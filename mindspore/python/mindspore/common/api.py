@@ -508,6 +508,13 @@ def ms_class(cls):
     return cls
 
 
+def _function_forbid_reuse(func):
+    if not inspect.isfunction(func):
+        raise TypeError(f'Decorator _function_forbid_reuse can only be used for function type, but got {func}.')
+    setattr(func, '__function_forbid_reuse__', True)
+    return func
+
+
 def is_pynative_parallel():
     run_mode = context.get_context('mode')
     parallel_mode = context.get_auto_parallel_context('parallel_mode')

@@ -28,6 +28,7 @@ inline const char GRAPH_FLAG_SIDE_EFFECT_HIDDEN[] = "side_effect_hidden";
 inline const char GRAPH_FLAG_SIDE_EFFECT_EXCEPTION[] = "side_effect_exception";
 inline const char GRAPH_FLAG_SIDE_EFFECT_PROPAGATE[] = "side_effect_propagate";
 inline const char GRAPH_FLAG_SIDE_EFFECT_BACKPROP[] = "side_effect_backprop";
+inline const char GRAPH_FLAG_FORBID_REUSE_RESULT[] = "forbid_reuse_result";
 inline const char GRAPH_FLAG_IS_WHILE_HEADER[] = "is_while_header";
 inline const char GRAPH_FLAG_ORDER_ENFORCE_SKIP[] = "order_enforce_skip";
 

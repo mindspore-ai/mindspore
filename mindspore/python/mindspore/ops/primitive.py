@@ -690,7 +690,7 @@ def prim_attr_register(fn):
     return deco
 
 
-def constexpr(fn=None, get_instance=True, name=None):
+def constexpr(fn=None, get_instance=True, name=None, reuse_result=True):
     """
     Creates a PrimitiveWithInfer operator that can infer the value at compile time. We can use it to define a function
     to compute constant value using the constants in the constructor.
@@ -700,6 +700,8 @@ def constexpr(fn=None, get_instance=True, name=None):
         get_instance (bool): If true, return the instance of operator,
                              otherwise return the operator class. Default: True.
         name (str): Defines the operator name. If `name` is None, use the function name as op name. Default: None.
+        reuse_result (bool): If true, the operator will be executed once and reuse the result next time,
+                             otherwise the operator will always be executed. Default: True.
 
     Examples:
         >>> from mindspore.ops import constexpr
@@ -732,6 +734,8 @@ def constexpr(fn=None, get_instance=True, name=None):
                 op_name = name if name else fn.__name__
                 PrimitiveWithInfer.__init__(self, op_name)
                 self.set_const_prim(True)
+                if not reuse_result:
+                    self.add_prim_attr('forbid_reuse_result', True)
 
             def infer_value(self, *args):
                 return fn(*args)

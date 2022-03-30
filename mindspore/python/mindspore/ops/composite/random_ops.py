@@ -19,14 +19,16 @@ from .. import functional as F
 from .multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
 from ...common.seed import _get_graph_seed
+from ...common.api import _function_forbid_reuse
 
 
-@constexpr
+@constexpr(reuse_result=False)
 def _get_seed(op_seed, kernel_name):
     "Get the graph-level seed."
     return _get_graph_seed(op_seed, kernel_name)
 
 
+@_function_forbid_reuse
 def normal(shape, mean, stddev, seed=None):
     """
     Generates random numbers according to the Normal (or Gaussian) random number distribution.
@@ -85,6 +87,7 @@ def normal(shape, mean, stddev, seed=None):
     return value
 
 
+@_function_forbid_reuse
 def laplace(shape, mean, lambda_param, seed=None):
     r"""
     Generates random numbers according to the Laplace random number distribution.
@@ -132,6 +135,7 @@ def laplace(shape, mean, lambda_param, seed=None):
     return value
 
 
+@_function_forbid_reuse
 def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     """
     Generates random numbers according to the Uniform random number distribution.
@@ -205,6 +209,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     return value
 
 
+@_function_forbid_reuse
 def gamma(shape, alpha, beta, seed=None):
     """
     Generates random numbers according to the Gamma random number distribution.
@@ -283,6 +288,7 @@ def gamma(shape, alpha, beta, seed=None):
     return value
 
 
+@_function_forbid_reuse
 def poisson(shape, mean, seed=None):
     r"""
     Generates random numbers according to the Poisson random number distribution.
@@ -334,6 +340,7 @@ def poisson(shape, mean, seed=None):
     return value
 
 
+@_function_forbid_reuse
 def multinomial(inputs, num_sample, replacement=True, seed=None):
     r"""
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
