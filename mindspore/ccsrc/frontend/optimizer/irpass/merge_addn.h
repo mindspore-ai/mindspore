@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,6 +224,54 @@ class AddNZeroFilter : public AnfVisitor {
  private:
   std::vector<AnfNodePtr> filtered_Xs_{}, Xs_{};
   bool has_zero_like_{false};
+};
+
+// {PrimAddN, {kPrimMakeTuple, Xs}}
+class AddNCheckDump : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    Reset();
+    AnfVisitor::Match(prim::kPrimAddN, {IsCNode})(node);
+
+    // Only handle gradient addn.
+    if (node->scope()->name().find("Gradients/") != 0) {
+      return nullptr;
+    }
+
+    if (set_dump_) {
+      AnfUtils::SetDumpFlag(node);
+    }
+
+    return nullptr;
+  }
+
+  void Visit(const CNodePtr &cnode) override {
+    if (!IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+      return;
+    }
+    if (cnode->size() < kSizeThree) {
+      return;
+    }
+
+    // When all of inputs has dump flag, we need set dump flag for AddN.
+    set_dump_ = true;
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      auto input = cnode->input(i);
+      MS_EXCEPTION_IF_NULL(input);
+      if (IsPrimitiveCNode(input, prim::kPrimTupleGetItem) || IsPrimitiveCNode(input, prim::kPrimDepend)) {
+        input = input->cast<CNodePtr>()->input(kIndexOne);
+      }
+      if (!input->isa<CNode>() || !AnfUtils::GetDumpFlag(input)) {
+        set_dump_ = false;
+        break;
+      }
+    }
+  }
+
+  void Reset() { set_dump_ = false; }
+
+ private:
+  bool set_dump_{false};
 };
 }  // namespace irpass
 }  // namespace opt
