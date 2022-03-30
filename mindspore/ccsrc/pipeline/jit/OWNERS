@@ -1,11 +1,15 @@
-reviewers:
+approvers:
+- zh_qh
+- hwhewei
 - ginfung
+
+reviewers:
+- xychow
 - chenfei52
 - zhangzhaoju
 - lanzhineng
-- xychow
-- Margaret_wangrui
 - lianliguang
+- Margaret_wangrui
 - irmo
 - huangbingjian
 - liangzhibo
