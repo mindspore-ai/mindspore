@@ -64,12 +64,11 @@ sudo update-alternatives --install /usr/bin/python python /usr/bin/python$PYTHON
 # pip
 python -m pip install -U pip -i https://pypi.tuna.tsinghua.edu.cn/simple
 echo -e "alias pip='python -m pip'" >> ~/.bashrc
-source ~/.bashrc
-pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # install mindspore whl
 arch=`uname -m`
-pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/cpu/${arch}/mindspore-${version_map["$PYTHON_VERSION"]}-linux_${arch}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
+python -m pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/cpu/${arch}/mindspore-${version_map["$PYTHON_VERSION"]}-linux_${arch}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # check mindspore installation
 python -c "import mindspore;mindspore.run_check()"
