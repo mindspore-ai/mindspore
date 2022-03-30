@@ -164,6 +164,7 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
       MS_LOG(EXCEPTION) << "The src_node is PrimUpdateState must have monad abstract.";
     }
     auto monad_input = NewValueNode(monad_value);
+    MS_EXCEPTION_IF_NULL(monad_input);
     monad_input->set_abstract(monad_value->ToAbstract());
     recv_inputs.push_back(monad_input);
     recv_node_abs = src_node->abstract();
@@ -175,6 +176,15 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
         common::AnfAlgo::VisitKernel(common::AnfAlgo::GetInputNode(src_node->cast<CNodePtr>(), parameter_index), 0);
       auto param_node = kernel_with_index.first;
       recv_inputs.push_back(param_node);
+
+      // To update the parameter on the device side in heterogeneous case, side-effect node should be added to recv's
+      // input.
+      ValuePtr monad_value = kUMonad;
+      auto monad_input = NewValueNode(monad_value);
+      MS_EXCEPTION_IF_NULL(monad_input);
+      monad_input->set_abstract(monad_value->ToAbstract());
+      recv_inputs.push_back(monad_input);
+
       recv_node_abs = param_node->abstract();
     } else {
       auto mock_value = CreateFakeValueNode(true, src_node);
