@@ -59,14 +59,20 @@ static bool FillMetaServerAddress(struct MetaServerAddress *address) {
 }
 
 __attribute__((unused)) static std::unique_ptr<MessageBase> CreateMessage(const std::string &dest_url,
-                                                                          const MessageName &name,
+                                                                          const std::string &name,
                                                                           const std::string &content) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
-  message->name = std::to_string(static_cast<int>(name));
+  message->name = name;
   message->from = AID("", "");
   message->to = AID("", dest_url);
   message->body = content;
   return message;
+}
+
+__attribute__((unused)) static std::unique_ptr<MessageBase> CreateMessage(const std::string &dest_url,
+                                                                          const MessageName &name,
+                                                                          const std::string &content) {
+  return CreateMessage(dest_url, std::to_string(static_cast<int>(name)), content);
 }
 
 __attribute__((unused)) static std::chrono::high_resolution_clock::time_point Now() {

@@ -15,6 +15,8 @@
  */
 
 #include <functional>
+#include <algorithm>
+#include <string>
 #include "proto/topology.pb.h"
 #include "distributed/cluster/topology/utils.h"
 #include "distributed/cluster/topology/meta_server_node.h"
@@ -58,23 +60,38 @@ bool MetaServerNode::InitTCPServer() {
   tcp_server_->SetMessageHandler(std::bind(&MetaServerNode::HandleMessage, this, std::placeholders::_1));
 
   // Configure the message processors for the TCP server.
-  message_handlers_[MessageName::kRegistration] =
+  system_msg_handlers_[MessageName::kRegistration] =
     std::bind(&MetaServerNode::ProcessRegister, this, std::placeholders::_1);
-  message_handlers_[MessageName::kUnregistration] =
+  system_msg_handlers_[MessageName::kUnregistration] =
     std::bind(&MetaServerNode::ProcessUnregister, this, std::placeholders::_1);
-  message_handlers_[MessageName::kHeartbeat] =
+  system_msg_handlers_[MessageName::kHeartbeat] =
     std::bind(&MetaServerNode::ProcessHeartbeat, this, std::placeholders::_1);
   return true;
 }
 
 void MetaServerNode::HandleMessage(const std::shared_ptr<MessageBase> &message) {
   MS_EXCEPTION_IF_NULL(message);
-  const auto &message_name = static_cast<MessageName>(std::stoi(message->Name()));
-  const auto &handler = message_handlers_.find(message_name);
-  if (handler == message_handlers_.end()) {
-    MS_LOG(ERROR) << "Unknown message name: " << message->Name();
+  const auto &name = message->Name();
+
+  // Handle system messages.
+  if (std::all_of(name.begin(), name.end(), ::isdigit)) {
+    const auto &message_name = static_cast<MessageName>(std::stoi(message->Name()));
+    const auto &handler = system_msg_handlers_.find(message_name);
+    if (handler == system_msg_handlers_.end()) {
+      MS_LOG(ERROR) << "Unknown system message name: " << message->Name();
+      return;
+    }
+    system_msg_handlers_[message_name](message);
+
+    // Handle user defined messages.
+  } else {
+    const auto &handler = message_handlers_.find(name);
+    if (handler == message_handlers_.end()) {
+      MS_LOG(ERROR) << "Unknown message name: " << name;
+      return;
+    }
+    (*message_handlers_[name])(message->Body());
   }
-  message_handlers_[message_name](message);
 }
 
 void MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message) {
@@ -160,6 +177,16 @@ TopoState MetaServerNode::TopologyState() { return topo_state_; }
 size_t MetaServerNode::GetAliveNodeNum() {
   std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
   return nodes_.size();
+}
+
+bool MetaServerNode::RegisterMessageHandler(const std::string &name,
+                                            std::shared_ptr<std::function<void(const std::string &)>> handler) {
+  if (message_handlers_.find(name) != message_handlers_.end()) {
+    MS_LOG(ERROR) << "The message name: " << name << " have already been registered";
+    return false;
+  }
+  message_handlers_[name] = handler;
+  return true;
 }
 }  // namespace topology
 }  // namespace cluster
