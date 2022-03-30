@@ -19,4 +19,4 @@ mindspore.dataset.text.transforms.RegexReplace
 
     - **TypeError** - 参数 `pattern` 的类型不是str。
     - **TypeError** - 参数 `replace` 的类型不是str。
-    - **TypeError** - 参数 `separator` 的类型不是bool。
+    - **TypeError** - 参数 `replace_all` 的类型不是bool。
