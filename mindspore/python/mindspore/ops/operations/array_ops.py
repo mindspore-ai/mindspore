@@ -4803,6 +4803,71 @@ class ScatterSub(_ScatterOpDynamic):
         self.add_prim_attr('side_effect_mem', True)
 
 
+class Triu(Primitive):
+    """
+    Returns a tensor with elements below the kth diagonal zeroed.
+
+    Args:
+        diagonal (int): The index of diagonal. Default: 0
+
+    Inputs:
+        - **x** (Tensor) -  The input tensor. The data type is Number. (N,∗)
+        where ∗ means, any number of additional dimensions.
+
+    Outputs:
+        - **y** (Tensor) - A tensor has the same shape and data type as input.
+
+    Raises:
+        TypeError: If `diagonal` is not an int.
+        TypeError: If `x` is not an Tensor.
+        ValueError: If length of shape of x is less than 1.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...              [ 5,  6,  7,  8],
+        ...              [10, 11, 12, 13],
+        ...              [14, 15, 16, 17]]))
+        >>> triu = P.Triu()
+        >>> result = triu(x)
+        >>> print(result)
+        [[ 1  2  3  4]
+         [ 0  6  7  8]
+         [ 0  0 12 13]
+         [ 0  0  0 17]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...              [ 5,  6,  7,  8],
+        ...              [10, 11, 12, 13],
+        ...              [14, 15, 16, 17]]))
+        >>> triu = P.Triu(diagonal=1)
+        >>> result = triu(x)
+        >>> print(result)
+        [[ 0  2  3  4]
+         [ 0  0  7  8]
+         [ 0  0  0 13]
+         [ 0  0  0  0]]
+        >>> x = Tensor(np.array([[ 1,  2,  3,  4],
+        ...               [ 5,  6,  7,  8],
+        ...               [10, 11, 12, 13],
+        ...               [14, 15, 16, 17]]))
+        >>> triu = P.Triu(diagonal=-1)
+        >>> result = triu(x)
+        >>> print(result)
+        [[ 1  2  3  4]
+         [ 5  6  7  8]
+         [ 0 11 12 13]
+         [ 0  0 16 17]]
+    """
+    @prim_attr_register
+    def __init__(self, diagonal=0):
+        """Initialize Stack"""
+        validator.check_value_type("diagonal", diagonal, [int], self.name)
+        self.diagonal = diagonal
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class ScatterMul(_ScatterOp):
     r"""
     Updates the value of the input tensor through the multiply operation.

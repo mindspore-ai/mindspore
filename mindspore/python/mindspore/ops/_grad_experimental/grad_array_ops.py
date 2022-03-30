@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from .._grad.grad_math_ops import binop_grad_common
 from .._grad.grad_base import bprop_getters
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.array_ops import Tril
+from ..operations.array_ops import Triu
 from .. import functional as F
 from .. import operations as P
 
@@ -102,6 +103,19 @@ def get_bprop_coalesce(self):
 
     def bprop(x_indices, x_values, x_shape, out, dout):
         return dout
+
+    return bprop
+
+
+@bprop_getters.register(Triu)
+def get_bprop_triu(self):
+    """Grad definition for 'Triu' operation"""
+    diagonal = self.diagonal
+    triu = Triu(diagonal)
+
+    def bprop(x, out, dout):
+        dx = triu(dout)
+        return (dx,)
 
     return bprop
 

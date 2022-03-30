@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -135,3 +135,4 @@ from .priority_replay_buffer import _prb_sample_op_cpu
 from .priority_replay_buffer import _prb_update_op_cpu
 from .right_shift import _right_shift_aicpu
 from .tril import _tril_aicpu
+from .triu import _triu_aicpu
