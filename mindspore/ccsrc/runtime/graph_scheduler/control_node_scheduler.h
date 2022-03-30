@@ -127,6 +127,7 @@ class ControlNodeScheduler {
   void AddFormalParameterDeviceTensor(ControlActor *const from_actor, size_t from_index, const AnfNodePtr &input_node,
                                       const KernelGraphPtr &graph);
 
+  bool CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) const;
   // The id of memory manager actor.
   AID memory_manager_aid_;
 };
