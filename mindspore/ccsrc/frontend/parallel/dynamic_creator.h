@@ -240,6 +240,9 @@ REGISTER(XdivyInfo);
 REGISTER(XlogyInfo);
 REGISTER(InplaceAddInfo);
 REGISTER(InplaceSubInfo);
+REGISTER(CheckValidInfo);       // has not bprop
+REGISTER(InvertInfo);           // has not bprop
+REGISTER(PopulationCountInfo);  // has not bprop
 REGISTER(CdistInfo);
 REGISTER(L2LossInfo);
 REGISTER(LerpInfo);
