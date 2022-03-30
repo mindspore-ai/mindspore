@@ -168,7 +168,7 @@ bool AbstractPSNode::HandleHeartbeatTimeout() {
         StartHeartbeatTimer();
         break;
       } else {
-        MS_LOG(ERROR) << "Failed to establish connection to the scheduler.";
+        MS_LOG(WARNING) << "Failed to establish connection to the scheduler.";
       }
     }
   });
