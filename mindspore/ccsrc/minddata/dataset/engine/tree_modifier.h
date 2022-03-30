@@ -140,13 +140,19 @@ class TreeModifier {
   /// \param change_request Pointer to the change request
   /// \return Status return Status code
   Status AddChangeRequest(int32_t op_id, ChangeRequestPtr change_request) {
+    num_requests_++;
     RETURN_IF_NOT_OK(callbacks[op_id]->PushChangeRequest(change_request));
     return Status::OK();
   }
 
+  /// \brief Get the number of change requests received
+  /// \return Number of change requests received
+  uint64_t GetRequestsCount() const { return num_requests_; }
+
  private:
   ExecutionTree *tree_;
   std::map<int32_t, std::shared_ptr<AutotuneCallback>> callbacks;
+  uint64_t num_requests_ = 0;  // counter for number of requests received
 };
 }  // namespace dataset
 }  // namespace mindspore
