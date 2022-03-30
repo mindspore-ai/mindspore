@@ -4163,7 +4163,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
     """
     Creates a new tensor by updating the positions in `input_x` indicated by
     `indices`, with values from `update`. This operation is almost equivalent to using
-    ScatterNd, except that the updates are applied on `input_x` instead of a zero tensor.
+    :class:`mindspore.ops.ScatterNd` , except that the updates are applied on `input_x` instead of a zero tensor.
 
     `indices` must have rank at least 2, the last axis is the depth of each index
     vectors. For each index vector, there must be a corresponding value in `update`. If
@@ -4265,7 +4265,7 @@ class TensorScatterAdd(PrimitiveWithInfer):
     Creates a new tensor by adding the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are given for the same
     index, the updated result will be the sum of all values. This operation is almost
-    equivalent to using ScatterNdAdd, except that the updates are applied on output `Tensor`
+    equivalent to using :class:`mindspore.ops.ScatterNdAdd` , except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
@@ -6755,7 +6755,7 @@ class TensorScatterSub(PrimitiveWithInfer):
     Creates a new tensor by subtracting the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When multiple values are provided for the same
     index, the result of the update will be to subtract these values respectively. This operation is almost
-    equivalent to using ScatterNdSub, except that the updates are applied on output `Tensor`
+    equivalent to using :class:`mindspore.ops.ScatterNdSub` , except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,

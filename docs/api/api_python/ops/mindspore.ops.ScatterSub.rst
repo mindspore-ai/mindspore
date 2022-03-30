@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.ScatterSub(use_locking=False)
 
-    使用给定更新值通过减法操作和输入索引来更新Tensor值。此操作在更新完成后输出 `input_x` ，这有利于更加方便地使用更新后的值。
+    使用给定更新值通过减法操作和输入索引来更新Tensor值。此操作在更新完成后输出数据 ，这有利于更加方便地使用更新后的值。
 
     对于每个在 `indices.shape` 中的 `i, ..., j` ：
 

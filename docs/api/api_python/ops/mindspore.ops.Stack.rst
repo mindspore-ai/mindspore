@@ -3,11 +3,11 @@
 
 .. py:class:: mindspore.ops.Stack(axis=0)
 
-    根据指定轴对输入Tensor序列进行堆叠运算。
+    在指定轴上对输入Tensor序列进行堆叠。
 
-    输入秩为 `R` 的Tensor序列，且输出秩为 `(R+1)` 的Tensor。
+    输入秩为 `R` 的Tensor序列，则输出秩为 `(R+1)` 的Tensor。
 
-    给定输入Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。将输入Tensor的数量设为 `N` 。如果存在 :math:`0 \le axis` ，则输出Tensor的shape为 :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)` 。
+    给定输入Tensor的shape为 :math:`(x_1, x_2, ..., x_R)` 。若输入Tensor的长度为 `N` 。如果存在 :math:`axis \ge 0` ，则输出Tensor的shape为 :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)` 。
 
     **参数：**
 
