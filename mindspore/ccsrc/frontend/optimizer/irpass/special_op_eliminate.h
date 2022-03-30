@@ -158,6 +158,43 @@ class VirtualAssignAddEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr};
 };
 
+class LinSpaceValue : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto func_graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto &inputs = cnode->inputs();
+    constexpr size_t kInputSize = 4;
+    if (inputs.size() != kInputSize) {
+      return nullptr;
+    }
+    for (auto const item : inputs) {
+      MS_EXCEPTION_IF_NULL(item);
+    }
+    auto input_val_ptr = inputs[kIndex3]->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(input_val_ptr);
+    auto input_num = GetValue<int64_t>(input_val_ptr->value());
+    input_num = IntToSize(input_num);
+    if (input_num != 1) {
+      return nullptr;
+    }
+
+    const auto &reshape_fn = python_adapter::GetPyFn("mindspore.ops.functional", "reshape");
+
+    auto reshape_fg = parse::ParsePythonCode(reshape_fn);
+    auto res = std::make_shared<pipeline::Resource>();
+    (void)parse::ResolveFuncGraph(reshape_fg, res);
+
+    auto shape = NewValueNode(MakeValue(std::vector<int64_t>{1}));
+    AnfNodePtr reshape_node = func_graph->NewCNodeInOrder({NewValueNode(reshape_fg), inputs[1], shape});
+    AnfNodePtr stop_grad_node = func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimStopGradient), reshape_node});
+    return stop_grad_node;
+  }
+};
+
 class VirtualAccuGradEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
