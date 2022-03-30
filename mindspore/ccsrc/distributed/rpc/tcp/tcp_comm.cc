@@ -138,29 +138,40 @@ int DoSend(Connection *conn) {
       conn->FillSendMessage(conn->send_message_queue.front(), conn->source, false);
       conn->send_message_queue.pop();
     }
-
+    size_t retryCount = 10;
     size_t sendLen = 0;
-    int retval = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, conn->total_send_len, &sendLen);
-    if (retval == IO_RW_OK && sendLen > 0) {
-      total_send_bytes += sendLen;
-      conn->total_send_len -= sendLen;
-      if (conn->total_send_len == 0) {
-        // update metrics
-        conn->send_metrics->UpdateError(false);
+    while (retryCount > 0 && sendLen != conn->total_send_len) {
+      int retval = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, conn->total_send_len, &sendLen);
+      if (retval == IO_RW_OK && sendLen > 0) {
+        conn->total_send_len -= sendLen;
+        if (conn->total_send_len == 0) {
+          // update metrics
+          conn->send_metrics->UpdateError(false);
 
-        conn->output_buffer_size -= conn->send_message->body.size();
-        delete conn->send_message;
-        conn->send_message = nullptr;
+          conn->output_buffer_size -= conn->send_message->body.size();
+          total_send_bytes += conn->send_message->body.size();
+          delete conn->send_message;
+          conn->send_message = nullptr;
+          break;
+        }
+      } else if (retval == IO_RW_OK && sendLen == 0) {
+        // EAGAIN
+        MS_LOG(ERROR) << "Failed to send message and update the epoll event";
+        (void)conn->recv_event_loop->UpdateEpollEvent(conn->socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
+        continue;
+      } else {
+        if (--retryCount > 0) {
+          MS_LOG(ERROR) << "Failed to send message and retry(" + std::to_string(retryCount) + ")...";
+          unsigned int time = 1;
+          sleep(time);
+          continue;
+        } else {
+          // update metrics
+          conn->send_metrics->UpdateError(true, conn->error_code);
+          conn->state = ConnectionState::kDisconnecting;
+          break;
+        }
       }
-    } else if (retval == IO_RW_OK && sendLen == 0) {
-      // EAGAIN
-      (void)conn->recv_event_loop->UpdateEpollEvent(conn->socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
-      break;
-    } else {
-      // update metrics
-      conn->send_metrics->UpdateError(true, conn->error_code);
-      conn->state = ConnectionState::kDisconnecting;
-      break;
     }
   }
   return total_send_bytes;
@@ -445,12 +456,24 @@ bool TCPComm::IsConnected(const std::string &dst_url) {
   return false;
 }
 
-void TCPComm::Disconnect(const std::string &dst_url) {
+bool TCPComm::Disconnect(const std::string &dst_url) {
+  int interval = 100000;
+  size_t retry = 30;
+  while (recv_event_loop_->RemainingTaskNum() != 0 && send_event_loop_->RemainingTaskNum() != 0 && retry > 0) {
+    usleep(interval);
+    retry--;
+  }
+  if (recv_event_loop_->RemainingTaskNum() > 0 || send_event_loop_->RemainingTaskNum() > 0) {
+    MS_LOG(ERROR) << "Failed to disconnect from url " << dst_url
+                  << ", because there are still pending tasks to be executed, please try later.";
+    return false;
+  }
   (void)recv_event_loop_->AddTask([dst_url, this] {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
     conn_pool_->DeleteConnection(dst_url);
     return true;
   });
+  return true;
 }
 
 Connection *TCPComm::CreateDefaultConn(const std::string &to) {

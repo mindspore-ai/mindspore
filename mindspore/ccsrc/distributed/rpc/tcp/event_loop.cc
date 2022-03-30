@@ -149,6 +149,13 @@ size_t EventLoop::AddTask(std::function<int()> &&task) {
   return result;
 }
 
+size_t EventLoop::RemainingTaskNum() {
+  task_queue_mutex_.lock();
+  auto task_num = task_queue_.size();
+  task_queue_mutex_.unlock();
+  return task_num;
+}
+
 bool EventLoop::Initialize(const std::string &threadName) {
   int retval = InitResource();
   if (retval != RPC_OK) {

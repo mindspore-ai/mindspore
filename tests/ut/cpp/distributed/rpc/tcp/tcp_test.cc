@@ -255,7 +255,7 @@ TEST_F(TCPTest, SendSyncMessage) {
 
   // Create the message.
   auto message = CreateMessage(server_url, client_url);
-  auto msg_size = GetMessageSize(*message);
+  auto msg_size = message->body.size();
 
   // Send the message.
   client->Connect(server_url);
