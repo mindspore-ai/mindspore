@@ -25,7 +25,7 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
 #include "include/common/utils/convert_utils.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "backend/common/optimizer/helper.h"

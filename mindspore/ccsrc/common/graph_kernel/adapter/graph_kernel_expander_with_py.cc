@@ -22,7 +22,7 @@
 #include <algorithm>
 
 #include "utils/ms_context.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"

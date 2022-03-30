@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <set>
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/optimizer/pass.h"
 #include "common/graph_kernel/add_atomic_clean.h"
 #include "ir/func_graph.h"

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/mem_reuse/mem_reuse_checker.h"
 #include "backend/common/optimizer/helper.h"
 

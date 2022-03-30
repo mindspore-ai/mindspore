@@ -27,7 +27,7 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "utils/file_utils.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/core/graph_builder.h"

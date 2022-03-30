@@ -30,7 +30,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 // operator which follows commutative rules

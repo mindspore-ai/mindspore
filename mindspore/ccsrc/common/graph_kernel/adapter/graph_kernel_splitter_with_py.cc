@@ -28,7 +28,7 @@
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 class CostModelSplitSchemer : public SplitSchemer {

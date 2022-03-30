@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_GRAPH_KERNEL_FLAGS_H
-#define MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_GRAPH_KERNEL_FLAGS_H
+#ifndef MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_GRAPH_KERNEL_FLAGS_H
+#define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_GRAPH_KERNEL_FLAGS_H
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
-#include "include/common/visible.h"
 
 namespace mindspore::graphkernel {
 constexpr unsigned int OptLevel_0 = 0;  // Disabled
@@ -35,7 +34,7 @@ constexpr unsigned int OpLevel_0 = 0;
 constexpr unsigned int OpLevel_1 = 1;
 constexpr unsigned int OpLevel_MAX = 2;
 
-class COMMON_EXPORT GraphKernelFlags {
+class GraphKernelFlags {
  public:
   static const GraphKernelFlags &GetInstance();
 
@@ -226,4 +225,4 @@ class COMMON_EXPORT GraphKernelFlags {
   bool enable_graph_kernel_;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_GRAPH_KERNEL_FLAGS_H
+#endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_GRAPH_KERNEL_FLAGS_H

@@ -34,7 +34,7 @@
 #include "ir/func_graph.h"
 #include "include/common/utils/python_adapter.h"
 #include "pipeline/jit/action.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 namespace {

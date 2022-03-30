@@ -82,7 +82,7 @@
 #include "utils/ms_utils.h"
 #include "include/common/utils/config_manager.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/utils/utils.h"
 #include "abstract/utils.h"
 #if ENABLE_CPU && ENABLE_GPU

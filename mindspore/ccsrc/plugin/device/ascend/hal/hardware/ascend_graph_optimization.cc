@@ -21,7 +21,7 @@
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "backend/common/session/ascend_auto_monad.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "runtime/device/kernel_adjust.h"
 

@@ -31,7 +31,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/hal/hardware/optimizer.h"
 #include "runtime/device/ms_device_shape_transfer.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/gpu/hal/device/gpu_bucket.h"
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"

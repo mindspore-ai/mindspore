@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 #include <map>
 #include <string>
