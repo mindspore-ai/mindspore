@@ -146,6 +146,9 @@ class Profiler:
         if Profiler._has_initialized:
             msg = "Do not init twice in the profiler."
             raise RuntimeError(msg)
+        self._filt_optype_names = []
+        self._output_path = ""
+        self._dev_id = ""
         Profiler._has_initialized = True
         _environment_check()
         # get device_id and device_target
@@ -161,6 +164,15 @@ class Profiler:
         self._md_profiler = cde.GlobalContext.profiling_manager()
         self._md_profiler.init()
 
+        self._decide_device_target(kwargs)
+
+        if self.start_profile:
+            self.start()
+        elif context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
+
+    def _decide_device_target(self, kwargs):
+        """Complete Profiler initialization according to device_target."""
         if self._device_target:
             cpu_profiler = c_expression.CPUProfiler
             self._cpu_profiler = cpu_profiler.get_instance()
@@ -178,7 +190,7 @@ class Profiler:
         if self._device_target and self._device_target == DeviceTarget.GPU.value:
             if context.get_context("mode") == context.PYNATIVE_MODE:
                 raise RuntimeError("Pynative model is not supported on GPU currently.")
-            self._parse_parameter_for_gpu(**kwargs)
+            self._parse_parameter_for_gpu(kwargs)
 
             gpu_profiler = c_expression.GPUProfiler
             self._gpu_profiler = gpu_profiler.get_instance()
@@ -190,7 +202,7 @@ class Profiler:
         elif self._device_target and self._device_target == DeviceTarget.ASCEND.value:
             self._init_time = int(time.time() * 10000000)
             logger.info("Profiling: profiling init time: %d", self._init_time)
-            self._parse_parameter_for_ascend(**kwargs)
+            self._parse_parameter_for_ascend(kwargs)
             os.environ['DEVICE_ID'] = self._dev_id
 
             self._ascend_profiling_options = json.dumps(self._construct_profiling_options())
@@ -200,11 +212,15 @@ class Profiler:
                       f"the limit (2048), please input valid parameters."
                 logger.critical(msg)
                 raise ValueError(msg)
-
-        if self.start_profile:
-            self.start()
-        elif context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
+            # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
+            self._ascend_profiler = c_expression.AscendProfiler.get_instance()
+            self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
+            base_profiling_container_path = os.path.join(self._output_path, "container")
+            container_path = os.path.join(base_profiling_container_path, self._dev_id)
+            data_path = os.path.join(container_path, "data")
+            data_path = validate_and_normalize_path(data_path)
+            if not os.path.exists(data_path):
+                os.makedirs(data_path, exist_ok=True)
 
     def _construct_profiling_options(self):
         """
@@ -234,7 +250,7 @@ class Profiler:
 
         return profiling_options
 
-    def _parse_parameter_for_gpu(self, **kwargs):
+    def _parse_parameter_for_gpu(self, kwargs):
         """Parse parameter in Proflier when the device target is GPU."""
 
         self.start_profile = kwargs.pop("start_profile", True)
@@ -256,7 +272,7 @@ class Profiler:
         if self._profile_memory:
             raise RuntimeError(f"The parameter profile_memory is not supported on GPU currently.")
 
-    def _parse_parameter_for_ascend(self, **kwargs):
+    def _parse_parameter_for_ascend(self, kwargs):
         """Parse parameter in Proflier when the device target is Ascend."""
         if 'optypes_not_deal' in kwargs:
             deprecated('optypes_not_deal', '1.6')
@@ -597,23 +613,10 @@ class Profiler:
         pynative_profiler = c_expression.PynativeProfiler
         self._pynative_profiler = pynative_profiler.get_instance()
         self._pynative_profiler.init(self._output_path)
-
-        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
-        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
         self._ascend_profiler.start()
 
     def _ascend_graph_start(self):
         """Ascend graph mode start profiling."""
-        # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
-        self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
-        base_profiling_container_path = os.path.join(self._output_path, "container")
-        container_path = os.path.join(base_profiling_container_path, self._dev_id)
-        data_path = os.path.join(container_path, "data")
-        data_path = validate_and_normalize_path(data_path)
-        if not os.path.exists(data_path):
-            os.makedirs(data_path, exist_ok=True)
-
         self._ascend_profiler.start()
 
     def stop(self):
@@ -715,8 +718,8 @@ class Profiler:
             pass
 
         logger.warning(
-            '\nThe training and inference process does not support profiler currently, '
-            'only individual training or inference is supported.'
+            '\nThe GPU supports only the training mode or inference mode, '
+            'it does not support train and infer at the same time.'
         )
 
     def _get_step_reduce_op_type(self):

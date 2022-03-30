@@ -222,7 +222,7 @@ class GraphMemoryParser:
         self.graph.nodes = self._parse_nodes(nodes_proto)
 
         self._process_memory_breakdowns()
-        self.graph.breakdowns = self.breakdowns[self.tensor_node_id]
+        self.graph.breakdowns = [self.breakdowns[self.tensor_node_id]]
 
         # update fp_start and bp_end
         point_id = self._locate_fp_bp_id()
