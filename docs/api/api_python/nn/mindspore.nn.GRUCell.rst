@@ -20,7 +20,7 @@ mindspore.nn.GRUCell
 
     - **input_size** (int) - 输入的大小。
     - **hidden_size** (int) - 隐藏状态大小。
-    - **has_bias** (bool) - cell是否有偏置项 `b_ih` 和 `b_hh` 。默认值：True。
+    - **has_bias** (bool) - cell是否有偏置项 `b_in` 和 `b_hn` 。默认值：True。
 
     **输入：**
 

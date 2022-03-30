@@ -16,9 +16,9 @@
     
     - **input_x** (Tensor)：Argmax的输入，任意维度的Tensor。支持的数据类型如下所示：
 
-      - Ascend：Float16和Float32。
-      - GPU：Float16和Float32。
-      - CPU：Float16、Float32和Float64。
+      - Ascend：float16和float32。
+      - GPU：float16和float32。
+      - CPU：float16、float32和float64。
 
     **输出：**
 
