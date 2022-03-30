@@ -41,4 +41,4 @@
     Tuple，表示一个包含(`output`, `layer_present`)的元组。
 
     - **output** (Tensor) - 输出的logit。shape为[batch, tgt_seq_length, hidden_size]或[batch * tgt_seq_length, hidden_size]。
-    - **layer_present** (Tuple) - 大小为层数的元组，其中每个元组都是shape为((batch_size, num_heads, size_per_head, tgt_seq_length)或(batch_size, num_heads, tgt_seq_length, size_per_head)的自注意力中的投影key向量和value向量的tensor，或者是shape为(batch_size, num_heads, size_per_head, src_seq_length)或(batch_size, num_heads, src_seq_length, size_per_head))的交叉注意力中的投影key向量和value向量的tensor。
+    - **layer_present** (Tuple) - 大小为层数的元组，其中每个元组都是shape为((batch_size, num_heads, size_per_head, tgt_seq_length)或(batch_size, num_heads, tgt_seq_length, size_per_head)的自注意力中的投影key向量和value向量的tensor的元组，或者是shape为(batch_size, num_heads, size_per_head, src_seq_length)或(batch_size, num_heads, src_seq_length, size_per_head))的交叉注意力中的投影key向量和value向量的tensor的元组。
