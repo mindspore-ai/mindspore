@@ -39,7 +39,6 @@ OpParameter *PopulateFusedBatchNorm(const void *prim) {
   param->epsilon_ = value->epsilon();
   param->momentum_ = value->momentum();
   param->fused_ = true;
-  param->is_training_ = static_cast<bool>(value->mode());
   return reinterpret_cast<OpParameter *>(param);
 }
 REG_POPULATE(PrimitiveType_FusedBatchNorm, PopulateFusedBatchNorm, SCHEMA_CUR)
