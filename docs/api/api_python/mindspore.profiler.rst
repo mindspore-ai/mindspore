@@ -11,6 +11,7 @@ mindspore.profiler
     MindSpore用户能够通过该类对神经网络的性能进行采集。
 
     **参数：**
+    
     - **output_path** (str, 可选) – 表示输出数据的路径。默认值："./data"。
     - **profile_communication** (bool, 可选) – （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。默认值：False。
     - **profile_memory** (bool, 可选) – （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值：False。
