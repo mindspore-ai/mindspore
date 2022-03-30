@@ -108,7 +108,8 @@ curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
 sudo mkdir $HOME/cmake-3.19.8
 sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
 add_env PATH $HOME/cmake-3.19.8/bin
-source ~/.bashrc
+set +e && source ~/.bashrc
+set -e
 cd -
 
 ARCH=`uname -m`
