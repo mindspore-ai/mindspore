@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,7 +292,7 @@ void Parser::TransformParallelCall() {
     constexpr auto recur_3 = 3;
     MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
                   << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
-    auto [middle_graph_output_cnode, middle_graph_dependency_node] = GetRealMiddleOutputNodes(middle_call_graph);
+    const auto &[middle_graph_output_cnode, middle_graph_dependency_node] = GetRealMiddleOutputNodes(middle_call_graph);
     auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
     if (middle_graph_output_cnode_size <= 1) {
       constexpr auto recur_2 = 2;
@@ -676,6 +676,12 @@ LocationPtr Parser::GetLocation(const py::object &node) const {
   return location;
 }
 
+void Parser::UpdateBlockPyParams(const FunctionBlockPtr &block, const FunctionBlockPtr &pre_block) {
+  block->UpdateGlobalPyParam(pre_block->global_py_params());
+  const auto &[keys, values] = pre_block->local_py_params();
+  block->UpdateLocalPyParam(keys, values);
+}
+
 void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const FunctionBlockPtr &true_block,
                                  const FunctionBlockPtr &false_block) {
   MS_EXCEPTION_IF_NULL(true_block);
@@ -685,6 +691,12 @@ void Parser::MakeConditionBlocks(const FunctionBlockPtr &pre_block, const Functi
 
   false_block->AddPrevBlock(pre_block);
   false_block->Mature();
+
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback) {
+    UpdateBlockPyParams(true_block, pre_block);
+    UpdateBlockPyParams(false_block, pre_block);
+  }
 }
 
 AnfNodePtr Parser::HandelReturnExprNode(const FunctionBlockPtr &block, const AnfNodePtr &return_expr_node,
@@ -790,7 +802,9 @@ AnfNodePtr Parser::ParseName(const FunctionBlockPtr &block, const py::object &no
   auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
   MS_LOG(DEBUG) << "The Name id is " << name_id;
   MS_EXCEPTION_IF_NULL(block);
-  if (block->IsGlobalVar(name_id)) {
+  static const auto use_fallback = (support_fallback() != "0");
+  // The Tensor object will be parsed into an Interpret node. For example, Tensor(0).astype("int32")
+  if (block->IsGlobalVar(name_id) || (use_fallback && name_id == "Tensor")) {
     MS_LOG(DEBUG) << "name_id: " << name_id;
     return block->MakeResolveSymbol(name_id);
   }
@@ -1506,7 +1520,9 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
   condition_node = HandleInterpret(block, condition_node, test_node);
   MS_EXCEPTION_IF_NULL(block);
-  CNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  UpdateInterpretForUserNode(bool_node, condition_node);
+  bool_node = HandleInterpret(block, bool_node, test_node);
 
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
@@ -1632,6 +1648,13 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   condition_node = header_block->ForceToWhileCond(condition_node);
   body_block->Mature();
   header_block->ConditionalJump(condition_node, body_block, after_block);
+
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback) {
+    UpdateBlockPyParams(header_block, block);
+    UpdateBlockPyParams(body_block, block);
+    UpdateBlockPyParams(after_block, block);
+  }
 
   // Parse loop body statements with loop context.
   LoopContext loop_context{&loops_, header_block, nullptr};
@@ -2323,7 +2346,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   MS_EXCEPTION_IF_NULL(value_node);
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
-  auto [keys, values] = block->local_py_params();
+  const auto &[keys, values] = block->local_py_params();
   if (IsTensorType(value_node, script_text)) {
     return value_node;
   }
@@ -2411,7 +2434,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
 FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::object &node) {
   if (loops_.empty()) {
     // Report error if loop context not set for the 'continue' statement.
-    MS_LOG(EXCEPTION) << "Unexpected 'continue.";
+    MS_LOG(EXCEPTION) << "Unexpected 'continue'.";
   }
   // Jump to the header of the loop with iterator called.
   Loop &loop = loops_.top();

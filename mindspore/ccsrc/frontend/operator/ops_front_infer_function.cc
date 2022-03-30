@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ struct SlideInfo {
 template <typename T>
 AbstractBasePtr InferImplTupleOrListEqual(const std::string &op_name, const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tuples or two lists.
-  CheckArgsSize(op_name, args_spec_list, 2);
+  const size_t args_num = 2;
+  CheckArgsSize(op_name, args_spec_list, args_num);
   auto input_x = CheckArg<T>(op_name, args_spec_list, 0);
   auto input_y = CheckArg<T>(op_name, args_spec_list, 1);
   ValuePtr x_value = input_x->BuildValue();
@@ -72,6 +73,9 @@ void CheckSlideInput(const ValuePtr &arg_value) {
 void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) {
   int64_t arg1 = 0;
   int64_t arg2 = 0;
+  const size_t two_args = 2;
+  const size_t three_args = 3;
+  const size_t second_index = 2;
   if (!args_spec_list.empty()) {
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     auto arg_value = args_spec_list[0]->BuildValue();
@@ -81,7 +85,7 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     arg1 = GetValue<int64_t>(arg_value);
   }
 
-  if (args_spec_list.size() >= 2) {
+  if (args_spec_list.size() >= two_args) {
     MS_EXCEPTION_IF_NULL(args_spec_list[1]);
     auto arg_value = args_spec_list[1]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
@@ -90,9 +94,9 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     arg2 = GetValue<int64_t>(arg_value);
   }
 
-  if (args_spec_list.size() == 3) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[2]);
-    auto arg_value = args_spec_list[2]->BuildValue();
+  if (args_spec_list.size() == three_args) {
+    MS_EXCEPTION_IF_NULL(args_spec_list[second_index]);
+    auto arg_value = args_spec_list[second_index]->BuildValue();
     if (!arg_value->isa<Int64Imm>()) {
       CheckSlideInput(arg_value);
     }
@@ -101,7 +105,7 @@ void CalcSlidePara(const AbstractBasePtrList &args_spec_list, SlideInfo *slide) 
     slide->stop = arg2;
   }
 
-  if (args_spec_list.size() == 2) {
+  if (args_spec_list.size() == two_args) {
     slide->start = arg1;
     slide->stop = arg2;
   }
@@ -198,7 +202,8 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
   MS_EXCEPTION_IF_NULL(primitive);
   // Inputs: a pointer to an AbstractBase object and a pointer to a Type
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  const size_t args_num = 2;
+  CheckArgsSize(op_name, args_spec_list, args_num);
   AbstractTypePtr abs_type = CheckArg<AbstractType>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(abs_type);
   auto mode_v = abs_type->GetValueTrack();
@@ -682,7 +687,8 @@ AbstractBasePtr InferImplStringEqual(const AnalysisEnginePtr &, const PrimitiveP
                                      const AbstractBasePtrList &args_spec_list) {
   // Inputs: two scalars whose value is a string.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  const size_t args_num = 2;
+  CheckArgsSize(op_name, args_spec_list, args_num);
   AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
   AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
@@ -701,7 +707,8 @@ AbstractBasePtr InferImplStringConcat(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: two scalars whose value is a string.
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 2);
+  const size_t args_num = 2;
+  CheckArgsSize(op_name, args_spec_list, args_num);
   AbstractScalarPtr scalar_x = CheckArg<AbstractScalar>(op_name, args_spec_list, 0);
   AbstractScalarPtr scalar_y = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
@@ -815,7 +822,8 @@ AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr
 AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // Inputs: at lease two objects of a subclass of AbstractBase.
-  if (args_spec_list.size() < 2) {
+  const size_t args_num = 2;
+  if (args_spec_list.size() < args_num) {
     MS_LOG(EXCEPTION) << "The size of arguments of MakeRecord operator must greater than 1, but the input size is "
                       << args_spec_list.size() << ".";
   }

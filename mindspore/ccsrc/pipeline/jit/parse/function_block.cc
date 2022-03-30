@@ -424,6 +424,20 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
     WriteVariable(var_name, arg_node);
     removable_phis_[phi] = arg_node;
+    static const auto use_fallback = (parser_.support_fallback() != "0");
+    if (use_fallback) {
+      bool interpret_without_internal =
+        IsPrimitiveCNode(arg_node, prim::kPrimPyInterpret) && !arg_node->interpret_internal_type();
+      if (arg_node->interpret() || interpret_without_internal) {
+        phi->set_interpret(true);
+        if (arg_node->interpret_internal_type()) {
+          phi->set_interpret_internal_type(true);
+        }
+      }
+      if (arg_node->interpret_special_type()) {
+        phi->set_interpret_special_type(true);
+      }
+    }
     // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized
     // recursively". check if phi1 is assigned with this phi before, then phi1 can be replaced with arg_node.
     for (auto &prev : prev_blocks_) {
