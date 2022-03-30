@@ -195,7 +195,6 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   // Step 3: Generate device information of the root node.
   CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
   MS_EXCEPTION_IF_NULL(group);
-  bool is_root_node = (group->GetGroupRank(global_rank_id_) == 0);
   size_t root_info_size = 0;
   void *root_info = group->GenerateRootInfo(&root_info_size);
   MS_EXCEPTION_IF_NULL(root_info);
@@ -203,7 +202,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   bool ret = false;
   // Step 4: Broadcast the device root information to all nodes on host side.
   while (!ret) {
-    ret = host_comm_lib_instance_->BroadcastUniqueID(group_name, is_root_node, root_info_size, root_info);
+    ret = host_comm_lib_instance_->BroadcastUniqueID(group_name, root_info_size, root_info);
     if (!ret) {
       MS_LOG(ERROR) << "Broadcast for device root info failed on the host side.";
       return false;
