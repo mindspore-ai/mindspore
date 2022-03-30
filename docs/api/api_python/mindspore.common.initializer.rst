@@ -193,9 +193,9 @@ mindspore.common.initializer
 
     生成一个随机的矩阵用于初始化Tensor。
     当 `distribution` 是'truncated_normal'或者'untruncated_normal'时，矩阵中的值将服从均值为0，标准差
-    为 :math:`stddev = \sqrt{\scale{6}{n}}` 的截断或者非截断正太分布。如果 `mode` 是'fan_in'， :math:`n` 是输入单元的数量；
+    为 :math:`stddev = \sqrt{\frac{scale}{n}}` 的截断或者非截断正太分布。如果 `mode` 是'fan_in'， :math:`n` 是输入单元的数量；
     如果 `mode` 是'fan_out'， :math:`n` 是输出单元的数量；如果 `mode` 是'fan_avg'， :math:`n` 是输入输出单元数量的均值。
-    当 `distribution` 是'uniform'时，矩阵中的值将服从均匀分布 :math:`[-\sqrt{\scale{3*scale}{n}}, \sqrt{\scale{3*scale}{n}}]`。
+    当 `distribution` 是'uniform'时，矩阵中的值将服从均匀分布 :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`。
 
     **参数：**
 

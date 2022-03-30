@@ -538,10 +538,10 @@ class VarianceScaling(Initializer):
     Generates an random array with scaling in order to initialize a tensor.
     When `distribution` is 'truncated_normal' or 'untruncated_normal', the value will be sampled from truncated or
     untruncated normal distribution with a mean of 0 and a scaled standard deviation
-    :math:`stddev = \sqrt{\scale{6}{n}}`. :math:`n` will be the number of input units if `mode` is 'fan_in',
+    :math:`stddev = \sqrt{\frac{scale}{n}}`. :math:`n` will be the number of input units if `mode` is 'fan_in',
     the number of output units if `mode` is 'fan_out', the average of 'fan_in' and 'fan_out' if `mode` is 'fan_avg'.
     When `distribution` is 'uniform', the value will be sampled from a uniform distribution within the limit of
-    :math:`[-\sqrt{\scale{3*scale}{n}}, \sqrt{\scale{3*scale}{n}}]`.
+    :math:`[-\sqrt{\frac{3*scale}{n}}, \sqrt{\frac{3*scale}{n}}]`.
 
     Args:
         scale (float): The scaling factor. Default: 1.0.
