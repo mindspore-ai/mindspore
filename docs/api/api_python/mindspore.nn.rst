@@ -98,7 +98,7 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.MultiFieldEmbeddingLookup
 
 非线性激活函数层
---------------
+------------------
 
 .. mscnplatformautosummary::
     :toctree: nn
