@@ -383,25 +383,27 @@ class Profiler:
 
     def _ascend_graph_memory_analyse(self, points):
         """Analyse memory usage info."""
-        if self._profile_memory:
-            try:
-                logger.info("Profiling: analyzing the memory usage info.")
-                self._analyse_memory_usage(points)
-            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-                logger.warning(err.message)
-            finally:
-                pass
+        if not self._profile_memory:
+            return
+        try:
+            logger.info("Profiling: analyzing the memory usage info.")
+            self._analyse_memory_usage(points)
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
 
     def _ascend_graph_hccl_analyse(self):
         """Analyse hccl profiler info."""
-        if self._profile_communication:
-            try:
-                logger.info("Profiling: analyzing the hccl profiler info.")
-                self._analyse_hccl_info()
-            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-                logger.warning(err.message)
-            finally:
-                pass
+        if not self._profile_communication:
+            return
+        try:
+            logger.info("Profiling: analyzing the hccl profiler info.")
+            self._analyse_hccl_info()
+        except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+            logger.warning(err.message)
+        finally:
+            pass
 
     def _ascend_graph_op_analyse(self, source_path):
         """
@@ -714,8 +716,8 @@ class Profiler:
             pass
 
         logger.warning(
-            '\nThe training and inference process does not support profiler currently, '
-            'only individual training or inference is supported.'
+            '\nThe GPU supports only the training mode or inference mode, '
+            'it does not support train and infer at the same time.'
         )
 
     def _get_step_reduce_op_type(self):
