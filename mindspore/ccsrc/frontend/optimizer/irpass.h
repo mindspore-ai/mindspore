@@ -96,6 +96,9 @@ class OptimizeIRPassLib {
   SubstitutionPtr addn_zero_filter_;
   SubstitutionPtr addn_check_dump_;
 
+  // linspace
+  SubstitutionPtr lin_space_val_;
+
   // AccumulateNV2
   SubstitutionPtr accumulaten_eliminater_;
 

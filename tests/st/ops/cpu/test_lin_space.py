@@ -126,3 +126,27 @@ def test_lin_space_vmap_2d():
     start_np = np.moveaxis(start_np, 1, 0)
     result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_lin_space_num():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LinSpace Net
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    np.random.seed(0)
+
+    start_np = np.random.randn(5)
+    stop_np = np.random.randn(5)
+    num_np = 1
+
+    start = Tensor(start_np, dtype=mstype.float32)
+    stop = Tensor(stop_np, dtype=mstype.float32)
+    net = LinSpaceNet(num_np)
+    result_ms = ops.vmap(net, (0, 0))(start, stop).asnumpy()
+    result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
+    assert np.allclose(result_ms, result_np)
