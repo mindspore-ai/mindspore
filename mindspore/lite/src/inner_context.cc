@@ -148,11 +148,7 @@ int InnerContext::Init() {
   }
 
   if (this->allocator == nullptr) {
-#ifdef BFC_MEMORY
-    this->allocator = std::make_shared<DynamicMemAllocator>(node_id_);
-#else
     this->allocator = mindspore::Allocator::Create();
-#endif
     CHECK_NULL_RETURN(this->allocator);
   }
   if (IsNpuEnabled()) {
