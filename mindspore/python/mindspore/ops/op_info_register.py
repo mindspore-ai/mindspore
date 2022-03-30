@@ -38,7 +38,7 @@ def op_info_register(op_info):
         The 'op_info' will be added into oplib.
 
     Args:
-        op_info (str or dict): operator information in json format.
+        op_info (Union[str, dict]): operator information in json format.
 
     Examples:
         >>> from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType

@@ -25,7 +25,7 @@ mindspore.ops.batch_dot
     - **ValueError** - `x1` 或 `x2` 的秩小于2。
     - **ValueError** - 在轴中使用了代表批量的维度。
     - **ValueError** - len(axes)小于2。
-    - **ValueError** - 轴不是其一：None，int，或(int, int)。
+    - **ValueError** - `axes` 不是其一：None，int，或(int, int)。
     - **ValueError** - 如果 `axes` 为负值，低于输入数组的维度。
     - **ValueError** - 如果 `axes` 的值高于输入数组的维度。
     - **ValueError** - `x1` 和 `x2` 的批处理大小不相同。

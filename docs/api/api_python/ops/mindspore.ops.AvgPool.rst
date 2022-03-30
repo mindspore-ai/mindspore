@@ -13,12 +13,12 @@ mindspore.ops.AvgPool
 
     .. warning::
         - 支持全局池化。
-        - 在Ascend上，"kernel_size"的高度和权重取值为[1, 255]范围内的正整数。 :math:`ksize_H * ksize_W < 256` 。
-        - 由于指令限制，"strides_h"和"strides_w"的取值为[1, 63]范围内的正整数。
+        - 在Ascend上，"kernel_size"的高度和宽度取值为[1, 255]范围内的正整数。 其高度和宽度相乘小于256。
+        - 由于指令限制，"strides"的取值为[1, 63]范围内的正整数。
 
     **参数：**
 
-    - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，表示内核高度和宽度的整数值，或者是两个分别表示高度和宽度的整数tuple。默认值：1。
+    - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，表示池化核高度和宽度的整数值，或者是两个分别表示高度和宽度的整数tuple。默认值：1。
     - **strides** (Union[int, tuple[int]]) - 池化操作的移动步长，表示移动高度和宽度的整数都是步长，或者两个分别表示移动高度和宽度的整数tuple。默认值：1。
     - **pad_mode** (str) - 指定池化填充模式，取值为"same"或"valid"，不区分大小写。默认值："valid"。
 

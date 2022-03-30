@@ -10,7 +10,7 @@ mindspore.ops.op_info_register
 
     **参数：**
 
-    - **op_info** (str or dict) - json格式的算子信息。
+    - **op_info** (Union[str, dict]) - json格式的算子信息。
 
     **返回：**
 
