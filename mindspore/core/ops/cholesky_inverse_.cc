@@ -31,7 +31,7 @@ abstract::ShapePtr CholeskyInverseInferShape(const PrimitivePtr &primitive,
   auto x_shape = x_shape_map[kShape];
   if (x_shape.size() != kDimNum) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', The dimension of x must be equal to 2, but got x_dim: " << x_shape.size() << ".";
+                             << "', The dimension of x must be equal to 2, but got: " << x_shape.size() << ".";
   }
   if (x_shape[x_shape.size() - 1] != x_shape[x_shape.size() - kDimNum])
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', input should be square matrix, "

@@ -47,8 +47,8 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
   try {
     auto attr = primitive->GetAttr(shape_attr_name);
     if (attr->cast<ValueTuplePtr>() == nullptr) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', Attr " << shape_attr_name
-                              << " cannot be nullptr but got it.";
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', Attr '" << shape_attr_name
+                              << "' is necessary, but missing it.";
     }
     attr_shapes = GetValue<ValuePtrList>(attr);
   } catch (const std::exception &) {
@@ -66,8 +66,8 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
   try {
     auto attr = primitive->GetAttr(rank_ids_attr_name);
     if (attr->cast<ValueTuplePtr>() != nullptr) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', Attr " << shape_attr_name
-                              << " cannot be nullptr but got it.";
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', Attr '" << shape_attr_name
+                              << "' is necessary, but missing it";
     }
     attr_rank_ids = GetValue<std::vector<int64_t>>(attr);
   } catch (const std::exception &) {
@@ -75,9 +75,10 @@ void CheckAttr(const PrimitivePtr &primitive, const std::string &shape_attr_name
                             << " must be a list[int, int, ...].";
   }
   if (attr_shapes.size() != attr_rank_ids.size()) {
-    MS_EXCEPTION(ValueError) << "Invalid " << primitive->name() << " attr " << shape_attr_name << " size "
-                             << attr_shapes.size() << " must be equal to attr " << rank_ids_attr_name << " size "
-                             << attr_rank_ids.size();
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', attr '" << shape_attr_name
+                             << "' size must be equal to attr  '" << rank_ids_attr_name << "' size, but got attr '"
+                             << shape_attr_name << "' size: " << attr_shapes.size() << ", attr " << rank_ids_attr_name
+                             << " size: " << attr_rank_ids.size();
   }
 }
 
@@ -123,8 +124,9 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
   auto abstract_element = abstract_tuple->elements();
   auto send_shapes = GetValue<ValuePtrList>(primitive->GetAttr(kSendShapes));
   if (abstract_element.size() != send_shapes.size()) {
-    MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', Input tuple size " << abstract_element.size()
-                                << " must be equal to attr " << kSendShapes << " size " << send_shapes.size();
+    MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', Input tuple size must be equal to attr '" << kSendShapes
+                                << "' size, but got Input tuple size:" << abstract_element.size() << ", attr "
+                                << kSendShapes << " size " << send_shapes.size();
   }
   for (size_t i = 0; i < abstract_element.size(); ++i) {
     // get attr shape
@@ -143,8 +145,10 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
     // comp two shape
     auto shape_vec = shape->shape();
     if (shape_vec != send_shape) {
-      MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', Input " << i << " shape: " << GetShapeStr(shape_vec)
-                                  << " but attr shape : " << GetShapeStr(send_shape);
+      MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input[" << i
+                                  << "] shape should be equal to attr shape, but got input[" << i
+                                  << "] shape: " << GetShapeStr(shape_vec)
+                                  << ", attr shape : " << GetShapeStr(send_shape);
     }
   }
 }

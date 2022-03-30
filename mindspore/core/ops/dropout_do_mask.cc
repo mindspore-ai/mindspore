@@ -36,7 +36,7 @@ T GetAndCheckKeepProp(const tensor::TensorPtr &keep_prop) {
   T min = (T)0.0;
   T max = (T)1.0;
   if (*value < min || *value > max) {
-    MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the `keep_prop` input value must in the range [0, 1], but got "
+    MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the 'keep_prop' input value must in the range [0, 1], but got "
                              << *value << ".";
   }
   return *value;
@@ -110,7 +110,8 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
       }
       auto value = GetValue<float>(keep_prop_value);
       if (value < 0 || value > 1) {
-        MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the keep_prop input value must in the range [0, 1].";
+        MS_EXCEPTION(ValueError) << "For 'DropoutDoMask', the keep_prop input value must in the range [0, 1], but got "
+                                 << value << ".";
       }
     }
   } else {

@@ -46,7 +46,7 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, 
   }
   if (std::any_of(strides->begin(), strides->end(), [](int64_t stride) { return stride <= 0; })) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', strides must be all positive, but got invalid strides.";
+                             << "', 'strides' must be all positive, but got 'strides': " << strides << ".";
   }
   // attr pad_list
   *pad_list = GetValue<std::vector<int64_t>>(primitive->GetAttr(kPadList));
@@ -69,7 +69,9 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
   int64_t out_h = 0;
   int64_t out_w = 0;
   if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', stride_d or stride_h or stride_w must be non-zero.";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', stride_d or stride_h or stride_w should be non-zero, but got stride_d: " << stride_d
+                      << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
   }
   if (ceil_mode) {
     out_d =
@@ -105,7 +107,9 @@ void GetPadsByPadding(const PrimitivePtr &primitive, int64_t in_d, int64_t in_h,
     (void)pad_list->insert(pad_list->begin(), kAvgPool3DPadDims, 0);
   } else if (pad_mode == PadMode::SAME) {
     if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', stride_d or stride_h or stride_w must be non-zero.";
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', stride_d or stride_h or stride_w should be non-zero, but got stride_d: " << stride_d
+                        << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
     }
     int64_t tail_d = in_d % stride_d;
     int64_t tail_h = in_h % stride_h;
@@ -164,7 +168,8 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
   std::vector<int64_t> out_shape = GetOutputShape(primitive, in_shape, kernel_d, kernel_h, kernel_w, stride_d, stride_h,
                                                   stride_w, new_pad_list, ceil_mode);
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', output size should be positive, but got not valid.";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', output shape's all elements should be positive, but got shape: " << out_shape << ".";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

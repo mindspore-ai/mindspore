@@ -73,7 +73,10 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
     MS_LOG(ERROR) << "For '" << primitive->name() << "', cond shape :" << input_cond_index->ToString();
     MS_LOG(ERROR) << "For '" << primitive->name() << "', x shape :" << input_x_index->ToString();
     MS_LOG(ERROR) << "For '" << primitive->name() << "', y shape :" << input_y_index->ToString();
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of cond, x and y should be the same.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', The shape of cond, x and y should be the same, cond shape :"
+                             << input_cond_index->ToString() << ", x shape :" << input_x_index->ToString()
+                             << ", y shape :" << input_y_index->ToString();
   }
   return input_args[1]->BuildShape();
 }
@@ -93,7 +96,7 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   (void)CheckAndConvertUtils::CheckTensorTypeValid("cond", cond_type, {kBool}, prim_name);
   if (*x_type != *y_type) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', the x_type must equal to y_type, but got x_type: " << x_type->ToString()
+                            << "', the x_type and y_type must be the same, but got x_type: " << x_type->ToString()
                             << " and y_type: " << y_type->ToString();
   }
   return x_type;

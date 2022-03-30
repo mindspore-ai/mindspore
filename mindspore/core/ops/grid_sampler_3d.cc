@@ -37,10 +37,11 @@ abstract::ShapePtr GridSampler3DInferShape(const PrimitivePtr &primitive,
                              << std::to_string(grid_shape.size()) << "-dimensional tensor.";
   }
   if (input_x_shape[kInputIndex0] != grid_shape[kInputIndex0]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of grid is "
-                             << input_args[kInputIndex1]->BuildShape()->ToString() << " , but the shape of input_x is "
-                             << input_args[kInputIndex0]->BuildShape()->ToString()
-                             << " . The first dimension of grid and input_x must be equal.";
+    MS_EXCEPTION(ValueError)
+      << "For '" << primitive->name()
+      << "', The first dimension of 'grid' and 'input_x' must be equal, but got the shape of 'grid' is "
+      << input_args[kInputIndex1]->BuildShape()->ToString() << " , and the shape of 'input_x' is "
+      << input_args[kInputIndex0]->BuildShape()->ToString() << ".";
   }
   if (grid_shape[kInputIndex4] != kInputIndex3) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The last dimension of grid must be 3, but got "

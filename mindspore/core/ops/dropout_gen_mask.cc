@@ -128,7 +128,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     auto shape = shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->shape().size() != 1) {
-      MS_EXCEPTION(TypeError) << "For '" << op_name << "', Input `shape` must be a 1-D Tensor, but got "
+      MS_EXCEPTION(TypeError) << "For '" << op_name << "', Input 'shape' must be a 1-D Tensor, but got "
                               << shape->shape().size() << ".";
     }
     size_t shape_rank = LongToSize(shape->shape()[0]);
@@ -143,8 +143,10 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     auto min_value = shape_min->isa<ValueList>() ? shape_min->cast<ValueListPtr>()->value()
                                                  : shape_min->cast<ValueTuplePtr>()->value();
     if (max_value.size() != shape_rank || min_value.size() != shape_rank) {
-      MS_LOG(EXCEPTION) << "For '" << op_name
-                        << "', The size of max_value or min_value is not equal to the shape rank.";
+      MS_LOG(EXCEPTION)
+        << "For '" << op_name
+        << "', The size of max_value and min_value should be equal to the shape rank, but got max_value's size:"
+        << max_value.size() << ", min_value's size: " << min_value.size() << ".";
     }
     ShapeVector out_min_shape = CalDynamicOutputShape(primitive, min_value);
     ShapeVector out_max_shape = CalDynamicOutputShape(primitive, max_value);
