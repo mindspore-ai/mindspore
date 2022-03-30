@@ -9,7 +9,9 @@ mindspore.nn.DiceLoss
     函数如下：
 
     .. math::
-        dice = 1 - \frac{2 * (pred \bigcap true)}{pred \bigcup true}
+        dice = 1 - \frac{2 * |pred \bigcap true|}{|pred| + |true| + smooth}
+
+    :math:`pred` 表示 `logits` ， :math:`true` 表示 `labels` 。
 
     **参数：**
 

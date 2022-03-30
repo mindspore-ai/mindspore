@@ -17,7 +17,7 @@ mindspore.ops.IOU
 
     **参数：**
 
-    - **mode** (string) - 该模式用于指定计算方法，现支持'iou'(intersection over union)或'iof'(intersection over foreground)模式。默认值：'iou'。
+    - **mode** (string) - 指定计算方法，现支持'iou'(intersection over union)或'iof'(intersection over foreground)模式。默认值：'iou'。
 
     **输入：**
 
