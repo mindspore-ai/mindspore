@@ -176,3 +176,12 @@ if [[ $backend == "all" || $backend == "server_inference_x86" || $backend == "se
       exit 1
     fi
 fi
+
+if [[ $backend == "all" || $backend == "server_inference_x86_gpu" ]]; then
+    sh $cur_path/scripts/run_benchmark_server_inference_tensorrt.sh -r $release_path -m $models_path -d $device_id -e $backend -l $level
+    server_inference_gpu_status=$?
+    if [[ server_inference_gpu_status -ne 0 ]]; then
+      echo "Run server inference gpu failed"
+      exit 1
+    fi
+fi
