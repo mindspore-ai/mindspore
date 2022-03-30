@@ -119,6 +119,10 @@ int CommonInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
                      OpParameter *parameter);
 int CommonGradInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                          OpParameter *parameter);
+int CommonInferShapeWithOneInput(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs,
+                                 size_t outputs_size, OpParameter *parameter);
+int CommonInferShapeWithNHWC(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                             OpParameter *parameter);
 int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   const OpParameter *parameter);
 
