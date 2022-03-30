@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.CumSum(exclusive=False, reverse=False)
 
-    在指定轴上计算输入Tensor的累加和。
+    计算输入Tensor在指定轴上的累加和。
 
     .. math::
         y_i = x_1 + x_2 + x_3 + ...+ x_i
