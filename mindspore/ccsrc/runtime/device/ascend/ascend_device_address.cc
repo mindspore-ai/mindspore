@@ -635,9 +635,10 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
 #endif
 
 #ifdef ENABLE_DEBUGGER
-bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &,
-                                        const ShapeVector &host_shape, TypeId host_type, size_t slot, bool keep_prev,
-                                        uint32_t root_graph_id, bool force_update) const {
+bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order,
+                                        const std::string &host_fmt, const ShapeVector &host_shape, TypeId host_type,
+                                        size_t slot, bool keep_prev, uint32_t root_graph_id, bool force_update,
+                                        bool trans_flag) const {
   bool ret = false;
   auto debugger = Debugger::GetInstance();
   MS_EXCEPTION_IF_NULL(debugger);
@@ -659,9 +660,14 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   MS_EXCEPTION_IF_NULL(out_tensor);
   size_t host_size = out_tensor->data().nbytes();
-  auto ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
+  bool ret_sync = false;
+  if (trans_flag) {
+    ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
+  } else {
+    ret_sync = SyncDeviceToHost(host_size, out_tensor->data_c());
+  }
   if (!ret_sync) {
-    MS_LOG(ERROR) << "Copy device mem to host failed";
+    MS_LOG(ERROR) << "Convert format or Copy device mem to host failed";
     return ret;
   }
   MS_LOG(INFO) << "E2E tensor name is " << tensor_name;
@@ -671,7 +677,11 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetType((unsigned int)host_type);
   tensor_data->SetShape(out_tensor->shape());
   tensor_data->SetRootGraphId(root_graph_id);
+  std::string tensor_format = trans_flag ? host_fmt : format_;
+  tensor_data->SetFormat(tensor_format);
   ret = debugger->LoadNewTensor(tensor_data, keep_prev);
+  MS_LOG(INFO) << "Load tensor '" << tensor_name << "' into debugger tensor loader successfully: format("
+               << tensor_format << ")";
   return ret;
 }
 #endif

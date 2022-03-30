@@ -231,6 +231,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     return false;
   }
   const std::string file_path_str = file_path.value();
+  MS_LOG(INFO) << "Dump path is " << file_path_str;
   ChangeFileMode(file_path_str, S_IWUSR);
   std::ofstream fd(file_path_str, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!fd.is_open()) {

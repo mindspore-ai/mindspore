@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_DEBUG_TENSOR_DATA_H_
 
 #include <algorithm>
+#include <map>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -203,6 +204,10 @@ class TensorData {
 
 #ifdef ONLINE_DBG_MODE
   void SetTensor(const mindspore::tensor::TensorPtr &out_tensor) { this->tensor_ptr_ = out_tensor; }
+
+  void SetFormat(const std::string &format) { this->format_ = format; }
+
+  std::string GetFormat() { return this->format_; }
 #endif
 
   void SetSlot(size_t slot) { this->slot_ = slot; }
@@ -238,6 +243,19 @@ class TensorData {
   void SetRootGraphId(unsigned int root_graph_id) { this->root_graph_id_ = root_graph_id; }
 
   DbgDataType GetType() const { return this->data_type_; }
+
+  std::string GetTypeString() const {
+    const std::map<DbgDataType, std::string> kDbgDataTypeToStringMap = {
+      {DT_BOOL, "bool"},     {DT_INT8, "int8"},       {DT_INT16, "int16"},     {DT_INT32, "int32"},
+      {DT_INT64, "int64"},   {DT_UINT8, "uint8"},     {DT_UINT16, "uint16"},   {DT_UINT32, "uint32"},
+      {DT_UINT64, "uint64"}, {DT_FLOAT16, "float16"}, {DT_FLOAT32, "float32"}, {DT_FLOAT64, "float64"}};
+    auto iter_type = kDbgDataTypeToStringMap.find(data_type_);
+    if (iter_type == kDbgDataTypeToStringMap.end()) {
+      return std::string();
+    } else {
+      return iter_type->second;
+    }
+  }
 
   void SetType(unsigned int type) { ConvertMsToDbgType(type); }
 
@@ -438,6 +456,7 @@ class TensorData {
   std::string time_stamp_;
 
 #ifdef ONLINE_DBG_MODE
+  std::string format_{""};
   mindspore::tensor::TensorPtr tensor_ptr_{nullptr};
 #endif
 };
