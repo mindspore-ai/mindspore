@@ -1,4 +1,3 @@
-set(ENABLE_GITEE_EULER OFF)
 if(ENABLE_GITEE_EULER)
     set(GIT_REPOSITORY "https://gitee.com/src-openeuler/sentencepiece.git")
     set(GIT_TAG "master")

@@ -21,7 +21,6 @@ else()
     set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack -s")
 endif()
 
-set(ENABLE_GITEE_EULER OFF)
 if(ENABLE_GITEE_EULER)
     set(GIT_REPOSITORY "https://gitee.com/src-openeuler/opencv.git")
     set(GIT_TAG "openEuler-22.03-LTS")
