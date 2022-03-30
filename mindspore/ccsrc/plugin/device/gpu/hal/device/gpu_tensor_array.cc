@@ -25,8 +25,8 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-// ReleaseMemory() used in Free() in TensorArray.
-void GPUTensorArray::ReleaseMemory(const DeviceMemPtr addr) {
+// FreeMemory() used in Free() in TensorArray.
+void GPUTensorArray::FreeMemory(const DeviceMemPtr addr) {
   device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(addr);
 }
 
@@ -34,7 +34,30 @@ void GPUTensorArray::ClearMemory(void *addr, const size_t size) {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(addr, 0, size), "failed to set cuda memory with zeros.");
 }
 
-void *GPUTensorArray::CreateMemory(const size_t size) {
+void *GPUTensorArray::AllocateMemory(const size_t size) {
+  return device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
+}
+
+void GPUTensorsQueue::CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src,
+                                 void *stream) {
+  if (dst->size != src->size) {
+    MS_LOG(EXCEPTION) << "For TensorsQueue Put/Get function, each tensor in element should have the same size, but get "
+                      << src->size << ", not equal to dst " << dst->size;
+  }
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(dst->addr, src->addr, dst->size, cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream)),
+    "Copy tensor failed");
+}
+// FreeMemory() used in Free() in TensorArray.
+void GPUTensorsQueue::FreeMemory(const DeviceMemPtr addr) {
+  device::gpu::GPUMemoryAllocator::GetInstance().FreeTensorMem(addr);
+}
+
+void GPUTensorsQueue::ClearMemory(void *addr, const size_t size) {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemsetAsync(addr, 0, size), "failed to set cuda memory with zeros.");
+}
+
+void *GPUTensorsQueue::AllocateMemory(const size_t size) {
   return device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
 }
 }  // namespace gpu

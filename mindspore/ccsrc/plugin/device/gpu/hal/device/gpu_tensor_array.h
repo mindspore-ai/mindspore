@@ -22,6 +22,7 @@
 #include <memory>
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "runtime/device/tensor_array.h"
+#include "runtime/device/tensors_queue.h"
 
 namespace mindspore {
 namespace device {
@@ -31,12 +32,25 @@ class GPUTensorArray : public TensorArray {
   GPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~GPUTensorArray() override = default;
-  void ReleaseMemory(const DeviceMemPtr addr) override;
-  void *CreateMemory(const size_t size) override;
+  void FreeMemory(const DeviceMemPtr addr) override;
+  void *AllocateMemory(const size_t size) override;
   void ClearMemory(void *addr, const size_t size) override;
 };
-using GPUTensorArray = GPUTensorArray;
+
+class GPUTensorsQueue : public TensorsQueue {
+ public:
+  GPUTensorsQueue(const string &name, const TypePtr &dtype, const int64_t size, const int64_t elements_num,
+                  const std::vector<std::vector<int64_t>> &shapes)
+      : TensorsQueue(name, dtype, size, elements_num, shapes) {}
+  ~GPUTensorsQueue() override = default;
+  void FreeMemory(const DeviceMemPtr addr) override;
+  void *AllocateMemory(const size_t size) override;
+  void ClearMemory(void *addr, const size_t size) override;
+  void CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src,
+                  void *stream) override;
+};
 using GPUTensorArrayPtr = std::shared_ptr<GPUTensorArray>;
+using GPUTensorsQueuePtr = std::shared_ptr<GPUTensorsQueue>;
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

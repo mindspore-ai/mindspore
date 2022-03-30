@@ -43,7 +43,7 @@ bool TensorArrayWriteKernelMod::Init(const CNodePtr &kernel_node) {
 void TensorArrayWriteKernelMod::InitSizeLists() {
   input_size_list_.push_back(sizeof(int64_t));
   input_size_list_.push_back(sizeof(int64_t));
-  input_size_list_.push_back(sizeof(value_size_));
+  input_size_list_.push_back(value_size_);
   output_size_list_.push_back(sizeof(int64_t));
 }
 
