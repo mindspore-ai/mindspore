@@ -17,15 +17,29 @@ MS_ALL:
     include/api
     mindspore/core
     mindspore/ccsrc/cxx_api
-    mindspore/ccsrc/backend
+    mindspore/ccsrc/backend/common
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl
+    mindspore/ccsrc/minddata
+    mindspore/ccsrc/CMakeLists.txt
+    mindspore/lite/java
+    mindspore/lite/src/train
+    mindspore/lite/src/runtime/kernel/arm/fp32
+    mindspore/lite/src/runtime/kernel/arm/fp32_grad
+    mindspore/ccsrc/backend/kernel_compiler
+    mindspore/ccsrc/fl
+    mindspore/ccsrc/ps
 MS_CLOUD:
     mindspore/python
-    mindspore/ccsrc/frontend
-    mindspore/ccsrc/runtime
+    mindspore/ccsrc
     tests/st
 MS_LITE:
+    include/c_api
+    include/api/allocator.h
+    include/api/delegate.h
+    include/api/kernel.h
+    include/api/model_parallel_runner.h
     mindspore/lite/
-    cmake/package_lite
+    cmake/package_lite.cmake
 MS_CLOUD_UT:
     tests/ut
 MS_CLOUD_UT_CPP:
