@@ -429,6 +429,7 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
 
   // The graph common optimization.
   opt::BackendCommonOptimization(root_graph);
+  root_graph->SetInputNodes();
 
   auto graph_id = CompileGraphImpl(root_graph, device_context);
 
