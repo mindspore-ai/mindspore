@@ -28,6 +28,7 @@
 #include "kernel/kernel.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/common_utils.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace device {

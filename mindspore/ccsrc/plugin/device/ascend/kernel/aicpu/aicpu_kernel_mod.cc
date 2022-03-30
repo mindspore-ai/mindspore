@@ -26,13 +26,9 @@
 #include "include/common/utils/convert_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 #include "utils/ms_context.h"
-#include "plugin/device/ascend/hal/device/executor/ai_cpu_dynamic_kernel.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/hal/device/executor/host_dynamic_kernel.h"
 
 using AicpuTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::AicpuTaskInfo>;
-using AicpuDynamicKernel = mindspore::device::ascend::AiCpuDynamicKernel;
-using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 
 namespace mindspore {
 namespace kernel {
@@ -224,15 +220,6 @@ std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr>
 
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask end";
   return {task_info_ptr};
-}
-
-device::DynamicKernelPtr AicpuOpKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  KernelLaunchInfo kernel_launch_info;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
-
-  CreateCpuKernelInfo(kernel_launch_info.inputs_, kernel_launch_info.outputs_);
-  return std::make_shared<AicpuDynamicKernel>(stream_ptr, cnode_ptr, args_, ext_info_, node_so_, node_name_,
-                                              cust_kernel_);
 }
 }  // namespace kernel
 }  // namespace mindspore

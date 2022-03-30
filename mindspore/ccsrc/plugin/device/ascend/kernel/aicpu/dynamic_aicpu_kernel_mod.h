@@ -20,7 +20,7 @@
 #include <string>
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
-#include "plugin/device/ascend/hal/device/executor/aicpu_ext_info_handle.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
 namespace mindspore {
 namespace kernel {
 class DynamicAicpuOpKernelMod : public AicpuOpKernelMod {

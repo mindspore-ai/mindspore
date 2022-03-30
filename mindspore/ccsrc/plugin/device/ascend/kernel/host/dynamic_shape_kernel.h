@@ -18,27 +18,20 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "plugin/device/ascend/hal/device/executor/host_dynamic_kernel.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_mod.h"
 #include "kernel/kernel.h"
-using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 namespace mindspore {
 namespace kernel {
-class TensorShapeKernel : public HostDynamicKernel {
- public:
-  TensorShapeKernel(void *stream, const CNodePtr &cnode_ptr) : HostDynamicKernel(stream, cnode_ptr) {}
-  ~TensorShapeKernel() override = default;
-  void Execute() override;
-  void Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-};
-
 class TensorShapeKernelMod : public HostKernelMod {
  public:
   TensorShapeKernelMod() = default;
   ~TensorShapeKernelMod() override = default;
-  device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+
+ private:
+  void Execute();
+  void Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };
 MS_HOST_REG_KERNEL(DynamicShape, TensorShapeKernelMod);
 MS_HOST_REG_KERNEL(TensorShape, TensorShapeKernelMod);

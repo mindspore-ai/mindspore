@@ -18,26 +18,19 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "plugin/device/ascend/hal/device/executor/host_dynamic_kernel.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_mod.h"
 
-using HostDynamicKernel = mindspore::device::ascend::HostDynamicKernel;
 namespace mindspore {
 namespace kernel {
-class DynamicBroadcastGradientArgsKernel : public HostDynamicKernel {
- public:
-  DynamicBroadcastGradientArgsKernel(void *stream, const CNodePtr &cnode_ptr) : HostDynamicKernel(stream, cnode_ptr) {}
-  ~DynamicBroadcastGradientArgsKernel() override = default;
-  void Execute() override;
-};
-
 class DynamicBroadcastGradientArgsKernelMod : public HostKernelMod {
  public:
   DynamicBroadcastGradientArgsKernelMod() = default;
   ~DynamicBroadcastGradientArgsKernelMod() override = default;
-  device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+
+ private:
+  void Execute();
 };
 MS_HOST_REG_KERNEL(DynamicBroadcastGradientArgs, DynamicBroadcastGradientArgsKernelMod);
 }  // namespace kernel

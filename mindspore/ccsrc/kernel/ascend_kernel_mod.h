@@ -21,7 +21,6 @@
 #include <memory>
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "kernel/kernel.h"
-#include "runtime/device/executor/dynamic_kernel.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -49,19 +48,9 @@ class AscendKernelMod : public KernelMod {
   void UpdateOp() override;
   bool IsNeedUpdateOp() override;
 
-  void InitDynamicKernel(const CNodePtr &cnode_ptr, void *stream) {
-    if (dynamic_kernel_ == nullptr) {
-      stream_ = stream;
-      dynamic_kernel_ = GenDynamicKernel(cnode_ptr, stream);
-      dynamic_kernel_->Initialize();
-    }
-  }
-  device::DynamicKernelPtr DynamicKernel() const { return dynamic_kernel_; }
-
  protected:
   uint32_t block_dim_{1};
   uint32_t stream_id_{0};
-  device::DynamicKernelPtr dynamic_kernel_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

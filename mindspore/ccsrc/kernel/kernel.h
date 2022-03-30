@@ -28,7 +28,7 @@
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
-#include "runtime/device/executor/dynamic_kernel.h"
+#include "abstract/primitive_infer_map.h"
 
 #ifdef _MSC_VER
 #undef OPAQUE
@@ -201,7 +201,6 @@ class KernelMod {
   virtual const std::vector<size_t> &GetWorkspaceSizeList() const { return workspace_size_list_; }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
-  virtual device::DynamicKernelPtr GenDynamicKernel(const CNodePtr &, void *) { return nullptr; }
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
 

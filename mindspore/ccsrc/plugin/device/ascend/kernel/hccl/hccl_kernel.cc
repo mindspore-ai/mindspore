@@ -22,7 +22,6 @@
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/hal/device/executor/hccl_dynamic_kernel.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
@@ -283,29 +282,6 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   }
 
   return results;
-}
-
-device::DynamicKernelPtr HcclKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  KernelLaunchInfo kernel_launch_info;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
-
-  std::string hccl_type = MsOpNameToHcomOpType(common::AnfAlgo::GetCNodeName(anf_node_.lock()));
-
-  if (kernel_launch_info.inputs_.empty()) {
-    MS_LOG(EXCEPTION) << "Hccl kernel input is empty";
-  }
-  if (hccl_data_type_list_.empty()) {
-    MS_LOG(EXCEPTION) << "Hccl data type list is empty";
-  }
-  MS_EXCEPTION_IF_NULL(kernel_launch_info.inputs_.at(0));
-  auto input_data_addr = kernel_launch_info.inputs_.at(0)->addr;
-  MS_EXCEPTION_IF_NULL(kernel_launch_info.outputs_.at(0));
-  auto output_data_addr = kernel_launch_info.outputs_.at(0)->addr;
-  HcclDataType data_type = hccl_data_type_list_[0];
-
-  auto executor = std::make_shared<device::ascend::HcclDynamicKernel>(
-    hccl_type, input_data_addr, output_data_addr, hccl_count_, data_type, op_type_, root_id_, stream_ptr, cnode_ptr);
-  return executor;
 }
 
 void HcclKernel::InferOp() {

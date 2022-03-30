@@ -51,7 +51,6 @@ class AscendKernelRuntime : public KernelRuntime {
   void ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
                             std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
                             const std::vector<size_t> &last_stream_nodes);
-  bool GenDynamicKernel(const session::KernelGraph &graph) override;
   bool RunDynamicKernelAsync(const session::KernelGraph &graph) override;
   bool LoadTask(const session::KernelGraph &graph);
   bool RunTask(const session::KernelGraph &graph);

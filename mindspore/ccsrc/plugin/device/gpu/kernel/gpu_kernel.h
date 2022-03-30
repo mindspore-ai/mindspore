@@ -38,7 +38,6 @@
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/executor/dynamic_kernel.h"
 #include "kernel/kernel_build_info.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"

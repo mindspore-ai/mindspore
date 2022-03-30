@@ -20,7 +20,6 @@
 #include "runtime/rt.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
-#include "plugin/device/ascend/hal/device/executor/ai_core_dynamic_kernel.h"
 #include "runtime/device/kernel_runtime.h"
 
 namespace mindspore {
@@ -125,60 +124,6 @@ std::vector<TaskInfoPtr> TbeKernelMod::GenTask(const std::vector<AddressPtr> &in
     unique_name_, stream_id, stub_func, block_dim_, args, 0, sm_desc, nullptr, 0, meta_data, input_data_addrs,
     output_data_addrs, workspace_addrs, NeedDump());
   return {task_info_ptr};
-}
-
-device::DynamicKernelPtr TbeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  KernelLaunchInfo kernel_launch_info;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
-
-  // Get para_size from json
-  auto kernel_json_info = kernel_pack_->kernel_json_info();
-  auto op_para_size = kernel_json_info.op_para_size;
-
-  // Generate args
-  std::vector<void *> runtime_args;
-  const auto &kernel_inputs = kernel_launch_info.inputs_;
-  (void)std::transform(std::begin(kernel_inputs), std::end(kernel_inputs), std::back_inserter(runtime_args),
-                       [](const AddressPtr &input) -> void * { return input->addr; });
-  const auto &kernel_outputs = kernel_launch_info.outputs_;
-  (void)std::transform(std::begin(kernel_outputs), std::end(kernel_outputs), std::back_inserter(runtime_args),
-                       [](const AddressPtr &output) -> void * { return output->addr; });
-  const auto &kernel_workspaces = kernel_launch_info.workspaces_;
-  if (!kernel_workspaces.empty()) {
-    (void)std::transform(std::begin(kernel_workspaces), std::end(kernel_workspaces), std::back_inserter(runtime_args),
-                         [](const AddressPtr &addr) -> void * { return addr->addr; });
-  }
-
-  void *tiling_data_ptr = nullptr;
-  if (op_para_size > 0) {
-    auto ret = rtMalloc(&tiling_data_ptr, op_para_size, RT_MEMORY_HBM);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "rtMalloc tiling data failed";
-    }
-    runtime_args.push_back(tiling_data_ptr);
-  }
-
-  // Get stub_function
-  uint32_t block_dim = 1;  // default blockdim equal to 1.
-  device::DynamicKernelPtr executor = nullptr;
-  std::string origin_key;
-  void *handle = nullptr;
-  auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim, &handle, &origin_key);
-  if (kernel_json_info.has_kernel_list) {
-    if (func_stub != 1) {
-      MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-    }
-    executor = std::make_shared<device::ascend::AiCoreDynamicKernel>(handle, block_dim, tiling_data_ptr, op_para_size,
-                                                                     stream_ptr, cnode_ptr, runtime_args, origin_key);
-  } else {
-    if (func_stub == 0) {
-      MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-    }
-    const void *stub_func_ptr = reinterpret_cast<void *>(func_stub);
-    executor = std::make_shared<device::ascend::AiCoreDynamicKernel>(stub_func_ptr, block_dim, tiling_data_ptr,
-                                                                     op_para_size, stream_ptr, cnode_ptr, runtime_args);
-  }
-  return executor;
 }
 
 vector<size_t> TbeKernelMod::GenParameters() {

@@ -35,7 +35,6 @@
 #include "utils/ms_context.h"
 #include "runtime/device/memory_manager.h"
 #include "runtime/device/memory_scheduler.h"
-#include "runtime/device/executor/dynamic_kernel.h"
 #include "ir/device_event.h"
 #include "include/backend/visible.h"
 
@@ -71,7 +70,6 @@ class KernelRuntime {
   virtual bool LoadData(const session::KernelGraph &graph);
   virtual bool Load(const session::KernelGraph &graph, bool is_task_sink);
   virtual bool Run(const session::KernelGraph &graph, bool is_task_sink) = 0;
-  virtual bool GenDynamicKernel(const session::KernelGraph &graph) = 0;
   virtual bool RunDynamicKernelAsync(const session::KernelGraph &graph) = 0;
   bool LaunchKernels(const session::KernelGraph &graph);
   virtual void AssignStaticMemoryInput(const session::KernelGraph &graph);
@@ -162,6 +160,7 @@ class KernelRuntime {
                                          const KernelLaunchInfo &kernel_launch_address, void *stream);
 
   virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
+  void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
 
  private:
   void GetDeviceAddress(const AnfNodePtr &item, const std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map,
@@ -174,7 +173,6 @@ class KernelRuntime {
                            KernelLaunchInfo *kernel_launch_address);
   static void GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,
                                  const DeviceAddress *device_address, const kernel::AddressPtr &kernel_addr);
-  void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
   void SyncNodeOutputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph,
                              const AnfNodePtr &kernel);
   void SyncNodeOutputTensor(const std::shared_ptr<MemScheduler> &mem_scheduler, const KernelWithIndex &output,
@@ -217,7 +215,6 @@ class KernelRuntime {
   void *independent_stream_{nullptr};
   void *communication_stream_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
-  std::map<uint32_t, std::vector<DynamicKernelPtr>> graph_dynamic_kernel_map_;
   std::map<uint32_t, std::pair<std::map<AnfNodePtr, std::vector<std::function<void()>>>,
                                std::map<AnfNodePtr, std::vector<std::function<void()>>>>>
     graph_kernel_events_map_;

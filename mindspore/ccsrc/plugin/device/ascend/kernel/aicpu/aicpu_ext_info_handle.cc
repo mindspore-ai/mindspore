@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/hal/device/executor/aicpu_ext_info_handle.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.h"
 #include <algorithm>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -35,6 +35,10 @@ bool AicpuExtInfoHandler::Parse(const std::string &ext_info) {
   }
 
   ext_info_len_ = ext_info.size();
+  if (ext_info_len_ <= 0) {
+    MS_LOG(ERROR) << "The ext_info_len_ should be > 0";
+    return false;
+  }
   ext_info_.reset(new (std::nothrow) uint8_t[ext_info_len_]);
   MS_EXCEPTION_IF_NULL(ext_info_);
 
