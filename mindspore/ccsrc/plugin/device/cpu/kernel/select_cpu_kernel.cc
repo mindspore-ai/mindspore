@@ -17,11 +17,14 @@
 #include "plugin/device/cpu/kernel/select_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <complex>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+using float_complex = std::complex<float>;
+using double_complex = std::complex<double>;
 constexpr size_t kSelectInputsNum = 3;
 constexpr size_t kSelectOutputsNum = 1;
 }  // namespace
@@ -78,10 +81,70 @@ std::vector<std::pair<KernelAttr, SelectCpuKernelMod::SelectFunc>> SelectCpuKern
    &SelectCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddInputAttr(kNumberTypeInt8)
+     .AddOutputAttr(kNumberTypeInt8),
+   &SelectCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOutputAttr(kNumberTypeInt16),
+   &SelectCpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeInt32),
-   &SelectCpuKernelMod::LaunchKernel<int>}};
+   &SelectCpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   &SelectCpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddOutputAttr(kNumberTypeUInt8),
+   &SelectCpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddOutputAttr(kNumberTypeUInt16),
+   &SelectCpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddOutputAttr(kNumberTypeUInt32),
+   &SelectCpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   &SelectCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &SelectCpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &SelectCpuKernelMod::LaunchKernel<float_complex>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &SelectCpuKernelMod::LaunchKernel<double_complex>}};
 
 std::vector<KernelAttr> SelectCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
