@@ -67,7 +67,7 @@ public class MSContext {
      * @return init status.
      */
     public boolean init() {
-        this.msContextPtr = createMSContext(2, 0, false);
+        this.msContextPtr = createDefaultMSContext();
         return this.msContextPtr != 0;
     }
 
@@ -114,6 +114,8 @@ public class MSContext {
     }
 
     private native long createMSContext(int threadNum, int cpuBindMode, boolean enableParallel);
+
+    private native long createDefaultMSContext();
 
     private native boolean addDeviceInfo(long msContextPtr, int deviceType, boolean isEnableFloat16, int npuFrequency);
 
