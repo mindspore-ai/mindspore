@@ -1031,17 +1031,20 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
     return ret_abstract;
   }
-  // Try to get infer result from evaluator cache.
-  auto eval_result = evaluator_cache_mgr_->GetValue(args);
-  if (eval_result != nullptr) {
-    return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
+  auto forbid_reuse = prim_py_->HasAttr(GRAPH_FLAG_FORBID_REUSE_RESULT);
+  if (!forbid_reuse) {
+    // Try to get infer result from evaluator cache.
+    EvalResultPtr eval_result = evaluator_cache_mgr_->GetValue(args);
+    if (eval_result != nullptr) {
+      return std::make_shared<EvalResult>(eval_result->abstract()->Clone(), eval_result->attribute());
+    }
   }
   // In pynative mode (engine == nullptr), it is difficult to set added_attrs to
   // python object by C++ code, so we disable global eval cache in pynative mode.
-  const bool enable_global_cache = (engine != nullptr);
+  const bool enable_global_cache = (engine != nullptr && !forbid_reuse);
   if (enable_global_cache) {
     // Try to get infer result from global primitive eval cache.
-    eval_result = eval_cache_->Get(prim_py_, args);
+    EvalResultPtr eval_result = eval_cache_->Get(prim_py_, args);
     if (eval_result != nullptr) {
       // Global cache hit.
       evaluator_cache_mgr_->SetValue(args, eval_result);
@@ -1059,7 +1062,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   MS_LOG(DEBUG) << "Output type is " << (std::string)py::str(output);
   auto res_abs = PyInferRes2Abstract(prim_py_, output);
   MS_LOG(DEBUG) << "Python InferTensor result abstract: " << res_abs->ToString();
-  eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
+  EvalResultPtr eval_result = std::make_shared<EvalResult>(res_abs, std::make_shared<AttrValueMap>(added_attrs));
   // Save result to global primitive eval cache.
   if (enable_global_cache) {
     eval_cache_->Put(prim_py_, std::move(input_attrs), args, eval_result);

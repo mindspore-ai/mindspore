@@ -24,6 +24,7 @@ extern const char PYTHON_CELL_AS_LIST[];
 extern const char PYTHON_DATACLASS_FIELDS[];
 extern const char PYTHON_MS_CLASS[];
 extern const char PYTHON_CLASS_MEMBER_NAMESPACE[];
+extern const char PYTHON_FUNCTION_FORBID_REUSE[];
 }  // namespace mindspore
 
 #endif  // PYBIND_API_EXPORT_FLAGS_H_

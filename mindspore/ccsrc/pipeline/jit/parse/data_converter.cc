@@ -574,7 +574,8 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     MS_LOG(DEBUG) << "Get the cache data, obj: " << obj_id;
     func_graph = value->cast<FuncGraphPtr>();
     if (!func_graph->dropped()) {
-      if (pipeline::GetJitLevel() == "o0") {
+      bool forbid_reuse = py::hasattr(obj, PYTHON_FUNCTION_FORBID_REUSE);
+      if (forbid_reuse || pipeline::GetJitLevel() == "o0") {
         return BasicClone(func_graph);
       }
       return func_graph;
