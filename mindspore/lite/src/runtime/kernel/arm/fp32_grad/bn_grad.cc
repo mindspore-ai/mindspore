@@ -70,6 +70,7 @@ int BNGradCPUKernel::DoExecute(int task_id) {
     input_var = in_tensors_.at(5);
   }
   auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(bn_param);
   int stage = stage_;
   int thread_num = thread_num_;
   float *save_mean = reinterpret_cast<float *>(input_mean->MutableData());
@@ -126,7 +127,8 @@ int BNGradCPUKernel::DoExecute(int task_id) {
         }
       }
       if (thread_num == 1) {
-        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dbias, dscale, dx, (IsTrain()));
+        backwardAll(x, yt, save_mean, save_var, scale, total, channels, dbias, dscale, dx,
+                    (IsTrain() && bn_param->is_training_));
       }
       break;
     }
@@ -136,7 +138,8 @@ int BNGradCPUKernel::DoExecute(int task_id) {
     }
     case 2: {
       backwardP2(x + task_id * stride * channels, yt + task_id * stride * channels, save_mean, save_var, dscale, dbias,
-                 scale, count, total, channels, dx + task_id * stride * channels, (IsTrain()));
+                 scale, count, total, channels, dx + task_id * stride * channels,
+                 (IsTrain() && bn_param->is_training_));
       break;
     }
     default:

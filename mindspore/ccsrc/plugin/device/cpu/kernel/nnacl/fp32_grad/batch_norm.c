@@ -53,10 +53,13 @@ void backwardAll(const float *restrict in, const float *restrict yt, const float
     for (int c = 0; c < ch; c++) {
       int ix = i * ch + c;
       dbias[c] += yt[ix];
-      // dscale
-      float x_hat = (in[ix] - mean[c]) * invar[c];
+      // in fact, x_hat should also mul invar[c]. now put this step to the end.
+      float x_hat = in[ix] - mean[c];
       dscale[c] += (yt[ix] * x_hat);
     }
+  }
+  for (int c = 0; c < ch; c++) {
+    dscale[c] *= invar[c];
   }
   backwardComputeDx(in, yt, mean, invar, scale, size, ch, dbias, dscale, dx, N, is_train);
 }
@@ -73,10 +76,13 @@ void backwardP1(const float *restrict in, const float *restrict yt, const float 
     for (int c = 0; c < ch; c++) {
       int ix = i * ch + c;
       dbias[c] += yt[ix];
-      // dscale
-      float x_hat = (in[ix] - mean[c]) * invar[c];
+      // in fact, x_hat should also mul invar[c]. now put this step to the end.
+      float x_hat = in[ix] - mean[c];
       dscale[c] += (yt[ix] * x_hat);
     }
+  }
+  for (int c = 0; c < ch; c++) {
+    dscale[c] *= invar[c];
   }
 }
 
