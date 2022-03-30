@@ -718,7 +718,7 @@ def get_multiprocessing_timeout_interval():
 
     Returns:
         int, interval (in seconds) for multiprocessing/multithreading timeout when main process/thread gets data from
-          subprocesses/child threads (default is 300s).
+        subprocesses/child threads (default is 300s).
 
     Examples:
         >>> # Get the global configuration of multiprocessing/multithreading timeout when main process/thread gets data
