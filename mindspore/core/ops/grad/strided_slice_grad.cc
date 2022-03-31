@@ -78,7 +78,7 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   auto shape_max_value = abstract_tensor->get_max_value();
   if (shape_min_value == nullptr || shape_max_value == nullptr) {
     MS_LOG(EXCEPTION) << "For " << prim_name
-                      << ", Max_value or min value of shapex can not be empty when shapex is not a constant.";
+                      << ", max value or min value of 'shapex' can not be empty when 'shapex' is not a constant.";
   }
 
   auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);

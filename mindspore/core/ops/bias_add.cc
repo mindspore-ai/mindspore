@@ -67,9 +67,12 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
   bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
                                [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   if (x_not_dyn && bias_shape[0] != x_channel) {
-    MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "', bias_shape[0] should be equal to x_channel, but got data format: " << data_format
-                             << ", got bias_shape[0]: " << bias_shape[0] << ", x_channel: " << x_channel << ".";
+    auto input_shape_channel = input_shape.size() - 1;
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape should be equal to input_x["
+                             << input_shape_channel
+                             << "] shape when data_format is NHWC or input_x[1] shape, but got bias[0] shape: "
+                             << bias_shape[0] << ", input_x[" << input_shape_channel
+                             << "] or input_x[1] shape: " << x_channel << ".";
   }
   CheckAndConvertUtils::CheckMinMaxShape(input_shape, &min_shape, &max_shape);
   if (min_shape.size() != 0 && max_shape.size() != 0) {

@@ -36,10 +36,11 @@ abstract::ShapePtr UpperBoundInferShape(const PrimitivePtr &primitive, const std
                              << values_shape.size();
   }
   if (x_shape[0] != values_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of values is "
-                             << input_args[1]->BuildShape()->ToString() << ", but the shape of sorted_x is "
-                             << input_args[0]->BuildShape()->ToString()
-                             << ". The number of rows of sorted_x must be consistent with that of values.";
+    MS_EXCEPTION(ValueError)
+      << "For '" << primitive->name()
+      << "', The number of rows of sorted_x must be consistent with that of values, but got the shape of values: "
+      << input_args[1]->BuildShape()->ToString()
+      << ", the shape of sorted_x: " << input_args[0]->BuildShape()->ToString() << ".";
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }
@@ -57,7 +58,7 @@ TypePtr UpperBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto out_type_id = out_type->type_id();
   MS_EXCEPTION_IF_NULL(out_type);
   if (out_type_id != kInt32->type_id() && out_type_id != kInt64->type_id()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', out_type must be int32 or int64.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', 'out_type' must be int32 or int64.";
   }
   return out_type;
 }
