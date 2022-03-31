@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include <unordered_map>
+
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "include/common/utils/convert_utils.h"
@@ -322,7 +324,12 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   }
 
   // Set type.
-  TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, front_node_with_index.second);
+  TypeId type_id = kTypeUnknown;
+  if (common::AnfAlgo::CheckAbsCSRTensor(node)) {
+    type_id = node->abstract()->cast<abstract::AbstractCSRTensorPtr>()->GetTypeIdAt(front_node_with_index.second);
+  } else {
+    type_id = common::AnfAlgo::GetOutputInferDataType(node, front_node_with_index.second);
+  }
   if (builder->GetAllOutputDeviceTypes().size() > front_node_with_index.second) {
     builder->SetOutputDeviceType(type_id, front_node_with_index.second);
   } else {
@@ -334,7 +341,12 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   }
 
   // Create device tensor.
-  size_t size = AnfAlgo::GetOutputTensorMemSize(node, front_node_with_index.second);
+  size_t size = 0;
+  if (common::AnfAlgo::CheckAbsCSRTensor(node)) {
+    size = node->cast<ValueNodePtr>()->value()->cast<tensor::CSRTensorPtr>()->GetSizeAt(front_node_with_index.second);
+  } else {
+    size = AnfAlgo::GetOutputTensorMemSize(node, front_node_with_index.second);
+  }
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector());
   MS_EXCEPTION_IF_NULL(address);
@@ -570,6 +582,10 @@ KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const 
   if (front_node != nullptr) {
     MS_LOG(DEBUG) << "Front node:" << front_node->DebugString() << " index:0"
                   << " for backend node:" << backend_node->DebugString();
+    // Adapt CSRTensor to new runtime
+    if (common::AnfAlgo::CheckAbsCSRTensor(front_node)) {
+      return {front_node, kCsrTensorValuesIndex};
+    }
     return {front_node, 0};
   }
   const auto &front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);

@@ -329,6 +329,10 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
     res = tuple_type->size();
   } else if (type->isa<TypeNone>()) {
     res = 0;
+  } else if (type->isa<CSRTensorType>()) {
+    // Currently, CSRTensor only supports 2-D matrix (shape has 2 values). 5 outputs = 3 Tensors + 2 shape values.
+    constexpr size_t kCSRTensorOutputNum = 5;
+    res = kCSRTensorOutputNum;
   } else {
     res = 1;
   }

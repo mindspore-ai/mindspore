@@ -1596,7 +1596,8 @@ class MS_CORE_API AbstractCSRTensor : public AbstractUndetermined {
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden() const override;
   AbstractBasePtr BroadenWithShape() const;
-
+  const AbstractTensorPtr GetAbsTensorAt(size_t index) const;
+  const TypeId GetTypeIdAt(size_t index) const;
   std::string ToString() const override;
 
  private:
@@ -1604,6 +1605,10 @@ class MS_CORE_API AbstractCSRTensor : public AbstractUndetermined {
   AbstractTensorPtr indices_;
   AbstractTensorPtr values_;
   AbstractTuplePtr dense_shape_;
+  static constexpr size_t kIndptrIdx = 0;
+  static constexpr size_t kIndicesIdx = 1;
+  static constexpr size_t kValuesIdx = 2;
+  static constexpr size_t kShapeIdx = 3;
 };
 using AbstractCSRTensorPtr = std::shared_ptr<AbstractCSRTensor>;
 

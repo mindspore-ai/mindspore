@@ -1848,6 +1848,36 @@ std::string AbstractCSRTensor::ToString() const {
   return buffer.str();
 }
 
+const AbstractTensorPtr AbstractCSRTensor::GetAbsTensorAt(size_t index) const {
+  if (index == kIndptrIdx) {
+    return indptr_;
+  } else if (index == kIndicesIdx) {
+    return indices_;
+  } else if (index == kValuesIdx) {
+    return values_;
+  }
+  MS_LOG(EXCEPTION) << "Invalid index: " << index << " for abstract: " << ToString();
+  return nullptr;
+}
+
+const TypeId AbstractCSRTensor::GetTypeIdAt(size_t index) const {
+  if (index == kIndptrIdx) {
+    MS_EXCEPTION_IF_NULL(indptr_);
+    return indptr_->element()->BuildType()->type_id();
+  } else if (index == kIndicesIdx) {
+    MS_EXCEPTION_IF_NULL(indices_);
+    return indices_->element()->BuildType()->type_id();
+  } else if (index == kValuesIdx) {
+    MS_EXCEPTION_IF_NULL(values_);
+    return values_->element()->BuildType()->type_id();
+  } else if (index >= kShapeIdx && index < kShapeIdx + dense_shape_->elements().size()) {
+    MS_EXCEPTION_IF_NULL(dense_shape_);
+    return dense_shape_->elements()[index - kShapeIdx]->BuildType()->type_id();
+  }
+  MS_LOG(EXCEPTION) << "Invalid index: " << index << " for abstract: " << ToString();
+  return kTypeUnknown;
+}
+
 AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
   if (!other->isa<AbstractUMonad>()) {
