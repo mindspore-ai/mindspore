@@ -203,10 +203,6 @@ FuncGraphManagerPtr Manage(FuncGraphPtr func_graph, bool manage) {
   return Manage(func_graphs, manage);
 }
 
-api::FuncGraphManagerPtr api::FuncGraphManager::Manage(const api::FuncGraphPtr &func_graph, bool manage) {
-  return mindspore::Manage(std::dynamic_pointer_cast<mindspore::FuncGraph>(func_graph), manage);
-}
-
 FuncGraphManager::FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage)
     : roots_(roots), is_manage_(manage) {
   Reset();

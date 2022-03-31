@@ -39,7 +39,6 @@
 #include "base/effect_info.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/abstract_value.h"
-#include "api/ir/func_graph.h"
 #include "ir/func_graph_transform.h"
 #include "ir/func_graph_base.h"
 #include "utils/visible.h"
@@ -98,7 +97,7 @@ const char kFuncGraphFlagBackPropEntry[] = "BackPropEntry";
 const char kFuncGraphFlagReAutoMonad[] = "ReAutoMonad";
 const char kFuncGraphFlagRecursive[] = "Recursive";
 
-class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGraphBase, public EffectInfoHolder {
+class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
  public:
   using Drawer = std::function<void(const std::string &, const FuncGraphPtr &)>;
 
@@ -114,16 +113,16 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   abstract::AbstractBasePtr ToAbstract() override;
 
   // get function graph inputs, but parameters
-  const std::vector<AnfNodePtr> get_inputs() const final;
+  const std::vector<AnfNodePtr> get_inputs() const;
   // Return the graph's output, or nullptr if not yet deduced.
-  AnfNodePtr output() const final;
+  AnfNodePtr output() const;
   void set_output(const AnfNodePtr &value, bool force_new_ret = false);
 
-  const std::vector<AnfNodePtr> &parameters() const final { return parameters_; }
+  const std::vector<AnfNodePtr> &parameters() const { return parameters_; }
   // Append
-  ParameterPtr add_parameter() override;
+  virtual ParameterPtr add_parameter();
   ParameterPtr add_parameter(NodeDebugInfoPtr &&debug_info);
-  void add_parameter(const ParameterPtr &p) final;
+  void add_parameter(const ParameterPtr &p);
   void append_parameter(const ParameterPtr &p) { parameters_.push_back(p); }
   // Prepend
   virtual ParameterPtr InsertFrontParameter();
@@ -136,8 +135,8 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
 
   // Create a cnode with given inputs, bound to this graph.
   virtual CNodePtr NewCNode(std::vector<AnfNodePtr> &&inputs);
-  CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>()) override;
-  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs) final;
+  virtual CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs = std::vector<AnfNodePtr>());
+  CNodePtr NewCNode(const PrimitivePtr &primitive, const std::vector<AnfNodePtr> &prim_inputs);
 
   // Create a cnode with given inputs, bound to this graph and push back to order list.
   CNodePtr NewCNodeInOrder(std::vector<AnfNodePtr> &&inputs);
@@ -194,23 +193,21 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   void set_flag(const std::string &key, bool flag) { attrs_[key] = MakeValue(flag); }
   void erase_flag(const std::string &key) { (void)attrs_.erase(key); }
 
-  bool has_attr(const std::string &key) const final;
-  ValuePtr get_attr(const std::string &key) const final;
-  void set_attr(const std::string &key, const ValuePtr &value) final { attrs_[key] = value; }
+  bool has_attr(const std::string &key) const;
+  ValuePtr get_attr(const std::string &key) const;
+  void set_attr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
 
   mindspore::HashMap<std::string, FuncGraphTransform> &transforms() { return transforms_; }
   void set_transforms(const mindspore::HashMap<std::string, FuncGraphTransform> &transforms) {
     transforms_ = transforms;
   }
 
-  CNodePtr get_return() const final { return return_; }
-  void set_return(const CNodePtr &cnode) final { return_ = cnode; }
+  CNodePtr get_return() const { return return_; }
+  void set_return(const CNodePtr &cnode) { return_ = cnode; }
   const CNodePtr &return_node() const { return return_; }
 
   FuncGraphManagerPtr manager() const { return manager_.lock(); }
   void set_manager(const FuncGraphManagerPtr &m) { manager_ = std::weak_ptr<FuncGraphManager>(m); }
-
-  deprecated::api::FuncGraphManagerPtr get_manager() const final { return manager_.lock(); }
 
   std::string ToString() const override;
   GraphDebugInfoPtr debug_info();
@@ -221,7 +218,7 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
     this->debug_info_ = info;
   }
   // Get all nodes belonging to this func graph.
-  const AnfNodeSet &nodes() const final;
+  const AnfNodeSet &nodes() const;
   void CopyNodes(const FuncGraphPtr &source);
   void ClearNodes();
   void AddNode(const AnfNodePtr &node);
@@ -370,6 +367,13 @@ class MS_CORE_API FuncGraph : public deprecated::api::FuncGraph, public FuncGrap
   void set_is_tensor_condition_branch(bool is_tensor_condition_branch) {
     is_tensor_condition_branch_ = is_tensor_condition_branch;
   }
+
+  /// \brief Topological sort a graph from the given end node.
+  ///
+  /// \param[in] node The end node of the graph to be sorted.
+  ///
+  /// \return The sorted nodes.
+  static std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &node);
 
  private:
   // Only used for func_graph manager to control resource free.
