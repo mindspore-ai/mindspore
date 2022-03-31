@@ -38,12 +38,13 @@ namespace profiler {
 namespace ascend {
 bool has_save_parallel_strategy = false;
 bool has_got_parallel_strategy_data = false;
+bool profiling_parallel_strategy_enabled = false;
 irpb::ProfilingParallel cache_profiling_parallel_pb;
 
 bool IsProfilingParallelStrategyEnabled() {
   auto ascend_profiler = AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->IsInitialized()) {
+  if (!profiling_parallel_strategy_enabled || !ascend_profiler->IsInitialized()) {
     MS_LOG(INFO) << "Profiling parallel strategy is disabled.";
     return false;
   }
