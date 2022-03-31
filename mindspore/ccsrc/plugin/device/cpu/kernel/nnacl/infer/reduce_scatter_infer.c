@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/errorcode.h"
+
+#include "nnacl/infer/reduce_scatter_infer.h"
 #include "nnacl/infer/infer_register.h"
-#include "nnacl/infer/common_infer.h"
-#include "nnacl/reduce_scatter_parameter.h"
 
 int ReduceScatterInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                             OpParameter *parameter) {
