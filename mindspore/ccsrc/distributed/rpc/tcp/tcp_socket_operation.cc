@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-constexpr int EAGAIN_RETRY = 100;
+constexpr int EAGAIN_RETRY = 10240;
 
 ssize_t TCPSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) {
   return recv(connection->socket_fd, recvBuf, recvLen, MSG_PEEK);
@@ -106,18 +106,18 @@ int TCPSocketOperation::ReceiveMessage(Connection *connection, struct msghdr *re
 
 int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendMsg, size_t totalSendLen,
                                     size_t *sendLen) {
-  int eagainCount = EAGAIN_RETRY;
+  int eagainCount = 0;
   *sendLen = 0;
 
   while (*sendLen != totalSendLen) {
     auto retval = sendmsg(connection->socket_fd, sendMsg, MSG_NOSIGNAL);
     if (retval < 0) {
-      --eagainCount;
+      ++eagainCount;
       if (errno != EAGAIN) {
         MS_LOG(ERROR) << "Failed to call sendmsg and errno is: " << errno;
         connection->error_code = errno;
         return IO_RW_ERROR;
-      } else if (eagainCount == 0) {
+      } else if (eagainCount == EAGAIN_RETRY) {
         MS_LOG(ERROR) << "Failed to call sendmsg after retry " + std::to_string(EAGAIN_RETRY) + " times and errno is: "
                       << errno;
         *sendLen = 0;
@@ -146,7 +146,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
           break;
         }
       }
-      eagainCount = EAGAIN_RETRY;
+      eagainCount = 0;
     }
   }
   return IO_RW_OK;
