@@ -96,7 +96,7 @@ def _check_moe_config(moe_config=None, parallel_config=None):
                          f"{parallel_config.expert_parallel}.")
     if parallel_config.data_parallel % parallel_config.expert_parallel != 0:
         raise ValueError(f"data parallel: {parallel_config.data_parallel} should be a multiple of "
-                         f"expert_parallel: {parallel_config.expert_parallel}.")
+                         f"expert_parallel: {parallel_config.expert_parallel} when using MoE.")
     if parallel_config.data_parallel * parallel_config.model_parallel > device_num:
         raise ValueError(f"The product of the data parallel: {parallel_config.data_parallel} and "
                          f"model parallel: {parallel_config.model_parallel} "
