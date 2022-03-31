@@ -33,7 +33,7 @@ mindspore.profiler
 
         - **RuntimeError** – profiler已经开启。
         - **RuntimeError** – 停止Minddata采集后，不支持重复开启。
-        - **RuntimeError** – 如果start_profile参数设置为True。
+        - **RuntimeError** – 如果start_profile参数未设置或设置为True。
 
     .. py:method:: stop()
 
