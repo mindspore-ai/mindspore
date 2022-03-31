@@ -614,6 +614,8 @@ class MS_CORE_API CSRTensor : public MetaSparseTensor {
     return false;
   }
 
+  const size_t GetSizeAt(size_t index) const;
+
   /// \brief Get display information of this Tensor.
   ///
   /// \return The display information of this Tensor.
@@ -623,6 +625,10 @@ class MS_CORE_API CSRTensor : public MetaSparseTensor {
   TensorPtr indptr_;
   TensorPtr indices_;
   TensorPtr values_;
+  static constexpr size_t kIndptrIdx = 0;
+  static constexpr size_t kIndicesIdx = 1;
+  static constexpr size_t kValuesIdx = 2;
+  static constexpr size_t kShapeIdx = 3;
 };
 using CSRTensorPtr = std::shared_ptr<CSRTensor>;
 

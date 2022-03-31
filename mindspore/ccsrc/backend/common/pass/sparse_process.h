@@ -23,6 +23,10 @@
 
 namespace mindspore {
 namespace opt {
+// Process SparseOPs:
+// 1. Convert "MakeCSRTensor/MakeCOOTensor/..." to MakeTuple
+// 2. Convert "CSRTensorGetIndptr/..." to TupleGetItem
+// 3. Process inputs for SparseOPs, e.g., split CSRTensor input to multiple tensor inputs.
 class SparseProcess : public PatternProcessPass {
  public:
   explicit SparseProcess(bool multigraph = true) : PatternProcessPass("sparse_process", multigraph) {}

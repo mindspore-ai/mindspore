@@ -59,6 +59,7 @@ constexpr size_t kCsrTensorIndPtrIndex = 0;
 constexpr size_t kCsrTensorIndicesIndex = 1;
 constexpr size_t kCsrTensorValuesIndex = 2;
 constexpr size_t kCsrTensorDenseShapeIndex = 3;
+constexpr size_t kCsrParamOutputSize = 3;
 constexpr size_t kCooTensorIndicesIndex = 0;
 constexpr size_t kCooTensorValuesIndex = 1;
 constexpr size_t kCooTensorDenseShapeIndex = 2;
