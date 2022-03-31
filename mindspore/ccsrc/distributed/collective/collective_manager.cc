@@ -277,6 +277,7 @@ bool CollectiveManager::Finalize() {
       MS_LOG(WARNING) << "Failed to finalize device communication library.";
     }
 
+    inited_ = false;
     finalized_ = true;
     return true;
   };
