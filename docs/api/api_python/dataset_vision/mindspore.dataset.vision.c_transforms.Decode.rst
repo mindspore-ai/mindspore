@@ -12,4 +12,4 @@ mindspore.dataset.vision.c_transforms.Decode
     **异常：**
 
     - **RuntimeError** - 如果 `rgb` 为 False，因为此选项已弃用。
-    - **RuntimeError** - 如果输入图像的shape不是一维序列。
+    - **RuntimeError** - 如果输入图像不是一维序列。

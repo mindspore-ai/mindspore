@@ -36,7 +36,7 @@ def is_pil(img):
         img: Image to be checked.
 
     Returns:
-        Bool, True if input is PIL image.
+        bool, True if input is PIL.Image.Image.
     """
     return isinstance(img, Image.Image)
 
@@ -92,13 +92,13 @@ def normalize(img, mean, std, pad_channel=False, dtype="float32"):
 
 def decode(img):
     """
-    Decode the input image to PIL image format in RGB mode.
+    Decode the input image to PIL Image format in RGB mode.
 
     Args:
         img: Image to be decoded.
 
     Returns:
-        img (PIL image), Decoded image in RGB mode.
+        img (PIL.Image.Image), Decoded image in RGB mode.
     """
 
     try:
@@ -130,10 +130,10 @@ def hwc_to_chw(img):
 
 def to_tensor(img, output_type):
     """
-    Change the input image (PIL image or NumPy image array) to NumPy format.
+    Change the input image (PIL.Image.Image or numpy.ndarray) to numpy.ndarray format.
 
     Args:
-        img (Union[PIL image, numpy.ndarray]): Image to be converted.
+        img (Union[PIL.Image.Image, numpy.ndarray]): Image to be converted.
         output_type: The datatype of the NumPy output. e.g. np.float32
 
     Returns:
@@ -163,7 +163,7 @@ def to_pil(img):
         img: Image to be converted.
 
     Returns:
-        img (PIL image), Converted image.
+        img (PIL.Image.Image), Converted image.
     """
     if not is_pil(img):
         if not isinstance(img, np.ndarray):
@@ -177,10 +177,10 @@ def horizontal_flip(img):
     Flip the input image horizontally.
 
     Args:
-        img (PIL image): Image to be flipped horizontally.
+        img (PIL.Image.Image): Image to be flipped horizontally.
 
     Returns:
-        img (PIL image), Horizontally flipped image.
+        PIL.Image.Image, Horizontally flipped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -193,10 +193,10 @@ def vertical_flip(img):
     Flip the input image vertically.
 
     Args:
-        img (PIL image): Image to be flipped vertically.
+        img (PIL.Image.Image): Image to be flipped vertically.
 
     Returns:
-        img (PIL image), Vertically flipped image.
+        PIL.Image.Image, Vertically flipped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -209,12 +209,12 @@ def random_horizontal_flip(img, prob):
     Randomly flip the input image horizontally.
 
     Args:
-        img (PIL image): Image to be flipped.
+        img (PIL.Image.Image): Image to be flipped.
             If the given probability is above the random probability, then the image is flipped.
         prob (float): Probability of the image being flipped.
 
     Returns:
-        img (PIL image), Converted image.
+        PIL.Image.Image, Converted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -229,12 +229,12 @@ def random_vertical_flip(img, prob):
     Randomly flip the input image vertically.
 
     Args:
-        img (PIL image): Image to be flipped.
+        img (PIL.Image.Image): Image to be flipped.
             If the given probability is above the random probability, then the image is flipped.
         prob (float): Probability of the image being flipped.
 
     Returns:
-        img (PIL image), Converted image.
+        PIL.Image.Image, Converted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -246,10 +246,10 @@ def random_vertical_flip(img, prob):
 
 def crop(img, top, left, height, width):
     """
-    Crop the input PIL image.
+    Crop the input PIL Image.
 
     Args:
-        img (PIL image): Image to be cropped. (0,0) denotes the top left corner of the image,
+        img (PIL.Image.Image): Image to be cropped. (0,0) denotes the top left corner of the image,
             in the directions of (width, height).
         top (int): Vertical component of the top left corner of the crop box.
         left (int): Horizontal component of the top left corner of the crop box.
@@ -257,7 +257,7 @@ def crop(img, top, left, height, width):
         width (int): Width of the crop box.
 
     Returns:
-        img (PIL image), Cropped image.
+        PIL.Image.Image, cropped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -267,10 +267,10 @@ def crop(img, top, left, height, width):
 
 def resize(img, size, interpolation=Inter.BILINEAR):
     """
-    Resize the input PIL image to desired size.
+    Resize the input PIL Image to desired size.
 
     Args:
-        img (PIL image): Image to be resized.
+        img (PIL.Image.Image): Image to be resized.
         size (Union[int, sequence]): The output size of the resized image.
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
@@ -278,7 +278,7 @@ def resize(img, size, interpolation=Inter.BILINEAR):
         interpolation (interpolation mode): Image interpolation mode. Default is Inter.BILINEAR = 2.
 
     Returns:
-        img (PIL image), Resized image.
+        PIL.Image.Image, resized image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -304,16 +304,16 @@ def resize(img, size, interpolation=Inter.BILINEAR):
 
 def center_crop(img, size):
     """
-    Crop the input PIL image at the center to the given size.
+    Crop the input PIL Image at the center to the given size.
 
     Args:
-        img (PIL image): Image to be cropped.
+        img (PIL.Image.Image): Image to be cropped.
         size (Union[int, tuple]): The size of the crop box.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Returns:
-        img (PIL image), Cropped image.
+        PIL.Image.Image, cropped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -329,10 +329,10 @@ def center_crop(img, size):
 
 def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, max_attempts=10):
     """
-    Crop the input PIL image to a random size and aspect ratio.
+    Crop the input PIL Image to a random size and aspect ratio.
 
     Args:
-        img (PIL image): Image to be randomly cropped and resized.
+        img (PIL.Image.Image): Image to be randomly cropped and resized.
         size (Union[int, sequence]): The size of the output image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
@@ -343,7 +343,7 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
             If exceeded, fall back to use center_crop instead.
 
     Returns:
-        img (PIL image), Randomly cropped and resized image.
+        PIL.Image.Image, randomly cropped and resized image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -399,10 +399,10 @@ def random_resize_crop(img, size, scale, ratio, interpolation=Inter.BILINEAR, ma
 
 def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
     """
-    Crop the input PIL image at a random location.
+    Crop the input PIL Image at a random location.
 
     Args:
-        img (PIL image): Image to be randomly cropped.
+        img (PIL.Image.Image): Image to be randomly cropped.
         size (Union[int, sequence]): The output size of the cropped image.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
@@ -428,7 +428,7 @@ def random_crop(img, size, padding, pad_if_needed, fill_value, padding_mode):
                 value of edge
 
     Returns:
-        PIL image, Cropped image.
+        PIL.Image.Image, cropped image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -470,12 +470,12 @@ def adjust_brightness(img, brightness_factor):
     Adjust brightness of an image.
 
     Args:
-        img (PIL image): Image to be adjusted.
+        img (PIL.Image.Image): Image to be adjusted.
         brightness_factor (float): A non negative number indicated the factor by which
             the brightness is adjusted. 0 gives a black image, 1 gives the original.
 
     Returns:
-        img (PIL image), Brightness adjusted image.
+        PIL.Image.Image, brightness adjusted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -490,12 +490,12 @@ def adjust_contrast(img, contrast_factor):
     Adjust contrast of an image.
 
     Args:
-        img (PIL image): PIL image to be adjusted.
+        img (PIL.Image.Image): PIL Image to be adjusted.
         contrast_factor (float): A non negative number indicated the factor by which
             the contrast is adjusted. 0 gives a solid gray image, 1 gives the original.
 
     Returns:
-        img (PIL image), Contrast adjusted image.
+        PIL.Image.Image, contrast adjusted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -510,13 +510,13 @@ def adjust_saturation(img, saturation_factor):
     Adjust saturation of an image.
 
     Args:
-        img (PIL image): PIL image to be adjusted.
+        img (PIL.Image.Image): PIL Image to be adjusted.
         saturation_factor (float):  A non negative number indicated the factor by which
             the saturation is adjusted. 0 will give a black and white image, 1 will
             give the original.
 
     Returns:
-        img (PIL image), Saturation adjusted image.
+        PIL.Image.Image, saturation adjusted image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -531,7 +531,7 @@ def adjust_hue(img, hue_factor):
     Adjust hue of an image. The Hue is changed by changing the HSV values after image is converted to HSV.
 
     Args:
-        img (PIL image): PIL image to be adjusted.
+        img (PIL.Image.Image): PIL Image to be adjusted.
         hue_factor (float):  Amount to shift the Hue channel. Value should be in
             [-0.5, 0.5]. 0.5 and -0.5 give complete reversal of hue channel. This
             is because Hue wraps around when rotated 360 degrees.
@@ -539,7 +539,7 @@ def adjust_hue(img, hue_factor):
             will give an image with complementary colors .
 
     Returns:
-        img (PIL image), Hue adjusted image.
+        PIL.Image.Image, hue adjusted image.
     """
     image = img
     image_hue_factor = hue_factor
@@ -587,10 +587,10 @@ def to_type(img, output_type):
 
 def rotate(img, angle, resample, expand, center, fill_value):
     """
-    Rotate the input PIL image by angle.
+    Rotate the input PIL Image by angle.
 
     Args:
-        img (PIL image): Image to be rotated.
+        img (PIL.Image.Image): Image to be rotated.
         angle (int or float): Rotation angle in degrees, counter-clockwise.
         resample (Union[Inter.NEAREST, Inter.BILINEAR, Inter.BICUBIC], optional): An optional resampling filter.
             If omitted, or if the image has mode "1" or "P", it is set to be Inter.NEAREST.
@@ -605,7 +605,7 @@ def rotate(img, angle, resample, expand, center, fill_value):
             If it is an integer, it is used for all RGB channels.
 
     Returns:
-        img (PIL image), Rotated image.
+        PIL.Image.Image, rotated image.
 
     https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate
     """
@@ -623,7 +623,7 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
     Randomly adjust the brightness, contrast, saturation, and hue of an image.
 
     Args:
-        img (PIL image): Image to have its color adjusted randomly.
+        img (PIL.Image.Image): Image to have its color adjusted randomly.
         brightness (Union[float, tuple]): Brightness adjustment factor. Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
@@ -638,7 +638,7 @@ def random_color_adjust(img, brightness, contrast, saturation, hue):
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Returns:
-        img (PIL image), Image after random adjustment of its color.
+        PIL.Image.Image, image after random adjustment of its color.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -685,11 +685,11 @@ def random_lighting(img, alpha):
     Add AlexNet-style PCA-based noise to an image.
 
     Args:
-        img (PIL Image): Image to be added AlexNet-style PCA-based noise.
+        img (PIL.Image.Image): Image to be added AlexNet-style PCA-based noise.
         alpha (float, optional): Intensity of the image.
 
     Returns:
-        PIL Image, image with noise added.
+        PIL.Image.Image, image with noise added.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -700,9 +700,9 @@ def random_lighting(img, alpha):
     alpha_g = np.random.normal(loc=0.0, scale=alpha)
     alpha_b = np.random.normal(loc=0.0, scale=alpha)
     table = np.array([
-        [55.46*-0.5675, 4.794*0.7192, 1.148 * 0.4009],
-        [55.46*-0.5808, 4.794*-0.0045, 1.148 * -0.8140],
-        [55.46*-0.5836, 4.794*-0.6948, 1.148 * 0.4203]
+        [55.46 * -0.5675, 4.794 * 0.7192, 1.148 * 0.4009],
+        [55.46 * -0.5808, 4.794 * -0.0045, 1.148 * -0.8140],
+        [55.46 * -0.5836, 4.794 * -0.6948, 1.148 * 0.4203]
     ])
     pca_r = table[0][0] * alpha_r + table[0][1] * alpha_g + table[0][2] * alpha_b
     pca_g = table[1][0] * alpha_r + table[1][1] * alpha_g + table[1][2] * alpha_b
@@ -718,10 +718,12 @@ def random_lighting(img, alpha):
 
 def random_rotation(img, degrees, resample, expand, center, fill_value):
     """
-    Rotate the input PIL image by a random angle.
+    Rotate the input PIL Image by a random angle.
+
+    See <https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate>.
 
     Args:
-        img (PIL image): Image to be rotated.
+        img (PIL.Image.Image): Image to be rotated.
         degrees (Union[int, float, sequence]): Range of random rotation degrees.
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
@@ -738,9 +740,7 @@ def random_rotation(img, degrees, resample, expand, center, fill_value):
             If it is an integer, it is used for all RGB channels.
 
     Returns:
-        img (PIL image), Rotated image.
-
-    https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.rotate
+        PIL.Image.Image, Rotated image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -764,13 +764,13 @@ def five_crop(img, size):
     Generate 5 cropped images (one central and four corners).
 
     Args:
-        img (PIL image): PIL image to be cropped.
+        img (PIL.Image.Image): PIL Image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
 
     Returns:
-            img_tuple (tuple), a tuple of 5 PIL images
+            img_tuple (tuple), a tuple of 5 PIL Image
                 (top_left, top_right, bottom_left, bottom_right, center).
     """
     if not is_pil(img):
@@ -783,7 +783,7 @@ def five_crop(img, size):
     else:
         raise TypeError("Size should be a single number or a list/tuple (h, w) of length 2.")
 
-    # PIL image.size returns in (width, height) order
+    # PIL.Image.Image.size returns in (width, height) order
     img_width, img_height = img.size
     crop_height, crop_width = size
     if crop_height > img_height or crop_width > img_width:
@@ -804,14 +804,14 @@ def ten_crop(img, size, use_vertical_flip=False):
     The default is horizontal flipping, use_vertical_flip=False.
 
     Args:
-        img (PIL image): PIL image to be cropped.
+        img (PIL.Image.Image): PIL Image to be cropped.
         size (Union[int, sequence]): The output size of the crop.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, it should be (height, width).
         use_vertical_flip (bool): Flip the image vertically instead of horizontally if set to True.
 
     Returns:
-        img_tuple (tuple), a tuple of 10 PIL images
+        tuple[PIL.Image.Image], a tuple of 10 PIL Image
             (top_left, top_right, bottom_left, bottom_right, center) of original image +
             (top_left, top_right, bottom_left, bottom_right, center) of flipped image.
     """
@@ -839,14 +839,14 @@ def ten_crop(img, size, use_vertical_flip=False):
 
 def grayscale(img, num_output_channels):
     """
-    Convert the input PIL image to grayscale image.
+    Convert the input PIL Image to grayscale image.
 
     Args:
-        img (PIL image): PIL image to be converted to grayscale.
+        img (PIL.Image.Image): PIL Image to be converted to grayscale.
         num_output_channels (int): Number of channels of the output grayscale image (1 or 3).
 
     Returns:
-        img (PIL image), grayscaled image.
+        PIL.Image.Image, grayscaled image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -870,7 +870,7 @@ def pad(img, padding, fill_value, padding_mode):
     Pad the image according to padding parameters.
 
     Args:
-        img (PIL image): Image to be padded.
+        img (PIL.Image.Image): Image to be padded.
         padding (Union[int, sequence], optional): The number of pixels to pad the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or lists of 2 values are provided, it pads the (left and top)
@@ -891,7 +891,7 @@ def pad(img, padding, fill_value, padding_mode):
                 value of edge
 
     Returns:
-        img (PIL image), Padded image.
+        PIL.Image.Image, padded image.
     """
     if not is_pil(img):
         raise TypeError(augment_error_message.format(type(img)))
@@ -966,16 +966,16 @@ def get_perspective_params(img, distortion_scale):
 
 def perspective(img, start_points, end_points, interpolation=Inter.BICUBIC):
     """
-    Apply perspective transformation to the input PIL image.
+    Apply perspective transformation to the input PIL Image.
 
     Args:
-        img (PIL image): PIL image to be applied perspective transformation.
+        img (PIL.Image.Image): PIL Image to be applied perspective transformation.
         start_points (list): List of [top_left, top_right, bottom_right, bottom_left] of the original image.
         end_points: List of [top_left, top_right, bottom_right, bottom_left] of the transformed image.
         interpolation (interpolation mode): Image interpolation mode, Default is Inter.BICUBIC = 3.
 
     Returns:
-        img (PIL image), Image after being perspectively transformed.
+        PIL.Image.Image, image after being perspectively transformed.
     """
 
     def _input_to_coeffs(original_points, transformed_points):
@@ -1112,10 +1112,10 @@ def linear_transform(np_img, transformation_matrix, mean_vector):
 
 def random_affine(img, angle, translations, scale, shear, resample, fill_value=0):
     """
-    Applies a random Affine transformation on the input PIL image.
+    Applies a random Affine transformation on the input PIL Image.
 
     Args:
-        img (PIL image): Image to be applied affine transformation.
+        img (PIL.Image.Image): Image to be applied affine transformation.
         angle (Union[int, float]): Rotation angle in degrees, clockwise.
         translations (sequence): Translations in horizontal and vertical axis.
         scale (float): Scale parameter, a single number.
@@ -1126,7 +1126,7 @@ def random_affine(img, angle, translations, scale, shear, resample, fill_value=0
             If None, no filling is performed.
 
     Returns:
-        img (PIL image), Randomly affine transformed image.
+        PIL.Image.Image, randomly affine transformed image.
 
     """
     if not is_pil(img):
@@ -1467,15 +1467,15 @@ def hsv_to_rgbs(np_hsv_imgs, is_hwc):
 
 def random_color(img, degrees):
     """
-    Adjust the color of the input PIL image by a random degree.
+    Adjust the color of the input PIL Image by a random degree.
 
     Args:
-        img (PIL image): Image to be color adjusted.
+        img (PIL.Image.Image): Image to be color adjusted.
         degrees (sequence): Range of random color adjustment degrees.
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Returns:
-        img (PIL image), Color adjusted image.
+        PIL.Image.Image, color adjusted image.
     """
 
     if not is_pil(img):
@@ -1487,15 +1487,15 @@ def random_color(img, degrees):
 
 def random_sharpness(img, degrees):
     """
-    Adjust the sharpness of the input PIL image by a random degree.
+    Adjust the sharpness of the input PIL Image by a random degree.
 
     Args:
-        img (PIL image): Image to be sharpness adjusted.
+        img (PIL.Image.Image): Image to be sharpness adjusted.
         degrees (sequence): Range of random sharpness adjustment degrees.
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Returns:
-        img (PIL image), Sharpness adjusted image.
+        PIL.Image.Image, sharpness adjusted image.
     """
 
     if not is_pil(img):
@@ -1507,15 +1507,15 @@ def random_sharpness(img, degrees):
 
 def adjust_gamma(img, gamma, gain):
     """
-    Adjust gamma of the input PIL image.
+    Adjust gamma of the input PIL Image.
 
     Args:
-        img (PIL image): Image to be augmented with AdjustGamma.
+        img (PIL.Image.Image): Image to be augmented with AdjustGamma.
         gamma (float): Non negative real number, same as gamma in the equation.
         gain (float, optional): The constant multiplier.
 
     Returns:
-        img (PIL image), Augmented image.
+        PIL.Image.Image, augmented image.
 
     """
 
@@ -1533,16 +1533,15 @@ def adjust_gamma(img, gamma, gain):
 
 def auto_contrast(img, cutoff, ignore):
     """
-    Automatically maximize the contrast of the input PIL image.
+    Automatically maximize the contrast of the input PIL Image.
 
     Args:
-        img (PIL image): Image to be augmented with AutoContrast.
+        img (PIL.Image): Image to be augmented with AutoContrast.
         cutoff (float, optional): Percent of pixels to cut off from the histogram (default=0.0).
-        ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
+        ignore (Union[int, Sequence[int]], optional): Pixel values to ignore (default=None).
 
     Returns:
-        img (PIL image), Augmented image.
-
+        PIL.Image, augmented image.
     """
 
     if not is_pil(img):
@@ -1553,13 +1552,13 @@ def auto_contrast(img, cutoff, ignore):
 
 def invert_color(img):
     """
-    Invert colors of input PIL image.
+    Invert colors of input PIL Image.
 
     Args:
-        img (PIL image): Image to be color inverted.
+        img (PIL.Image.Image): Image to be color inverted.
 
     Returns:
-        img (PIL image), Color inverted image.
+        PIL.Image.Image, color inverted image.
 
     """
 
@@ -1571,13 +1570,13 @@ def invert_color(img):
 
 def equalize(img):
     """
-    Equalize the histogram of input PIL image.
+    Equalize the histogram of input PIL Image.
 
     Args:
-        img (PIL image): Image to be equalized
+        img (PIL.Image.Image): Image to be equalized
 
     Returns:
-        img (PIL image), Equalized image.
+        PIL.Image.Image, equalized image.
 
     """
 

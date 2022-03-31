@@ -10,12 +10,12 @@ mindspore.dataset.vision.py_transforms.AutoContrast
     **参数：**
 
     - **cutoff** (float，可选) - 从直方图中移除最亮和最暗像素的百分比，取值范围为[0.0, 50.0)，默认值：0.0。
-    - **ignore** (Union[int, sequence]，可选) - 背景像素值，将会被直接映射为白色，默认值：None，表示没有背景像素。
+    - **ignore** (Union[int, Sequence[int]]，可选) - 背景像素值，将会被直接映射为白色，默认值：None，表示没有背景像素。
 
     **异常：**
 
-    - **TypeError** - 当 `cutoff` 的类型不为浮点型。
-    - **TypeError** - 当 `ignore` 的类型不为整型或序列。
+    - **TypeError** - 当 `cutoff` 的类型不为float。
+    - **TypeError** - 当 `ignore` 的类型不为int或Sequence[int]。
     - **ValueError** - 当 `cutoff` 取值不在[0, 50.0)范围内。
     - **ValueError** - 当 `ignore` 取值不在[0, 255]范围内。
     - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。

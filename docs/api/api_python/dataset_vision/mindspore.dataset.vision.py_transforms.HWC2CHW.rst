@@ -3,7 +3,7 @@ mindspore.dataset.vision.py_transforms.HWC2CHW
 
 .. py:class:: mindspore.dataset.vision.py_transforms.HWC2CHW
 
-    将输入的(H, W, C)形状numpy.ndarray图像转换为(C, H, W)形状。
+    将输入的numpy.ndarray图像的shape从(H, W, C)转换为(C, H, W)。
 
     **异常：**
 

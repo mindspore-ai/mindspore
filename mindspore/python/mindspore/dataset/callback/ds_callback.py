@@ -135,8 +135,6 @@ class WaitedDSCallback(Callback, DSCallback):
     It can be used to execute a custom callback method before a step or an epoch, such as
     updating the parameters of operators according to the loss of the previous training epoch in auto augmentation.
 
-    Note that the call is triggered only at the beginning of the second step or epoch.
-
     Users can obtain the network training context through `train_run_context`, such as
     `network`, `train_network`, `epoch_num`, `batch_num`, `loss_fn`, `optimizer`, `parallel_mode`,
     `device_number`, `list_callback`, `cur_epoch_num`, `cur_step_num`, `dataset_sink_mode`,
@@ -146,6 +144,9 @@ class WaitedDSCallback(Callback, DSCallback):
 
     Users can obtain the dataset pipeline context through `ds_run_context`, including
     `cur_epoch_num`, `cur_step_num_in_epoch` and `cur_step_num`.
+
+    Note:
+        Note that the call is triggered only at the beginning of the second step or epoch.
 
     Args:
        step_size (int, optional): The number of rows in each step, usually set equal to the batch size. Default: 1.

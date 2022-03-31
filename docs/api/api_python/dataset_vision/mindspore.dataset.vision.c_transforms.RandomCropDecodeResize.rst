@@ -33,4 +33,4 @@ mindspore.dataset.vision.c_transforms.RandomCropDecodeResize
     - **ValueError** - 如果 `scale` 为负数。
     - **ValueError** - 如果 `ratio` 为负数。
     - **ValueError** - 如果 `max_attempts` 不是正数。
-    - **RuntimeError** - 如果输入图像的shape不是一维序列。
+    - **RuntimeError** - 如果输入图像不是一维序列。
