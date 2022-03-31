@@ -57,7 +57,7 @@ def _cal_reshape(x_shape, rep, axis):
 
 def repeat_elements(x, rep, axis=0):
     """
-    Repeat elements of a tensor along an axis, like np.repeat.
+    Repeat elements of a tensor along an axis, like `np.repeat` .
 
     Args:
         x (Tensor): The tensor to repeat values for. Must be of type: float16,
