@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <complex>
 #include "ops/select.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
@@ -23,6 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
+using float_complex = std::complex<float>;
+using double_complex = std::complex<double>;
 constexpr auto kSelectCondIndex = 0;
 constexpr auto kSelectXIndex = 1;
 constexpr auto kSelectYIndex = 2;
@@ -119,10 +122,6 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
       SelectImpl<bool>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
-    case kNumberTypeInt: {
-      SelectImpl<int>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
-      break;
-    }
     case kNumberTypeInt8: {
       SelectImpl<int8_t>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
@@ -137,10 +136,6 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
     }
     case kNumberTypeInt64: {
       SelectImpl<int64_t>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
-      break;
-    }
-    case kNumberTypeUInt: {
-      SelectImpl<uint32_t>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     case kNumberTypeUInt8: {
@@ -159,10 +154,6 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
       SelectImpl<uint64_t>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
-    case kNumberTypeFloat: {
-      SelectImpl<float>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
-      break;
-    }
     case kNumberTypeFloat16: {
       SelectImpl<float16>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
@@ -173,6 +164,14 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
     }
     case kNumberTypeFloat64: {
       SelectImpl<double>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeComplex64: {
+      SelectImpl<float_complex>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
+      break;
+    }
+    case kNumberTypeComplex128: {
+      SelectImpl<double_complex>(cond_data, x_tensor->data_c(), y_tensor->data_c(), result_tensor->data_c(), data_size);
       break;
     }
     default: {
