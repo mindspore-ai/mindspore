@@ -323,8 +323,9 @@ bool Iteration::NewInstance(const nlohmann::json &new_instance_json, std::string
   }
 
   if (iteration_num_ == 1) {
-    MS_LOG(INFO) << "This is just the first iteration.";
-    return true;
+    *result = "This is just the first iteration, do not need to new instance.";
+    MS_LOG(WARNING) << *result;
+    return false;
   }
 
   // Start new server instance.

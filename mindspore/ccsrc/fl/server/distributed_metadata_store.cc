@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "fl/server/iteration.h"
 
 namespace mindspore {
 namespace fl {
@@ -26,7 +27,7 @@ void DistributedMetadataStore::Initialize(const std::shared_ptr<ps::core::Server
   MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
   local_rank_ = server_node_->rank_id();
-  server_num_ = ps::PSContext::instance()->initial_server_num();
+  server_num_ = server_node->server_num();
   InitHashRing();
   return;
 }
@@ -109,6 +110,7 @@ bool DistributedMetadataStore::UpdateMetadata(const std::string &name, const PBM
       if (reason != nullptr) {
         *reason = kNetworkError;
       }
+      Iteration::GetInstance().NotifyNext(false, *reason);
       return false;
     }
 

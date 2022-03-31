@@ -49,9 +49,10 @@ struct NodeInfo {
   NodeRole node_role_;
   // the current Node rank id,the worker node range is:[0,numOfWorker-1], the server node range is:[0, numOfServer-1]
   uint32_t rank_id_;
-
   // After the node registration is successful, it is alive.If the node's heartbeat times out, then it is not alive
   bool is_alive;
+  // the number of the fl job iteration
+  size_t fl_iteration_num_;
 };
 }  // namespace core
 }  // namespace ps

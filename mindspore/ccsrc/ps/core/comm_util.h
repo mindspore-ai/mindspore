@@ -86,7 +86,7 @@ constexpr char kLibeventLogPrefix[] = "[libevent log]:";
 
 // Find the corresponding string style of cluster state through the subscript of the enum:ClusterState
 const std::vector<std::string> kClusterState = {
-  "ClUSTER_STARTING",           // Initialization state when the cluster is just started.
+  "CLUSTER_STARTING",           // Initialization state when the cluster is just started.
   "CLUSTER_READY",              // The state after all nodes are successfully registered.
   "CLUSTER_EXIT",               // The state after the cluster exits successfully.
   "NODE_TIMEOUT",               // When a node has a heartbeat timeout

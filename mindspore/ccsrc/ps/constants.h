@@ -258,6 +258,10 @@ using BarrierBeforeScaleIn = std::function<void(void)>;
 using HandlerAfterScaleOut = std::function<void(void)>;
 using HandlerAfterScaleIn = std::function<void(void)>;
 
+constexpr char kClusterNotReady[] =
+  "The Scheduler's connections are not equal with total node num, Maybe this is because some server nodes are drop "
+  "out or scale in nodes has not been recycled.";
+constexpr char kJobNotReady[] = "The server's training job is not ready.";
 constexpr char kClusterSafeMode[] = "The cluster is in safemode.";
 constexpr char kJobNotAvailable[] = "The server's training job is disabled or finished.";
 
