@@ -70,7 +70,7 @@ class _SharedQueue(multiprocessing.queues.Queue):
             )
 
     def put(self, data, timeout=None):
-        if isinstance(data, ExceptionHandler):
+        if isinstance(data, ExceptionHandler):  # pylint: disable=too-many-nested-blocks
             super().put(data, timeout=timeout)
         else:
             name_list = []
@@ -79,36 +79,39 @@ class _SharedQueue(multiprocessing.queues.Queue):
             if not isinstance(data, tuple) and not isinstance(data, np.ndarray):
                 raise TypeError("return value of user defined python function in GeneratorDataset or"
                                 " map should be numpy array or tuple of numpy array.")
-            for r in data:
-                # the map:pyfunc is a yield generator which can't be serialize
-                if isinstance(r, types.GeneratorType):
-                    raise TypeError("Can not pickle {} object, please verify pyfunc return with numpy array"
-                                    .format(type(r)))
-                if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
-                        and start_bytes + r.nbytes < self.seg_size):
-                    # need to convert start_bytes to offset in array
-                    start_offset = start_bytes
-                    dest = np.ndarray(r.shape, r.dtype, buffer=self.shm_list[self.seg_pos].get_obj(),
-                                      offset=start_offset)
-                    np.copyto(dest, r)
-                    byte = r.nbytes
-                    byte = 8 * ((byte + 7) // 8)
-                    start_bytes += byte
-                    name_list.append((self.data_shared, self.seg_pos, byte, r.dtype, r.shape))
-                    count += 1
-                else:
-                    if isinstance(r, np.ndarray) and r.size >= self.min_shared_mem:
-                        # Only print out error the first time it happens
-                        if self.print_error:
-                            logger.warning(
-                                "Using shared memory queue, but rowsize is larger than allocated memory "
-                                + "max_rowsize "
-                                + str(self.seg_size)
-                                + " current rowsize "
-                                + str(start_bytes + r.nbytes)
-                            )
-                            self.print_error = False
-                    name_list.append((self.data_immediate, r))
+            if isinstance(data, np.ndarray):
+                name_list.append((self.data_immediate, np.array(data)))
+            else:
+                for r in data:
+                    # the map:pyfunc is a yield generator which can't be serialize
+                    if isinstance(r, types.GeneratorType):
+                        raise TypeError("Can not pickle {} object, please verify pyfunc return with numpy array"
+                                        .format(type(r)))
+                    if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
+                            and start_bytes + r.nbytes < self.seg_size):
+                        # need to convert start_bytes to offset in array
+                        start_offset = start_bytes
+                        dest = np.ndarray(r.shape, r.dtype, buffer=self.shm_list[self.seg_pos].get_obj(),
+                                          offset=start_offset)
+                        np.copyto(dest, r)
+                        byte = r.nbytes
+                        byte = 8 * ((byte + 7) // 8)
+                        start_bytes += byte
+                        name_list.append((self.data_shared, self.seg_pos, byte, r.dtype, r.shape))
+                        count += 1
+                    else:
+                        if isinstance(r, np.ndarray) and r.size >= self.min_shared_mem:
+                            # Only print out error the first time it happens
+                            if self.print_error:
+                                logger.warning(
+                                    "Using shared memory queue, but rowsize is larger than allocated memory "
+                                    + "max_rowsize "
+                                    + str(self.seg_size)
+                                    + " current rowsize "
+                                    + str(start_bytes + r.nbytes)
+                                )
+                                self.print_error = False
+                        name_list.append((self.data_immediate, r))
             super().put(name_list, timeout=timeout)
             # note above could generate a queue full exception.  It will be handled by teh caller
             # only increment seg_pos after successfully adding to metadata queue

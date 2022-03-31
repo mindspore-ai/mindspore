@@ -137,6 +137,11 @@ def _convert_row(row):
     if isinstance(row, dict):
         raise ValueError("Return value in user defined python function should be numpy array, but got dict.")
 
+    # just return a numpy value from generator
+    if isinstance(row, np.ndarray):
+        value.append(np.array(row))
+        return tuple(value,)
+
     # convert each column in row into numpy array
     for x in row:
         if isinstance(x, bytes):         # got image bytes from a file
