@@ -64,31 +64,31 @@ def create_symbol_tree():
     stree.set_init_func_ast(ast_init_func)
     stree.set_ast_root(ast_construct_func)
     stree.append_input_node("x")
-    conv_node = Node.create_call_cell(net.conv, ast_conv, [ScopedValue.create_naming_value("x")],
-                                      ScopedValue.create_naming_value("conv", "self"),
-                                      [ScopedValue.create_naming_value("x")],
-                                      {},
-                                      "conv")
+    conv_node = Node.create_call_buildin_op(net.conv, ast_conv, [ScopedValue.create_naming_value("x")],
+                                            ScopedValue.create_naming_value("conv", "self"),
+                                            [ScopedValue.create_naming_value("x")],
+                                            {},
+                                            "conv")
     stree.append_origin_field(conv_node)
-    bn_node = Node.create_call_cell(net.bn, ast_bn, [ScopedValue.create_naming_value("x")],
-                                    ScopedValue.create_naming_value("bn", "self"),
-                                    [ScopedValue.create_naming_value("x")], {},
-                                    "bn")
+    bn_node = Node.create_call_buildin_op(net.bn, ast_bn, [ScopedValue.create_naming_value("x")],
+                                          ScopedValue.create_naming_value("bn", "self"),
+                                          [ScopedValue.create_naming_value("x")], {},
+                                          "bn")
     bn_node = stree.append_origin_field(bn_node)
-    relu1_node = Node.create_call_cell(net.relu1, ast_relu1, [ScopedValue.create_naming_value("x")],
-                                       ScopedValue.create_naming_value("relu1", "self"),
-                                       [ScopedValue.create_naming_value("x")],
-                                       {}, "relu1")
+    relu1_node = Node.create_call_buildin_op(net.relu1, ast_relu1, [ScopedValue.create_naming_value("x")],
+                                             ScopedValue.create_naming_value("relu1", "self"),
+                                             [ScopedValue.create_naming_value("x")],
+                                             {}, "relu1")
     relu1_node = stree.append_origin_field(relu1_node)
-    relu2_node = Node.create_call_cell(net.relu2, ast_relu2, [ScopedValue.create_naming_value("x")],
-                                       ScopedValue.create_naming_value("relu2", "self"),
-                                       [ScopedValue.create_naming_value("x")],
-                                       {}, "relu2")
+    relu2_node = Node.create_call_buildin_op(net.relu2, ast_relu2, [ScopedValue.create_naming_value("x")],
+                                             ScopedValue.create_naming_value("relu2", "self"),
+                                             [ScopedValue.create_naming_value("x")],
+                                             {}, "relu2")
     relu2_node = stree.append_origin_field(relu2_node)
-    relu3_node = Node.create_call_cell(net.relu3, ast_relu3, [ScopedValue.create_naming_value("x")],
-                                       ScopedValue.create_naming_value("relu3", "self"),
-                                       [ScopedValue.create_naming_value("x")],
-                                       {}, "relu3")
+    relu3_node = Node.create_call_buildin_op(net.relu3, ast_relu3, [ScopedValue.create_naming_value("x")],
+                                             ScopedValue.create_naming_value("relu3", "self"),
+                                             [ScopedValue.create_naming_value("x")],
+                                             {}, "relu3")
     stree.append_origin_field(relu3_node)
     node_return = Node.create_output_node(ast_return, ["x"])
     stree.append_origin_field(node_return)
@@ -113,9 +113,10 @@ def test_insert_node():
     assert len(relu2.get_normalized_args().values()) == 1
     assert relu1.get_targets()[0] == list(relu2.get_normalized_args().values())[0]
     input1 = 1
-    node = Node.create_call_cell(Add(), None, ['x'], 'new_conv',
-                                 [ScopedValue.create_naming_value('x'), ScopedValue.create_variable_value(input1)], {},
-                                 'new_conv')
+    node = Node.create_call_buildin_op(Add(), None, ['x'], 'new_conv',
+                                       [ScopedValue.create_naming_value('x'),
+                                        ScopedValue.create_variable_value(input1)], {},
+                                       'new_conv')
     position = stree.before(relu2)
     node = stree.insert_node(position, node)
     # check nodes size

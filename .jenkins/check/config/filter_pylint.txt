@@ -40,6 +40,7 @@
 "mindspore/mindspore/python/mindspore/log.py"                                                                            "protected-access"
 "mindspore/mindspore/python/mindspore/rewrite/api/node.py"                                                               "protected-access"
 "mindspore/mindspore/python/mindspore/rewrite/node.py"                                                                   "protected-access"
+"mindspore/mindspore/python/mindspore/rewrite/symbol_tree.py"                                                            "protected-access"
 "mindspore/mindspore/python/mindspore/rewrite/parser_register.py"                                                        "protected-access"
 "mindspore/mindspore/python/mindspore/rewrite/api/pattern_engine.py"                                                     "protected-access"
 "mindspore/mindspore/python/mindspore/rewrite/symbol_tree.py"                                                            "inconsistent-return-statements"

@@ -24,23 +24,7 @@ from mindspore import log as logger
 from ..symbol_tree import SymbolTree
 from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
-
-
-class ClassFinder(ast.NodeVisitor):
-    """Find all ast.ClassDef in input ast node."""
-
-    def __init__(self):
-        """Keep all found ast.ClassDef in self._classes"""
-        self._classes: [ast.ClassDef] = []
-
-    def visit_ClassDef(self, node: ast.ClassDef) -> Any:
-        """Iterate over all nodes and save ast.ClassDef nodes."""
-        self._classes.append(node)
-
-    def find_all_classes(self, node: ast.AST) -> [ast.ClassDef]:
-        """Interface of ClassFinder."""
-        self.visit(node)
-        return self._classes
+from ..ast_helpers import AstFinder
 
 
 class ModuleParser(Parser):
@@ -53,8 +37,8 @@ class ModuleParser(Parser):
     @staticmethod
     def _find_class(ast_node: ast.Module) -> ast.ClassDef:
         """Find all ast.ClassDef in ast.Module, only support one ast.ClassDef in ast.Module now."""
-        visitor = ClassFinder()
-        classes = visitor.find_all_classes(ast_node)
+        visitor = AstFinder(ast_node)
+        classes = visitor.find_all(ast.ClassDef)
         if not classes:
             raise RuntimeError("No class in module")
         if len(classes) > 1:

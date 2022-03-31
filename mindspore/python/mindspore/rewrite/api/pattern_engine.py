@@ -359,8 +359,8 @@ class PatternEngine:
         """
 
         # Don't iterate into subgraph node, pattern should not be matched across sub-tree
-        if node.get_node_type() != NodeType.CallCell and node.get_node_type() != NodeType.Input:
-            logger.debug("Pattern match failed: node(%s) is not a cell", str(node))
+        if node.get_node_type() not in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Input):
+            logger.debug("Pattern match failed: node(%s) is not a CallCell, CallPrimitive or Input", str(node))
             return False, OrderedDict()
         if not pattern.match(node):
             logger.debug("Pattern match failed: node(%s)'s type is %s while pattern type is %s", str(node),

@@ -83,7 +83,7 @@ def test_one_to_one_pattern():
             super().__init__([BatchNorm2d], BnReplacement())
 
     net = ChainNetwork()
-    stree = SymbolTree(net)
+    stree = SymbolTree.create(net)
     conv = stree.get_node("conv")
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
@@ -158,7 +158,7 @@ def test_one_to_multi_chain_pattern():
             super().__init__([BatchNorm2d], BnReplacement())
 
     net = ChainNetwork()
-    stree = SymbolTree(net)
+    stree = SymbolTree.create(net)
     conv = stree.get_node("conv")
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
@@ -281,7 +281,7 @@ def test_tree_pattern():
             super().__init__([Add, ReLU], AddReluReplacement())
 
     net = TreeNetwork()
-    stree = SymbolTree(net)
+    stree = SymbolTree.create(net)
     conv1 = stree.get_node("conv1")
     conv2 = stree.get_node("conv2")
     add = stree.get_node("add")
@@ -468,7 +468,7 @@ def test_multi_input_to_multi_pattern_tree_pattern():
     """
 
     net = TreeNetwork2()
-    stree = SymbolTree(net)
+    stree = SymbolTree.create(net)
     conv1 = stree.get_node("conv1")
     conv2 = stree.get_node("conv2")
     add1 = stree.get_node("add1")
@@ -585,7 +585,7 @@ def test_one_input_to_multi_pattern_tree_pattern():
     """
 
     net = TreeNetwork3()
-    stree = SymbolTree(net)
+    stree = SymbolTree.create(net)
     conv1 = stree.get_node("conv1")
     conv2 = stree.get_node("conv2")
     add1 = stree.get_node("add1")

@@ -49,12 +49,11 @@ class AstModifier(ast.NodeTransformer):
         Args:
             ast_father (ast.AST): Where new ast node to be inserted into.
             ast_son (ast.AST): An ast node to be inserted in.
-            index_ast (Optional[ast.AST]): An ast_node indicates a position in 'ast_father' where new ast node to be
-                                           inserted into. Default is None which means append new ast node to body of
-                                           'ast_father'.
+            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_father' where new ast node to be
+                inserted into. Default is None which means append new ast node to body of 'ast_father'.
             insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast node to be
-                                  inserted into. Only valid when 'index_ast' is not None. Default is True which means
-                                  inserting new ast node before 'index_ast'.
+                inserted into. Only valid when 'index_ast' is not None. Default is True which means inserting new ast
+                node before 'index_ast'.
 
         Returns:
             An instance of ast.AST which has been inserted into 'ast_father'.
@@ -97,12 +96,11 @@ class AstModifier(ast.NodeTransformer):
             expr (ScopedValue): Func of ast.Call which is value of new ast.Assign.
             args ([ScopedValue]): Args of ast.Call which is value of new ast.Assign.
             kwargs ({str, ScopedValue}): Kwargs of ast.Call which is value of new ast.Assign.
-            index_ast (Optional[ast.AST]): An ast_node indicates a position in 'ast_func' where new ast.Assign node to
-                                           be inserted into. Default is None which means append new ast.Assign into
-                                           'ast_func'.
+            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_func' where new ast.Assign node to
+                be inserted into. Default is None which means append new ast.Assign into 'ast_func'.
             insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast.Assign node to be
-                                  inserted into. Only valid when 'index_ast' is not None. Default is True which means
-                                  inserting new ast.Assign before 'index_ast'.
+                inserted into. Only valid when 'index_ast' is not None. Default is True which means inserting new
+                ast.Assign before 'index_ast'.
 
         Returns:
             An instance of ast.Assign which has been inserted into 'ast_func'.
@@ -122,12 +120,11 @@ class AstModifier(ast.NodeTransformer):
         Args:
             ast_func (ast.FunctionDef): Where new ast.Assign to be inserted into.
             ast_assign (ast.Assign): An instance of ast.Assign to be inserted in.
-            index_ast (Optional[ast.AST]): An ast_node indicates a position in 'ast_func' where new ast.Assign node to
-                                           be inserted into. Default is None which means append new ast.Assign to
-                                           'ast_func'.
+            index_ast ([ast.AST, optional]): An ast_node indicates a position in 'ast_func' where new ast.Assign node to
+                be inserted into. Default is None which means append new ast.Assign to 'ast_func'.
             insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast.Assign node to be
-                                  inserted into. Only valid when 'index_ast' is not None. Default is True which means
-                                  inserting new ast.Assign before 'index_ast'.
+                inserted into. Only valid when 'index_ast' is not None. Default is True which means inserting new
+                ast.Assign before 'index_ast'.
 
         Returns:
             An instance of ast.Assign which has been inserted into 'ast_func'.
@@ -324,17 +321,17 @@ class AstModifier(ast.NodeTransformer):
         Raises:
             TypeError: Input src_argument is not a ScopedValue
             RuntimeError: If 'dst_ast' is an instance of ast.Constant but type of 'src_argument' is not
-                          ValueType.IntValue, ValueType.FloatValue or ValueType.StringValue.
+                ValueType.IntValue, ValueType.FloatValue or ValueType.StringValue.
             RuntimeError: If 'dst_ast' is an instance of ast.Name or ast.Attribute but type of 'src_argument' is not
-                          ValueType.NamingValue.
+                ValueType.NamingValue.
             RuntimeError: When 'dst_ast' is an instance of ast.Name, scope of 'src_argument' is not empty.
             RuntimeError: When 'dst_ast' is an instance of ast.Attribute, value of 'dst_ast' is not an instance of
-                          ast.Name.
+                ast.Name.
             RuntimeError: If 'dst_ast' is an instance of ast.Tuple but type of 'src_argument' is not
-                          ValueType.TupleValue.
+                ValueType.TupleValue.
             RuntimeError: If 'dst_ast' is an instance of ast.Constant, ast.Name, ast.Attribute or ast.Tuple.
             RuntimeError: When 'dst_ast' is an instance of ast.Tuple, length of elts of 'dst_ast' is not equal to length
-                          of value of 'src_argument'.
+                of value of 'src_argument'.
         """
         if not isinstance(src_argument, ScopedValue):
             raise TypeError("src_argument should be ScopedValue, got: ", type(src_argument))
