@@ -16,6 +16,7 @@
 
 #include "frontend/parallel/ops_info/strided_slice_info.h"
 
+#include <bitset>
 #include <algorithm>
 #include <memory>
 #include <utility>
@@ -51,6 +52,70 @@ Status StridedSliceInfo::GetMask(const std::string &mask_name, int64_t *mask_val
   return SUCCESS;
 }
 
+constexpr auto kStridedSliceMaxDims = 8;
+static std::vector<bool> Dec2Bin(int64_t mask) {
+  auto mask_str = std::bitset<kStridedSliceMaxDims>(mask).to_string();
+  int64_t dim_idx = 0;
+  std::vector<bool> result(kStridedSliceMaxDims, false);
+  for (int64_t i = mask_str.size() - 1; i >= 0; --i) {
+    if (mask_str[i] == '1') {
+      result[dim_idx] = true;
+    }
+    dim_idx++;
+  }
+  return result;
+}
+
+void StridedSliceInfo::ComputeBeginMask(int64_t begin_mask_) {
+  auto begin_mask = Dec2Bin(begin_mask_);
+  for (size_t i = 0; i < begin_mask.size(); ++i) {
+    if (i < kStridedSliceMaxDims && begin_mask[i]) {
+      begin_[i] = strides_[i] < 0 ? SizeToLong(inputs_shape_[0][i]) - 1 : 0;
+    }
+  }
+}
+
+void StridedSliceInfo::ComputeEndMask(int64_t end_mask_) {
+  auto end_mask = Dec2Bin(end_mask_);
+  for (size_t j = 0; j < end_mask.size(); ++j) {
+    if (j < kStridedSliceMaxDims && end_mask[j]) {
+      end_[j] = strides_[j] < 0 ? -1 : SizeToLong(inputs_shape_[0][j]);
+    }
+  }
+}
+
+void StridedSliceInfo::ComputeEllipsisMask(int64_t ellipsis_mask_) {
+  auto ellipsis_mask = Dec2Bin(ellipsis_mask_);
+  for (size_t k = 0; k < ellipsis_mask.size(); ++k) {
+    if (k < kStridedSliceMaxDims && ellipsis_mask[k]) {
+      begin_[k] = 0;
+      end_[k] = SizeToLong(inputs_shape_[0][k]);
+      strides_[k] = 1;
+    }
+  }
+}
+
+void StridedSliceInfo::ComputeNewAxisMask(int64_t new_axis_mask_) {
+  auto new_axis_mask = Dec2Bin(new_axis_mask_);
+  for (size_t l = 0; l < new_axis_mask.size(); ++l) {
+    if (l < kStridedSliceMaxDims && new_axis_mask[l]) {
+      begin_[l] = 0;
+      end_[l] = SizeToLong(inputs_shape_[0][l]);
+      strides_[l] = 1;
+    }
+  }
+}
+
+void StridedSliceInfo::ComputShrinkAxisMask(int64_t shrink_axis_mask_) {
+  auto shrink_axis_mask = Dec2Bin(shrink_axis_mask_);
+  for (size_t m = 0; m < shrink_axis_mask.size(); ++m) {
+    if (m < kStridedSliceMaxDims && shrink_axis_mask[m]) {
+      end_[m] = end_[m] > begin_[m] ? begin_[m] + 1 : begin_[m] - 1;
+      strides_[m] = end_[m] > begin_[m] ? 1 : -1;
+    }
+  }
+}
+
 Status StridedSliceInfo::GetAttrs() {
   if (attrs_.size() < STRIDED_SLICE_ATTRS_SIZE) {
     MS_LOG(ERROR) << name_ << ": The size of attrs small than " << STRIDED_SLICE_ATTRS_SIZE;
@@ -62,7 +127,6 @@ Status StridedSliceInfo::GetAttrs() {
       (GetMask(SHRINK_AXIS_MASK, &shrink_axis_mask_) != SUCCESS)) {
     return FAILED;
   }
-  has_mask_ = ((ellipsis_mask_ != 0) || (new_axis_mask_ != 0) || (shrink_axis_mask_ != 0));
 
   if (input_value_.size() != STRIDED_SLICE_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": The size of input value must be " << STRIDED_SLICE_INPUTS_SIZE << ", but got "
@@ -75,7 +139,11 @@ Status StridedSliceInfo::GetAttrs() {
       (TransValueSequeueToVector(input_value_[STRIDED_SLICE_STRIDES_INDEX], &strides_) != SUCCESS)) {
     return FAILED;
   }
-
+  ComputeBeginMask(begin_mask_);
+  ComputeEndMask(end_mask_);
+  ComputeEllipsisMask(ellipsis_mask_);
+  ComputeNewAxisMask(new_axis_mask_);
+  ComputShrinkAxisMask(shrink_axis_mask_);
   return SUCCESS;
 }
 
@@ -93,12 +161,6 @@ Status StridedSliceInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   Dimensions strategy_value = stra[0];
-  bool has_split = std::any_of(strategy_value.begin(), strategy_value.end(), [](int64_t v) { return v > 1; });
-  if (has_split && has_mask_) {
-    MS_LOG(ERROR) << name_ << ": When there is a mask, the input is not supported to be split";
-    return FAILED;
-  }
-
   if (strategy_value.size() < strides_.size()) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be larger or equal to the size of strides";
     return FAILED;
@@ -153,6 +215,8 @@ Status StridedSliceInfo::InferTensorMap() {
   }
 
   inputs_tensor_map_.push_back(tensor_map);
+  if (new_axis_mask_ != 0) tensor_map.insert(tensor_map.begin() + (new_axis_mask_ - 1), -1);
+  if (shrink_axis_mask_ != 0) tensor_map.erase(tensor_map.begin() + (shrink_axis_mask_ - 1));
   outputs_tensor_map_.push_back(tensor_map);
   return SUCCESS;
 }
@@ -196,16 +260,10 @@ Status StridedSliceInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 
 std::vector<StrategyPtr> StridedSliceInfo::GenerateOpStrategies(int64_t stage_id) {
   Shape input_split(inputs_shape_[0].size(), 1);
-  if (has_mask_) {
-    for (size_t i = 0; i < inputs_shape_[0].size(); ++i) {
+  for (size_t i = 0; i < begin_.size(); ++i) {
+    bool no_fully_fetch = ((begin_[i] != 0) || (end_[i] < inputs_shape_[0][i]));
+    if (no_fully_fetch || (strides_[i] != 1)) {
       input_split[i] = 0;
-    }
-  } else {
-    for (size_t i = 0; i < begin_.size(); ++i) {
-      bool no_fully_fetch = ((begin_[i] != 0) || (end_[i] < inputs_shape_[0][i]));
-      if (no_fully_fetch || (strides_[i] != 1)) {
-        input_split[i] = 0;
-      }
     }
   }
   Shapes splittable_inputs = {input_split};
