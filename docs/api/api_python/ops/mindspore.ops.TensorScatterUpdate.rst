@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.TensorScatterUpdate
 
-    根据指定的更新值和输入索引，通过更新操作更新输入Tensor的值。此操作几乎等同于使用ScatterNd，只是更新操作应用到 `input_x` Tensor而不是0。
+    根据指定的更新值和输入索引，通过更新操作更新输入Tensor的值。此操作几乎等同于使用 :class:`mindspore.ops.ScatterNd` ，只是更新操作应用到 `input_x` Tensor而不是0。
 
     `indices` 的rank至少要为2，最后一个轴表示每个索引向量的深度。对于每个索引向量， `update` 中必须有相应的值。如果每个索引Tensor的深度与 `input_x` 的rank匹配，则每个索引向量对应于 `input_x` 中的Scalar，并且每次更新都会更新一个Scalar。如果每个索引Tensor的深度小于 `input_x` 的rank，则每个索引向量对应于 `input_x` 中的切片，并且每次更新都会更新一个切片。
 
@@ -11,7 +11,7 @@
 
     **输入：**
 
-    - **input_x** (Tensor) - TensorScatterUpdate的输入，任意维度的Tensor。其数据类型为Number。input_x的维度必须不小于indices.shape[-1]。
+    - **input_x** (Tensor) - TensorScatterUpdate的输入，任意维度的Tensor。其数据类型为数值型。 `input_x` 的维度必须不小于indices.shape[-1]。
     - **indices** (Tensor) - 输入Tensor的索引，数据类型为int32或int64。其rank必须至少为2。
     - **update** (Tensor) - 指定与 `input_x` 做更新操作的Tensor，其数据类型与输入相同。update.shape应等于indices.shape[:-1] + input_x.shape[indices.shape[-1]:]。
 

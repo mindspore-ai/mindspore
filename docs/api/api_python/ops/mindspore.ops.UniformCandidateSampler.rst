@@ -3,14 +3,14 @@
 
 .. py:class:: mindspore.ops.UniformCandidateSampler(num_true, num_sampled, unique, range_max, seed=0, remove_accidental_hits=False)
 
-    使用均匀分布对一组类进行采样。
+    使用均匀分布对一组类别进行采样。
     
-    此函数在均匀分布的基础上从[0, range_max-1]中采样一组类（sampled_candidates）。如果unique=True，则候选采样没有重复；如果unique=False，则有重复。
+    此函数使用均匀分布从[0, range_max-1]中采样一组类（sampled_candidates）。如果 `unique` 为True，则候选采样没有重复；如果 `unique` 为False，则有重复。
 
     **参数：**
 
     - **num_true** (int) - 每个训练样本的目标类数。
-    - **num_sampled** (int) - 随机采样的类数。sampled_candidates的shape将为num_sampled。如果unique=True，则num_sampled必须小于或等于range_max。
+    - **num_sampled** (int) - 随机采样的类数。sampled_candidates的shape将为 `num_sampled` 。如果`unique` 为True，则 `num_sampled` 必须小于或等于 `range_max` 。
     - **unique** (bool) - 表示一个batch中的所有采样类是否唯一。
     - **range_max** (int) - 可能的类数，该值必须是非负的。
     - **seed** (int) - 随机种子，该值必须是非负的。如果seed的值为0，则seed的值将被随机生成的值替换。默认值：0。
