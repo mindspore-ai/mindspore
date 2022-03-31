@@ -887,10 +887,22 @@ class Cell(Cell_):
             inputs (tuple): Inputs of the Cell object.
 
         Examples:
-            >>> n = Net()
-            >>> input_dyn = Tensor(shape = [3, None], dtype=type)
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import nn, Tensor, context
+            >>>
+            >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+            >>> class reluNet(nn.Cell):
+            >>>     def __init__(self):
+            >>>         super(reluNet, self).__init__()
+            >>>         self.relu = nn.ReLU()
+            >>>     def construct(self, x):
+            >>>         return self.relu(x)
+            >>>
+            >>> net = reluNet()
+            >>> input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
             >>> net.set_inputs(input_dyn)
-            >>> input1 = Tensor(np.random.random([3, 10]), dtype=type)
+            >>> input1 = Tensor(np.random.random([3, 10]), dtype=ms.float32)
             >>> output = net(input1)
 
         NOTE:
