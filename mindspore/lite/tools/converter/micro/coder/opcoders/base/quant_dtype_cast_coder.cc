@@ -58,12 +58,8 @@ int QuantDTypeCastCoder::DoCode(CoderContext *const context) {
     code.CodeFunction("DoDequantizeInt8ToFp32", input_tensor_, output_tensor_, quant_arg.scale, quant_arg.zeroPoint,
                       num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeFloat32 && dst_dtype == TypeId::kNumberTypeInt8) {
-    bool from_uint8_src = false;
-    if (quant_arg.dstDtype == TypeId::kNumberTypeUInt8) {
-      from_uint8_src = true;
-    }
     code.CodeFunction("DoQuantizeFp32ToInt8", input_tensor_, output_tensor_, quant_arg.scale, quant_arg.zeroPoint,
-                      num_unit_thread, from_uint8_src);
+                      num_unit_thread, static_cast<int32_t>(INT8_MIN), static_cast<int32_t>(INT8_MAX));
   } else if (src_dtype == TypeId::kNumberTypeInt8 && dst_dtype == TypeId::kNumberTypeUInt8) {
     code.CodeFunction("Int8ToUInt8", input_tensor_, output_tensor_, num_unit_thread);
   } else if (src_dtype == TypeId::kNumberTypeUInt8 && dst_dtype == TypeId::kNumberTypeFloat32) {

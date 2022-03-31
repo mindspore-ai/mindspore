@@ -97,7 +97,7 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
 
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
   ofs << "void MSModelDestroy(MSModelHandle *model) {\n"
-         "  if (model) {\n"
+         "  if (*model) {\n"
          "    MicroModel *micro_model = (MicroModel *)*model;\n"
          "    if (micro_model->runtime_buffer) {\n"
          "      free(micro_model->runtime_buffer);\n"

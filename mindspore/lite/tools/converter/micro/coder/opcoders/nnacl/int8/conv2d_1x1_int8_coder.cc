@@ -67,13 +67,20 @@ int Conv2D1x1Int8Coder::DoCode(CoderContext *const context) {
             "MatmulInt8Opt.S",
           });
 
+  if (target_ == kARM64) {
+    Collect(context, {}, {},
+            {
+              "MatmulDpInt8Opt.S",
+            });
+  }
+
   nnacl::NNaclInt8Serializer code;
 
   code.CodeStruct("conv_param", *conv_param_);
   code.CodeStruct("matmul_param", *matmul_param_);
 
   code.CodeBaseStruct<false>("Conv1x1Args", kRunArgs, input_sum_, filter_zp_ptr_, left_shift_, right_shift_,
-                             multiplier_, packed_weight_, bias_data_, packed_input_, nullptr, nullptr, 0, 0, 0, 0,
+                             multiplier_, packed_weight_, bias_data_, packed_input_, input_ptr_, nullptr, 0, 0, 0, 0,
                              "&conv_param", "&matmul_param", matmul_func_, pre_trans_input_, "GetSupportOptFlag()",
                              filter_peroc_, false);
 
