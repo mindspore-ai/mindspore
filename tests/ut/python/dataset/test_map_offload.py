@@ -22,6 +22,7 @@ import mindspore.dataset.transforms.c_transforms as C2
 
 
 DATA_DIR = "../data/dataset/testPK/data"
+BATCH_SIZE = 2
 
 
 def test_offload():
@@ -34,17 +35,18 @@ def test_offload():
     dataset_0 = ds.ImageFolderDataset(DATA_DIR)
     dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
     dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
-    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+    dataset_0 = dataset_0.batch(BATCH_SIZE, drop_remainder=True)
 
     # Dataset with offload not activated.
     dataset_1 = ds.ImageFolderDataset(DATA_DIR)
     dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
-    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+    dataset_1 = dataset_1.batch(BATCH_SIZE, drop_remainder=True)
 
     for (img_0, _), (img_1, _) in zip(dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True),
                                       dataset_1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(img_0, img_1)
+        break
 
 
 def test_auto_offload():
@@ -61,16 +63,17 @@ def test_auto_offload():
     # Dataset with offload deactivated
     dataset_auto_disabled = ds.ImageFolderDataset(DATA_DIR)
     dataset_auto_disabled = dataset_auto_disabled.map(operations=trans, input_columns="image", offload=False)
-    dataset_auto_disabled = dataset_auto_disabled.batch(8, drop_remainder=True)
+    dataset_auto_disabled = dataset_auto_disabled.batch(BATCH_SIZE, drop_remainder=True)
 
     # Dataset with config.auto_offload activated
     dataset_auto_enabled = ds.ImageFolderDataset(DATA_DIR)
     dataset_auto_enabled = dataset_auto_enabled.map(operations=trans, input_columns="image")
-    dataset_auto_enabled = dataset_auto_enabled.batch(8, drop_remainder=True)
+    dataset_auto_enabled = dataset_auto_enabled.batch(BATCH_SIZE, drop_remainder=True)
 
     for (img_0, _), (img_1, _) in zip(dataset_auto_disabled.create_tuple_iterator(num_epochs=1, output_numpy=True),
                                       dataset_auto_enabled.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(img_0, img_1)
+        break
 
     # Need to turn off here or subsequent test cases will fail.
     ds.config.set_auto_offload(False)
@@ -86,7 +89,7 @@ def test_offload_column_validation():
     dataset = dataset.map(operations=[C.Decode()], input_columns="image")
     # Use invalid input column name
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="fake_column", offload=True)
-    dataset = dataset.batch(8, drop_remainder=True)
+    dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
     error_msg = "The following input column(s) for an offloaded map operation do not exist: [\'fake_column\']"
     with pytest.raises(RuntimeError) as excinfo:
@@ -112,7 +115,7 @@ def test_offload_multi_column():
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image1")
     dataset = dataset.map(operations=[C.Decode()], input_columns="image2")
     dataset = dataset.map(operations=[C.HWC2CHW()], input_columns="image2")
-    dataset = dataset.batch(8, drop_remainder=True)
+    dataset = dataset.batch(BATCH_SIZE, drop_remainder=True)
 
     dataset_offload = ds.ImageFolderDataset(DATA_DIR)
     dataset_offload = dataset_offload.map(operations=copy_column, input_columns=["image", "label"],
@@ -122,13 +125,14 @@ def test_offload_multi_column():
     dataset_offload = dataset_offload.map(operations=[C.HWC2CHW()], input_columns="image1", offload=True)
     dataset_offload = dataset_offload.map(operations=[C.Decode()], input_columns="image2")
     dataset_offload = dataset_offload.map(operations=[C.HWC2CHW()], input_columns="image2", offload=True)
-    dataset_offload = dataset_offload.batch(8, drop_remainder=True)
+    dataset_offload = dataset_offload.batch(BATCH_SIZE, drop_remainder=True)
 
     for (img1, img2, _), (img1_offload, img2_offload, _) in \
         zip(dataset.create_tuple_iterator(num_epochs=1, output_numpy=True),
                 dataset_offload.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(img1, img1_offload)
         np.testing.assert_array_equal(img2, img2_offload)
+        break
 
 
 def test_offload_column_mapping():
@@ -163,13 +167,13 @@ def test_offload_concat_dataset_1():
     dataset_0 = ds.ImageFolderDataset(DATA_DIR)
     dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
     dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
-    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+    dataset_0 = dataset_0.batch(BATCH_SIZE, drop_remainder=True)
 
     # Dataset with offload not activated.
     dataset_1 = ds.ImageFolderDataset(DATA_DIR)
     dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
-    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+    dataset_1 = dataset_1.batch(BATCH_SIZE, drop_remainder=True)
 
     dataset_concat = dataset_0 + dataset_1
 
@@ -196,7 +200,7 @@ def test_offload_concat_dataset_2():
     dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
 
     dataset_concat = dataset_0 + dataset_1
-    dataset_concat = dataset_concat.batch(8, drop_remainder=True)
+    dataset_concat = dataset_concat.batch(BATCH_SIZE, drop_remainder=True)
 
     error_msg = "Offload module currently does not support concatenated or zipped datasets."
     with pytest.raises(RuntimeError, match=error_msg):
@@ -218,18 +222,19 @@ def test_offload_normalize_op():
     dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
     dataset_0 = dataset_0.map(operations=[C.Normalize(mean=mean, std=std)], input_columns="image", offload=True)
     dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
-    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+    dataset_0 = dataset_0.batch(BATCH_SIZE, drop_remainder=True)
 
     # Dataset with offload not activated.
     dataset_1 = ds.ImageFolderDataset(DATA_DIR)
     dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.Normalize(mean=mean, std=std)], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
-    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+    dataset_1 = dataset_1.batch(BATCH_SIZE, drop_remainder=True)
 
     for (img_0, _), (img_1, _) in zip(dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True),
                                       dataset_1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_almost_equal(img_0, img_1, decimal=6)
+        break
 
 
 def test_offload_rescale_op():
@@ -246,18 +251,19 @@ def test_offload_rescale_op():
     dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
     dataset_0 = dataset_0.map(operations=[C.Rescale(rescale, shift)], input_columns="image", offload=True)
     dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
-    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+    dataset_0 = dataset_0.batch(BATCH_SIZE, drop_remainder=True)
 
     # Dataset with offload not activated.
     dataset_1 = ds.ImageFolderDataset(DATA_DIR)
     dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.Rescale(rescale, shift)], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
-    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+    dataset_1 = dataset_1.batch(BATCH_SIZE, drop_remainder=True)
 
     for (img_0, _), (img_1, _) in zip(dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True),
                                       dataset_1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_almost_equal(img_0, img_1, decimal=6)
+        break
 
 
 def test_offload_typecast_op():
@@ -351,18 +357,19 @@ def test_offload_random_sharpness_op():
     dataset_0 = dataset_0.map(operations=[C.Decode()], input_columns="image")
     dataset_0 = dataset_0.map(operations=[C.RandomSharpness(degrees=[1.0, 1.0])], input_columns="image", offload=True)
     dataset_0 = dataset_0.map(operations=[C.HWC2CHW()], input_columns="image", offload=True)
-    dataset_0 = dataset_0.batch(8, drop_remainder=True)
+    dataset_0 = dataset_0.batch(BATCH_SIZE, drop_remainder=True)
 
     # Dataset with offload not activated.
     dataset_1 = ds.ImageFolderDataset(DATA_DIR)
     dataset_1 = dataset_1.map(operations=[C.Decode()], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.RandomSharpness(degrees=[1.0, 1.0])], input_columns="image")
     dataset_1 = dataset_1.map(operations=[C.HWC2CHW()], input_columns="image")
-    dataset_1 = dataset_1.batch(8, drop_remainder=True)
+    dataset_1 = dataset_1.batch(BATCH_SIZE, drop_remainder=True)
 
     for (img_0, _), (img_1, _) in zip(dataset_0.create_tuple_iterator(num_epochs=1, output_numpy=True),
                                       dataset_1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_almost_equal(img_0, img_1, decimal=6)
+        break
 
 
 if __name__ == "__main__":
