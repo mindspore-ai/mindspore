@@ -130,9 +130,9 @@ def _reset_training_dataset(step):
 class Shuffle(str, Enum):
     """Specify the shuffle mode.
 
-    - GLOBAL: Shuffle both the files and samples.
-    - FILES: Shuffle files only.
-    - INFILE: Shuffle data within each file.
+    - Shuffle.GLOBAL: Shuffle both the files and samples.
+    - Shuffle.FILES: Shuffle files only.
+    - Shuffle.INFILE: Shuffle data within each file.
     """
     GLOBAL: str = "global"
     FILES: str = "files"
