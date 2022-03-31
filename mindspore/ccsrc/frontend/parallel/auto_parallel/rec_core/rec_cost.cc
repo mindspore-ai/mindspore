@@ -117,9 +117,9 @@ double CostRedisWithAdjacentNode(const std::vector<std::pair<std::string, Strate
     }
   }
 
-  if (counter >= 2) {
-    new_redis_cost = tensor_size / 4.0;
-  } else if (counter == 0 || counter == 1) {
+  if (counter >= 1) {
+    new_redis_cost = tensor_size * REDIS_COEF;
+  } else if (counter == 0) {
     new_redis_cost = 0;
   } else {
     MS_LOG(EXCEPTION) << "Failure: CostRedis failed.";
@@ -166,7 +166,7 @@ StrategyRec CostMatMul::GetOptimalStr(const Graph::NodeType &node,
 }
 
 // Get weight for MatMul
-double CostMatMul::GetMinCostIn(const OperatorRec &op) {
+double CostMatMul::GetMaxCostIn(const OperatorRec &op) {
   int64_t edge_i = static_cast<int64_t>(op.arguments[0].tensor_shape.shape_h * op.arguments[0].tensor_str.str_h);
   int64_t edge_j = static_cast<int64_t>(op.arguments[1].tensor_shape.shape_w * op.arguments[1].tensor_str.str_w);
   int64_t edge_k = static_cast<int64_t>(op.arguments[0].tensor_shape.shape_w * op.arguments[0].tensor_str.str_w);
@@ -176,7 +176,7 @@ double CostMatMul::GetMinCostIn(const OperatorRec &op) {
   cost_in.push_back(StrConcatDimJ(edge_i, edge_k));
   cost_in.push_back(StrReduceDimK(edge_i, edge_j));
 
-  return *min_element(cost_in.begin(), cost_in.end());
+  return *max_element(cost_in.begin(), cost_in.end());
 }
 
 // Chose strategy for MatMul

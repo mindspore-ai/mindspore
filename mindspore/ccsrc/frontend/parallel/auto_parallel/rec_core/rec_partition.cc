@@ -35,7 +35,7 @@ double GetWeights(const Graph::NodeType &node) {
     // For MatMul
     auto cost_ptr = std::make_shared<CostMatMul>();
 
-    return cost_ptr->GetMinCostIn(op);
+    return cost_ptr->GetMaxCostIn(op);
   } else if (op.op_type == OperatorType::kRecConvolution) {
     // For Convolution
     auto cost_ptr = std::make_shared<CostConvolution>();
