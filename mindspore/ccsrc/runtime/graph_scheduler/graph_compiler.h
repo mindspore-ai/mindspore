@@ -88,7 +88,7 @@ struct BACKEND_EXPORT GraphCompilerInfo {
   size_t outputs_num_;
   std::string name_;
   bool need_erase_;
-  GraphExecutionStrategy strategy_;
+  mutable GraphExecutionStrategy strategy_;
 };
 
 class GraphCompiler {
