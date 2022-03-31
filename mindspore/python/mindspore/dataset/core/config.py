@@ -94,14 +94,12 @@ def _init_device_info():
 
 def set_seed(seed):
     """
-    If the seed is set, the generated random number will be fixed, this helps to
-    produce deterministic results.
+    Set the seed so the random generated number will be fixed for deterministic results.
 
     Note:
         This set_seed function sets the seed in the Python random library and numpy.random library
         for deterministic Python augmentations using randomness. This set_seed function should
-        be called with every iterator created to reset the random seed. In the pipeline, this
-        does not guarantee deterministic results with num_parallel_workers > 1.
+        be called when iterator is created to reset the random seed.
 
     Args:
         seed(int): Random number seed. It is used to generate deterministic random numbers.
@@ -172,6 +170,7 @@ def set_prefetch_size(size):
 def get_prefetch_size():
     """
     Get the prefetch size as for number of rows.
+    If `set_prefetch_size` is never called before, the default value 16 will be returned.
 
     Returns:
         int, total number of rows to be prefetched.
@@ -212,8 +211,7 @@ def set_num_parallel_workers(num):
 def get_num_parallel_workers():
     """
     Get the global configuration of number of parallel workers.
-    This is the DEFAULT num_parallel_workers value used for each operation, it is not related
-    to AutoNumWorker feature.
+    This is the DEFAULT num_parallel_workers value used for each operation.
 
     Returns:
         int, number of parallel workers to be used as a default for each operation.
@@ -286,6 +284,7 @@ def set_monitor_sampling_interval(interval):
 def get_monitor_sampling_interval():
     """
     Get the global configuration of sampling interval of performance monitor.
+    If `set_monitor_sampling_interval` is never called before, the default value(1000) will be returned.
 
     Returns:
         int, interval (in milliseconds) for performance monitor sampling.
@@ -360,7 +359,7 @@ def get_auto_num_workers():
 
     Examples:
         >>> # Get the global configuration of auto number worker feature.
-        >>> num_workers = ds.config.get_auto_num_workers()
+        >>> flag = ds.config.get_auto_num_workers()
     """
     return _config.get_auto_num_workers()
 
@@ -368,7 +367,6 @@ def get_auto_num_workers():
 def set_callback_timeout(timeout):
     """
     Set the default timeout (in seconds) for DSWaitedCallback.
-    In case of a deadlock, the wait function will exit after the timeout period.
 
     Args:
         timeout (int): Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
@@ -390,8 +388,7 @@ def set_callback_timeout(timeout):
 
 def get_callback_timeout():
     """
-    Get the default timeout for DSWaitedCallback.
-    In case of a deadlock, the wait function will exit after the timeout period.
+    Get the default timeout for WaitedDSCallback.
 
     Returns:
         int, Timeout (in seconds) to be used to end the wait in DSWaitedCallback in case of a deadlock.
@@ -416,7 +413,7 @@ def __str__():
 
 def load(file):
     """
-    Load the project configuration from the file format.
+    Load the project configuration from the file.
 
     Args:
         file (str): Path of the configuration file to be loaded.
@@ -577,7 +574,7 @@ def get_enable_shared_mem():
         `get_enable_shared_mem` is not supported on Windows and MacOS platforms yet.
 
     Returns:
-        bool, the state of shared mem enabled variable (default=True).
+        bool, the state of shared mem enabled variable.
 
     Examples:
         >>> # Get the flag of shared memory feature.

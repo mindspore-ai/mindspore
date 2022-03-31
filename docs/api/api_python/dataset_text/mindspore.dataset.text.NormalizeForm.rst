@@ -5,7 +5,7 @@
 
     :class:`mindspore.dataset.text.transforms.NormalizeUTF8` 的枚举值。
 
-    可选的枚举值包括： `NormalizeForm.NONE` 、 `NormalizeForm.NFC` 、 `NormalizeForm.NFKC` 、 `NormalizeForm.NFD` 和 `NormalizeForm.NFKD` 。
+    `Unicode规范化模式 <http://unicode.org/reports/tr15/#Norm_Forms>_` 可选的枚举值包括： `NormalizeForm.NONE` 、 `NormalizeForm.NFC` 、 `NormalizeForm.NFKC` 、 `NormalizeForm.NFD` 和 `NormalizeForm.NFKD` 。
 
     - **NormalizeForm.NONE** - 对输入字符串不做任何处理。
     - **NormalizeForm.NFC** - 对输入字符串进行C形式规范化。

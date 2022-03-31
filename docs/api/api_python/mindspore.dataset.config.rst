@@ -23,7 +23,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.load(file)
 
-    从文件格式中加载项目配置。
+    根据文件内容加载项目配置文件。
 
     **参数：**
 
@@ -35,10 +35,10 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_seed(seed)
 
-    如果设置了种子，生成的随机数将被固定，这有助于产生确定性结果。
+    设置种子，固定产生的随机数达到确定性的结果。
 
     .. note::
-        此函数在Python随机库和numpy.random库中设置种子，以便随机进行确定性Python增强。此函数应与创建的每个迭代器一起调用，以重置随机种子。在管道中，这并不保证 `num_parallel_workers` 大于1。
+        此函数在Python随机库和numpy.random库中设置种子，以便随机进行确定性Python增强。此函数应与创建的每个迭代器一起调用，以重置随机种子。
 
     **参数：**
 
@@ -77,6 +77,7 @@ API示例所需模块的导入代码如下：
 .. py:function:: mindspore.dataset.config.get_prefetch_size()
 
     获取数据处理管道的输出缓存队列长度。
+    如果 `set_prefetch_size` 方法未被调用，那么将会返回默认值16。
 
     **返回：**
 
@@ -89,7 +90,7 @@ API示例所需模块的导入代码如下：
 
     **参数：**
 
-    - **num** (int) - 表示并行工作线程的数量，用作为每个操作的默认值。
+    - **num** (int) - 表示并行工作线程的数量，用作为每个数据集操作的默认值。
 
     **异常：**
 
@@ -99,11 +100,11 @@ API示例所需模块的导入代码如下：
 .. py:function:: mindspore.dataset.config.get_num_parallel_workers()
 
     获取并行工作线程数量的全局配置。
-    这是并行工作线程数量的值，用于每个操作。
+    这是作用于每个操作的并行工作线程数量的值。
 
     **返回：**
 
-    int，表示每个操作中默认的并行工作进程的数量。
+    int，表示每个操作中默认的并行工作线程的数量。
 
 .. py:function:: mindspore.dataset.config.set_numa_enable(numa_enable)
 
@@ -142,6 +143,7 @@ API示例所需模块的导入代码如下：
 .. py:function:: mindspore.dataset.config.get_monitor_sampling_interval()
 
     获取性能监控采样时间间隔的全局配置。
+    如果 `set_monitor_sampling_interval` 方法未被调用，那么将会返回默认值1000。
 
     **返回：**
 
@@ -149,12 +151,11 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_callback_timeout(timeout)
 
-    为DSWaitedCallback设置的默认超时时间（秒）。
-    如果出现死锁，等待函数将在超时时间结束后退出。
+    为 :class:`mindspore.dataset.WaitedDSCallback` 设置的默认超时时间（秒）。
 
     **参数：**
 
-    - **timeout** (int) - 表示在出现死锁情况下，用于结束DSWaitedCallback中等待的超时时间（秒）。
+    - **timeout** (int) - 表示在出现死锁情况下，用于结束 :class:`mindspore.dataset.WaitedDSCallback` 中等待的超时时间（秒）。
 
     **异常：**
 
@@ -163,21 +164,21 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.get_callback_timeout()
 
-    获取DSWaitedCallback的默认超时时间。
+    获取 :class:`mindspore.dataset.WaitedDSCallback` 的默认超时时间。
     如果出现死锁，等待的函数将在超时时间结束后退出。
 
     **返回：**
 
-    int，表示在出现死锁情况下，用于结束DSWaitedCallback中的等待函数的超时时间（秒）。
+    int，表示在出现死锁情况下，用于结束 :class:`mindspore.dataset.WaitedDSCallback` 中的等待函数的超时时间（秒）。
 
 .. py:function:: mindspore.dataset.config.set_auto_num_workers(enable)
 
     自动为每个数据集操作设置并行线程数量（默认情况下，此功能关闭）。
 
-    如果启用该功能，将自动调整每个数据集操作中的并行线程数量，这可能会覆盖用户传入的并行线程数量或通过ds.config.set_num_parallel_workers()设置的默认值（如果用户未传递任何内容）。
+    如果启用该功能，将自动调整每个数据集操作中的并行线程数量，这可能会覆盖用户通过脚本定义的并行线程数量或通过ds.config.set_num_parallel_workers()设置的默认值（如果用户未传递任何内容）。
 
     目前，此函数仅针对具有per_batch_map（batch中的运行映射）的YOLOv3数据集进行了优化。
-    此功能旨在为每个操作的优化线程数量分配提供基线。
+    此功能旨在为每个操作的优化线程数量分配一个基础值。
     并行线程数有所调整的数据集操作将会被记录。
 
     **参数：**

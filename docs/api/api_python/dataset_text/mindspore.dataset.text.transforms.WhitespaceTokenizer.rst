@@ -3,7 +3,7 @@ mindspore.dataset.text.transforms.WhitespaceTokenizer
 
 .. py:class:: mindspore.dataset.text.transforms.WhitespaceTokenizer(with_offsets=False)
 
-    基于ICU4C定义的空白字符（' ', '\\\\t', '\\\\r', '\\\\n'）对输入字符串进行分词。
+    基于ICU4C定义的空白字符（' ', '\\\\t', '\\\\r', '\\\\n'）对输入的UTF-8字符串进行分词。
 
     .. note:: Windows平台尚不支持 `WhitespaceTokenizer` 。
 
