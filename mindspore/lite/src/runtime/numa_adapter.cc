@@ -15,8 +15,11 @@
  */
 #include "src/runtime/numa_adapter.h"
 #include <dlfcn.h>
+#include <fstream>
+#include <string>
 #include "src/common/log_adapter.h"
 #include "src/common/common.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace numa {
@@ -24,14 +27,9 @@ namespace {
 static constexpr int kSuccess = 0;
 static constexpr int kBitsPerByte = 8;
 static constexpr auto kBitsPerMask = static_cast<int>(sizeof(uint64_t) * kBitsPerByte);
+constexpr size_t kMaxValidLineCount = 10;
+static auto kNodeBase = "/sys/devices/system/node/node";
 }  // namespace
-
-bool NUMAAdapter::Available() const {
-#ifdef MACHINE_LINUX_ARM64
-  return false;
-#endif
-  return available_;
-}
 
 NUMAAdapter::NUMAAdapter() {
   available_ = false;
@@ -61,12 +59,6 @@ NUMAAdapter::NUMAAdapter() {
   numa_interfaces_.numa_num_task_cpus = reinterpret_cast<int (*)(void)>(dlsym(handle_, "numa_num_task_cpus"));
   if (MS_UNLIKELY(numa_interfaces_.numa_num_task_cpus == nullptr)) {
     MS_LOG(ERROR) << "numa_num_task_cpus not found!";
-    available_ = false;
-  }
-  numa_interfaces_.numa_node_to_cpus =
-    reinterpret_cast<int (*)(int node, struct bitmask *mask)>(dlsym(handle_, "numa_node_to_cpus"));
-  if (MS_UNLIKELY(numa_interfaces_.numa_node_to_cpus == nullptr)) {
-    MS_LOG(ERROR) << "numa_node_to_cpus not found!";
     available_ = false;
   }
   numa_interfaces_.numa_allocate_nodemask =
@@ -169,46 +161,43 @@ std::vector<int> NUMAAdapter::GetCPUList(int node_id) {
   if (!Available() || node_id < 0) {
     return cpu_list;
   }
-  struct bitmask *nodemask = numa_interfaces_.numa_allocate_nodemask();
-  if (nodemask == nullptr) {
-    MS_LOG(ERROR) << "allocate nodemask failed!";
+  auto iter = node_cpu_list_.find(node_id);
+  if (iter != node_cpu_list_.end()) {
+    return iter->second;
+  }
+  static constexpr auto kVectorDefaultSize = 32;
+  cpu_list.reserve(kVectorDefaultSize);
+  std::string cpu_list_file = kNodeBase + std::to_string(node_id) + "/cpulist";
+  std::ifstream cpu_list_ifs(cpu_list_file);
+  if (!cpu_list_ifs.good()) {
+    MS_LOG(ERROR) << "file: " << cpu_list_file << " is not exist";
     return cpu_list;
   }
-  auto ret = numa_interfaces_.numa_node_to_cpus(node_id, nodemask);
-  if (ret != kSuccess || nodemask->maskp == nullptr) {
-    MS_LOG(ERROR) << "numa_node_to_cpus failed!ret = " << ret;
+  if (!cpu_list_ifs.is_open()) {
+    MS_LOG(ERROR) << "file: " << cpu_list_file << " open failed";
     return cpu_list;
   }
-  int cpu_num = numa_interfaces_.numa_num_task_cpus();
-  if (MS_UNLIKELY(cpu_num < 0)) {
-    MS_LOG(ERROR) << "numa_num_task_cpus return " << cpu_num;
+  std::string line;
+  if (!std::getline(cpu_list_ifs, line)) {
+    MS_LOG(ERROR) << cpu_list_file << " getline failed!";
     return cpu_list;
   }
-  int index = 0;
-  int maskp_index = 0;
-  auto maskp = nodemask->maskp;
-  do {
-    if (MS_UNLIKELY(maskp == nullptr)) {
-      MS_LOG(ERROR) << "maskp is nullptr!";
-      break;
+  lite::Trim(&line);
+  auto cpu_lists = lite::StrSplit(line, ",");
+  for (auto &&item : cpu_lists) {
+    auto cpu_range = lite::StrSplit(item, "-");
+    static constexpr size_t kMaxRangeNum = 2;
+    if (cpu_range.size() != kMaxRangeNum) {
+      continue;
     }
-    auto mask = *(maskp);
-    int step = static_cast<int>(maskp_index * kBitsPerMask);
-    for (int i = 0; i < kBitsPerMask; ++i) {
-      if (mask & 1) {
-        cpu_list.emplace_back(i + step);
-      }
-      mask >>= 1;
+    int begin = std::stoi(cpu_range[0]);
+    int end = std::stoi(cpu_range[1]);
+    for (int j = begin; j <= end; ++j) {
+      cpu_list.emplace_back(j);
     }
-    index += kBitsPerMask;
-    if (index >= cpu_num) {
-      break;
-    }
-    maskp = nodemask->maskp + 1;
-    ++maskp_index;
-  } while (true);
-
-  numa_interfaces_.numa_bitmask_free(nodemask);
+  }
+  cpu_list_ifs.close();
+  node_cpu_list_[node_id] = cpu_list;
   return cpu_list;
 }
 
@@ -222,11 +211,13 @@ MemoryInfo NUMAAdapter::GetNodeSize(int node_id) {
 }
 
 NUMAAdapter::~NUMAAdapter() {
+  MS_LOG(DEBUG) << "~NUMAAdapter() begin.";
   if (handle_ == nullptr) {
     return;
   }
   (void)dlclose(handle_);
   handle_ = nullptr;
+  MS_LOG(DEBUG) << "~NUMAAdapter() end.";
 }
 }  // namespace numa
 }  // namespace mindspore
