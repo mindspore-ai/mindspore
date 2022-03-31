@@ -729,6 +729,23 @@ abstract::AbstractBasePtr CSRTensor::ToAbstract() {
   return abs_csr_tensor;
 }
 
+const size_t CSRTensor::GetSizeAt(size_t index) const {
+  if (index == kIndptrIdx) {
+    MS_EXCEPTION_IF_NULL(indptr_);
+    return indptr_->data().nbytes();
+  } else if (index == kIndicesIdx) {
+    MS_EXCEPTION_IF_NULL(indices_);
+    return indices_->data().nbytes();
+  } else if (index == kValuesIdx) {
+    MS_EXCEPTION_IF_NULL(values_);
+    return values_->data().nbytes();
+  } else if (index >= kIndicesIdx && index < kShapeIdx + shape().size()) {
+    return sizeof(int64_t);
+  }
+  MS_LOG(EXCEPTION) << "Invalid index: " << index << " for CSRTensor: " << ToString();
+  return kTypeUnknown;
+}
+
 std::string COOTensor::ToString() const {
   std::ostringstream buf;
   MS_EXCEPTION_IF_NULL(indices_);
