@@ -29,6 +29,7 @@ bool NvidiaCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   initialized_ = true;
+  finalized_ = false;
   return true;
 }
 
