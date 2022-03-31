@@ -22,11 +22,11 @@
 #
 # Augments:
 #   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
-#   - MINDSPORE_VERSION: mindspore version to install, required
+#   - MINDSPORE_VERSION: mindspore version to install, >=1.6.0, required
 #
 # Usage:
-#   Run script like `MINDSPORE_VERSION=1.6.1 bash ./euleros-ascend310-pip.sh`.
-#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.5.0 bash ./euleros-ascend310-pip.sh`.
+#   Run script like `MINDSPORE_VERSION=1.7.0 bash ./euleros-ascend310-pip.sh`.
+#   To set augments, run it as `PYTHON_VERSION=3.9 MINDSPORE_VERSION=1.6.0 bash ./euleros-ascend310-pip.sh`.
 
 set -e
 
@@ -34,8 +34,12 @@ PYTHON_VERSION=${PYTHON_VERSION:-3.7}
 MINDSPORE_VERSION=${MINDSPORE_VERSION:-EMPTY}
 OPENMPI=${OPENMPI:-off}
 
-if [[ $MINDSPORE_VERSION == "EMPTY" ]]; then
-    echo "MINDSPORE_VERSION not set, please check available versions at https://www.mindspore.cn/versions."
+version_less() {
+    test "$(echo "$@" | tr ' ' '\n' | sort -rV | head -n 1)" != "$1";
+}
+
+if [ $MINDSPORE_VERSION == "EMPTY" ] || version_less "${MINDSPORE_VERSION}" "1.6.0"; then
+    echo "MINDSPORE_VERSION should be >=1.6.0, please check available versions at https://www.mindspore.cn/versions."
     exit 1
 fi
 
@@ -46,9 +50,9 @@ if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
 fi
 
 declare -A version_map=()
-version_map["3.7"]="${MINDSPORE_VERSION}-cp37-cp37m"
-version_map["3.8"]="${MINDSPORE_VERSION}-cp38-cp38"
-version_map["3.9"]="${MINDSPORE_VERSION}-cp39-cp39"
+version_map["3.7"]="${MINDSPORE_VERSION/-/}-cp37-cp37m"
+version_map["3.8"]="${MINDSPORE_VERSION/-/}-cp38-cp38"
+version_map["3.9"]="${MINDSPORE_VERSION/-/}-cp39-cp39"
 
 # add value to environment variable if value is not in it
 add_env() {
