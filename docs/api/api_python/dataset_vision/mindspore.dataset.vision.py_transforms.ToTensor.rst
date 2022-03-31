@@ -13,5 +13,5 @@ mindspore.dataset.vision.py_transforms.ToTensor
 
     **异常：**
 
-    - **TypeError** - 当输入图像的类型不为 :class:`PIL.Image` 或 :class:`numpy.ndarray` 。
+    - **TypeError** - 当输入图像的类型不为 :class:`PIL.Image.Image` 或 :class:`numpy.ndarray` 。
     - **TypeError** - 输入图像的维度不为2或3。

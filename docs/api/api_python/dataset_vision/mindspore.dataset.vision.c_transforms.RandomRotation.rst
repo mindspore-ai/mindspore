@@ -14,7 +14,7 @@ mindspore.dataset.vision.c_transforms.RandomRotation
       - Inter.NEAREST，最近邻插值。
       - Inter.BICUBIC，双三次插值。
 
-    - **expand** (bool, 可选) - 图像形状大小扩展标志，若为True，将扩展图像形状大小使其足以容纳整个旋转图像；若为False或未指定，则保持输出图像与输入图像形状大小一致。请注意，扩展时将假设图像为中心旋转且未进行平移，默认值：False。
+    - **expand** (bool, 可选) - 若为True，将扩展图像尺寸大小使其足以容纳整个旋转图像；若为False，则保持图像尺寸大小不变。请注意，扩展时将假设图像为中心旋转且未进行平移。默认值：False。
     - **center** (tuple, 可选) - 可选的旋转中心，以图像左上角为原点，旋转中心的位置按照 (宽度, 高度) 格式指定。默认值：None，表示中心旋转。
     - **fill_value** (Union[int, tuple], 可选) - 旋转图像之外区域的像素填充值。若输入3元素元组，将分别用于填充R、G、B通道；若输入整型，将以该值填充RGB通道。`fill_value` 值必须在 [0, 255] 范围内，默认值：0。
 

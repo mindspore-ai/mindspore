@@ -14,8 +14,8 @@ mindspore.dataset.vision.py_transforms.Cutout
     
     **异常：**
 
-    - **TypeError** - 当 `length` 的类型不为整型。
-    - **TypeError** - 当 `num_patches` 的类型不为整型。
+    - **TypeError** - 当 `length` 的类型不为int。
+    - **TypeError** - 当 `num_patches` 的类型不为int。
     - **ValueError** - 当 `length` 小于等于0。
     - **ValueError** - 当 `num_patches` 小于等于0。
     - **RuntimeError** - 当输入图像的shape不为<H, W, C>。

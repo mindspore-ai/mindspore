@@ -17,8 +17,8 @@ mindspore.dataset.vision.py_transforms.RandomPerspective
 
     **异常：**
 
-    - **TypeError** - 当 `distortion_scale` 的类型不为浮点型。
-    - **TypeError** - 当 `prob` 的类型不为浮点型。
+    - **TypeError** - 当 `distortion_scale` 的类型不为float。
+    - **TypeError** - 当 `prob` 的类型不为float。
     - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
     - **ValueError** - 当 `distortion_scale` 取值不在[0, 1]范围内。
     - **ValueError** - 当 `prob` 取值不在[0, 1]范围内。

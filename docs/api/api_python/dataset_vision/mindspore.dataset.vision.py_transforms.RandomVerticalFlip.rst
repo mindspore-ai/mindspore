@@ -11,6 +11,6 @@ mindspore.dataset.vision.py_transforms.RandomVerticalFlip
 
     **异常：**
 
-    - **TypeError** - 当 `prob` 的类型不为浮点型。
+    - **TypeError** - 当 `prob` 的类型不为float。
     - **ValueError** - 当 `prob` 取值不在[0, 1]范围内。
     - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。
