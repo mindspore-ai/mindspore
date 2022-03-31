@@ -81,8 +81,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Spread the MakeTuple input of UpdateState
   pm->Add(std::make_shared<SpreadUpdateState>(), OptLevel_1);
+
   // Eliminate the common nodes that generated in SpreadUpdateState
-  pm->Add(std::make_shared<CommonSubexpressionElimination>("cse2"), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelCSE>(), OptLevel_1);
   return pm;
 }
 
