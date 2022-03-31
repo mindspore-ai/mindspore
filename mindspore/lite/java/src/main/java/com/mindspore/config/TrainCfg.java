@@ -16,8 +16,6 @@
 
 package com.mindspore.config;
 
-import com.mindspore.lite.NativeLibrary;
-
 public class TrainCfg {
     // depend "mindspore-lite-train-jni"
     static {

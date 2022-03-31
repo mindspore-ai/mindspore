@@ -19,10 +19,13 @@ allprojects {
 }
 
 apply plugin: 'java'
+test {
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = 'full'
+}
 
 dependencies {
     testImplementation 'junit:junit:4.13'
-    implementation project(':common')
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(':linux_x86')
