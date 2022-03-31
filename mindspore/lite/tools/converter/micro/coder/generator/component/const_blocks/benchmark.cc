@@ -234,10 +234,12 @@ int main(int argc, const char **argv) {
     ret = ReadCalibData(argv[4], &calib_tensors, &calib_num);
     if (ret != kMSStatusSuccess) {
       MSModelDestroy(&model_handle);
+      return ret;
     }
     ret = CompareOutputs(outputs_handle, &calib_tensors, calib_num);
     if (ret != kMSStatusSuccess) {
       MSModelDestroy(&model_handle);
+      return ret;
     }
     FreeCalibTensors(&calib_tensors, calib_num);
   }
