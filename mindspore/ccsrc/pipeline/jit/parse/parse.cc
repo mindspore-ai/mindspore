@@ -1613,7 +1613,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     MS_EXCEPTION_IF_NULL(after_block->func_graph());
     after_block->func_graph()->set_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK, true);
   }
-
+  static const auto use_fallback = (support_fallback() != "0");
   // Process the if-true branch
   std::pair<FunctionBlockPtr, FunctionBlockPtr> true_branch_graphs;
   py::object bodyNode = python_adapter::GetPyObjAttr(node, "body");
@@ -1630,6 +1630,10 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     }
     MS_LOG(DEBUG) << "The true_end block jump to after, true_block: " << true_block->ToString()
                   << ", true_end: " << true_end->ToString();
+
+    if (use_fallback) {
+      UpdateBlockPyParams(after_block, true_end);
+    }
   }
 
   // Process the orelse branch
@@ -1648,6 +1652,9 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     }
     MS_LOG(DEBUG) << "The false_end block jump to after, false_block: " << false_block->ToString()
                   << ", false_end: " << false_end->ToString();
+    if (use_fallback) {
+      UpdateBlockPyParams(after_block, false_end);
+    }
   }
   auto switch_app = block->ConditionalJump(bool_node, true_block, false_block);
 
@@ -2364,7 +2371,7 @@ void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::
 }
 
 bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
-                              const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) {
+                              const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   // Check global parameters.
   if (global_dict.contains(script_text)) {
@@ -2373,14 +2380,7 @@ bool Parser::IsScriptInParams(const std::string &script_text, const py::dict &gl
   }
 
   // Check local parameters.
-  auto in_local_params = std::any_of(local_keys.begin(), local_keys.end(), [&script_text](const AnfNodePtr &node) {
-    const auto value_node = dyn_cast<ValueNode>(node);
-    MS_EXCEPTION_IF_NULL(value_node);
-    const StringImmPtr &str_imm = dyn_cast<StringImm>(value_node->value());
-    MS_EXCEPTION_IF_NULL(str_imm);
-    return script_text == str_imm->value();
-  });
-  if (in_local_params) {
+  if (local_keys.find(script_text) != local_keys.end()) {
     MS_LOG(DEBUG) << "[" << func_graph->ToString() << "] Found `" << script_text << "` in local params.";
     return true;
   }
@@ -2414,7 +2414,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   MS_EXCEPTION_IF_NULL(value_node);
   // Check if script_text is in global/local params.
   py::dict global_dict = block->global_py_params();
-  const auto &[keys, values] = block->local_py_params();
+  auto [keys, values] = block->local_py_params();
   if (IsTensorType(value_node, script_text)) {
     return value_node;
   }
@@ -2434,13 +2434,14 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   auto current_fg = value_node->func_graph();
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
-  for (size_t index = 0; index < values.size(); ++index) {
-    auto value = values[index];
+  for (auto iter = values.begin(); iter != values.end(); ++iter) {
+    auto value = iter->second;
     auto fg = GetValueNode<FuncGraphPtr>(value);
     if (fg == current_fg) {
       continue;
     }
-    (void)filter_keys.emplace_back(keys[index]);
+    const std::string &name = iter->first;
+    (void)filter_keys.emplace_back(keys[name]);
     (void)filter_values.emplace_back(value);
   }
   auto local_dict_node = ParseDictByKeysAndValues(block, filter_keys, filter_values);

@@ -128,6 +128,9 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   if (node != nullptr) {
     return node;
   }
+  // The fallback feature is enabled in default.
+  // Not support change the flag during the process is alive.
+  static const auto use_fallback = (parser_.support_fallback() != "0");
   // Get var from predecessor block, if can't get then make a resolve node to it
   if (matured_) {
     // If only one predecessor block, read the definition of var from it.
@@ -135,10 +138,6 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       auto block = prev_blocks_[0];
       MS_EXCEPTION_IF_NULL(block);
       auto res = block->ReadVariable(var_name);
-
-      // The fallback feature is enabled in default.
-      // Not support change the flag during the process is alive.
-      static const auto use_fallback = (parser_.support_fallback() != "0");
       if (use_fallback) {
         MS_LOG(DEBUG) << "Update global params of block: " << ToString()
                       << ", with previous block: " << block->ToString()
@@ -166,6 +165,11 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " generate phi node "
                 << phi_param->ToString() << " for " << var_name;
+  // If information transform by phi, need remove the var in interpret dict in fallback feature.
+  if (use_fallback) {
+    EraseLocalPyParam(var_name);
+  }
+
   func_graph()->add_parameter(phi_param);
   phi_nodes_[phi_param] = var_name;
   WriteVariable(var_name, phi_param);

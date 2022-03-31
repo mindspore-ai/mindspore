@@ -219,7 +219,7 @@ class Parser {
 
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
-                        const std::vector<AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
+                        const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
   // Set the interpret flag for the node calling the interpret node.
   void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node);
   void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes);
