@@ -50,7 +50,7 @@ INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 def _environment_check():
     if c_expression.security.enable_security():
-        raise RuntimeError("Profiler is not supported if compiled with \'-s on\'")
+        raise RuntimeError("Profiler is not supported when MindSpore is installed which compiled with \'-s on\'.")
 
 
 class Profiler:
@@ -299,7 +299,8 @@ class Profiler:
 
         task_sink = os.getenv("GRAPH_OP_RUN")
         if task_sink and task_sink == "1":
-            logger.warning("Profiling is not supported when task is not sink.")
+            logger.warning(f"For '{self.__class__.__name__}', Profiling is not supported if set environment "
+                           f"'GRAPH_OP_RUN' value to 1, which means model training task is not sink.")
 
     def _set_ascend_job_id(self, ascend_job_id):
         """Set output_path for offline parsing performance data."""
@@ -586,7 +587,8 @@ class Profiler:
                 self._has_started = True
                 self._has_started_twice = True
             else:
-                raise RuntimeError("MD Profiling has finished, repeated start and stop actions are not supported.")
+                raise RuntimeError("MindSpore Profiling has finished, repeated start and stop actions are not "
+                                   "supported.")
         else:
             raise RuntimeError("The profiler has already started. Use profiler.start() only when start_profile value "
                                "is set to False.")
@@ -650,7 +652,8 @@ class Profiler:
         if self._has_started:
             self._has_started = False
         else:
-            raise RuntimeError("The profiler has not started, so can not stop.")
+            raise RuntimeError("The profiler has not started, so can not stop. Please call the start() method "
+                               "before calling the stop() method.")
 
         # No need to stop anything if parse profiling data offline
         if self._is_offline_parser():

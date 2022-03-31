@@ -117,7 +117,8 @@ class TestSummaryCollector:
         if isinstance(collect_freq, int):
             with pytest.raises(ValueError) as exc:
                 SummaryCollector(summary_dir=summary_dir, collect_freq=collect_freq)
-            expected_msg = f'For `collect_freq` the value should be greater than 0, but got `{collect_freq}`.'
+            expected_msg = f'For "SummaryCollector", the value of `collect_freq` should be greater than 0, ' \
+                           f'but got `{collect_freq}`.'
             assert expected_msg == str(exc.value)
         else:
             with pytest.raises(TypeError) as exc:
@@ -163,7 +164,7 @@ class TestSummaryCollector:
             SummaryCollector(summary_dir, export_options=export_options)
 
         unexpected_format = {export_options.get("tensor_format")}
-        expected_msg = f'For `export_options`, the export_format {unexpected_format} are ' \
+        expected_msg = f'For "SummaryRecord", the export_format {unexpected_format} of "export_options" are ' \
                        f'unsupported for tensor_format, expect the follow values: ' \
                        f'{list(_DEFAULT_EXPORT_OPTIONS.get("tensor_format"))}'
 
@@ -244,7 +245,7 @@ class TestSummaryCollector:
         data = {'unexpected_key': True}
         with pytest.raises(ValueError) as exc:
             SummaryCollector(summary_dir, collect_specified_data=data)
-        expected_msg = f"For `collect_specified_data` the keys {set(data)} are unsupported"
+        expected_msg = f"the keys {set(data)} of `collect_specified_data` are unsupported"
         assert expected_msg in str(exc.value)
 
     @security_off_wrap
@@ -254,7 +255,7 @@ class TestSummaryCollector:
         data = {'unexpected_key': "value"}
         with pytest.raises(ValueError) as exc:
             SummaryCollector(summary_dir, export_options=data)
-        expected_msg = f"For `export_options` the keys {set(data)} are unsupported"
+        expected_msg = f'the keys {set(data)} of "export_options" are unsupported'
         assert expected_msg in str(exc.value)
 
     @security_off_wrap
@@ -505,7 +506,7 @@ class TestSummaryCollector:
         data = {'unexpected_key': "value"}
         with pytest.raises(ValueError) as exc:
             SummaryCollector(summary_dir, collect_specified_data={'collect_landscape': data})
-        expected_msg = f"For `collect_landscape` the keys {set(data)} are unsupported"
+        expected_msg = f"the keys {set(data)} of `collect_landscape` are unsupported"
         assert expected_msg in str(exc.value)
 
     @security_off_wrap

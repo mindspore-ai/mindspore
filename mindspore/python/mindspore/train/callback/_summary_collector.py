@@ -287,14 +287,14 @@ class SummaryCollector(Callback):
     def __exit__(self, *err):
         self._record.close()
 
-    @staticmethod
-    def _check_positive(name, value, allow_none=False):
+    def _check_positive(self, name, value, allow_none=False):
         """Check if the value to be int type and positive."""
         if allow_none and value is None:
             return
         check_value_type(name, value, int)
         if value <= 0:
-            raise ValueError(f'For `{name}` the value should be greater than 0, but got `{value}`.')
+            raise ValueError(f'For "{self.__class__.__name__}", the value of `{name}` should be greater than 0, '
+                             f'but got `{value}`.')
 
     def _create_epoch_group(self, intervals):
         """Create epoch group."""
@@ -342,14 +342,15 @@ class SummaryCollector(Callback):
             logger.debug("Hyper config is not in system environment.")
             return auto_custom_lineage_data
         if len(hyper_config) > HYPER_CONFIG_LEN_LIMIT:
-            logger.warning("Hyper config is too long. The length limit is %s, the length of "
-                           "hyper_config is %s." % (HYPER_CONFIG_LEN_LIMIT, len(hyper_config)))
+            logger.warning("The 'MINDINSIGHT_HYPER_CONFIG' of environment variable is too long. The length limit "
+                           "is %s, the length of hyper_config is %s." % (HYPER_CONFIG_LEN_LIMIT, len(hyper_config)))
             return auto_custom_lineage_data
 
         try:
             hyper_config = json.loads(hyper_config)
         except (TypeError, JSONDecodeError) as exc:
-            logger.warning("Hyper config decode error. Detail: %s." % str(exc))
+            logger.warning("The 'MINDINSIGHT_HYPER_CONFIG' of environment variable decode error. "
+                           "Detail: %s." % str(exc))
             return auto_custom_lineage_data
 
         custom_lineage_data = hyper_config.get("custom_lineage_data")
@@ -365,52 +366,50 @@ class SummaryCollector(Callback):
         """Check action type."""
         check_value_type('keep_default_action', action, bool)
 
-    @staticmethod
-    def _check_landscape_size(landscape_size):
+    def _check_landscape_size(self, landscape_size):
         """Check landscape size type and value."""
         check_value_type('landscape_size', landscape_size, int)
         # landscape size should be between 3 and 256.
         if landscape_size < 3 or landscape_size > 256:
-            raise ValueError(f'Landscape size should be less than 256 and more than 3, '
-                             f'but got the: {landscape_size}')
+            raise ValueError(f'For "{self.__class__.__name__}", the "landscape_size" in collect_specified_data '
+                             f'should be less than 256 and more than 3, but got the: {landscape_size}')
 
-    @staticmethod
-    def _check_unit(unit):
+    def _check_unit(self, unit):
         """Check unit type and value."""
         check_value_type('unit', unit, str)
         if unit not in ["step", "epoch"]:
-            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
+            raise ValueError(f'For "{self.__class__.__name__}", unit in collect_specified_data should be step '
+                             f'or epoch, but got the: {unit}.')
 
-    @staticmethod
-    def _check_create_landscape(create_landscape):
+    def _check_create_landscape(self, create_landscape):
         """Check create landscape type and value."""
         check_value_type('create_landscape', create_landscape, dict)
         for param, value in create_landscape.items():
             if param not in ["train", "result"]:
-                raise ValueError(f'The key to create landscape should be in ["train", "result"], '
-                                 f'but got the: {param}')
+                raise ValueError(f'For "{self.__class__.__name__}", the key to create landscape should be in '
+                                 f'["train", "result"], but got the: {param}.')
             check_value_type(param, value, bool)
 
-    @staticmethod
-    def _check_intervals(intervals):
+    def _check_intervals(self, intervals):
         """Check intervals type and value."""
         check_value_type('intervals', intervals, list)
         for _, interval in enumerate(intervals):
             check_value_type('each interval inintervals', interval, list)
             if len(interval) < 3:
-                raise ValueError(f'Each landscape interval should not be less than three, '
-                                 f'but got the: {interval}')
+                raise ValueError(f'For "{self.__class__.__name__}", each landscape interval should not be less '
+                                 f'than three, but got the: {interval}')
             for j in interval:
                 if not isinstance(j, int):
-                    raise TypeError(f'Landscape interval value type should be int, '
+                    raise TypeError(f'For "{self.__class__.__name__}", landscape interval value type should be int, '
                                     f'but got the: {type(j)}')
 
     def _check_collect_landscape_data(self, collect_landscape):
         """Check collect landscape data type and value."""
         unexpected_params = set(collect_landscape) - set(self._DEFAULT_SPECIFIED_DATA.get("collect_landscape"))
         if unexpected_params:
-            raise ValueError(f'For `collect_landscape` the keys {unexpected_params} are unsupported, expect'
-                             f'the follow keys: {list(self._DEFAULT_SPECIFIED_DATA["collect_landscape"].keys())}')
+            raise ValueError(f'For "{self.__class__.__name__}", the keys {unexpected_params} of `collect_landscape` '
+                             f'are unsupported, expect the follow keys: '
+                             f'{list(self._DEFAULT_SPECIFIED_DATA.get("collect_landscape").keys())}')
         landscape_size = collect_landscape.get("landscape_size", 40)
         self._check_landscape_size(landscape_size)
         unit = collect_landscape.get("unit", "step")
@@ -436,7 +435,8 @@ class SummaryCollector(Callback):
 
         unexpected_params = set(specified_data) - set(self._DEFAULT_SPECIFIED_DATA)
         if unexpected_params:
-            raise ValueError(f'For `collect_specified_data` the keys {unexpected_params} are unsupported, '
+            raise ValueError(f'For "{self.__class__.__name__}", the keys {unexpected_params} of '
+                             f'`collect_specified_data` are unsupported, '
                              f'expect the follow keys: {list(self._DEFAULT_SPECIFIED_DATA.keys())}')
 
         if 'histogram_regular' in specified_data:
@@ -784,7 +784,8 @@ class SummaryCollector(Callback):
             # we assume that the first one is loss.
             loss = output[0]
         else:
-            logger.warning("The output type could not be identified, so no loss was recorded in SummaryCollector.")
+            logger.warning("The output type could not be identified, expect type is one of "
+                           "[int, float, Tensor, list, tuple], so no loss was recorded in SummaryCollector.")
             self._is_parse_loss_success = False
             return None
 
