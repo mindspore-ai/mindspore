@@ -52,7 +52,7 @@ add_library(core_proto_obj OBJECT ${PROTO_SRCS})
 add_library(mindspore_core SHARED $<TARGET_OBJECTS:core_obj> $<TARGET_OBJECTS:core_proto_obj>)
 target_link_libraries(mindspore_core PRIVATE mindspore::protobuf securec)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND NOT BUILD_LITE)
     target_link_options(mindspore_core PRIVATE -Wl,-init,mindspore_log_init)
 endif()
 
