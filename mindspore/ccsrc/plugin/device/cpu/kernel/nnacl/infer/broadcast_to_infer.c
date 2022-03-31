@@ -185,11 +185,11 @@ int BroadcastToInferShape(const TensorC *const *inputs, size_t inputs_size, Tens
         dst_shape[i] = inputs[0]->shape_[i];
       }
     }
+  }
 
-    if (BroadCastToShape(input_shape_size, dst_shape_size, input_shape, dst_shape, &ndim, output_shape,
-                         &has_broad_cast) != NNACL_OK) {
-      return NNACL_ERR;
-    }
+  if (BroadCastToShape(input_shape_size, dst_shape_size, input_shape, dst_shape, &ndim, output_shape,
+                       &has_broad_cast) != NNACL_OK) {
+    return NNACL_ERR;
   }
 
   SetShapeArray(outputs[0], output_shape, (size_t)ndim);
