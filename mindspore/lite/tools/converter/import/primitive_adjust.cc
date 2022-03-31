@@ -585,6 +585,26 @@ int MoveAttrBatchNorm(const CNodePtr &cnode) {
   value_node->set_value(dst_prim_c);
   return lite::RET_OK;
 }
+
+int MoveAttrMapBatchNormGrad(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
+  MS_CHECK_TRUE_MSG(value_node != nullptr, RET_NULL_PTR, "value_node is nullptr");
+  auto src_prim = GetValueNode<PrimitivePtr>(value_node);
+  MS_CHECK_TRUE_MSG(src_prim != nullptr, RET_NULL_PTR, "value_node is nullptr");
+  auto dst_prim = std::make_shared<ops::BatchNormGrad>();
+  MS_CHECK_TRUE_MSG(dst_prim != nullptr, RET_NULL_PTR, "dst_prim is nullptr.");
+  auto dst_prim_c = dst_prim->GetPrim();
+  MS_CHECK_TRUE_MSG(dst_prim_c != nullptr, RET_NULL_PTR, "dst_prim_c is nullptr.");
+  dst_prim_c->SetAttrs(src_prim->attrs());
+  auto is_training_attr = src_prim->GetAttr(ops::kIsTraining);
+  if (is_training_attr == nullptr) {
+    MS_LOG(INFO) << "no \"is_training\" attr found in BatchNormGrad, will set it to true by default.";
+    dst_prim->set_is_training(true);
+  }
+  value_node->set_value(dst_prim_c);
+  return lite::RET_OK;
+}
 }  // namespace
 
 bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
@@ -678,8 +698,8 @@ REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameEluGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameExp, MoveAttrMapCommon<ops::ExpFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormEx, MoveAttrMapCommon<ops::FusedBatchNorm>)
-REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradEx, MoveAttrMapCommon<ops::BatchNormGrad>)
-REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradCPU, MoveAttrMapCommon<ops::BatchNormGrad>)
+REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradEx, MoveAttrMapBatchNormGrad)
+REGIST_PRIMITIVE_ADJUST(kNameFusedBatchNormGradCPU, MoveAttrMapBatchNormGrad)
 REGIST_PRIMITIVE_ADJUST(kNameGeLU, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameGeLUGrad, MoveAttrMapActivationGrad)
 REGIST_PRIMITIVE_ADJUST(kNameHSigmoid, MoveAttrMapActivation)
