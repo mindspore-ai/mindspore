@@ -11,16 +11,16 @@
 
         通过数据集构建Vocab对象。
 
-        这将收集数据集中的所有唯一单词，并在freq_range中用户指定的频率范围内返回一个vocab。如果没有单词在该频率上，用户将收到预警信息。
+        获得数据集中的所有唯一单词，并在 `freq_range` 中用户指定的频率范围内返回一个vocab。如果没有单词在该频率上，用户将收到预警信息。
         vocab中的单词按最高频率到最低频率的顺序进行排列。具有相同频率的单词将按词典顺序进行排列。
 
         **参数：**
 
         - **dataset** (Dataset) - 表示要从中构建vocab的数据集。
-        - **columns** (list[str]，可选) - 表示要从中获取单词的列名。它可以是列名的列表，默认值：None。如果没有列是string类型，将返回错误。
+        - **columns** (list[str]，可选) - 表示要从中获取单词的列名。它可以是列名的列表，默认值：None。
         - **freq_range** (tuple，可选) - 表示整数元组（min_frequency，max_frequency）。频率范围内的单词将被保留。0 <= min_frequency <= max_frequency <= total_words。min_frequency=0等同于min_frequency=1。max_frequency > total_words等同于max_frequency = total_words。min_frequency和max_frequency可以为None，分别对应于0和total_words，默认值：None。
-        - **top_k** (int，可选) - `top_k` 大于0。要在vocab中 `top_k` 建立的单词数量表示取用最频繁的单词。 `top_k` 在 `freq_range` 之后取用。如果没有足够的 `top_k` ，所有单词都将被取用,默认值：None。
-        - **special_tokens** (list，可选) - 特殊分词列表，如常用的"[PAD]"、"[UNK]"等。默认值：None，表示不添加特殊分词（token）。
+        - **top_k** (int，可选) - `top_k` 大于0。要在vocab中 `top_k` 建立的单词数量表示取用最频繁的单词。 `top_k` 在 `freq_range` 之后取用。如果没有足够的 `top_k` ，所有单词都将被取用，默认值：None。
+        - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
         - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
 
         **返回：**
@@ -39,16 +39,16 @@
 
         Vocab，从字典构建的Vocab对象。
 
-    .. py:method:: from_file(file_path, delimiter='', vocab_size=None, special_tokens=None, special_first=True)
+    .. py:method:: from_file(file_path, delimiter="", vocab_size=None, special_tokens=None, special_first=True)
 
         通过文件构建Vocab对象。
 
         **参数：**
 
-        - **file_path** (str) - 表示包含vocab列表的文件的路径。
+        - **file_path** (str) - 表示包含vocab文件路径的一个列表。
         - **delimiter** (str，可选) - 表示用来分隔文件中每一行的分隔符。第一个元素被视为单词，默认值：""。
         - **vocab_size** (int，可选) - 表示要从 `file_path` 读取的字数，默认值：None，表示读取所有的字。
-        - **special_tokens** (list，可选) - 特殊分词列表，如常用的"[PAD]"、"[UNK]"等。默认值：None，表示不添加特殊分词（token）。
+        - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
         - **special_first** (list，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
 
         **返回：**
@@ -62,7 +62,7 @@
         **参数：**
 
         - **word_list** (list) - 输入单词列表，每个单词需要为字符串类型。
-        - **special_tokens** (list，可选) - 特殊分词列表，如常用的"[PAD]"、"[UNK]"等。默认值：None，表示不添加特殊分词（token）。
+        - **special_tokens** (list，可选) - 特殊分词列表，如常用的"<pad>"、"<unk>"等。默认值：None，表示不添加特殊分词（token）。
         - **special_first** (bool，可选) - 表示是否将 `special_tokens` 中的特殊分词添加到词典的最前面。如果为True则将 `special_tokens` 添加到词典的最前，否则添加到词典的最后。默认值：True。
 
         **返回：**

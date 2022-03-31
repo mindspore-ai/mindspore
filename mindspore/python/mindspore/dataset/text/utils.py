@@ -115,7 +115,7 @@ class Vocab:
         Args:
             dataset (Dataset): dataset to build vocab from.
             columns (list[str], optional): column names to get words from. It can be a list of column names.
-                (default=None, where all columns will be used. If any column isn't string type, will return error).
+                (default=None).
             freq_range (tuple, optional): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency=0 is the same as
                 min_frequency=1. max_frequency > total_words is the same as max_frequency = total_words.
@@ -388,6 +388,12 @@ def to_bytes(array, encoding='utf8'):
 
     Returns:
         numpy.ndarray, NumPy array of `bytes`.
+
+    Examples:
+        >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"]
+        >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
+        >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        ...     data = text.to_bytes(item["text"])
     """
 
     if not isinstance(array, np.ndarray):
