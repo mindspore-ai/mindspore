@@ -41,6 +41,7 @@
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/gain_ir.h"
+#include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -333,6 +334,19 @@ PYBIND_REGISTER(GainOperation, 1, ([](const py::module *m) {
                       return gain;
                     }));
                 }));
+
+PYBIND_REGISTER(
+  GriffinLimOperation, 1, ([](const py::module *m) {
+    (void)py::class_<audio::GriffinLimOperation, TensorOperation, std::shared_ptr<audio::GriffinLimOperation>>(
+      *m, "GriffinLimOperation")
+      .def(py::init([](int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type,
+                       float power, float momentum, int32_t length, bool rand_init) {
+        auto griffin_lim = std::make_shared<audio::GriffinLimOperation>(
+          n_fft, n_iter, win_length, hop_length, window_type, power, momentum, length, rand_init);
+        THROW_IF_ERROR(griffin_lim->ValidateParams());
+        return griffin_lim;
+      }));
+  }));
 
 PYBIND_REGISTER(
   HighpassBiquadOperation, 1, ([](const py::module *m) {

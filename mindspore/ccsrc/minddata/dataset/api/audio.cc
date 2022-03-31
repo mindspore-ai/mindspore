@@ -37,6 +37,7 @@
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/gain_ir.h"
+#include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
@@ -412,6 +413,41 @@ struct Gain::Data {
 Gain::Gain(float gain_db) : data_(std::make_shared<Data>(gain_db)) {}
 
 std::shared_ptr<TensorOperation> Gain::Parse() { return std::make_shared<GainOperation>(data_->gain_db_); }
+
+// GriffinLim Transform Operation.
+struct GriffinLim::Data {
+  Data(int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type, float power,
+       float momentum, int32_t length, bool rand_init)
+      : n_fft_(n_fft),
+        n_iter_(n_iter),
+        win_length_(win_length),
+        hop_length_(hop_length),
+        window_type_(window_type),
+        power_(power),
+        momentum_(momentum),
+        length_(length),
+        rand_init_(rand_init) {}
+  int32_t n_fft_;
+  int32_t n_iter_;
+  int32_t win_length_;
+  int32_t hop_length_;
+  WindowType window_type_;
+  float power_;
+  float momentum_;
+  int32_t length_;
+  bool rand_init_;
+};
+
+GriffinLim::GriffinLim(int32_t n_fft, int32_t n_iter, int32_t win_length, int32_t hop_length, WindowType window_type,
+                       float power, float momentum, int32_t length, bool rand_init)
+    : data_(std::make_shared<Data>(n_fft, n_iter, win_length, hop_length, window_type, power, momentum, length,
+                                   rand_init)) {}
+
+std::shared_ptr<TensorOperation> GriffinLim::Parse() {
+  return std::make_shared<GriffinLimOperation>(data_->n_fft_, data_->n_iter_, data_->win_length_, data_->hop_length_,
+                                               data_->window_type_, data_->power_, data_->momentum_, data_->length_,
+                                               data_->rand_init_);
+}
 
 // HighpassBiquad Transform Operation.
 struct HighpassBiquad::Data {

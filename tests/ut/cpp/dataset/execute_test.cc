@@ -1435,6 +1435,30 @@ TEST_F(MindDataTestExecute, TestFadeWithBool) {
   EXPECT_TRUE(s01.IsOk());
 }
 
+
+/// Feature: GriffinLim
+/// Description: test basic usage of GriffinLim
+/// Expectation: success
+TEST_F(MindDataTestExecute, TestGriffinLimDefaultValue) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestGriffinLimDefaultValue.";
+  // Random waveform
+  std::mt19937 gen;
+  std::normal_distribution<float> distribution(1.0, 0.5);
+  std::vector<float> vec;
+  for (int i = 0; i < 1206; ++i) {
+    vec.push_back(distribution(gen));
+  }
+  std::shared_ptr<Tensor> input;
+  ASSERT_OK(Tensor::CreateFromVector(vec, TensorShape({1, 201, 6}), &input));
+  auto input_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input));
+  std::shared_ptr<TensorTransform> griffin_lim_op = std::make_shared<audio::GriffinLim>();
+  // apply griffinlim
+  mindspore::dataset::Execute trans({griffin_lim_op});
+  Status status = trans(input_ms, &input_ms);
+  EXPECT_TRUE(status.IsOk());
+}
+
+
 TEST_F(MindDataTestExecute, TestVolDefalutValue) {
   MS_LOG(INFO) << "Doing MindDataTestExecute-TestVolDefalutValue.";
   std::shared_ptr<Tensor> input_tensor_;

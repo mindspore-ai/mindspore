@@ -528,6 +528,41 @@ class MS_API Gain final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Waveform calculation from linear scalar amplitude spectrogram using GriffinLim transform.
+class MS_API GriffinLim final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \notes Calculated by formula:
+  ///     x(n)=\frac{\sum_{m=-\infty}^{\infty} w(m S-n) y_{w}(m S, n)}{\sum_{m=-\infty}^{\infty} w^{2}(m S-n)}
+  ///     where w represents the window function, y represents the reconstructed signal of each frame and x represents
+  ///     the whole signal.
+  /// \param[in] n_fft Size of FFT (Default: 400).
+  /// \param[in] n_iter Number of iteration for phase recovery (Default: 32).
+  /// \param[in] win_length Window size for GriffinLim (Default: 0, will be set to n_fft).
+  /// \param[in] hop_length Length of hop between STFT windows (Default: 0, will be set to win_length / 2).
+  /// \param[in] window_type Window type for GriffinLim (Default: WindowType::kHann).
+  /// \param[in] power Exponent for the magnitude spectrogram (Default: 2.0).
+  /// \param[in] momentum The momentum for fast Griffin-Lim (Default: 0.99).
+  /// \param[in] length Length of the expected output waveform (Default: 0.0, will be set to the value of last
+  ///     dimension of the stft matrix).
+  /// \param[in] rand_init Flag for random phase initialization or all-zero phase initialization (Default: true).
+  explicit GriffinLim(int32_t n_fft = 400, int32_t n_iter = 32, int32_t win_length = 0, int32_t hop_length = 0,
+                      WindowType window_type = WindowType::kHann, float power = 2.0, float momentum = 0.99,
+                      int32_t length = 0, bool rand_init = true);
+
+  /// \brief Destructor.
+  ~GriffinLim() = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief HighpassBiquad TensorTransform. Apply highpass biquad filter on audio.
 class MS_API HighpassBiquad final : public TensorTransform {
  public:

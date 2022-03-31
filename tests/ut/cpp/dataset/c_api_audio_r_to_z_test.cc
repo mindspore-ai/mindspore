@@ -1007,6 +1007,143 @@ TEST_F(MindDataTestPipeline, TestTrebleBiquadWrongArg) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: GriffinLim.
+/// Description: test pipeline.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestGriffinLimPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGriffinLimPipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {201, 6}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto griffin_lim = audio::GriffinLim(400, 32, 0, 0, WindowType::kHann, 2.0, 0.99, 0, true);
+  ds = ds->Map({griffin_lim});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {1000};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 1);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema2 = Schema();
+  ASSERT_OK(schema2->add_column("waveform", mindspore::DataType::kNumberTypeFloat64, {2, 301, 6}));
+  std::shared_ptr<Dataset> ds2 = RandomData(50, schema2);
+  EXPECT_NE(ds2, nullptr);
+  ds2 = ds2->SetNumWorkers(4);
+  EXPECT_NE(ds2, nullptr);
+  auto griffin_lim2 = audio::GriffinLim(600, 10, 0, 300, WindowType::kHann, 1.0, 0.99, 0, false);
+  ds2 = ds2->Map({griffin_lim2});
+  EXPECT_NE(ds2, nullptr);
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  EXPECT_NE(ds2, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row2;
+  ASSERT_OK(iter2->GetNextRow(&row2));
+  std::vector<int64_t> expected2 = {2, 1500};
+  i = 0;
+  while (row2.size() != 0) {
+    auto col = row2["waveform"];
+    ASSERT_EQ(col.Shape(), expected2);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat64);
+    ASSERT_OK(iter2->GetNextRow(&row2));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+  iter->Stop();
+}
+
+/// Feature: GriffinLim.
+/// Description: test some invalid parameters.
+/// Expectation: success.
+TEST_F(MindDataTestPipeline, TestGriffinLimWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGriffinLimWrongArgs.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {201, 6}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  // invalid n_fft
+  auto griffin_lim_op = audio::GriffinLim(-10);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid n_iter
+  griffin_lim_op = audio::GriffinLim(400, -10);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid win_length
+  griffin_lim_op = audio::GriffinLim(400, 10, -2);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+  griffin_lim_op = audio::GriffinLim(400, 10, 500);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid hop_length
+  griffin_lim_op = audio::GriffinLim(400, 10, 0, -10);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid power
+  griffin_lim_op = audio::GriffinLim(400, 10, 0, 0, WindowType::kHann, -2);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid momentum
+  griffin_lim_op = audio::GriffinLim(400, 10, 0, 0, WindowType::kHann, 2, -10);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+
+  // invalid length
+  griffin_lim_op = audio::GriffinLim(400, 10, 0, 0, WindowType::kHann, 2, 0.9, -3);
+  ds = ds->Map({griffin_lim_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  // Expect failure
+  EXPECT_EQ(iter, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestVolPipeline) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestVolPipeline.";
   // Original waveform

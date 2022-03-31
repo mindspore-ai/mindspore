@@ -23,6 +23,7 @@ add_library(audio-ir-kernels OBJECT
         flanger_ir.cc
         frequency_masking_ir.cc
         gain_ir.cc
+        griffin_lim_ir.cc
         highpass_biquad_ir.cc
         lfilter_ir.cc
         lowpass_biquad_ir.cc
