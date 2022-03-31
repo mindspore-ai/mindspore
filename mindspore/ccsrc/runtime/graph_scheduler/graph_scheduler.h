@@ -166,9 +166,10 @@ class BACKEND_EXPORT GraphScheduler {
                               const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
+  void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph);
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.
   void LinkControlArrowByCommunicationNode(const std::vector<CNodePtr> &communication_nodes,
-                                           const GraphCompilerInfo &graph_compiler_info);
+                                           const std::vector<KernelGraphPtr> &graphs);
   void LinkDeviceTensorStoreForAutoMonadActor(const std::vector<AbstractActor *> &auto_monad_actors);
   void LinkControlArrowForDataPrepareActor(DataPrepareActor *data_prepare_actor, const ActorSet *actor_set,
                                            const ControlNodeParserPtr &parser);
@@ -221,6 +222,9 @@ class BACKEND_EXPORT GraphScheduler {
   AID memory_manager_aid_;
   const AID *recorder_aid_{nullptr};
   const AID *debug_aid_{nullptr};
+
+  // Whether actor running by the persistent execution order.
+  bool execution_order_running_{false};
 
   bool init_{false};
 };
