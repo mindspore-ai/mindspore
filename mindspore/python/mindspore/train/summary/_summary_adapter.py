@@ -179,13 +179,15 @@ def _nptype_to_prototype(np_value):
     }
     np_type = None
     if np_value is None:
-        logger.error("The numpy value is none")
+        logger.error("The numpy value in tensor of Summary is none")
     else:
         np_type = np_value.dtype.type
 
     proto = np2pt_tbl.get(np_type, None)
     if proto is None:
-        raise TypeError("No match for proto data type.")
+        raise TypeError("No match for proto data type, np_value type expect value is one of ['np.bool_', 'np.int8', "
+                        "'np.int16', 'np.int32', 'np.int64', 'np.uint8', 'np.uint16', 'np.uint32', 'np.uint64', "
+                        "'np.float16', 'np.float', 'np.float64'].")
 
     return proto
 
@@ -207,11 +209,12 @@ def _fill_scalar_summary(tag: str, np_value, summary):
         summary.scalar_value = np_value.item()
         return True
     if np_value.size > 1:
-        logger.warning(
+        logger.info(
             f"The tensor is not a single scalar, tag = {tag}, ndim = {np_value.ndim}, shape = {np_value.shape}")
         summary.scalar_value = next(np_value.flat).item()
         return True
-    logger.error(f"There no values inside tensor, tag = {tag}, size = {np_value.size}")
+    logger.error(f"The size of Summary tensor should greater than 1, "
+                 f"but got size = {np_value.size}, this means has no values inside tensor, ")
     return False
 
 
@@ -354,12 +357,15 @@ def _fill_image_summary(tag: str, np_value, summary_image, input_format='NCHW'):
     """
     logger.debug(f"Set({tag}) the image summary value")
     if np_value.ndim != 4 or np_value.shape[1] not in (1, 3):
-        logger.error(f"The value is not Image, tag = {tag}, ndim = {np_value.ndim}, shape={np_value.shape}")
+        logger.error(f"The dimension of Summary tensor should be 4 or second dimension should be 1 or 3, "
+                     f"but got tag = {tag}, ndim = {np_value.ndim}, shape={np_value.shape}, "
+                     f"which means Summary tensor is not Image.")
         return False
 
     if np_value.ndim != len(input_format):
         logger.error(
-            f"The tensor with dim({np_value.ndim}) can't convert the format({input_format}) because dim not same")
+            f"The tensor with dimension({np_value.ndim}) can't convert the format({input_format}) "
+            f"because dimension not same, the dimension should be {len(input_format)}.")
         return False
 
     if 0 in np_value.shape:

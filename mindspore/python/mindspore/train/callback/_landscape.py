@@ -327,8 +327,9 @@ class SummaryLandscape:
 
         json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
         if not os.path.exists(json_path):
-            raise FileNotFoundError(f'train_metadata json file path not exists,'
-                                    f'please use summary_collector to collect information to create the json file')
+            raise FileNotFoundError(f'For "{self.__class__.__name__}", train_metadata.json file does not exist '
+                                    f'under the path, please use summary_collector to collect information to '
+                                    f'create the json file')
         with open(json_path, 'r') as file:
             data = json.load(file)
         self._check_json_file_data(data)
@@ -766,68 +767,67 @@ class SummaryLandscape:
             metrics[key] = value.eval()
         return metrics
 
-    @staticmethod
-    def _check_unit(unit):
+    def _check_unit(self, unit):
         """Check unit type and value."""
         check_value_type('unit', unit, str)
         if unit not in ["step", "epoch"]:
-            raise ValueError(f'Unit should be step or epoch, but got the: {unit}')
+            raise ValueError(f'For "{self.__class__.__name__}", the "unit" in train_metadata.json should be '
+                             f'step or epoch, but got the: {unit}')
 
-    @staticmethod
-    def _check_landscape_size(landscape_size):
+    def _check_landscape_size(self, landscape_size):
         """Check landscape size type and value."""
         check_value_type('landscape_size', landscape_size, int)
         # landscape size should be between 3 and 256.
         if landscape_size < 3 or landscape_size > 256:
-            raise ValueError(f'Landscape size should be between 3 and 256, but got the: {landscape_size}')
+            raise ValueError(f'For "{self.__class__.__name__}", "landscape_size" in train_metadata.json should be '
+                             f'between 3 and 256, but got the: {landscape_size}')
 
-    @staticmethod
-    def _check_create_landscape(create_landscape):
+    def _check_create_landscape(self, create_landscape):
         """Check create landscape type and value."""
         check_value_type('create_landscape', create_landscape, dict)
         for param, value in create_landscape.items():
             if param not in ["train", "result"]:
-                raise ValueError(f'The key to create landscape should be in ["train", "result"], '
-                                 f'but got the: {param}')
+                raise ValueError(f'For "{self.__class__.__name__}", the key of "create_landscape" should be in '
+                                 f'["train", "result"], but got the: {param}.')
             if len(create_landscape) < 2:
-                raise ValueError(f'The key to create landscape should be train and result, '
-                                 f'but only got the: {param}')
+                raise ValueError(f'For "{self.__class__.__name__}", the key of "create_landscape" should be train '
+                                 f'and result, but only got the: {param}')
             check_value_type(param, value, bool)
 
-    @staticmethod
-    def _check_intervals(intervals):
+    def _check_intervals(self, intervals):
         """Check intervals type and value."""
         check_value_type('intervals', intervals, list)
         for _, interval in enumerate(intervals):
             check_value_type('each interval in intervals', interval, list)
             #Each interval have at least three epochs.
             if len(interval) < 3:
-                raise ValueError(f'Each landscape interval should not be less than three, '
-                                 f'but got the: {interval}.')
+                raise ValueError(f'For "{self.__class__.__name__}", the length of each list in "intervals" '
+                                 f'should not be less than three, but got the: {interval}.')
             for j in interval:
                 if not isinstance(j, int):
-                    raise TypeError(f'Landscape interval value type should be int, '
-                                    f'but got the: {type(j)}.')
+                    raise TypeError(f'For "{self.__class__.__name__}", the type of each value in "intervals" '
+                                    f'should be int, but got the: {type(j)}.')
 
-    @staticmethod
-    def _check_device_ids(device_ids):
+    def _check_device_ids(self, device_ids):
         """Check device_ids type and value."""
         check_value_type('device_ids', device_ids, list)
         for i in device_ids:
             if not isinstance(i, int):
-                raise TypeError(f'Landscape device_ids type should be int, '
-                                f'but got the: {type(i)}.')
+                raise TypeError(f'For "{self.__class__.__name__}.gen_landscapes_with_multi_process", the parameter '
+                                f'"device_ids" type should be int, but got the: {type(i)}.')
             #device_id should be between 0 and 7.
             if i < 0 or i > 7:
-                raise ValueError(f'Landscape device_ids value should be between 0 and 7,but got {i}.')
+                raise ValueError(f'For "{self.__class__.__name__}.gen_landscapes_with_multi_process", the parameter '
+                                 f'"device_ids" should be between 0 and 7,but got {i}.')
 
 
     def _check_collect_landscape_data(self, collect_landscape):
         """Check collect landscape data type and value."""
         for param in collect_landscape.keys():
             if param not in ["landscape_size", "unit", "num_samples", "create_landscape", "intervals"]:
-                raise ValueError(f'The key of collect landscape should be landscape_size, unit, num_samples'
-                                 f'create_landscape or intervals, but got the: {param}. ')
+                raise ValueError(f'For "{self.__class__.__name__}", the key of collect landscape should be '
+                                 f'landscape_size, unit, num_samples create_landscape or intervals, '
+                                 f'but got the: {param}. ')
         if "landscape_size" in collect_landscape:
             landscape_size = collect_landscape.get("landscape_size")
             self._check_landscape_size(landscape_size)
@@ -862,11 +862,13 @@ class SummaryLandscape:
         for _, epochs in enumerate(epoch_group.values()):
             # Each epoch_group have at least three epochs.
             if len(epochs) < 3:
-                raise ValueError(f'This group epochs length should not be less than 3'
+                raise ValueError(f'For "{self.__class__.__name__}", the "epoch_group" in train_metadata.json, '
+                                 f'length of each list in "epoch_group" should not be less than 3, '
                                  f'but got: {len(epochs)}. ')
             for epoch in epochs:
                 if str(epoch) not in model_params_file_map.keys():
-                    raise ValueError(f'The model_params_file_map does not exist {epoch}th checkpoint in intervals.')
+                    raise ValueError(f'For "{self.__class__.__name__}", the "model_params_file_map" in '
+                                     f'train_metadata.json does not exist {epoch}th checkpoint in intervals.')
 
         check_value_type('step_per_epoch', step_per_epoch, int)
         self._check_landscape_size(landscape_size)
