@@ -23,15 +23,8 @@ package com.mindspore.lite;
  */
 public class Version {
     static {
-        try {
-            NativeLibrary.load();
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
-        }
+        System.loadLibrary("mindspore-lite-jni");
     }
-
     /**
      * Get MindSpore Lite version info.
      *
