@@ -102,6 +102,20 @@ bool ComputeGraphNode::Heartbeat() {
   tcp_client_->SendSync(std::move(message));
   return true;
 }
+
+bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::string &msg_body) {
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+
+  auto message = CreateMessage(meta_server_addr_.GetUrl(), msg_name, msg_body);
+  MS_EXCEPTION_IF_NULL(message);
+
+  auto retval = tcp_client_->SendSync(std::move(message));
+  if (retval > 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

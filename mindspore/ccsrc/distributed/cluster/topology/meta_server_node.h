@@ -62,14 +62,18 @@ class MetaServerNode : public NodeBase {
       : NodeBase(node_id), total_node_num_(node_num), topo_state_(TopoState::kInitializing), enable_monitor_(true) {}
   ~MetaServerNode() override = default;
 
+  bool Initialize() override;
+  bool Finalize() override;
+
   // Get the current topology state.
   TopoState TopologyState();
 
   // Get the number of alive compute graph node.
   size_t GetAliveNodeNum();
 
-  bool Initialize() override;
-  bool Finalize() override;
+  // Register the message handler for the user defined message which is specified by the `name` parameter.
+  bool RegisterMessageHandler(const std::string &name,
+                              std::shared_ptr<std::function<void(const std::string &)>> handler);
 
  private:
   // Create and init the tcp server.
@@ -96,8 +100,13 @@ class MetaServerNode : public NodeBase {
   // The TCP server is used to process messages sent from compute graph nodes.
   std::unique_ptr<rpc::TCPServer> tcp_server_;
 
-  // All the handlers for compute graph node's messages processing.
-  std::map<MessageName, rpc::MessageHandler> message_handlers_;
+  // All the handlers for compute graph node's system messages processing.
+  // The `system` means the built-in messages used for cluster topology construction.
+  std::map<MessageName, rpc::MessageHandler> system_msg_handlers_;
+
+  // All the handlers for compute graph node's user-defined messages processing.
+  // The `user-defined` means that this kind of message is user defined and has customized message handler.
+  std::map<std::string, std::shared_ptr<std::function<void(const std::string &)>>> message_handlers_;
 
   // Stores the registered compute graph nodes.
   std::map<std::string, std::shared_ptr<ComputeGraphNodeState>> nodes_;
