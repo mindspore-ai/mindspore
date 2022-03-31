@@ -138,40 +138,30 @@ int DoSend(Connection *conn) {
       conn->FillSendMessage(conn->send_message_queue.front(), conn->source, false);
       conn->send_message_queue.pop();
     }
-    size_t retryCount = 10;
     size_t sendLen = 0;
-    while (retryCount > 0 && sendLen != conn->total_send_len) {
-      int retval = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, conn->total_send_len, &sendLen);
-      if (retval == IO_RW_OK && sendLen > 0) {
-        conn->total_send_len -= sendLen;
-        if (conn->total_send_len == 0) {
-          // update metrics
-          conn->send_metrics->UpdateError(false);
+    int retval = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, conn->total_send_len, &sendLen);
+    if (retval == IO_RW_OK && sendLen > 0) {
+      conn->total_send_len -= sendLen;
+      if (conn->total_send_len == 0) {
+        // update metrics
+        conn->send_metrics->UpdateError(false);
 
-          conn->output_buffer_size -= conn->send_message->body.size();
-          total_send_bytes += conn->send_message->body.size();
-          delete conn->send_message;
-          conn->send_message = nullptr;
-          break;
-        }
-      } else if (retval == IO_RW_OK && sendLen == 0) {
-        // EAGAIN
-        MS_LOG(ERROR) << "Failed to send message and update the epoll event";
-        (void)conn->recv_event_loop->UpdateEpollEvent(conn->socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
-        continue;
-      } else {
-        if (--retryCount > 0) {
-          MS_LOG(ERROR) << "Failed to send message and retry(" + std::to_string(retryCount) + ")...";
-          unsigned int time = 1;
-          sleep(time);
-          continue;
-        } else {
-          // update metrics
-          conn->send_metrics->UpdateError(true, conn->error_code);
-          conn->state = ConnectionState::kDisconnecting;
-          break;
-        }
+        conn->output_buffer_size -= conn->send_message->body.size();
+        total_send_bytes += conn->send_message->body.size();
+        delete conn->send_message;
+        conn->send_message = nullptr;
+        break;
       }
+    } else if (retval == IO_RW_OK && sendLen == 0) {
+      // EAGAIN
+      MS_LOG(ERROR) << "Failed to send message and update the epoll event";
+      (void)conn->recv_event_loop->UpdateEpollEvent(conn->socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
+      continue;
+    } else {
+      // update metrics
+      conn->send_metrics->UpdateError(true, conn->error_code);
+      conn->state = ConnectionState::kDisconnecting;
+      break;
     }
   }
   return total_send_bytes;
