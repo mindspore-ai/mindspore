@@ -100,6 +100,34 @@
 #define MS_FMSUB128_F32(src1, src2, src3) _mm_sub_ps(_mm_mul_ps(src1, src2), src3)
 #endif
 
+#define MS128_INT16_TO_FLOAT16(src) _mm_cvtepi16_ph(src)
+#define MS128_FLOAT16_TO_INT16(src) _mm_cvttph_epi16(src)
+
+#define MS128_INT32_TO_FLOAT16(src) _mm_cvtepi32_ph(src)
+#define MS128_FLOAT16_TO_INT32(src) _mm_cvttph_epi32(src)
+
+#define MS128_INT32_TO_FLOAT32(src) _mm_cvtepi32_ps(src)
+#define MS128_FLOAT32_TO_INT32(src) _mm_cvttps_epi32(src)
+
+#define MS128_INT64_TO_FLOAT32(src) _mm_cvtepi64_ps(src)
+#define MS128_FLOAT32_TO_INT64(src) _mm_cvttps_epi64(src)
+
+#define MS128_INT64_TO_FLOAT16(src) _mm_cvtepi64_ph(src)
+#define MS128_FLOAT16_TO_INT64(src) _mm_cvttph_epi64(src)
+
+#define MS128_INT32_TO_FLOAT64(src) _mm_cvtepi32_pd(src)
+#define MS128_FLOAT64_TO_INT32(src) _mm_cvttpd_epi32(src)
+
+#define MS128_INT64_TO_FLOAT64(src) _mm_cvtepi64_pd(src)
+#define MS128_FLOAT64_TO_INT64(src) _mm_cvttpd_epi64(src)
+
+#define MS128_INT16_TO_INT32(src) _mm128_cvtepi16_epi32(src)
+#define MS128_INT16_TO_INT64(src) _mm128_cvtepi16_epi64(src)
+#define MS128_INT32_TO_INT16(src) _mm128_cvtepi32_epi16(src)
+#define MS128_INT32_TO_INT64(src) _mm128_cvtepi32_epi64(src)
+#define MS128_INT64_TO_INT16(src) _mm128_cvtepi64_epi16(src)
+#define MS128_INT64_TO_INT32(src) _mm128_cvtepi64_epi32(src)
+
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
   MS_F32X4_GETI(dst, 0) = sqrtf(MS_F32X4_GETI(src, 0));

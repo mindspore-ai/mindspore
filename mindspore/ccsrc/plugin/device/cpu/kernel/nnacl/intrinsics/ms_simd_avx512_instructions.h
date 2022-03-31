@@ -94,6 +94,34 @@ static inline float MS_GET_SUM512_F32(__m512 src) {
 #define MS_DIV512_EPI32(src1, src2) \
   _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))
 
+#define MS512_INT16_TO_FLOAT16(src) _mm512_cvtepi16_ph(src)
+#define MS512_FLOAT16_TO_INT16(src) _mm512_cvttph_epi16(src)
+
+#define MS512_INT32_TO_FLOAT16(src) _mm512_cvtepi32_ph(src)
+#define MS512_FLOAT16_TO_INT32(src) _mm512_cvttph_epi32(src)
+
+#define MS512_INT32_TO_FLOAT32(src) _mm512_cvtepi32_ps(src)
+#define MS512_FLOAT32_TO_INT32(src) _mm512_cvttps_epi32(src)
+
+#define MS512_INT64_TO_FLOAT32(src) _mm512_cvtepi64_ps(src)
+#define MS512_FLOAT32_TO_INT64(src) _mm512_cvttps_epi64(src)
+
+#define MS512_INT64_TO_FLOAT16(src) _mm512_cvtepi64_ph(src)
+#define MS512_FLOAT16_TO_INT64(src) _mm512_cvttph_epi64(src)
+
+#define MS512_INT32_TO_FLOAT64(src) _mm512_cvtepi32_pd(src)
+#define MS512_FLOAT64_TO_INT32(src) _mm512_cvttpd_epi32(src)
+
+#define MS512_INT64_TO_FLOAT64(src) _mm512_cvtepi64_pd(src)
+#define MS512_FLOAT64_TO_INT64(src) _mm512_cvttpd_epi64(src)
+
+#define MS512_INT16_TO_INT32(src) _mm512_cvtepi16_epi32(src)
+#define MS512_INT16_TO_INT64(src) _mm512_cvtepi16_epi64(src)
+#define MS512_INT32_TO_INT16(src) _mm512_cvtepi32_epi16(src)
+#define MS512_INT32_TO_INT64(src) _mm512_cvtepi32_epi64(src)
+#define MS512_INT64_TO_INT16(src) _mm512_cvtepi64_epi16(src)
+#define MS512_INT64_TO_INT32(src) _mm512_cvtepi64_epi32(src)
+
 static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
   static const MS_FLOAT32X16 data0 = {378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f,
                                       378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f};
