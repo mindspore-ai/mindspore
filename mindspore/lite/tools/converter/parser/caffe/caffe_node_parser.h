@@ -21,7 +21,11 @@
 #include <vector>
 #include "google/protobuf/message.h"
 #include "schema/inner/model_generated.h"
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/caffe.pb.h"
+#else
 #include "proto/caffe.pb.h"
+#endif
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"

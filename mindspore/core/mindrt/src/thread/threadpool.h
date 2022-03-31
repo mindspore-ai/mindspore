@@ -57,11 +57,9 @@ constexpr int kThreadIdle = 2;  // idle, the thread is waiting
 
 // used in scenarios with unequal division of task
 // the parameters indicate the start and end coefficients
-#ifdef BUILD_LITE
-typedef int (*Func)(void *param, int task_id, float l, float r);
-#else
+
+typedef int (*TaskFunc)(void *param, int task_id, float l, float r);
 using Func = std::function<int(void *, int, float, float)>;
-#endif
 using Content = void *;
 
 typedef struct Task {
@@ -164,6 +162,7 @@ class MS_CORE_API ThreadPool {
   int SetCpuAffinity(BindMode bind_mode);
   int SetProcessAffinity(BindMode bind_mode) const;
 
+  int ParallelLaunch(const TaskFunc &func, Content content, int task_num) const;
   int ParallelLaunch(const Func &func, Content content, int task_num) const;
   void DisableOccupiedActorThread() { occupied_actor_thread_ = false; }
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }

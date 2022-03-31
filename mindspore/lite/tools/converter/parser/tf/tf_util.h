@@ -19,7 +19,11 @@
 
 #include <string>
 #include <string_view>
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/node_def.pb.h"
+#else
 #include "proto/node_def.pb.h"
+#endif
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"

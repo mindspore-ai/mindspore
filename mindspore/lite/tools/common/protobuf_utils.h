@@ -20,7 +20,11 @@
 #include <string>
 #include <vector>
 #include "google/protobuf/message.h"
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/caffe.pb.h"
+#else
 #include "proto/caffe.pb.h"
+#endif
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
 

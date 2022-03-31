@@ -23,7 +23,11 @@
 #include <unordered_map>
 #include "include/registry/model_parser.h"
 #include "include/registry/model_parser_registry.h"
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/caffe.pb.h"
+#else
 #include "proto/caffe.pb.h"
+#endif
 #include "ops/primitive_c.h"
 
 using STATUS = int;

@@ -591,7 +591,7 @@ void mindspore_log_init(void) {
 __attribute__((constructor)) void mindspore_log_init(void) {
 #endif
 #else
-void mindspore_log_init(void) {
+MS_CORE_API void mindspore_log_init(void) {
 #endif
 #ifdef USE_GLOG
 #define google mindspore_private

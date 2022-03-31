@@ -24,8 +24,13 @@
 #include <vector>
 #include <set>
 #include <utility>
+#ifdef ENABLE_CLOUD_AND_LITE
+#include "proto/lite/graph.pb.h"
+#include "proto/lite/node_def.pb.h"
+#else
 #include "proto/graph.pb.h"
 #include "proto/node_def.pb.h"
+#endif
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"

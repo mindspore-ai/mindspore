@@ -283,6 +283,14 @@ if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     )
 endif()
 
+if(ENABLE_CLOUD_AND_LITE)
+    install(
+        TARGETS mindspore-lite mslite_converter_plugin
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
 # set python files
 file(GLOB MS_PY_LIST ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/*.py)
 install(

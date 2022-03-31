@@ -27,7 +27,7 @@
 #include "include/api/context.h"
 
 namespace mindspore {
-class AclModelOptions {
+class MS_API AclModelOptions {
  public:
   explicit AclModelOptions(const std::shared_ptr<Context> &context);
   ~AclModelOptions() = default;

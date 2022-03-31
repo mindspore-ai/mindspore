@@ -314,7 +314,9 @@ if(MSLITE_ENABLE_V0)
 endif()
 
 if(MSLITE_ENABLE_MINDRT)
-    add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
+    if(NOT ENABLE_CLOUD_AND_LITE)
+        add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
+    endif()
     set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
@@ -533,4 +535,8 @@ endif()
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(mindspore-lite ascend_kernel_mid)
     target_link_libraries(mindspore-lite_static ascend_kernel_mid)
+endif()
+
+if(ENABLE_CLOUD_AND_LITE)
+    set_target_properties(mindspore-lite PROPERTIES INSTALL_RPATH $ORIGIN)
 endif()
