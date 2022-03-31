@@ -95,19 +95,17 @@ endif()
 
 if(MSLITE_ENABLE_CONVERTER)
     if(MSLITE_ENABLE_TOOLS)
-        list(APPEND TEST_UT_SRC ${TEST_DIR}/st/benchmark_test.cc)
-
-        set(TEST_LITE_SRC
-                ${TEST_LITE_SRC}
+        set(TEST_CONVERTER_UT_SRC
+                ${TEST_UT_SRC}
                 ${LITE_DIR}/tools/benchmark/run_benchmark.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_base.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_unified_api.cc
                 ${LITE_DIR}/tools/benchmark/benchmark_c_api.cc
                 ${LITE_DIR}/tools/benchmark/benchmark.cc
+                ${TEST_DIR}/st/benchmark_test.cc
                 )
     endif()
     add_definitions(-DPRIMITIVE_WRITEABLE)
-    add_definitions(-DUSE_GLOG)
     file(GLOB_RECURSE TEST_CONVERTER_UT_SRC
             ${TEST_DIR}/ut/tools/converter/registry/*.cc
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
@@ -125,22 +123,24 @@ if(MSLITE_ENABLE_CONVERTER)
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/graph_test.cc)
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/sub_graph_test.cc)
     endif()
-    list(APPEND TEST_UT_SRC ${TEST_CONVERTER_UT_SRC})
 
-    set(TEST_LITE_SRC
-        ${TEST_LITE_SRC}
+    set(TEST_CONVERTER_UT_SRC
+        ${TEST_CONVERTER_UT_SRC}
+        ${TEST_DIR}/main.cc
+        ${TEST_DIR}/common/common_test.cc
         ${TEST_DIR}/common/import_from_meta_graphT.cc
-        ${LITE_DIR}/src/ops/ops_utils.cc
-        ${LITE_DIR}/src/ops/ops_def.cc
-        ${LITE_DIR}/src/tensor.cc
-        ${LITE_DIR}/src/schema_tensor_wrapper.cc
         )
 endif()
 
 set(TEST_SRC
         ${TEST_UT_SRC}
         ${TEST_LITE_SRC}
+        ${TEST_DIR}/st/graph_test.cc
         )
+
+if(MSLITE_ENABLE_SERVER_INFERENCE)
+    list(REMOVE_ITEM TEST_SRC ${TEST_DIR}/st/graph_test.cc)
+endif()
 
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src fbs_inner_src)
@@ -180,13 +180,21 @@ if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(lite-test mindrt_test_mid)
 endif()
 
-if(MSLITE_ENABLE_CONVERTER)
-    target_link_libraries(lite-test tflite_parser_mid caffe_parser_mid
-                                    onnx_parser_mid tf_parser_mid)
-endif()
-
 if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
-    target_link_libraries(lite-test
+    add_executable(lite-test-converter ${TEST_CONVERTER_UT_SRC})
+    target_compile_definitions(lite-test-converter PRIVATE PRIMITIVE_WRITEABLE USE_GLOG)
+    target_link_libraries(lite-test-converter dl mindspore::gtest)
+    if(PLATFORM_ARM)
+        target_link_libraries(lite-test-converter log)
+    else()
+        target_link_libraries(lite-test-converter ${SECUREC_LIBRARY} pthread)
+    endif()
+    add_dependencies(lite-test-converter fbs_src fbs_inner_src)
+    target_link_libraries(lite-test-converter
+            converter_runtime_mid
+            cpu_ops_mid
+            nnacl_mid
+            cpu_kernel_mid
             anf_exporter_mid
             mslite_converter_plugin
             graph_pass_mid
@@ -199,10 +207,16 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
             mindspore::json
             -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::glog
+            mindspore::flatbuffers
             preprocess_mid
             config_parser_mid
             coder_mid
             )
+endif()
+
+if(MSLITE_ENABLE_CONVERTER)
+    target_link_libraries(lite-test-converter tflite_parser_mid caffe_parser_mid
+                                    onnx_parser_mid tf_parser_mid)
 endif()
 
 if(ENABLE_MODEL_OBF)
