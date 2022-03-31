@@ -16,7 +16,7 @@
 from typing import Optional
 import ast
 
-from .api.scoped_value import ScopedValue, ValueType
+from ..api.scoped_value import ScopedValue, ValueType
 
 
 class AstModifier(ast.NodeTransformer):
@@ -39,6 +39,50 @@ class AstModifier(ast.NodeTransformer):
                 ast_func.body.remove(body)
                 return True
         return False
+
+    @staticmethod
+    def insert_sub_ast(ast_father: ast.AST, ast_son: ast.AST, index_ast: Optional[ast.AST] = None,
+                       insert_before=True) -> ast.AST:
+        """
+        Insert an ast node into another ast node's body.
+
+        Args:
+            ast_father (ast.AST): Where new ast node to be inserted into.
+            ast_son (ast.AST): An ast node to be inserted in.
+            index_ast (Optional[ast.AST]): An ast_node indicates a position in 'ast_father' where new ast node to be
+                                           inserted into. Default is None which means append new ast node to body of
+                                           'ast_father'.
+            insert_before (bool): A bool indicates at before or at after of 'index_ast' where new ast node to be
+                                  inserted into. Only valid when 'index_ast' is not None. Default is True which means
+                                  inserting new ast node before 'index_ast'.
+
+        Returns:
+            An instance of ast.AST which has been inserted into 'ast_father'.
+
+        Raises:
+            ValueError: If 'ast_father' has no attribute named 'body'.
+            RuntimeError: If 'index_ast' is not contained in 'ast_father'.
+        """
+        if not hasattr(ast_father, "body"):
+            raise ValueError("Input ast_father has no attribute body:", type(ast_father))
+        if index_ast is None:
+            ast_father.body.append(ast_son)
+            ast.fix_missing_locations(ast_father)
+            return ast_son
+        for index in range(0, len(ast_father.body)):
+            if id(ast_father.body[index]) == id(index_ast):
+                if insert_before:
+                    ast_father.body.insert(index, ast_son)
+                else:
+                    ast_father.body.insert(index + 1, ast_son)
+                ast.fix_missing_locations(ast_father)
+                return ast_son
+        raise RuntimeError("index_ast is not contained in ast_father")
+
+    @staticmethod
+    def insert_class_into_module(ast_mod: ast.Module, ast_class: ast.ClassDef, index_ast: Optional[ast.AST] = None,
+                                 insert_before=True) -> ast.ClassDef:
+        return AstModifier.insert_sub_ast(ast_mod, ast_class, index_ast, insert_before)
 
     @staticmethod
     def insert_assign_to_function(ast_func: ast.FunctionDef, targets: [ScopedValue], expr: ScopedValue,
@@ -163,6 +207,77 @@ class AstModifier(ast.NodeTransformer):
         return result
 
     @staticmethod
+    def _create_call_args(args: [ScopedValue]) -> [ast.AST]:
+        """
+        Create a list of ast.AST as args of ast.Call from a list of `ScopedValue`.
+
+        Args:
+            args (list[ScopedValue]): Args of ast.Call.
+
+        Returns:
+            A list of ast.AST as args of ast.Call.
+
+        Raises:
+            RuntimeError: If element of 'args' is not an instance of `ScopedValue`.
+            RuntimeError: If value_type of element of 'args' is `ValueType.CustomObjValue`.
+        """
+
+        if args is None:
+            return []
+        results = []
+        for arg in args:
+            if not isinstance(arg, ScopedValue):
+                raise TypeError("arg should be ScopedValue, got: ", type(arg))
+            if arg.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+                if arg.scope:
+                    raise RuntimeError("arg.scope should be empty")
+                results.append(ast.Constant(value=arg.value, kind=None))
+            elif arg.type == ValueType.NamingValue:
+                if arg.scope:
+                    results.append(ast.Attribute(ast.Name(arg.scope, ast.Load()), arg.value, ast.Store()))
+                else:
+                    results.append(ast.Name(arg.value, ast.Store()))
+            else:
+                raise RuntimeError("Please handle custom-object first")
+        return results
+
+    @staticmethod
+    def _create_call_kwargs(kwargs: {str: ScopedValue}) -> [ast.keyword]:
+        """
+        Create a list of ast.keyword as kwargs of ast.Call from a dict of string to `ScopedValue`.
+
+        Args:
+            kwargs (dict{str: ScopedValue}): Kwargs of ast.Call.
+
+        Returns:
+            A list of ast.AST as args of ast.Call.
+
+        Raises:
+            RuntimeError: If element of 'args' is not an instance of `ScopedValue`.
+            RuntimeError: If value_type of element of 'args' is `ValueType.CustomObjValue`.
+        """
+
+        if kwargs is None:
+            return []
+        results = []
+        for arg, value in kwargs.items():
+            if not isinstance(value, ScopedValue):
+                raise TypeError("value should be ScopedValue, got: ", type(value))
+            if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+                if value.scope:
+                    raise RuntimeError("value.scope should be empty")
+                results.append(ast.keyword(arg=arg, value=ast.Constant(value=value.value, kind=None)))
+            elif value.type == ValueType.NamingValue:
+                if value.scope:
+                    results.append(ast.keyword(arg=arg, value=ast.Attribute(ast.Name(value.scope, ast.Load()),
+                                                                            value.value, ast.Store())))
+                else:
+                    results.append(ast.keyword(arg=arg, value=ast.Name(value.value, ast.Store())))
+            else:
+                raise RuntimeError("Please handle custom-object first")
+        return results
+
+    @staticmethod
     def create_call(expr: ScopedValue, args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None) -> ast.Call:
         """
         Create an instance of ast.Call.
@@ -178,11 +293,7 @@ class AstModifier(ast.NodeTransformer):
         Raises:
             RuntimeError: If value_type of 'expr' is ValueType.CustomObjValue.
             RuntimeError: If value_type of 'expr' is not ValueType.NamingValue.
-            RuntimeError: If value_type of element of 'args' is ValueType.CustomObjValue.
-            RuntimeError: If value_type of value of 'kwargs' is ValueType.CustomObjValue.
             TypeError: If expr is not an instance of ScopedValue.
-            RuntimeError: If element of 'args' is not an instance of ScopedValue.
-            RuntimeError: If value of 'kwargs' is not an instance of ScopedValue.
         """
         if not isinstance(expr, ScopedValue):
             raise TypeError("expr should be ScopedValue, got: ", type(expr))
@@ -195,40 +306,8 @@ class AstModifier(ast.NodeTransformer):
         else:
             ast_func = ast.Name(expr.value, ast.Store())
 
-        ast_args = []
-        if args is not None:
-            for arg in args:
-                if not isinstance(arg, ScopedValue):
-                    raise TypeError("arg should be ScopedValue, got: ", type(arg))
-                if arg.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                    if arg.scope:
-                        raise RuntimeError("arg.scope should be empty")
-                    ast_args.append(ast.Constant(value=arg.value, kind=None))
-                elif arg.type == ValueType.NamingValue:
-                    if arg.scope:
-                        ast_args.append(ast.Attribute(ast.Name(arg.scope, ast.Load()), arg.value, ast.Store()))
-                    else:
-                        ast_args.append(ast.Name(arg.value, ast.Store()))
-                else:
-                    raise RuntimeError("Please handle custom-object first")
-        keywords = []
-        if kwargs is not None:
-            for arg, value in kwargs.items():
-                if not isinstance(value, ScopedValue):
-                    raise TypeError("value should be ScopedValue, got: ", type(value))
-                if value.type in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                    if value.scope:
-                        raise RuntimeError("value.scope should be empty")
-                    keywords.append(ast.keyword(arg=arg, value=ast.Constant(value=value.value, kind=None)))
-                elif value.type == ValueType.NamingValue:
-                    if value.scope:
-                        keywords.append(ast.keyword(arg=arg,
-                                                    value=ast.Attribute(ast.Name(value.scope, ast.Load()), value.value,
-                                                                        ast.Store())))
-                    else:
-                        keywords.append(ast.keyword(arg=arg, value=ast.Name(value.value, ast.Store())))
-                else:
-                    raise RuntimeError("Please handle custom-object first")
+        ast_args = AstModifier._create_call_args(args)
+        keywords = AstModifier._create_call_kwargs(kwargs)
         result = ast.Call(func=ast_func, args=ast_args, keywords=keywords)
         ast.fix_missing_locations(result)
         return result

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-MindSpore Rewrite module.
+MindSpore Rewrite package.
 This is an experimental python package that is subject to change or deletion.
 """
 from .parsers.module_parser import g_module_parser

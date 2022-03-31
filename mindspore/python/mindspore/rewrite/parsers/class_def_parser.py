@@ -20,7 +20,7 @@ from ..symbol_tree import SymbolTree
 from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
 from ..api.scoped_value import ScopedValue
-from ..ast_modifier import AstModifier
+from ..ast_helpers import AstModifier
 
 
 class ClassDefParser(Parser):
