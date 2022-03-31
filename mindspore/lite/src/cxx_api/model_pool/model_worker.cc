@@ -16,8 +16,8 @@
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/numa_adapter.h"
-#include "src/common/utils.h"
 #include "src/common/common.h"
+#include "nnacl/op_base.h"
 namespace mindspore {
 namespace {
 const int kNumInitBatch = 2000;
@@ -83,8 +83,7 @@ Status ModelWorker::ResizeInit() {
   }
   inputs = model_->GetInputs();
   for (auto &input : inputs) {
-    auto data = malloc(input.DataSize());
-    input.SetData(data);
+    input.MutableData();
   }
   std::vector<MSTensor> out;
   status = model_->Predict(inputs, &out);
@@ -95,20 +94,15 @@ Status ModelWorker::ResizeInit() {
   return kSuccess;
 }
 
-Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
-                         int node_id) {
+Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context) {
+  MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
+  MS_CHECK_TRUE_MSG(model_context != nullptr, kLiteError, "model_context is nullptr in model worker.");
   model_ = std::make_shared<Model>();
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
   }
   mindspore::ModelType model_type = kMindIR_Lite;
-#ifdef BFC_MEMORY
-  if (node_id != -1) {
-    numa::NUMAAdapter::GetInstance()->Bind(node_id);
-    model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
-  }
-#endif
   auto status = model_->Build(model_buf, size, model_type, model_context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";

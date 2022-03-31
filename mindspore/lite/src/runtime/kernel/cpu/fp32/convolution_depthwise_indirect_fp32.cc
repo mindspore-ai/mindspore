@@ -202,17 +202,8 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
   int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, pack_weight_size * sizeof(float));
-#ifdef SERVER_INFERENCE
-    auto packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
-      in_tensors_[1], static_cast<size_t>(pack_weight_size * sizeof(float)));
-    packed_weight_ = packed.second;
-    weight_is_packed_ = packed.first;
-    if (weight_is_packed_ == lite::MALLOC && packed_weight_ == nullptr) {
-      packed_weight_ = malloc(pack_weight_size * sizeof(float));
-    }
-#else
-    packed_weight_ = malloc(pack_weight_size * sizeof(float));
-#endif
+    packed_weight_ = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors_[1]->data(), static_cast<size_t>(pack_weight_size * sizeof(float)), &weight_is_packed_);
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;

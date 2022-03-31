@@ -91,13 +91,6 @@ struct InnerContext : public Context {
 
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
 
-#ifdef BFC_MEMORY
-  /// \brief Set NUMA node id.
-  ///
-  /// \param[in] node Define the NUMA node id.
-  inline void SetNodeId(int node_id) { node_id_ = node_id; }
-#endif
-
  private:
   bool IsAllDeviceTypeValid() const;
 

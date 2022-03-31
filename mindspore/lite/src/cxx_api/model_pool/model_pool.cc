@@ -339,30 +339,25 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   // read model by path and init packed weight by buffer
   size_t size = 0;
-  if (graph_buf_ != nullptr) {
-    delete[] graph_buf_;
-    graph_buf_ = nullptr;
-  }
-  graph_buf_ = lite::ReadFile(model_path.c_str(), &size);
-  if (graph_buf_ == nullptr) {
+  auto graph_buf = lite::ReadFile(model_path.c_str(), &size);
+  if (graph_buf == nullptr) {
     MS_LOG(ERROR) << "read file failed.";
-    return kLiteError;
-  }
-  auto ret = lite::PackWeightManager::GetInstance()->InitWeightManagerByBuf(graph_buf_);
-  if (ret != kSuccess) {
-    MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
     return kLiteError;
   }
   // create worker
   std::shared_ptr<ModelWorker> model_worker = nullptr;
   for (size_t i = 0; i < workers_num_; i++) {
     int numa_node_id = model_pool_context[i]->numa_id;
+    auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
+    MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
+    auto new_mdoel_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(numa_node_id);
+    MS_CHECK_TRUE_MSG(new_mdoel_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
       MS_LOG(ERROR) << "model worker is nullptr.";
       return kLiteError;
     }
-    auto status = model_worker->Init(graph_buf_, size, model_pool_context[i]->context, numa_node_id);
+    auto status = model_worker->Init(new_mdoel_buf, size, model_pool_context[i]->context);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
@@ -375,6 +370,10 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   if (model_worker != nullptr) {
     model_inputs_ = model_worker->GetInputs();
     model_outputs_ = model_worker->GetOutputs();
+  }
+  if (graph_buf != nullptr) {
+    delete[] graph_buf;
+    graph_buf = nullptr;
   }
   return kSuccess;
 }
@@ -631,10 +630,6 @@ ModelPool::~ModelPool() {
     if (th.joinable()) {
       th.join();
     }
-  }
-  if (graph_buf_ != nullptr) {
-    delete[] graph_buf_;
-    graph_buf_ = nullptr;
   }
 }
 }  // namespace mindspore
