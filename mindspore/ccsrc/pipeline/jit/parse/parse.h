@@ -21,6 +21,7 @@
 
 #include <limits>
 #include <utility>
+#include <tuple>
 #include <vector>
 #include <string>
 #include <map>
@@ -208,6 +209,7 @@ class Parser {
   // Transform tail call to parallel call.
   void TransformParallelCall();
   void LiftRolledBodyGraphFV();
+  void LiftIfBranchGraphFV();
 
   // If Tensor is present as type, not Tensor(xxx), should not make InterpretNode.
   bool IsTensorType(const AnfNodePtr &node, const std::string &script_text) const;
@@ -332,6 +334,8 @@ class Parser {
   // The func graphs to transform tail call ir to independent call ir.
   // Contains: {former_graph, middle_graph}, latter_graph is no need.
   std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> parallel_call_graphs_;
+  // The true branch and false branch call info. of if statement.
+  std::vector<std::tuple<CNodePtr, FunctionBlockPtr, FunctionBlockPtr>> if_branch_calls_;
   // The rolled_body callers info. for later lifting operation.
   std::vector<std::pair<CNodePtr, FunctionBlockPtr>> rolled_body_calls_;
   // Add exception for if parallel transform.
