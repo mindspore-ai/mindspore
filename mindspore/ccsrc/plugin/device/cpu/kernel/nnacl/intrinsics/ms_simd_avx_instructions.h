@@ -91,6 +91,34 @@ static inline float MS_GET_SUM256_F32(__m256 src) {
 #define MS_DIV256_EPI32(src1, src2) \
   _mm256_cvttps_epi32(MS_DIV256_F32(_mm256_cvtepi32_ps(src1), _mm256_cvtepi32_ps(src2)))
 
+#define MS256_INT16_TO_FLOAT16(src) _mm256_cvtepi16_ph(src)
+#define MS256_FLOAT16_TO_INT16(src) _mm256_cvttph_epi16(src)
+
+#define MS256_INT32_TO_FLOAT16(src) _mm256_cvtepi32_ph(src)
+#define MS256_FLOAT16_TO_INT32(src) _mm256_cvttph_epi32(src)
+
+#define MS256_INT32_TO_FLOAT32(src) _mm256_cvtepi32_ps(src)
+#define MS256_FLOAT32_TO_INT32(src) _mm256_cvttps_epi32(src)
+
+#define MS256_INT64_TO_FLOAT32(src) _mm256_cvtepi64_ps(src)
+#define MS256_FLOAT32_TO_INT64(src) _mm256_cvttps_epi64(src)
+
+#define MS256_INT64_TO_FLOAT16(src) _mm256_cvtepi64_ph(src)
+#define MS256_FLOAT16_TO_INT64(src) _mm256_cvttph_epi64(src)
+
+#define MS256_INT32_TO_FLOAT64(src) _mm256_cvtepi32_pd(src)
+#define MS256_FLOAT64_TO_INT32(src) _mm256_cvttpd_epi32(src)
+
+#define MS256_INT64_TO_FLOAT64(src) _mm256_cvtepi64_pd(src)
+#define MS256_FLOAT64_TO_INT64(src) _mm256_cvttpd_epi64(src)
+
+#define MS256_INT16_TO_INT32(src) _mm256_cvtepi16_epi32(src)
+#define MS256_INT16_TO_INT64(src) _mm256_cvtepi16_epi64(src)
+#define MS256_INT32_TO_INT16(src) _mm256_cvtepi32_epi16(src)
+#define MS256_INT32_TO_INT64(src) _mm256_cvtepi32_epi64(src)
+#define MS256_INT64_TO_INT16(src) _mm256_cvtepi64_epi16(src)
+#define MS256_INT64_TO_INT32(src) _mm256_cvtepi64_epi32(src)
+
 static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   MS_FLOAT32X8 dst;
   MS_F32X8_GETI(dst, 0) = sqrtf(MS_F32X8_GETI(src, 0));

@@ -35,9 +35,20 @@ inline void Uint8ToFloat32(const uint8_t *input, float *output, int number) {
   }
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdInt32ToFloat32CoreCalc(block_size, block_num, input, output, number, index)           \
+  for (int block_max_size = number - block_num + 1; index < block_max_size; index += block_num) { \
+    MS_INT_32xN(block_num) value = MS_LD_EPI32(block_size, input + index);                        \
+    MS_ST_F32(block_size, output + index, MS_INT32_TO_FLOAT32(block_size, value));                \
+  }
+
 inline void Int32ToFloat32(const int32_t *input, float *output, int number) {
-  for (int i = 0; i < number; ++i) {
-    output[i] = (float)input[i];
+  int index = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdInt32ToFloat32CoreCalc, input, output, number, index);
+
+  for (; index < number; ++index) {
+    output[index] = (float)input[index];
   }
 }
 
@@ -97,9 +108,20 @@ inline void Float32ToFp16(const float *input, uint16_t *output, int number) {
 }
 #endif
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdFloat32ToInt32CoreCalc(block_size, block_num, input, output, number, index)           \
+  for (int block_max_size = number - block_num + 1; index < block_max_size; index += block_num) { \
+    MS_FLOAT_32xN(block_num) value = MS_LD_F32(block_size, input + index);                        \
+    MS_ST_EPI32(block_size, output + index, MS_FLOAT32_TO_INT32(block_size, value));              \
+  }
+
 inline void Float32ToInt32(const float *input, int32_t *output, int number) {
-  for (int i = 0; i < number; ++i) {
-    output[i] = (int32_t)input[i];
+  int index = 0;
+
+  MS_SIMD_RUN_X86_NO_SCALAR(SimdFloat32ToInt32CoreCalc, input, output, number, index);
+
+  for (; index < number; ++index) {
+    output[index] = (int32_t)input[index];
   }
 }
 

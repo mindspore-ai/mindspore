@@ -34,6 +34,18 @@
 #include "nnacl/intrinsics/ms_simd_neon_instructions.h"
 #endif
 
+#define SIMD512_BLOCK16 32  // SIMD : 512 = 16 x 32
+#define SIMD256_BLOCK16 16  // SIMD : 256 = 16 x 16
+#define SIMD128_BLOCK16 8   // SIMD : 128 = 16 x 8
+
+#define SIMD512_BLOCK32 16  // SIMD : 512 = 32 x 16
+#define SIMD256_BLOCK32 8   // SIMD : 256 = 32 x 8
+#define SIMD128_BLOCK32 4   // SIMD : 128 = 32 x 4
+
+#define SIMD512_BLOCK64 8  // SIMD : 512 = 64 x 8
+#define SIMD256_BLOCK64 4  // SIMD : 256 = 64 x 4
+#define SIMD128_BLOCK64 2  // SIMD : 128 = 64 x 2
+
 #define MS_EXPAND(...) __VA_ARGS__
 
 // Scaler
@@ -177,6 +189,27 @@
 #define MS_CMPLE_F32(bit_num, ...) MS_EXPAND((MS_CMPLE##bit_num##_F32(__VA_ARGS__)))
 #define MS_CMPGT_F32(bit_num, ...) MS_EXPAND((MS_CMPGT##bit_num##_F32(__VA_ARGS__)))
 #define MS_BLEND_F32(bit_num, ...) MS_EXPAND((MS_BLEND##bit_num##_F32(__VA_ARGS__)))
+
+#define MS_INT16_TO_FLOAT16(bit_num, ...) MS_EXPAND((MS##bit_num##_INT16_TO_FLOAT16(__VA_ARGS__)))
+#define MS_FLOAT16_TO_INT16(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT16_TO_INT16(__VA_ARGS__)))
+
+#define MS_INT32_TO_FLOAT16(bit_num, ...) MS_EXPAND((MS##bit_num##_INT32_TO_FLOAT16(__VA_ARGS__)))
+#define MS_FLOAT16_TO_INT32(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT16_TO_INT32(__VA_ARGS__)))
+
+#define MS_INT32_TO_FLOAT32(bit_num, ...) MS_EXPAND((MS##bit_num##_INT32_TO_FLOAT32(__VA_ARGS__)))
+#define MS_FLOAT32_TO_INT32(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT32_TO_INT32(__VA_ARGS__)))
+
+#define MS_INT64_TO_FLOAT32(bit_num, ...) MS_EXPAND((MS##bit_num##_INT64_TO_FLOAT32(__VA_ARGS__)))
+#define MS_FLOAT32_TO_INT64(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT32_TO_INT64(__VA_ARGS__)))
+
+#define MS_INT64_TO_FLOAT16(bit_num, ...) MS_EXPAND((MS##bit_num##_INT64_TO_FLOAT16(__VA_ARGS__)))
+#define MS_FLOAT16_TO_INT64(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT16_TO_INT64(__VA_ARGS__)))
+
+#define MS_INT32_TO_FLOAT64(bit_num, ...) MS_EXPAND((MS##bit_num##_INT32_TO_FLOAT64(__VA_ARGS__)))
+#define MS_FLOAT64_TO_INT32(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT64_TO_INT32(__VA_ARGS__)))
+
+#define MS_INT64_TO_FLOAT64(bit_num, ...) MS_EXPAND((MS##bit_num##_INT64_TO_FLOAT64(__VA_ARGS__)))
+#define MS_FLOAT64_TO_INT64(bit_num, ...) MS_EXPAND((MS##bit_num##_FLOAT64_TO_INT64(__VA_ARGS__)))
 
 // enable avx512
 #if defined(ENABLE_AVX512)
