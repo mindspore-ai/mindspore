@@ -190,12 +190,12 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
         TypeError: If group is not a string.
         ValueError: If backend is invalid.
         RuntimeError: If HCCL/NCCL is not available.
-
-    >>> from mindspore.communication import init, get_rank
-    >>> init()
-    >>> rank_id = get_rank()
-    >>> print(rank_id)
-    >>> # the result is the rank_id in world_group
+    Examples:
+        >>> from mindspore.communication import init, get_rank
+        >>> init()
+        >>> rank_id = get_rank()
+        >>> print(rank_id)
+        >>> # the result is the rank_id in world_group
     """
     if not isinstance(group, str):
         raise TypeError("For 'get_rank', the argument 'group' must be type of string, "

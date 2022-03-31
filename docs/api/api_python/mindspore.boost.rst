@@ -393,7 +393,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     - **train_parameter_groups** (Union[tuple, list]) – 梯度冻结训练的权重。
     - **train_strategy** (Union[tuple(int), list(int), Tensor]) – 梯度冻结训练的策略。
 
-.. py:function:: freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None, max_accumulation_step=1)
+.. py:function:: mindspore.boost.freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None, max_accumulation_step=1)
 
     提供带梯度冻结的网络Cell。
 
