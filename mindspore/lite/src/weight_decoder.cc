@@ -359,8 +359,9 @@ int WeightDecoder::UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *d
 }
 
 int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
-                               const std::string &model_version) {
-  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT) {
+                               const std::string &model_version, bool float_mode) {
+  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT &&
+      !(op_parameter->quant_type_ == schema::QuantType_QUANT_ALL && float_mode)) {
     return RET_OK;
   }
   int index = 0;
