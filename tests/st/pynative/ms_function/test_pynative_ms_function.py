@@ -383,3 +383,36 @@ def test_pynative_ms_function_with_dynamic_shape():
     x = Tensor([[1, 1, 2], [3, 3, 5]], ms.int32)
     output = test(x)
     assert (output[0].asnumpy() == np.array([1, 2, 3, 5])).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_pynative_ms_function_with_tuple_inputs():
+    """
+    Feature: PyNative ms_function.
+    Description: PyNative ms_function with tuple inputs.
+    Expectation: The calculation result is correct.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.enable_tuple_broaden = True
+
+        @ms_function
+        def construct(self, grads):
+            new_grads = []
+            for grad in grads:
+                new_grads.append(grad + 1)
+            return new_grads
+
+
+    x = Tensor(np.ones([2, 2]), dtype=ms.int32)
+    y = Tensor(np.ones([2, 2]), dtype=ms.int32)
+    net = Net()
+    out = net((x, y))
+    assert (out[0].asnumpy() == np.ones([2, 2]) + 1).all()
