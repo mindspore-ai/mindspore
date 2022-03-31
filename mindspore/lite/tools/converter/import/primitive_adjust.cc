@@ -613,6 +613,7 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
     i++;
     auto node_list = TopoSort(func_graph->get_return());
     int status = lite::RET_OK;
+    std::set<AnfNodePtr> adjusted_value_node;
     for (auto &node : node_list) {
       if (!utils::isa<CNodePtr>(node)) {
         continue;
@@ -622,11 +623,21 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
       if (cnode->input(0)->cast<CNodePtr>() != nullptr) {
         continue;
       }
-      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+      auto value_node = cnode->input(0);
+      auto prim = GetValueNode<PrimitivePtr>(value_node);
       if (prim == nullptr) {
         MS_LOG(DEBUG) << "this is a call cnode, which input[0] is fg.";
         continue;
       }
+      if (adjusted_value_node.count(value_node)) {
+        /* For new mindir version, some cnodes share the same value node, so we copy them to avoid processing twice */
+        auto new_prim = MakeValue(prim);
+        auto new_value_node = NewValueNode(new_prim);
+        new_value_node->set_abstract(new_prim->ToAbstract());
+        cnode->set_input(0, new_value_node);
+        continue;
+      }
+      adjusted_value_node.insert(value_node);
       auto name = prim->name();
       auto adjust_func = PrimitiveAdjustRegistry::GetInstance()->GetPrimitiveCreator(name);
       if (adjust_func == nullptr) {
