@@ -1973,7 +1973,7 @@ class Mul(_MathBinaryOp):
         return None
 
 
-class SquaredDifference(_MathBinaryOp):
+class SquaredDifference(Primitive):
     """
     Subtracts the second input tensor from the first input tensor element-wise and returns square of it.
 
@@ -2012,6 +2012,12 @@ class SquaredDifference(_MathBinaryOp):
         >>> print(output)
         [1. 4. 9.]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize _BinaryOp"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
 
 class Square(Primitive):
