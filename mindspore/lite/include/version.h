@@ -21,16 +21,12 @@
 
 namespace mindspore {
 namespace lite {
-const int ms_version_major = 1;
-const int ms_version_minor = 7;
-const int ms_version_revision = 0;
-
 /// \brief Global method to get a version string.
 ///
 /// \return The version string of MindSpore Lite.
 inline String Version() {
-  return "MindSpore Lite " + to_string(ms_version_major) + "." + to_string(ms_version_minor) + "." +
-         to_string(ms_version_revision);
+  String version = VERSION_STR;
+  return "MindSpore Lite " + version;
 }
 }  // namespace lite
 }  // namespace mindspore
