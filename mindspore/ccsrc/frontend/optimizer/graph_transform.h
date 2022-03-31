@@ -72,7 +72,7 @@ class GraphTupleParamTransform {
     mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
     for (auto &param : params) {
       auto abs = param->abstract();
-      if (abs != nullptr && abs->isa<abstract::AbstractTuple>()) {
+      if (abs != nullptr && abs->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(abs)) {
         auto tuple_abs = abs->cast<abstract::AbstractTuplePtr>();
         std::vector<AnfNodePtr> tuple_params;
         repl.emplace(param, GenerateTupleParams(tuple_abs, new_fg, &tuple_params));

@@ -96,7 +96,7 @@ def csr_mul(x, y):
     Supported Platforms:
         ``GPU`` ``CPU``
     """
-    return _csr_ops.CSRMul()(x, y)
+    return _csr_ops.CSRMul()(x.indptr, x.indices, x.values, x.shape, y)
 
 
 def csr_div(x, y):
@@ -119,11 +119,43 @@ def csr_div(x, y):
     Supported Platforms:
         ``GPU`` ``CPU``
     """
-    return _csr_ops.CSRDiv()(x, y)
+    return _csr_ops.CSRDiv()(x.indptr, x.indices, x.values, x.shape, y)
 
 
-csr_mv = _csr_ops.CSRMV()
-csr_reduce_sum = _csr_ops.CSRReduceSum()
+def csr_mv(csr_tensor, dense):
+    """
+    Sparse matrix-vector multiplication.
+
+    Args:
+        csr_tensor (CSRTensor): Sparse CSR Tensor.
+        dense (Tensor): Dense Tensor.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    return _csr_ops.CSRMV()(csr_tensor.indptr, csr_tensor.indices, csr_tensor.values, csr_tensor.shape, dense)
+
+
+def csr_reduce_sum(csr_tensor, axis):
+    """
+    Reduces a dimension of a CSRTensor by summing all elements in the dimension.
+
+    Args:
+        csr_tensor (CSRTensor): Sparse CSR Tensor.
+        axis (int): Axis to be reduced.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    return _csr_ops.CSRReduceSum()(csr_tensor.indptr, csr_tensor.indices, csr_tensor.values, csr_tensor.shape, axis)
+
+
 csr_gather = _csr_ops.CSRGather()
 csr2coo = _csr_ops.CSR2COO()
 coo2csr = _csr_ops.COO2CSR()

@@ -783,6 +783,33 @@ bool AbstractTuple::ContainsAllBroadenTensors() const {
   return true;
 }
 
+template <typename T>
+const T AbstractTuple::GetAbsPtrAt(size_t index) const {
+  if (index >= size()) {
+    MS_LOG(EXCEPTION) << "Index should be in range of [0, " << size() << "), but got " << index
+                      << " for abstract: " << ToString();
+    return nullptr;
+  }
+  AbstractBasePtr base = elements()[index];
+  MS_EXCEPTION_IF_NULL(base);
+  return base->cast<T>();
+}
+
+BaseShapePtrList AbstractTuple::ElementsShapeTupleRecursive() const {
+  BaseShapePtrList element_shape_list;
+  for (const auto &element : elements()) {
+    MS_EXCEPTION_IF_NULL(element);
+    if (element->isa<AbstractTuple>()) {
+      for (const auto &scalar : element->cast<AbstractTuplePtr>()->elements()) {
+        MS_EXCEPTION_IF_NULL(scalar);
+        element_shape_list.push_back(scalar->BuildShape());
+      }
+    }
+    element_shape_list.push_back(element->BuildShape());
+  }
+  return element_shape_list;
+}
+
 bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequence::operator==(other); }
 
 bool AbstractList::operator==(const AbstractBase &other) const {
@@ -1489,234 +1516,150 @@ std::string AbstractRowTensor::ToString() const {
 }
 
 // COOTensor
+const TypeId AbstractCOOTensor::GetTypeIdAt(size_t index) const {
+  if (index == kIndicesIdx) {
+    return indices()->BuildType()->type_id();
+  }
+  if (index == kValuesIdx) {
+    return values()->BuildType()->type_id();
+  }
+  if (index < kShapeIdx + shape()->size()) {
+    return shape()->elements()[index - kShapeIdx]->BuildType()->type_id();
+  }
+  MS_LOG(EXCEPTION) << "Index must be in range of [0, " << kShapeIdx + shape()->size() << "), but got " << index
+                    << " for " << ToString();
+  return kTypeUnknown;
+}
+
 TypePtr AbstractCOOTensor::BuildType() const {
-  MS_EXCEPTION_IF_NULL(element());
-  TypePtr element_type = element()->BuildType();
+  MS_EXCEPTION_IF_NULL(values());
+  TypePtr element_type = values()->element()->BuildType();
   return std::make_shared<COOTensorType>(element_type);
 }
 
 AbstractBasePtr AbstractCOOTensor::Clone() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto clone = std::make_shared<AbstractCOOTensor>(element()->Clone());
-  ShapePtr shp = shape();
-  MS_EXCEPTION_IF_NULL(shp);
-  clone->set_shape(shp->Clone());
-  clone->set_value(GetValueTrack());
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  clone->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  clone->set_values(value_clone->cast<AbstractTensorPtr>());
-  clone->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return clone;
+  AbstractBasePtrList element_list;
+  for (const auto &element : elements()) {
+    MS_EXCEPTION_IF_NULL(element);
+    AbstractBasePtr clone = element->Clone();
+    element_list.push_back(clone);
+  }
+  return std::make_shared<abstract::AbstractCOOTensor>(element_list);
 }
 
 AbstractBasePtr AbstractCOOTensor::Broaden() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractCOOTensor>(element()->Broaden());
-  auto shp = shape();
-  MS_EXCEPTION_IF_NULL(shp);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  broaden->set_shape(shp->Clone());
-  broaden->set_value(kAnyValue);
-  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return broaden;
-}
-
-AbstractBasePtr AbstractCOOTensor::BroadenWithShape() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractCOOTensor>(element()->Broaden());
-  auto this_shape = shape();
-  MS_EXCEPTION_IF_NULL(this_shape);
-  auto shp = this_shape->Clone();
-  MS_EXCEPTION_IF_NULL(shp);
-  shp->Broaden();
-  broaden->set_shape(shp);
-  broaden->set_value(kAnyValue);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return broaden;
+  return std::make_shared<abstract::AbstractCOOTensor>(ElementsBroaden());
 }
 
 std::string AbstractCOOTensor::ToString() const {
-  BaseShapePtr shape_track = GetShapeTrack();
-  MS_EXCEPTION_IF_NULL(shape_track);
-  auto value_track = GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_track);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  MS_EXCEPTION_IF_NULL(element());
   std::ostringstream buffer;
   buffer << type_name() << "("
-         << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
-         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
-         << ", indices: " << indices_->ToString() << ", values" << values_->ToString()
-         << ", dense_shape: " << dense_shape_->ToString();
+         << "indices: " << indices()->ToString() << ", values" << values()->ToString()
+         << ", dense_shape: " << shape()->ToString();
   return buffer.str();
+}
+
+const AbstractTensorPtr AbstractCOOTensor::indices() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get indices nullptr in AbstractCOOTensor: " << ToString();
+  }
+  return res;
+}
+
+const AbstractTensorPtr AbstractCOOTensor::values() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get values nullptr in AbstractCOOTensor: " << ToString();
+  }
+  return res;
+}
+
+const AbstractTuplePtr AbstractCOOTensor::shape() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTuplePtr>(kShapeIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get shape nullptr in AbstractCOOTensor: " << ToString();
+  }
+  return res;
 }
 
 // CSRTensor
 TypePtr AbstractCSRTensor::BuildType() const {
-  MS_EXCEPTION_IF_NULL(element());
-  TypePtr element_type = element()->BuildType();
+  MS_EXCEPTION_IF_NULL(values());
+  TypePtr element_type = values()->element()->BuildType();
   return std::make_shared<CSRTensorType>(element_type);
 }
 
 AbstractBasePtr AbstractCSRTensor::Clone() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto clone = std::make_shared<AbstractCSRTensor>(element()->Clone());
-  ShapePtr shp = shape();
-  MS_EXCEPTION_IF_NULL(shp);
-  MS_EXCEPTION_IF_NULL(indptr_);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indptr_clone = indptr_->Clone();
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indptr_clone);
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  clone->set_shape(shp->Clone());
-  clone->set_value(GetValueTrack());
-  clone->set_indptr(indptr_clone->cast<AbstractTensorPtr>());
-  clone->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  clone->set_values(value_clone->cast<AbstractTensorPtr>());
-  clone->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return clone;
+  AbstractBasePtrList element_list;
+  for (const auto &element : elements()) {
+    MS_EXCEPTION_IF_NULL(element);
+    AbstractBasePtr clone = element->Clone();
+    element_list.push_back(clone);
+  }
+  return std::make_shared<abstract::AbstractCSRTensor>(element_list);
 }
 
 AbstractBasePtr AbstractCSRTensor::Broaden() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractCSRTensor>(element()->Broaden());
-  auto shp = shape();
-  MS_EXCEPTION_IF_NULL(shp);
-  MS_EXCEPTION_IF_NULL(indptr_);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indptr_clone = indptr_->Clone();
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indptr_clone);
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  broaden->set_shape(shp->Clone());
-  broaden->set_value(kAnyValue);
-  broaden->set_indptr(indptr_clone->cast<AbstractTensorPtr>());
-  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return broaden;
-}
-
-AbstractBasePtr AbstractCSRTensor::BroadenWithShape() const {
-  MS_EXCEPTION_IF_NULL(element());
-  auto broaden = std::make_shared<AbstractCSRTensor>(element()->Broaden());
-  auto this_shape = shape();
-  MS_EXCEPTION_IF_NULL(this_shape);
-  auto shp = this_shape->Clone();
-  MS_EXCEPTION_IF_NULL(shp);
-  shp->Broaden();
-  broaden->set_shape(shp);
-  broaden->set_value(kAnyValue);
-  MS_EXCEPTION_IF_NULL(indptr_);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
-  auto indptr_clone = indptr_->Clone();
-  auto indices_clone = indices_->Clone();
-  auto value_clone = values_->Clone();
-  auto dense_clone = dense_shape_->Clone();
-  MS_EXCEPTION_IF_NULL(indptr_clone);
-  MS_EXCEPTION_IF_NULL(indices_clone);
-  MS_EXCEPTION_IF_NULL(value_clone);
-  MS_EXCEPTION_IF_NULL(dense_clone);
-  broaden->set_indptr(indptr_clone->cast<AbstractTensorPtr>());
-  broaden->set_indices(indices_clone->cast<AbstractTensorPtr>());
-  broaden->set_values(value_clone->cast<AbstractTensorPtr>());
-  broaden->set_dense_shape(dense_clone->cast<AbstractTuplePtr>());
-  return broaden;
+  return std::make_shared<abstract::AbstractCSRTensor>(ElementsBroaden());
 }
 
 std::string AbstractCSRTensor::ToString() const {
   std::ostringstream buffer;
-  BaseShapePtr shape_track = GetShapeTrack();
-  MS_EXCEPTION_IF_NULL(shape_track);
-  MS_EXCEPTION_IF_NULL(element());
-  auto value_track = GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_track);
-  MS_EXCEPTION_IF_NULL(indptr_);
-  MS_EXCEPTION_IF_NULL(indices_);
-  MS_EXCEPTION_IF_NULL(values_);
-  MS_EXCEPTION_IF_NULL(dense_shape_);
   buffer << type_name() << "("
-         << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
-         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
-         << ", indptr: " << indptr_->ToString() << ", indices: " << indices_->ToString() << ", values"
-         << values_->ToString() << ", dense_shape: " << dense_shape_->ToString();
+         << "indptr: " << indptr()->ToString() << ", indices: " << indices()->ToString() << ", values"
+         << values()->ToString() << ", dense_shape: " << shape()->ToString();
   return buffer.str();
-}
-
-const AbstractTensorPtr AbstractCSRTensor::GetAbsTensorAt(size_t index) const {
-  if (index == kIndptrIdx) {
-    return indptr_;
-  } else if (index == kIndicesIdx) {
-    return indices_;
-  } else if (index == kValuesIdx) {
-    return values_;
-  }
-  MS_LOG(EXCEPTION) << "Invalid index: " << index << " for abstract: " << ToString();
-  return nullptr;
 }
 
 const TypeId AbstractCSRTensor::GetTypeIdAt(size_t index) const {
   if (index == kIndptrIdx) {
-    MS_EXCEPTION_IF_NULL(indptr_);
-    return indptr_->element()->BuildType()->type_id();
-  } else if (index == kIndicesIdx) {
-    MS_EXCEPTION_IF_NULL(indices_);
-    return indices_->element()->BuildType()->type_id();
-  } else if (index == kValuesIdx) {
-    MS_EXCEPTION_IF_NULL(values_);
-    return values_->element()->BuildType()->type_id();
-  } else if (index >= kShapeIdx && index < kShapeIdx + dense_shape_->elements().size()) {
-    MS_EXCEPTION_IF_NULL(dense_shape_);
-    return dense_shape_->elements()[index - kShapeIdx]->BuildType()->type_id();
+    return indptr()->BuildType()->type_id();
   }
-  MS_LOG(EXCEPTION) << "Invalid index: " << index << " for abstract: " << ToString();
+  if (index == kIndicesIdx) {
+    return indices()->BuildType()->type_id();
+  }
+  if (index == kValuesIdx) {
+    return values()->BuildType()->type_id();
+  }
+  if (index < kShapeIdx + shape()->size()) {
+    return shape()->elements()[index - kShapeIdx]->BuildType()->type_id();
+  }
+  MS_LOG(EXCEPTION) << "Index must be in range of [0, " << kShapeIdx + shape()->size() << "), but got " << index
+                    << " for " << ToString();
   return kTypeUnknown;
+}
+
+const AbstractTensorPtr AbstractCSRTensor::indptr() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndptrIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get indptr nullptr in AbstractCSRTensor: " << ToString();
+  }
+  return res;
+}
+
+const AbstractTensorPtr AbstractCSRTensor::indices() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get indices nullptr in AbstractCSRTensor: " << ToString();
+  }
+  return res;
+}
+
+const AbstractTensorPtr AbstractCSRTensor::values() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get values nullptr in AbstractCSRTensor: " << ToString();
+  }
+  return res;
+}
+
+const AbstractTuplePtr AbstractCSRTensor::shape() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTuplePtr>(kShapeIdx);
+  if (res == nullptr) {
+    MS_LOG(ERROR) << "Get shape nullptr in AbstractCSRTensor: " << ToString();
+  }
+  return res;
 }
 
 AbstractBasePtr AbstractUMonad::Join(const AbstractBasePtr &other) {

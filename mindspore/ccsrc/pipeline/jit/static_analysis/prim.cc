@@ -666,12 +666,26 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractCOOTensor>()) {
     auto arg = dyn_cast<AbstractCOOTensor>(abs_base);
-    dic[ATTR_SHAPE] = arg->shape()->shape();
+    AbstractBasePtrList sparse_shape = arg->shape()->elements();
+    ShapeVector sparse_shape_vector;
+    (void)std::transform(sparse_shape.begin(), sparse_shape.end(), std::back_inserter(sparse_shape_vector),
+                         [](const AbstractBasePtr &e) -> int64_t {
+                           ValuePtr value = e->cast<AbstractScalarPtr>()->BuildValue();
+                           return GetValue<int64_t>(value);
+                         });
+    dic[ATTR_SHAPE] = sparse_shape_vector;
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractCSRTensor>()) {
     auto arg = dyn_cast<AbstractCSRTensor>(abs_base);
-    dic[ATTR_SHAPE] = arg->shape()->shape();
+    AbstractBasePtrList sparse_shape = arg->shape()->elements();
+    ShapeVector sparse_shape_vector;
+    (void)std::transform(sparse_shape.begin(), sparse_shape.end(), std::back_inserter(sparse_shape_vector),
+                         [](const AbstractBasePtr &e) -> int64_t {
+                           ValuePtr value = e->cast<AbstractScalarPtr>()->BuildValue();
+                           return GetValue<int64_t>(value);
+                         });
+    dic[ATTR_SHAPE] = sparse_shape_vector;
     dic[ATTR_DTYPE] = arg->BuildType();
     dic[ATTR_VALUE] = BuildValue(arg->BuildValue());
   } else if (abs_base->isa<AbstractEllipsis>()) {

@@ -30,6 +30,8 @@
 
 namespace mindspore {
 namespace common {
+using abstract::AbstractCOOTensor;
+using abstract::AbstractCSRTensor;
 using abstract::AbstractTensor;
 using abstract::AbstractTuple;
 
@@ -39,9 +41,6 @@ constexpr size_t kNopNodeRealInputIndex = 1;
 
 const PrimitiveSet expand_prims{
   prim::kPrimMakeTuple,
-  prim::kPrimMakeCSRTensor,
-  prim::kPrimMakeCOOTensor,
-  prim::kPrimMakeRowTensor,
 };
 const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
 
@@ -201,28 +200,16 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
 
 AnfNodePtr AnfAlgo::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
-  if (CheckPrimitiveType(tuple_get_item, prim::kPrimTupleGetItem)) {
-    if (tuple_get_item->size() != kTupleGetItemInputSize) {
-      MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
-    }
-  } else if (tuple_get_item->size() != kSparseGetAttrInputSize) {
-    MS_LOG(EXCEPTION) << "The node sparse_get_attribute must have 1 input!";
+  if (tuple_get_item->size() != kTupleGetItemInputSize) {
+    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
   }
   return tuple_get_item->input(kRealInputNodeIndexInTupleGetItem);
 }
 
 size_t AnfAlgo::GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
-  if (CheckPrimitiveType(tuple_get_item, prim::kPrimTupleGetItem)) {
-    if (tuple_get_item->size() != kTupleGetItemInputSize) {
-      MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
-    }
-  } else if (tuple_get_item->size() != kSparseGetAttrInputSize) {
-    MS_LOG(EXCEPTION) << "The node sparse_get_attribute must have 1 input!";
-  }
-  std::string prim_name = GetCNodeFuncName(tuple_get_item);
-  if (sparse_attr_map.find(prim_name) != sparse_attr_map.end()) {
-    return sparse_attr_map.at(prim_name);
+  if (tuple_get_item->size() != kTupleGetItemInputSize) {
+    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
   }
   auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(output_index_value_node);
@@ -252,7 +239,7 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
   MS_EXCEPTION_IF_NULL(cnode);
   std::string prim_name = GetCNodeFuncName(cnode);
   // TupleGetItem and SparseGetAttr needs to find real input
-  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || sparse_attr_map.find(prim_name) != sparse_attr_map.end()) {
+  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
     abstract::AbstractBasePtr abs = nullptr;
     auto item_with_index_tmp = VisitKernelWithReturnType(
       GetTupleGetItemRealInput(cnode), GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types, &abs);
@@ -339,24 +326,6 @@ std::vector<AnfNodePtr> AnfAlgo::GetAllOutput(const AnfNodePtr &node, const std:
 size_t AnfAlgo::GetOutputNumByAbstract(const AbstractBasePtr &node_abstract) {
   MS_EXCEPTION_IF_NULL(node_abstract);
   size_t result = 0;
-  if (node_abstract->isa<abstract::AbstractCSRTensor>()) {
-    auto csr_tensor_abstract = node_abstract->cast<abstract::AbstractCSRTensorPtr>();
-    MS_EXCEPTION_IF_NULL(csr_tensor_abstract);
-    result += GetOutputNumByAbstract(csr_tensor_abstract->indptr());
-    result += GetOutputNumByAbstract(csr_tensor_abstract->indices());
-    result += GetOutputNumByAbstract(csr_tensor_abstract->values());
-    result += GetOutputNumByAbstract(csr_tensor_abstract->dense_shape());
-    return result;
-  }
-
-  if (node_abstract->isa<abstract::AbstractCOOTensor>()) {
-    auto coo_tensor_abstract = node_abstract->cast<abstract::AbstractCOOTensorPtr>();
-    MS_EXCEPTION_IF_NULL(coo_tensor_abstract);
-    result += GetOutputNumByAbstract(coo_tensor_abstract->dense_shape());
-    result += GetOutputNumByAbstract(coo_tensor_abstract->indices());
-    result += GetOutputNumByAbstract(coo_tensor_abstract->values());
-    return result;
-  }
 
   if (!node_abstract->isa<abstract::AbstractTuple>()) {
     return 1;
@@ -907,7 +876,7 @@ bool AnfAlgo::IsTupleOutput(const AnfNodePtr &anf) {
     return false;
   }
   MS_EXCEPTION_IF_NULL(type);
-  return type->isa<Tuple>();
+  return type->isa<Tuple>() || type->isa<CSRTensorType>() || type->isa<COOTensorType>();
 }
 
 AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {
@@ -1693,6 +1662,31 @@ bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
     return false;
   }
   return true;
+}
+
+template <typename T>
+bool AnfAlgo::CheckAbsType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(node->abstract());
+  return node->abstract()->isa<T>();
+}
+
+bool AnfAlgo::CheckAbsSparseTensor(const AnfNodePtr &node) {
+  return CheckAbsType<AbstractCSRTensor>(node) || CheckAbsType<AbstractCOOTensor>(node);
+}
+
+bool AnfAlgo::CheckAbsSparseTensor(const abstract::AbstractBasePtr &abs) {
+  return abs->isa<AbstractCSRTensor>() || abs->isa<AbstractCOOTensor>();
+}
+
+TypeId AnfAlgo::GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx) {
+  if (CheckAbsType<AbstractCSRTensor>(node)) {
+    return node->abstract()->cast<abstract::AbstractCSRTensorPtr>()->GetTypeIdAt(idx);
+  } else if (CheckAbsType<AbstractCOOTensor>(node)) {
+    return node->abstract()->cast<abstract::AbstractCOOTensorPtr>()->GetTypeIdAt(idx);
+  }
+  MS_LOG_WARNING << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
+  return kTypeUnknown;
 }
 }  // namespace common
 }  // namespace mindspore

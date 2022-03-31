@@ -524,7 +524,7 @@ class CleanAfterOptARewriter : public BaseRewriter {
   }
 
   // From:
-  //   MakeSparse(indices, values, dense_shape)
+  //   MakeSparseTensor(indices, values, dense_shape)
   // To:
   //   MakeTuple(indices, values, dense_shape)
   AnfNodePtr ConvertMakeSparseToMakeTuple(const CNodePtr &node) {
@@ -536,33 +536,39 @@ class CleanAfterOptARewriter : public BaseRewriter {
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     // Inputs of node should be [make_sparse, indices, values, dense_shape], so offset by 1 to get items.
     (void)inputs.insert(inputs.end(), node->inputs().begin() + 1, node->inputs().end());
-    return node->func_graph()->NewCNode(std::move(inputs));
+    auto new_node = node->func_graph()->NewCNode(std::move(inputs));
+    new_node->set_abstract(node->abstract());
+    return new_node;
   }
 
+  static inline const mindspore::HashMap<PrimitivePtr, int64_t> sparse_attr_map = {
+    {prim::kPrimCSRTensorGetIndptr, 0},     {prim::kPrimCSRTensorGetIndices, 1}, {prim::kPrimCSRTensorGetValues, 2},
+    {prim::kPrimCSRTensorGetDenseShape, 3}, {prim::kPrimCOOTensorGetIndices, 0}, {prim::kPrimCOOTensorGetValues, 1},
+    {prim::kPrimCOOTensorGetDenseShape, 2}, {prim::kPrimRowTensorGetIndices, 0}, {prim::kPrimRowTensorGetValues, 1},
+    {prim::kPrimRowTensorGetDenseShape, 2}};
+
   // From:
-  //   RowTensorGetXXX(sparse) # index
+  //   SparseTensorGetXXX(sparse) # index
   // To:
   //   TupleGetItem(sparse, index)
-  AnfNodePtr ConvertSparseGetAttr(const CNodePtr &node, const int64_t index) {
+  AnfNodePtr ConvertSparseGetAttrToTupleGetItem(const CNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
     MS_EXCEPTION_IF_NULL(node->func_graph());
 
-    // Inputs should be [sparse_getattr, sparse]
-    constexpr size_t expect_input_index = 2;
-    CheckInputsSize(node, expect_input_index);
+    constexpr size_t kExpectInputSize = 2;
+    constexpr size_t kSparseAttrIndex = 1;
+    CheckInputsSize(node, kExpectInputSize);
 
-    const auto &sparse = node->input(1);
-    auto cons_node = NewValueNode(index);
-    return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, cons_node});
-  }
-
-  AnfNodePtr ConvertSparseGetIndices(const CNodePtr &node) { return ConvertSparseGetAttr(node, 0); }
-
-  AnfNodePtr ConvertSparseGetValues(const CNodePtr &node) { return ConvertSparseGetAttr(node, 1); }
-
-  AnfNodePtr ConvertSparseGetDenseShape(const CNodePtr &node) {
-    constexpr int64_t dense_shape_index = 2;
-    return ConvertSparseGetAttr(node, dense_shape_index);
+    auto prim = GetValueNode<PrimitivePtr>(node->input(0));
+    auto iter = sparse_attr_map.find(prim);
+    if (iter != sparse_attr_map.end()) {
+      const auto &sparse = node->input(kSparseAttrIndex);
+      auto index_node = NewValueNode(iter->second);
+      auto new_node = node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), sparse, index_node});
+      new_node->set_abstract(node->abstract());
+      return new_node;
+    }
+    return nullptr;
   }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
@@ -571,10 +577,20 @@ class CleanAfterOptARewriter : public BaseRewriter {
     {prim::kPrimMakeList, &ThisClass::ConvertMakeListToMakeTuple},
     {prim::kPrimListGetItem, &ThisClass::ConvertListGetItemToTupleGetItem},
     {prim::kPrimListSetItem, &ThisClass::ConvertListSetItemToTupleSetItem},
+    // SparseProcess: 1.MakeSparse->MakeTuple 2.SparseGetAttr->TupleGetItem
     {prim::kPrimMakeRowTensor, &ThisClass::ConvertMakeSparseToMakeTuple},
-    {prim::kPrimRowTensorGetIndices, &ThisClass::ConvertSparseGetIndices},
-    {prim::kPrimRowTensorGetValues, &ThisClass::ConvertSparseGetValues},
-    {prim::kPrimRowTensorGetDenseShape, &ThisClass::ConvertSparseGetDenseShape},
+    {prim::kPrimRowTensorGetIndices, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimRowTensorGetValues, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimRowTensorGetDenseShape, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimMakeCSRTensor, &ThisClass::ConvertMakeSparseToMakeTuple},
+    {prim::kPrimCSRTensorGetIndptr, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimCSRTensorGetIndices, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimCSRTensorGetValues, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimCSRTensorGetDenseShape, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimMakeCOOTensor, &ThisClass::ConvertMakeSparseToMakeTuple},
+    {prim::kPrimCOOTensorGetIndices, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimCOOTensorGetValues, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
+    {prim::kPrimCOOTensorGetDenseShape, &ThisClass::ConvertSparseGetAttrToTupleGetItem},
   };
 
   AnfNodePtr ConvertPrimitiveCNode(const CNodePtr &cnode, const PrimitivePtr &prim) override {

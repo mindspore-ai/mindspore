@@ -89,49 +89,7 @@ std::set<size_t> FetchRealIndexByAbstract(const AbstractBasePtr &abstract, std::
   indexes->pop_back();
 
   // Fetch the dest abstract by index, and the abstracts num before the dest abstract.
-  if (abstract->isa<abstract::AbstractCSRTensor>()) {
-    auto csr_abs = abstract->cast<abstract::AbstractCSRTensorPtr>();
-    MS_EXCEPTION_IF_NULL(csr_abs);
-    switch (index) {
-      case kCsrTensorIndPtrIndex:
-        dst_abstract = csr_abs->indptr();
-        pre_abstract_num = kCsrTensorIndPtrIndex;
-        break;
-      case kCsrTensorIndicesIndex:
-        dst_abstract = csr_abs->indices();
-        pre_abstract_num = kCsrTensorIndicesIndex;
-        break;
-      case kCsrTensorValuesIndex:
-        dst_abstract = csr_abs->values();
-        pre_abstract_num = kCsrTensorValuesIndex;
-        break;
-      case kCsrTensorDenseShapeIndex:
-        dst_abstract = csr_abs->dense_shape();
-        pre_abstract_num = kCsrTensorDenseShapeIndex;
-        break;
-      default:
-        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
-    }
-  } else if (abstract->isa<abstract::AbstractCOOTensor>()) {
-    auto coo_abs = abstract->cast<abstract::AbstractCOOTensorPtr>();
-    MS_EXCEPTION_IF_NULL(coo_abs);
-    switch (index) {
-      case kCooTensorIndicesIndex:
-        dst_abstract = coo_abs->indices();
-        pre_abstract_num = kCooTensorIndicesIndex;
-        break;
-      case kCooTensorValuesIndex:
-        dst_abstract = coo_abs->values();
-        pre_abstract_num = kCooTensorValuesIndex;
-        break;
-      case kCooTensorDenseShapeIndex:
-        dst_abstract = coo_abs->values();
-        pre_abstract_num = kCooTensorDenseShapeIndex;
-        break;
-      default:
-        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
-    }
-  } else if (abstract->isa<abstract::AbstractTuple>()) {
+  if (abstract->isa<abstract::AbstractTuple>()) {
     auto tuple_abstract = abstract->cast<abstract::AbstractTuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_abstract);
     const auto &sub_abstracts = tuple_abstract->elements();
@@ -343,11 +301,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
 
   // Set type.
   TypeId type_id = kTypeUnknown;
-  if (common::AnfAlgo::CheckAbsCSRTensor(node)) {
-    type_id = node->abstract()->cast<abstract::AbstractCSRTensorPtr>()->GetTypeIdAt(front_node_with_index.second);
-  } else {
-    type_id = common::AnfAlgo::GetOutputInferDataType(node, front_node_with_index.second);
-  }
+  type_id = common::AnfAlgo::GetOutputInferDataType(node, front_node_with_index.second);
   if (builder->GetAllOutputDeviceTypes().size() > front_node_with_index.second) {
     builder->SetOutputDeviceType(type_id, front_node_with_index.second);
   } else {
@@ -360,11 +314,7 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
 
   // Create device tensor.
   size_t size = 0;
-  if (common::AnfAlgo::CheckAbsCSRTensor(node)) {
-    size = node->cast<ValueNodePtr>()->value()->cast<tensor::CSRTensorPtr>()->GetSizeAt(front_node_with_index.second);
-  } else {
-    size = AnfAlgo::GetOutputTensorMemSize(node, front_node_with_index.second);
-  }
+  size = AnfAlgo::GetOutputTensorMemSize(node, front_node_with_index.second);
   device::DeviceAddressPtr address =
     device_context->CreateDeviceAddress(nullptr, size, kOpFormat_DEFAULT, type_id, ShapeVector());
   MS_EXCEPTION_IF_NULL(address);
@@ -414,18 +364,15 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
 
   // The node is divided into the following types:
   // 1. depend and load.
-  const auto &node_with_index = common::AnfAlgo::VisitKernelWithReturnType(
-    node, 0, false,
-    {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCSRTensorGetIndptr, prim::kPrimCSRTensorGetIndices,
-     prim::kPrimCSRTensorGetValues, prim::kPrimCSRTensorGetDenseShape, prim::kPrimCOOTensorGetIndices,
-     prim::kPrimCOOTensorGetValues, prim::kPrimCOOTensorGetDenseShape});
+  const auto &node_with_index =
+    common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple});
   auto real_node = node_with_index.first;
   size_t real_index = node_with_index.second;
   MS_EXCEPTION_IF_NULL(real_node);
   std::vector<KernelWithIndex> results;
 
   // 2. Tuple node.
-  const PrimitiveSet expand_prims{prim::kPrimMakeTuple, prim::kPrimMakeCSRTensor, prim::kPrimMakeCOOTensor};
+  const PrimitiveSet expand_prims{prim::kPrimMakeTuple};
   // The MakeTuple/MakeSparse node need expand and recurse.
   if (IsOneOfPrimitiveCNode(real_node, expand_prims)) {
     const auto &cnode = real_node->cast<CNodePtr>();
@@ -437,48 +384,7 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
     return results;
   }
 
-  // 3. kPrimMakeCSRTensor.
-  if (IsCsrNode(real_node) || IsCooNode(real_node)) {
-    const auto &cnode = real_node->cast<CNodePtr>();
-    const auto &inputs = cnode->inputs();
-    if (inputs.size() <= kMakeTensorInputStartPos) {
-      MS_LOG(EXCEPTION) << "Invalid make csr tensor node:" << cnode->DebugString();
-    }
-
-    // Fetch output put index.
-    const auto &prim_node = inputs[0]->cast<ValueNodePtr>();
-    MS_EXCEPTION_IF_NULL(prim_node);
-    const auto &prim_value = prim_node->value()->cast<PrimitivePtr>();
-    MS_EXCEPTION_IF_NULL(prim_value);
-    const auto &src_node = inputs[kMakeTensorInputStartPos];
-    MS_EXCEPTION_IF_NULL(src_node);
-    const auto iter = sparse_attr_map.find(prim_value->name());
-    // Csr node from the make csr tensor node.
-    if (common::AnfAlgo::CheckPrimitiveType(src_node, prim::kPrimMakeCSRTensor) ||
-        common::AnfAlgo::CheckPrimitiveType(src_node, prim::kPrimMakeCOOTensor)) {
-      const auto &make_tensor_cnode = src_node->cast<CNodePtr>();
-      const auto &make_tensor_inputs = make_tensor_cnode->inputs();
-      if (make_tensor_inputs.size() <= kMakeCSRTensorInputNum && make_tensor_inputs.size() <= kMakeCOOTensorInputNum) {
-        MS_LOG(EXCEPTION) << "Invalid make sparse tensor node:" << cnode->DebugString();
-      }
-      const auto &sub_results =
-        FetchInputNodeByNode(make_tensor_inputs[LongToSize(iter->second) + kMakeTensorInputStartPos]);
-      (void)results.insert(results.end(), sub_results.begin(), sub_results.end());
-    } else if (src_node->isa<Parameter>()) {
-      results.emplace_back(src_node, iter->second);
-    } else {
-      // Csr node from parameter or call node.
-      auto abstract = src_node->abstract();
-      MS_EXCEPTION_IF_NULL(abstract);
-      std::vector<size_t> index_stack{LongToSize(iter->second)};
-      auto real_indexs = FetchRealIndexByAbstract(abstract, &index_stack);
-      (void)std::transform(real_indexs.begin(), real_indexs.end(), std::back_inserter(results),
-                           [&src_node](const auto &index) { return KernelWithIndex(src_node, index); });
-    }
-    return results;
-  }
-
-  // 4. One output node.
+  // 3. One output node.
   const auto &abstract = real_node->abstract();
   if (abstract == nullptr) {
     MS_LOG(WARNING) << "Empty abstract for node:" << real_node->DebugString();
@@ -486,7 +392,7 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
     return results;
   }
 
-  // 5 Other.
+  // 4 Other.
   if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimTupleGetItem)) {
     std::vector<size_t> index_stack;
     auto get_item_src_node = common::AnfAlgo::GetTupleIndexes(real_node, &index_stack);
@@ -631,10 +537,6 @@ KernelWithIndex GetFrontNodeByKernelGraph(const AnfNodePtr &backend_node, const 
   if (front_node != nullptr) {
     MS_LOG(DEBUG) << "Front node:" << front_node->DebugString() << " index:0"
                   << " for backend node:" << backend_node->DebugString();
-    // Adapt CSRTensor to new runtime
-    if (common::AnfAlgo::CheckAbsCSRTensor(front_node)) {
-      return {front_node, kCsrTensorValuesIndex};
-    }
     return {front_node, 0};
   }
   const auto &front_node_with_index = graph->GetFrontNodeByInternalParameter(backend_node);
@@ -694,35 +596,6 @@ std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node) {
 
 abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index) {
   MS_EXCEPTION_IF_NULL(abstract);
-  if (abstract->isa<abstract::AbstractCSRTensor>()) {
-    auto csr_abs = abstract->cast<abstract::AbstractCSRTensorPtr>();
-    MS_EXCEPTION_IF_NULL(csr_abs);
-    if (index == kCsrTensorIndPtrIndex) {
-      return csr_abs->indptr();
-    } else if (index == kCsrTensorIndicesIndex) {
-      return csr_abs->indices();
-    } else if (index == kCsrTensorValuesIndex) {
-      return csr_abs->values();
-    } else if (index >= kCsrTensorDenseShapeIndex) {
-      return FetchAbstractByIndex(csr_abs->dense_shape(), index - kCsrTensorDenseShapeIndex);
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
-    }
-  }
-
-  if (abstract->isa<abstract::AbstractCOOTensor>()) {
-    auto coo_abs = abstract->cast<abstract::AbstractCOOTensorPtr>();
-    MS_EXCEPTION_IF_NULL(coo_abs);
-    if (index == kCooTensorIndicesIndex) {
-      return coo_abs->indices();
-    } else if (index == kCooTensorValuesIndex) {
-      return coo_abs->values();
-    } else if (index >= kCooTensorDenseShapeIndex) {
-      return FetchAbstractByIndex(coo_abs->dense_shape(), index - kCooTensorDenseShapeIndex);
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
-    }
-  }
 
   if (!abstract->isa<abstract::AbstractTuple>()) {
     if (index != 0) {
@@ -1485,13 +1358,21 @@ void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> 
     } else if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial)) {
       for (size_t i = kPartialInputStartPos; i < inputs.size(); ++i) {
         if (inputs[i]->isa<Parameter>()) {
-          (void)control_node_parameters_.emplace_back(inputs[i]);
+          auto para_abs = inputs[i]->abstract();
+          size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(para_abs);
+          for (size_t j = 0; j < output_num; ++j) {
+            (void)control_node_parameters_.emplace_back(inputs[i], j);
+          }
         }
       }
     } else if (cnode->input(0)->isa<CNode>() || IsValueNode<FuncGraph>(cnode->input(0))) {
       for (size_t i = kCallInputStartPos; i < inputs.size(); ++i) {
         if (inputs[i]->isa<Parameter>()) {
-          (void)control_node_parameters_.emplace_back(inputs[i]);
+          auto para_abs = inputs[i]->abstract();
+          size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(para_abs);
+          for (size_t j = 0; j < output_num; ++j) {
+            (void)control_node_parameters_.emplace_back(inputs[i], j);
+          }
         }
       }
     } else if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch)) {
@@ -1499,14 +1380,14 @@ void ControlNodeParser::ParseControlNodeParameter(const std::vector<AnfNodePtr> 
         MS_LOG(EXCEPTION) << "Invalid switch node:" << common::AnfAlgo::GetNodeDebugString(control_node);
       }
       if (inputs[kSwitchCondPos]->isa<Parameter>()) {
-        (void)control_node_parameters_.emplace_back(inputs[kSwitchCondPos]);
+        (void)control_node_parameters_.emplace_back(inputs[kSwitchCondPos], 0);
       }
     } else if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
       if (inputs.size() != kSwitchLayerInputNum) {
         MS_LOG(EXCEPTION) << "Invalid switch node:" << common::AnfAlgo::GetNodeDebugString(control_node);
       }
       if (inputs[kSwitchLayerCondPos]->isa<Parameter>()) {
-        (void)control_node_parameters_.emplace_back(inputs[kSwitchLayerCondPos]);
+        (void)control_node_parameters_.emplace_back(inputs[kSwitchLayerCondPos], 0);
       }
     }
   }

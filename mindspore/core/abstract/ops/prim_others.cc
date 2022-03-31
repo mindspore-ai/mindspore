@@ -389,11 +389,8 @@ AbstractBasePtr InferImplMakeCOOTensor(const AnalysisEnginePtr &, const Primitiv
                               << dense_shape_value->ToString();
     }
   }
-  auto ret = std::make_shared<AbstractCOOTensor>(values->element()->BuildType(), dense_shape_vec);
-  ret->set_indices(indices);
-  ret->set_values(values);
-  ret->set_dense_shape(dense_shape);
-  return ret;
+  AbstractBasePtrList element_list{indices, values, dense_shape};
+  return std::make_shared<abstract::AbstractCOOTensor>(element_list);
 }
 
 AbstractBasePtr InferImplCOOTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
@@ -422,65 +419,76 @@ AbstractBasePtr InferImplCOOTensorGetDenseShape(const AnalysisEnginePtr &, const
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
   auto sparse_tensor = CheckArg<AbstractCOOTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(sparse_tensor->dense_shape());
-  return sparse_tensor->dense_shape();
+  MS_EXCEPTION_IF_NULL(sparse_tensor->shape());
+  return sparse_tensor->shape();
+}
+
+ShapeVector ConvertToShapeVector(const AbstractTuplePtr &shape) {
+  auto shape_value = shape->BuildValue()->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  ShapeVector shape_vec;
+  (void)std::transform(std::begin(shape_value->value()), std::end(shape_value->value()), std::back_inserter(shape_vec),
+                       [](const ValuePtr &e) -> int64_t {
+                         auto elem = GetValue<int64_t>(e);
+                         return elem;
+                       });
+  return shape_vec;
 }
 
 AbstractBasePtr InferImplCSRElementWise(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const AbstractBasePtrList &args_spec_list) {
   // Inputs: a sparse tensor and a dense tensor.
-  constexpr auto kCSRElementwiseInputsNum = 2;
+  constexpr auto kCSRElementwiseInputsNum = 5;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kCSRElementwiseInputsNum);
-  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
-  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(sparse);
-  MS_EXCEPTION_IF_NULL(sparse->shape());
-  MS_EXCEPTION_IF_NULL(sparse->values());
-  MS_EXCEPTION_IF_NULL(sparse->indices());
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 4);
+  MS_EXCEPTION_IF_NULL(indptr);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(values);
+  MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(dense);
 
-  auto indptr = sparse->indptr();
-  auto indices = sparse->indices();
   CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
   CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
-  auto sparse_shape = sparse->shape()->shape();
+  ShapeVector sparse_shape = ConvertToShapeVector(shape);
   auto dense_shape = dense->shape()->shape();
   CheckSparseShape(sparse_shape, dense_shape);
-  auto ret = sparse->values()->Broaden();
-
-  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
-  auto nnz_vec = sparse->indices()->shape()->shape();
+  auto ret = values->Broaden();
+  // SetAttr
+  auto nnz_vec = indices->shape()->shape();
   auto csr_avg_rows = nnz_vec[0] / dense_shape[0];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
-  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
   return ret;
 }
 
 AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a sparse tensor and a dense tensor.
-  constexpr auto kCSRMVInputsNum = 2;
+  constexpr auto kCSRMVInputsNum = 5;
   constexpr auto kCSRMVShapeSize = 2;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kCSRMVInputsNum);
-  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
-  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(sparse);
-  MS_EXCEPTION_IF_NULL(sparse->shape());
-  MS_EXCEPTION_IF_NULL(sparse->values());
-  MS_EXCEPTION_IF_NULL(sparse->indices());
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  auto dense = CheckArg<AbstractTensor>(op_name, args_spec_list, 4);
+  MS_EXCEPTION_IF_NULL(indptr);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(values);
+  MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(dense);
 
-  auto indptr = sparse->indptr();
-  auto indices = sparse->indices();
   CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
   CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
-  auto sparse_shape = sparse->shape()->shape();
-  auto dense_shape = dense->shape()->shape();
+  ShapeVector sparse_shape = ConvertToShapeVector(shape);
+  ShapeVector dense_shape = dense->shape()->shape();
   if (sparse_shape.size() != kCSRMVShapeSize || dense_shape.size() != kCSRMVShapeSize) {
     MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMVShapeSize << "-D inputs! "
                              << "But csr tensor has " << sparse_shape.size() << " dimensions, "
@@ -492,15 +500,12 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
                              << "(" << dense_shape[kIndexZero] << ", " << dense_shape[kIndexOne] << ").";
   }
 
-  MS_EXCEPTION_IF_NULL(sparse->values()->element());
   ShapeVector out_shape = {sparse_shape[kIndexZero], dense_shape[kIndexOne]};
-  auto ret = std::make_shared<AbstractTensor>(sparse->values()->element()->BuildType(), out_shape);
-
-  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
-  auto nnz_vec = sparse->indices()->shape()->shape();
+  auto ret = std::make_shared<AbstractTensor>(values->element()->BuildType(), out_shape);
+  // SetAttr
+  auto nnz_vec = indices->shape()->shape();
   auto csr_avg_rows = nnz_vec[kIndexZero] / dense_shape[kIndexZero];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
-  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
   return ret;
 }
@@ -508,24 +513,24 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
 AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: a sparse tensor and an axis.
-  constexpr auto kCSRReduceSumInputsNum = 2;
+  constexpr auto kCSRReduceSumInputsNum = 5;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kCSRReduceSumInputsNum);
-  auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
-  auto axis = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
-  MS_EXCEPTION_IF_NULL(sparse);
-  MS_EXCEPTION_IF_NULL(sparse->shape());
-  MS_EXCEPTION_IF_NULL(sparse->values());
-  MS_EXCEPTION_IF_NULL(sparse->indices());
-  MS_EXCEPTION_IF_NULL(sparse->indptr());
+  auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto indices = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  auto values = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+  auto shape = CheckArg<AbstractTuple>(op_name, args_spec_list, 3);
+  auto axis = CheckArg<AbstractScalar>(op_name, args_spec_list, 4);
+  MS_EXCEPTION_IF_NULL(indptr);
+  MS_EXCEPTION_IF_NULL(indices);
+  MS_EXCEPTION_IF_NULL(values);
+  MS_EXCEPTION_IF_NULL(shape);
   MS_EXCEPTION_IF_NULL(axis);
 
-  auto indptr = sparse->indptr();
-  auto indices = sparse->indices();
   CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
   CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
-  auto sparse_shape = sparse->shape()->shape();
+  ShapeVector sparse_shape = ConvertToShapeVector(shape);
   ShapeVector out_shape = sparse_shape;
   MS_EXCEPTION_IF_NULL(axis->BuildValue());
   if (axis->BuildValue()->isa<Int32Imm>() || axis->BuildValue()->isa<Int64Imm>()) {
@@ -545,14 +550,12 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
                             << axis->BuildType()->ToString();
   }
 
-  MS_EXCEPTION_IF_NULL(sparse->values()->element());
-  auto ret = std::make_shared<AbstractTensor>(sparse->values()->element()->BuildType(), out_shape);
-
-  MS_EXCEPTION_IF_NULL(sparse->indices()->shape());
-  auto nnz_vec = sparse->indices()->shape()->shape();
+  MS_EXCEPTION_IF_NULL(values->element());
+  auto ret = std::make_shared<AbstractTensor>(values->element()->BuildType(), out_shape);
+  // SetAttr
+  auto nnz_vec = indices->shape()->shape();
   auto csr_avg_rows = nnz_vec[0] / sparse_shape[0];
   primitive->set_attr(kCSRAvgRows, MakeValue(csr_avg_rows));
-  primitive->set_attr(kCSRDenseShape, MakeValue(sparse_shape));
   primitive->set_attr(kIsCSR, MakeValue(true));
   return ret;
 }
@@ -707,12 +710,8 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     MS_EXCEPTION(ValueError) << "Shape total size: " << shape_size << " is too small to hold " << values_shp[kIndexZero]
                              << " non-zero values.";
   }
-  auto ret = std::make_shared<AbstractCSRTensor>(values->element()->BuildType(), shape_vec);
-  ret->set_indptr(indptr);
-  ret->set_indices(indices);
-  ret->set_values(values);
-  ret->set_dense_shape(shape);
-  return ret;
+  AbstractBasePtrList element_list{indptr, indices, values, shape};
+  return std::make_shared<abstract::AbstractCSRTensor>(element_list);
 }
 
 template <typename T>
@@ -746,8 +745,8 @@ AbstractBasePtr InferImplCSRTensorGetIndices(const AnalysisEnginePtr &, const Pr
 AbstractBasePtr InferImplCSRTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const AbstractBasePtrList &args_spec_list) {
   auto csr_tensor = InferSparseAttr<AbstractCSRTensor>(primitive, args_spec_list);
-  MS_EXCEPTION_IF_NULL(csr_tensor->dense_shape());
-  return csr_tensor->dense_shape();
+  MS_EXCEPTION_IF_NULL(csr_tensor->shape());
+  return csr_tensor->shape();
 }
 
 AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

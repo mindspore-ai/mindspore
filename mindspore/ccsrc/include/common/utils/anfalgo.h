@@ -238,16 +238,12 @@ class COMMON_EXPORT AnfAlgo {
   // Get the real output node and indexes of get item, make tuple, depend, load.
   static AnfNodePtr GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *index_stack);
   static bool IsNopNode(const AnfNodePtr &node);
-  static bool CheckAbsCSRTensor(const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->abstract());
-    return node->abstract()->isa<abstract::AbstractCSRTensor>();
-  }
-  static bool CheckAbsCOOTensor(const AnfNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->abstract());
-    return node->abstract()->isa<abstract::AbstractCOOTensor>();
-  }
+
+  template <typename T>
+  static bool CheckAbsType(const AnfNodePtr &node);
+  static bool CheckAbsSparseTensor(const AnfNodePtr &node);
+  static bool CheckAbsSparseTensor(const abstract::AbstractBasePtr &abs);
+  static TypeId GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx);
 };
 }  // namespace common
 }  // namespace mindspore

@@ -60,33 +60,6 @@ bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePt
   return false;
 }
 
-void SetCSRParamAddr(const AnfNodePtr &node, size_t output_size, const DeviceContext *device_context) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(node->abstract());
-  MS_EXCEPTION_IF_NULL(device_context);
-
-  auto abs_csr_tensor = node->abstract()->cast<abstract::AbstractCSRTensorPtr>();
-  MS_EXCEPTION_IF_NULL(abs_csr_tensor);
-  for (size_t i = 0; i < output_size; ++i) {
-    auto abs_tensor = abs_csr_tensor->GetAbsTensorAt(i);
-    MS_EXCEPTION_IF_NULL(abs_tensor);
-
-    TypeId type_id = abs_tensor->BuildType()->type_id();
-    ShapeVector shape_vec = abs_tensor->shape()->shape();
-    std::vector<size_t> res;
-    std::transform(res.begin(), res.end(), std::back_inserter(shape_vec),
-                   [](int64_t num) { return static_cast<size_t>(num); });
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    size_t tensor_size = std::accumulate(res.begin(), res.end(), type_size, std::multiplies<size_t>());
-
-    auto device_address = device_context->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, type_id,
-                                                              trans::GetRuntimePaddingShape(node, i));
-    device_address->set_from_persistent_mem(node->isa<Parameter>());
-    MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(node) << " addr:" << device_address;
-    AnfAlgo::SetOutputAddr(device_address, i, node.get());
-  }
-}
-
 void CreateParameterDeviceAddress(const DeviceContext *device_context, const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(graph);
@@ -122,10 +95,6 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
   // Create device address for anf node in nodes_list
   for (const auto &item : nodes_list) {
     auto output_size = common::AnfAlgo::GetOutputTensorNum(item);
-    if (common::AnfAlgo::CheckAbsCSRTensor(item)) {
-      SetCSRParamAddr(item, kCsrParamOutputSize, device_context);
-      continue;
-    }
     for (size_t index = 0; index < output_size; index++) {
       TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(item, index);
       if (output_type_id == kTypeUnknown) {

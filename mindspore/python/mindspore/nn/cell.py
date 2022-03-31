@@ -33,7 +33,7 @@ from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
 from ..common.parameter import Parameter, ParameterTuple
-from ..common.tensor import Tensor, CSRTensor, COOTensor
+from ..common.tensor import Tensor
 from ..ops.operations import Cast
 from ..ops.primitive import Primitive
 from ..ops.operations import _inner_ops as inner
@@ -955,8 +955,6 @@ class Cell(Cell_):
             if isinstance(i, Tensor):
                 if i.has_init:
                     i.init_data()
-                new_inputs.append(i)
-            elif isinstance(i, (COOTensor, CSRTensor)):
                 new_inputs.append(i)
             elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
                 new_inputs.append(i)

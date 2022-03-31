@@ -151,7 +151,7 @@ class ControlNodeParser {
   bool IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph);
   bool IsInputInSameLevel(const AnfNodePtr &node);
 
-  const std::vector<AnfNodePtr> &control_node_parameters() const { return control_node_parameters_; }
+  const std::vector<KernelWithIndex> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
   const NodeWithDeviceContext &front_value_nodes() const { return front_value_nodes_; }
 
@@ -277,7 +277,7 @@ class ControlNodeParser {
   NodeWithDeviceContext front_value_nodes_;
 
   // Parameters of control node which come from the host actor.
-  std::vector<AnfNodePtr> control_node_parameters_;
+  std::vector<KernelWithIndex> control_node_parameters_;
   // The kernel graph of call exists in the front input node.
   // In the scene of funcgrarph recursive call, general input and call input are passed recursively, so a stack actor
   // is created for kernel graph which has a call input.

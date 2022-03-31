@@ -4019,6 +4019,7 @@ class CSRTensor(CSRTensor_):
             validator.check_csr_tensor_shape(indptr.shape, indices.shape, values.shape, shape)
             validator.check_csr_tensor_dtype(indptr.dtype, indices.dtype)
             CSRTensor_.__init__(self, indptr, indices, values, shape)
+        setattr(self, "__ms_mutable__", True)
         self.init_finished = True
 
     def __repr__(self):
