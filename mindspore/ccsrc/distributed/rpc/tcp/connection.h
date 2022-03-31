@@ -109,6 +109,9 @@ struct Connection {
     return !(that != nullptr && that->destination == destination && that->is_remote == is_remote);
   }
 
+  // Send all the messages in the message queue.
+  int Flush();
+
   // The socket used by this connection.
   int socket_fd;
 

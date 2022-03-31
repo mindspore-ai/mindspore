@@ -80,16 +80,16 @@ class MetaServerNode : public NodeBase {
   bool InitTCPServer();
 
   // Handle the message received by the tcp server.
-  void HandleMessage(const std::shared_ptr<MessageBase> &message);
+  std::shared_ptr<MessageBase> HandleMessage(const std::shared_ptr<MessageBase> &message);
 
   // Process the received register message sent from compute graph nodes.
-  void ProcessRegister(const std::shared_ptr<MessageBase> &message);
+  std::shared_ptr<MessageBase> ProcessRegister(const std::shared_ptr<MessageBase> &message);
 
   // Process the received unregister message sent from compute graph nodes.
-  void ProcessUnregister(const std::shared_ptr<MessageBase> &message);
+  std::shared_ptr<MessageBase> ProcessUnregister(const std::shared_ptr<MessageBase> &message);
 
   // Process the received heartbeat message sent from compute graph nodes.
-  void ProcessHeartbeat(const std::shared_ptr<MessageBase> &message);
+  std::shared_ptr<MessageBase> ProcessHeartbeat(const std::shared_ptr<MessageBase> &message);
 
   // Maintain the state which is type of `TopoState` of this cluster topology.
   void UpdateTopoState();

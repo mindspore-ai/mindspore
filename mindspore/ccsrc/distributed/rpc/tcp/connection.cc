@@ -422,6 +422,42 @@ void Connection::FillRecvMessage() {
   recv_message = msg;
 }
 
+int Connection::Flush() {
+  int total_send_bytes = 0;
+  while (!send_message_queue.empty() || total_send_len != 0) {
+    if (total_send_len == 0) {
+      FillSendMessage(send_message_queue.front(), source, false);
+      send_message_queue.pop();
+    }
+    size_t sendLen = 0;
+    int retval = socket_operation->SendMessage(this, &send_kernel_msg, total_send_len, &sendLen);
+    if (retval == IO_RW_OK && sendLen > 0) {
+      total_send_len -= sendLen;
+      if (total_send_len == 0) {
+        // update metrics
+        send_metrics->UpdateError(false);
+
+        output_buffer_size -= send_message->body.size();
+        total_send_bytes += send_message->body.size();
+        delete send_message;
+        send_message = nullptr;
+        break;
+      }
+    } else if (retval == IO_RW_OK && sendLen == 0) {
+      // EAGAIN
+      MS_LOG(ERROR) << "Failed to send message and update the epoll event";
+      (void)recv_event_loop->UpdateEpollEvent(socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
+      continue;
+    } else {
+      // update metrics
+      send_metrics->UpdateError(true, error_code);
+      state = ConnectionState::kDisconnecting;
+      break;
+    }
+  }
+  return total_send_bytes;
+}
+
 int Connection::AddConnnectEventHandler() {
   return recv_event_loop->SetEventHandler(socket_fd, EPOLLIN | EPOLLHUP | EPOLLERR, NewConnectEventHandler,
                                           reinterpret_cast<void *>(this));

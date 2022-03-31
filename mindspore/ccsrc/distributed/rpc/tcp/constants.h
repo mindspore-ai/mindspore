@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
-using MessageHandler = std::function<void(const std::shared_ptr<MessageBase> &)>;
+using MessageHandler = std::function<std::shared_ptr<MessageBase>(const std::shared_ptr<MessageBase> &)>;
 using DeleteCallBack = void (*)(const std::string &from, const std::string &to);
 using ConnectionCallBack = void (*)(void *conn);
 
@@ -56,6 +56,8 @@ static const int g_httpKmsgEnable = -1;
 
 using IntTypeMetrics = std::queue<int>;
 using StringTypeMetrics = std::queue<std::string>;
+
+static const std::shared_ptr<MessageBase> NULL_MSG = nullptr;
 
 // Server socket listen backlog.
 static const int SOCKET_LISTEN_BACKLOG = 2048;

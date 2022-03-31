@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <string>
 #include "proto/topology.pb.h"
+#include "distributed/rpc/tcp/constants.h"
 #include "distributed/cluster/topology/utils.h"
 #include "distributed/cluster/topology/meta_server_node.h"
 
@@ -69,7 +70,7 @@ bool MetaServerNode::InitTCPServer() {
   return true;
 }
 
-void MetaServerNode::HandleMessage(const std::shared_ptr<MessageBase> &message) {
+std::shared_ptr<MessageBase> MetaServerNode::HandleMessage(const std::shared_ptr<MessageBase> &message) {
   MS_EXCEPTION_IF_NULL(message);
   const auto &name = message->Name();
 
@@ -79,7 +80,7 @@ void MetaServerNode::HandleMessage(const std::shared_ptr<MessageBase> &message) 
     const auto &handler = system_msg_handlers_.find(message_name);
     if (handler == system_msg_handlers_.end()) {
       MS_LOG(ERROR) << "Unknown system message name: " << message->Name();
-      return;
+      return rpc::NULL_MSG;
     }
     system_msg_handlers_[message_name](message);
 
@@ -88,13 +89,14 @@ void MetaServerNode::HandleMessage(const std::shared_ptr<MessageBase> &message) 
     const auto &handler = message_handlers_.find(name);
     if (handler == message_handlers_.end()) {
       MS_LOG(ERROR) << "Unknown message name: " << name;
-      return;
+      return rpc::NULL_MSG;
     }
     (*message_handlers_[name])(message->Body());
   }
+  return rpc::NULL_MSG;
 }
 
-void MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message) {
+std::shared_ptr<MessageBase> MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message) {
   MS_EXCEPTION_IF_NULL(message);
 
   RegistrationMessage registration;
@@ -111,9 +113,10 @@ void MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message
   } else {
     MS_LOG(ERROR) << "The node: " << node_id << " have been registered before.";
   }
+  return rpc::NULL_MSG;
 }
 
-void MetaServerNode::ProcessUnregister(const std::shared_ptr<MessageBase> &message) {
+std::shared_ptr<MessageBase> MetaServerNode::ProcessUnregister(const std::shared_ptr<MessageBase> &message) {
   MS_EXCEPTION_IF_NULL(message);
 
   UnregistrationMessage unregistration;
@@ -124,12 +127,13 @@ void MetaServerNode::ProcessUnregister(const std::shared_ptr<MessageBase> &messa
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
     MS_LOG(ERROR) << "Received unregistration message from invalid compute graph node: " << node_id;
-    return;
+    return rpc::NULL_MSG;
   }
   nodes_.erase(node_id);
+  return rpc::NULL_MSG;
 }
 
-void MetaServerNode::ProcessHeartbeat(const std::shared_ptr<MessageBase> &message) {
+std::shared_ptr<MessageBase> MetaServerNode::ProcessHeartbeat(const std::shared_ptr<MessageBase> &message) {
   MS_EXCEPTION_IF_NULL(message);
 
   HeartbeatMessage heartbeat;
@@ -145,6 +149,7 @@ void MetaServerNode::ProcessHeartbeat(const std::shared_ptr<MessageBase> &messag
   } else {
     MS_LOG(ERROR) << "Invalid node: " << node_id << ".";
   }
+  return rpc::NULL_MSG;
 }
 
 void MetaServerNode::UpdateTopoState() {

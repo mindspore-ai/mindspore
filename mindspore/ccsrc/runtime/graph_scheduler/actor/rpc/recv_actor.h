@@ -66,7 +66,7 @@ class RecvActor : public RpcActor {
 
  private:
   // The message callback of the tcp server.
-  void HandleMessage(const std::shared_ptr<MessageBase> &msg);
+  std::shared_ptr<MessageBase> HandleMessage(const std::shared_ptr<MessageBase> &msg);
 
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
