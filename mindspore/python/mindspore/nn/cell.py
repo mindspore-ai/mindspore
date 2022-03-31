@@ -1068,7 +1068,7 @@ class Cell(Cell_):
         """
         if not child_name or '.' in child_name:
             raise KeyError("For 'insert_child_to_cell', the argument 'child_name' should not be None and "
-                           "should not contain \".\"")
+                           "should not contain '.'")
         if hasattr(self, child_name) and child_name not in self._cells:
             raise KeyError("For 'insert_child_to_cell', the {} child cell already exists in the network. Cannot "
                            "insert another child cell with the same name.".format(child_name))
