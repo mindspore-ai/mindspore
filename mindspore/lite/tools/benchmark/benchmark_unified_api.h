@@ -87,9 +87,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   int GetDataTypeByTensorName(const std::string &tensor_name) override;
 
   int CompareOutput() override;
-#ifdef PARALLEL_INFERENCE
-  int CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs);
-#endif
+
   int CompareOutputByCosineDistance(float cosine_distance_threshold);
 
   int InitTimeProfilingCallbackParameter() override;
@@ -102,7 +100,10 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int PrintInputData();
 #ifdef PARALLEL_INFERENCE
-  int RunModelPool(std::shared_ptr<mindspore::Context> context);
+  int CompareOutputForModelPool(std::vector<mindspore::MSTensor> *outputs);
+  void ModelParallelRunnerWarmUp(int index);
+  void ModelParallelRunnerRun(int task_num, int parallel_idx);
+  int ParallelInference(std::shared_ptr<mindspore::Context> context);
 #endif
 
   template <typename T>
@@ -133,10 +134,13 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   MSKernelCallBack ms_before_call_back_ = nullptr;
   MSKernelCallBack ms_after_call_back_ = nullptr;
+#ifdef PARALLEL_INFERENCE
   std::vector<std::vector<mindspore::MSTensor>> all_inputs_;
   std::vector<std::vector<mindspore::MSTensor>> all_outputs_;
-  std::atomic<int> all_require_num_{-1};
   std::atomic<bool> model_parallel_runner_ret_failed_{false};
+  std::atomic<bool> runner_run_start_ = false;
+  mindspore::ModelParallelRunner model_runner_;
+#endif
 };
 
 }  // namespace mindspore::lite
