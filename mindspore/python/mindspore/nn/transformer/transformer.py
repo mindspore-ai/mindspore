@@ -2335,7 +2335,7 @@ class Transformer(Cell):
               Used for incremental prediction when the use_past is True. Default None.
 
         Outputs:
-            Tuple, a tuple contains(`output`, `encoder_layer_present`, `decoder_layer_present`)
+            Tuple, a tuple contains(`output`, `encoder_layer_present`, `decoder_layer_present`, `accum_loss`)
 
             - **output** (Tensor) - If there is only encoder, the output logit of the encoder layer. The shape is
               [batch, src_seq_length, hidden_size] or [batch * src_seq_length, hidden_size], if there are encoder and
@@ -2351,6 +2351,8 @@ class Transformer(Cell):
               (batch_size, num_heads, size_per_head, src_seq_length),
               (batch_size, num_heads, src_seq_length, size_per_head)). If the decoder is not set, the
               returned value will be None.
+            - **accum_loss** (Tensor) - A Tensor indicates an auxiliary loss to minimize the mean square of the data
+              part routed to each expert, and only returned if the number of experts is greater than 1.
 
         Supported Platforms:
             ``Ascend`` ``GPU``

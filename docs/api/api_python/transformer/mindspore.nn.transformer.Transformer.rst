@@ -40,8 +40,9 @@
 
     **输出：**
 
-    Tuple，表示包含(`output`, `encoder_layer_present`, `encoder_layer_present`)的元组。
+    Tuple，表示包含(`output`, `encoder_layer_present`, `encoder_layer_present`, `accum_loss`)的元组。
 
     - **output** (Tensor) - 如果只有编码器，则表示编码器层的输出logit。shape为[batch, src_seq_length, hidden_size] or [batch * src_seq_length, hidden_size]。如果有编码器和解码器，则输出来自于解码器层。shape为[batch, tgt_seq_length, hidden_size]或[batch * tgt_seq_length, hidden_size]。
     - **encoder_layer_present** (Tuple) - 大小为num_layers的元组，其中每个元组都是shape为((batch_size, num_heads, size_per_head, src_seq_length)或(batch_size, num_heads, src_seq_length, size_per_head))的自注意力中的投影key向量和value向量的tensor的元组。
     - **decoder_layer_present** (Tuple) - 大小为num_layers的元组，其中每个元组都是shape为((batch_size, num_heads, size_per_head, tgt_seq_length)或(batch_size, num_heads, tgt_seq_length, size_per_head))的self attention中的投影key向量和value向量的tensor的元组，或者是shape为(batch_size, num_heads, size_per_head, src_seq_length)或(batch_size, num_heads, src_seq_length, size_per_head))的交叉注意力中的投影key向量和value向量的tensor的元组。如果未设置解码器，返回值将为None。
+    - **accum_loss** (Tensor) - 表示一个辅助损失来最小化路由到每个专家的数据部分的均方，且仅仅在专家数大于1时才会返回。
