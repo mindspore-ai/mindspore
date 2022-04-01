@@ -33,13 +33,13 @@
 #include "utils/signal.h"
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
+#include "utils/compact_set.h"
 #include "utils/ordered_set.h"
 #include "utils/ordered_map.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
 #include "utils/hashing.h"
 #include "base/base_ref.h"
-#include "api/ir/func_graph_manager.h"
 
 namespace mindspore {
 namespace change {
@@ -55,9 +55,9 @@ class FuncGraphTransaction;
 class FuncGraphManager;
 using FuncGraphManagerPtr = std::shared_ptr<FuncGraphManager>;
 
-using AnfNodeIndexSet = deprecated::api::AnfNodeIndexSet;
-// NodeUsersMap, for node B input i use node A, it will be one item in map with key: A, and value: (B, i)
-using NodeUsersMap = deprecated::api::NodeUsersMap;
+using AnfNodeIndexSet = CompactSet<std::pair<AnfNodePtr, int>>;
+using NodeUsersMap = mindspore::HashMap<AnfNodePtr, AnfNodeIndexSet, PointerHash<AnfNodePtr>>;
+
 using FuncGraphSetPair = std::pair<FuncGraphPtr, FuncGraphSet>;
 using FuncGraphSetPtr = std::shared_ptr<FuncGraphSet>;
 
@@ -278,8 +278,7 @@ class FuncGraphMetaFgPrimTotalComputer final : public DepComputer {
   bool SeekMetaFgPrim(const FuncGraphPtr &fg, SeenNum seen_num);
 };
 
-class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager>,
-                                     public deprecated::api::FuncGraphManager {
+class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGraphManager> {
  public:
   explicit FuncGraphManager(const std::vector<FuncGraphPtr> &roots, bool manage = true);
   virtual ~FuncGraphManager() {
@@ -299,10 +298,10 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
   void AddParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter);
   void InsertFrontParameter(const FuncGraphPtr &fg, const AnfNodePtr &parameter);
   void MaybeDropFuncGraphs(const FuncGraphSet &func_graphs, bool ignore_users = false);
-  bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node) final;
+  bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node);
   bool Replace(const AnfNodePtr &old_node, const AnfNodePtr &new_node, const AnfNodePtr &mask_node);
-  void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value) final;
-  void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value) final;
+  void SetEdge(const AnfNodePtr &node, int index, const AnfNodePtr &value);
+  void AddEdge(const AnfNodePtr &node, const AnfNodePtr &value);
   void MoveAllCNodeDropGraph(const FuncGraphPtr &source, const FuncGraphPtr &target, const ScopePtr &scope);
 
   FuncGraphTransaction Transact();
@@ -318,7 +317,7 @@ class MS_CORE_API FuncGraphManager : public std::enable_shared_from_this<FuncGra
 
   NodeUsersMap &node_users() { return node_users_; }
 
-  const NodeUsersMap &node_users() const final { return node_users_; }
+  const NodeUsersMap &node_users() const { return node_users_; }
 
   FVTotalMap &free_variables_total() const;
 

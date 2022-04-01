@@ -17,7 +17,6 @@
 #include <algorithm>
 #include "mindapi/ir/func_graph.h"
 #include "mindapi/src/helper.h"
-#define USE_DEPRECATED_API
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "ir/func_graph.h"

@@ -281,8 +281,6 @@ if(PLATFORM_ARM64)
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${ABSTRACT_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-            install(FILES ${API_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/api/ir
-                    COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
             install(FILES ${IR_DTYPE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/ir/dtype
@@ -655,8 +653,6 @@ else()
         install(FILES ${MINDAPI_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/mindapi/ir
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${ABSTRACT_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/abstract
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${API_IR_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/api/ir
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${BASE_HEADER} DESTINATION ${CONVERTER_ROOT_DIR}/include/core/base
                 COMPONENT ${RUNTIME_COMPONENT_NAME})

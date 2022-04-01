@@ -12,10 +12,6 @@ set(ABSTRACT_HEADER
         ${CORE_DIR}/abstract/primitive_infer_map.h
         ${CORE_DIR}/abstract/utils.h
         )
-set(API_IR_HEADER
-        ${CORE_DIR}/api/ir/func_graph.h
-        ${CORE_DIR}/api/ir/func_graph_manager.h
-        )
 file(GLOB MINDAPI_BASE_HEADER ${CORE_DIR}/mindapi/base/*.h)
 file(GLOB MINDAPI_IR_HEADER ${CORE_DIR}/mindapi/ir/*.h)
 set(BASE_HEADER
