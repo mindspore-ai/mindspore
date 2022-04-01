@@ -10,7 +10,7 @@
 
     **参数：**
 
-    - **prefix** (str) - checkpoint文件的前缀名称。默认值：CKP。
+    - **prefix** (str) - checkpoint文件的前缀名称。默认值：'CKP'。
     - **directory** (str) - 保存checkpoint文件的文件夹路径。默认情况下，文件保存在当前目录下。默认值：None。
     - **config** (CheckpointConfig) - checkpoint策略配置。默认值：None。
 
