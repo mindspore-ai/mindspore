@@ -492,6 +492,8 @@ REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_SubFusion, CPU
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_DivFusion, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
+REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_RealDiv, CPUOpCoderCreator<ArithmeticFP32Coder>)
+
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_LogicalAnd, CPUOpCoderCreator<ArithmeticFP32Coder>)
 
 REG_OPERATOR_CODER(kAllTargets, kNumberTypeFloat32, PrimitiveType_LogicalOr, CPUOpCoderCreator<ArithmeticFP32Coder>)
