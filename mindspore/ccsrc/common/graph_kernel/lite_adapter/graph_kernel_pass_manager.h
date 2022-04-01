@@ -22,7 +22,7 @@
 #include <memory>
 
 #include "backend/common/optimizer/pass_manager.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore::graphkernel {
 using opt::PassManager;

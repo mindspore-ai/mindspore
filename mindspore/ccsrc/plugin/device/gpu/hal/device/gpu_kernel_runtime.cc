@@ -26,7 +26,7 @@
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "utils/ms_utils.h"

@@ -22,7 +22,7 @@
 
 #include "ir/func_graph.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/add_atomic_clean.h"
 #include "common/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "common/graph_kernel/arithmetic_simplify.h"

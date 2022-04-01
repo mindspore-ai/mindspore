@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "ir/func_graph.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/pass/getitem_tuple.h"
 #include "common/graph_kernel/core/graph_kernel_cluster.h"
 #include "common/graph_kernel/core/graph_kernel_splitter.h"

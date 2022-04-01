@@ -21,7 +21,7 @@
 
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 

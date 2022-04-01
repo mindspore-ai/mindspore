@@ -1,7 +1,0 @@
-files:
-  ".*graph_kernel.*":
-    approvers:
-    - gaoxiong1
-    - ckey_dou
-    - anyrenwei
-    - dayschan

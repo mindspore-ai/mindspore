@@ -22,7 +22,7 @@
 #include "runtime/dev.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"

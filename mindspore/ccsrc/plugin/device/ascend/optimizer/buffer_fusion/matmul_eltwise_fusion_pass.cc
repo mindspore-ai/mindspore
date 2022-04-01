@@ -18,7 +18,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "base/core_ops.h"
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
 
 namespace mindspore {

@@ -21,7 +21,7 @@
 #include <queue>
 #include <unordered_map>
 #include <utility>
-#include "include/common/utils/context/graph_kernel_flags.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 #include "kernel/kernel.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "kernel/common_utils.h"
