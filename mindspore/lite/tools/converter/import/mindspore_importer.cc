@@ -27,6 +27,7 @@
 #include "tools/converter/import/primitive_adjust.h"
 #include "tools/converter/import/mindir_adjust.h"
 #include "tools/converter/import/mindir_control_flow_adjust.h"
+#include "tools/converter/import/remove_public_primitive.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/string_util.h"
 #include "tools/common/tensor_util.h"
@@ -272,6 +273,12 @@ FuncGraphPtr MindsporeImporter::CheckAndUpdateFuncGraph(const converter::Flags &
 
   func_graph->set_attr("graph_name", MakeValue("main_graph"));
   func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::kFmkTypeMs)));
+  auto remove_public_primitive = std::make_shared<RemovePublicPrimitiveInterference>();
+  MS_CHECK_TRUE_MSG(remove_public_primitive != nullptr, nullptr, "ne RemovePublicPrimitiveInterference is a nullptr.");
+  if (!remove_public_primitive->Run(func_graph)) {
+    MS_LOG(ERROR) << "remove interference due to public-pirmitive failed.";
+    return nullptr;
+  }
   RemoveUnusedGraphInput(func_graph);
   if (CommonAnfAdjust(func_graph) != RET_OK) {
     MS_LOG(ERROR) << "AdjustForAnf failed.";
