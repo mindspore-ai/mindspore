@@ -44,7 +44,8 @@ abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::v
     if (input_shape[i] != other_shape[i] && (input_shape[i] != 1 || other_shape[i] != 1)) {
       MS_EXCEPTION(ValueError) << "For '" << op_name
                                << "', The size of tensor input must match the size of tensor other at the " << i
-                               << " dimension!";
+                               << " dimension, but got input size: " << input_shape[i]
+                               << ", other size: " << other_shape[i] << ".";
     }
   }
   if (input_size > MAX)

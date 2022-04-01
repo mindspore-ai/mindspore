@@ -33,7 +33,7 @@ std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const st
   std::vector<int64_t> mask_shape;
   if (input_shape.size() != 4) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name()
-                             << "', The `input_x` should be a 4-D tensor,but got a " +
+                             << "', The 'input_x' should be a 4-D tensor,but got a " +
                                   std::to_string(input_shape.size()) + "-D tensor whose shape is " +
                                   std::to_string(input_shape.size());
   }

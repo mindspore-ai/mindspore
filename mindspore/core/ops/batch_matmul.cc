@@ -146,7 +146,7 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
     auto out_type = prim->GetAttr("cast_type");
     MS_EXCEPTION_IF_NULL(out_type);
     if (!out_type->isa<Type>()) {
-      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', MatMul cast_type must be a `Type`, but got "
+      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', MatMul cast_type must be a 'Type', but got "
                                << out_type;
     }
     x_type = out_type->cast<TypePtr>();

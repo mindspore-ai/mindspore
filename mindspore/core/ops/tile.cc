@@ -39,9 +39,10 @@ std::vector<int64_t> GetInferShape(const PrimitivePtr &prim, const std::vector<i
     multiples_w = multiples_v;
   }
   if (len_sub < 0) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name()
-                             << "', the length of multiples can not be smaller than the"
-                                "length of dimension in input_x";
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim->name()
+      << "', 'multiples' length cannot be smaller than 'input_x' dimension length, but got 'multiples' length:"
+      << multiples_v.size() << ", 'input_x' dimension length: " << input_shape.size() << ".";
   }
   for (size_t i = 0; i < multiples_w.size(); i++) {
     if (infer_shape[i] == abstract::Shape::SHP_ANY) {

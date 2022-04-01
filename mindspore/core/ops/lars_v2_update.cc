@@ -37,12 +37,12 @@ abstract::ShapePtr LARSUpdateInferShape(const PrimitivePtr &primitive, const std
 
   if (weight_shape[kShape].size() != gradient_shape[kShape].size()) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', weight shape size should equale with gradient shape size, but got "
+                             << "', weight shape size should be equal to gradient shape size, but got "
                              << "weight shape: " << weight_shape << " and gradient shape: " << gradient_shape;
   }
   if (norm_weight_shape[kShape].size() != norm_gradient_shape[kShape].size()) {
     MS_EXCEPTION(ValueError) << "For " << op_name
-                             << "', norm weight shape size should equale with norm gradient shape size, but got "
+                             << "', norm weight shape size should be equal to norm gradient shape size, but got "
                              << "weight shape: " << norm_weight_shape << " and gradient shape: " << norm_gradient_shape;
   }
   for (size_t index = 0; index < weight_shape[kShape].size(); index++) {

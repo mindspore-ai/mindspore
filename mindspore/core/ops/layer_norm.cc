@@ -93,15 +93,22 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   if ((begin_params_axis_u > input_shape_list.size()) ||
       (gamma_shape_list.size() + begin_params_axis_u < input_shape_list.size()) ||
       (beta_shape_list.size() + begin_params_axis_u < input_shape_list.size())) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', Gamma and beta shape get wrong size.";
+    MS_LOG(EXCEPTION)
+      << "For '" << op_name
+      << ", begin_params_axis should be less than or equal to input_x shape size, gama shape size add "
+         "begin_params_axis should be equal to or greater than input_x shape size, and beta shape size add "
+         "begin_params_axis should be equal to or greater than input_x shape size, but got begin_params_axis: "
+      << begin_params_axis << ", input_x shape size: " << input_shape_list.size()
+      << ", gama shape size: " << gamma_shape_list.size() << ", beta shape size: " << beta_shape_list.size() << ".";
   }
   for (size_t i = begin_params_axis_u; i < input_shape_list.size(); ++i) {
     size_t gamma_beta_shape_dim = i - begin_params_axis_u;
     if ((gamma_shape_list[gamma_beta_shape_dim] != input_shape_list[i]) ||
         (beta_shape_list[gamma_beta_shape_dim] != input_shape_list[i])) {
-      MS_LOG(EXCEPTION) << "For '" << op_name << "', Gamma or beta shape should match input shape, but got input_shape="
-                        << input_shape->ToString() << ", gamma_shape=" << gamma_shape->ToString()
-                        << ", beta_shape=" << beta_shape->ToString();
+      MS_LOG(EXCEPTION) << "For '" << op_name
+                        << "', Gamma or beta shape should match input shape, but got input shape: "
+                        << input_shape->ToString() << ", gamma shape: " << gamma_shape->ToString()
+                        << ", beta shape: " << beta_shape->ToString();
     }
   }
 
