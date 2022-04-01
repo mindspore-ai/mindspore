@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ import pytest
 import numpy as np
 
 import mindspore.nn as nn
-from mindspore import Tensor, ms_function, context
 import mindspore.common.dtype as mstype
+from mindspore import Tensor, ms_function, context
+from mindspore.ops import Primitive
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -257,3 +258,28 @@ def test_fallback_tensor_array_astype():
         me_x = Tensor([1.1, -2.1]).astype("float32")
         return me_x
     print(foo())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tuple_with_mindspore_function():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback when local input has tuple with mindspore function type, such as Cell, Primitive.
+    Expectation: No exception.
+    """
+    def test_isinstance(a, base_type):
+        mro = type(a).mro()
+        for i in base_type:
+            if i in mro:
+                return True
+        return False
+
+    @ms_function
+    def foo():
+        return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
+
+    assert foo()
