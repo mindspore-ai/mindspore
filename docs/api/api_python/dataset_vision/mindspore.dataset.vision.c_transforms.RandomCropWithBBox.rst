@@ -32,7 +32,7 @@ mindspore.dataset.vision.c_transforms.RandomCropWithBBox
     - **TypeError** - 如果 `size` 不是int或Sequence[int]类型。
     - **TypeError** - 如果 `padding` 不是int或Sequence[int]类型。
     - **TypeError** - 如果 `pad_if_needed` 不是bool类型。
-    - **TypeError** - 如果 `fill_value` 不是int或Sequence[int]类型。
+    - **TypeError** - 如果 `fill_value` 不是int或Tuple[int]类型。
     - **TypeError** - 如果 `padding_mode` 不是 :class:`mindspore.dataset.vision.Border` 的类型。
     - **ValueError** - 如果 `size` 不是正数。
     - **ValueError** - 如果 `padding` 为负数。
