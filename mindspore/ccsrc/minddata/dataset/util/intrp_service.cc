@@ -20,6 +20,7 @@
 
 namespace mindspore {
 namespace dataset {
+const int64_t kServiceRetryGetUniqueIdInterVal = 10;
 IntrpService::IntrpService() try : high_water_mark_(0) { (void)ServiceStart(); } catch (const std::exception &e) {
   MS_LOG(ERROR) << "Interrupt service failed: " << e.what() << ".";
   std::terminate();
@@ -37,7 +38,7 @@ IntrpService::~IntrpService() noexcept {
   (void)ServiceStop();
 }
 
-Status IntrpService::Register(const std::string &name, IntrpResource *res) {
+Status IntrpService::Register(std::string *name, IntrpResource *res) {
   SharedLock stateLck(&state_lock_);
   // Now double check the state
   if (ServiceState() != STATE::kRunning) {
@@ -46,11 +47,18 @@ Status IntrpService::Register(const std::string &name, IntrpResource *res) {
     std::lock_guard<std::mutex> lck(mutex_);
     try {
       std::ostringstream ss;
+      std::string uuid = std::string("");
       ss << this_thread::get_id();
-      MS_LOG(DEBUG) << "Register resource with name " << name << ". Thread ID " << ss.str() << ".";
-      auto it = all_intrp_resources_.emplace(name, res);
-      if (it.second == false) {
-        return Status(StatusCode::kMDDuplicateKey, __LINE__, __FILE__, name);
+      MS_LOG(INFO) << "Register resource with name " << *name << ". Thread ID " << ss.str() << ".";
+      auto it = all_intrp_resources_.emplace(*name, res);
+      while (it.second == false) {
+        uuid = Services::GetUniqueID();
+        it = all_intrp_resources_.emplace(uuid, res);
+        MS_LOG(WARNING) << "The name(" << *name << ") of register resource is duplicate, get new uuid: " << uuid;
+        std::this_thread::sleep_for(std::chrono::milliseconds(kServiceRetryGetUniqueIdInterVal));
+      }
+      if (!uuid.empty()) {
+        *name = uuid;
       }
       high_water_mark_++;
     } catch (std::exception &e) {
