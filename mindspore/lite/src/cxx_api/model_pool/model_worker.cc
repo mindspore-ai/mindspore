@@ -15,6 +15,7 @@
  */
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/common/log_adapter.h"
+#include "src/runtime/numa_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/common.h"
 namespace mindspore {
@@ -97,9 +98,14 @@ Status ModelWorker::ResizeInit() {
 Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context,
                          int node_id) {
   model_ = std::make_shared<Model>();
+  if (model_ == nullptr) {
+    MS_LOG(ERROR) << "model is nullptr.";
+    return kLiteNullptr;
+  }
   mindspore::ModelType model_type = kMindIR_Lite;
 #ifdef BFC_MEMORY
   if (node_id != -1) {
+    numa::NUMAAdapter::GetInstance()->Bind(node_id);
     model_->UpdateConfig(lite::kConfigServerInference, {lite::kConfigNUMANodeId, std::to_string(node_id)});
   }
 #endif
