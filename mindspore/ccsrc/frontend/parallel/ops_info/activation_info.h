@@ -391,6 +391,24 @@ class ErfinvInfo : public ActivationOther {
       : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ErfinvCost>()) {}
   ~ErfinvInfo() override = default;
 };
+
+// the Invert has not backward
+class InvertInfo : public ActivationOther {
+ public:
+  InvertInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReLUCost>()) {}
+  ~InvertInfo() = default;
+};
+
+// the PopulationCount has not backward
+class PopulationCountInfo : public ActivationOther {
+ public:
+  PopulationCountInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                      const PrimitiveAttrs &attrs)
+      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReLUCost>()) {}
+  ~PopulationCountInfo() = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_OPS_INFO_ACTIVATION_INFO_H_

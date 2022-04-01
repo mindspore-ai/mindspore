@@ -31,10 +31,10 @@ class BatchParallelInfo : public OperatorInfo {
  public:
   BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                     const PrimitiveAttrs &attrs, OperatorCostPtr cost)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost), dev_num_(1) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
   BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                     const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()), dev_num_(1) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
 
   ~BatchParallelInfo() override = default;
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
@@ -50,7 +50,6 @@ class BatchParallelInfo : public OperatorInfo {
   Status InferAsLossDivisor() override;
 
  private:
-  int64_t dev_num_ = 1;
   bool need_replace_input_ = false;
   Shape replace_shape_;
 };
@@ -63,6 +62,20 @@ class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {
                           std::make_shared<SparseSoftmaxCrossEntropyWithLogitsCost>()) {}
   ~SparseSoftmaxCrossEntropyWithLogitsInfo() override = default;
   void ReComputeBatchSplitFlagList() override;
+};
+
+// For CheckValid operator, only the first dimension of first input can be split.
+class CheckValidInfo : public BatchParallelInfo {
+ public:
+  CheckValidInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                 const PrimitiveAttrs &attrs)
+      : BatchParallelInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
+  ~CheckValidInfo() override = default;
+  void ReComputeBatchSplitFlagList() override;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status InferDevMatrixShape() override;
 };
 }  // namespace parallel
 }  // namespace mindspore

@@ -74,19 +74,10 @@ Status BatchParallelInfo::InferTensorMap() {
     return SUCCESS;
   }
 
-  if (strategy[0].empty()) {
-    MS_LOG(INFO) << name_ << ": the first element of strategy is empty";
-    return FAILED;
-  }
-
-  if (strategy[0][0] != stage_device_size_) {
-    MS_LOG(ERROR) << name_ << ": It is not a valid data parallel strategy.";
-    return FAILED;
-  }
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     Shape tensor_map_index;
     for (size_t j = 0; j < inputs_shape_[i].size(); ++j) {
-      if (strategy[i][j] == stage_device_size_ && j == 0) {
+      if (strategy[i][j] > 1 && j == 0) {
         tensor_map_index.push_back(0);
       } else {
         tensor_map_index.push_back(MAP_NONE);
@@ -133,6 +124,8 @@ Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 std::vector<StrategyPtr> BatchParallelInfo::GenerateOpStrategies(int64_t stage_id) {
   StrategyPtr sp;
   Strategys strategy;
+  ComputeBatchSplitFlagList();
+
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
     Shape temp(inputs_shape_[i].size(), 1);
     if (split_flag_list_[i]) {
@@ -144,12 +137,6 @@ std::vector<StrategyPtr> BatchParallelInfo::GenerateOpStrategies(int64_t stage_i
   std::vector<StrategyPtr> sp_vector;
   sp_vector.push_back(sp);
   return sp_vector;
-}
-
-void SparseSoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
-  for (size_t i = 0; i < inputs_shape_.size(); i++) {
-    split_flag_list_[i] = true;
-  }
 }
 
 Status BatchParallelInfo::InferAsLossDivisor() {
@@ -181,5 +168,38 @@ void BatchParallelInfo::ReplaceNodeInputOrAttrs() {
   AnfNodePtr val = NewValueNode(replace_shape);
   (void)manager->Replace(cnode->input(1), val);
 }
+
+void SparseSoftmaxCrossEntropyWithLogitsInfo::ReComputeBatchSplitFlagList() {
+  for (size_t i = 0; i < inputs_shape_.size(); i++) {
+    split_flag_list_[i] = true;
+  }
+}
+
+Status CheckValidInfo::CheckStrategy(const StrategyPtr &strategy) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
+    return FAILED;
+  }
+
+  Strategys stra = strategy->GetInputDim();
+  if (stra[0][1] != 1) {
+    MS_LOG(ERROR) << name_ << ": The second dimension of the first input can not be split, but got " << stra[0][1];
+    return FAILED;
+  }
+
+  if (stra[1][0] != 1) {
+    MS_LOG(ERROR) << name_ << ": The second input can not be split, but got " << stra[1][0];
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status CheckValidInfo::InferDevMatrixShape() {
+  Strategys stra = strategy_->GetInputDim();
+  dev_matrix_shape_.push_back(stra[0][0]);
+  return SUCCESS;
+}
+
+void CheckValidInfo::ReComputeBatchSplitFlagList() { split_flag_list_[0] = true; }
 }  // namespace parallel
 }  // namespace mindspore
