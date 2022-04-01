@@ -57,11 +57,7 @@ MODEL=${MODEL_DIR}/${MODEL_NAME}/mnist.tflite
 MODEL_FILE=${MODEL_NAME}.tar.gz
 
 GetVersion() {
-    local VERSION_HEADER=${ROOT_DIR}/mindspore/lite/include/version.h
-    local VERSION_MAJOR=$(grep "const int ms_version_major =" ${VERSION_HEADER} | tr -dc "[0-9]")
-    local VERSION_MINOR=$(grep "const int ms_version_minor =" ${VERSION_HEADER} | tr -dc "[0-9]")
-    local VERSION_REVISION=$(grep "const int ms_version_revision =" ${VERSION_HEADER} | tr -dc "[0-9]")
-    VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
+    VERSION_STR=$(cat ${ROOT_DIR}/version.txt)
 }
 
 DownloadModel() {
