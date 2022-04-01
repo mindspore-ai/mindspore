@@ -81,7 +81,7 @@ class Cell(Cell_):
         [Parameter (name=weight, shape=(240, 120, 4, 4), dtype=Float32, requires_grad=True)]
     """
 
-    class CellGuard:
+    class _CellGuard:
         """Detecting whether the cell is a top-level cell with the 'with statement'."""
         def __enter__(self):
             """Enter cell and increase recursion depth count."""
@@ -602,7 +602,7 @@ class Cell(Cell_):
         _pynative_executor.new_graph(self, *args, **kwargs)
         cast_inputs = self.auto_cast_inputs(args)
 
-        with self.CellGuard():
+        with self._CellGuard():
             try:
                 output = self._run_construct(cast_inputs, kwargs)
             except Exception as err:
