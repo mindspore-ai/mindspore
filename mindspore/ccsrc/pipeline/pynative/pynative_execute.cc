@@ -2219,7 +2219,7 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info) {
                                     op_exec_info->abstract,
                                     op_exec_info->is_dynamic_shape,
                                     op_exec_info->is_mixed_precision_cast,
-                                    op_exec_info->lazy_build,
+                                    false,
                                     op_exec_info->next_op_name,
                                     static_cast<int>(op_exec_info->next_input_index),
                                     graph_info,
