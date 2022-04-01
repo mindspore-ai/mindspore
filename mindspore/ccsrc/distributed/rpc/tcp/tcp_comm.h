@@ -33,9 +33,6 @@ namespace rpc {
 // Event handler for new connecting request arrived.
 void OnAccept(int server, uint32_t events, void *arg);
 
-// Send messages buffered in the connection.
-int DoSend(Connection *conn);
-
 void DoDisconnect(int fd, Connection *conn, uint32_t error, int soError);
 
 void ConnectedEventHandler(int fd, uint32_t events, void *context);
@@ -116,7 +113,6 @@ class TCPComm {
   std::shared_ptr<std::mutex> conn_mutex_;
 
   friend void OnAccept(int server, uint32_t events, void *arg);
-  friend int DoSend(Connection *conn);
   friend int DoConnect(const std::string &to, Connection *conn, ConnectionCallBack event_callback,
                        ConnectionCallBack write_callback, ConnectionCallBack read_callback);
 };

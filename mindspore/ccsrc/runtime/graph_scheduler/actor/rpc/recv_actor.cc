@@ -20,6 +20,7 @@
 #include <utility>
 #include <functional>
 #include <condition_variable>
+#include "distributed/rpc/tcp/constants.h"
 #include "plugin/device/cpu/kernel/rpc/rpc_recv_kernel.h"
 
 namespace mindspore {
@@ -130,7 +131,7 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-void RecvActor::HandleMessage(const std::shared_ptr<MessageBase> &msg) {
+std::shared_ptr<MessageBase> RecvActor::HandleMessage(const std::shared_ptr<MessageBase> &msg) {
   // Block the message handler if the context is invalid.
   std::unique_lock<std::mutex> lock(context_mtx_);
   context_cv_.wait(lock, [this] { return is_context_valid_; });
@@ -138,9 +139,11 @@ void RecvActor::HandleMessage(const std::shared_ptr<MessageBase> &msg) {
 
   MS_LOG(INFO) << "Rpc actor recv message for inter-process edge: " << inter_process_edge_name_;
 
-  MS_ERROR_IF_NULL_WO_RET_VAL(msg);
-  MS_ERROR_IF_NULL_WO_RET_VAL(op_context_);
+  if (msg == nullptr || op_context_ == nullptr) {
+    return distributed::rpc::NULL_MSG;
+  }
   ActorDispatcher::Send(GetAID(), &RecvActor::RunOpInterProcessData, msg, op_context_);
+  return distributed::rpc::NULL_MSG;
 }
 }  // namespace runtime
 }  // namespace mindspore

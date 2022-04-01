@@ -131,42 +131,6 @@ void OnAccept(int server, uint32_t events, void *arg) {
   tcpmgr->conn_pool_->AddConnection(conn);
 }
 
-int DoSend(Connection *conn) {
-  int total_send_bytes = 0;
-  while (!conn->send_message_queue.empty() || conn->total_send_len != 0) {
-    if (conn->total_send_len == 0) {
-      conn->FillSendMessage(conn->send_message_queue.front(), conn->source, false);
-      conn->send_message_queue.pop();
-    }
-    size_t sendLen = 0;
-    int retval = conn->socket_operation->SendMessage(conn, &conn->send_kernel_msg, conn->total_send_len, &sendLen);
-    if (retval == IO_RW_OK && sendLen > 0) {
-      conn->total_send_len -= sendLen;
-      if (conn->total_send_len == 0) {
-        // update metrics
-        conn->send_metrics->UpdateError(false);
-
-        conn->output_buffer_size -= conn->send_message->body.size();
-        total_send_bytes += conn->send_message->body.size();
-        delete conn->send_message;
-        conn->send_message = nullptr;
-        break;
-      }
-    } else if (retval == IO_RW_OK && sendLen == 0) {
-      // EAGAIN
-      MS_LOG(ERROR) << "Failed to send message and update the epoll event";
-      (void)conn->recv_event_loop->UpdateEpollEvent(conn->socket_fd, EPOLLOUT | EPOLLIN | EPOLLHUP | EPOLLERR);
-      continue;
-    } else {
-      // update metrics
-      conn->send_metrics->UpdateError(true, conn->error_code);
-      conn->state = ConnectionState::kDisconnecting;
-      break;
-    }
-  }
-  return total_send_bytes;
-}
-
 void TCPComm::SetMessageHandler(const MessageHandler &handler) { message_handler_ = handler; }
 
 bool TCPComm::Initialize() {
@@ -260,7 +224,7 @@ void TCPComm::EventCallBack(void *connection) {
 
   if (conn->state == ConnectionState::kConnected) {
     conn->conn_mutex->lock();
-    (void)DoSend(conn);
+    (void)conn->Flush();
     conn->conn_mutex->unlock();
   } else if (conn->state == ConnectionState::kDisconnecting) {
     conn->conn_mutex->lock();
@@ -272,7 +236,7 @@ void TCPComm::WriteCallBack(void *connection) {
   Connection *conn = reinterpret_cast<Connection *>(connection);
   if (conn->state == ConnectionState::kConnected) {
     conn->conn_mutex->lock();
-    (void)DoSend(conn);
+    (void)conn->Flush();
     conn->conn_mutex->unlock();
   }
 }
@@ -370,7 +334,7 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
     } else {
       (void)conn->send_message_queue.emplace(msg);
     }
-    return DoSend(conn);
+    return conn->Flush();
   };
   if (sync) {
     return task();
