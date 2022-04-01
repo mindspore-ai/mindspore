@@ -34,6 +34,8 @@ from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.array_ops import Triu
+from mindspore.ops.operations.nn_ops import FractionalMaxPool
+from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -1089,6 +1091,20 @@ class ApplyKerasMomentumNet(nn.Cell):
 
 
 test_case_math_ops = [
+    ('FractionalMaxPool', {
+        'block': FractionalMaxPool(pooling_ratio=[1.0, 1.4, 1.4, 1.0]),
+        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],
+        'desc_bprop': [([1, 8, 8, 4], {'dtype': np.int64}),
+                       ([9], {'dtype': np.int64}),
+                       ([9], {'dtype': np.int64})]}),
+    ('FractionalMaxPoolGrad', {
+        'block': FractionalMaxPoolGrad(),
+        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64}),
+                        ([1, 8, 8, 4], {'dtype': np.int64}),
+                        ([1, 8, 8, 4], {'dtype': np.int64}),
+                        ([9], {'dtype': np.int64}),
+                        ([9], {'dtype': np.int64})],
+        'skip': ['backward']}),
     ('Cross', {
         'block': P.Cross(dim=1),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),

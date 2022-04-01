@@ -155,6 +155,7 @@ constexpr auto kPadSize = "pad_size";
 constexpr auto kPooledH = "pooled_h";
 constexpr auto kPooledW = "pooled_w";
 constexpr auto kPoolMode = "pool_mode";
+constexpr auto kPoolingRatio = "pooling_ratio";
 constexpr auto kCeilMode = "ceil_mode";
 constexpr auto kCountIncludePad = "count_include_pad";
 constexpr auto kDivisorOverride = "divisor_override";

@@ -137,6 +137,8 @@ constexpr auto kTril = "Tril";
 constexpr auto kTriu = "Triu";
 
 // NN
+constexpr auto kFractionalMaxPool = "FractionalMaxPool";
+constexpr auto kFractionalMaxPoolGrad = "FractionalMaxPoolGrad";
 constexpr auto kCTCLoss = "CTCLoss";
 constexpr auto kLayerNorm = "LayerNorm";
 constexpr auto kLayerNormGrad = "LayerNormGrad";
@@ -560,6 +562,8 @@ GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSamp
 GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGrad));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdate, std::make_shared<Primitive>("BNTrainingUpdate"));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdateGrad, std::make_shared<Primitive>("BNTrainingUpdateGrad"));
+GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool, std::make_shared<Primitive>("FractionalMaxPool"));
+GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolGrad, std::make_shared<Primitive>("FractionalMaxPoolGrad"));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

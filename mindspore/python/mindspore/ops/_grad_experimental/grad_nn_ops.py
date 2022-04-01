@@ -19,6 +19,8 @@ from .._grad.grad_base import bprop_getters
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
+from ..operations.nn_ops import FractionalMaxPool
+from ..operations._grad_ops import FractionalMaxPoolGrad
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -94,5 +96,17 @@ def get_bprop_grid_sampler_3d(self):
     def bprop(input_x, grid, out, dout):
         dx, dgrid = grad(dout, input_x, grid)
         return dx, dgrid
+
+    return bprop
+
+
+@bprop_getters.register(FractionalMaxPool)
+def get_bprop_fractional_max_pool(self):
+    """Grad definition for `FractionalMaxPool` operation."""
+    fractional_max_pool_grad = FractionalMaxPoolGrad(self.overlapping)
+
+    def bprop(x, out, dout):
+        dx = fractional_max_pool_grad(x, out[0], dout[0], out[1], out[2])
+        return (dx,)
 
     return bprop
