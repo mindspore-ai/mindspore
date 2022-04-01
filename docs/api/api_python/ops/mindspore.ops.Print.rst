@@ -9,6 +9,8 @@ mindspore.ops.Print
 
     .. note::
         在PyNative模式下，请使用Python print函数。在Graph模式下，bool、int和float将被转换为Tensor进行打印，str保持不变。
+        该方法用于代码调试，当同时print大量数据时，为了保证主进程不受影响，可能会丢失一些数据，这时推荐使用 `Summary` 功能，具体可查看
+        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_.
 
     **输入：**
 
