@@ -486,15 +486,16 @@ def jvp(fn, inputs, v):
     Compute the jacobian-vector-product of the given network.
 
     Args:
-        fn (Function or Cell): The function or net that takes Tensor inputs and returns a tensor or tuple of Tensors.
-        inputs (Tensor or tuple or list): The inputs to `fn`.
-        v (Tensor or tuple or list): The shape and type of v should be the same as inputs.
+        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
+            Tensors.
+        inputs (Union[Tensor, Tuple or List of Tensors]): The inputs to `fn`.
+        v (Union[Tensor, Tuple or or List of Tensors]): The shape and type of v should be the same as inputs.
 
     Returns:
         Tuple, tuple of output and jvp.
 
-        - **netout** (Tensors or Tuple of Tensors) - The output of "fn(inputs)".
-        - **jvp** (Tensors or Tuple of Tensors) - The result of the dot product.
+        - **netout** (Tensor or Tuple of Tensors) - The output of "fn(inputs)".
+        - **jvp** (Tensor or Tuple of Tensors) - The result of the dot product.
 
     Raises:
         TypeError: If the input is not a tensor or tuple or list of tensors.
@@ -521,14 +522,16 @@ def jvp(fn, inputs, v):
     """
     jvp_inner = _JvpInner()
 
-    @ms_function
+    @ms_function(hash_args=fn)
     def _wrap_container(*arg):
         args = arg[1:]
         vectors = arg[0]
         return jvp_inner(fn, vectors, *args)
 
-    if not isinstance(inputs, (Tensor, tuple, list)):
+    if not isinstance(inputs, (Tensor, tuple, list)) or not isinstance(v, (Tensor, tuple, list)):
         _raise_type_error()
+    if isinstance(v, list):
+        v = tuple(v)
     if isinstance(inputs, (tuple, list)):
         return _wrap_container(v, *inputs)
     return _wrap_container(v, inputs)
@@ -539,15 +542,16 @@ def vjp(fn, inputs, v):
     Compute the vector-jacobian-product of the given network.
 
     Args:
-        fn (Function or Cell): The function or net that takes Tensor inputs and returns a tensor or tuple of Tensors.
-        inputs (Tensor or tuple or list): The inputs to `fn`.
-        v (Tensor or tuple or list): The shape and type of v should be the same as outputs.
+        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
+            Tensors.
+        inputs (Union[Tensor, Tuple or List of Tensors]): The inputs to `fn`.
+        v (Union[Tensor, Tuple or List of Tensors]): The shape and type of v should be the same as outputs.
 
     Returns:
         Tuple, tuple of output and vjp.
 
-        - **netout** (Tensors or Tuple of Tensors) - The output of "fn(inputs)".
-        - **vjp** (Tensors or Tuple of Tensors) - The result of the dot product.
+        - **netout** (Tensor or Tuple of Tensors) - The output of "fn(inputs)".
+        - **vjp** (Tensor or Tuple of Tensors) - The result of the dot product.
 
     Raises:
         TypeError: If the input is not a tensor or tuple or list of tensors.
@@ -577,14 +581,16 @@ def vjp(fn, inputs, v):
     """
     vjp_inner = _VjpInner()
 
-    @ms_function
+    @ms_function(hash_args=fn)
     def wrap_container(*arg):
         args = arg[:-1]
         vectors = arg[-1]
         return vjp_inner(fn, *args, vectors)
 
-    if not isinstance(inputs, (Tensor, tuple, list)):
+    if not isinstance(inputs, (Tensor, tuple, list)) or not isinstance(v, (Tensor, tuple, list)):
         _raise_type_error()
+    if isinstance(v, list):
+        v = tuple(v)
     if isinstance(inputs, (tuple, list)):
         return wrap_container(*inputs, v)
     return wrap_container(inputs, v)
@@ -736,7 +742,7 @@ def narrow(inputs, axis, start, length):
 
 @constexpr
 def _raise_type_error():
-    raise TypeError("The inputs type should be a Tensor, tuple or list of Tensor.")
+    raise TypeError("The inputs type should be a Tensor, tuple or list of Tensors.")
 
 
 @constexpr
