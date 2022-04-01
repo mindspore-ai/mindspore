@@ -20,8 +20,8 @@ mindspore.ops.NotEqual
 
     **输入：**
 
-    - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是Number或bool，也可以是数据类型为Number或bool的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - 第二个输入可以是Number或bool。也可以是数据类型为Number或bool的Tensor。
+    - **x** (Union[Tensor, Number, bool]) - 第一个输入可以是数值型或bool，也可以是数据类型为数值型或bool的Tensor。
+    - **y** (Union[Tensor, Number, bool]) - 第二个输入可以是数值型或bool。也可以是数据类型为数值型或bool的Tensor。
 
     **输出：**
 
@@ -29,5 +29,5 @@ mindspore.ops.NotEqual
 
     **异常：**
 
-    - **TypeError** - `x` 和 `y` 不是以下之一：Tensor、Number、bool。
+    - **TypeError** - `x` 和 `y` 不是以下之一：Tensor、数值型、bool。
     - **TypeError** - `x` 和 `y` 都不是Tensor。

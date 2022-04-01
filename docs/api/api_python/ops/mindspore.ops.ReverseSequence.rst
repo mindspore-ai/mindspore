@@ -12,7 +12,7 @@ mindspore.ops.ReverseSequence
 
     **输入：**
 
-    - **x** (Tensor) - 输入需反转的数据，其数据类型支持包括bool在内的所有Number类型。
+    - **x** (Tensor) - 输入需反转的数据，其数据类型支持包括bool在内的所有数值型。
     - **seq_lengths** (Tensor) - 指定反转长度，为一维向量，其数据类型为int32或int64。
 
     **输出：**

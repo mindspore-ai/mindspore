@@ -7,7 +7,7 @@ mindspore.nn.FocalLoss
 
     解决了类别不平衡的问题。
 
-    论文 `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ 中提出的loss函数提高了图像目标检测的效果。
+    FocalLoss函数在论文 `Focal Loss for Dense Object Detection <https://arxiv.org/pdf/1708.02002.pdf>`_ 中提出，提高了图像目标检测的效果。
 
     函数如下：
 

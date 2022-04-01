@@ -13,13 +13,13 @@ mindspore.nn.BatchNorm2d
     .. note::
         BatchNorm的实现在图模式和PyNative模式下是不同的，因此不建议在网络初始化后更改其模式。
 
-        需要注意的是，更新 `moving_mean` 和 `moving_var` 的公式为：
+        需要注意的是，更新 :math:`moving\_mean` 和 :math:`moving\_var` 的公式为：
 
         .. math::
             \text{moving_mean}=\text{moving_mean*momentum}+μ_β\text{*(1−momentum)}\\
             \text{moving_var}=\text{moving_var*momentum}+σ^2_β\text{*(1−momentum)}
 
-        其中， :math:`moving_mean, moving_var` 分别是更新后的均值和方差， :math:`μ_β, σ^2_β` 是每一批的数据的观测值(均值和方差)。
+        其中， :math:`moving\_mean` 是更新后的均值， :math:`moving\_var` 是更新后的方差， :math:`μ_β, σ^2_β` 是每一批的数据的观测值(均值和方差)。
 
     **参数：**
 

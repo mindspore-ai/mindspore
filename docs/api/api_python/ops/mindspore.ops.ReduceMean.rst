@@ -3,7 +3,7 @@ mindspore.ops.ReduceMean
 
 .. py:class:: mindspore.ops.ReduceMean(keep_dims=False)
 
-    默认情况下，输出张量各维度上的平均值，以达到对所有维度进行归约的目的。也可以对指定维度进行求平均值归约。
+    默认情况下，输出Tensor各维度上的平均值，以达到对所有维度进行归约的目的。也可以对指定维度进行求平均值归约。
 
     通过指定 `keep_dims` 参数，来控制输出和输入的维度是否相同。
 

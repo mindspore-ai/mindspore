@@ -16,5 +16,5 @@
 
     **异常：**
     
-    - **TypeError** - `input_x` 既不是Tensor也不是Number。
-    - **TypeError** - `type` 不是Number。
+    - **TypeError** - `input_x` 既不是Tensor也不是数值型。
+    - **TypeError** - `type` 不是数值型。
