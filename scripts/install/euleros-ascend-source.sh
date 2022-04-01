@@ -23,6 +23,7 @@
 # Augments:
 #   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
 #   - OPENMPI: whether to install optional package Open MPI for distributed training. [on, off(default)]
+#   - LOCAL_ASCEND: Ascend AI software package installed path, default /usr/local/Ascend.
 #
 # Usage:
 #   Run script like `bash -i ./euleros-ascend-source.sh`.
@@ -32,10 +33,16 @@ set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
 OPENMPI=${OPENMPI:-off}
+LOCAL_ASCEND=${LOCAL_ASCEND:-/usr/local/Ascend}
 
 available_py_version=(3.7 3.8 3.9)
 if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     echo "PYTHON_VERSION is '$PYTHON_VERSION', but available versions are [${available_py_version[*]}]."
+    exit 1
+fi
+
+if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl 1> /dev/null 2>&1); then
+    echo "can not find whl packages in LOCAL_ASCEND=${LOCAL_ASCEND}, please check whether it is a valid path."
     exit 1
 fi
 
@@ -96,6 +103,11 @@ conda activate $env_name
 
 pip install wheel
 pip install -U setuptools
+
+pip install sympy
+pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl
+pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl
+pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
 
 # cmake
 cd /tmp
