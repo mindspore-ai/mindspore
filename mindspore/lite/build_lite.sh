@@ -84,7 +84,7 @@ build_lite_x86_64_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
     cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
-    if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]] ; then
+    if [ -f "${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so.0" ]; then
       cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/libglog.so
     fi
     if [[ "X$is_train" = "Xon" ]]; then
@@ -182,7 +182,7 @@ build_lite_aarch64_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
-    if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]] ; then
+    if [ -f "${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so.0" ]; then
       cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/libglog.so
     fi
     if [[ "X$is_train" = "Xon" ]]; then
@@ -683,13 +683,13 @@ build_lite_x86_64_aarch64_jar()
   cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
   cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/libmindspore-lite-jni.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
 
-  if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]] ; then
+  if [ -f "${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libglog.so.0" ]; then
     cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/libglog.so
-    cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/libglog.so
-  else
-    echo -e "\e[31mMSLITE_ENABLE_SERVER_INFERENCE is not set, so glog libs will not be compiled \e[0m"
   fi
 
+  if [ -f "${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libglog.so.0" ]; then
+    cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/libglog.so
+  fi
   # compile jar package
   [ -n "${LITE_JAVA_PATH}" ] && rm -rf ${LITE_JAVA_PATH}/build
   # build jar
