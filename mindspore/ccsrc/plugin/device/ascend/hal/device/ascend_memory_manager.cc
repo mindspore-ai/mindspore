@@ -35,7 +35,10 @@ void AscendMemoryManager::Initialize() {
   AscendMemoryPool::GetInstance().Init();
 }
 
-void AscendMemoryManager::Finalize() { (void)AscendMemAdapter::GetInstance().DeInitialize(); }
+void AscendMemoryManager::Finalize() {
+  AscendMemoryPool::GetInstance().ReleaseDeviceRes();
+  (void)AscendMemAdapter::GetInstance().DeInitialize();
+}
 
 void AscendMemoryManager::ResetDynamicMemory() { (void)AscendMemAdapter::GetInstance().ResetDynamicMemory(); }
 

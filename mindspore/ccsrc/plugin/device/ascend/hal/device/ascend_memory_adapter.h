@@ -42,6 +42,8 @@ class AscendMemAdapter {
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
 
+  static size_t GetRoundUpAlignSize(size_t input_size);
+
   [[nodiscard]] uint64_t FreeDevMemSize() const { return static_mem_offset_ - max_dynamic_mem_offset_; }
   [[nodiscard]] uint64_t MaxHbmSizeForMs() const { return max_available_ms_hbm_size_; }
   [[nodiscard]] uint64_t GetMsUsedHbmSize() const { return ms_used_hbm_size_; }
@@ -87,6 +89,7 @@ class AscendMemAdapter {
   // static memory info, from a high address to a low address
   uint64_t static_mem_offset_{0};
   std::vector<std::shared_ptr<MemoryBlock>> static_memory_block_list_;
+  static size_t GetRoundDownAlignSize(size_t input_size);
 };
 }  // namespace ascend
 }  // namespace device

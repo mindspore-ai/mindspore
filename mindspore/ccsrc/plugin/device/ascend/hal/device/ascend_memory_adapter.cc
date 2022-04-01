@@ -25,6 +25,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+constexpr uint64_t kAscendMemAlignSize = 512;
 constexpr double kMSMemoryRatio = 0.9375;           // 15/16
 constexpr double kReservedMemoryRatio = 0.0625;     // 1/16
 constexpr size_t kPerHugePageMemorySize = 2097152;  // 2mb
@@ -32,6 +33,14 @@ constexpr size_t kExtraReservedMemory = 10485760;   // 10mb
 constexpr double kHalfRatio = 0.5;
 // The Ascend max available device memory is 32GB.
 constexpr float kAscendMaxDeviceMemory = 32;
+
+size_t AscendMemAdapter::GetRoundDownAlignSize(size_t input_size) {
+  return (input_size / kAscendMemAlignSize) * kAscendMemAlignSize;
+}
+
+size_t AscendMemAdapter::GetRoundUpAlignSize(size_t input_size) {
+  return ((input_size + kAscendMemAlignSize - 1) / kAscendMemAlignSize) * kAscendMemAlignSize;
+}
 
 bool AscendMemAdapter::Initialize() {
   if (initialized_) {
@@ -60,7 +69,7 @@ bool AscendMemAdapter::Initialize() {
   size_t reserved_mem_size_for_others;
   if (user_define_ms_size == 0) {
     ms_used_hbm_size_ = LongToSize(DoubleToLong(device_hbm_free_size_ * kMSMemoryRatio));
-    // sub the extra reserved 10mb after rounding up the 2mb
+    // sub the extra reserved 10mb after rounding down the 2mb
     ms_used_hbm_size_ = (ms_used_hbm_size_ / kPerHugePageMemorySize) * kPerHugePageMemorySize - kExtraReservedMemory;
     reserved_mem_size_for_others = device_hbm_free_size_ - ms_used_hbm_size_;
   } else {
@@ -83,6 +92,7 @@ bool AscendMemAdapter::Initialize() {
     }
   }
 
+  ms_used_hbm_size_ = GetRoundDownAlignSize(ms_used_hbm_size_);
   MS_LOG(INFO) << "Device HBM Size:" << device_hbm_total_size_ / kMBToByte
                << "M, Device free HBM Size:" << device_hbm_free_size_ / kMBToByte
                << "M, Reserved HBM size for Other Components(HCCL/rts/etc.):"
@@ -130,6 +140,7 @@ bool AscendMemAdapter::DeInitialize() {
 
 uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
+  size = GetRoundUpAlignSize(size);
   auto new_static_offset = static_mem_offset_ - size;
   if (new_static_offset < max_dynamic_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
@@ -146,6 +157,7 @@ uint8_t *AscendMemAdapter::MallocStaticDevMem(size_t size, const std::string &ta
 
 uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &tag) {
   std::lock_guard<std::mutex> locker(mutex_);
+  size = GetRoundUpAlignSize(size);
   auto new_dynamic_offset = cur_dynamic_mem_offset_ + size;
   if (new_dynamic_offset > static_mem_offset_) {
     MS_LOG(INFO) << DevMemDetailInfo();
