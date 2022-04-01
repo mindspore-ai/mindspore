@@ -201,15 +201,17 @@ class GraphSplitByPattern:
             self.is_output = is_output
             self.output_excluded = set()
             if self.pattern == PrimLib.REDUCE:
-                def _gather_reduce_exclude(op):
-                    for to in op.output.to_ops:
-                        idx = to.inputs.index(op.output)
-                        if self.get_relation(to, idx) > PrimLib.ELEMWISE:
-                            self.output_excluded.add(to)
-                        else:
-                            _gather_reduce_exclude(to)
-
-                _gather_reduce_exclude(init_op)
+                def _gather_reduce_exclude():
+                    recursion_stack = [init_op]
+                    while recursion_stack:
+                        op = recursion_stack.pop()
+                        for to in op.output.to_ops:
+                            idx = to.inputs.index(op.output)
+                            if self.get_relation(to, idx) > PrimLib.ELEMWISE:
+                                self.output_excluded.add(to)
+                            else:
+                                recursion_stack.append(to)
+                _gather_reduce_exclude()
             self.unique_id = unique_id
             self.reach_tab = reach_tab
 
