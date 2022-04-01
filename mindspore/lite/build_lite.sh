@@ -80,15 +80,19 @@ build_lite_x86_64_jni_and_jar() {
         echo "---------------- mindspore lite: build jni x86_64 failed----------------"
         exit 1
     fi
+    rm -f ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/*.so*
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
     cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
     cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
+    if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]] ; then
+      cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/libglog.so
+    fi
     if [[ "X$is_train" = "Xon" ]]; then
-        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
-        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
-        cp ./libmindspore-lite-train-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
+      cp ./libmindspore-lite-train-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
     fi
 
     cd ${LITE_JAVA_PATH}/java
@@ -120,13 +124,13 @@ build_lite_x86_64_jni_and_jar() {
     # build jar
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/
     if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
-      ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
+      ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
     else
       if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_x86/
-          ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/
+          ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ --info
       else
-           ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
+           ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
       fi
     fi
     cp ${LITE_JAVA_PATH}/build/lib/jar/*.jar ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
@@ -174,15 +178,19 @@ build_lite_aarch64_jni_and_jar() {
         echo "---------------- mindspore lite: build jni arm64 failed----------------"
         exit 1
     fi
+    rm -f ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/*.so*
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
+    if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]] ; then
+      cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/libglog.so
+    fi
     if [[ "X$is_train" = "Xon" ]]; then
-        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
-        cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
-        cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
+      cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
     fi
 
     cd ${LITE_JAVA_PATH}/java
@@ -202,25 +210,25 @@ build_lite_aarch64_jni_and_jar() {
 
     # build java fl_client
     if [[ "X$is_train" = "Xon" ]]; then
-        ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
-        cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
-        rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
+      ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
+      ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
+      ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client
+      ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
+      ${gradle_command} flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
+      cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+      rm -rf ${LITE_JAVA_PATH}/java/fl_client/.gradle ${LITE_JAVA_PATH}/java/fl_client/src/main/java/mindspore
     fi
 
     # build jar
     ${gradle_command} clean -p ${LITE_JAVA_PATH}/
     if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
-      ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
+      ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
     else
       if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_aarch64/
-          ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/
+          ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ --info
       else
-           ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
+           ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
       fi
     fi
     cp ${LITE_JAVA_PATH}/build/lib/jar/*.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
@@ -668,11 +676,19 @@ build_lite_x86_64_aarch64_jar()
 
   LITE_JAVA_PATH=${LITE_BASEPATH}/java
   local LITE_JAVA_NATIVE_RESOURCE_PATH=${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite
-  rm -f ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/*.so
-  rm -f ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/*.so
-  cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/lib/*.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/
-  cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/*.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
-  echo "unzip tar success."
+  rm -f ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/*.so*
+  rm -f ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/*.so*
+  cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/
+  cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/lib/libmindspore-lite-jni.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/
+  cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
+  cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/libmindspore-lite-jni.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
+
+  if [[ "${MSLITE_ENABLE_SERVER_INFERENCE}" == "ON" || "${MSLITE_ENABLE_SERVER_INFERENCE}" == "on" ]] ; then
+    cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/libglog.so
+    cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/libglog.so
+  else
+    echo -e "\e[31mMSLITE_ENABLE_SERVER_INFERENCE is not set, so glog libs will not be compiled \e[0m"
+  fi
 
   # compile jar package
   rm -rf ${LITE_JAVA_PATH}/build
@@ -688,13 +704,13 @@ build_lite_x86_64_aarch64_jar()
 
   ${gradle_command} clean -p ${LITE_JAVA_PATH}/
   if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
-    ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
+    ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
   else
     if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_x86/
-        ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/
+        ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ --info
     else
-         ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test
+         ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
     fi
   fi
   echo "compile jar success."
