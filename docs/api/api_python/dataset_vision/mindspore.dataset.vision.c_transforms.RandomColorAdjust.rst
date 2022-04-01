@@ -5,6 +5,8 @@ mindspore.dataset.vision.c_transforms.RandomColorAdjust
 
     随机调整输入图像的亮度、对比度、饱和度和色调。
 
+    .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
+
     **参数：**
 
     - **brightness**  (Union[float, list, tuple], 可选) - 亮度调整因子。不能为负，默认值：(1, 1)。
