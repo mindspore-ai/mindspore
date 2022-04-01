@@ -132,22 +132,5 @@ def test_mobilenetv2_quant():
     train()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-def test_mobilenetv2_quant_pynative():
-    """
-    test_mobilenetv2_quant_pynative
-    Features: test_mobilenetv2_quant_pynative
-    Description: test_mobilenetv2_quant_pynative pynative mode
-    Expectation: None
-    """
-    set_seed(1)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    train()
-
-
 if __name__ == '__main__':
     test_mobilenetv2_quant()
-    test_mobilenetv2_quant_pynative()
