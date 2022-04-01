@@ -50,7 +50,7 @@ INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 def _environment_check():
     if c_expression.security.enable_security():
-        raise RuntimeError("Profiler is not supported when MindSpore is installed which compiled with \'-s on\'.")
+        raise RuntimeError("Profiler is not supported when MindSpore is compiled with \'-s on\'.")
 
 
 class Profiler:
