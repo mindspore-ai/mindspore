@@ -49,6 +49,10 @@ option(MSLITE_ENABLE_SHARING_MODEL_WEIGHT "enable sharing model weight" off)
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
 option(ENABLE_MODEL_OBF "if support model obfuscation" off)
+set(VERSION_STR "1.7.0" CACHE STRING "get from version")
+
+add_definitions(-DVERSION_STR=\"${VERSION_STR}\")
+
 if(MACHINE_LINUX_ARM64)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a+fp16")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a+fp16")
@@ -421,7 +425,7 @@ if(MSLITE_ENABLE_ACL)
     set(ASCEND_CANN_RUNTIME_PATH ${ASCEND_PATH}/latest/fwkacllib/lib64)
 endif()
 
-set(PKG_NAME_PREFIX mindspore-lite-${MS_VERSION_MAJOR}.${MS_VERSION_MINOR}.${MS_VERSION_REVISION})
+set(PKG_NAME_PREFIX mindspore-lite-${VERSION_STR})
 
 if(SUPPORT_NPU)
     set(DDK_PATH "$ENV{HWHIAI_DDK}/ddk/ai_ddk_lib")

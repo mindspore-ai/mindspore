@@ -35,10 +35,7 @@ check_Hi35xx() {
 }
 
 get_version() {
-    VERSION_MAJOR=$(grep "const int ms_version_major =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
-    VERSION_MINOR=$(grep "const int ms_version_minor =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
-    VERSION_REVISION=$(grep "const int ms_version_revision =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
-    VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
+    VERSION_STR=$(cat ${BASEPATH}/version.txt)
 }
 
 write_commit_file() {
@@ -74,6 +71,7 @@ build_lite_x86_64_jni_and_jar() {
     cd ${BASEPATH}/mindspore/lite/build
     rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
+    echo "cmake ${X86_JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} ${LITE_JAVA_PATH}/native/"
     cmake ${X86_JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
@@ -168,7 +166,7 @@ build_lite_aarch64_jni_and_jar() {
     cd ${BASEPATH}/mindspore/lite/build
     rm -rf java/jni && mkdir -pv java/jni
     cd java/jni
-    cmake ${AARCH64_JNI_CMAKE_ARGS} -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
+    cmake ${AARCH64_JNI_CMAKE_ARGS} -DMACHINE_LINUX_ARM64=on -DSUPPORT_TRAIN=${is_train} "${LITE_JAVA_PATH}/native/"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm64 failed----------------"
@@ -397,7 +395,7 @@ build_lite() {
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
-            build_lite_x86_64_jni_and_jar $1
+            build_lite_x86_64_jni_and_jar "${CMAKE_ARGS}"
         else
             echo -e "\e[31mJAVA_HOME is not set, so jni and jar packages will not be compiled \e[0m"
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
@@ -405,7 +403,7 @@ build_lite() {
       elif [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
-            build_lite_aarch64_jni_and_jar "-DMACHINE_LINUX_ARM64=on"
+            build_lite_aarch64_jni_and_jar "${CMAKE_ARGS}"
         else
             echo -e "\e[31mJAVA_HOME is not set, so jni and jar packages will not be compiled \e[0m"
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
@@ -636,6 +634,7 @@ update_submodule()
   git submodule update --init graphengine
   cd "${BASEPATH}/graphengine"
   git submodule update --init metadef
+  cd "${BASEPATH}"
 }
 
 build_lite_x86_64_aarch64_jar()
@@ -737,9 +736,9 @@ fi
 
 CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_VERBOSE=${ENABLE_VERBOSE}"
 if [[ "${DEBUG_MODE}" == "on" ]]; then
-    CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Debug "
+    CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Debug "
 else
-    CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release "
+    CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release "
 fi
 if [[ "X$ENABLE_GITEE" = "Xon" ]]; then
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GITEE=ON"
@@ -751,7 +750,7 @@ else
 fi
 
 get_version
-CMAKE_ARGS="${CMAKE_ARGS} -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION}"
+CMAKE_ARGS="${CMAKE_ARGS} -DVERSION_STR=${VERSION_STR}"
 
 if [[ "X$LITE_ENABLE_AAR" = "Xon" ]]; then
     build_aar
