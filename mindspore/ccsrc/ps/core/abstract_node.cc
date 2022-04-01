@@ -886,6 +886,12 @@ void AbstractNode::ProcessSendMetadata(const std::shared_ptr<TcpConnection> &con
     OnEventCallback(ClusterEvent::CLUSTER_SCALE_IN_DONE);
   }
 
+  if (cancelSafeModeFn_ && current_cluster_state_ == ClusterState::CLUSTER_SCALE_OUT_ROLLBACK) {
+    MS_LOG(WARNING) << "Trigger cluster scale out rollback done event.";
+    OnEventCallback(ClusterEvent::CLUSTER_SCALE_OUT_ROLLBACK_DONE);
+    cancelSafeModeFn_();
+  }
+
   std::lock_guard<std::mutex> lock(client_mutex_);
   connected_nodes_.clear();
 
@@ -948,6 +954,27 @@ void AbstractNode::ProcessEvent(const std::shared_ptr<TcpConnection> &conn, cons
   } else {
     OnCustomEventCallback(event);
   }
+}
+
+void AbstractNode::ProcessScaleOutRollback(const std::shared_ptr<TcpConnection> &conn,
+                                           const std::shared_ptr<MessageMeta> &meta, const Protos &, const void *data,
+                                           size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+
+  if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
+    MS_LOG(WARNING) << "Server response message failed.";
+  }
+
+  UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT_ROLLBACK);
+
+  MS_LOG(INFO) << "[Scale out rollback]: begin to set scale out rollback.";
+  Register(client_to_scheduler_);
+  std::lock_guard<std::mutex> lock(client_mutex_);
+  connected_nodes_.clear();
+
+  MS_LOG(INFO) << "The node begin to start scale out rollback.";
 }
 
 void AbstractNode::ProcessScaleOut(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -1344,6 +1371,7 @@ void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SEND_EVENT] = &AbstractNode::ProcessEvent;
   server_handler_[NodeCommand::SCHEDULER_RECOVERY] = &AbstractNode::ProcessSchedulerRecovery;
   server_handler_[NodeCommand::PREPARE_BUILDING_NETWORK] = &AbstractNode::ProcessPrepareBuildingNetwork;
+  server_handler_[NodeCommand::SCALE_OUT_ROLLBACK] = &AbstractNode::ProcessScaleOutRollback;
 }
 
 void AbstractNode::InitNodeInfo(const NodeRole &role) {
@@ -1501,6 +1529,11 @@ void AbstractNode::ProcessPrepareBuildingNetwork(const std::shared_ptr<TcpConnec
   } else {
     MS_LOG(INFO) << "prepare for building network success.";
   }
+}
+
+std::string AbstractNode::node_scale_state_str() {
+  MS_EXCEPTION_IF_NULL(follower_scaler_);
+  return follower_scaler_->GetNodeScaleStateStr();
 }
 }  // namespace core
 }  // namespace ps

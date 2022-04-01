@@ -127,6 +127,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
   void RegisterFollowerScalerHandlerAfterScaleOut(const std::string &module, const HandlerAfterScaleOut &handler);
   void RegisterFollowerScalerHandlerAfterScaleIn(const std::string &module, const HandlerAfterScaleIn &handler);
 
+  std::string node_scale_state_str();
+
   PersistentState persistent_state() const;
   void set_persistent_state(PersistentState persistent_state);
 
@@ -258,6 +260,9 @@ class BACKEND_EXPORT AbstractNode : public Node {
   bool FlCollectiveWaitInner(const CollectiveMessageMeta &expect_meta, VectorPtr *output, const uint32_t &timeout);
   void OnRecvCollectiveData(const MessageMeta &message_meta, const VectorPtr &data);
   void ConnectToScheduler();
+
+  void ProcessScaleOutRollback(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
+                               const Protos &, const void *data, size_t size);
 
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;

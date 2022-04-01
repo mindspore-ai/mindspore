@@ -63,6 +63,8 @@ enum NodeCommand {
   // Query the ready status to finish transform graph of computed node,
   // used in disaster recovery mode to prevent timeout of waiting for graph transformation.
   QUERY_FINISH_TRANSFORM = 23;
+  // This command is used to start scale out rollback
+  SCALE_OUT_ROLLBACK = 24;
 }
 
 enum NodeRole {
@@ -153,6 +155,7 @@ enum ClusterState {
   CLUSTER_ENABLE_FLS = 7;
   CLUSTER_DISABLE_FLS = 8;
   CLUSTER_SCHEDULER_RECOVERY = 9;
+  CLUSTER_SCALE_OUT_ROLLBACK = 10;
 }
 
 message HeartbeatRespMessage {

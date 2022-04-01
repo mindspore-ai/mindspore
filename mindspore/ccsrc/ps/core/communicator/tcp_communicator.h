@@ -63,7 +63,8 @@ const std::unordered_map<TcpUserCommand, std::string> kUserCommandToMsgType = {
   {TcpUserCommand::kQueryInstance, "queryInstance"},
   {TcpUserCommand::kEnableFLS, "enableFLS"},
   {TcpUserCommand::kDisableFLS, "disableFLS"},
-  {TcpUserCommand::kSyncAfterRecover, "syncAfterRecover"}};
+  {TcpUserCommand::kSyncAfterRecover, "syncAfterRecover"},
+  {TcpUserCommand::kQueryNodeScaleState, "queryNodeScaleState"}};
 
 class TcpCommunicator : public CommunicatorBase {
  public:

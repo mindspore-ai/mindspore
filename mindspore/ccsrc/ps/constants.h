@@ -248,6 +248,7 @@ using BarrierBeforeScaleIn = std::function<void(void)>;
 // is done.
 using HandlerAfterScaleOut = std::function<void(void)>;
 using HandlerAfterScaleIn = std::function<void(void)>;
+using HandlerAfterScaleOutRollback = std::function<void(void)>;
 
 constexpr char kClusterSafeMode[] = "The cluster is in safemode.";
 constexpr char kJobNotAvailable[] = "The server's training job is disabled or finished.";

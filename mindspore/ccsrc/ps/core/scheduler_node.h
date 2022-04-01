@@ -183,7 +183,9 @@ class BACKEND_EXPORT SchedulerNode : public Node {
 
   // Handle the scale out rollback http request, then delegate to the leader scaler to
   // process scale out rollback asynchronously.
-  void ProcessScaleoutRollback(const std::shared_ptr<HttpMessageHandler> &resp);
+  void ProcessScaleOutRollback(const std::shared_ptr<HttpMessageHandler> &resp);
+
+  bool QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler> &resp);
 
   // check whether the cluster is in the ready state.
   RequestProcessResult CheckIfClusterReady();
