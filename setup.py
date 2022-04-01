@@ -114,7 +114,8 @@ required_package = [
     'pillow >= 6.2.0',
     'scipy >= 1.5.2',
     'packaging >= 20.0',
-    'psutil >= 5.6.1'
+    'psutil >= 5.6.1',
+    'astunparse >= 0.0'
 ]
 
 package_data = {
