@@ -23,6 +23,7 @@
 # Augments:
 #   - PYTHON_VERSION: python version to set up. [3.7(default), 3.8, 3.9]
 #   - MINDSPORE_VERSION: mindspore version to install, >=1.6.0, required
+#   - LOCAL_ASCEND: Ascend AI software package installed path, default /usr/local/Ascend.
 #
 # Usage:
 #   Run script like `MINDSPORE_VERSION=1.7.0 bash ./euleros-ascend310-pip.sh`.
@@ -32,6 +33,7 @@ set -e
 
 PYTHON_VERSION=${PYTHON_VERSION:-3.7}
 MINDSPORE_VERSION=${MINDSPORE_VERSION:-EMPTY}
+LOCAL_ASCEND=${LOCAL_ASCEND:-/usr/local/Ascend}
 OPENMPI=${OPENMPI:-off}
 
 version_less() {
@@ -46,6 +48,11 @@ fi
 available_py_version=(3.7 3.8 3.9)
 if [[ " ${available_py_version[*]} " != *" $PYTHON_VERSION "* ]]; then
     echo "PYTHON_VERSION is '$PYTHON_VERSION', but available versions are [${available_py_version[*]}]."
+    exit 1
+fi
+
+if ! (ls ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl 1> /dev/null 2>&1); then
+    echo "can not find whl packages in LOCAL_ASCEND=${LOCAL_ASCEND}, please check whether it is a valid path."
     exit 1
 fi
 
@@ -104,6 +111,11 @@ set -e
 env_name=mindspore_py3${PYTHON_VERSION##*.}
 conda create -n $env_name python=${PYTHON_VERSION} -y
 conda activate $env_name
+
+pip install sympy
+pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl
+pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl
+pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
 
 # cmake
 cd /tmp
