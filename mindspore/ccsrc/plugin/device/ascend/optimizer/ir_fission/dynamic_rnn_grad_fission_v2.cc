@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -714,15 +714,29 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDwReduceSum(const FuncGraphPtr &func_g
                                                       const CNodePtr &dynamic_rnn_grad_cnode, const AnfNodePtr &matmul,
                                                       const RNNShapeSpecs &specs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
+  auto input_node = matmul;
+  // if matmul output is too large, need to insert cast to enable BatchMatmul&ReduceSum ub fusion later
+  const size_t max_out_shape_size = 1 << 10;
+  auto matmul_out_shape = common::AnfAlgo::GetOutputInferShape(matmul, 0);
+  auto matmul_out_shape_size = std::accumulate(matmul_out_shape.begin(), matmul_out_shape.end(), static_cast<size_t>(1),
+                                               std::multiplies<size_t>());
+  bool size_exceed_limit = matmul_out_shape_size > max_out_shape_size;
+  if (size_exceed_limit) {
+    std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), matmul};
+    auto cast = NewCNode(cast_inputs, func_graph);
+    common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {matmul_out_shape}, cast.get());
+    input_node = cast;
+  }
   // Create node
   std::vector<AnfNodePtr> reduce_sum_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReduceSum->name())),
-                                               matmul};
+                                               input_node};
   auto reduce_sum = NewCNode(reduce_sum_inputs, func_graph);
   // Set infer data type and shape
   std::vector<size_t> reduce_sum_shape = {specs.input_size + specs.hidden_size,
                                           kDimMultiNum * specs.hidden_nz_size * kCubeSize};
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(dynamic_rnn_grad_cnode, 0)},
-                                              {reduce_sum_shape}, reduce_sum.get());
+  auto reduce_sum_type =
+    size_exceed_limit ? kNumberTypeFloat32 : common::AnfAlgo::GetOutputInferDataType(dynamic_rnn_grad_cnode, 0);
+  common::AnfAlgo::SetOutputInferTypeAndShape({reduce_sum_type}, {reduce_sum_shape}, reduce_sum.get());
   // Set attr
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{0}), reduce_sum);
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(false), reduce_sum);
@@ -741,6 +755,16 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDwReduceSum(const FuncGraphPtr &func_g
   auto ret_node = reduce_sum;
   if (specs.shape_need_align) {
     ret_node = CreateTranspose(func_graph, reduce_sum, specs);
+  }
+  if (size_exceed_limit) {
+    std::vector<AnfNodePtr> out_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),
+                                               ret_node};
+    auto out_cast = NewCNode(out_cast_inputs, func_graph);
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(dynamic_rnn_grad_cnode, 0)},
+                                                {common::AnfAlgo::GetOutputInferShape(ret_node, 0)}, out_cast.get());
+    common::AnfAlgo::SetNodeAttr(kAttrInputSize, MakeValue(SizeToLong(specs.input_size)), out_cast);
+    common::AnfAlgo::SetNodeAttr(kAttrHiddenSize, MakeValue(SizeToLong(specs.hidden_size)), out_cast);
+    ret_node = out_cast;
   }
   return ret_node;
 }
