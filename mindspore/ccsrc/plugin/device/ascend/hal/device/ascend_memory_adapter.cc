@@ -25,9 +25,11 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-constexpr float kMSMemoryRatio = 0.9375;        // 15/16
-constexpr float kReservedMemoryRatio = 0.0625;  // 1/16
-constexpr float kHalfRatio = 0.5;
+constexpr double kMSMemoryRatio = 0.9375;           // 15/16
+constexpr double kReservedMemoryRatio = 0.0625;     // 1/16
+constexpr size_t kPerHugePageMemorySize = 2097152;  // 2mb
+constexpr size_t kExtraReservedMemory = 10485760;   // 10mb
+constexpr double kHalfRatio = 0.5;
 // The Ascend max available device memory is 32GB.
 constexpr float kAscendMaxDeviceMemory = 32;
 
@@ -42,7 +44,7 @@ bool AscendMemAdapter::Initialize() {
                       << ", total HBM size :" << device_hbm_total_size_;
   }
 
-  if (device_hbm_free_size_ < FloatToSize(device_hbm_total_size_ * kHalfRatio)) {
+  if (device_hbm_free_size_ < LongToSize(DoubleToLong(device_hbm_total_size_ * kHalfRatio))) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -54,10 +56,12 @@ bool AscendMemAdapter::Initialize() {
 
   // get user define max backend memory
   auto user_define_ms_size = GetDeviceMemSizeFromContext();
-  auto recommend_mem_size_for_others = FloatToSize(device_hbm_free_size_ * kReservedMemoryRatio);
+  auto recommend_mem_size_for_others = LongToSize(DoubleToLong(device_hbm_free_size_ * kReservedMemoryRatio));
   size_t reserved_mem_size_for_others;
   if (user_define_ms_size == 0) {
-    ms_used_hbm_size_ = FloatToSize(device_hbm_free_size_ * kMSMemoryRatio);
+    ms_used_hbm_size_ = LongToSize(DoubleToLong(device_hbm_free_size_ * kMSMemoryRatio));
+    // sub the extra reserved 10mb after rounding up the 2mb
+    ms_used_hbm_size_ = (ms_used_hbm_size_ / kPerHugePageMemorySize) * kPerHugePageMemorySize - kExtraReservedMemory;
     reserved_mem_size_for_others = device_hbm_free_size_ - ms_used_hbm_size_;
   } else {
     if (user_define_ms_size >= device_hbm_free_size_) {
