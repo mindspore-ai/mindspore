@@ -22,6 +22,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "utils/ms_context.h"
 #include "abstract/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
@@ -29,6 +30,33 @@ namespace mindspore {
 namespace ops {
 // batchmatmul
 namespace {
+void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const ShapeVector yshp, bool transpose_a,
+                          bool transpose_b, size_t offset) {
+  if (xshp.size() != yshp.size()) {
+    ShapeVector broadcast_input = xshp.size() > yshp.size() ? xshp : yshp;
+    for (size_t i = 0; i < broadcast_input.size() - offset; i++) {
+      if (broadcast_input[i] < 0) {
+        output->push_back(abstract::Shape::SHP_ANY);
+      } else {
+        output->push_back(broadcast_input[i]);
+      }
+    }
+  } else {
+    for (size_t i = 0; i < xshp.size() - offset; i++) {
+      if (xshp[i] < 0 || yshp[i] < 0) {
+        output->push_back(abstract::Shape::SHP_ANY);
+      } else {
+        output->push_back(xshp[i] > yshp[i] ? xshp[i] : yshp[i]);
+      }
+    }
+  }
+  size_t x_offset = xshp.size() - offset;
+  size_t y_offset = yshp.size() - offset;
+  output->push_back(xshp[x_offset + (transpose_a ? 1 : 0)]);
+  output->push_back(yshp[y_offset + (transpose_b ? 0 : 1)]);
+  return;
+}
+
 abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -37,6 +65,13 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto y_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto x_shp = x_shape_map[kShape];
   auto y_shp = y_shape_map[kShape];
+  auto context = MsContext::GetInstance();
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (!is_ascend && x_shp.size() != y_shp.size()) {
+    MS_EXCEPTION(ValueError) << "For BatchMatMul on cpu/gpu, input x's size should be equal to input y's size, "
+                                "while x size = "
+                             << x_shp.size() << ", y size = " << y_shp.size();
+  }
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;
   if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
@@ -89,25 +124,10 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   ShapeVector ret_shape;
   ShapeVector ret_min_shape;
   ShapeVector ret_max_shape;
-  auto make_shape = [&transpose_a, &transpose_b, &offset](ShapeVector &output, const ShapeVector xshp,
-                                                          const ShapeVector yshp) -> void {
-    ShapeVector broadcast_input = xshp.size() > yshp.size() ? xshp : yshp;
-    for (size_t i = 0; i < broadcast_input.size() - offset; i++) {
-      if (broadcast_input[i] < 0) {
-        output.push_back(abstract::Shape::SHP_ANY);
-      } else {
-        output.push_back(broadcast_input[i]);
-      }
-    }
-    size_t x_offset = xshp.size() - offset;
-    size_t y_offset = yshp.size() - offset;
-    output.push_back(xshp[x_offset + (transpose_a ? 1 : 0)]);
-    output.push_back(yshp[y_offset + (transpose_b ? 0 : 1)]);
-    return;
-  };
-  make_shape(ret_shape, x_shp, y_shp);
-  make_shape(ret_min_shape, x_min_shape, y_min_shape);
-  make_shape(ret_max_shape, x_max_shape, y_max_shape);
+
+  BatchMatMulMakeShape(&ret_shape, x_shp, y_shp, transpose_a, transpose_b, offset);
+  BatchMatMulMakeShape(&ret_min_shape, x_min_shape, y_min_shape, transpose_a, transpose_b, offset);
+  BatchMatMulMakeShape(&ret_max_shape, x_max_shape, y_max_shape, transpose_a, transpose_b, offset);
   return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
 }
 
