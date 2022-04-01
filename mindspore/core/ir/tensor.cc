@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,20 @@
 
 #include "ir/tensor.h"
 
+#include <cstdint>
 #include <iomanip>
 #include <functional>
+#include <memory>
 #include <utility>
 #include <algorithm>
+#include <type_traits>
+#include <map>
+#include "mindapi/base/type_id.h"
 #include "abstract/utils.h"
 #include "abstract/abstract_value.h"
 #include "base/complex_storage.h"
+#include "utils/log_adapter.h"
+#include "utils/ms_utils_secure.h"
 
 namespace mindspore {
 namespace tensor {
@@ -181,69 +188,14 @@ std::unique_ptr<T[]> CopyData(const ShapeVector &shape, void *const data, size_t
   return NewData<T>(buf, size);
 }
 
-// Tensor data implementation.
+// TensorStringifier provide methods to convert tensor data to its string representation.
 template <typename T>
-class TensorDataImpl : public TensorData {
+class TensorStringifier {
  public:
-  explicit TensorDataImpl(const ShapeVector &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
-  ~TensorDataImpl() = default;
+  TensorStringifier(const T *data, size_t data_size, size_t ndim) : data_(data), data_size_(data_size), ndim_(ndim) {}
+  ~TensorStringifier() = default;
 
-  TensorDataImpl(const ShapeVector &shape, void *data, size_t data_len)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)) {}
-
-  TensorDataImpl(const ShapeVector &shape, void *data, TypeId data_type)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_type)) {}
-
-  template <typename U>
-  TensorDataImpl(const ShapeVector &shape, const U *input, size_t size)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(input, size)) {}
-
-  template <typename Scalar>
-  TensorDataImpl(const ShapeVector &shape, Scalar scalar)
-      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(scalar)) {}
-
-  ssize_t size() const override { return static_cast<ssize_t>(data_size_); }
-
-  ssize_t itemsize() const override { return static_cast<ssize_t>(sizeof(T)); }
-
-  ssize_t nbytes() const override { return size() * itemsize(); }
-
-  ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
-
-  void *data() override {
-    if (data_ == nullptr) {
-      if (data_size_ > INT32_MAX) {
-        MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
-      }
-      // Lazy allocation.
-      data_ = std::make_unique<T[]>(data_size_);
-    }
-    return data_.get();
-  }
-
-  const void *const_data() const override {
-    // May return nullptr if data not initialized.
-    return data_.get();
-  }
-
-  virtual bool equals(const TensorDataImpl<T> &other) const {
-    auto ptr = &other;
-    if (ptr == this) {
-      return true;
-    }
-    if (data_ == nullptr || ptr->data_ == nullptr) {
-      return false;
-    }
-    return (ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) &&
-           std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get());
-  }
-
-  bool equals(const TensorData &other) const override {
-    // Not same type, compare data byte by byte.
-    return TensorData::equals(other);
-  }
-
-  std::string ToString(const TypeId type, const ShapeVector &shape, bool use_comma) const override {
+  std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const {
     constexpr auto valid =
       std::is_same<T, bool>::value || std::is_same<T, uint8_t>::value || std::is_same<T, int8_t>::value ||
       std::is_same<T, int16_t>::value || std::is_same<T, int32_t>::value || std::is_same<T, int64_t>::value ||
@@ -271,7 +223,7 @@ class TensorDataImpl : public TensorData {
   }
 
  private:
-  void OutputFloatDataString(std::ostringstream &ss, bool isScalar, const T &value) const {
+  static void OutputFloatDataString(std::ostringstream &ss, bool isScalar, const T &value) {
     if (isScalar) {
       ss << value;
     } else {
@@ -284,7 +236,7 @@ class TensorDataImpl : public TensorData {
     }
   }
 
-  void OutputBoolDataString(std::ostringstream &ss, bool isScalar, const T &value) const {
+  static void OutputBoolDataString(std::ostringstream &ss, bool isScalar, const T &value) {
     if (isScalar) {
       ss << (value ? "True" : "False");
     } else {
@@ -293,23 +245,46 @@ class TensorDataImpl : public TensorData {
     }
   }
 
-  void OutputOtherDataString(std::ostringstream &ss, bool isScalar, const T &value, int *max_width) const {
+  static void OutputOtherDataString(std::ostringstream &ss, bool isScalar, const T &value, int *max_width) {
     if (isScalar) {
       ss << value;
     } else {
-      // Add a padding string before the number, such as "###123", for subsequent replacement.
-      const int width = GetNumLength(value);
-      *max_width = std::max(*max_width, width);
-      std::string pad(width, '#');
-      ss << pad;
+      std::ostringstream value_ss;
       if constexpr (std::is_same<T, uint8_t>::value) {
-        ss << static_cast<uint16_t>(value);
+        value_ss << static_cast<uint16_t>(value);
       } else if constexpr (std::is_same<T, int8_t>::value) {
-        ss << static_cast<int16_t>(value);
+        value_ss << static_cast<int16_t>(value);
       } else {
-        ss << value;
+        value_ss << value;
       }
+      auto value_str = value_ss.str();
+      const int width = static_cast<int>(value_str.size());
+      *max_width = std::max(*max_width, width);
+      // Add a padding string before the number, such as "###123", for subsequent replacement.
+      std::string pad(width, '#');
+      ss << pad << value_str;
     }
+  }
+
+  static std::string ProcessPlaceholder(const std::ostringstream &ss, int max_width) {
+    std::string str = ss.str();
+    if constexpr (std::is_same<T, bool>::value || std::is_same<T, float16>::value || std::is_same<T, float>::value ||
+                  std::is_same<T, double>::value) {
+      return str;
+    }
+    // Replace # with placeholder.
+    size_t index = str.find('#');
+    while (index != std::string::npos) {
+      size_t pos = index;
+      while (str[pos] == '#') {
+        pos++;
+      }
+      size_t len = pos - index;
+      std::string space(max_width - SizeToInt(len), ' ');
+      str = str.replace(index, len, space);
+      index = str.find('#', index);
+    }
+    return str;
   }
 
   void OutputDataString(std::ostringstream &ss, ssize_t cursor, ssize_t start, ssize_t end, bool use_comma,
@@ -409,43 +384,140 @@ class TensorDataImpl : public TensorData {
     ss << ']';
   }
 
-  std::string ProcessPlaceholder(const std::ostringstream &ss, int max_width) const {
-    std::string str = ss.str();
-    if constexpr (std::is_same<T, bool>::value || std::is_same<T, float16>::value || std::is_same<T, float>::value ||
-                  std::is_same<T, double>::value) {
-      return str;
-    }
-    // Replace # with placeholder.
-    size_t index = str.find('#');
-    while (index != std::string::npos) {
-      size_t pos = index;
-      while (str[pos] == '#') {
-        pos++;
+  const T *data_;
+  const size_t data_size_;
+  const size_t ndim_;
+};
+
+// Tensor data implementation.
+template <typename T>
+class TensorDataImpl : public TensorData {
+ public:
+  explicit TensorDataImpl(const ShapeVector &shape) : ndim_(shape.size()), data_size_(SizeOf(shape)) {}
+  ~TensorDataImpl() = default;
+
+  TensorDataImpl(const ShapeVector &shape, void *data, size_t data_len)
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_len)) {}
+
+  TensorDataImpl(const ShapeVector &shape, void *data, TypeId data_type)
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(CopyData<T>(shape, data, data_type)) {}
+
+  template <typename U>
+  TensorDataImpl(const ShapeVector &shape, const U *input, size_t size)
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(input, size)) {}
+
+  template <typename Scalar>
+  TensorDataImpl(const ShapeVector &shape, Scalar scalar)
+      : ndim_(shape.size()), data_size_(SizeOf(shape)), data_(NewData<T>(scalar)) {}
+
+  ssize_t size() const override { return static_cast<ssize_t>(data_size_); }
+
+  ssize_t itemsize() const override { return static_cast<ssize_t>(sizeof(T)); }
+
+  ssize_t nbytes() const override { return size() * itemsize(); }
+
+  ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
+
+  void *data() override {
+    if (data_ == nullptr) {
+      if (data_size_ > INT32_MAX) {
+        MS_LOG(WARNING) << "Try to alloca a large memory, size is:" << data_size_ * sizeof(T);
       }
-      size_t len = pos - index;
-      std::string space(max_width - SizeToInt(len), ' ');
-      str = str.replace(index, len, space);
-      index = str.find('#', index);
+      // Lazy allocation.
+      data_ = std::make_unique<T[]>(data_size_);
     }
-    return str;
+    return data_.get();
   }
 
-  int GetNumLength(const T &num) const {
-    T value = num;
-    int count = 0;
-    if (value <= 0) {  // Add the length of '-' when value < 0.
-      count++;
-    }
-    while (value != 0) {
-      value /= 10;
-      count++;
-    }
-    return count;
+  const void *const_data() const override {
+    // May return nullptr if data not initialized.
+    return data_.get();
   }
 
+  virtual bool equals(const TensorDataImpl<T> &other) const {
+    auto ptr = &other;
+    if (ptr == this) {
+      return true;
+    }
+    if (data_ == nullptr || ptr->data_ == nullptr) {
+      return false;
+    }
+    return (ndim_ == ptr->ndim_) && (data_size_ == ptr->data_size_) &&
+           std::equal(data_.get(), data_.get() + data_size_, ptr->data_.get());
+  }
+
+  bool equals(const TensorData &other) const override {
+    // Not same type, compare data byte by byte.
+    return TensorData::equals(other);
+  }
+
+  std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const override {
+    TensorStringifier<T> stringifier{data_.get(), data_size_, ndim_};
+    return stringifier.ToString(type, shape, use_comma);
+  }
+
+ private:
   size_t ndim_{0};
   size_t data_size_{0};
   std::unique_ptr<T[]> data_;
+};
+
+// TensorSubData is the base class to provide tensor data as a segment from an owner tensor data.
+class TensorSubData : public TensorData {
+ public:
+  TensorSubData(const TensorPtr &data_owner, size_t offset, size_t data_size, size_t ndim)
+      : data_owner_(data_owner), data_offset_(offset), data_size_(data_size), ndim_(ndim) {}
+
+  ~TensorSubData() override = default;
+
+  ssize_t size() const override { return static_cast<ssize_t>(data_size_); }
+
+  ssize_t nbytes() const override { return size() * itemsize(); }
+
+  ssize_t ndim() const override { return static_cast<ssize_t>(ndim_); }
+
+  void *data() override {
+    // Set data initialized if data() is called.
+    data_initialized_ = true;
+    auto start = static_cast<uint8_t *>(data_owner_->data().data());
+    return static_cast<void *>(start + data_offset_);
+  }
+
+  const void *const_data() const override {
+    if (!data_initialized_) {
+      // Return nullptr if data not initialized.
+      return nullptr;
+    }
+    auto start = static_cast<uint8_t *>(data_owner_->data().data());
+    return static_cast<void *>(start + data_offset_);
+  }
+
+  // Get the owner Tensor.
+  const TensorPtr &GetOwner() const { return data_owner_; }
+
+ protected:
+  const TensorPtr data_owner_;
+  size_t data_offset_{0};
+  size_t data_size_{0};
+  size_t ndim_{0};
+  bool data_initialized_{false};
+};
+
+// TensorSubDataImpl implements methods that rely on T.
+template <typename T>
+class TensorSubDataImpl : public TensorSubData {
+ public:
+  TensorSubDataImpl(const TensorPtr &data_owner, size_t offset, size_t data_size, size_t ndim)
+      : TensorSubData(data_owner, offset, data_size, ndim) {}
+
+  ~TensorSubDataImpl() override = default;
+
+  ssize_t itemsize() const override { return static_cast<ssize_t>(sizeof(T)); }
+
+  std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const override {
+    TensorStringifier<T> stringifier{static_cast<const T *>(const_data()), data_size_, ndim_};
+    return stringifier.ToString(type, shape, use_comma);
+  }
 };
 
 template <typename... Args>
@@ -489,6 +561,66 @@ TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const A
       break;
   }
   MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
+}
+
+template <typename T>
+TensorDataPtr MakeSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
+  const size_t data_bytes = data->nbytes();
+  if (data_bytes == 0) {
+    MS_LOG(EXCEPTION) << "Tensor data size is 0.";
+  }
+  auto sub_data = std::make_shared<TensorSubDataImpl<T>>(owner, offset, data->size(), data->ndim());
+  // If tensor data is initialized, copy it.
+  if (data->const_data() != nullptr) {
+    auto err = common::huge_memcpy(static_cast<uint8_t *>(sub_data->data()), data_bytes,
+                                   static_cast<const uint8_t *>(data->const_data()), data_bytes);
+    if (err != EOK) {
+      MS_LOG(EXCEPTION) << "Copy data failed! size: " << data_bytes << ".";
+    }
+  }
+  return sub_data;
+}
+
+TensorDataPtr MakeTensorSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
+  switch (owner->data_type()) {
+    case kNumberTypeBool:
+      return MakeSubData<bool>(owner, offset, data);
+    case kNumberTypeUInt8:
+      return MakeSubData<uint8_t>(owner, offset, data);
+    case kNumberTypeInt8:
+      return MakeSubData<int8_t>(owner, offset, data);
+    case kNumberTypeInt16:
+      return MakeSubData<int16_t>(owner, offset, data);
+    case kNumberTypeInt32:
+      return MakeSubData<int32_t>(owner, offset, data);
+    case kNumberTypeInt64:
+      return MakeSubData<int64_t>(owner, offset, data);
+    case kNumberTypeUInt16:
+      return MakeSubData<uint16_t>(owner, offset, data);
+    case kNumberTypeUInt32:
+      return MakeSubData<uint32_t>(owner, offset, data);
+    case kNumberTypeUInt64:
+      return MakeSubData<uint64_t>(owner, offset, data);
+    case kNumberTypeFloat16:
+      return MakeSubData<float16>(owner, offset, data);
+    case kNumberTypeFloat:
+      return MakeSubData<float>(owner, offset, data);
+    case kNumberTypeFloat32:
+      return MakeSubData<float>(owner, offset, data);
+    case kNumberTypeFloat64:
+      return MakeSubData<double>(owner, offset, data);
+    case kNumberTypeComplex64:
+      return MakeSubData<ComplexStorage<float>>(owner, offset, data);
+    case kNumberTypeComplex128:
+      return MakeSubData<ComplexStorage<double>>(owner, offset, data);
+    case kObjectTypeString:
+      return MakeSubData<uint8_t>(owner, offset, data);
+    case kObjectTypeTensorType:
+      return MakeSubData<int>(owner, offset, data);
+    default:
+      break;
+  }
+  MS_LOG(EXCEPTION) << "Unsupported data type: " << owner->data_type() << ".";
 }
 
 Tensor::Tensor(const Tensor &tensor)
@@ -684,12 +816,103 @@ void Tensor::data_sync(bool need_wait) const {
   sync_status_ = kNeedSyncHostToDevice;
 }
 
-TypeId Tensor::set_data_type(const TypeId data_type) {
+TypeId Tensor::set_data_type(TypeId data_type) {
   if (data_type != data_type_) {
     data_ = MakeTensorData(data_type, shape_, data_->data(), data_type_);
     return MetaTensor::set_data_type(data_type);
   }
   return data_type;
+}
+
+// A helper data structure for flatten tensors.
+struct TensorChunk {
+  size_t size{0};    // total num of elements.
+  size_t offset{0};  // current offset in bytes in tensor data.
+  TensorPtr tensor;  // the chunk tensor.
+};
+
+static TypeId normalize_type(TypeId type_id) {
+  if (type_id == kNumberTypeFloat) {
+    // kNumberTypeFloat is an alias of kNumberTypeFloat32.
+    return kNumberTypeFloat32;
+  }
+  return type_id;
+}
+
+TensorPtrList Tensor::FlattenTensors(const TensorPtrList &tensors) {
+  // Use std::map to keep order by type id.
+  std::map<TypeId, TensorChunk> chunks;
+  // Calculate chunk sizes.
+  for (auto &tensor : tensors) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto &chunk = chunks[normalize_type(tensor->data_type())];
+    chunk.size += tensor->DataSize();
+  }
+  // Create chunk tensors and copy data to them.
+  for (auto &tensor : tensors) {
+    auto chunk_dtype = normalize_type(tensor->data_type());
+    auto &chunk = chunks[chunk_dtype];
+    // Initialize chunk tensor if required.
+    if (chunk.tensor == nullptr) {
+      // Chunk tensor is always 1 rank.
+      ShapeVector shape{static_cast<int64_t>(chunk.size)};
+      // Create a lazy initialized tensor, the tensor data will be
+      // allocated when we begin to copy small tensors data into it.
+      chunk.tensor = std::make_shared<Tensor>(chunk_dtype, shape);
+    }
+    // Copy and create sub-data.
+    auto sub_data = MakeTensorSubData(chunk.tensor, chunk.offset, tensor->data_ptr());
+    chunk.offset += sub_data->nbytes();
+    // Reset tensor data.
+    tensor->data_ = sub_data;
+  }
+  // Generate result list.
+  TensorPtrList result_list;
+  result_list.reserve(chunks.size());
+  (void)std::transform(chunks.begin(), chunks.end(), std::back_inserter(result_list),
+                       [](const auto &chunk) { return chunk.second.tensor; });
+  return result_list;
+}
+
+bool Tensor::IsFlattened(const TensorPtrList &tensors) {
+  // Tensor data is flattened if all tensors data are TensorSubData.
+  return std::all_of(tensors.begin(), tensors.end(), [](const TensorPtr &tensor) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto data_ptr = tensor->data_ptr().get();
+    return dynamic_cast<TensorSubData *>(data_ptr) != nullptr;
+  });
+}
+
+TensorPtrList Tensor::GetFlattenedTensors(const TensorPtrList &tensors) {
+  // Use std::map to keep order by type id.
+  std::map<TypeId, TensorPtr> chunk_tensors;
+  for (auto &tensor : tensors) {
+    // Get sub-data.
+    auto sub_data = std::dynamic_pointer_cast<TensorSubData>(tensor->data_ptr());
+    if (sub_data == nullptr) {
+      MS_LOG(WARNING) << "Tensors are not flattened.";
+      return {};
+    }
+    // Get owner tensor from sub-data.
+    auto owner_tensor = sub_data->GetOwner();
+    MS_EXCEPTION_IF_NULL(owner_tensor);
+    // Find chunk tensor by its data type.
+    auto chunk_dtype = normalize_type(tensor->data_type());
+    auto &chunk_tensor = chunk_tensors[chunk_dtype];
+    if (chunk_tensor == nullptr) {
+      chunk_tensor = owner_tensor;
+    } else if (chunk_tensor != owner_tensor) {
+      // There should be only one chunk tensor for same data type.
+      MS_LOG(WARNING) << "Tensors are not flattened together.";
+      return {};
+    }
+  }
+  // Generate result tensor list.
+  TensorPtrList result_tensors;
+  result_tensors.reserve(chunk_tensors.size());
+  (void)std::transform(chunk_tensors.begin(), chunk_tensors.end(), std::back_inserter(result_tensors),
+                       [](const auto &chunk) { return chunk.second; });
+  return result_tensors;
 }
 
 CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)

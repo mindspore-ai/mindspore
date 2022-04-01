@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ class MS_CORE_API MetaTensor : public Value {
   ///
   /// \param[in] data_type The data type of the tensor.
   /// \param[in] shape The shape of the tensor.
-  MetaTensor(const TypeId data_type, const ShapeVector &shape);
+  MetaTensor(TypeId data_type, const ShapeVector &shape);
 
   MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape);
   /// \brief Copy constructor.
@@ -113,7 +113,7 @@ class MS_CORE_API MetaTensor : public Value {
   /// \brief Set the data type of a tensor in its MetaTensor.
   ///
   /// \param[in] data_type The data type of the tensor to be set.
-  virtual TypeId set_data_type(const TypeId data_type) {
+  virtual TypeId set_data_type(TypeId data_type) {
     data_type_ = data_type;
     return data_type_;
   }
@@ -251,7 +251,7 @@ class MS_CORE_API MetaSparseTensor : public Value {
   ///
   /// \param[in] data_type The data type of the SparseTensor.
   /// \param[in] shape The shape of the SparseTensor.
-  MetaSparseTensor(const TypeId data_type, const ShapeVector &shape);
+  MetaSparseTensor(TypeId data_type, const ShapeVector &shape);
 
   /// \brief Copy constructor.
   /// The constructed MetaSparseTensor object will have the same data type and shape as the
@@ -285,7 +285,7 @@ class MS_CORE_API MetaSparseTensor : public Value {
   /// \brief Set the data type of a sparse tensor.
   ///
   /// \param[in] data_type The data type of the tensor to be set.
-  void set_data_type(const TypeId data_type) { data_type_ = data_type; }
+  void set_data_type(TypeId data_type) { data_type_ = data_type; }
 
   /// \brief Get sparsetensor's shape.
   ///

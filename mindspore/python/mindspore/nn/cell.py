@@ -1643,6 +1643,12 @@ class Cell(Cell_):
         self.add_flags(auto_parallel=True)
         self._get_construct_inputs_number_and_name()
 
+    def flatten_weights(self):
+        """
+        Reset data for weight parameters so that they are using contiguous memory chunks grouped by data type.
+        """
+        Tensor._flatten_tensors(self.trainable_params())  # pylint: disable=W0212
+
     def _run_forward_pre_hook(self, inputs):
         """
         Running forward pre hook function registered on Cell object.
