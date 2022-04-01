@@ -55,8 +55,10 @@ add_dependencies(engine
 # for include pb.h
 if(ENABLE_CACHE)
     add_dependencies(engine-opt engine-cache-server)
+    add_dependencies(engine-ir-cache engine-cache-client)
 else()
     add_dependencies(engine-opt engine-cache-client)
+    add_dependencies(engine-ir-cache engine-cache-client)
 endif()
 
 if(NOT ENABLE_SECURITY)
