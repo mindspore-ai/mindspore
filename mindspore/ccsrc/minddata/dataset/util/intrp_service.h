@@ -42,7 +42,7 @@ class IntrpService : public Service {
 
   IntrpService &operator=(const IntrpService &) = delete;
 
-  Status Register(const std::string &name, IntrpResource *res);
+  Status Register(std::string *name, IntrpResource *res);
 
   Status Deregister(const std::string &name) noexcept;
 

@@ -81,7 +81,7 @@ void CondVar::NotifyOne() noexcept { cv_.notify_one(); }
 void CondVar::NotifyAll() noexcept { cv_.notify_all(); }
 
 Status CondVar::Register(std::shared_ptr<IntrpService> svc) {
-  Status rc = svc->Register(my_name_, this);
+  Status rc = svc->Register(&my_name_, this);
   if (rc.IsOk()) {
     svc_ = svc;
   }
