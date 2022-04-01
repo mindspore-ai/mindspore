@@ -24,7 +24,6 @@
 #include "include/common/visible.h"
 #include "utils/log_adapter.h"
 
-const int maxNameLength = 64;
 namespace mindspore {
 class COMMON_EXPORT BaseRecorder {
  public:

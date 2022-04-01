@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace {
-constexpr int kMaxNameLength = 32;
+constexpr int kMaxNameLength = 64;
 }  // namespace
 BaseRecorder::BaseRecorder() : module_(""), name_(""), directory_(""), filename_(""), timestamp_("") {}
 BaseRecorder::BaseRecorder(const std::string &module, const std::string &name)
