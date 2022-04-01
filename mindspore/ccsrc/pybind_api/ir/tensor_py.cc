@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -543,6 +543,9 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data.strides
                                  (4, 4)
                              )mydelimiter")
+                           .def("_flatten_tensors", Tensor::FlattenTensors)
+                           .def("_is_flattened", Tensor::IsFlattened)
+                           .def("_get_flattened_tensors", Tensor::GetFlattenedTensors)
                            .def("from_numpy", TensorPy::MakeTensorOfNumpy, R"mydelimiter(
                              Creates a Tensor from a numpy.ndarray without copy.
 

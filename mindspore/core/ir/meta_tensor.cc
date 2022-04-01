@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 
 #include "ir/meta_tensor.h"
 #include <numeric>
+#include <functional>
 
 namespace mindspore {
 namespace tensor {
 // MetaTensor has default type_id_ which is TypeId::kTypeUnknown.
 MetaTensor::MetaTensor() : data_type_(TypeId::kTypeUnknown) {}
 
-MetaTensor::MetaTensor(const TypeId data_type, const ShapeVector &shape) : data_type_(data_type), shape_(shape) {}
+MetaTensor::MetaTensor(TypeId data_type, const ShapeVector &shape) : data_type_(data_type), shape_(shape) {}
 
 MetaTensor::MetaTensor(const TypePtr &type_ptr, const ShapeVector &shape) {
   TypeId data_type = TypeId::kTypeUnknown;
@@ -104,8 +105,7 @@ std::string MetaTensor::DumpText() const {
 
 MetaSparseTensor::MetaSparseTensor() : data_type_(TypeId::kTypeUnknown) {}
 
-MetaSparseTensor::MetaSparseTensor(const TypeId data_type, const ShapeVector &shape)
-    : data_type_(data_type), shape_(shape) {}
+MetaSparseTensor::MetaSparseTensor(TypeId data_type, const ShapeVector &shape) : data_type_(data_type), shape_(shape) {}
 
 MetaSparseTensor::MetaSparseTensor(const MetaSparseTensor &meta_sparse_tensor)
     : Value(meta_sparse_tensor), data_type_(meta_sparse_tensor.data_type()), shape_(meta_sparse_tensor.shape()) {}

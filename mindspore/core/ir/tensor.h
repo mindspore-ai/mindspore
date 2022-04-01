@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ class MS_CORE_API TensorData {
   /// \param[in] shape The shape of tensor data.
   /// \param[in] use_comma Whether to use comma.
   /// \return The display information.
-  virtual std::string ToString(const TypeId type, const ShapeVector &shape, bool use_comma) const = 0;
+  virtual std::string ToString(TypeId type, const ShapeVector &shape, bool use_comma) const = 0;
 };
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
@@ -145,6 +145,10 @@ class WaitEvent : public ExceptionListener {
   mutable std::mutex mutex_;
   mutable std::condition_variable cond_var_;
 };
+
+class Tensor;
+using TensorPtr = std::shared_ptr<Tensor>;
+using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 
 // Tensor entity class
 class MS_CORE_API Tensor final : public MetaTensor {
@@ -311,7 +315,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \return The reference to internal data object.
   const TensorData &data() const { return *data_; }
 
-  TypeId set_data_type(const TypeId data_type) override;
+  TypeId set_data_type(TypeId data_type) override;
 
   /// \brief Get information about shape and data type.
   ///
@@ -544,6 +548,27 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \param[in] lazy_callback The callback from backend when lazy build is enabled
   void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
 
+  /// \brief Reset tensors data so that they are using contiguous memory chunks grouped by data type.
+  ///
+  /// \param[in] tensors The tensors to be processed.
+  ///
+  /// \return Tensors that data are pointed to each contiguous memory chunks.
+  static TensorPtrList FlattenTensors(const TensorPtrList &tensors);
+
+  /// \brief Check if FlattenTensors called for the input tensors.
+  ///
+  /// \param[in] tensors The tensors to be checked.
+  ///
+  /// \return True if FlattenTensors called for input tensors, false otherwise.
+  static bool IsFlattened(const TensorPtrList &tensors);
+
+  /// \brief Get tensors for each contiguous memory chunks used by the input tensors.
+  ///
+  /// \param[in] tensors The input tensors.
+  ///
+  /// \return Tensors that data are pointed to each contiguous memory chunks, empty if failed.
+  static TensorPtrList GetFlattenedTensors(const TensorPtrList &tensors);
+
  private:
   void ExecuteLazyTask() const;
 
@@ -566,8 +591,6 @@ class MS_CORE_API Tensor final : public MetaTensor {
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
 };
-using TensorPtr = std::shared_ptr<Tensor>;
-using TensorPtrList = std::vector<std::shared_ptr<Tensor>>;
 
 // CSRTensor entity class
 class MS_CORE_API CSRTensor : public MetaSparseTensor {

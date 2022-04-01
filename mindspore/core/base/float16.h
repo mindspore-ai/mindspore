@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CORE_BASE_FLOAT16_H_
 #define MINDSPORE_CORE_BASE_FLOAT16_H_
 
+#include <type_traits>
 #if defined(ENABLE_ARM32) || defined(ENABLE_ARM64)
 // Built for lite and ARM
 #include <arm_neon.h>
@@ -226,6 +227,12 @@ template <>
 struct hash<float16> {
   std::size_t operator()(const float16 &f16) const noexcept { return static_cast<std::size_t>(f16.int_value()); }
 };
+
+template <>
+struct is_floating_point<float16> : public std::true_type {};
+
+template <>
+struct is_signed<float16> : public std::true_type {};
 
 template <>
 struct numeric_limits<float16> {
