@@ -33,16 +33,20 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto dim = GetValue<int64_t>(primitive->GetAttr("dim"));
   if (x1_shape.size() != x2_shape.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of two inputs must have the same size.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the shape of two inputs must have the same size, but got 'x1' shape size: "
+                             << x1_shape.size() << ", 'x2' shape size: " << x2_shape.size() << ".";
   }
   for (size_t i = 0; i < x1_shape.size(); ++i) {
     if (x1_shape[i] != x2_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', x1 and x2 must have the same shape.";
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', 'x1' and 'x2' must have the same shape. but got 'x1' shape: " << x1_shape
+                               << ", 'x2' shape: " << x2_shape << ".";
     }
   }
   if (x1_shape.size() <= 0 || x2_shape.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs should not be a " << x1_shape.size()
-                             << " dimensional tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs data dim should be greater than 0, but got "
+                             << x1_shape.size() << ".";
   }
   int64_t default_dim = -65530;
   if (dim == default_dim) {
@@ -69,7 +73,7 @@ abstract::ShapePtr CrossInferShape(const PrimitivePtr &primitive, const std::vec
   }
   int64_t dim_size = 3;
   if (x1_shape[dim] != dim_size && x2_shape[dim] != dim_size && dim != default_dim) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The size of inputs dim should be 3,but got "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The size of inputs dim should be 3, but got "
                              << x1_shape[dim];
   }
   return std::make_shared<abstract::Shape>(x1_shape);

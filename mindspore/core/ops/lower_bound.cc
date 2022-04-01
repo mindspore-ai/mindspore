@@ -36,10 +36,11 @@ abstract::ShapePtr LowerBoundInferShape(const PrimitivePtr &primitive, const std
                              << values_shape.size();
   }
   if (x_shape[0] != values_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The shape of values is "
-                             << input_args[1]->BuildShape()->ToString() << ", but the shape of sorted_x is "
-                             << input_args[0]->BuildShape()->ToString()
-                             << ". The first dimension of the shape of sorted_x must be equal to that of values.";
+    MS_EXCEPTION(ValueError)
+      << "For '" << primitive->name()
+      << "', The first dimension of shape of sorted_x must be equal to that of values, but got shape of values: "
+      << input_args[1]->BuildShape()->ToString() << ", shape of sorted_x:" << input_args[0]->BuildShape()->ToString()
+      << ".";
   }
   return std::make_shared<abstract::Shape>(values_shape);
 }

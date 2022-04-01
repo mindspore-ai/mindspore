@@ -36,7 +36,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
   ShapeVector p_value_raw;
   if (input_args.size() == 1) {
     if (!primitive->HasAttr("perm")) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is required!";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is necessary, but missing it!";
     }
     ValuePtr perm = primitive->GetAttr("perm");
     MS_EXCEPTION_IF_NULL(perm);
@@ -59,8 +59,9 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
     p_value.emplace_back(p);
   }
   if (x_shape.size() != p_value.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', The dimension of x " << x_shape.size() << " and perm "
-                             << p_value.size() << " must be equal.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', The dimension of x and perm must be equal, but got x dimension: " << x_shape.size()
+                             << ", perm dimension: " << p_value.size() << ".";
   }
   for (auto i : p_value) {
     (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, SizeToLong(p_value.size()), op_name);

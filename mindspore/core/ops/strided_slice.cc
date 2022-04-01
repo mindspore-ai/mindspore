@@ -174,8 +174,9 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
     }
     if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
       if ((-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
-        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                 << "', when shrink axis, the stride cannot be negative number";
+        MS_EXCEPTION(ValueError)
+          << "For '" << primitive->name()
+          << "', when shrink axis, the 'strides' should be greater than or equal to one, but got " << strides << ".";
       }
       j += 1;
       i += 1;
@@ -233,7 +234,8 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
       if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
         if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
           MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', when shrink axis, the stride cannot be negative number";
+                                   << "', when shrink axis, the 'strides'  greater than or equal to one, but got "
+                                   << strides << ".";
         }
         j += 1;
         i += 1;
@@ -343,7 +345,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   if (x_is_dyn && (min_shape.size() == 0 || max_shape.size() == 0)) {
     MS_EXCEPTION(ValueError)
       << "For '" << prim_name
-      << "', Input x dynamic shape is currently not supported without giving the min and max shape";
+      << ", input x dynamic shape is currently not supported if min and max shapes are not given.";
   }
   ShapeVector begin_v;
   ShapeVector end_v;

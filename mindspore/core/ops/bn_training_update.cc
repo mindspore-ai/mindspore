@@ -34,8 +34,8 @@ int64_t BNTrainingUpdateGetAndCheckFormat(const PrimitivePtr &primitive, const V
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
   if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', data format is invalid, only support NCHW, NHWC and NCDHW.";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format should be NCHW, NHWC and NCDHW, but got "
+                      << data_format << ".";
   }
   return data_format;
 }

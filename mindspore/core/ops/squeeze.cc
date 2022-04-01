@@ -56,8 +56,8 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
       CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
       auto idx = item >= 0 ? item : len + item;
       if (in_shape[LongToSize(idx)] != 1L) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name
-                                 << "', Cannot select an axis to squeeze out which has size not equal to one.";
+        MS_EXCEPTION(ValueError) << "For '" << op_name << ", input_x shape[" << LongToSize(idx)
+                                 << "] should be equal to one, but got " << in_shape[LongToSize(idx)] << ".";
       }
     }
     for (int64_t i = 0; i < len; i++) {
@@ -78,7 +78,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
 TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << ", the input args userd for infer shape and type, can not be a nullptr.";
+                      << ", the input args used for infer shape and type is necessary, but missing it.";
   }
   auto name = prim->name();
   MS_LOG(DEBUG) << "Infer data type for " << name;
