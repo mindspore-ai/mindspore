@@ -123,6 +123,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void AssignAdd(T *input1, const T *input2, T *out);
   void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
+  void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                const std::vector<AddressPtr> &outputs) override {
@@ -146,21 +147,29 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     if (kernel_name_ == prim::kPrimAssignAdd->name()) {
       return;
     }
-    static const std::unordered_map<std::string, TypeComputeFunc> arithmeticMathFuncMap{
-      {prim::kPrimAdd->name(), &ArithmeticCpuTypeFunc<T>::Add},
-      {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
-      {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
-      {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::Div},
-      {prim::kPrimMod->name(), &ArithmeticCpuTypeFunc<T>::Mod},
-      {prim::kPrimFloorMod->name(), &ArithmeticCpuTypeFunc<T>::FloorMod},
-      {prim::kPrimPow->name(), &ArithmeticCpuTypeFunc<T>::Pow},
-      {prim::kPrimFloorDiv->name(), &ArithmeticCpuTypeFunc<T>::FloorDiv},
-      {prim::kPrimAtan2->name(), &ArithmeticCpuTypeFunc<T>::Atan2},
-      {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDiv},
-      {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifference}};
+    string dtype_desc;
+    static std::unordered_map<std::string, TypeComputeFunc> arithmeticMathFuncMap;
+    if constexpr (!((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {
+      dtype_desc = "real data";
+      arithmeticMathFuncMap = {{prim::kPrimAdd->name(), &ArithmeticCpuTypeFunc<T>::Add},
+                               {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
+                               {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
+                               {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::Div},
+                               {prim::kPrimMod->name(), &ArithmeticCpuTypeFunc<T>::Mod},
+                               {prim::kPrimFloorMod->name(), &ArithmeticCpuTypeFunc<T>::FloorMod},
+                               {prim::kPrimPow->name(), &ArithmeticCpuTypeFunc<T>::Pow},
+                               {prim::kPrimFloorDiv->name(), &ArithmeticCpuTypeFunc<T>::FloorDiv},
+                               {prim::kPrimAtan2->name(), &ArithmeticCpuTypeFunc<T>::Atan2},
+                               {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDiv},
+                               {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifference}};
+    } else {
+      dtype_desc = "complex data";
+      arithmeticMathFuncMap = {
+        {prim::kPrimSquaredDifference->name(), &ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex}};
+    }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
-                        << ", but got " << kernel_name_;
+                        << ", but got " << kernel_name_ << "for " << dtype_desc << ", but got " << kernel_name_ << ".";
     }
     compute_func_ = arithmeticMathFuncMap.at(kernel_name_);
   }
@@ -504,6 +513,21 @@ void ArithmeticCpuTypeFunc<T>::SquaredDifference(const T *input1, const T *input
 }
 
 template <typename T>
+void ArithmeticCpuTypeFunc<T>::SquaredDifferenceComplex(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      T diff = input1[iter.GetInputPosA()] - input2[iter.GetInputPosB()];
+      out[i] = static_cast<T>(std::conj(diff) * diff);
+      iter.GenNextPos();
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
 void ArithmeticCpuTypeFunc<T>::Atan2(const T *input1, const T *input2, T *out) {
   BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
   auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
@@ -620,12 +644,24 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
   {prim::kPrimSquaredDifference->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
      SpecializeArithFunc<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-     SpecializeArithFunc<double>}}},
+     SpecializeArithFunc<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {prim::kPrimAtan2->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      SpecializeArithFunc<float>},

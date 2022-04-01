@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ TypePtr SquaredDifferenceInferType(const PrimitivePtr &prim, const std::vector<A
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   auto type_x = input_args[0]->BuildType();
   auto type_y = input_args[1]->BuildType();
   MS_EXCEPTION_IF_NULL(type_x);
