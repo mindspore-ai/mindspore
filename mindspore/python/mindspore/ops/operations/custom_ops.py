@@ -339,6 +339,7 @@ class Custom(ops.PrimitiveWithInfer):
 
         self.supported_targets = ["Ascend", "GPU", "CPU"]
         self.supported_func_type = ["hybrid", "akg", "tbe", "aicpu", "aot", "pyfunc", "julia"]
+        self.log_prefix = "For '{}', 'func_type': {}, 'func': {}".format(self.name, func_type, func)
         self.func = func
         self.func_type = func_type
         self.func_name = ""
@@ -397,50 +398,49 @@ class Custom(ops.PrimitiveWithInfer):
     def _check_julia_func(self):
         """Check the validity of julia func"""
         if not isinstance(self.func, str):
-            raise TypeError("{} func should be of type str, but got {}".format(
-                self.func_type, type(self.func)))
+            raise TypeError("{}, 'func' should be of type str, but got {}".format(self.log_prefix, type(self.func)))
         if self.func.count(':') != 2:
-            raise Exception("func format in julia custom op should be file:module:func.")
-        file, module, func = self.func.split(':')
-        with open(file, 'r') as f:
+            raise ValueError("{}, the format of 'func' should be file:module:func".format(self.log_prefix))
+        source_file, module, func = self.func.split(':')
+        with open(source_file, 'r') as f:
             jl = f.read()
             if 'module ' + module not in jl:
-                raise Exception("module: " + module + " not found!!!")
+                raise Exception("{}, module {} is not found in source file {}!"
+                                .format(self.log_prefix, module, source_file))
             if 'function ' + func not in jl:
-                raise Exception("function: " + func + " not found!!!")
+                raise Exception("{}, function {} is not found in source file {}!"
+                                .format(self.log_prefix, func, source_file))
 
     def _check_func(self):
         """Check the validity of func_type and type of func"""
         if self.func_type not in self.supported_func_type:
-            raise ValueError("func_type should be one of {}, but got {}"
-                             .format(self.supported_func_type, self.func_type))
+            raise ValueError("{}, 'func_type' should be one of {}, but got {}"
+                             .format(self.log_prefix, self.supported_func_type, self.func_type))
         if self.func_type == "aot":
             if not isinstance(self.func, str):
-                raise TypeError("{} func should be of type str, but got {}".format(
-                    self.func_type, type(self.func)))
+                raise TypeError("{}, 'func' should be of type str, but got {}".format(self.log_prefix, type(self.func)))
         elif self.func_type == "julia":
             self._check_julia_func()
         elif self.func_type == "hybrid":
             if not hasattr(self.func, "ms_hybrid_flag"):
-                raise TypeError(
-                    "To use the mode hybrid, the input func should a function decorated by ms_hybrid")
+                raise TypeError("{}, 'func' should a function decorated by ms_hybrid".format(self.log_prefix))
             self._is_ms_hybrid = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
             if hasattr(self.func, "ms_hybrid_flag"):
-                logger.warning("To have a better user experience, the mode hybrid is suggested "
-                               "for the input function with decorator @ms_hybrid"
-                               "To enable this mode, set the func_type to be \"hybrid\"")
+                logger.warning("{}. To have a better user experience, the mode hybrid is suggested "
+                               "for the input function with decorator @ms_hybrid. "
+                               "To enable this mode, set the 'func_type' to be \"hybrid\"".format(self.log_prefix))
         elif self.func_type == "pyfunc":
             if hasattr(self.func, "ms_hybrid_flag"):
-                logger.warning("Now you are using the function with decorator @ms_hybrid in the mode pyfunc"
+                logger.warning("{}. Now you are using the function with decorator @ms_hybrid in the mode pyfunc. "
                                "The kernel will be executed as a native python function, which might lead to "
-                               "low efficiency. To accelerate the kernel, set the func_type to be \"ms_hybrid\""
-                               )
+                               "low efficiency. To accelerate the kernel, set the 'func_type' to be \"ms_hybrid\""
+                               .format(self.log_prefix))
         else:
             if not callable(self.func):
-                raise TypeError("{} func should be of type function, but got {}"
-                                .format(self.func_type, type(self.func)))
+                raise TypeError("{}, 'func' should be of type function, but got {}"
+                                .format(self.log_prefix, type(self.func)))
 
     def _update_func_info(self):
         """Update information of func"""
@@ -479,7 +479,8 @@ class Custom(ops.PrimitiveWithInfer):
             # uniq func name
             self.uniq_name = self.name + "_" + self.func_name
         else:
-            raise TypeError("func should be of type function or str, but got {}".format(type(self.func)))
+            raise TypeError("For '{}', 'func' should be of type function or str, but got {}"
+                            .format(self.name, type(self.func)))
 
     def _register_info(self, info):
         """Register reg_info."""
@@ -487,7 +488,9 @@ class Custom(ops.PrimitiveWithInfer):
         if reg_info is None and hasattr(self.func, "reg_info"):
             reg_info = getattr(self.func, "reg_info")
         if self.func_type == "aicpu" and reg_info is None:
-            raise ValueError("custom aicpu ops must set reg_info, but current reg_info is None.")
+            raise ValueError("{}, the registration information must be set, but current is None. Use 'CustomRegOp' to "
+                             "generate the registration information, then pass it to 'reg_info'"
+                             .format(self.log_prefix))
         reg_info_list = self._get_expanded_list(reg_info)
         for reg_info in reg_info_list:
             if not isinstance(reg_info, (str, dict)):
@@ -509,7 +512,10 @@ class Custom(ops.PrimitiveWithInfer):
             reg_info_str = json.dumps(reg_info)
             op_lib = Oplib()
             if not op_lib.reg_op(reg_info_str, self.imply_path):
-                raise ValueError('Invalid reg info {}: {}\n'.format(self.imply_path, reg_info_str))
+                raise ValueError("{}, the registration information is registered failed. Use 'CustomRegOp' to "
+                                 "generate the registration information, then pass it to 'reg_info' or use "
+                                 "'custom_info_register' to bind it to 'func' if 'func' is a function."
+                                 .format(self.log_prefix))
             self._save_attr(reg_info)
             self._save_register_status(target)
 
@@ -562,7 +568,10 @@ class Custom(ops.PrimitiveWithInfer):
     def _reformat_reg_info(self, reg_info, target):
         """Reformat registration information."""
         if not isinstance(reg_info, dict):
-            raise TypeError("reg_info should be of type dict, but got {}".format(type(reg_info)))
+            raise TypeError("{}, the registration information should be of type dict, but got {} with type {}. Use "
+                            "'CustomRegOp' to generate the registration information, then pass it to 'reg_info' or "
+                            "use 'custom_info_register' to bind it to 'func' if 'func' is a function."
+                            .format(self.log_prefix, reg_info, type(reg_info)))
         reg_info["op_name"] = self._get_op_name(reg_info)
         reg_info["imply_type"] = self._get_imply_type(reg_info, target)
         if not isinstance(reg_info.get("fusion_type"), str) or not reg_info["fusion_type"].strip():
@@ -605,7 +614,8 @@ class Custom(ops.PrimitiveWithInfer):
             func_type_to_target = {"tbe": "Ascend", "pyfunc": "CPU"}
             target = func_type_to_target.get(self.func_type)
         if target not in self.supported_targets:
-            raise ValueError("target should be one of {}, but got {}".format(self.supported_targets, target))
+            raise ValueError("{}, target set in registration information should be one of {}, but got {}"
+                             .format(self.log_prefix, self.supported_targets, target))
         return target
 
     def _get_imply_type(self, reg_info, target):
@@ -659,15 +669,12 @@ class Custom(ops.PrimitiveWithInfer):
             else:
                 prev_input_names = func_attr.get("input_names")
                 prev_attr_names = func_attr.get("attr_names")
-        if not isinstance(prev_input_names, list):
-            raise TypeError("func {}: previous saved input_names should be a list, but got {}"
-                            .format(self.func, type(prev_input_names)))
         if len(input_names) != len(prev_input_names):
-            raise ValueError("func {}: input_names's length {} is different from previous saved one: {}"
-                             .format(self.func, len(input_names), len(prev_input_names)))
+            raise ValueError("{}, input_names's length {} is different from previous saved one: {}"
+                             .format(self.log_prefix, len(input_names), len(prev_input_names)))
         if attr_names != prev_attr_names:
-            raise ValueError("func {}: attr_names {} is different from previous saved one: {}"
-                             .format(self.func, attr_names, prev_attr_names))
+            raise ValueError("{}, attr_names {} is different from previous saved one: {}"
+                             .format(self.log_prefix, attr_names, prev_attr_names))
 
     def _add_prim_target(self):
         """Add primitive_target to primitive's attr."""
@@ -675,11 +682,11 @@ class Custom(ops.PrimitiveWithInfer):
         if self.func_type == "pyfunc":
             self.add_prim_attr("primitive_target", "CPU")
             if registered_targets and registered_targets != ["CPU"]:
-                logger.warning("CustomPyfunc only supports CPU platform, but gets registered target as {}."
-                               "We will run CustomPyfunc on CPU".format(registered_targets))
+                logger.warning("{}, only supports CPU platform, but got registered target as {}. "
+                               "We will run it on CPU".format(self.log_prefix, registered_targets))
         elif self.func_type == "aot":
             if len(registered_targets) != 1:
-                logger.info("Target of CustomAOT will be set according to context.")
+                logger.info("{}, target will be set according to context.".format(self.log_prefix))
             elif registered_targets == ["GPU"]:
                 self.add_prim_attr("primitive_target", "GPU")
             elif registered_targets == ["CPU"]:
@@ -690,10 +697,11 @@ class Custom(ops.PrimitiveWithInfer):
             if device_target == "CPU":
                 pass
             elif device_target == "GPU" and registered_targets and registered_targets == ["CPU"]:
-                logger.warning("CustomJulia only supports CPU platform, but gets registered target as {}."
-                               "We will run CustomJulia on CPU".format(registered_targets))
+                logger.warning("{}, only supports CPU platform, but got registered target as {}. "
+                               "We will run it on CPU".format(self.log_prefix, registered_targets))
             else:
-                raise ValueError("CustomJulia only supports CPU platform, but gets target as {}.".format(device_target))
+                raise ValueError("{}, only supports CPU platform, but got target as {}."
+                                 .format(self.log_prefix, device_target))
 
     def _update_attr(self):
         """Add input_names, attr_names, primitive_target to primitive's attr."""
@@ -723,9 +731,10 @@ class Custom(ops.PrimitiveWithInfer):
         """generate backward op for a custom hybrid op"""
         inputs_num = len(inspect.signature(self.func).parameters)
         if inputs_num == 0:
-            logger.warning("Function with no input has no backward op.")
+            logger.warning("{}, 'func' with no input has no backward op.".format(self.log_prefix))
         elif inputs_num > 10:
-            logger.warning("Currently autodiff for function with more than 10 inputs is not supported.")
+            logger.warning("{}, currently autodiff for 'func' with more than 10 inputs is not supported."
+                           .format(self.log_prefix))
         else:
             grad_func = autodiff_bprop(inputs_num)
 
@@ -740,8 +749,10 @@ class Custom(ops.PrimitiveWithInfer):
     def _hybrid_func_analyser(self):
         """analyze hybrid source string and add corresponding attrs."""
         args = {val: idx for idx, val in enumerate(list(inspect.signature(self.func).parameters))}
-        if self.func_source_str.count('return') != 1:
-            logger.warning("Hybrid function code should have only one 'return' syntax.")
+        return_num = self.func_source_str.count('return')
+        if return_num != 1:
+            logger.warning("{}, source code of 'func' should have only one 'return' syntax, but got {}"
+                           .format(self.log_prefix, return_num))
         else:
             sentences = [s for s in self.func_source_str.split('\n') if s.count("return") == 1]
             symbols = re.sub(r"return|\s|\[|\]|\(|\)", "", sentences[-1]).split(',')
@@ -800,8 +811,9 @@ class Custom(ops.PrimitiveWithInfer):
         # deal with the case of ms script
         # enable auto infer function if any infer information is missing
         if self._is_ms_hybrid and (infer_dtype is None or infer_shape is None):
-            logger.warning("Now Custom Op is inferring the shape and dtype automatically. "
-                           "There might be some Python RuntimeWarning but it wouldn't influence the result.")
+            logger.warning("{}, 'out_shape' or 'out_dtype' is None, so we will infer the output shape and output dtype "
+                           "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
+                           "result.".format(self.log_prefix))
 
             auto_infer_result = self._auto_infer(*args)
 
@@ -813,25 +825,22 @@ class Custom(ops.PrimitiveWithInfer):
         # deal with case that the custom op is of type pyfunc with empty output
         if self.func_type == "pyfunc":
             if infer_shape == ():
-                logger.warning("The function output are empty tuple. Add a placeholder instead. "
-                               "Do not use it as it could be any uninitialized data.")
+                logger.warning("{}, 'out_shape' is an empty tuple. Add a placeholder instead. "
+                               "Do not use it as it could be any uninitialized data.".format(self.log_prefix))
                 infer_shape = (1,)
             if infer_dtype == ():
-
-                logger.warning("The function output are empty tuple. Add a placeholder instead. "
-                               "Do not use it as it could be any uninitialized data.")
+                logger.warning("{}, 'out_dtype' is an empty tuple. Add a placeholder instead. "
+                               "Do not use it as it could be any uninitialized data.".format(self.log_prefix))
                 infer_dtype = mstype.int32
 
         # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None
         if not isinstance(infer_shape, (tuple, list)):
-            raise TypeError(
-                "The input 'out_shape' should be one of a tuple, list, and function, "
-                "but get a {} for the Custom Op {}".format(type(infer_shape), self.func_name))
+            raise TypeError("{}, 'out_shape' should be one of [tuple, list, function], but got {}"
+                            .format(self.log_prefix, type(infer_shape)))
 
         if not isinstance(infer_dtype, (typing.Type, tuple, list)):
-            raise TypeError(
-                "The input 'out_dtype' should be one of a mindspore.dtype, tuple, list, and function, "
-                "but get a {} for the Custom Op {}".format(type(infer_dtype), self.func_name))
+            raise TypeError("{}, 'out_dtype' should be one of [mindspore.dtype, tuple, list, function], but got {}"
+                            .format(self.log_prefix, type(infer_dtype)))
 
         out = {
             "shape": infer_shape,
