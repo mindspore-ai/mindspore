@@ -31,6 +31,7 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
   {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE},
   {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
   {"ScatterNdSub", SCATTER_ND_FUNC_SUB},
+  {"ScatterNdDiv", SCATTER_ND_FUNC_DIV},
 };
 
 template <typename T, typename S>
