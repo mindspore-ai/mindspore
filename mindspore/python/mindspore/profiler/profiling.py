@@ -553,7 +553,7 @@ class Profiler:
         Raises:
             RuntimeError: If the profiler has already started.
             RuntimeError: If MD profiling has stopped, repeated start action is not supported.
-            RuntimeError: If the start_profile value is set to False.
+            RuntimeError: If the start_profile parameter is not set or is set to True.
 
         Examples:
              >>> class StopAtStep(Callback):
