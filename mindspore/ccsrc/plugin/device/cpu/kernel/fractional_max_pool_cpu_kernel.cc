@@ -116,8 +116,7 @@ static std::vector<int64_t> GeneratePoolingSequenceRandom(size_t input_length, s
     for (size_t i = 0; i < num_random_spot; ++i) {
       diff[i] += 1;
     }
-    std::srand(seed);
-    random_shuffle(diff.begin(), diff.end());
+    std::shuffle(diff.begin(), diff.end(), std::default_random_engine(seed));
     return diff;
   }
 }
