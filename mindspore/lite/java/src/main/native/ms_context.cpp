@@ -34,6 +34,16 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_MSContext_createMSC
   return (jlong)context;
 }
 
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_MSContext_createDefaultMSContext(JNIEnv *env,
+                                                                                              jobject thiz) {
+  auto *context = new (std::nothrow) mindspore::Context();
+  if (context == nullptr) {
+    MS_LOGE("new Context fail!");
+    return (jlong) nullptr;
+  }
+  return (jlong)context;
+}
+
 extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_config_MSContext_addDeviceInfo(
   JNIEnv *env, jobject thiz, jlong context_ptr, jint device_type, jboolean enable_fp16, jint npu_freq) {
   auto *pointer = reinterpret_cast<void *>(context_ptr);
