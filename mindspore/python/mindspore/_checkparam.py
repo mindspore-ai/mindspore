@@ -884,7 +884,7 @@ class Validator:
     def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
         """Checks input tensors' shapes for CSRTensor."""
         if len(csr_shp) != 2:
-            raise ValueError(f"Currently only supports 2-dimensional csr tensor, got `shape length`={len(csr_shp)}.")
+            raise ValueError(f"Currently only supports 2-dimensional csr tensor, but got shape length={len(csr_shp)}.")
         shape_size = 1
         for item in csr_shp:
             if item <= 0:
@@ -938,7 +938,7 @@ class Validator:
             raise ValueError(f"For COOTensor, `values` must be a 1-dimensional tensor, but got a {len(values_shp)}" \
                              f"dimension tensor.")
         if indices_shp[0] != values_shp[0]:
-            raise ValueError(f"For COOTensor, `indices.shape[0]` must be euqla to `values.shape[0]`, but got " \
+            raise ValueError(f"For COOTensor, `indices.shape[0]` must be euqal to `values.shape[0]`, but got " \
                              f"`indices.shape[0]` = {indices_shp[0]} and `values.shape[0]` = {values_shp[0]}.")
         if indices_shp[1] != 2:
             raise ValueError(f"For COOTensor, `indices.shape[1]` must be 2, but got {indices_shp[1]}.")
