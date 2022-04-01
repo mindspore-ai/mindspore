@@ -928,6 +928,9 @@ bool GraphExecutorPy::Compile(const py::object &source_obj, const py::tuple &arg
   } catch (const py::name_error &ex) {
     ReleaseResource(phase);
     throw py::name_error(ex);
+  } catch (const py::assertion_error &ex) {
+    ReleaseResource(phase);
+    throw py::assertion_error(ex);
   } catch (const std::exception &ex) {
     ReleaseResource(phase);
     // re-throw this exception to Python interpreter to handle it

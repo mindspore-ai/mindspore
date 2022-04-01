@@ -1969,8 +1969,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
     if (cur_graph->is_tensor_condition_branch()) {
       MS_LOG(EXCEPTION) << "Currently only supports raise in constant scenarios."
                         << "Tensor type data cannot exist in the conditional statement."
-                        << "Please check your conditions which raise node is located at:"
-                        << trace::GetDebugInfo(node->debug_info()) << ".";
+                        << "Please check your conditions which raise node is located at: "
+                        << trace::GetDebugInfo(node->debug_info());
     }
     if (args_spec_list.empty()) {
       // process raise

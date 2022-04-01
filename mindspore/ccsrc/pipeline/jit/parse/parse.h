@@ -145,6 +145,8 @@ class Parser {
   FunctionBlockPtr ParsePass(const FunctionBlockPtr &block, const py::object &node);
   // Process raise statement
   FunctionBlockPtr ParseRaise(const FunctionBlockPtr &block, const py::object &node);
+  // Process assert statement
+  FunctionBlockPtr ParseAssert(const FunctionBlockPtr &block, const py::object &node);
 
   // Process the expr and slice node method list
   AnfNodePtr ParseBinOp(const FunctionBlockPtr &block, const py::object &node);
@@ -205,6 +207,7 @@ class Parser {
   std::vector<AnfNodePtr> ParseException(const FunctionBlockPtr &block, const py::list &args, const std::string &name);
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
+  FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
 
   // Transform tail call to parallel call.
   void TransformParallelCall();
