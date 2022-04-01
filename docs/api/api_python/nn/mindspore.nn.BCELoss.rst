@@ -37,7 +37,7 @@ mindspore.nn.BCELoss
 
     **输出：**
 
-    Tensor或Scalar，如果 `reduction` 为'None'，则输出是Tensor，其shape与 `logits` 相同。否则，输出为Scalar。
+    Tensor，数据类型与 `logits` 相同。如果 `reduction` 为'none'，则shape与 `logits` 相同。否则，输出为Scalar的Tensor。
 
     **异常：**
 

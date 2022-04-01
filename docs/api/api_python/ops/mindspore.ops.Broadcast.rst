@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Broadcast(root_rank, group=GlobalComm.WORLD_COMM_GROUP)
 
-    对输入数据整租广播。
+    对输入数据整组广播。
 
     .. note::
         集合中的所有进程的Tensor的shape和数据格式相同。

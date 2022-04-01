@@ -182,12 +182,12 @@ class RNNCell(RNNCellBase):
         nonlinearity (str): The non-linearity to use. Can be either `tanh` or `relu`. Default: `tanh`.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape (batch_size, `input_size`).
-        - **hx** (Tensor) - Tensor of data type mindspore.float32 and shape (batch_size, `hidden_size`).
+        - **x** (Tensor) - Tensor of shape :math:`(batch\_size, input\_size)` .
+        - **hx** (Tensor) - Tensor of data type mindspore.float32 and shape :math:`(batch\_size, hidden\_size)` .
           Data type of `hx` must be the same as `x`.
 
     Outputs:
-        - **hx'** (Tensor) - Tensor of shape (batch_size, `hidden_size`).
+        - **hx'** (Tensor) - Tensor of shape :math:`(batch\_size, hidden\_size)` .
 
     Raises:
         TypeError: If `input_size` or `hidden_size` is not an int or not greater than 0.
