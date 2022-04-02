@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Unique name producer for target, name of node."""
+"""Unique name producer for target, name of node, class name, etc."""
+
 from typing import Union
 
 from .node import Node
@@ -135,7 +136,7 @@ class NodeNamer(Namer):
         if isinstance(node_or_name, Node):
             origin_name = node_or_name.get_name()
             if origin_name is None or not origin_name:
-                if node_or_name.get_node_type() == NodeType.CallCell:
+                if node_or_name.get_node_type() in (NodeType.CallCell, NodeType.CallPrimitive):
                     if not isinstance(node_or_name, Node):
                         raise TypeError("node_or_name should be Node, got: ", type(node_or_name))
                     targets = node_or_name.get_targets()
@@ -157,3 +158,52 @@ class NodeNamer(Namer):
         else:
             raise RuntimeError("unexpected type of node_or_name: ", type(node_or_name))
         return super(NodeNamer, self).get_name(origin_name)
+
+
+class ClassNamer(Namer):
+    """
+    Used for unique-ing class name in a network.
+
+    Class name should be unique in a network, in other word, in a Rewrite process. So please do not invoke constructor
+    of `ClassNamer` and call `instance()` of `ClassNamer` to obtain singleton of ClassNamer.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._prefix = "Opt"
+
+    @classmethod
+    def instance(cls):
+        """
+        Class method of `ClassNamer` for singleton of `ClassNamer`.
+
+        Returns:
+            An instance of `ClassNamer` as singleton of `ClassNamer`.
+        """
+
+        if not hasattr(ClassNamer, "_instance"):
+            ClassNamer._instance = ClassNamer()
+        return ClassNamer._instance
+
+    def get_name(self, origin_class_name: str) -> str:
+        """
+        Unique input `origin_class_name`.
+
+        Args:
+            origin_class_name (str): A string represents original class name.
+
+        Returns:
+            A string represents a unique class name generated from `origin_class_name`.
+        """
+
+        return super(ClassNamer, self).get_name(origin_class_name + self._prefix)
+
+    def add_name(self, class_name: str):
+        """
+        Declare a `class_name` so that other class can not apply this `class_name` anymore.
+
+        Args:
+            class_name (str): A string represents a class name.
+        """
+
+        super(ClassNamer, self).add_name(class_name + self._prefix)

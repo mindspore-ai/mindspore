@@ -24,7 +24,7 @@ from mindspore.nn import Cell
 from mindspore import log as logger
 from .node import Node, TreeNode
 from .api.node_type import NodeType
-from .ast_modifier import AstModifier
+from .ast_helpers import AstModifier
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
