@@ -46,47 +46,6 @@ class MS_API Cell : public CellBase {
   std::shared_ptr<CellBase> Clone() const override { return std::make_shared<T>(static_cast<const T &>(*this)); }
 };
 
-class MS_API ParameterCell final : public Cell<ParameterCell> {
- public:
-  ParameterCell() = default;
-  ~ParameterCell() override = default;
-
-  ParameterCell(const ParameterCell &);
-  ParameterCell &operator=(const ParameterCell &);
-
-  ParameterCell(ParameterCell &&);
-  ParameterCell &operator=(ParameterCell &&);
-
-  explicit ParameterCell(const MSTensor &);
-  ParameterCell &operator=(const MSTensor &);
-
-  explicit ParameterCell(MSTensor &&);
-  ParameterCell &operator=(MSTensor &&);
-
-  MSTensor GetTensor() const { return tensor_; }
-
- private:
-  MSTensor tensor_;
-};
-
-class MS_API OpCellBase : public CellBase {
- public:
-  explicit OpCellBase(const std::string &name) : name_(name) {}
-  ~OpCellBase() override = default;
-  const std::string &GetOpType() const { return name_; }
-
- protected:
-  std::string name_;
-};
-
-template <class T>
-class MS_API OpCell : public OpCellBase, public std::enable_shared_from_this<T> {
- public:
-  explicit OpCell(const std::string &name) : OpCellBase(name) {}
-  ~OpCell() override = default;
-  std::shared_ptr<CellBase> Clone() const override { return std::make_shared<T>(static_cast<const T &>(*this)); }
-};
-
 class MS_API GraphCell final : public Cell<GraphCell> {
  public:
   class GraphImpl;
@@ -116,10 +75,6 @@ class MS_API InputAndOutput {
  public:
   InputAndOutput();
   ~InputAndOutput() = default;
-
-  // no explicit
-  InputAndOutput(const MSTensor &);  // NOLINT(runtime/explicit)
-  InputAndOutput(MSTensor &&);       // NOLINT(runtime/explicit)
 
   InputAndOutput(const std::shared_ptr<CellBase> &, const std::vector<InputAndOutput> &, int32_t index);
 

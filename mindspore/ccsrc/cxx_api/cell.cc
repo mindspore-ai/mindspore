@@ -21,52 +21,6 @@
 namespace mindspore {
 std::vector<Output> CellBase::operator()(const std::vector<Input> &inputs) const { return Clone()->Construct(inputs); }
 
-ParameterCell::ParameterCell(const ParameterCell &cell) : Cell<ParameterCell>(cell) {
-  auto tmp_ptr = cell.tensor_.Clone();
-  tensor_ = *tmp_ptr;
-  MSTensor::DestroyTensorPtr(tmp_ptr);
-}
-
-ParameterCell &ParameterCell::operator=(const ParameterCell &cell) {
-  if (&cell == this) {
-    return *this;
-  }
-  auto tmp_ptr = cell.tensor_.Clone();
-  tensor_ = *tmp_ptr;
-  MSTensor::DestroyTensorPtr(tmp_ptr);
-  return *this;
-}
-
-ParameterCell::ParameterCell(ParameterCell &&cell) : Cell<ParameterCell>(std::move(cell)), tensor_(cell.tensor_) {}
-
-ParameterCell &ParameterCell::operator=(ParameterCell &&cell) {
-  if (&cell == this) {
-    return *this;
-  }
-  tensor_ = cell.tensor_;
-  return *this;
-}
-
-ParameterCell::ParameterCell(const MSTensor &tensor) {
-  auto tmp_ptr = tensor.Clone();
-  tensor_ = *tmp_ptr;
-  MSTensor::DestroyTensorPtr(tmp_ptr);
-}
-
-ParameterCell &ParameterCell::operator=(const MSTensor &tensor) {
-  auto tmp_ptr = tensor.Clone();
-  tensor_ = *tmp_ptr;
-  MSTensor::DestroyTensorPtr(tmp_ptr);
-  return *this;
-}
-
-ParameterCell::ParameterCell(MSTensor &&tensor) : tensor_(tensor) {}
-
-ParameterCell &ParameterCell::operator=(MSTensor &&tensor) {
-  tensor_ = tensor;
-  return *this;
-}
-
 GraphCell::GraphCell(const Graph &graph) : graph_(std::make_shared<Graph>(graph)) { MS_EXCEPTION_IF_NULL(graph_); }
 
 GraphCell::GraphCell(const std::shared_ptr<Graph> &graph) : graph_(graph) { MS_EXCEPTION_IF_NULL(graph_); }
@@ -134,14 +88,6 @@ std::vector<MSTensor> GraphCell::GetOutputs() {
 }
 
 InputAndOutput::InputAndOutput() : cell_(nullptr), prev_(), index_(-1) {}
-
-InputAndOutput::InputAndOutput(const MSTensor &tensor) : prev_(), index_(-1) {
-  auto tmp_ptr = tensor.Clone();
-  cell_ = std::make_shared<ParameterCell>(*tmp_ptr);
-  MSTensor::DestroyTensorPtr(tmp_ptr);
-}
-InputAndOutput::InputAndOutput(MSTensor &&tensor)
-    : cell_(std::make_shared<ParameterCell>(tensor)), prev_(), index_(-1) {}
 
 InputAndOutput::InputAndOutput(const std::shared_ptr<CellBase> &cell, const std::vector<InputAndOutput> &prev,
                                int32_t index)

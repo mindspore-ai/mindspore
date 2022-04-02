@@ -24,33 +24,6 @@ std::vector<Output> CellBase::operator()(const std::vector<Input> &inputs) const
   return empty;
 }
 
-ParameterCell::ParameterCell(const ParameterCell &cell) { MS_LOG(ERROR) << "Unsupported feature."; }
-ParameterCell &ParameterCell::operator=(const ParameterCell &cell) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return *this;
-}
-
-ParameterCell::ParameterCell(ParameterCell &&cell) { MS_LOG(ERROR) << "Unsupported feature."; }
-
-ParameterCell &ParameterCell::operator=(ParameterCell &&cell) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return *this;
-}
-
-ParameterCell::ParameterCell(const MSTensor &tensor) { MS_LOG(ERROR) << "Unsupported feature."; }
-
-ParameterCell &ParameterCell::operator=(const MSTensor &tensor) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return *this;
-}
-
-ParameterCell::ParameterCell(MSTensor &&tensor) : tensor_(tensor) { MS_LOG(ERROR) << "Unsupported feature."; }
-
-ParameterCell &ParameterCell::operator=(MSTensor &&tensor) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return *this;
-}
-
 GraphCell::GraphCell(const Graph &graph) : graph_(std::shared_ptr<Graph>(new (std::nothrow) Graph(graph))) {
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph.";
@@ -80,9 +53,6 @@ Status GraphCell::Load(uint32_t device_id) {
 }
 
 InputAndOutput::InputAndOutput() { MS_LOG(ERROR) << "Unsupported feature."; }
-
-InputAndOutput::InputAndOutput(const MSTensor &tensor) { MS_LOG(ERROR) << "Unsupported feature."; }
-InputAndOutput::InputAndOutput(MSTensor &&tensor) { MS_LOG(ERROR) << "Unsupported feature."; }
 
 InputAndOutput::InputAndOutput(const std::shared_ptr<CellBase> &cell, const std::vector<InputAndOutput> &prev,
                                int32_t index) {
