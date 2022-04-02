@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
-
+#include <sstream>
 #include "include/common/utils/utils.h"
 
 namespace mindspore::graphkernel {
@@ -39,7 +39,19 @@ class FakeAbstractShape {
     }
     auto iter = fmap.find(format);
     if (iter == fmap.end()) {
-      MS_LOG(WARNING) << "Unexpected format[" << format << "]";
+      std::stringstream ss;
+      ss << "[";
+      size_t i = 0;
+      for (const auto &it : fmap) {
+        if (i > 0) {
+          ss << ", ";
+        }
+        ++i;
+        ss << it.first;
+      }
+      ss << "]";
+      MS_LOG(WARNING) << "Encounter unsupported format when infer the abstract shape, because the format " << format
+                      << " is not in supported list " << ss.str();
       return device_shape;
     }
     return iter->second(device_shape);
