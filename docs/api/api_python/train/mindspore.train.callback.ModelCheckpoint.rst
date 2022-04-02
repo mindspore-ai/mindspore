@@ -6,11 +6,11 @@
 
     .. note::
         在分布式训练场景下，请为每个训练进程指定不同的目录来保存checkpoint文件。否则，可能会训练失败。
-        如何在 `model` 方法中使用此回调函数，默认将会把优化器中的参数保存到checkpoint文件中。
+        如果在 `model` 方法中使用此回调函数，默认将会把优化器中的参数保存到checkpoint文件中。
 
     **参数：**
 
-    - **prefix** (str) - checkpoint文件的前缀名称。默认值：CKP。
+    - **prefix** (str) - checkpoint文件的前缀名称。默认值：'CKP'。
     - **directory** (str) - 保存checkpoint文件的文件夹路径。默认情况下，文件保存在当前目录下。默认值：None。
     - **config** (CheckpointConfig) - checkpoint策略配置。默认值：None。
 
