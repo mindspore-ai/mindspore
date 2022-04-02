@@ -624,7 +624,9 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 }
 
 ModelPool::~ModelPool() {
-  predict_task_queue_->SetPredictTaskDone();
+  if (predict_task_queue_ != nullptr) {
+    predict_task_queue_->SetPredictTaskDone();
+  }
   for (auto &th : model_worker_vec_) {
     if (th.joinable()) {
       th.join();
