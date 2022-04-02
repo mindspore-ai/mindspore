@@ -81,11 +81,11 @@ def _generator_fn(generator, num_samples):
                 val = next(gen_iter)
             except StopIteration:
                 return
-            yield val
+            yield _convert_row(val)
     else:
         gen_iter = generator()
         for val in gen_iter:
-            yield val
+            yield _convert_row(val)
 
 
 def _cpp_sampler_fn(sample_ids, dataset):
@@ -133,25 +133,42 @@ def _convert_row(row):
     """
     Convert Op return value to numpy
     """
-    value = []
     if isinstance(row, dict):
-        raise ValueError("Return value in user defined python function should be numpy array, but got dict.")
+        raise TypeError("Input data is expected to be " \
+                        "int, float, str, bytes, Numpy array, Tensor or list-or-tuple of them, but got dict.")
 
-    # just return a numpy value from generator
-    if isinstance(row, np.ndarray):
-        value.append(np.array(row))
-        return tuple(value,)
+    # convert single item to np.array
+    prim_type = (int, float, str, bytes, np.ndarray, Tensor)
+    if isinstance(row, prim_type):
+        if isinstance(row, bytes):         # bytes
+            item = np.frombuffer(row, np.uint8)
+        elif isinstance(row, Tensor):      # mindspore.Tensor
+            item = row.asnumpy()
+        else:
+            item = np.array(row, copy=False)
+            if item.dtype == 'object':
+                raise TypeError("Data type of the input or converted Numpy array is expected to be " \
+                                "int or float or str, but got {}.".format(item.dtype))
+        return tuple([item])
 
-    # convert each column in row into numpy array
+    value = []
+    # convert each item to np.array
+    idx = 0
     for x in row:
-        if isinstance(x, bytes):         # got image bytes from a file
+        idx += 1
+        if isinstance(x, bytes):         # bytes
             value.append(np.frombuffer(x, np.uint8))
-        elif isinstance(x, Tensor):      # got mindspore.Tensor
+        elif isinstance(x, Tensor):      # mindspore.Tensor
             value.append(x.asnumpy())
         elif isinstance(x, dict):
-            raise ValueError("Return value in user defined python function should be numpy array, but got dict.")
+            raise TypeError("The {}st item of input data is expected to be " \
+                            "int, float, str, bytes, Numpy array, Tensor, but got dict.".format(idx))
         else:
-            value.append(np.array(x, copy=False))
+            item = np.array(x, copy=False)
+            if item.dtype == 'object':
+                raise TypeError("Data type of {}st item of the input or converted Numpy array is expected to be " \
+                                "int or float or str, but got {}.".format(idx, item.dtype))
+            value.append(item)
     return tuple(value)
 
 
