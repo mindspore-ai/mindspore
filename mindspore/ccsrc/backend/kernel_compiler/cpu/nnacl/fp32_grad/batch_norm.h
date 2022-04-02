@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP32_GRAD_BATCH_NORM_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP32_GRAD_BATCH_NORM_H_
+#ifndef MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_H_
+#define MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_H_
 
 #include "nnacl/fp32_grad/batch_norm_parameter.h"
 
@@ -25,13 +25,13 @@ extern "C" {
 
 void var2Invar(float *save_var, int size, float eps);
 void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
-                 int ch, float *dbias, float *dscale, float *dx, bool is_train);
+                 int ch, float *dbias, float *dscale, float *dx);
 void backwardP1(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
                 int ch, float *dbias, float *dscale);
 void backwardP2(const float *in, const float *yt, const float *mean, const float *invar, const float *dscale,
-                const float *dbias, const float *scale, int size, int total_size, int ch, float *dx, bool is_train);
+                const float *dbias, const float *scale, int size, int total_size, int ch, float *dx);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NNACL_FP32_GRAD_BATCH_NORM_H_
+#endif  // MINDSPORE_NNACL_FP32_GRAD_BATCH_NORM_H_

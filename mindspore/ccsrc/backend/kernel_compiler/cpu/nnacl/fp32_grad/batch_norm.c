@@ -25,11 +25,11 @@ void var2Invar(float *save_var, int size, float eps) {
 
 #ifdef _MSC_VER
 void backwardAll(const float *in, const float *yt, const float *mean, const float *invar, const float *scale, int size,
-                 int ch, float *dbias, float *dscale, float *dx, bool is_train) {
+                 int ch, float *dbias, float *dscale, float *dx) {
 #else
 void backwardAll(const float *restrict in, const float *restrict yt, const float *restrict mean,
                  const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dbias,
-                 float *restrict dscale, float *restrict dx, bool is_train) {
+                 float *restrict dscale, float *restrict dx) {
 #endif
   NNACL_CHECK_ZERO_RETURN(size);
   float N = (float)size;
@@ -47,9 +47,7 @@ void backwardAll(const float *restrict in, const float *restrict yt, const float
       // dx_2
       int ix = i * ch + c;
       dx[ix] = yt[ix];
-      if (is_train) {
-        dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
-      }
+      dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
       dx[ix] *= scale[c] * invar[c];
     }
   }
@@ -76,11 +74,11 @@ void backwardP1(const float *restrict in, const float *restrict yt, const float 
 
 #ifdef _MSC_VER
 void backwardP2(const float *in, const float *yt, const float *mean, const float *invar, const float *dscale,
-                const float *dbias, const float *scale, int size, int total_size, int ch, float *dx, bool is_train) {
+                const float *dbias, const float *scale, int size, int total_size, int ch, float *dx) {
 #else
 void backwardP2(const float *restrict in, const float *restrict yt, const float *restrict mean,
                 const float *restrict invar, const float *restrict dscale, const float *restrict dbias,
-                const float *restrict scale, int size, int total_size, int ch, float *restrict dx, bool is_train) {
+                const float *restrict scale, int size, int total_size, int ch, float *restrict dx) {
 #endif
   NNACL_CHECK_ZERO_RETURN(total_size);
   const float N = (float)total_size;
@@ -89,9 +87,7 @@ void backwardP2(const float *restrict in, const float *restrict yt, const float 
       // dx_2
       int ix = i * ch + c;
       dx[ix] = yt[ix];
-      if (is_train) {
-        dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
-      }
+      dx[ix] -= dbias[c] / N + (in[ix] - mean[c]) * dscale[c] * invar[c] / N;
       dx[ix] *= scale[c] * invar[c];
     }
   }
