@@ -7,7 +7,7 @@ mindspore.dataset.vision.c_transforms.RandomCropDecodeResize
 
     **参数：**
 
-    - **size**  (Union[int, sequence]) - 调整后图像的输出尺寸大小。大小值必须为正。
+    - **size**  (Union[int, Sequence[int]]) - 调整后图像的输出尺寸大小。大小值必须为正。
       如果 size 是整数，则返回一个裁剪尺寸大小为 (size, size) 的正方形。
       如果 size 是一个长度为 2 的序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
     - **scale**  (Union[list, tuple], 可选) - 要裁剪的原始尺寸大小的各个尺寸的范围[min, max)，必须为非负数，默认值：(0.08, 1.0)。
