@@ -28,6 +28,15 @@ func_map = {
     "update": ops.ScatterNdUpdate,
     "add": ops.ScatterNdAdd,
     "sub": ops.ScatterNdSub,
+    "div": ops.ScatterNdDiv,
+}
+
+np_func_map = {
+    "update": lambda a, b: b,
+    "add": lambda a, b: a + b,
+    "sub": lambda a, b: a - b,
+    "mul": lambda a, b: a * b,
+    "div": lambda a, b: a / b,
 }
 
 
@@ -45,124 +54,125 @@ class TestScatterNdFuncNet(nn.Cell):
         return out
 
 
-def scatter_nd_func_net(func, inputx, indices, updates):
-    lock = True
-    net = TestScatterNdFuncNet(func, lock, inputx, indices, updates)
-    return net()
+def scatter_nd_func_np(func, inputx, indices, updates):
+    result = inputx.asnumpy().copy()
+    updates_np = updates.asnumpy()
+
+    f = np_func_map[func]
+
+    for idx, _ in np.ndenumerate(np.zeros(indices.shape[:-1])):
+        out_index = indices[idx]
+        result[out_index] = f(result[out_index], updates_np[idx])
+
+    return result
 
 
-def scatter_nd_func_use_locking_false_net(func, inputx, indices, updates):
-    lock = False
-    net = TestScatterNdFuncNet(func, lock, inputx, indices, updates)
-    return net()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_traning
-@pytest.mark.env_onecard
-def test_scatter_nd_func_small_float32():
-    inputx = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
-    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
-    updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
-
-    # update
-    output = scatter_nd_func_net("update", inputx, indices, updates)
-    expected = np.array([[1.0, 0.3, 3.6], [0.4, 2.2, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # add
-    output = scatter_nd_func_net("add", inputx, indices, updates)
-    expected = np.array([[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # sub
-    output = scatter_nd_func_net("sub", inputx, indices, updates)
-    expected = np.array([[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]])
+def compare_scatter_nd_func(func, lock, inputx, indices, updates):
+    output = TestScatterNdFuncNet(func, lock, inputx, indices, updates)()
+    expected = scatter_nd_func_np(func, inputx, indices, updates)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_scatter_nd_func_input_updated():
-    inputx = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
-    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
-    updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
-    lock = True
+@pytest.mark.parametrize('lock', [True, False])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div'])
+@pytest.mark.parametrize('data_type',
+                         [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
+                          mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_func_small(lock, func, data_type, index_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for small input of ScatterNd* like functions
+    Expectation: the result match to numpy implementation
+    """
+    inputx = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[0, 0], [1, 1]]), index_type)
+    updates = Tensor(np.array([1.0, 2.2]), data_type)
 
-    # update
-    net = TestScatterNdFuncNet("update", lock, inputx, indices, updates)
-    output = net()
-    expected = np.array([[1.0, 0.3, 3.6], [0.4, 2.2, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # add
-    net = TestScatterNdFuncNet("add", lock, inputx, indices, updates)
-    output = net()
-    expected = np.array([[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # sub
-    net = TestScatterNdFuncNet("sub", lock, inputx, indices, updates)
-    output = net()
-    expected = np.array([[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+    compare_scatter_nd_func(func, lock, inputx, indices, updates)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_traning
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_scatter_nd_func_small_float32_using_locking_false():
-    inputx = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
-    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
-    updates = Tensor(np.array([1.0, 2.2]), mstype.float32)
+@pytest.mark.parametrize('lock', [True, False])
+def test_scatter_nd_func_small_update(lock):
+    """
+    Feature: ALL To ALL
+    Description: test cases for bool input of ScatterNdUpdate
+    Expectation: the result match to numpy implementation
+    """
+    inputx = Tensor(np.array([True, False, True, False, True, True, False, True]), mstype.bool_)
+    indices = Tensor(np.array([[False], [True], [False], [True]]), mstype.int32)
+    updates = Tensor(np.array([9, 10, 11, 12]), mstype.bool_)
 
-    # update
-    output = scatter_nd_func_use_locking_false_net("update", inputx, indices, updates)
-    expected = np.array([[1.0, 0.3, 3.6], [0.4, 2.2, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # add
-    output = scatter_nd_func_use_locking_false_net("add", inputx, indices, updates)
-    expected = np.array([[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # sub
-    output = scatter_nd_func_use_locking_false_net("sub", inputx, indices, updates)
-    expected = np.array([[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+    compare_scatter_nd_func("update", lock, inputx, indices, updates)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_traning
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_scatter_nd_func_small_int32():
-    inputx = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mstype.float32)
-    indices = Tensor(np.array([[4], [3], [1], [7]]), mstype.int32)
-    updates = Tensor(np.array([9, 10, 11, 12]), mstype.float32)
+@pytest.mark.parametrize('lock', [True, False])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div'])
+@pytest.mark.parametrize('data_type',
+                         [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
+                          mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_func_small_int(lock, func, data_type, index_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for int input of ScatterNd* like functions
+    Expectation: the result match to numpy implementation
+    """
+    inputx = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), data_type)
+    indices = Tensor(np.array([[4], [3], [1], [7]]), index_type)
+    updates = Tensor(np.array([9, 10, 11, 12]), data_type)
 
-    # update
-    output = scatter_nd_func_net("update", inputx, indices, updates)
-    expected = np.array([1, 11, 3, 10, 9, 6, 7, 12])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # add
-    output = scatter_nd_func_net("add", inputx, indices, updates)
-    expected = np.array([1, 13, 3, 14, 14, 6, 7, 20])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # sub
-    output = scatter_nd_func_net("sub", inputx, indices, updates)
-    expected = np.array([1, -9, 3, -6, -4, 6, 7, -4])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+    compare_scatter_nd_func(func, lock, inputx, indices, updates)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_traning
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_scatter_nd_func_multi_dims():
-    inputx = Tensor(np.zeros((4, 4, 4)), mstype.float32)
-    indices = Tensor(np.array([[0], [2]]), mstype.int32)
+@pytest.mark.parametrize('lock', [True, False])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div'])
+@pytest.mark.parametrize('data_type',
+                         [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
+                          mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_func_small_negative(lock, func, data_type, index_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for negative input of ScatterNd* like functions
+    Expectation: the result match to numpy implementation
+    """
+    inputx = Tensor(np.array([-1, -2, -3, -4, -5, -6, -7, -8]), data_type)
+    indices = Tensor(np.array([[4], [3], [1], [7]]), index_type)
+    updates = Tensor(np.array([9, -10, 11, -12]), data_type)
+
+    compare_scatter_nd_func(func, lock, inputx, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('lock', [True, False])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div'])
+@pytest.mark.parametrize('data_type',
+                         [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
+                          mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_func_multi_dims(lock, func, data_type, index_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for multi-dims input of ScatterNd* like functions
+    Expectation: the result match to numpy implementation
+    """
+    inputx = Tensor(np.zeros((4, 4, 4)), data_type)
+    indices = Tensor(np.array([[0], [2]]), index_type)
     updates = Tensor(
         np.array(
             [
@@ -170,65 +180,29 @@ def test_scatter_nd_func_multi_dims():
                 [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
             ]
         ),
-        mstype.float32,
+        data_type,
     )
 
-    # update
-    output = scatter_nd_func_net("update", inputx, indices, updates)
-    expected = np.array(
-        [
-            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        ]
-    )
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # add
-    output = scatter_nd_func_net("add", inputx, indices, updates)
-    expected = np.array(
-        [
-            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        ]
-    )
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # sub
-    output = scatter_nd_func_net("sub", inputx, indices, updates)
-    expected = np.array(
-        [
-            [[-5, -5, -5, -5], [-6, -6, -6, -6], [-7, -7, -7, -7], [-8, -8, -8, -8]],
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-            [[-5, -5, -5, -5], [-6, -6, -6, -6], [-7, -7, -7, -7], [-8, -8, -8, -8]],
-            [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        ]
-    )
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+    compare_scatter_nd_func(func, lock, inputx, indices, updates)
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_traning
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_scatter_nd_func_one_value():
-    inputx = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mstype.float32)
-    indices = Tensor(np.array([[0, 1]]), mstype.int32)
-    updates = Tensor(np.array([1.0]), mstype.float32)
+@pytest.mark.parametrize('lock', [True, False])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div'])
+@pytest.mark.parametrize('data_type',
+                         [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
+                          mstype.float64])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_scatter_nd_func_one_value(lock, func, data_type, index_type):
+    """
+    Feature: ALL To ALL
+    Description: test cases for one value modification of ScatterNd* like functions
+    Expectation: the result match to numpy implementation
+    """
+    inputx = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[0, 1]]), index_type)
+    updates = Tensor(np.array([1.0]), data_type)
 
-    # update
-    output = scatter_nd_func_net("update", inputx, indices, updates)
-    expected = np.array([[-0.1, 1.0, 3.6], [0.4, 0.5, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # add
-    output = scatter_nd_func_net("add", inputx, indices, updates)
-    expected = np.array([[-0.1, 1.3, 3.6], [0.4, 0.5, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # sub
-    output = scatter_nd_func_net("sub", inputx, indices, updates)
-    expected = np.array([[-0.1, -0.7, 3.6], [0.4, 0.5, -3.2]])
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+    compare_scatter_nd_func(func, lock, inputx, indices, updates)

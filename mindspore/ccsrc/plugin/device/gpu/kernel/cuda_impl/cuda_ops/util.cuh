@@ -557,14 +557,14 @@ __device__ static inline int8_t MsAtomicDiv(int8_t *address, int8_t val) {
   uint32_t *address_as_ui = (uint32_t *)((char *)address - offset);  // NOLINT
   uint32_t old = *address_as_ui;
   uint32_t shift = offset * 8;
-  uint32_t old_byte;
-  uint32_t newval;
   uint32_t assumed;
 
   do {
     assumed = old;
-    old_byte = (old >> shift) & 0xff;
-    newval = static_cast<uint8_t>(old_byte / val);
+    uint8_t old_byte = (old >> shift) & 0xff;
+    int8_t current_value = *(reinterpret_cast<int8_t *>(&old_byte));
+    int8_t new_value = current_value / val;
+    uint32_t newval = *(reinterpret_cast<uint8_t *>(&new_value));
     newval = (old & ~(0x000000ff << shift)) | (newval << shift);
     old = atomicCAS(address_as_ui, assumed, newval);
   } while (assumed != old);
@@ -594,7 +594,7 @@ __device__ static inline bool MsAtomicDiv(bool *address, bool val) {
   return address[0];
 }
 
-__device__ static inline unsigned char MsAtomicDiv(short *address, short val) {  // NOLINT
+__device__ static inline int16_t MsAtomicDiv(int16_t *address, int16_t val) {  // NOLINT
   bool is_4_byte_aligned = ((size_t)address & 2) == 0;
   unsigned int *aligned = (unsigned int *)((size_t)address & ~2);
   unsigned int old = *aligned;
@@ -602,21 +602,22 @@ __device__ static inline unsigned char MsAtomicDiv(short *address, short val) { 
 
   do {
     assumed = old;
-    unsigned int replacement;
-
+    uint16_t old_byte = is_4_byte_aligned ? (old & 0xffff) : (old >> 16);
+    int16_t current_value = *(reinterpret_cast<int16_t *>(&old_byte));
+    int16_t new_value = current_value / val;
+    unsigned int replacement = *(reinterpret_cast<uint16_t *>(&new_value));
     if (is_4_byte_aligned) {
-      replacement = (old & 0xffff0000) | (((old & 0xffff) / val) & 0xffff);
+      replacement = (old & 0xffff0000) | replacement;
     } else {
-      replacement = old / ((unsigned int)val << 16);
+      replacement = (old & 0xffff) | (replacement << 16);
     }
-
     old = atomicCAS(aligned, assumed, replacement);
   } while (assumed != old);
 
   if (is_4_byte_aligned) {
-    return (short)(old & 0xffff);  // NOLINT
+    return (int16_t)(old & 0xffff);  // NOLINT
   } else {
-    return (short)(old >> 16);  // NOLINT
+    return (int16_t)(old >> 16);  // NOLINT
   }
 }
 
