@@ -3,7 +3,7 @@ mindspore.dataset.vision.c_transforms.RandomPosterize
 
 .. py:class:: mindspore.dataset.vision.c_transforms.RandomPosterize(bits=(8, 8))
 
-    随机减少输入图像每个RGB通道的位数。
+    随机减少输入图像每个颜色通道的位数。
 
     **参数：**
 

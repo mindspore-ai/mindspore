@@ -7,6 +7,8 @@ mindspore.dataset.vision.c_transforms.Normalize
 
     此处理将使用以下公式对输入图像进行归一化：output[channel] = (input[channel] - mean[channel]) / std[channel]，其中 channel 代表通道索引，channel >= 1。
 
+    .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
+
     **参数：**
 
     - **mean**  (sequence) - 图像每个通道的均值组成的列表或元组。平均值必须在 [0.0, 255.0] 范围内。
