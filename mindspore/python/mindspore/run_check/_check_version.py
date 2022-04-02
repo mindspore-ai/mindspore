@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ import os
 import sys
 import time
 import subprocess
+import glob
 from pathlib import Path
 from abc import abstractmethod, ABCMeta
 from packaging import version
@@ -80,8 +81,8 @@ class GPUEnvChecker(EnvChecker):
 
     def _get_nvcc_version(self, is_set_env):
         """Get cuda version by nvcc command."""
-        nvcc_result = subprocess.run(["nvcc --version | grep release"],
-                                     timeout=3, text=True, capture_output=True, check=False, shell=True)
+        nvcc_result = subprocess.run(["nvcc", "--version | grep release"],
+                                     timeout=3, text=True, capture_output=True, check=False)
         if nvcc_result.returncode:
             if not is_set_env:
                 for path in self.cuda_bin_path:
@@ -99,8 +100,11 @@ class GPUEnvChecker(EnvChecker):
         """Get cudnn version by libcudnn.so."""
         cudnn_version = []
         for path in self.cudnn_lib_path:
-            ls_cudnn = subprocess.run(["ls " + path + "/lib*/libcudnn.so.*.*"], timeout=10, text=True,
-                                      capture_output=True, check=False, shell=True)
+            real_path = glob.glob(path + "/lib*/libcudnn.so.*.*")
+            if real_path == []:
+                continue
+            ls_cudnn = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
+                                      capture_output=True, check=False)
             if ls_cudnn.returncode == 0:
                 cudnn_version = ls_cudnn.stdout.split('/')[-1].strip('libcudnn.so.').strip().split('.')
                 if len(cudnn_version) == 2:
@@ -112,8 +116,11 @@ class GPUEnvChecker(EnvChecker):
     def _get_cudart_version(self):
         """Get cuda runtime version by libcudart.so."""
         for path in self.cuda_lib_path:
-            ls_cudart = subprocess.run(["ls " + path + "/lib*/libcudart.so.*.*.*"], timeout=10, text=True,
-                                       capture_output=True, check=False, shell=True)
+            real_path = glob.glob(path + "/lib*/libcudart.so.*.*.*")
+            if real_path == []:
+                continue
+            ls_cudart = subprocess.run(["ls", real_path[0]], timeout=10, text=True,
+                                       capture_output=True, check=False)
             if ls_cudart.returncode == 0:
                 self.v = ls_cudart.stdout.split('/')[-1].strip('libcudart.so.').strip()
                 break
@@ -165,15 +172,16 @@ class GPUEnvChecker(EnvChecker):
         current_path = os.path.split(os.path.realpath(__file__))[0]
         mindspore_path = os.path.join(current_path, "../")
         try:
-            ldd_result = subprocess.run(["ldd " + mindspore_path + "/_c_expression*.so* | grep " + lib_name],
-                                        timeout=10, text=True, capture_output=True, check=False, shell=True)
-            if ldd_result.returncode:
+            real_path = glob.glob(mindspore_path + "/_c_expression*.so*")
+            if real_path == []:
                 logger.error(f"{self.lib_key_to_lib_name[lib_name]} (need by mindspore-gpu) is not found, please "
                              f"confirm that _c_expression.so is in directory:{mindspore_path} and the correct cuda "
                              "version has been installed, you can refer to the installation "
                              "guidelines: https://www.mindspore.cn/install")
                 return path_list
-            result = ldd_result.stdout
+            ldd_r = subprocess.Popen(['ldd', real_path[0]], stdout=subprocess.PIPE)
+            ldd_result = subprocess.Popen(['grep', lib_name], stdin=ldd_r.stdout, stdout=subprocess.PIPE)
+            result = ldd_result.communicate()[0].decode()
             for i in result.split('\n'):
                 path = i.partition("=>")[2]
                 if path.lower().find("not found") > 0:
