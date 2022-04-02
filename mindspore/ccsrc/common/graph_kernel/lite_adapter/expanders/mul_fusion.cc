@@ -32,11 +32,10 @@ class MulFusion : public OpDesc {
   ~MulFusion() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     const auto &input_y = inputs[1];
-    auto result = gb.Emit("Mul", {input_x, input_y});
+    auto result = gb.Mul(input_x, input_y);
     return {result};
   }
 };

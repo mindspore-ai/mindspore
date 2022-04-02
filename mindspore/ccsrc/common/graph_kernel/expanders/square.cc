@@ -27,10 +27,9 @@ class Square : public OpDesc {
   ~Square() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    auto result = gb.Emit("Mul", {input_x, input_x});
+    auto result = gb.Mul(input_x, input_x);
     return {result};
   }
 };

@@ -24,7 +24,7 @@
 namespace mindspore::graphkernel::inner {
 class LiteGraph {
  public:
-  class GraphBuilder;
+  class GraphBuilderBase;
   explicit LiteGraph(const std::string &name = "") : name_(name), output_(new OutputNode()) {}
 
   NodePtr &Add(PrimOpPtr op) {
@@ -57,11 +57,10 @@ class LiteGraph {
   mutable int node_id_{0};
 };
 using LiteGraphPtr = std::shared_ptr<LiteGraph>;
-
-class LiteGraph::GraphBuilder {
+class LiteGraph::GraphBuilderBase {
  public:
-  explicit GraphBuilder(const std::string &name = "") { graph_ = std::make_shared<LiteGraph>(name); }
-  ~GraphBuilder() = default;
+  explicit GraphBuilderBase(const std::string &name = "") { graph_ = std::make_shared<LiteGraph>(name); }
+  ~GraphBuilderBase() = default;
 
   // Create a parameter of graph
   NodePtr Parameter(const NodeBase &baseinfo) const {

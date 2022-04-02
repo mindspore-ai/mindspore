@@ -23,6 +23,7 @@
 
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/model/node.h"
+#include "common/graph_kernel/model/graph_builder.h"
 
 namespace mindspore::graphkernel::expanders {
 using inner::NodePtr;
@@ -34,7 +35,7 @@ class OpDesc {
  public:
   inner::LiteGraphPtr Run(const BaseInfoList &inputs, const BaseInfoList &outputs, const inner::DAttrs &attrs,
                           const std::string &processor);
-  const std::string &Op() const { return op_; }
+  const std::string &Name() const { return name_; }
   const BaseInfoList &InputsInfo() const { return inputs_info_; }
   const BaseInfoList &OuputsInfo() const { return outputs_info_; }
   inner::DAttrs Attrs() const { return attrs_; }
@@ -43,11 +44,11 @@ class OpDesc {
 
  protected:
   virtual bool CheckInputs() { return true; }
-  virtual NodePtrList Expand() = 0;
+  virtual NodePtrList Expand(const NodePtrList &inputs) = 0;
   bool CheckOutputs();
 
-  inner::LiteGraph::GraphBuilder gb;
-  std::string op_;
+  inner::GraphBuilder gb;
+  std::string name_;
   BaseInfoList inputs_info_;
   BaseInfoList outputs_info_;
   inner::DAttrs attrs_;
@@ -71,7 +72,7 @@ class CheckAllFormatsSame : public Validator {
     const auto &fmt_0 = inputs_info[0].format;
     for (size_t i = 1; i < inputs_info.size(); i++) {
       if (inputs_info[i].format != fmt_0) {
-        MS_LOG(INFO) << "Unmatched format for op " << e.Op();
+        MS_LOG(INFO) << "Unmatched format for op " << e.Name();
         return false;
       }
     }
@@ -86,7 +87,7 @@ class CheckAttr : public Validator {
   bool Check(const OpDesc &e) override {
     for (auto &a : attrs_) {
       if (e.Attrs().count(a) == 0) {
-        MS_LOG(INFO) << "attr " << a << " does not exist. op " << e.Op();
+        MS_LOG(INFO) << "attr " << a << " does not exist. op " << e.Name();
         return false;
       }
     }
@@ -116,7 +117,7 @@ class SupportFormat : public Validator {
         return true;
       }
     }
-    MS_LOG(INFO) << "unsupported format for op " << e.Op();
+    MS_LOG(INFO) << "unsupported format for op " << e.Name();
     return false;
   }
   virtual ~SupportFormat() = default;
@@ -127,7 +128,7 @@ class SupportFormat : public Validator {
 
 std::vector<int64_t> GetAxisList(const ValuePtr &value);
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis);
-NodePtr ReluExpand(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs);
-NodePtr SigmoidExpand(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs);
+NodePtr ReluExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs);
+NodePtr SigmoidExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs);
 }  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_EXPANDERS_UTILS_H_

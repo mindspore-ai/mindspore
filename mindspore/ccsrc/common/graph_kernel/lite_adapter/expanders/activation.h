@@ -43,7 +43,6 @@ class CheckActivationType : public Validator {
   std::set<int64_t> activation_types_;
 };
 
-NodePtr GetActivationExpander(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs,
-                              int64_t activation_type);
+NodePtr GetActivationExpander(const inner::GraphBuilder &gb, const NodePtrList &inputs, int64_t activation_type);
 }  // namespace mindspore::graphkernel::expanders
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_LITE_ADAPTER_EXPANDERS_ACTIVATION_H_

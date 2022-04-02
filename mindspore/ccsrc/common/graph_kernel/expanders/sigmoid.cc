@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "common/graph_kernel/expanders/expander_factory.h"
+
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
@@ -26,24 +27,21 @@ class Sigmoid : public OpDesc {
   Sigmoid() = default;
   ~Sigmoid() = default;
 
-  static NodePtr Exec(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs) {
+  static NodePtr Exec(const inner::GraphBuilder &gb, const NodePtrList &inputs) {
     const auto &input_x = inputs[0];
     auto dtype = input_x->type;
-    tensor::TensorPtr data_one = std::make_shared<tensor::Tensor>(static_cast<double>(1.0), TypeIdToType(dtype));
-    auto const_one = gb.Value(data_one);
-    auto neg_x = gb.Emit("Neg", {input_x});
-    auto exp_neg_x = gb.Emit("Exp", {neg_x});
-    auto add_exp = gb.Emit("Add", {const_one, exp_neg_x});
-    auto result = gb.Emit("RealDiv", {const_one, add_exp});
+    auto const_one = gb.Const(1.0, dtype);
+    auto neg_x = gb.Neg(input_x);
+    auto exp_neg_x = gb.Exp(neg_x);
+    auto add_exp = gb.Add(const_one, exp_neg_x);
+    auto result = gb.Div(const_one, add_exp);
     return result;
   }
 
  protected:
-  NodePtrList Expand() override { return {Exec(gb, gb.Get()->inputs())}; }
+  NodePtrList Expand(const NodePtrList &inputs) override { return {Exec(gb, inputs)}; }
 };
 OP_EXPANDER_REGISTER("Sigmoid", Sigmoid);
 
-NodePtr SigmoidExpand(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs) {
-  return Sigmoid::Exec(gb, inputs);
-}
+NodePtr SigmoidExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs) { return Sigmoid::Exec(gb, inputs); }
 }  // namespace mindspore::graphkernel::expanders

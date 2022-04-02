@@ -32,11 +32,10 @@ class AddFusion : public OpDesc {
   ~AddFusion() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     const auto &input_y = inputs[1];
-    auto result = gb.Emit("Add", {input_x, input_y});
+    auto result = gb.Add(input_x, input_y);
     return {result};
   }
 };

@@ -44,11 +44,10 @@ class ExpandDims : public OpDesc {
   }
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    auto shape = MakeValue(ExpandDims::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"])));
-    auto result = gb.Emit("Reshape", {input_x}, {{"shape", shape}});
+    auto target_shape = ExpandDims::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"]));
+    auto result = gb.Reshape(input_x, target_shape);
     return {result};
   }
 };

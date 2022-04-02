@@ -26,23 +26,20 @@ class ReLU : public OpDesc {
   ReLU() = default;
   ~ReLU() = default;
 
-  static NodePtr Exec(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs) {
+  static NodePtr Exec(const inner::GraphBuilder &gb, const NodePtrList &inputs) {
     const auto &input_x = inputs[0];
     auto dtype = input_x->type;
-    tensor::TensorPtr data_zero = std::make_shared<tensor::Tensor>(static_cast<double>(0.0), TypeIdToType(dtype));
-    auto const_zero = gb.Value(data_zero);
-    auto greater_res = gb.Emit("Greater", {input_x, const_zero});
-    auto cast_res = gb.Emit("Cast", {greater_res}, {{"dst_type", TypeIdToType(dtype)}});
-    auto result = gb.Emit("Mul", {cast_res, input_x});
+    auto const_zero = gb.Const(0.0, dtype);
+    auto greater_res = gb.Greater(input_x, const_zero);
+    auto cast_res = gb.Cast(greater_res, dtype);
+    auto result = gb.Mul(cast_res, input_x);
     return result;
   }
 
  protected:
-  NodePtrList Expand() override { return {Exec(gb, gb.Get()->inputs())}; }
+  NodePtrList Expand(const NodePtrList &inputs) override { return {Exec(gb, inputs)}; }
 };
 OP_EXPANDER_REGISTER("ReLU", ReLU);
 
-NodePtr ReluExpand(const inner::LiteGraph::GraphBuilder &gb, const NodePtrList &inputs) {
-  return ReLU::Exec(gb, inputs);
-}
+NodePtr ReluExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs) { return ReLU::Exec(gb, inputs); }
 }  // namespace mindspore::graphkernel::expanders

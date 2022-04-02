@@ -27,12 +27,11 @@ class AssignAdd : public OpDesc {
   ~AssignAdd() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_param = inputs[0];
     const auto &input_x = inputs[1];
-    auto next_para = gb.Emit("Add", {input_param, input_x});
-    auto result = gb.Emit("Assign", {input_param, next_para});
+    auto next_para = gb.Add(input_param, input_x);
+    auto result = gb.Assign(input_param, next_para);
     return {result};
   }
 };

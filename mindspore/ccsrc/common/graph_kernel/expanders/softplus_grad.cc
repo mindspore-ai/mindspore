@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,16 +36,14 @@ class SoftplusGrad : public OpDesc {
     return true;
   }
 
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_dy = inputs[0];
     const auto &input_x = inputs[1];
-    auto exp_x = gb.Emit("Exp", {input_x});
-    tensor::TensorPtr data = std::make_shared<tensor::Tensor>(static_cast<double>(1.0), TypeIdToType(input_x->type));
-    auto const_one = gb.Value(data);
-    auto exp_x_add_one = gb.Emit("Add", {exp_x, const_one});
-    auto dy_mul_exp_x = gb.Emit("Mul", {input_dy, exp_x});
-    auto result = gb.Emit("RealDiv", {dy_mul_exp_x, exp_x_add_one});
+    auto exp_x = gb.Exp(input_x);
+    auto const_one = gb.Const(1.0, input_x->type);
+    auto exp_x_add_one = gb.Add(exp_x, const_one);
+    auto dy_mul_exp_x = gb.Mul(input_dy, exp_x);
+    auto result = gb.Div(dy_mul_exp_x, exp_x_add_one);
     return {result};
   }
 };

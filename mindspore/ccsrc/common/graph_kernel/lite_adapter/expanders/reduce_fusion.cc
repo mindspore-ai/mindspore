@@ -46,12 +46,11 @@ class ReduceFusion : public OpDesc {
   ~ReduceFusion() = default;
 
  protected:
-  NodePtrList Expand() override {
-    const auto &inputs = gb.Get()->inputs();
+  NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     auto axis = GetAxisList(attrs_["axis"]);
-    auto keep_dims = attrs_["keep_dims"];
-    auto result = gb.Emit("ReduceSum", {input_x}, {{"axis", MakeValue(axis)}, {"keep_dims", keep_dims}});
+    auto keep_dims = GetValue<bool>(attrs_["keep_dims"]);
+    auto result = gb.ReduceSum(input_x, axis, keep_dims);
     return {result};
   }
 };
