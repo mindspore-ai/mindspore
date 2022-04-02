@@ -54,7 +54,8 @@ bool RecvActor::StartServer() {
   ip_ = server_->GetIP();
   port_ = server_->GetPort();
   std::string server_url = ip_ + ":" + std::to_string(port_);
-  MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url;
+  MS_LOG(INFO) << "Start server for recv actor. Server address: " << server_url
+               << ", inter-process edge name: " << inter_process_edge_name_;
 
   // Step 2: Set the message handler of the server.
   server_->SetMessageHandler(std::bind(&RecvActor::HandleMessage, this, std::placeholders::_1));

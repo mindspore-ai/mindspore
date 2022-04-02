@@ -53,6 +53,7 @@ ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_
     MS_EXCEPTION_IF_NULL(origin_node);
     abstract::AbstractTensorPtr origin_abstract;
     if (origin_node->abstract()->isa<abstract::AbstractTuple>()) {
+      // Defaultly, if the origin node's output is a tuple, get the abstract of the first element.
       auto get_one_tuple_element = origin_node->abstract()->cast<abstract::AbstractTuplePtr>()->elements()[0];
       origin_abstract = get_one_tuple_element->cast<abstract::AbstractTensorPtr>();
     } else {
