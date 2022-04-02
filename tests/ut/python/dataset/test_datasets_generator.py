@@ -641,7 +641,7 @@ def test_generator_error_1():
         data1 = ds.GeneratorDataset(generator_np, ["data"])
         for _ in data1:
             pass
-    assert "Invalid data type" in str(info.value)
+    assert "Data type of 1st item of the input or converted Numpy array is expected" in str(info.value)
 
 
 def test_generator_error_2():
@@ -653,8 +653,7 @@ def test_generator_error_2():
         data1 = ds.GeneratorDataset(generator_np, ["data"])
         for _ in data1:
             pass
-    print("========", str(info.value))
-    assert "'GeneratorDataset' should return a tuple of NumPy arrays" in str(info.value)
+    assert "Data type of 1st item of the input or converted Numpy array is expected" in str(info.value)
 
 
 def test_generator_error_3():
@@ -989,6 +988,385 @@ def test_generator_mixed_operator():
     for _ in data1.create_tuple_iterator(num_epochs=1):
         pass
 
+
+def test_generator_single_input_0():
+    """
+    Feature: Test single int input
+    Description: input int
+    Expectation: success
+    """
+    def generator_int():
+        for i in range(64):
+            yield i
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [i for i in range(64)]
+
+        def __getitem__(self, item):
+            return self.__data[item]
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = [i for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_0(data):
+        # apply dataset operations
+        data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+        i = 0
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            golden = np.array(i)
+            np.testing.assert_equal(item["data"], golden)
+            i = i + 1
+
+    assert_generator_single_input_0(generator_int)
+    assert_generator_single_input_0(RandomAccessDatasetInner())
+    assert_generator_single_input_0(SequentialAccessDataset())
+
+
+def test_generator_single_input_1():
+    """
+    Feature: Test single float input
+    Description: input float
+    Expectation: success
+    """
+
+    def generator_float():
+        for i in range(64):
+            yield i * 0.1
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [i for i in range(64)]
+
+        def __getitem__(self, item):
+            return self.__data[item] * 0.1
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = [i for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index] * 0.1
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_1(data):
+        # apply dataset operations
+        data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+        i = 0.0
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            golden = np.array(i)
+            np.testing.assert_almost_equal(item["data"], golden)
+            i = i + 0.1
+
+    assert_generator_single_input_1(generator_float)
+    assert_generator_single_input_1(RandomAccessDatasetInner())
+    assert_generator_single_input_1(SequentialAccessDataset())
+
+
+def test_generator_single_input_2():
+    """
+    Feature: Test single str input
+    Description: input str
+    Expectation: success
+    """
+
+    def generator_str():
+        for i in range(64):
+            yield chr(ord('a') + i)
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [i for i in range(64)]
+
+        def __getitem__(self, item):
+            return chr(ord('a') + self.__data[item])
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = [i for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = chr(ord('a') + self.__data[self.__index])
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_2(data):
+        # apply dataset operations
+        data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+        i = 0
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            s = chr(ord('a') + i)
+            golden = np.array(bytes(s, encoding='utf8'))
+            np.testing.assert_array_equal(item["data"], golden)
+            i = i + 1
+
+    assert_generator_single_input_2(generator_str)
+    assert_generator_single_input_2(RandomAccessDatasetInner())
+    assert_generator_single_input_2(SequentialAccessDataset())
+
+
+def test_generator_single_input_3():
+    """
+    Feature: Test single bytes input
+    Description: input bytes
+    Expectation: success
+    """
+
+    def generator_bytes():
+        for i in range(64):
+            yield bytes('a' * i, encoding='UTF-8')
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [bytes('a' * i, encoding='UTF-8') for i in range(64)]
+
+        def __getitem__(self, item):
+            return self.__data[item]
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = [bytes('a' * i, encoding='UTF-8') for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_3(data):
+        # apply dataset operations
+        data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+        i = 0
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            b = bytes('a' * i, encoding='UTF-8')
+            golden = np.frombuffer(b, dtype=np.uint8)
+            np.testing.assert_array_equal(item["data"], golden)
+            i = i + 1
+
+    assert_generator_single_input_3(generator_bytes)
+    assert_generator_single_input_3(RandomAccessDatasetInner())
+    assert_generator_single_input_3(SequentialAccessDataset())
+
+
+def test_generator_single_input_4():
+    """
+    Feature: Test single Tensor input
+    Description: input Tensor
+    Expectation: success
+    """
+
+    def generator_tensor():
+        for i in range(64):
+            yield Tensor(i)
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [Tensor(i) for i in range(64)]
+
+        def __getitem__(self, item):
+            return self.__data[item]
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = [Tensor(i) for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_4(data):
+        # apply dataset operations
+        data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+        i = 0
+        for item in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+            golden = Tensor(i)
+            assert item["data"] == golden
+            i = i + 1
+
+    assert_generator_single_input_4(generator_tensor)
+    assert_generator_single_input_4(RandomAccessDatasetInner())
+    assert_generator_single_input_4(SequentialAccessDataset())
+
+
+def test_generator_single_input_5():
+    """
+    Feature: Test single np.array input
+    Description: input np.array
+    Expectation: success
+    """
+
+    def generator_np():
+        for i in range(64):
+            yield np.ones(i)
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [np.ones(i) for i in range(64)]
+
+        def __getitem__(self, item):
+            return self.__data[item]
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDataset:
+        def __init__(self):
+            self.__data = [np.ones(i) for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_5(data):
+        # apply dataset operations
+        data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+        i = 0
+        for item in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+            golden = np.ones(i)
+            np.testing.assert_array_equal(item["data"], golden)
+            i = i + 1
+
+    assert_generator_single_input_5(generator_np)
+    assert_generator_single_input_5(RandomAccessDatasetInner())
+    assert_generator_single_input_5(SequentialAccessDataset())
+
+
+def test_generator_single_input_6():
+    """
+    Feature: Test single np.array input whose dtype is object
+    Description: input np.array
+    Expectation: throw exception
+    """
+    def generator_nested_np():
+        for i in range(64):
+            yield np.array([[i, i + 1], [i, i + 1, i + 2]])
+
+    class RandomAccessDatasetInner:
+        def __init__(self):
+            self.__data = [np.array([[i, i + 1], [i, i + 1, i + 2]]) for i in range(64)]
+
+        def __getitem__(self, item):
+            return self.__data[item]
+
+        def __len__(self):
+            return 64
+
+    class SequentialAccessDatasetInner:
+        def __init__(self):
+            self.__data = [np.array([[i, i + 1], [i, i + 1, i + 2]]) for i in range(64)]
+            self.__index = 0
+
+        def __next__(self):
+            if self.__index >= 64:
+                raise StopIteration
+            item = self.__data[self.__index]
+            self.__index += 1
+            return item
+
+        def __iter__(self):
+            self.__index = 0
+            return self
+
+        def __len__(self):
+            return 64
+
+    def assert_generator_single_input_6(data):
+        # apply dataset operations
+
+        with pytest.raises(RuntimeError) as info:
+            data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
+            for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
+                pass
+        assert " Data type of the input or converted Numpy array is expected" in str(info.value)
+
+    assert_generator_single_input_6(generator_nested_np)
+    assert_generator_single_input_6(RandomAccessDatasetInner())
+    assert_generator_single_input_6(SequentialAccessDatasetInner())
+
+
 if __name__ == "__main__":
     test_generator_0()
     test_generator_1()
@@ -1030,3 +1408,10 @@ if __name__ == "__main__":
     test_func_generator_dataset_005()
     test_func_generator_dataset_with_zip_source()
     test_generator_mixed_operator()
+    test_generator_single_input_0()
+    test_generator_single_input_1()
+    test_generator_single_input_2()
+    test_generator_single_input_3()
+    test_generator_single_input_4()
+    test_generator_single_input_5()
+    test_generator_single_input_6()

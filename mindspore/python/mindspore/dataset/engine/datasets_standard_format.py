@@ -418,3 +418,23 @@ class OBSMindDataset(GeneratorDataset):
                 raise ValueError("columns_list: {} can not found in MindRecord fields: {}".format(columns_list,
                                                                                                   full_columns_list))
         super().__init__(source=dataset, column_names=columns_list, num_shards=None, shard_id=None, shuffle=False)
+
+
+    def add_sampler(self, new_sampler):
+        """
+        Add a sampler for current dataset, it's not supported for OBSMindDataset.
+
+        Args:
+            new_sampler (Sampler): The sampler to be added as the parent sampler for current dataset.
+        """
+        raise NotImplementedError("add_sampler is not supported for OBSMindDataset.")
+
+
+    def use_sampler(self, new_sampler):
+        """
+        Make the current dataset use the new_sampler provided by other API, it's not supported for OBSMindDataset.
+
+        Args:
+            new_sampler (Sampler): The sampler to use for the current dataset.
+        """
+        raise NotImplementedError("use_sampler is not supported for OBSMindDataset.")
