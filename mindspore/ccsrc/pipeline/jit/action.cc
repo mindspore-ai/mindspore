@@ -66,6 +66,15 @@ namespace pipeline {
 namespace {
 bool ExistControlFlow(const FuncGraphPtr &func_graph) { return !func_graph->func_graphs_used_total().empty(); }
 
+bool EnableGradForScalar(const abstract::AbstractBasePtr &abs) {
+  return MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && abs->BuildType() != nullptr &&
+         abs->BuildType()->isa<Number>();
+}
+
+bool EnableTupleBroaden(const abstract::AbstractBasePtr &abs) {
+  return abs->isa<abstract::AbstractTuple>() && abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors();
+}
+
 void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_paras;
@@ -78,11 +87,8 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
     }
     AbstractBasePtr par_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(par_abs);
-    if (par_abs->isa<abstract::AbstractUndetermined>() ||
-        (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && par_abs->BuildType() != nullptr &&
-         par_abs->BuildType()->isa<Number>()) ||
-        (par_abs->isa<abstract::AbstractTuple>() &&
-         par_abs->cast<abstract::AbstractTuplePtr>()->ContainsAllBroadenTensors())) {
+    if (par_abs->isa<abstract::AbstractUndetermined>() || par_abs->BuildValue() == kAnyValue ||
+        EnableGradForScalar(par_abs) || EnableTupleBroaden(par_abs)) {
       new_paras.push_back(param_node);
     }
   }

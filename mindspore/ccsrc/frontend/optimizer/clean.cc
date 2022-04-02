@@ -43,6 +43,7 @@ using mindspore::abstract::AbstractBasePtr;
 using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractCOOTensor;
 using mindspore::abstract::AbstractDictionary;
+using mindspore::abstract::AbstractDictionaryPtr;
 using mindspore::abstract::AbstractList;
 using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractRowTensor;
@@ -53,6 +54,7 @@ using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
 namespace {
+static constexpr size_t kMaxSeqRecursiveDepth = 5;
 void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
   if (cnode->size() != expect_size) {
     std::string op_name = GetCNodeFuncName(cnode);
@@ -450,11 +452,60 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return std::make_shared<AbstractTuple>(std::move(elements));
   }
 
-  AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
+  // AbstractDictionary, AbstractClass --> AbstractSequence.
+  static AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
+    if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
+    }
+    auto abs_seq = abs->cast<AbstractSequencePtr>();
+    if (abs_seq != nullptr) {
+      const auto &seq_elements = abs_seq->elements();
+      // First we check if elements should be converted,
+      // changed_elements maps old element to new element.
+      mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
+      for (const auto &element : seq_elements) {
+        auto new_element = ConvertToAbstractSequence(element, depth + 1);
+        if (new_element != nullptr) {
+          (void)changed_elements.emplace(element, new_element);
+        }
+      }
+      if (changed_elements.empty()) {
+        // Here the AbstractList don't need to convert to AbstractTuple.
+        return nullptr;
+      }
+      // Always make new AbstractSequence when elements changed.
+      std::vector<AbstractBasePtr> elements;
+      elements.reserve(seq_elements.size());
+      for (const auto &element : seq_elements) {
+        auto iter = changed_elements.find(element);
+        if (iter != changed_elements.end()) {
+          (void)elements.emplace_back(iter->second);
+        } else {
+          (void)elements.emplace_back(element);
+        }
+      }
+      // Here the AbstractList don't need to convert to AbstractTuple.
+      if (abs_seq->isa<AbstractList>()) {
+        return std::make_shared<AbstractList>(std::move(elements));
+      } else {
+        return std::make_shared<AbstractTuple>(std::move(elements));
+      }
+    }
     // AbstractDictionary --> AbstractTuple.
-    auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+    auto abs_dict = abs->cast<AbstractDictionaryPtr>();
     if (abs_dict != nullptr) {
-      return MakeAbstractTuple(abs_dict->elements());
+      const auto &dict_elements = abs_dict->elements();
+      std::vector<AbstractBasePtr> elements;
+      elements.reserve(dict_elements.size());
+      for (const auto &element : dict_elements) {
+        auto new_element = ConvertToAbstractSequence(element.second, depth + 1);
+        if (new_element != nullptr) {
+          (void)elements.emplace_back(new_element);
+        } else {
+          (void)elements.emplace_back(element.second);
+        }
+      }
+      return std::make_shared<AbstractTuple>(elements);
     }
     // AbstractClass --> AbstractTuple.
     auto abs_class = abs->cast<abstract::AbstractClassPtr>();
@@ -462,6 +513,11 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
       return MakeAbstractTuple(abs_class->attributes());
     }
     return nullptr;
+  }
+
+  AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
+    // AbstractDictionary, AbstractClass --> AbstractSequence.
+    return ConvertToAbstractSequence(abs, 0);
   }
 };
 
@@ -597,12 +653,10 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  static constexpr size_t kMaxListRecursiveDepth = 5;
-
   // ValueList --> ValueTuple
   static ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, size_t depth) {
-    if (depth > kMaxListRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxListRecursiveDepth << " levels.";
+    if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
     }
     const auto &list_elements = value_list->value();
     std::vector<ValuePtr> elements;
@@ -625,50 +679,60 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return nullptr;
   }
 
-  // AbstractSequence --> AbstractTuple
-  static AbstractTuplePtr ConvertAbstractSeqToAbstractTuple(const AbstractSequencePtr &abs_seq, size_t depth) {
-    if (depth > kMaxListRecursiveDepth) {
-      MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxListRecursiveDepth << " levels.";
+  // AbstractSequence, AbstractDict, AbstractCOOTensor, AbstractRowTensor --> AbstractTuple.
+  static AbstractTuplePtr ConvertToAbstractTuple(const AbstractBasePtr &abs, size_t depth) {
+    if (depth > kMaxSeqRecursiveDepth) {
+      MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
     }
-    const auto &seq_elements = abs_seq->elements();
-    // First we check if elements should be converted,
-    // changed_elements maps old element to new element.
-    mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
-    for (const auto &element : seq_elements) {
-      if (element->isa<AbstractSequence>()) {
-        auto new_element = ConvertAbstractSeqToAbstractTuple(element->cast<AbstractSequencePtr>(), depth + 1);
+    // AbstractList --> AbstractTuple.
+    auto abs_seq = abs->cast<AbstractSequencePtr>();
+    if (abs_seq != nullptr) {
+      const auto &seq_elements = abs_seq->elements();
+      // First we check if elements should be converted,
+      // changed_elements maps old element to new element.
+      mindspore::HashMap<AbstractBasePtr, AbstractBasePtr> changed_elements;
+      for (const auto &element : seq_elements) {
+        auto new_element = ConvertToAbstractTuple(element, depth + 1);
         if (new_element != nullptr) {
           (void)changed_elements.emplace(element, new_element);
         }
       }
-    }
-    if (changed_elements.empty()) {
-      if (abs_seq->isa<AbstractTuple>()) {
-        // If no elements changed and it is an AbstractTuple, do not convert.
-        return nullptr;
+      if (changed_elements.empty()) {
+        if (abs->isa<AbstractTuple>()) {
+          // If no elements changed and it is an AbstractTuple, do not convert.
+          return nullptr;
+        }
+        // If no elements changed but it is not an AbstractTuple, convert it by copy elements.
+        return std::make_shared<AbstractTuple>(seq_elements);
       }
-      // If no elements changed but it is not an AbstractTuple, convert it by copy elements.
-      return std::make_shared<AbstractTuple>(seq_elements);
-    }
-    // Always make new AbstractTuple when elements changed.
-    std::vector<AbstractBasePtr> elements;
-    elements.reserve(seq_elements.size());
-    for (const auto &element : seq_elements) {
-      auto iter = changed_elements.find(element);
-      if (iter != changed_elements.end()) {
-        (void)elements.emplace_back(iter->second);
-      } else {
-        (void)elements.emplace_back(element);
+      // Always make new AbstractTuple when elements changed.
+      std::vector<AbstractBasePtr> elements;
+      elements.reserve(seq_elements.size());
+      for (const auto &element : seq_elements) {
+        auto iter = changed_elements.find(element);
+        if (iter != changed_elements.end()) {
+          (void)elements.emplace_back(iter->second);
+        } else {
+          (void)elements.emplace_back(element);
+        }
       }
+      return std::make_shared<AbstractTuple>(std::move(elements));
     }
-    return std::make_shared<AbstractTuple>(std::move(elements));
-  }
-
-  AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
-    // AbstractSequence --> AbstractTuple.
-    auto abs_seq = abs->cast<AbstractSequencePtr>();
-    if (abs_seq != nullptr) {
-      return ConvertAbstractSeqToAbstractTuple(abs_seq, 0);
+    // AbstractDict --> AbstractTuple.
+    auto abs_dict = abs->cast<AbstractDictionaryPtr>();
+    if (abs_dict != nullptr) {
+      const auto &dict_elements = abs_dict->elements();
+      std::vector<AbstractBasePtr> elements;
+      elements.reserve(dict_elements.size());
+      for (const auto &element : dict_elements) {
+        auto new_element = ConvertToAbstractTuple(element.second, depth + 1);
+        if (new_element != nullptr) {
+          (void)elements.emplace_back(new_element);
+        } else {
+          (void)elements.emplace_back(element.second);
+        }
+      }
+      return std::make_shared<AbstractTuple>(elements);
     }
     // AbstractCOOTensor --> AbstractTuple.
     auto abs_sparse = abs->cast<abstract::AbstractCOOTensorPtr>();
@@ -684,6 +748,11 @@ class CleanAfterOptARewriter : public BaseRewriter {
       return std::make_shared<AbstractTuple>(std::move(elements));
     }
     return nullptr;
+  }
+
+  AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
+    // AbstractSequence, AbstractDict, AbstractCOOTensor, AbstractRowTensor --> AbstractTuple.
+    return ConvertToAbstractTuple(abs, 0);
   }
 };
 }  // namespace

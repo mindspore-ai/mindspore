@@ -358,6 +358,7 @@ REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                            .def(py::init<bool>(), py::arg("reverse"));
                        }));
 
+namespace {
 bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
   MS_EXCEPTION_IF_NULL(tuple);
   for (size_t i = 0; i < tuple->size(); ++i) {
@@ -370,17 +371,23 @@ bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
   return true;
 }
 
+bool EnableGradForScalar(const abstract::AbstractBasePtr &abs) {
+  return MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && abs->BuildType() != nullptr &&
+         abs->BuildType()->isa<Number>();
+}
+
+bool EnableGradForTuple(const abstract::AbstractBasePtr &abs, bool enable_tuple_grad) {
+  return abs->isa<abstract::AbstractTuple>() && enable_tuple_grad &&
+         CheckSequenceAllTensor(abs->cast<abstract::AbstractTuplePtr>());
+}
+
 bool CheckTailGradFristSequence(const abstract::AbstractSequencePtr &sequeue, bool enable_tuple_grad) {
   MS_EXCEPTION_IF_NULL(sequeue);
   return sequeue->size() > 1 && (*sequeue)[1] != nullptr &&
-         ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() ||
-          (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[1]->BuildType() != nullptr &&
-           (*sequeue)[1]->BuildType()->isa<Number>()) ||
-          ((*sequeue)[1]->isa<abstract::AbstractTuple>() && enable_tuple_grad &&
-           CheckSequenceAllTensor((*sequeue)[1]->cast<abstract::AbstractTuplePtr>())));
+         ((*sequeue)[1]->isa<abstract::AbstractUndetermined>() || (*sequeue)[1]->BuildValue() == kAnyValue ||
+          EnableGradForScalar((*sequeue)[1]) || EnableGradForTuple((*sequeue)[1], enable_tuple_grad));
 }
 
-namespace {
 void GenerateSequenceFuncGraphByPosition(const FuncGraphPtr &res, const abstract::AbstractSequencePtr &sequeue,
                                          const abstract::AbstractSequencePtr &pos, bool enable_tuple_grad) {
   if (pos == nullptr) {
@@ -470,9 +477,8 @@ FuncGraphPtr Tail::GenerateSequenceFuncGraph(const abstract::AbstractSequencePtr
   for (size_t i = 1; i < sequeue->size(); ++i) {
     if (tail_type_ == kGradAll) {
       MS_EXCEPTION_IF_NULL((*sequeue)[i]);
-      if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>() ||
-          (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && (*sequeue)[i]->BuildType() != nullptr &&
-           (*sequeue)[i]->BuildType()->isa<Number>())) {
+      if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>() || (*sequeue)[i]->BuildValue() == kAnyValue ||
+          EnableGradForScalar((*sequeue)[i])) {
         elements.push_back(res->NewCNodeInOrder({NewValueNode(op), tuple_parameter, NewValueNode(SizeToLong(i))}));
       }
     } else {

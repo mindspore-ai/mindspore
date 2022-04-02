@@ -29,6 +29,7 @@
 #include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "ir/param_info.h"
+#include "ir/variable.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
@@ -149,7 +150,7 @@ bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
 
 AbstractBasePtr ArgsToAbstract(const ValuePtr &value, bool enable_tuple_broaden = false) {
   MS_EXCEPTION_IF_NULL(value);
-  bool broaden = value->isa<MetaTensor>() ||
+  bool broaden = value->isa<MetaTensor>() || value->isa<Variable>() ||
                  (enable_tuple_broaden && value->isa<ValueTuple>() && CheckAllTensor(value->cast<ValueTuplePtr>())) ||
                  (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>());
 
@@ -165,6 +166,14 @@ bool CheckArgValid(const py::handle &arg) {
   if (py::isinstance<py::dict>(arg)) {
     auto dict_arg = py::cast<py::dict>(arg);
     return std::all_of(dict_arg.begin(), dict_arg.end(), [](const auto &pair) { return CheckArgValid(pair.second); });
+  }
+
+  if (py::isinstance<Variable>(arg)) {
+    if (py::hasattr(arg, "value")) {
+      return CheckArgValid(arg.attr("value"));
+    }
+    MS_LOG(ERROR) << "There should be a python object value stored in the Variable " << py::str(arg);
+    return false;
   }
 
   if (py::isinstance<Tensor>(arg)) {
