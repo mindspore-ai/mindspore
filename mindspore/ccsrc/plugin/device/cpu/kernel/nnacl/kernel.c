@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 #include "nnacl/kernel.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/op_base.h"
+#include "nnacl/experimental/fp32_funcs.h"
+#include "nnacl/experimental/fp16_funcs.h"
+
 static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
 
 void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
@@ -22,5 +27,27 @@ void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
 
 KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
   int dtype = in[kInputIndex]->data_type_;
-  return g_kernelCreatorRegistry[param->type_][dtype - kNumberTypeBegin - 1](param, in, insize, out, outsize);
+  KernelCreator creator = g_kernelCreatorRegistry[param->type_][dtype - kNumberTypeBegin - 1];
+  if (creator == NULL) {
+    return NULL;
+  }
+  return creator(param, in, insize, out, outsize);
+}
+
+ExecEnv *GetExecEnv() {
+  static ExecEnv kc;
+  return &kc;
+}
+
+CoreFuncs *GetCoreFuncs(bool use_fp16) {
+  static CoreFuncs fp23funcs;
+  InitFp32Funcs(&fp23funcs);
+  static CoreFuncs fp16funcs;
+  InitFp16Funcs(&fp16funcs);
+
+  if (use_fp16) {
+    return &fp16funcs;
+  }
+
+  return &fp23funcs;
 }

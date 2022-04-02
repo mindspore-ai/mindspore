@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_CONV_FP32_AVX512_H_
-#define MINDSPORE_NNACL_EXPERIMENT_CONV_FP32_AVX512_H_
+#ifndef MINDSPORE_NNACL_EXPERIMENT_BASE_MATMUL_H_
+#define MINDSPORE_NNACL_EXPERIMENT_BASE_MATMUL_H_
+
 #include "nnacl/kernel.h"
 
-int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_release_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_infershape_fp32_nchwx_avx512(struct KernelBase *self);
-int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[],
-                                    size_t outsize);
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+void BaseMatmul(uint8_t *a_ptr, uint8_t *b_ptr, uint8_t *bias, uint8_t *c_ptr, int row, int deep, int col,
+                ActType act_type, int thread_num, KernelBase *base);
+
+#ifdef __cplusplus
+}
+#endif
+#endif  // MINDSPORE_NNACL_EXPERIMENT_BASE_MATMUL_H_

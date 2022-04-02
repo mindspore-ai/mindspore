@@ -28,6 +28,9 @@
 #ifdef GPU_OPENCL
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
+#include "nnacl/kernel.h"
+#include "src/runtime/inner_allocator.h"
+#include "experimental/src/exec_env_utils.h"
 
 namespace mindspore::lite {
 namespace {
@@ -108,6 +111,16 @@ void InnerContext::SetContextDevice(const Context *context) {
   return;
 }
 
+void InnerContext::InitExperimentExecEnv() {
+#ifdef MSLITE_ENABLE_EXPERIMENT_KERNEL
+  GetExecEnv()->allocator = this->allocator.get();
+  GetExecEnv()->threadPool = this->thread_pool_;
+  GetExecEnv()->alloc = experimental::DefaultAllocatorMalloc;
+  GetExecEnv()->free = experimental::DefaultAllocatorFree;
+  GetExecEnv()->parallelLaunch = experimental::DefaultThreadPoolParallelLunch;
+#endif
+}
+
 int InnerContext::CreateThreadPool() {
   if (this->thread_pool_ == nullptr) {
     BindMode bind_mode = Power_NoBind;
@@ -170,6 +183,8 @@ int InnerContext::Init() {
   if (IsGpuEnabled()) {
     MS_LOG(DEBUG) << "GPU enabled.";
   }
+
+  InitExperimentExecEnv();
   return RET_OK;
 }
 

@@ -138,6 +138,12 @@ if(MSLITE_ENABLE_BFC_MEMORY)
         )
 endif()
 
+if(MSLITE_ENABLE_EXPERIMENT_KERNEL)
+    set(LITE_SRC ${LITE_SRC}
+        ${SRC_DIR}/../experimental/src/exec_env_utils.cc)
+endif()
+
+
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}

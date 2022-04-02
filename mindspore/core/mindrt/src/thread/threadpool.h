@@ -60,6 +60,7 @@ constexpr int kThreadIdle = 2;  // idle, the thread is waiting
 
 typedef int (*TaskFunc)(void *param, int task_id, float l, float r);
 using Func = std::function<int(void *, int, float, float)>;
+
 using Content = void *;
 
 typedef struct Task {
@@ -162,8 +163,8 @@ class MS_CORE_API ThreadPool {
   int SetCpuAffinity(BindMode bind_mode);
   int SetProcessAffinity(BindMode bind_mode) const;
 
-  int ParallelLaunch(const TaskFunc &func, Content content, int task_num) const;
-  int ParallelLaunch(const Func &func, Content content, int task_num) const;
+  int ParallelLaunch(const TaskFunc &func, Content content, int task_num);
+  int ParallelLaunch(const Func &func, Content content, int task_num);
   void DisableOccupiedActorThread() { occupied_actor_thread_ = false; }
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
   void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }

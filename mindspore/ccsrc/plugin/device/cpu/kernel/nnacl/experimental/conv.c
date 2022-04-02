@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/experimental/conv.h"
 #include "nnacl/experimental/conv_fp32_nchwx_avx512.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/conv_parameter.h"
+#include "nnacl/tensor_c.h"
+#include "nnacl/op_base.h"
+#include "nnacl/kernel.h"
 
 static KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
   if (in[0]->format_ == Format_NHWC) {
     return NULL;
   } else if (in[0]->format_ == Format_NCHW) {
-    if (in[0]->data_format_ != Format_NC16HW16) {
+    if (in[0]->format_ != Format_NC16HW16) {
       return NULL;
     }
     KConv2d *conv = (KConv2d *)malloc(sizeof(KConv2d));
@@ -38,6 +43,9 @@ static KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, 
     conv->base.release = conv2d_release_fp32_nchwx_avx512;
     conv->base.resize = conv2d_resize_fp32_nchwx_avx512;
     conv->base.inferShape = conv2d_infershape_fp32_nchwx_avx512;
+
+    conv->base.funcs = GetCoreFuncs(in[0]->data_type_ == kNumberTypeFloat16);
+
     return (KernelBase *)conv;
   } else {
     return NULL;
@@ -45,4 +53,5 @@ static KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, 
   return NULL;
 }
 
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, PrimType_Conv2DFusion, DT_Float16, CreateConv);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat32, CreateConv);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat16, CreateConv);
