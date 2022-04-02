@@ -624,17 +624,17 @@ class GaussianBlur(ImageTensorOperation):
     Blur input image with the specified Gaussian kernel.
 
     Args:
-        kernel_size (Union[int, sequence]): Size of the Gaussian kernel to use. The value must be positive and odd. If
-            only an integer is provided, the kernel size will be (kernel_size, kernel_size). If a sequence of integer
+        kernel_size (Union[int, Sequence[int]]): Size of the Gaussian kernel to use. The value must be positive and odd.
+            If only an integer is provided, the kernel size will be (kernel_size, kernel_size). If a sequence of integer
             is provided, it must be a sequence of 2 values which represents (width, height).
-        sigma (Union[float, sequence], optional): Standard deviation of the Gaussian kernel to use (default=None). The
-            value must be positive. If only a float is provided, the sigma will be (sigma, sigma). If a sequence of
-            float is provided, it must be a sequence of 2 values which represents (width, height). If None
-            is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
+        sigma (Union[float, Sequence[float]], optional): Standard deviation of the Gaussian kernel to use
+            (default=None). The value must be positive. If only a float is provided, the sigma will be (sigma, sigma).
+            If a sequence of float is provided, it must be a sequence of 2 values which represents (width, height).
+            If None is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
 
     Raises:
-        TypeError: If `kernel_size` is not of type int or sequence of int.
-        TypeError: If `sigma` is not of type float or sequence of float.
+        TypeError: If `kernel_size` is not of type int or Sequence[int].
+        TypeError: If `sigma` is not of type float or Sequence[float].
         ValueError: If `kernel_size` is not positive and odd.
         ValueError: If `sigma` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
@@ -857,13 +857,13 @@ class Pad(ImageTensorOperation):
     Pad the image.
 
     Args:
-        padding (Union[int, sequence]): The number of pixels to pad each border of the image.
+        padding (Union[int, Sequence[tuple]]): The number of pixels to pad each border of the image.
             If a single number is provided, it pads all borders with this value.
             If a tuple or lists of 2 values are provided, it pads the (left and top)
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple, it pads the left, top, right and bottom respectively.
             The pad values must be non-negative.
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+        fill_value (Union[int, tuple[int]], optional): The pixel intensity of the borders, only valid for
             padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
             The fill_value values must be in range [0, 255] (default=0).
@@ -881,8 +881,8 @@ class Pad(ImageTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `padding` is not of type int or sequence of int.
-        TypeError: If `fill_value` is not of type int or tuple of int.
+        TypeError: If `padding` is not of type int or Sequence[int].
+        TypeError: If `fill_value` is not of type int or tuple[int].
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range [0, 255].
@@ -982,7 +982,7 @@ class RandomAffine(ImageTensorOperation):
 
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
-        fill_value (Union[int, tuple], optional): Optional fill_value to fill the area outside the transform
+        fill_value (Union[int, tuple[int]], optional): Optional fill_value to fill the area outside the transform
             in the output image. There must be three elements in tuple and the value of single element is [0, 255].
             (default=0, filling is performed).
 
@@ -992,7 +992,7 @@ class RandomAffine(ImageTensorOperation):
         TypeError: If `scale` is not of type sequence.
         TypeError: If `shear` is not of type int, float or sequence.
         TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `fill_value` is not of type int or tuple of int.
+        TypeError: If `fill_value` is not of type int or tuple[int].
         ValueError: If `degrees` is negative.
         ValueError: If `translate` is not in range [-1.0, 1.0].
         ValueError: If `scale` is negative.
@@ -1106,12 +1106,12 @@ class RandomColor(ImageTensorOperation):
     This operation works only with 3-channel RGB images.
 
     Args:
-         degrees (sequence, optional): Range of random color adjustment degrees, which must be non-negative.
+         degrees (Sequence[float], optional): Range of random color adjustment degrees, which must be non-negative.
             It should be in (min, max) format. If min=max, then it is a
             single fixed magnitude operation (default=(0.1, 1.9)).
 
     Raises:
-        TypeError: If `degrees` is not of type sequence of float.
+        TypeError: If `degrees` is not of type Sequence[float].
         ValueError: If `degrees` is negative.
         RuntimeError: If given tensor shape is not <H, W, C>.
 
@@ -1140,27 +1140,27 @@ class RandomColorAdjust(ImageTensorOperation):
         This operation supports running on Ascend or GPU platforms by Offload.
 
     Args:
-        brightness (Union[float, list, tuple], optional): Brightness adjustment factor (default=(1, 1)).
+        brightness (Union[float, Sequence[float]], optional): Brightness adjustment factor (default=(1, 1)).
             Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-brightness), 1+brightness].
             If it is a sequence, it should be [min, max] for the range.
-        contrast (Union[float, list, tuple], optional): Contrast adjustment factor (default=(1, 1)).
+        contrast (Union[float, Sequence[float]], optional): Contrast adjustment factor (default=(1, 1)).
             Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-contrast), 1+contrast].
             If it is a sequence, it should be [min, max] for the range.
-        saturation (Union[float, list, tuple], optional): Saturation adjustment factor (default=(1, 1)).
+        saturation (Union[float, Sequence[float]], optional): Saturation adjustment factor (default=(1, 1)).
             Cannot be negative.
             If it is a float, the factor is uniformly chosen from the range [max(0, 1-saturation), 1+saturation].
             If it is a sequence, it should be [min, max] for the range.
-        hue (Union[float, list, tuple], optional): Hue adjustment factor (default=(0, 0)).
+        hue (Union[float, Sequence[float]], optional): Hue adjustment factor (default=(0, 0)).
             If it is a float, the range will be [-hue, hue]. Value should be 0 <= hue <= 0.5.
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Raises:
-        TypeError: If `brightness` is not of type float or sequence of float.
-        TypeError: If `contrast` is not of type float or sequence of float.
-        TypeError: If `saturation` is not of type float or sequence of float.
-        TypeError: If `hue` is not of type float or sequence of float.
+        TypeError: If `brightness` is not of type float or Sequence[float].
+        TypeError: If `contrast` is not of type float or Sequence[float].
+        TypeError: If `saturation` is not of type float or Sequence[float].
+        TypeError: If `hue` is not of type float or Sequence[float].
         ValueError: If `brightness` is negative.
         ValueError: If `contrast` is negative.
         ValueError: If `saturation` is negative.
@@ -1215,10 +1215,10 @@ class RandomCrop(ImageTensorOperation):
         If the input image is more than one, then make sure that the image size is the same.
 
     Args:
-        size (Union[int, sequence]): The output size of the cropped image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the cropped image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        padding (Union[int, sequence], optional): The number of pixels to pad each border of the image.
+        padding (Union[int, Sequence[int]], optional): The number of pixels to pad each border of the image.
             The padding value(s) must be non-nagetive (default=None).
             If padding is not None, pad image first with padding values.
             If a single number is provided, pad all borders with this value.
@@ -1228,7 +1228,7 @@ class RandomCrop(ImageTensorOperation):
             pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+        fill_value (Union[int, tuple[int]], optional): The pixel intensity of the borders, only valid for
             padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
             The fill_value values must be in range [0, 255] (default=0).
@@ -1246,10 +1246,10 @@ class RandomCrop(ImageTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
-        TypeError: If `padding` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
+        TypeError: If `padding` is not of type int or Sequence[int].
         TypeError: If `pad_if_needed` is not of type boolean.
-        TypeError: If `fill_value` is not of type int or tuple of int.
+        TypeError: If `fill_value` is not of type int or tuple[int].
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
@@ -1296,7 +1296,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
     will crop the input image at a random location, decode the cropped image in RGB mode, and resize the decoded image.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         scale (Union[list, tuple], optional): Range [min, max) of respective size of the
@@ -1321,7 +1321,7 @@ class RandomCropDecodeResize(ImageTensorOperation):
             If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
@@ -1377,10 +1377,10 @@ class RandomCropWithBBox(ImageTensorOperation):
     Crop the input image at a random location and adjust bounding boxes accordingly.
 
     Args:
-        size (Union[int, sequence]): The output size of the cropped image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the cropped image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
-        padding (Union[int, sequence], optional): The number of pixels to pad the image
+        padding (Union[int, Sequence[int]], optional): The number of pixels to pad the image
             The padding value(s) must be non-nagetive (default=None).
             If padding is not None, first pad image with padding values.
             If a single number is provided, pad all borders with this value.
@@ -1389,7 +1389,7 @@ class RandomCropWithBBox(ImageTensorOperation):
             If 4 values are provided as a list or tuple, pad the left, top, right and bottom respectively.
         pad_if_needed (bool, optional): Pad the image if either side is smaller than
             the given output size (default=False).
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+        fill_value (Union[int, tuple[int]], optional): The pixel intensity of the borders, only valid for
             padding_mode Border.CONSTANT. If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
             The fill_value values must be in range [0, 255] (default=0).
@@ -1407,10 +1407,10 @@ class RandomCropWithBBox(ImageTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
-        TypeError: If `padding` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
+        TypeError: If `padding` is not of type int or Sequence[int].
         TypeError: If `pad_if_needed` is not of type boolean.
-        TypeError: If `fill_value` is not of type int or tuple of int.
+        TypeError: If `fill_value` is not of type int or tuple[int].
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
@@ -1646,7 +1646,7 @@ class RandomResizedCrop(ImageTensorOperation):
         If the input image is more than one, then make sure that the image size is the same.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square of size (size, size) will be cropped with this value.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         scale (Union[list, tuple], optional): Range [min, max) of respective size of the original
@@ -1671,7 +1671,7 @@ class RandomResizedCrop(ImageTensorOperation):
             crop_area (default=10). If exceeded, fall back to use center_crop instead.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
@@ -1716,7 +1716,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
     Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
     Args:
-        size (Union[int, sequence]): The size of the output image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square of size (size, size) will be cropped with this value.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         scale (Union[list, tuple], optional): Range (min, max) of respective size of the original
@@ -1736,7 +1736,7 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
             crop area (default=10). If exceeded, fall back to use center crop instead.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
@@ -1780,12 +1780,12 @@ class RandomResize(ImageTensorOperation):
     Resize the input image using a randomly selected interpolation mode.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square of size (size, size) will be cropped with this value.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1820,12 +1820,12 @@ class RandomResizeWithBBox(ImageTensorOperation):
     bounding boxes accordingly.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square of size (size, size) will be cropped with this value.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1877,7 +1877,7 @@ class RandomRotation(ImageTensorOperation):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
             Origin is the top left corner. None sets to the center of the image.
-        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image.
+        fill_value (Union[int, tuple[int]], optional): Optional fill color for the area outside the rotated image.
             If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
             The fill_value values must be in range [0, 255] (default=0).
@@ -1887,7 +1887,7 @@ class RandomRotation(ImageTensorOperation):
         TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `expand` is not of type boolean.
         TypeError: If `center` is not of type tuple.
-        TypeError: If `fill_value` is not of type int or tuple of int.
+        TypeError: If `fill_value` is not of type int or tuple[int].
         ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2142,7 +2142,7 @@ class Resize(ImageTensorOperation):
     Resize the input image to the given size with a given interpolation mode.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, a square of size (size, size) will be cropped with this value.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
@@ -2160,7 +2160,7 @@ class Resize(ImageTensorOperation):
               should be in 3 channels format.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
@@ -2193,7 +2193,7 @@ class ResizeWithBBox(ImageTensorOperation):
     Resize the input image to the given size and adjust bounding boxes accordingly.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image.
+        size (Union[int, Sequence[int]]): The output size of the resized image.
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, it should be (height, width).
@@ -2207,7 +2207,7 @@ class ResizeWithBBox(ImageTensorOperation):
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
@@ -2280,7 +2280,7 @@ class Rotate(ImageTensorOperation):
             Note that the expand flag assumes rotation around the center and no translation.
         center (tuple, optional): Optional center of rotation (a 2-tuple) (default=None).
             Origin is the top left corner. None sets to the center of the image.
-        fill_value (Union[int, tuple], optional): Optional fill color for the area outside the rotated image.
+        fill_value (Union[int, tuple[int]], optional): Optional fill color for the area outside the rotated image.
             If it is a 3-tuple, it is used to fill R, G, B channels respectively.
             If it is an integer, it is used for all RGB channels.
             The fill_value values must be in range [0, 255] (default=0).
@@ -2290,7 +2290,7 @@ class Rotate(ImageTensorOperation):
         TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
-        TypeError: If `fill_value` is not of type int or tuple of int.
+        TypeError: If `fill_value` is not of type int or tuple[int].
         ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2390,7 +2390,7 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     Only images with an even resolution can be output. The output of odd resolution is not supported.
 
     Args:
-        size (Union[int, sequence]): The size of the output image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The size of the output image. The size value(s) must be positive.
             If size is an integer, a square crop of size (size, size) is returned.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
         scale (Union[list, tuple], optional): Range [min, max) of respective size of the
@@ -2401,7 +2401,7 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
             If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `max_attempts` is not of type int.
@@ -2451,13 +2451,13 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
     Only images with an even resolution can be output. The output of odd resolution is not supported.
 
     Args:
-        size (Union[int, sequence]): The output size of the resized image. The size value(s) must be positive.
+        size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
             If size is an integer, smaller edge of the image will be resized to this value with
             the same image aspect ratio.
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `size` is not of type int or Sequence[int].
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor is not a 1D sequence.
 

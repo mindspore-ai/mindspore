@@ -9,7 +9,7 @@ mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg
 
     **参数：**
 
-    - **size** (Union[int, sequence]) - 图像的输出尺寸大小。如果 `size` 是整数，将调整图像的较短边长度为 `size`，且保持图像的宽高比不变；若输入是2元素组成的序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
+    - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。如果 `size` 是整数，将调整图像的较短边长度为 `size`，且保持图像的宽高比不变；若输入是2元素组成的序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
 
     **异常：**
 
