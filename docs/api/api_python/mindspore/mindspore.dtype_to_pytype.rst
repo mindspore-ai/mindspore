@@ -3,7 +3,7 @@ mindspore.dtype_to_pytype
 
 .. py:method:: mindspore.dtype_to_pytype(type_)
 
-    将MindSpore dtype转换为Python数据类型。
+    将MindSpore 数据类型转换为Python数据类型。
 
     **参数：**
 

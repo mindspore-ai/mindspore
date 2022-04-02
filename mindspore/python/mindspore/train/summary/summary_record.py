@@ -429,7 +429,7 @@ class SummaryRecord:
 
     def flush(self):
         """
-        Flush the buffer and write files to disk.
+        Flush the buffer and write buffer data to disk.
 
         Call it to make sure that all pending events have been written to disk.
 
