@@ -987,6 +987,16 @@ class MS_CORE_API ValueNode final : public ANode {
   /// \return The count of graphs using this ValueNode.
   size_t used_graph_count() const { return used_graph_count_; }
 
+  /// \brief Set the count of groups using this ValueNode.
+  ///
+  /// \param[in] group The count of groups using this ValueNode.
+  void set_fracz_group(int64_t group) { format_attr_.fracz_group = group; }
+
+  /// \brief Get groups attr in FracZ format.
+  ///
+  /// \return Groups attr in FracZ format.
+  int64_t fracz_group() const { return format_attr_.fracz_group; }
+
   /// \brief Set the count of graphs using this ValueNode.
   ///
   /// \param[in] used_graph_count The count of graphs using this ValueNode.
@@ -1010,6 +1020,12 @@ class MS_CORE_API ValueNode final : public ANode {
   }
 
  private:
+  struct FormatAttr {
+    int64_t fracz_group = 1;
+    int64_t input_size = 0;
+    int64_t hidden_size = 0;
+  };
+  FormatAttr format_attr_;
   ValuePtr value_;
   size_t used_graph_count_{0};
   bool has_new_value_ = false;

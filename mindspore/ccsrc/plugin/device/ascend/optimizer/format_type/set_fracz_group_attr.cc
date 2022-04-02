@@ -44,7 +44,7 @@ AnfNodePtr GetOutputItem(const FuncGraphManagerPtr &manager, const CNodePtr &cno
   while (!depend_nodes.empty()) {
     auto node = depend_nodes.back();
     depend_nodes.pop_back();
-    for (auto node_index : manager->node_users()[node]) {
+    for (const auto &node_index : manager->node_users()[node]) {
       if (common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimDepend) && node_index.second == 1) {
         (void)depend_nodes.emplace_back(node_index.first);
       } else if (common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimTupleGetItem)) {
@@ -69,6 +69,14 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
       return true;
     }
     param->set_fracz_group(groups);
+    return false;
+  }
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    if (value_node->fracz_group() != 1) {
+      return true;
+    }
+    value_node->set_fracz_group(groups);
     return false;
   }
   if (node->isa<CNode>()) {
@@ -147,7 +155,7 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
       auto output = GetOutputItem(manager, cnode, groups, i);
       if (output != nullptr) {
         (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                             [](KernelWithIndex node_index) {
+                             [](const KernelWithIndex &node_index) {
                                return KernelWithIndex{node_index.first, node_index.second - 1};
                              });
       }
@@ -160,9 +168,9 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
                                                    size_t index, int64_t groups) {
   std::vector<KernelWithIndex> ret;
   auto node_user = manager->node_users();
-  if (node->isa<Parameter>()) {
+  if (node->isa<Parameter>() || node->isa<ValueNode>()) {
     std::transform(node_user[node].begin(), node_user[node].end(), std::back_inserter(ret),
-                   [](KernelWithIndex node_index) {
+                   [](const KernelWithIndex &node_index) {
                      return KernelWithIndex{node_index.first, node_index.second - 1};
                    });
   }
@@ -178,7 +186,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
     auto output = GetOutputItem(manager, cnode, groups, index);
     if (output != nullptr) {
       (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                           [](KernelWithIndex node_index) {
+                           [](const KernelWithIndex &node_index) {
                              return KernelWithIndex{node_index.first, node_index.second - 1};
                            });
     }
@@ -210,7 +218,8 @@ bool SetAttrFraczGroup(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   return true;
 }
 
-bool SetAttrFraczGroup(const FuncGraphPtr &func_graph, const ParameterPtr &param) {
+template <typename T>
+bool SetAttrFraczGroup(const FuncGraphPtr &func_graph, const T &param) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param);
   auto groups = param->fracz_group();
@@ -253,7 +262,14 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
     if (node->isa<Parameter>()) {
       // transmit fracz_group attr through multi graph by parameter
       auto param = node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(param);
       changed = SetAttrFraczGroup(func_graph, param) || changed;
+    }
+    if (node->isa<ValueNode>()) {
+      // transmit fracz_group attr through multi graph by value node
+      auto value_node = node->cast<ValueNodePtr>();
+      MS_EXCEPTION_IF_NULL(value_node);
+      changed = SetAttrFraczGroup(func_graph, value_node) || changed;
     }
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
