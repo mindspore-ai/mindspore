@@ -330,6 +330,7 @@ class Dataset:
         self._input_indexs = ()
         self.saved_output_types = None
         self.saved_output_shapes = None
+        self.runtime_context = None
         self.dynamic_setting = [False, None]
         self.saved_min_shapes = None
         self.saved_max_shapes = None
@@ -1573,10 +1574,14 @@ class Dataset:
         """
         if self.saved_output_shapes is None:
             runtime_getter = self._init_tree_getters()
+            # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
+            # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
+            self.runtime_context = runtime_getter[1]
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
+            del self.runtime_context
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_shapes
@@ -1594,10 +1599,14 @@ class Dataset:
         """
         if self.saved_output_types is None:
             runtime_getter = self._init_tree_getters()
+            # We have a hang problem when two-level pipeline with multiprocessing, we need to extend the life cycle
+            # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
+            self.runtime_context = runtime_getter[1]
             self.saved_output_shapes = runtime_getter[0].GetOutputShapes()
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
             runtime_getter[2].close_pool()
             runtime_getter[2].notify_watchdog()
+            del self.runtime_context
         if self.dynamic_setting[0]:
             self.saved_output_shapes, self.saved_min_shapes, self.saved_max_shapes = self._dynamic_output_shapes()
         return self.saved_output_types
