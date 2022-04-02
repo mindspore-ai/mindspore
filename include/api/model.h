@@ -45,6 +45,59 @@ class MS_API Model {
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
+  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_data Define the buffer read from a model file.
+  /// \param[in] data_size Define bytes number of model buffer.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  ///
+  /// \return Status.
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr);
+
+  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_path Define the model path.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  ///
+  /// \return Status.
+  Status Build(const std::string &model_path, ModelType model_type,
+               const std::shared_ptr<Context> &model_context = nullptr);
+
+  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_data Define the buffer read from a model file.
+  /// \param[in] data_size Define bytes number of model buffer.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
+  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
+  /// \param[in] cropto_lib_path Define the openssl library path.
+  ///
+  /// \return Status.
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+               const std::string &cropto_lib_path);
+
+  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
+  ///
+  /// \param[in] model_path Define the model path.
+  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
+  /// ModelType::kMindIR is valid for Lite.
+  /// \param[in] model_context Define the context used to store options during execution.
+  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
+  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
+  /// \param[in] cropto_lib_path Define the openssl library path.
+  ///
+  /// \return Status.
+  Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+               const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path);
+
   /// \brief Builds a model
   ///
   /// \param[in] graph GraphCell is a derivative of Cell. Cell is not available currently. GraphCell can be constructed
@@ -252,59 +305,6 @@ class MS_API Model {
   bool GetTrainMode() const;
   Status Train(int epochs, std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
   Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack *> cbs);
-
-  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
-  ///
-  /// \param[in] model_data Define the buffer read from a model file.
-  /// \param[in] data_size Define bytes number of model buffer.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
-  ///
-  /// \return Status.
-  Status Build(const void *model_data, size_t data_size, ModelType model_type,
-               const std::shared_ptr<Context> &model_context = nullptr);
-
-  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
-  ///
-  /// \param[in] model_path Define the model path.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
-  ///
-  /// \return Status.
-  Status Build(const std::string &model_path, ModelType model_type,
-               const std::shared_ptr<Context> &model_context = nullptr);
-
-  /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
-  ///
-  /// \param[in] model_data Define the buffer read from a model file.
-  /// \param[in] data_size Define bytes number of model buffer.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
-  /// \param[in] cropto_lib_path Define the openssl library path.
-  ///
-  /// \return Status.
-  Status Build(const void *model_data, size_t data_size, ModelType model_type,
-               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
-               const std::string &cropto_lib_path);
-
-  /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
-  ///
-  /// \param[in] model_path Define the model path.
-  /// \param[in] model_type Define The type of model file. Options: ModelType::kMindIR, ModelType::kOM. Only
-  /// ModelType::kMindIR is valid for Lite.
-  /// \param[in] model_context Define the context used to store options during execution.
-  /// \param[in] dec_key Define the key used to decrypt the ciphertext model. The key length is 16.
-  /// \param[in] dec_mode Define the decryption mode. Options: AES-GCM.
-  /// \param[in] cropto_lib_path Define the openssl library path.
-  ///
-  /// \return Status.
-  Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
-               const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path);
 
  private:
   friend class Serialization;
