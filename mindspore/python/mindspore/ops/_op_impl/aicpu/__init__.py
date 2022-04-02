@@ -67,6 +67,7 @@ from .squeeze import _squeeze_aicpu
 from .acos import _acos_aicpu
 from .acos_grad import _acos_grad_aicpu
 from .real_div import _real_div_aicpu
+from .expand import _expand_aicpu
 from .expand_dims import _expand_dims_aicpu
 from .range_v2 import _range_v2_aicpu
 from .randperm import _randperm_aicpu

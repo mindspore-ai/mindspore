@@ -89,6 +89,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
   static const auto &kSegmentSum = prim::kPrimSegmentSum->name();
   static const auto &kBlackmanWindow = prim::kPrimBlackmanWindow->name();
+  static const auto &kExpand = prim::kPrimExpand->name();
   // Common host depends.
   static PrimShapeDependMap host_depends{{kSegmentMax, ShapeSet{1}},
                                          {kSegmentMin, ShapeSet{1}},
@@ -128,7 +129,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kTransposeNOD, ShapeSet{1}},
                                          {kSparseSegmentMean, ShapeSet{2}},
                                          {kResizeLinear1D, ShapeSet{1}},
-                                         {kBlackmanWindow, ShapeSet{0}}};
+                                         {kBlackmanWindow, ShapeSet{0}},
+                                         {kExpand, ShapeSet{1}}};
   return host_depends;
 }
 

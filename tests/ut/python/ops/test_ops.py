@@ -72,6 +72,7 @@ from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
+from mindspore.ops.operations.array_ops import Expand
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
@@ -2826,6 +2827,11 @@ test_case_array_ops = [
         'desc_const': [mstype.int32],
         'desc_inputs': [[2, 3, 4, 5]],
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5)).astype(np.int32))]}),
+    ('Expand', {
+        'block': Expand(),
+        'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)),
+                        Tensor(np.array([5, 2, 3]).astype(np.int32))],
+        'skip': ['backward']}),
     ('ExpandDims', {
         'block': P.ExpandDims(),
         'desc_const': [0],
