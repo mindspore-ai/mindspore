@@ -7,7 +7,7 @@ mindspore.dataset.vision.c_transforms.Resize
 
     **参数：**
 
-    - **size** (Union[int, sequence]) - 图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
+    - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，则放缩至(size, size)大小；若输入2元素序列，则以2个元素分别为高和宽放缩至(高度, 宽度)大小。
     - **interpolation** (Inter, 可选) - 图像插值方式。它可以是 [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC] 中的任何一个，默认值：Inter.LINEAR。
 
       - Inter.LINEAR，双线性插值。
