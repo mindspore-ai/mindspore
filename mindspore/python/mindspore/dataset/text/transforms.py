@@ -690,24 +690,23 @@ if platform.system().lower() != 'windows':
             `BasicTokenizer` is not supported on Windows platform yet.
 
         Args:
-            lower_case (bool, optional): If True, will apply `CaseFold`, NormalizeForm.NFD mode `NormalizeUTF8`,
-                `RegexReplace` operations on the input to fold the text to lower case and strip accented characters.
-                If False, will only apply `NormalizeUTF8` operation of mode `normalization_form` on the input.
-                Default: False.
+            lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
+                text to lower case and strip accented characters. If False, will only perform normalization on the
+                text, with mode specified by `normalization_form`. Default: False.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
             normalization_form (NormalizeForm, optional):
                 `Unicode normalization forms <http://unicode.org/reports/tr15/>`_, only valid when `lower_case`
                 is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
                 NormalizeForm.NFKD. Default: NormalizeForm.NONE.
 
-                - NormalizeForm.NONE, do nothing to input string.
-                - NormalizeForm.NFC, normalize with Normalization Form C.
-                - NormalizeForm.NFKC, normalize with Normalization Form KC.
-                - NormalizeForm.NFD, normalize with Normalization Form D.
-                - NormalizeForm.NFKD, normalize with Normalization Form KD.
+                - NormalizeForm.NONE, no normalization.
+                - NormalizeForm.NFC, Canonical Decomposition, followed by Canonical Composition.
+                - NormalizeForm.NFKC, Compatibility Decomposition, followed by Canonical Composition.
+                - NormalizeForm.NFD, Canonical Decomposition.
+                - NormalizeForm.NFKD, Compatibility Decomposition.
 
-            preserve_unused_token (bool, optional): If True, will not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
+            preserve_unused_token (bool, optional): Whether to preserve special tokens. If True, will not split special
+                tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
             with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
         Raises:
@@ -778,24 +777,23 @@ if platform.system().lower() != 'windows':
             unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
                 unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
                 output. Default: '[UNK]'.
-            lower_case (bool, optional): If True, will apply `CaseFold`, NormalizeForm.NFD mode `NormalizeUTF8`,
-                `RegexReplace` operations on the input to fold the text to lower case and strip accented characters.
-                If False, will only apply `NormalizeUTF8` operation of mode `normalization_form` on the input.
-                Default: False.
+            lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
+                text to lower case and strip accented characters. If False, will only perform normalization on the
+                text, with mode specified by `normalization_form`. Default: False.
             keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: False.
             normalization_form (NormalizeForm, optional):
                 `Unicode normalization forms <http://unicode.org/reports/tr15/>`_, only valid when `lower_case`
                 is False, can be NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD or
                 NormalizeForm.NFKD. Default: NormalizeForm.NONE.
 
-                - NormalizeForm.NONE, do nothing to input string.
-                - NormalizeForm.NFC, normalize with Normalization Form C.
-                - NormalizeForm.NFKC, normalize with Normalization Form KC.
-                - NormalizeForm.NFD, normalize with Normalization Form D.
-                - NormalizeForm.NFKD, normalize with Normalization Form KD.
+                - NormalizeForm.NONE, no normalization.
+                - NormalizeForm.NFC, Canonical Decomposition, followed by Canonical Composition.
+                - NormalizeForm.NFKC, Compatibility Decomposition, followed by Canonical Composition.
+                - NormalizeForm.NFD, Canonical Decomposition.
+                - NormalizeForm.NFKD, Compatibility Decomposition.
 
-            preserve_unused_token (bool, optional): If True, will not split special tokens like
-                '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
+            preserve_unused_token (bool, optional): Whether to preserve special tokens. If True, will not split special
+                tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: True.
             with_offsets (bool, optional): Whether to return the offsets of tokens. Default: False.
 
         Raises:

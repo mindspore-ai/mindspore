@@ -420,16 +420,16 @@ class JiebaMode(IntEnum):
 
 class NormalizeForm(IntEnum):
     """
-    An enumeration for NormalizeUTF8.
+    Enumeration class for `Unicode normalization forms <http://unicode.org/reports/tr15/>`_ .
 
-    Possible enumeration values are: NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD,
-    NormalizeForm.NFKD.
+    Possible enumeration values are: NormalizeForm.NONE, NormalizeForm.NFC, NormalizeForm.NFKC, NormalizeForm.NFD
+    and NormalizeForm.NFKD.
 
-    - NormalizeForm.NONE: do nothing for input string tensor.
-    - NormalizeForm.NFC: normalize with Normalization Form C.
-    - NormalizeForm.NFKC: normalize with Normalization Form KC.
-    - NormalizeForm.NFD: normalize with Normalization Form D.
-    - NormalizeForm.NFKD: normalize with Normalization Form KD.
+    - NormalizeForm.NONE: no normalization.
+    - NormalizeForm.NFC: Canonical Decomposition, followed by Canonical Composition.
+    - NormalizeForm.NFKC: Compatibility Decomposition, followed by Canonical Composition.
+    - NormalizeForm.NFD: Canonical Decomposition.
+    - NormalizeForm.NFKD: Compatibility Decomposition.
     """
 
     NONE = 0

@@ -3,13 +3,12 @@
 
 .. py:class:: mindspore.dataset.text.NormalizeForm
 
-    :class:`mindspore.dataset.text.transforms.NormalizeUTF8` 的枚举值。
+    `Unicode规范化模式 <http://unicode.org/reports/tr15/>`_ 枚举类。
 
-    `Unicode规范化模式 <http://unicode.org/reports/tr15/#Norm_Forms>_` 可选的枚举值包括： `NormalizeForm.NONE` 、 `NormalizeForm.NFC` 、 `NormalizeForm.NFKC` 、 `NormalizeForm.NFD` 和 `NormalizeForm.NFKD` 。
+    可选枚举值为：NormalizeForm.NONE、NormalizeForm.NFC、NormalizeForm.NFKC、NormalizeForm.NFD 和 NormalizeForm.NFKD。
 
-    - **NormalizeForm.NONE** - 对输入字符串不做任何处理。
-    - **NormalizeForm.NFC** - 对输入字符串进行C形式规范化。
-    - **NormalizeForm.NFKC** - 对输入字符串进行KC形式规范化。
-    - **NormalizeForm.NFD** - 对输入字符串进行D形式规范化。
-    - **NormalizeForm.NFKD** - 对输入字符串进行KD形式规范化。
-    
+    - **NormalizeForm.NONE** - 不进行规范化处理。
+    - **NormalizeForm.NFC** - 先以标准等价方式分解，再以标准等价方式重组。
+    - **NormalizeForm.NFKC** - 先以兼容等价方式分解，再以标准等价方式重组。
+    - **NormalizeForm.NFD** - 以标准等价方式分解。
+    - **NormalizeForm.NFKD** - 以兼容等价方式分解。

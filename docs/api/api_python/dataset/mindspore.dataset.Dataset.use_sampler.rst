@@ -1,7 +1,7 @@
 .. py:method:: use_sampler(new_sampler)
 
-    为当前数据集对象更换一个新的采样器。
+    替换当前数据集的最末子采样器，保持父采样器不变。
 
     **参数：**
 
-    - **new_sampler** (Sampler) ：替换的新采样器。
+    - **new_sampler** (Sampler) ：用于替换的新采样器。
