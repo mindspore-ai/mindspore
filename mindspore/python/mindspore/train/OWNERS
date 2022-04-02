@@ -1,8 +1,11 @@
 approvers:
+- changzherui
+- kingxian
+
+reviewers:
 - ouwenchang
 - yelihua
 - lilongfei15
 - wangyue01
 - wenkai_dist
 - yanghaiao1
-- changzherui

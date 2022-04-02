@@ -1,8 +1,10 @@
-reviewers:
+approvers:
 - zh_qh
 - hwhewei
-- xychow
 - ginfung
+
+reviewers:
+- xychow
 - chenfei52
 - zhangzhaoju
 - lanzhineng
