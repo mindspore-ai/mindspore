@@ -104,7 +104,6 @@ std::vector<StrategyPtr> DropoutInfo::GenerateOpStrategies(int64_t stage_id) {
 
 Status Softmax::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
 
@@ -240,7 +239,6 @@ Status CumOpBase::GetAttrs() {
 
 Status CumOpBase::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 

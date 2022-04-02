@@ -29,7 +29,6 @@ namespace mindspore {
 namespace parallel {
 Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << " : Invalid strategy.";
     return FAILED;
   }
 

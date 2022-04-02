@@ -61,7 +61,6 @@ Status UniqueInfo::InferDevMatrixShape() {
 Status UniqueInfo::CheckStrategy(const StrategyPtr &strategy) {
   Strategys stras = strategy->GetInputDim();
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
   for (Dimensions stra : stras) {
