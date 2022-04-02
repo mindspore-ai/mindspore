@@ -273,7 +273,7 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
     :math:`\lambda` represents :math:`damping`, :math:`g_i` represents gradients of the i-th layer,
     :math:`\otimes` represents Kronecker product, :math:`\gamma` represents 'learning rate'
 
-     Note:
+    Note:
         When a parameter group is separated, 'weight_decay' of each group is applied to the corresponding parameter.
         'weight_decay' in the optimizer is applied to arguments that do not have 'beta' or 'gamma' in their name
         when the argument group is not separated.

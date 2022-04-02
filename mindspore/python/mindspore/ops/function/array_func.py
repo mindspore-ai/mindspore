@@ -46,7 +46,7 @@ def unique(x):
           The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
 
     Returns:
-        Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
+        Tuple, containing Tensor objects (`y`, `idx`), `y` is a tensor with the
         same type as `x`, and contains the unique elements in `x`.
         `idx` is a tensor containing indices of elements in
         the input corresponding to the output tensor, have the same shape with `x`.
