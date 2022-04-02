@@ -13,4 +13,3 @@ tables >= 3.6.1             # for st test
 easydict >= 1.9             # for st test
 psutil >= 5.7.0
 astunparse >= 0.0
-astpretty >= 0.0
