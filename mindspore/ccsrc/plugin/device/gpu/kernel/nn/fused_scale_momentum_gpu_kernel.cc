@@ -26,7 +26,8 @@ MS_REG_GPU_KERNEL_TWO(FusedScaleApplyMomentum,
                         .AddInputAttr(kNumberTypeFloat32)  // learning_rate
                         .AddInputAttr(kNumberTypeFloat32)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutInRef(0, 1),
                       FusedScaleMomentumGpuKernelMod, float, float)
 MS_REG_GPU_KERNEL_TWO(FusedScaleApplyMomentum,
                       KernelAttr()
@@ -38,7 +39,8 @@ MS_REG_GPU_KERNEL_TWO(FusedScaleApplyMomentum,
                         .AddInputAttr(kNumberTypeFloat32)  // learning_rate
                         .AddInputAttr(kNumberTypeFloat16)  // gradient
                         .AddInputAttr(kNumberTypeFloat32)  // momentum
-                        .AddOutputAttr(kNumberTypeFloat32),
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutInRef(0, 1),
                       FusedScaleMomentumGpuKernelMod, float, half)
 }  // namespace kernel
 }  // namespace mindspore
