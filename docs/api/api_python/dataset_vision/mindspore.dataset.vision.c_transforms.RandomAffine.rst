@@ -27,7 +27,7 @@ mindspore.dataset.vision.c_transforms.RandomAffine
       - **Inter.NEAREST**: 最近邻插值。
       - **Inter.BICUBIC**: 双三次插值。
 
-    - **fill_value**  (Union[int, tuple], 可选) - 用于填充输出图像中变换之外的区域。元组中必须有三个值，取值范围是[0, 255]，默认值：0。
+    - **fill_value**  (Union[int, tuple[int]], 可选) - 用于填充输出图像中变换之外的区域。元组中必须有三个值，取值范围是[0, 255]，默认值：0。
 
     **异常：**
 
@@ -36,7 +36,7 @@ mindspore.dataset.vision.c_transforms.RandomAffine
     - **TypeError** - 如果 `scale` 不是sequence类型。
     - **TypeError** - 如果 `shear` 不是int、float或sequence类型。
     - **TypeError** - 如果 `resample` 不是 :class:`mindspore.dataset.vision.Inter` 的类型。
-    - **TypeError** - 如果 `fill_value` 不是int或Tuple[int]类型。
+    - **TypeError** - 如果 `fill_value` 不是int或tuple[int]类型。
     - **ValueError** - 如果 `degrees` 为负数。
     - **ValueError** - 如果 `translate` 不在范围 [-1.0, 1.0] 内。
     - **ValueError** - 如果 `scale` 为负数。
