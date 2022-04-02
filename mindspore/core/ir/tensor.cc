@@ -494,6 +494,7 @@ TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const A
 Tensor::Tensor(const Tensor &tensor)
     : MetaTensor(tensor),
       init_flag_(tensor.init_flag_),
+      is_forward_output_(tensor.is_forward_output_),
       data_(tensor.data_),
       id_(tensor.id_),
       event_(tensor.event_),
@@ -511,6 +512,7 @@ Tensor::Tensor(const Tensor &tensor)
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
       init_flag_(tensor.init_flag_),
+      is_forward_output_(tensor.is_forward_output_),
       data_(MakeTensorData(data_type, tensor.shape_, tensor.data_->data(), tensor.data_type_)),
       id_(tensor.id_),
       event_(tensor.event_),
@@ -595,6 +597,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     MetaTensor::operator=(tensor);
     device_sync_ = tensor.device_sync_;
     need_release_device_mem_ = tensor.need_release_device_mem_;
+    is_forward_output_ = tensor.is_forward_output_;
     data_ = tensor.data_;
     id_ = tensor.id_;
     event_ = tensor.event_;
