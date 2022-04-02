@@ -313,7 +313,7 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('n', [128])
-@pytest.mark.parametrize('dtype,error', [(onp.float32, 1e-4)])
+@pytest.mark.parametrize('dtype,error', [(onp.float32, 5e-3)])
 @pytest.mark.parametrize('preconditioner', ['random'])
 @pytest.mark.parametrize('solve_method', ['incremental', 'batched'])
 def test_gmres_against_scipy_level1(n, dtype, error, preconditioner, solve_method):
