@@ -28,3 +28,7 @@
     **异常：**
 
     - **TypeError** - `axis` 不是int。
+    - **TypeError** - `input_x` 是不同数据类型的Tensor。
+    - **ValueError** - `input_x` 是不同维度的Tensor。
+    - **ValueError** - `axis` 的维度范围不在[-dims, dims - 1]。
+    - **RuntimeError** - 除了 `axis` 之外， `input_x` 的shape不相同。
