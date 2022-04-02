@@ -22,7 +22,7 @@ mindspore.ops.LogSoftmax
 
     **输出：**
 
-    Tensor，数据类型和shape与logits相同。
+    Tensor，数据类型和shape与 `logits` 相同。
 
     **异常：**
 

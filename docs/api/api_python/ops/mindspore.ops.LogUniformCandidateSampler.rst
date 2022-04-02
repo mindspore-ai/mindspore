@@ -3,7 +3,7 @@ mindspore.ops.LogUniformCandidateSampler
 
 .. py:class:: mindspore.ops.LogUniformCandidateSampler(num_true=1, num_sampled=5, unique=True, range_max=5, seed=0)
 
-    使用log-uniform(Zipfian)分布对一组类进行采样。
+    使用log-uniform(Zipfian)分布对一组类别进行采样。
 
     该操作从整数范围[0, `range_max` )中随机采样一个采样类( `sampled_candidates` )的Tensor。
 
@@ -17,13 +17,13 @@ mindspore.ops.LogUniformCandidateSampler
 
     **输入：**
 
-    - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为(batch_size, num_true)。
+    - **true_classes** (Tensor) - 目标类，其数据类型为int64，shape为 :math:`(batch\_size, num\_true)` 。
 
     **输出：**
 
     3个Tensor组成的元组。
 
-    - **sampled_candidates** (Tensor) - shape为(num_sampled,)且数据类型与 `true_classes` 相同的Tensor。
+    - **sampled_candidates** (Tensor) - shape为 :math:`(num\_sampled,)` 且数据类型与 `true_classes` 相同的Tensor。
     - **true_expected_count** (Tensor) - shape与 `true_classes` 相同且数据类型为float32的Tensor。
     - **sampled_expected_count** (Tensor) - shape与 `sampled_candidates` 相同且数据类型为float32的Tensor。
 

@@ -15,7 +15,7 @@ mindspore.ops.ReLU
 
     **输入：**
 
-    - **input_x** (Tensor) - ReLU的输入，任意维度的Tensor。其数据类型为Number。
+    - **input_x** (Tensor) - ReLU的输入，任意维度的Tensor。其数据类型为数值型。
 
     **输出：**
 
@@ -23,5 +23,5 @@ mindspore.ops.ReLU
 
     **异常：**
 
-    - **TypeError** - `input_x` 的数据类型不是Number。
+    - **TypeError** - `input_x` 的数据类型不是数值型。
     - **TypeError** - `input_x` 不是Tensor。

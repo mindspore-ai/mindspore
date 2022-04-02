@@ -392,13 +392,13 @@ class BatchNorm2d(_BatchNorm):
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
         changed after net was initialized.
-        Note that the formula for updating the moving_mean and moving_var is
+        Note that the formula for updating the :math:`moving\_mean` and :math:`moving\_var` is
 
         .. math::
             \text{moving_mean}=\text{moving_mean∗momentum}+μ_β\text{∗(1−momentum)}\\
             \text{moving_var}=\text{moving_var∗momentum}+σ^2_β\text{∗(1−momentum)}
 
-        where :math:`moving_mean, moving_var` are the updated mean and variance,
+        where :math:`moving\_mean` is the updated mean, :math:`moving\_var` is the updated variance,
         :math:`μ_β, σ^2_β` are the observed value (mean and variance) of each batch of data.
 
     Args:
@@ -1009,7 +1009,7 @@ class GroupNorm(Cell):
             'he_uniform', etc. Default: 'zeros'. If beta_init is a Tensor, the shape must be [num_channels].
 
     Inputs:
-        - **x** (Tensor) - The input feature with shape [N, C, H, W].
+        - **x** (Tensor) - The input feature with shape :math:`(N, C, H, W)` .
 
     Outputs:
         Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.

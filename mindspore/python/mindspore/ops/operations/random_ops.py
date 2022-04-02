@@ -727,7 +727,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
 
 
 class LogUniformCandidateSampler(PrimitiveWithInfer):
-    """
+    r"""
     Generates random labels with a log-uniform distribution for sampled_candidates.
 
     Randomly samples a tensor of sampled classes from the range of integers [0, range_max).
@@ -742,12 +742,14 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
         seed (int): Random seed, must be non-negative. Default: 0.
 
     Inputs:
-        - **true_classes** (Tensor) - The target classes. With data type of int64 and shape [batch_size, num_true].
+        - **true_classes** (Tensor) - The target classes. With data type of int64 and
+        shape :math:`(batch\_size, num\_true)` .
 
     Outputs:
         Tuple of 3 Tensors.
 
-        - **sampled_candidates** (Tensor) - A Tensor with shape (num_sampled,) and the same type as `true_classes`.
+        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)` and
+        the same type as `true_classes`.
         - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
         - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
 

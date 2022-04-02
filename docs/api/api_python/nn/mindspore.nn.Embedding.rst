@@ -5,7 +5,7 @@ mindspore.nn.Embedding
 
     嵌入层。
 
-    该模块常被用做存储词嵌入，并使用索引检索它们。该模块的输入是一个索引列表，输出是对应的词嵌入。
+    用于存储词向量并使用索引进行检索，根据输入Tensor中的id，从 `embedding_table` 中查询对应的embedding向量。当输入为id组成的序列时，输出为对应embedding向量构成的矩阵。
 
     .. note:: 
         当 `use_one_hot` 等于True时，x的类型必须是mindpore.int32。
@@ -15,7 +15,7 @@ mindspore.nn.Embedding
     - **vocab_size** (int) -  词典的大小。
     - **embedding_size** (int) -  每个嵌入向量的大小。
     - **use_one_hot** (bool) -  指定是否使用one-hot形式。默认值：False。
-    - **embedding_table** (Union[Tensor, str, Initializer, numbers.Number]) – embedding_table的初始化方法。当指定为字符串，字符串取值请参见类 `Initializer` 。默认值：'normal'。
+    - **embedding_table** (Union[Tensor, str, Initializer, numbers.Number]) – embedding_table的初始化方法。当指定为字符串，字符串取值请参见类 `mindspore.common.initializer` 。默认值：'normal'。
     - **dtype** (mindspore.dtype) - x的数据类型。默认值：mindspore.float32。
     - **padding_idx** (int, None) - 将 `padding_idx` 对应索引所输出的嵌入向量用零填充。默认值：None。该功能已停用。
 
