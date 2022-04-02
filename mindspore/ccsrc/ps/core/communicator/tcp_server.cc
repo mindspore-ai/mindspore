@@ -32,7 +32,10 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-TcpConnection::~TcpConnection() { bufferevent_free(buffer_event_); }
+TcpConnection::~TcpConnection() {
+  MS_LOG(WARNING) << "TcpConnection is destructed! fd is " << fd_;
+  bufferevent_free(buffer_event_);
+}
 void TcpConnection::InitConnection(const messageReceive &callback) { tcp_message_handler_.SetCallback(callback); }
 
 void TcpConnection::OnReadHandler(const void *buffer, size_t num) {
@@ -247,7 +250,7 @@ void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
   connections_.erase(fd);
 }
 
-std::shared_ptr<TcpConnection> TcpServer::GetConnectionByFd(const evutil_socket_t &fd) { return connections_[fd]; }
+std::shared_ptr<TcpConnection> &TcpServer::GetConnectionByFd(const evutil_socket_t &fd) { return connections_[fd]; }
 
 void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *sockaddr, int,
                                  void *const data) {
@@ -296,13 +299,25 @@ void TcpServer::ListenerCallbackInner(evutil_socket_t fd, struct sockaddr *socka
   MS_EXCEPTION_IF_NULL(conn);
   SetTcpNoDelay(fd);
   server->AddConnection(fd, conn);
-  conn->InitConnection(
-    [=](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
-      OnServerReceiveMessage on_server_receive = server->GetServerReceive();
-      if (on_server_receive) {
-        on_server_receive(conn, meta, protos, data, size);
-      }
-    });
+  if (PSContext::instance()->server_mode() == kServerModeHybrid ||
+      PSContext::instance()->server_mode() == kServerModeFL) {
+    conn->InitConnection(
+      [fd, server](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+        OnServerReceiveMessage on_server_receive = server->GetServerReceive();
+        if (on_server_receive) {
+          on_server_receive(server->GetConnectionByFd(fd), meta, protos, data, size);
+        }
+      });
+  } else {
+    conn->InitConnection(
+      [=](const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data, size_t size) {
+        OnServerReceiveMessage on_server_receive = server->GetServerReceive();
+        if (on_server_receive) {
+          on_server_receive(conn, meta, protos, data, size);
+        }
+      });
+  }
+
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
                     reinterpret_cast<void *>(conn.get()));
   MS_LOG(INFO) << "A client is connected, fd is " << fd;
@@ -405,13 +420,12 @@ void TcpServer::EventCallbackInner(struct bufferevent *bev, std::int16_t events,
                       << ", the error lib:" << ERR_lib_error_string(err)
                       << ", the error func:" << ERR_func_error_string(err);
     }
-    // Free connection structures
-    srv->RemoveConnection(conn->GetFd());
-
     // Notify about disconnection
     if (srv->client_disconnection_) {
       srv->client_disconnection_(*srv, *conn);
     }
+    // Free connection structures
+    srv->RemoveConnection(conn->GetFd());
   } else {
     MS_LOG(WARNING) << "Unhandled event:" << events;
   }
