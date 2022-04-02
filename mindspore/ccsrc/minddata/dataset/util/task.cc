@@ -54,7 +54,8 @@ void Task::operator()() {
     // the TaskGroup pointer and register. We move the registration logic to here (after we spawn) so we can
     // get the thread id.
     TaskGroup *vg = MyTaskGroup();
-    rc_ = vg->GetIntrpService()->Register(ss.str(), this);
+    std::string uuid = ss.str();
+    rc_ = vg->GetIntrpService()->Register(&uuid, this);
     if (rc_.IsOk()) {
       // Now we can run the given task.
       rc_ = fnc_obj_();
@@ -64,7 +65,7 @@ void Task::operator()() {
       if (rc_.StatusCode() == StatusCode::kMDNetWorkError) {
         MS_LOG(WARNING) << rc_;
       } else {
-        MS_LOG(INFO) << "Task: " << my_name_ << " - thread(" << ss.str() << ") is terminated with err msg: " << rc_;
+        MS_LOG(INFO) << "Task: " << my_name_ << " - thread(" << uuid << ") is terminated with err msg: " << rc_;
       }
       ShutdownGroup();
     }
