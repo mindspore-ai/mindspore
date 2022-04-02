@@ -27,6 +27,7 @@
 #include "tools/common/option.h"
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
+#include "include/version.h"
 
 namespace mindspore {
 namespace lite {
@@ -65,6 +66,11 @@ std::vector<std::string> MSTensorToStrings(const tensor::MSTensor *tensor) {
   MS_LOG(ERROR) << unsupport_string_tensor_log;
   return {""};
 #endif
+}
+
+String Version() {
+  String version = VERSION_STR;
+  return "MindSpore Lite " + version;
 }
 }  // namespace lite
 }  // namespace mindspore
