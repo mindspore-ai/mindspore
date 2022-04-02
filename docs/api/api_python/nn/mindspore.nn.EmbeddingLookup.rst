@@ -17,7 +17,7 @@ mindspore.nn.EmbeddingLookup
     - **vocab_size** (int) - 嵌入词典的大小。
     - **embedding_size** (int) - 每个嵌入向量的大小。
     - **param_init** (Union[Tensor, str, Initializer, numbers.Number]) - embedding_table的初始化方法。当指定为字符串，字符串取值请参见类 `Initializer` 。默认值：'normal'。
-    - **target** (str) - 指定执行操作的'target'。取值范围为['DEVICE', 'CPU']。默认值：'CPU'。
+    - **target** (str) - 指定执行操作的'target'。取值范围为['Ascend', 'GPU', 'CPU']。默认值：'CPU'。
     - **slice_mode** (str) - semi_auto_parallel或auto_parallel模式下的切片方式。该值必须通过nn.EmbeddingLookup获得。默认值：nn.EmbeddingLookup.BATCH_SLICE。
     - **manual_shapes** (tuple) - 字段切片模式下的伴随数组（accompaniment array），默认值：None。
     - **max_norm** (Union[float, None]) - 最大剪切值。数据类型必须为float16、float32或None。默认值：None。
@@ -30,7 +30,7 @@ mindspore.nn.EmbeddingLookup
 
     **输出：**
 
-    Tensor，shape为 :math:`(z_1, z_2, ..., z_N)` 的tensor。
+    Tensor，shape为 :math:`(z_1, z_2, ..., z_N)` 的Tensor。
 
     **异常：**
 

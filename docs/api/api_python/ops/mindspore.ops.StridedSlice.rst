@@ -21,7 +21,7 @@
 
     如果设置了 `new_ax_mask` 的第i位，则忽略 `begin` 、 `end` 和 `strides` ，并在输出Tensor的指定位置添加新的长度为1的维度。
 
-    对于5*6*7的Tensor， `x[:2, newaxis, :6]` 将产生一个shape为(2, 1, 7)的Tensor。
+    对于5*6*7的Tensor， `x[:2, newaxis, :6]` 将产生一个shape为 :math:`(2, 1, 7)` 的Tensor。
 
     如果设置了 `shrink_ax_mask` 的第i位，则第i个大小将维度收缩1，并忽略 `begin[i]` 、 `end[i]` 和 `strides[i]` 索引处的值。
 
@@ -43,7 +43,7 @@
     - **input_x** (Tensor) - 需要切片处理的输入Tensor。
     - **begin** (tuple[int]) - 指定开始切片的索引。输入为一个tuple，仅支持常量值。
     - **end** (tuple[int]) - 指定结束切片的索引。输入为一个tuple，仅支持常量值。
-    - **strides** (tuple[int]) - tuple，指定各维度切片的步长。仅支持常量值。
+    - **strides** (tuple[int]) - 指定各维度切片的步长。输入为一个tuple，仅支持常量值。
 
     **输出：**
 

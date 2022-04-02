@@ -10,7 +10,7 @@ mindspore.nn.Dropout
     论文 `Dropout: A Simple Way to Prevent Neural Networks from Overfitting <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ 中提出了该技术，并证明其能有效地减少过度拟合，防止神经元共适应。更多详细信息，请参见 `Improving neural networks by preventing co-adaptation of feature detectors <https://arxiv.org/pdf/1207.0580.pdf>`_ 。
 
     .. note::
-        每个通道将在每次构造调用时独立归零。
+        训练过程中每步对同一通道（或神经元）独立进行丢弃。
 
     **参数：**
 

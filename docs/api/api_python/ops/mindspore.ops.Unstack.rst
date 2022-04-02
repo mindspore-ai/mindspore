@@ -5,7 +5,7 @@
 
     根据指定轴对输入矩阵进行分解。
 
-    在指定轴上，矩阵分解的rank为 `R` 的Tensor，输出rank为 `(R-1)` 的Tensor。
+    若输入Tensor在指定的轴上的rank为 `R` ，则输出Tensor的rank为 `(R-1)` 。
 
     给定一个shape为 :math:`(x_1, x_2, ..., x_R)` 的Tensor。如果存在 :math:`0 \le axis` ，则输出Tensor的shape为 :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)` 。
 

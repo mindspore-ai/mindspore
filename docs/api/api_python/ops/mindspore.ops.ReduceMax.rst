@@ -13,7 +13,7 @@ mindspore.ops.ReduceMax
 
     **输入：**
 
-    - **x** (Tensor[Number]) - ReduceMax的输入，任意维度的Tensor，秩应小于8。其数据类型为number。
+    - **x** (Tensor[Number]) - ReduceMax的输入，任意维度的Tensor，秩应小于8。其数据类型为数值型。
     - **axis** (Union[int, tuple(int), list(int)]) - 指定计算维度。默认值：()，即计算所有元素的最大值。只允许常量值，取值范围[-rank(x), rank(x))。
 
     **输出：**

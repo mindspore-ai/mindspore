@@ -3,7 +3,7 @@ mindspore.nn.RNNCell
 
 .. py:class:: mindspore.nn.RNNCell(input_size: int, hidden_size: int, has_bias: bool = True, nonlinearity: str = 'tanh')
 
-    用于定义循环神经网络（RNN）的一个单元，激活函数是tanh或relu。
+    循环神经网络单元，激活函数是tanh或relu。
 
     .. math::
         h_t = \tanh(W_{ih} x_t + b_{ih} + W_{hh} h_{(t-1)} + b_{hh})
@@ -20,13 +20,13 @@ mindspore.nn.RNNCell
     - **nonlinearity** (str) - 用于选择非线性激活函数。取值可以是'tanh'或'relu'。默认值：'tanh'。
 
     **输入：**
-	
-    - **x** (Tensor) - 输入Tensor，其shape为(batch_size, `input_size`)。
-    - **hx** (Tensor) - 输入Tensor，其数据类型为mindspore.float32及shape为(batch_size, `hidden_size`)。 `hx` 的数据类型与 `x` 相同。
+
+    - **x** (Tensor) - 输入Tensor，其shape为 :math:`(batch\_size, input\_size)` 。
+    - **hx** (Tensor) - 输入Tensor，其数据类型为mindspore.float32及shape为 :math:`(batch\_size, hidden\_size)` 。 `hx` 的数据类型与 `x` 相同。
 
     **输出：**
 	
-    - **hx'** (Tensor) - shape为(batch_size, `hidden_size`)的Tensor。
+    - **hx'** (Tensor) - shape为 :math:`(batch\_size, hidden\_size)` 的Tensor。
 
     **异常：**
 	

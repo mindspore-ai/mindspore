@@ -24,7 +24,7 @@ mindspore.nn.DiceLoss
 
     **输出：**
 
-    Tensor，shape为每样本采样的Dice loss的Tensor。
+    Tensor，shape为每样本采样的Dice系数的Tensor。
 
     **异常：**
 

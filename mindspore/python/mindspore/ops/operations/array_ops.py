@@ -3390,7 +3390,7 @@ class StridedSlice(PrimitiveWithInfer):
     If the ith bit of `new_axis_mask` is set, `begin`, `end` and `strides` are ignored and a new length 1
     dimension is added at the specified position in tthe output tensor.
 
-    As for a 5*6*7 tensor, `x[:2, newaxis, :6]` will produce a tensor with shape (2, 1, 7).
+    As for a 5*6*7 tensor, `x[:2, newaxis, :6]` will produce a tensor with shape :math:`(2, 1, 7)` .
 
     If the ith bit of `shrink_axis_mask` is set, ith size shrinks the dimension by 1, taking on the value
     at index `begin[i]`, `end[i]` and `strides[i]` are ignored.

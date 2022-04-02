@@ -114,6 +114,9 @@ class LossBase(Cell):
                 and must be broadcastable to inputs (i.e., all dimensions must be either `1`,
                 or the same as the corresponding inputs dimension). Default: 1.0.
 
+        Returns:
+            Return the weighted loss.
+
         Examples:
             >>> class Net(nn.LossBase):
             ...     def __init__(self, reduction='mean'):
@@ -1080,8 +1083,8 @@ class BCELoss(LossBase):
         - **labels** (Tensor) - The label tensor with shape :math:`(N, *)`, the same shape and data type as `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
-        Otherwise, the output is a scalar.
+        Tensor, has the same dtype as `logits`. if `reduction` is 'none', then it has the same shape as `logits`.
+        Otherwise, it is a scalar Tensor.
 
     Raises:
         TypeError: If dtype of `logits`, `labels` or `weight` (if given) is neither float16 not float32.
