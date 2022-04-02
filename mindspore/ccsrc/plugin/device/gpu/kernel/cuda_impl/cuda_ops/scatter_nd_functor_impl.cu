@@ -96,6 +96,32 @@ __global__ void ScatterNdSub(const size_t unit_size, const size_t index_depth, c
 }
 
 template <typename T, typename S>
+__global__ void ScatterNdDiv(const size_t unit_size, const size_t index_depth, const size_t updates_size,
+                             const S *out_strides, const S *indices, const T *updates, T *input) {
+  int i, j;
+  for (size_t read_index = blockIdx.x * blockDim.x + threadIdx.x; read_index < (updates_size);
+       read_index += blockDim.x * gridDim.x) {
+    size_t write_index = 0;
+    bool out_bound = false;
+
+    i = read_index / unit_size;
+    j = read_index % unit_size;
+
+    for (size_t k = 0; k < index_depth; k++) {
+      S indices_i = indices[i * index_depth + k];
+      out_bound |= indices_i < 0;
+      write_index += indices_i * out_strides[k] * unit_size;
+    }
+
+    write_index += j;
+
+    if (!out_bound) {
+      MsAtomicDiv(&input[write_index], updates[read_index]);
+    }
+  }
+}
+
+template <typename T, typename S>
 void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit_size, const size_t &num_units,
                          const size_t &index_depth, const S *out_strides, const S *indices, const T *updates, T *input,
                          cudaStream_t cuda_stream) {
@@ -109,6 +135,9 @@ void CalScatterNdFunctor(enum ScatterNdFunctorType func_type, const size_t &unit
         unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     case SCATTER_ND_FUNC_SUB:
       return ScatterNdSub<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
+        unit_size, index_depth, updates_size, out_strides, indices, updates, input);
+    case SCATTER_ND_FUNC_DIV:
+      return ScatterNdDiv<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(
         unit_size, index_depth, updates_size, out_strides, indices, updates, input);
     default:
       break;

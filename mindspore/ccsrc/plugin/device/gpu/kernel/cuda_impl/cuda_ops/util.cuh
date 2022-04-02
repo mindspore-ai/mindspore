@@ -461,6 +461,17 @@ __device__ static inline half MsAtomicMul(half *address, half val) {
 
 // atomic div
 
+__device__ static inline double MsAtomicDiv(double *address, const double val) {
+  unsigned long long int *address_as_ull = (unsigned long long int *)address;  // NOLINT
+  unsigned long long int old = *address_as_ull;                                // NOLINT
+  unsigned long long int assumed;                                              // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ull, assumed, __double_as_longlong(__longlong_as_double(assumed) / val));
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
+}
+
 __device__ static inline float MsAtomicDiv(int *address, const int val) {
   unsigned int *address_as_ui = (unsigned int *)address;  // NOLINT
   unsigned int old = *address_as_ui;                       // NOLINT
@@ -490,6 +501,25 @@ __device__ static inline char MsAtomicDiv(char* address, char val) {
     return old;
 }
 
+__device__ static inline int8_t MsAtomicDiv(int8_t *address, int8_t val) {
+  size_t offset = (size_t)address & 3;
+  uint32_t *address_as_ui = (uint32_t *)((char *)address - offset);  // NOLINT
+  uint32_t old = *address_as_ui;
+  uint32_t shift = offset * 8;
+  uint32_t old_byte;
+  uint32_t newval;
+  uint32_t assumed;
+
+  do {
+    assumed = old;
+    old_byte = (old >> shift) & 0xff;
+    newval = static_cast<uint8_t>(old_byte / val);
+    newval = (old & ~(0x000000ff << shift)) | (newval << shift);
+    old = atomicCAS(address_as_ui, assumed, newval);
+  } while (assumed != old);
+  return __byte_perm(old, 0, offset);
+}
+
 __device__ static inline unsigned char MsAtomicDiv(unsigned char* address, unsigned char val) {
     unsigned int *base_address = (unsigned int *)((size_t)address & ~3);
     unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
@@ -517,6 +547,38 @@ __device__ static inline float MsAtomicDiv(float *address, const float val) {
     old = atomicCAS(address_as_ui, assumed, __float_as_uint(uint_as_float(assumed) / val));
   } while (assumed != old);  // NOLINT
   return __longlong_as_double(old);
+}
+
+// Won't run, just to align with ScatterNdUpdate<bool>(...)
+__device__ static inline bool MsAtomicDiv(bool *address, bool val) {
+  *address = address && val;
+  return address[0];
+}
+
+__device__ static inline unsigned char MsAtomicDiv(short *address, short val) {  // NOLINT
+  bool is_4_byte_aligned = ((size_t)address & 2) == 0;
+  unsigned int *aligned = (unsigned int *)((size_t)address & ~2);
+  unsigned int old = *aligned;
+  unsigned int assumed;
+
+  do {
+    assumed = old;
+    unsigned int replacement;
+
+    if (is_4_byte_aligned) {
+      replacement = (old & 0xffff0000) | (((old & 0xffff) / val) & 0xffff);
+    } else {
+      replacement = old / ((unsigned int)val << 16);
+    }
+
+    old = atomicCAS(aligned, assumed, replacement);
+  } while (assumed != old);
+
+  if (is_4_byte_aligned) {
+    return (short)(old & 0xffff);  // NOLINT
+  } else {
+    return (short)(old >> 16);  // NOLINT
+  }
 }
 
 __device__ static inline half MsAtomicDiv(half *address, half val) {
