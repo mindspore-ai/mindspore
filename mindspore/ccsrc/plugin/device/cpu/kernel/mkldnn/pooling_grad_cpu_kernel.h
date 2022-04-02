@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include <map>
+#include <unordered_map>
 
 #include "plugin/device/cpu/kernel/mkldnn/pooling_cpu_kernel.h"
 
@@ -45,7 +45,7 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
-    static std::map<std::string, std::vector<KernelAttr>> support_list = {
+    static std::unordered_map<std::string, std::vector<KernelAttr>> support_list = {
       {kAvgPoolGrad,
        {{KernelAttr()
            .AddInputAttr(kNumberTypeFloat32)
@@ -76,13 +76,17 @@ class PoolingGradCpuKernelMod : public PoolingCpuKernelMod {
  private:
   void InitPoolingGradFields(const CNodePtr &kernel_node);
   void InitInputOutputSize(const CNodePtr &kernel_node) override;
-  void ComputeMaxValueIndex(void *src, void *dst, void *work_array) const;
+  void ComputeMaxValueIndex(void *src, void *dst, void *work_array);
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  void ExecuteForwardByMSThreadPool(const std::unordered_map<int, dnnl::memory> &arguments);
+#endif
 
+  size_t grad_index_{0};
   dnnl::memory::desc src_desc_{};
   dnnl::memory::desc dst_desc_{};
   dnnl::memory::desc workspace_desc_{};
-  dnnl::pooling_forward::primitive_desc forward_prim_desc_{};
-  size_t grad_index_{0};
+  std::shared_ptr<dnnl::pooling_forward> primitive_forward_{nullptr};
+  ParallelSearchInfo forward_parallel_info_{};
   std::string kernel_type_{kUnknown};
 };
 }  // namespace kernel
