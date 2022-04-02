@@ -5,6 +5,8 @@ mindspore.dataset.vision.c_transforms.RandomHorizontalFlip
 
     对输入图像按给定的概率进行水平随机翻转。
 
+    .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
+
     **参数：**
 
     - **prob**  (float, 可选) - 图像被翻转的概率，必须在 [0, 1] 范围内, 默认值：0.5。

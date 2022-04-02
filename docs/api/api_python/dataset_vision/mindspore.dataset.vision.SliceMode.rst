@@ -7,5 +7,5 @@ mindspore.dataset.vision.SliceMode
 
     可选枚举值为：SliceMode.PAD、SliceMode.DROP。
 
-    - **SliceMode.PAD** - 当Tensor无法进行整数切分时，对剩余部分进行填充。
-    - **SliceMode.DROP** - 当Tensor无法进行整数切分时，对剩余部分进行丢弃。
+    - **SliceMode.PAD** - 当图像无法进行整数块切分时，填充最后一个图像块至指定切分尺寸大小。
+    - **SliceMode.DROP** - 当图像无法进行整数块切分时，丢弃最后一个图像块。

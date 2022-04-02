@@ -335,7 +335,7 @@ class CenterCrop(ImageTensorOperation):
             The size value(s) must be larger than 0.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence.
+        TypeError: If `size` is not of type int or sequence.
         ValueError: If `size` is less than or equal to 0.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -451,7 +451,7 @@ class Crop(ImageTensorOperation):
 
     Raises:
         TypeError: If `coordinates` is not of type sequence.
-        TypeError: If `size` is not of type integer or sequence.
+        TypeError: If `size` is not of type int or sequence.
         ValueError: If `coordinates` is less than 0.
         ValueError: If `size` is less than or equal to 0.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
@@ -530,8 +530,8 @@ class CutOut(ImageTensorOperation):
         num_patches (int, optional): Number of patches to be cut out of an image, must be larger than 0. (default=1).
 
     Raises:
-        TypeError: If `length` is not of type integer.
-        TypeError: If `num_patches` is not of type integer.
+        TypeError: If `length` is not of type int.
+        TypeError: If `num_patches` is not of type int.
         ValueError: If `length` is less than or equal 0.
         ValueError: If `num_patches` is less than or equal 0.
         RuntimeError: If given tensor shape is not <H, W, C>.
@@ -633,7 +633,7 @@ class GaussianBlur(ImageTensorOperation):
             is provided, the sigma will be calculated as ((kernel_size - 1) * 0.5 - 1) * 0.3 + 0.8.
 
     Raises:
-        TypeError: If `kernel_size` is not of type integer or sequence of integer.
+        TypeError: If `kernel_size` is not of type int or sequence of int.
         TypeError: If `sigma` is not of type float or sequence of float.
         ValueError: If `kernel_size` is not positive and odd.
         ValueError: If `sigma` is not positive.
@@ -824,7 +824,7 @@ class NormalizePad(ImageTensorOperation):
     Raises:
         TypeError: If `mean` is not of type sequence.
         TypeError: If `std` is not of type sequence.
-        TypeError: If `dtype` is not of type string.
+        TypeError: If `dtype` is not of type str.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `std` is not in range (0.0, 255.0].
         RuntimeError: If given tensor shape is not <H, W, C>.
@@ -881,8 +881,8 @@ class Pad(ImageTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `padding` is not of type integer or sequence of integer.
-        TypeError: If `fill_value` is not of type integer or tuple of integer.
+        TypeError: If `padding` is not of type int or sequence of int.
+        TypeError: If `fill_value` is not of type int or tuple of int.
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `padding` is negative.
         ValueError: If `fill_value` is not in range [0, 255].
@@ -987,12 +987,12 @@ class RandomAffine(ImageTensorOperation):
             (default=0, filling is performed).
 
     Raises:
-        TypeError: If `degrees` is not of type integer, float or sequence.
+        TypeError: If `degrees` is not of type int, float or sequence.
         TypeError: If `translate` is not of type sequence.
         TypeError: If `scale` is not of type sequence.
-        TypeError: If `shear` is not of type integer, float or sequence.
+        TypeError: If `shear` is not of type int, float or sequence.
         TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `fill_value` is not of type integer or tuple of integer.
+        TypeError: If `fill_value` is not of type int or tuple of int.
         ValueError: If `degrees` is negative.
         ValueError: If `translate` is not in range [-1.0, 1.0].
         ValueError: If `scale` is negative.
@@ -1070,7 +1070,7 @@ class RandomAutoContrast(ImageTensorOperation):
 
     Raises:
         TypeError: If `cutoff` is not of type float.
-        TypeError: If `ignore` is not of type integer or sequence of integer.
+        TypeError: If `ignore` is not of type int or sequence of int.
         TypeError: If `prob` is not of type float.
         ValueError: If `cutoff` is not in range [0.0, 50.0).
         ValueError: If `ignore` is not in range [0, 255].
@@ -1246,10 +1246,10 @@ class RandomCrop(ImageTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `padding` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `padding` is not of type int or sequence of int.
         TypeError: If `pad_if_needed` is not of type boolean.
-        TypeError: If `fill_value` is not of type integer or sequence of integer.
+        TypeError: If `fill_value` is not of type int or tuple of int.
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
@@ -1321,11 +1321,11 @@ class RandomCropDecodeResize(ImageTensorOperation):
             If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `max_attempts` is not of type integer.
+        TypeError: If `max_attempts` is not of type int.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -1407,10 +1407,10 @@ class RandomCropWithBBox(ImageTensorOperation):
               value of edge.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `padding` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `padding` is not of type int or sequence of int.
         TypeError: If `pad_if_needed` is not of type boolean.
-        TypeError: If `fill_value` is not of type integer or sequence of integer.
+        TypeError: If `fill_value` is not of type int or tuple of int.
         TypeError: If `padding_mode` is not of type :class:`mindspore.dataset.vision.Border`.
         ValueError: If `size` is not positive.
         ValueError: If `padding` is negative.
@@ -1604,7 +1604,7 @@ class RandomLighting(ImageTensorOperation):
 
 class RandomPosterize(ImageTensorOperation):
     """
-    Reduce the number of bits for each RGB channel to posterize the input image randomly with a given probability.
+    Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
     Args:
         bits (Union[int, Sequence[int]], optional): Range of random posterize to compress image.
@@ -1614,7 +1614,7 @@ class RandomPosterize(ImageTensorOperation):
             magnitude operation (default=(8, 8)).
 
     Raises:
-        TypeError: If `bits` is not of type integer or sequence of integer.
+        TypeError: If `bits` is not of type int or sequence of int.
         ValueError: If `bits` is not in range [1, 8].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1671,11 +1671,11 @@ class RandomResizedCrop(ImageTensorOperation):
             crop_area (default=10). If exceeded, fall back to use center_crop instead.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
         TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
-        TypeError: If `max_attempts` is not of type integer.
+        TypeError: If `max_attempts` is not of type int.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -1736,11 +1736,11 @@ class RandomResizedCropWithBBox(ImageTensorOperation):
             crop area (default=10). If exceeded, fall back to use center crop instead.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
-        TypeError: If `interpolation` is not of type Inter.
-        TypeError: If `max_attempts` is not of type integer.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `max_attempts` is not of type int.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -1785,7 +1785,7 @@ class RandomResize(ImageTensorOperation):
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1825,7 +1825,7 @@ class RandomResizeWithBBox(ImageTensorOperation):
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -1883,11 +1883,11 @@ class RandomRotation(ImageTensorOperation):
             The fill_value values must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `degrees` is not of type integer, float or sequence.
-        TypeError: If `resample` is not of type Inter.
+        TypeError: If `degrees` is not of type int, float or sequence.
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `expand` is not of type boolean.
         TypeError: If `center` is not of type tuple.
-        TypeError: If `fill_value` is not of type integer or tuple of integer.
+        TypeError: If `fill_value` is not of type int or tuple of int.
         ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2160,8 +2160,8 @@ class Resize(ImageTensorOperation):
               should be in 3 channels format.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2207,8 +2207,8 @@ class ResizeWithBBox(ImageTensorOperation):
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
-        TypeError: If `interpolation` is not of type Inter.
+        TypeError: If `size` is not of type int or sequence of int.
+        TypeError: If `interpolation` is not of type :class:`mindspore.dataset.vision.Inter`.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2286,11 +2286,11 @@ class Rotate(ImageTensorOperation):
             The fill_value values must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `degrees` is not of type integer or float.
-        TypeError: If `resample` is not of type Inter.
+        TypeError: If `degrees` is not of type int or float.
+        TypeError: If `resample` is not of type :class:`mindspore.dataset.vision.Inter`.
         TypeError: If `expand` is not of type bool.
         TypeError: If `center` is not of type tuple.
-        TypeError: If `fill_value` is not of type integer or tuple of integer.
+        TypeError: If `fill_value` is not of type int or tuple of int.
         ValueError: If `fill_value` is not in range [0, 255].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
@@ -2344,10 +2344,10 @@ class SlicePatches(ImageTensorOperation):
             The fill_value must be in range [0, 255] (default=0).
 
     Raises:
-        TypeError: If `num_height` is not of type integer.
-        TypeError: If `num_width` is not of type integer.
-        TypeError: If `slice_mode` is not of type Inter.
-        TypeError: If `fill_value` is not of type integer.
+        TypeError: If `num_height` is not of type int.
+        TypeError: If `num_width` is not of type int.
+        TypeError: If `slice_mode` is not of type :class:`mindspore.dataset.vision.Inter`.
+        TypeError: If `fill_value` is not of type int.
         ValueError: If `num_height` is not positive.
         ValueError: If `num_width` is not positive.
         ValueError: If `fill_value` is not in range [0, 255].
@@ -2401,10 +2401,10 @@ class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
             If exceeded, fall back to use center_crop instead. The max_attempts value must be positive.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         TypeError: If `scale` is not of type tuple or list.
         TypeError: If `ratio` is not of type tuple or list.
-        TypeError: If `max_attempts` is not of type integer.
+        TypeError: If `max_attempts` is not of type int.
         ValueError: If `size` is not positive.
         ValueError: If `scale` is negative.
         ValueError: If `ratio` is negative.
@@ -2457,7 +2457,7 @@ class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
             If size is a sequence of length 2, an image of size (height, width) will be cropped.
 
     Raises:
-        TypeError: If `size` is not of type integer or sequence of integer.
+        TypeError: If `size` is not of type int or sequence of int.
         ValueError: If `size` is not positive.
         RuntimeError: If given tensor is not a 1D sequence.
 
@@ -2497,7 +2497,7 @@ class UniformAugment(ImageTensorOperation):
     Raises:
         TypeError: If `transform` is not an image processing operation
             in :class:`mindspore.dataset.vision.c_transforms`.
-        TypeError: If `num_ops` is not of type integer.
+        TypeError: If `num_ops` is not of type int.
         ValueError: If `num_ops` is not positive.
 
     Supported Platforms:
