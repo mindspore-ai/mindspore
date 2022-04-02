@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-#include "common/graph_kernel/lite_adapter/build_kernel.h"
+#define USE_DEPRECATED_API
+#include "tools/graph_kernel/converter/akg/kernel_builder.h"
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include "common/graph_kernel/core/graph_kernel_callback.h"
-#include "common/graph_kernel/lite_adapter/akg_build.h"
+#include "tools/graph_kernel/converter/akg/akg_build.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
+#include "ops/primitive_c.h"
 #include "ops/custom.h"
 #include "utils/anf_utils.h"
 #include "utils/log_adapter.h"
@@ -48,11 +50,8 @@ AnfNodePtr KernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const C
   if (func_graph == nullptr || cnode == nullptr) {
     return nullptr;
   }
-  auto primc = std::make_shared<ops::Custom>();
-  if (primc == nullptr) {
-    return nullptr;
-  }
-  primc->set_type("GraphKernel");
+  auto op = std::make_shared<ops::Custom>();
+  op->set_type("GraphKernel");
   std::map<std::string, std::vector<uint8_t>> custom_attrs;
   auto fg = GetCNodeFuncGraph(cnode);
   MS_EXCEPTION_IF_NULL(fg);
@@ -82,10 +81,10 @@ AnfNodePtr KernelBuilder::CreateCustomOp(const FuncGraphPtr &func_graph, const C
   custom_attrs["outputs_shape"] = std::vector<uint8_t>(output_shape_str.begin(), output_shape_str.end());
   custom_attrs["outputs_format"] = std::vector<uint8_t>(output_format_str.begin(), output_format_str.end());
   custom_attrs["outputs_type"] = std::vector<uint8_t>(output_type_str.begin(), output_type_str.end());
-  primc->set_attr(custom_attrs);
+  op->set_attr(custom_attrs);
   auto inputs = cnode->inputs();
-  inputs.erase(inputs.begin());
-  auto custom_cnode = func_graph->NewCNode(primc, inputs);
+  inputs[0] = NewValueNode(op->GetPrim());
+  auto custom_cnode = func_graph->NewCNode(inputs);
   custom_cnode->set_fullname_with_scope(cnode->fullname_with_scope());
   custom_cnode->set_abstract(cnode->abstract()->Clone());
   return custom_cnode;

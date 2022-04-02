@@ -5,12 +5,33 @@ if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     add_compile_definitions(ENABLE_OPENSSL)
 endif()
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
+set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
 set(CCSRC_SRC
         ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
         ${CCSRC_DIR}/backend/common/optimizer/visit.cc
         ${CCSRC_DIR}/backend/common/optimizer/optimizer.cc
         )
+
+if(MSLITE_ENABLE_GRAPH_KERNEL)
+    add_compile_definitions(MSLITE_ENABLE_GRAPH_KERNEL)
+    file(GLOB_RECURSE GRAPH_KERNEL_SRC
+            ${TOOLS_DIR}/graph_kernel/common/*.cc
+            ${TOOLS_DIR}/graph_kernel/converter/*.cc
+            ${CCSRC_DIR}/common/graph_kernel/core/*.cc
+            ${CCSRC_DIR}/common/graph_kernel/expanders/*.cc
+            ${CCSRC_DIR}/common/graph_kernel/model/*.cc
+            ${CCSRC_DIR}/common/graph_kernel/split_model/*.cc
+            ${CCSRC_DIR}/common/graph_kernel/graph_kernel_flags.cc
+            ${CCSRC_DIR}/kernel/akg/akg_kernel_json_generator.cc
+            ${CCSRC_DIR}/backend/common/pass/getitem_tuple.cc
+            ${CCSRC_DIR}/backend/common/optimizer/const_input_to_attr.cc
+            )
+    set(CCSRC_SRC
+            ${CCSRC_SRC}
+            ${GRAPH_KERNEL_SRC}
+            )
+endif()
 
 include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 

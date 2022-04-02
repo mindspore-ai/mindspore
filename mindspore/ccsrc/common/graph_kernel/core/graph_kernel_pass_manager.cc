@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/graph_kernel/adapter/graph_kernel_pass_manager.h"
+#include "common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 #include <iomanip>
 

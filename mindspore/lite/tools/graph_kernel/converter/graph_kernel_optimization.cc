@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/graph_kernel/lite_adapter/graph_kernel_optimization.h"
+#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 
 #include <vector>
 #include <string>
@@ -27,10 +27,11 @@
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
-#include "common/graph_kernel/lite_adapter/build_kernel.h"
-#include "common/graph_kernel/lite_adapter/convert_const_input_to_attr.h"
-#include "common/graph_kernel/lite_adapter/graph_kernel_expander_lite.h"
-#include "common/graph_kernel/lite_adapter/graph_kernel_pass_manager.h"
+#include "common/graph_kernel/core/graph_kernel_pass_manager.h"
+
+#include "tools/graph_kernel/converter/akg/kernel_builder.h"
+#include "tools/graph_kernel/converter/convert_const_input_to_attr.h"
+#include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 
 namespace mindspore::graphkernel {
 using opt::GetitemTuple;
@@ -72,8 +73,8 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
   return pm;
 }
 
-PassManagerPtr GraphKernelOptimizer::PostProcess() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(2, "postprocess");
+PassManagerPtr GraphKernelOptimizer::BuildKernel() const {
+  auto pm = std::make_shared<GraphKernelPassManager>(2, "buildkernel");
   // build akg and replace graph kernel nodes
   pm->Add(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;
@@ -83,7 +84,7 @@ void GraphKernelOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
   optimizer->AddPassManager(Cluster());
   optimizer->AddPassManager(Split());
-  optimizer->AddPassManager(PostProcess());
+  optimizer->AddPassManager(BuildKernel());
 
   auto mng = kernel_graph->manager();
   if (mng == nullptr) {

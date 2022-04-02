@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_LITE_ADAPTER_RUNTIME_AKG_KERNEL_H_
-#define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_LITE_ADAPTER_RUNTIME_AKG_KERNEL_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_
 #include <vector>
 #include <string>
 #include "src/lite_kernel.h"
-#include "common/graph_kernel/lite_adapter/common/graph_kernel_op_parameter.h"
+#include "nnacl/custom_parameter.h"
 
 namespace mindspore::kernel {
 using AkgParallelLambda = int (*)(int task_id, int num_task, void *cdata);
@@ -29,7 +29,8 @@ class AkgKernel : public LiteKernel {
   AkgKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {
-    params_ = reinterpret_cast<GraphKernelParameter *>(op_parameter_);
+    // in PopulateCustomParameter, the primitive is store in attr_data[0]
+    params_ = static_cast<void *>(reinterpret_cast<CustomParameter *>(op_parameter_)->attr_data[0]);
     ExtractKernelName();
   }
   ~AkgKernel() override;
@@ -49,7 +50,7 @@ class AkgKernel : public LiteKernel {
  protected:
   void ExtractKernelName();
 
-  GraphKernelParameter *params_{nullptr};
+  void *params_{nullptr};
   void *handle_{nullptr};
   void *kernel_func_{nullptr};
   std::string kernel_name_;
@@ -58,4 +59,4 @@ class AkgKernel : public LiteKernel {
   void *cached_runtimeargs_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_LITE_ADAPTER_RUNTIME_AKG_KERNEL_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_

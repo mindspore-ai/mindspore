@@ -18,26 +18,26 @@
 #include <set>
 
 #include "common/graph_kernel/expanders/expander_factory.h"
-#include "common/graph_kernel/lite_adapter/expanders/activation.h"
+#include "tools/graph_kernel/converter/expanders/activation.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class MulFusion : public OpDesc {
+class SubFusion : public OpDesc {
  public:
-  MulFusion() {
+  SubFusion() {
     (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>());
     (void)validators_.emplace_back(std::make_unique<CheckActivationType>(ActivationType::NO_ACTIVATION));
   }
-  ~MulFusion() = default;
+  ~SubFusion() = default;
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
     const auto &input_y = inputs[1];
-    auto result = gb.Mul(input_x, input_y);
+    auto result = gb.Sub(input_x, input_y);
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("MulFusion", MulFusion);
+OP_EXPANDER_REGISTER("SubFusion", SubFusion);
 }  // namespace mindspore::graphkernel::expanders

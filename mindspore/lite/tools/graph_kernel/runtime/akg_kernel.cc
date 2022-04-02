@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/graph_kernel/lite_adapter/runtime/akg_kernel.h"
+#include "tools/graph_kernel/runtime/akg_kernel.h"
 #include <dlfcn.h>
 #include <algorithm>
 #include "src/tensor.h"
@@ -60,7 +60,7 @@ class AkgCallBack {
 }  // namespace
 
 void AkgKernel::ExtractKernelName() {
-  auto prim = static_cast<schema::Primitive *>(params_->prim_)->value_as_Custom();
+  auto prim = static_cast<schema::Primitive *>(params_)->value_as_Custom();
   for (size_t i = 0; i < prim->attr()->size(); i++) {
     auto attr = prim->attr()->Get(i);
     if (attr->name()->str() == "kernel_name") {

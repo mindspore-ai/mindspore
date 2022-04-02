@@ -24,6 +24,8 @@
 #include "tools/common/meta_graph_serializer.h"
 #include "tools/anf_exporter/anf_exporter.h"
 #include "include/version.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
+#include "tools/graph_kernel/converter/graph_kernel_optimization.h"
 #ifdef SUPPORT_TRAIN
 #include "src/train/train_populate_parameter.h"
 #endif
@@ -160,6 +162,12 @@ schema::MetaGraphT *Converter::TransferFuncGraph(const std::unique_ptr<converter
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
     return nullptr;
   }
+
+#ifdef MSLITE_ENABLE_GRAPH_KERNEL
+  if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
+    graphkernel::GraphKernelOptimize(func_graph);
+  }
+#endif
 
   // protobuf -> flatbuffer
   auto meta_graph = Export(func_graph, false, false, flag->trainModel);

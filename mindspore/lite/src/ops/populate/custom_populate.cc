@@ -16,6 +16,7 @@
 #include "src/ops/populate/populate_register.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
+#include "nnacl/custom_parameter.h"
 using mindspore::schema::PrimitiveType_Custom;
 
 namespace mindspore {
@@ -38,6 +39,17 @@ OpParameter *PopulateCustomParameter(const void *prim) {
     }
     memset(param, 0, sizeof(OpParameter));
     param->type_ = PrimType_Inner_ShapeFusion;
+    return reinterpret_cast<OpParameter *>(param);
+  } else if (type == "GraphKernel") {
+    auto *param = static_cast<CustomParameter *>(malloc(sizeof(CustomParameter)));
+    if (param == nullptr) {
+      MS_LOG(ERROR) << "malloc CustomParameter failed.";
+      return nullptr;
+    }
+    memset(param, 0, sizeof(CustomParameter));
+    param->op_parameter_.type_ = PrimType_Inner_GraphKernel;
+    // Just use the attr_data pointer to save the prim directly, the inner value is parsed as necessary.
+    param->attr_data[0] = static_cast<char *>(const_cast<void *>(prim));
     return reinterpret_cast<OpParameter *>(param);
   } else {
     MS_LOG(ERROR) << "Unsupported custom type: " << type;

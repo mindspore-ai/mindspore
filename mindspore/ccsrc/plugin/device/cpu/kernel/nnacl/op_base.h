@@ -497,8 +497,9 @@ enum PrimType {
   PrimType_Inner_GltextureToOpencl = 10001,
   PrimType_Inner_Identity = 10002,
   PrimType_Inner_ShapeFusion = 10003,
+  PrimType_Inner_GraphKernel = 10004,
   PrimType_InnerOpMin = PrimType_Inner_ToFormat,
-  PrimType_InnerOpMax = PrimType_Inner_ShapeFusion + 1
+  PrimType_InnerOpMax = PrimType_Inner_GraphKernel + 1
 };
 
 typedef enum FormatC {

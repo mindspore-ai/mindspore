@@ -23,7 +23,7 @@
 #include "src/common/utils.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/infer/infer_register.h"
-#include "common/graph_kernel/lite_adapter/common/graph_kernel_op_parameter.h"
+#include "nnacl/custom_parameter.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -112,10 +112,11 @@ int SetOutputsType(TensorC **outputs, size_t outputs_size, const std::string &ou
 }
 }  // namespace
 
-int InferShape(const TensorC **inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int InferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                OpParameter *parameter) {
-  auto param = reinterpret_cast<GraphKernelParameter *>(parameter);
-  auto prim = static_cast<schema::Primitive *>(param->prim_)->value_as_Custom();
+  // in PopulateCustomParameter, the primitive is store in attr_data[0]
+  auto param = reinterpret_cast<CustomParameter *>(parameter)->attr_data[0];
+  auto prim = reinterpret_cast<schema::Primitive *>(param)->value_as_Custom();
   for (size_t i = 0; i < prim->attr()->size(); i++) {
     auto attr = prim->attr()->Get(i);
     if (attr->name()->str() == "outputs_shape") {
@@ -142,7 +143,7 @@ int InferShape(const TensorC **inputs, size_t inputs_size, TensorC **outputs, si
 #ifdef __cplusplus
 extern "C" {
 #endif
-int GraphKernelInferShape(const TensorC **inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+int GraphKernelInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                           OpParameter *parameter) {
   return mindspore::graphkernel::InferShape(inputs, inputs_size, outputs, outputs_size, parameter);
 }
