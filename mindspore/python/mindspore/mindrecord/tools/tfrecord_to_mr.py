@@ -75,7 +75,7 @@ class TFRecordToMR:
         source (str): TFRecord file to be transformed.
         destination (str): MindRecord file path to transform into, ensure that no file with the same name
             exists in the directory.
-        feature_dict (dict[str, `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_]): Dictionary
+        feature_dict (dict[str, `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ ]): Dictionary
             that states the feature type, and `VarLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/VarLenFeature>`_
             is not supported.
         bytes_fields (list[str], optional): The bytes fields which are in `feature_dict` and can be images bytes.
