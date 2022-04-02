@@ -84,6 +84,14 @@ mindspore.nn.Optimizer
 
         Parameter，单个 `Parameter` 或 `Parameter` 列表。如果使用了动态学习率，返回用于计算学习率的 `LearningRateSchedule` 或 `LearningRateSchedule` 列表。
 
+    .. py:method:: get_weight_decay()
+
+        优化器调用该接口获取当前步骤（step）的weight decay值。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可在参数更新前调用该接口获取weight decay值。
+
+        **返回：**
+
+        float，当前步骤的weight decay值。
+
     .. py:method:: gradients_centralization(gradients)
 
         梯度中心化。
