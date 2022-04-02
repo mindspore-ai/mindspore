@@ -59,6 +59,7 @@ using AnyList = std::vector<Any>;
 using AnyListPtr = std::shared_ptr<AnyList>;
 
 struct OpRunInfo {
+  bool is_infer = false;
   bool is_gradient_out = false;
   std::string op_name;
   Primitive *primitive;

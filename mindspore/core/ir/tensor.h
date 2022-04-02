@@ -354,6 +354,16 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \param[in] flag Whether this Tensor is initialized.
   void set_init_flag(bool flag) { init_flag_ = flag; }
 
+  /// \brief Check if this Tensor is forward output.
+  ///
+  /// \return Whether this Tensor is forward output.
+  bool is_forward_output() const { return is_forward_output_; }
+
+  /// \brief Set the forward output flag of this Tensor.
+  ///
+  /// \param[in] is_forward_output Whether this Tensor is forward output.
+  void set_is_forward_output(bool is_forward_output) { is_forward_output_ = is_forward_output; }
+
   /// \brief Get the device address.
   ///
   /// \return The device address.
@@ -548,6 +558,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   void ExecuteLazyTask() const;
 
   bool init_flag_{false};
+  bool is_forward_output_{false};
   TensorDataPtr data_{nullptr};
   std::string id_{""};
   mutable std::shared_ptr<WaitEvent> event_{nullptr};

@@ -2077,6 +2077,7 @@ void GradExecutor::SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr
     if (forward_op_tensor_id.find(tensor->id()) == forward_op_tensor_id.end() || tensor->device_address() == nullptr) {
       continue;
     }
+    tensor->set_is_forward_output(true);
     tensor_id_with_tensor_object[tensor->id()].emplace_back(tensor);
     top_cell()->forward_op_output_id().insert(tensor->id());
     MS_LOG(DEBUG) << "Save forward tensor " << tensor.get() << " id " << tensor->id()
@@ -2213,7 +2214,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info) {
   // get graph info for checking it whether existing in the cache
   GetSingleOpGraphInfo(op_exec_info, input_tensors, tensors_mask, &graph_info);
 #if defined(__APPLE__)
-  session::OpRunInfo op_run_info = {false,
+  session::OpRunInfo op_run_info = {true,
+                                    false,
                                     op_exec_info->op_name,
                                     op_exec_info->py_primitive.get(),
                                     op_exec_info->abstract,
@@ -2227,7 +2229,8 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info) {
                                     input_tensors,
                                     cur_target};
 #else
-  session::OpRunInfo op_run_info = {false,
+  session::OpRunInfo op_run_info = {true,
+                                    false,
                                     op_exec_info->op_name,
                                     op_exec_info->py_primitive.get(),
                                     op_exec_info->abstract,
