@@ -44,7 +44,7 @@ AnfNodePtr GetOutputItem(const FuncGraphManagerPtr &manager, const CNodePtr &cno
   while (!depend_nodes.empty()) {
     auto node = depend_nodes.back();
     depend_nodes.pop_back();
-    for (auto node_index : manager->node_users()[node]) {
+    for (const auto &node_index : manager->node_users()[node]) {
       if (common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimDepend) && node_index.second == 1) {
         (void)depend_nodes.emplace_back(node_index.first);
       } else if (common::AnfAlgo::CheckPrimitiveType(node_index.first, prim::kPrimTupleGetItem)) {
@@ -147,7 +147,7 @@ std::vector<KernelWithIndex> GetCNodeNeighborFraczNodes(const FuncGraphManagerPt
       auto output = GetOutputItem(manager, cnode, groups, i);
       if (output != nullptr) {
         (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                             [](KernelWithIndex node_index) {
+                             [](const KernelWithIndex &node_index) {
                                return KernelWithIndex{node_index.first, node_index.second - 1};
                              });
       }
@@ -162,7 +162,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
   auto node_user = manager->node_users();
   if (node->isa<Parameter>()) {
     std::transform(node_user[node].begin(), node_user[node].end(), std::back_inserter(ret),
-                   [](KernelWithIndex node_index) {
+                   [](const KernelWithIndex &node_index) {
                      return KernelWithIndex{node_index.first, node_index.second - 1};
                    });
   }
@@ -178,7 +178,7 @@ std::vector<KernelWithIndex> GetNeighborFraczNodes(const FuncGraphManagerPtr &ma
     auto output = GetOutputItem(manager, cnode, groups, index);
     if (output != nullptr) {
       (void)std::transform(node_user[output].begin(), node_user[output].end(), std::back_inserter(ret),
-                           [](KernelWithIndex node_index) {
+                           [](const KernelWithIndex &node_index) {
                              return KernelWithIndex{node_index.first, node_index.second - 1};
                            });
     }
@@ -253,6 +253,7 @@ bool SetFraczGroupAttr::Run(const FuncGraphPtr &func_graph) {
     if (node->isa<Parameter>()) {
       // transmit fracz_group attr through multi graph by parameter
       auto param = node->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(param);
       changed = SetAttrFraczGroup(func_graph, param) || changed;
     }
     if (node->isa<CNode>()) {
