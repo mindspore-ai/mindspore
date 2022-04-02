@@ -24,11 +24,7 @@ namespace lite {
 /// \brief Global method to get a version string.
 ///
 /// \return The version string of MindSpore Lite.
-inline String Version() {
-  String version = VERSION_STR;
-  return "MindSpore Lite " + version;
-}
+MS_API String Version();
 }  // namespace lite
 }  // namespace mindspore
-
 #endif  // MINDSPORE_LITE_INCLUDE_VERSION_H_
