@@ -17,11 +17,13 @@ import os
 import stat
 import time
 import json
+from google.protobuf.json_format import MessageToJson
 
 from mindspore import log as logger, context
 from mindspore.communication.management import GlobalComm, get_rank, get_group_size
 import mindspore._c_expression as c_expression
 import mindspore._c_dataengine as cde
+from mindspore.train.profiling_parallel_pb2 import ProfilingParallel
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException, \
     ProfilerIOException, ProfilerException, ProfilerRawFileException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException
@@ -142,6 +144,7 @@ class Profiler:
         self._job_id_env = None
         self._filt_optype_names = ''
         self._output_path = ''
+        self._rank_size = 0
         _environment_check()
         # get device_id and device_target
         self._get_devid_rankid_and_devtarget()
@@ -158,9 +161,6 @@ class Profiler:
         self._decide_device_target(kwargs)
         if self.start_profile:
             self.start()
-        elif context.get_context("mode") == context.PYNATIVE_MODE:
-            raise RuntimeError(
-                "Pynative model does not support conditional collection of performance data.")
 
     def _decide_device_target(self, kwargs):
         """Complete Profiler initialization according to device_target."""
@@ -499,8 +499,7 @@ class Profiler:
 
         try:
             logger.info("Profiling: analyzing the step trace data.")
-            points, is_training_mode_flag = self._analyse_step_trace(
-                source_path, framework_parser)
+            points, is_training_mode_flag = self._analyse_step_trace(source_path, framework_parser)
         except ProfilerException as err:
             logger.warning(err.message)
         finally:
@@ -509,38 +508,22 @@ class Profiler:
         # analyse timeline info
         try:
             logger.info("Profiling: analyzing the timeline data.")
-            self._analyse_timeline(
-                aicpu_data_parser, optime_parser, source_path)
+            self._analyse_timeline(aicpu_data_parser, optime_parser, source_path)
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
         finally:
             pass
 
-        # analyse memory usage info
-        if self._profile_memory:
-            try:
-                logger.info("Profiling: analyzing the memory usage info.")
-                self._analyse_memory_usage(points)
-            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-                logger.warning(err.message)
-            finally:
-                pass
-
-        # analyse hccl profiler info
-        if self._profile_communication:
-            try:
-                logger.info("Profiling: analyzing the hccl profiler info.")
-                self._analyse_hccl_info()
-            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
-                logger.warning(err.message)
-            finally:
-                pass
+        self._analyse_memory(points)
+        self._analyse_hccl()
 
         # get op FLOPs from aicore.data.x.slice.0 file, and compute FLOPS, write output_op_flops_x.txt
         flops_parser = FlopsParser(source_path, self._output_path, op_task_dict,
                                    self._dev_id, self._rank_id, is_training_mode_flag)
         logger.info("Profiling: analyzing the operation FLOPs.")
         flops_parser.execute()
+        logger.info("Profiling: analyzing the parallel strategy.")
+        self._analyse_parallel_strategy()
 
     @staticmethod
     def _check_output_path(output_path):
@@ -589,6 +572,9 @@ class Profiler:
              ...         self.profiler.analyse()
         """
 
+        if not self.start_profile and context.get_context("mode") == context.PYNATIVE_MODE:
+            raise RuntimeError("Pynative model does not support conditional collection of performance data.")
+
         self._start_time = int(time.time() * 10000000)
         logger.info("Profiling: start time: %d", self._start_time)
 
@@ -618,6 +604,28 @@ class Profiler:
                 self._ascend_pynative_start()
             else:
                 self._ascend_graph_start()
+
+    def _analyse_memory(self, points):
+        """Analyse memory usage info."""
+        if self._profile_memory:
+            try:
+                logger.info("Profiling: analyzing the memory usage info.")
+                self._analyse_memory_usage(points)
+            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+                logger.warning(err.message)
+            finally:
+                pass
+
+    def _analyse_hccl(self):
+        """Analyse hccl info."""
+        if self._profile_communication:
+            try:
+                logger.info("Profiling: analyzing the hccl profiler info.")
+                self._analyse_hccl_info()
+            except (ProfilerIOException, ProfilerFileNotFoundException, ProfilerRawFileException) as err:
+                logger.warning(err.message)
+            finally:
+                pass
 
     def _ascend_pynative_start(self):
         """Ascend pynative mode start profiling."""
@@ -1138,3 +1146,21 @@ class Profiler:
                                 self._rank_id, self._output_path)
         hccl_parse.parse()
         logger.info("Analyse hccl info successfully.")
+
+    def _analyse_parallel_strategy(self):
+        """Analyse parallel strategy from proto binary to json."""
+        binary_file = os.path.join(self._output_path, 'parallel_strategy_pb_{}.bin'.format(self._rank_id))
+        binary_file = validate_and_normalize_path(binary_file)
+        if not os.path.isfile(binary_file):
+            return
+        with open(binary_file, 'rb') as f:
+            data = f.read()
+        parallel = ProfilingParallel()
+        parallel.ParseFromString(data)
+        parallel_json = MessageToJson(parallel)
+
+        json_file = os.path.join(self._output_path, 'parallel_strategy_{}.json'.format(self._rank_id))
+        with os.fdopen(os.open(json_file, os.O_WRONLY | os.O_CREAT, 0o660), 'w') as f:
+            f.write(parallel_json)
+        os.remove(binary_file)
+        

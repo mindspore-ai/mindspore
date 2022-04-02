@@ -38,7 +38,7 @@ namespace profiler {
 namespace ascend {
 bool has_save_parallel_strategy = false;
 bool has_got_parallel_strategy_data = false;
-bool profiling_parallel_strategy_enabled = false;
+bool profiling_parallel_strategy_enabled = true;
 irpb::ProfilingParallel cache_profiling_parallel_pb;
 
 bool IsProfilingParallelStrategyEnabled() {
@@ -168,7 +168,7 @@ void SaveParallelStrategyToFile() {
   if (rank_id.empty()) {
     rank_id = "0";
   }
-  std::string file_path = dir_path + std::string("/parallel_strategy_") + std::string(rank_id) + std::string(".json");
+  std::string file_path = dir_path + std::string("/parallel_strategy_pb_") + std::string(rank_id) + std::string(".bin");
 
   MS_LOG(INFO) << "Start to write parallel strategy string, file path is " << file_path;
   std::ofstream ofs(file_path);
@@ -178,9 +178,7 @@ void SaveParallelStrategyToFile() {
     return;
   }
 
-  std::string profiling_parallel_str;
-  google::protobuf::util::MessageToJsonString(cache_profiling_parallel_pb, &profiling_parallel_str);
-  ofs << profiling_parallel_str;
+  ofs << cache_profiling_parallel_pb.SerializeAsString();
   ofs.close();
 
   ChangeFileMode(file_path, S_IRUSR | S_IWUSR);
