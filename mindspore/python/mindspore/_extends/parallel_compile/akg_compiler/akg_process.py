@@ -14,23 +14,12 @@
 # ============================================================================
 """akg process"""
 import os
-import shutil
+import json
 import subprocess
 import sys
 from multiprocessing import Pool, cpu_count
 from mindspore import log as logger
 from mindspore._extends.parallel_compile.akg_compiler.get_file_path import get_akg_path
-
-
-def copy_json(pid_path, ppid_path):
-    """
-    copy json from pid_path to ppid_path
-    """
-    if not os.path.exists(ppid_path):
-        os.mkdir(ppid_path)
-    json_files = os.listdir(pid_path)
-    for json_file in json_files:
-        shutil.move(os.path.join(pid_path, json_file), ppid_path)
 
 
 def _compile_akg_task_default(json_strs, attrs):
@@ -60,13 +49,15 @@ def _compile_akg_task_ascend(json_strs, attrs):
     """
     if attrs is None:
         attrs = "{}"
-    akg_compiler = os.path.join(os.path.split(
-        os.path.realpath(__file__))[0], "compiler.py")
+    akg_compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
     for json_str in json_strs:
-        try:
-            subprocess.run([sys.executable, akg_compiler, json_str, attrs], text=True, check=True)
-        except BaseException as e:
-            logger.error(e, "Compile error, args: {}! build attrs: {}".format(json_str, attrs))
+        compile_result = subprocess.run([sys.executable, akg_compiler, json_str, attrs], text=True, check=False,
+                                        capture_output=True)
+        if compile_result.returncode:
+            json_dict = json.loads(json_str)
+            if not json_dict.get("composite"):
+                raise ValueError("Compile error, json str: {}! build attrs: {}".format(json_str, attrs))
+            logger.debug("Will try to split, json str: {}! build attrs: {}".format(json_str, attrs))
 
 
 def create_akg_parallel_process(process_num, wait_time, platform):
@@ -122,13 +113,13 @@ class AkgProcess:
                 res.get(timeout=self.wait_time)
         return True
 
-    def accept_json(self, json):
+    def accept_json(self, json_str):
         """
         accept json data before compile
         Args:
-            json: str. kernel info.
+            json_str: str. kernel info.
         """
-        if not isinstance(json, str):
-            raise ValueError("json must be of type str, but got {} with type {}".format(json, type(json)))
-        self.args[self.argc % self.process_num].append(json)
+        if not isinstance(json_str, str):
+            raise ValueError("json must be of type str, but got {} with type {}".format(json_str, type(json_str)))
+        self.args[self.argc % self.process_num].append(json_str)
         self.argc += 1

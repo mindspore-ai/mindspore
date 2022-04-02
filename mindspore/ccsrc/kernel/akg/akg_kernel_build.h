@@ -46,6 +46,8 @@ class AkgKernelBuilder {
   virtual void LoadCache();
   bool AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf_nodes);
 
+  bool ParallelBuild(const std::vector<JsonNodePair> &build_args);
+
  private:
   std::vector<JsonNodePair> GetNotCachedKernels(const std::vector<JsonNodePair> &build_args);
   std::vector<std::string> GetKernelJsonsByHashId(const std::vector<JsonNodePair> &build_args,
@@ -53,6 +55,7 @@ class AkgKernelBuilder {
   bool InsertToCache(const std::vector<JsonNodePair> &build_args);
   bool HandleRepeatNodes();
   bool AkgOpParallelBuild(const std::vector<JsonNodePair> &build_args);
+
   std::vector<JsonNodePair> repeat_nodes_;
   std::string CollectBuildAttrs();
 };
