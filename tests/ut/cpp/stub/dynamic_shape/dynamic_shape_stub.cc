@@ -14,33 +14,8 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/hal/device/executor/hccl_dynamic_kernel.h"
-#include "plugin/device/ascend/hal/device/executor/rts/memcpy_rts_dynamic_kernel.h"
-#include "plugin/device/ascend/hal/device/executor/rts/profiling_rts_dynamic_kernel.h"
-#include "plugin/device/ascend/hal/device/executor/ai_core_dynamic_kernel.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_build.h"
-
-namespace mindspore {
-namespace device {
-namespace ascend {
-void HcclDynamicKernel::UpdateArgs() {}
-void HcclDynamicKernel::Execute() {}
-void HcclDynamicKernel::PostExecute() {}
-
-MemcpyRtsDynamicKernel::~MemcpyRtsDynamicKernel() {}
-void MemcpyRtsDynamicKernel::Execute() {}
-
-void ProfilingRtsDynamicKernel::Execute() {}
-
-AiCoreDynamicKernel::~AiCoreDynamicKernel() {}
-void AiCoreDynamicKernel::Execute() {}
-void AiCoreDynamicKernel::UpdateArgs() {}
-void AiCoreDynamicKernel::Initialize() {}
-void AiCoreDynamicKernel::PostExecute() {}
-}  // namespace ascend
-}  // namespace device
-}  // namespace mindspore
 
 namespace mindspore {
 namespace kernel {

@@ -31,7 +31,7 @@
 #include "runtime/kernel.h"
 #include "runtime/mem.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
-#include "plugin/device/ascend/hal/device/executor/tiling/op_tiling_adapter.h"
+#include "plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/utils.h"

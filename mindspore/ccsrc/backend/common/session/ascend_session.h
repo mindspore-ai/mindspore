@@ -101,7 +101,6 @@ class AscendSession : public SessionBasic {
   void AssignStream(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   static void BuildKernel(const std::vector<CNodePtr> &kernels);
-  void BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph,
                         bool is_gradient_out) const;

@@ -25,6 +25,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
+#include "runtime/device/kernel_runtime_manager.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "frontend/operator/ops.h"
 #include "ir/value.h"
@@ -34,6 +35,7 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/debug/env_config_parser.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -1590,15 +1592,6 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
   }
 
   const auto &kernels = graph.execution_order();
-  std::vector<DynamicKernelPtr> dynamic_kernel_list;
-  auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
-  if (iter != graph_dynamic_kernel_map_.end()) {
-    dynamic_kernel_list = iter->second;
-  }
-  if (!dynamic_kernel_list.empty() && dynamic_kernel_list.size() != kernels.size()) {
-    MS_LOG(EXCEPTION) << "The size of dynamic kernels " << dynamic_kernel_list.size()
-                      << " should be equal to the size of kernels " << kernels.size();
-  }
   std::map<AnfNodePtr, std::vector<std::function<void()>>> kernel_pre_run_events;
   std::map<AnfNodePtr, std::vector<std::function<void()>>> kernel_post_run_events;
   auto events_iter = graph_kernel_events_map_.find(graph.graph_id());
@@ -1608,20 +1601,56 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
   }
   for (size_t i = 0; i < kernels.size(); ++i) {
     LaunchKernelEvent(kernel_pre_run_events, kernels[i]);
-    if (!dynamic_kernel_list.empty() && dynamic_kernel_list[i] != nullptr &&
-        dynamic_kernel_list[i]->is_dynamic_shape()) {
-      dynamic_kernel_list[i]->InferShape();
-      dynamic_kernel_list[i]->UpdateArgs();
-      dynamic_kernel_list[i]->Execute();
+    auto &kernel = kernels[i];
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (common::AnfAlgo::IsDynamicShape(kernel)) {
+      auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      kernel_mod->InferOp();
+      kernel_mod->InitOp();
+      KernelLaunchInfo kernel_launch_info;
+      device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
+
+      // allocate workspace size
+      std::vector<AddressPtr> workspace_addr;
+      if (AnfAlgo::GetKernelType(kernel) == KernelType::TBE_KERNEL) {
+#ifdef ENABLE_D
+        auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
+        auto ms_context = MsContext::GetInstance();
+        MS_EXCEPTION_IF_NULL(ms_context);
+        auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+        auto runtime_instance = KernelRuntimeManager::Instance().GetSingleKernelRuntime(kAscendDevice, device_id);
+        MS_EXCEPTION_IF_NULL(runtime_instance);
+
+        for (auto size : workspace_size_list) {
+          auto device_address_ptr =
+            std::make_shared<ascend::AscendDeviceAddress>(nullptr, size, kAscendDevice, device_id);
+          device_address_ptr->set_is_ptr_persisted(true);
+          auto device_ptr = runtime_instance->MallocMem(MemType::kDynamicMem, size, device_address_ptr);
+          if (device_ptr == nullptr) {
+            MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
+          }
+          AddressPtr workspace_addr_ptr =
+            std::make_shared<Address>(device_address_ptr->GetMutablePtr(), device_address_ptr->GetSize());
+          workspace_addr.emplace_back(workspace_addr_ptr);
+        }
+#endif
+      } else {
+        workspace_addr = kernel_launch_info.workspaces_;
+      }
+
+      auto ret = kernel_mod->Launch(kernel_launch_info.inputs_, workspace_addr, kernel_launch_info.outputs_, stream_);
+      if (!ret) {
+        MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+        return false;
+      }
+
       if (!SyncStream()) {
         MS_LOG(ERROR) << "SyncStream failed";
         return false;
       }
-      dynamic_kernel_list[i]->PostExecute();
+      kernel_mod->UpdateOp();
     } else {
-      auto &kernel = kernels[i];
-      MS_EXCEPTION_IF_NULL(kernel);
-
       // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
       // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
       // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.

@@ -194,7 +194,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/kernel/kernel.cc"
         "../../../mindspore/ccsrc/kernel/ascend_kernel_mod.cc"
         "../../../mindspore/ccsrc/backend/common/optimizer/helper.cc"
-        "../../../mindspore/ccsrc/plugin/device/ascend/hal/device/executor/aicpu_ext_info_handle.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_ext_info_handle.cc"
         "../../../mindspore/ccsrc/plugin/device/ascend/kernel/aicpu/aicpu_util.cc"
         )
 
@@ -231,6 +231,8 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/runtime/akg_kernel.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/common/infer_shape.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tbe_kernel_compile.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/akg_cpu_kernel_mod.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/cpu/kernel/akg/akg_cpu_kernel_build.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/runtime/graph_scheduler/rpc_node_scheduler.cc")

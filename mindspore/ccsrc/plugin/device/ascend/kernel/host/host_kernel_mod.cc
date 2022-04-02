@@ -20,7 +20,6 @@
 #include "utils/ms_context.h"
 #include "kernel/common_utils.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/hal/device/executor/host_dynamic_kernel.h"
 
 namespace mindspore {
 namespace kernel {

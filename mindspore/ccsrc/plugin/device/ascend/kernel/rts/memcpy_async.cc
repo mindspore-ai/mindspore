@@ -25,12 +25,9 @@
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
-#include "plugin/device/ascend/hal/device/executor/rts/memcpy_rts_dynamic_kernel.h"
 
 using mindspore::ge::model_runner::MemcpyAsyncTaskInfo;
 using MemcpyAsyncTaskInfoPtr = std::shared_ptr<MemcpyAsyncTaskInfo>;
-using mindspore::device::ascend::MemcpyRtsDynamicKernel;
-using MemcpyRtsDynamicKernelPtr = std::shared_ptr<MemcpyRtsDynamicKernel>;
 
 namespace mindspore {
 namespace kernel {
@@ -133,36 +130,6 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
                                           inputs[0]->size, ACL_MEMCPY_DEVICE_TO_DEVICE, NeedDump());
   MS_EXCEPTION_IF_NULL(task_info_ptr);
   return {task_info_ptr};
-}
-
-device::DynamicKernelPtr MemCpyAsyncKernel::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  KernelLaunchInfo kernel_launch_info;
-  device::KernelRuntime::GenLaunchArgs(*this, cnode_ptr, &kernel_launch_info);
-
-  const auto &kernel_inputs = kernel_launch_info.inputs_;
-  const auto &kernel_outputs = kernel_launch_info.outputs_;
-  if (kernel_inputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync op inputs is not one, got " << kernel_inputs.size();
-  }
-
-  if (kernel_outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "MemCpyAsync op output is not one, got " << kernel_outputs.size();
-  }
-
-  MS_EXCEPTION_IF_NULL(kernel_outputs[0]);
-  MS_EXCEPTION_IF_NULL(kernel_inputs[0]);
-  if (kernel_outputs[0]->size < kernel_inputs[0]->size) {
-    MS_LOG(EXCEPTION) << "aclrtMemcpyAsync destMax " << kernel_outputs[0]->size << " is less than src size "
-                      << kernel_inputs[0]->size;
-  }
-  // input x -> memcpy_async -> AllReduce
-  if (kernel_outputs[0]->size > kernel_inputs[0]->size) {
-    MS_LOG(WARNING) << "Check aclrtMemcpyAsync destMax > src size";
-  }
-
-  return std::make_shared<MemcpyRtsDynamicKernel>(stream_ptr, cnode_ptr, kernel_outputs[0]->addr,
-                                                  kernel_outputs[0]->size, kernel_inputs[0]->addr,
-                                                  kernel_inputs[0]->size);
 }
 
 const std::vector<TypeId> data_type_list = {

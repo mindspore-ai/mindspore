@@ -715,10 +715,6 @@ void AscendSession::LaunchFunc(const KernelGraphPtr &graph,
   BindAddressToTensor(tensor_to_node);
   RunOpGenKernelEvent(graph.get());
 
-  if (is_dynamic_shape) {
-    BuildDynamicKernel(graph);
-  }
-
   LoadInputData(graph, input_tensors);
   Execute(graph, false);
   RunOpMemoryClear(graph.get());
@@ -871,10 +867,7 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_r
   RunOpMemoryAlloc(*input_tensors, graph.get(), op_run_info->is_gradient_out);
   RunOpGenKernelEvent(graph.get());
   AnfAlgo::CacheAddrForGraph(graph);
-  // Build dynamic kernel
-  if (op_run_info->is_dynamic_shape) {
-    BuildDynamicKernel(graph);
-  }
+
   // load input data to device
   LoadInputData(graph, *input_tensors);
   // run op
@@ -1119,24 +1112,6 @@ void AscendSession::BuildKernel(const std::vector<CNodePtr> &kernels) {
   uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
   cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
   MS_LOG(INFO) << "KernelBuild run in " << cost << " us.";
-}
-
-void AscendSession::BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  MS_LOG(DEBUG) << "Start!";
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  const auto &kernels = kernel_graph->execution_order();
-  auto iter = std::find_if(kernels.begin(), kernels.end(), [](const CNodePtr &kernel) {
-    return common::AnfAlgo::GetBooleanAttr(kernel, kAttrOutputIsDynamicShape);
-  });
-  if (iter == kernels.end()) {
-    return;
-  }
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  if (!runtime_instance->GenDynamicKernel(*kernel_graph)) {
-    MS_LOG(DEBUG) << "Graph:" << kernel_graph->graph_id() << " failed to generate dynamic kernel!";
-  }
-  MS_LOG(DEBUG) << "Finish!";
 }
 
 static CNodePtr GetNextLabelSet(const std::vector<CNodePtr> &kernel_nodes, uint32_t index) {

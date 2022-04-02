@@ -190,9 +190,11 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
 }
 }  // namespace
 
-void DynamicBroadcastGradientArgsKernel::Execute() {
+void DynamicBroadcastGradientArgsKernelMod::Execute() {
   MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel Start";
-  auto cnode = cnode_ptr_.lock();
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != kInputNum) {
@@ -215,21 +217,18 @@ void DynamicBroadcastGradientArgsKernel::Execute() {
   MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel End";
 }
 
-device::DynamicKernelPtr DynamicBroadcastGradientArgsKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr,
-                                                                                 void *stream_ptr) {
-  return std::make_shared<DynamicBroadcastGradientArgsKernel>(stream_ptr, cnode_ptr);
-}
-
 bool DynamicBroadcastGradientArgsKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                                    const std::vector<AddressPtr> &, void *stream_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  stream_ = stream_ptr;
-  auto broadcast_grad_kernel = std::make_shared<DynamicBroadcastGradientArgsKernel>(stream_ptr, cnode);
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
+
   try {
-    broadcast_grad_kernel->Execute();
+    Execute();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "DynamicBroadcastGradientArgsKernel Launch failed. node: " << cnode->fullname_with_scope()
                   << ", Error message is " << e.what();

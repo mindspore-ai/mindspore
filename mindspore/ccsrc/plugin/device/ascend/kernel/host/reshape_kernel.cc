@@ -126,9 +126,11 @@ std::vector<int64_t> GetOutputShapes(const CNodePtr &cnode) {
 }
 }  // namespace
 
-void ReshapeKernel::Execute() {
+void ReshapeKernelMod::Execute() {
   MS_LOG(INFO) << "Execute host ReshapeKernel Start";
-  auto cnode = cnode_ptr_.lock();
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
   auto address_x = AnfAlgo::GetPrevNodeMutableOutputAddr(cnode, 0);
@@ -158,9 +160,11 @@ void ReshapeKernel::Execute() {
   MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
 
-void ReshapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Execute host ReshapeKernel Start";
-  auto cnode = cnode_ptr_.lock();
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
 
   if (inputs.empty() || outputs.empty()) {
@@ -182,10 +186,6 @@ void ReshapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std::ve
     MS_LOG(ERROR) << "Call rtMemcpyAsync failed, ret = 0x" << status;
   }
   MS_LOG(INFO) << "Execute host ReshapeKernel End";
-}
-
-device::DynamicKernelPtr ReshapeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  return std::make_shared<ReshapeKernel>(stream_ptr, cnode_ptr);
 }
 }  // namespace kernel
 }  // namespace mindspore

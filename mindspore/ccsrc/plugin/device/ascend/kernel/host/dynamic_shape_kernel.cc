@@ -23,9 +23,11 @@
 
 namespace mindspore {
 namespace kernel {
-void TensorShapeKernel::Execute() {
+void TensorShapeKernelMod::Execute() {
   MS_LOG(INFO) << "Execute TensorShapeKernel Start";
-  auto cnode = cnode_ptr_.lock();
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
@@ -72,9 +74,11 @@ void TensorShapeKernel::Execute() {
   MS_LOG(INFO) << "Execute TensorShapeKernel End";
 }
 
-void TensorShapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void TensorShapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   MS_LOG(INFO) << "Execute TensorShapeKernel Start";
-  auto cnode = cnode_ptr_.lock();
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   if (input_num != 1) {
@@ -106,20 +110,17 @@ void TensorShapeKernel::Execute(const std::vector<AddressPtr> &inputs, const std
   MS_LOG(INFO) << "Execute TensorShapeKernel End";
 }
 
-device::DynamicKernelPtr TensorShapeKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  return std::make_shared<TensorShapeKernel>(stream_ptr, cnode_ptr);
-}
-
 bool TensorShapeKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                   const std::vector<AddressPtr> &, void *stream_ptr) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  stream_ = stream_ptr;
-  auto shape_kernel = std::make_shared<TensorShapeKernel>(stream_ptr, cnode);
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
   try {
-    shape_kernel->Execute();
+    Execute();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "TensorShapeKernelMod Launch failed. node: " << cnode->fullname_with_scope()
                   << ", Error message is " << e.what();

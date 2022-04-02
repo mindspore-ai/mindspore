@@ -20,10 +20,8 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/hal/device/executor/rts/profiling_rts_dynamic_kernel.h"
 
 using ProfilerTraceTaskInfo = mindspore::ge::model_runner::ProfilerTraceTaskInfo;
-using mindspore::device::ascend::ProfilingRtsDynamicKernel;
 using mindspore::device::ascend::ProfilingUtils;
 
 namespace mindspore {
@@ -31,6 +29,7 @@ namespace kernel {
 bool ProfilingKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_LOG(INFO) << "[profiling] init profiling kernel mod";
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
+  anf_node_ = anf_node;
 
   MS_EXCEPTION_IF_NULL(primitive);
   ValuePtr notify_ptr = primitive->GetAttr(ProfilingUtils::kNotify);
@@ -51,7 +50,18 @@ bool ProfilingKernelMod::Init(const AnfNodePtr &anf_node) {
 }
 
 bool ProfilingKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-                                const std::vector<AddressPtr> &, void *) {
+                                const std::vector<AddressPtr> &, void *stream_ptr) {
+  if (!common::AnfAlgo::IsDynamicShape(anf_node_.lock())) {
+    return true;
+  }
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
+  auto rt_ret = rtProfilerTrace(log_id_, notify_, flags_, stream_);
+  if (rt_ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call rtProfilerTrace failed";
+    return false;
+  }
   return true;
 }
 
@@ -64,10 +74,6 @@ std::vector<TaskInfoPtr> ProfilingKernelMod::GenTask(const std::vector<AddressPt
   std::shared_ptr<ProfilerTraceTaskInfo> task_info_ptr =
     std::make_shared<ProfilerTraceTaskInfo>(unique_name_, stream_id, log_id_, notify_, flags_);
   return {task_info_ptr};
-}
-
-device::DynamicKernelPtr ProfilingKernelMod::GenDynamicKernel(const CNodePtr &cnode_ptr, void *stream_ptr) {
-  return std::make_shared<ProfilingRtsDynamicKernel>(stream_ptr, cnode_ptr, log_id_, notify_, flags_);
 }
 }  // namespace kernel
 }  // namespace mindspore
