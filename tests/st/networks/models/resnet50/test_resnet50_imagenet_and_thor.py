@@ -99,9 +99,9 @@ class LossGet(Callback):
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs
         self._epoch = cb_params.cur_epoch_num
-        if isinstance(loss,
-                      (tuple, list) and isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray)):
-            loss = loss[0]
+        if isinstance(loss, (tuple, list)):
+            if isinstance(loss[0], Tensor) and isinstance(loss[0].asnumpy(), np.ndarray):
+                loss = loss[0]
 
         if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
             loss = np.mean(loss.asnumpy())
@@ -114,7 +114,8 @@ class LossGet(Callback):
         cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
             self._loss = loss
-            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss), flush=True)
+            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num,
+                                                      cur_step_in_epoch, loss), flush=True)
 
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
@@ -186,6 +187,7 @@ def train_process(q, device_id, epoch_size, device_num, enable_hccl):
     # train dataset
     dataset = create_dataset(dataset_path=dataset_path, do_train=True, repeat_num=1, batch_size=config.batch_size)
 
+    step_size = dataset.get_dataset_size()
     # evaluation dataset
     eval_dataset = create_dataset(dataset_path=eval_path, do_train=False,
                                   repeat_num=1, batch_size=config.eval_batch_size)
@@ -302,10 +304,6 @@ def train_process_thor(q, device_id, epoch_size, device_num, enable_hccl):
     q.put({'loss': loss, 'cost': time_cost})
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
 def resnet_end(device_num, q):
     acc = 0.0
     cost = 0.0
@@ -334,13 +332,17 @@ def thor_end(device_num, q):
     thor_loss = thor_loss / device_num
     thor_cost = thor_cost / device_num
 
-    for i in range(0, device_num):
+    for i in range(4, device_num + 4):
         os.system("rm -rf " + str(i))
     print("End training...")
     assert thor_loss < 7
     assert thor_cost < 30
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
 def test_resnet_imagenet_and_thor_4p():
     """
     Feature: Resnet50 network.
@@ -367,7 +369,7 @@ def test_resnet_imagenet_and_thor_4p():
                                 args=(q2, device_id + 4, epoch_size_2, device_num, enable_hccl)))
     cpu_count = os.cpu_count()
     half_cpu_count = cpu_count // 2
-    each_cpu_count = cpu_count // device_num
+    each_cpu_count = half_cpu_count // device_num
     for i in range(device_num):
         process[i].start()
         process2[i].start()
