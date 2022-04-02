@@ -37,7 +37,6 @@ Status ROIAlignInfo::GetAttrs() {
 
 Status ROIAlignInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
 
