@@ -18,7 +18,4 @@
 #include "include/version.h"
 #include "src/common/log_adapter.h"
 
-int main(int argc, const char **argv) {
-  MS_LOG(INFO) << mindspore::lite::Version();
-  return mindspore::lite::RunBenchmark(argc, argv);
-}
+int main(int argc, const char **argv) { return mindspore::lite::RunBenchmark(argc, argv); }
