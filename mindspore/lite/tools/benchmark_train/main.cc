@@ -38,7 +38,6 @@ void PrintMem() {
 }
 
 int main(int argc, const char **argv) {
-  MS_LOG(INFO) << mindspore::lite::Version();
   int res = mindspore::lite::RunNetTrain(argc, argv);
   PrintMem();
   return res;
