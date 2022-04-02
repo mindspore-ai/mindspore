@@ -3,7 +3,7 @@ mindspore.dtype_to_nptype
 
 .. py:method:: mindspore.dtype_to_nptype(type_)
 
-    将MindSpore dtype转换成NumPy数据类型。
+    将MindSpore 数据类型转换成NumPy数据类型。
 
     **参数：**
 

@@ -9,7 +9,7 @@ mindspore.dataset.vision.c_transforms.RandomSharpness
 
     **参数：**
 
-    - **degrees** (Union[list, tuple], 可选) - 锐度调整度的随机选取范围，按照(min, max)顺序排列。如果min与max相等，那么它是一个单一的固定锐度调整操作，默认值：(0.1, 1.9)。
+    - **degrees** (Union[list, tuple], 可选) - 锐度调节系数的随机选取范围，需为非负数，按照(min, max)顺序排列。如果min与max相等，将使用固定的调节系数进行处理，默认值：(0.1, 1.9)。
 
     **异常：**
 
