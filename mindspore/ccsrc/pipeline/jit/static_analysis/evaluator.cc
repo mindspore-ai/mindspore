@@ -319,7 +319,7 @@ AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList 
     AbstractBasePtrList broaded_list;
     BroadenArgs(args_spec_list, &broaded_list);
     MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_spec_list)
-                  << ", broaded: " << mindspore::ToString(broaded_list);
+                  << ", broadened: " << mindspore::ToString(broaded_list);
     return broaded_list;
   }
   return args_spec_list;
@@ -349,6 +349,10 @@ FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const Ab
     MS_EXCEPTION_IF_NULL(fg);
     FuncGraphPtr generated_graph = fg->GenerateGraph(args_spec_list);
     func_graph_cache_[args_spec_list] = generated_graph;
+    MS_LOG(DEBUG) << "Generate special instance of function graph: " << ToString()
+                  << ", special function: " << generated_graph->ToString()
+                  << ", args: " << ArgsToString(args_spec_list);
+
     MS_EXCEPTION_IF_NULL(engine);
     engine->func_graph_manager()->AddFuncGraph(generated_graph);
     res = generated_graph;
