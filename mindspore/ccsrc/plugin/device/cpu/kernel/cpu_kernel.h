@@ -111,6 +111,7 @@ constexpr char ADJOINT[] = "adjoint";
 constexpr char ALIGNMENT[] = "alignment";
 constexpr char NCHW[] = "NCHW";
 constexpr char NCDHW[] = "NCDHW";
+constexpr char USE_LOCKING[] = "use_locking";
 constexpr size_t NC_LEN = 2;
 constexpr size_t SHAPE_4D = 4;
 constexpr size_t SHAPE_5D = 5;
