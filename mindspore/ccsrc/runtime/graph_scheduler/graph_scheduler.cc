@@ -1662,7 +1662,7 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
 
   for (const auto &communication_nodes : communication_node_groups) {
     // Link the control arrows by the communication nodes to ensure communication nodes running order.
-    LinkControlArrowByCommunicationNode(communication_nodes.second.first, communication_nodes.second.second);
+    LinkControlArrowByCommunicationNode(communication_nodes.second.first, graph_compiler_info.graphs_);
   }
 
   // Auto monad actor may modify the device tensor store.
