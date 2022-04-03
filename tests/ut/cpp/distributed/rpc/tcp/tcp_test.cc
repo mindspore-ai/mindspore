@@ -154,7 +154,7 @@ TEST_F(TCPTest, SendOneMessage) {
   bool ret = server->Initialize(server_url);
   ASSERT_TRUE(ret);
 
-  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> std::shared_ptr<MessageBase> {
+  server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
     IncrDataMsgNum(1);
     return NULL_MSG;
   });
@@ -196,7 +196,7 @@ TEST_F(TCPTest, SendTwoMessages) {
   bool ret = server->Initialize(server_url);
   ASSERT_TRUE(ret);
 
-  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> std::shared_ptr<MessageBase> {
+  server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
     IncrDataMsgNum(1);
     return NULL_MSG;
   });
@@ -251,7 +251,7 @@ TEST_F(TCPTest, SendSyncMessage) {
   bool ret = server->Initialize(server_url);
   ASSERT_TRUE(ret);
 
-  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> std::shared_ptr<MessageBase> {
+  server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
     IncrDataMsgNum(1);
     return NULL_MSG;
   });
@@ -292,7 +292,7 @@ TEST_F(TCPTest, SendLargeMessages) {
   bool ret = server->Initialize();
   ASSERT_TRUE(ret);
 
-  server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> std::shared_ptr<MessageBase> {
+  server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
     IncrDataMsgNum(1);
     return NULL_MSG;
   });
@@ -348,7 +348,7 @@ TEST_F(TCPTest, CreateManyConnectionPairs) {
     auto port = server->GetPort();
     ASSERT_TRUE(ret);
 
-    server->SetMessageHandler([](const std::shared_ptr<MessageBase> &message) -> std::shared_ptr<MessageBase> {
+    server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
       IncrDataMsgNum(1);
       return NULL_MSG;
     });

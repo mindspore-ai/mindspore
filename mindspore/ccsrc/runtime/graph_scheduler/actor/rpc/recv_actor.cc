@@ -72,7 +72,7 @@ bool RecvActor::StartServer() {
   return true;
 }
 
-void RecvActor::RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context) {
+void RecvActor::RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTensor> *const context) {
   // Once recv actor is launched, reset the op_context so that the next step's recv will not be launched in advance.
   ResetOpcontext();
 
@@ -131,7 +131,7 @@ void RecvActor::EraseInput(const OpContext<DeviceTensor> *context) {
   }
 }
 
-std::shared_ptr<MessageBase> RecvActor::HandleMessage(const std::shared_ptr<MessageBase> &msg) {
+MessageBase *RecvActor::HandleMessage(MessageBase *const msg) {
   // Block the message handler if the context is invalid.
   std::unique_lock<std::mutex> lock(context_mtx_);
   context_cv_.wait(lock, [this] { return is_context_valid_; });

@@ -254,12 +254,9 @@ int Connection::ReceiveMessage() {
     return 0;
   }
 
-  std::shared_ptr<MessageBase> msg(recv_message);
-  recv_message = nullptr;
-
   // Call msg handler if set
   if (message_handler) {
-    message_handler(msg);
+    message_handler(recv_message);
   } else {
     MS_LOG(INFO) << "Message handler was not found";
   }
@@ -354,7 +351,6 @@ void Connection::FillSendMessage(MessageBase *msg, const std::string &advertiseU
       // update metrics
       send_metrics->UpdateMax(msg->body.size());
       send_metrics->last_send_msg_name = msg->name;
-
       return;
     } else {
       if (advertise_addr_.empty()) {

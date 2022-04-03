@@ -59,14 +59,14 @@ class RecvActor : public RpcActor {
   bool CheckRunningCondition(const OpContext<DeviceTensor> *context) const override;
 
   // When an inter-process data received, this method is called.
-  void RunOpInterProcessData(const std::shared_ptr<MessageBase> &msg, OpContext<DeviceTensor> *const context);
+  void RunOpInterProcessData(MessageBase *const msg, OpContext<DeviceTensor> *const context);
 
   // Besides erasing input data and input controls when finish actor running, inter-process inputs should be erased.
   void EraseInput(const OpContext<DeviceTensor> *context) override;
 
  private:
   // The message callback of the tcp server.
-  std::shared_ptr<MessageBase> HandleMessage(const std::shared_ptr<MessageBase> &msg);
+  MessageBase *HandleMessage(MessageBase *const msg);
 
   // The network address of this recv actor. It's generated automatically by rpc module.
   std::string ip_;
