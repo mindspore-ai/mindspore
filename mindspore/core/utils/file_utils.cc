@@ -261,8 +261,13 @@ std::optional<std::string> FileUtils::GetRealPath(const char *path) {
 void FileUtils::SplitDirAndFileName(const std::string &path, std::optional<std::string> *prefix_path,
                                     std::optional<std::string> *file_name) {
   auto path_split_pos = path.find_last_of('/');
-  if (path_split_pos == std::string::npos) {
-    path_split_pos = path.find_last_of('\\');
+  auto path_split_pos_backslash = path.find_last_of('\\');
+  if (path_split_pos != std::string::npos) {
+    if (path_split_pos_backslash != std::string::npos && path_split_pos < path_split_pos_backslash) {
+      path_split_pos = path_split_pos_backslash;
+    }
+  } else {
+    path_split_pos = path_split_pos_backslash;
   }
 
   MS_EXCEPTION_IF_NULL(prefix_path);
