@@ -47,9 +47,9 @@ class UniqueSquare(nn.Cell):
 class UniqueReshapeAdd(nn.Cell):
     def __init__(self):
         super(UniqueReshapeAdd, self).__init__()
-        self.unique_cpu = P.Unique().add_prim_attr("primitive_target", "CPU")
+        self.unique_cpu = P.Unique()
         self.unique = P.Unique()
-        self.reshape_cpu = P.Reshape().add_prim_attr("primitive_target", "CPU")
+        self.reshape_cpu = P.Reshape()
         self.reshape = P.Reshape()
         self.add = P.Add()
 
