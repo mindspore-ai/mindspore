@@ -1845,7 +1845,9 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
     def _pynative_get_step_timeline_list(self, timeline_list):
         """Get step timeline list for pynative model."""
         step_list = []
-        if 'GetNext' not in timeline_list[0][self._op_name_idx]:
+        # The timeline starts with the GetNext op
+        if len(timeline_list) < 2 or 'GetNext' not in timeline_list[0][self._op_name_idx] and \
+                'GetNext' not in timeline_list[1][self._op_name_idx]:
             return step_list
         step = [-1, -1]
         step_num = 0
