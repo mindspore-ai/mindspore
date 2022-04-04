@@ -466,7 +466,8 @@ void Server::StartCommunicator() {
   (void)std::for_each(communicators_with_worker_.begin(), communicators_with_worker_.end(),
                       [](const std::shared_ptr<ps::core::CommunicatorBase> &communicator) {
                         MS_ERROR_IF_NULL_WO_RET_VAL(communicator);
-                        if (typeid(*communicator.get()) != typeid(ps::core::TcpCommunicator)) {
+                        const auto &ptr = *communicator.get();
+                        if (typeid(ptr) != typeid(ps::core::TcpCommunicator)) {
                           if (!communicator->Start()) {
                             MS_LOG(EXCEPTION) << "Starting communicator with worker failed.";
                           }
