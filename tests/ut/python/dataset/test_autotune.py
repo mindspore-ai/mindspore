@@ -118,7 +118,7 @@ class TestAutotuneWithProfiler:
         ds.config.set_enable_autotune(False)
 
     @staticmethod
-    def test_delayed_autotune_with_2_pipeline(capfd):
+    def test_delayed_autotune_with_2_pipeline(tmp_path, capfd):
         """
         Feature: Autotuning
         Description: Test delayed Autotune with two pipelines
@@ -130,7 +130,7 @@ class TestAutotuneWithProfiler:
         data1 = data1.batch(32)
         itr1 = data1.create_dict_iterator(num_epochs=5)
 
-        ds.config.set_enable_autotune(True)
+        ds.config.set_enable_autotune(True, str(tmp_path / "file.json"))
         itr2 = data1.create_dict_iterator(num_epochs=5)
         ds.config.set_enable_autotune(False)
 
@@ -140,7 +140,7 @@ class TestAutotuneWithProfiler:
         err_out_log(out, err, False)
 
     @staticmethod
-    def test_delayed_start_autotune_with_3_pipeline(capfd):
+    def test_delayed_start_autotune_with_3_pipeline(tmp_path, capfd):
         """
         Feature: Autotuning
         Description: Test delayed Autotune and early stop with three pipelines
@@ -152,7 +152,7 @@ class TestAutotuneWithProfiler:
         data1 = data1.batch(32)
         itr1 = data1.create_dict_iterator(num_epochs=5)
 
-        ds.config.set_enable_autotune(True)
+        ds.config.set_enable_autotune(True, str(tmp_path / "file.json"))
         itr2 = data1.create_dict_iterator(num_epochs=5)
         ds.config.set_enable_autotune(False)
 

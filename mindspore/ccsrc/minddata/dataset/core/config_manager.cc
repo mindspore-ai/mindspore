@@ -215,7 +215,7 @@ Status ConfigManager::set_enable_autotune(bool enable, bool save_autoconfig, con
   }
 
   // Save the final AutoTune configuration JSON filepath name
-  autotune_json_filepath_ = std::move(json_filepath);
+  autotune_json_filepath_ = json_filepath;
   return Status::OK();
 }
 
