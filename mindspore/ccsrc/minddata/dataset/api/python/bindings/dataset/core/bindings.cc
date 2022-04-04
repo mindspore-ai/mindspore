@@ -46,6 +46,7 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_op_connector_size", &ConfigManager::op_connector_size)
                     .def("get_seed", &ConfigManager::seed)
                     .def("set_rank_id", &ConfigManager::set_rank_id)
+                    .def("get_rank_id", &ConfigManager::rank_id)
                     .def("get_worker_connector_size", &ConfigManager::worker_connector_size)
                     .def("set_auto_num_workers", &ConfigManager::set_auto_num_workers)
                     .def("set_auto_worker_config", &ConfigManager::set_auto_worker_config_)

@@ -87,15 +87,19 @@ def test_autotune_train_simple_model(tmp_path):
     Expectation: Training and data deserialization completes successfully
 
     """
+    rank_id = os.getenv("RANK_ID")
+    if not rank_id or not rank_id.isdigit():
+        rank_id = "0"
+
     original_seed = ds.config.get_seed()
     set_seed(1)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     context.set_context(enable_graph_kernel=True)
-    at_config_filename = "test_autotune_train_simple_model_at_config.json"
+    at_config_filename = "test_autotune_train_simple_model_at_config"
 
     # Enable Dataset AutoTune
     original_autotune = ds.config.get_enable_autotune()
-    ds.config.set_enable_autotune(True, str(tmp_path) + at_config_filename)
+    ds.config.set_enable_autotune(True, str(tmp_path / at_config_filename))
 
     ds_train = create_dataset(os.path.join("/home/workspace/mindspore_dataset/mnist", "train"), 32)
     model = create_model()
@@ -108,7 +112,9 @@ def test_autotune_train_simple_model(tmp_path):
 
     ds.config.set_enable_autotune(False)
 
-    ds_train_deserialized = ds.deserialize(json_filepath=str(tmp_path) + at_config_filename)
+    file = tmp_path / (at_config_filename + "_" + rank_id + ".json")
+    assert file.exists()
+    ds_train_deserialized = ds.deserialize(json_filepath=str(file))
 
     num = 0
     for data1, data2 in zip(ds_train.create_dict_iterator(num_epochs=1, output_numpy=True),
