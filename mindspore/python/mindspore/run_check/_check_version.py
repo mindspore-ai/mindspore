@@ -218,6 +218,7 @@ class AscendEnvChecker(EnvChecker):
             self.cce_path = self.fwk_path + "/ccec_compiler/bin"
             self.fwk_version = atlas_nnae_version
             self.op_path = "/usr/local/Ascend/nnae/latest/opp"
+            self.aicpu_path = "/usr/local/Ascend/nnae/latest"
         elif os.path.exists(atlas_toolkit_version):
             # atlas default path
             self.fwk_path = "/usr/local/Ascend/ascend-toolkit/latest/fwkacllib"
@@ -226,6 +227,7 @@ class AscendEnvChecker(EnvChecker):
             self.cce_path = self.fwk_path + "/ccec_compiler/bin"
             self.fwk_version = atlas_toolkit_version
             self.op_path = "/usr/local/Ascend/ascend-toolkit/latest/opp"
+            self.aicpu_path = "/usr/local/Ascend/ascend-toolkit/latest"
         elif os.path.exists(hisi_fwk_version):
             # hisi default path
             self.fwk_path = "/usr/local/Ascend/latest/fwkacllib"
@@ -234,6 +236,7 @@ class AscendEnvChecker(EnvChecker):
             self.cce_path = self.fwk_path + "/ccec_compiler/bin"
             self.fwk_version = hisi_fwk_version
             self.op_path = "/usr/local/Ascend/latest/opp"
+            self.aicpu_path = "/usr/local/Ascend/latest"
         else:
             # custom or unknown environment
             self.fwk_path = ""
@@ -242,12 +245,14 @@ class AscendEnvChecker(EnvChecker):
             self.cce_path = ""
             self.fwk_version = ""
             self.op_path = ""
+            self.aicpu_path = ""
 
         # env
         self.path = os.getenv("PATH")
         self.python_path = os.getenv("PYTHONPATH")
         self.ld_lib_path = os.getenv("LD_LIBRARY_PATH")
         self.ascend_opp_path = os.getenv("ASCEND_OPP_PATH")
+        self.ascend_aicpu_path = os.getenv("ASCEND_AICPU_PATH")
 
         # check content
         self.path_check = "/fwkacllib/ccec_compiler/bin"
@@ -350,6 +355,15 @@ class AscendEnvChecker(EnvChecker):
             raise EnvironmentError(
                 f"No such directory: {self.op_path}, Please check if Ascend AI software package (Ascend Data Center "
                 "Solution) is installed correctly.")
+
+        if self.aicpu_path is None:
+            pass
+        elif Path(self.aicpu_path).is_dir():
+            os.environ['ASCEND_AICPU_PATH'] = self.aicpu_path
+        else:
+            raise EnvironmentError(
+                f"No such directory: {self.aicpu_path}, Please check if Ascend AI software package (Ascend Data Center"
+                " Solution) is installed correctly.")
 
     def _check_env(self):
         """ascend dependence path check"""
