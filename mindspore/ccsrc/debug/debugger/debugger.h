@@ -339,6 +339,7 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
   uint32_t not_dataset_graph_sum_;
   std::list<uint32_t> rungraph_id_list_;
   bool ascend_kernel_by_kernel_;
+  bool enable_debugger_called_;
   std::string version_;
 };
 
