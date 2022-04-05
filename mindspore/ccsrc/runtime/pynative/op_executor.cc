@@ -112,7 +112,8 @@ bool OpExecutor::BuildQueueFull() {
   return op_build_tasks_.size() > kMaxQueueSize;
 }
 
-bool OpExecutor::ActorInQueue(const std::string &actor_info) const {
+bool OpExecutor::ActorInQueue(const std::string &actor_info) {
+  std::lock_guard<std::mutex> lock(task_mutex_);
   auto iter = actor_in_queue_.find(actor_info);
   return iter != actor_in_queue_.end();
 }
