@@ -384,10 +384,6 @@ class _AutoParallelContext:
             search_mode (str): The search mode of strategy.
         """
         self.check_context_handle()
-        run_mode = context.get_context("mode")
-        if run_mode == context.PYNATIVE_MODE and search_mode != "sharding_propagation":
-            raise ValueError(f"PyNative only supports AUTO_PARALLEL using sharding_propagation under shard function"
-                             f" but got search_mode of {search_mode}.")
         ret = self._context_handle.set_strategy_search_mode(search_mode)
         if ret is False:
             raise ValueError("The context configuration parameter 'auto_parallel_search_mode' only support "
