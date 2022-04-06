@@ -82,6 +82,10 @@ void HostKernelMod::InferOp() {
     MS_LOG(EXCEPTION) << "The node is not dynamic shape.";
   }
   KernelMod::InferShape();
+
+  input_size_list_.clear();
+  output_size_list_.clear();
+  HostKernelMod::Init(node);
 }
 
 std::vector<TaskInfoPtr> HostKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
