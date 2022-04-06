@@ -66,7 +66,7 @@ class BACKEND_EXPORT OpExecutor {
 
   // Determine if there is another task with the same name in execution.
   // Tasks with the same name use the same CNode cache. So we need to wait.
-  bool ActorInQueue(const std::string &actor_info) const;
+  bool ActorInQueue(const std::string &actor_info);
 
   // Wait for all OpRunTasks to finish executing.
   void Wait();
