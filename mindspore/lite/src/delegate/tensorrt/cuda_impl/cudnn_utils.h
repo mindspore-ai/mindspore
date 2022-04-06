@@ -20,6 +20,7 @@
 #include <cudnn.h>
 #include <NvInfer.h>
 #include "src/delegate/tensorrt/cuda_impl/cuda_helper.h"
+#include "src/common/log_util.h"
 
 #define CUDNN_CHECK_VOID(err)                                            \
   do {                                                                   \
