@@ -22,6 +22,23 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+AbstractNode::~AbstractNode() {
+  if (client_to_scheduler_ != nullptr) {
+    client_to_scheduler_->Stop();
+  }
+  if (client_to_scheduler_thread_ != nullptr && client_to_scheduler_thread_->joinable()) {
+    client_to_scheduler_thread_->join();
+  }
+  if (heart_beat_thread_ != nullptr && heart_beat_thread_->joinable()) {
+    heart_beat_thread_->join();
+  }
+  if (server_ != nullptr) {
+    server_->Stop();
+  }
+  if (server_thread_ != nullptr && server_thread_->joinable()) {
+    server_thread_->join();
+  }
+}
 void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
@@ -681,7 +698,6 @@ void AbstractNode::StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client)
     }
   });
   MS_EXCEPTION_IF_NULL(heart_beat_thread_);
-  heart_beat_thread_->detach();
 }
 
 bool AbstractNode::Heartbeat(const std::shared_ptr<TcpClient> &client) {
@@ -1106,11 +1122,17 @@ bool AbstractNode::InitClientToScheduler() {
 }
 void AbstractNode::ConnectToScheduler() {
   client_to_scheduler_->Init();
+  if (TcpClient::is_started()) {
+    return;
+  }
+
+  if (client_to_scheduler_thread_ != nullptr && client_to_scheduler_thread_->joinable()) {
+    client_to_scheduler_thread_->join();
+  }
   client_to_scheduler_thread_ = std::make_unique<std::thread>([this]() {
     MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
-  client_to_scheduler_thread_->detach();
 }
 
 const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint32_t &rank_id, const NodeRole &role) {
@@ -1441,7 +1463,6 @@ void AbstractNode::CreateTcpServer() {
     this->server_->Start();
   });
   MS_EXCEPTION_IF_NULL(server_thread_);
-  server_thread_->detach();
 }
 
 void AbstractNode::UpdateClusterState(const ClusterState &state) {

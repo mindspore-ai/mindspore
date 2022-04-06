@@ -65,7 +65,7 @@ class HttpServer {
   // Return: true if success, false if failed, check log to find failure reason
   bool RegisterRoute(const std::string &url, OnRequestReceive *func);
 
-  bool Start(bool is_detach = true);
+  bool Start();
   bool Wait();
   bool Stop();
 
