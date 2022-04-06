@@ -96,6 +96,7 @@ constexpr auto kStridedSliceGradOpName = "StridedSliceGrad";
 constexpr auto kSparseGatherV2OpName = "SparseGatherV2";
 constexpr auto kUnsortedSegmentProdOpName = "UnsortedSegmentProd";
 constexpr auto kUnsortedSegmentMinOpName = "UnsortedSegmentMin";
+constexpr auto kSortOpName = "Sort";
 constexpr auto kFlattenGradOpName = "FlattenGrad";
 constexpr auto kExpandDimsOpName = "ExpandDims";
 constexpr auto kReshapeOpName = "Reshape";

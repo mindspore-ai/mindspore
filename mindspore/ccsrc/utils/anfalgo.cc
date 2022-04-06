@@ -608,6 +608,17 @@ std::vector<size_t> AnfAlgo::GetPrevNodeOutputInferShape(const AnfNodePtr &node,
   return AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
 }
 
+std::vector<TypeId> AnfAlgo::GetAllOutputInferDataTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  std::vector<TypeId> outputs;
+  auto out_nums = AnfAlgo::GetOutputTensorNum(node);
+  for (size_t i = 0; i < out_nums; i++) {
+    auto type = AnfAlgo::GetOutputInferDataType(node, i);
+    outputs.push_back(type);
+  }
+  return outputs;
+}
+
 TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
   auto type_ptr = type;
   MS_EXCEPTION_IF_NULL(type_ptr);

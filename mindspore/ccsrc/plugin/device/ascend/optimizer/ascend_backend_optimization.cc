@@ -123,13 +123,13 @@
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_cascade.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_pad_for_nms_with_mask.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_transdata_for_runop.h"
+#include "plugin/device/ascend/optimizer/enhancer/insert_transpose_for_sort.h"
 #include "plugin/device/ascend/optimizer/enhancer/getnext_tensor_move_elimination.h"
 #include "plugin/device/ascend/optimizer/ir_fission/addn_fission.h"
 #include "plugin/device/ascend/optimizer/enhancer/insert_tensor_move_for_getnext.h"
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/split_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/splitv_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fusion/add_input_to_output.h"
 #include "plugin/device/ascend/optimizer/format_type/remove_internal_output.h"
 #include "plugin/device/ascend/optimizer/ir_fission/concat_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/pack_fission.h"
@@ -145,7 +145,6 @@
 #include "plugin/device/ascend/optimizer/mindir/dropout_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "plugin/device/ascend/optimizer/mindir/maxpool_with_argmax_unify_mindir.h"
-#include "plugin/device/ascend/optimizer/mindir/conv2d_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/optimizer_unify_output.h"
 #include "plugin/device/ascend/optimizer/mindir/fake_learned_scale_quant_grad_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
@@ -333,6 +332,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
@@ -406,6 +406,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
+  ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
