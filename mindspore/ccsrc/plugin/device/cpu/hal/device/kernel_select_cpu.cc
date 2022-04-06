@@ -187,8 +187,15 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
 }
 
 void KernelNotSupportException(const AnfNodePtr &kernel_node, const std::vector<TypeId> &input_types,
-                               const std::vector<TypeId> &infer_output_types) {
+                               const std::vector<TypeId> &infer_output_types, bool is_kernel_exist) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (!is_kernel_exist) {
+    MS_LOG(EXCEPTION) << "Unsupported op [" << kernel_name
+                      << "] on CPU, Please confirm whether the device target setting is correct, or refer to the "
+                         "official website to query the operator support list.\n"
+                      << trace::DumpSourceLines(kernel_node);
+  }
+
   std::stringstream operator_info;
   operator_info << "Operator[" << kernel_name << "] ";
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -415,13 +422,13 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
                     output_types, &matched, true)) {
     if (op_name == "Cast") {
-      KernelNotSupportException(kernel_node, input_types, output_types);
+      KernelNotSupportException(kernel_node, input_types, output_types, !kernel_attrs.empty());
     }
     matched = std::make_pair(false, false);
     (void)SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
                        output_types, &matched, false);
     if (!matched.first) {
-      KernelNotSupportException(kernel_node, input_types, output_types);
+      KernelNotSupportException(kernel_node, input_types, output_types, !kernel_attrs.empty());
     }
   }
 
