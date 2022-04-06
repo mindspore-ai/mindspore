@@ -30,7 +30,7 @@ PrimitiveCPtr BaseOperator::GetPrim() {
 void BaseOperator::InitIOName(const std::vector<std::string> &inputs_name,
                               const std::vector<std::string> &outputs_name) {
   (void)AddAttr("input_names", api::MakeValue(inputs_name));
-  (void)AddAttr("output_name", api::MakeValue(outputs_name));
+  (void)AddAttr("output_names", api::MakeValue(outputs_name));
 }
 }  // namespace ops
 }  // namespace mindspore
