@@ -748,8 +748,8 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
     Outputs:
         Tuple of 3 Tensors.
 
-        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)` and
-        the same type as `true_classes`.
+        - **sampled_candidates** (Tensor) - A Tensor with shape :math:`(num\_sampled,)`
+          and the same type as `true_classes`.
         - **true_expected_count** (Tensor) - A Tensor with the same shape as `true_classes and` type float32.
         - **sampled_expected_count** (Tensor) - A Tensor with the same shape as `sampled_candidates` and type float32.
 
