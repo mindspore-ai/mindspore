@@ -339,7 +339,7 @@ def thor_end(device_num, q):
     assert thor_cost < 30
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
