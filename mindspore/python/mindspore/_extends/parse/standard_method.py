@@ -1912,7 +1912,7 @@ def filter_(fun, iter_):
 
 def csr_astype(x, dtype):
     """Implementation of `astype` for CSRTensor."""
-    data = F.cast(x.values, dtype)
+    data = x.values.astype(dtype)
     return F.make_csr_tensor(x.indptr, x.indices, data, x.shape)
 
 
@@ -1929,7 +1929,7 @@ def csr_abs(x):
 
 def csr_mv(x, dense_vector):
     """Implementation of `abs` for CSRTensor."""
-    check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
+    check_value_type('dense_vector', dense_vector, (Tensor,), 'CSRTensor.mv')
     return F.csr_mv(x, dense_vector)
 
 
@@ -1941,7 +1941,7 @@ def csr_to_tuple(x):
 
 def coo_astype(x, dtype):
     """Implementation of `astype` for COOTensor."""
-    data = F.cast(x.values, dtype)
+    data = x.values.astype(dtype)
     return F.make_coo_tensor(x.indices, data, x.shape)
 
 

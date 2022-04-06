@@ -2587,7 +2587,7 @@ class COOTensor(COOTensor_):
         Return a copy of the COOTensor, cast its values to a specified type.
 
         Args:
-            dtype (:class:`mindspore.dtype`): Designated tensor dtype.
+            dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype.
 
         Returns:
             COOTensor.
@@ -2795,7 +2795,7 @@ class CSRTensor(CSRTensor_):
         Return a copy of the CSRTensor, cast its values to a specified type.
 
         Args:
-            dtype (:class:`mindspore.dtype`): Designated tensor dtype.
+            dtype (Union[:class:`mindspore.dtype`, numpy.dtype, str]): Designated tensor dtype.
 
         Returns:
             CSRTensor.
