@@ -1,7 +1,7 @@
 .. py:method:: add_sampler(new_sampler)
 
-    为当前数据集对象添加采样器。
+    为当前数据集添加子采样器。
 
     **参数：**
 
-    - **new_sampler** (Sampler) ：指定作用于当前数据集对象的新采样器。
+    - **new_sampler** (Sampler)：待添加的子采样器。

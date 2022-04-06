@@ -2159,18 +2159,16 @@ class MappableDataset(SourceDataset):
 
     def add_sampler(self, new_sampler):
         """
-        Add a sampler for current dataset.
+        Add a child sampler for the current dataset.
 
         Args:
-            new_sampler (Sampler): The sampler to be added as the parent sampler for current dataset.
+            new_sampler (Sampler): The child sampler to be added.
 
         Examples:
-            >>> # dataset is an instance object of Dataset
-            >>> # use a DistributedSampler instead
             >>> new_sampler = ds.DistributedSampler(10, 2)
-            >>> dataset.add_sampler(new_sampler)
+            >>> dataset.add_sampler(new_sampler)  # dataset is an instance of Dataset
         """
-        # note: By adding a sampler, the sampled IDs will flow to new_sampler
+        # Note: By adding a sampler, the sampled IDs will flow to the new_sampler
         # after first passing through the current samplers attached to this dataset.
         self.dataset_size = None
         new_sampler.add_child(self.sampler)
@@ -2178,10 +2176,10 @@ class MappableDataset(SourceDataset):
 
     def use_sampler(self, new_sampler):
         """
-        Make the current dataset use the new_sampler provided by other API.
+        Replace the last child sampler of the current dataset, remaining the parent sampler unchanged.
 
         Args:
-            new_sampler (Sampler): The sampler to use for the current dataset.
+            new_sampler (Sampler): The new sampler to replace with.
 
         Examples:
             >>> # dataset is an instance object of Dataset
