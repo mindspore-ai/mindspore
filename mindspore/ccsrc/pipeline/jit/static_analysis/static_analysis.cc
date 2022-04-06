@@ -661,26 +661,23 @@ void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const Fu
   MS_EXCEPTION_IF_NULL(evaluator);
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
+  if (possible_parent_fg != nullptr) {
+    possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
+    MS_LOG(DEBUG) << "Set graph undetermined: " << possible_parent_fg->ToString();
+  }
   auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
   if (fg_eval == nullptr) {
     return;
   }
-
   auto fg = fg_eval->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
-  auto undetermined_fgs = fg->recursive();
-  if (undetermined_fgs) {
-    auto fg_parent = fg->parent();
-    if (fg_parent != nullptr) {
-      fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
-      MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString() << " for fg: " << fg->ToString();
-      return;
-    } else if (possible_parent_fg != nullptr) {
-      possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
-      MS_LOG(DEBUG) << "Set graph undetermined: " << possible_parent_fg->ToString() << " for fg: " << fg->ToString();
-    } else {
-      MS_LOG(EXCEPTION) << "cannot find parent for fg: " << fg->ToString();
-    }
+  auto fg_parent = fg->parent();
+  if (fg_parent != nullptr) {
+    fg_parent->set_flag(kFuncGraphFlagUndetermined, true);
+    MS_LOG(DEBUG) << "Set graph undetermined: " << fg_parent->ToString() << " for fg: " << fg->ToString();
+    return;
+  } else {
+    MS_LOG(DEBUG) << "cannot find parent for fg: " << fg->ToString();
   }
 }
 
@@ -960,7 +957,6 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     return std::make_shared<EvalResult>(eval_result, nullptr);
   }
   auto possible_parent_fg = out_conf->node()->func_graph();
-
   // Eval result of the main.
   AsyncAbstractPtr async_result_main = std::make_shared<AsyncAbstract>();
   // Eval result of the branches
