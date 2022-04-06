@@ -296,11 +296,16 @@ class SamplerFn:
     def _stop_subprocess(self):
         """Only the main process can call join."""
         if self.need_join is True and self.ppid == os.getpid():
-            self.eof.set()
+            if hasattr(self, 'eof') and self.eof is not None and not self.eof.is_set():
+                self.eof.set()
             self.need_join = False
             for w in self.workers:
                 if self.multi_process is True and hasattr(w, '_closed') and w._closed is False:  # pylint: disable=W0212
-                    w.join()
+                    try:
+                        w.join()
+                    except Exception:  # pylint: disable=W0703
+                        # Block all errors when join
+                        continue
             self._abort_watchdog()
 
     def _abort_watchdog(self):
