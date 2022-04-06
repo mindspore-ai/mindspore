@@ -195,6 +195,10 @@
 
     int，类别的数目。
 
+.. py:method:: notify_watchdog()
+
+    关闭数据集对象中的watchdog线程。当前GeneratorDataset/map/batch开启多进程时会各自拉起一个watchdog线程来监控多进程的状态，对于get_dataset_size/output_shapes/output_types/get_col_names/num_classes这些接口，其内部默认调用了notify_watchdog。
+
 .. py:method:: output_shapes()
 
     获取数据集对象中每列数据的shape。
