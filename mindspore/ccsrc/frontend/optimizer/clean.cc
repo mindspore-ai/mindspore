@@ -260,9 +260,14 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     int64_t index = GetAttrIndex(abs_dict->elements(), GetStringValue(cons));
     if (index >= static_cast<int64_t>(abs_dict->elements().size())) {
       // For dictionary set, if the key does not exist, we should create a new item.
-      auto tuple_add_op = std::make_shared<prim::TupleAdd>("tuple_add");
-      auto make_tuple_node = node->func_graph()->NewCNode({NewValueNode(prim::kPrimMakeTuple), item_value});
-      return node->func_graph()->NewCNode({NewValueNode(tuple_add_op), data, make_tuple_node});
+      std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+      for (size_t i = 0; i < abs_dict->elements().size(); ++i) {
+        auto tuple_getitem_i =
+          node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleGetItem), data, NewValueNode(SizeToLong(i))});
+        (void)make_tuple_inputs.emplace_back(tuple_getitem_i);
+      }
+      (void)make_tuple_inputs.emplace_back(item_value);
+      return node->func_graph()->NewCNode(make_tuple_inputs);
     }
     auto index_node = NewValueNode(index);
     return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, index_node, item_value});
