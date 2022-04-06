@@ -388,7 +388,7 @@ class ClipByNorm(Cell):
     Inputs:
         - **x** (Tensor) - Tensor of shape N-D. The type must be float32 or float16.
         - **clip_norm** (Tensor) - A scalar Tensor of shape :math:`()` or :math:`(1)`.
-          Or a tensor shape can be broadcast to input shape.
+          Or a tensor shape can be broadcast to input `x` shape.
 
     Outputs:
         Tensor, clipped tensor with the same shape as the `x`, whose type is float32.

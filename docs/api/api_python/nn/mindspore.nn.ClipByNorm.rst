@@ -20,7 +20,7 @@ mindspore.nn.ClipByNorm
     **输入：**
 
     - **x** (Tensor) - 输入n维的Tensor，数据类型为float32或float16。
-    - **clip_norm** (Tensor) - shape为 :math:`()` 或 :math:`(1)` 的Tensor。或者其shape可以广播到输入的shape。
+    - **clip_norm** (Tensor) - shape为 :math:`()` 或 :math:`(1)` 的Tensor。或者其shape可以广播到 `x` 的shape。
 
     **输出：**
 

@@ -4627,7 +4627,9 @@ class ScatterAdd(_ScatterOpDynamic):
         This is an in-place update operator. Therefore, the `input_x` will be updated after the operation is completed.
 
     Args:
-        use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+        use_locking (bool): Whether to protect the assignment by a lock.
+            If true, ` input_x` will be protected by the lock.
+            Otherwise, the calculation result is undefined. Default: False.
 
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
