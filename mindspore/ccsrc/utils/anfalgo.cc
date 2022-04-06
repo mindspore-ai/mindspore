@@ -1541,10 +1541,16 @@ int64_t AnfAlgo::GetAttrGroups(const AnfNodePtr &node, size_t index) {
       }
       return AnfAlgo::GetNodeAttr<int64_t>(cnode, kAttrFracZGroup);
     }
-  } else if (node->isa<Parameter>()) {
+  }
+  if (node->isa<Parameter>()) {
     auto param = node->cast<ParameterPtr>();
     MS_EXCEPTION_IF_NULL(param);
     return param->fracz_group();
+  }
+  if (node->isa<ValueNode>()) {
+    auto value_node = node->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    return value_node->fracz_group();
   }
   return 1;
 }
