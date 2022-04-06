@@ -878,12 +878,12 @@ class RandomAffine(py_transforms.PyTensorOperation):
         shear (Union[float, Sequence[float, float], Sequence[float, float, float, float]], optional):
             Range of shear factor to select from.
             If float is provided, a shearing parallel to X axis with a factor selected from
-            (-`shear`, `shear`) will be applied.
+            (- `shear` , `shear` ) will be applied.
             If Sequence[float, float] is provided, a shearing parallel to X axis with a factor selected
-            from (`shear`[0], `shear`[1]) will be applied.
+            from ( `shear` [0], `shear` [1]) will be applied.
             If Sequence[float, float, float, float] is provided, a shearing parallel to X axis with a factor selected
-            from (`shear`[0], `shear`[1]) and a shearing parallel to Y axis with a factor selected from
-            (`shear`[2], `shear`[3]) will be applied. Default: None, means no shearing.
+            from ( `shear` [0], `shear` [1]) and a shearing parallel to Y axis with a factor selected from
+            ( `shear` [2], `shear` [3]) will be applied. Default: None, means no shearing.
         resample (Inter, optional): Method of interpolation. It can be Inter.BILINEAR, Inter.NEAREST
             or Inter.BICUBIC. If the input PIL Image is in mode of "1" or "P", Inter.NEAREST will be
             used directly. Default: Inter.NEAREST.
