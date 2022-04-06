@@ -15,18 +15,17 @@
 """smoke tests for CSR operations"""
 
 import os
-import platform
 import pytest
 import numpy as np
 
-from mindspore import Tensor, CSRTensor, ms_function, nn, context, ops
+from mindspore import Tensor, CSRTensor, ms_function, nn, ops
 from mindspore.ops.operations import _csr_ops
 from mindspore.common import dtype as mstype
 from mindspore.train.serialization import export, load
 from mindspore.ops import functional as F
 
+from .sparse_utils import get_platform, compare_res
 
-context.set_context(mode=context.GRAPH_MODE)
 
 def compare_csr(csr1, csr2):
     assert isinstance(csr1, CSRTensor)
@@ -36,8 +35,6 @@ def compare_csr(csr1, csr2):
     assert (csr1.values.asnumpy() == csr2.values.asnumpy()).all()
     assert csr1.shape == csr2.shape
 
-def get_platform():
-    return platform.system().lower()
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
@@ -494,10 +491,10 @@ def test_dtype_csr_tensor():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_csr_bprop():
+def test_bprop():
     """
     Feature: Test back-propagation with CSR-related Ops.
-    Description: Test CSRReduceSum, CSRMul, CSRMV, CSRTensor.to_coo(), CSRTensor.to_dense().
+    Description: Test CSRReduceSum, CSRMul, CSRDiv, CSRMV, CSRTensor.to_coo(), CSRTensor.to_dense().
     Expectation: Success.
     """
     if get_platform() != "linux":
@@ -506,21 +503,25 @@ def test_csr_bprop():
     csrmv = _csr_ops.CSRMV()
     grad_op = ops.GradOperation(get_all=True)
 
+    @grad_op
+    @ms_function
     def test_csr_mul(csr_tensor, dense):
         return csr_tensor * dense
 
+    @grad_op
+    @ms_function
+    def test_csr_div(csr_tensor, dense):
+        return csr_tensor / dense
+
+    @grad_op
+    @ms_function
     def test_csr_reduce_sum(csr_tensor, axis):
         return csr_reduce_sum(csr_tensor, axis)
 
+    @grad_op
+    @ms_function
     def test_csrmv(csr_tensor, dense):
         return csrmv(csr_tensor, dense)
-
-    test_csr_mul_grad_pynative = grad_op(test_csr_mul)
-    test_csr_mul_grad_graph = ms_function(test_csr_mul_grad_pynative)
-    test_csr_reduce_sum_grad_pynative = grad_op(test_csr_reduce_sum)
-    test_csr_reduce_sum_grad_graph = ms_function(test_csr_reduce_sum_grad_pynative)
-    test_csrmv_grad_pynative = grad_op(test_csrmv)
-    test_csrmv_grad_graph = ms_function(test_csrmv_grad_pynative)
 
     indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
     indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
@@ -531,38 +532,42 @@ def test_csr_bprop():
     csr_mv_arg = Tensor([[1], [2], [3], [4]], dtype=mstype.float32)
     csr_mv_expect_1 = np.array([4, 1, 2, 3, 2, 4], dtype=np.float32)
     csr_mv_expect_2 = np.array([[1], [6], [3], [5]], dtype=np.float32)
-    csr_mv_output_1, csr_mv_output_2 = test_csrmv_grad_pynative(csr_tensor, csr_mv_arg)
-    assert np.allclose(csr_mv_output_1.values.asnumpy(), csr_mv_expect_1)
-    assert np.allclose(csr_mv_output_2.asnumpy(), csr_mv_expect_2)
-    csr_mv_output_1, csr_mv_output_2 = test_csrmv_grad_graph(csr_tensor, csr_mv_arg)
+    csr_mv_output_1, csr_mv_output_2 = test_csrmv(csr_tensor, csr_mv_arg)
     assert np.allclose(csr_mv_output_1.values.asnumpy(), csr_mv_expect_1)
     assert np.allclose(csr_mv_output_2.asnumpy(), csr_mv_expect_2)
 
-    csr_reduce_sum_expect = np.ones(6, dtype=np.float32)
-    csr_reduce_sum_output = test_csr_reduce_sum_grad_pynative(csr_tensor, 1)
-    assert np.allclose(csr_reduce_sum_output[0].values.asnumpy(), csr_reduce_sum_expect)
-    csr_reduce_sum_output = test_csr_reduce_sum_grad_graph(csr_tensor, 1)
-    assert np.allclose(csr_reduce_sum_output[0].values.asnumpy(), csr_reduce_sum_expect)
+    csr_reduce_sum_expect_1 = np.ones(6, dtype=np.float32)
+    csr_reduce_sum_output_1 = test_csr_reduce_sum(csr_tensor, 1)
+    assert np.allclose(csr_reduce_sum_output_1[0].values.asnumpy(), csr_reduce_sum_expect_1)
 
     csr_mul_arg_1 = Tensor([[1], [2], [3]], dtype=mstype.float32)
     csr_mul_expect_1_1 = np.array([1, 2, 2, 2, 3, 3], dtype=np.float32)
     csr_mul_expect_1_2 = np.array([[0], [6], [9]], dtype=np.float32)
-    csr_mul_output_1_1, csr_mul_output_1_2 = test_csr_mul_grad_pynative(csr_tensor, csr_mul_arg_1)
-    assert np.allclose(csr_mul_output_1_1.values.asnumpy(), csr_mul_expect_1_1)
-    assert np.allclose(csr_mul_output_1_2.asnumpy(), csr_mul_expect_1_2)
-    csr_mul_output_1_1, csr_mul_output_1_2 = test_csr_mul_grad_graph(csr_tensor, csr_mul_arg_1)
+    csr_mul_output_1_1, csr_mul_output_1_2 = test_csr_mul(csr_tensor, csr_mul_arg_1)
     assert np.allclose(csr_mul_output_1_1.values.asnumpy(), csr_mul_expect_1_1)
     assert np.allclose(csr_mul_output_1_2.asnumpy(), csr_mul_expect_1_2)
 
     csr_mul_arg_2 = Tensor(np.arange(12).reshape(3, 4), dtype=mstype.float32)
     csr_mul_expect_2_1 = np.array([3, 4, 5, 6, 9, 11], dtype=np.float32)
     csr_mul_expect_2_2 = np.array([[0, 0, 0, 0], [1, 2, 3, 0], [0, 4, 0, 5]], np.float32)
-    csr_mul_output_2_1, csr_mul_output_2_2 = test_csr_mul_grad_pynative(csr_tensor, csr_mul_arg_2)
+    csr_mul_output_2_1, csr_mul_output_2_2 = test_csr_mul(csr_tensor, csr_mul_arg_2)
     assert np.allclose(csr_mul_output_2_1.values.asnumpy(), csr_mul_expect_2_1)
     assert np.allclose(csr_mul_output_2_2.asnumpy(), csr_mul_expect_2_2)
-    csr_mul_output_2_1, csr_mul_output_2_2 = test_csr_mul_grad_graph(csr_tensor, csr_mul_arg_2)
-    assert np.allclose(csr_mul_output_2_1.values.asnumpy(), csr_mul_expect_2_1)
-    assert np.allclose(csr_mul_output_2_2.asnumpy(), csr_mul_expect_2_2)
+
+    csr_div_expect_1_1 = np.array([1, 0.5, 0.5, 0.5, 0.3333333, 0.3333333], dtype=np.float32)
+    csr_div_expect_1_2 = np.array([[0], [-1.5], [-1]], dtype=np.float32)
+    csr_div_arg_1 = Tensor([[1], [2], [3]], dtype=mstype.float32)
+    csr_div_output_1_1, csr_div_output_1_2 = test_csr_div(csr_tensor, csr_div_arg_1)
+    assert np.allclose(csr_div_output_1_1.values.asnumpy(), csr_div_expect_1_1)
+    assert np.allclose(csr_div_output_1_2.asnumpy(), csr_div_expect_1_2)
+
+    csr_div_arg_2 = Tensor(np.arange(1, 13).reshape(3, 4), dtype=mstype.float32)
+    csr_div_expect_2_1 = np.array([0.25, 0.2, 0.16666667, 0.14285715, 0.1, 0.0833333], dtype=np.float32)
+    csr_div_expect_2_2 = np.array(
+        [[0, 0, 0, 0], [-0.04, -0.05555556, -0.06122449, 0], [0, -0.04, 0, -0.03472222]], dtype=np.float32)
+    csr_div_output_2_1, csr_div_output_2_2 = test_csr_div(csr_tensor, csr_div_arg_2)
+    assert np.allclose(csr_div_output_2_1.values.asnumpy(), csr_div_expect_2_1)
+    assert np.allclose(csr_div_output_2_2.asnumpy(), csr_div_expect_2_2)
 
 
 @pytest.mark.level0
@@ -600,3 +605,103 @@ def test_csr_method():
     to_dense_output = CSRToDenseNet()(csr_tensor)
     to_dense_expect = np.array([[0, 0, 0, 0], [1, 2, 3, 0], [0, 4, 0, 5]], np.float32)
     assert np.allclose(to_dense_output.asnumpy(), to_dense_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_bprop2():
+    """
+    Feature: Test back-propagation with CSR-related Ops.
+    Description: Test back-propagation of make_csr, csr.attributes, csr.methods().
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+    grad_op = ops.GradOperation(get_all=True)
+    indptr = Tensor([0, 1, 4, 6], dtype=mstype.int32)
+    indices = Tensor([3, 0, 1, 2, 1, 3], dtype=mstype.int32)
+    values = Tensor(np.arange(6) - 3.5, dtype=mstype.float32)
+    dense_shape = (3, 4)
+
+    @grad_op
+    @ms_function
+    def test_csr_tensor(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor
+
+    @grad_op
+    @ms_function
+    def test_csr_indptr(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.indptr
+
+    @grad_op
+    @ms_function
+    def test_csr_indices(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.indices
+
+    @grad_op
+    @ms_function
+    def test_csr_values(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.values
+
+    @grad_op
+    @ms_function
+    def test_csr_shape(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.shape
+
+    @grad_op
+    @ms_function
+    def test_csr_cast(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.astype(mstype.int32)
+
+    @grad_op
+    @ms_function
+    def test_csr_dtype(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.dtype
+
+    @grad_op
+    @ms_function
+    def test_csr_to_tuple(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.to_tuple()
+
+    @grad_op
+    @ms_function
+    def test_csr_to_abs(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.abs()
+
+    @grad_op
+    @ms_function
+    def test_csr_to_coo(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.to_coo()
+
+    @grad_op
+    @ms_function
+    def test_csr_to_dense(indptr, indices, values, dense_shape):
+        csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+        return csr_tensor.to_dense()
+
+    all_zero = (np.zeros(indptr.shape, np.int32), np.zeros(indices.shape, np.int32), np.zeros(values.shape, np.float32))
+    values_on = (np.zeros(indptr.shape, np.int32), np.zeros(indices.shape, np.int32), np.ones(values.shape, np.float32))
+    values_absgrad = (np.zeros(indptr.shape, np.int32), np.zeros(indices.shape, np.int32), np.sign(values.asnumpy()))
+    compare_res(test_csr_tensor(indptr, indices, values, dense_shape), values_on)
+    compare_res(test_csr_indptr(indptr, indices, values, dense_shape), all_zero)
+    compare_res(test_csr_indices(indptr, indices, values, dense_shape), all_zero)
+    compare_res(test_csr_values(indptr, indices, values, dense_shape), values_on)
+    compare_res(test_csr_cast(indptr, indices, values, dense_shape), values_on)
+    compare_res(test_csr_shape(indptr, indices, values, dense_shape), all_zero)
+    compare_res(test_csr_dtype(indptr, indices, values, dense_shape), all_zero)
+    compare_res(test_csr_to_tuple(indptr, indices, values, dense_shape), values_on)
+    compare_res(test_csr_to_abs(indptr, indices, values, dense_shape), values_absgrad)
+    compare_res(test_csr_to_coo(indptr, indices, values, dense_shape), values_on)
+    compare_res(test_csr_to_dense(indptr, indices, values, dense_shape), values_on)
