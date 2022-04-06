@@ -31,12 +31,12 @@ class FileReader:
     Class to read MindRecord files.
 
     Note:
-        If `file_name` is a filename string, it tries to load all MindRecord files generated \
+        If `file_name` is a file path, it tries to load all MindRecord files generated \
         in a conversion, and throws an exception if a MindRecord file is missing.
-        If `file_name` is a filename list, only the MindRecord files in the list are loaded.
+        If `file_name` is file path list, only the MindRecord files in the list are loaded.
 
     Args:
-       file_name (str, list[str]): One of MindRecord file or a file list.
+       file_name (str, list[str]): One of MindRecord file path or file path list.
        num_consumer(int, optional): Number of reader workers which load data. Default: 4.
            It should not be smaller than 1 or larger than the number of processor cores.
        columns (list[str], optional): A list of fields where corresponding data would be read. Default: None.

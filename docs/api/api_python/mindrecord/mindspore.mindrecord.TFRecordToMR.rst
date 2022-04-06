@@ -1,7 +1,7 @@
 
 .. py:class:: mindspore.mindrecord.TFRecordToMR(source, destination, feature_dict, bytes_fields=None)
 
-    将TFRecord格式数据集转换为MindRecord格式数据集的类。
+    将TFRecord格式数据集转换为MindRecord格式数据集。
 
     .. note::
         示例的详细信息，请参见 `转换TFRecord数据集 <https://mindspore.cn/docs/programming_guide/zh-CN/master/dataset_conversion.html#转换TFRecord数据集>`_。
@@ -10,8 +10,8 @@
 
     - **source** (str) - 待转换的TFRecord文件路径。
     - **destination** (str) - 转换生成的MindRecord文件路径，需提前创建目录并且目录下不能存在同名文件。
-    - **feature_dict** (dict[str, `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ ]) - TFRecord的feature类别的字典，
-      不支持 `VarLenFeature  <https://www.tensorflow.org/api_docs/python/tf/io/VarLenFeature>`_ 类别。
+    - **feature_dict** (dict[str, FixedLenFeature]) - TFRecord的feature类别的字典，当前支持
+        `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ 类型。
     - **bytes_fields** (list[str]，可选) - `feature_dict` 中的字节字段，可以为字节类型的图像字段。
 
     **异常：**
