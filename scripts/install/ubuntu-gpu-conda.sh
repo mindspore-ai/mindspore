@@ -164,7 +164,7 @@ env_name=mindspore_py3${PYTHON_VERSION##*.}
 declare -A cudnn_version_map=()
 cudnn_version_map["10.1"]="7.6.5"
 cudnn_version_map["11.1"]="8.1.0"
-conda create -n $env_name python=${PYTHON_VERSION} -y
+conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
 install_name="mindspore-gpu"
 if [[ $MINDSPORE_VERSION != "EMPTY" ]]; then

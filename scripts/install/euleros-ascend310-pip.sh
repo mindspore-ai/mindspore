@@ -71,6 +71,17 @@ add_env() {
 
 sudo yum install gcc gmp-devel -y
 
+# cmake
+cd /tmp
+cmake_file_name="cmake-3.19.8-Linux-$(arch).sh"
+curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
+sudo mkdir $HOME/cmake-3.19.8
+sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
+add_env PATH $HOME/cmake-3.19.8/bin
+set +e && source ~/.bashrc
+set -e
+cd -
+
 install_conda() {
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
     cd /tmp
@@ -109,24 +120,17 @@ set -e
 
 # set up conda env
 env_name=mindspore_py3${PYTHON_VERSION##*.}
-conda create -n $env_name python=${PYTHON_VERSION} -y
+conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
+# downgrade openssl when py3.9+310
+if [[ "$PYTHON_VERSION" == "3.9" ]]; then
+    conda install openssl=1.1.1 -y
+fi
 
 pip install sympy
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-any.whl
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
-
-# cmake
-cd /tmp
-cmake_file_name="cmake-3.19.8-Linux-$(arch).sh"
-curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
-sudo mkdir $HOME/cmake-3.19.8
-sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
-add_env PATH $HOME/cmake-3.19.8/bin
-set +e && source ~/.bashrc
-set -e
-cd -
 
 ARCH=`uname -m`
 pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/${MINDSPORE_VERSION}/MindSpore/ascend/${ARCH}/mindspore_ascend-${version_map["$PYTHON_VERSION"]}-linux_${ARCH}.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
