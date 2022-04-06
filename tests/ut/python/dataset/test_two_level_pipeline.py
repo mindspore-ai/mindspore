@@ -17,6 +17,7 @@ This is the test module for two level pipeline.
 """
 import os
 import pytest
+import numpy as np
 
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -187,3 +188,42 @@ def test_minddtaset_generatordataset_exception_02(add_and_remove_file):
                 print("item: ", item)
                 num_iter += 1
     assert 'Unexpected error. Invalid data, column name:' in str(error_info.value)
+
+
+def test_two_level_pipeline_with_multiprocessing():
+    """
+    Feature: Test basic two level pipeline with multiprocessing testcases.
+    Description: Test basic feature on two level pipeline with multiprocessing scenario.
+    Expectation: Basic feature work fine.
+    """
+    file_name = "../data/dataset/testPK/data"
+
+    class DatasetGenerator:
+        def __init__(self):
+            data1 = ds.ImageFolderDataset(file_name)
+            data1 = data1.map(DatasetGenerator.pyfunc, input_columns=["image"], python_multiprocessing=True)
+            self.iter = data1.create_tuple_iterator(output_numpy=True)
+
+        def __getitem__(self, item):
+            return next(self.iter)
+
+        def __len__(self):
+            return 10
+
+        @staticmethod
+        def pyfunc(x):
+            return x
+
+    source = DatasetGenerator()
+    data2 = ds.GeneratorDataset(source, ["data", "label"])
+    assert data2.output_shapes() == [[159109], []]
+
+    data3 = ds.GeneratorDataset(source, ["data", "label"])
+    assert data3.output_types() == [np.uint8, np.int32]
+
+    data4 = ds.GeneratorDataset(source, ["data", "label"])
+    assert data4.get_dataset_size() == 10
+    nums = 0
+    for _ in data4.create_dict_iterator(output_numpy=True):
+        nums += 1
+    assert nums == 10
