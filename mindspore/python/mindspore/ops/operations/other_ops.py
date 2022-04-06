@@ -222,12 +222,14 @@ class CheckValid(PrimitiveWithInfer):
         specifying the valid boundary (heights x ratio, weights x ratio).
 
     Inputs:
-        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). Data type must be float16 or float32.
-        - **img_metas** (Tensor) - Raw image size information with the format of (height, width, ratio).
-          Data type must be float16 or float32.
+        - **bboxes** (Tensor) - Bounding boxes tensor with shape (N, 4). "N" indicates the number of
+          bounding boxes, the value "4" indicates "x0", "x1", "y0", and "y1". Data type must be float16 or float32.
+        - **img_metas** (Tensor) - Raw image size information with the format of (height, width, ratio), specifying
+          the valid boundary(height * ratio, width * ratio). Data type must be float16 or float32.
 
     Outputs:
-        Tensor, with shape of (N,) and dtype of bool.
+        Tensor, with shape of (N,) and dtype of bool, specifying whether the bounding boxes is in the image.
+        "True" indicates valid, while "False" indicates invalid.
 
     Raises:
         TypeError: If `bboxes` or `img_metas` is not a Tensor.
@@ -609,7 +611,8 @@ class ConfusionMatrix(PrimitiveWithInfer):
 
 class PopulationCount(PrimitiveWithInfer):
     r"""
-    Calculates population count.
+    Computes element-wise population count(a.k.a bitsum, bitcount).
+    For each entry in `input` , calculates the number of 1 bits in the binary representation of that entry.
 
     Inputs:
         - **input** (Tensor) -  The data type must be int16 or uint16.
