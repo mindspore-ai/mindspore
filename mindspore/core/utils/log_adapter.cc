@@ -28,6 +28,7 @@
 
 // namespace to support utils module definition
 namespace mindspore {
+constexpr int kNameMaxLength = 18;
 std::map<void **, std::thread *> acl_handle_map;
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
@@ -445,7 +446,7 @@ void InitSubModulesLogLevel() {
 }
 
 const std::string GetSubModuleName(SubModuleId module_id) {
-  static const std::vector<std::string> sub_module_names = {
+  static const char sub_module_names[NUM_SUBMODUES][kNameMaxLength] = {
     "UNKNOWN",            // SM_UNKNOWN
     "CORE",               // SM_CORE
     "ANALYZER",           // SM_ANALYZER
