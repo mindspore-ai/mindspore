@@ -100,49 +100,52 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
   }
 
-  std::tuple<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> local_py_params() {
+  std::tuple<std::map<std::string, AnfNodePtr>, std::map<std::string, AnfNodePtr>> local_py_params() {
     return {local_py_params_keys_, local_py_params_values_};
   }
   void AddLocalPyParam(const std::string &name, const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();
-    local_py_params_keys_.emplace_back(NewValueNode(name));
-    local_py_params_values_.emplace_back(node);
-  }
-  // Call this methon only if you need update a variable. Usually variable override.
-  void UpdateLocalPyParam(const std::string &name, const AnfNodePtr &node) {
-    auto iter = std::find_if(local_py_params_keys_.cbegin(), local_py_params_keys_.cend(),
-                             [&name](const AnfNodePtr node) -> bool {
-                               const auto value_node = dyn_cast<ValueNode>(node);
-                               MS_EXCEPTION_IF_NULL(value_node);
-                               const StringImmPtr &str_imm = dyn_cast<StringImm>(value_node->value());
-                               MS_EXCEPTION_IF_NULL(str_imm);
-                               return name == str_imm->value();
-                             });
-    if (iter == local_py_params_keys_.cend()) {
-      MS_LOG(EXCEPTION) << "Only for updating. Should not call this method if 'name' not exist.";
-    }
-    // Find the same position in 'values', and update the node.
-    auto distance = std::distance(local_py_params_keys_.cbegin(), iter);
-    auto values_pos_iter = local_py_params_values_.begin() + distance;
-    MS_LOG(DEBUG) << "Update '" << name << "', " << (*values_pos_iter)->DebugString() << " -> " << node->DebugString();
-    *values_pos_iter = node;
+    (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(name, NewValueNode(name)));
+    (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(name, node));
   }
 
-  void UpdateLocalPyParam(const std::vector<AnfNodePtr> &keys, const std::vector<AnfNodePtr> &values) {
+  // Call this methon only if you need update a variable. Usually variable override.
+  void UpdateLocalPyParam(const std::string &name, const AnfNodePtr &node) {
+    auto key_iter = local_py_params_keys_.find(name);
+    if (key_iter == local_py_params_keys_.end()) {
+      MS_LOG(EXCEPTION) << "Only for updating. Should not call this method if '" << name << "' not exist.";
+    }
+    // Find the same position in 'values', and update the node.
+    MS_LOG(DEBUG) << "Update '" << name << "', " << local_py_params_values_[name]->DebugString() << " -> "
+                  << node->DebugString();
+    local_py_params_values_[name] = node;
+  }
+
+  void EraseLocalPyParam(const std::string &name) {
+    auto key_iter = local_py_params_keys_.find(name);
+    auto value_iter = local_py_params_values_.find(name);
+    if (key_iter != local_py_params_keys_.end() && value_iter != local_py_params_values_.end()) {
+      MS_LOG(DEBUG) << "Erase '" << name
+                    << "' from local_py_params, the key node:" << local_py_params_keys_[name]->DebugString()
+                    << ", the value node:" << local_py_params_values_[name]->DebugString();
+      local_py_params_keys_.erase(key_iter);
+      local_py_params_values_.erase(value_iter);
+    }
+  }
+
+  void UpdateLocalPyParam(const std::map<std::string, AnfNodePtr> &keys, std::map<std::string, AnfNodePtr> values) {
     if (keys.size() != values.size()) {
       MS_LOG(EXCEPTION) << "keys size should be equal to values size.";
     }
-    for (size_t index = 0; index < keys.size(); ++index) {
-      auto iter = std::find(local_py_params_keys_.cbegin(), local_py_params_keys_.cend(), keys[index]);
-      if (iter == local_py_params_keys_.cend()) {
-        local_py_params_keys_.emplace_back(keys[index]);
-        local_py_params_values_.emplace_back(values[index]);
-        MS_LOG(DEBUG) << "Add '" << keys[index]->DebugString() << "', " << values[index]->DebugString();
+    for (auto iter = keys.begin(); iter != keys.end(); ++iter) {
+      const std::string &cur_key_name = iter->first;
+      if (local_py_params_keys_.find(cur_key_name) == local_py_params_keys_.end()) {
+        (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(cur_key_name, iter->second));
+        (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(cur_key_name, values[cur_key_name]));
+        MS_LOG(DEBUG) << "Add '" << iter->second->DebugString() << "', " << values[cur_key_name]->DebugString();
       } else {
-        auto distance = std::distance(local_py_params_keys_.cbegin(), iter);
-        auto values_pos_iter = local_py_params_values_.begin() + distance;
-        MS_LOG(DEBUG) << "Update '" << keys[index]->DebugString() << "', " << values[index]->DebugString();
-        *values_pos_iter = values[index];
+        MS_LOG(DEBUG) << "Update '" << iter->second->DebugString() << "', " << values[cur_key_name]->DebugString();
+        local_py_params_values_[cur_key_name] = values[cur_key_name];
       }
     }
     if (local_py_params_keys_.size() != local_py_params_values_.size()) {
@@ -186,8 +189,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   // Collect all python symbols in the block.
   // We treat both global symbols and local symbols declared previously as global symbols.
   py::dict global_py_params_;
-  std::vector<AnfNodePtr> local_py_params_keys_;
-  std::vector<AnfNodePtr> local_py_params_values_;
+  std::map<std::string, AnfNodePtr> local_py_params_keys_;
+  std::map<std::string, AnfNodePtr> local_py_params_values_;
 
   // Isolated nodes.
   OrderedSet<AnfNodePtr> isolated_nodes_;
