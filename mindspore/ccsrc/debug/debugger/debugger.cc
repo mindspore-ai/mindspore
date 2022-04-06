@@ -86,6 +86,7 @@ Debugger::Debugger()
       enable_heartbeat_(false),
       not_dataset_graph_sum_(0),
       ascend_kernel_by_kernel_(false),
+      enable_debugger_called_(false),
       version_("") {
   CheckDebuggerEnabledParam();
   auto ms_context = MsContext::GetInstance();
@@ -143,6 +144,7 @@ void Debugger::EnableDebugger() {
   grpc_client_ = nullptr;
   debug_services_ = nullptr;
   heartbeat_thread_ = nullptr;
+  enable_debugger_called_ = true;
 
   // see if dump using debugger backend is enabled
   bool dump_enabled = CheckDebuggerDumpEnabled();
@@ -440,7 +442,7 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr) {
  */
 void Debugger::SendMultiGraphsAndClear(const KernelGraphPtr &graph_ptr) {
   // only try to enable debugger if they are not all dataset graphs
-  if (!debugger_enabled_) {
+  if (!enable_debugger_called_) {
     EnableDebugger();
   }
   if (debugger_enabled_) {
@@ -710,7 +712,7 @@ void Debugger::CheckGraphPtr(const KernelGraphPtr &graph_ptr) {
     graph_ptr_ = graph_ptr;
     if (!is_dataset_graph_) {
       // only try to enable debugger if it is not a dataset graph
-      if (!debugger_enabled_) {
+      if (!enable_debugger_called_) {
         EnableDebugger();
       }
       if (debugger_enabled_) {
