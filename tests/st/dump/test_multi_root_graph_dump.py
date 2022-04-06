@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,8 +43,12 @@ class NewAddNet(Cell):
         super(NewAddNet, self).__init__()
         self.add = P.AddN()
 
-    def construct(self, x, y):
+    def construct(self, b1, b2, x, y):
         z = self.add([x, y, y])
+        if b1 < b2:
+            z = self.add([x, y, y])
+        else:
+            z = self.add([x, x, y])
         return z
 
 
@@ -52,13 +56,29 @@ def train_addnet(epoch):
     net = AddNet()
     net2 = NewAddNet()
     output_list = []
+    b1 = Tensor(np.array(1).astype(np.float32))
+    b2 = Tensor(np.array(3).astype(np.float32))
     input_x = Tensor(np.ones([2, 1, 2, 1]).astype(np.float32))
     input_y = Tensor(np.ones([2, 1, 2, 1]).astype(np.float32))
     for _ in range(epoch):
         out_put = net(input_x, input_y)
-        out2 = net2(out_put, input_x)
+        out2 = net2(b1, b2, out_put, input_x)
         output_list.append(out2.asnumpy())
         input_x = input_x + input_y
+        b1 = b1+1
+    return output_list
+
+
+def check_graph_structure(dump_file_path, execution_order_path, graph_id, expect_steps):
+    dump_data_path = os.path.join(dump_file_path, graph_id)
+    assert sorted(os.listdir(dump_data_path)) == expect_steps
+    graph_history_file_path = os.path.join(
+        execution_order_path, 'ms_global_execution_order_graph_{}.csv'.format(graph_id))
+    assert path.exists(graph_history_file_path)
+    with open(graph_history_file_path) as csvfile:
+        history_graph = csv.reader(csvfile)
+        iter_list_graph = [row[0] for row in history_graph]
+    assert iter_list_graph == expect_steps
 
 
 def run_multi_root_graph_dump(device, dump_mode, test_name):
@@ -79,31 +99,24 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
         for _ in range(3):
             if not os.path.exists(dump_file_path):
                 time.sleep(2)
-        # Multi root graph script : we have 2 graphs under rank_0 dir
-        # Each graph should have 3 iteration
-        # Each graph was executed once per epoch,
-        # Graph 0 was executed in even iterations, graph one was executed in odd iterations
-        assert len(os.listdir(dump_file_path)) == 2
-        dump_path_graph_0 = os.path.join(dump_file_path, '0')
-        dump_path_graph_1 = os.path.join(dump_file_path, '1')
-        assert sorted(os.listdir(dump_path_graph_0)) == ['0', '2', '4']
-        assert sorted(os.listdir(dump_path_graph_1)) == ['1', '3', '5']
         execution_order_path = os.path.join(dump_path, 'rank_0', 'execution_order')
-        # Four files in execution_order dir.
-        # Two files for each graph (ms_execution_order and ms_global_execution_order)
-        assert len(os.listdir(execution_order_path)) == 4
-        global_exec_order_graph_0 = os.path.join(execution_order_path, 'ms_global_execution_order_graph_0.csv')
-        assert path.exists(global_exec_order_graph_0)
-        with open(global_exec_order_graph_0) as csvfile:
-            history_graph_0 = csv.reader(csvfile)
-            iter_list_graph_0 = list(history_graph_0)
-        assert iter_list_graph_0 == [['0'], ['2'], ['4']]
-        global_exec_order_graph_1 = os.path.join(execution_order_path, 'ms_global_execution_order_graph_1.csv')
-        assert path.exists(global_exec_order_graph_1)
-        with open(global_exec_order_graph_1) as csvfile:
-            history_graph_1 = csv.reader(csvfile)
-            iter_list_graph_1 = list(history_graph_1)
-        assert iter_list_graph_1 == [['1'], ['3'], ['5']]
+        # Multi root graph script: check dump data dir and graph history files and see if iteration number is matched.
+        if device == "GPU":
+            # In GPU, we have 4 kernel graphs folders under rank_0 dir.
+            # In graph history dir, there are 2 files for each graph (ms_execution_order and ms_global_execution_order).
+            assert len(os.listdir(dump_file_path)) == 4
+            assert len(os.listdir(execution_order_path)) == 8
+            check_graph_structure(dump_file_path, execution_order_path, '0', ['0', '2', '4'])
+            check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '3', '5'])
+        else:
+            # In Ascend, we have 2 root graphs folders under rank_0 dir.
+            # In graph history dir, there are 4 ms_execution_order files and 2 ms_global_execution_order files.
+            # Each graph should have 3 iterations. Each graph was executed once per epoch.
+            # Graph 0 was executed in even iterations, graph 1 was executed in odd iterations.
+            assert len(os.listdir(dump_file_path)) == 2
+            assert len(os.listdir(execution_order_path)) == 6
+            check_graph_structure(dump_file_path, execution_order_path, '0', ['0', '2', '4'])
+            check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '3', '5'])
 
 
 @pytest.mark.level0
@@ -154,5 +167,23 @@ def test_Ascend_async_multi_root_graph_dump():
     Expectation:
         Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
     """
-
     run_multi_root_graph_dump("Ascend", "async_dump", "test_Ascend_async_multi_root_graph_dump")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_multi_root_graph_dump_kernel_by_kernel():
+    """
+    Feature:
+        Multi root graph dump for Ascend kernel by kernel.
+    Description:
+        Test multi root graph dump in Ascend kernel by kernel.
+    Expectation:
+        Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
+    """
+    os.environ['GRAPH_OP_RUN'] = "1"
+    run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
+    del os.environ['GRAPH_OP_RUN']

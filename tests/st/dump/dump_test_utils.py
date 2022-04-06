@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ def generate_dump_json(dump_path, json_file_name, test_key):
     if test_key == "test_async_dump":
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
-    elif test_key == "test_e2e_dump":
+    elif test_key in ("test_e2e_dump", "test_e2e_dump_trans_false"):
         data = e2e_dump_dict
         data["common_dump_settings"]["path"] = dump_path
     elif test_key == "test_async_dump_net_multi_layer_mode1":
@@ -126,6 +126,10 @@ def generate_dump_json(dump_path, json_file_name, test_key):
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "bin"
+    elif test_key == "test_e2e_dump_trans_true":
+        data = e2e_dump_dict
+        data["common_dump_settings"]["path"] = dump_path
+        data["e2e_dump_settings"]["trans_flag"] = True
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
