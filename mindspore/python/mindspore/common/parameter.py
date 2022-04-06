@@ -670,8 +670,9 @@ class ParameterTuple(tuple):
         names = set()
         for x in data:
             if not isinstance(x, Parameter):
-                raise TypeError(f"ParameterTuple input should be `Parameter` collection."
-                                f"But got a {type(iterable)}, {iterable}")
+                raise TypeError(f"For ParameterTuple initialization, "
+                                f"ParameterTuple input should be 'Parameter' collection, "
+                                f"but got a {type(iterable)}.")
             if id(x) not in ids:
                 if x.name in names:
                     raise ValueError("The value {} , its name '{}' already exists. "

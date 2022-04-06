@@ -642,8 +642,10 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
 
     logger.info("Loading parameters into net is finished.")
     if param_not_load:
-        logger.warning("{} parameters in the 'net' are not loaded, because they are not in the "
-                       "'parameter_dict'.".format(len(param_not_load)))
+        logger.warning("For 'load_param_into_net', "
+                       "{} parameters in the 'net' are not loaded, because they are not in the "
+                       "'parameter_dict', please check whether the network structure is consistent "
+                       "when training and loading checkpoint.".format(len(param_not_load)))
         for param_name in param_not_load:
             logger.warning("{} is not loaded.".format(param_name))
     return param_not_load
@@ -1059,8 +1061,8 @@ def _save_mindir_together(net_dict, model, file_name, is_encrypt, **kwargs):
             param_data = net_dict[param_name].data.asnumpy().tobytes()
             param_proto.raw_data = param_data
         else:
-            logger.critical("The parameter %s in the graph should also be defined in the network.", param_name)
-            raise ValueError("The parameter {} in the graph should also be defined in the "
+            logger.critical("The parameter '%s' in the graph should also be defined in the network.", param_name)
+            raise ValueError("The parameter '{}' in the graph should also be defined in the "
                              "network.".format(param_name))
     if not file_name.endswith('.mindir'):
         file_name += ".mindir"
@@ -1087,7 +1089,7 @@ def _save_together(net_dict, model):
         if name in net_dict.keys():
             data_total += sys.getsizeof(net_dict[name].data.asnumpy().tobytes()) / 1024
         else:
-            raise ValueError("The parameter {} in the graph should also be defined in the network."
+            raise ValueError("The parameter '{}' in the graph should also be defined in the network."
                              .format(param_proto.name))
         if data_total > TOTAL_SAVE:
             return False
@@ -1239,9 +1241,9 @@ def parse_print(print_file_name):
                 dims = print_.tensor.dims
                 data_type = print_.tensor.tensor_type
                 data = print_.tensor.tensor_content
-                np_type = tensor_to_np_type[data_type]
+                np_type = tensor_to_np_type.get(data_type)
                 param_data = np.fromstring(data, np_type)
-                ms_type = tensor_to_ms_type[data_type]
+                ms_type = tensor_to_ms_type.get(data_type)
                 if dims and dims != [0]:
                     param_value = param_data.reshape(dims)
                     tensor_list.append(Tensor(param_value, ms_type))
@@ -1370,10 +1372,10 @@ def restore_group_info_list(group_info_file_name):
                         f"but got {type(group_info_file_name)}.")
 
     if not os.path.isfile(group_info_file_name):
-        raise ValueError(f"No such group information file: {group_info_file_name}.")
+        raise ValueError(f"For 'restore_group_info_list', no such group information file: {group_info_file_name}.")
 
     if os.path.getsize(group_info_file_name) == 0:
-        raise ValueError("The group information file should not be empty.")
+        raise ValueError("For 'restore_group_info_list', the group information file should not be empty.")
 
     parallel_group_map = ParallelGroupMap()
 
@@ -1383,7 +1385,7 @@ def restore_group_info_list(group_info_file_name):
 
     restore_list = parallel_group_map.ckpt_restore_rank_list
     if not restore_list:
-        raise ValueError("The group information file has no restore rank list.")
+        raise ValueError("For 'restore_group_info_list', the group information file has no restore rank list.")
 
     restore_rank_list = [rank for rank in restore_list.dim]
     return restore_rank_list
@@ -1710,7 +1712,7 @@ def _check_predict_strategy(predict_strategy):
     if not flag:
         raise ValueError(f"For 'load_distributed_checkpoint', the argument 'predict_strategy' is dict, "
                          f"the key of it must be string, and the value of it must be list or tuple that "
-                         f"the first four elements are dev_matrix (list[int]), tensor_map (list[int]), "
+                         f"the first four elements must be dev_matrix (list[int]), tensor_map (list[int]), "
                          f"param_split_shape (list[int]) and field_size (int, which value is 0)."
                          f"Please check whether 'predict_strategy' is correct.")
 
