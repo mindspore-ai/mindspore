@@ -2444,3 +2444,33 @@ class PSROIPoolingGrad(Primitive):
         self.add_prim_attr('spatial_scale', self.spatial_scale)
         self.add_prim_attr('group_size', self.group_size)
         self.add_prim_attr('output_dim', self.output_dim)
+
+
+
+class TraceGrad(Primitive):
+    """
+    Computes grad for Trace operation.
+
+    Inputs:
+        - **y_grad** (Tensor) - the grad of trace to output of Trace function.
+          Currently grad data type support float16, float32, int8, int16, int32, int64,
+          uint8, uint16, uint32, uint64, float64.
+        - **x_shape** (Tensor) - the shape of trace to output of Trace function.
+          Currently shape data type support int32, int64.
+
+    Outputs:
+        x_grad - Tensor, with the same data type as 'y_grad' and shape is x_shape.
+
+    Raises:
+        TypeError: If `x_shape` is not a Tensor.
+        TypeError: If the dtype of `x_shape` is neither int32 nor int64.
+        ValueError: If `x_shape` is not a 1D Tensor.
+        ValueError: If length of shape of `x_shape` is not equal to 2.
+
+    Support Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass

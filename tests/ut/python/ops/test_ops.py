@@ -32,6 +32,7 @@ from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselK0, BesselK1, BesselK0e, BesselK1e, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
+from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
@@ -1944,6 +1945,10 @@ test_case_math_ops = [
         'block': Bucketize(boundaries=[1., 3., 5., 7., 9.]),
         'desc_inputs': [Tensor(np.array([[-1, 6, 8], [3, 6, 9]]).astype(np.float))],
         'skip': ['backward']}),
+    ('Trace', {
+        'block': Trace(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]).astype(np.float32))],
+        'desc_bprop': [Tensor([15.0], dtype=mstype.float32)]}),
 ]
 
 test_case_nn_ops = [

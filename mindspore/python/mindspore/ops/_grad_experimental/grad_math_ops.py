@@ -21,6 +21,7 @@ import mindspore.numpy as mnp
 import numpy as np
 from .. import functional as F
 from .. import operations as P
+from ..operations.math_ops import Trace
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
@@ -450,5 +451,21 @@ def get_bprop_mul_no_nan(self):
         bc_x = mul_func(dout, y)
         bc_y = mul_func(x, dout)
         return binop_grad_common(x, y, bc_x, bc_y)
+
+    return bprop
+
+
+@bprop_getters.register(Trace)
+def get_bprop_trace(self):
+    """Grad definition for `Trace` operation."""
+    input_grad = G.TraceGrad()
+    shape_op = P.Shape()
+    to_array = P.TupleToArray()
+    cast = P.Cast()
+
+    def bprop(x, out, dout):
+        shape = shape_op(x)
+        dx = input_grad(dout, cast(to_array(shape), mstype.int64))
+        return (dx,)
 
     return bprop
