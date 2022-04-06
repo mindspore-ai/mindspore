@@ -129,6 +129,18 @@ CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const NodeUsersMap &
   return nullptr;
 }
 
+bool IsSourceUsedByMirror(const CNodePtr &node, const NodeUsersMap &node_user_map) {
+  if (node->inputs().size() < 2) return false;
+  auto parameter_node = node->input(1);
+  if (parameter_node->cast<ParameterPtr>()) {
+    for (auto &item : node_user_map.at(parameter_node)) {
+      if (IsPrimitiveCNode(item.first, prim::kPrimMirrorMicroStep)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const FuncGraphManagerPtr &manager,
                             const AnfNodePtr &accu_parameter, const NodeUsersMap &node_user_map) {
   auto cnode = node_user.first->cast<CNodePtr>();
@@ -138,7 +150,8 @@ void InsertVirtualAssignAdd(const std::pair<AnfNodePtr, int> &node_user, const F
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   bool enable_parallel_optimizer = ParallelContext::GetInstance()->enable_parallel_optimizer();
   bool grad_accumulation_shard = ParallelContext::GetInstance()->grad_accumulation_shard();
-  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && enable_parallel_optimizer) {
+  if (IsPrimitiveCNode(cnode, prim::kPrimDepend) && enable_parallel_optimizer &&
+      IsSourceUsedByMirror(cnode, node_user_map)) {
     return;
   }
   auto prim = GetCNodePrimitive(cnode);

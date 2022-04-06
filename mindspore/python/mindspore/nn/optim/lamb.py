@@ -336,6 +336,7 @@ class Lamb(Optimizer):
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim)
     """
+    _support_parallel_optimizer = True
 
     @opt_init_args_register
     def __init__(self, params, learning_rate, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
