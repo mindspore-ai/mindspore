@@ -871,6 +871,13 @@ void CheckPyNativeContext() {
   MS_EXCEPTION_IF_NULL(parallel_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  const auto &parallel_mode = parallel_context->parallel_mode();
+  const auto &search_mode = parallel_context->strategy_search_mode();
+  if (parallel_mode == parallel::kAutoParallel && search_mode != parallel::kShardingPropagation) {
+    MS_LOG(EXCEPTION)
+      << "PyNative only supports Auto_Parallel under search mode of sharding_propagation using shard function, but got "
+      << search_mode;
+  }
 }
 
 py::object GetDstType(const TypeId &type_id) {
