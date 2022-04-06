@@ -549,12 +549,6 @@ class BaseTimelineGenerator:
 
     _STEPS_SORT_INDEX = -4
 
-    _map_tid_name_to_int = {
-        "Steps": (-4, _STEPS_TID),
-        "Scope Name": (-3, _SCOPE_NAME_TID),
-        "GpuOps": (-2, _GPU_OP_TID),
-        "HostCpuOps": (-1, _HOST_CPU_OP_TID)
-    }
     _timeline_summary = {
         'total_time': 0,
         'num_of_streams': 0,
@@ -564,12 +558,22 @@ class BaseTimelineGenerator:
     }
     _op_name_idx, _tid_idx, _start_time_idx, _duration_idx = 0, 1, 2, 3
     _max_scope_name_num = 0
-    _host_cpu_op_label = 'Host CPU OP'
+    _host_cpu_op_label = 'HOSTCPU Op'
     _gpu_op_label = "GPU Op"
     _ascend_op_label = "Ascend Op"
-    _aicore_op_label = "AICORE OP"
-    _aicpu_op_label = "AICPU OP"
+    _aicore_op_label = "AICORE Op"
+    _aicpu_op_label = "AICPU Op"
+    _step_op_label = "Step"
+    _scope_name_label = "Scope Name"
 
+    _map_tid_name_to_int = {
+        _step_op_label: (-4, _STEPS_TID),
+        _scope_name_label: (-3, _SCOPE_NAME_TID),
+        "GpuOps": (-2, _GPU_OP_TID),
+        "HostCpuOps": (-1, _HOST_CPU_OP_TID)
+    }
+
+    _get_next_op_name = "GetNext"
     _device_id = 0
     _profiling_dir = ""
     _timeline_summary_filename = ""
@@ -611,7 +615,7 @@ class BaseTimelineGenerator:
             {"name": "process_sort_index", "ph": "M", "pid": self._OP_OVERLAP_PID, "args": {"sort_index": 40}},
 
             {"name": "thread_name", "ph": "M", "pid": self._HOST_CPU_PID, "tid": self._HOST_CPU_OP_TID,
-             "args": {"name": "Host CPU Op"}},
+             "args": {"name": self._host_cpu_op_label}},
             {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._MERGED_COMPUTATION_TID,
              "args": {"name": "Merged Computation Op"}},
             {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._PURE_COMMUNICATION_TID,
@@ -621,7 +625,7 @@ class BaseTimelineGenerator:
             {"name": "thread_name", "ph": "M", "pid": self._OP_OVERLAP_PID, "tid": self._FREE_TIME_TID,
              "args": {"name": "Free Time"}},
             {"name": "thread_name", "ph": "M", "pid": self._device_id, "tid": self._STEPS_TID,
-             "args": {"name": "Steps"}},
+             "args": {"name": self._step_op_label}},
             {"name": "thread_name", "ph": "M", "pid": self._device_id, "tid": self._SINGLE_TID,
              "args": {"name": "Ops"}},
 
@@ -755,7 +759,7 @@ class BaseTimelineGenerator:
     def _update_num_of_streams(timeline, stream_count_dict):
         """Update number of streams."""
         stream_id = timeline[1]
-        if stream_id in ["Steps", "Scope Name"]:
+        if stream_id in ["Step", "Scope Name"]:
             return
         if stream_id not in stream_count_dict.keys():
             stream_count_dict[stream_id] = 1
@@ -772,7 +776,7 @@ class BaseTimelineGenerator:
             "ph": "M",
             "cat": "__metadata",
             "args": {
-                "name": "Steps"
+                "name": self._step_op_label
             }
         }
         tid_name = timeline_dict['tid']
@@ -819,7 +823,7 @@ class BaseTimelineGenerator:
         scope_name_start_duration_dict = {}
         scope_name_time_list = []
         op_full_name_idx, scope_name_idx, invalid_idx = 0, 0, -1
-        tid = "Scope Name"
+        tid = self._scope_name_label
         for idx, time_item in enumerate(timeline_list):
             scope_name_list = time_item[op_full_name_idx].split('/')[:-1]
             # skip Default/InitDataSetQueue operator.
@@ -887,7 +891,7 @@ class BaseTimelineGenerator:
         # Record the time of each step.
         step_time_list = []
         step_num = 1
-        tid = "Steps"
+        tid = self._step_op_label
         cur_step_start_time, cur_step_duration_time = 0, 0
         for time_item in timeline_list:
             if time_item[self._op_name_idx] == self._step_start_op_name:
@@ -1018,7 +1022,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
             timeline_dict['pid'] = int(self._device_id)
         else:
             timeline_dict['pid'] = op_meta.pid
-        if op_meta.stream_id == "Scope Name":
+        if op_meta.stream_id == self._scope_name_label:
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
             timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
@@ -1033,7 +1037,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
                 args_dict[self._activity_keys_list[ix]] = value
             timeline_dict['args'] = args_dict
             timeline_dict['tid'] = f"Stream #{timeline_dict['tid']}"
-        elif op_meta.stream_id not in ["Scope Name", "Steps"]:
+        elif op_meta.stream_id not in [self._scope_name_label, self._step_op_label]:
             # Update total time of operator execution.
             self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
@@ -1219,7 +1223,7 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         step_start_op_name = []
         step_end_op_name = []
         step_num = 1
-        tid = "Steps"
+        tid = self._step_op_label
         step_trace_profiling_path = self._get_and_validate_path(
             self._step_trace_original_filename
         )
@@ -1475,12 +1479,12 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         if op_meta.pid is None:
             timeline_dict['pid'] = int(self._device_id)
             # Update total time of operator execution.
-            if op_meta.stream_id not in ["Steps", "Scope Name"]:
+            if op_meta.stream_id not in [self._step_op_label, self._scope_name_label]:
                 self._timeline_summary['total_time'] += op_meta.duration
         else:  # AllReduce and AI CPU pid
             timeline_dict['pid'] = op_meta.pid
 
-        if op_meta.stream_id == "Scope Name":
+        if op_meta.stream_id == self._scope_name_label:
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
             timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
@@ -1846,14 +1850,14 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
         """Get step timeline list for pynative model."""
         step_list = []
         # The timeline starts with the GetNext op
-        if len(timeline_list) < 2 or 'GetNext' not in timeline_list[0][self._op_name_idx] and \
-                'GetNext' not in timeline_list[1][self._op_name_idx]:
+        if len(timeline_list) < 2 or self._get_next_op_name not in timeline_list[0][self._op_name_idx] and \
+                self._get_next_op_name not in timeline_list[1][self._op_name_idx]:
             return step_list
         step = [-1, -1]
         step_num = 0
-        tid = "Steps"
+        tid = self._step_op_label
         for timeline in timeline_list:
-            if 'GetNext' not in timeline[self._op_name_idx]:
+            if self._get_next_op_name not in timeline[self._op_name_idx]:
                 continue
             start_time = float(timeline[self._start_time_idx])
             if step[0] == -1:
@@ -2013,7 +2017,7 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
         dur = op_meta.duration
         timeline_dict['dur'] = dur
         timeline_dict['pid'] = int(self._device_id)
-        if op_meta.stream_id == "Scope Name":
+        if op_meta.stream_id == self._scope_name_label:
             # remove the level of scope name which has a format like "0-conv2-Conv2d".
             timeline_dict['name'] = "-".join(op_meta.op_name.split('-')[1:])
             timeline_dict['scope_level'] = int(op_meta.op_name.split('-')[0])
@@ -2023,7 +2027,7 @@ class CpuTimelineGenerator(GpuTimelineGenerator):
         if len(timeline) == 5:
             # len(timeline) == 5 refers to analyse data.
             timeline_dict["pid"] = op_meta.pid
-        elif op_meta.stream_id not in ["Scope Name", "Steps"]:
+        elif op_meta.stream_id not in [self._scope_name_label, self._step_op_label]:
             # Update total time of operator execution.
             self._timeline_summary['total_time'] += dur / factor
             self._timeline_summary['op_exe_times'] += 1
