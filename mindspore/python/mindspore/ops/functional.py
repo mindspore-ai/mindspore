@@ -148,6 +148,11 @@ gather_d = P.GatherD()
 gather_nd = P.GatherNd()
 scatter_update = P.ScatterUpdate()
 tensor_scatter_update = P.TensorScatterUpdate()
+tensor_scatter_min = P.TensorScatterMin()
+tensor_scatter_max = P.TensorScatterMax()
+tensor_scatter_add = P.TensorScatterAdd()
+tensor_scatter_sub = P.TensorScatterSub()
+tensor_scatter_mul = P.TensorScatterMul()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
 
@@ -196,6 +201,7 @@ def csr_div(x, y):
         ``GPU`` ``CPU``
     """
     return _csr_ops.CSRDiv()(x, y)
+
 
 csr_mv = _csr_ops.CSRMV()
 csr_reduce_sum = _csr_ops.CSRReduceSum()
@@ -518,6 +524,7 @@ def jvp(fn, inputs, v):
         args = arg[1:]
         vectors = arg[0]
         return jvp_inner(fn, vectors, *args)
+
     if not isinstance(inputs, (Tensor, tuple, list)):
         _raise_type_error()
     if isinstance(inputs, (tuple, list)):
@@ -573,11 +580,13 @@ def vjp(fn, inputs, v):
         args = arg[:-1]
         vectors = arg[-1]
         return vjp_inner(fn, *args, vectors)
+
     if not isinstance(inputs, (Tensor, tuple, list)):
         _raise_type_error()
     if isinstance(inputs, (tuple, list)):
         return wrap_container(*inputs, v)
     return wrap_container(inputs, v)
+
 
 shard_fn = Shard()
 
