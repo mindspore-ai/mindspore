@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 project(DPICO_Custom)
-include(${TOP_DIR}/cmake/utils.cmake)
 
 if(DEFINED ENV{HISI_SDK_PATH})
     set(SD3403_SDK_PATH $ENV{HISI_SDK_PATH}/sd3403_sdk/dpico_acl_adapter/3403_sdk)
@@ -8,7 +7,7 @@ else()
     message(FATAL_ERROR "error, no sdk found")
 endif()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${SD3403_SDK_PATH})
 include_directories(${SD3403_SDK_PATH}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime)
@@ -16,12 +15,17 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../runtime/include/third_party)
 link_directories(${SD3403_SDK_PATH}/lib)
 
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/src COMMON_SRC)
+set(DEPENDENCY_LIBS
+        ${SD3403_SDK_PATH}/lib/libsvp_acl.so
+        ${SD3403_SDK_PATH}/lib/libprotobuf-c.so.1
+        ${SD3403_SDK_PATH}/lib/libsecurec.so)
 
-set(LINK_LOCAT_LIB ${SD3403_SDK_PATH}/lib/libsvp_acl.so
-        pthread ${SD3403_SDK_PATH}/lib/libsecurec.so dl
-        ${SD3403_SDK_PATH}/lib/libprotobuf-c.so.1 stdc++)
+file(GLOB_RECURSE DPICO_RUNTIME_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/infer/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/manager/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
+        )
 
-add_library(dpico_acl_adapter SHARED
-        ${COMMON_SRC})
-target_link_libraries(dpico_acl_adapter ${LINK_LOCAT_LIB} securec)
+add_library(dpico_acl_adapter SHARED ${DPICO_RUNTIME_SRC})
+target_link_libraries(dpico_acl_adapter ${DEPENDENCY_LIBS})

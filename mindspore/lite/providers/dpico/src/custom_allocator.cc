@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,83 +15,85 @@
  */
 
 #include "src/custom_allocator.h"
+#include <unistd.h>
 #include <utility>
-#include "include/svp_acl.h"
-#include "include/svp_acl_ext.h"
-#include "src/custom_log.h"
-#include "src/common_utils.h"
+#include "include/svp_acl_rt.h"
+#include "common/check_base.h"
+#include "common/log_util.h"
 
 namespace mindspore {
-namespace dpico {
-CustomAllocator::CustomAllocator(size_t aligned_size) { aligned_size_ = aligned_size; }
+namespace lite {
+namespace {
+size_t GetMaxMallocSize() {
+  static size_t max_malloc_size =
+    static_cast<size_t>(sysconf(_SC_PHYS_PAGES)) * static_cast<size_t>(sysconf(_SC_PAGESIZE));
+  return max_malloc_size;
+}
+}  // namespace
+CustomAllocator::CustomAllocator(size_t aligned_size) {
+  aligned_size_ = aligned_size;
+  max_malloc_size_ = GetMaxMallocSize();
+}
 
 CustomAllocator::~CustomAllocator() { Clear(); }
 
 void CustomAllocator::SetContext(const AllocatorContext &ctx) {
-  lockFlag_ = ctx.lockFlag;
-  shiftFactor_ = static_cast<unsigned>(ctx.shiftFactor);
+  lock_flag_ = ctx.lockFlag;
+  shift_factor_ = static_cast<unsigned>(ctx.shiftFactor);
 }
 
 void CustomAllocator::Lock() {
-  if (lockFlag_) {
+  if (lock_flag_) {
     lock_.lock();
   }
 }
 
 void CustomAllocator::UnLock() {
-  if (lockFlag_) {
+  if (lock_flag_) {
     lock_.unlock();
   }
 }
 
 bool CustomAllocator::ReuseMemory(size_t free_size, size_t size) const {
   return free_size >= size &&
-         (free_size <= (size >= UINT32_MAX / (1ul << shiftFactor_) ? UINT32_MAX : size << shiftFactor_));
+         (free_size <= (size >= UINT32_MAX / (1ul << shift_factor_) ? UINT32_MAX : size << shift_factor_));
 }
 
 void *CustomAllocator::Malloc(size_t size) {
-  if (size > lite::GetMaxMallocSize()) {
-    MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
-    return nullptr;
-  }
-  if (this->total_size_ >= lite::GetMaxMallocSize()) {
-    MS_LOG(ERROR) << "Memory pool is exhausted";
-    return nullptr;
-  }
+  MS_CHECK_TRUE_MSG(size <= max_malloc_size_, nullptr, "MallocData out of max_size, size: " << size);
+  MS_CHECK_TRUE_MSG(total_size_ < max_malloc_size_, nullptr, "memory pool is exhausted");
   Lock();
-  auto iter = freeList_.lower_bound(size);
-  if (iter != freeList_.end() && ReuseMemory(iter->second->size, size)) {
+  auto iter = free_list_.lower_bound(size);
+  if (iter != free_list_.end() && ReuseMemory(iter->second->size, size)) {
     auto membuf = iter->second;
     membuf->ref_count_ = 0;
-    (void)freeList_.erase(iter);
-    allocatedList_[membuf->buf] = membuf;
+    (void)free_list_.erase(iter);
+    allocated_list_[membuf->buf] = membuf;
     UnLock();
     return membuf->buf;
   }
-
   void *mem_ptr = nullptr;
-  svp_acl_error ret =
-    svp_acl_rt_malloc_cached(&mem_ptr, sizeof(MemBuf) + size + aligned_size_, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
+  int ret = svp_acl_rt_malloc_cached(&mem_ptr, sizeof(MemBuf) + size + aligned_size_, SVP_ACL_MEM_MALLOC_NORMAL_ONLY);
   if (ret != SVP_ACL_SUCCESS) {
-    MS_LOG(ERROR) << "malloc data failed.";
+    MS_LOG(ERROR) << "svp acl rt malloc cached failed.";
+    UnLock();
     return nullptr;
   }
   std::unique_ptr<MemBuf> membuf(reinterpret_cast<MemBuf *>(mem_ptr));
   if (membuf == nullptr) {
     MS_LOG(ERROR) << "malloc membuf return nullptr";
-    svp_acl_rt_free(mem_ptr);
     UnLock();
     return nullptr;
   }
   this->total_size_ += size;
   membuf->ref_count_ = 0;
   membuf->size = size;
-  membuf->buf = reinterpret_cast<void *>(
+  membuf->buf = reinterpret_cast<uint8_t *>(
     (reinterpret_cast<uintptr_t>(membuf.get()) + sizeof(MemBuf) + aligned_size_ - 1) & (~(aligned_size_ - 1)));
-  auto bufPtr = membuf->buf;
-  allocatedList_[bufPtr] = membuf.release();
+  auto buf_ptr = membuf->buf;
+  allocated_list_[buf_ptr] = membuf.release();
   UnLock();
-  return bufPtr;
+  return buf_ptr;
 }
 
 void CustomAllocator::Free(void *buf) {
@@ -99,17 +101,19 @@ void CustomAllocator::Free(void *buf) {
     return;
   }
   Lock();
-  auto iter = allocatedList_.find(buf);
-  if (iter != allocatedList_.end()) {
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
     auto membuf = iter->second;
     membuf->ref_count_ = 0;
-    (void)allocatedList_.erase(iter);
-    (void)freeList_.insert(std::make_pair(membuf->size, membuf));
+    (void)allocated_list_.erase(iter);
+    (void)free_list_.insert(std::make_pair(membuf->size, membuf));
     UnLock();
     return;
   }
   UnLock();
-  svp_acl_rt_free(buf);
+  int ret = svp_acl_rt_free(buf);
+  MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "svp acl rt free failed.");
+  buf = nullptr;
 }
 
 int CustomAllocator::RefCount(void *buf) {
@@ -117,8 +121,8 @@ int CustomAllocator::RefCount(void *buf) {
     return -1;
   }
   Lock();
-  auto iter = allocatedList_.find(buf);
-  if (iter != allocatedList_.end()) {
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
     auto membuf = iter->second;
     int ref_count = std::atomic_load(&membuf->ref_count_);
     UnLock();
@@ -132,8 +136,8 @@ int CustomAllocator::SetRefCount(void *buf, int ref_count) {
     return -1;
   }
   Lock();
-  auto iter = allocatedList_.find(buf);
-  if (iter != allocatedList_.end()) {
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
     auto membuf = iter->second;
     std::atomic_store(&membuf->ref_count_, ref_count);
     UnLock();
@@ -147,8 +151,8 @@ int CustomAllocator::IncRefCount(void *buf, int ref_count) {
     return -1;
   }
   Lock();
-  auto iter = allocatedList_.find(buf);
-  if (iter != allocatedList_.end()) {
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
     auto membuf = iter->second;
     auto ref = std::atomic_fetch_add(&membuf->ref_count_, ref_count);
     UnLock();
@@ -162,8 +166,8 @@ int CustomAllocator::DecRefCount(void *buf, int ref_count) {
     return -1;
   }
   Lock();
-  auto iter = allocatedList_.find(buf);
-  if (iter != allocatedList_.end()) {
+  auto iter = allocated_list_.find(buf);
+  if (iter != allocated_list_.end()) {
     auto membuf = iter->second;
     auto ref = std::atomic_fetch_sub(&membuf->ref_count_, ref_count);
     UnLock();
@@ -174,17 +178,21 @@ int CustomAllocator::DecRefCount(void *buf, int ref_count) {
 }
 void CustomAllocator::Clear() {
   Lock();
-
-  for (auto &it : allocatedList_) {
-    svp_acl_rt_free(it.second);
+  int ret;
+  for (auto &it : allocated_list_) {
+    ret = svp_acl_rt_free(it.second);
+    MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "svp acl rt free failed.");
+    it.second = nullptr;
   }
-  allocatedList_.clear();
+  allocated_list_.clear();
 
-  for (auto &it : freeList_) {
-    svp_acl_rt_free(it.second);
+  for (auto &it : free_list_) {
+    ret = svp_acl_rt_free(it.second);
+    MS_CHECK_TRUE_MSG_VOID(ret == SVP_ACL_SUCCESS, "svp acl rt free failed.");
+    it.second = nullptr;
   }
-  freeList_.clear();
+  free_list_.clear();
   UnLock();
 }
-}  // namespace dpico
+}  // namespace lite
 }  // namespace mindspore

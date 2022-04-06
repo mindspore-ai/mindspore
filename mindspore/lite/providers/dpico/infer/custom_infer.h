@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_CUSTOM_PARAMETER_H_
-#define MINDSPORE_LITE_NNACL_CUSTOM_PARAMETER_H_
+
+#ifndef DPICO_INFER_CUSTOM_INFER_H_
+#define DPICO_INFER_CUSTOM_INFER_H_
+
 #include <vector>
-#include <memory>
-#include <string>
 #include "include/kernel_interface.h"
 
 namespace mindspore {
 namespace dpico {
-class CustomInterface : public mindspore::kernel::KernelInterface {
+class CustomInterface : public kernel::KernelInterface {
  public:
   CustomInterface() {}
 
   ~CustomInterface() = default;
 
   Status Infer(std::vector<mindspore::MSTensor> *inputs, std::vector<mindspore::MSTensor> *outputs,
-               const mindspore::schema::Primitive *primitive, const kernel::Kernel *kernel) override;
-
- private:
-  Status InferShapeJudge(std::vector<mindspore::MSTensor> *inputs,
-                         const std::vector<std::vector<int64_t>> &inputs_shape) const;
-  Status InferRecurrentTwoOutputProcess(const mindspore::schema::Primitive *primitive, const kernel::Kernel *kernel,
-                                        std::vector<std::vector<int64_t>> *outputs_shape) const;
+               const schema::Primitive *primitive, const kernel::Kernel *kernel) override;
 };
 }  // namespace dpico
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_NNACL_CUSTOM_PARAMETER_H_
+
+#endif  // DPICO_INFER_CUSTOM_INFER_H_
