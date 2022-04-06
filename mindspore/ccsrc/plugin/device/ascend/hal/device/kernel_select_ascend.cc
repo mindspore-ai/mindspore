@@ -803,6 +803,14 @@ void PrintNotMatchMessage(const std::vector<std::shared_ptr<kernel::KernelBuildI
   }
 }
 
+void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status) {
+  if (status == kStatusRaisePrecision) {
+    common::AnfAlgo::SetNodeAttr(kAttrPrecisionFlag, MakeValue("raise"), kernel_node);
+  } else if (status == kStatusReducePrecision) {
+    common::AnfAlgo::SetNodeAttr(kAttrPrecisionFlag, MakeValue("reduce"), kernel_node);
+  }
+}
+
 KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
@@ -851,6 +859,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
     GatherInputAndOutputInferType(aicpu_in_out_info, kernel_node);
     PrintNotMatchMessage(kernel_info_list, aicpu_kernel_info_list, aicore_in_out_info, aicpu_in_out_info, kernel_node);
   }
+  SetRaiseOrReduceFlag(kernel_node, select_status);
   return select_status;
 }
 
