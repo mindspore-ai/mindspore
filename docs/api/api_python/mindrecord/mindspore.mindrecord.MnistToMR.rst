@@ -1,7 +1,7 @@
 
 .. py:class:: mindspore.mindrecord.MnistToMR(source, destination, partition_number=1)
 
-    将MNIST数据集转换为MindRecord格式数据集的类。
+    将MNIST数据集转换为MindRecord格式数据集。
 
     **参数：**
 
