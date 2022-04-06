@@ -46,7 +46,7 @@ __global__ void ScatterSubKernel(const size_t inner_size, const size_t updates_s
     const size_t index = pos / inner_size;
     const size_t offset = pos % inner_size;
     const size_t current_pos = indices[index] * inner_size + offset;
-    MsAtomicAdd(&input[current_pos], -updates[pos]);
+    MsAtomicSub(&input[current_pos], updates[pos]);
   }
 }
 
