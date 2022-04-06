@@ -414,7 +414,8 @@ class Optimizer(Cell):
             self.dynamic_weight_decay = True
             weight_decay = _WrappedWeightDecay(weight_decay, self.loss_scale)
         else:
-            raise TypeError("For 'Optimizer', the argument 'Weight_decay' should be int, float or Cell.")
+            raise TypeError("For 'Optimizer', the argument 'Weight_decay' should be int, "
+                            "float or Cell.but got {}".format(type(weight_decay)))
         return weight_decay
 
     def _preprocess_single_lr(self, learning_rate):
@@ -434,9 +435,10 @@ class Optimizer(Cell):
                 raise ValueError(f"For 'Optimizer', if 'learning_rate' is Tensor type, then the dimension of it should "
                                  f"be 0 or 1, but got {learning_rate.ndim}.")
             if learning_rate.ndim == 1 and learning_rate.size < 2:
-                logger.warning("For 'Optimizer', if use `Tensor` type dynamic learning rate, "
+                logger.warning("For 'Optimizer', if use 'Tensor' type dynamic learning rate, "
                                "please make sure that the number "
-                               "of elements in the tensor is greater than 1.")
+                               "of elements in the tensor is greater than 1, "
+                               "but got {}.".format(learning_rate.size))
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
             return learning_rate
@@ -549,7 +551,8 @@ class Optimizer(Cell):
 
             for key in group_param.keys():
                 if key not in ('params', 'lr', 'weight_decay', 'grad_centralization'):
-                    logger.warning(f"The optimizer cannot parse '{key}' when setting parameter groups.")
+                    logger.warning(f"The optimizer cannot parse '{key}' when setting parameter groups, "
+                                   f"the key should in ['params', 'lr', 'weight_decay', 'grad_centralization']")
 
             for param in group_param['params']:
                 validator.check_value_type("parameter", param, [Parameter], self.cls_name)

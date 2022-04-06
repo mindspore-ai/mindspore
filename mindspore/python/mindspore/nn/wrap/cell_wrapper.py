@@ -455,7 +455,8 @@ class _VirtualDatasetCell(Cell):
 @constexpr
 def _check_shape_value_on_axis_divided_by_target_value(input_shape, dim, param_name, cls_name, target_value):
     if input_shape[dim] % target_value != 0:
-        raise ValueError(f"{cls_name} {param_name} at {dim} shape should be divided by {target_value},"
+        raise ValueError(f"For MicroBatchInterleaved initialization, "
+                         f"{cls_name} {param_name} at {dim} shape should be divided by {target_value},"
                          f"but got {input_shape[dim]}")
     return True
 

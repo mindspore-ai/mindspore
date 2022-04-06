@@ -143,5 +143,6 @@ class DatasetGraph:
         elif value is None:
             message.mapStr[key] = "None"
         else:
-            logger.warning("The parameter %r is not recorded, because its type is not supported in event package. "
-                           "Its type is %r.", key, type(value).__name__)
+            logger.warning("The parameter %r is not recorded, because its type is not supported in event package, "
+                           "Its type should be in ['str', 'bool', 'int', 'float', '(list, tuple)', 'dict', 'None'], "
+                           "but got type is %r.", key, type(value).__name__)

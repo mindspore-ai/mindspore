@@ -70,7 +70,7 @@ def test_init_graph_cell_parameters_with_wrong_type():
         load_net = nn.GraphCell(graph, params_init=new_params)
         load_net(input_a, input_b)
 
-    assert "The 'params_init' must be a dict, but got" in str(err.value)
+    assert "For 'GraphCell', the argument 'params_init' must be a dict, but got" in str(err.value)
     remove_generated_file(mindir_name)
 
 
