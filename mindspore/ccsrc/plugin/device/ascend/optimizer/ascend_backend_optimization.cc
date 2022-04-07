@@ -59,6 +59,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_transdata_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fission/transdata_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/topk_split.h"
+#include "plugin/device/ascend/optimizer/ir_fission/conv2d_backprop_filter_mul_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/lin_space_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/space_to_depth_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/diag_fission.h"
@@ -210,6 +211,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ConfusionSoftmaxGradRule>());
   ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LinSpaceFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
@@ -385,6 +387,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LinSpaceFission>());
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
