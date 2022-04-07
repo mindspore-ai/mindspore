@@ -110,8 +110,7 @@ ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
   }
   MS_LOG(INFO) << "Pushing weight for iteration " << current_iter << " succeeds.";
 
-  std::string count_reason = "";
-  if (!DistributedCountService::GetInstance().Count(name_, std::to_string(local_rank_), &count_reason)) {
+  if (!DistributedCountService::GetInstance().Count(name_, std::to_string(local_rank_))) {
     std::string reason = "Count for push weight request failed.";
     BuildPushWeightRsp(fbb, schema::ResponseCode_SystemError, reason, current_iter);
     MS_LOG(ERROR) << reason;

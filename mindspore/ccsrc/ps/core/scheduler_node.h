@@ -217,6 +217,8 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   void GeneralResponse(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                        const std::shared_ptr<MessageMeta> &meta, bool is_success, const std::string &error);
 
+  bool BuildingNetwork();
+
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;

@@ -57,7 +57,6 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start Scheduler node timeout!";
     return false;
   }
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
 
   StartUpdatePersistentCommandTimer();
   MS_LOG(INFO) << "[Scheduler start]: 4. Successfully start scheduler, there are " << node_manager_.worker_num()
@@ -85,7 +84,26 @@ void SchedulerNode::RunRecovery() {
     MS_LOG(WARNING) << "There is no registered nodes in scheduler!";
     return;
   }
-  MS_LOG(INFO) << "The scheduler start run recovery!";
+  MS_LOG(INFO) << "The scheduler start run recovery!"
+               << " The worker num:" << clusterConfig.initial_worker_num
+               << ", the server num:" << clusterConfig.initial_server_num
+               << ", the scheduler ip:" << clusterConfig.scheduler_host
+               << ", the scheduler port:" << clusterConfig.scheduler_port
+               << ", the initial total node num:" << clusterConfig.initial_total_node_num
+               << ", the initial next worker rank id:" << clusterConfig.initial_next_worker_rank_id
+               << ", the initial next server rank id:" << clusterConfig.initial_next_server_rank_id
+               << ", the initial cluster state:" << kClusterState.at(clusterConfig.initial_cluster_state);
+
+  if (!clusterConfig.initial_registered_nodes_infos.empty()) {
+    for (const auto kvs : clusterConfig.initial_registered_nodes_infos) {
+      MS_LOG(INFO) << "The ip:" << kvs.second.ip_ << ", the port:" << kvs.second.port_
+                   << ", the node_id:" << kvs.second.node_id_
+                   << ", the node_role:" << CommUtil::NodeRoleToString(kvs.second.node_role_)
+                   << ", the rank_id_:" << kvs.second.rank_id_
+                   << ", the is_alive:" << CommUtil::BoolToString(kvs.second.is_alive);
+    }
+  }
+
   uint32_t worker_num = clusterConfig.initial_worker_num;
   uint32_t server_num = clusterConfig.initial_server_num;
 
@@ -94,6 +112,11 @@ void SchedulerNode::RunRecovery() {
   node_manager_.set_next_worker_rank_id(clusterConfig.initial_next_worker_rank_id);
   node_manager_.set_next_server_rank_id(clusterConfig.initial_next_server_rank_id);
   node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
+  if (clusterConfig.initial_cluster_state == ClusterState::CLUSTER_DISABLE_FLS) {
+    MS_LOG(WARNING) << "Scheduler recover and update cluster state from recovery file, cluster state is "
+                    << CommUtil::ClusterStateToString(clusterConfig.initial_cluster_state);
+    node_manager_.UpdateClusterState(clusterConfig.initial_cluster_state);
+  }
 
   for (const auto &kvs : initial_node_infos) {
     auto &node_id = kvs.first;
@@ -352,44 +375,56 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
                        "will exit later.";
       return;
     }
+    if (!BuildingNetwork()) {
+      MS_LOG(ERROR) << "Building network failed! Cluster will exit later.";
+    }
+  }
+}
 
-    if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
-      auto nodes = node_manager_.nodes_info();
-      for (const auto &id : scale_in_node_ids_) {
-        MS_LOG(INFO) << "The scheduler send metadata to scale in node:" << id;
-        if (nodes.count(id)) {
-          auto scale_in_client = GetOrCreateClient(nodes[id]);
-          SendMetadata(scale_in_client, nodes[id].rank_id_);
-          node_manager_.UpdateHeartbeat(id);
-        }
-        if (connected_nodes_.count(id)) {
-          MS_LOG(INFO) << "remove scale in node id: " << id << " connection.";
-          connected_nodes_.erase(id);
-        }
+bool SchedulerNode::BuildingNetwork() {
+  if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
+    auto nodes = node_manager_.nodes_info();
+    for (const auto &id : scale_in_node_ids_) {
+      MS_LOG(INFO) << "The scheduler send metadata to scale in node:" << id;
+      if (nodes.count(id)) {
+        auto scale_in_client = GetOrCreateClient(nodes[id]);
+        SendMetadata(scale_in_client, nodes[id].rank_id_);
+        node_manager_.UpdateHeartbeat(id);
+      }
+      if (connected_nodes_.count(id)) {
+        MS_LOG(INFO) << "remove scale in node id: " << id << " connection.";
+        connected_nodes_.erase(id);
       }
     }
-    node_manager_.UpdateNodesInfo();
-    auto node_infos = node_manager_.nodes_info();
-    bool res = SendPrepareBuildingNetwork(node_infos);
-    if (!res) {
-      MS_LOG(ERROR) << "Prepare for building network failed! Cluster will exit later.";
-      return;
-    }
-    is_ready_ = true;
-    MS_LOG(INFO) << "Prepare for building network success. There are " << node_manager_.worker_num() << " workers and "
-                 << node_manager_.server_num()
-                 << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
-
-    for (const auto &kvs : node_infos) {
-      auto client = GetOrCreateClient(kvs.second);
-      MS_EXCEPTION_IF_NULL(client);
-      SendMetadata(client, kvs.second.rank_id_);
-      node_manager_.UpdateHeartbeat(kvs.first);
-    }
-    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
-    PersistMetaData();
-    wait_start_cond_.notify_all();
   }
+  node_manager_.UpdateNodesInfo();
+  auto node_infos = node_manager_.nodes_info();
+  bool res = SendPrepareBuildingNetwork(node_infos);
+  if (!res) {
+    MS_LOG(ERROR) << "Prepare for building network failed!";
+    return false;
+  }
+  is_ready_ = true;
+  MS_LOG(INFO) << "Prepare for building network success. There are " << node_manager_.worker_num() << " workers and "
+               << node_manager_.server_num()
+               << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
+
+  for (const auto &kvs : node_infos) {
+    auto client = GetOrCreateClient(kvs.second);
+    MS_EXCEPTION_IF_NULL(client);
+    SendMetadata(client, kvs.second.rank_id_);
+    node_manager_.UpdateHeartbeat(kvs.first);
+  }
+
+  if (node_manager_.GetClusterState() == ClusterState::CLUSTER_DISABLE_FLS) {
+    MS_LOG(WARNING)
+      << "Cluster state is CLUSTER_DISABLE_FLS, do not need to change to CLUSTER_READY when building network.";
+  } else {
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  }
+  PersistMetaData();
+  wait_start_cond_.notify_all();
+  return true;
 }
 
 void SchedulerNode::ProcessFinish(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
@@ -897,7 +932,7 @@ bool SchedulerNode::QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
       MS_EXCEPTION_IF_NULL(instance_manager_);
-      instance_manager_->QueryNodeScaleState(client, node_manager_, request_id, node_info_);
+      instance_manager_->QueryNodeScaleState(client, node_manager_, request_id, kvs.second);
     }
   }
 
@@ -1179,7 +1214,7 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
       MS_EXCEPTION_IF_NULL(instance_manager_);
-      instance_manager_->NewInstanceAsync(client, node_manager_, body, request_id, node_info_);
+      instance_manager_->NewInstanceAsync(client, node_manager_, body, request_id, kvs.second);
     }
   }
   bool res = Wait(request_id);
@@ -1246,7 +1281,7 @@ void SchedulerNode::ProcessQueryInstance(const std::shared_ptr<HttpMessageHandle
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
       MS_EXCEPTION_IF_NULL(instance_manager_);
-      instance_manager_->QueryInstanceAsync(client, node_manager_, request_id, node_info_);
+      instance_manager_->QueryInstanceAsync(client, node_manager_, request_id, kvs.second);
     }
   }
   bool res = Wait(request_id);
@@ -1308,7 +1343,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
       MS_EXCEPTION_IF_NULL(instance_manager_);
-      instance_manager_->EnableFLSAsync(client, node_manager_, request_id, node_info_);
+      instance_manager_->EnableFLSAsync(client, node_manager_, request_id, kvs.second);
     }
   }
   bool res = Wait(request_id);
@@ -1334,6 +1369,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
     js["code"] = kSuccessCode;
     js["result"] = true;
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+    PersistMetaData();
   } else {
     js["message"] = "start enabling FL-Server failed.";
     js["code"] = kErrorCode;
@@ -1379,7 +1415,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
       MS_EXCEPTION_IF_NULL(instance_manager_);
-      instance_manager_->DisableFLSAsync(client, node_manager_, request_id, node_info_);
+      instance_manager_->DisableFLSAsync(client, node_manager_, request_id, kvs.second);
     }
   }
   bool res = Wait(request_id);
@@ -1404,6 +1440,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
     js["code"] = kSuccessCode;
     js["result"] = true;
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
+    PersistMetaData();
   } else {
     js["message"] = "start disabling FL-Server failed.";
     js["code"] = kErrorCode;
@@ -1565,6 +1602,7 @@ void SchedulerNode::PersistMetaData() {
     return;
   }
   if (!is_ready_) {
+    MS_LOG(WARNING) << "Cluster is not building network successful, do not persist meta data";
     return;
   }
   if (config_->Exists(kKeyRecovery)) {
@@ -1576,6 +1614,7 @@ void SchedulerNode::PersistMetaData() {
     clusterConfig.initial_next_server_rank_id = node_manager_.next_server_rank_id();
     clusterConfig.initial_registered_nodes_infos.clear();
     clusterConfig.initial_registered_nodes_infos = node_manager_.registered_nodes_info();
+    clusterConfig.initial_cluster_state = node_manager_.GetClusterState();
 
     scheduler_recovery_->Persist(clusterConfig);
     scheduler_recovery_->PersistNodesInfo(clusterConfig);

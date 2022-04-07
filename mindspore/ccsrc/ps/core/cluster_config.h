@@ -46,7 +46,8 @@ struct ClusterConfig {
         scheduler_timeout(30),
         initial_total_node_num(0),
         initial_next_worker_rank_id(0),
-        initial_next_server_rank_id(0) {}
+        initial_next_server_rank_id(0),
+        initial_cluster_state(ClusterState::CLUSTER_STARTING) {}
   // Configure through environment variables:MS_WORKER_NUM
   uint32_t initial_worker_num;
   // Configure through environment variables:MS_SERVER_NUM
@@ -72,6 +73,7 @@ struct ClusterConfig {
   uint32_t initial_total_node_num;
   uint32_t initial_next_worker_rank_id;
   uint32_t initial_next_server_rank_id;
+  ClusterState initial_cluster_state;
 };
 }  // namespace core
 }  // namespace ps

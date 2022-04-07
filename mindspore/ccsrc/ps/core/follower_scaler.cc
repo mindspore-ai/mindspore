@@ -225,6 +225,8 @@ std::string FollowerScaler::GetNodeScaleStateStr() {
       return "kWaiting";
     case NodeScaleState::kScaling:
       return "kScaling";
+    case NodeScaleState::kRollback:
+      return "kRollback";
     default:
       MS_LOG(EXCEPTION) << "scale_state is not supported.";
   }

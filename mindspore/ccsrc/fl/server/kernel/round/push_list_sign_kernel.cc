@@ -128,9 +128,8 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return true;
   }
-  std::string count_reason = "";
-  if (!DistributedCountService::GetInstance().Count(name_, fl_id, &count_reason)) {
-    std::string reason = "Counting for push list sign request failed. Please retry later. " + count_reason;
+  if (!DistributedCountService::GetInstance().Count(name_, fl_id)) {
+    std::string reason = "Counting for push list sign request failed for fl id " + fl_id + ". Please retry later.";
     BuildPushListSignKernelRsp(fbb, schema::ResponseCode_OutOfTime, reason, std::to_string(CURRENT_TIME_MILLI.count()),
                                iter_num);
     MS_LOG(ERROR) << reason;

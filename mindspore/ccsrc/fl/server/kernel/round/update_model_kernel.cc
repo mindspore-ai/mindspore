@@ -365,8 +365,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
   fl_id.set_fl_id(update_model_fl_id);
   PBMetadata comm_value;
   *comm_value.mutable_fl_id() = fl_id;
-  std::string update_reason = "";
-  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxUpdateModelClientList, comm_value, &update_reason)) {
+  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxUpdateModelClientList, comm_value)) {
     std::string reason = "Updating metadata of UpdateModelClientList failed for fl id " + update_model_fl_id;
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
@@ -526,9 +525,8 @@ std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
 }
 
 ResultCode UpdateModelKernel::CountForAggregation(const std::string &req_fl_id) {
-  std::string count_reason = "";
-  if (!DistributedCountService::GetInstance().Count(kCountForAggregation, req_fl_id, &count_reason)) {
-    MS_LOG(ERROR) << "Counting for aggregation failed. reason: " + count_reason;
+  if (!DistributedCountService::GetInstance().Count(kCountForAggregation, req_fl_id)) {
+    MS_LOG(ERROR) << "Counting for aggregation failed for fl id " << req_fl_id;
     return ResultCode::kFail;
   }
   return ResultCode::kSuccess;
@@ -538,10 +536,9 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
                                                   const schema::RequestUpdateModel *update_model_req) {
   MS_ERROR_IF_NULL_W_RET_VAL(fbb, ResultCode::kFail);
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, ResultCode::kFail);
-  std::string count_reason = "";
-  if (!DistributedCountService::GetInstance().Count(name_, update_model_req->fl_id()->str(), &count_reason)) {
+  if (!DistributedCountService::GetInstance().Count(name_, update_model_req->fl_id()->str())) {
     std::string reason = "Counting for update model request failed for fl id " + update_model_req->fl_id()->str() +
-                         ", Please retry later. " + count_reason;
+                         ", Please retry later.";
     BuildUpdateModelRsp(
       fbb, schema::ResponseCode_OutOfTime, reason,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
