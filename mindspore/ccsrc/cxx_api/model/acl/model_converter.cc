@@ -128,8 +128,34 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
     return Buffer();
   }
 
+  if (SaveModel(model) != kSuccess) {
+    MS_LOG(ERROR) << "Save model failed.";
+    return Buffer();
+  }
+
   ge::aclgrphBuildFinalize();
   return Buffer(model.data.get(), model.length);
+}
+
+Status ModelConverter::SaveModel(const ge::ModelBufferData &model) {
+#ifdef BUILD_LITE
+  std::string file_path;
+  auto option = options_.lock();
+  if (option != nullptr) {
+    file_path = option->GetOmFilePath();
+  }
+  if (file_path.empty()) {
+    MS_LOG(INFO) << "File path is empty, there is no need to save model";
+    return kSuccess;
+  }
+  MS_LOG(INFO) << "Om file path: " << file_path;
+  auto ret = ge::aclgrphSaveModel(file_path, model);
+  if (ret != ge::SUCCESS) {
+    MS_LOG(ERROR) << "Call aclgrphSaveModel fail.";
+    return kMCFailed;
+  }
+#endif
+  return kSuccess;
 }
 
 Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {

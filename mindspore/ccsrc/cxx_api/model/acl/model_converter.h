@@ -37,6 +37,8 @@ class ModelConverter {
 
   void set_options(const std::weak_ptr<AclModelOptions> &options) { options_ = options; }
 
+  Status SaveModel(const ge::ModelBufferData &model);
+
  private:
   transform::DfGraphPtr ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph);
   Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &init_options,
