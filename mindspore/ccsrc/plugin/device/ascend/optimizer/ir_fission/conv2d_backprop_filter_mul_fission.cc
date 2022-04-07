@@ -116,6 +116,7 @@ const AnfNodePtr Conv2dBackpropFilterMul::Process(const FuncGraphPtr &func_graph
   }
   // CreateAssitValueNode
   auto value_node = CreateAssistNode(func_graph, node, shape, matrix_size);
+  value_node->set_fracz_group(groups);
   MS_LOG(INFO) << "Create assist value node success.";
   // CreateMulNode
   std::vector<AnfNodePtr> mul_inputs{NewValueNode(std::make_shared<Primitive>(kMulOpName)), node, value_node};
