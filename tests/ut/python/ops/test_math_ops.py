@@ -423,6 +423,15 @@ class LdexpFunc(nn.Cell):
         return self.ldexp(x, other)
 
 
+class BlockDiagFunc(nn.Cell):
+    def __init__(self):
+        super(BlockDiagFunc, self).__init__()
+        self.block_diag = ops.block_diag
+
+    def construct(self, x1, x2, x3, x4, x5):
+        return self.block_diag(x1, x2, x3, x4, x5)
+
+
 class AtLeast1DFunc(nn.Cell):
     def __init__(self):
         super(AtLeast1DFunc, self).__init__()
@@ -791,6 +800,14 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([1.]), dtype=ms.float32),
                         Tensor(np.array([1, 2, 3, 4]), dtype=ms.int32)],
         'skip': ['backward']
+    }),
+    ('BlockDiag', {
+        'block': BlockDiagFunc(),
+        'desc_inputs': [Tensor(np.array([[4], [3], [2]]), ms.int32),
+                        Tensor(np.array([7, 6, 5]), ms.int32),
+                        Tensor(np.array(1), ms.int32),
+                        Tensor(np.array([[5, 4, 3], [2, 1, 0]]), ms.int32),
+                        Tensor(np.array([[8, 7], [7, 8]]), ms.int32)]
     }),
     ('AtLeast1D', {
         'block': AtLeast1DFunc(),

@@ -309,6 +309,7 @@ from .math_func import (
     all,
     any,
     sparse_segment_mean,
+    block_diag,
     atleast_1d,
     dstack,
     atleast_2d,
