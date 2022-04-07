@@ -110,7 +110,7 @@ set -e
 
 # set up conda env
 env_name=mindspore_py3${PYTHON_VERSION##*.}
-conda create -n $env_name python=${PYTHON_VERSION} -y
+conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
 
 pip install sympy
