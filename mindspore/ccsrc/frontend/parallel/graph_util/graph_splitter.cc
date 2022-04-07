@@ -205,7 +205,7 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
 void ParameterServerMode::PreBuildDistributedGraph() {
   MS_LOG(INFO) << "Start pre-building distribtued graph in Parameter Server mode.";
   MS_EXCEPTION_IF_NULL(node_labels_);
-  ProcessForSplittedOptimizer();
+  ProcessForSplitOptimizer();
   MS_LOG(INFO) << "End pre-building distribtued graph in Parameter Server mode.";
 }
 
@@ -257,7 +257,48 @@ void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInf
   MS_LOG(INFO) << "End post-building distribtued graph in Parameter Server mode.";
 }
 
-void ParameterServerMode::ProcessForSplittedOptimizer() {
+void ParameterServerMode::DoRpcNodeFusion() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  // Only the rpc nodes whose peer is the same process(with same OperatorLabel) can be fused.
+  std::map<std::pair<OperatorLabel, std::string>, std::vector<CNodePtr>> rpc_nodes_list_need_to_be_fused;
+  for (const auto &node : all_nodes) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    std::string cnode_name = common::AnfAlgo::GetCNodeName(cnode);
+    if (cnode_name != kRpcSendOpName && cnode_name != kRpcRecvOpName) {
+      continue;
+    }
+    const auto &peer_ranks = (cnode_name == kRpcSendOpName)
+                               ? common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrSendDstRanks)
+                               : common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrRecvSrcRanks);
+    const auto &peer_roles = (cnode_name == kRpcSendOpName)
+                               ? common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrSendDstRoles)
+                               : common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(cnode, kAttrRecvSrcRoles);
+    OperatorLabel peer_label = {peer_ranks[0], peer_roles[0]};
+    rpc_nodes_list_need_to_be_fused[std::make_pair(peer_label, cnode_name)].emplace_back(cnode);
+  }
+
+  for (auto &rpc_nodes_fuse_info : rpc_nodes_list_need_to_be_fused) {
+    // Reorder the rpc nodes list according to the inter-process edge name so the inputs order of send/recv nodes can
+    // correspond.
+    std::sort(rpc_nodes_fuse_info.second.begin(), rpc_nodes_fuse_info.second.end(),
+              [](const CNodePtr &a, const CNodePtr &b) {
+                return common::AnfAlgo::GetNodeAttr<std::string>(a, kAttrInterProcessEdgeName) <
+                       common::AnfAlgo::GetNodeAttr<std::string>(b, kAttrInterProcessEdgeName);
+              });
+    if (rpc_nodes_fuse_info.first.second == kRpcSendOpName) {
+      FuseRpcSendNodes(rpc_nodes_fuse_info.second);
+    } else {
+      FuseRpcRecvNodes(rpc_nodes_fuse_info.second);
+    }
+  }
+}
+
+void ParameterServerMode::ProcessForSplitOptimizer() {
   // Judge the node role number validation.
   uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
   if (worker_num == 0) {
@@ -294,6 +335,7 @@ void ParameterServerMode::ProcessForSplittedOptimizer() {
       MS_LOG(EXCEPTION) << "The gradient type " << gradient_type << " is invalid.";
     }
 
+    const std::string &opt_device_target = GetCNodeTarget(ps_optimizer);
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(ps_optimizer); i++) {
       auto input = common::AnfAlgo::GetInputNode(ps_optimizer, i);
       // If the input is not a cnode, no inter-process edge is added so no node with multiple inputs should be created.
@@ -311,6 +353,8 @@ void ParameterServerMode::ProcessForSplittedOptimizer() {
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, real_div_node);
         node_labels_->insert(std::make_pair(accum_node, node_labels_->at(ps_optimizer)));
         node_labels_->insert(std::make_pair(real_div_node, node_labels_->at(ps_optimizer)));
+        common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), accum_node);
+        common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), real_div_node);
       } else if (i == indices_index) {
         // Create the node to replace origin indices.
         AnfNodePtr new_indices_input = CreateNodeWithInterProcessEdgeOnPServer(
@@ -318,6 +362,7 @@ void ParameterServerMode::ProcessForSplittedOptimizer() {
 
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, new_indices_input);
         node_labels_->insert(std::make_pair(new_indices_input, node_labels_->at(ps_optimizer)));
+        common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), new_indices_input);
       } else {
         std::pair<CNodePtr, CNodePtr> make_tuple_get_item_nodes =
           CreateNodesForMakeTuple(input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
@@ -327,6 +372,8 @@ void ParameterServerMode::ProcessForSplittedOptimizer() {
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, tuple_get_item_node);
         node_labels_->insert(std::make_pair(make_tuple_node, node_labels_->at(ps_optimizer)));
         node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
+        common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), make_tuple_node);
+        common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), tuple_get_item_node);
       }
     }
   }
@@ -473,6 +520,78 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
   return new_node;
 }
 
+bool ParameterServerMode::FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes) {
+  std::vector<AnfNodePtr> send_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcSendOpName))};
+  AbstractBasePtrList abstract_list = {};
+  std::string fused_inter_process_edge_name = "";
+  for (const auto &send_node : rpc_send_nodes) {
+    MS_EXCEPTION_IF_NULL(send_node);
+    for (size_t i = 1; i < send_node->inputs().size(); i++) {
+      auto input_i = send_node->inputs()[i];
+      MS_EXCEPTION_IF_NULL(input_i);
+      // If the input of send is monad, do not pass it to fused send node.
+      if (HasAbstractMonad(input_i)) {
+        continue;
+      }
+      send_inputs.emplace_back(input_i);
+    }
+    abstract_list.emplace_back(send_node->abstract());
+    fused_inter_process_edge_name.append(
+      common::AnfAlgo::GetNodeAttr<std::string>(send_node, kAttrInterProcessEdgeName));
+  }
+
+  CNodePtr fused_send_node = func_graph_->NewCNode(send_inputs);
+  MS_EXCEPTION_IF_NULL(fused_send_node);
+  fused_send_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(fused_inter_process_edge_name), fused_send_node);
+
+  for (size_t j = 0; j < rpc_send_nodes.size(); j++) {
+    auto index_node = NewValueNode(MakeValue(SizeToLong(j)));
+    MS_EXCEPTION_IF_NULL(index_node);
+    std::vector<AnfNodePtr> tuple_get_item_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
+                                                     fused_send_node, index_node};
+    CNodePtr tuple_get_item_node = func_graph_->NewCNode(tuple_get_item_inputs);
+    MS_EXCEPTION_IF_NULL(tuple_get_item_node);
+    tuple_get_item_node->set_abstract(abstract_list[j]);
+    func_graph_->manager()->Replace(rpc_send_nodes[j], tuple_get_item_node);
+  }
+  return true;
+}
+
+bool ParameterServerMode::FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_recv_nodes) {
+  std::vector<AnfNodePtr> recv_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcRecvOpName))};
+  AbstractBasePtrList abstract_list = {};
+  std::string fused_inter_process_edge_name = "";
+  for (const auto &recv_node : rpc_recv_nodes) {
+    MS_EXCEPTION_IF_NULL(recv_node);
+    for (size_t i = 1; i < recv_node->inputs().size(); i++) {
+      auto input_i = recv_node->inputs()[i];
+      MS_EXCEPTION_IF_NULL(input_i);
+      recv_inputs.emplace_back(input_i);
+    }
+    abstract_list.emplace_back(recv_node->abstract());
+    fused_inter_process_edge_name.append(
+      common::AnfAlgo::GetNodeAttr<std::string>(recv_node, kAttrInterProcessEdgeName));
+  }
+
+  CNodePtr fused_recv_node = func_graph_->NewCNode(recv_inputs);
+  MS_EXCEPTION_IF_NULL(fused_recv_node);
+  fused_recv_node->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+  common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeName, MakeValue(fused_inter_process_edge_name), fused_recv_node);
+
+  for (size_t j = 0; j < rpc_recv_nodes.size(); j++) {
+    auto index_node = NewValueNode(MakeValue(SizeToLong(j)));
+    MS_EXCEPTION_IF_NULL(index_node);
+    std::vector<AnfNodePtr> tuple_get_item_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
+                                                     fused_recv_node, index_node};
+    CNodePtr tuple_get_item_node = func_graph_->NewCNode(tuple_get_item_inputs);
+    MS_EXCEPTION_IF_NULL(tuple_get_item_node);
+    tuple_get_item_node->set_abstract(abstract_list[j]);
+    func_graph_->manager()->Replace(rpc_recv_nodes[j], tuple_get_item_node);
+  }
+  return true;
+}
+
 GraphSplitter::GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, const std::string &role)
     : func_graph_(func_graph),
       rank_id_(rank_id),
@@ -520,6 +639,9 @@ void GraphSplitter::Run() {
 
   // Step 7: Postbuild the graph after splitting.
   exec_mode_->PostBuildDistributedGraph(comm_edges);
+
+  // Step 8: Fuse the rpc nodes to improve performance.
+  exec_mode_->DoRpcNodeFusion();
 }
 
 void GraphSplitter::DyeGraph() {

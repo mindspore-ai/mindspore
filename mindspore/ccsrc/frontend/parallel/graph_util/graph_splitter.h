@@ -172,6 +172,9 @@ class DistributedExecutionMode {
   // Input 'comm_edges' represents the inter-process edges generated after splitting the graph.
   virtual void PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {}
 
+  // After building the distributed graph, do rpc node fusion to decrease the overhead of network communication.
+  virtual void DoRpcNodeFusion() {}
+
  protected:
   FuncGraphPtr func_graph_;
 
@@ -197,10 +200,11 @@ class ParameterServerMode : public DistributedExecutionMode {
 
   void PreBuildDistributedGraph() override;
   void PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) override;
+  void DoRpcNodeFusion() override;
 
  private:
   // Process optimizers split to the parameter server.
-  void ProcessForSplittedOptimizer();
+  void ProcessForSplitOptimizer();
 
   // Filter out all optimizer nodes which are set on parameter server from the graph.
   std::vector<CNodePtr> FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes);
@@ -228,6 +232,16 @@ class ParameterServerMode : public DistributedExecutionMode {
   CNodePtr CreateNodeWithInterProcessEdgeOnPServer(const std::string &many_to_one_node_name,
                                                    const AnfNodePtr &real_input, size_t index_of_real_input,
                                                    uint32_t total_inputs_number);
+
+  // Fuse RpcSend and RpcRecv nodes for Parameter Server optimizers. Only one fused send node should be corresponding to
+  // one fused recv node, vice versa.
+  void FuseRpcNodesForSplitOptimizer();
+
+  // Fuse the given rpc send nodes list. Only nodes which send data to the same peer can be fused.
+  bool FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes);
+
+  // Fuse the given rpc recv nodes list. Only nodes which recv data from the same peer can be fused.
+  bool FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_recv_nodes);
 };
 
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
