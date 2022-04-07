@@ -468,6 +468,15 @@ class VstackFunc(nn.Cell):
         return self.vstack([x1, x2])
 
 
+class CombinationsFunc(nn.Cell):
+    def __init__(self):
+        super(CombinationsFunc, self).__init__()
+        self.combinations = ops.combinations
+
+    def construct(self, x):
+        return self.combinations(x)
+
+
 class DistFunc(nn.Cell):
     def __init__(self):
         super(DistFunc, self).__init__()
@@ -837,6 +846,10 @@ test_case_math_ops = [
         'block': VstackFunc(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]), ms.int32),
                         Tensor(np.array([4, 5, 6]), ms.int32)]
+    }),
+    ('Combinations', {
+        'block': CombinationsFunc(),
+        'desc_inputs': [Tensor(np.array([1, 3, -1, 0, 4]), ms.int32)]
     }),
     ('Dist', {
         'block': DistFunc(),
