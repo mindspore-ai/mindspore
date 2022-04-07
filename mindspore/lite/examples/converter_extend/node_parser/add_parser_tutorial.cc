@@ -22,15 +22,15 @@
 
 namespace mindspore {
 namespace converter {
-ops::PrimitiveC *AddParserTutorial::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                          const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
-                                          const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto prim = std::make_unique<ops::AddFusion>();
+ops::BaseOperatorPtr AddParserTutorial::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph,
+                                              const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = api::MakeShared<ops::AddFusion>();
   if (prim == nullptr) {
     return nullptr;
   }
   prim->set_activation_type(mindspore::NO_ACTIVATION);  // user need to analyze tflite_op's attr.
-  return prim.release();
+  return prim;
 }
 
 REG_NODE_PARSER(kFmkTypeTflite, ADD, std::make_shared<AddParserTutorial>());

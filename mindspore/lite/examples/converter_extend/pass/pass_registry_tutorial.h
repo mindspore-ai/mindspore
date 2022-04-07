@@ -30,7 +30,7 @@ class PassTutorial : public registry::PassBase {
   bool Execute(const api::FuncGraphPtr &func_graph) override;
 
  private:
-  AnfNodePtr CreateCustomOp(const api::FuncGraphPtr func_graph, const CNodePtr &cnode);
+  api::AnfNodePtr CreateCustomOp(const api::FuncGraphPtr func_graph, const api::CNodePtr &cnode);
 };
 }  // namespace opt
 }  // namespace mindspore
