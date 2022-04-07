@@ -216,6 +216,15 @@ class L2NormalizeNet(nn.Cell):
         return out
 
 
+class TripletMarginWithDistanceLossNet(nn.Cell):
+    def __init__(self):
+        super(TripletMarginWithDistanceLossNet, self).__init__()
+        self.triplet_margin_with_distance_loss = nn.TripletMarginWithDistanceLoss()
+
+    def construct(self, x, positive, negative):
+        return self.triplet_margin_with_distance_loss(x, positive, negative)
+
+
 class CosineSimilarityNet(nn.Cell):
     def __init__(self):
         super(CosineSimilarityNet, self).__init__()
@@ -577,6 +586,12 @@ test_cases = [
     ('L2Normalize', {
         'block': L2NormalizeNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
+    }),
+    ('TripletMarginWithDistanceLoss', {
+        'block': TripletMarginWithDistanceLossNet(),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32),
+                        Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32),
+                        Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)]
     }),
     ('CosineSimilarity', {
         'block': CosineSimilarityNet(),
