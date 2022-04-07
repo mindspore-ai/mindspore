@@ -5858,6 +5858,130 @@ def copysign(x, other):
     return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
 
 
+def chain_matmul(*inputs):
+    r"""
+    Computes the dot product of two or more 2-D arrays in a single function call, while automatically
+    selecting the fastest evaluation order.
+    multi_dot chains numpy.dot and uses optimal parenthesization of the matrices. For more
+    information, refer to the `wiki page <https://en.wikipedia.org/wiki/Matrix_chain_multiplication>`_.
+    Depending on the shapes of the matrices, this can speed up the multiplication a lot.
+    All the arguments must be 2-D.
+
+    Note:
+        Numpy argument `out` is not supported.
+
+    Args:
+        inputs (List[Tensor]): All the arguments must be 2-D.
+
+    Returns:
+        Tensor, the dot product of the supplied arrays.
+
+    Raises:
+        TypeError: inputs are empty or not tensors.
+        ValueError: inputs are not 2-D.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.ones((2, 2)))
+        >>> x2 = Tensor(np.ones((2, 1)))
+        >>> x3 = Tensor(np.ones((1, 1)))
+        >>> out = ops.chain_matmul(x1, x2, x3)
+        >>> print(out.asnumpy())
+        [[2.]
+         [2.]]
+        >>> x1 = Tensor(np.ones((10000, 100)))
+        >>> x2 = Tensor(np.ones((100, 1000)))
+        >>> x3 = Tensor(np.ones((1000, 5)))
+        >>> x4 = Tensor(np.ones((5, 333)))
+        >>> out = ops.chain_matmul(x1, x2, x3, x4)
+        >>> print(out.asnumpy())
+        [[500000. 500000. 500000. ... 500000. 500000. 500000.]
+         [500000. 500000. 500000. ... 500000. 500000. 500000.]
+         [500000. 500000. 500000. ... 500000. 500000. 500000.]
+         ...
+         [500000. 500000. 500000. ... 500000. 500000. 500000.]
+         [500000. 500000. 500000. ... 500000. 500000. 500000.]
+         [500000. 500000. 500000. ... 500000. 500000. 500000.]]
+    """
+
+    def _min_cost_chain_matmul(dims):
+        """
+        Returns indices of splits that has the minimal cost for matmul.
+        s[i, j] holds the index of the split with minimal cost for
+        arrays[i, i + 1, ... j]
+        """
+        dims = tuple(dims)
+        n = len(dims) - 1
+        m = [[0] * n for _ in range(n)]
+        s = [[0] * n for _ in range(n)]
+        for pos in range(1, n):
+            for i in range(n - pos):
+                j = i + pos
+                m[i][j] = float("inf")
+                for k in range(i, j):
+                    cost = m[i][k] + m[k + 1][j]
+                    cost = cost + dims[i] * dims[k + 1] * dims[j + 1]
+                    if cost < m[i][j]:
+                        m[i][j] = cost
+                        s[i][j] = k
+        return s
+
+    def _get_dims(shapes):
+        """
+        Returns the chain of the dimensions in arrays.
+        dims[i] == arrays[i - 1].shape[1] == arrays[i].shape[0]
+        """
+        shapes = tuple(shapes)
+        dims = tuple(map(lambda a: a[0], shapes))
+        return dims + (shapes[-1][1],)
+
+    def _multi_dot(arrays, i, j, order):
+        """Computes multi dot recursively using minimal cost."""
+        if i == j:
+            return arrays[i]
+        return matmul(
+            _multi_dot(arrays, i, order[i][j], order),
+            _multi_dot(arrays, order[i][j] + 1, j, order),
+        )
+
+    if not inputs:
+        raise TypeError(f"For 'chain_matmul', 'inputs' can not be empty, but got {inputs}")
+    for tensor in inputs:
+        if not isinstance(tensor, Tensor):
+            msg = "For 'chain_matmul', each element of 'inputs' must be a tensor, but got " + f"{type(tensor)}"
+            raise TypeError(msg)
+        if P.Rank()(tensor) != 2:
+            raise ValueError(
+                "For 'chain_matmul', the dimension of each elements in 'inputs' must be 2, but got "
+                f"{P.Rank()(tensor)}"
+            )
+    if len(inputs) == 2:
+        return matmul(inputs[0], inputs[1])
+
+    shape_out = ()
+    arrs = []
+    for arr in inputs:
+        arrs.append(arr)
+
+    shape_out += (P.Shape()(arrs[0])[0],)
+    shape_out += (P.Shape()(arrs[-1])[1],)
+
+    shapes = []
+    for arr in arrs:
+        shapes.append(P.Shape()(arr))
+    last_shape = shapes[0][0]
+    for shape in shapes:
+        if last_shape != shape[0]:
+            raise ValueError(f"For 'chain_matmul', shapes of each element of 'inputs' must be aligned")
+        last_shape = shape[1]
+    dims = _get_dims(shapes)
+    order = _min_cost_chain_matmul(dims)
+    res = _multi_dot(arrs, 0, len(arrs) - 1, order)
+    return P.Reshape()(res, shape_out)
+
+
 def hann_window(window_length, periodic=True):
     r"""
     Generates Hann Window. It is a window that approximates the prolate sphere,
@@ -8749,6 +8873,7 @@ __all__ = [
     'vstack',
     'dist',
     'copysign',
+    'chain_matmul',
     'hann_window',
     'log2',
     'xlogy',
