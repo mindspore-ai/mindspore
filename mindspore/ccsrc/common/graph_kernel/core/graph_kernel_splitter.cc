@@ -134,7 +134,7 @@ bool SplitNodesDecoder::DecodeSplitNodes(const nlohmann::json &kernel_json,
   // decode cnodes in graph.
   std::vector<nlohmann::json> op_node_descs = kernel_json[kJsonKeyOpDesc];
   if (op_node_descs.empty()) {
-    MS_LOG(ERROR) << "Error decode, no cnodes for graph." << kernel_json;
+    MS_LOG(ERROR) << "Error decode, no cnodes for graph: " << kernel_json;
     return false;
   }
   StitchInfo info = GetStitchInfo(kernel_json);

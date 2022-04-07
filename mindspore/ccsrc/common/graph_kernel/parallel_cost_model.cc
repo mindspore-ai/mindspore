@@ -107,7 +107,8 @@ FusionInfoPtr ParallelCostModel::ProcessFusionInfo(const py::object &fusion_type
 
     fusion_info = std::make_shared<BlockPipelineFusionInfo>(pipeline_ids);
   } else {
-    MS_LOG(EXCEPTION) << "Unsupported parallel fusion type: " << fusion_type_name;
+    MS_LOG(EXCEPTION) << "parallel fusion type: " << fusion_type_name
+                      << " is not in supported list [block_fusion, block_pipeline_fusion]";
   }
   return fusion_info;
 }

@@ -83,11 +83,10 @@ class ScheduleAnalyzer:
         for op in self.ops:
             if PrimLib.iter_type(op) == PrimLib.REDUCE:
                 if reduce_op:
-                    raise RuntimeError(
-                        "Not support multiple reduce op in a graph now.")
+                    raise RuntimeError("Parallel fusion does not support multiple reduce op now.")
                 reduce_op = op
         if not reduce_op:
-            raise RuntimeError("Wrong analyze for reduce: no reduce op found in graph!")
+            raise RuntimeError("Parallel fusion does not find a reduce op.")
         shape = reduce_op.inputs[0].shape
         reduce_axis = reduce_op.attrs['reduce_axis']
         total_space = self.prod(shape)

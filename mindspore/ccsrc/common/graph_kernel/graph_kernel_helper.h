@@ -86,7 +86,7 @@ ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t d
   }
 
   if (info.type == nullptr) {
-    MS_LOG(EXCEPTION) << "Data type is needed!!!";
+    MS_LOG(EXCEPTION) << "Data type can not be nullptr when creating scalar tensor!";
   }
 
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(info.type->type_id(), info.shape);

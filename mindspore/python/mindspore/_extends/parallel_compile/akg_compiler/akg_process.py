@@ -80,10 +80,10 @@ class AkgProcess:
             wait_time: int. max time the function blocked
         """
         if not isinstance(process_num, int):
-            raise ValueError("process number must be of type int, but got {} with type {}"
+            raise ValueError("AKG kernel compiling process number must be of type int, but got {} with type {}"
                              .format(process_num, type(wait_time)))
         if not isinstance(wait_time, int):
-            raise ValueError("wait time must be of type int, but got {} with type {}"
+            raise ValueError("AKG kernel compiling wait time must be of type int, but got {} with type {}"
                              .format(wait_time, type(wait_time)))
         if process_num == 0:
             process_num = 1
@@ -101,7 +101,8 @@ class AkgProcess:
             True for all compile success, False for some failed.
         """
         if self.argc == 0:
-            raise ValueError("json must be not null")
+            raise ValueError("In AKG kernel compiling, the number of kernel json that need to be compiled can "
+                             "not be zero.")
         args = list((arg, attrs) for arg in self.args)
         if self.platform == "ASCEND":
             with Pool(processes=self.process_num) as pool:
@@ -120,6 +121,7 @@ class AkgProcess:
             json_str: str. kernel info.
         """
         if not isinstance(json_str, str):
-            raise ValueError("json must be of type str, but got {} with type {}".format(json_str, type(json_str)))
+            raise ValueError("In AKG kernel compiling, the kernel json must be of type str, but got {} with type {}"
+                             .format(json, type(json)))
         self.args[self.argc % self.process_num].append(json_str)
         self.argc += 1
