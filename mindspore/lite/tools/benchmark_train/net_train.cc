@@ -177,9 +177,10 @@ int NetTrain::CompareOutput(const session::LiteSession &lite_session) {
     MS_LOG(ERROR) << "Cannot find output tensors, get model output failed";
     return RET_ERROR;
   }
+  std::map<std::string, mindspore::tensor::MSTensor *> ordered_outputs(tensors_list.begin(), tensors_list.end());
   mindspore::tensor::MSTensor *tensor = nullptr;
   int i = 1;
-  for (auto it = tensors_list.begin(); it != tensors_list.end(); ++it) {
+  for (auto it = ordered_outputs.begin(); it != ordered_outputs.end(); ++it) {
     tensor = lite_session.GetOutputByTensorName(it->first);
     std::cout << "output is tensor " << it->first << "\n";
     auto outputs = tensor->data();
