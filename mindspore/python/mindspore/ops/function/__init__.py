@@ -310,6 +310,7 @@ from .math_func import (
     atleast_2d,
     vstack,
     copysign,
+    hann_window,
     log2,
     xlogy,
     log10,

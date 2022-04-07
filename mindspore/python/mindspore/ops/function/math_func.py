@@ -5650,6 +5650,59 @@ def copysign(x, other):
     return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
 
 
+def hann_window(window_length, periodic=True):
+    r"""
+    Generates Hann Window. It is a window that approximates the prolate sphere,
+    for which the ratio of the main sphere energy to the sidelobe energy is maximum.
+
+    The Hann window is defined as
+
+    .. math::
+        w(n) = \frac{1}{2} - \frac{1}{2} \cos\left(\frac{2\pi{n}}{M-1}\right) \qquad 0 \leq n \leq M-1.
+
+    Args:
+        window_length (int): Length of window.
+        periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
+            When set to False, generates a symmetric window for filter design.Default: True.
+
+    Returns:
+        Tensor, a Hann window.
+
+    Raises:
+        TypeError: If `window_length` is not a integer.
+        ValueError: If `window_length` is negative.
+        TypeError: If `periodic` is not a variable of Boolean type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> window_length = 5
+        >>> out = ops.hann_window(window_length)
+        >>> print(out.asnumpy())
+        [0.        0.3454915 0.9045085 0.9045085 0.3454915]
+    """
+    if not isinstance(window_length, int):
+        raise TypeError(
+            f"For 'hann_window', 'window_length' must be a non-negative integer, but got {type(window_length)}"
+        )
+    if window_length < 0:
+        raise ValueError(
+            f"For 'hann_window', 'window_length' must be a non-negative integer, but got {window_length}"
+        )
+    if window_length <= 1:
+        return Tensor(np.ones(window_length))
+    if not isinstance(periodic, (bool, np.bool_)):
+        raise TypeError(
+            f"For 'kaiser_window', 'periodic' must be a variable of Boolean type, but got {type(periodic)}"
+        )
+    if periodic:
+        window_length = window_length + 1
+    n = np.arange(0, window_length)
+    w = 0.5 - 0.5 * np.cos(2 * math.pi / (window_length - 1) * n)
+    return Tensor(w[:-1]) if periodic else Tensor(w)
+
+
 @constexpr
 def _type_convert(force, obj):
     """
@@ -8310,6 +8363,7 @@ __all__ = [
     'atleast_2d',
     'vstack',
     'copysign',
+    'hann_window',
     'log2',
     'xlogy',
     'log10',
