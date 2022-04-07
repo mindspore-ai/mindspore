@@ -40,3 +40,10 @@ add_library(cpp-API OBJECT
         text.cc
         vision.cc
         )
+
+# for include pb.h
+if(ENABLE_CACHE)
+    add_dependencies(cpp-API engine-cache-server)
+else()
+    add_dependencies(cpp-API engine-cache-client)
+endif()
