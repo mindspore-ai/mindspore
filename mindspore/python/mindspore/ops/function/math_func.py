@@ -4790,6 +4790,57 @@ def sparse_segment_mean(x, indices, segment_ids):
     return sparse_segment_mean_(x, indices, segment_ids)
 
 
+def dstack(inputs):
+    r"""
+    Stacks tensors in sequence depth wise (along the third axis).
+
+    This is equivalent to concatenation along the third axis.
+    1-D tensors :math:`(N,)` should be reshaped to :math:`(1,N,1)`.
+    2-D tensors :math:`(M,N)` should be reshaped to :math:`(M,N,1)` before concatenation.
+
+    Args:
+        inputs (Union(List[tensor], Tuple[tensor])): A sequence of tensors.
+            The tensors must have the same shape along all but the third axis.
+            1-D or 2-D tensors must have the same shape.
+
+    Returns:
+        Tensor, formed by stacking the given tensors, will be at least 3-D.
+        The output shape is similar to the output of `numpy.dstack()` function.
+
+    Raises:
+        TypeError: If `inputs` is not tuple or list.
+        ValueError: If `inputs` is empty.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([1., 2., 3.])
+        >>> x2 = Tensor([4., 5., 6.])
+        >>> out = ops.dstack([x1, x2])
+        >>> print(out.asnumpy())
+        [[[1. 4.]
+          [2. 5.]
+          [3. 6.]]]
+    """
+    if not isinstance(inputs, (tuple, list)):
+        raise TypeError(f"For 'dstack', 'inputs' must be list or tuple of tensors, but got {type(inputs)}")
+    if not inputs:
+        raise TypeError(f"For 'dstack', 'inputs' can not be empty.")
+    trans_inputs = ()
+    for tensor in inputs:
+        if not isinstance(tensor, Tensor):
+            raise TypeError(f"For 'dstack', each elements of 'inputs' must be Tensor, but got {type(tensor)}")
+        if tensor.ndim <= 1:
+            tensor = _expand(tensor, 2)
+        if tensor.ndim == 2:
+            tensor = P.ExpandDims()(tensor, 2)
+        trans_inputs += (tensor,)
+    if not trans_inputs:
+        raise ValueError("For 'dstack', at least one tensor is needed to concatenate.")
+    return P.Concat(2)(trans_inputs)
+
+
 def tril_indices(row, col, offset=0, dtype=mstype.int64):
     r"""
     Returns the indices of the lower triangular part of a row-by- col matrix in a 2-by-N Tensor,
@@ -7525,6 +7576,7 @@ __all__ = [
     'all',
     'any',
     'sparse_segment_mean',
+    'dstack',
     'atleast_2d',
     'vstack',
     'copysign',

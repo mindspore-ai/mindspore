@@ -287,6 +287,7 @@ from .math_func import (
     all,
     any,
     sparse_segment_mean,
+    dstack,
     atleast_2d,
     vstack,
     copysign,
