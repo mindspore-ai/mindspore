@@ -407,6 +407,15 @@ class LdexpFunc(nn.Cell):
         return self.ldexp(x, other)
 
 
+class VstackFunc(nn.Cell):
+    def __init__(self):
+        super(VstackFunc, self).__init__()
+        self.vstack = ops.vstack
+
+    def construct(self, x1, x2):
+        return self.vstack([x1, x2])
+
+
 class CopysignFunc(nn.Cell):
     def __init__(self):
         super(CopysignFunc, self).__init__()
@@ -687,6 +696,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([1.]), dtype=ms.float32),
                         Tensor(np.array([1, 2, 3, 4]), dtype=ms.int32)],
         'skip': ['backward']
+    }),
+    ('Vstack', {
+        'block': VstackFunc(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]), ms.int32),
+                        Tensor(np.array([4, 5, 6]), ms.int32)]
     }),
     ('Copysign', {
         'block': CopysignFunc(),
