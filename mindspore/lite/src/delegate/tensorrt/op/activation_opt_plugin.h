@@ -29,6 +29,17 @@ class ActivationOptPlugin : public TensorRTPlugin {
   ActivationOptPlugin(const std::string name, schema::ActivationType activation_type)
       : TensorRTPlugin(name, std::string(ACTIVATION_OPT_PLUGIN_NAME)), activation_type_(activation_type) {}
 
+  ActivationOptPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(ACTIVATION_OPT_PLUGIN_NAME)) {
+    const nvinfer1::PluginField *fields = fc->fields;
+    activation_type_ = static_cast<const schema::ActivationType *>(fields[0].data)[0];
+  }
+
+  ActivationOptPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(ACTIVATION_OPT_PLUGIN_NAME)) {
+    DeserializeValue(&serialData, &serialLength, &activation_type_, sizeof(schema::ActivationType));
+  }
+
   ActivationOptPlugin() = delete;
 
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
@@ -53,12 +64,9 @@ class ActivationOptPlugin : public TensorRTPlugin {
   int infer_stride_[5]{1, 1, 1, 1, 1};
   int infer_dims_cnt_{0};
 };
-class ActivationOptPluginCreater : public TensorRTPluginCreater {
+class ActivationOptPluginCreater : public TensorRTPluginCreater<ActivationOptPlugin> {
  public:
   ActivationOptPluginCreater() : TensorRTPluginCreater(std::string(ACTIVATION_OPT_PLUGIN_NAME)) {}
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_OPT_PLUGIN_H_

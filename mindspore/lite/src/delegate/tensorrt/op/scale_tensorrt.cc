@@ -43,10 +43,7 @@ int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
 }
 
 int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(network);
   auto scale_op = op_primitive_->value_as_ScaleFusion();
   if (scale_op == nullptr) {
     MS_LOG(ERROR) << "convert failed";
@@ -54,7 +51,6 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   schema::ActivationType activation_type = scale_op->activation_type();
-
   // mode of scale
   axis_ = scale_op->axis();
   if (axis_ == -1) {
@@ -118,10 +114,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (activation_type != schema::ActivationType::ActivationType_NO_ACTIVATION) {
     auto activation_layer =
       ActivationTensorRT::AddActivation(network, activation_type, 0, 0, 0, cal_layer->getOutput(0));
-    if (activation_layer == nullptr) {
-      MS_LOG(ERROR) << "addActivation for scale failed";
-      return RET_ERROR;
-    }
+    CHECK_NULL_RETURN(activation_layer);
     activation_layer->setName((op_name_ + "_activation").c_str());
     activation_tensor = activation_layer->getOutput(0);
   }

@@ -240,13 +240,14 @@ int ShuffleTensorRT::AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
 }
 
 int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
+  if (in_tensors_[0].Shape().size() != in_tensors_[1].ElementNum()) {
+    MS_LOG(WARNING) << "transpose perm is invalid for input, ignore " << op_name_;
+    shuffler_output_ = shuffler_input_;
+    return RET_OK;
+  }
   auto transpose_op = this->op_primitive_->value_as_Transpose();
   if (transpose_op == nullptr) {
     MS_LOG(ERROR) << "AddTransposeOp convert failed";
-    return RET_ERROR;
-  }
-  if (in_tensors_.size() != INPUT_SIZE2) {
-    MS_LOG(ERROR) << "AddTransposeOp size of in tensort needs check: " << in_tensors_.size();
     return RET_ERROR;
   }
   // perm

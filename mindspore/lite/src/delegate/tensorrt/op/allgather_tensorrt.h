@@ -45,8 +45,17 @@ class AllGatherPlugin : public TensorRTPlugin {
   AllGatherPlugin(const std::string name, int rank)
       : TensorRTPlugin(name, std::string(ALLGATHER_PLUGIN_NAME)), rank_(rank) {}
 
-  // It doesn't make sense to make GeluPluginDynamic without arguments, so we delete
-  // default constructor.
+  AllGatherPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
+      : TensorRTPlugin(std::string(name), std::string(ALLGATHER_PLUGIN_NAME)) {
+    const nvinfer1::PluginField *fields = fc->fields;
+    rank_ = static_cast<const int *>(fields[0].data)[0];
+  }
+
+  AllGatherPlugin(const char *name, const void *serialData, size_t serialLength)
+      : TensorRTPlugin(std::string(name), std::string(ALLGATHER_PLUGIN_NAME)) {
+    DeserializeValue(&serialData, &serialLength, &rank_, sizeof(int));
+  }
+
   AllGatherPlugin() = delete;
 
   nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
@@ -58,14 +67,9 @@ class AllGatherPlugin : public TensorRTPlugin {
  private:
   int rank_{0};
 };
-class AllGatherPluginCreater : public TensorRTPluginCreater {
+class AllGatherPluginCreater : public TensorRTPluginCreater<AllGatherPlugin> {
  public:
   AllGatherPluginCreater() : TensorRTPluginCreater(std::string(ALLGATHER_PLUGIN_NAME)) {}
-
-  nvinfer1::IPluginV2 *createPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc) noexcept override;
-
-  nvinfer1::IPluginV2 *deserializePlugin(const char *name, const void *serialData,
-                                         size_t serialLength) noexcept override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ALLGATHER_TENSORRT_H_

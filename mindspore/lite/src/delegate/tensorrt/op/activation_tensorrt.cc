@@ -17,6 +17,7 @@
 #include "src/delegate/tensorrt/op/activation_tensorrt.h"
 #include <cfloat>
 #include <memory>
+#include <unordered_set>
 #include "src/delegate/tensorrt/op/cast_tensorrt.h"
 #include "src/delegate/tensorrt/op/activation_opt_plugin.h"
 
@@ -108,8 +109,14 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition
                                                     schema::ActivationType activation_type, float alpha,
                                                     float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
                                                     schema::QuantType quant_type) {
+  std::unordered_set<schema::ActivationType> plugin_activation = {schema::ActivationType::ActivationType_SIGMOID,
+                                                                  schema::ActivationType::ActivationType_GELU};
+  bool use_plugin = false;
+  if (plugin_activation.find(activation_type) != plugin_activation.end()) {
+    use_plugin = true;
+  }
   // sigmoid precision is wrong for trt
-  if (quant_type == schema::QuantType_QUANT_NONE && activation_type == schema::ActivationType::ActivationType_SIGMOID) {
+  if (quant_type == schema::QuantType_QUANT_NONE && use_plugin) {
     auto plugin = std::make_shared<ActivationOptPlugin>(trt_in_tensor->getName(), activation_type);
     MS_LOG(INFO) << "using opt plugin for " << trt_in_tensor->getName();
     if (plugin == nullptr) {

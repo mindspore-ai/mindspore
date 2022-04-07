@@ -20,7 +20,8 @@
 #include "src/delegate/tensorrt/op/tensorrt_op.h"
 
 namespace mindspore::lite {
-constexpr int BEGIN_INDEX = 1;
+constexpr int BEGINS_INDEX = 1;
+constexpr int ENDS_INDEX = 2;
 constexpr int HAS_AXIS = 5;
 constexpr int AXIS_INDEX = 3;
 class SliceTensorRT : public TensorRTOp {
@@ -44,6 +45,7 @@ class SliceTensorRT : public TensorRTOp {
   nvinfer1::Dims stride_dims_;
   int strides_index_{0};
   int axis_index_{0};
+  int shrink_axis_{0};  // pos start from 1
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_SLICE_TENSORRT_H_

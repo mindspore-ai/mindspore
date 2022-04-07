@@ -21,6 +21,11 @@
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(ReduceScatterPluginCreater);
+template class TensorRTPluginCreater<ReduceScatterPlugin>;
+template <class T>
+nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
+template <class T>
+std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
 int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
                                      const std::vector<mindspore::MSTensor> &in_tensors,
@@ -115,22 +120,5 @@ size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return sizeo
 
 void ReduceScatterPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &red_mode_, sizeof(schema::ReduceMode));
-}
-
-nvinfer1::IPluginV2 *ReduceScatterPluginCreater::createPlugin(const char *name,
-                                                              const nvinfer1::PluginFieldCollection *fc) noexcept {
-  const nvinfer1::PluginField *fields = fc->fields;
-  schema::ReduceMode red_mode = static_cast<const schema::ReduceMode *>(fields[0].data)[0];
-  int rank = static_cast<const int *>(fields[1].data)[0];
-  MS_LOG(DEBUG) << "createPlugin: " << name << " of rank: " << rank;
-  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
-}
-nvinfer1::IPluginV2 *ReduceScatterPluginCreater::deserializePlugin(const char *name, const void *serialData,
-                                                                   size_t serialLength) noexcept {
-  int rank = GetGPUGroupSize();
-  schema::ReduceMode red_mode;
-  DeserializeValue(&serialData, &serialLength, &red_mode, sizeof(schema::ReduceMode));
-  MS_LOG(DEBUG) << name << " is deserialize as rank: " << rank << ", red_mode: " << red_mode;
-  return new (std::nothrow) ReduceScatterPlugin(name, red_mode, rank);
 }
 }  // namespace mindspore::lite

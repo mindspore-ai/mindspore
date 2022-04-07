@@ -34,8 +34,8 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors_[BEGIN_INDEX].Data() == nullptr) {
-    MS_LOG(ERROR) << "invalid pad or stride tensor for: " << op_name_;
+  if (in_tensors_[BEGINS_INDEX].Data() == nullptr || in_tensors_[ENDS_INDEX].Data() == nullptr) {
+    MS_LOG(ERROR) << "invalid input tensor for: " << op_name_;
     return RET_ERROR;
   }
   dynamic_shape_params_.support_dynamic_ = false;
@@ -51,6 +51,7 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   strides_index_ = in_tensors_.size() - 1;
   axis_index_ = in_tensors_.size() == HAS_AXIS ? AXIS_INDEX : -1;
+  shrink_axis_ = slice_primitive->shrink_axis_mask();
 
   ITensorHelper slice_input;
   int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &slice_input);
@@ -73,6 +74,9 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->layer_ = slice_layer;
   slice_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
+  if (shrink_axis_ != 0) {
+    out_tensor = Reshape(network, out_tensor, out_tensors_[0].Shape());
+  }
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "output tensor create failed";
     return RET_ERROR;
@@ -83,11 +87,21 @@ int SliceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 }
 
 int SliceTensorRT::ConvertParamsDims() {
-  const mindspore::MSTensor &begin = in_tensors_[BEGIN_INDEX];
+  const mindspore::MSTensor &begin = in_tensors_[BEGINS_INDEX];
   const mindspore::MSTensor &stride = in_tensors_[strides_index_];
+  const mindspore::MSTensor &end = in_tensors_[ENDS_INDEX];
+
   if (static_cast<size_t>(begin.ElementNum()) == in_tensors_[0].Shape().size()) {
     start_dims_ = lite::ConvertCudaDims(begin.Data().get(), begin.ElementNum());
-    size_dims_ = lite::ConvertCudaDims(out_tensors_[0].Shape());
+    if (shrink_axis_ == 0) {
+      size_dims_ = lite::ConvertCudaDims(out_tensors_[0].Shape());
+    } else {
+      size_dims_.nbDims = start_dims_.nbDims;
+      auto end_dims = lite::ConvertCudaDims(end.Data().get(), end.ElementNum());
+      for (int i = 0; i < size_dims_.nbDims; i++) {
+        size_dims_.d[i] = end_dims.d[i] - start_dims_.d[i];
+      }
+    }
     stride_dims_ = lite::ConvertCudaDims(stride.Data().get(), stride.ElementNum());
   } else {
     if (axis_index_ == -1 || in_tensors_[axis_index_].ElementNum() != 1) {
@@ -95,7 +109,7 @@ int SliceTensorRT::ConvertParamsDims() {
       return RET_ERROR;
     }
     int axis_value = *(static_cast<int *>(in_tensors_[axis_index_].MutableData()));
-    int start_value = *(static_cast<int *>(in_tensors_[BEGIN_INDEX].MutableData()));
+    int start_value = *(static_cast<int *>(in_tensors_[BEGINS_INDEX].MutableData()));
     start_dims_.nbDims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
     for (int i = 0; i < start_dims_.nbDims; i++) {
       start_dims_.d[i] = (i == axis_value) ? start_value : 0;
