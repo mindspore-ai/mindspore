@@ -21,6 +21,7 @@
 #include <unordered_map>
 
 #include "utils/ms_utils.h"
+#include "utils/profile.h"
 
 namespace mindspore {
 namespace kernel {
@@ -105,28 +106,67 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // Pooling_avg forward description
   const auto desc = CreateDesc<dnnl::pooling_forward::desc>(dnnl::prop_kind::forward_training, algorithm_, src_desc_,
                                                             dst_desc_, strides, kernel, padding_l, padding_r);
-  forward_prim_desc_ = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, engine_);
+  auto forward_prim_desc = CreateDesc<dnnl::pooling_forward::primitive_desc>(desc, engine_);
 
   // Pooling_avg backward description
   const auto backward_desc =
     CreateDesc<dnnl::pooling_backward::desc>(algorithm_, src_desc_, dst_desc_, strides, kernel, padding_l, padding_r);
   const auto backward_prim_desc =
-    CreateDesc<dnnl::pooling_backward::primitive_desc>(backward_desc, engine_, forward_prim_desc_);
+    CreateDesc<dnnl::pooling_backward::primitive_desc>(backward_desc, engine_, forward_prim_desc);
   primitive_ = CreatePrimitive<dnnl::pooling_backward>(backward_prim_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc_);
   AddArgument(DNNL_ARG_DIFF_DST, dst_desc_);
 
   // For pooling_max, need a workspace that generated in forward and stored the max value indexes to compute grad.
   if (algorithm_ == dnnl::algorithm::pooling_max) {
-    workspace_desc_ = GetWorkspaceDesc(forward_prim_desc_);
+    primitive_forward_ = CreatePrimitive<dnnl::pooling_forward>(forward_prim_desc);
+    workspace_desc_ = GetWorkspaceDesc(forward_prim_desc);
     AddArgument(DNNL_ARG_WORKSPACE, workspace_desc_);
   }
 }
 
-void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *work_array) const {
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+void PoolingGradCpuKernelMod::ExecuteForwardByMSThreadPool(const std::unordered_map<int, dnnl::memory> &arguments) {
+  const size_t MAX_POW = 6;
+  const size_t AVG_COUNT = 5;
+  const size_t DIFF = 2;
+  size_t current_pow = forward_parallel_info_.search_count / AVG_COUNT;
+  int current_thread_nums = static_cast<int>(std::pow(2.0f, current_pow));
+  auto mkl_pool = dynamic_cast<mkl_threadpool *>(mkl_threadpool_.get());
+  if (current_pow >= MAX_POW) {
+    int best_thread_nums = static_cast<int>(std::pow(2.0f, forward_parallel_info_.best_pow));
+    mkl_pool->set_num_threads(best_thread_nums);
+    MS_LOG(DEBUG) << "begin to invoke primitive::execute";
+    primitive_forward_->execute(stream_, arguments);
+    MS_LOG(DEBUG) << "end to invoke primitive::execute";
+    return;
+  }
+
+  if (forward_parallel_info_.search_count % AVG_COUNT == 0) {
+    forward_parallel_info_.tmp_sum_cost_time = 0;
+  }
+  double start_time = GetTime();
+  mkl_pool->set_num_threads(current_thread_nums);
+  MS_LOG(DEBUG) << "begin to invoke primitive::execute";
+  primitive_forward_->execute(stream_, arguments);
+  MS_LOG(DEBUG) << "end to invoke primitive::execute";
+  double cost_time = GetTime() - start_time;
+  forward_parallel_info_.tmp_sum_cost_time += cost_time;
+  forward_parallel_info_.search_count++;
+  if (forward_parallel_info_.search_count % AVG_COUNT == 0) {
+    if (forward_parallel_info_.min_cost_time > forward_parallel_info_.tmp_sum_cost_time) {
+      forward_parallel_info_.min_cost_time = forward_parallel_info_.tmp_sum_cost_time;
+      forward_parallel_info_.best_pow = current_pow;
+    } else if (current_pow - forward_parallel_info_.best_pow >= DIFF) {
+      forward_parallel_info_.search_count = AVG_COUNT * MAX_POW;
+    }
+  }
+}
+#endif
+
+void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *work_array) {
   // Compute maxvalue index for pooling_backward_max.
   MS_LOG(INFO) << "Compute maxvalue index for " << kernel_name_;
-  auto primitive_forward = CreatePrimitive<dnnl::pooling_forward>(forward_prim_desc_);
   std::unordered_map<int, dnnl::memory> arguments;
   dnnl::memory src_mem = dnnl::memory(src_desc_, engine_, nullptr);
   dnnl::memory dst_mem = dnnl::memory(dst_desc_, engine_, nullptr);
@@ -137,8 +177,15 @@ void PoolingGradCpuKernelMod::ComputeMaxValueIndex(void *src, void *dst, void *w
   arguments[DNNL_ARG_SRC] = src_mem;
   arguments[DNNL_ARG_DST] = dst_mem;
   arguments[DNNL_ARG_WORKSPACE] = work_mem;
-  dnnl::stream stream(engine_);
-  primitive_forward->execute(stream, arguments);
+
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  ExecuteForwardByMSThreadPool(arguments);
+#else
+  MS_LOG(DEBUG) << "begin to invoke primitive::execute";
+  primitive_forward_->execute(stream_, arguments);
+  MS_LOG(DEBUG) << "end to invoke primitive::execute";
+#endif
+  (void)stream_.wait();
 }
 
 bool PoolingGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
