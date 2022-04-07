@@ -1487,7 +1487,7 @@ class Dataset:
         Get Input Index Information
 
         Returns:
-            tuple, tuple of the input index information.
+            int, tuple of the input index information.
 
         Examples:
             >>> # dataset is an instance object of Dataset
