@@ -44,6 +44,19 @@ class UniqueSquare(nn.Cell):
         return self.square(x)
 
 
+class UniqueSquareRelu(nn.Cell):
+    def __init__(self):
+        super(UniqueSquareRelu, self).__init__()
+        self.unique_cpu = P.Unique().add_prim_attr("primitive_target", "CPU")
+        self.square_cpu = P.Square().add_prim_attr("primitive_target", "CPU")
+        self.relu = P.ReLU()
+
+    def construct(self, x):
+        x, _ = self.unique_cpu(x)
+        x = self.square_cpu(x)
+        return self.relu(x)
+
+
 class UniqueReshapeAdd(nn.Cell):
     def __init__(self):
         super(UniqueReshapeAdd, self).__init__()
@@ -94,6 +107,24 @@ def test_unique_square():
     """
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.float32)
     net = UniqueSquare()
+    output = net(x)
+    expect = np.array([1, 4, 9])
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_unique_square_relu():
+    """
+    Feature: Dynamic shape with heterogeneity.
+    Description: Test unique, square and relu kernels in dynamic shape with heterogeneity scenarios.
+    Expectation: The value and shape of output are the expected values.
+    """
+    x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.float32)
+    net = UniqueSquareRelu()
     output = net(x)
     expect = np.array([1, 4, 9])
     assert (output.asnumpy() == expect).all()
