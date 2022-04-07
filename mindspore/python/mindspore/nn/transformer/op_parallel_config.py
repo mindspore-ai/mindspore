@@ -48,7 +48,7 @@ class MoEParallelConfig(_Config):
             model_parallel (int): The model parallel way. Default: 1
             expert_parallel (int): The expert parallel way. Default: 1
         Supported Platforms:
-            ``Ascend`` ``GPU``
+            ``Ascend``
     """
 
     def __init__(self, data_parallel=1, model_parallel=1, expert_parallel=1):
@@ -60,7 +60,6 @@ class MoEParallelConfig(_Config):
 
     @property
     def data_parallel(self):
-        """ Get the configuration for data_parallel """
         return self._dpmp.data_parallel
 
     @data_parallel.setter
@@ -70,7 +69,6 @@ class MoEParallelConfig(_Config):
 
     @property
     def model_parallel(self):
-        """ Get the configuration for model_parallel """
         return self._dpmp.model_parallel
 
     @model_parallel.setter
@@ -80,7 +78,6 @@ class MoEParallelConfig(_Config):
 
     @property
     def expert_parallel(self):
-        """ Get the configuration for expert_parallel """
         return self._expert_parallel
 
     @expert_parallel.setter
@@ -117,7 +114,6 @@ class OpParallelConfig(_Config):
 
     @property
     def data_parallel(self):
-        """ Get the configuration for data_parallel """
         return self._data_parallel
 
     @data_parallel.setter
@@ -127,7 +123,6 @@ class OpParallelConfig(_Config):
 
     @property
     def model_parallel(self):
-        """ Get the configuration for model_parallel """
         return self._model_parallel
 
     @model_parallel.setter
@@ -158,7 +153,6 @@ class _PipeLineConfig(_Config):
 
     @property
     def pipeline_stage(self):
-        """ Get the configuration for pipeline_stage """
         return self._pipeline_stage
 
     @pipeline_stage.setter
@@ -169,7 +163,6 @@ class _PipeLineConfig(_Config):
 
     @property
     def micro_batch_num(self):
-        """ Get the configuration for micro_batch_num """
         return self._micro_batch_num
 
     @micro_batch_num.setter
