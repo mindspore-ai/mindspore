@@ -122,6 +122,8 @@ message RegisterMessage {
   string node_id = 3;
   // the role of the node: worker,server,scheduler
   NodeRole role = 4;
+  // the number of the fl job iteration
+  uint64 fl_iteration_num = 5;
 }
 
 message RegisterRespMessage {
@@ -145,7 +147,7 @@ enum NodeState {
 }
 
 enum ClusterState {
-  ClUSTER_STARTING = 0;
+  CLUSTER_STARTING = 0;
   CLUSTER_READY = 1;
   CLUSTER_EXIT = 2;
   NODE_TIMEOUT = 3;

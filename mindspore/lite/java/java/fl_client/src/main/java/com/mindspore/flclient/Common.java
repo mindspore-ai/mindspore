@@ -79,6 +79,11 @@ public class Common {
     /**
      * The tag when server is not ready.
      */
+    public static final String NOT_READY = "The server's training job is not ready.";
+
+    /**
+     * The tag when server is not ready.
+     */
     public static final String JOB_NOT_AVAILABLE = "The server's training job is disabled or finished.";
 
     /**
@@ -327,6 +332,9 @@ public class Common {
             } else {
                 LOGGER.info(Common.addTag("[isSeverReady] the server does not return the current iteration."));
             }
+            return false;
+        } else if (messageStr.contains(NOT_READY)) {
+            LOGGER.info(Common.addTag("[isSeverReady] " + NOT_READY + ", need wait some time and request again"));
             return false;
         } else {
             return true;

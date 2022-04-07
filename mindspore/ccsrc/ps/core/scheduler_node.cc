@@ -311,7 +311,6 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
       return;
     }
 
-    MS_LOG(INFO) << "The node id is registered.";
     if (connected_nodes_.count(node_id)) {
       (void)connected_nodes_.erase(node_id);
     }
@@ -344,12 +343,16 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
 
   if (node_manager_.IsAllNodesRegistered()) {
     if (!node_manager_.IsAllNodesAlive()) {
-      MS_LOG(ERROR) << "Do not broadcast nodes info because some server nodes are not alive.";
+      MS_LOG(ERROR)
+        << "Do not broadcast nodes info because some server nodes are not alive, and cluster will exit later.";
       return;
     }
-    is_ready_ = true;
-    MS_LOG(INFO) << "There are " << node_manager_.worker_num() << " workers and " << node_manager_.server_num()
-                 << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
+    if (!node_manager_.VerifyClusterNodesParam()) {
+      MS_LOG(ERROR) << "Do not broadcast nodes info because some server nodes info are not inconsistent, and cluster "
+                       "will exit later.";
+      return;
+    }
+
     if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_IN) {
       auto nodes = node_manager_.nodes_info();
       for (const auto &id : scale_in_node_ids_) {
@@ -369,10 +372,14 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     auto node_infos = node_manager_.nodes_info();
     bool res = SendPrepareBuildingNetwork(node_infos);
     if (!res) {
-      MS_LOG(ERROR) << "Prepare for building network failed!";
+      MS_LOG(ERROR) << "Prepare for building network failed! Cluster will exit later.";
       return;
     }
-    MS_LOG(INFO) << "Prepare for building network success.";
+    is_ready_ = true;
+    MS_LOG(INFO) << "Prepare for building network success. There are " << node_manager_.worker_num() << " workers and "
+                 << node_manager_.server_num()
+                 << " servers registered to scheduer, so the scheduler send meta data to worker/server.";
+
     for (const auto &kvs : node_infos) {
       auto client = GetOrCreateClient(kvs.second);
       MS_EXCEPTION_IF_NULL(client);
@@ -702,7 +709,7 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
         node_manager_.UpdateClusterState(ClusterState::CLUSTER_EXIT);
       }
       std::this_thread::sleep_for(std::chrono::seconds(PSContext::instance()->cluster_config().heartbeat_interval));
-      node_manager_.UpdateCluster();
+      node_manager_.UpdateCluster(is_ready_);
       HandleNodeTimeoutForRecovery(node_manager_.QueryTimeOutNodesInfo());
 
       if (node_manager_.GetClusterState() == ClusterState::CLUSTER_EXIT) {
@@ -1183,15 +1190,27 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
     return;
   }
 
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
-  nlohmann::json js;
-  js["message"] = "Start new instance successful.";
-  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
-    js["result"][output.first] = data;
+    nlohmann::json dataJson = nlohmann::json::parse(data);
+    if (!dataJson["result"]) {
+      res = false;
+      break;
+    }
   }
 
+  nlohmann::json js;
+  if (res) {
+    js["message"] = "Start new instance successful.";
+    js["code"] = kSuccessCode;
+    js["result"] = true;
+  } else {
+    js["message"] = "Start new instance failed.";
+    js["code"] = kErrorCode;
+    js["result"] = false;
+  }
+
+  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
 
@@ -1236,7 +1255,6 @@ void SchedulerNode::ProcessQueryInstance(const std::shared_ptr<HttpMessageHandle
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
-
   nlohmann::json js;
   js["message"] = "Query Instance successful.";
   js["code"] = kSuccessCode;
@@ -1258,9 +1276,15 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
   MS_EXCEPTION_IF_NULL(resp);
 
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
+  if (CheckIfNodeDisconnected()) {
+    ERROR_STATUS(status, RequestProcessResultCode::kSystemError, kClusterNotReady);
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
 
-  status = CheckIfClusterReady();
-  if (status != RequestProcessResultCode::kSuccess) {
+  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_DISABLE_FLS) {
+    std::string message = "The cluster state is not CLUSTER_DISABLE_FLS, does not need to enable fls.";
+    ERROR_STATUS(status, RequestProcessResultCode::kSystemError, message);
     resp->ErrorResponse(HTTP_BADREQUEST, status);
     return;
   }
@@ -1295,15 +1319,26 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
     return;
   }
 
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
-  nlohmann::json js;
-  js["message"] = "start enabling FL-Server successful.";
-  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
-    js["result"][output.first] = data;
+    nlohmann::json dataJson = nlohmann::json::parse(data);
+    if (!dataJson["result"]) {
+      res = false;
+      break;
+    }
   }
 
+  nlohmann::json js;
+  if (res) {
+    js["message"] = "start enabling FL-Server successful.";
+    js["code"] = kSuccessCode;
+    js["result"] = true;
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
+  } else {
+    js["message"] = "start enabling FL-Server failed.";
+    js["code"] = kErrorCode;
+    js["result"] = false;
+  }
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
 
@@ -1315,6 +1350,12 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
   MS_EXCEPTION_IF_NULL(resp);
 
   RequestProcessResult status(RequestProcessResultCode::kSuccess);
+  if (node_manager_.GetClusterState() == ClusterState::CLUSTER_DISABLE_FLS) {
+    std::string message = "The cluster state is already in CLUSTER_DISABLE_FLS.";
+    ERROR_STATUS(status, RequestProcessResultCode::kSystemError, message);
+    resp->ErrorResponse(HTTP_BADREQUEST, status);
+    return;
+  }
 
   status = CheckIfClusterReady();
   if (status != RequestProcessResultCode::kSuccess) {
@@ -1322,10 +1363,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
     return;
   }
 
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
-
   uint64_t request_id = AddMessageTrack(node_manager_.server_num());
-
   std::unordered_map<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
@@ -1348,19 +1386,29 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
   if (!res) {
     ERROR_STATUS(status, RequestProcessResultCode::kInvalidInputs, "The disable FLS is timeout.");
     resp->ErrorResponse(HTTP_BADREQUEST, status);
-    node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     return;
   }
 
-  node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
-  nlohmann::json js;
-  js["message"] = "start disabling FL-Server successful.";
-  js["code"] = kSuccessCode;
   for (const auto &output : outputs) {
     std::string data = std::string(reinterpret_cast<char *>(output.second->data()), output.second->size());
-    js["result"][output.first] = data;
+    nlohmann::json dataJson = nlohmann::json::parse(data);
+    if (!dataJson["result"]) {
+      res = false;
+      break;
+    }
   }
 
+  nlohmann::json js;
+  if (res) {
+    js["message"] = "start disabling FL-Server successful.";
+    js["code"] = kSuccessCode;
+    js["result"] = true;
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
+  } else {
+    js["message"] = "start disabling FL-Server failed.";
+    js["code"] = kErrorCode;
+    js["result"] = false;
+  }
   resp->AddRespString(js.dump());
   resp->AddRespHeadParam("Content-Type", "application/json");
 
@@ -1370,9 +1418,14 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
 
 RequestProcessResult SchedulerNode::CheckIfClusterReady() {
   RequestProcessResult result(RequestProcessResultCode::kSuccess);
-  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_READY || CheckIfNodeDisconnected()) {
+  if (node_manager_.GetClusterState() != ClusterState::CLUSTER_READY) {
     std::string message = "The cluster is not ready.";
     ERROR_STATUS(result, RequestProcessResultCode::kSystemError, message);
+    return result;
+  }
+
+  if (CheckIfNodeDisconnected()) {
+    ERROR_STATUS(result, RequestProcessResultCode::kSystemError, kClusterNotReady);
     return result;
   }
   return result;
