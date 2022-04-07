@@ -312,6 +312,7 @@ from .math_func import (
     atleast_1d,
     dstack,
     atleast_2d,
+    cartesian_prod,
     atleast_3d,
     vstack,
     dist,

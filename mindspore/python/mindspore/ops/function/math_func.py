@@ -5621,6 +5621,45 @@ def atleast_2d(inputs):
     return [_expand(arr, 2) for arr in inputs]
 
 
+def cartesian_prod(*inputs):
+    r"""
+    Performs a Cartesian product for a given tensor sequence.
+    The behavior is similar to Python's `itertools.product`.
+
+    Args:
+        inputs (List[Tensor]): Tensor sequence.
+
+    Returns:
+        Tensor, a Cartesian product for a given tensor sequence.
+
+    Raises:
+        TypeError: If the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([1, 2])
+        >>> x2 = Tensor([5])
+        >>> out = ops.cartesian_prod(x1, x2)
+        >>> print(out.asnumpy())
+        [[1 5]
+         [2 5]]
+        >>> x1 = Tensor([1, 2, 3, 4])
+        >>> x2 = Tensor([5, 6, 7])
+        >>> x3 = Tensor([8, 9, 0, 1, 2])
+        >>> out = ops.cartesian_prod(x1, x2, x3)
+        >>> print(len(out))
+        60
+    """
+    meshgrid = P.Meshgrid(indexing="ij")
+    meshgrid_output = meshgrid(inputs)
+    stack = P.Stack(axis=-1)
+    stack_output = stack(meshgrid_output)
+    reshape = P.Reshape()
+    return reshape(stack_output, (-1, len(inputs)))
+
+
 def atleast_3d(inputs):
     r"""
     Reshapes `inputs` as arrays with at least three dimensions.
@@ -8646,6 +8685,7 @@ __all__ = [
     'atleast_1d',
     'dstack',
     'atleast_2d',
+    'cartesian_prod',
     'atleast_3d',
     'vstack',
     'dist',
