@@ -202,6 +202,7 @@ class TestProfiler:
             assert os.path.isfile(file)
 
     def _check_d_profiling_file(self):
+        """Check ascend profiling file."""
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'
         step_trace_file = self.profiler_path + f'step_trace_raw_{self.rank_id}_detail_time.csv'
         timeline_file = self.profiler_path + f'ascend_timeline_display_{self.rank_id}.json'
