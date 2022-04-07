@@ -105,21 +105,24 @@ if(PLATFORM_ARM32)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "sse")
-    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c)
+    file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
+            ${NNACL_DIR}/intrinsics/ms_simd_cpu_info.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "avx")
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
             ${NNACL_DIR}/intrinsics/avx/*.c
-            ${NNACL_DIR}/assembly/avx/*.S)
+            ${NNACL_DIR}/assembly/avx/*.S
+            ${NNACL_DIR}/intrinsics/ms_simd_cpu_info.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
 if("${X86_64_SIMD}" STREQUAL "avx512")
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/intrinsics/sse/*.c
             ${NNACL_DIR}/intrinsics/avx/*.c
-            ${NNACL_DIR}/assembly/avx/*.S)
+            ${NNACL_DIR}/assembly/avx/*.S
+            ${NNACL_DIR}/intrinsics/ms_simd_cpu_info.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
