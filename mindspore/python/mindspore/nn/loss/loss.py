@@ -1165,6 +1165,76 @@ class SampledSoftmaxLoss(LossBase):
         return out_logits, out_labels
 
 
+class MultiLabelSoftMarginLoss(LossBase):
+    r"""
+    Calculates the MultiLabelSoftMarginLoss.
+    Create a criterion for optimizing multi-label one-to-total loss based on maximum entropy.
+
+    .. math::
+        \mathcal{L}_{D} = - \frac{1}{|D|}\sum_{i = 0}^{|D|}\left(
+        y_{i}\ln\frac{1}{1 + e^{- x_{i}}} + \left( 1 - y_{i}
+        \right)\ln\frac{1}{1 + e^{x_{i}}} \right)
+
+    where :math:`\mathcal{L}_{D}` is the loss, :math:`y_{i}` is the `target`,
+    :math:`x_{i}` is the `x`. `weight` will multiply to the loss of each class if given.
+
+    Args:
+        weight (int, float): The manual rescaling weight given to each class. Default: None.
+        reduction (string): Specifies which reduction to be applied to the output. It must be one of
+            'none', 'mean', and 'sum', meaning no reduction, reduce mean and sum on output, respectively.
+            Default 'mean'.
+
+    Inputs:
+        - **x** (Tensor) - A tensor of shape (N, C), where N is batch size and C is number
+          of classes.
+        - **target** (Tensor) - The label target Tensor which has the same shape as `x`.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is 'none', the output is a tensor of shape (N) with the same data type as `x`.
+        Otherwise it is a scalar.
+
+    Raises:
+        ValueError: If the rank of `x` or `target`is not 2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0.3, 0.6, 0.6], [0.9, 0.4, 0.2]])
+        >>> target = Tensor([[0.0, 0.0, 1.0], [0.0, 0.0, 1.0]])
+        >>> loss = nn.MultiLabelSoftMarginLoss(reduction='mean')
+        >>> out = loss(x, target)
+        >>> print(out.asnumpy())
+        0.84693956
+    """
+
+    def __init__(self, weight=None, reduction="mean"):
+        """Initialize MultiLabelSoftMarginLoss."""
+        super(MultiLabelSoftMarginLoss, self).__init__(reduction)
+        self.weight = weight
+        self.mul = P.Mul()
+        self.exp = P.Exp()
+        self.add = P.Add()
+        self.log = P.Log()
+
+    def construct(self, x, target):
+        _check_is_tensor('x', x, self.cls_name)
+        _check_is_tensor('target', target, self.cls_name)
+        if x.ndim != 2 or target.ndim != 2:
+            raise ValueError(
+                "For 'MultiLabelSoftMarginLoss', the inputs must be 2d tensor, but got shapes: "
+                f"x: {x.shape}, target: {target.shape} "
+            )
+        pos = self.log(self.add(self.exp(-x), 1))
+        neg = self.log(self.add(self.exp(x), 1))
+        loss = target * pos + (1 - target) * neg
+        if self.weight is not None:
+            loss = loss * self.weight
+        class_dim = x.ndim - 1
+        loss = loss.sum(axis=class_dim) / x.shape[class_dim]
+        return self.get_loss(loss)
+
+
 class MultiMarginLoss(LossBase):
     r"""
     Creates a criterion that optimizes a multi-class classification hinge
