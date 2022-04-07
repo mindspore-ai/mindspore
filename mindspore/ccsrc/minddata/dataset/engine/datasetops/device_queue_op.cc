@@ -750,9 +750,10 @@ Status DeviceQueueOp::DetectFirstBatch() {
   TaskManager::FindMe()->Post();
   uint8_t count_num = 0;
   uint64_t temp_start_time = ProfilingTime::GetCurMilliSecond();
+  constexpr int check_interval = 200;
   while (true) {
     RETURN_IF_INTERRUPTED();
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(check_interval));
     uint64_t temp_end_time = ProfilingTime::GetCurMilliSecond();
     // if fetch first batch, or detect 3 or more times and unable fetch first batch, exist with already printed Warning
     if (first_fetch_flag_ == true || count_num > 2) {
