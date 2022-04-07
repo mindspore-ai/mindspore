@@ -132,6 +132,12 @@ static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   return dst;
 }
 
+#define MS_LOAD256X4_F32(src, input_ptr, num)              \
+  MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
+  MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \
+  MS_FLOAT32X8 src##3 = MS_LD256_F32(input_ptr + 2 * num); \
+  MS_FLOAT32X8 src##4 = MS_LD256_F32(input_ptr + 3 * num);
+
 #define MS_LOAD256X8_F32(src, input_ptr, num)              \
   MS_FLOAT32X8 src##1 = MS_LD256_F32(input_ptr + 0 * num); \
   MS_FLOAT32X8 src##2 = MS_LD256_F32(input_ptr + 1 * num); \

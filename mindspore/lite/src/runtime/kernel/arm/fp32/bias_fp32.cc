@@ -90,6 +90,7 @@ int BiasCPUKernel::ChooseThreadCuttingstrategy() {
   if (thread_num_ < 1) {
     thread_num_ = 1;
   }
+  block_size = total_num_ / thread_num_;
   int64_t remain_data = total_num_ - block_size * thread_num_;
   int64_t split_point = 0;
   while (split_point < total_num_) {
