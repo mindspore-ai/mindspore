@@ -743,7 +743,7 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
 
     Inputs:
         - **true_classes** (Tensor) - The target classes. With data type of int64 and
-        shape :math:`(batch\_size, num\_true)` .
+          shape :math:`(batch\_size, num\_true)` .
 
     Outputs:
         Tuple of 3 Tensors.
