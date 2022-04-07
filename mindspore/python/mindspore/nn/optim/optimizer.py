@@ -52,7 +52,7 @@ def opt_init_args_register(fn):
             arguments.pop('optimizer')
         if 'learning_rate' in arguments.keys():
             if isinstance(arguments['learning_rate'], Tensor):
-                arguments['learning_rate'] = list(arguments['learning_rate'].asnumpy())
+                arguments['learning_rate'] = arguments['learning_rate'].asnumpy().tolist()
             if isinstance(arguments['learning_rate'], Cell):
                 setattr(self, 'init_learning_rate', None)
             else:
