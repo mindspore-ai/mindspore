@@ -18,8 +18,6 @@
 
 #include <memory>
 #include <vector>
-#include <set>
-#include <utility>
 #include "utils/anf_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -29,27 +27,18 @@
 
 namespace mindspore {
 namespace opt::dynamic_shape {
-namespace {
 constexpr size_t kTupleFirstItemIndex = 0;
 constexpr size_t kFirstDataInputIndex = 1;
-using DependPair = std::pair<AnfNodePtr, AnfNodePtr>;
-struct DependPairCmp {
-  bool operator()(const DependPair &lhs, const DependPair &rhs) const {
-    if (lhs.first != rhs.first) {
-      return lhs.first > rhs.first;
-    }
-    return lhs.second > rhs.second;
-  }
-};
-void InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePtr &next, AnfNodePtrList *depend_nodes) {
+
+void LinkCustomOp::InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePtr &next,
+                                AnfNodePtrList *depend_nodes) {
   MS_EXCEPTION_IF_NULL(g);
   MS_EXCEPTION_IF_NULL(prev);
   MS_EXCEPTION_IF_NULL(next);
   MS_EXCEPTION_IF_NULL(depend_nodes);
-  static std::set<DependPair, DependPairCmp> added_set = std::set<DependPair, DependPairCmp>();
 
   DependPair cur_pair = std::make_pair(prev, next);
-  if (added_set.count(cur_pair) > 0) {
+  if (added_set_.count(cur_pair) > 0) {
     return;
   }
 
@@ -58,10 +47,10 @@ void InsertDepend(const FuncGraphPtr &g, const AnfNodePtr &prev, const AnfNodePt
     std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), next, prev});
   MS_EXCEPTION_IF_NULL(depend_node);
   depend_nodes->push_back(depend_node);
-  (void)added_set.insert(cur_pair);
+  (void)added_set_.insert(cur_pair);
 }
 
-bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrList *depend_nodes) {
+bool LinkCustomOp::LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrList *depend_nodes) {
   MS_EXCEPTION_IF_NULL(g);
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(depend_nodes);
@@ -83,7 +72,7 @@ bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrLis
   return changed;
 }
 
-bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *depend_nodes) {
+bool LinkCustomOp::LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *depend_nodes) {
   MS_EXCEPTION_IF_NULL(g);
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(depend_nodes);
@@ -135,7 +124,7 @@ bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *d
   return changed;
 }
 
-bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *depend_nodes) {
+bool LinkCustomOp::LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *depend_nodes) {
   MS_EXCEPTION_IF_NULL(g);
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(depend_nodes);
@@ -194,7 +183,7 @@ bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList
  * @param g Graph.
  * @param depend_nodes Custom's Depend nodes.
  */
-void AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes) {
+void LinkCustomOp::AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes) {
   if (depend_nodes.empty()) {
     return;
   }
@@ -216,13 +205,13 @@ void AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes
   // Attach back.
   return_node->set_input(kFirstDataInputIndex, get_1st_item);
 }
-}  // namespace
 
 bool LinkCustomOp::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   bool changed = false;
   AnfNodePtrList depend_nodes;
   auto node_list = TopoSort(func_graph->get_return());
+  added_set_.clear();
   for (const auto &node : node_list) {
     CNodePtr cnode = node->cast<CNodePtr>();
     if (cnode == nullptr || !CustomActorNodeManager::Instance().IsRegistered(cnode)) {
