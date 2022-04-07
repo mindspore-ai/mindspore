@@ -34,6 +34,7 @@
 #include "src/lite_session.h"
 #include "src/common/file_utils.h"
 #include "src/common/config_file.h"
+#include "src/cpu_info.h"
 #ifdef SERVER_INFERENCE
 #include "src/common/common.h"
 #endif
@@ -65,6 +66,10 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     MS_LOG(ERROR) << "The input model buffer size is 0.";
     return kLiteInputParamInvalid;
   }
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    return kLiteNotSupport;
+  }
   context_ = ms_context;
   auto session = std::shared_ptr<lite::LiteSession>(CreateLiteSession(ContextUtils::Convert(ms_context.get())));
   if (session == nullptr) {
@@ -86,6 +91,11 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
 
 Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    return kLiteNotSupport;
+  }
+
   auto session = std::shared_ptr<lite::LiteSession>(CreateLiteSession(ContextUtils::Convert(ms_context.get())));
   if (session == nullptr) {
     MS_LOG(ERROR) << "Allocate session failed.";
@@ -113,6 +123,11 @@ Status ModelImpl::Build() {
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
     return kLiteNullptr;
+  }
+
+  if (!PlatformInstructionSetSupportCheck()) {
+    MS_LOG(ERROR) << "The platform exist don't support's instruction.";
+    return kLiteNotSupport;
   }
 
   auto *inner_context = ContextUtils::Convert(context_.get());

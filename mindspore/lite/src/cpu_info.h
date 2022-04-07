@@ -13,10 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_ARM
-#include <string>
+
 #ifndef MINDSPORE_LITE_SRC_CPU_INFO_H
 #define MINDSPORE_LITE_SRC_CPU_INFO_H
+
+#if defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#include "nnacl/intrinsics/ms_simd_cpu_info.h"
+#endif
+
+inline bool PlatformInstructionSetSupportCheck() {
+  bool flag = true;
+
+#if defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+  flag = IntelX86InstructionSetSupportCheck();
+#endif
+
+  return flag;
+}
+
+#ifdef ENABLE_ARM
+#include <string>
+
 namespace mindspore::lite {
 #ifndef MS_COMPILE_IOS
 #define ARM_CPU_IMPLEMENTER_MASK UINT32_C(0xFF000000)
@@ -50,5 +67,5 @@ class CpuInfo {
   bool fp16_flag_ = false;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_CPU_INFO_H
 #endif
+#endif  // MINDSPORE_LITE_SRC_CPU_INFO_H
