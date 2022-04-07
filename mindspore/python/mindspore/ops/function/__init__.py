@@ -259,6 +259,7 @@ from .math_func import (
     all,
     any,
     sparse_segment_mean,
+    atleast_2d,
     vstack,
     copysign,
     log2,

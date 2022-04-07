@@ -411,6 +411,15 @@ class LdexpFunc(nn.Cell):
         return self.ldexp(x, other)
 
 
+class AtLeast2DFunc(nn.Cell):
+    def __init__(self):
+        super(AtLeast2DFunc, self).__init__()
+        self.atleast_2d = ops.atleast_2d
+
+    def construct(self, x1, x2, x3):
+        return self.atleast_2d([x1, x2, x3])
+
+
 class VstackFunc(nn.Cell):
     def __init__(self):
         super(VstackFunc, self).__init__()
@@ -700,6 +709,12 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([1.]), dtype=ms.float32),
                         Tensor(np.array([1, 2, 3, 4]), dtype=ms.int32)],
         'skip': ['backward']
+    }),
+    ('AtLeast2D', {
+        'block': AtLeast2DFunc(),
+        'desc_inputs': [Tensor(np.array([[1, 1, 1], [1, 1, 1]]), ms.float64),
+                        Tensor(np.array(1), ms.float64),
+                        Tensor(np.array([1, 1, 1, 1, 1]), ms.float64)]
     }),
     ('Vstack', {
         'block': VstackFunc(),
