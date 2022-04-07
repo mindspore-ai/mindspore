@@ -641,7 +641,7 @@ def test_generator_error_1():
         data1 = ds.GeneratorDataset(generator_np, ["data"])
         for _ in data1:
             pass
-    assert "Data type of 1st item of the input or converted Numpy array is expected" in str(info.value)
+    assert "Data type of 1th item of the input or its converted Numpy array is expected" in str(info.value)
 
 
 def test_generator_error_2():
@@ -653,7 +653,7 @@ def test_generator_error_2():
         data1 = ds.GeneratorDataset(generator_np, ["data"])
         for _ in data1:
             pass
-    assert "Data type of 1st item of the input or converted Numpy array is expected" in str(info.value)
+    assert "Data type of 1th item of the input or its converted Numpy array is expected" in str(info.value)
 
 
 def test_generator_error_3():
@@ -1360,7 +1360,7 @@ def test_generator_single_input_6():
             data1 = ds.GeneratorDataset(data, ["data"], shuffle=False)
             for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):  # each data is a dictionary
                 pass
-        assert " Data type of the input or converted Numpy array is expected" in str(info.value)
+        assert " Data type of the input or its converted Numpy array is expected" in str(info.value)
 
     assert_generator_single_input_6(generator_nested_np)
     assert_generator_single_input_6(RandomAccessDatasetInner())

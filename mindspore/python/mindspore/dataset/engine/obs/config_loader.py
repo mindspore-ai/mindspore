@@ -47,7 +47,7 @@ class _Config:
             return self._convert_type(key)
         if key in self.config:
             return self.config[key]
-        raise RuntimeError("Variable {} can not found in configuration file or environment variables.".format(key))
+        raise RuntimeError("Variable {} can not be found in configuration file or environment variables.".format(key))
 
     def __setattr__(self, key, value):
         if key == 'config':

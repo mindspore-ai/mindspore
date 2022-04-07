@@ -135,7 +135,7 @@ def _convert_row(row):
     """
     if isinstance(row, dict):
         raise TypeError("Input data is expected to be " \
-                        "int, float, str, bytes, Numpy array, Tensor or list-or-tuple of them, but got dict.")
+                        "int, float, str, bytes, numpy.ndarray, Tensor or list/tuple of them, but got dict.")
 
     # convert single item to np.array
     prim_type = (int, float, str, bytes, np.ndarray, Tensor)
@@ -147,7 +147,7 @@ def _convert_row(row):
         else:
             item = np.array(row, copy=False)
             if item.dtype == 'object':
-                raise TypeError("Data type of the input or converted Numpy array is expected to be " \
+                raise TypeError("Data type of the input or its converted Numpy array is expected to be " \
                                 "int or float or str, but got {}.".format(item.dtype))
         return tuple([item])
 
@@ -161,12 +161,12 @@ def _convert_row(row):
         elif isinstance(x, Tensor):      # mindspore.Tensor
             value.append(x.asnumpy())
         elif isinstance(x, dict):
-            raise TypeError("The {}st item of input data is expected to be " \
-                            "int, float, str, bytes, Numpy array, Tensor, but got dict.".format(idx))
+            raise TypeError("The {}th item of input data is expected to be " \
+                            "int, float, str, bytes, numpy.ndarray, Tensor, but got dict.".format(idx))
         else:
             item = np.array(x, copy=False)
             if item.dtype == 'object':
-                raise TypeError("Data type of {}st item of the input or converted Numpy array is expected to be " \
+                raise TypeError("Data type of {}th item of the input or its converted Numpy array is expected to be " \
                                 "int or float or str, but got {}.".format(idx, item.dtype))
             value.append(item)
     return tuple(value)
