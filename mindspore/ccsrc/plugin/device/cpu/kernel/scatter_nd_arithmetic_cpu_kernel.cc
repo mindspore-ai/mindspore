@@ -60,7 +60,8 @@ class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
   std::vector<size_t> input_shape_;
   std::string kernel_name_;
   std::set<std::string> tensor_scatter_kernel_types_{kernel::kTensorScatterAdd, kernel::kTensorScatterSub,
-                                                     kernel::kTensorScatterMax, kernel::kTensorScatterMin};
+                                                     kernel::kTensorScatterMax, kernel::kTensorScatterMin,
+                                                     kernel::kTensorScatterDiv};
   bool is_tensor_scatter_arithmetric_{false};
 };
 
@@ -72,6 +73,7 @@ void ScatterNdArithmeticCpuKernelFunc<T, S>::InitComputeFunc() {
     {prim::kPrimScatterNdSub->name(), [](const T &a, const T &b) { return a - b; }},
     {prim::kPrimTensorScatterAdd->name(), [](const T &a, const T &b) { return a + b; }},
     {prim::kPrimTensorScatterSub->name(), [](const T &a, const T &b) { return a - b; }},
+    {prim::kPrimTensorScatterDiv->name(), [](const T &a, const T &b) { return ((b == 0) ? (0) : (a / b)); }},
     {prim::kPrimTensorScatterMax->name(), [](const T &a, const T &b) { return std::max(a, b); }},
     {prim::kPrimTensorScatterMin->name(), [](const T &a, const T &b) { return std::min(a, b); }}};
   if (scatterNdArithmeticFuncMap.find(kernel_name_) == scatterNdArithmeticFuncMap.end()) {
@@ -385,6 +387,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterAdd,
                                  []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterAdd); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterSub,
                                  []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterSub); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterDiv,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterDiv); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterMax,
                                  []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterMax); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterMin,

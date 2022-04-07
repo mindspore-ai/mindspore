@@ -26,6 +26,7 @@ tensor_scatter_func_map = {
     "add": P.TensorScatterAdd,
     "sub": P.TensorScatterSub,
     "mul": P.TensorScatterMul,
+    "div": P.TensorScatterDiv,
 
 }
 
@@ -34,6 +35,7 @@ np_benchmark_func_map = {
     "add": lambda a, b: a + b,
     "sub": lambda a, b: a - b,
     "mul": lambda a, b: a * b,
+    "div": lambda a, b: a / b,
     "min": min,
     "max": max,
 }
@@ -70,7 +72,7 @@ def tensor_scatter_np_benchmark(np_func, input_x, indices, updates):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func_name', ["update", "min", "max", "add", "sub", "mul"])
+@pytest.mark.parametrize('func_name', ["update", "min", "max", "add", "sub", "mul", "div"])
 @pytest.mark.parametrize('input_data_type', [np.float16, np.float32, np.float64, np.int8, np.int32])
 @pytest.mark.parametrize('index_data_type', [np.int32, np.int64])
 def test_tensor_scatter(func_name, input_data_type, index_data_type):
