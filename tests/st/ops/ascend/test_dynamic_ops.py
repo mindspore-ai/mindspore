@@ -60,6 +60,18 @@ def dataset_generator(data_list):
         yield data
 
 
+def compare(output, expect):
+    if isinstance(output, (tuple, list)):
+        assert isinstance(expect, (tuple, list))
+        for output_, expect_ in zip(output, expect):
+            if not compare(output_, expect_):
+                return False
+    else:
+        if not np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1.0e-4, atol=1.0e-4):
+            return False
+    return True
+
+
 class GradNetWrtX(nn.Cell):
     def __init__(self, net):
         super(GradNetWrtX, self).__init__()
@@ -70,6 +82,28 @@ class GradNetWrtX(nn.Cell):
     def construct(self, *inputs):
         gradient_function = self.grad_op(self.net, self.params)
         return gradient_function(*inputs)
+
+
+def common_func(dynamic_range, input_shape, data_type, op_net):
+    data_list = []
+    for i in dynamic_range:
+        cur_data = []
+        for data_shape in input_shape:
+            cur_shape = [dim if dim is not None else i for dim in data_shape]
+            cur_data.append(np.random.random(cur_shape).astype(data_type))
+        data_list.append(tuple(cur_data))
+
+    dynamic_data_map = {}
+    for i, val in enumerate(input_shape):
+        dynamic_data_map["data" + str(i + 1)] = val
+
+    dataset = ds.GeneratorDataset(data_list, list(dynamic_data_map.keys()))
+    dataset.set_dynamic_columns(columns=dynamic_data_map)
+    net = GradNetWrtX(op_net)
+
+    gradients = dynamic_shape_sink_process(net, dataset)
+    gradients_cmp = fixed_shape_process(net, dataset)
+    assert compare(gradients, gradients_cmp)
 
 
 class LayerNormNet(nn.Cell):
@@ -116,6 +150,20 @@ class AddNet(nn.Cell):
         return ops.add(x, y)
 
 
+class SoftmaxNet(nn.Cell):
+    def construct(self, x):
+        return ops.Softmax(axis=-1)(x)
+
+
+class BatchNormNet(nn.Cell):
+    def __init__(self, channels):
+        super(BatchNormNet, self).__init__()
+        self.bn = nn.BatchNorm2d(channels)
+
+    def construct(self, x):
+        return self.bn(x)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -128,21 +176,11 @@ def test_dynamic_layernorm():
     """
     last_dim = 32
     batch_size = 16
-    data_list = []
-    for i in range(20, 23):
-        data_list.append((np.random.rand(batch_size, i, last_dim).astype(np.float32),
-                          np.random.rand(batch_size, i, last_dim).astype(np.float32)))
-
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, None, last_dim], "data2": [batch_size, None, last_dim]})
-
-    net = GradNetWrtX(LayerNormNet(last_dim))
-
-    gradients = dynamic_shape_sink_process(net, dataset)
-    gradients_cmp = fixed_shape_process(net, dataset)
-    assert np.allclose(gradients[0][0].asnumpy(), gradients_cmp[0][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
-    assert np.allclose(gradients[1][0].asnumpy(), gradients_cmp[1][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
-    assert np.allclose(gradients[1][1].asnumpy(), gradients_cmp[1][1].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
+    dynamic_range = range(20, 23)
+    data_type = np.float32
+    input_shape = [(batch_size, None, last_dim), (batch_size, None, last_dim)]
+    net = LayerNormNet(last_dim)
+    common_func(dynamic_range, input_shape, data_type, net)
 
 
 @pytest.mark.level0
@@ -156,18 +194,11 @@ def test_dynamic_conv2d():
     Expectation: Assert that results are consistent with fixed shape.
     """
     batch_size = 16
-    data_list = []
-    for i in range(220, 224):
-        data_list.append((np.random.rand(batch_size, 3, i, 112).astype(np.float32),
-                          np.random.rand(batch_size, 10, 219, 109).astype(np.float32)))
-
-    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
-    dataset.set_dynamic_columns(columns={"data1": [batch_size, 3, None, 112], "data2": [batch_size, 10, None, 109]})
-    net = GradNetWrtX(Conv2dNet())
-    gradients = dynamic_shape_sink_process(net, dataset)
-    gradients_cmp = fixed_shape_process(net, dataset)
-    assert np.allclose(gradients[0][0].asnumpy(), gradients_cmp[0][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
-    assert np.allclose(gradients[1][0].asnumpy(), gradients_cmp[1][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
+    dynamic_range = range(220, 224)
+    data_type = np.float32
+    input_shape = [(batch_size, 3, None, 112), (batch_size, 10, 219, 109)]
+    net = Conv2dNet()
+    common_func(dynamic_range, input_shape, data_type, net)
 
 
 @pytest.mark.level0
@@ -240,7 +271,7 @@ def test_dynamic_reducesum2():
 
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
-    assert np.allclose(gradients[0][0].asnumpy(), gradients_cmp[0][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
+    assert compare(gradients, gradients_cmp)
 
 
 @pytest.mark.level0
@@ -266,8 +297,7 @@ def test_dynamic_add1():
 
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
-    assert np.allclose(gradients[0][0].asnumpy(), gradients_cmp[0][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
-    assert np.allclose(gradients[0][1].asnumpy(), gradients_cmp[0][1].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
+    assert compare(gradients, gradients_cmp)
 
 
 @pytest.mark.level0
@@ -295,5 +325,40 @@ def test_dynamic_add2():
 
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
-    assert np.allclose(gradients[0][0].asnumpy(), gradients_cmp[0][0].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
-    assert np.allclose(gradients[0][1].asnumpy(), gradients_cmp[0][1].asnumpy(), rtol=1.0e-4, atol=1.0e-4)
+    assert compare(gradients, gradients_cmp)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_softmax():
+    """
+    Feature: Test Softmax and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    batch_size = 16
+    dynamic_range = range(48, 50)
+    data_type = np.float32
+    input_shape = [(batch_size, 2, None), (batch_size, 2, None)]
+    net = SoftmaxNet()
+    common_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_batchnorm():
+    """
+    Feature: Test Batchnorm2D and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    batch_size = 1
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(batch_size, 256, None, 12), (batch_size, 256, None, 12)]
+    net = BatchNormNet(256)
+    common_func(dynamic_range, input_shape, data_type, net)
