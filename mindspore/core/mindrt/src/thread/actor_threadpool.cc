@@ -21,7 +21,7 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-constexpr size_t MAX_READY_ACTOR_NR = 4096;
+constexpr size_t MAX_READY_ACTOR_NR = 8192;
 void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSpin, this); }
 
 void ActorWorker::RunWithSpin() {
