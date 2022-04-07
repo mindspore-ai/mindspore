@@ -175,7 +175,6 @@ def test_if_after_if_in_for_02():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_if_after_if_in_for_03():
-    context.set_context(save_graphs=True, save_graphs_path="./test_112_graph_ir")
     x = Tensor(2, mstype.int32)
     expect1 = Tensor(11, mstype.int32)
     expect2 = (Tensor(1, mstype.int32),)
