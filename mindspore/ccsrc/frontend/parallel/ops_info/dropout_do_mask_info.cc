@@ -195,8 +195,7 @@ void SetGenMaskShape(const CNodePtr &cnode, const Shape &input_slice_shape) {
 // split. Find the DropoutGenMask node in the anf graph according to DropoutDoMask node, and modify the input shape
 // of DropoutGenMask according to the strategy of DropoutDoMask. When the DropoutDoMask performs repeated calculation
 // and both seeds of DropoutGenMask are 0, two new seeds are automatically generated for DropoutGenMask.
-std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp() {
-  auto cnode = cnode_;
+std::vector<Operator> DropoutDoMaskInfo::GetDropoutGenMaskReplaceOp(const CNodePtr &cnode) {
   std::vector<Operator> replace_ops;
   MS_EXCEPTION_IF_NULL(cnode);
   PrimitivePtr prim = GetDropoutGenMaskPrim(cnode);
@@ -273,18 +272,19 @@ static void ReplaceOneOp(const Operator &replace_op, const CNodePtr &node) {
 }
 
 void DropoutDoMaskInfo::ReplaceNodeInputOrAttrs() {
-  auto cnode = cnode_;
-  MS_EXCEPTION_IF_NULL(cnode);
-  std::vector<Operator> replace_op = GetDropoutGenMaskReplaceOp();
-  if (replace_op.empty()) {
-    MS_LOG(DEBUG) << name_ << ": No need to replace dropout_gen_mask";
-    return;
+  for (auto &cnode : cnodes_) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    std::vector<Operator> replace_op = GetDropoutGenMaskReplaceOp(cnode);
+    if (replace_op.empty()) {
+      MS_LOG(DEBUG) << name_ << ": No need to replace dropout_gen_mask";
+      return;
+    }
+    if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
+      MS_LOG(EXCEPTION) << name_ << ": The size of drop out do mask cnode's input is not "
+                        << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
+    }
+    ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
   }
-  if (cnode->inputs().size() != DROPOUT_DO_MASK_CNODE_INPUT_SIZE) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of drop out do mask cnode's input is not "
-                      << DROPOUT_DO_MASK_CNODE_INPUT_SIZE;
-  }
-  ReplaceOneOp(replace_op[0], cnode->input(DROPOUT_GEN_MASK_INDEX)->cast<CNodePtr>());
 }
 }  // namespace parallel
 }  // namespace mindspore

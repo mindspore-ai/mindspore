@@ -156,24 +156,25 @@ Status TileInfo::InferMirrorOps() {
 }
 
 void TileInfo::UpdateMultiples() {
-  auto cnode = cnode_;
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() != 3) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 3";
+  for (auto &cnode : cnodes_) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->size() != 3) {
+      MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 3";
+    }
+
+    if (!IsValueNode<ValueTuple>(cnode->input(2))) {
+      MS_LOG(EXCEPTION) << name_ << ": The input[2] of tile cnode is not ValueTuple.";
+    }
+
+    auto func_graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+
+    ValuePtr new_multiples = MakeValue(slice_multiples_);
+    AnfNodePtr val = NewValueNode(new_multiples);
+    (void)manager->Replace(cnode->input(2), val);
   }
-
-  if (!IsValueNode<ValueTuple>(cnode->input(2))) {
-    MS_LOG(EXCEPTION) << name_ << ": The input[2] of tile cnode is not ValueTuple.";
-  }
-
-  auto func_graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-
-  ValuePtr new_multiples = MakeValue(slice_multiples_);
-  AnfNodePtr val = NewValueNode(new_multiples);
-  (void)manager->Replace(cnode->input(2), val);
 }
 
 void TileInfo::ReplaceNodeInputOrAttrs() { UpdateMultiples(); }

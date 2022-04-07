@@ -120,22 +120,23 @@ void UniformRealInfo::UpdateShape(const CNodePtr &cnode) {
 }
 
 void UniformRealInfo::ReplaceNodeInputOrAttrs() {
-  auto cnode = cnode_;
-  int64_t split_num = 1;
-  UpdateShape(cnode);
-  std::vector<Dimensions> stra = strategy_->GetInputDim();
-  for (size_t i = 0; i < stra[0].size(); i++) {
-    split_num *= stra[0][i];
-  }
-  int64_t device_num = stage_device_size_;
-  int64_t rank_id = g_device_manager->rank_index_in_stage();
+  for (auto &cnode : cnodes_) {
+    int64_t split_num = 1;
+    UpdateShape(cnode);
+    std::vector<Dimensions> stra = strategy_->GetInputDim();
+    for (size_t i = 0; i < stra[0].size(); i++) {
+      split_num *= stra[0][i];
+    }
+    int64_t device_num = stage_device_size_;
+    int64_t rank_id = g_device_manager->rank_index_in_stage();
 
-  if (device_num != split_num) {
-    auto split_group_num = device_num / split_num;
-    int64_t seed_bias = rank_id / split_group_num;
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    prim->set_attr(SEED, MakeValue(seed_ + seed_bias));
-    prim->set_attr(SEED2, MakeValue(seed2_ + seed_bias));
+    if (device_num != split_num) {
+      auto split_group_num = device_num / split_num;
+      int64_t seed_bias = rank_id / split_group_num;
+      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+      prim->set_attr(SEED, MakeValue(seed_ + seed_bias));
+      prim->set_attr(SEED2, MakeValue(seed2_ + seed_bias));
+    }
   }
 }
 }  // namespace parallel
