@@ -309,6 +309,7 @@ from .math_func import (
     dstack,
     atleast_2d,
     vstack,
+    dist,
     copysign,
     log2,
     xlogy,

@@ -5577,6 +5577,50 @@ def vstack(inputs):
     return out
 
 
+def dist(input_x, input_y, p=2):
+    r"""
+    Computes batched the :math:`p`-norm distance between each pair of the two collections of row vectors.
+
+    Note:
+        Since only normalization for integer :math:`p`-normal form is supported in MindSpore,
+        a type error will be raised if :math:`p` is not an integer.
+
+    Args:
+        input_x (Tensor): The first input tensor. The dtype must be float32 or float16.
+        input_y (Tensor): The second input tensor. The dtype must be float32 or float16.
+        p (int, optional): The order of norm. `p` is greater than or equal to 0.
+            Default: 2. Currently only normalization for integer p-normal form is supported.
+
+    Returns:
+        Tensor, has the same dtype as `input_x`, which shape is :math:`(1)`.
+
+    Raises:
+        TypeError: If `input_x` or `input_y` is not a Tensor.
+        TypeError: If dtype of `input_x` or `input_y` is neither float16 nor float32.
+        TypeError: If `p` is not a non-negative integer.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor([[[1.0, 1.0], [2.0, 2.0]]])
+        >>> input_y = Tensor([[[3.0, 3.0], [3.0, 3.0]]])
+        >>> out = ops.dist(input_x, input_y)
+        >>> print(out.asnumpy())
+        3.1622777
+    """
+    if not isinstance(input_x, Tensor):
+        raise TypeError(f"For 'dist', 'input_x' must be a tensor, but got {type(input_x)}")
+    if not isinstance(input_y, Tensor):
+        raise TypeError(f"For 'dist', 'input_y' must be a tensor, but got {type(input_y)}")
+    z = input_x - input_y
+    if z.ndim == 0:
+        return ops.abs(z)
+
+    # the types of p will expend once ops.LpNorm supports float
+    return ops.LpNorm(axis=0, p=p)(ops.reshape(z, (-1,)))
+
+
 def copysign(x, other):
     r"""
     Create a new floating-point tensor with the magnitude of `x` and the sign of `other`, element-wise.
@@ -8309,6 +8353,7 @@ __all__ = [
     'dstack',
     'atleast_2d',
     'vstack',
+    'dist',
     'copysign',
     'log2',
     'xlogy',

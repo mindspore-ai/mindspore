@@ -450,6 +450,15 @@ class VstackFunc(nn.Cell):
         return self.vstack([x1, x2])
 
 
+class DistFunc(nn.Cell):
+    def __init__(self):
+        super(DistFunc, self).__init__()
+        self.dist = ops.dist
+
+    def construct(self, input_x, input_y):
+        return self.dist(input_x, input_y)
+
+
 class CopysignFunc(nn.Cell):
     def __init__(self):
         super(CopysignFunc, self).__init__()
@@ -779,6 +788,11 @@ test_case_math_ops = [
         'block': VstackFunc(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]), ms.int32),
                         Tensor(np.array([4, 5, 6]), ms.int32)]
+    }),
+    ('Dist', {
+        'block': DistFunc(),
+        'desc_inputs': [Tensor(np.array([[[1, 1], [2, 2]]]), ms.float32),
+                        Tensor(np.array([[[3, 3], [3, 3]]]), ms.float32)]
     }),
     ('Copysign', {
         'block': CopysignFunc(),
