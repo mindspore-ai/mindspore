@@ -68,6 +68,8 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
 int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
                           bool symmetric, bool narrow_range = false);
 
+void EncodeMinMax(float min_value, float max_value, int quant_min, int quant_max, bool symmetric, float *encode_min,
+                  float *encode_max);
 template <typename T>
 T QuantizeData(float origin_data, const schema::QuantParamT *quant_param, int quant_max, int quant_min) {
   MS_ASSERT(quant_param != nullptr);
@@ -102,7 +104,7 @@ T QuantizeData(const float origin_data, const schema::QuantParamT *quant_param) 
 template <typename T>
 int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
                     const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
-                    bool symmetry = false, bool narrow_range = false, bool k_means = false) {
+                    bool symmetric = false, bool narrow_range = false, bool k_means = false) {
   if (k_means) {
     MS_LOG(ERROR) << "Unsupported K-means.";
     return RET_ERROR;
@@ -115,7 +117,7 @@ int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schem
   }
 
   schema::QuantParamT quant_param;
-  int status = CalQuantizationParams(&quant_param, min, max, bit_num, quant_min, quant_max, symmetry, narrow_range);
+  int status = CalQuantizationParams(&quant_param, min, max, bit_num, quant_min, quant_max, symmetric, narrow_range);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CalQuantizationParams failed" << status;
     return status;
@@ -148,7 +150,7 @@ template <typename T>
 int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
                       std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
                       const size_t &bit_num, std::vector<T> *quant_datas, const std::vector<int> &dims,
-                      int preferred_dim, bool symmetry = false, bool narrow_range = false, bool k_means = false) {
+                      int preferred_dim, bool symmetric = false, bool narrow_range = false, bool k_means = false) {
   if (raw_datas == nullptr || quant_params == nullptr || quant_datas == nullptr) {
     MS_LOG(ERROR) << "raw_data, quant_params or quant_data is nullptr.";
     return RET_ERROR;
@@ -186,7 +188,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
     float min = min_max_map.second.min;
     float max = min_max_map.second.max;
     schema::QuantParamT quant_param;
-    ret = CalQuantizationParams(&quant_param, min, max, bit_num, quant_min, quant_max, symmetry, narrow_range);
+    ret = CalQuantizationParams(&quant_param, min, max, bit_num, quant_min, quant_max, symmetric, narrow_range);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Cal quantization params failed.";
       return ret;

@@ -81,8 +81,8 @@ class FullQuantQuantizer : public Quantizer {
   int activation_q_max_{INT8_MAX};
   int weight_q_min_{INT8_MIN};
   int weight_q_max_{INT8_MAX};
-  bool activation_symmetry_{false};
-  bool weight_symmetry_{true};
+  bool activation_symmetric_{false};
+  bool weight_symmetric_{true};
   std::set<PrimitivePtr> support_int8_ops_;
   std::set<PrimitivePtr> skip_check_dtype_ops_;
   std::set<PrimitivePtr> per_channel_ops_;

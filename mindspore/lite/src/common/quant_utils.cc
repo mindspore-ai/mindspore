@@ -33,67 +33,64 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
                                narrow_range);
 }
 
-int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
-                          int quant_min, int quant_max, bool symmetric, bool narrow_range) {
-  CHECK_NULL_RETURN(quant_param);
+void EncodeMinMax(float min_value, float max_value, int quant_min, int quant_max, bool symmetric, float *encode_min,
+                  float *encode_max) {
+  // handle case where encode_min_ == encode_max_
+  float epsilon = 1e-10;
+  if (max_value - min_value < epsilon) {
+    MS_LOG(INFO) << min_value << " - " << max_value;
+  }
+  max_value = std::max(max_value, min_value + epsilon);
   if (symmetric) {
-    auto abs_max = std::max(std::abs(real_min), std::abs(real_max));
-    real_min = -abs_max;
-    real_max = abs_max;
-    narrow_range = true;
+    auto abs_max = std::max(std::fabs(min_value), std::fabs(max_value));
+    *encode_min = -abs_max;
+    *encode_max = abs_max;
+  } else {
+    *encode_min = min_value;
+    *encode_max = max_value;
   }
   // Handling 0
   // Inputs are strictly positive, set the real min to 0. e.g. input range = [1.0, 5.0] -> [0.0, 5.0]
-  if (real_min > 0.0f) {
-    MS_LOG(DEBUG) << "min " << real_min << " is bigger then 0, set to 0, this may course low precision";
-    real_min = 0.0f;
+  if (*encode_min > 0.0f) {
+    MS_LOG(DEBUG) << "min " << *encode_min << " is bigger then 0, set to 0, this may course low precision";
+    *encode_min = 0.0f;
   }
   // Inputs are strictly negative, set the real max to 0. e.g. input range = [-5.0, -1.0] -> [-5.0, 0.0]
-  if (real_max < 0.0f) {
-    MS_LOG(DEBUG) << "real_max " << real_max << " is smaller than 0, set to 0, this may course low precision";
-    real_max = 0.0f;
+  if (*encode_max < 0.0f) {
+    MS_LOG(DEBUG) << "real_max " << *encode_max << " is smaller than 0, set to 0, this may course low precision";
+    *encode_max = 0.0f;
   }
+  auto q_range = quant_max - quant_min;
+  MS_ASSERT(quant_max - quant_min > 0);
   // Inputs are both negative and positive, real_min and real_max are slightly shifted to make the floating point zero
   // exactly representable. e.g. input range = [-5.1, 5.1] -> [-5.12, 5.08]
+  double step_size = static_cast<double>(*encode_max - *encode_min) / q_range;
+  auto close_0 = std::round(-(*encode_min) / step_size);
+  *encode_min = (0 - close_0) * step_size;
+  *encode_max = (q_range - close_0) * step_size;
+}
 
-  if (real_min > real_max) {
-    MS_LOG(ERROR) << "cal error while min" << real_min << ">" << real_max;
-    return RET_PARAM_INVALID;
-  }
-  if (real_max - real_min <= 0.0f) {
-    if (real_min != 0.0f) {
-      MS_LOG(ERROR) << "min and max should both be zero if they are equal to each other";
-      return RET_ERROR;
-    }
-    MS_LOG(INFO) << "The maximum and minimum values are equal to 0.";
-    quant_param->inited = true;
-    quant_param->min = real_min;
-    quant_param->max = real_max;
-    quant_param->scale = 1;
-    quant_param->zeroPoint = 0;
-    quant_param->narrowRange = narrow_range;
-    quant_param->numBits = num_bits;
-    return RET_OK;
-  }
-
-  if (quant_max - quant_min == 0) {
-    MS_LOG(ERROR) << "divisor cannot be 0";
-    return RET_ERROR;
-  }
-  double scale = (real_max - real_min) / (quant_max - quant_min);
+int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, double real_max, int num_bits,
+                          int quant_min, int quant_max, bool symmetric, bool narrow_range) {
+  CHECK_NULL_RETURN(quant_param);
+  float encode_min = real_min;
+  float encode_max = real_max;
+  EncodeMinMax(real_min, real_max, quant_min, quant_max, symmetric, &encode_min, &encode_max);
+  auto q_range = quant_max - quant_min;
+  double scale = (encode_max - encode_min) / q_range;
   if (fabs(scale) <= 0.0f) {
     MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
     return RET_ERROR;
   }
-  int zero_point = static_cast<int32_t>(std::round(quant_min - real_min / scale));
+  int zero_point = static_cast<int32_t>(std::round(quant_min - encode_min / scale));
 
   // The zero point should always be in the range of quantized value,
   // [qmin, qmax].
   MS_ASSERT(zero_point >= quant_min);
   MS_ASSERT(zero_point <= quant_max);
   quant_param->inited = true;
-  quant_param->min = real_min;
-  quant_param->max = real_max;
+  quant_param->min = encode_min;
+  quant_param->max = encode_max;
   quant_param->scale = scale;
   quant_param->zeroPoint = zero_point;
   quant_param->narrowRange = narrow_range;

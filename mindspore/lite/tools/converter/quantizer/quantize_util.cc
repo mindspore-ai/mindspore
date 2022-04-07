@@ -524,7 +524,7 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
 
 int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                         const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
-                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetry) {
+                        TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetric) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
   auto dims = weight->shape();
@@ -557,7 +557,7 @@ int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
       << parameter_node->fullname_with_scope()
       << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
     return FixedBitQuantFilter<int8_t>(parameter_node, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min,
-                                       k8Bit, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index, preferred_dim, symmetry);
+                                       k8Bit, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index, preferred_dim, symmetric);
   }
   if (ret != RET_OK) {
     return ret;
