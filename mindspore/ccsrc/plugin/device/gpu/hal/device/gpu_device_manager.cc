@@ -41,6 +41,11 @@ void GPUDeviceManager::InitDevice() {
   CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
     cusolverDnSetStream(cusolver_dn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
     "Failed to set stream for cusolver dn handle");
+  // Create cusparse handle.
+  CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseCreate(&cusparse_handle_), "Failed to create sparse handle.");
+  CHECK_CUSPARSE_RET_WITH_EXCEPT(cusparseSetStream(cusparse_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
+                                 "Failed to set stream for cusparse handle");
+
   CHECK_OP_RET_WITH_EXCEPT(GPUMemoryAllocator::GetInstance().Init(), "Failed to Init gpu memory allocator")
   dev_alive_ = true;
 }
@@ -65,6 +70,10 @@ void GPUDeviceManager::ReleaseDevice() {
   if (cusolver_dn_handle_ != nullptr) {
     CHECK_CUSOLVER_RET_WITH_ERROR(cusolverDnDestroy(cusolver_dn_handle_), "Failed to destroy cusolver dn handle.");
   }
+  if (cusparse_handle_ != nullptr) {
+    CHECK_CUSPARSE_RET_WITH_ERROR(cusparseDestroy(cusparse_handle_), "Failed to destroy cusparse handle.");
+  }
+
   CHECK_OP_RET_WITH_ERROR(GPUMemoryAllocator::GetInstance().Finalize(), "Failed to destroy gpu memory allocator");
   dev_alive_ = false;
 }
@@ -98,7 +107,11 @@ bool GPUDeviceManager::is_device_id_init() const { return dev_id_init_; }
 const cudnnHandle_t &GPUDeviceManager::GetCudnnHandle() const { return cudnn_handle_; }
 
 const cublasHandle_t &GPUDeviceManager::GetCublasHandle() const { return cublas_handle_; }
+
 const cusolverDnHandle_t &GPUDeviceManager::GetCusolverDnHandle() const { return cusolver_dn_handle_; }
+
+const cusparseHandle_t &GPUDeviceManager::GetCuSparseHandle() const { return cusparse_handle_; }
+
 bool GPUDeviceManager::SyncStream(const CudaDeviceStream &stream) const {
   return dev_alive_ ? CudaDriver::SyncStream(stream) : false;
 }
