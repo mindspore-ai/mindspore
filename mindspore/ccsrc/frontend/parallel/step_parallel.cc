@@ -3024,8 +3024,11 @@ Status ParallelInit() {
     stages.push_back(device_num / split_stage_num);
   }
 
-  if ((split_stage_num > 1) && (parallel_mode != kSemiAutoParallel)) {
-    MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << kSemiAutoParallel;
+  bool use_sp = (ParallelContext::GetInstance()->strategy_search_mode() == kShardingPropagation) ||
+                (ParallelContext::GetInstance()->sharding_propagation());
+  if ((split_stage_num > 1) && (parallel_mode == kAutoParallel) && !use_sp) {
+    MS_LOG(ERROR) << "To enable the pipeline parallel, please set the parallel mode to " << kSemiAutoParallel << " or "
+                  << kAutoParallel << " with " << kShardingPropagation;
     return FAILED;
   }
 
@@ -3361,13 +3364,12 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   std::reverse(all_nodes.begin(), all_nodes.end());
+  if (pipeline_stages <= 1 && parallel_mode != kAutoParallel && ParallelInit() != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Parallel init failed";
+  }
+  PipelinePreProcess(root, manager, all_nodes);
   if (parallel_mode != kAutoParallel) {
     TOTAL_OPS = 0;
-    if (pipeline_stages <= 1 && ParallelInit() != SUCCESS) {
-      MS_LOG(EXCEPTION) << "Parallel init failed";
-    }
-    PipelinePreProcess(root, manager, all_nodes);
-
     // mark the forward cnodes, parallel only care these nodes
     MarkForwardCNode(root);
 

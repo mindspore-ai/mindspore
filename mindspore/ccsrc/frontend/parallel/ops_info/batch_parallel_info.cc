@@ -162,24 +162,25 @@ void BatchParallelInfo::ReplaceNodeInputOrAttrs() {
     return;
   }
 
-  auto cnode = cnode_;
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->size() != 2) {
-    MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 2";
+  for (auto &cnode : cnodes_) {
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->size() != 2) {
+      MS_LOG(EXCEPTION) << name_ << ": The size of tile cnode's inputs must be 2";
+    }
+
+    if (!IsValueNode<ValueTuple>(cnode->input(1))) {
+      MS_LOG(EXCEPTION) << name_ << ": The input[1] of tile cnode is not ValueTuple.";
+    }
+
+    auto func_graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+
+    ValuePtr replace_shape = MakeValue(replace_shape_);
+    AnfNodePtr val = NewValueNode(replace_shape);
+    (void)manager->Replace(cnode->input(1), val);
   }
-
-  if (!IsValueNode<ValueTuple>(cnode->input(1))) {
-    MS_LOG(EXCEPTION) << name_ << ": The input[1] of tile cnode is not ValueTuple.";
-  }
-
-  auto func_graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-
-  ValuePtr replace_shape = MakeValue(replace_shape_);
-  AnfNodePtr val = NewValueNode(replace_shape);
-  (void)manager->Replace(cnode->input(1), val);
 }
 }  // namespace parallel
 }  // namespace mindspore

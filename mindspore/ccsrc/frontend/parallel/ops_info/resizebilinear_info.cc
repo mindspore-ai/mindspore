@@ -146,8 +146,10 @@ void ResizeBilinearInfo::ReplaceNodeInputOrAttrs() {
   if (need_exchange_overlap_) {
     return;
   }
-  auto prim = GetValueNode<PrimitivePtr>(cnode_->input(0));
-  prim->set_attr(SIZE, MakeValue(slice_size_));
+  for (auto &cnode : cnodes_) {
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    prim->set_attr(SIZE, MakeValue(slice_size_));
+  }
 }
 
 Status ResizeBilinearInfo::InferRankBias() {
