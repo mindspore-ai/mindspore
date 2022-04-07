@@ -293,6 +293,7 @@ inline T JsonGetKeyWithException(const nlohmann::json &json, const std::string &
 // Definitions for Federated Learning.
 
 constexpr auto kNetworkError = "Cluster networking failed.";
+constexpr auto KTriggerCounterEventError = "Cluster trigger counter event failed.";
 
 // The result code used for round kernels.
 enum class ResultCode {

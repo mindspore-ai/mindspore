@@ -54,7 +54,6 @@ class BACKEND_EXPORT Node {
         is_already_stopped_(true),
         is_already_finished_(false),
         next_request_id_(0),
-        current_node_state_(NodeState::NODE_STARTING),
         current_cluster_state_(ClusterState::CLUSTER_STARTING) {}
   virtual ~Node() = default;
 
@@ -113,8 +112,6 @@ class BACKEND_EXPORT Node {
   std::mutex message_tracker_mutex_;
   std::condition_variable message_tracker_cond_;
 
-  // Worker and server receive the node state and cluster state from the scheduler.
-  NodeState current_node_state_;
   ClusterState current_cluster_state_;
 
   // Configuration file,The format is as follows

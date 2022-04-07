@@ -58,6 +58,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <map>
 #include <algorithm>
 
 #include "proto/comm.pb.h"
@@ -98,6 +99,19 @@ const std::vector<std::string> kClusterState = {
   "CLUSTER_SCHEDULER_RECOVERY",  // When the cluster is doing SCHEDULER_RECOVERY.
   "CLUSTER_SCALE_OUT_ROLLBACK",  // When the cluster is scale out rollback.
 };
+
+const std::map<std::string, ClusterState> kClusterStateMap = {
+  {"CLUSTER_STARTING", ClusterState::CLUSTER_STARTING},
+  {"CLUSTER_READY", ClusterState::CLUSTER_READY},
+  {"CLUSTER_EXIT", ClusterState::CLUSTER_EXIT},
+  {"NODE_TIMEOUT", ClusterState::NODE_TIMEOUT},
+  {"CLUSTER_SCALE_OUT", ClusterState::CLUSTER_SCALE_OUT},
+  {"CLUSTER_SCALE_IN", ClusterState::CLUSTER_SCALE_IN},
+  {"CLUSTER_NEW_INSTANCE", ClusterState::CLUSTER_NEW_INSTANCE},
+  {"CLUSTER_ENABLE_FLS", ClusterState::CLUSTER_ENABLE_FLS},
+  {"CLUSTER_DISABLE_FLS", ClusterState::CLUSTER_DISABLE_FLS},
+  {"CLUSTER_SCHEDULER_RECOVERY", ClusterState::CLUSTER_SCHEDULER_RECOVERY},
+  {"CLUSTER_SCALE_OUT_ROLLBACK", ClusterState::CLUSTER_SCALE_OUT_ROLLBACK}};
 
 class CommUtil {
  public:

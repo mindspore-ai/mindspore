@@ -15,6 +15,7 @@
  */
 
 #include "ps/core/scheduler_recovery.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace ps {
@@ -63,11 +64,6 @@ bool SchedulerRecovery::Recover() {
     MS_LOG(EXCEPTION) << kRecoverySchedulerPort << " is not contained in " << recovery_storage_->file_path();
   }
 
-  MS_LOG(INFO) << "The worker num:" << clusterConfig.initial_worker_num
-               << ", the server num:" << clusterConfig.initial_server_num
-               << ", the scheduler ip:" << clusterConfig.scheduler_host
-               << ", the scheduler port:" << clusterConfig.scheduler_port;
-
   MS_ERROR_IF_NULL_W_RET_VAL(scheduler_recovery_storage_, false);
   // 5. recover total node num
   if (scheduler_recovery_storage_->Exists(kRecoveryTotalNodeNum)) {
@@ -110,7 +106,6 @@ bool SchedulerRecovery::Recover() {
       node_info.port_ = static_cast<uint16_t>(std::strtol(port.c_str(), nullptr, kBase));
       node_info.node_id_ = elem.at("node_id");
       node_info.rank_id_ = UlongToUint(std::strtoul(rank_id.c_str(), nullptr, kBase));
-      node_info.is_alive = CommUtil::StringToBool(elem.at("alive"));
       node_info.node_role_ = CommUtil::StringToNodeRole(elem.at("role"));
 
       nodes_infos[node_info.node_id_] = node_info;
@@ -127,18 +122,11 @@ bool SchedulerRecovery::Recover() {
     MS_LOG(EXCEPTION) << kRecoveryRegisteredNodesInfos << " is not contained in " << recovery_storage_->file_path();
   }
 
-  MS_LOG(INFO) << ", the initial total node num:" << clusterConfig.initial_total_node_num
-               << ", the initial next worker rank id:" << clusterConfig.initial_next_worker_rank_id
-               << ", the initial next server rank id:" << clusterConfig.initial_next_server_rank_id;
-
-  if (!clusterConfig.initial_registered_nodes_infos.empty()) {
-    for (const auto kvs : clusterConfig.initial_registered_nodes_infos) {
-      MS_LOG(INFO) << "The ip:" << kvs.second.ip_ << ", the port:" << kvs.second.port_
-                   << ", the node_id:" << kvs.second.node_id_
-                   << ", the node_role:" << CommUtil::NodeRoleToString(kvs.second.node_role_)
-                   << ", the rank_id_:" << kvs.second.rank_id_
-                   << ", the is_alive:" << CommUtil::BoolToString(kvs.second.is_alive);
-    }
+  // 9. recover cluster state
+  if (recovery_storage_->Exists(kRecoveryClusterState)) {
+    clusterConfig.initial_cluster_state = kClusterStateMap.at(recovery_storage_->GetString(kRecoveryClusterState, ""));
+  } else {
+    MS_LOG(EXCEPTION) << kRecoveryClusterState << " is not contained in " << recovery_storage_->file_path();
   }
   return true;
 }

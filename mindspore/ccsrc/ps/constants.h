@@ -142,6 +142,7 @@ constexpr char kRecoveryTotalNodeNum[] = "total_node_num";
 constexpr char kRecoveryNextWorkerRankId[] = "next_worker_rank_id";
 constexpr char kRecoveryNextServerRankId[] = "next_server_rank_id";
 constexpr char kRecoveryRegisteredNodesInfos[] = "node_ids";
+constexpr char kRecoveryClusterState[] = "cluster_state";
 
 constexpr char kServerCertPath[] = "server_cert_path";
 constexpr char kServerPassword[] = "server_password";

@@ -85,8 +85,7 @@ ResultCode PushMetricsKernel::PushMetrics(const std::shared_ptr<FBBuilder> &fbb,
   Iteration::GetInstance().set_loss(loss);
   Iteration::GetInstance().set_accuracy(accuracy);
 
-  std::string count_reason = "";
-  if (!DistributedCountService::GetInstance().Count(name_, std::to_string(local_rank_), &count_reason)) {
+  if (!DistributedCountService::GetInstance().Count(name_, std::to_string(local_rank_))) {
     std::string reason = "Count for push metrics request failed.";
     BuildPushMetricsRsp(fbb, schema::ResponseCode_SystemError);
     MS_LOG(ERROR) << reason;
