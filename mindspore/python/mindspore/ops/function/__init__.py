@@ -303,6 +303,7 @@ from .math_func import (
     any,
     sparse_segment_mean,
     atleast_2d,
+    atleast_3d,
     vstack,
     copysign,
     log2,
