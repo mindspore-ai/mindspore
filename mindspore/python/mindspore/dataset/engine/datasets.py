@@ -3632,6 +3632,7 @@ class TransferDataset(Dataset):
         self._send_epoch_end = replace_none(send_epoch_end, True)
         self._create_data_info_queue = create_data_info_queue
         self._to_device = None
+        self.column_name = self.get_col_names()
 
     def parse(self, children=None):
         total_batch = 0
@@ -3690,7 +3691,7 @@ class TransferDataset(Dataset):
 
     def get_offload_model(self):
         if self._to_device is not None:
-            return self._to_device.get_offload_model(self.get_col_names())
+            return self._to_device.get_offload_model(self.column_name)
 
         raise RuntimeError("get_offload_model, _to_device is None")
 
