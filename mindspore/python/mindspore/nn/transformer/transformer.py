@@ -29,7 +29,7 @@ from mindspore.ops import functional as F
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator
 from mindspore import log as logger
-from mindspore.parallel._utils import _get_parallel_mode
+from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
 from .layers import _LayerNorm, _Linear, _Dropout, _check_input_shape, \
     _args_type_validator_check, _valid_type_checks, _valid_value_checks, \
@@ -405,67 +405,115 @@ class FeedForward(Cell):
                  param_init_type=mstype.float32,
                  parallel_config=default_dpmp_config):
         super(FeedForward, self).__init__()
-        _check_config(parallel_config)
-        mp = parallel_config.model_parallel
-        if expert_num > 1:
-            ep = parallel_config.expert_parallel
-        else:
-            ep = 1
-        # ffn use less dp than other ops when use_moe, due to there are ops use dp and ep.
-        dp = int(parallel_config.data_parallel / ep)
-        if ffn_hidden_size % mp != 0:
-            raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the"
-                             "num of "
-                             "model parallel, but got the ffn_hidden_size is {} and the num of model parallel is {}."
-                             .format(ffn_hidden_size, mp))
-        if hidden_size % mp != 0:
-            raise ValueError("For 'FeedForward', the class variable 'hidden_size' must be a multiple of the num of "
-                             "model parallel, but got the hidden_size is {} and the num of model parallel is {}."
-                             .format(hidden_size, mp))
-        if dropout_rate < 0 or dropout_rate >= 1:
-            raise ValueError("For 'FeedForward', the class variable 'dropout_rate' must be in the range [0, 1.0), "
-                             "but got the value : {}.".format(dropout_rate))
-        input_size = hidden_size
-        output_size = ffn_hidden_size
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
+            mp = parallel_config.model_parallel
+            if expert_num > 1:
+                ep = parallel_config.expert_parallel
+            else:
+                ep = 1
+            # ffn use less dp than other ops when use_moe, due to there are ops use dp and ep.
+            dp = int(parallel_config.data_parallel / ep)
+            if ffn_hidden_size % mp != 0:
+                raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the"
+                                 "num of model parallel, but got the ffn_hidden_size is {} and the num of model "
+                                 "parallel is {}.".format(ffn_hidden_size, mp))
+            if hidden_size % mp != 0:
+                raise ValueError("For 'FeedForward', the class variable 'hidden_size' must be a multiple of the num of "
+                                 "model parallel, but got the hidden_size is {} and the num of model parallel is {}."
+                                 .format(hidden_size, mp))
+            if dropout_rate < 0 or dropout_rate >= 1:
+                raise ValueError("For 'FeedForward', the class variable 'dropout_rate' must be in the range [0, 1.0), "
+                                 "but got the value : {}.".format(dropout_rate))
+            input_size = hidden_size
+            output_size = ffn_hidden_size
 
-        # Project to ffn_hidden_size
-        self.mapping = _Linear(in_channels=input_size,
-                               out_channels=output_size,
-                               activation=hidden_act,
-                               transpose_b=False,
-                               expert_num=expert_num,
-                               outer_batch=dp,
-                               param_init_type=param_init_type)
+            # Project to ffn_hidden_size
+            self.mapping = _Linear(in_channels=input_size,
+                                   out_channels=output_size,
+                                   activation=hidden_act,
+                                   transpose_b=False,
+                                   expert_num=expert_num,
+                                   outer_batch=dp,
+                                   param_init_type=param_init_type)
 
-        if expert_num > 1:
-            self.mapping.shard(strategy_matmul=((dp, ep, 1, 1), (ep, 1, mp)),
-                               strategy_bias=((dp, ep, 1, mp), (mp,)),
-                               strategy_activation=((dp, ep, 1, mp),))
+            # Project back to hidden_size
+            self.projection = _Linear(in_channels=output_size,
+                                      out_channels=input_size,
+                                      transpose_b=False,
+                                      expert_num=expert_num,
+                                      outer_batch=dp,
+                                      param_init_type=param_init_type)
+            if expert_num > 1:
+                self.projection.shard(strategy_matmul=((dp, ep, 1, mp), (ep, mp, 1)))
+            else:
+                self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)))
+            self.projection.bias.parallel_optimizer = False
+            self.dropout = _Dropout(1 - dropout_rate)
+            self.dropout_3d = _Dropout(1 - dropout_rate)
+            self.dropout_4d = _Dropout(1 - dropout_rate)
+            self.cast = P.Cast()
         else:
-            self.mapping.shard(strategy_matmul=((dp, 1), (1, mp)),
-                               strategy_bias=((dp, mp), (mp,)),
-                               strategy_activation=((dp, mp),))
-        # Project back to hidden_size
-        self.projection = _Linear(in_channels=output_size,
-                                  out_channels=input_size,
-                                  transpose_b=False,
-                                  expert_num=expert_num,
-                                  outer_batch=dp,
-                                  param_init_type=param_init_type)
-        if expert_num > 1:
-            self.projection.shard(strategy_matmul=((dp, ep, 1, mp), (ep, mp, 1)),
-                                  strategy_bias=((dp, ep, 1, 1), (1,)))
-        else:
-            self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)),
-                                  strategy_bias=((dp, 1), (1,)))
-        self.projection.bias.parallel_optimizer = False
-        self.dropout = _Dropout(1 - dropout_rate)
-        self.dropout.shard(((dp, 1),))
-        self.dropout_3d = _Dropout(1 - dropout_rate)
-        self.dropout_3d.shard(((dp, 1, 1),))
-        self.dropout_4d = _Dropout(1 - dropout_rate)
-        self.dropout_4d.shard(((dp, ep, 1, 1),))
-        self.cast = P.Cast()
+            _check_config(parallel_config)
+            mp = parallel_config.model_parallel
+            if expert_num > 1:
+                ep = parallel_config.expert_parallel
+            else:
+                ep = 1
+            # ffn use less dp than other ops when use_moe, due to there are ops use dp and ep.
+            dp = int(parallel_config.data_parallel / ep)
+            if ffn_hidden_size % mp != 0:
+                raise ValueError("For 'FeedForward', the class variable 'ffn_hidden_size' must be a multiple of the"
+                                 "num of model parallel, but got the ffn_hidden_size is {} and the num of model "
+                                 "parallel is {}.".format(ffn_hidden_size, mp))
+            if hidden_size % mp != 0:
+                raise ValueError("For 'FeedForward', the class variable 'hidden_size' must be a multiple of the num of "
+                                 "model parallel, but got the hidden_size is {} and the num of model parallel is {}."
+                                 .format(hidden_size, mp))
+            if dropout_rate < 0 or dropout_rate >= 1:
+                raise ValueError("For 'FeedForward', the class variable 'dropout_rate' must be in the range [0, 1.0), "
+                                 "but got the value : {}.".format(dropout_rate))
+            input_size = hidden_size
+            output_size = ffn_hidden_size
+
+            # Project to ffn_hidden_size
+            self.mapping = _Linear(in_channels=input_size,
+                                   out_channels=output_size,
+                                   activation=hidden_act,
+                                   transpose_b=False,
+                                   expert_num=expert_num,
+                                   outer_batch=dp,
+                                   param_init_type=param_init_type)
+
+            if expert_num > 1:
+                self.mapping.shard(strategy_matmul=((dp, ep, 1, 1), (ep, 1, mp)),
+                                   strategy_bias=((dp, ep, 1, mp), (mp,)),
+                                   strategy_activation=((dp, ep, 1, mp),))
+            else:
+                self.mapping.shard(strategy_matmul=((dp, 1), (1, mp)),
+                                   strategy_bias=((dp, mp), (mp,)),
+                                   strategy_activation=((dp, mp),))
+            # Project back to hidden_size
+            self.projection = _Linear(in_channels=output_size,
+                                      out_channels=input_size,
+                                      transpose_b=False,
+                                      expert_num=expert_num,
+                                      outer_batch=dp,
+                                      param_init_type=param_init_type)
+            if expert_num > 1:
+                self.projection.shard(strategy_matmul=((dp, ep, 1, mp), (ep, mp, 1)),
+                                      strategy_bias=((dp, ep, 1, 1), (1,)))
+            else:
+                self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)),
+                                      strategy_bias=((dp, 1), (1,)))
+            self.projection.bias.parallel_optimizer = False
+            self.dropout = _Dropout(1 - dropout_rate)
+            self.dropout.shard(((dp, 1),))
+            self.dropout_3d = _Dropout(1 - dropout_rate)
+            self.dropout_3d.shard(((dp, 1, 1),))
+            self.dropout_4d = _Dropout(1 - dropout_rate)
+            self.dropout_4d.shard(((dp, ep, 1, 1),))
+            self.cast = P.Cast()
 
     def construct(self, x):
         _check_input_shape(F.shape(x), "x", self.cls_name, [2, 3])
@@ -795,118 +843,216 @@ class MultiHeadAttention(Cell):
                  use_past=False,
                  parallel_config=default_dpmp_config):
         super(MultiHeadAttention, self).__init__()
-        _check_config(parallel_config)
-        self.is_parallel_mode = _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        self.src_seq_length = src_seq_length
-        self.tgt_seq_length = tgt_seq_length
-        self.hidden_size = hidden_size
-        self.batch_size = batch_size
-        if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
-            raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_dropout_rate' must be "
-                             "in range [0, 1.0), but got the value : {}.".format(hidden_dropout_rate))
-        if attention_dropout_rate < 0 or attention_dropout_rate >= 1:
-            raise ValueError("For 'MultiHeadAttention', the class variable 'attention_dropout_rate' must be "
-                             "in range [0, 1.0), but got the value : {}.".format(attention_dropout_rate))
-        if hidden_size % num_heads != 0:
-            raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' should be a multiple "
-                             "of 'num_heads', but got the hidden_size is {} and the num_heads is {}."
-                             .format(hidden_size, num_heads))
-        if num_heads % parallel_config.model_parallel != 0:
-            raise ValueError("For 'MultiHeadAttention', the class variable 'num_heads' must be a multiple of "
-                             "'parallel_config.model_parallel', but got the num_heads is {} "
-                             "and the parallel_config.model_parallel  is {}."
-                             .format(num_heads, parallel_config.model_parallel))
-        if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
-            raise ValueError("For 'MultiHeadAttention', the class variable 'batch_size' must be a multiple of "
-                             "'parallel_config.data_parallel', but got the batch_size is {} "
-                             "and the parallel_config.data_parallel is {}."
-                             .format(batch_size, parallel_config.data_parallel))
-        self.is_first_iteration = True
-        # Output layer
-        self.projection = _Linear(in_channels=hidden_size,
-                                  out_channels=hidden_size,
-                                  transpose_b=False,
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
+            self.is_parallel_mode = _get_parallel_mode() in (
+                ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+            self.src_seq_length = src_seq_length
+            self.tgt_seq_length = tgt_seq_length
+            self.hidden_size = hidden_size
+            self.batch_size = batch_size
+            if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_dropout_rate' must be "
+                                 "in range [0, 1.0), but got the value : {}.".format(hidden_dropout_rate))
+            if attention_dropout_rate < 0 or attention_dropout_rate >= 1:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'attention_dropout_rate' must be "
+                                 "in range [0, 1.0), but got the value : {}.".format(attention_dropout_rate))
+            if hidden_size % num_heads != 0:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' should be a multiple "
+                                 "of 'num_heads', but got the hidden_size is {} and the num_heads is {}."
+                                 .format(hidden_size, num_heads))
+            if num_heads % parallel_config.model_parallel != 0:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'num_heads' must be a multiple of "
+                                 "'parallel_config.model_parallel', but got the num_heads is {} "
+                                 "and the parallel_config.model_parallel  is {}."
+                                 .format(num_heads, parallel_config.model_parallel))
+            if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'batch_size' must be a multiple of "
+                                 "'parallel_config.data_parallel', but got the batch_size is {} "
+                                 "and the parallel_config.data_parallel is {}."
+                                 .format(batch_size, parallel_config.data_parallel))
+            self.is_first_iteration = True
+            # Output layer
+            self.projection = _Linear(in_channels=hidden_size,
+                                      out_channels=hidden_size,
+                                      transpose_b=False,
+                                      param_init_type=param_init_type).to_float(compute_dtype)
+            self.projection.shard(strategy_bias=((parallel_config.data_parallel, 1), (1,)),
+                                  strategy_matmul=((parallel_config.data_parallel, parallel_config.model_parallel),
+                                                   (parallel_config.model_parallel, 1)))
+            self.projection.bias.parallel_optimizer = False
+            self.transpose = P.Transpose()
+            self.merger_head_transpose = P.Transpose()
+            self.reshape = P.Reshape()
+            self.n_head = num_heads
+            # embedding size per head
+            self.size_per_head = hidden_size // self.n_head
+            self.concat_k = P.Concat(axis=3)
+            self.concat_v = P.Concat(axis=2)
+            self.multiply_data = Tensor([
+                -10000.0,
+            ], dtype=softmax_compute_type)
+            self.batch_matmul = P.BatchMatMul()
+            self.real_div = P.RealDiv()
+            self.sub = P.Sub()
+            self.mul = P.Mul()
+            self.add = P.Add()
+            # Normalize factor for attention, sqrt(dk) as widely used
+            self.scale_factor = Tensor(math.sqrt(math.sqrt(self.size_per_head)))
+            self.use_past = use_past
+            self.dropout = _Dropout(1 - hidden_dropout_rate)
+            self.prob_dropout = _Dropout(1 - attention_dropout_rate)
+            self.softmax = nn.Softmax().to_float(softmax_compute_type)
+            self.expand_dims = P.ExpandDims()
+
+            # Query
+            self.dense1 = _Linear(hidden_size,
+                                  hidden_size,
                                   param_init_type=param_init_type).to_float(compute_dtype)
-        self.projection.shard(strategy_bias=((parallel_config.data_parallel, 1), (1,)),
-                              strategy_matmul=((parallel_config.data_parallel, parallel_config.model_parallel),
-                                               (parallel_config.model_parallel, 1)))
-        self.projection.bias.parallel_optimizer = False
-        self.transpose = P.Transpose().shard(((parallel_config.data_parallel, 1, parallel_config.model_parallel, 1),))
-        self.merger_head_transpose = P.Transpose().shard(
-            ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
-        self.reshape = P.Reshape()
-        self.n_head = num_heads
-        # embedding size per head
-        self.size_per_head = hidden_size // self.n_head
-        self.concat_k = P.Concat(axis=3)
-        self.concat_v = P.Concat(axis=2)
-        self.multiply_data = Tensor([
-            -10000.0,
-        ], dtype=softmax_compute_type)
-        self.batch_matmul = P.BatchMatMul().shard(
-            ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),
-             (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
-        self.real_div = P.RealDiv().shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1), ()))
-        self.sub = P.Sub().shard(
-            ((1,), (parallel_config.data_parallel, 1, 1, 1)))
-        self.mul = P.Mul().shard(
-            ((parallel_config.data_parallel, 1, 1, 1), (1,)))
-        self.add = P.Add().shard(
-            ((parallel_config.data_parallel, 1, 1, 1),
-             (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
-        # Normalize factor for attention, sqrt(dk) as widely used
-        self.scale_factor = Tensor(math.sqrt(math.sqrt(self.size_per_head)))
-        self.use_past = use_past
-        self.dropout = _Dropout(1 - hidden_dropout_rate)
-        self.dropout.shard(((parallel_config.data_parallel, 1),))
-        self.prob_dropout = _Dropout(1 - attention_dropout_rate)
-        self.prob_dropout.shard(
-            ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
-        self.softmax = nn.Softmax().to_float(softmax_compute_type)
-        self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1),))
-        self.expand_dims = P.ExpandDims().shard(((parallel_config.data_parallel, 1, 1),))
+            # Key
+            self.dense2 = _Linear(hidden_size,
+                                  hidden_size,
+                                  param_init_type=param_init_type).to_float(compute_dtype)
+            # Value
+            self.dense3 = _Linear(hidden_size,
+                                  hidden_size,
+                                  param_init_type=param_init_type).to_float(compute_dtype)
 
-        # Query
-        self.dense1 = _Linear(hidden_size,
-                              hidden_size,
-                              param_init_type=param_init_type).to_float(compute_dtype)
-        self.dense1.shard(strategy_matmul=((parallel_config.data_parallel, 1), (parallel_config.model_parallel, 1)),
-                          strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
-                                         (parallel_config.model_parallel,)))
-        # Key
-        self.dense2 = _Linear(hidden_size,
-                              hidden_size,
-                              param_init_type=param_init_type).to_float(compute_dtype)
-        self.dense2.shard(strategy_matmul=((parallel_config.data_parallel, 1), (parallel_config.model_parallel, 1)),
-                          strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
-                                         (parallel_config.model_parallel,)))
+            self.dtype = compute_dtype
+            self.softmax_dtype = softmax_compute_type
+            if self.use_past:
+                # operators used for state reuse
+                seq_range = np.arange(src_seq_length).reshape(1, 1, -1)
+                self.range = Tensor(np.tile(seq_range, (batch_size, 1, 1)), mstype.int32)
+                self.seq_length = src_seq_length
+                self.attention_mask = Tensor(np.tril(np.ones(shape=(self.seq_length, self.seq_length))), mstype.int32)
+                self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
+                self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
+                self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
+                self.expand_dims = P.ExpandDims().shard(((1, 1, 1),))
+                self.tensor_le = P.LessEqual().shard(((1, 1, 1), (1, 1, 1)))
+                self.add = P.Add().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+                self.equal = P.Equal().shard(((1, 1, 1), (1, 1, 1)))
+                self.sub1 = P.Sub().shard(((1,), ()))
+                self.tile = P.Tile().shard(((1, 1, 1, 1),))
+                self.less = P.Less().shard(((1, 1, 1), (1, 1, 1)))
+                self.mul1 = P.Mul().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+        else:
+            _check_config(parallel_config)
+            self.is_parallel_mode = _get_parallel_mode() in (
+                ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+            self.src_seq_length = src_seq_length
+            self.tgt_seq_length = tgt_seq_length
+            self.hidden_size = hidden_size
+            self.batch_size = batch_size
+            if hidden_dropout_rate < 0 or hidden_dropout_rate >= 1:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_dropout_rate' must be "
+                                 "in range [0, 1.0), but got the value : {}.".format(hidden_dropout_rate))
+            if attention_dropout_rate < 0 or attention_dropout_rate >= 1:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'attention_dropout_rate' must be "
+                                 "in range [0, 1.0), but got the value : {}.".format(attention_dropout_rate))
+            if hidden_size % num_heads != 0:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' should be a multiple "
+                                 "of 'num_heads', but got the hidden_size is {} and the num_heads is {}."
+                                 .format(hidden_size, num_heads))
+            if num_heads % parallel_config.model_parallel != 0:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'num_heads' must be a multiple of "
+                                 "'parallel_config.model_parallel', but got the num_heads is {} "
+                                 "and the parallel_config.model_parallel  is {}."
+                                 .format(num_heads, parallel_config.model_parallel))
+            if self.is_parallel_mode and batch_size % parallel_config.data_parallel != 0:
+                raise ValueError("For 'MultiHeadAttention', the class variable 'batch_size' must be a multiple of "
+                                 "'parallel_config.data_parallel', but got the batch_size is {} "
+                                 "and the parallel_config.data_parallel is {}."
+                                 .format(batch_size, parallel_config.data_parallel))
+            self.is_first_iteration = True
+            # Output layer
+            self.projection = _Linear(in_channels=hidden_size,
+                                      out_channels=hidden_size,
+                                      transpose_b=False,
+                                      param_init_type=param_init_type).to_float(compute_dtype)
+            self.projection.shard(strategy_bias=((parallel_config.data_parallel, 1), (1,)),
+                                  strategy_matmul=((parallel_config.data_parallel, parallel_config.model_parallel),
+                                                   (parallel_config.model_parallel, 1)))
+            self.projection.bias.parallel_optimizer = False
+            self.transpose = P.Transpose().shard(
+                ((parallel_config.data_parallel, 1, parallel_config.model_parallel, 1),))
+            self.merger_head_transpose = P.Transpose().shard(
+                ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
+            self.reshape = P.Reshape()
+            self.n_head = num_heads
+            # embedding size per head
+            self.size_per_head = hidden_size // self.n_head
+            self.concat_k = P.Concat(axis=3)
+            self.concat_v = P.Concat(axis=2)
+            self.multiply_data = Tensor([
+                -10000.0,
+            ], dtype=softmax_compute_type)
+            self.batch_matmul = P.BatchMatMul().shard(
+                ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),
+                 (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
+            self.real_div = P.RealDiv().shard(
+                ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1), ()))
+            self.sub = P.Sub().shard(
+                ((1,), (parallel_config.data_parallel, 1, 1, 1)))
+            self.mul = P.Mul().shard(
+                ((parallel_config.data_parallel, 1, 1, 1), (1,)))
+            self.add = P.Add().shard(
+                ((parallel_config.data_parallel, 1, 1, 1),
+                 (parallel_config.data_parallel, parallel_config.model_parallel, 1, 1)))
+            # Normalize factor for attention, sqrt(dk) as widely used
+            self.scale_factor = Tensor(math.sqrt(math.sqrt(self.size_per_head)))
+            self.use_past = use_past
+            self.dropout = _Dropout(1 - hidden_dropout_rate)
+            self.dropout.shard(((parallel_config.data_parallel, 1),))
+            self.prob_dropout = _Dropout(1 - attention_dropout_rate)
+            self.prob_dropout.shard(
+                ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
+            self.softmax = nn.Softmax().to_float(softmax_compute_type)
+            self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1),))
+            self.expand_dims = P.ExpandDims().shard(((parallel_config.data_parallel, 1, 1),))
 
-        # Value
-        self.dense3 = _Linear(hidden_size,
-                              hidden_size,
-                              param_init_type=param_init_type).to_float(compute_dtype)
-        self.dense3.shard(strategy_matmul=((parallel_config.data_parallel, 1), (parallel_config.model_parallel, 1)),
-                          strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
-                                         (parallel_config.model_parallel,)))
-        self.dtype = compute_dtype
-        self.softmax_dtype = softmax_compute_type
-        if self.use_past:
-            # operators used for state reuse
-            seq_range = np.arange(src_seq_length).reshape(1, 1, -1)
-            self.range = Tensor(np.tile(seq_range, (batch_size, 1, 1)), mstype.int32)
-            self.seq_length = src_seq_length
-            self.attention_mask = Tensor(np.tril(np.ones(shape=(self.seq_length, self.seq_length))), mstype.int32)
-            self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-            self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
-            self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
-            self.expand_dims = P.ExpandDims().shard(((1, 1, 1),))
-            self.tensor_le = P.LessEqual().shard(((1, 1, 1), (1, 1, 1)))
-            self.add = P.Add().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
-            self.equal = P.Equal().shard(((1, 1, 1), (1, 1, 1)))
-            self.sub1 = P.Sub().shard(((1,), ()))
-            self.tile = P.Tile().shard(((1, 1, 1, 1),))
-            self.less = P.Less().shard(((1, 1, 1), (1, 1, 1)))
-            self.mul1 = P.Mul().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+            # Query
+            self.dense1 = _Linear(hidden_size,
+                                  hidden_size,
+                                  param_init_type=param_init_type).to_float(compute_dtype)
+            self.dense1.shard(strategy_matmul=((parallel_config.data_parallel, 1), (parallel_config.model_parallel, 1)),
+                              strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
+                                             (parallel_config.model_parallel,)))
+            # Key
+            self.dense2 = _Linear(hidden_size,
+                                  hidden_size,
+                                  param_init_type=param_init_type).to_float(compute_dtype)
+            self.dense2.shard(strategy_matmul=((parallel_config.data_parallel, 1), (parallel_config.model_parallel, 1)),
+                              strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
+                                             (parallel_config.model_parallel,)))
+
+            # Value
+            self.dense3 = _Linear(hidden_size,
+                                  hidden_size,
+                                  param_init_type=param_init_type).to_float(compute_dtype)
+            self.dense3.shard(strategy_matmul=((parallel_config.data_parallel, 1), (parallel_config.model_parallel, 1)),
+                              strategy_bias=((parallel_config.data_parallel, parallel_config.model_parallel),
+                                             (parallel_config.model_parallel,)))
+            self.dtype = compute_dtype
+            self.softmax_dtype = softmax_compute_type
+            if self.use_past:
+                # operators used for state reuse
+                seq_range = np.arange(src_seq_length).reshape(1, 1, -1)
+                self.range = Tensor(np.tile(seq_range, (batch_size, 1, 1)), mstype.int32)
+                self.seq_length = src_seq_length
+                self.attention_mask = Tensor(np.tril(np.ones(shape=(self.seq_length, self.seq_length))), mstype.int32)
+                self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
+                self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
+                self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
+                self.expand_dims = P.ExpandDims().shard(((1, 1, 1),))
+                self.tensor_le = P.LessEqual().shard(((1, 1, 1), (1, 1, 1)))
+                self.add = P.Add().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+                self.equal = P.Equal().shard(((1, 1, 1), (1, 1, 1)))
+                self.sub1 = P.Sub().shard(((1,), ()))
+                self.tile = P.Tile().shard(((1, 1, 1, 1),))
+                self.less = P.Less().shard(((1, 1, 1), (1, 1, 1)))
+                self.mul1 = P.Mul().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
 
     def construct(self, query_tensor, key_tensor, value_tensor, attention_mask, key_past=None,
                   value_past=None, batch_valid_length=None):
@@ -1272,79 +1418,163 @@ class TransformerEncoderLayer(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_dpmp_config):
         super(TransformerEncoderLayer, self).__init__()
-        _check_config(parallel_config)
-        if num_heads % parallel_config.model_parallel != 0:
-            raise ValueError("For 'TransformerEncoderLayer', the class variable 'num_heads' must be divisibled by the "
-                             "'parallel_config.model_parallel', but got the num_heads is {} and "
-                             "parallel_config.model_parallel is {}.".format(num_heads, parallel_config.model_parallel))
-        if hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("For 'TransformerEncoderLayer', the class variable 'hidden_size' must be divisibled by "
-                             "the 'parallel_config.model_parallel', but got the hidden_size is {} and parallel_config."
-                             " model_parallel is {}.".format(hidden_size, parallel_config.model_parallel))
-        if ffn_hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("For 'TransformerEncoderLayer', the class variable 'ffn_hidden_size' must be divisibled "
-                             "by the 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
-                             "and parallel_config. model_parallel is {}."
-                             .format(ffn_hidden_size, parallel_config.model_parallel))
-        _check_moe_config(moe_config, parallel_config)
-        self.use_moe = (moe_config.expert_num > 1)
-        self.use_past = use_past
-        self.seq_length = seq_length
-        self.hidden_size = hidden_size
-        self.batch_size = batch_size
-        self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
-        self.layernorm1.shard(((parallel_config.data_parallel, 1),))
-        self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
-        self.layernorm2.shard(((parallel_config.data_parallel, 1),))
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
+            if num_heads % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerEncoderLayer', the class variable 'num_heads' must be divisibled by the "
+                    "'parallel_config.model_parallel', but got the num_heads is {} and "
+                    "parallel_config.model_parallel is {}.".format(num_heads, parallel_config.model_parallel))
+            if hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerEncoderLayer', the class variable 'hidden_size' must be divisibled by "
+                    "the 'parallel_config.model_parallel', but got the hidden_size is {} and parallel_config."
+                    " model_parallel is {}.".format(hidden_size, parallel_config.model_parallel))
+            if ffn_hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerEncoderLayer', the class variable 'ffn_hidden_size' must be divisibled "
+                    "by the 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
+                    "and parallel_config. model_parallel is {}."
+                    .format(ffn_hidden_size, parallel_config.model_parallel))
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            self.use_past = use_past
+            self.seq_length = seq_length
+            self.hidden_size = hidden_size
+            self.batch_size = batch_size
+            self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
 
-        self.attention = MultiHeadAttention(batch_size=batch_size,
-                                            src_seq_length=seq_length,
-                                            tgt_seq_length=seq_length,
-                                            hidden_size=hidden_size,
-                                            num_heads=num_heads,
-                                            hidden_dropout_rate=hidden_dropout_rate,
-                                            attention_dropout_rate=attention_dropout_rate,
-                                            softmax_compute_type=softmax_compute_type,
-                                            param_init_type=param_init_type,
-                                            use_past=use_past,
-                                            parallel_config=parallel_config.dpmp if self.use_moe else parallel_config)
-        if self.use_moe:
-            self.output = MoE(hidden_size=hidden_size,
-                              dropout_rate=hidden_dropout_rate,
-                              ffn_hidden_size=ffn_hidden_size,
-                              param_init_type=param_init_type,
-                              hidden_act=hidden_act,
-                              moe_config=moe_config,
-                              parallel_config=parallel_config)
+            self.attention = MultiHeadAttention(batch_size=batch_size,
+                                                src_seq_length=seq_length,
+                                                tgt_seq_length=seq_length,
+                                                hidden_size=hidden_size,
+                                                num_heads=num_heads,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                softmax_compute_type=softmax_compute_type,
+                                                param_init_type=param_init_type,
+                                                use_past=use_past,
+                                                parallel_config=parallel_config.dpmp if self.use_moe
+                                                else parallel_config)
+            if self.use_moe:
+                self.output = MoE(hidden_size=hidden_size,
+                                  dropout_rate=hidden_dropout_rate,
+                                  ffn_hidden_size=ffn_hidden_size,
+                                  param_init_type=param_init_type,
+                                  hidden_act=hidden_act,
+                                  moe_config=moe_config,
+                                  parallel_config=parallel_config)
+            else:
+                # Feed Forward Network, FFN
+                self.output = FeedForward(hidden_size=hidden_size,
+                                          dropout_rate=hidden_dropout_rate,
+                                          ffn_hidden_size=ffn_hidden_size,
+                                          param_init_type=param_init_type,
+                                          hidden_act=hidden_act,
+                                          parallel_config=parallel_config)
+            self.post_layernorm_residual = post_layernorm_residual
+            self.add = P.Add().shard(((parallel_config.data_parallel, 1), (parallel_config.data_parallel, 1)))
+            self.add_3d = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
+            self.dtype = mstype.float16
+            self.key_past = None
+            self.value_past = None
+
+            if self.use_past:
+                # operator used for state reuse
+                self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
+                self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
+                self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
+                size_per_head = int(hidden_size / num_heads)
+                self.key_shape = (batch_size, num_heads, size_per_head, seq_length)
+                self.value_shape = (batch_size, num_heads, seq_length, size_per_head)
+                # parameters saving key and value states
+                self.key_past = Parameter(Tensor(np.zeros(shape=self.key_shape), self.dtype), name="key_past")
+                self.value_past = Parameter(Tensor(np.zeros(shape=self.value_shape), self.dtype), name="value_past")
+                self.tile = P.Tile().shard(((1, 1),))
+                self.mul = P.Mul().shard(((1, 1, 1, 1), (1,)))
+                self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+        elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
+            _check_config(parallel_config)
+            if num_heads % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerEncoderLayer', the class variable 'num_heads' must be divisibled by the "
+                    "'parallel_config.model_parallel', but got the num_heads is {} and "
+                    "parallel_config.model_parallel is {}.".format(num_heads, parallel_config.model_parallel))
+            if hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerEncoderLayer', the class variable 'hidden_size' must be divisibled by "
+                    "the 'parallel_config.model_parallel', but got the hidden_size is {} and parallel_config."
+                    " model_parallel is {}.".format(hidden_size, parallel_config.model_parallel))
+            if ffn_hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerEncoderLayer', the class variable 'ffn_hidden_size' must be divisibled "
+                    "by the 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
+                    "and parallel_config. model_parallel is {}."
+                    .format(ffn_hidden_size, parallel_config.model_parallel))
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            self.use_past = use_past
+            self.seq_length = seq_length
+            self.hidden_size = hidden_size
+            self.batch_size = batch_size
+            self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.layernorm1.shard(((parallel_config.data_parallel, 1),))
+            self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.layernorm2.shard(((parallel_config.data_parallel, 1),))
+
+            self.attention = MultiHeadAttention(batch_size=batch_size,
+                                                src_seq_length=seq_length,
+                                                tgt_seq_length=seq_length,
+                                                hidden_size=hidden_size,
+                                                num_heads=num_heads,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                softmax_compute_type=softmax_compute_type,
+                                                param_init_type=param_init_type,
+                                                use_past=use_past,
+                                                parallel_config=parallel_config.dpmp if self.use_moe
+                                                else parallel_config)
+            if self.use_moe:
+                self.output = MoE(hidden_size=hidden_size,
+                                  dropout_rate=hidden_dropout_rate,
+                                  ffn_hidden_size=ffn_hidden_size,
+                                  param_init_type=param_init_type,
+                                  hidden_act=hidden_act,
+                                  moe_config=moe_config,
+                                  parallel_config=parallel_config)
+            else:
+                # Feed Forward Network, FFN
+                self.output = FeedForward(hidden_size=hidden_size,
+                                          dropout_rate=hidden_dropout_rate,
+                                          ffn_hidden_size=ffn_hidden_size,
+                                          param_init_type=param_init_type,
+                                          hidden_act=hidden_act,
+                                          parallel_config=parallel_config)
+            self.post_layernorm_residual = post_layernorm_residual
+            self.add = P.Add().shard(((parallel_config.data_parallel, 1), (parallel_config.data_parallel, 1)))
+            self.add_3d = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
+            self.dtype = mstype.float16
+            self.key_past = None
+            self.value_past = None
+
+            if self.use_past:
+                # operator used for state reuse
+                self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
+                self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
+                self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
+                size_per_head = int(hidden_size / num_heads)
+                self.key_shape = (batch_size, num_heads, size_per_head, seq_length)
+                self.value_shape = (batch_size, num_heads, seq_length, size_per_head)
+                # parameters saving key and value states
+                self.key_past = Parameter(Tensor(np.zeros(shape=self.key_shape), self.dtype), name="key_past")
+                self.value_past = Parameter(Tensor(np.zeros(shape=self.value_shape), self.dtype), name="value_past")
+                self.tile = P.Tile().shard(((1, 1),))
+                self.mul = P.Mul().shard(((1, 1, 1, 1), (1,)))
+                self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
         else:
-            # Feed Forward Network, FFN
-            self.output = FeedForward(hidden_size=hidden_size,
-                                      dropout_rate=hidden_dropout_rate,
-                                      ffn_hidden_size=ffn_hidden_size,
-                                      param_init_type=param_init_type,
-                                      hidden_act=hidden_act,
-                                      parallel_config=parallel_config)
-        self.post_layernorm_residual = post_layernorm_residual
-        self.add = P.Add().shard(((parallel_config.data_parallel, 1), (parallel_config.data_parallel, 1)))
-        self.add_3d = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
-        self.dtype = mstype.float16
-        self.key_past = None
-        self.value_past = None
-
-        if self.use_past:
-            # operator used for state reuse
-            self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
-            self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
-            self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-            size_per_head = int(hidden_size / num_heads)
-            self.key_shape = (batch_size, num_heads, size_per_head, seq_length)
-            self.value_shape = (batch_size, num_heads, seq_length, size_per_head)
-            # parameters saving key and value states
-            self.key_past = Parameter(Tensor(np.zeros(shape=self.key_shape), self.dtype), name="key_past")
-            self.value_past = Parameter(Tensor(np.zeros(shape=self.value_shape), self.dtype), name="value_past")
-            self.tile = P.Tile().shard(((1, 1),))
-            self.mul = P.Mul().shard(((1, 1, 1, 1), (1,)))
-            self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+            raise RuntimeError(f"The {self.cls_name} only support sharding propagation or "
+                               f"semi-auto parallel mode now.")
 
     def construct(self, x, input_mask, init_reset=True, batch_valid_length=None):
         self._check_input(x, input_mask, init_reset, batch_valid_length)
@@ -1573,103 +1803,208 @@ class TransformerDecoderLayer(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_dpmp_config):
         super(TransformerDecoderLayer, self).__init__()
-        _check_config(parallel_config)
-        if num_heads % parallel_config.model_parallel != 0:
-            raise ValueError("For 'TransformerDecoderLayer', the class variable 'num_heads' must be divisibled by "
-                             "'parallel_config.model_parallel', but got the num_heads is {} and "
-                             "parallel_config.model_parallel is {}.".format(num_heads, parallel_config.model_parallel))
-        if hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("For 'TransformerDecoderLayer', the class variable 'hidden_size' must be divisibled by "
-                             "'parallel_config.model_parallel', but got the hidden_size is {} and "
-                             "parallel_config.model_parallel is {}."
-                             .format(hidden_size, parallel_config.model_parallel))
-        if ffn_hidden_size % parallel_config.model_parallel != 0:
-            raise ValueError("For 'TransformerDecoderLayer', the class variable 'ffn_hidden_size' must be "
-                             "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
-                             "and parallel_config.model_parallel is {}."
-                             .format(ffn_hidden_size, parallel_config.model_parallel))
-        _check_moe_config(moe_config, parallel_config)
-        self.use_moe = (moe_config.expert_num > 1)
-        if use_past:
-            raise ValueError(f"The {self.cls_name} does not support use_past=True.")
-        self.batch_size = batch_size
-        self.use_past = use_past
-        self.softmax_compute_type = softmax_compute_type
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
+            if num_heads % parallel_config.model_parallel != 0:
+                raise ValueError("For 'TransformerDecoderLayer', the class variable 'num_heads' must be divisibled by "
+                                 "'parallel_config.model_parallel', but got the num_heads is {} and "
+                                 "parallel_config.model_parallel is {}.".format(num_heads,
+                                                                                parallel_config.model_parallel))
+            if hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerDecoderLayer', the class variable 'hidden_size' must be divisibled by "
+                    "'parallel_config.model_parallel', but got the hidden_size is {} and "
+                    "parallel_config.model_parallel is {}."
+                    .format(hidden_size, parallel_config.model_parallel))
+            if ffn_hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError("For 'TransformerDecoderLayer', the class variable 'ffn_hidden_size' must be "
+                                 "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
+                                 "and parallel_config.model_parallel is {}."
+                                 .format(ffn_hidden_size, parallel_config.model_parallel))
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            if use_past:
+                raise ValueError(f"The {self.cls_name} does not support use_past=True.")
+            self.batch_size = batch_size
+            self.use_past = use_past
+            self.softmax_compute_type = softmax_compute_type
 
-        self.src_seq_length = src_seq_length
-        self.tgt_seq_length = tgt_seq_length
-        self.use_past = use_past
-        self.hidden_size = hidden_size
+            self.src_seq_length = src_seq_length
+            self.tgt_seq_length = tgt_seq_length
+            self.use_past = use_past
+            self.hidden_size = hidden_size
 
-        self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
-        self.layernorm1.shard(((parallel_config.data_parallel, 1),))
-        self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
-        self.layernorm2.shard(((parallel_config.data_parallel, 1),))
-        self.attention = MultiHeadAttention(hidden_size=hidden_size,
-                                            num_heads=num_heads,
-                                            batch_size=batch_size,
-                                            src_seq_length=tgt_seq_length,
-                                            tgt_seq_length=tgt_seq_length,
-                                            hidden_dropout_rate=hidden_dropout_rate,
-                                            attention_dropout_rate=attention_dropout_rate,
-                                            use_past=use_past,
-                                            softmax_compute_type=softmax_compute_type,
-                                            param_init_type=param_init_type,
-                                            parallel_config=parallel_config.dpmp if self.use_moe else parallel_config)
+            self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.attention = MultiHeadAttention(hidden_size=hidden_size,
+                                                num_heads=num_heads,
+                                                batch_size=batch_size,
+                                                src_seq_length=tgt_seq_length,
+                                                tgt_seq_length=tgt_seq_length,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                use_past=use_past,
+                                                softmax_compute_type=softmax_compute_type,
+                                                param_init_type=param_init_type,
+                                                parallel_config=parallel_config.dpmp if self.use_moe
+                                                else parallel_config)
 
-        # Cross attention with the output of encoder as memory tensor
-        self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
-                                                  num_heads=num_heads,
-                                                  batch_size=batch_size,
-                                                  src_seq_length=tgt_seq_length,
-                                                  tgt_seq_length=src_seq_length,
-                                                  hidden_dropout_rate=hidden_dropout_rate,
-                                                  attention_dropout_rate=attention_dropout_rate,
-                                                  softmax_compute_type=softmax_compute_type,
-                                                  use_past=use_past,
-                                                  param_init_type=param_init_type,
-                                                  parallel_config=parallel_config.dpmp
-                                                  if self.use_moe else parallel_config)
-        self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
-            layernorm_compute_type)
-        self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
+            # Cross attention with the output of encoder as memory tensor
+            self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
+                                                      num_heads=num_heads,
+                                                      batch_size=batch_size,
+                                                      src_seq_length=tgt_seq_length,
+                                                      tgt_seq_length=src_seq_length,
+                                                      hidden_dropout_rate=hidden_dropout_rate,
+                                                      attention_dropout_rate=attention_dropout_rate,
+                                                      softmax_compute_type=softmax_compute_type,
+                                                      use_past=use_past,
+                                                      param_init_type=param_init_type,
+                                                      parallel_config=parallel_config.dpmp
+                                                      if self.use_moe else parallel_config)
+            self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
+                layernorm_compute_type)
 
-        if self.use_moe:
-            self.output = MoE(hidden_size=hidden_size,
-                              dropout_rate=hidden_dropout_rate,
-                              ffn_hidden_size=ffn_hidden_size,
-                              param_init_type=param_init_type,
-                              hidden_act=hidden_act,
-                              moe_config=moe_config,
-                              parallel_config=parallel_config)
+            if self.use_moe:
+                self.output = MoE(hidden_size=hidden_size,
+                                  dropout_rate=hidden_dropout_rate,
+                                  ffn_hidden_size=ffn_hidden_size,
+                                  param_init_type=param_init_type,
+                                  hidden_act=hidden_act,
+                                  moe_config=moe_config,
+                                  parallel_config=parallel_config)
+            else:
+                # Feed Forward Network, FFN
+                self.output = FeedForward(hidden_size=hidden_size,
+                                          dropout_rate=hidden_dropout_rate,
+                                          ffn_hidden_size=ffn_hidden_size,
+                                          hidden_act=hidden_act,
+                                          param_init_type=param_init_type,
+                                          parallel_config=parallel_config)
+            self.post_layernorm_residual = post_layernorm_residual
+            self.add = P.Add()
+            self.add_3d = P.Add()
+            self.dtype = mstype.float16
+            self.key_past = None
+            self.value_past = None
+            if self.use_past:
+                # operator used for state reuse
+                self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
+                self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
+                self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
+                size_per_head = int(hidden_size / num_heads)
+                self.key_shape = (batch_size, num_heads, size_per_head, tgt_seq_length)
+                self.value_shape = (batch_size, num_heads, tgt_seq_length, size_per_head)
+                # parameters saving key and value states
+                self.key_past = Parameter(Tensor(np.zeros(shape=self.key_shape), self.dtype), name="key_past")
+                self.value_past = Parameter(Tensor(np.zeros(shape=self.value_shape), self.dtype), name="value_past")
+                self.tile = P.Tile().shard(((1, 1),))
+                self.mul = P.Mul().shard(((1, 1, 1, 1), (1,)))
+                self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+        elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
+            _check_config(parallel_config)
+            if num_heads % parallel_config.model_parallel != 0:
+                raise ValueError("For 'TransformerDecoderLayer', the class variable 'num_heads' must be divisibled by "
+                                 "'parallel_config.model_parallel', but got the num_heads is {} and "
+                                 "parallel_config.model_parallel is {}.".format(num_heads,
+                                                                                parallel_config.model_parallel))
+            if hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError(
+                    "For 'TransformerDecoderLayer', the class variable 'hidden_size' must be divisibled by "
+                    "'parallel_config.model_parallel', but got the hidden_size is {} and "
+                    "parallel_config.model_parallel is {}."
+                    .format(hidden_size, parallel_config.model_parallel))
+            if ffn_hidden_size % parallel_config.model_parallel != 0:
+                raise ValueError("For 'TransformerDecoderLayer', the class variable 'ffn_hidden_size' must be "
+                                 "divisibled by 'parallel_config.model_parallel', but got the ffn_hidden_size is {} "
+                                 "and parallel_config.model_parallel is {}."
+                                 .format(ffn_hidden_size, parallel_config.model_parallel))
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            if use_past:
+                raise ValueError(f"The {self.cls_name} does not support use_past=True.")
+            self.batch_size = batch_size
+            self.use_past = use_past
+            self.softmax_compute_type = softmax_compute_type
+
+            self.src_seq_length = src_seq_length
+            self.tgt_seq_length = tgt_seq_length
+            self.use_past = use_past
+            self.hidden_size = hidden_size
+
+            self.layernorm1 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.layernorm1.shard(((parallel_config.data_parallel, 1),))
+            self.layernorm2 = _LayerNorm((hidden_size,)).to_float(layernorm_compute_type)
+            self.layernorm2.shard(((parallel_config.data_parallel, 1),))
+            self.attention = MultiHeadAttention(hidden_size=hidden_size,
+                                                num_heads=num_heads,
+                                                batch_size=batch_size,
+                                                src_seq_length=tgt_seq_length,
+                                                tgt_seq_length=tgt_seq_length,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                use_past=use_past,
+                                                softmax_compute_type=softmax_compute_type,
+                                                param_init_type=param_init_type,
+                                                parallel_config=parallel_config.dpmp if self.use_moe
+                                                else parallel_config)
+
+            # Cross attention with the output of encoder as memory tensor
+            self.cross_attention = MultiHeadAttention(hidden_size=hidden_size,
+                                                      num_heads=num_heads,
+                                                      batch_size=batch_size,
+                                                      src_seq_length=tgt_seq_length,
+                                                      tgt_seq_length=src_seq_length,
+                                                      hidden_dropout_rate=hidden_dropout_rate,
+                                                      attention_dropout_rate=attention_dropout_rate,
+                                                      softmax_compute_type=softmax_compute_type,
+                                                      use_past=use_past,
+                                                      param_init_type=param_init_type,
+                                                      parallel_config=parallel_config.dpmp
+                                                      if self.use_moe else parallel_config)
+            self.cross_attention_layernorm = _LayerNorm((hidden_size,)).to_float(
+                layernorm_compute_type)
+            self.cross_attention_layernorm.shard(((parallel_config.data_parallel, 1),))
+
+            if self.use_moe:
+                self.output = MoE(hidden_size=hidden_size,
+                                  dropout_rate=hidden_dropout_rate,
+                                  ffn_hidden_size=ffn_hidden_size,
+                                  param_init_type=param_init_type,
+                                  hidden_act=hidden_act,
+                                  moe_config=moe_config,
+                                  parallel_config=parallel_config)
+            else:
+                # Feed Forward Network, FFN
+                self.output = FeedForward(hidden_size=hidden_size,
+                                          dropout_rate=hidden_dropout_rate,
+                                          ffn_hidden_size=ffn_hidden_size,
+                                          hidden_act=hidden_act,
+                                          param_init_type=param_init_type,
+                                          parallel_config=parallel_config)
+            self.post_layernorm_residual = post_layernorm_residual
+            self.add = P.Add().shard(((parallel_config.data_parallel, 1), (parallel_config.data_parallel, 1)))
+            self.add_3d = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
+            self.dtype = mstype.float16
+            self.key_past = None
+            self.value_past = None
+            if self.use_past:
+                # operator used for state reuse
+                self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
+                self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
+                self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
+                size_per_head = int(hidden_size / num_heads)
+                self.key_shape = (batch_size, num_heads, size_per_head, tgt_seq_length)
+                self.value_shape = (batch_size, num_heads, tgt_seq_length, size_per_head)
+                # parameters saving key and value states
+                self.key_past = Parameter(Tensor(np.zeros(shape=self.key_shape), self.dtype), name="key_past")
+                self.value_past = Parameter(Tensor(np.zeros(shape=self.value_shape), self.dtype), name="value_past")
+                self.tile = P.Tile().shard(((1, 1),))
+                self.mul = P.Mul().shard(((1, 1, 1, 1), (1,)))
+                self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
         else:
-            # Feed Forward Network, FFN
-            self.output = FeedForward(hidden_size=hidden_size,
-                                      dropout_rate=hidden_dropout_rate,
-                                      ffn_hidden_size=ffn_hidden_size,
-                                      hidden_act=hidden_act,
-                                      param_init_type=param_init_type,
-                                      parallel_config=parallel_config)
-        self.post_layernorm_residual = post_layernorm_residual
-        self.add = P.Add().shard(((parallel_config.data_parallel, 1), (parallel_config.data_parallel, 1)))
-        self.add_3d = P.Add().shard(((parallel_config.data_parallel, 1, 1), (parallel_config.data_parallel, 1, 1)))
-        self.dtype = mstype.float16
-        self.key_past = None
-        self.value_past = None
-        if self.use_past:
-            # operator used for state reuse
-            self.reducesum = P.ReduceSum().shard(((1, 1, 1, 1),))
-            self.not_equal = P.NotEqual().shard(((1, 1, 1, 1), ()))
-            self.slice = P.StridedSlice().shard(((1, 1, 1, 1),))
-            size_per_head = int(hidden_size / num_heads)
-            self.key_shape = (batch_size, num_heads, size_per_head, tgt_seq_length)
-            self.value_shape = (batch_size, num_heads, tgt_seq_length, size_per_head)
-            # parameters saving key and value states
-            self.key_past = Parameter(Tensor(np.zeros(shape=self.key_shape), self.dtype), name="key_past")
-            self.value_past = Parameter(Tensor(np.zeros(shape=self.value_shape), self.dtype), name="value_past")
-            self.tile = P.Tile().shard(((1, 1),))
-            self.mul = P.Mul().shard(((1, 1, 1, 1), (1,)))
-            self.assign = P.Assign().shard(((1, 1, 1, 1), (1, 1, 1, 1)))
+            raise RuntimeError(f"The {self.cls_name} only support sharding propagation or "
+                               f"semi-auto parallel mode now.")
 
     def construct(self, hidden_stats,
                   decoder_mask,
@@ -2012,39 +2347,77 @@ class TransformerEncoder(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_transformer_config):
         super(TransformerEncoder, self).__init__()
-        _check_config(parallel_config)
-        _check_moe_config(moe_config, parallel_config)
-        self.use_moe = (moe_config.expert_num > 1)
-        self.add = P.Add().shard(((), ()))
-        self.aux_loss = Tensor(0.0, mstype.float32)
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
-            raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
-        self.num_layers = num_layers
-        self.blocks = nn.CellList()
-        for i in range(num_layers):
-            block = TransformerEncoderLayer(hidden_size=hidden_size,
-                                            batch_size=batch_size,
-                                            ffn_hidden_size=ffn_hidden_size,
-                                            seq_length=seq_length,
-                                            attention_dropout_rate=attention_dropout_rate,
-                                            hidden_dropout_rate=hidden_dropout_rate,
-                                            layernorm_compute_type=layernorm_compute_type,
-                                            softmax_compute_type=softmax_compute_type,
-                                            num_heads=num_heads,
-                                            hidden_act=hidden_act,
-                                            post_layernorm_residual=post_layernorm_residual,
-                                            param_init_type=param_init_type,
-                                            use_past=use_past,
-                                            moe_config=moe_config,
-                                            parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                            else parallel_config.dp_mp_config)
-            # If the user doesn't pass the fusion function, use the default one
-            if not lambda_func:
-                lambda_func = _get_lambda_func()
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            self.add = P.Add()
+            self.aux_loss = Tensor(0.0, mstype.float32)
+            self.num_layers = num_layers
+            self.blocks = nn.CellList()
+            for i in range(num_layers):
+                block = TransformerEncoderLayer(hidden_size=hidden_size,
+                                                batch_size=batch_size,
+                                                ffn_hidden_size=ffn_hidden_size,
+                                                seq_length=seq_length,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                layernorm_compute_type=layernorm_compute_type,
+                                                softmax_compute_type=softmax_compute_type,
+                                                num_heads=num_heads,
+                                                hidden_act=hidden_act,
+                                                post_layernorm_residual=post_layernorm_residual,
+                                                param_init_type=param_init_type,
+                                                use_past=use_past,
+                                                moe_config=moe_config,
+                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
+                                                else parallel_config.dp_mp_config)
+                # If the user doesn't pass the fusion function, use the default one
+                if not lambda_func:
+                    lambda_func = _get_lambda_func()
 
-            lambda_func(block, layer_id=i, layers=num_layers,
-                        offset=offset, parallel_config=parallel_config)
-            self.blocks.append(block)
+                lambda_func(block, layer_id=i, layers=num_layers,
+                            offset=offset, parallel_config=parallel_config)
+                self.blocks.append(block)
+        elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
+            _check_config(parallel_config)
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            self.add = P.Add().shard(((), ()))
+            self.aux_loss = Tensor(0.0, mstype.float32)
+            logger.warning("For parallel mode, sharding propagation is recommended, you can use it by setting "
+                           "'set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, "
+                           "search_mode=\"sharding_propagation\")' and "
+                           "'set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)'")
+            self.num_layers = num_layers
+            self.blocks = nn.CellList()
+            for i in range(num_layers):
+                block = TransformerEncoderLayer(hidden_size=hidden_size,
+                                                batch_size=batch_size,
+                                                ffn_hidden_size=ffn_hidden_size,
+                                                seq_length=seq_length,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                layernorm_compute_type=layernorm_compute_type,
+                                                softmax_compute_type=softmax_compute_type,
+                                                num_heads=num_heads,
+                                                hidden_act=hidden_act,
+                                                post_layernorm_residual=post_layernorm_residual,
+                                                param_init_type=param_init_type,
+                                                use_past=use_past,
+                                                moe_config=moe_config,
+                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
+                                                else parallel_config.dp_mp_config)
+                # If the user doesn't pass the fusion function, use the default one
+                if not lambda_func:
+                    lambda_func = _get_lambda_func()
+
+                lambda_func(block, layer_id=i, layers=num_layers,
+                            offset=offset, parallel_config=parallel_config)
+                self.blocks.append(block)
+        else:
+            raise RuntimeError(f"The {self.cls_name} only support sharding propagation or "
+                               f"semi-auto parallel mode now.")
 
     def construct(self, hidden_states, attention_mask, init_reset=True, batch_valid_length=None):
         present_layer = ()
@@ -2207,42 +2580,83 @@ class TransformerDecoder(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_transformer_config):
         super(TransformerDecoder, self).__init__()
-        _check_config(parallel_config)
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
 
-        self.add = P.Add().shard(((), ()))
-        self.aux_loss = Tensor(0.0, mstype.float32)
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
-            raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
-        self.num_layers = num_layers
-        self.blocks = nn.CellList()
-        _check_moe_config(moe_config, parallel_config)
-        self.use_moe = (moe_config.expert_num > 1)
-        for i in range(num_layers):
-            block = TransformerDecoderLayer(hidden_size=hidden_size,
-                                            batch_size=batch_size,
-                                            ffn_hidden_size=ffn_hidden_size,
-                                            src_seq_length=src_seq_length,
-                                            tgt_seq_length=tgt_seq_length,
-                                            attention_dropout_rate=attention_dropout_rate,
-                                            hidden_dropout_rate=hidden_dropout_rate,
-                                            num_heads=num_heads,
-                                            layernorm_compute_type=layernorm_compute_type,
-                                            softmax_compute_type=softmax_compute_type,
-                                            hidden_act=hidden_act,
-                                            use_past=use_past,
-                                            param_init_type=param_init_type,
-                                            post_layernorm_residual=post_layernorm_residual,
-                                            moe_config=moe_config,
-                                            parallel_config=parallel_config.moe_parallel_config if self.use_moe
-                                            else parallel_config.dp_mp_config)
-            # If the user doesn't pass the fusion function, use the default one
-            if not lambda_func:
-                lambda_func = _get_lambda_func()
+            self.add = P.Add()
+            self.aux_loss = Tensor(0.0, mstype.float32)
+            self.num_layers = num_layers
+            self.blocks = nn.CellList()
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            for i in range(num_layers):
+                block = TransformerDecoderLayer(hidden_size=hidden_size,
+                                                batch_size=batch_size,
+                                                ffn_hidden_size=ffn_hidden_size,
+                                                src_seq_length=src_seq_length,
+                                                tgt_seq_length=tgt_seq_length,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                num_heads=num_heads,
+                                                layernorm_compute_type=layernorm_compute_type,
+                                                softmax_compute_type=softmax_compute_type,
+                                                hidden_act=hidden_act,
+                                                use_past=use_past,
+                                                param_init_type=param_init_type,
+                                                post_layernorm_residual=post_layernorm_residual,
+                                                moe_config=moe_config,
+                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
+                                                else parallel_config.dp_mp_config)
+                # If the user doesn't pass the fusion function, use the default one
+                if not lambda_func:
+                    lambda_func = _get_lambda_func()
 
-            lambda_func(block, layer_id=i, layers=num_layers,
-                        offset=offset, parallel_config=parallel_config)
+                lambda_func(block, layer_id=i, layers=num_layers,
+                            offset=offset, parallel_config=parallel_config)
 
-            self.blocks.append(block)
+                self.blocks.append(block)
+        elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
+            _check_config(parallel_config)
+
+            self.add = P.Add().shard(((), ()))
+            self.aux_loss = Tensor(0.0, mstype.float32)
+            logger.warning("For parallel mode, sharding propagation is recommended, you can use it by setting "
+                           "'set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, "
+                           "search_mode=\"sharding_propagation\")' and "
+                           "'set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)'")
+            self.num_layers = num_layers
+            self.blocks = nn.CellList()
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            for i in range(num_layers):
+                block = TransformerDecoderLayer(hidden_size=hidden_size,
+                                                batch_size=batch_size,
+                                                ffn_hidden_size=ffn_hidden_size,
+                                                src_seq_length=src_seq_length,
+                                                tgt_seq_length=tgt_seq_length,
+                                                attention_dropout_rate=attention_dropout_rate,
+                                                hidden_dropout_rate=hidden_dropout_rate,
+                                                num_heads=num_heads,
+                                                layernorm_compute_type=layernorm_compute_type,
+                                                softmax_compute_type=softmax_compute_type,
+                                                hidden_act=hidden_act,
+                                                use_past=use_past,
+                                                param_init_type=param_init_type,
+                                                post_layernorm_residual=post_layernorm_residual,
+                                                moe_config=moe_config,
+                                                parallel_config=parallel_config.moe_parallel_config if self.use_moe
+                                                else parallel_config.dp_mp_config)
+                # If the user doesn't pass the fusion function, use the default one
+                if not lambda_func:
+                    lambda_func = _get_lambda_func()
+
+                lambda_func(block, layer_id=i, layers=num_layers,
+                            offset=offset, parallel_config=parallel_config)
+
+                self.blocks.append(block)
+        else:
+            raise RuntimeError(f"The {self.cls_name} only support sharding propagation or "
+                               f"semi-auto parallel mode now.")
 
     def construct(self, hidden_states, attention_mask, encoder_output=None, memory_mask=None,
                   init_reset=True, batch_valid_length=None):
@@ -2431,70 +2845,139 @@ class Transformer(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_transformer_config):
         super(Transformer, self).__init__()
-        _check_config(parallel_config)
-        self.batch_size = batch_size
-        self.hidden_size = hidden_size
-        self.src_seq_length = src_seq_length
-        self.tgt_seq_length = tgt_seq_length
-        self.use_past = use_past
-        if encoder_layers <= 0 < decoder_layers:
-            raise ValueError(f"Transformer doest support encoder layer {encoder_layers} and decoder"
-                             f"layer {decoder_layers}, please use TransformerDecoder")
-        if encoder_layers > 0 and decoder_layers > 0 and use_past:
-            raise ValueError(f"The {self.cls_name} with encoder and decoder does not support use_past=True.")
-        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,):
-            raise RuntimeError(f"The {self.cls_name} does not support auto parallel mode now.")
-        # The shard setting of Transformer is set within the TransformerEncoderLayer
-        if not lambda_func:
-            lambda_func = _get_lambda_func(total_layer=encoder_layers + decoder_layers)
-        _check_moe_config(moe_config, parallel_config)
-        self.use_moe = (moe_config.expert_num > 1)
-        self.add = P.Add().shard(((), ()))
-        self.aux_loss = Tensor(0.0, mstype.float32)
-        if encoder_layers > 0:
-            self.encoder = TransformerEncoder(num_layers=encoder_layers,
-                                              batch_size=batch_size,
-                                              hidden_size=hidden_size,
-                                              ffn_hidden_size=ffn_hidden_size,
-                                              num_heads=num_heads,
-                                              seq_length=src_seq_length,
-                                              attention_dropout_rate=attention_dropout_rate,
-                                              hidden_dropout_rate=hidden_dropout_rate,
-                                              hidden_act=hidden_act,
-                                              layernorm_compute_type=layernorm_compute_type,
-                                              softmax_compute_type=softmax_compute_type,
-                                              post_layernorm_residual=post_layernorm_residual,
-                                              param_init_type=param_init_type,
-                                              lambda_func=lambda_func,
-                                              use_past=use_past,
-                                              moe_config=moe_config,
-                                              parallel_config=parallel_config)
-        else:
-            self.encoder = None
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            _check_config(parallel_config)
+            self.batch_size = batch_size
+            self.hidden_size = hidden_size
+            self.src_seq_length = src_seq_length
+            self.tgt_seq_length = tgt_seq_length
+            self.use_past = use_past
+            if encoder_layers <= 0 < decoder_layers:
+                raise ValueError(f"Transformer doest support encoder layer {encoder_layers} and decoder"
+                                 f"layer {decoder_layers}, please use TransformerDecoder")
+            if encoder_layers > 0 and decoder_layers > 0 and use_past:
+                raise ValueError(f"The {self.cls_name} with encoder and decoder does not support use_past=True.")
+            # The shard setting of Transformer is set within the TransformerEncoderLayer
+            if not lambda_func:
+                lambda_func = _get_lambda_func(total_layer=encoder_layers + decoder_layers)
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            self.add = P.Add()
+            self.aux_loss = Tensor(0.0, mstype.float32)
+            if encoder_layers > 0:
+                self.encoder = TransformerEncoder(num_layers=encoder_layers,
+                                                  batch_size=batch_size,
+                                                  hidden_size=hidden_size,
+                                                  ffn_hidden_size=ffn_hidden_size,
+                                                  num_heads=num_heads,
+                                                  seq_length=src_seq_length,
+                                                  attention_dropout_rate=attention_dropout_rate,
+                                                  hidden_dropout_rate=hidden_dropout_rate,
+                                                  hidden_act=hidden_act,
+                                                  layernorm_compute_type=layernorm_compute_type,
+                                                  softmax_compute_type=softmax_compute_type,
+                                                  post_layernorm_residual=post_layernorm_residual,
+                                                  param_init_type=param_init_type,
+                                                  lambda_func=lambda_func,
+                                                  use_past=use_past,
+                                                  moe_config=moe_config,
+                                                  parallel_config=parallel_config)
+            else:
+                self.encoder = None
 
-        # Offset is needed as the encoder has consumed some flags.
-        # so the decoder need to increase the flags based on the encoder layer
-        self.decoder = None
-        if decoder_layers > 0:
-            self.decoder = TransformerDecoder(num_layers=decoder_layers,
-                                              batch_size=batch_size,
-                                              hidden_size=hidden_size,
-                                              ffn_hidden_size=ffn_hidden_size,
-                                              num_heads=num_heads,
-                                              src_seq_length=src_seq_length,
-                                              tgt_seq_length=tgt_seq_length,
-                                              attention_dropout_rate=attention_dropout_rate,
-                                              hidden_dropout_rate=hidden_dropout_rate,
-                                              hidden_act=hidden_act,
-                                              post_layernorm_residual=post_layernorm_residual,
-                                              layernorm_compute_type=layernorm_compute_type,
-                                              softmax_compute_type=softmax_compute_type,
-                                              lambda_func=lambda_func,
-                                              use_past=use_past,
-                                              param_init_type=param_init_type,
-                                              offset=encoder_layers,
-                                              moe_config=moe_config,
-                                              parallel_config=parallel_config)
+            # Offset is needed as the encoder has consumed some flags.
+            # so the decoder need to increase the flags based on the encoder layer
+            self.decoder = None
+            if decoder_layers > 0:
+                self.decoder = TransformerDecoder(num_layers=decoder_layers,
+                                                  batch_size=batch_size,
+                                                  hidden_size=hidden_size,
+                                                  ffn_hidden_size=ffn_hidden_size,
+                                                  num_heads=num_heads,
+                                                  src_seq_length=src_seq_length,
+                                                  tgt_seq_length=tgt_seq_length,
+                                                  attention_dropout_rate=attention_dropout_rate,
+                                                  hidden_dropout_rate=hidden_dropout_rate,
+                                                  hidden_act=hidden_act,
+                                                  post_layernorm_residual=post_layernorm_residual,
+                                                  layernorm_compute_type=layernorm_compute_type,
+                                                  softmax_compute_type=softmax_compute_type,
+                                                  lambda_func=lambda_func,
+                                                  use_past=use_past,
+                                                  param_init_type=param_init_type,
+                                                  offset=encoder_layers,
+                                                  moe_config=moe_config,
+                                                  parallel_config=parallel_config)
+        elif _get_parallel_mode() not in (ParallelMode.AUTO_PARALLEL,):
+            _check_config(parallel_config)
+            self.batch_size = batch_size
+            self.hidden_size = hidden_size
+            self.src_seq_length = src_seq_length
+            self.tgt_seq_length = tgt_seq_length
+            self.use_past = use_past
+            if encoder_layers <= 0 < decoder_layers:
+                raise ValueError(f"Transformer doest support encoder layer {encoder_layers} and decoder"
+                                 f"layer {decoder_layers}, please use TransformerDecoder")
+            if encoder_layers > 0 and decoder_layers > 0 and use_past:
+                raise ValueError(f"The {self.cls_name} with encoder and decoder does not support use_past=True.")
+            logger.warning("For parallel mode, sharding propagation is recommended, you can use it by setting "
+                           "'set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, "
+                           "search_mode=\"sharding_propagation\")' and "
+                           "'set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)'")
+            # The shard setting of Transformer is set within the TransformerEncoderLayer
+            if not lambda_func:
+                lambda_func = _get_lambda_func(total_layer=encoder_layers + decoder_layers)
+            _check_moe_config(moe_config, parallel_config)
+            self.use_moe = (moe_config.expert_num > 1)
+            self.add = P.Add().shard(((), ()))
+            self.aux_loss = Tensor(0.0, mstype.float32)
+            if encoder_layers > 0:
+                self.encoder = TransformerEncoder(num_layers=encoder_layers,
+                                                  batch_size=batch_size,
+                                                  hidden_size=hidden_size,
+                                                  ffn_hidden_size=ffn_hidden_size,
+                                                  num_heads=num_heads,
+                                                  seq_length=src_seq_length,
+                                                  attention_dropout_rate=attention_dropout_rate,
+                                                  hidden_dropout_rate=hidden_dropout_rate,
+                                                  hidden_act=hidden_act,
+                                                  layernorm_compute_type=layernorm_compute_type,
+                                                  softmax_compute_type=softmax_compute_type,
+                                                  post_layernorm_residual=post_layernorm_residual,
+                                                  param_init_type=param_init_type,
+                                                  lambda_func=lambda_func,
+                                                  use_past=use_past,
+                                                  moe_config=moe_config,
+                                                  parallel_config=parallel_config)
+            else:
+                self.encoder = None
+
+            # Offset is needed as the encoder has consumed some flags.
+            # so the decoder need to increase the flags based on the encoder layer
+            self.decoder = None
+            if decoder_layers > 0:
+                self.decoder = TransformerDecoder(num_layers=decoder_layers,
+                                                  batch_size=batch_size,
+                                                  hidden_size=hidden_size,
+                                                  ffn_hidden_size=ffn_hidden_size,
+                                                  num_heads=num_heads,
+                                                  src_seq_length=src_seq_length,
+                                                  tgt_seq_length=tgt_seq_length,
+                                                  attention_dropout_rate=attention_dropout_rate,
+                                                  hidden_dropout_rate=hidden_dropout_rate,
+                                                  hidden_act=hidden_act,
+                                                  post_layernorm_residual=post_layernorm_residual,
+                                                  layernorm_compute_type=layernorm_compute_type,
+                                                  softmax_compute_type=softmax_compute_type,
+                                                  lambda_func=lambda_func,
+                                                  use_past=use_past,
+                                                  param_init_type=param_init_type,
+                                                  offset=encoder_layers,
+                                                  moe_config=moe_config,
+                                                  parallel_config=parallel_config)
+        else:
+            raise RuntimeError(f"The {self.cls_name} only support sharding propagation or "
+                               f"semi-auto parallel mode now.")
 
     def construct(self, encoder_inputs,
                   encoder_masks,
