@@ -294,7 +294,8 @@ unsigned int GetTensorSlot(const tensor_info_t info) { return info.slot; }
 
 bool GetTensorIsOutput(const tensor_info_t info) { return info.is_output; }
 
-std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vector<tensor_info_t> info) {
+std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vector<tensor_info_t> info,
+                                                                      bool is_base_request) {
   MS_EXCEPTION_IF_NULL(debug_services_);
   for (auto i : info) {
     MS_LOG(INFO) << "cpp DbgServices ReadTensor info name " << i.node_name << ", slot " << i.slot << ", iteration "
@@ -326,7 +327,7 @@ std::vector<std::shared_ptr<TensorData>> DbgServices::ReadTensorsUtil(std::vecto
     processed_npy_files = debug_services_->ProcessNPYFilePool(file_paths);
   }
   debug_services_->ReadDumpedTensor(backend_name, slot, rank_id, iteration, root_graph_id, is_output,
-                                    &processed_npy_files, &result_list);
+                                    &processed_npy_files, &result_list, is_base_request);
   for (auto result : result_list) {
     std::string output = "0";
     if (result->GetIsOutput()) {
@@ -363,7 +364,7 @@ std::vector<tensor_data_t> DbgServices::ReadTensors(const std::vector<tensor_inf
 std::vector<TensorBaseData> DbgServices::ReadTensorsBase(const std::vector<tensor_info_t> info) {
   std::vector<TensorBaseData> tensors_read_base;
   std::vector<std::shared_ptr<TensorData>> result_list;
-  result_list = ReadTensorsUtil(info);
+  result_list = ReadTensorsUtil(info, true);
   for (auto result : result_list) {
     if (!result->GetByteSize()) {
       // tensor not found, adding empty tensor base.
