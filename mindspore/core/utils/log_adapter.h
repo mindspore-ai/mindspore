@@ -225,7 +225,7 @@ class TryCatchGuard {
 /// \brief LogWriter defines interface to write log.
 class MS_CORE_API LogWriter {
  public:
-  using ExceptionHandler = std::function<void(ExceptionType, const std::string &msg)>;
+  using ExceptionHandler = void (*)(ExceptionType, const std::string &);
   using TraceProvider = std::function<void(std::ostringstream &oss)>;
 
   LogWriter(const LocationInfo &location, MsLogLevel log_level, SubModuleId submodule,
