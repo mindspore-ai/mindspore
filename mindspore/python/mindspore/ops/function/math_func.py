@@ -4302,6 +4302,91 @@ def sparse_segment_mean(x, indices, segment_ids):
     return sparse_segment_mean_(x, indices, segment_ids)
 
 
+def copysign(x, other):
+    r"""
+    Changes the sign of `x` to that of `other`, element-wise.
+
+    If `other` is a scalar, its sign will be copied to all elements of `x`.
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and `extobj` are
+        not supported. Complex inputs are not supported.
+
+    Args:
+        x (Union[Tensor]): Values to change the sign of.
+        other (Union[int, float, Tensor]): The sign of `other` is copied to `x`. If `x.shape != other.shape`,
+            `other` must be broadcastable to the shape of `x` (which is also the shape of the output).
+
+    Returns:
+        Tensor, float, the values of `x` with the sign of `other`, the shape is the same as `x`.
+
+    Raises:
+        TypeError: If dtype of the input is not in the given types or
+            the input can not be converted to tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([[0.3, -0.7], [0.5, 0.5]])
+        >>> other = np.array([[-0.4, 0.6], [0.4, -0.6]])
+        >>> out = ops.copysign(x, other)
+        >>> print(out)
+        [[-0.3  0.7]
+         [ 0.5 -0.5]]
+    """
+
+    def _broadcast_to_shape(x, shape):
+        """Broadcasts x from current shape to shape"""
+        ndim_to = len(shape)
+        x = _expand(x, ndim_to)
+        return _broadcast_to(x, P.Shape()(x), shape, ndim_to)
+
+    if not isinstance(x, Tensor):
+        raise TypeError("Tensor is expected, but got " + f"{type(x)}")
+    if not isinstance(other, (int, float, Tensor)):
+        raise TypeError(
+            "integer, float or Tensor is expected, but got " + f"{type(other)}"
+        )
+
+    if not isinstance(x, Tensor):
+        other = _type_convert(Tensor, other)
+    other = _broadcast_to_shape(other, P.Shape()(x))
+
+    if _check_same_type(P.DType()(x), mstype.bool_):
+        raise TypeError("copysign does not accept dtype bool.")
+    if _check_same_type(P.DType()(other), mstype.bool_):
+        raise TypeError("copysign does not accept dtype bool.")
+
+    if _check_same_type(P.DType()(x), mstype.complex64):
+        raise TypeError("copysign does not accept dtype complex64.")
+    if _check_same_type(P.DType()(other), mstype.complex64):
+        raise TypeError("copysign does not accept dtype complex64.")
+
+    if _check_same_type(P.DType()(x), mstype.complex128):
+        raise TypeError("copysign does not accept dtype complex128.")
+    if _check_same_type(P.DType()(other), mstype.complex128):
+        raise TypeError("copysign does not accept dtype complex128.")
+
+    x_float = (
+        x
+        if x.dtype in (mstype.float16, mstype.float32, mstype.float64)
+        else x.astype("float32")
+    )
+    pos_tensor = P.Abs()(x_float)
+    less_zero = P.Less()(other, 0)
+    return P.Select()(less_zero, P.Neg()(pos_tensor), pos_tensor)
+
+
+@constexpr
+def _type_convert(force, obj):
+    """
+    Convert type of `obj` to `force`.
+    """
+    return force(obj)
+
+
 def logsumexp(x, axis, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
@@ -6261,6 +6346,7 @@ __all__ = [
     'all',
     'any',
     'sparse_segment_mean',
+    'copysign',
     'log2',
     'xlogy',
     'log10',
