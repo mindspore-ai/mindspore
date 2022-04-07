@@ -2504,7 +2504,7 @@ class COOTensor(COOTensor_):
             validator.check_coo_tensor_input(indices, values, shape)
             validator.check_coo_tensor_shape(indices.shape, values.shape, shape)
             validator.check_coo_tensor_dtype(indices.dtype)
-            if not (indices < Tensor(shape)).all() or (indices < 0).any():
+            if not (indices < Tensor(shape, mstype.int32)).all() or (indices < Tensor(0, mstype.int32)).any():
                 raise ValueError("All the indices should be non-negative integer and in range of the given shape!")
             COOTensor_.__init__(self, indices, values, shape)
         self.init_finished = True
