@@ -14,6 +14,7 @@
 # ============================================================================
 """loss"""
 from __future__ import absolute_import, division
+import math
 
 import mindspore
 import mindspore.common.dtype as mstype
@@ -1163,6 +1164,96 @@ class SampledSoftmaxLoss(LossBase):
             self.zeros_like(sampled_logits)
         ))
         return out_logits, out_labels
+
+
+class PoissonNLLLoss(LossBase):
+    r"""
+    Poisson negative log likelihood loss.
+
+    The loss is:
+
+    .. math::
+        \mathcal{L}_{D} = \sum_{i = 0}^{|D|}\left( x_{i} - y_{i}\ln x_{i} + \ln{y_{i}!} \right)
+
+    where :math:`\mathcal{L}_{D}` is the loss, :math:`y_{i}` is the `target`,
+    :math:`x_{i}` is the `x`.
+
+    If `log_input` is True, use :math:`e^{x_{i}} - y_{i} x_{i}` instead of :math:`x_{i} - y_{i}\ln x_{i}`.
+    When calculating logarithms, the lower bound of `x` is set to `eps` to avoid numerical errors.
+
+    If `full` is False, the last term :math:`\ln{y_{i}!}` will be omitted,
+    otherwise the last term will be approximated using Stirling formula:
+
+    .. math::
+        n! \approx \sqrt{2\pi n}\left( \frac{n}{e} \right)^{n}.
+
+    Note:
+        Calculating the logarithm of a negative number or the exponent of a large positive number under Ascend
+        will have a different range of return values and results different from those under GPU and CPU.
+
+    Args:
+        log_input (bool): Whether use log input. Default: True.
+        full (bool): Whether include the Stirling approximation term in the loss calculation. Default: False.
+        eps (float): Lower bound of `x` when calculating logarithms. Default: 1e-8.
+        reduction (str): Apply specific reduction method to the output:
+            'none', 'mean', 'sum'. Default: 'mean'.
+
+    Inputs:
+        - **x** (Tensor) - The input Tensor. The shape can be any number of dimensions.
+        - **target** (Tensor) - The label Tensor which has the same shape as `x`.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `x`.
+        Otherwise it is a scalar.
+
+    Raises:
+        TypeError: If `reduction` is not a str.
+        TypeError: If neither `x` nor `target` is a tensor.
+        TypeError: If dtype of `x` or `target` is not currently supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0.3, 0.7], [0.5, 0.5]])
+        >>> target = Tensor([[1.0, 2.0], [3.0, 4.0]])
+        >>> loss = nn.PoissonNLLLoss()
+        >>> output = loss(x, target)
+        >>> print(output.asnumpy())
+        0.3652635
+    """
+
+    def __init__(self, log_input=True, full=False, eps=1e-08, reduction="mean"):
+        """Initialize PoissonNLLLoss."""
+        super(PoissonNLLLoss, self).__init__(reduction=reduction)
+        self.log_input = log_input
+        self.full = full
+        self.eps = eps
+        self.maximum = P.Maximum()
+
+    def construct(self, x, target):
+        _check_is_tensor('x', x, self.cls_name)
+        _check_is_tensor('target', target, self.cls_name)
+        if x.ndim == 0 or target.ndim == 0:
+            raise ValueError(
+                "For 'PoissonNLLLoss', the inputs must be non-scalar, but got shapes: "
+                f"x: {x.shape}, target: {target.shape}"
+            )
+        if self.log_input:
+            loss = x.exp() - target * x
+        else:
+            loss = x - target * ((x + self.eps).log())
+        if self.full:
+            target = self.maximum(target, self.eps)
+            stirling_term = (target > 1) * ((target + 0.5) * target.log() - target + get_half_ln_2_pi())
+            loss += stirling_term
+        out = self.get_loss(loss)
+        return out
+
+
+@constexpr
+def get_half_ln_2_pi():
+    return 0.5 * math.log(2 * math.pi)
 
 
 class MultiLabelSoftMarginLoss(LossBase):

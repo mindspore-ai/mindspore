@@ -216,6 +216,15 @@ class L2NormalizeNet(nn.Cell):
         return out
 
 
+class PoissonNLLLossNet(nn.Cell):
+    def __init__(self):
+        super(PoissonNLLLossNet, self).__init__()
+        self.poisson_nllloss = nn.PoissonNLLLoss()
+
+    def construct(self, x, target):
+        return self.poisson_nllloss(x, target)
+
+
 class MultiLabelSoftMarginLossNet(nn.Cell):
     def __init__(self):
         super(MultiLabelSoftMarginLossNet, self).__init__()
@@ -550,6 +559,11 @@ test_cases = [
     ('L2Normalize', {
         'block': L2NormalizeNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
+    }),
+    ('PoissonNLLLoss', {
+        'block': PoissonNLLLossNet(),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32),
+                        Tensor(np.array([[1, 2], [3, 4]]), mindspore.float32)]
     }),
     ('MultiLabelSoftMarginLoss', {
         'block': MultiLabelSoftMarginLossNet(),
