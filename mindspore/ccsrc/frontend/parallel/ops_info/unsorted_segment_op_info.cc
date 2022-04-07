@@ -71,7 +71,6 @@ Status UnsortedSegmentOpInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
   // The strategy of the first and the second input should be set.
   if (CheckStrategyValue(strategy, {inputs_shape_.at(0), inputs_shape_.at(1)}) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
   Strategys stra = strategy->GetInputDim();
