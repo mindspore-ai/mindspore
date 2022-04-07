@@ -545,6 +545,15 @@ class LogAddExp2Func(nn.Cell):
         return y
 
 
+class KaiserWindowFunc(nn.Cell):
+    def __init__(self):
+        super(KaiserWindowFunc, self).__init__()
+        self.kaiser_window = ops.kaiser_window
+
+    def construct(self, window_length):
+        return self.kaiser_window(window_length)
+
+
 class AddmvFunc(nn.Cell):
     def __init__(self):
         super(AddmvFunc, self).__init__()
@@ -856,6 +865,10 @@ test_case_math_ops = [
         'block': LogAddExp2Func(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
         'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
+    }),
+    ('KaiserWindow', {
+        'block': KaiserWindowFunc(),
+        'desc_inputs': [5]
     }),
     ('LogAddExp', {
         'block': LogAddExpFunc(),

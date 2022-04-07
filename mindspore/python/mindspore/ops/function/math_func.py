@@ -6516,6 +6516,74 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     return ret
 
 
+def kaiser_window(window_length, periodic=True, beta=12.0):
+    r"""
+    Generates a Kaiser window.
+    It is also known as the Kaiser-Bessel window, which is an approximate window of the prolate sphere.
+    The ratio of the main sphere energy to the side wave energy is maximum for it.
+
+    The Kaiser window is defined as
+
+    .. math::
+        w(n) = \frac{I_{0}\left( \beta\sqrt{1 - \frac{4n^{2}}{(M - 1)^{2}}} \right)}{I_{0}(\beta)}
+
+    with
+
+    .. math::
+        - \frac{M - 1}{2} \leq n \leq \frac{M - 1}{2},
+
+    where :math:`I_0` is the modified zeroth-order Bessel function.
+
+    Args:
+        window_length (int): Length of window.
+        periodic (bool, optional): When set to True, generates a periodic window for spectral analysis.
+            When set to False, generates a symmetric window for filter design. Default: True.
+        beta (float, optional): Shape parameter, determines trade-off between main-lobe width and side lobe level.
+            When `beta` gets large, the window narrows. Default: 12.0.
+
+    Returns:
+        Tensor, a Kaiser window.
+
+    Raises:
+        TypeError: If `window_length` is not a integer.
+        ValueError: If `window_length` is negative.
+        TypeError: If `periodic` is not a variable of Boolean type.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> window_length = 5
+        >>> out = ops.kaiser_window(window_length)
+        >>> print(out.asnumpy())
+        [5.27734413e-05 1.01719688e-01 7.92939834e-01 7.92939834e-01
+         1.01719688e-01]
+    """
+    if not isinstance(window_length, int):
+        raise TypeError(
+            f"For 'kaiser_window', 'window_length' must be a non-negative integer, but got {type(window_length)}"
+        )
+    if window_length < 0:
+        raise ValueError(
+            f"For 'kaiser_window', 'window_length' must be a non-negative integer, but got {window_length}"
+        )
+    if window_length <= 1:
+        return Tensor(np.ones(window_length))
+    if not isinstance(periodic, bool):
+        raise TypeError(
+            f"For 'kaiser_window', 'periodic' must be a variable of Boolean type, but got {type(periodic)}"
+        )
+    if periodic:
+        window_length = window_length + 1
+    n = np.arange(0, window_length)
+    alpha = (window_length - 1) / 2.0
+    w = np.i0(
+        beta * np.sqrt(1 - ((n - alpha) / alpha) ** 2.0)
+    ) / np.i0(beta)
+    out = Tensor(w[:-1]) if periodic else Tensor(w)
+    return out
+
+
 def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
          pad_mode="REFLECT", normalized=False, onesided=None, return_complex=None):
     r"""
@@ -8628,6 +8696,7 @@ __all__ = [
     'truncate_mod',
     'trunc',
     'gumbel_softmax',
+    'kaiser_window',
     'matmul',
     'cummin',
     'cummax',
