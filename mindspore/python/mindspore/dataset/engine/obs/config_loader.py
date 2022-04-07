@@ -44,16 +44,25 @@ class _Config:
 
     def __getattr__(self, key):
         if key in os.environ:
-            return os.environ[key]
+            return self._convert_type(key)
         if key in self.config:
             return self.config[key]
-        return None
+        raise RuntimeError("Variable {} can not found in configuration file or environment variables.".format(key))
 
     def __setattr__(self, key, value):
         if key == 'config':
             self.__dict__[key] = value
         else:
             self.config[key] = value
+
+    def _convert_type(self, key):
+        if key not in self.config:
+            return  os.environ[key]
+        if isinstance(self.config[key], int):
+            return int(os.environ[key])
+        if isinstance(self.config[key], float):
+            return float(os.environ[key])
+        return  os.environ[key]
 
 
 config = _Config()
