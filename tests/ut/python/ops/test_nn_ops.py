@@ -216,6 +216,15 @@ class L2NormalizeNet(nn.Cell):
         return out
 
 
+class CosineSimilarityNet(nn.Cell):
+    def __init__(self):
+        super(CosineSimilarityNet, self).__init__()
+        self.cosine_similarity = nn.layer.CosineSimilarity()
+
+    def construct(self, x1, x2):
+        return self.cosine_similarity(x1, x2)
+
+
 class UpsampleNet(nn.Cell):
     def __init__(self):
         super(UpsampleNet, self).__init__()
@@ -568,6 +577,11 @@ test_cases = [
     ('L2Normalize', {
         'block': L2NormalizeNet(),
         'desc_inputs': [Tensor(np.array([[1.0, 2, 3], [4.0, 5, 6], [7.0, 8, 9]]), mindspore.float32)],
+    }),
+    ('CosineSimilarity', {
+        'block': CosineSimilarityNet(),
+        'desc_inputs': [Tensor(np.array([[1, 3, 4, 7], [2, 4, 2, 5], [3, 1, 5, 8]]), mindspore.float32),
+                        Tensor(np.array([[2, 4, 2, 5], [3, 1, 5, 8], [1, 3, 4, 7]]), mindspore.float32)]
     }),
     ('Upsample', {
         'block': UpsampleNet(),
