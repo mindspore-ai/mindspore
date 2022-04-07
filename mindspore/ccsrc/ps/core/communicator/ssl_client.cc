@@ -38,18 +38,7 @@ SSLClient::SSLClient() : ssl_ctx_(nullptr), check_time_thread_(nullptr), running
 SSLClient::~SSLClient() { CleanSSL(); }
 
 void SSLClient::InitSSL() {
-  if (!SSL_library_init()) {
-    MS_LOG(EXCEPTION) << "SSL_library_init failed.";
-  }
-  if (!ERR_load_crypto_strings()) {
-    MS_LOG(EXCEPTION) << "ERR_load_crypto_strings failed.";
-  }
-  if (!SSL_load_error_strings()) {
-    MS_LOG(EXCEPTION) << "SSL_load_error_strings failed.";
-  }
-  if (!OpenSSL_add_all_algorithms()) {
-    MS_LOG(EXCEPTION) << "OpenSSL_add_all_algorithms failed.";
-  }
+  CommUtil::InitOpensslLib();
   ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
   if (!ssl_ctx_) {
     MS_LOG(EXCEPTION) << "SSL_CTX_new failed";
@@ -62,12 +51,12 @@ void SSLClient::InitSSL() {
   }
 
   // 1.Parse the client's certificate and the ciphertext of key.
-  std::string client_cert = kCertificateChain;
   std::string path = CommUtil::ParseConfig(*config_, kClientCertPath);
   if (!CommUtil::IsFileExists(path)) {
     MS_LOG(EXCEPTION) << "The key:" << kClientCertPath << "'s value is not exist.";
   }
-  client_cert = path;
+  std::string client_cert = path;
+  MS_LOG(INFO) << "client cert: " << client_cert;
 
   // 2. Parse the client password.
   std::string client_password = PSContext::instance()->client_password();
@@ -77,7 +66,6 @@ void SSLClient::InitSSL() {
   EVP_PKEY *pkey = nullptr;
   X509 *cert = nullptr;
   STACK_OF(X509) *ca_stack = nullptr;
-  MS_LOG(INFO) << "cliet cert: " << client_cert;
   BIO *bio = BIO_new_file(client_cert.c_str(), "rb");
   MS_EXCEPTION_IF_NULL(bio);
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
@@ -103,12 +91,14 @@ void SSLClient::InitSSL() {
   BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
   MS_EXCEPTION_IF_NULL(ca_bio);
   X509 *caCert = PEM_read_bio_X509(ca_bio, nullptr, nullptr, nullptr);
+
+  X509_CRL *crl = nullptr;
   std::string crl_path = CommUtil::ParseConfig(*(config_), kCrlPath);
   if (crl_path.empty()) {
     MS_LOG(INFO) << "The crl path is empty.";
   } else if (!CommUtil::checkCRLTime(crl_path)) {
     MS_LOG(EXCEPTION) << "check crl time failed";
-  } else if (!CommUtil::VerifyCRL(cert, crl_path)) {
+  } else if (!CommUtil::VerifyCRL(caCert, crl_path, &crl)) {
     MS_LOG(EXCEPTION) << "Verify crl failed.";
   }
 
@@ -127,14 +117,17 @@ void SSLClient::InitSSL() {
   if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
     MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
   }
-  InitSSLCtx(cert, pkey);
+  InitSSLCtx(cert, pkey, crl);
   StartCheckCertTime(*config_, cert);
 
   EVP_PKEY_free(pkey);
-  (void)BIO_free(ca_bio);
+  BIO_vfree(ca_bio);
+  if (crl != nullptr) {
+    X509_CRL_free(crl);
+  }
 }
 
-void SSLClient::InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey) {
+void SSLClient::InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey, X509_CRL *crl) {
   if (!SSL_CTX_use_certificate(ssl_ctx_, const_cast<X509 *>(cert))) {
     MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
   }
@@ -154,6 +147,23 @@ void SSLClient::InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey) {
 
   if (!SSL_CTX_set_mode(ssl_ctx_, SSL_MODE_AUTO_RETRY)) {
     MS_LOG(EXCEPTION) << "SSL set mode auto retry failed!";
+  }
+
+  if (crl != nullptr) {
+    // Load CRL into the `X509_STORE`
+    X509_STORE *x509_store = SSL_CTX_get_cert_store(ssl_ctx_);
+    if (X509_STORE_add_crl(x509_store, crl) != 1) {
+      MS_LOG(EXCEPTION) << "ssl client X509_STORE add crl failed!";
+    }
+
+    // Enable CRL checking
+    X509_VERIFY_PARAM *param = SSL_CTX_get0_param(ssl_ctx_);
+    if (param == nullptr) {
+      MS_LOG(EXCEPTION) << "ssl client X509_VERIFY_PARAM is nullptr!";
+    }
+    if (X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK) != 1) {
+      MS_LOG(EXCEPTION) << "ssl client X509_VERIFY_PARAM set flag X509_V_FLAG_CRL_CHECK failed!";
+    }
   }
 
   SSL_CTX_set_security_level(ssl_ctx_, kSecurityLevel);

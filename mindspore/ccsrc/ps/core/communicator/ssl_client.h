@@ -61,7 +61,7 @@ class SSLClient {
 
   void StartCheckCertTime(const Configuration &config, const X509 *cert);
   void StopCheckCertTime();
-  void InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey);
+  void InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey, X509_CRL *crl);
 
   SSL_CTX *ssl_ctx_;
   std::unique_ptr<std::thread> check_time_thread_;

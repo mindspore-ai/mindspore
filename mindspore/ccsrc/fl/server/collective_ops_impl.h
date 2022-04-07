@@ -67,14 +67,13 @@ class CollectiveOpsImpl {
   bool AllReduce(const std::string &data_name, void *sendbuff, void *recvbuff, size_t count);
 
   template <typename T>
-  bool AllGather(const void *sendbuff, void *recvbuff, size_t send_count,
-                 const std::shared_ptr<ps::core::AbstractNode> &node);
+  bool AllGather(const void *sendbuff, void *recvbuff, size_t send_count, const ps::core::AbstractNodePtr &node);
 
   // Collective broadcast within the specified group. The parameter "root" is the group rank of the root process.
   // Normally 0.
   template <typename T>
   bool Broadcast(const void *sendbuff, void *recvbuff, size_t count, uint32_t root,
-                 const std::shared_ptr<ps::core::AbstractNode> &node, const CommunicationGroupInfo &group_info);
+                 const ps::core::AbstractNodePtr &node, const CommunicationGroupInfo &group_info);
 
   // Reinitialize the ring for collective communication after scaling operations are done.
   bool ReInitForScaling();
@@ -123,7 +122,7 @@ class CollectiveOpsImpl {
 
   // The abstract node could be worker or server. Only nodes which have the same role could use collective
   // communication.
-  std::shared_ptr<ps::core::AbstractNode> node_;
+  ps::core::AbstractNodePtr node_;
   ps::core::NodeRole node_role_;
   uint32_t rank_size_;
 };

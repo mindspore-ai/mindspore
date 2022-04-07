@@ -1244,13 +1244,15 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, con
 }
 
 void AbstractNode::ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn,
-                                             const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+                                             const std::shared_ptr<MessageMeta> &meta, const Protos &protos,
+                                             const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(conn);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
   if (!server_->SendMessage(conn, meta, Protos::RAW, data, size)) {
     MS_LOG(WARNING) << "Server response message failed.";
   }
+  RunReceiveCallback(meta, protos, data, size);
 }
 
 void AbstractNode::ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -1361,8 +1363,8 @@ void AbstractNode::RegisterActorRouteTableRspHandler() {
 void AbstractNode::InitServerHandler() {
   server_handler_[NodeCommand::SEND_METADATA] = &AbstractNode::ProcessSendMetadata;
   server_handler_[NodeCommand::FINISH] = &AbstractNode::ProcessFinish;
-  server_handler_[NodeCommand::SEND_DATA] = nullptr;
-  server_handler_[NodeCommand::COLLECTIVE_SEND_DATA] = nullptr;
+  server_handler_[NodeCommand::SEND_DATA] = &AbstractNode::ProcessSendData;
+  server_handler_[NodeCommand::COLLECTIVE_SEND_DATA] = &AbstractNode::ProcessCollectiveSendData;
   server_handler_[NodeCommand::SCALE_OUT] = &AbstractNode::ProcessScaleOut;
   server_handler_[NodeCommand::SCALE_IN] = &AbstractNode::ProcessScaleIn;
   server_handler_[NodeCommand::SCALE_OUT_DONE] = &AbstractNode::ProcessScaleOutDone;
@@ -1461,26 +1463,20 @@ void AbstractNode::CreateTcpServer() {
   MS_EXCEPTION_IF_NULL(server_);
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &protos, const void *data, size_t size) {
-    MS_EXCEPTION_IF_NULL(meta);
     MS_EXCEPTION_IF_NULL(conn);
+    MS_EXCEPTION_IF_NULL(meta);
     MS_EXCEPTION_IF_NULL(data);
-    if (server_handler_.count(meta->cmd()) == 0) {
+    MS_LOG(DEBUG) << "Receive message cmd " << meta->cmd() << ", size is " << size;
+    const auto &handler_pair = server_handler_.find(meta->cmd());
+    if (handler_pair == server_handler_.end()) {
       MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
     }
-
-    if (meta->cmd() == NodeCommand::COLLECTIVE_SEND_DATA) {
-      ProcessCollectiveSendData(conn, meta, data, size);
-      RunReceiveCallback(meta, protos, data, size);
-    } else if (meta->cmd() == NodeCommand::SEND_DATA) {
-      ProcessSendData(conn, meta, protos, data, size);
-    } else {
-      const auto &handler_ptr = server_handler_[meta->cmd()];
-      (this->*handler_ptr)(conn, meta, protos, data, size);
-    }
+    (this->*(handler_pair->second))(conn, meta, protos, data, size);
   });
+
   server_->Init();
   server_thread_ = std::make_unique<std::thread>([this]() {
-    MS_LOG(INFO) << "The server node start a tcp server!";
+    MS_LOG(INFO) << "The worker node or server node start a tcp server!";
     this->server_->Start();
   });
   MS_EXCEPTION_IF_NULL(server_thread_);

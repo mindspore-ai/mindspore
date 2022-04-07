@@ -17,7 +17,7 @@
 from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
-from .._c_expression import get_rank_id, get_rank_size
+from .._c_expression import get_rank_id, get_rank_size, CollectiveManager
 
 _HCCL_AVAILABLE = False
 _HCCL_TEST_AVAILABLE = False
@@ -54,6 +54,7 @@ else:
 
 HCCL_WORLD_COMM_GROUP = "hccl_world_group"
 NCCL_WORLD_COMM_GROUP = "nccl_world_group"
+MCCL_WORLD_COMM_GROUP = "mccl_world_group"
 
 
 class Backend:
@@ -79,6 +80,7 @@ class Backend:
     HCCL = "hccl"
     NCCL = "nccl"
     HCCL_MPI = "hccl_mpi"
+    MCCL = "mccl"
 
     def __new__(cls, name):
         """Create instance object of Backend."""
@@ -90,6 +92,7 @@ class Backend:
             raise ValueError("For 'Backend', the class variable 'name' {} is not supported, "
                              "please use hccl or nccl.".format(name))
         return value
+
 
 DEFAULT_BACKEND = Backend("hccl")
 
@@ -202,7 +205,6 @@ def _get_rank_helper(group, backend):
     Returns:
         Integer. The local rank id of the calling process.
     """
-    rank_id = None
     if _is_role_pserver() or _is_role_sched():
         rank_id = 0
         return rank_id
@@ -215,6 +217,9 @@ def _get_rank_helper(group, backend):
             rank_id = hccl.get_rank_id(group)
     elif backend == Backend.NCCL:
         rank_id = get_rank_id(group)
+    elif backend == Backend.MCCL:
+        # Call cluster getting rank function.
+        rank_id = CollectiveManager.get_instance().get_rank_id(group)
     else:
         raise ValueError("For '_get_rank_helper', the argument 'backend' {} is not supported, "
                          "please use hccl_mpi, hccl or nccl.".format(backend))
@@ -280,6 +285,9 @@ def _get_size_helper(group, backend):
             size = hccl.get_rank_size(group)
     elif backend == Backend.NCCL:
         size = get_rank_size(group)
+    elif backend == Backend.MCCL:
+        # Call cluster getting group size function.
+        size = CollectiveManager.get_instance().get_group_size(group)
     else:
         raise ValueError("For '_get_size_helper', the argument 'backend' {} is not supported, "
                          "please use hccl or nccl.".format(backend))

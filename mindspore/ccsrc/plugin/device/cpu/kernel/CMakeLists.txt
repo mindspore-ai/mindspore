@@ -45,6 +45,7 @@ if(NOT ENABLE_CPU OR WIN32)
     list(REMOVE_ITEM CPU_SRC_LIST "fl/push_metrics_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "fl/get_keys_kernel.cc")
     list(REMOVE_ITEM CPU_SRC_LIST "fl/exchange_keys_kernel.cc")
+    list(REMOVE_ITEM CPU_SRC_LIST "allreduce_cpu_kernel.cc")
 endif()
 
 if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ENABLE_CPU)

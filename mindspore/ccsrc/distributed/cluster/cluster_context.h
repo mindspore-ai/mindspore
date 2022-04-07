@@ -126,7 +126,7 @@ class BACKEND_EXPORT ClusterContext {
   std::shared_ptr<ps::core::Node> node_;
 
   // abstract_node_ is nullptr only when this is node is scheduler.
-  std::shared_ptr<ps::core::AbstractNode> abstract_node_;
+  ps::core::AbstractNodePtr abstract_node_;
 
   // The role of this process in the cluster.
   std::string node_role_;

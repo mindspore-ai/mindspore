@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-constexpr char kMSGlobalGroupName[] = "ms_world_group";
+constexpr char kMCCLGlobalGroupName[] = "mccl_world_group";
 using ClusterContext = mindspore::distributed::cluster::ClusterContext;
 using CollectiveOpsImpl = mindspore::fl::server::CollectiveOpsImpl;
 using CommunicationGroupInfo = mindspore::fl::server::CommunicationGroupInfo;
@@ -57,9 +57,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
                  const std::string &group_name, void *stream = nullptr) override;
 
   bool AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
-                 CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) override {
-    return true;
-  }
+                 CollectiveOpReduceType reduce_op, const std::string &group_name, void *stream = nullptr) override;
 
   bool Broadcast(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type, uint32_t root_rank,
                  const std::string &group_name, void *stream = nullptr) override;
@@ -85,7 +83,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   // Query unique id from scheduler.
   bool QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const;
 
-  std::shared_ptr<ps::core::AbstractNode> node_;
+  ps::core::AbstractNodePtr node_;
 };
 }  // namespace cpu
 }  // namespace device

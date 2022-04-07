@@ -126,11 +126,14 @@ class CommUtil {
   // Parse the configuration file according to the key.
   static std::string ParseConfig(const Configuration &config, const std::string &key);
 
+  // Init openssl lib
+  static void InitOpensslLib();
+
   // verify valid of certificate time
   static bool VerifyCertTime(const X509 *cert, int64_t time = 0);
   static bool verifyCertTimeStamp(const X509 *cert);
   // verify valid of equip certificate with CRL
-  static bool VerifyCRL(const X509 *cert, const std::string &crl_path);
+  static bool VerifyCRL(const X509 *cert, const std::string &crl_path, X509_CRL **crl);
   static bool VerifyCommonName(const X509 *caCert, const X509 *subCert);
   static std::vector<std::string> Split(const std::string &s, char delim);
   static bool VerifyCipherList(const std::vector<std::string> &list);

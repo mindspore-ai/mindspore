@@ -18,14 +18,14 @@ from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
-    _get_local_rank_helper, _get_local_size_helper, GlobalComm
-from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective
+    MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm
+from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
 
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
            "get_group_rank_from_world_rank", "create_group", "destroy_group",
-           "HCCL_WORLD_COMM_GROUP", "NCCL_WORLD_COMM_GROUP"]
+           "HCCL_WORLD_COMM_GROUP", "NCCL_WORLD_COMM_GROUP", "MCCL_WORLD_COMM_GROUP"]
 
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
 
@@ -89,11 +89,12 @@ def init(backend_name=None):
     Note:
         The full name of HCCL is Huawei Collective Communication Library.
         The full name of NCCL is NVIDIA Collective Communication Library.
+        The full name of MCCL is MindSpore Collective Communication Library.
         This method should be used after set_context. The user needs to preset communication environment variables
         before running the following example, please see the docstring of the mindspore.management.
 
     Args:
-        backend_name (str): Backend, using HCCL/NCCL. If the `backend_name` is None, system will recognize
+        backend_name (str): Backend, using HCCL/NCCL/MCCL. If the `backend_name` is None, system will recognize
             `device_target` by devices. Default: None.
 
     Raises:
@@ -123,9 +124,11 @@ def init(backend_name=None):
             backend_name = "hccl"
         elif device_target == "GPU":
             backend_name = "nccl"
+        elif device_target == "CPU":
+            backend_name = "mccl"
         else:
             raise RuntimeError("For 'set_context', the argument 'device_target' {} is not supported in "
-                               "parallel initialization, please use Ascend or GPU.".format(device_target))
+                               "parallel initialization, please use Ascend, GPU or CPU.".format(device_target))
     if not isinstance(backend_name, str):
         raise TypeError("For 'init', the argument 'backend_name' must be a string, "
                         "but got the type : {}".format(type(backend_name)))
@@ -141,15 +144,19 @@ def init(backend_name=None):
             GlobalComm.BACKEND = Backend("hccl_mpi")
         init_hccl()
         GlobalComm.WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
-        GlobalComm.INITED = True
     elif backend_name == "nccl":
         init_gpu_collective()
         GlobalComm.BACKEND = Backend("nccl")
         GlobalComm.WORLD_COMM_GROUP = NCCL_WORLD_COMM_GROUP
-        GlobalComm.INITED = True
+    elif backend_name == "mccl":
+        GlobalComm.BACKEND = Backend("mccl")
+        # Init cluster.
+        init_cluster()
+        GlobalComm.WORLD_COMM_GROUP = MCCL_WORLD_COMM_GROUP
     else:
         raise RuntimeError("For 'init', the argument 'backend_name' must be nccl while 'device_target' is GPU, "
                            "but got the 'backend_name' : hccl.")
+    GlobalComm.INITED = True
 
 
 def release():

@@ -1,0 +1,8 @@
+{
+    "server_cert_path": "server.p12",
+    "crl_path": "",
+    "client_cert_path": "client.p12",
+    "ca_cert_path": "cacert.pem",
+    "cipher_list": "ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-PSK-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-CCM:ECDHE-ECDSA-AES256-CCM:ECDHE-ECDSA-CHACHA20-POLY1305",
+    "cert_expire_warning_time_in_day": 90
+}

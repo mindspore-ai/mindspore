@@ -156,6 +156,7 @@ bool ClusterContext::BuildCluster() {
   } else if (node_role_ == kEnvRoleOfServer) {
     node_ = std::make_shared<ps::core::PSServerNode>();
   } else if (node_role_ == kEnvRoleOfScheduler) {
+    ps::PSContext::instance()->set_scheduler_manage_port(0);
     node_ = std::make_shared<ps::core::PSSchedulerNode>();
   } else {
     MS_LOG(EXCEPTION) << "The role " << node_role_ << " is invalid.";
