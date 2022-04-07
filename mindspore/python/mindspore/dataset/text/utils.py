@@ -313,11 +313,6 @@ class SentencePieceVocab:
             params (dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
                 library).
 
-                .. code-block::
-
-                    input_sentence_size 0
-                    max_sentencepiece_length 16
-
         Returns:
             SentencePieceVocab, vocab built from the file.
 
@@ -489,7 +484,7 @@ class SPieceTokenizerLoadType(IntEnum):
     Possible enumeration values are: SPieceTokenizerLoadType.FILE, SPieceTokenizerLoadType.MODEL.
 
     - SPieceTokenizerLoadType.FILE: Load SentencePiece tokenizer from a Vocab file.
-    - SPieceTokenizerLoadType.MODEL: Load SentencePiece tokenizer from a Vocab instance.
+    - SPieceTokenizerLoadType.MODEL: Load SentencePiece tokenizer from a SentencePieceVocab object.
     """
 
     FILE = 0

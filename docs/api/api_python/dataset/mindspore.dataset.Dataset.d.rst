@@ -154,7 +154,7 @@
 
     **返回：**
 
-    tuple，数据集的input index信息。
+    int，数据集的input index信息。
 
 .. py:method:: map(operations, input_columns=None, output_columns=None, column_order=None, num_parallel_workers=None, python_multiprocessing=False, cache=None, callbacks=None, max_rowsize=16, offload=None)
 

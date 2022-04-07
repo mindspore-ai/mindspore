@@ -35,7 +35,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_seed(seed)
 
-    设置种子，固定产生的随机数达到确定性的结果。
+    设置随机种子，产生固定的随机数来达到确定的结果。
 
     .. note::
         此函数在Python随机库和numpy.random库中设置种子，以便随机进行确定性Python增强。此函数应与创建的每个迭代器一起调用，以重置随机种子。
@@ -51,7 +51,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.get_seed()
 
-    获取随机数的种子。如果随机数的种子已设置，则返回设置的值，否则将返回std::mt19937::default_seed这个默认种子值。
+    获取随机数的种子。如果随机数的种子已设置，则返回设置的值，否则将返回 `std::mt19937::default_seed <http://www.cplusplus.com/reference/random/mt19937/>`_ 这个默认种子值。
 
     **返回：**
 
@@ -108,7 +108,7 @@ API示例所需模块的导入代码如下：
 
 .. py:function:: mindspore.dataset.config.set_numa_enable(numa_enable)
 
-    设置NUMA的默认状态为启动状态。如果 `numa_enable` 为True，则需要确保安装了NUMA库。
+    设置NUMA的默认状态为启动状态。如果 `numa_enable` 为True，则需要确保安装了 `NUMA库 <http://rpmfind.net/linux/rpm2html/search.php?query=libnuma-devel>`_ 。
 
     **参数：**
 

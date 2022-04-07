@@ -7,6 +7,6 @@
 
     可选的枚举值包括：SPieceTokenizerLoadType.FILE和SPieceTokenizerLoadType.MODEL。
 
-    - **SPieceTokenizerLoadType.FILE** - 从Vocab文件中加载SentencePiece分词器。
-    - **SPieceTokenizerLoadType.MODEL** - 从Vocab实例中加载SentencePiece分词器。
+    - **SPieceTokenizerLoadType.FILE** - 从词典文件中加载SentencePiece分词器。
+    - **SPieceTokenizerLoadType.MODEL** - 从 :class:`mindspore.dataset.text.SentencePieceVocab` 对象中加载SentencePiece分词器。
     

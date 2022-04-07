@@ -36,7 +36,7 @@
 
         - **file_path** (list) - 表示包含SentencePiece文件路径的一个列表。
         - **vocab_size** (int) - 表示词汇大小。
-        - **character_coverage** (float) - 表示模型涵盖的字符数量。推荐的默认值为：0.9995适用于具有丰富字符集的语言，如日文或中文，1.0适用于具有小字符集的其他语言。
+        - **character_coverage** (float) - 表示模型涵盖的字符数量。推荐的默认值为：0.9995，适用于具有丰富字符集的语言，如日文或中文，1.0适用于具有小字符集的其他语言。
         - **model_type** (SentencePieceModel) - 其值可以是SentencePieceModel.UNIGRAM、SentencePieceModel.BPE、SentencePieceModel.CHAR或SentencePieceModel.WORD，默认值为SentencePieceModel.UNIgram。使用SentencePieceModel.WORD类型时，必须预先标记输入句子。
 
           - SentencePieceModel.UNIGRAM：Unigram语言模型意味着句子中的下一个单词被假定为独立于模型生成的前一个单词。
@@ -45,11 +45,6 @@
           - SentencePieceModel.WORD：引用基于单词的SentencePiece模型类型。
 
         - **params** (dict)：表示没有传入参数的字典（参数派生自SentencePiece库）。
-
-          .. code-block::
-
-              input_sentence_size 0
-              max_sentencepiece_length 16
 
         **返回：**
 
