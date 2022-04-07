@@ -98,8 +98,12 @@ set -e
 
 # set up conda env
 env_name=mindspore_py3${PYTHON_VERSION##*.}
-conda create -n $env_name python=${PYTHON_VERSION} -y
+conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
 conda activate $env_name
+# downgrade openssl when py3.9+310
+if [[ "$PYTHON_VERSION" == "3.9" ]]; then
+    conda install openssl=1.1.1 -y
+fi
 
 pip install wheel
 pip install -U setuptools
