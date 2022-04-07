@@ -441,6 +441,15 @@ class DstackFunc(nn.Cell):
         return self.dstack([x1, x2])
 
 
+class DiffFunc(nn.Cell):
+    def __init__(self):
+        super(DiffFunc, self).__init__()
+        self.diff = ops.diff
+
+    def construct(self, x):
+        return self.diff(x)
+
+
 class AtLeast2DFunc(nn.Cell):
     def __init__(self):
         super(AtLeast2DFunc, self).__init__()
@@ -820,6 +829,10 @@ test_case_math_ops = [
         'block': DstackFunc(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]), ms.float32),
                         Tensor(np.array([4, 5, 6]), ms.float32)]
+    }),
+    ('Diff', {
+        'block': DiffFunc(),
+        'desc_inputs': [Tensor(np.array([1, 3, -1, 0, 4]), ms.int32)]
     }),
     ('AtLeast2D', {
         'block': AtLeast2DFunc(),
