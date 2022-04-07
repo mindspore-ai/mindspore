@@ -820,8 +820,9 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
   AnfNodePtr op_node = block->MakeResolveAstOp(op);
   // Create apply node
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
+  AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
   UpdateInterpretForUserNode(new_node, {left_node, right_node});
+  new_node = HandleInterpret(block, new_node, node);
   // Handling % symbol in formatted string values by JIT Fallback.
   // The string AnfNode may be created by ParseJoinedStr or ParseStr.
   // For example, string % var, f"The string is: %s." % str  or "The number is: %d." % num

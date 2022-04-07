@@ -144,6 +144,16 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
                       << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
                       << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
         UpdateGlobalPyParam(block->global_py_params());
+        auto iter = block->local_py_params_values_.find(var_name);
+        if (iter != block->local_py_params_values_.end()) {
+          auto &key_node = block->local_py_params_keys_[var_name];
+          auto &value_node = iter->second;
+          MS_LOG(DEBUG) << "Update local params of block: " << ToString()
+                        << ", with previous block: " << block->ToString() << ",\nkey_node: " << key_node->DebugString()
+                        << "\nvalue_node: " << value_node->DebugString();
+          (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(var_name, key_node));
+          (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(var_name, value_node));
+        }
       }
       return res;
     } else if (prev_blocks_.empty()) {
@@ -165,8 +175,23 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   ParameterPtr phi_param = std::make_shared<Parameter>(func_graph());
   MS_LOG(DEBUG) << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " generate phi node "
                 << phi_param->ToString() << " for " << var_name;
-  // If information transform by phi, need remove the var in interpret dict in fallback feature.
   if (use_fallback) {
+    // Check the phi whether need interpret flag.
+    // If has Interpret node which name is var_name in prev_blocks_, means the phi need set interpret true.
+    for (auto &pred : prev_blocks_) {
+      MS_EXCEPTION_IF_NULL(pred);
+      auto iter = pred->local_py_params_values_.find(var_name);
+      if (iter != pred->local_py_params_values_.end()) {
+        auto pred_node = iter->second;
+        bool interpret_without_internal =
+          IsPrimitiveCNode(pred_node, prim::kPrimPyInterpret) && !pred_node->interpret_internal_type();
+        if (pred_node->interpret() || interpret_without_internal) {
+          phi_param->set_interpret(true);
+          break;
+        }
+      }
+    }
+    // If information transform by phi, need remove the var in interpret dict in fallback feature.
     EraseLocalPyParam(var_name);
   }
 

@@ -125,9 +125,8 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     auto key_iter = local_py_params_keys_.find(name);
     auto value_iter = local_py_params_values_.find(name);
     if (key_iter != local_py_params_keys_.end() && value_iter != local_py_params_values_.end()) {
-      MS_LOG(DEBUG) << "Erase '" << name
-                    << "' from local_py_params, the key node:" << local_py_params_keys_[name]->DebugString()
-                    << ", the value node:" << local_py_params_values_[name]->DebugString();
+      MS_LOG(DEBUG) << "Erase '" << name << "' from local_py_params, the key node:" << key_iter->second->DebugString()
+                    << ", the value node:" << value_iter->second->DebugString();
       local_py_params_keys_.erase(key_iter);
       local_py_params_values_.erase(value_iter);
     }
