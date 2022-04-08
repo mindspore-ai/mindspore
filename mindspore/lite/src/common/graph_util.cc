@@ -23,9 +23,6 @@
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
 #include "include/errorcode.h"
-#ifdef ENABLE_V0
-#include "schema/model_v0_generated.h"
-#endif
 
 namespace mindspore {
 namespace lite {

@@ -30,9 +30,6 @@
 #include "src/schema_tensor_wrapper.h"
 #include "nnacl/op_base.h"
 #include "src/common/prim_util.h"
-#ifdef ENABLE_V0
-#include "schema/model_v0_generated.h"
-#endif
 #ifdef ENABLE_MODEL_OBF
 #include "tools/obfuscator/include/deobfuscator.h"
 #endif
@@ -64,12 +61,6 @@ class LiteModel : public Model {
   static int VersionVerify(flatbuffers::Verifier *verify);
 
  private:
-#ifdef ENABLE_V0
-  int ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor);
-
-  int ConvertAttrToTensors();
-#endif
-
   bool PrepareInnerTensors();
 
   bool CheckQuantAllInit(const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::QuantParam>> *quant_params);
@@ -85,11 +76,6 @@ class LiteModel : public Model {
     if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
       SetNodeDeviceType(node, *c_node);
     }
-#ifdef ENABLE_V0
-    if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
-      SetNodeDeviceType(node, *c_node);
-    }
-#endif
     bool old_version_weight_quant =
       ((meta_graph.version() == nullptr || meta_graph.version()->str() < "1.3.0") &&
        node->quant_type_ == schema::QuantType_QUANT_NONE && CheckNeedWeightQuant(meta_graph, c_node->inputIndex()));
@@ -296,20 +282,10 @@ class LiteModel : public Model {
         }
       }
     }
-#ifdef ENABLE_V0
-    if (ConvertAttrToTensors() != RET_OK) {
-      MS_LOG(ERROR) << "fail to convert attr to tensor.";
-      return RET_ERROR;
-    }
-#endif
     return RET_OK;
   }
 
   void SetNodeDeviceType(Node *node, const schema::CNode &c_node) { node->device_type_ = c_node.deviceType(); }
-
-#ifdef ENABLE_V0
-  void SetNodeDeviceType(Node *node, const schema::v0::CNode &c_node) { node->device_type_ = -1; }
-#endif
 
   int GenerateModelByVersion();
 

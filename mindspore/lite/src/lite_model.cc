@@ -28,81 +28,11 @@
 #include "src/common/graph_util.h"
 #include "src/common/file_utils.h"
 #include "src/tensor.h"
-#ifdef ENABLE_V0
-#include "src/ops/compat/compat_register.h"
-#endif
 
 namespace mindspore::lite {
 namespace {
 constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;
 }
-
-#ifdef ENABLE_V0
-int LiteModel::ConvertAttrs(Model::Node *node, std::vector<schema::Tensor *> *dst_tensor) {
-  if (node == nullptr || dst_tensor == nullptr) {
-    MS_LOG(ERROR) << "node or tensor_vec is nullptr.";
-    return RET_ERROR;
-  }
-  auto primitive = node->primitive_;
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr.";
-    return RET_ERROR;
-  }
-  auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
-  int primitive_type = prim->value_type();
-  auto creator = CompatRegistry::GetInstance()->GetTransferAttrFunc(SCHEMA_VERSION::SCHEMA_V0, primitive_type);
-  if (creator == nullptr) {
-    MS_LOG(DEBUG) << "the node don't need to convert attr to tensor.";
-    return RET_OK;
-  }
-  int status = creator(node, dst_tensor, &this->attr_tensor_bufs_);
-  if (status != RET_OK && status != RET_NO_CHANGE) {
-    MS_LOG(ERROR) << "translate attr to tensor failed.";
-    return status;
-  }
-  return RET_OK;
-}
-
-int LiteModel::ConvertAttrToTensors() {
-  if (schema_version_ != SCHEMA_VERSION::SCHEMA_V0) {
-    MS_LOG(DEBUG) << "no need to convert attr to tensor.";
-    return RET_OK;
-  }
-  std::unordered_map<int, std::set<int>> subgraph_node_indexes;
-  for (size_t subgraph_index = 0; subgraph_index < this->sub_graphs_.size(); ++subgraph_index) {
-    for (size_t node_index = 0; node_index < this->sub_graphs_[subgraph_index]->node_indices_.size(); ++node_index) {
-      subgraph_node_indexes[subgraph_index].insert(this->sub_graphs_[subgraph_index]->node_indices_[node_index]);
-    }
-  }
-  int cur_all_tensors_size = this->all_tensors_.size();
-  for (size_t index = 0; index < this->all_nodes_.size(); ++index) {
-    std::vector<schema::Tensor *> dst_tensors;
-    int status = ConvertAttrs(this->all_nodes_[index], &dst_tensors);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "fail to convert attr to tensor.";
-      return RET_ERROR;
-    }
-    if (dst_tensors.empty()) {
-      continue;
-    }
-    std::vector<int> subgraphs_with_node;
-    for (size_t subgraph_index = 0; subgraph_index < this->sub_graphs_.size(); ++subgraph_index) {
-      if (subgraph_node_indexes[subgraph_index].find(index) == subgraph_node_indexes[subgraph_index].end()) {
-        continue;
-      }
-      subgraphs_with_node.push_back(subgraph_index);
-    }
-    for (auto tensor : dst_tensors) {
-      for (auto subgraph_index : subgraphs_with_node) {
-        this->sub_graphs_[subgraph_index]->tensor_indices_.push_back(cur_all_tensors_size);
-      }
-      this->all_nodes_[index]->input_indices_.push_back(cur_all_tensors_size++);
-      this->all_tensors_.push_back(tensor);
-    }
-  }
-  return RET_OK;
-}
-#endif
 
 void LiteModel::Free() {
   if (this->buf != nullptr) {
@@ -200,11 +130,6 @@ int LiteModel::VersionVerify(flatbuffers::Verifier *verify) {
   if (schema::VerifyMetaGraphBuffer(*verify)) {
     return SCHEMA_VERSION::SCHEMA_CUR;
   }
-#ifdef ENABLE_V0
-  if (schema::v0::VerifyMetaGraphBuffer(*verify)) {
-    return SCHEMA_VERSION::SCHEMA_V0;
-  }
-#endif
   return SCHEMA_VERSION::SCHEMA_INVALID;
 }
 
@@ -403,11 +328,6 @@ int LiteModel::GenerateModelByVersion() {
   if (schema_version_ == SCHEMA_VERSION::SCHEMA_CUR) {
     meta_graph = reinterpret_cast<const void *>(schema::GetMetaGraph(this->buf));
   }
-#ifdef ENABLE_V0
-  if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
-    meta_graph = reinterpret_cast<const void *>(schema::v0::GetMetaGraph(buf));
-  }
-#endif
   MS_ASSERT(meta_graph != nullptr);
   int status = RET_ERROR;
 #ifdef ENABLE_MODEL_OBF
@@ -426,12 +346,6 @@ int LiteModel::GenerateModelByVersion() {
 #endif
     status = GenerateModel<schema::MetaGraph, schema::CNode>(*reinterpret_cast<const schema::MetaGraph *>(meta_graph));
   }
-#ifdef ENABLE_V0
-  if (schema_version_ == SCHEMA_VERSION::SCHEMA_V0) {
-    status = GenerateModel<schema::v0::MetaGraph, schema::v0::CNode>(
-      *reinterpret_cast<const schema::v0::MetaGraph *>(meta_graph));
-  }
-#endif
 #ifdef ENABLE_MODEL_OBF
   if (this->model_obfuscated_) {
     MS_ASSERT(model_deobf != nullptr);
@@ -486,10 +400,6 @@ int LiteModel::ConstructModel(const char *model_buf, size_t size, bool take_buf)
   schema_version_ = VersionVerify(&verify);
   if (schema_version_ == SCHEMA_INVALID) {
     MS_LOG(ERROR) << "The model buffer is invalid and fail to create graph.";
-#ifndef ENABLE_V0
-    MS_LOG(ERROR) << "Maybe this is a model transferred out using the conversion tool before 1.1.0";
-    MS_LOG(ERROR) << unsupport_v0_log;
-#endif
     if (take_buf) {
       this->buf = nullptr;
     }

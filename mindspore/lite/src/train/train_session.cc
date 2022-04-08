@@ -326,11 +326,6 @@ int TrainSession::CompileTrainGraph(std::shared_ptr<Model> model) {
     return RET_ERROR;
   }
 
-#ifdef ENABLE_V0
-  if (reinterpret_cast<LiteModel *>(model_.get())->GetSchemaVersion() == SCHEMA_VERSION::SCHEMA_V0) {
-    kernel::PopulateTrainV0Parameters();
-  }
-#endif
   if (reinterpret_cast<LiteModel *>(model_.get())->GetSchemaVersion() == SCHEMA_VERSION::SCHEMA_CUR) {
     kernel::PopulateTrainParameters();
   }

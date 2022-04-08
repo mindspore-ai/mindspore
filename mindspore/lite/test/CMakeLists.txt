@@ -8,10 +8,6 @@ include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 
 include(${TOP_DIR}/cmake/external_libs/gtest.cmake)
 
-if(MSLITE_ENABLE_V0)
-    add_definitions(-DENABLE_V0)
-endif()
-
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
 endif()
