@@ -100,10 +100,10 @@ void FusedBatchNormFp32(const float *input, const float *scale, const float *off
 }
 
 void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, const BatchNormParameter *param,
-                               float *save_mean, float *save_var) {
+                               float *save_mean, float *save_var, bool isBatchNorm2d) {
   const float N = (float)param->unit_;
   const float VN = N;
-  const float VNUB = (N > 1.0f) ? (N - 1.0f) : 1.0f;
+  const float VNUB = (isBatchNorm2d == false) ? N : ((N > 1.0f) ? (N - 1.0f) : 1.0f);
   const float momentum = (1.0f - param->momentum_);
 
   for (int i = 0; i < param->unit_; i++) {

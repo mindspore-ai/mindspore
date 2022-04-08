@@ -161,6 +161,7 @@ int FusedBatchnormCPUKernel::Run() {
     float *current_var = static_cast<float *>(variance_);
     float *save_mean = static_cast<float *>(in_tensors_.at(FOURTH_INPUT)->data());
     float *save_variance = static_cast<float *>(in_tensors_.at(FIFTH_INPUT)->data());
+    bool isBatch2d = true;
     if (in == nullptr || scale == nullptr || offset == nullptr || current_mean == nullptr || current_var == nullptr ||
         save_mean == nullptr || save_variance == nullptr) {
       MS_LOG(ERROR) << "The input data is nullptr.";
@@ -168,8 +169,9 @@ int FusedBatchnormCPUKernel::Run() {
     }
     std::fill(current_mean, current_mean + in_tensors_.at(FOURTH_INPUT)->ElementsNum(), 0.f);
     std::fill(current_var, current_var + in_tensors_.at(FIFTH_INPUT)->ElementsNum(), 0.f);
+    if (in_tensors_.at(FIRST_INPUT)->shape().size() == C2NUM) isBatch2d = false;
     FusedBatchNormFp32MeanVar(in, current_mean, current_var, param, static_cast<float *>(save_mean),
-                              static_cast<float *>(save_variance));
+                              static_cast<float *>(save_variance), isBatch2d);
 
     CHECK_NULL_RETURN(out_tensors_.at(SECOND_INPUT)->data());
     CHECK_NULL_RETURN(out_tensors_.at(THIRD_INPUT)->data());
