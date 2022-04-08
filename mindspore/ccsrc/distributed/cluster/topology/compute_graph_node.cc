@@ -116,6 +116,19 @@ bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::s
     return false;
   }
 }
+
+std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name, uint32_t timeout) {
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+
+  auto message = CreateMessage(meta_server_addr_.GetUrl(), msg_name, msg_name);
+  MS_EXCEPTION_IF_NULL(message);
+
+  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  if (retval != rpc::NULL_MSG) {
+    return std::make_shared<std::string>(retval->body);
+  }
+  return nullptr;
+}
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed
