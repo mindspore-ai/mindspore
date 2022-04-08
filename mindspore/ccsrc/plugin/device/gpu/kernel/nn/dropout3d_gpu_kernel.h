@@ -43,15 +43,6 @@ class Dropout3DFwdGpuKernelMod : public NativeGpuKernelMod {
     bool *mask_addr = GetDeviceAddress<bool>(outputs, 1);
     float *rand_f = GetDeviceAddress<float>(workspace, 0);
 
-    if (!states_init_) {
-      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&curand_generator_, CURAND_RNG_PSEUDO_DEFAULT),
-                                   "Failed to create generator");
-      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(curand_generator_, time(NULL)),
-                                   "Failed to SetPseudoRandomGeneratorSeed");
-      MS_EXCEPTION_IF_NULL(curand_generator_);
-      states_init_ = true;
-    }
-
     CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(curand_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "Failed to set stream for generator");
     // curandGen only supports float or double.
@@ -109,6 +100,15 @@ class Dropout3DFwdGpuKernelMod : public NativeGpuKernelMod {
                         << "but got " << keep_prob_;
     }
 
+    if (!states_init_) {
+      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&curand_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+                                   "Failed to create generator");
+      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(curand_generator_, time(NULL)),
+                                   "Failed to SetPseudoRandomGeneratorSeed");
+      MS_EXCEPTION_IF_NULL(curand_generator_);
+      states_init_ = true;
+    }
+
     InitSizeLists();
     return true;
   }
@@ -119,8 +119,6 @@ class Dropout3DFwdGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = "Dropout3D";
     num_count_ = 0;
     keep_prob_ = 0.0;
-    states_init_ = false;
-    curand_generator_ = nullptr;
     n_ = 0;
     c_ = 0;
     num_chan_ = 0;
@@ -144,10 +142,10 @@ class Dropout3DFwdGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   cudnnHandle_t cudnn_handle_;
-  curandGenerator_t curand_generator_;
+  curandGenerator_t curand_generator_{nullptr};
   bool is_null_input_;
   std::string kernel_name_;
-  bool states_init_;
+  bool states_init_{false};
   size_t num_count_;
   size_t n_;
   size_t c_;

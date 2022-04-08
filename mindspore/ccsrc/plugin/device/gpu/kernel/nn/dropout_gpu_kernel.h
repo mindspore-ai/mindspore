@@ -43,14 +43,6 @@ class DropoutFwdGpuKernelMod : public NativeGpuKernelMod {
     T *mask = GetDeviceAddress<T>(outputs, 1);
     float *mask_f = GetDeviceAddress<float>(workspace, 0);
 
-    if (!states_init_) {
-      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
-                                   "Failed to create generator");
-      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
-                                   "Failed to SetPseudoRandomGeneratorSeed");
-      MS_EXCEPTION_IF_NULL(mask_generator_);
-      states_init_ = true;
-    }
     CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "Failed to set stream for generator");
     // curandGen only support float or double for mask.
@@ -83,14 +75,22 @@ class DropoutFwdGpuKernelMod : public NativeGpuKernelMod {
       num_count_ *= x;
     }
     keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
-    int64_t seed = GetAttr<int64_t>(kernel_node, "Seed0");
-    if (seed == 0) {
-      seed = GetAttr<int64_t>(kernel_node, "Seed1");
+    if (!states_init_) {
+      int64_t seed = GetAttr<int64_t>(kernel_node, "Seed0");
       if (seed == 0) {
-        seed = time(NULL);
+        seed = GetAttr<int64_t>(kernel_node, "Seed1");
+        if (seed == 0) {
+          seed = time(NULL);
+        }
       }
+      seed_ = static_cast<uint64_t>(seed);
+      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+                                   "Failed to create generator");
+      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
+                                   "Failed to SetPseudoRandomGeneratorSeed");
+      MS_EXCEPTION_IF_NULL(mask_generator_);
+      states_init_ = true;
     }
-    seed_ = static_cast<uint64_t>(seed);
 
     InitSizeLists();
     return true;
@@ -102,9 +102,6 @@ class DropoutFwdGpuKernelMod : public NativeGpuKernelMod {
     kernel_name_ = "Dropout";
     num_count_ = 0;
     keep_prob_ = 0.0;
-    seed_ = 0;
-    states_init_ = false;
-    mask_generator_ = nullptr;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -127,9 +124,9 @@ class DropoutFwdGpuKernelMod : public NativeGpuKernelMod {
   std::string kernel_name_;
   size_t num_count_;
   float keep_prob_;
-  bool states_init_;
-  uint64_t seed_;
-  curandGenerator_t mask_generator_;
+  bool states_init_{false};
+  uint64_t seed_{0};
+  curandGenerator_t mask_generator_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore
