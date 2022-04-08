@@ -3462,7 +3462,8 @@ class GetNext(Primitive):
     Returns the next element in the dataset queue.
 
     Note:
-        The GetNext operation needs to be associated with network and it also depends on the init_dataset interface,
+        The GetNext operation needs to be associated with network and it also depends
+        on the 'dataset' interface, For example, please refer to :class:`mindspore.dataset.MnistDataset` .
         it can't be used directly as a single operation.
         For details, please refer to :class:`mindspore.connect_network_with_dataset` source code.
 
@@ -3470,7 +3471,7 @@ class GetNext(Primitive):
         types (list[:class:`mindspore.dtype`]): The type of the outputs.
         shapes (list[tuple[int]]): The dimensionality of the outputs.
         output_num (int): The output number, length of `types` and `shapes`.
-        shared_name (str): The queue name of `init_dataset` interface.
+        shared_name (str): Queue name to fetch the data.
 
     Inputs:
         No inputs.

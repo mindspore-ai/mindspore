@@ -17,7 +17,7 @@ mindspore.ops.ScatterAdd
 
     **参数：**
 
-    - **use_locking** (bool) - 是否启用锁保护。默认值：False。
+    - **use_locking** (bool) - 是否启用锁保护。如果为True，则 `input_x` 将受到锁的保护。否则计算结果是未定义的。默认值：False。
 
     **输入：**
 

@@ -1481,7 +1481,8 @@ class CumSum(PrimitiveWithInfer):
         y_i = x_1 + x_2 + x_3 + ... + x_i
 
     Args:
-        exclusive (bool): If true, perform exclusive mode. Default: False.
+        exclusive (bool): By default, this op performs an inclusive cumsum, which means that the first
+            element of the input is identical to the first element of the output. Default: False.
         reverse (bool): If true, perform inverse cumulative sum. Default: False.
 
     Inputs:
