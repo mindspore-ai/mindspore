@@ -73,6 +73,7 @@ add_env() {
 sudo yum install gcc gmp-devel -y
 
 install_conda() {
+    echo "installing Miniconda3"
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
     cd /tmp
     curl -O https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/$conda_file_name
@@ -120,6 +121,7 @@ pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-non
 
 # optional openmpi for distributed training
 if [[ X"$OPENMPI" == "Xon" ]]; then
+    echo "installing openmpi"
     origin_wd=$PWD
     cd /tmp
     curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz

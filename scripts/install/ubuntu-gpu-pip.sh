@@ -107,6 +107,7 @@ echo -e "alias pip='python -m pip'" >> ~/.bashrc
 python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # install cuda/cudnn
+echo "installing CUDA and cuDNN"
 cd /tmp
 declare -A cuda_url_map=()
 cuda_url_map["10.1"]=https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
@@ -135,6 +136,7 @@ set -e
 
 # optional openmpi for distributed training
 if [[ X"$OPENMPI" == "Xon" ]]; then
+    echo "installing openmpi"
     cd /tmp
     curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
     tar xzf openmpi-4.0.3.tar.gz
