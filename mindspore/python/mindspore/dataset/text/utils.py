@@ -388,7 +388,8 @@ def to_bytes(array, encoding='utf8'):
         >>> text_file_dataset_dir = ["/path/to/text_file_dataset_file"]
         >>> dataset = ds.TextFileDataset(dataset_files=text_file_dataset_dir, shuffle=False)
         >>> for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
-        ...     data = text.to_bytes(item["text"])
+        ...     data = text.to_str(item["text"])
+        ...     byte_encoded_data = text.to_bytes(data)
     """
 
     if not isinstance(array, np.ndarray):
