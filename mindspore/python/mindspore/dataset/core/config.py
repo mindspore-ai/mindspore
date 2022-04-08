@@ -437,7 +437,7 @@ def load(file):
     _config.load(file)
 
 
-def set_enable_autotune(enable, json_filepath_prefix=None):
+def set_enable_autotune(enable, filepath_prefix=None):
     """
     Set whether to enable AutoTune. AutoTune is disabled by default.
 
@@ -450,9 +450,10 @@ def set_enable_autotune(enable, json_filepath_prefix=None):
 
     Args:
         enable (bool): Whether to enable AutoTune.
-        json_filepath_prefix (str, optional): The prefix filepath to save the optimized global configuration.
-            The rank id and the json extension will be appended to the json_filepath_prefix string.
-            For example, if json_filepath_prefix="/path/to/some/dir/prefixname" and rank_id is 1, then the path
+        filepath_prefix (str, optional): The prefix filepath to save the optimized global configuration.
+            The rank id and the json extension will be appended to the filepath_prefix string in multi-device training,
+            rank id will be set to 0 in standalone training.
+            For example, if filepath_prefix="/path/to/some/dir/prefixname" and rank_id is 1, then the path
             of the generated file will be "/path/to/some/dir/prefixname_1.json"
             If the file already exists, it will be automatically overwritten. Default: None,
             means not to save the configuration file, but the tuned result still can be checked through INFO log.
@@ -498,21 +499,21 @@ def set_enable_autotune(enable, json_filepath_prefix=None):
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
 
-    save_autoconfig = bool(enable and json_filepath_prefix is not None)
+    save_autoconfig = bool(enable and filepath_prefix is not None)
 
-    if json_filepath_prefix and not isinstance(json_filepath_prefix, str):
-        raise TypeError("json_filepath must be a str value but was: {}.".format(json_filepath_prefix))
+    if filepath_prefix and not isinstance(filepath_prefix, str):
+        raise TypeError("json_filepath must be a str value but was: {}.".format(filepath_prefix))
 
-    if enable and json_filepath_prefix == "":
+    if enable and filepath_prefix == "":
         raise RuntimeError("The value of json_filepath cannot be the empty string.")
 
-    if not enable and json_filepath_prefix is not None:
+    if not enable and filepath_prefix is not None:
         logger.warning("The value of json_filepath is ignored when enable is False.")
 
-    if enable and json_filepath_prefix is None:
+    if enable and filepath_prefix is None:
         logger.warning("Dataset AutoTune is enabled but no json path is specified, check INFO log for tuned result.")
 
-    json_filepath = replace_none(json_filepath_prefix, "")
+    json_filepath = replace_none(filepath_prefix, "")
 
     rank_id = _get_rank_id()
 
