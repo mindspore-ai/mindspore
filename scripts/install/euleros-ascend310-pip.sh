@@ -72,17 +72,19 @@ add_env() {
 sudo yum install gcc gmp-devel -y
 
 # cmake
+echo "installing cmake"
 cd /tmp
 cmake_file_name="cmake-3.19.8-Linux-$(arch).sh"
 curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
-sudo mkdir $HOME/cmake-3.19.8
-sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
+mkdir $HOME/cmake-3.19.8
+bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
 add_env PATH $HOME/cmake-3.19.8/bin
 set +e && source ~/.bashrc
 set -e
 cd -
 
 install_conda() {
+    echo "installing Miniconda3"
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
     cd /tmp
     curl -O https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/$conda_file_name
@@ -120,12 +122,13 @@ set -e
 
 # set up conda env
 env_name=mindspore_py3${PYTHON_VERSION##*.}
-conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
-conda activate $env_name
-# downgrade openssl when py3.9+310
+# constraint openssl when py3.9+310
+openssl_constraint=""
 if [[ "$PYTHON_VERSION" == "3.9" ]]; then
-    conda install openssl=1.1.1 -y
+    openssl_constraint="openssl=1.1.1"
 fi
+conda create -n $env_name python=${PYTHON_VERSION} ${openssl_constraint} -c conda-forge -y
+conda activate $env_name
 
 pip install sympy
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/topi-*-py3-none-any.whl

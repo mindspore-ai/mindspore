@@ -56,6 +56,7 @@ if [[ "$PYTHON_VERSION" == "3.8" && ${MINDSPORE_VERSION:0:3} == "1.6" ]]; then
 fi
 
 install_conda() {
+    echo "installing Miniconda3"
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
     cd /tmp
     wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/$conda_file_name
