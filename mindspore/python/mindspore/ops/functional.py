@@ -1021,7 +1021,7 @@ make_csr_tensor = Primitive('MakeCSRTensor')
 csr_tensor_get_values = Primitive('CSRTensorGetValues')
 csr_tensor_get_indices = Primitive('CSRTensorGetIndices')
 csr_tensor_get_indptr = Primitive('CSRTensorGetIndptr')
-csr_tensor_get_shape = Primitive('CSRTensorGetDenseShape')
+csr_tensor_get_dense_shape = Primitive('CSRTensorGetDenseShape')
 
 tensor_operator_registry.register('all', P.ReduceAll)
 tensor_operator_registry.register('any', P.ReduceAny)
