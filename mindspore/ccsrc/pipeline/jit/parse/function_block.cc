@@ -144,16 +144,8 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
                       << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
                       << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
         UpdateGlobalPyParam(block->global_py_params());
-        auto iter = block->local_py_params_values_.find(var_name);
-        if (iter != block->local_py_params_values_.end()) {
-          auto &key_node = block->local_py_params_keys_[var_name];
-          auto &value_node = iter->second;
-          MS_LOG(DEBUG) << "Update local params of block: " << ToString()
-                        << ", with previous block: " << block->ToString() << ",\nkey_node: " << key_node->DebugString()
-                        << "\nvalue_node: " << value_node->DebugString();
-          (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(var_name, key_node));
-          (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(var_name, value_node));
-        }
+        const auto &[keys, values] = block->local_py_params();
+        UpdateLocalPyParam(keys, values);
       }
       return res;
     } else if (prev_blocks_.empty()) {
