@@ -73,23 +73,23 @@ class MetaServerNode : public NodeBase {
 
   // Register the message handler for the user defined message which is specified by the `name` parameter.
   bool RegisterMessageHandler(const std::string &name,
-                              std::shared_ptr<std::function<void(const std::string &)>> handler);
+                              std::shared_ptr<std::function<std::string(const std::string &)>> handler);
 
  private:
   // Create and init the tcp server.
   bool InitTCPServer();
 
   // Handle the message received by the tcp server.
-  std::shared_ptr<MessageBase> HandleMessage(const std::shared_ptr<MessageBase> &message);
+  MessageBase *const HandleMessage(MessageBase *const message);
 
   // Process the received register message sent from compute graph nodes.
-  std::shared_ptr<MessageBase> ProcessRegister(const std::shared_ptr<MessageBase> &message);
+  MessageBase *const ProcessRegister(MessageBase *const message);
 
   // Process the received unregister message sent from compute graph nodes.
-  std::shared_ptr<MessageBase> ProcessUnregister(const std::shared_ptr<MessageBase> &message);
+  MessageBase *const ProcessUnregister(MessageBase *const message);
 
   // Process the received heartbeat message sent from compute graph nodes.
-  std::shared_ptr<MessageBase> ProcessHeartbeat(const std::shared_ptr<MessageBase> &message);
+  MessageBase *const ProcessHeartbeat(MessageBase *const message);
 
   // Maintain the state which is type of `TopoState` of this cluster topology.
   void UpdateTopoState();
@@ -106,7 +106,7 @@ class MetaServerNode : public NodeBase {
 
   // All the handlers for compute graph node's user-defined messages processing.
   // The `user-defined` means that this kind of message is user defined and has customized message handler.
-  std::map<std::string, std::shared_ptr<std::function<void(const std::string &)>>> message_handlers_;
+  std::map<std::string, std::shared_ptr<std::function<std::string(const std::string &)>>> message_handlers_;
 
   // Stores the registered compute graph nodes.
   std::map<std::string, std::shared_ptr<ComputeGraphNodeState>> nodes_;

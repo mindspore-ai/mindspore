@@ -70,8 +70,7 @@ bool MetaServerNode::InitTCPServer() {
   return true;
 }
 
-std::shared_ptr<MessageBase> MetaServerNode::HandleMessage(const std::shared_ptr<MessageBase> &message) {
-  MS_EXCEPTION_IF_NULL(message);
+MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
   const auto &name = message->Name();
 
   // Handle system messages.
@@ -83,6 +82,7 @@ std::shared_ptr<MessageBase> MetaServerNode::HandleMessage(const std::shared_ptr
       return rpc::NULL_MSG;
     }
     system_msg_handlers_[message_name](message);
+    return rpc::NULL_MSG;
 
     // Handle user defined messages.
   } else {
@@ -92,13 +92,11 @@ std::shared_ptr<MessageBase> MetaServerNode::HandleMessage(const std::shared_ptr
       return rpc::NULL_MSG;
     }
     (*message_handlers_[name])(message->Body());
+    return rpc::NULL_MSG;
   }
-  return rpc::NULL_MSG;
 }
 
-std::shared_ptr<MessageBase> MetaServerNode::ProcessRegister(const std::shared_ptr<MessageBase> &message) {
-  MS_EXCEPTION_IF_NULL(message);
-
+MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   RegistrationMessage registration;
   const std::string &body = message->Body();
   registration.ParseFromArray(body.c_str(), body.length());
@@ -116,9 +114,7 @@ std::shared_ptr<MessageBase> MetaServerNode::ProcessRegister(const std::shared_p
   return rpc::NULL_MSG;
 }
 
-std::shared_ptr<MessageBase> MetaServerNode::ProcessUnregister(const std::shared_ptr<MessageBase> &message) {
-  MS_EXCEPTION_IF_NULL(message);
-
+MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message) {
   UnregistrationMessage unregistration;
   const std::string &body = message->Body();
   unregistration.ParseFromArray(body.c_str(), body.length());
@@ -133,9 +129,7 @@ std::shared_ptr<MessageBase> MetaServerNode::ProcessUnregister(const std::shared
   return rpc::NULL_MSG;
 }
 
-std::shared_ptr<MessageBase> MetaServerNode::ProcessHeartbeat(const std::shared_ptr<MessageBase> &message) {
-  MS_EXCEPTION_IF_NULL(message);
-
+MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) {
   HeartbeatMessage heartbeat;
   const std::string &body = message->Body();
   heartbeat.ParseFromArray(body.c_str(), body.length());
@@ -185,7 +179,7 @@ size_t MetaServerNode::GetAliveNodeNum() {
 }
 
 bool MetaServerNode::RegisterMessageHandler(const std::string &name,
-                                            std::shared_ptr<std::function<void(const std::string &)>> handler) {
+                                            std::shared_ptr<std::function<std::string(const std::string &)>> handler) {
   if (message_handlers_.find(name) != message_handlers_.end()) {
     MS_LOG(ERROR) << "The message name: " << name << " have already been registered";
     return false;

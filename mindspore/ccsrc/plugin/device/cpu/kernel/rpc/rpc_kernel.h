@@ -37,10 +37,10 @@ class RpcKernelMod : public NativeCpuKernelMod {
   void InitKernel(const CNodePtr &kernel_node) override { return; }
 
   // Set remote data as input.
-  void SetRemoteInput(const std::shared_ptr<MessageBase> &msg) { remote_input_ = msg; }
+  void SetRemoteInput(MessageBase *const msg) { remote_input_ = msg; }
 
  protected:
-  std::shared_ptr<MessageBase> remote_input_;
+  MessageBase *remote_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -83,8 +83,11 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
 
   std::string message_name = "route";
   static std::string received_message;
-  auto func = std::make_shared<std::function<void(const std::string &)>>(
-    [](const std::string &message) { received_message = message; });
+  auto func =
+    std::make_shared<std::function<std::string(const std::string &)>>([](const std::string &message) -> std::string {
+      received_message = message;
+      return message;
+    });
   msn.RegisterMessageHandler(message_name, func);
 
   ComputeGraphNode cgn("compute_graph_node");
