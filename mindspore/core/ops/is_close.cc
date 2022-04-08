@@ -21,6 +21,7 @@
 #include <set>
 #include <vector>
 #include "ops/op_utils.h"
+#include "utils/ms_context.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
@@ -29,33 +30,38 @@ namespace mindspore {
 namespace ops {
 namespace {
 abstract::ShapePtr IsCloseInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const int MAX = 0x3fffffff;
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  auto input_rank = SizeToLong(input_shape.size());
-  auto other_rank = SizeToLong(other_shape.size());
-  CheckAndConvertUtils::Check("input rank", input_rank, kEqual, other_rank, op_name);
-  int64_t input_size = 1, other_size = 1;
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size *= input_shape[i];
-    other_size *= other_shape[i];
-    if (input_shape[i] != other_shape[i] && (input_shape[i] != 1 || other_shape[i] != 1)) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name
-                               << "', The size of tensor input must match the size of tensor other at the " << i
-                               << " dimension, but got input size: " << input_shape[i]
-                               << ", other size: " << other_shape[i] << ".";
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    const int MAX = 0x3fffffff;
+    auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+    auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto input_rank = SizeToLong(input_shape.size());
+    auto other_rank = SizeToLong(other_shape.size());
+    CheckAndConvertUtils::Check("input rank", input_rank, kEqual, other_rank, op_name);
+    int64_t input_size = 1, other_size = 1;
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      input_size *= input_shape[i];
+      other_size *= other_shape[i];
+      if (input_shape[i] != other_shape[i] && (input_shape[i] != 1 || other_shape[i] != 1)) {
+        MS_EXCEPTION(ValueError) << "For '" << op_name
+                                 << "', The size of tensor input must match the size of tensor other at the " << i
+                                 << " dimension, but got input size: " << input_shape[i]
+                                 << ", other size: " << other_shape[i] << ".";
+      }
     }
+    if (input_size > MAX)
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', The size of tensor input must should be less than [2147483648], actual is "
+                               << input_size;
+    if (other_size > MAX)
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', The size of tensor other must should be less than [2147483648], actual is "
+                               << other_size;
   }
-  if (input_size > MAX)
-    MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', The size of tensor input must should be less than [2147483648], actual is "
-                             << input_size;
-  if (other_size > MAX)
-    MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', The size of tensor other must should be less than [2147483648], actual is "
-                             << other_size;
   return BroadCastInferShape(op_name, input_args);
 }
 
