@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_OPTIMIZATION_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_OPTIMIZATION_H_
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -33,9 +33,9 @@ class GraphKernelOptimizer {
   // Split kernels
   PassManagerPtr Split() const;
   // Post-process
-  PassManagerPtr PostProcess() const;
+  PassManagerPtr BuildKernel() const;
 };
 
 void GraphKernelOptimize(const FuncGraphPtr &kernel_graph);
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_OPTIMIZATION_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_OPTIMIZATION_H_

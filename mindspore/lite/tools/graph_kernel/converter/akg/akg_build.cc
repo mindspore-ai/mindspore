@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/graph_kernel/lite_adapter/akg_build.h"
+#include "tools/graph_kernel/converter/akg/akg_build.h"
 
 #include <sys/wait.h>
 #include <dirent.h>
@@ -211,7 +211,7 @@ bool AkgKernelBuilder::CompileJsonsInAnfnodes(const AnfNodePtrList &node_list) {
   auto res = CompileJsonsInList(dir_path.value(), json_list);
   if (res) {
     CheckObjFiles(dir_path.value(), json_list);
-    auto cmd = "g++ -fPIC -shared -o" + dir_path.value() + "/akgkernels.so " + kernels_name;
+    auto cmd = "g++ -fPIC -shared -o akgkernels.so " + kernels_name;
     if (system(cmd.c_str()) == 0) {
       return true;
     }

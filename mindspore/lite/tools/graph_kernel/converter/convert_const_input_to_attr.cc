@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/graph_kernel/lite_adapter/convert_const_input_to_attr.h"
+#include "tools/graph_kernel/converter/convert_const_input_to_attr.h"
 
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "utils/anf_utils.h"

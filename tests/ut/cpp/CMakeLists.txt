@@ -220,16 +220,6 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_relu_fusion.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
         "../../../mindspore/ccsrc/plugin/device/gpu/optimizer/batch_norm_relu_grad_fusion.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/akg_build.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/build_kernel.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/callback_impl.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/graph_kernel_optimization.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST
-  "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/graph_kernel_pass_manager.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/runtime/akg_kernel.cc")
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/common/graph_kernel/lite_adapter/common/infer_shape.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tbe_kernel_compile.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST
   "../../../mindspore/ccsrc/plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.cc")

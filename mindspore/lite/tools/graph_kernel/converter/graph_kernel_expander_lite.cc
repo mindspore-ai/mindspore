@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "common/graph_kernel/lite_adapter/graph_kernel_expander_lite.h"
+#include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 
 #include <utility>
 #include <vector>

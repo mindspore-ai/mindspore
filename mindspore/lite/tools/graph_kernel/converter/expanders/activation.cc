@@ -19,7 +19,7 @@
 #include <string>
 
 #include "common/graph_kernel/expanders/expander_factory.h"
-#include "common/graph_kernel/lite_adapter/expanders/activation.h"
+#include "tools/graph_kernel/converter/expanders/activation.h"
 #include "mindapi/base/types.h"
 #include "ir/dtype.h"
 

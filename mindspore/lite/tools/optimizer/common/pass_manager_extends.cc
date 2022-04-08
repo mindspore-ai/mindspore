@@ -35,11 +35,35 @@ void PassManager::AddPass(const PassPtr &pass) {
   }
 }
 
-// not implement for lite, just for api compatible
-bool PassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const { return false; }
+bool PassManager::RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const PassPtr &pass) const {
+  bool changed = false;
+#if defined(_WIN32) || defined(_WIN64)
+  auto start_time = std::chrono::steady_clock::now();
+#else
+  struct timeval start_time {};
+  struct timeval end_time {};
+  (void)gettimeofday(&start_time, nullptr);
+#endif
+  if (pass->Run(func_graph)) {
+    MS_LOG(DEBUG) << "Run pass and find change";
+    changed = true;
+  }
+#if defined(_WIN32) || defined(_WIN64)
+  auto end_time = std::chrono::steady_clock::now();
+  std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
+  MS_LOG(INFO) << "Run pass " << GetPassFullname(pass_id, pass) << " in " << cost.count() << " us.";
+#else
+  (void)gettimeofday(&end_time, nullptr);
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Run pass " << GetPassFullname(pass_id, pass) << " in " << cost << " us.";
+#endif
+  return changed;
+}
 
-// not implement for lite, just for api compatible
-std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const { return ""; }
+std::string PassManager::GetPassFullname(size_t pass_id, const PassPtr &pass) const {
+  return "hwopt_" + name() + "_" + std::to_string(pass_id) + "_" + pass->name();
+}
 
 // not implement for lite, just for api compatible
 void PassManager::DumpPassIR(const FuncGraphPtr &func_graph, const std::string &pass_fullname) const {}
@@ -52,31 +76,11 @@ bool PassManager::Run(const FuncGraphPtr &func_graph, const std::vector<PassPtr>
   size_t num = 0;
   for (const auto &pass : passes) {
     if (pass != nullptr) {
-#if defined(_WIN32) || defined(_WIN64)
-      auto start_time = std::chrono::steady_clock::now();
-#else
-      struct timeval start_time {};
-      struct timeval end_time {};
-      (void)gettimeofday(&start_time, nullptr);
-#endif
-      if (pass->Run(func_graph)) {
-        MS_LOG(DEBUG) << "Run pass and find change";
-        changed = true;
-      }
-#if defined(_WIN32) || defined(_WIN64)
-      auto end_time = std::chrono::steady_clock::now();
-      std::chrono::duration<double, std::ratio<1, kUSecondInSecond>> cost = end_time - start_time;
-      MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost.count() << " us";
-#else
-      (void)gettimeofday(&end_time, nullptr);
-      uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-      cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-      MS_LOG(INFO) << "Run pass hwopt_" + name() + "_" << num << "_" + pass->name() + " in " << cost << " us";
-#endif
-      num++;
+      changed = RunPass(func_graph, num, pass) || changed;
     } else {
       MS_LOG(INFO) << "pass is null";
     }
+    num++;
   }
   return changed;
 }

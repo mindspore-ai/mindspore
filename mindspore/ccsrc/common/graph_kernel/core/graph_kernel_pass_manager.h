@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_PASS_MANAGER_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_PASS_MANAGER_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_PASS_MANAGER_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_PASS_MANAGER_H_
 
 #include <utility>
 #include <vector>
 #include <string>
 #include <memory>
 
-#include "backend/common/optimizer/pass_manager.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
+#include "backend/common/optimizer/pass_manager.h"
 
 namespace mindspore::graphkernel {
 using opt::PassManager;
@@ -32,14 +32,13 @@ class GraphKernelPassManager : public PassManager {
       : PassManager(name, true), stage_(stage), flags_(GraphKernelFlags::GetInstance()) {}
   ~GraphKernelPassManager() = default;
 
-  // Add graph pass for lite, the pass object will be freed when pass manager freed.
+  // Add graph pass, the pass object will be freed when pass manager freed.
   void Add(const opt::PassPtr &pass, unsigned int pass_level, bool default_enable = true);
 
-  // Run passes for lite on the func_graph
+  // Run passes on the func_graph
   bool Run(const FuncGraphPtr &func_graph) const override;
 
  protected:
-  bool RunPass(const FuncGraphPtr &func_graph, size_t pass_id, const opt::PassPtr &pass) const override;
   std::string GetPassFullname(size_t pass_id, const opt::PassPtr &pass) const override;
 
   size_t stage_;
@@ -47,4 +46,4 @@ class GraphKernelPassManager : public PassManager {
   const GraphKernelFlags &flags_;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_GRAPH_KERNEL_PASS_MANAGER_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_PASS_MANAGER_H_

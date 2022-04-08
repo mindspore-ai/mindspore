@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_BUILD_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_BUILD_KERNEL_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONVERT_CONST_INPUT_TO_ATTR_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONVERT_CONST_INPUT_TO_ATTR_H_
 #include "ir/func_graph.h"
 #include "backend/common/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
-class KernelBuilder : public opt::Pass {
+class ConvertConstInputToAttr : public opt::Pass {
  public:
-  KernelBuilder() : Pass("build_kernel_lite") {}
-  ~KernelBuilder() override = default;
-
-  AnfNodePtr CreateCustomOp(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
-
+  ConvertConstInputToAttr() : Pass("convert_const_input_to_attr") {}
+  ~ConvertConstInputToAttr() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_BUILD_KERNEL_H_
+
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONVERT_CONST_INPUT_TO_ATTR_H_

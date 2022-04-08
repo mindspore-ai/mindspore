@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_CALLBACK_IMPL_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_CALLBACK_IMPL_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_
 #include <string>
 #include <vector>
 #include <utility>
@@ -43,4 +43,4 @@ class CallbackImpl : public Callback {
   void ResetKernelInfo(const AnfNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_LITE_ADAPTER_CALLBACK_IMPL_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CALLBACK_IMPL_H_
