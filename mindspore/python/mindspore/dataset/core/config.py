@@ -25,6 +25,7 @@ Common imported modules in corresponding API examples are as follows:
 import os
 import platform
 import random
+from pathlib import Path
 import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
@@ -436,7 +437,7 @@ def load(file):
     _config.load(file)
 
 
-def set_enable_autotune(enable, json_filepath=None):
+def set_enable_autotune(enable, json_filepath_prefix=None):
     """
     Set whether to enable AutoTune. AutoTune is disabled by default.
 
@@ -449,7 +450,10 @@ def set_enable_autotune(enable, json_filepath=None):
 
     Args:
         enable (bool): Whether to enable AutoTune.
-        json_filepath (str, optional): The filepath to save the optimized global configuration.
+        json_filepath_prefix (str, optional): The prefix filepath to save the optimized global configuration.
+            The rank id and the json extension will be appended to the json_filepath_prefix string.
+            For example, if json_filepath_prefix="/path/to/some/dir/prefixname" and rank_id is 1, then the path
+            of the generated file will be "/path/to/some/dir/prefixname_1.json"
             If the file already exists, it will be automatically overwritten. Default: None,
             means not to save the configuration file, but the tuned result still can be checked through INFO log.
 
@@ -465,7 +469,7 @@ def set_enable_autotune(enable, json_filepath=None):
         - When `enable` is False, `json_filepath` will be ignored.
         - The JSON file can be loaded by API `mindspore.dataset.deserialize` to build a tuned pipeline.
 
-    An example of the generated JSON file is as follow. "remark" file will conclude that if the dataset has been
+    An example of the generated JSON file is as follows. "remark" file will conclude that if the dataset has been
     tuned or not. "summary" filed will show the tuned configuration of dataset pipeline. Users can modify scripts
     based on the tuned result.
 
@@ -494,23 +498,51 @@ def set_enable_autotune(enable, json_filepath=None):
     if not isinstance(enable, bool):
         raise TypeError("enable must be of type bool.")
 
-    save_autoconfig = bool(enable and json_filepath is not None)
+    save_autoconfig = bool(enable and json_filepath_prefix is not None)
 
-    if json_filepath and not isinstance(json_filepath, str):
-        raise TypeError("json_filepath must be a str value but was: {}.".format(json_filepath))
+    if json_filepath_prefix and not isinstance(json_filepath_prefix, str):
+        raise TypeError("json_filepath must be a str value but was: {}.".format(json_filepath_prefix))
 
-    if enable and json_filepath == "":
+    if enable and json_filepath_prefix == "":
         raise RuntimeError("The value of json_filepath cannot be the empty string.")
 
-    if not enable and json_filepath is not None:
+    if not enable and json_filepath_prefix is not None:
         logger.warning("The value of json_filepath is ignored when enable is False.")
 
-    if enable and json_filepath is None:
+    if enable and json_filepath_prefix is None:
         logger.warning("Dataset AutoTune is enabled but no json path is specified, check INFO log for tuned result.")
 
-    json_filepath = replace_none(json_filepath, "")
+    json_filepath = replace_none(json_filepath_prefix, "")
+
+    rank_id = _get_rank_id()
+
+    path = Path(json_filepath).resolve()
+
+    if not path.is_dir():
+        filename_prefix = path.name
+        # append rank_id and json extension
+        filename = filename_prefix + "_" + rank_id + ".json"
+        json_filepath = str(path.with_name(filename))
 
     _config.set_enable_autotune(enable, save_autoconfig, json_filepath)
+
+
+def _get_rank_id():
+    """
+    INTERNAL USE ONLY
+    Get the rank id
+    :return:rank_id
+    """
+    _init_device_info()
+    rank_id = _config.get_rank_id()
+    # default rank_id is -1 in ConfigManager
+    if rank_id < 0:
+        rank_id = os.getenv("RANK_ID")
+        if not rank_id or not rank_id.isdigit():
+            rank_id = "0"
+    else:
+        rank_id = str(rank_id)
+    return rank_id
 
 
 def get_enable_autotune():
