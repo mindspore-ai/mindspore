@@ -82,7 +82,7 @@ class Callback:
     Callback function can perform some operations before and after step or epoch.
     To create a custom callback, subclass Callback and override the method associated
     with the stage of interest. For details of Callback fusion, please check
-    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_.
+    `Callback <https://www.mindspore.cn/tutorials/experts/en/master/debug/custom_debugging_info.html>`_.
 
     Examples:
         >>> import numpy as np
@@ -249,7 +249,7 @@ class RunContext:
     Callback objects can stop the loop by calling request_stop() of run_context.
     This class needs to be used with :class:`mindspore.train.callback.Callback`.
     For details of Callback fusion, please check
-    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_.
+    `Callback <https://www.mindspore.cn/tutorials/experts/en/master/debug/custom_debugging_info.html>`_.
 
     Args:
         original_args (dict): Holding the related information of model.

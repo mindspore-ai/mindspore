@@ -892,7 +892,7 @@ class Gather(Primitive):
          out of range.
 
          2.The data type of input_params cannot be
-         `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+         `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
          platform currently.
 
     Inputs:
@@ -1289,7 +1289,7 @@ class Size(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - Input parameters, the shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is
-          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
     Outputs:
         int. A scalar representing the elements' size of `input_x`, tensor is the number of elements
@@ -1333,8 +1333,8 @@ class Fill(PrimitiveWithInfer):
 
     Inputs:
         - **type** (mindspore.dtype) - The specified type of output tensor. The data type only supports
-          `bool_ <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
-          `number <https://www.mindspore.cn/docs/api/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ and
+          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
         - **shape** (tuple[int]) - The specified shape of output tensor.
         - **value** (Union(number.Number, bool)) - Value to fill the returned tensor.
 

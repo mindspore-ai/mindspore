@@ -41,7 +41,7 @@ MindSpore提供了友好的设计和高效的执行，旨在提升数据科学�
 
 <img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture-zh.png" alt="MindSpore Architecture"/>
 
-欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/architecture.html)。
+欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/tutorials/zh-CN/master/beginner/introduction.html)。
 
 ### 自动微分
 

@@ -793,7 +793,7 @@ def set_context(**kwargs):
             If enable_graph_kernel is set to True, acceleration can be enabled.
             For details of graph kernel fusion, please check
             `Enabling Graph Kernel Fusion
-            <https://www.mindspore.cn/docs/programming_guide/en/master/enable_graph_kernel_fusion.html>`_.
+            <https://www.mindspore.cn/docs/en/master/design/enable_graph_kernel_fusion.html>`_.
         graph_kernel_flags (str) –
             Optimization options of graph kernel fusion, and the priority is higher when it conflicts
             with enable_graph_kernel. Only for experienced users.
@@ -828,7 +828,7 @@ def set_context(**kwargs):
 
             For more information about the enable operator tuning tool settings, please check
             `Enable the operator optimization tool
-            <https://www.mindspore.cn/docs/programming_guide/en/master/enable_auto_tune.html>`_.
+            <https://www.mindspore.cn/tutorials/experts/en/master/debug/auto_tune.html>`_.
         check_bprop (bool): Whether to check back propagation nodes. The checking ensures that the shape and dtype
             of back propagation node outputs is the same as input parameters. Default: False.
         max_call_depth (int): Specify the maximum depth of function call. Must be positive integer. Default: 1000.
@@ -837,7 +837,7 @@ def set_context(**kwargs):
             set larger too, otherwise a `core dumped` exception may be raised because of system stack overflow.
         enable_sparse (bool): Whether to enable sparsity feature. Default: False.
             For details of sparsity and sparse tensor, please check
-            `sparse tensor <https://www.mindspore.cn/docs/programming_guide/en/master/tensor.html#sparse-tensor>`_.
+            `sparse tensor <https://www.mindspore.cn/tutorials/en/master/beginner/tensor.html#sparse-tensor>`_.
         grad_for_scalar (bool):  Whether to get gradient for scalar. Default: False.
             When grad_for_scalar is set to True, the function's scalar input can be derived.
             The default value is False. Because the back-end does not support scaling operations currently,
