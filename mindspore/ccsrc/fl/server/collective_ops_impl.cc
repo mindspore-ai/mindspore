@@ -33,7 +33,7 @@ void CollectiveOpsImpl::Initialize(const std::shared_ptr<ps::core::ServerNode> &
   MS_EXCEPTION_IF_NULL(server_node);
   server_node_ = server_node;
   rank_id_ = server_node_->rank_id();
-  server_num_ = ps::PSContext::instance()->initial_server_num();
+  server_num_ = server_node->server_num();
   return;
 }
 

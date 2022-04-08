@@ -76,6 +76,8 @@ class BACKEND_EXPORT Server {
 
   bool SubmitTask(std::function<void()> &&task);
 
+  bool IsReady() const;
+
  private:
   Server()
       : server_node_(nullptr),
@@ -109,7 +111,8 @@ class BACKEND_EXPORT Server {
         cipher_get_list_sign_cnt_(0),
         minimum_clients_for_reconstruct(0),
         minimum_secret_shares_for_reconstruct(0),
-        cipher_time_window_(0) {}
+        cipher_time_window_(0),
+        is_ready_(false) {}
   ~Server() = default;
   Server(const Server &) = delete;
   Server &operator=(const Server &) = delete;
@@ -249,6 +252,9 @@ class BACKEND_EXPORT Server {
   size_t minimum_clients_for_reconstruct;
   size_t minimum_secret_shares_for_reconstruct;
   uint64_t cipher_time_window_;
+
+  // The flag that represents whether server is starting successful.
+  std::atomic_bool is_ready_;
 };
 }  // namespace server
 }  // namespace fl

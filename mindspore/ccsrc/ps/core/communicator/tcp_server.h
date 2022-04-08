@@ -51,7 +51,9 @@ class TcpServer;
 class TcpConnection {
  public:
   explicit TcpConnection(struct bufferevent *bev, const evutil_socket_t &fd, TcpServer *server)
-      : buffer_event_(bev), fd_(fd), server_(server) {}
+      : buffer_event_(bev), fd_(fd), server_(server) {
+    MS_LOG(WARNING) << "TcpConnection is constructed! fd is " << fd;
+  }
   TcpConnection(const TcpConnection &);
   virtual ~TcpConnection();
 
@@ -98,7 +100,7 @@ class TcpServer {
   void SendToAllClients(const char *data, size_t len);
   void AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection);
   void RemoveConnection(const evutil_socket_t &fd);
-  std::shared_ptr<TcpConnection> GetConnectionByFd(const evutil_socket_t &fd);
+  std::shared_ptr<TcpConnection> &GetConnectionByFd(const evutil_socket_t &fd);
   OnServerReceiveMessage GetServerReceive() const;
   void SetMessageCallback(const OnServerReceiveMessage &cb);
   bool SendMessage(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<CommMessage> &message);
