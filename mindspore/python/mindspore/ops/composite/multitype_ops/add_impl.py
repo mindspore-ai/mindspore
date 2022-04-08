@@ -361,4 +361,19 @@ def _add_csrtensor_csrtensor(x, y):
    """
     return F.make_csr_tensor(x.indptr, x.indices, x.values + y.values, x.shape)
 
+
+@_add_backward.register("COOTensor", "COOTensor")
+def _add_cootensor_cootensor(x, y):
+    """
+   Adds COOTensor and COOTensor.
+
+   Args:
+       x (COOTensor): x
+       y (COOTensor): y
+
+   Returns:
+       COOTensor.
+   """
+    return F.make_coo_tensor(x.indices, x.values + y.values, x.shape)
+
 hyper_add = base.HyperMap(_add_backward)

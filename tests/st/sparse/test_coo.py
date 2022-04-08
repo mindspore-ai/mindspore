@@ -14,19 +14,15 @@
 # ============================================================================
 """smoke tests for COO operations"""
 
-import platform
 import pytest
 import numpy as np
 
-from mindspore import Tensor, COOTensor, ms_function, nn, context
+from mindspore import Tensor, COOTensor, ms_function, nn, ops
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 
+from .sparse_utils import get_platform, compare_res
 
-context.set_context(mode=context.GRAPH_MODE)
-
-def get_platform():
-    return platform.system().lower()
 
 def compare_coo(coo1, coo2):
     assert isinstance(coo1, COOTensor)
@@ -219,3 +215,96 @@ def test_coo_attr():
             assert (py_tuple[i].asnumpy() == g_tuple[i].asnumpy()).all()
         else:
             assert py_tuple[i] == g_tuple[i]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_coo_bprop():
+    """
+    Feature: Test back-propagation with COO-related Ops.
+    Description: Test back-propagation of make_coo, coo.attributes, coo.methods().
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+    grad_op = ops.GradOperation(get_all=True)
+    indices = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+    values = Tensor([-1, 2], dtype=mstype.float32)
+    dense_shape = (3, 4)
+
+    @grad_op
+    @ms_function
+    def test_coo_tensor(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor
+
+    @grad_op
+    @ms_function
+    def test_coo_indices(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.indices
+
+    @grad_op
+    @ms_function
+    def test_coo_values(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.values
+
+    @grad_op
+    @ms_function
+    def test_coo_shape(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.shape
+
+    @grad_op
+    @ms_function
+    def test_coo_cast(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.astype(mstype.int32)
+
+    @grad_op
+    @ms_function
+    def test_coo_dtype(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.dtype
+
+    @grad_op
+    @ms_function
+    def test_coo_to_tuple(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.to_tuple()
+
+    @grad_op
+    @ms_function
+    def test_coo_to_abs(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.abs()
+
+    @grad_op
+    @ms_function
+    def test_coo_to_csr(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.to_csr()
+
+    @grad_op
+    @ms_function
+    def test_coo_to_dense(indices, values, dense_shape):
+        coo_tensor = COOTensor(indices, values, dense_shape)
+        return coo_tensor.to_dense()
+
+    all_zero = (np.zeros(indices.shape, np.int32), np.zeros(values.shape, np.float32))
+    values_on = (np.zeros(indices.shape, np.int32), np.ones(values.shape, np.float32))
+    values_absgrad = (np.zeros(indices.shape, np.int32), np.sign(values.asnumpy()))
+
+    compare_res(test_coo_tensor(indices, values, dense_shape), values_on)
+    compare_res(test_coo_indices(indices, values, dense_shape), all_zero)
+    compare_res(test_coo_values(indices, values, dense_shape), values_on)
+    compare_res(test_coo_shape(indices, values, dense_shape), all_zero)
+    compare_res(test_coo_cast(indices, values, dense_shape), values_on)
+    compare_res(test_coo_dtype(indices, values, dense_shape), all_zero)
+    compare_res(test_coo_to_tuple(indices, values, dense_shape), values_on)
+    compare_res(test_coo_to_abs(indices, values, dense_shape), values_absgrad)
+    compare_res(test_coo_to_csr(indices, values, dense_shape), values_on)
+    compare_res(test_coo_to_dense(indices, values, dense_shape), values_on)
