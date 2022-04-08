@@ -5401,7 +5401,7 @@ class Invert(Primitive):
 
     .. math::
 
-        out_i = -x_{i}
+        out_i = ~x_{i}
 
     Inputs:
         - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
