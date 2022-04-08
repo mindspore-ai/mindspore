@@ -223,7 +223,7 @@ API示例所需模块的导入代码如下：
 
     bool，表示是否启用共享内存。
 
-.. py:function:: mindspore.dataset.config.set_enable_autotune(enable, json_filepath=None)
+.. py:function:: mindspore.dataset.config.set_enable_autotune(enable, filepath_prefix=None)
 
     设置是否开启自动数据加速。默认情况下不开启自动数据加速。
 
@@ -234,7 +234,9 @@ API示例所需模块的导入代码如下：
     **参数：**
 
     - **enable** (bool) - 是否开启自动数据加速。
-    - **json_filepath** (str，可选) - 优化后的全局配置的保存路径，当路径存在同名文件时会自动覆盖。默认值：None，表示不保存配置文件，但可以通过INFO日志查看调优配置。
+    - **filepath_prefix** (str，可选) - 优化后的全局配置的保存路径+文件前缀。多卡环境时，设备ID号与JSON扩展名会自动添加到 `filepath_prefix`
+      参数后面作为完整的文件路径，单卡默认设备ID号为0。例如，设置 `filepath_prefix="/path/to/some/dir/prefixname"` ，设备ID为1的训练进程
+      生成的调优文件将被命名为 `/path/to/some/dir/prefixname_1.json` 。默认值：None，表示不保存配置文件，但可以通过INFO日志查看调优配置。
 
     **异常：**
 
