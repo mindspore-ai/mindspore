@@ -93,6 +93,7 @@ fi
 
 # optional openmpi for distributed training
 if [[ X"$OPENMPI" == "Xon" ]]; then
+    echo "installing openmpi"
     origin_wd=$PWD
     cd /tmp
     curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
@@ -117,6 +118,7 @@ python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simp
 
 # install cuda/cudnn
 cd /tmp
+echo "installing CUDA and cuDNN"
 declare -A cuda_url_map=()
 cuda_url_map["10.1"]=https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
 cuda_url_map["11.1"]=https://developer.download.nvidia.com/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run
