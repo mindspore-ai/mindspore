@@ -9,7 +9,7 @@ function Convert() {
   rm -f ${fifo_file}
   max_converter_jobs=6
   for ((i = 0; i < ${max_converter_jobs}; i++)); do echo; done >&6
-
+  fail=0
   local cfg_file_list model_info model_name extra_info model_type cfg_file_name model_file weight_file output_file \
         quant_type config_file train_model in_dtype out_dtype converter_result cfg_file calib_size
   cfg_file_list=$1
@@ -117,11 +117,12 @@ function Convert() {
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' pass';echo ${converter_result} >> $5
             model_size=`ls ${output_file}.ms  -l|awk -F ' ' '{print $5}'`
             if [[ -n ${calib_size} ]];then
-              if [ ${model_size} -gt ${calib_size} ]; then
+              let calib_final_size=${calib_size}+50
+              if [ ${model_size} -gt ${calib_final_size} ]; then
                 echo "${output_file}.ms " model size is " ${model_size} " and calib size is " ${calib_size}"
                 converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' failed';echo ${converter_result} >> $5
                 if [[ $6 != "ON" ]]; then
-                    return 1
+                  fail=1
                 fi
               else
                 converter_result='compare_size '${model_type}''${quant_type}' '${output_file##*/}.ms' pass';echo ${converter_result} >> $5
@@ -130,7 +131,7 @@ function Convert() {
         else
             converter_result='converter '${model_type}''${quant_type}' '${model_name}' failed';echo ${converter_result} >> $5
             if [[ $6 != "ON" ]]; then
-                return 1
+              fail=1
             fi
         fi
         echo >&6
@@ -139,6 +140,7 @@ function Convert() {
   done
   wait
   exec 6>&-
+  return ${fail}
 }
 
 function Push_Files() {
