@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "nnacl/infer/instance_norm_infer.h"
 #include "nnacl/infer/crop_infer.h"
 #include "nnacl/infer/infer_register.h"
 

@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_LSTM_GRAD_WEIGHT_INFER_H
-#define MINDSPORE_NNACL_LSTM_GRAD_WEIGHT_INFER_H
+#ifndef MINDSPORE_NNACL_REDUCE_SCATTER_INFER_H
+#define MINDSPORE_NNACL_REDUCE_SCATTER_INFER_H
 
 #include "nnacl/infer/common_infer.h"
-#include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/reduce_scatter_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int LstmGradWeightInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
-                             OpParameter *parameter);
+int ReduceScatterInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
+                            OpParameter *parameter);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_LSTM_GRAD_WEIGHT_INFER_H
+#endif  // MINDSPORE_NNACL_REDUCE_SCATTER_INFER_H
