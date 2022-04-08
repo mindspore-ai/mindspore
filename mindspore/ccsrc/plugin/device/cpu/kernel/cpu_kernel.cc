@@ -468,6 +468,70 @@ void BroadcastIterator::InitStrides() {
                        input_strides_b_.begin(), [](const auto &a, const auto &b) { return b == 1 ? 0 : a; });
 }
 
+MultipleBroadcastIterator::MultipleBroadcastIterator(std::vector<shape_info> multi_inputs, shape_info output_shape)
+    : multi_inputs_(std::move(multi_inputs)), output_shape_(std::move(output_shape)) {
+  output_dimension_ = SizeToInt(output_shape_.size());
+  // Assign dimension to int for iterator
+  BroadcastShape();
+  input_pos_.resize(multi_inputs_.size());
+  // Allocate strides memory
+  multi_inputs_strides_.resize(multi_inputs_.size(), std::vector<size_t>(output_dimension_, 0));
+  multi_inputs_back_strides_.resize(multi_inputs_.size(), std::vector<size_t>(output_dimension_, 0));
+  coordinates_.resize(output_dimension_);
+  InitStrides();
+}
+
+void MultipleBroadcastIterator::SetPos(size_t pos) {
+  for (int i = output_dimension_ - 1; i >= 0 && pos != 0; --i) {
+    coordinates_[i] = pos % output_shape_[i];
+    for (size_t j = 0; j < input_pos_.size(); ++j) {
+      input_pos_[j] += coordinates_[i] * multi_inputs_strides_[j][i];
+    }
+    pos /= output_shape_[i];
+  }
+}
+
+void MultipleBroadcastIterator::GenNextPos() {
+  // Calculate output next coordinate
+  for (int i = output_dimension_ - 1; i >= 0; --i) {
+    if (coordinates_[i] + 1 == output_shape_[i]) {
+      coordinates_[i] = 0;
+      for (size_t j = 0; j < input_pos_.size(); ++j) {
+        input_pos_[j] -= multi_inputs_back_strides_[j][i];
+      }
+    } else {
+      ++coordinates_[i];
+      for (size_t j = 0; j < input_pos_.size(); ++j) {
+        input_pos_[j] += multi_inputs_strides_[j][i];
+      }
+      break;
+    }
+  }
+}
+
+void MultipleBroadcastIterator::BroadcastShape() {
+  for (auto &multi_input : multi_inputs_) {
+    int input_dimension = SizeToInt(multi_input.size());
+    if (input_dimension < output_dimension_) {
+      (void)multi_input.insert(multi_input.begin(), IntToSize(output_dimension_ - input_dimension), 1);
+    }
+  }
+}
+
+void MultipleBroadcastIterator::InitStrides() {
+  for (size_t i = 0; i < multi_inputs_.size(); ++i) {
+    multi_inputs_strides_[i][output_dimension_ - 1] = 1;
+    for (int j = output_dimension_ - 2; j >= 0; --j) {
+      multi_inputs_strides_[i][j] = multi_inputs_[i][j + 1] * multi_inputs_strides_[i][j + 1];
+      multi_inputs_back_strides_[i][j + 1] = (multi_inputs_[i][j + 1] - 1) * multi_inputs_strides_[i][j + 1];
+    }
+    // Update strides for broadcast
+    // While the axis value is 1, the stride is 0
+    (void)std::transform(multi_inputs_strides_[i].begin(), multi_inputs_strides_[i].end(), multi_inputs_[i].begin(),
+                         multi_inputs_strides_[i].begin(), [](const auto &a, const auto &b) { return b == 1 ? 0 : a; });
+  }
+}
+
 TransposeIterator::TransposeIterator(std::vector<size_t> output_shape, std::vector<size_t> axes,
                                      const std::vector<size_t> &input_shape)
     : shape_(std::move(output_shape)), axes_(std::move(axes)) {

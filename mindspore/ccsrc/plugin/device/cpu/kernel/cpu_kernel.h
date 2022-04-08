@@ -242,6 +242,29 @@ class BroadcastIterator {
   int output_dimension_{0};
 };
 
+// Broadcast for multi_inputs and single output
+class MultipleBroadcastIterator {
+ public:
+  using shape_info = std::vector<size_t>;
+  MultipleBroadcastIterator(std::vector<shape_info> multi_inputs, shape_info output_shape);
+  virtual ~MultipleBroadcastIterator() = default;
+  inline size_t GetInputPos(size_t index) const { return input_pos_[index]; }
+  void SetPos(size_t pos);
+  void GenNextPos();
+
+ private:
+  void BroadcastShape();
+  void InitStrides();
+
+  shape_info coordinates_;
+  std::vector<shape_info> multi_inputs_;
+  shape_info output_shape_;
+  std::vector<shape_info> multi_inputs_strides_;
+  std::vector<shape_info> multi_inputs_back_strides_;
+  shape_info input_pos_;
+  int output_dimension_{0};
+};
+
 class TransposeIterator {
  public:
   TransposeIterator(std::vector<size_t> output_shape, std::vector<size_t> axes, const std::vector<size_t> &input_shape);
