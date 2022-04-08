@@ -75,6 +75,7 @@ add_env() {
 }
 
 install_conda() {
+    echo "installing Miniconda3"
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
     cd /tmp
     wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/$conda_file_name
@@ -109,6 +110,7 @@ sudo apt-get install curl gcc-7 libgmp-dev -y
 
 # optional openmpi for distributed training
 if [[ X"$OPENMPI" == "Xon" ]]; then
+    echo "installing openmpi"
     cd /tmp
     curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
     tar xzf openmpi-4.0.3.tar.gz
@@ -133,6 +135,7 @@ fi
 set -e
 
 # install cuda/cudnn
+echo "installing CUDA and cuDNN"
 cd /tmp
 declare -A cuda_url_map=()
 cuda_url_map["10.1"]=https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run

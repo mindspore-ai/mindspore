@@ -56,11 +56,30 @@ add_env() {
 
 sudo yum install gcc git gmp-devel tcl patch numactl-devel flex -y
 
-curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | sudo os=el dist=7 bash
-sudo yum install git-lfs -y
-git lfs install
+# git-lfs
+set +e && type git-lfs &>/dev/null
+if [[ $? -eq 0 ]]; then
+    echo "git-lfs has been installed, skip."
+else
+    echo "installing git-lfs"
+    cd /tmp
+    if [[ "$(arch)" == "aarch64" ]]; then
+        file_name=git-lfs-linux-arm64-v3.1.2.tar.gz
+    else
+        file_name=git-lfs-linux-amd64-v3.1.2.tar.gz
+    fi
+    curl -OL https://github.com/git-lfs/git-lfs/releases/download/v3.1.2/$file_name
+    mkdir $HOME/git-lfs
+    tar xf $file_name -C $HOME/git-lfs
+    add_env PATH $HOME/git-lfs
+    source ~/.bashrc
+    cd -
+    git lfs install
+fi
+set -e
 
 install_conda() {
+    echo "installing Miniconda3"
     conda_file_name="Miniconda3-py3${PYTHON_VERSION##*.}_4.10.3-Linux-$(arch).sh"
     cd /tmp
     curl -O https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/$conda_file_name
@@ -98,12 +117,13 @@ set -e
 
 # set up conda env
 env_name=mindspore_py3${PYTHON_VERSION##*.}
-conda create -n $env_name python=${PYTHON_VERSION} -c conda-forge -y
-conda activate $env_name
-# downgrade openssl when py3.9+310
+# constraint openssl when py3.9+310
+openssl_constraint=""
 if [[ "$PYTHON_VERSION" == "3.9" ]]; then
-    conda install openssl=1.1.1 -y
+    openssl_constraint="openssl=1.1.1"
 fi
+conda create -n $env_name python=${PYTHON_VERSION} ${openssl_constraint} -c conda-forge -y
+conda activate $env_name
 
 pip install wheel
 pip install -U setuptools
@@ -114,11 +134,12 @@ pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/te-*-py3-none-
 pip install ${LOCAL_ASCEND}/ascend-toolkit/latest/fwkacllib/lib64/hccl-*-py3-none-any.whl
 
 # cmake
+echo "installing cmake"
 cd /tmp
 cmake_file_name="cmake-3.19.8-Linux-$(arch).sh"
 curl -O "https://cmake.org/files/v3.19/${cmake_file_name}"
-sudo mkdir $HOME/cmake-3.19.8
-sudo bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
+mkdir $HOME/cmake-3.19.8
+bash cmake-3.19.8-Linux-*.sh --prefix=$HOME/cmake-3.19.8 --exclude-subdir
 add_env PATH $HOME/cmake-3.19.8/bin
 set +e && source ~/.bashrc
 set -e
@@ -126,6 +147,7 @@ cd -
 
 # optional openmpi for distributed training
 if [[ X"$OPENMPI" == "Xon" ]]; then
+    echo "installing openmpi"
     origin_wd=$PWD
     cd /tmp
     curl -O https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz
