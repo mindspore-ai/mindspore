@@ -88,8 +88,8 @@ class Node:
             RuntimeError: If value of kwarg in `kwargs` is not a `NamingValue`-`ScopedValue` or a
                 `CustomObjValue`-`ScopedValue`.
         """
-        return Node(NodeImpl.create_call_cell(cell, None, targets, ScopedValue.create_naming_value(name, "self"), args,
-                                              kwargs, name))
+        return Node(NodeImpl.create_call_buildin_op(cell, None, targets, ScopedValue.create_naming_value(name, "self"),
+                                                    args, kwargs, name))
 
     def get_prev(self) -> 'Node':
         """

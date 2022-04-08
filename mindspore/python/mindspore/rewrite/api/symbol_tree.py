@@ -33,8 +33,14 @@ class SymbolTree:
         RuntimeError: If there is any unsupported ast node type while parsing or optimizing.
     """
 
-    def __init__(self, network: Cell):
-        self._symbol_tree: SymbolTreeImpl = SymbolTreeBuilder(network).build()
+    def __init__(self, handler: SymbolTreeImpl):
+        self._symbol_tree: SymbolTreeImpl = handler
+
+    @classmethod
+    def create(cls, network):
+        if not isinstance(network, Cell):
+            raise RuntimeError("Only support Cell-type-network now.")
+        return cls(SymbolTreeBuilder(network).build())
 
     def get_handler(self) -> SymbolTreeImpl:
         """
@@ -52,7 +58,7 @@ class SymbolTree:
         Returns:
             A dict mapping from name of node to node.
         """
-        return [Node(node_impl) for node_impl in self._symbol_tree.nodes(unfold_subtree=True)]
+        return [Node(node_impl) for node_impl in self._symbol_tree.nodes(unfold_subtree=False)]
 
     def get_node(self, node_name: str) -> Optional[Node]:
         """

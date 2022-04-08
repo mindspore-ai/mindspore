@@ -35,7 +35,6 @@ class AstFinder(ast.NodeVisitor):
         """
         An override method, iterating over all nodes and save target ast nodes.
 
-
         Args:
             node (ast.AST): An instance of ast node which is visited currently.
         """

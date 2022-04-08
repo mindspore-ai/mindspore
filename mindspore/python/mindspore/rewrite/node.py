@@ -18,6 +18,7 @@ import ast
 import inspect
 
 from mindspore.nn import Cell
+from mindspore.ops import Primitive
 from mindspore import log as logger
 from .ast_helpers import AstModifier
 from .api.scoped_value import ScopedValue, ValueType
@@ -63,17 +64,17 @@ class Node:
                  func: Optional[ScopedValue], args: [ScopedValue], kwargs: {str: ScopedValue}, name: str, instance):
         """
         Constructor of Node. Rewrite recommend invoking class method of Node to instantiate an instance of Node such
-        as `create_call_cell`, `create_call_method`, `create_python_node`, `create_input_node` and `create_output_node`,
-        etc. rather than invoking constructor of Node directly.
+        as `create_call_buildin_op`, `create_call_method`, `create_python_node`, `create_input_node` and
+        `create_output_node`, etc. rather than invoking constructor of Node directly.
 
         Args:
             node_type (NodeType): A NodeType as type of Node.
-            ast_node (Optional[ast.AST]): An instance of ast.AST represents corresponding node in ast. `ast_node` should
+            ast_node (ast.AST, optional): An instance of ast.AST represents corresponding node in ast. `ast_node` should
                 not be None except when node type is Unknown.
-            targets ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            func (Optional[ScopedValue]): An instance of ScopedValue. See detail in docstring of Node class.
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            func (ScopedValue, optional): An instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.
@@ -99,23 +100,27 @@ class Node:
         self._belong_tree = None
 
     @classmethod
-    def create_call_cell(cls, cell: Cell, ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
-                         func: Union[ScopedValue, str], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None,
-                         name: str = ""):
+    def create_call_buildin_op(cls, op: Union[Cell, Primitive], ast_node: Optional[ast.AST],
+                               targets: [Union[ScopedValue, str]], func: Union[ScopedValue, str],
+                               args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = ""):
         """
-        Class method of Node. Instantiate an instance of node whose type is CallCell. A CallCell node represents an
-        invoking to cell-op.
+        Class method of Node. Instantiate an instance of node whose type is `CallCell` or `CallPrimitive`.
+        A `CallCell` node represents an invoking to cell-op.
+        A `CallPrimitive` node represents an invoking to primitive-op.
 
         Args:
-            cell (Cell): An instance of Cell corresponding to this node.
-            ast_node (Optional[ast.AST]): An instance of ast.AST represents corresponding node in ast.
-            targets ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            func (Optional[ScopedValue]): An instance of ScopedValue. See detail in docstring of Node class.
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
-            name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
+            op (Union[Cell, Primitive]): An instance of `Cell` or `Primitive` corresponding to this node.
+            ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
+            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of `ScopedValue`. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+                class.
+            name (str): A string represents name of node. Name of node will be unique when inserted into `SymbolTree`.
                 Name of node also used as field name in network class.
         """
+
+        assert isinstance(op, (Cell, Primitive))
         if args is None:
             args = []
         if kwargs is None:
@@ -127,7 +132,11 @@ class Node:
         new_targets = Node._handle_targets(targets)
         if ast_node is None:
             ast_node = AstModifier.create_call_assign(new_targets, func, non_custom_args, non_custom_kwargs)
-        return cls(NodeType.CallCell, ast_node, new_targets, func, args, kwargs, name, cell)
+        if isinstance(op, Cell):
+            node_type = NodeType.CallCell
+        else:
+            node_type = NodeType.CallPrimitive
+        return cls(node_type, ast_node, new_targets, func, args, kwargs, name, op)
 
     @classmethod
     def create_call_method(cls, ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
@@ -138,12 +147,12 @@ class Node:
         invoking to cell-op.
 
         Args:
-            ast_node (Optional[ast.AST]): An instance of ast.AST represents corresponding node in ast. `ast_node` should
-                not be None currently.
-            targets ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            func (Optional[ScopedValue]): An instance of ScopedValue. See detail in docstring of Node class.
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast. `ast_node`
+                should not be None currently.
+            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
         """
@@ -186,7 +195,7 @@ class Node:
         Args:
             ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
             arg_name (str): A string represents name of parameter.
-            default (Optional[ScopedValue]): An instance of ScopedValue represents default value of parameter.
+            default ([ScopedValue, optional]): An instance of ScopedValue represents default value of parameter.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
         """
@@ -205,19 +214,18 @@ class Node:
 
         Args:
             ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
-            return_values ([str]): A list of string represents name of return values.
+            return_values (list[str]): A list of string represents name of return values.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
         """
         real_return_values = ScopedValue.create_name_values(return_values)
         return cls(NodeType.Output, ast_node, None, ScopedValue.create_naming_value("return"), real_return_values, {},
-                   name,
-                   None)
+                   name, None)
 
     @staticmethod
     def _get_construct_arg_names(parameters):
         """
-        Static method of Node. Get parameters' names of the construct function.
+        Static method of `Node`. Get parameters' names of the construct function.
 
         Args:
             parameters (MappingProxyType): An ordered mapping of parameters' names to the corresponding Parameter
@@ -265,9 +273,9 @@ class Node:
 
         Args:
             names (tuple): Parameters' name got from construct func.
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
-            normalized_args ({str: ScopedValue}): The normalized args to be filled.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            normalized_args (dict{str: ScopedValue}): The normalized args to be filled.
 
         Raises:
             RuntimeError: Input args are invalid.
@@ -321,8 +329,8 @@ class Node:
         The keys of args are obtained from the construct function of type(self._instance).
 
         Args:
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
 
         Raises:
             RuntimeError: Input args are invalid.
@@ -361,7 +369,7 @@ class Node:
         Convert CustomObjValue type argument to NamingValue type argument.
 
         Args:
-            args ([ScopedValue]): A list of instance of ScopedValue to be converted.
+            args (list[ScopedValue]): A list of instance of ScopedValue to be converted.
 
         Returns:
             A list of instance of ScopedValue which have been converted.
@@ -383,7 +391,7 @@ class Node:
         Convert CustomObjValue type argument to NamingValue type argument.
 
         Args:
-            kwargs ({str: ScopedValue}): A str to instance of ScopedValue dict whose value to be converted.
+            kwargs (dict{str: ScopedValue}): A str to instance of ScopedValue dict whose value to be converted.
 
         Returns:
             A str to instance of ScopedValue dict whose value has be converted.
@@ -483,7 +491,7 @@ class Node:
         self._belong_tree = symbol_tree
 
     def _sync_assign_func_to_ast(self):
-        """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell."""
+        """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
         if self._ast_node is None:
             return
         assign_ast = self._ast_node
@@ -510,7 +518,7 @@ class Node:
         ast.fix_missing_locations(assign_ast)
 
     def _sync_assign_targets_to_ast(self):
-        """Sync targets of ast.Assign from self._targets when NodeType is CallCell or CallMethod."""
+        """Sync targets of ast.Assign from self._targets when NodeType is CallCell, CallPrimitive or CallMethod."""
         if self._ast_node is None:
             return
         assign_ast = self._ast_node
@@ -529,7 +537,7 @@ class Node:
         ast.fix_missing_locations(assign_ast)
 
     def _sync_call_cell_args_to_ast(self):
-        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallCell."""
+        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallCell or CallPrimitive."""
         if self._ast_node is None:
             return
         assign_ast = self._ast_node
@@ -680,7 +688,7 @@ class Node:
 
 
         Args:
-            inputs ([Node]): A list of instances of Node as new input nodes.
+            inputs (list[Node]): A list of instances of Node as new input nodes.
         """
         self._inputs = inputs
 
@@ -723,7 +731,7 @@ class Node:
             targets ([ScopedValue]): A list of instances of ScopedValue as new targets.
         """
         self._targets = targets
-        if self._node_type in (NodeType.CallCell, NodeType.CallMethod):
+        if self._node_type in (NodeType.CallCell, NodeType.CallMethod, NodeType.CallPrimitive, NodeType.Tree):
             self._sync_assign_targets_to_ast()
 
     def get_func(self) -> ScopedValue:
@@ -746,7 +754,7 @@ class Node:
             func (ScopedValue): An instance of ScopedValue as new func.
         """
         self._func = func
-        if self._node_type == NodeType.CallCell:
+        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive):
             self._sync_assign_func_to_ast()
 
     def get_name(self) -> str:
@@ -779,10 +787,11 @@ class Node:
     def get_instance_type(self) -> type:
         """
         Get the instance_type of current node.
-        When node_type of current node is CallCell, instance_type is type of cell-op.
-        When node_type of current node is CallPrimitive, instance_type is type of primitive-op.
-        When node_type of current node is Tree, instance_type is type of network-cell.
-        When node_type of current node is Python, Input, Output or CallMethod, instance_type should be NoneType
+
+        - When node_type of current node is CallCell, instance_type is type of cell-op.
+        - When node_type of current node is CallPrimitive, instance_type is type of primitive-op.
+        - When node_type of current node is Tree, instance_type is type of network-cell.
+        - When node_type of current node is Python, Input, Output or CallMethod, instance_type should be NoneType
 
         Returns:
             A type.
@@ -792,10 +801,11 @@ class Node:
     def get_instance(self):
         """
         Get the instance of current node.
-        When node_type of current node is CallCell, instance is an instance of Cell.
-        When node_type of current node is CallPrimitive, instance is an instance of primitive.
-        When node_type of current node is Tree, instance is an instance of network-cell.
-        When node_type of current node is Python, Input, Output or CallMethod, instance should be None
+
+        - When node_type of current node is CallCell, instance is an instance of Cell.
+        - When node_type of current node is CallPrimitive, instance is an instance of primitive.
+        - When node_type of current node is Tree, instance is an instance of network-cell.
+        - When node_type of current node is Python, Input, Output or CallMethod, instance should be None
 
         Returns:
             A object.
@@ -804,7 +814,7 @@ class Node:
 
     def _sync_arg(self):
         """Sync _normalized_args to corresponding ast node when updated."""
-        if self._node_type == NodeType.CallCell:
+        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
             self._sync_call_cell_args_to_ast()
         elif self._node_type == NodeType.Output:
             self._sync_return_node_to_ast()
@@ -819,7 +829,7 @@ class Node:
         Args:
             arg_idx (int): Indicate which input being modified.
             node (Node): Node as new input. Can be a node or name of node.
-            out_idx (Optional[int]): Indicate which output of 'node' as new argument. Default is None which means use
+            out_idx ([int, optional]): Indicate which output of 'node' as new argument. Default is None which means use
                 first output of 'node_to_link' as new input.
 
         Raises:
@@ -867,7 +877,7 @@ class Node:
         Note that when _normalized_args is updated, corresponding ast node would be updated also.
 
         Args:
-            args ([ScopedValue]): New arguments to been set.
+            args (list[ScopedValue]): New arguments to been set.
 
         Raises:
             TypeError: Element of new argument is not an instance of ScopedValue.
@@ -886,7 +896,7 @@ class Node:
         Note that when _normalized_args is updated, corresponding ast node would be updated also.
 
         Args:
-            kwargs ({str: ScopedValue}): New arguments to been set.
+            kwargs (dict{str: ScopedValue}): New arguments to been set.
 
         Raises:
             TypeError: Value of new argument is not an instance of ScopedValue.
@@ -923,11 +933,12 @@ class Node:
     def get_args(self):
         """
         Get the arguments of current node.
-        When node_type of current node is CallCell, CallPrimitive or Tree, arguments are corresponding to args of
-        ast.Call which represents arguments to invoke cell-op's forward method or primitive-op's `call()` method.
-        When node_type of current node is Input, arguments represents default-value of argument of function.
-        When node_type of current node is Output, arguments represents return values.
-        When node_type of current node is Python, arguments are don't-care.
+
+        - When node_type of current node is CallCell, CallPrimitive or Tree, arguments are corresponding to args of
+          ast.Call which represents arguments to invoke cell-op's forward method or primitive-op's `call()` method.
+        - When node_type of current node is Input, arguments represents default-value of argument of function.
+        - When node_type of current node is Output, arguments represents return values.
+        - When node_type of current node is Python, arguments are don't-care.
 
         Returns:
             A list of instances of ScopedValue.
@@ -940,9 +951,11 @@ class Node:
     def get_kwargs(self):
         """
         Get the keyword arguments of current node.
-        When node_type of current node is CallCell, CallPrimitive or Tree, keyword arguments are corresponding to kwargs
-        of ast.Call which represents arguments to invoke cell-op's forward method or primitive-op's `call()` method.
-        When node_type of current node is Python, Input or Output, keyword arguments are don't-care.
+
+        - When node_type of current node is CallCell, CallPrimitive or Tree, keyword arguments are corresponding to
+          kwargs of ast.Call which represents arguments to invoke cell-op's forward method or primitive-op's `call()`
+          method.
+        - When node_type of current node is Python, Input or Output, keyword arguments are don't-care.
 
         Returns:
             A dict of str to instance of ScopedValue.
@@ -1052,16 +1065,16 @@ class TreeNode(Node):
                  args: [ScopedValue], kwargs: {str: ScopedValue}, name: str, instance):
         """
         Constructor of Node. Rewrite recommend to invoking class method of Node to instantiate an instance of Node such
-        as `create_call_cell`, `create_call_method`, `create_python_node`, `create_input_node` and `create_output_node`,
-         etc. rather than invoking constructor of Node directly.
+        as `create_call_buildin_op`, `create_call_method`, `create_python_node`, `create_input_node` and
+        `create_output_node`, etc. rather than invoking constructor of Node directly.
 
         Args:
             tree: An instance of SymbolTree represents a handler of sub-symbol-tree.
             ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
-            targets ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            func (Optional[ScopedValue]): An instance of ScopedValue. See detail in docstring of Node class.
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.
@@ -1081,10 +1094,10 @@ class TreeNode(Node):
         Args:
             tree: An instance of SymbolTree represents a handler of sub-symbol-tree.
             ast_node (ast.AST): An instance of ast.AST represents corresponding node in ast.
-            targets ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            func (Optional[ScopedValue]): An instance of ScopedValue. See detail in docstring of Node class.
-            args ([ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs ({str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+            targets (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of ScopedValue. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
             name (str): A string represents name of node. Name of node will be unique when inserted into SymbolTree.
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.

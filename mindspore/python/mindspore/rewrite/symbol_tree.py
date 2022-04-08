@@ -24,26 +24,27 @@ from mindspore.nn import Cell
 from mindspore import log as logger
 from .node import Node, TreeNode
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier
+from .ast_helpers import AstModifier, AstReplacer
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
-from .namer import TargetNamer, NodeNamer
+from .namer import TargetNamer, NodeNamer, ClassNamer
+from .common.observer import Observer
 
 
 class Position:
-    """Position indicates a source code position in one network."""
+    """
+    Position indicates a source code position in one network.
+
+    Rewrite recommend using class method `create()` of position rather than constructor of Position.
+
+    Args:
+        symbol_tree (SymbolTree): A handler of SymbolTree indicated position in which SymbolTree.
+        node (Node): A handler of Node indicated position is around which Node.
+        before_node (bool): A bool indicated position is before or after the 'node'.
+    """
 
     def __init__(self, symbol_tree, node, before_node: bool):
-        """
-        Constructor of Position.
-        Recommend to use class method of position rather than constructor of Position.
-
-        Args:
-            symbol_tree (SymbolTree): A handler of SymbolTree indicated position in which SymbolTree.
-            node (Node): A handler of Node indicated position is around which Node.
-            before_node (bool): A bool indicated position is before or after the 'node'.
-        """
         self.symbol_tree = symbol_tree
         self.node = node
         self.before_node = before_node
@@ -66,18 +67,20 @@ class Position:
         return Position(symbol_tree, node, before_node)
 
 
-class SymbolTree:
-    """A symbol-tree usually corresponding to forward method of a network."""
+class SymbolTree(Observer):
+    """
+    A symbol-tree usually corresponding to forward method of a network.
+
+    Rewrite recommend using SymbolTreeBuilder to instantiate an instance of SymbolTree rather than invoking constructor
+    of SymbolTree directly.
+
+    Args:
+        origin_network (Cell): A handler to original network instance.
+        module_ast (ast.Module): An instance of ast.AST represents ast node of original network.
+    """
 
     def __init__(self, origin_network: Cell, module_ast: ast.Module):
-        """
-        Constructor of SymbolTree. Rewrite recommend using SymbolTreeBuilder to instantiate an instance of SymbolTree
-        rather than invoking constructor of SymbolTree directly.
-
-        Args:
-            origin_network (Cell): A handler to original network instance.
-            module_ast (ast.Module): An instance of ast.AST represents ast node of original network.
-        """
+        super().__init__()
         origin_network_key = "handler"
         # init unique-namers
         self._target_namer = TargetNamer()
@@ -86,13 +89,14 @@ class SymbolTree:
         # _node_name_namer.
         self._node_name_namer.add_name(origin_network_key)
         self._topo_mgr = TopoManager()
+        self._topo_mgr.reg_observer(self)
 
         self._global_vars: {str, object} = {origin_network_key: origin_network}
         self._nodes: {str, Node} = {}
         # parameters of forward method
         self._inputs: [Node] = []
         self._ori_cls_name = type(origin_network).__name__
-        self._opt_cls_name = self._ori_cls_name + "Opt"
+        self._opt_cls_name = ClassNamer.instance().get_name(self._ori_cls_name)
         self._origin_network = origin_network
         self._module_ast: ast.Module = module_ast
         self._class_ast: Optional[ast.ClassDef] = None
@@ -104,6 +108,11 @@ class SymbolTree:
         # tail node is always point to the last node(in source code order) of SymbolTree
         self._tail = None
         self._return: Optional[Node] = None
+
+        self._modified = False
+
+    def _on_change(self):
+        self._modified = True
 
     def get_ori_cls_name(self) -> str:
         """
@@ -132,6 +141,16 @@ class SymbolTree:
         """
         return self._module_ast
 
+    def set_module_ast(self, ast_node: ast.Module):
+        """
+        Setter of _module_ast.
+
+        Args:
+            ast_node (ast.Module): An instance of ast.Module represents ast node of module of corresponding network
+                                   class.
+        """
+        self._module_ast = ast_node
+
     def get_ast_root(self):
         """
         Getter of `_root_ast`.
@@ -141,34 +160,52 @@ class SymbolTree:
         """
         return self._root_ast
 
-    def set_class_ast(self, ast_node: ast.ClassDef):
-        """
-        Setter of `_class_ast`.
-
-        Args:
-            ast_node (ast.ClassDef): An instance of ast.ClassDef represents ast node of corresponding network class.
-        """
-        self._class_ast = ast_node
-
-    def set_init_func_ast(self, ast_node: ast.FunctionDef):
-        """
-        Setter of `_init_func_ast`.
-
-        Args:
-            ast_node (ast.FunctionDef): An instance of ast.FunctionDef represents ast node of init method of
-                                        corresponding network class.
-        """
-        self._init_func_ast = ast_node
-
     def set_ast_root(self, ast_node: ast.FunctionDef):
         """
-        Setter of `_root_ast`.
+        Setter of _root_ast.
 
         Args:
             ast_node (ast.FunctionDef): An instance of ast.FunctionDef represents ast node of forward method of
                                         corresponding network class.
         """
         self._root_ast = ast_node
+
+    def get_class_ast(self):
+        """
+        Getter of `_class_ast`.
+
+        Returns:
+            An instance of ast.ClassDef represents ast node of corresponding network class.
+        """
+        return self._class_ast
+
+    def set_class_ast(self, ast_node: ast.ClassDef):
+        """
+        Setter of `_init_func_ast`.
+
+        Args:
+            ast_node (ast.ClassDef): An instance of ast.ClassDef represents ast node of corresponding network class.
+        """
+        self._class_ast = ast_node
+
+    def get_init_func_ast(self):
+        """
+        Getter of _init_func_ast.
+
+        Returns:
+            An instance of ast.FunctionDef represents ast node of init method of corresponding network class.
+        """
+        return self._init_func_ast
+
+    def set_init_func_ast(self, ast_node: ast.FunctionDef):
+        """
+        Setter of _init_func_ast.
+
+        Args:
+            ast_node (ast.FunctionDef): An instance of ast.FunctionDef represents ast node of init method of
+                                        corresponding network class.
+        """
+        self._init_func_ast = ast_node
 
     def get_inputs(self):
         """
@@ -206,7 +243,15 @@ class SymbolTree:
         """
         return self._origin_network
 
-    def nodes(self, unfold_subtree=True):
+    def get_global_vars(self):
+        return self._global_vars
+
+    def add_global_vars(self, key: str, value):
+        if self._global_vars.get(key) is not None:
+            raise RuntimeError("Key of global_vars duplicated:", key)
+        self._global_vars[key] = value
+
+    def nodes(self, unfold_subtree=False):
         """
         Getter of nodes if current SymbolTree.
 
@@ -220,7 +265,7 @@ class SymbolTree:
             nodes = []
             for _, v in self._nodes.items():
                 if isinstance(v, TreeNode):
-                    nodes.extend(self.nodes(v.symbol_tree))
+                    nodes.extend(v.symbol_tree.nodes())
                 else:
                     nodes.append(v)
             return nodes
@@ -241,7 +286,8 @@ class SymbolTree:
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, Node):
-            return self.get_node(node_or_name.get_name())
+            result = self.get_node(node_or_name.get_name())
+            return result if result is node_or_name else None
         if isinstance(node_or_name, str):
             return self.get_node(node_or_name)
         return None
@@ -435,7 +481,7 @@ class SymbolTree:
 
         Args:
             param_name (str): A str represents name of parameter of forward method of network class.
-            default (Optional[ScopedValue] ): A ScopedValue represents default value of parameter. Default is None which
+            default (ScopedValue, optional): A ScopedValue represents default value of parameter. Default is None which
                 means parameter has no default value.
 
         Returns:
@@ -556,7 +602,7 @@ class SymbolTree:
             position (Position): A Position indicates an insert position point.
             root (Node): An instance of node as root of node-tree to be inserted in.
             insert_to_ast (bool): A bool indicates whether to update corresponding ast node at same time, default is
-                      True.
+                True.
 
         Returns:
             An instance of node as root node of node-tree which has been inserted into SymbolTree.
@@ -598,10 +644,11 @@ class SymbolTree:
     def _link_nodes_and_find_root(nodes: [Node]) -> Node:
         """
         Find inputs for all nodes created by Replacement according to their targets and arguments.
+
         Find root node of all nodes created by Replacement. One and Only one root should be found.
 
         Args:
-            nodes ([Node]): A list of instance of Node created by Replacement.
+            nodes (list[Node]): A list of instance of Node created by Replacement.
 
         Returns:
             An instance of Node represents root of input nodes.
@@ -653,7 +700,7 @@ class SymbolTree:
 
         Args:
             old_node (Node): Node to be replaced.
-            new_nodes ([Node]): Node tree to replace in.
+            new_nodes (list[Node]): Node tree to replace in.
 
         Returns:
             An instance of Node represents root of node_tree been replaced in.
@@ -717,7 +764,7 @@ class SymbolTree:
             dst_node (Node): Node to be modified. Can be a node or name of node.
             arg_idx (int): Indicate which input being modified.
             src_node (Node): Node as new input. Can be a node or name of node.
-            out_idx (Optional[int]): Indicate which output of 'src_node' as new input of 'dst_node'. Default is None
+            out_idx ([int, optional]): Indicate which output of 'src_node' as new input of 'dst_node'. Default is None
                 which means use first output of 'node_to_link' as new input.
 
         Raises:
@@ -757,7 +804,42 @@ class SymbolTree:
             A str represents source code of modified network.
         """
         ast.fix_missing_locations(self._module_ast)
-        return astunparse.unparse(self._module_ast)
+        # Find all ast.ClassDef which can be export to code
+        # Replace duplicated ast.ClassDef reference in main-ClassDef
+        seen_class: {type, str} = {}
+        allow_class_name = []
+        replacer = AstReplacer(self._class_ast)
+        for node in self.nodes():
+            if not isinstance(node, TreeNode):
+                continue
+            sub_stree: SymbolTree = node.symbol_tree
+            # all modified ast.ClassDef should export to code
+            if sub_stree._modified:
+                allow_class_name.append(sub_stree._class_ast.name)
+                continue
+            # all un-modified ast.ClassDef only keep one instance
+            seen_cls_name = seen_class.get(type(sub_stree.get_origin_network()))
+            if seen_cls_name is not None:
+                replacer.replace_all(sub_stree._class_ast.name, seen_cls_name)
+            else:
+                seen_class[type(sub_stree.get_origin_network())] = sub_stree._class_ast.name
+                allow_class_name.append(sub_stree._class_ast.name)
+        allow_class_name.append(self._class_ast.name)
+        # Add all non-ClassDef body to gencode_module
+        # Add all ClassDef in allow_class_name to gencode_module
+        # Use gencode_module to generate code
+        bodies = []
+        for body in self._module_ast.body:
+            if not isinstance(body, ast.ClassDef):
+                bodies.append(body)
+                continue
+            if body.name in allow_class_name:
+                bodies.append(body)
+        gencode_module = ast.Module(body=bodies)
+        code = astunparse.unparse(gencode_module)
+        # Restore main-ClassDef
+        replacer.undo_all()
+        return code
 
     def get_network(self):
         """
@@ -831,8 +913,8 @@ class SymbolTree:
         3. Update topological relation and update inputs of `node`.
 
         Args:
-            position (Optional[Position]): Indicates node insert position. Position is None when inserting first node of
-                SymbolTree.
+            position ([Position, optional]): Indicates node insert position. Position is None when inserting first node
+                of SymbolTree.
             node (Node): A Node to be inserted into SymbolTree.
 
         Raises:

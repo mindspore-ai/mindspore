@@ -132,10 +132,9 @@ def test_simple_net():
     Expectation: Result of rewrite can be compiled.
     """
     net = SimpleNet(10)
-    stree = SymbolTree(net)
+    stree = SymbolTree.create(net)
     transform(stree)
-    print("------------------------------------ keys of global_vars: ",
-          getattr(stree.get_handler(), "_global_vars").keys())
+    print("------------------------------------ keys of global_vars: ", stree.get_handler().get_global_vars().keys())
     net_opt = stree.get_network()
     data_in = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)
     _cell_graph_executor.compile(net_opt, data_in)

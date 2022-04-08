@@ -17,9 +17,10 @@ from typing import Tuple
 
 from .api.scoped_value import ScopedValue
 from .node import Node
+from .common.observable import Observable
 
 
-class TopoManager:
+class TopoManager(Observable):
     """SymbolTree topological-relationship manager."""
 
     def __init__(self):
@@ -30,6 +31,7 @@ class TopoManager:
         Value of dict is a tuple whose first is an instance of Node, whose second is an index.
         It means node's index th arg is argument
         """
+        super().__init__()
         self._target_provider: {ScopedValue, (Node, int)} = {}
         self._target_consumer: {ScopedValue, [(Node, int)]} = {}
 
@@ -137,6 +139,7 @@ class TopoManager:
             for index, arg in enumerate(node.get_normalized_args().values()):
                 self._add_consumer(arg, node, index)
         self._update_node_inputs(node)
+        self.changed()
 
     def on_erase_node(self, node: Node):
         """
@@ -156,6 +159,7 @@ class TopoManager:
                 self._erase_consumer(arg, node)
         # clear inputs of node rather than call _update_node_inputs because node is already erase from consumer dict
         node.set_inputs([])
+        self.changed()
 
     def on_update_arg(self, node: Node, arg_idx: int, old_arg: ScopedValue, new_arg: ScopedValue):
         """
@@ -171,6 +175,7 @@ class TopoManager:
         self._erase_consumer(old_arg, node)
         self._add_consumer(new_arg, node, arg_idx)
         self._update_node_inputs(node)
+        self.changed()
 
     def dump(self, title=""):
         """

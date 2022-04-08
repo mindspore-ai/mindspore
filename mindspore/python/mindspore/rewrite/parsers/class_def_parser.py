@@ -16,35 +16,44 @@
 import ast
 
 from mindspore import log as logger
+from mindspore._extends.parse.namespace import CellNamespace
 from ..symbol_tree import SymbolTree
 from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
 from ..api.scoped_value import ScopedValue
-from ..ast_helpers import AstModifier
+from ..ast_helpers import AstReplacer, AstModifier
 
 
 class ClassDefParser(Parser):
     """Parse ast.ClassDef which is subclass of Cell to SymbolTree."""
 
+    def __init__(self):
+        """Constructor"""
+        super(ClassDefParser, self).__init__()
+        self._cell_namespace = CellNamespace('mindspore.nn')
+
     def target(self):
         """Parse target type"""
         return ast.ClassDef
 
-    @staticmethod
-    def _process_init_func_ast(init_ast: ast.FunctionDef, ori_cls_name: str, opt_cls_name: str):
+    def _is_subtree_field(self, ori_net, field) -> bool:
+        op = getattr(ori_net, field)
+        assert op is not None
+        return not type(op).__name__ in self._cell_namespace
+
+    def _process_init_func_ast(self, stree: SymbolTree, init_ast: ast.FunctionDef):
         """Process init func"""
-        super_index = ClassDefParser._modify_super_expr_of_init_func(init_ast, ori_cls_name, opt_cls_name)
+        super_index = ClassDefParser._find_super_expr_of_init_func(init_ast)
         ClassDefParser._modify_arguments_of_init_func(init_ast)
-        ClassDefParser._replace_ori_field_of_init_func(init_ast.body, super_index)
+        self._replace_ori_field_of_init_func(stree, init_ast.body, super_index)
         ClassDefParser._insert_handler_to_init_func(init_ast, super_index)
 
     @staticmethod
-    def _modify_super_expr_of_init_func(ast_init_fn: ast.FunctionDef, ori_cls_name: str, opt_cls_name: str) -> int:
-        """Modify network name in super(XXnet).__init__()"""
+    def _find_super_expr_of_init_func(ast_init_fn: ast.FunctionDef) -> int:
+        """Find index of super(XXnet).__init__() in body of init ast.FunctionDef"""
         if not ast_init_fn.body:
             return -1
         super_index = -1
-        super_call_args = None
         while True:
             super_index += 1
             expr = ast_init_fn.body[super_index]
@@ -62,14 +71,7 @@ class ClassDefParser(Parser):
             expr_value_func_value_func = expr_value_func_value.func
             if not isinstance(expr_value_func_value_func, ast.Name) or expr_value_func_value_func.id != "super":
                 continue
-            super_call_args = expr_value_func_value.args
             break
-        if super_call_args is None or not isinstance(super_call_args, list) or len(super_call_args) != 2:
-            return super_index
-        super_call_arg = super_call_args[0]
-        if super_call_arg.id != ori_cls_name:
-            raise RuntimeError("super_call_arg.id should equal to ori_cls_name")
-        super_call_arg.id = opt_cls_name
         return super_index
 
     @staticmethod
@@ -81,8 +83,7 @@ class ClassDefParser(Parser):
                                          kw_defaults=[], defaults=[], vararg=None, kwarg=None)
         ast.fix_missing_locations(ast_init_fn)
 
-    @staticmethod
-    def _replace_ori_field_of_init_func(bodies: [], super_index: int):
+    def _replace_ori_field_of_init_func(self, stree: SymbolTree, bodies: [], super_index: int):
         """
         Replace original field in init func to self.XX = getattr(self._handler, "XX").
         Only keep following two kinds of ast nodes in bodies right now:
@@ -103,8 +104,8 @@ class ClassDefParser(Parser):
                 continue  # ignoring super.__init__()
             if isinstance(body, ast.If) and isinstance(body.test, ast.Attribute) \
                     and isinstance(body.test.value, ast.Name) and body.test.value.id == 'self':
-                ClassDefParser._replace_ori_field_of_init_func(body.body, -1)
-                ClassDefParser._replace_ori_field_of_init_func(body.orelse, -1)
+                self._replace_ori_field_of_init_func(stree, body.body, -1)
+                self._replace_ori_field_of_init_func(stree, body.orelse, -1)
                 continue
             if not isinstance(body, ast.Assign):  # if not assign node, delete
                 body_index_to_be_deleted.append(body_index)
@@ -146,15 +147,15 @@ class ClassDefParser(Parser):
             stree ([SymbolTree]): Symbol Tree under parsing.
             node ([ast.ClassDef]): An ast.ClassDef node.
         """
-        # change class name
-        node.name = stree.get_opt_cls_name()
+        replacer = AstReplacer(node)
+        replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
 
         stree.set_class_ast(node)
 
         for body in node.body:
             if isinstance(body, ast.FunctionDef):
                 if body.name == "__init__":
-                    ClassDefParser._process_init_func_ast(body, stree.get_ori_cls_name(), stree.get_opt_cls_name())
+                    self._process_init_func_ast(stree, body)
                     stree.set_init_func_ast(body)
                 elif body.name == "construct":
                     parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
