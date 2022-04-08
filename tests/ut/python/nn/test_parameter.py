@@ -1,5 +1,5 @@
 
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from mindspore import context, Tensor, Parameter, ParameterTuple, nn
 from mindspore._checkparam import Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
+
 
 def test_parameter_init():
     dat = np.array([[1, 2, 3], [2, 3, 4]])
@@ -134,6 +135,7 @@ def test_check_str_by_regular():
     with pytest.raises(ValueError):
         Validator.check_str_by_regular(str6)
 
+
 def test_parameter_compute():
     para_1 = Parameter(initializer('ones', [1, 2, 3], mstype.int32), 'test1')
     para_2 = Parameter(initializer('ones', [1, 2, 3], mstype.int32), 'test2')
@@ -242,6 +244,7 @@ def test_parameter_as_output():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     initial_input = initializer('One', shape=(2,), dtype=mstype.int32)
     updated_input = Tensor([2, 2], mstype.int32)
+
     class Net(nn.Cell):
         def __init__(self, initial, updated):
             super().__init__()
@@ -250,6 +253,7 @@ def test_parameter_as_output():
             self.p = Parameter(self.initial, name="weight")
             self.new_p = self.p.init_data()
             self.new_p.set_data(self.updated)
+
         def construct(self):
             return self.new_p
 
@@ -257,3 +261,17 @@ def test_parameter_as_output():
     output = net()
     assert np.array_equal(output.asnumpy(), np.array([2, 2], np.int32))
     context.reset_auto_parallel_context()
+
+
+def test_parameter_init_from_tensor():
+    """
+    Feature: Parameter initialize.
+    Description: Parameter initialized from a given tensor, data is shared.
+    Expectation: The Parameter and the tensor share same data buffer.
+    """
+    tensor = Tensor([1], mstype.float32)
+    param = Parameter._from_tensor(tensor, name="mypara")  # pylint: disable=W0212
+    assert param.name == "mypara"
+    assert np.allclose(param.asnumpy(), np.array([1]))
+    tensor.asnumpy()[0] = 2
+    assert np.allclose(param.asnumpy(), np.array([2]))

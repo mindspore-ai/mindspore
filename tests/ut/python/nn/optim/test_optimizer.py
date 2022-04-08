@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore as ms
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.nn.optim import Optimizer, SGD, Adam, AdamWeightDecay
@@ -101,3 +102,50 @@ class TestUnsupportParam():
         with pytest.raises(TypeError):
             paramsTensor = Parameter(Tensor(np.zeros([1, 2, 3])), "x")
             SGD(paramsTensor)
+
+
+class TestFlattenParams:
+    """ Test Optimizer with flatten parameters """
+
+    def __init__(self):
+        self.p1 = None
+        self.p2 = None
+        self.p3 = None
+        self.params = []
+
+    def setup_method(self):
+        self.p1 = Parameter(Tensor([1], ms.float32), name="p1")
+        self.p2 = Parameter(Tensor([2], ms.float32), name="p2")
+        self.p3 = Parameter(Tensor([3], ms.float32), name="p3")
+        self.params = [self.p1, self.p2, self.p3]
+
+    def test_not_flattened_params(self):
+        """
+        Feature: Flatten weights.
+        Description: Optimizer with not flattened parameters.
+        Expectation: The Optimizer works as expected.
+        """
+        opt = Optimizer(0.1, self.params)
+        assert not opt._use_flattened_params  # pylint: disable=W0212
+        assert len(opt.parameters) == 3
+        assert len(opt.cache_enable) == 3
+
+    def test_with_flattened_params(self):
+        """
+        Feature: Flatten weights.
+        Description: Optimizer with flattened parameters.
+        Expectation: The Optimizer works as expected.
+        """
+        Tensor._flatten_tensors(self.params)  # pylint: disable=W0212
+        opt = Optimizer(0.1, self.params)
+        assert opt._use_flattened_params  # pylint: disable=W0212
+        assert len(opt.parameters) == 1
+        assert len(opt.cache_enable) == 1
+        assert opt.parameters[0].dtype == ms.float32
+        assert opt.parameters[0].shape == (3,)
+        assert opt.parameters[0].size == 3
+        assert np.allclose(opt.parameters[0].asnumpy(), np.array([1, 2, 3]))
+        self.p1.asnumpy()[0] = 6
+        self.p2.asnumpy()[0] = 6
+        self.p3.asnumpy()[0] = 6
+        assert np.allclose(opt.parameters[0].asnumpy(), np.array([6, 6, 6]))

@@ -231,15 +231,15 @@ class Parameter(Tensor_):
         """Set `set_data` of current `Parameter`."""
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
-        if isinstance(data, Tensor) and data.has_init:
+        if isinstance(data, Tensor):
+            if not data.has_init:
+                # make a copy of Tensor to init the parameter.
+                return (Tensor, data.asnumpy())
             if not _is_fl_mode():
                 if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched() or _is_role_pserver():
                     # do not init data while in auto parallel.
                     return (Tensor, None, data.dtype, data.shape, data.init)
-            data = data.init_data().asnumpy()
-        elif isinstance(data, Tensor):
-            # make a copy of Tensor to init the parameter
-            return (Tensor, data.asnumpy(),)
+            return (Tensor, data.init_data())
         if isinstance(data, int):
             return (Tensor, data, mstype.int32)
         if isinstance(data, float):
@@ -536,6 +536,16 @@ class Parameter(Tensor_):
             if not slice_shape:
                 raise ValueError(f"Can not change the shape of Parameter which has been initialized."
                                  f" Current shape is {current_shape}, and incoming is {data_shape}.")
+
+    @staticmethod
+    def _from_tensor(tensor, *args, **kwargs):
+        """Create a `Parameter` that data is shared from a `Tensor`."""
+        if not isinstance(tensor, Tensor_):
+            raise TypeError(f"The type of input must be Tensor, but got {type(tensor)}.")
+        param = Tensor_.__new__(Parameter)
+        Tensor_.__init__(param, tensor)
+        Parameter.__init__(param, tensor, *args, **kwargs)
+        return param
 
     def set_data(self, data, slice_shape=False):
         """
