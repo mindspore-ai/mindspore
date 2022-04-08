@@ -99,7 +99,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
       内存重用：
 
       - **mem_Reuse**：表示内存复用功能是否打开。设置为True时，将打开内存复用功能。设置为False时，将关闭内存复用功能。
-        有关running data recoder和内存复用配置详细信息，请查看 `配置RDR和内存复用 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
+        有关running data recoder和内存复用配置详细信息，请查看 `配置RDR和内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/debug/custom_debugging_info.html>`_。
 
 
     - **precompile_only** (bool) - 表示是否仅预编译网络。默认值：False。设置为True时，仅编译网络，而不执行网络。
@@ -111,7 +111,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
 
     - **pynative_synchronize** (bool) - 表示是否在PyNative模式下启动设备同步执行。默认值：False。设置为False时，将在设备上异步执行算子。当算子执行出错时，将无法定位特定错误脚本代码的位置。当设置为True时，将在设备上同步执行算子。这将降低程序的执行性能。此时，当算子执行出错时，可以根据错误的调用栈来定位错误脚本代码的位置。
     - **mode** (int) - 表示在GRAPH_MODE(0)或PYNATIVE_MODE(1)模式中的运行。默认值：GRAPH_MODE(0)。GRAPH_MODE或PYNATIVE_MODE可以通过 `mode` 属性设置，两种模式都支持所有后端。默认模式为GRAPH_MODE。
-    - **enable_graph_kernel** (bool) - 表示开启图算融合去优化网络执行性能。默认值：False。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_graph_kernel_fusion.html>`_ 。
+    - **enable_graph_kernel** (bool) - 表示开启图算融合去优化网络执行性能。默认值：False。如果 `enable_graph_kernel` 设置为True，则可以启用加速。有关图算融合的详细信息，请查看 `使能图算融合 <https://www.mindspore.cn/docs/zh-CN/r1.7/design/enable_graph_kernel_fusion.html>`_ 。
     - **graph_kernel_flags** (str) - 图算融合的优化选项，当与enable_graph_kernel冲突时，它的优先级更高。其仅适用于有经验的用户。例如，context.set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")。一些常用选项：
 
       - **opt_level**：设置优化级别。默认值：2。当opt_level的值大于0时，启动图算融合。可选值包括：
@@ -133,11 +133,11 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
       - RL，GA：当RL和GA优化同时打开时，工具会根据网络模型中的不同算子类型自动选择RL或GA。RL和GA的顺序没有区别。（自动选择）。
 
 
-      有关启用算子调优工具设置的更多信息，请查看 `使能算子调优工具 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_auto_tune.html>`_。
+      有关启用算子调优工具设置的更多信息，请查看 `使能算子调优工具 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/debug/auto_tune.html>`_。
 
     - **check_bprop** (bool) - 表示是否检查反向传播节点，以确保反向传播节点输出的形状(shape)和数据类型与输入参数相同。默认值：False。
     - **max_call_depth** (int) - 指定函数调用的最大深度。其值必须为正整数。默认值：1000。当嵌套Cell太深或子图数量太多时，需要设置 `max_call_depth` 参数。系统最大堆栈深度应随着 `max_call_depth` 的调整而设置为更大的值，否则可能会因为系统堆栈溢出而引发 "core dumped" 异常。
-    - **enable_sparse** (bool) - 表示是否启用稀疏特征。默认值：False。有关稀疏特征和稀疏张量的详细信息，请查看 `稀疏张量 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/tensor.html#sparse-tensor>`_。
+    - **enable_sparse** (bool) - 表示是否启用稀疏特征。默认值：False。有关稀疏特征和稀疏张量的详细信息，请查看 `稀疏张量 <https://www.mindspore.cn/tutorials/zh-CN/r1.7/beginner/tensor.html#sparse-tensor>`_。
     - **grad_for_scalar** (bool)：  表示是否获取标量梯度。默认值：False。当 `grad_for_scalar` 设置为True时，则可以导出函数的标量输入。由于后端目前不支持伸缩操作，所以该接口只支持在前端可推演的简单操作。
     - **enable_compile_cache** (bool) - 表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值：False。这是一个实验特性，可能会被更改或者删除。
     - **compile_cache_path** (str) - 保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。

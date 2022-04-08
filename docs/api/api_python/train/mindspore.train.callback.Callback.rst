@@ -5,7 +5,7 @@
 
     Callback函数可以在step或epoch开始前或结束后执行一些操作。
     要创建自定义Callback，需要继承Callback基类并重载它相应的方法，有关自定义Callback的详细信息，请查看
-    `Callback <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/custom_debugging_info.html>`_。
+    `Callback <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/debug/custom_debugging_info.html>`_。
 
     .. py:method:: begin(run_context)
 
