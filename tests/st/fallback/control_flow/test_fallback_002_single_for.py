@@ -90,6 +90,28 @@ def test_single_for_zip():
     assert res == 9
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_for_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for():
+        x = np.array([1, 3, 5])
+        y = np.array([0, 2, 4])
+        for _ in range(3):
+            x = x + y
+        return Tensor(x)
+    res = control_flow_for()
+    assert (res.asnumpy() == [1, 9, 17]).all()
+
+
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_single_for_builtin_function_sum():
     """
@@ -110,7 +132,11 @@ def test_single_for_builtin_function_sum():
     assert (res.asnumpy() == [85, 87, 89, 91, 93]).all()
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_builtin_function_int():
     """
     Feature: JIT Fallback
@@ -127,7 +153,11 @@ def test_single_for_builtin_function_int():
     assert res == 8.1
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_for_builtin_function_list():
     """
     Feature: JIT Fallback
