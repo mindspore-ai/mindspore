@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PadCpuKernelMod : public NativeCpuKernelMod {
+class PadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PadCpuKernelMod() = default;
   ~PadCpuKernelMod() override = default;

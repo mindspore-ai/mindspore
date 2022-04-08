@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Proposal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Proposal, BaseOperator);
 void Proposal::set_feat_stride(const float feat_stride) {
   (void)this->AddAttr(kFeatStride, api::MakeValue(feat_stride));
 }

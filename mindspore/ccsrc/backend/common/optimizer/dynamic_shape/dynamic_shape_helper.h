@@ -25,6 +25,7 @@
 namespace mindspore::opt::dynamic_shape {
 bool IsRealCNode(const BaseRef &n);
 bool IsNeedUpdateOp(const AnfNodePtr &node);
+void InferOp(const CNodePtr &node);
 AnfNodePtr GenInferNode(const AnfNodePtr &node, bool fake_flag = false);
 AnfNodePtr GenInitNode(const AnfNodePtr &node, bool fake_flag = false);
 AnfNodePtr GenUpdateNode(const AnfNodePtr &node);

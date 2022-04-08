@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Div, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Div, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameDiv, Div);
 }  // namespace ops
 }  // namespace mindspore

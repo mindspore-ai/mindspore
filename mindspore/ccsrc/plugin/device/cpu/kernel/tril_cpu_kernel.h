@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TrilCpuKernelMod : public NativeCpuKernelMod {
+class TrilCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TrilCpuKernelMod() = default;
   ~TrilCpuKernelMod() override = default;

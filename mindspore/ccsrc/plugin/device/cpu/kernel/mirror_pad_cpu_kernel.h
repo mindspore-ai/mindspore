@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MirrorPadCpuKernelMod : public NativeCpuKernelMod {
+class MirrorPadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MirrorPadCpuKernelMod() = default;
   ~MirrorPadCpuKernelMod() override = default;

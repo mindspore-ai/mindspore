@@ -49,7 +49,7 @@ int64_t FakeQuantWithMinMaxVars::get_num_bits() const {
   return GetValue<int64_t>(value_ptr);
 }
 
-MIND_API_BASE_IMPL(FakeQuantWithMinMaxVars, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FakeQuantWithMinMaxVars, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFakeQuantWithMinMaxVars, FakeQuantWithMinMaxVars);
 }  // namespace ops
 }  // namespace mindspore

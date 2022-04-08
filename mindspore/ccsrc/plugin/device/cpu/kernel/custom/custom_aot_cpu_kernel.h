@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 
-class CustomAOTCpuKernelMod : public NativeCpuKernelMod {
+class CustomAOTCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CustomAOTCpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
   ~CustomAOTCpuKernelMod();

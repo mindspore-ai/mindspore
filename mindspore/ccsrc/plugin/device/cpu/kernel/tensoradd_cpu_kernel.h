@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorAddCpuKernelMod : public NativeCpuKernelMod {
+class TensorAddCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TensorAddCpuKernelMod() = default;
   ~TensorAddCpuKernelMod() override = default;

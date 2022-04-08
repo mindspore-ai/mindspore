@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class L2NormalizeGradCpuKernelMod : public NativeCpuKernelMod {
+class L2NormalizeGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   L2NormalizeGradCpuKernelMod() = default;
   ~L2NormalizeGradCpuKernelMod() override = default;

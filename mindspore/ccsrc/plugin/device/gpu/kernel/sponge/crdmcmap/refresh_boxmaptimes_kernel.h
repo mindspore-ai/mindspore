@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class RefreshBoxmaptimesGpuKernelMod : public NativeGpuKernelMod {
+class RefreshBoxmaptimesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RefreshBoxmaptimesGpuKernelMod() : ele_crd(1) {}
   ~RefreshBoxmaptimesGpuKernelMod() override = default;

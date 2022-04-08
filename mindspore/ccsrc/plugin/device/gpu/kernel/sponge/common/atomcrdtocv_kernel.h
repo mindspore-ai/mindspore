@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class AtomCrdToCVGpuKernelMod : public NativeGpuKernelMod {
+class AtomCrdToCVGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AtomCrdToCVGpuKernelMod() : ele_crd(1) {}
   ~AtomCrdToCVGpuKernelMod() override = default;

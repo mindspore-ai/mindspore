@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
+class ActivationFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ActivationFwdGpuKernelMod() { ResetResource(); }
   ~ActivationFwdGpuKernelMod() override { DestroyResource(); }

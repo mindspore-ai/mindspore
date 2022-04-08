@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int DynamicInputNum = 5;
 template <typename T, typename S = int64_t>
-class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSliceGpuCommon {
+class StridedSliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod, public StridedSliceGpuCommon {
  public:
   StridedSliceGradGpuKernelMod() = default;
   ~StridedSliceGradGpuKernelMod() override = default;
@@ -55,10 +55,10 @@ class StridedSliceGradGpuKernelMod : public NativeGpuKernelMod, public StridedSl
       is_dynamic_attr_ = true;
     }
     if (is_dynamic_attr_) {
-      GetDynamicAttrIntValue(kernel_node, kShapexIndex_, &shapex_);
-      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_);
-      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_);
-      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_);
+      GetDynamicAttrIntValue(kernel_node, kShapexIndex_, &shapex_, kernel_node->user_data<kernel::InitOpArgs>());
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel_node->user_data<kernel::InitOpArgs>());
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel_node->user_data<kernel::InitOpArgs>());
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel_node->user_data<kernel::InitOpArgs>());
     } else {
       shapex_ = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
     }

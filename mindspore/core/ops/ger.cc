@@ -56,7 +56,7 @@ TypePtr GerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Ger, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Ger, BaseOperator);
 AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

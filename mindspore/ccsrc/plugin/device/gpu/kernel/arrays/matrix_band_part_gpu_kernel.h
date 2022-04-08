@@ -36,7 +36,7 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
-class MatrixBandPartGpuKernelMod : public NativeGpuKernelMod {
+class MatrixBandPartGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MatrixBandPartGpuKernelMod() : is_null_input_(false) {}
   ~MatrixBandPartGpuKernelMod() = default;

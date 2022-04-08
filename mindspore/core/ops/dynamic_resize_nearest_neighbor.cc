@@ -120,7 +120,7 @@ TypePtr DynamicResizeNearestNeighborInferType(const PrimitivePtr &prim,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(DynamicResizeNearestNeighbor, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DynamicResizeNearestNeighbor, BaseOperator);
 AbstractBasePtr DynamicResizeNearestNeighborInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();

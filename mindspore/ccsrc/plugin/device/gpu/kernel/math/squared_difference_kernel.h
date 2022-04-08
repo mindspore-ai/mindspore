@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
 template <typename T>
-class SquaredDifferenceOpGpuKernelMod : public NativeGpuKernelMod {
+class SquaredDifferenceOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SquaredDifferenceOpGpuKernelMod() { ResetResource(); }
   ~SquaredDifferenceOpGpuKernelMod() override = default;

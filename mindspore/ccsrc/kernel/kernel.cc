@@ -29,188 +29,113 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kInvalidShape = -2;
 
-void KernelMod::SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node) {
-  atomic_clean_nodes_.resize(atomic_clean_node.size());
-  for (size_t i = 0; i < atomic_clean_node.size(); ++i) {
-    atomic_clean_nodes_[i] = atomic_clean_node[i];
+TypeId KernelTensor::GetDtype() const {
+  if (tensor_info_.abstract_base == nullptr) {
+    return TypeId::kTypeUnknown;
   }
+
+  auto type_ptr = tensor_info_.abstract_base->BuildType();
+  if (type_ptr == nullptr || !type_ptr->isa<TensorType>()) {
+    return TypeId::kTypeUnknown;
+  }
+
+  auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
+  auto elem = tensor_ptr->element();
+  if (elem == nullptr) {
+    return TypeId::kTypeUnknown;
+  }
+  return elem->type_id();
 }
 
-void KernelMod::InferShape() {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
-  GetDepndLists(cnode);
-  auto ret = InferShapeForDefiniteOutputNode(cnode);
-  if (ret) {
+std::vector<size_t> KernelTensor::GetShapeVector() const {
+  auto base_shape_ptr = GetBaseShape();
+  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
+    return {};
+  }
+  auto shape = base_shape_ptr->cast<abstract::ShapePtr>()->shape();
+  std::vector<size_t> out_shape;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(out_shape),
+                 [](const int64_t &value) { return static_cast<size_t>(value); });
+  return out_shape;
+}
+
+std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
+  if (tensor_info_.abstract_base == nullptr) {
+    return {TypeId::kTypeUnknown};
+  }
+
+  auto type_ptr = tensor_info_.abstract_base->BuildType();
+  if (type_ptr == nullptr || !type_ptr->isa<List>() || !type_ptr->isa<Tuple>()) {
+    return {TypeId::kTypeUnknown};
+  }
+
+  std::vector<TypeId> types;
+  if (type_ptr->isa<List>()) {
+    auto tuple_ptr = type_ptr->cast<TuplePtr>();
+    auto elements = tuple_ptr->elements();
+    std::transform(elements.begin(), elements.end(), std::back_inserter(types),
+                   [](const TypePtr &t) { return t->type_id(); });
+  } else if (type_ptr->isa<Tuple>()) {
+    auto tuple_ptr = type_ptr->cast<TuplePtr>();
+    auto elements = tuple_ptr->elements();
+    std::transform(elements.begin(), elements.end(), std::back_inserter(types),
+                   [](const TypePtr &t) { return t->type_id(); });
+  } else {
+    types.push_back(TypeId::kTypeUnknown);
+  }
+
+  return types;
+}
+
+std::vector<std::vector<size_t>> KernelTensor::GetListOrTupleShapeVector() const {
+  auto base_shape_ptr = GetBaseShape();
+  // ListShape or TupleShape is inherited from SequenceShape.
+  if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::SequenceShape>()) {
+    return {};
+  }
+  auto sequence_shape_ptr = base_shape_ptr->cast<abstract::SequenceShapePtr>();
+  auto base_shape_list = sequence_shape_ptr->shape();
+  std::vector<std::vector<size_t>> shape_vector_list;
+  for (auto base_shape : base_shape_list) {
+    if (base_shape == nullptr || !base_shape->isa<abstract::Shape>()) {
+      return {};
+    }
+    auto tmp_shape = base_shape->cast<abstract::ShapePtr>()->shape();
+    std::vector<size_t> cur_out_shape;
+    std::transform(tmp_shape.begin(), tmp_shape.end(), std::back_inserter(cur_out_shape),
+                   [](const int64_t &value) { return static_cast<size_t>(value); });
+    shape_vector_list.push_back(cur_out_shape);
+  }
+
+  return shape_vector_list;
+}
+
+void KernelTensor::SetDtype(const TypePtr &dtype) {
+  if (tensor_info_.abstract_base == nullptr) {
     return;
   }
-  depend_tensor_map_.clear();
-  auto &inputs = cnode->inputs();
-  if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs.";
-  }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  AbstractBasePtrList args_spec_list;
-  auto primitive = GetValueNode<PrimitivePtr>(inputs[0]);
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
-  bool skip_nop_node = !context->get_param<bool>(MS_CTX_ENABLE_MINDRT);
-  for (size_t i = 0; i < input_size; i++) {
-    auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, i, false);
-    auto real_input = input_node_with_index.first;
-    auto real_input_index = input_node_with_index.second;
-    MS_EXCEPTION_IF_NULL(real_input);
-    if (skip_nop_node) {
-      InferShapeForNopNode(real_input);
-    }
-    if (depend_list_.find(i) != depend_list_.end()) {
-      auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
-      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-      auto host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-      auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
-      MS_EXCEPTION_IF_NULL(out_tensor);
-      // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
-      // address size will be wrong in the dynamic shape scenario.
-      out_tensor->set_device_address(output_addr, false);
-      auto ret2 = depend_tensor_map_.try_emplace(i, out_tensor);
-      if (!ret2.second) {
-        MS_LOG(EXCEPTION) << "Insert map failed.";
-      }
-      out_tensor->data_sync();
-
-      // cppcheck-suppress unreadVariable
-      auto lock = AnfUtils::GetAbstractLock(real_input.get());
-      auto real_abs = real_input->abstract();
-      if (real_abs->isa<abstract::AbstractTensor>()) {
-        real_abs->set_value(out_tensor);
-      } else if (real_abs->isa<abstract::AbstractTuple>()) {
-        auto abstract_tuple = real_abs->cast<abstract::AbstractTuplePtr>();
-        MS_EXCEPTION_IF_NULL(abstract_tuple);
-        MS_EXCEPTION_IF_CHECK_FAIL((real_input_index < abstract_tuple->elements().size()), "Index is out of range.");
-        auto tuple_elements = abstract_tuple->elements()[real_input_index];
-        tuple_elements->set_value(out_tensor);
-      }
-    }
-    common::AnfAlgo::AddArgList(&args_spec_list, real_input, real_input_index);
-  }
-  auto eval_result = opt::CppInferShape(primitive, args_spec_list);
-  cnode->set_abstract(eval_result);
+  tensor_info_.abstract_base->set_type(dtype);
 }
 
-void KernelMod::UpdateOutputSizeList() {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  for (size_t i = 0; i < output_size_list_.size(); ++i) {
-    auto ori_output_size = output_size_list_[i];
-    auto real_output_size = AnfAlgo::GetOutputTensorMemSize(cnode, i);
-    if (ori_output_size != real_output_size) {
-      output_size_list_[i] = real_output_size;
-    }
-  }
-}
-
-bool KernelMod::InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimShape)) {
-    return false;
-  }
-  auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
-  if (input_size != 1) {
-    MS_LOG(EXCEPTION) << "Node only has one input: " << cnode->fullname_with_scope();
-  }
-  auto cur_shape = dynamic_cast<mindspore::abstract::Shape *>(cnode->Shape().get())->shape();
-  if (std::any_of(cur_shape.begin(), cur_shape.end(), [](int64_t x) { return x == kInvalidShape; })) {
-    return false;
-  }
-  std::vector<int64_t> output_shape = {static_cast<int64_t>(cur_shape.size())};
-  mindspore::abstract::BaseShapePtr shape = std::make_shared<mindspore::abstract::Shape>(output_shape);
-
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(cnode.get());
-  auto abstract = cnode->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  abstract->set_shape(shape);
-  return true;
-}
-
-void KernelMod::InferShapeForNopNode(const AnfNodePtr &input_node) {
-  MS_EXCEPTION_IF_NULL(input_node);
-  if (!common::AnfAlgo::IsNopNode(input_node) || !common::AnfAlgo::IsDynamicShape(input_node)) {
-    MS_LOG(INFO) << "Input node is not a nop node, no need infer.";
+void KernelTensor::SetShapeVector(const std::vector<int64_t> &shape) {
+  if (tensor_info_.abstract_base == nullptr) {
     return;
   }
-  if (!common::AnfAlgo::IsNeedSkipNopOpExecution(input_node)) {
-    MS_LOG(INFO) << "The Nop node need execution, no need the InferShapeForNopNode.";
-    return;
-  }
-  MS_LOG(INFO) << "Infer shape for nop node.";
-  std::stack<AnfNodePtr> nop_road;
-  nop_road.push(input_node);
-
-  auto in_node = input_node;
-  while (true) {
-    auto input_node_with_idx = common::AnfAlgo::GetPrevNodeOutput(in_node, 0);
-    in_node = input_node_with_idx.first;
-    MS_EXCEPTION_IF_NULL(in_node);
-    if (common::AnfAlgo::IsNopNode(in_node)) {
-      nop_road.push(in_node);
-    } else {
-      break;
-    }
-  }
-
-  while (!nop_road.empty()) {
-    auto nop_node = nop_road.top();
-    MS_EXCEPTION_IF_NULL(nop_node);
-    AnfAlgo::InferShape(nop_node->cast<CNodePtr>());
-    nop_road.pop();
-  }
+  tensor_info_.abstract_base->set_shape(std::make_shared<abstract::Shape>(shape));
 }
 
-void KernelMod::GetDepndLists(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (depend_list_.size() != 0) {
-    return;
+abstract::BaseShapePtr KernelTensor::GetBaseShape() const {
+  if (tensor_info_.abstract_base == nullptr) {
+    return nullptr;
   }
-  auto ret = abstract::GetDependsFormMap(cnode);
-  if (ret.empty()) {
-    MS_LOG(DEBUG) << "No dynamic_shape_depends found.";
-    return;
-  }
-  MS_LOG(INFO) << "Have depends.";
-  (void)std::transform(ret.begin(), ret.end(), std::inserter(depend_list_, depend_list_.begin()),
-                       [](const int64_t &value) { return static_cast<int>(value); });
-  MS_LOG(INFO) << "Init End.";
+  return tensor_info_.abstract_base->BuildShape();
 }
 
-bool KernelMod::NeedSkipExecute(const CNodePtr &cnode) {
-  // Skip run ReduceSum when axis is a Empty Tensor
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (op_name != kReduceSumOpName) {
-    return false;
+void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
+  if (tensor_info_.abstract_base == nullptr) {
+    return;
   }
-
-  const size_t axes_index = 1;
-  if (cnode->inputs().size() <= axes_index + 1) {
-    return false;
-  }
-  auto input_axes = cnode->input(axes_index + 1);
-  // cppcheck-suppress unreadVariable
-  auto lock = AnfUtils::GetAbstractLock(input_axes.get());
-  auto axes_abs = input_axes->abstract()->Clone();
-  MS_EXCEPTION_IF_NULL(axes_abs);
-  auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
-  if (axes_abs->isa<abstract::AbstractTensor>()) {
-    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](ssize_t shape) { return shape == 0; })) {
-      return true;
-    }
-  }
-  return false;
+  tensor_info_.abstract_base->set_shape(base_shape);
 }
 }  // namespace kernel
 }  // namespace mindspore

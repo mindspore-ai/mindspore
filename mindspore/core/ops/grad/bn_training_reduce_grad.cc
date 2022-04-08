@@ -45,7 +45,7 @@ TypePtr BNTrainingReduceGradInferType(const PrimitivePtr &prim, const std::vecto
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BNTrainingReduceGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BNTrainingReduceGrad, BaseOperator);
 void BNTrainingReduceGrad::Init(const float epsilon) { this->set_epsilon(epsilon); }
 
 void BNTrainingReduceGrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }

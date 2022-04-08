@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SmoothL1LossCpuKernelMod : public NativeCpuKernelMod {
+class SmoothL1LossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SmoothL1LossCpuKernelMod() = default;
   ~SmoothL1LossCpuKernelMod() override = default;

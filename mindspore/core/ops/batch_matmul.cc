@@ -155,7 +155,7 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BatchMatmul, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BatchMatmul, BaseOperator);
 void BatchMatmul::Init(bool transpose_a, bool transpose_b) {
   set_transpose_a(transpose_a);
   set_transpose_b(transpose_b);

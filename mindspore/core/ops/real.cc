@@ -61,7 +61,7 @@ AbstractBasePtr RealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Real, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Real, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Real, prim::kPrimReal, RealInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

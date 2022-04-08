@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PackFwdGpuKernelMod : public NativeGpuKernelMod {
+class PackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PackFwdGpuKernelMod()
       : axis_(0),

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Minimum, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Minimum, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMinimum, Minimum);
 }  // namespace ops
 }  // namespace mindspore

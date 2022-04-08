@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ConcatV2FwdGpuKernelMod : public NativeGpuKernelMod {
+class ConcatV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ConcatV2FwdGpuKernelMod()
       : axis_(0),

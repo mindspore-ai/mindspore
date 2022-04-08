@@ -43,7 +43,7 @@ constexpr size_t kMethodNearest = 2;
 constexpr size_t kMethodBilinearV2 = 3;
 
 template <typename T>
-class CropAndResizeGpuKernelMod : public NativeGpuKernelMod {
+class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CropAndResizeGpuKernelMod()
       : method_(0),

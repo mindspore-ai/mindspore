@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class TotalC6GetGpuKernelMod : public NativeGpuKernelMod {
+class TotalC6GetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TotalC6GetGpuKernelMod() : ele_atom_lj_type(1) {}
   ~TotalC6GetGpuKernelMod() override = default;

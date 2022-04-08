@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUMS = 2;
-class BoundingBoxEncodeCpuKernelMod : public NativeCpuKernelMod {
+class BoundingBoxEncodeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BoundingBoxEncodeCpuKernelMod() = default;
   ~BoundingBoxEncodeCpuKernelMod() override = default;

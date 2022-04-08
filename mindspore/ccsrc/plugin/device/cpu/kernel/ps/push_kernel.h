@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PushKernelMod : public NativeCpuKernelMod {
+class PushKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PushKernelMod() : key_(UINT64_MAX) {}
   ~PushKernelMod() override = default;

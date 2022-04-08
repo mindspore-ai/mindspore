@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FillV2, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FillV2, BaseOperator);
 abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";

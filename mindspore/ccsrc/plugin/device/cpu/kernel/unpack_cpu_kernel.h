@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace kernel {
-class UnpackCpuKernelMod : public NativeCpuKernelMod {
+class UnpackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UnpackCpuKernelMod() = default;
   ~UnpackCpuKernelMod() override = default;

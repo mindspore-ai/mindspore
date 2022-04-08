@@ -95,7 +95,7 @@ TypePtr BatchToSpaceNDInferType(const std::vector<AbstractBasePtr> &input_args) 
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BatchToSpaceND, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BatchToSpaceND, BaseOperator);
 void BatchToSpaceND::set_crops(std::vector<std::vector<int64_t>> crops) {
   const int64_t crop_size = 2;
   (void)CheckAndConvertUtils::CheckInteger(kCrops, SizeToLong(crops.size()), kEqual, crop_size, this->name());

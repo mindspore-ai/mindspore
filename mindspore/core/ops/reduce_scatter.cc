@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ReduceScatter, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReduceScatter, BaseOperator);
 void ReduceScatter::set_group(const string &group) {
   std::string g = group;
   (void)this->AddAttr(kGroup, api::MakeValue(g));

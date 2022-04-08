@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PReLU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(PReLU, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePReLU, PReLU);
 }  // namespace ops
 }  // namespace mindspore

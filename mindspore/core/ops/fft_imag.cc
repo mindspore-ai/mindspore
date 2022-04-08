@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FftImag, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FftImag, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFftImag, FftImag);
 }  // namespace ops
 }  // namespace mindspore

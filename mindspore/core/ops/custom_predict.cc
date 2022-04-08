@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(CustomPredict, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CustomPredict, BaseOperator);
 void CustomPredict::Init(const int64_t output_num, const float weight_threshold) {
   this->set_output_num(output_num);
   this->set_weight_threshold(weight_threshold);

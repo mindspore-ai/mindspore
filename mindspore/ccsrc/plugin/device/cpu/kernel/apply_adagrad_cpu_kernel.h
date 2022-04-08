@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ApplyAdagradCpuKernelMod : public NativeCpuKernelMod {
+class ApplyAdagradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ApplyAdagradCpuKernelMod() = default;
   ~ApplyAdagradCpuKernelMod() override = default;

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Equal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Equal, BaseOperator);
 AbstractBasePtr EqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

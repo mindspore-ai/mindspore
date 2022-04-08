@@ -34,7 +34,7 @@ constexpr size_t kGradIndex = 2;
 }  // namespace
 
 void PoolingGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (algorithm_ == dnnl::algorithm::pooling_max) {
     size_t work_space = GetSize(workspace_desc_);
     size_t dst_space =

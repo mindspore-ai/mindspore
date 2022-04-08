@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CholeskyTrsmGpuKernelMod : public NativeGpuKernelMod {
+class CholeskyTrsmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CholeskyTrsmGpuKernelMod()
       : batch_(0),

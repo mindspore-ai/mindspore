@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MaximumCpuKernelMod : public NativeCpuKernelMod {
+class MaximumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MaximumCpuKernelMod() = default;
   ~MaximumCpuKernelMod() override = default;

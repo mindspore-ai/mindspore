@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class IsCloseCpuKernelMod : public NativeCpuKernelMod {
+class IsCloseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   IsCloseCpuKernelMod() = default;
   ~IsCloseCpuKernelMod() override = default;

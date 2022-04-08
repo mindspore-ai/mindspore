@@ -48,7 +48,7 @@ TypePtr RsqrtGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(RsqrtGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(RsqrtGrad, BaseOperator);
 AbstractBasePtr RsqrtGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

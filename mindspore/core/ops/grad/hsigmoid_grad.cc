@@ -59,7 +59,7 @@ TypePtr HSigmoidGradInferType(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(HSigmoidGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(HSigmoidGrad, BaseOperator);
 AbstractBasePtr HSigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = HSigmoidGradInferType(primitive, input_args);

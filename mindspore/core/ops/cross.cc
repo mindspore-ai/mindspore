@@ -108,6 +108,6 @@ AbstractBasePtr CrossInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
 REGISTER_PRIMITIVE_EVAL_IMPL(Cross, prim::kPrimCross, CrossInfer, nullptr, true);
 }  // namespace
 
-MIND_API_BASE_IMPL(Cross, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Cross, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore

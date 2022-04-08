@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CustomAOTGpuKernelMod : public NativeGpuKernelMod {
+class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CustomAOTGpuKernelMod() : num_input_(0), num_output_(0), handle_(nullptr), aot_func_(nullptr) {}
   ~CustomAOTGpuKernelMod() override {

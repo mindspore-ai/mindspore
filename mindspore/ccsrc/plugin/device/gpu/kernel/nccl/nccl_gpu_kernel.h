@@ -46,7 +46,7 @@ typedef ncclResult_t (*GroupStart)();
 typedef ncclResult_t (*GroupEnd)();
 typedef std::vector<int> (*GetGroupRanks)(const std::string &);
 
-class NcclGpuKernelMod : public NativeGpuKernelMod {
+class NcclGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   NcclGpuKernelMod() : collective_handle_(nullptr), group_name_(""), nccl_data_type_(ncclHalf), use_mpi_(true) {}
   ~NcclGpuKernelMod() override = default;

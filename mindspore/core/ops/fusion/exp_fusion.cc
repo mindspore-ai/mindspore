@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ExpFusion, PrimitiveC, Exp);
+MIND_API_OPERATOR_IMPL(ExpFusion, Exp);
 void ExpFusion::Init(const float base, const float scale, const float shift) {
   this->set_base(base);
   this->set_scale(scale);

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "common/graph_kernel/adapter/callback_impl.h"
 
 #include <algorithm>

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S, typename G>
-class AdagradGpuKernelMod : public NativeGpuKernelMod {
+class AdagradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AdagradGpuKernelMod()
       : variable_size_(0),

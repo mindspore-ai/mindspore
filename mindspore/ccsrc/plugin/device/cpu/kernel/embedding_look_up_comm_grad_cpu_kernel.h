@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EmbeddingLookUpCommGradCpuKernelMod : public NativeCpuKernelMod {
+class EmbeddingLookUpCommGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EmbeddingLookUpCommGradCpuKernelMod() : split_num_(1) {}
   ~EmbeddingLookUpCommGradCpuKernelMod() override{};

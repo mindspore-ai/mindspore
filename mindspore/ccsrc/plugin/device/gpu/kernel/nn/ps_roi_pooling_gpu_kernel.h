@@ -38,7 +38,7 @@ constexpr int ROI_SHAPE_INDEX0 = 0;
 constexpr int ROI_SHAPE_INDEX1 = 1;
 
 template <typename T>
-class PsROIPoolingFwdGpuKernelMod : public NativeGpuKernelMod {
+class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PsROIPoolingFwdGpuKernelMod()
       : pooled_height_(0),

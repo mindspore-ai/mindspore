@@ -32,7 +32,7 @@ namespace mindspore {
 namespace kernel {
 
 template <typename T>
-class LUGpuKernelMod : public NativeGpuKernelMod {
+class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LUGpuKernelMod() : is_null_input_(false) {}
   ~LUGpuKernelMod() = default;

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(LshProjection, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LshProjection, BaseOperator);
 void LshProjection::Init(const LshProjectionType &type) { set_type(type); }
 
 void LshProjection::set_type(const LshProjectionType &type) {

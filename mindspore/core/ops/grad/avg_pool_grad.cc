@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(AvgPoolGrad, PrimitiveC, PoolGrad);
+MIND_API_OPERATOR_IMPL(AvgPoolGrad, PoolGrad);
 REGISTER_PRIMITIVE_C(kNameAvgPoolGrad, AvgPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

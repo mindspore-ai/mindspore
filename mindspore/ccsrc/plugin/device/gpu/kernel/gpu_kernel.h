@@ -81,44 +81,49 @@ inline int GetPad(int input, int kernel, int stride) {
 
 class NativeGpuKernelMod : public GpuKernelMod {
  public:
-  virtual ~NativeGpuKernelMod() = default;
-  virtual bool Init(const CNodePtr &kernel_node) = 0;
-  virtual void ResetResource() noexcept {
-    MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
-  }
-  virtual void DestroyResource() noexcept {}
+  using ReduceDetail = std::tuple<size_t, TypeId, TypeId>;
+  using ReducePrecisonRes = std::tuple<bool, std::vector<ReduceDetail>, std::vector<ReduceDetail>>;
 
+  virtual void DestroyResource() noexcept {}
+  bool CheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
+  std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
+  ReducePrecisonRes ReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr);
   static std::vector<KernelAttr> GetGpuSupportedList(const std::string &kernel_name) {
     if (!Factory<NativeGpuKernelMod>::Instance().IsRegistered(kernel_name)) {
       return {};
     }
     return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->GetAllSupportedList(kernel_name);
   }
-
+  void SetDevicedId(uint32_t device_id) { device_id_ = device_id; }
   static bool GpuCheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
 
-  using ReduceDetail = std::tuple<size_t, TypeId, TypeId>;
-  using ReducePrecisonRes = std::tuple<bool, std::vector<ReduceDetail>, std::vector<ReduceDetail>>;
   static ReducePrecisonRes GpuReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr) {
     return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->ReducePrecisionCheck(kernel_name, kernel_attr);
   }
-
-  void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
-  bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
-  void InferOp() override;
-  void InitOp() override;
+  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
 
  protected:
   virtual void InitResource() {}
   virtual void InitSizeLists() = 0;
-  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
-  bool CheckSupport(const std::string &kernel_name, const KernelAttr &kernel_attr);
-  std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
-  ReducePrecisonRes ReducePrecisionCheck(const std::string &kernel_name, const KernelAttr &kernel_attr);
-
-  std::weak_ptr<CNode> kernel_node_;
+  virtual void ResetResource() {
+    MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
+  }
+  uint32_t device_id_;
   static std::map<std::string, std::vector<KernelAttr>> support_map_;
   static std::set<std::string> initialize_;
+};
+
+class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
+ public:
+  virtual ~DeprecatedNativeGpuKernelMod() = default;
+  virtual bool Init(const CNodePtr &kernel_node) = 0;
+
+  void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
+  bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
+  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
+
+ protected:
+  std::weak_ptr<CNode> kernel_node_;
 
   size_t GetMatchKernelAttrIdxWithException(const AnfNodePtr &node, const std::vector<KernelAttr> &kernel_attrs) {
     auto kernel_attr = GetKernelAttrFromNode(node);
@@ -413,14 +418,14 @@ class NativeGpuKernelMod : public GpuKernelMod {
   }
 
   inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
-                                     std::vector<int64_t> *attr_value) {
+                                     std::vector<int64_t> *attr_value, const std::shared_ptr<InitOpArgs> &args) {
     // The value of dynamic attr can only be obtained after the InferShape() is executed
-    if (depend_tensor_map_.empty()) {
+    if (args == nullptr || args->depend_tensor_map.empty()) {
       MS_LOG(DEBUG) << "For '" << kernel_name_ << "', the depend_tensor_map is currently empty";
       return false;
     }
-    auto depend_iter = depend_tensor_map_.find(input_index);
-    if (depend_iter == depend_tensor_map_.end()) {
+    auto depend_iter = args->depend_tensor_map.find(input_index);
+    if (depend_iter == args->depend_tensor_map.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to find the " << input_index
                         << "th input in the depend_tensor_map";
     }
@@ -439,6 +444,63 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return true;
   }
 };
+
+std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs);
+
+// expand Nd Shape to 4d (N in [0,4])
+bool ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst);
+
+template <typename T>
+inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
+  if (index >= addr_list.size()) {
+    MS_LOG(ERROR) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    return nullptr;
+  }
+  // Kernels may run normally without workspace, the addr_list[index] maybe nullptr.
+  if ((addr_list[index] == nullptr) || (addr_list[index]->size == 0)) {
+    return nullptr;
+  }
+  if (addr_list[index]->addr == nullptr) {
+    MS_LOG(ERROR) << "The device address is empty, address index:" << index;
+    return nullptr;
+  }
+  return reinterpret_cast<T *>(addr_list[index]->addr);
+}
+
+int AxisTransform(const std::string &origin_data_format, const std::string &cal_format, int axis);
+
+// transpose shape: NCHW To NHWC
+void ShapeNCHW2NHWC(std::vector<size_t> *shape);
+
+// transpose shape: NCDHW To NDHWC
+void ShapeNCDHW2NDHWC(std::vector<size_t> *shape);
+
+void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format);
+
+void SetStrideA(const std::vector<size_t> &shape, int *strideA, size_t len, const std::string &format);
+
+void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format);
+
+void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format);
+
+bool CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B, const std::vector<int> &Out);
+
+// The tensor size is limited to 2G by cudnn.
+bool CheckTensorSize(const std::initializer_list<std::vector<size_t>> &shapes);
+
+// set the tensor descriptor for cudnn/cublas
+bool CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
+                                cudnnDataType_t data_type, const std::string &node_name);
+
+// choose the suitable datatype for cudnn/cublas
+bool GetCudnnDataType(const std::string &Type, cudnnDataType_t *out_type);
+
+bool GetCudaDataType(const std::string &Type, cudaDataType_t *out_type);
+
+bool GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index, const std::string &kernel_name,
+                       const std::string &tensor_name, std::vector<int64_t> *tensor_value);
+
+bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2);
 
 // This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
 // 8 bit integral type is represented by an unsigned char, but the MS_REG_GPU_KERNEL

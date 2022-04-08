@@ -33,7 +33,7 @@ constexpr auto kScatterMax = "ScatterMax";
 constexpr auto kScatterMin = "ScatterMin";
 constexpr auto kScatterUpdate = "ScatterUpdate";
 constexpr auto kUnKnown = "UnKnown";
-class ScatterArithmeticCpuKernelMod : public NativeCpuKernelMod {
+class ScatterArithmeticCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ScatterArithmeticCpuKernelMod() = default;
 

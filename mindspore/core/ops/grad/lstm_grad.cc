@@ -90,7 +90,7 @@ void LSTMGrad::Init(const int64_t input_size, const int64_t hidden_size, const i
   this->set_zoneout_hidden(zoneout_hidden);
 }
 
-MIND_API_BASE_IMPL(LSTMGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LSTMGrad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLSTMGrad, LSTMGrad);
 }  // namespace ops
 }  // namespace mindspore

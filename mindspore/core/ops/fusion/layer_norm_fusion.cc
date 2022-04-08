@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(LayerNormFusion, PrimitiveC, LayerNorm);
+MIND_API_OPERATOR_IMPL(LayerNormFusion, LayerNorm);
 void LayerNormFusion::Init(const int64_t begin_norm_axis, const int64_t begin_params_axis, const float epsilon,
                            const bool elementwise_affine) {
   this->set_begin_norm_axis(begin_norm_axis);

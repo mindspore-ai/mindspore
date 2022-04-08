@@ -47,7 +47,7 @@ TypePtr ReLUGradV2InferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ReLUGradV2, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReLUGradV2, BaseOperator);
 AbstractBasePtr ReLUGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

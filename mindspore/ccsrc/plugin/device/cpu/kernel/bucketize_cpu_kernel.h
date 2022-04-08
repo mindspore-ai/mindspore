@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BucketizeCpuKernelMod : public NativeCpuKernelMod {
+class BucketizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BucketizeCpuKernelMod() = default;
   ~BucketizeCpuKernelMod() override = default;

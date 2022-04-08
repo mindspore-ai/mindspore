@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DropoutFwdGpuKernelMod : public NativeGpuKernelMod {
+class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DropoutFwdGpuKernelMod() { ResetResource(); }
   ~DropoutFwdGpuKernelMod() override = default;

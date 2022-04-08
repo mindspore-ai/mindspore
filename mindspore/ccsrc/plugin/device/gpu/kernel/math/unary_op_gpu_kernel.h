@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-class UnaryOpGpuKernelMod : public NativeGpuKernelMod {
+class UnaryOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   explicit UnaryOpGpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) { ResetResource(); }
   ~UnaryOpGpuKernelMod() override = default;

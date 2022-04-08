@@ -32,7 +32,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int kMaxShapeSize = 4;
 template <typename T>
-class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
+class BroadcastOpGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BroadcastOpGradGpuKernelMod() { ResetResource(); }
   ~BroadcastOpGradGpuKernelMod() override = default;

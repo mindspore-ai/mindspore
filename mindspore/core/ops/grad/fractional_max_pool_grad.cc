@@ -80,7 +80,7 @@ TypePtr FractionalMaxPoolGradInferType(const PrimitivePtr &primitive, const std:
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(FractionalMaxPoolGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FractionalMaxPoolGrad, BaseOperator);
 AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

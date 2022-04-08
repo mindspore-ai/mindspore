@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
+class UniformCandidateSamplerGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UniformCandidateSamplerGpuKernelMod()
       : num_true_(0),

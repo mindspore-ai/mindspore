@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LstmGradWeightGpuKernelMod : public NativeGpuKernelMod {
+class LstmGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LstmGradWeightGpuKernelMod()
       : batch_size_(0),

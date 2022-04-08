@@ -30,7 +30,7 @@ std::vector<std::vector<int64_t>> Pad::get_paddings() const {
   return GetValue<std::vector<std::vector<int64_t>>>(GetAttr(kPaddings));
 }
 
-MIND_API_BASE_IMPL(Pad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Pad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePad, Pad);
 }  // namespace ops
 }  // namespace mindspore

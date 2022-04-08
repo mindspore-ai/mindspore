@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MinimumGradCpuKernelMod : public NativeCpuKernelMod {
+class MinimumGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MinimumGradCpuKernelMod() = default;
   ~MinimumGradCpuKernelMod() override = default;

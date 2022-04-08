@@ -30,7 +30,7 @@ constexpr size_t DimOfTensor = 3;
 constexpr size_t LeastWeightShape = 3;
 constexpr size_t LeastInputShapeSize = 2;
 template <typename T>
-class GruGradWeightGpuKernelMod : public NativeGpuKernelMod {
+class GruGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GruGradWeightGpuKernelMod()
       : batch_size_(0),

@@ -46,7 +46,7 @@ TypePtr LayerNormBetaGammaBackpropV2InferType(const PrimitivePtr &prim,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LayerNormBetaGammaBackpropV2, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LayerNormBetaGammaBackpropV2, BaseOperator);
 void LayerNormBetaGammaBackpropV2::Init(const std::vector<int64_t> &shape_gamma) { set_shape_gamma(shape_gamma); }
 
 void LayerNormBetaGammaBackpropV2::set_shape_gamma(const std::vector<int64_t> &shape_gamma) {

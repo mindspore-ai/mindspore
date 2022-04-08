@@ -133,22 +133,16 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
  public:
   NativeCpuKernelMod() = default;
   ~NativeCpuKernelMod() override = default;
-  virtual void Init(const CNodePtr &kernel_node);
-  virtual void InitKernel(const CNodePtr &kernel_node) = 0;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void * /*stream_ptr*/) override {
     return Launch(inputs, workspace, outputs);
-  };
+  }
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) = 0;
 
-  void SetCNodePtr(const CNodePtr &kernel_node) { cnode_ptr_ = kernel_node; }
-  const CNodeWeakPtr &GetCNodePtr() { return cnode_ptr_; }
-
-  void InferOp() override;
-  void InitOp() override;
-
-  ParallelSearchInfo parallel_search_info_;
+  // Should be called before Init.
+  void SetThreadPool(ActorThreadPool *pool) { pool_ = pool; }
 
   static std::vector<KernelAttr> GetCpuSupportedList(const std::string &kernel_name) {
     auto temp_mod = kernel::Factory<NativeCpuKernelMod>::Instance().Create(kernel_name);
@@ -159,12 +153,39 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
     return temp_mod->GetAllSupportedList(kernel_name);
   }
 
+  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
+
+  ParallelSearchInfo parallel_search_info_;
+
+ protected:
+  virtual void InitInputOutputSize(const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs);
+
+  ActorThreadPool *pool_{nullptr};
+
+ private:
+  std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
+  std::vector<KernelAttr> GetSupportFromOpLib(const std::string &kernel_name);
+  static std::map<std::string, std::vector<KernelAttr>> support_map_;
+  static std::set<std::string> initialize_;
+};
+
+class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
+ public:
+  DeprecatedNativeCpuKernelMod() = default;
+  ~DeprecatedNativeCpuKernelMod() override = default;
+
+  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
+  virtual void Init(const CNodePtr &kernel_node);
+  virtual void InitKernel(const CNodePtr &kernel_node) = 0;
+
+  void SetCNodePtr(const CNodePtr &kernel_node) { cnode_ptr_ = kernel_node; }
+  const CNodeWeakPtr &GetCNodePtr() { return cnode_ptr_; }
+
   void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
 
  protected:
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);
-  virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
-
   CNodeWeakPtr cnode_ptr_;
 
   template <typename T>
@@ -182,14 +203,8 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   }
 
  private:
-  std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
-  std::vector<KernelAttr> GetSupportFromOpLib(const std::string &kernel_name);
   std::vector<TypeId> GetInputDtypes(const CNodePtr &kernel_node);
-  std::vector<std::string> GetInputFormats(const CNodePtr &kernel_node);
   std::vector<TypeId> GetOutputDtypes(const CNodePtr &kernel_node);
-  std::vector<std::string> GetOutputFormats(const CNodePtr &kernel_node);
-  static std::map<std::string, std::vector<KernelAttr>> support_map_;
-  static std::set<std::string> initialize_;
 };
 
 class CpuKernelFunc {

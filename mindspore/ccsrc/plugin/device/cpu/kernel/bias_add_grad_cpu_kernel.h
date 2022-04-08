@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BiasAddGradCpuKernelMod : public NativeCpuKernelMod {
+class BiasAddGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BiasAddGradCpuKernelMod() = default;
   ~BiasAddGradCpuKernelMod() override = default;

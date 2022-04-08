@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class CalculateNoWrapCrdGpuKernelMod : public NativeGpuKernelMod {
+class CalculateNoWrapCrdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CalculateNoWrapCrdGpuKernelMod() : ele_crd(1) {}
   ~CalculateNoWrapCrdGpuKernelMod() override = default;

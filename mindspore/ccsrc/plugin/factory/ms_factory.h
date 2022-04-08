@@ -89,6 +89,11 @@ class KernelRegistrar {
 
 #define MS_KERNEL_FACTORY_REG_BY_CREATOR(BASE_CLASS, NAME, CREATOR) \
   static const KernelRegistrar<BASE_CLASS> g_##NAME##_##BASE_CLASS##_reg(#NAME, CREATOR)
+
+#define MS_KERNEL_FACTORY_REG_WITH_NAME_PARAM(BASE_CLASS, NAME, DERIVE_CLASS)                                          \
+  static_assert(std::is_base_of<BASE_CLASS, DERIVE_CLASS>::value, #DERIVE_CLASS " must be derived from " #BASE_CLASS); \
+  static const KernelRegistrar<BASE_CLASS> g_##NAME##_##BASE_CLASS##_reg(                                              \
+    #NAME, []() { return std::make_shared<DERIVE_CLASS>(#NAME); })
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_PLUGIN_FACTORY_MS_FACTORY_H_

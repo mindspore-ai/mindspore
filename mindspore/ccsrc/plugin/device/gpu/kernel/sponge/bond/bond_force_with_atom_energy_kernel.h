@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class BondForceWithAtomEnergyGpuKernelMod : public NativeGpuKernelMod {
+class BondForceWithAtomEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BondForceWithAtomEnergyGpuKernelMod() : ele_uint_crd(1) {}
   ~BondForceWithAtomEnergyGpuKernelMod() override = default;

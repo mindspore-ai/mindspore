@@ -24,7 +24,7 @@ namespace mindspore {
 constexpr size_t kInputNum = 1;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
-class CholeskyInverseCpuKernelMod : public NativeCpuKernelMod {
+class CholeskyInverseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CholeskyInverseCpuKernelMod() = default;
   ~CholeskyInverseCpuKernelMod() override = default;

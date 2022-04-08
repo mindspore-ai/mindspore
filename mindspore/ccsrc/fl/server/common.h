@@ -95,7 +95,7 @@ enum class IterationResult {
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
-using mindspore::kernel::NativeCpuKernelMod;
+using mindspore::kernel::DeprecatedNativeCpuKernelMod;
 using FBBuilder = flatbuffers::FlatBufferBuilder;
 using TimeOutCb = std::function<void(bool, const std::string &)>;
 using StopTimerCb = std::function<void(void)>;

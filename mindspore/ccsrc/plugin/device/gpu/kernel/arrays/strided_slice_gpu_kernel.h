@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int DynamicInputNum = 4;
 template <typename T, typename S = int64_t>
-class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceGpuCommon {
+class StridedSliceGpuKernelMod : public DeprecatedNativeGpuKernelMod, public StridedSliceGpuCommon {
  public:
   StridedSliceGpuKernelMod() = default;
   ~StridedSliceGpuKernelMod() override = default;
@@ -65,9 +65,9 @@ class StridedSliceGpuKernelMod : public NativeGpuKernelMod, public StridedSliceG
                         << ", but got " << input_shape_.size();
     }
     if (!is_dynamic_attr_) {
-      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_);
-      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_);
-      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_);
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel_node->user_data<kernel::InitOpArgs>());
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel_node->user_data<kernel::InitOpArgs>());
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel_node->user_data<kernel::InitOpArgs>());
     }
     CollectInfo(kernel_node, is_dynamic_attr_);
     InitSizeLists();

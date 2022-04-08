@@ -57,7 +57,7 @@ TypePtr ReciprocalInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Reciprocal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Reciprocal, BaseOperator);
 AbstractBasePtr ReciprocalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(ReciprocalInferShape(primitive, input_args),

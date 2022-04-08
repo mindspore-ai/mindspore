@@ -73,7 +73,7 @@ TuplePtr CTCLossV2InferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(CTCLossV2, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CTCLossV2, BaseOperator);
 AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   for (auto item : input_args) {

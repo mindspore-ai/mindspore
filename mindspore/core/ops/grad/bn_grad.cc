@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(BNGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BNGrad, BaseOperator);
 void BNGrad::Init(const float eps, const float momentum) {
   this->set_eps(eps);
   this->set_momentum(momentum);

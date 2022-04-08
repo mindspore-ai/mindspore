@@ -128,7 +128,7 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Complex, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Complex, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Complex, prim::kPrimComplex, ComplexInfer, ComplexInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

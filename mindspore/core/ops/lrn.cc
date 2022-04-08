@@ -75,7 +75,7 @@ void LRN::Init(const int64_t depth_radius, const float bias, const float alpha, 
   this->set_norm_region(norm_region);
 }
 
-MIND_API_BASE_IMPL(LRN, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LRN, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLRN, LRN);
 }  // namespace ops
 }  // namespace mindspore

@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BinaryCrossEntropyGradCpuKernelMod : public NativeCpuKernelMod {
+class BinaryCrossEntropyGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BinaryCrossEntropyGradCpuKernelMod() = default;
   ~BinaryCrossEntropyGradCpuKernelMod() override = default;

@@ -80,7 +80,7 @@ void MaxPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
   this->set_round_mode(round_mode);
 }
 
-MIND_API_BASE_IMPL(MaxPool, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MaxPool, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMaxPool, MaxPool);
 }  // namespace ops
 }  // namespace mindspore

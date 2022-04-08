@@ -76,7 +76,7 @@ AbstractBasePtr LstmInfer(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LSTM, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LSTM, BaseOperator);
 void LSTM::set_input_size(const int64_t input_size) {
   (void)CheckAndConvertUtils::CheckInteger(kInput_size, input_size, kGreaterThan, 0, this->name());
   (void)AddAttr(kInput_size, api::MakeValue(input_size));

@@ -33,7 +33,7 @@ constexpr int WIDTH = 3;
 constexpr size_t INPUT_NUM = 2;
 constexpr size_t OUTPUT_NUM = 1;
 
-class ROIAlignGradCpuKernelMod : public NativeCpuKernelMod {
+class ROIAlignGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ROIAlignGradCpuKernelMod() = default;
   ~ROIAlignGradCpuKernelMod() override = default;

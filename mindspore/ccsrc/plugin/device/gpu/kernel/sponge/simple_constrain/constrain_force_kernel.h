@@ -35,7 +35,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1, typename T2>
-class ConstrainForceGpuKernelMod : public NativeGpuKernelMod {
+class ConstrainForceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ConstrainForceGpuKernelMod() : ele_crd(1) {}
   ~ConstrainForceGpuKernelMod() override = default;

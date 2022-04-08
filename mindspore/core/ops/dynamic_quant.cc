@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(DynamicQuant, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DynamicQuant, BaseOperator);
 void DynamicQuant::set_symmetric(const bool symmetric) { (void)AddAttr(kSymmetric, api::MakeValue(symmetric)); }
 bool DynamicQuant::get_symmetric() const {
   auto value_ptr = this->GetAttr(kSymmetric);

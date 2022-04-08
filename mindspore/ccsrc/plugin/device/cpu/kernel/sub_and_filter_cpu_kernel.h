@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SubAndFilterCpuKernelMod : public NativeCpuKernelMod {
+class SubAndFilterCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SubAndFilterCpuKernelMod() = default;
   ~SubAndFilterCpuKernelMod() override = default;

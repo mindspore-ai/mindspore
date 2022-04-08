@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ROIPooling, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ROIPooling, BaseOperator);
 void ROIPooling::set_pooled_h(const int64_t pooled_h) { (void)this->AddAttr(kPooledH, api::MakeValue(pooled_h)); }
 
 int64_t ROIPooling::get_pooled_h() const { return GetValue<int64_t>(GetAttr(kPooledH)); }

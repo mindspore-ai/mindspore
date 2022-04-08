@@ -98,7 +98,7 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ApplyAdagradDA, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ApplyAdagradDA, BaseOperator);
 AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

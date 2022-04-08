@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ResizeBilinearGpuKernelMod : public NativeGpuKernelMod {
+class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ResizeBilinearGpuKernelMod() { ResetResource(); }
   ~ResizeBilinearGpuKernelMod() override = default;

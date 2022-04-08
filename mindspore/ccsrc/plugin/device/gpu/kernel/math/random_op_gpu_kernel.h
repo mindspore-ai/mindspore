@@ -44,7 +44,7 @@ const std::map<std::string, RandomOptype> kRandomOpTypeMap = {{"StandardNormal",
                                                               {"CudnnUniformReal", RANDOM_OP_CUDNN_UNIFORM_REAL}};
 
 template <typename T>
-class RandomOpGpuKernelMod : public NativeGpuKernelMod {
+class RandomOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RandomOpGpuKernelMod()
       : random_op_type_(RANDOM_OP_INVALID_TYPE),

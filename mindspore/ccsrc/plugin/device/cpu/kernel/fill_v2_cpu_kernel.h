@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class FillV2CpuKernelMod : public NativeCpuKernelMod {
+class FillV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   FillV2CpuKernelMod() = default;
   ~FillV2CpuKernelMod() override = default;

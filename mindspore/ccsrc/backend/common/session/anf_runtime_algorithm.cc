@@ -1218,5 +1218,31 @@ void AnfRuntimeAlgorithm::UpdateGraphValidRefPair(const KernelGraphPtr &graph) {
   }
   graph->set_ref_out_in_map(new_ref_map);
 }
+
+bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
+  // Skip run ReduceSum when axis is a Empty Tensor
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (op_name != kReduceSumOpName) {
+    return false;
+  }
+
+  const size_t axes_index = 1;
+  if (cnode->inputs().size() <= axes_index + 1) {
+    return false;
+  }
+  auto input_axes = cnode->input(axes_index + 1);
+  // cppcheck-suppress unreadVariable
+  auto lock = AnfUtils::GetAbstractLock(input_axes.get());
+  auto axes_abs = input_axes->abstract()->Clone();
+  MS_EXCEPTION_IF_NULL(axes_abs);
+  auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
+  if (axes_abs->isa<abstract::AbstractTensor>()) {
+    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](ssize_t shape) { return shape == 0; })) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace session
 }  // namespace mindspore

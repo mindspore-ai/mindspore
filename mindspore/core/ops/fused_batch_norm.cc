@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FusedBatchNorm, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FusedBatchNorm, BaseOperator);
 void FusedBatchNorm::Init(const int64_t mode, const float epsilon, const float momentum) {
   this->set_mode(mode);
   this->set_epsilon(epsilon);

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SpaceToDepth, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SpaceToDepth, BaseOperator);
 void SpaceToDepth::Init(const int64_t block_size, const Format &format) {
   this->set_block_size(block_size);
   this->set_format(format);

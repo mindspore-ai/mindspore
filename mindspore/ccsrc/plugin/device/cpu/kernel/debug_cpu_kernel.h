@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DebugCpuKernelMod : public NativeCpuKernelMod {
+class DebugCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   DebugCpuKernelMod() = default;
   ~DebugCpuKernelMod() override = default;

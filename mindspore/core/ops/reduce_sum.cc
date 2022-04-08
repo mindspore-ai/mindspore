@@ -200,7 +200,7 @@ TypePtr ReduceSumInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ReduceSum, PrimitiveC, Reduce);
+MIND_API_OPERATOR_IMPL(ReduceSum, Reduce);
 AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 1;

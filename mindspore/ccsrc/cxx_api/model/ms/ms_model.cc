@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "cxx_api/model/ms/ms_model.h"
 #include <memory>
 #include <set>

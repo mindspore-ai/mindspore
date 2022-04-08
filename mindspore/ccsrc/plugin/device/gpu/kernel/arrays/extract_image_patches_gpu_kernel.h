@@ -30,7 +30,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int64_t kMidDividend = 2;
 template <typename T>
-class ExtractImagePatchesKernelMod : public NativeGpuKernelMod {
+class ExtractImagePatchesKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ExtractImagePatchesKernelMod() { ResetResource(); }
   ~ExtractImagePatchesKernelMod() override = default;

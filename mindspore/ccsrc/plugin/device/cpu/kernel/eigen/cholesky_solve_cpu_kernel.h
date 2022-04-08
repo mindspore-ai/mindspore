@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CholeskySolveCpuKernelMod : public NativeCpuKernelMod {
+class CholeskySolveCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CholeskySolveCpuKernelMod() = default;
   ~CholeskySolveCpuKernelMod() override = default;

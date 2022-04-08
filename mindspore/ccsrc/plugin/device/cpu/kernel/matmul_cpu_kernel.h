@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnkown = "Unknown";
-class MatMulCpuKernelMod : public NativeCpuKernelMod {
+class MatMulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MatMulCpuKernelMod() = default;
   explicit MatMulCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

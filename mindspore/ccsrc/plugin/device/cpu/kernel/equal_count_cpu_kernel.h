@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EqualCountCpuKernelMod : public NativeCpuKernelMod {
+class EqualCountCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EqualCountCpuKernelMod() = default;
   ~EqualCountCpuKernelMod() override = default;

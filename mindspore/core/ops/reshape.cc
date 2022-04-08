@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Reshape, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Reshape, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReshape, Reshape);
 }  // namespace ops
 }  // namespace mindspore

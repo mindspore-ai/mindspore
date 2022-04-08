@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MatrixSetDiagGpuKernelMod : public NativeGpuKernelMod {
+class MatrixSetDiagGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MatrixSetDiagGpuKernelMod() = default;
   ~MatrixSetDiagGpuKernelMod() override = default;

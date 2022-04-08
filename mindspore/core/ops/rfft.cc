@@ -28,7 +28,7 @@ void Rfft::set_fft_length(const int64_t fft_length) { (void)this->AddAttr(kFftLe
 
 int64_t Rfft::get_fft_length() const { return GetValue<int64_t>(GetAttr(kFftLength)); }
 
-MIND_API_BASE_IMPL(Rfft, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Rfft, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameRfft, Rfft);
 }  // namespace ops
 }  // namespace mindspore

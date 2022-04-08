@@ -41,7 +41,7 @@ constexpr size_t kDilationSize = 4;
 constexpr size_t kHeightDilationIndex = 2;
 constexpr size_t kWidthDilationIndex = 3;
 template <typename T>
-class Im2ColFwdGpuKernelMod : public NativeGpuKernelMod {
+class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   Im2ColFwdGpuKernelMod()
       : cudnn_handle_(nullptr),

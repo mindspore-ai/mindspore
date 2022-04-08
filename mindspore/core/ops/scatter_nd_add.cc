@@ -72,7 +72,7 @@ TypePtr ScatterNdAddInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ScatterNdAdd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ScatterNdAdd, BaseOperator);
 AbstractBasePtr ScatterNdAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

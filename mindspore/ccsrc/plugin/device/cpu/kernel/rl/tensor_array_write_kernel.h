@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayWriteCpuKernelMod : public NativeCpuKernelMod {
+class TensorArrayWriteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TensorArrayWriteCpuKernelMod();
   ~TensorArrayWriteCpuKernelMod() = default;

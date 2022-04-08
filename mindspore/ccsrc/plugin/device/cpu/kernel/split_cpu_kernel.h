@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SplitCpuKernelMod : public NativeCpuKernelMod {
+class SplitCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SplitCpuKernelMod() = default;
   ~SplitCpuKernelMod() override = default;

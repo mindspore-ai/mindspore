@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(CumSum, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CumSum, BaseOperator);
 void CumSum::Init(const bool exclusive, const bool reverse) {
   this->set_exclusive(exclusive);
   this->set_reverse(reverse);

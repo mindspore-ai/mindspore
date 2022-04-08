@@ -104,7 +104,7 @@ TypePtr ApplyMomentumInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ApplyMomentum, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ApplyMomentum, BaseOperator);
 AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = ApplyMomentumInferType(primitive, input_args);

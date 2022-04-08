@@ -26,7 +26,7 @@ namespace mindspore {
 constexpr size_t kInputNum = 3;
 constexpr size_t kOutputNum = 1;
 namespace kernel {
-class LuSolveCpuKernelMod : public NativeCpuKernelMod {
+class LuSolveCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   LuSolveCpuKernelMod() = default;
   ~LuSolveCpuKernelMod() override = default;

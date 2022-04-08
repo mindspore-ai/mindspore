@@ -64,7 +64,7 @@ TypePtr XdivyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Xdivy, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Xdivy, BaseOperator);
 AbstractBasePtr XdivyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   auto shape = XdivyInferShape(primitive, input_args);

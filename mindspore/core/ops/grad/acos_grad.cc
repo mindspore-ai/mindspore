@@ -47,7 +47,7 @@ TypePtr ACosGradInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ACosGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ACosGrad, BaseOperator);
 AbstractBasePtr ACosGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

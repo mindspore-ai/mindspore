@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class NMSWithMaskFwdGpuKernelMod : public NativeGpuKernelMod {
+class NMSWithMaskFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   NMSWithMaskFwdGpuKernelMod()
       : num_input_(0),

@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PadFwdGpuKernelMod : public NativeGpuKernelMod {
+class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PadFwdGpuKernelMod() { ResetResource(); }
   ~PadFwdGpuKernelMod() override = default;

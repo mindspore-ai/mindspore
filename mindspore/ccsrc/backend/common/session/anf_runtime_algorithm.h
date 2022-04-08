@@ -170,6 +170,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void CacheAddrForAtomicClean(const AnfNodePtr &node, kernel::KernelMod *kernel_mod);
 
   static void UpdateGraphValidRefPair(const KernelGraphPtr &graph);
+  static bool IsDynamicShapeSkipExecute(const CNodePtr &cnode);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

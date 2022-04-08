@@ -93,7 +93,7 @@ void SparseApplyAdamCpuKernelMod::InitWorkspaceSize() {
 }
 
 void SparseApplyAdamCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else {

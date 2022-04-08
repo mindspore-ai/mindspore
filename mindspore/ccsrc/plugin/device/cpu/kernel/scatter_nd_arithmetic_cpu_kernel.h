@@ -27,7 +27,7 @@ namespace mindspore {
 namespace kernel {
 constexpr auto kScatterNdMul = "ScatterNdMul";
 constexpr auto kUnKnown = "UnKnown";
-class ScatterNdArithmeticCpuKernelMod : public NativeCpuKernelMod {
+class ScatterNdArithmeticCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ScatterNdArithmeticCpuKernelMod() = default;
 

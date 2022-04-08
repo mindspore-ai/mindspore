@@ -34,7 +34,7 @@ enum RandomOptype { RANDOM_OP_NORMAL = 0, RANDOM_OP_UNIFORM_INT, RANDOM_OP_UNIFO
 const std::map<std::string, RandomOptype> kRandomOpTypeMap = {
   {"StandardNormal", RANDOM_OP_NORMAL}, {"UniformInt", RANDOM_OP_UNIFORM_INT}, {"UniformReal", RANDOM_OP_UNIFORM_REAL}};
 
-class RandomCpuKernelMod : public NativeCpuKernelMod {
+class RandomCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RandomCpuKernelMod() = default;
   explicit RandomCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

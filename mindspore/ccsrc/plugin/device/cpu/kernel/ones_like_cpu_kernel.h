@@ -28,7 +28,7 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class OnesLikeCpuKernelMod : public NativeCpuKernelMod {
+class OnesLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   OnesLikeCpuKernelMod() = default;
   ~OnesLikeCpuKernelMod() override = default;

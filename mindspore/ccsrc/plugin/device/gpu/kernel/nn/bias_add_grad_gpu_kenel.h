@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BiasAddGradGpuKernelMod : public NativeGpuKernelMod {
+class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BiasAddGradGpuKernelMod()
       : same_dims_(true),

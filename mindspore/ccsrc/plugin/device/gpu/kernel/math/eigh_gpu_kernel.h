@@ -37,7 +37,7 @@ namespace kernel {
 constexpr char C_EIEH_VECTOR[] = "compute_eigenvectors";
 constexpr char LOWER[] = "lower";
 template <typename T>
-class EighGpuKernelMod : public NativeGpuKernelMod {
+class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EighGpuKernelMod() : is_null_input_(false) {}
   ~EighGpuKernelMod() = default;

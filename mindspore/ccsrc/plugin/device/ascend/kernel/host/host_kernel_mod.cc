@@ -43,6 +43,9 @@ HostKernelFactory &HostKernelFactory::Get() {
 
 bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
+  input_size_list_.clear();
+  output_size_list_.clear();
+
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
 
@@ -69,22 +72,22 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   anf_node_ = anf_node;
   return true;
 }
+
 bool HostKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                            const std::vector<AddressPtr> &, void *) {
   return true;
 }
 
-void HostKernelMod::InferOp() {
+void HostKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
-  if (!common::AnfAlgo::IsDynamicShape(node)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape.";
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!common::AnfAlgo::IsDynamicShape(cnode)) {
+    MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
-  KernelMod::InferShape();
 
-  input_size_list_.clear();
-  output_size_list_.clear();
-  HostKernelMod::Init(node);
+  Init(cnode);
 }
 
 std::vector<TaskInfoPtr> HostKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,

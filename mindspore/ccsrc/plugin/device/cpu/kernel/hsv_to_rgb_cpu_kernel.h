@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
-class HSVToRGBCpuKernelMod : public NativeCpuKernelMod {
+class HSVToRGBCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   HSVToRGBCpuKernelMod() = default;
   ~HSVToRGBCpuKernelMod() override = default;

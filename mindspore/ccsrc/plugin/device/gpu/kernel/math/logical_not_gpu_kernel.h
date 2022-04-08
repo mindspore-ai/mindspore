@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LogicalNotGpuKernelMod : public NativeGpuKernelMod {
+class LogicalNotGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LogicalNotGpuKernelMod() { ResetResource(); }
   ~LogicalNotGpuKernelMod() override = default;

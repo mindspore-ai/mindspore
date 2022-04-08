@@ -29,7 +29,7 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 namespace mindspore {
 namespace kernel {
-class UnaryOpCpuKernelMod : public NativeCpuKernelMod {
+class UnaryOpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UnaryOpCpuKernelMod() = default;
   explicit UnaryOpCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

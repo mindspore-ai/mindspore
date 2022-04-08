@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BoundingBoxEncodeGpuKernelMod : public NativeGpuKernelMod {
+class BoundingBoxEncodeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BoundingBoxEncodeGpuKernelMod() : anchor_size_(0), groundtruth_size_(0), deltas_size_(0), is_null_input_(false) {}
   ~BoundingBoxEncodeGpuKernelMod() override = default;

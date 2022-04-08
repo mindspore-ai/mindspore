@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CTCLossCpuKernelMod : public NativeCpuKernelMod {
+class CTCLossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CTCLossCpuKernelMod() = default;
   ~CTCLossCpuKernelMod() override = default;

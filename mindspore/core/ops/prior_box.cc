@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PriorBox, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(PriorBox, BaseOperator);
 void PriorBox::set_min_sizes(const std::vector<int64_t> &min_sizes) {
   (void)this->AddAttr(kMinSizes, api::MakeValue(min_sizes));
 }

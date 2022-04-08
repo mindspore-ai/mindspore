@@ -67,7 +67,7 @@ TypePtr CTCLossV2GradInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(CTCLossV2Grad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CTCLossV2Grad, BaseOperator);
 AbstractBasePtr CTCLossV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   for (auto item : input_args) {

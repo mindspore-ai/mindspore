@@ -97,7 +97,7 @@ TypePtr TransposeInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Transpose, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Transpose, BaseOperator);
 AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

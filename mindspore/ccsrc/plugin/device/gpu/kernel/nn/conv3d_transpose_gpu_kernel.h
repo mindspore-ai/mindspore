@@ -54,7 +54,7 @@ constexpr size_t kDepth3DDilationIdx = 2;
 constexpr size_t kHeight3DDilationIdx = 3;
 constexpr size_t kWidth3DDilationIdx = 4;
 template <typename T>
-class Conv3dTransposeFwdGpuKernelMod : public NativeGpuKernelMod {
+class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   Conv3dTransposeFwdGpuKernelMod() { ResetResource(); }
   ~Conv3dTransposeFwdGpuKernelMod() override { DestroyResource(); }

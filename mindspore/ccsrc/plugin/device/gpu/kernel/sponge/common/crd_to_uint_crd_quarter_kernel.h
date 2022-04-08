@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class CrdToUintCrdQuarterGpuKernelMod : public NativeGpuKernelMod {
+class CrdToUintCrdQuarterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CrdToUintCrdQuarterGpuKernelMod() : ele_crd(1) {}
   ~CrdToUintCrdQuarterGpuKernelMod() override = default;

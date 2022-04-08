@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixDiagPartCpuKernelMod : public NativeCpuKernelMod {
+class MatrixDiagPartCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MatrixDiagPartCpuKernelMod() = default;
   ~MatrixDiagPartCpuKernelMod() override = default;

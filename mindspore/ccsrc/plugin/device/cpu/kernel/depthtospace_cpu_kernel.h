@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DepthToSpaceCpuKernelMod : public NativeCpuKernelMod {
+class DepthToSpaceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   DepthToSpaceCpuKernelMod() = default;
   ~DepthToSpaceCpuKernelMod() override = default;

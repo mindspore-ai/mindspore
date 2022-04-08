@@ -124,7 +124,7 @@ void RandomChoiceWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void RandomChoiceWithMaskCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
 
   GetInputTotalCount(dims, &input_total_count, input_dim_size);
   int temp_output_length = count > 0 ? count : input_total_count;

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorArrayCreateCpuKernelMod : public NativeCpuKernelMod {
+class TensorArrayCreateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TensorArrayCreateCpuKernelMod();
   ~TensorArrayCreateCpuKernelMod() = default;

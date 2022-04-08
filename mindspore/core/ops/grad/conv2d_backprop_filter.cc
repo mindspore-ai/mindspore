@@ -102,7 +102,7 @@ TypePtr Conv2DBackpropFilterInferType(const PrimitivePtr &prim, const std::vecto
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Conv2DBackpropFilter, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Conv2DBackpropFilter, BaseOperator);
 void Conv2DBackpropFilter::Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                 const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const int64_t mode,
                                 const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,

@@ -52,16 +52,7 @@ DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
   }
 }
 
-void DynamicAicpuOpKernelMod::InferOp() {
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  if (!common::AnfAlgo::IsDynamicShape(node)) {
-    MS_LOG(EXCEPTION) << "The node is not dynamic shape.";
-  }
-  KernelMod::InferShape();
-}
-
-void DynamicAicpuOpKernelMod::InitOp() {
+void DynamicAicpuOpKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -71,7 +62,7 @@ void DynamicAicpuOpKernelMod::InitOp() {
   }
   // update output size after InferShape.
   if (unknow_type_ != device::ascend::UnknowShapeOpType::DEPEND_COMPUTE) {
-    KernelMod::UpdateOutputSizeList();
+    AscendKernelMod::UpdateOutputSizeList();
   }
 
   MS_LOG(INFO) << "UpdateExtInfo of " << cnode->fullname_with_scope() << " start";

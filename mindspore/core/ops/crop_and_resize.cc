@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(CropAndResize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CropAndResize, BaseOperator);
 void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
   this->set_method(method);
   this->set_extrapolation_value(extrapolation_value);

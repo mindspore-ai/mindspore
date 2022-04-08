@@ -45,7 +45,7 @@ TypePtr RoundInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Round, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Round, BaseOperator);
 AbstractBasePtr RoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

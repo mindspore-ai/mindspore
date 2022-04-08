@@ -33,7 +33,7 @@ Reduction NLLLoss::get_reduction() const {
   return Reduction(GetValue<int64_t>(value_ptr));
 }
 
-MIND_API_BASE_IMPL(NLLLoss, PrimitiveC, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameNLLLoss, NLLLoss)
+MIND_API_OPERATOR_IMPL(NLLLoss, BaseOperator);
+REGISTER_PRIMITIVE_C(kNameNLLLoss, NLLLoss);
 }  // namespace ops
 }  // namespace mindspore

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(EmbeddingLookupFusion, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(EmbeddingLookupFusion, BaseOperator);
 void EmbeddingLookupFusion::set_max_norm(const float max_norm) {
   (void)this->AddAttr(kMaxNorm, api::MakeValue(max_norm));
 }

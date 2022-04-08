@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class TileGpuKernelMod : public NativeGpuKernelMod {
+class TileGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TileGpuKernelMod() { ResetResource(); }
   ~TileGpuKernelMod() override = default;

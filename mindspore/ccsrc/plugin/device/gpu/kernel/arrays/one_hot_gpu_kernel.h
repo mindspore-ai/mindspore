@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int DynamicInputNum = 4;
 template <typename T, typename S, typename G = int>
-class OneHotFwdGpuKernelMod : public NativeGpuKernelMod {
+class OneHotFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   OneHotFwdGpuKernelMod()
       : input_size_(1), output_size_(1), depth_(0), left_dim_size_(1), right_dim_size_(1), is_null_input_(false) {}

@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MDIterationGradientDescentGpuKernelMod : public NativeGpuKernelMod {
+class MDIterationGradientDescentGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MDIterationGradientDescentGpuKernelMod() {}
   ~MDIterationGradientDescentGpuKernelMod() override = default;

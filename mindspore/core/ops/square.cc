@@ -147,7 +147,7 @@ ValuePtr SquareInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Square, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Square, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Square, prim::kPrimSquare, SquareInfer, SquareInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

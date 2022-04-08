@@ -34,7 +34,7 @@ const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
   {"ReduceProd", CUDNN_REDUCE_TENSOR_MUL},
 };
 template <typename T, typename S = int64_t>
-class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
+class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ArrayReduceGpuKernelMod() { ResetResource(); }
   ~ArrayReduceGpuKernelMod() override { DestroyResource(); }
@@ -104,7 +104,7 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     }
     auto inputA_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    if (is_dynamic_axis_ && NeedSkipExecute(kernel_node)) {
+    if (is_dynamic_axis_ && AnfAlgo::IsDynamicShapeSkipExecute(kernel_node)) {
       need_skip_execute_ = true;
       input_size_ = std::accumulate(inputA_shape.begin(), inputA_shape.end(), sizeof(T), std::multiplies<size_t>());
       InitSizeLists();
@@ -114,7 +114,8 @@ class ArrayReduceGpuKernelMod : public NativeGpuKernelMod {
     int input_dim_length = SizeToInt(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size());
     std::vector<int64_t> attr_axis;
     if (is_dynamic_axis_) {
-      get_dynamic_axis_value_ = GetDynamicAttrIntValue(kernel_node, kAxisIndex_, &attr_axis);
+      get_dynamic_axis_value_ =
+        GetDynamicAttrIntValue(kernel_node, kAxisIndex_, &attr_axis, kernel_node->user_data<kernel::InitOpArgs>());
       if (!get_dynamic_axis_value_) {
         InitSizeLists();
         return true;

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class CombineMomentumGpuKernelMod : public NativeGpuKernelMod {
+class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CombineMomentumGpuKernelMod()
       : element_num_(1), num_(0), input_num_(6), is_null_input_(false), kernel_name_("CombineMomentum") {}

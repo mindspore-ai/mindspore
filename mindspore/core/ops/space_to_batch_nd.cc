@@ -64,7 +64,7 @@ void SpaceToBatchND::Init(const std::vector<int64_t> block_shape, const std::vec
   this->set_block_shape(block_shape);
 }
 
-MIND_API_BASE_IMPL(SpaceToBatchND, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SpaceToBatchND, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSpaceToBatchND, SpaceToBatchND);
 }  // namespace ops
 }  // namespace mindspore

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PackFwdCpuKernelMod : public NativeCpuKernelMod {
+class PackFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PackFwdCpuKernelMod() = default;
   ~PackFwdCpuKernelMod() override = default;

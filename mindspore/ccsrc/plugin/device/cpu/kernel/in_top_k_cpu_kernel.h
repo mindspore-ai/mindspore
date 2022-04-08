@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class InTopKCpuKernelMod : public NativeCpuKernelMod {
+class InTopKCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   InTopKCpuKernelMod() = default;
   ~InTopKCpuKernelMod() override = default;

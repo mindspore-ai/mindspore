@@ -29,7 +29,7 @@ namespace kernel {
 using float_complex = std::complex<float>;
 using double_complex = std::complex<double>;
 
-class EigCpuKernelMod : public NativeCpuKernelMod {
+class EigCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EigCpuKernelMod() = default;
   ~EigCpuKernelMod() override = default;

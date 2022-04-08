@@ -90,7 +90,7 @@ TypePtr SliceInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Slice, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Slice, BaseOperator);
 AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(SliceInferShape(primitive, input_args), SliceInferType(primitive, input_args));

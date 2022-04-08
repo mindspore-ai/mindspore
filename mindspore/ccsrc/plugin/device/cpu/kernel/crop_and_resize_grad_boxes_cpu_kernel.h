@@ -51,7 +51,7 @@ constexpr size_t kBoxIndexShapeLen = 1;
 constexpr size_t kOutputIndex = 0;
 constexpr size_t kOutputShapeLen = 2;
 constexpr float kNum = 0.5;
-class CropAndResizeGradBoxesCpuKernelMod : public NativeCpuKernelMod {
+class CropAndResizeGradBoxesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CropAndResizeGradBoxesCpuKernelMod() = default;
   ~CropAndResizeGradBoxesCpuKernelMod() override = default;

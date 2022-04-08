@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ScaleFusion, PrimitiveC, Scale);
+MIND_API_OPERATOR_IMPL(ScaleFusion, Scale);
 void ScaleFusion::Init(const int64_t axis, const ActivationType &activation_type) {
   this->set_axis(axis);
   this->set_activation_type(activation_type);

@@ -21,6 +21,7 @@
 #include <set>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
 #include "runtime/device/ms_device_shape_transfer.h"
@@ -1606,8 +1607,8 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       MS_EXCEPTION_IF_NULL(kernel_mod);
-      kernel_mod->InferOp();
-      kernel_mod->InitOp();
+      opt::dynamic_shape::InferOp(kernel);
+      kernel_mod->InitOp(kernel->user_data<kernel::InitOpArgs>());
       KernelLaunchInfo kernel_launch_info;
       device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
 

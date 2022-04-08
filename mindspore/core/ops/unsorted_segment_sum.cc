@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(UnsortedSegmentSum, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(UnsortedSegmentSum, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameUnsortedSegmentSum, UnsortedSegmentSum);
 }  // namespace ops
 }  // namespace mindspore

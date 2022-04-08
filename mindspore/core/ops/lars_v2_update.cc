@@ -92,7 +92,7 @@ TypePtr LARSUpdateInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LARSUpdate, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LARSUpdate, BaseOperator);
 AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = LARSUpdateInferType(primitive, input_args);

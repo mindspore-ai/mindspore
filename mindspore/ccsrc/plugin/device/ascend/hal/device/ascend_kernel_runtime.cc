@@ -35,6 +35,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/model_runner.h"
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
@@ -1018,8 +1019,8 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
     }
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      kernel_mod->InferOp();
-      kernel_mod->InitOp();
+      opt::dynamic_shape::InferOp(kernel);
+      kernel_mod->InitOp(kernel->user_data<kernel::InitOpArgs>());
     }
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);

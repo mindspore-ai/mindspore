@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SGD, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SGD, BaseOperator);
 void SGD::Init(const float dampening, const float weight_decay, const bool nesterov) {
   set_nesterov(nesterov);
   set_dampening(dampening);

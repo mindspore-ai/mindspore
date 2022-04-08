@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class TensorCopySlicesGpuKernelMod : public NativeGpuKernelMod {
+class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TensorCopySlicesGpuKernelMod()
       : input_size_(0), update_size_(0), output_size_(0), is_null_input_(false), kernel_name_("TensorCopySlices") {}

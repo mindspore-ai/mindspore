@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BatchToSpaceGpuKernelMod : public NativeGpuKernelMod {
+class BatchToSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BatchToSpaceGpuKernelMod() { ResetResource(); }
   ~BatchToSpaceGpuKernelMod() = default;

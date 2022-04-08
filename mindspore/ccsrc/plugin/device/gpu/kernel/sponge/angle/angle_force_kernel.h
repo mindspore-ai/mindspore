@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class AngleForceGpuKernelMod : public NativeGpuKernelMod {
+class AngleForceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AngleForceGpuKernelMod() : ele_uint_crd(1) {}
   ~AngleForceGpuKernelMod() override = default;

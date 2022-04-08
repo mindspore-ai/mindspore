@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TrtKernelMod : public NativeGpuKernelMod {
+class TrtKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TrtKernelMod() : serialize_(""), runtime_(nullptr), engine_(nullptr), context_(nullptr) {}
   ~TrtKernelMod() = default;

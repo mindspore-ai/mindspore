@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReLUFwdGpuKernelMod : public NativeGpuKernelMod {
+class ReLUFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ReLUFwdGpuKernelMod() { ResetResource(); }
   ~ReLUFwdGpuKernelMod() override {}

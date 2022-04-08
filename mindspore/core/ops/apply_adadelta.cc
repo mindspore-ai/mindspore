@@ -123,7 +123,7 @@ TuplePtr ApplyAdadeltaInferType(const PrimitivePtr &primitive, const std::vector
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ApplyAdadelta, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ApplyAdadelta, BaseOperator);
 AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = ApplyAdadeltaInferType(primitive, input_args);

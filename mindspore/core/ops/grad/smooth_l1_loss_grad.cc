@@ -67,7 +67,7 @@ TypePtr SmoothL1LossGradInferType(const PrimitivePtr &prim, const std::vector<Ab
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SmoothL1LossGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SmoothL1LossGrad, BaseOperator);
 AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   for (auto item : input_args) {

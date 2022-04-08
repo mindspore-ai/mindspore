@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kSecondInputIndex = 2;
-class BufferGetCpuKernelMod : public NativeCpuKernelMod {
+class BufferGetCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BufferGetCpuKernelMod() : element_nums_(0), capacity_(0) {}
 

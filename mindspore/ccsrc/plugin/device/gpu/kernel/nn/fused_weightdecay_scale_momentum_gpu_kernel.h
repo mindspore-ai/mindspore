@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 7;
 template <typename T, typename S>
-class FusedWeightDecayScaleMomentumGpuKernelMod : public NativeGpuKernelMod {
+class FusedWeightDecayScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FusedWeightDecayScaleMomentumGpuKernelMod() : element_num_(1), is_null_input_(false) {}
   ~FusedWeightDecayScaleMomentumGpuKernelMod() override = default;

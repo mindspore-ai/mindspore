@@ -86,7 +86,7 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Coalesce, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Coalesce, BaseOperator);
 AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 3;

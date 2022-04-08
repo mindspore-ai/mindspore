@@ -33,7 +33,7 @@ constexpr size_t kDimLowerLimit = 2;
 constexpr size_t kDimOffset2 = 2;
 
 template <typename T, typename S>
-class MatMulGpuKernelMod : public NativeGpuKernelMod {
+class MatMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MatMulGpuKernelMod() { ResetResource(); }
   ~MatMulGpuKernelMod() = default;

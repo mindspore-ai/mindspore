@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 
 template <typename T>
-class IdentityGpuKernelMod : public NativeGpuKernelMod {
+class IdentityGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   IdentityGpuKernelMod() { ResetResource(); }
   ~IdentityGpuKernelMod() override = default;

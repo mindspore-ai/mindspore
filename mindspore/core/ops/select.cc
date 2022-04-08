@@ -222,7 +222,7 @@ ValuePtr SelectInferValue(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Select, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Select, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Select, prim::kPrimSelect, SelectInfer, SelectInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

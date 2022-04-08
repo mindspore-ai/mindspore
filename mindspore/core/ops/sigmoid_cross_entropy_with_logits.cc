@@ -64,7 +64,7 @@ TypePtr SigmoidCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SigmoidCrossEntropyWithLogits, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SigmoidCrossEntropyWithLogits, BaseOperator);
 AbstractBasePtr SigmoidCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   for (auto item : input_args) {

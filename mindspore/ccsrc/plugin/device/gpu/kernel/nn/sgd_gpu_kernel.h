@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SGDGpuKernelMod : public NativeGpuKernelMod {
+class SGDGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SGDGpuKernelMod() : size_(1), dampening_(0.0), weight_decay_(0.0), nesterov_(false), is_null_input_(false) {}
   ~SGDGpuKernelMod() override = default;

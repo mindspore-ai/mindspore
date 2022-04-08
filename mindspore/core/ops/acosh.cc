@@ -46,7 +46,7 @@ TypePtr AcoshInferType(const PrimitivePtr &primitive, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Acosh, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Acosh, BaseOperator);
 AbstractBasePtr AcoshInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

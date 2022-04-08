@@ -38,8 +38,7 @@ class DynamicTbeKernelMod : public TbeKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  void InferOp() override;
-  void InitOp() override;
+  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
   void UpdateOp() override;
 
  private:

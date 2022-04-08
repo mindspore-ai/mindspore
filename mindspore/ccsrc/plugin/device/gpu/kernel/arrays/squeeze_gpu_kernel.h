@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SqueezeGpuKernelMod : public NativeGpuKernelMod {
+class SqueezeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SqueezeGpuKernelMod() { ResetResource(); }
   ~SqueezeGpuKernelMod() override = default;

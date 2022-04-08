@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class CorrectionMulGpuKernelMod : public NativeGpuKernelMod {
+class CorrectionMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CorrectionMulGpuKernelMod() : is_null_input_(false), batch_size_(0), channel_(0), height_(0), width_(0) {}
   ~CorrectionMulGpuKernelMod() override { DestroyResource(); }

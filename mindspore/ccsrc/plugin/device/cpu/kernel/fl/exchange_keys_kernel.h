@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ExchangeKeysKernelMod : public NativeCpuKernelMod {
+class ExchangeKeysKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ExchangeKeysKernelMod() = default;
   ~ExchangeKeysKernelMod() override = default;

@@ -45,7 +45,7 @@
 
 namespace mindspore {
 namespace abstract {
-std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
+std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
   using ShapeSet = std::set<int64_t>;
   using PrimShapeDependMap = mindspore::HashMap<std::string, ShapeSet>;
   static const auto &kOneHot = prim::kPrimOneHot->name();
@@ -93,14 +93,6 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
                                                         {kNonDeterministicInts, ShapeSet{0}},
                                                         {kReduceSum, ShapeSet{1}}};
 
-  MS_EXCEPTION_IF_NULL(cnode);
-  if (cnode->inputs().empty()) {
-    MS_LOG(EXCEPTION) << "Invalid inputs";
-  }
-  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-  MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->ToString();
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -111,14 +103,24 @@ std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
 
   auto iter = dynamic_shape_depends.find(prim_name);
   if (iter != dynamic_shape_depends.end()) {
-    int64_t cnode_input_size = SizeToLong(cnode->inputs().size());
     ShapeSet res;
-    auto ori = iter->second;
+    const auto &ori = iter->second;
     (void)std::copy_if(ori.begin(), ori.end(), std::inserter(res, res.begin()),
-                       [&](auto idx) { return idx < cnode_input_size - 1; });
+                       [&](int64_t idx) { return idx < SizeToLong(input_num); });
     return res;
   }
   return {};
+}
+
+std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode->inputs().empty()) {
+    MS_LOG(EXCEPTION) << "Invalid inputs";
+  }
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->ToString();
+  return GetDependsFormMap(prim_name, cnode->inputs().size() - 1);
 }
 
 PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {

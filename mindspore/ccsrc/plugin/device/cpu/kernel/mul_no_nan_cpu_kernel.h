@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MulNoNanCPUKernelMod : public NativeCpuKernelMod {
+class MulNoNanCPUKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MulNoNanCPUKernelMod() = default;
   ~MulNoNanCPUKernelMod() override = default;

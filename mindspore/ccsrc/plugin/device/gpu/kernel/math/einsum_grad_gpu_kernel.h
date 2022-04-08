@@ -34,7 +34,7 @@ constexpr int IDX_INP_SHAPE = 1;
 constexpr int IDX_PARAM = 2;
 constexpr int IDX_OUT_SHAPE = 3;
 template <typename T>
-class EinsumGradGpuKernelMod : public NativeGpuKernelMod {
+class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EinsumGradGpuKernelMod() { ResetResource(); }
   ~EinsumGradGpuKernelMod() = default;

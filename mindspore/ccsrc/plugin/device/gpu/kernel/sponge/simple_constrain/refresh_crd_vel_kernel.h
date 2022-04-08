@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class RefreshCrdVelGpuKernelMod : public NativeGpuKernelMod {
+class RefreshCrdVelGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RefreshCrdVelGpuKernelMod() : ele_crd(1) {}
   ~RefreshCrdVelGpuKernelMod() override = default;

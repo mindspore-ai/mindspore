@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BiasAddGpuKernelMod : public NativeGpuKernelMod {
+class BiasAddGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BiasAddGpuKernelMod() { ResetResource(); }
   ~BiasAddGpuKernelMod() override { DestroyResource(); }

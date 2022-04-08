@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 8;
 template <typename T>
-class BatchNormFold2GradGpuKernelMod : public NativeGpuKernelMod {
+class BatchNormFold2GradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BatchNormFold2GradGpuKernelMod()
       : cudnn_handle_(nullptr),

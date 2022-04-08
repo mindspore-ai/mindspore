@@ -53,7 +53,7 @@ TypePtr ReLU6InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ReLU6, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReLU6, BaseOperator);
 AbstractBasePtr ReLU6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(ReLU6InferShape(primitive, input_args), ReLU6InferType(primitive, input_args));

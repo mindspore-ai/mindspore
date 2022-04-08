@@ -27,7 +27,7 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class ZerosLikeCpuKernelMod : public NativeCpuKernelMod {
+class ZerosLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ZerosLikeCpuKernelMod() = default;
   ~ZerosLikeCpuKernelMod() override = default;

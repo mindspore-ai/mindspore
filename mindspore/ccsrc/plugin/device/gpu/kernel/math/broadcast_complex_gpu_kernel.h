@@ -33,7 +33,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
 template <typename T, typename S, typename G>
-class BroadcastComplexOpGpuKernelMod : public NativeGpuKernelMod {
+class BroadcastComplexOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BroadcastComplexOpGpuKernelMod() { ResetResource(); }
   ~BroadcastComplexOpGpuKernelMod() override = default;

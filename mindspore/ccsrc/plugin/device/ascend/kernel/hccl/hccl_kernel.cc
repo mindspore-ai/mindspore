@@ -284,12 +284,6 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
   return results;
 }
 
-void HcclKernel::InferOp() {
-  if (common::AnfAlgo::IsDynamicShape(anf_node_.lock())) {
-    KernelMod::InferShape();
-  }
-}
-
 bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                         const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   auto node = anf_node_.lock();
@@ -345,7 +339,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   return true;
 }
 
-void HcclKernel::InitOp() {
+void HcclKernel::InitOp(const std::shared_ptr<InitOpArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();

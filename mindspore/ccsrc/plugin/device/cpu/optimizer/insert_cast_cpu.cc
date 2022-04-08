@@ -68,13 +68,29 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
   if (cpu_kernel == nullptr) {
     MS_LOG(EXCEPTION) << "Operator[Cast] " << cast->kernel_info() << " is not support.";
   }
-  try {
-    cpu_kernel->SetCpuRefMapToKernelInfo(cast);
-    cpu_kernel->Init(cast);
-  } catch (std::exception &e) {
-    MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(cast);
+
+  // This branch would be removed When KernelMode rectification is complete
+  auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
+  if (discard_cpu_kernel_mod) {
+    try {
+      discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(cast);
+      discard_cpu_kernel_mod->Init(cast);
+    } catch (std::exception &e) {
+      MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(cast);
+    }
+    AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, cast.get());
+  } else {
+    auto kernel_attrs = cpu_kernel->GetOpSupport();
+    kernel::SetCpuRefMapToKernelInfo(cast, kernel_attrs);
+    auto thread_pool = kernel::GetActorMgrInnerThreadPool();
+    cpu_kernel->SetThreadPool(thread_pool);
+    auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(cast);
+    auto ret = cpu_kernel->Init(base_operator, input_tensors, output_tensors);
+    if (!ret) {
+      MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
+    }
+    AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   }
-  AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   return cast;
 }
 

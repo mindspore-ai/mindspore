@@ -55,7 +55,7 @@ constexpr size_t kIdx17 = 17;
 constexpr size_t kIdx18 = 18;
 
 template <typename T, typename T1>
-class NeighborListUpdateNewGpuKernelMod : public NativeGpuKernelMod {
+class NeighborListUpdateNewGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   NeighborListUpdateNewGpuKernelMod()
       : skin(kSkinDef),

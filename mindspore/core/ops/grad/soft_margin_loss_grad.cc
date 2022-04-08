@@ -56,7 +56,7 @@ TypePtr SoftMarginLossGradInferType(const PrimitivePtr &primitive, const std::ve
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SoftMarginLossGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SoftMarginLossGrad, BaseOperator);
 AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(SoftMarginLossGradInferShape(primitive, input_args),

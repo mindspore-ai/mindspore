@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ReverseSequence, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReverseSequence, BaseOperator);
 void ReverseSequence::Init(const int64_t seq_dim, const int64_t batch_dim) {
   this->set_seq_dim(seq_dim);
   this->set_batch_dim(batch_dim);

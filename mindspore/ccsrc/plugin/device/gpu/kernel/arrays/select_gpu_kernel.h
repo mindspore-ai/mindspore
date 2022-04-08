@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SelectGpuKernelMod : public NativeGpuKernelMod {
+class SelectGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SelectGpuKernelMod() : input_size_(0), output_size_(0), is_null_input_(false), kernel_name_("Select") {}
   ~SelectGpuKernelMod() override = default;

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CumSumCpuKernelMod : public NativeCpuKernelMod {
+class CumSumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CumSumCpuKernelMod() = default;
   ~CumSumCpuKernelMod() override = default;

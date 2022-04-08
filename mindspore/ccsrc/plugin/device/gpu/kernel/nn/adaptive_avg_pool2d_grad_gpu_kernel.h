@@ -30,7 +30,7 @@ constexpr size_t kAdaptiveAvgPool2dGradInputNum = 2;
 constexpr size_t kAdaptiveAvgPool2dGradMinRank = 2;
 
 template <typename T>
-class AdaptiveAvgPool2DGradKernelMod : public NativeGpuKernelMod {
+class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AdaptiveAvgPool2DGradKernelMod()
       : input_size_(0),

@@ -57,7 +57,7 @@ void CumSumCpuKernelMod::InitWorkspaceSize() {
 }
 
 void CumSumCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat32) {
     InitWorkspaceSize<float_t>();
   } else if (dtype_ == kNumberTypeFloat16) {

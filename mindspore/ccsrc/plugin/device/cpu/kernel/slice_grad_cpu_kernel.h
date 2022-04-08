@@ -28,7 +28,7 @@ namespace kernel {
 constexpr auto kSliceGrad = "SliceGrad";
 constexpr auto kStridedSliceGrad = "StridedSliceGrad";
 constexpr auto kUnknown = "Unknown";
-class SliceGradCpuKernelMod : public NativeCpuKernelMod {
+class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SliceGradCpuKernelMod() = default;
   explicit SliceGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

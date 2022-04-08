@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class CheckValidGpuKernelMod : public NativeGpuKernelMod {
+class CheckValidGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CheckValidGpuKernelMod() : anchor_boxes_size_(0), img_metas_size_(0), valid_size_(0), is_null_input_(false) {}
   ~CheckValidGpuKernelMod() override = default;

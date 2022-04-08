@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ReduceSumSquare, PrimitiveC, Reduce);
+MIND_API_OPERATOR_IMPL(ReduceSumSquare, Reduce);
 REGISTER_PRIMITIVE_C(kNameReduceSumSquare, ReduceSumSquare);
 }  // namespace ops
 }  // namespace mindspore

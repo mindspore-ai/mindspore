@@ -36,7 +36,7 @@ struct ComputeParams {
   size_t x_mem_size_{0};
 };
 
-class ScatterUpdateCpuKernelMod : public NativeCpuKernelMod {
+class ScatterUpdateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ScatterUpdateCpuKernelMod() = default;
   ~ScatterUpdateCpuKernelMod() override = default;

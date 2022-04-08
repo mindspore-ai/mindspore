@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ReverseSequenceFwdGpuKernelMod : public NativeGpuKernelMod {
+class ReverseSequenceFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ReverseSequenceFwdGpuKernelMod()
       : shape_size_(0),

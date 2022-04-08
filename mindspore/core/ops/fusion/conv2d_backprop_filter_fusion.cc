@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Conv2DBackpropFilterFusion, PrimitiveC, Conv2DBackpropFilter);
+MIND_API_OPERATOR_IMPL(Conv2DBackpropFilterFusion, Conv2DBackpropFilter);
 void Conv2DBackpropFilterFusion::Init(const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                       const PadMode &pad_mode, const std::vector<int64_t> &pad_list, const int64_t mode,
                                       const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,

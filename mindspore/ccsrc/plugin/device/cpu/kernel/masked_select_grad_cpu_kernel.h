@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MaskedSelectGradCpuKernelMod : public NativeCpuKernelMod {
+class MaskedSelectGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MaskedSelectGradCpuKernelMod() = default;
   ~MaskedSelectGradCpuKernelMod() override = default;

@@ -49,7 +49,7 @@ TypePtr IsInfInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(IsInf, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(IsInf, BaseOperator);
 AbstractBasePtr IsInfInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   auto infertype = IsInfInferType(primitive, input_args);

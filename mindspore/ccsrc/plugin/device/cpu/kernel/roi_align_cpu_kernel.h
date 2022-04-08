@@ -28,7 +28,7 @@ constexpr size_t X_DIMS = 4;
 constexpr int CHANNEL = 1;
 constexpr int HEIGHT = 2;
 constexpr int WIDTH = 3;
-class ROIAlignCpuKernelMod : public NativeCpuKernelMod {
+class ROIAlignCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ROIAlignCpuKernelMod() = default;
   ~ROIAlignCpuKernelMod() override = default;

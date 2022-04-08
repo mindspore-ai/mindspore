@@ -36,7 +36,7 @@ enum Method : int {
 };
 }  // namespace rolling
 
-class RollingCpuKernelMod : public NativeCpuKernelMod {
+class RollingCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RollingCpuKernelMod() = default;
   ~RollingCpuKernelMod() override = default;
@@ -52,7 +52,7 @@ class RollingCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
   void InitInputOutputSize(const CNodePtr &kernel_node) override {
-    NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+    DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
     func_obj_->InitInputOutputSize(kernel_node, &input_size_list_, &output_size_list_, &workspace_size_list_);
   }
 

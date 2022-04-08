@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SoftplusGpuKernelMod : public NativeGpuKernelMod {
+class SoftplusGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SoftplusGpuKernelMod() : is_null_input_(false), input_size_(0) {}
   ~SoftplusGpuKernelMod() override = default;

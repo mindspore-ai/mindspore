@@ -42,7 +42,7 @@ TypePtr HShrinkInferType(const PrimitivePtr &primitive, const std::vector<Abstra
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(HShrink, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(HShrink, BaseOperator);
 AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(HShrinkInferType(primitive, input_args),

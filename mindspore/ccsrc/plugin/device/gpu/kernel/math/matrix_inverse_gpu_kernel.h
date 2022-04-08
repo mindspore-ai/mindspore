@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MatrixInverseGpuKernelMod : public NativeGpuKernelMod {
+class MatrixInverseGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MatrixInverseGpuKernelMod()
       : input_size_(0), adjoint_(false), is_null_input_(false), handle_(nullptr), batch_size_(1), size_(1) {}

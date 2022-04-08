@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(RandomNormal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(RandomNormal, BaseOperator);
 void RandomNormal::Init(float seed, float mean, float scale) {
   this->set_seed(seed);
   this->set_mean(mean);

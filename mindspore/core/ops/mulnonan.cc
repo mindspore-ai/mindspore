@@ -75,7 +75,7 @@ TypePtr MulNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(MulNoNan, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MulNoNan, BaseOperator);
 AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = MulNoNanInferType(primitive, input_args);

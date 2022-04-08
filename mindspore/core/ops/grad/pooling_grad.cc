@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PoolingGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(PoolingGrad, BaseOperator);
 void PoolingGrad::Init(const PoolMode &pool_mode, const std::vector<int64_t> &window,
                        const std::vector<int64_t> &stride, const PadMode &pad_mode,
                        const std::vector<int64_t> &pad_list, const RoundMode &round_mode, const Format &format,

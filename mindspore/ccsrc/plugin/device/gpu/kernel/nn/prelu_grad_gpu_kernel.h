@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PReLUGradGpuKernelMod : public NativeGpuKernelMod {
+class PReLUGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PReLUGradGpuKernelMod() = default;
   ~PReLUGradGpuKernelMod() override = default;

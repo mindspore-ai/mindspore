@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FlattenGardBkwGpuKernelMod : public NativeGpuKernelMod {
+class FlattenGardBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FlattenGardBkwGpuKernelMod() { ResetResource(); }
   ~FlattenGardBkwGpuKernelMod() override = default;

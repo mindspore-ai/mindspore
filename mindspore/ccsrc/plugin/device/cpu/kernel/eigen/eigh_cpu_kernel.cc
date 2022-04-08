@@ -81,7 +81,7 @@ void SolveComplexMatrix(const Map<MatrixSquare<T>> &A, Map<MatrixSquare<T>> *out
 
 template <typename T>
 void EighCpuKernelMod::InitIOFunc(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(m_ * m_ * sizeof(T));
 }
 

@@ -27,100 +27,24 @@
 
 namespace mindspore {
 namespace kernel {
-void NativeCpuKernelMod::InferOp() {
-  if (common::AnfAlgo::IsDynamicShape(cnode_ptr_.lock())) {
-    anf_node_ = cnode_ptr_.lock();
-    KernelMod::InferShape();
-  }
-}
-
-void NativeCpuKernelMod::InitOp() {
-  auto cnode = cnode_ptr_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
-  KernelMod::GetDepndLists(cnode);
-  if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
-      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) && depend_list_.empty()) {
-    return;
-  }
-
-  MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
-
-  Init(cnode);
-}
-
-void NativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  input_size_list_.clear();
-  output_size_list_.clear();
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
+void NativeCpuKernelMod::InitInputOutputSize(const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs) {
+  for (auto &input : inputs) {
+    size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
+    auto shape = input->GetShapeVector();
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);
-    (void)input_size_list_.emplace_back(tensor_size);
+    input_size_list_.emplace_back(tensor_size);
   }
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, output_index);
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(kernel_node, output_index);
+  for (auto &output : outputs) {
+    size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
+    auto shape = output->GetShapeVector();
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);
-    (void)output_size_list_.emplace_back(tensor_size);
+    output_size_list_.emplace_back(tensor_size);
   }
-}
-
-void NativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  if (cnode_ptr_.lock() == nullptr) {
-    cnode_ptr_ = kernel_node;
-  }
-
-  workspace_size_list_.clear();
-  InitKernel(kernel_node);
-  InitInputOutputSize(kernel_node);
-}
-
-std::vector<TypeId> NativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_node) {
-  std::vector<TypeId> input_types;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    auto dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
-    (void)input_types.emplace_back(dtype);
-  }
-  return input_types;
-}
-
-std::vector<std::string> NativeCpuKernelMod::GetInputFormats(const CNodePtr &kernel_node) {
-  std::vector<std::string> input_formats;
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    (void)input_formats.emplace_back(kOpFormat_DEFAULT);
-  }
-  return input_formats;
-}
-
-std::vector<TypeId> NativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) {
-  std::vector<TypeId> output_types;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    auto dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
-    (void)output_types.emplace_back(dtype);
-  }
-  return output_types;
-}
-
-std::vector<std::string> NativeCpuKernelMod::GetOutputFormats(const CNodePtr &kernel_node) {
-  std::vector<std::string> output_formats;
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    (void)output_formats.emplace_back(kOpFormat_DEFAULT);
-  }
-  return output_formats;
 }
 
 std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {
@@ -180,7 +104,78 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
 std::map<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
 std::set<std::string> NativeCpuKernelMod::initialize_{};
 
-void NativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
+void DeprecatedNativeCpuKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+  auto cnode = cnode_ptr_.lock();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
+      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
+      abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
+    return;
+  }
+
+  MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
+
+  Init(cnode);
+}
+
+void DeprecatedNativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  input_size_list_.clear();
+  output_size_list_.clear();
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
+    std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
+    size_t tensor_size =
+      shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+    tensor_size = std::max(tensor_size, type_size);
+    (void)input_size_list_.emplace_back(tensor_size);
+  }
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, output_index);
+    size_t type_size = GetTypeByte(TypeIdToType(type_id));
+    std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(kernel_node, output_index);
+    size_t tensor_size =
+      shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+    tensor_size = std::max(tensor_size, type_size);
+    (void)output_size_list_.emplace_back(tensor_size);
+  }
+}
+
+void DeprecatedNativeCpuKernelMod::Init(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  if (cnode_ptr_.lock() == nullptr) {
+    cnode_ptr_ = kernel_node;
+  }
+
+  workspace_size_list_.clear();
+  InitKernel(kernel_node);
+  InitInputOutputSize(kernel_node);
+}
+
+std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetInputDtypes(const CNodePtr &kernel_node) {
+  std::vector<TypeId> input_types;
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t input_index = 0; input_index < input_num; ++input_index) {
+    auto dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
+    (void)input_types.emplace_back(dtype);
+  }
+  return input_types;
+}
+
+std::vector<TypeId> DeprecatedNativeCpuKernelMod::GetOutputDtypes(const CNodePtr &kernel_node) {
+  std::vector<TypeId> output_types;
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+  for (size_t output_index = 0; output_index < output_num; ++output_index) {
+    auto dtype = common::AnfAlgo::GetOutputInferDataType(kernel_node, output_index);
+    (void)output_types.emplace_back(dtype);
+  }
+  return output_types;
+}
+
+void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
   auto kernel_attrs = GetOpSupport();
   if (kernel_attrs.empty()) {
     return;

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class StridedSliceGradCpuKernelMod : public NativeCpuKernelMod {
+class StridedSliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   StridedSliceGradCpuKernelMod() = default;
   ~StridedSliceGradCpuKernelMod() override;

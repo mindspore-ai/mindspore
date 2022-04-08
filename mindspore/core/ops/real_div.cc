@@ -53,7 +53,7 @@ TypePtr RealDivInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(RealDiv, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(RealDiv, BaseOperator);
 AbstractBasePtr RealDivInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(RealDivInferShape(primitive, input_args), RealDivInferType(primitive, input_args));

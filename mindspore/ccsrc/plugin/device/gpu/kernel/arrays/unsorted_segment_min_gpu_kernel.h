@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class UnsortedSegmentMinGpuKernelMod : public NativeGpuKernelMod {
+class UnsortedSegmentMinGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UnsortedSegmentMinGpuKernelMod() { ResetResource(); }
   ~UnsortedSegmentMinGpuKernelMod() override = default;

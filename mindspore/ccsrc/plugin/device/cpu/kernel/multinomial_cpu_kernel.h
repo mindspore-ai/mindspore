@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MultinomialCpuKernel : public NativeCpuKernelMod {
+class MultinomialCpuKernel : public DeprecatedNativeCpuKernelMod {
  public:
   MultinomialCpuKernel() = default;
   ~MultinomialCpuKernel() override = default;

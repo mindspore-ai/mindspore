@@ -114,6 +114,7 @@ class MS_CORE_API AnfUtils {
   static void ResetCustomUpdateInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &updateop);
   static AnfNodePtr GetCustomUpdateopNode(const AnfNodePtr &base_cnode);
   static AnfNodePtr GetCustomInferopNode(const AnfNodePtr &base_cnode);
+  static mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &GetRealInputNodes(const CNodePtr &cnode);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_

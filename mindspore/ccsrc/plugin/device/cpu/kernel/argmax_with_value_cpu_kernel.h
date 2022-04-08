@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ArgMaxWithValueCpuKernelMod : public NativeCpuKernelMod {
+class ArgMaxWithValueCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ArgMaxWithValueCpuKernelMod() = default;
   ~ArgMaxWithValueCpuKernelMod() override = default;

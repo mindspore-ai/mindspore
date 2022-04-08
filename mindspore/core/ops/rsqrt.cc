@@ -44,7 +44,7 @@ TypePtr RsqrtInferType(const PrimitivePtr &primitive, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Rsqrt, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Rsqrt, BaseOperator);
 AbstractBasePtr RsqrtInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

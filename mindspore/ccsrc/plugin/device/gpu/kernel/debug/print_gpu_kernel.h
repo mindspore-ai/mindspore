@@ -33,7 +33,7 @@ using mindspore::tensor::Tensor;
 
 namespace mindspore {
 namespace kernel {
-class PrintGpuKernelMod : public NativeGpuKernelMod {
+class PrintGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PrintGpuKernelMod() { ResetResource(); }
   ~PrintGpuKernelMod() override = default;

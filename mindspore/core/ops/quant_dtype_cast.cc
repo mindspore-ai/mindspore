@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(QuantDTypeCast, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(QuantDTypeCast, BaseOperator);
 void QuantDTypeCast::set_src_t(const int64_t src_t) { (void)AddAttr(kSrcT, api::MakeValue(src_t)); }
 int64_t QuantDTypeCast::get_src_t() const {
   auto value_ptr = this->GetAttr(kSrcT);

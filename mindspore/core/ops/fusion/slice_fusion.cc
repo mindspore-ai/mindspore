@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SliceFusion, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SliceFusion, BaseOperator);
 void SliceFusion::Init(const std::vector<int64_t> &axes) { this->set_axes(axes); }
 
 void SliceFusion::set_axes(const std::vector<int64_t> &axes) { (void)this->AddAttr(kAxes, api::MakeValue(axes)); }

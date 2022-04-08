@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class PMEReciprocalForceUpdateGpuKernelMod : public NativeGpuKernelMod {
+class PMEReciprocalForceUpdateGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PMEReciprocalForceUpdateGpuKernelMod() : ele_uint_crd(1) {}
   ~PMEReciprocalForceUpdateGpuKernelMod() override = default;

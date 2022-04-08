@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "mindapi/ir/primitive.h"
 
@@ -51,6 +52,49 @@ class MIND_API BaseOperator : public api::Primitive {
  protected:
   void InitIOName(const std::vector<std::string> &inputs_name, const std::vector<std::string> &outputs_name);
 };
+
+using OperatorDefineFunc = std::function<std::shared_ptr<BaseOperator>(const std::shared_ptr<mindspore::Base> &)>;
+class MIND_API OperatorRegister {
+ public:
+  ~OperatorRegister() {}
+
+  static OperatorRegister &GetInstance();
+
+  std::map<std::string, OperatorDefineFunc> GetOperatorMap();
+
+  void SetOperatorMap(const std::string &kname, const OperatorDefineFunc &fn);
+
+ private:
+  OperatorRegister() {}
+  std::map<std::string, OperatorDefineFunc> operator_fns_;
+};
+
+class MIND_API OperatorRegisterHelper {
+ public:
+  OperatorRegisterHelper(const std::string &kname, const OperatorDefineFunc &fn) {
+    OperatorRegister::GetInstance().SetOperatorMap(kname, fn);
+  }
+
+  ~OperatorRegisterHelper() = default;
+
+ private:
+  int id_{0};
+};
+
+#define OPERATOR_CREATOR_REG(K_NAME, OP_CLASS)                                                                   \
+  std::shared_ptr<BaseOperator> GetDefaultBaseOperator##OP_CLASS(const std::shared_ptr<mindspore::Base> &impl) { \
+    return std::make_shared<OP_CLASS>(impl);                                                                     \
+  }                                                                                                              \
+  OperatorRegisterHelper operator_gen_##OP_CLASS(K_NAME, GetDefaultBaseOperator##OP_CLASS)
+
+#define MIND_API_OPERATOR_IMPL(ClassName, ParentClassName)    \
+  MIND_API_BASE_IMPL(ClassName, PrimitiveC, ParentClassName); \
+  OPERATOR_CREATOR_REG(#ClassName, ClassName)
+
+// This macro is for operator whose name is not same as its class name.
+#define MIND_API_OPERATOR_NAME_IMPL(ClassName, OpName, ParentClassName) \
+  MIND_API_BASE_IMPL(ClassName, PrimitiveC, ParentClassName);           \
+  OPERATOR_CREATOR_REG(OpName, ClassName)
 }  // namespace ops
 }  // namespace mindspore
 

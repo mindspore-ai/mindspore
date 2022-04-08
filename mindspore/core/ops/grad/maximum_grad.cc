@@ -62,7 +62,7 @@ TuplePtr MaximumGradInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(MaximumGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MaximumGrad, BaseOperator);
 abstract::AbstractBasePtr MaximumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

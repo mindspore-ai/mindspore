@@ -87,7 +87,7 @@ struct MultiThreadReduceSparseGradientParam {
   bool use_sort_reduce_{false};
 };
 
-class SparseOptimizerCpuKernelMod : public NativeCpuKernelMod {
+class SparseOptimizerCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SparseOptimizerCpuKernelMod() = default;
   ~SparseOptimizerCpuKernelMod() override = default;

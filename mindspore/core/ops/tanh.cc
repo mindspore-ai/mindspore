@@ -51,7 +51,7 @@ TypePtr TanhInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Tanh, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Tanh, BaseOperator);
 AbstractBasePtr TanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 // The duration between two PushWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPushWeights = 200;
-class FusedPushWeightKernelMod : public NativeCpuKernelMod {
+class FusedPushWeightKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   FusedPushWeightKernelMod()
       : server_num_(0), indices_({}), weight_full_names_({}), fl_iteration_(0), total_iteration_(0) {}

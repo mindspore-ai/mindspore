@@ -30,7 +30,7 @@ namespace mindspore::kernel {
 constexpr size_t kArgMaxDim = 7;
 
 template <typename T>
-class ClipGradNormGpuKernelMod : public NativeGpuKernelMod {
+class ClipGradNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ClipGradNormGpuKernelMod()
       : cudnn_handle_(nullptr),

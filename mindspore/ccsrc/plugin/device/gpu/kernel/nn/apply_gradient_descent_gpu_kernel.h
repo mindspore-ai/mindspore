@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ApplyGradientDescentKernelMod : public NativeGpuKernelMod {
+class ApplyGradientDescentKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ApplyGradientDescentKernelMod() { ResetResource(); }
   ~ApplyGradientDescentKernelMod() override = default;

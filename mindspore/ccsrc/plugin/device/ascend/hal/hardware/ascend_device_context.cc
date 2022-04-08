@@ -38,7 +38,7 @@
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
-
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "toolchain/adx_datadump_server.h"
@@ -381,7 +381,10 @@ void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph) con
     if (node_atomics_.find(node) != node_atomics_.end()) {
       auto atomics = node_atomics_[node];
       auto kernel_mod = AnfAlgo::GetKernelMod(node);
-      kernel_mod->SetAtomicCleanNodes(atomics);
+      auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+      if (ascend_kernel_mod != nullptr) {
+        ascend_kernel_mod->SetAtomicCleanNodes(atomics);
+      }
     }
   }
 }
@@ -729,8 +732,8 @@ void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   if (!(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
-    kernel_mod->InferOp();
-    kernel_mod->InitOp();
+    opt::dynamic_shape::InferOp(kernel);
+    kernel_mod->InitOp(kernel->user_data<kernel::InitOpArgs>());
   }
 }
 

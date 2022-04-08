@@ -26,7 +26,7 @@ constexpr float kStartDefault = 0.;
 constexpr float kLimitDeltaDefault = 1.;
 
 template <typename T>
-class RangeGpuKernelMod : public NativeGpuKernelMod {
+class RangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RangeGpuKernelMod()
       : input_size_(0),

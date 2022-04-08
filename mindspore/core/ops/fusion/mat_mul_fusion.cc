@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(MatMulFusion, PrimitiveC, MatMul);
+MIND_API_OPERATOR_IMPL(MatMulFusion, MatMul);
 void MatMulFusion::Init(bool transpose_a, bool transpose_b, const ActivationType &activation_type) {
   set_transpose_a(transpose_a);
   set_transpose_b(transpose_b);

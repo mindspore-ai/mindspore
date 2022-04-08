@@ -52,7 +52,7 @@ constexpr size_t kWorkSpaceCFactorIndex = 2;
 }  // namespace
 
 void FusedAdaFactorCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(elem_num_ * kSizeFloat32);
   (void)workspace_size_list_.emplace_back((elem_num_ / last_row_dim_size_) * kSizeFloat32);
   (void)workspace_size_list_.emplace_back((elem_num_ / last_col_dim_size_) * kSizeFloat32);

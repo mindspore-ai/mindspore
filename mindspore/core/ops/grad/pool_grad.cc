@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PoolGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(PoolGrad, BaseOperator);
 std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, std::vector<int64_t> arg_val,
                                                   const std::string &op_name) {
   std::vector<int64_t> ret;

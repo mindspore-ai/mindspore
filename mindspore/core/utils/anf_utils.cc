@@ -57,14 +57,14 @@ class AbstractMutexManager {
 struct CustomActorInfo {
   CustomActorInfo(const AnfUtils::CustomActorCallback &func, const std::string &type_name, const CNodePtr &cnode,
                   bool is_fake = false)
-      : actor_func(func), type_name(type_name), base_cnode_ptr_(cnode), is_fake(is_fake) {}
+      : actor_func(func), type_name(type_name), base_cnode_ptr(cnode), is_fake(is_fake) {}
   ~CustomActorInfo() = default;
 
   // Key for user data.
   constexpr static char key[] = "CustomActor";
   AnfUtils::CustomActorCallback actor_func = {};
   std::string type_name;
-  CNodeWeakPtr base_cnode_ptr_;
+  CNodeWeakPtr base_cnode_ptr;
   bool is_fake{false};  // For infer
 };
 using CustomActorInfoPtr = std::shared_ptr<CustomActorInfo>;
@@ -81,6 +81,17 @@ struct CNodeCustomInfo {
   AnfNodeWeakPtr update_node;
 };
 using CNodeCustomInfoPtr = std::shared_ptr<CNodeCustomInfo>;
+struct RealInputInfo {
+  explicit RealInputInfo(const CNodePtr &cnode) : base_cnode_ptr(cnode), real_input_nodes() {}
+  ~RealInputInfo() = default;
+  // Key for user data.
+  constexpr static char key[] = "RealInputInfo";
+  CNodeWeakPtr base_cnode_ptr;
+  // HashMap <input_index, pair<pre_node, pre_node_output_index>> is used to record the real input node to infer the
+  // dynamic shape information of the nodes located at the boundary of the graph partition, such as heterogeneous
+  // scenario and so on.
+  mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> real_input_nodes;
+};
 
 AnfNodePtr NewCustomActorNode(const CustomActorInfoPtr &actor_info, const FuncGraphPtr &g) {
   MS_EXCEPTION_IF_NULL(g);
@@ -495,7 +506,7 @@ std::string AnfUtils::GetCustomActorName(const AnfNodePtr &node) {
 
   auto actor_info = node->user_data<CustomActorInfo>();
   MS_EXCEPTION_IF_NULL(actor_info);
-  auto base_node = actor_info->base_cnode_ptr_.lock();
+  auto base_node = actor_info->base_cnode_ptr.lock();
   MS_EXCEPTION_IF_NULL(base_node);
   std::string actor_name = actor_info->type_name + "_of_" + base_node->fullname_with_scope();
   return actor_name;
@@ -509,7 +520,7 @@ CNodePtr AnfUtils::GetCustomActorBaseNode(const AnfNodePtr &node) {
 
   auto actor_info = node->user_data<CustomActorInfo>();
   MS_EXCEPTION_IF_NULL(actor_info);
-  return actor_info->base_cnode_ptr_.lock();
+  return actor_info->base_cnode_ptr.lock();
 }
 
 AnfUtils::CustomActorCallback AnfUtils::GetCustomFunc(const AnfNodePtr &node) {
@@ -554,6 +565,7 @@ void AnfUtils::SetCustomInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNo
     base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
   }
 }
+
 void AnfUtils::ResetCustomUpdateInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &updateop) {
   MS_EXCEPTION_IF_NULL(base_cnode);
   auto actor_info = base_cnode->user_data<CNodeCustomInfo>();
@@ -583,5 +595,15 @@ AnfNodePtr AnfUtils::GetCustomInferopNode(const AnfNodePtr &base_cnode) {
     return nullptr;
   }
   return actor_info->infer_node.lock();
+}
+
+mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &AnfUtils::GetRealInputNodes(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto real_input_info = cnode->user_data<RealInputInfo>();
+  if (real_input_info == nullptr) {
+    real_input_info = std::make_shared<RealInputInfo>(cnode);
+    cnode->set_user_data(real_input_info);
+  }
+  return real_input_info->real_input_nodes;
 }
 }  // namespace mindspore

@@ -85,7 +85,7 @@ TypePtr DynamicBroadcastToInferType(const PrimitivePtr &prim, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(DynamicBroadcastTo, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DynamicBroadcastTo, BaseOperator);
 AbstractBasePtr DynamicBroadcastToInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(DynamicBroadcastToInferShape(primitive, input_args),

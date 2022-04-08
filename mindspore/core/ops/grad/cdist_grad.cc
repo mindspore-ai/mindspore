@@ -60,7 +60,7 @@ TypePtr CdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(CdistGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CdistGrad, BaseOperator);
 AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

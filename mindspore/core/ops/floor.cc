@@ -47,7 +47,7 @@ TypePtr FloorInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Floor, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Floor, BaseOperator);
 AbstractBasePtr FloorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

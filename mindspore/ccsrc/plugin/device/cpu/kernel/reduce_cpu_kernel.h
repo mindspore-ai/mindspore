@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ReduceCpuKernelMod : public NativeCpuKernelMod {
+class ReduceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ReduceCpuKernelMod() = default;
   explicit ReduceCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

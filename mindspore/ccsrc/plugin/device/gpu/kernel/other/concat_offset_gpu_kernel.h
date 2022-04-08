@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ConcatOffsetGpuKernelMod : public NativeGpuKernelMod {
+class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ConcatOffsetGpuKernelMod() {}
   ~ConcatOffsetGpuKernelMod() override = default;

@@ -29,7 +29,7 @@ namespace kernel {
 template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 template <typename T>
-class IFFT3DGpuKernelMod : public NativeGpuKernelMod {
+class IFFT3DGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   IFFT3DGpuKernelMod() = default;
   ~IFFT3DGpuKernelMod() override = default;

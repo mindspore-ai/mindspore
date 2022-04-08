@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class L2LossGpuKernelMod : public NativeGpuKernelMod {
+class L2LossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   L2LossGpuKernelMod() : input_size_(1), is_null_input_(false) {}
   ~L2LossGpuKernelMod() override = default;

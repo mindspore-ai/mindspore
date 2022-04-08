@@ -54,7 +54,7 @@ constexpr size_t kHeight3DDilationIndex = 3;
 constexpr size_t kWidth3DDilationIndex = 4;
 
 template <typename T>
-class Conv3dGradInputGpuKernelMod : public NativeGpuKernelMod {
+class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   Conv3dGradInputGpuKernelMod() { ResetResource(); }
   ~Conv3dGradInputGpuKernelMod() override { DestroyResource(); }

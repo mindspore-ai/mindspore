@@ -30,7 +30,7 @@ constexpr auto kGammaAttrName = "gamma";
 constexpr size_t kInputNum = 3;
 
 template <typename T>
-class DiscountedReturnGpuKernelMod : public NativeGpuKernelMod {
+class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DiscountedReturnGpuKernelMod() = default;
   ~DiscountedReturnGpuKernelMod() = default;

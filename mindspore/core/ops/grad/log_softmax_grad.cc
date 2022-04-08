@@ -52,7 +52,7 @@ TypePtr LogSoftmaxGradInferType(const PrimitivePtr &prim, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LogSoftmaxGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LogSoftmaxGrad, BaseOperator);
 void LogSoftmaxGrad::Init(const int64_t axis) { this->set_axis(axis); }
 
 void LogSoftmaxGrad::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }

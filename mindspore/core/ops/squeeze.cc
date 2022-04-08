@@ -86,7 +86,7 @@ TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Squeeze, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Squeeze, BaseOperator);
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   const size_t x_index = 0;

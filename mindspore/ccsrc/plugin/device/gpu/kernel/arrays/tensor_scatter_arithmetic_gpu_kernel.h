@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod {
+class TensorScatterArithmeticGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TensorScatterArithmeticGpuKernelMod() = default;
   ~TensorScatterArithmeticGpuKernelMod() {

@@ -39,7 +39,7 @@ constexpr size_t kIdx7 = 7;
 constexpr size_t kIdx8 = 8;
 
 template <typename T>
-class LocalResponseNormGradGpuKernelMod : public NativeGpuKernelMod {
+class LocalResponseNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LocalResponseNormGradGpuKernelMod() { ResetResource(); }
   ~LocalResponseNormGradGpuKernelMod() override { DestroyResource(); }

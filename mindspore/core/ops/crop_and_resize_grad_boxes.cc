@@ -103,7 +103,7 @@ TypePtr CropAndResizeGradBoxesInferType(const PrimitivePtr &prim, const std::vec
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(CropAndResizeGradBoxes, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CropAndResizeGradBoxes, BaseOperator);
 AbstractBasePtr CropAndResizeGradBoxesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   auto type = CropAndResizeGradBoxesInferType(primitive, input_args);

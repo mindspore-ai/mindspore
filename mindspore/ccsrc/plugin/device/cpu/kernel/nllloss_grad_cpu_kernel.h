@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class NLLLossGradCpuKernelMod : public NativeCpuKernelMod {
+class NLLLossGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   NLLLossGradCpuKernelMod() = default;
   ~NLLLossGradCpuKernelMod() override = default;

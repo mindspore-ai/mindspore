@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(NonMaxSuppression, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(NonMaxSuppression, BaseOperator);
 void NonMaxSuppression::set_center_point_box(const int64_t center_point_box) {
   (void)AddAttr(kCenterPointBox, api::MakeValue(center_point_box));
 }

@@ -25,7 +25,7 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class MirrorPadGradCpuKernelMod : public NativeCpuKernelMod {
+class MirrorPadGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MirrorPadGradCpuKernelMod() = default;
   ~MirrorPadGradCpuKernelMod() override = default;

@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class HSigmoidGradKernelMod : public NativeGpuKernelMod {
+class HSigmoidGradKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   HSigmoidGradKernelMod() { ResetResource(); }
   ~HSigmoidGradKernelMod() override = default;

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Activation, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Activation, BaseOperator);
 void Activation::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, api::MakeValue(alpha)); }
 
 void Activation::set_min_val(const float min_val) { (void)this->AddAttr(kMinVal, api::MakeValue(min_val)); }

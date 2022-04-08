@@ -15,6 +15,7 @@
  */
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
 #include <string>
+#include <memory>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/akg/akg_gpu_kernel_build.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -24,10 +25,32 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_build_client.h"
 #include "plugin/device/gpu/hal/device/cuda_env_checker.h"
-
 namespace mindspore {
 namespace device {
 namespace gpu {
+namespace {
+void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<kernel::KernelAttr> &kernel_attrs) {
+  MS_EXCEPTION_IF_NULL(apply_kernel);
+  if (kernel_attrs.empty()) {
+    return;
+  }
+
+  auto kernel_attr = kernel::GetKernelAttrFromNode(apply_kernel);
+  auto [is_match, index] = kernel::MatchKernelAttr(kernel_attr, kernel_attrs);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
+                      << " does not support this kernel data type: " << kernel_attr;
+  }
+
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &matched_kernel_attr = kernel_attrs[index];
+  if (!matched_kernel_attr.GetOutInRefMap().empty()) {
+    kernel_info->set_ref_map(matched_kernel_attr.GetOutInRefMap());
+  }
+}
+}  // namespace
+
 void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
@@ -71,13 +94,30 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         MS_LOG(EXCEPTION) << "Build gpu kernel op[" << kernel->fullname_with_scope() << "] failed";
       }
       MS_EXCEPTION_IF_NULL(kernel);
-      if (new_factory) {
-        gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
+      auto old_gpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeGpuKernelMod>(gpu_kernel_mod);
+      if (old_gpu_kernel_mod) {
+        if (new_factory) {
+          old_gpu_kernel_mod->SetGpuRefMapToKernelInfo(kernel);
+        }
+        if (!old_gpu_kernel_mod->Init(kernel)) {
+          MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
+        }
+        session::AnfRuntimeAlgorithm::SetKernelMod(old_gpu_kernel_mod, kernel.get());
+      } else {
+        if (new_factory) {
+          auto kernel_attrs = gpu_kernel_mod->GetOpSupport();
+          SetGpuRefMapToKernelInfo(kernel, kernel_attrs);
+        }
+        auto ms_context = MsContext::GetInstance();
+        MS_EXCEPTION_IF_NULL(ms_context);
+        auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+        gpu_kernel_mod->SetDevicedId(device_id);
+        auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(kernel);
+        if (!gpu_kernel_mod->Init(base_operator, input_tensors, output_tensors)) {
+          MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
+        }
+        session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
       }
-      if (!gpu_kernel_mod->Init(kernel)) {
-        MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
-      }
-      session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
     }
   }
 

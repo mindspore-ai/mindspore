@@ -28,7 +28,7 @@ void LeakyRelu::set_negative_slope(const float negative_slope) {
 }
 float LeakyRelu::get_negative_slope() const { return GetValue<float>(GetAttr(kNegativeSlope)); }
 
-MIND_API_BASE_IMPL(LeakyRelu, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LeakyRelu, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLeakyRelu, LeakyRelu);
 }  // namespace ops
 }  // namespace mindspore

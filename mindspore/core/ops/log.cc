@@ -60,7 +60,7 @@ TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Log, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Log, BaseOperator);
 AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(LogInferShape(primitive, input_args), LogInferType(primitive, input_args));

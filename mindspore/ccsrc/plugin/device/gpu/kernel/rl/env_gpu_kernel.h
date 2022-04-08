@@ -36,7 +36,7 @@ namespace kernel {
 // and result environment instance handle. The environment instance and handle will cache in
 // EnvironmentFactory. It is notice that repeate calls launch() will returns the same
 // handle created before.
-class EnvCreateKernelMod : public NativeGpuKernelMod {
+class EnvCreateKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EnvCreateKernelMod() = default;
   ~EnvCreateKernelMod() = default;
@@ -54,7 +54,7 @@ class EnvCreateKernelMod : public NativeGpuKernelMod {
 // Class for reinforcement environment reset.
 // It reset environment state (for example agent state, timestep etc.) and result initial observations.
 // The environment instance should already created with `EnvCreateKernelMod`.
-class EnvResetKernelMod : public NativeGpuKernelMod {
+class EnvResetKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EnvResetKernelMod() = default;
   ~EnvResetKernelMod() = default;
@@ -72,7 +72,7 @@ class EnvResetKernelMod : public NativeGpuKernelMod {
 // Class for environment step.
 // It execute one time step and result observation, reward and done flag.
 // The environment instance should already created with `EnvCreateKernelMod`.
-class EnvStepKernelMod : public NativeGpuKernelMod {
+class EnvStepKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EnvStepKernelMod() = default;
   ~EnvStepKernelMod() = default;

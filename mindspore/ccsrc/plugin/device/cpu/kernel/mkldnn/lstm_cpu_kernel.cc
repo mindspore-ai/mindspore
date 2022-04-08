@@ -35,7 +35,7 @@ using dt = dnnl::memory::data_type;
 }  // namespace
 
 void LstmCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   output_size_list_[kOutputWorkSpaceIndex] = reserve_size_;
   auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto output_type = common::AnfAlgo::GetOutputInferDataType(kernel_node, 0);

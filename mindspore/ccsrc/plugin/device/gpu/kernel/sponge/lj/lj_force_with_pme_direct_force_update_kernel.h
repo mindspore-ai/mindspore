@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class LJForceWithPMEDirectForceUpdateGpuKernelMod : public NativeGpuKernelMod {
+class LJForceWithPMEDirectForceUpdateGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LJForceWithPMEDirectForceUpdateGpuKernelMod() : ele_uint_crd(1) {}
   ~LJForceWithPMEDirectForceUpdateGpuKernelMod() override = default;

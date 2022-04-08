@@ -78,7 +78,7 @@ void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 void RankCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   // id
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));

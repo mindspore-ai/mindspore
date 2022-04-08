@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TensorListReserve, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorListReserve, BaseOperator);
 void TensorListReserve::Init(const int64_t element_dtype, const int64_t shape_type) {
   this->set_element_dtype(element_dtype);
   this->set_shape_type(shape_type);

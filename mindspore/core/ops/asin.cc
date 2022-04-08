@@ -43,7 +43,7 @@ TypePtr AsinInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Asin, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Asin, BaseOperator);
 AbstractBasePtr AsinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

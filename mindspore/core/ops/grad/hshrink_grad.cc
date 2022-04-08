@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(HShrinkGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(HShrinkGrad, BaseOperator);
 abstract::ShapePtr HShrinkGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

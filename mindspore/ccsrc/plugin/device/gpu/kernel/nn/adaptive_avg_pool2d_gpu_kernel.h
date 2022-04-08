@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class AdaptiveAvgPool2DKernelMod : public NativeGpuKernelMod {
+class AdaptiveAvgPool2DKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AdaptiveAvgPool2DKernelMod()
       : input_size_(0),

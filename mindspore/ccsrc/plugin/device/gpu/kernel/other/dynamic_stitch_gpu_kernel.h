@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DynamicStitchKernelMod : public NativeGpuKernelMod {
+class DynamicStitchKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DynamicStitchKernelMod();
   ~DynamicStitchKernelMod();

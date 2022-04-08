@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class NLLLossGradGpuKernelMod : public NativeGpuKernelMod {
+class NLLLossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   NLLLossGradGpuKernelMod() { ResetResource(); }
   ~NLLLossGradGpuKernelMod() override = default;

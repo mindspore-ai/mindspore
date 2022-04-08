@@ -89,7 +89,7 @@ TypePtr OneHotInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(OneHot, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(OneHot, BaseOperator);
 AbstractBasePtr OneHotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

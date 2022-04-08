@@ -49,7 +49,7 @@ TypePtr BitwiseAndInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BitwiseAnd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BitwiseAnd, BaseOperator);
 AbstractBasePtr BitwiseAndInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();

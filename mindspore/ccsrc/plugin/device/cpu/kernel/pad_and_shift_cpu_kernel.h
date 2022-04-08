@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PadAndShiftCpuKernelMod : public NativeCpuKernelMod {
+class PadAndShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PadAndShiftCpuKernelMod() = default;
   ~PadAndShiftCpuKernelMod() override = default;

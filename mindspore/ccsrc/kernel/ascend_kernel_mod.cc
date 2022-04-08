@@ -20,6 +20,26 @@
 #include "include/common/utils/anfalgo.h"
 namespace mindspore {
 namespace kernel {
+void AscendKernelMod::SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node) {
+  atomic_clean_nodes_.resize(atomic_clean_node.size());
+  for (size_t i = 0; i < atomic_clean_node.size(); ++i) {
+    atomic_clean_nodes_[i] = atomic_clean_node[i];
+  }
+}
+
+void AscendKernelMod::UpdateOutputSizeList() {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  for (size_t i = 0; i < output_size_list_.size(); ++i) {
+    auto ori_output_size = output_size_list_[i];
+    auto real_output_size = AnfAlgo::GetOutputTensorMemSize(cnode, i);
+    if (ori_output_size != real_output_size) {
+      output_size_list_[i] = real_output_size;
+    }
+  }
+}
+
 void AscendKernelMod::UpdateOp() {
   MS_EXCEPTION_IF_NULL(stream_);
   // cppcheck-suppress unreadVariable

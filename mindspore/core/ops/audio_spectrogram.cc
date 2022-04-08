@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(AudioSpectrogram, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(AudioSpectrogram, BaseOperator);
 void AudioSpectrogram::set_window_size(const int64_t window_size) {
   (void)this->AddAttr(kWindowSize, api::MakeValue(window_size));
 }

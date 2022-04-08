@@ -31,7 +31,7 @@ namespace kernel {
 class AscendKernelMod : public KernelMod {
  public:
   AscendKernelMod() = default;
-  explicit AscendKernelMod(const AnfNodePtr &anf_node_ptr) : KernelMod(anf_node_ptr) {}
+  explicit AscendKernelMod(const AnfNodePtr &anf_node_ptr) : KernelMod(), anf_node_(anf_node_ptr) {}
   virtual std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
   uint32_t block_dim() const { return block_dim_; }
@@ -47,8 +47,13 @@ class AscendKernelMod : public KernelMod {
   }
   void UpdateOp() override;
   bool IsNeedUpdateOp() override;
+  void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
 
  protected:
+  void UpdateOutputSizeList();
+
+  AnfNodeWeakPtr anf_node_;
+  std::vector<CNodeWeakPtr> atomic_clean_nodes_;
   uint32_t block_dim_{1};
   uint32_t stream_id_{0};
 };

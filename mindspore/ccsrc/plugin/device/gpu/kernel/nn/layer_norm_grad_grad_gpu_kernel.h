@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LayerNormGradGradGpuKernelMod : public NativeGpuKernelMod {
+class LayerNormGradGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LayerNormGradGradGpuKernelMod()
       : input_row_(1), input_col_(1), param_dim_(1), input_size_(1), is_null_input_(false), epsilon_() {}

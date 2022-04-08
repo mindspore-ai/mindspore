@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename S, typename T>
-class CastGpuKernelMod : public NativeGpuKernelMod {
+class CastGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CastGpuKernelMod() { ResetResource(); }
   ~CastGpuKernelMod() = default;

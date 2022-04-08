@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EluGradCpuKernelMod : public NativeCpuKernelMod {
+class EluGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EluGradCpuKernelMod() = default;
   ~EluGradCpuKernelMod() override = default;

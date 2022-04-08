@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ArgMinWithValueCpuKernelMod : public NativeCpuKernelMod {
+class ArgMinWithValueCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ArgMinWithValueCpuKernelMod() = default;
   ~ArgMinWithValueCpuKernelMod() override = default;

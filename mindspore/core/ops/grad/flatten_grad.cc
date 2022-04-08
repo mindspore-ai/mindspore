@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FlattenGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FlattenGrad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFlattenGrad, FlattenGrad);
 }  // namespace ops
 }  // namespace mindspore

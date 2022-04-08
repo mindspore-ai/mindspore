@@ -34,7 +34,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MDIterationLeapFrogGpuKernelMod : public NativeGpuKernelMod {
+class MDIterationLeapFrogGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MDIterationLeapFrogGpuKernelMod() {}
   ~MDIterationLeapFrogGpuKernelMod() override = default;

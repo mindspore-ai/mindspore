@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReverseV2GpuKernelMod : public NativeGpuKernelMod {
+class ReverseV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ReverseV2GpuKernelMod() { ResetResource(); }
   ~ReverseV2GpuKernelMod() = default;

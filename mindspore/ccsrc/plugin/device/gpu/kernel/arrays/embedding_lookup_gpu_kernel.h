@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class EmbeddingLookupKernelMod : public NativeGpuKernelMod {
+class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EmbeddingLookupKernelMod() { ResetResource(); }
   ~EmbeddingLookupKernelMod() = default;

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class LUSolverCpuKernelMod : public NativeCpuKernelMod {
+class LUSolverCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   LUSolverCpuKernelMod() = default;
   ~LUSolverCpuKernelMod() override = default;

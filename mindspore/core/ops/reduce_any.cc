@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ReduceAny, PrimitiveC, Reduce);
+MIND_API_OPERATOR_IMPL(ReduceAny, Reduce);
 REGISTER_PRIMITIVE_C(kNameReduceAny, ReduceAny);
 }  // namespace ops
 }  // namespace mindspore

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_
 #define MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_
 
@@ -27,11 +26,13 @@
 #include <algorithm>
 #include <vector>
 #include <utility>
+#include <tuple>
 #include <nlohmann/json.hpp>
 #include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
 #include "kernel/oplib/opinfo.h"
 #include "kernel/kernel_build_info.h"
+#include "ops/base_operator.h"
 
 namespace mindspore {
 namespace kernel {
@@ -269,6 +270,14 @@ std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
 std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr, const std::vector<KernelAttr> &attr_list);
 KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
 KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
+
+using KernelArgs = std::tuple<BaseOperatorPtr, std::vector<KernelTensorPtr>, std::vector<KernelTensorPtr>>;
+KernelArgs GetArgsFromCNode(const CNodePtr &cnode);
+
+KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs);
+
+void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &kernel_attrs);
 
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \

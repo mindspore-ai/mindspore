@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ZerosLikeGpuKernelMod : public NativeGpuKernelMod {
+class ZerosLikeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ZerosLikeGpuKernelMod() { ResetResource(); }
   ~ZerosLikeGpuKernelMod() override = default;

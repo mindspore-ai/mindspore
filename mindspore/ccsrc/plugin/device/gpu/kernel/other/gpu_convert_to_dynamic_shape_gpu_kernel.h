@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class GpuConvertToDynamicShapeGpuKernelMod : public NativeGpuKernelMod {
+class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GpuConvertToDynamicShapeGpuKernelMod() { ResetResource(); }
   ~GpuConvertToDynamicShapeGpuKernelMod() override = default;

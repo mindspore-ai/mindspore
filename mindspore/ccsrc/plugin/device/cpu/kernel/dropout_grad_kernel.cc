@@ -51,7 +51,7 @@ void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void DropoutGradBwdCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat16) {
     workspace_size_list_.emplace_back(num_count_ * sizeof(float));
     workspace_size_list_.emplace_back(num_count_ * sizeof(float));

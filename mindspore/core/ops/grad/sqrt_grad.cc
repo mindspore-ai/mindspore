@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SqrtGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SqrtGrad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSqrtGrad, SqrtGrad);
 }  // namespace ops
 }  // namespace mindspore

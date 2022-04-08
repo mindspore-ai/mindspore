@@ -59,7 +59,7 @@ TypePtr InvGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(InvGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(InvGrad, BaseOperator);
 AbstractBasePtr InvGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto type = InvGradInferType(primitive, input_args);

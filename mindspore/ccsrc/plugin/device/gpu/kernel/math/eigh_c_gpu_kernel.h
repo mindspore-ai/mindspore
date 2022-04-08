@@ -51,7 +51,7 @@ struct Complex_traits<Complex<T>> {
 };
 
 template <typename T>
-class EighcGpuKernelMod : public NativeGpuKernelMod {
+class EighcGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EighcGpuKernelMod() : is_null_input_(false) {}
   ~EighcGpuKernelMod() = default;

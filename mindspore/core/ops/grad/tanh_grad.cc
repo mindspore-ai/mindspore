@@ -62,7 +62,7 @@ TypePtr TanhGradInfertype(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(TanhGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TanhGrad, BaseOperator);
 AbstractBasePtr TanhGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto shape = TanhGradInfershape(primitive, input_args);

@@ -53,7 +53,7 @@ TypePtr SeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SeLU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SeLU, BaseOperator);
 AbstractBasePtr SeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   auto type = SeLUInferType(primitive, input_args);

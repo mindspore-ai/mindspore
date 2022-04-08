@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class OneHotCpuKernelMod : public NativeCpuKernelMod {
+class OneHotCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   OneHotCpuKernelMod() = default;
   ~OneHotCpuKernelMod() override = default;

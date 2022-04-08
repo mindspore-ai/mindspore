@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class StartFLJobKernelMod : public NativeCpuKernelMod {
+class StartFLJobKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   StartFLJobKernelMod() = default;
   ~StartFLJobKernelMod() override = default;

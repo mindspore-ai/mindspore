@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class DihedralEnergyGpuKernelMod : public NativeGpuKernelMod {
+class DihedralEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DihedralEnergyGpuKernelMod() : ele_uint_crd(1) {}
   ~DihedralEnergyGpuKernelMod() override = default;

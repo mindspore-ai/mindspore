@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t MIN_MAX_SHAPE_SIZE = 2;
 constexpr size_t INPUT_NUMS = 2;
-class BoundingBoxDecodeCpuKernelMod : public NativeCpuKernelMod {
+class BoundingBoxDecodeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BoundingBoxDecodeCpuKernelMod() = default;
   ~BoundingBoxDecodeCpuKernelMod() override = default;

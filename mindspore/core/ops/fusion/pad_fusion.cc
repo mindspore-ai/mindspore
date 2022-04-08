@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PadFusion, PrimitiveC, Pad);
+MIND_API_OPERATOR_IMPL(PadFusion, Pad);
 void PadFusion::Init(const PaddingMode &padding_mode, const float constant_value) {
   this->set_padding_mode(padding_mode);
   this->set_constant_value(constant_value);

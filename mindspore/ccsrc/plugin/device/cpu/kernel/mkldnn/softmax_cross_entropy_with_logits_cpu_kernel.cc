@@ -30,7 +30,7 @@ constexpr size_t kSoftmaxCrossEntropyWithLogitsWorkspaceSize = 1;
 }  // namespace
 
 void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);

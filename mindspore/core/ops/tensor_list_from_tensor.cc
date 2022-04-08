@@ -44,7 +44,7 @@ void TensorListFromTensor::set_shape_type(const int64_t shape_type) {
   (void)this->AddAttr(kShapeType, api::MakeValue(shape_type));
 }
 
-MIND_API_BASE_IMPL(TensorListFromTensor, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorListFromTensor, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameTensorListFromTensor, TensorListFromTensor);
 }  // namespace ops
 }  // namespace mindspore

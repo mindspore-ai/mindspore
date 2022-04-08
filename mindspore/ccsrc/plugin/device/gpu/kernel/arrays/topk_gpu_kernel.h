@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class TopKGpuKernelMod : public NativeGpuKernelMod {
+class TopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TopKGpuKernelMod()
       : sorted_(false), is_null_input_(false), outer_size_(1), inner_size_(1), k_(1), input_shape_size_(0) {}

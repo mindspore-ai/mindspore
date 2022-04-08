@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Affine, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Affine, BaseOperator);
 void Affine::Init(const std::vector<int64_t> &contexts, int64_t output_dim, bool transpose_a, bool transpose_b) {
   this->set_context(contexts);
   this->set_output_dim(output_dim);

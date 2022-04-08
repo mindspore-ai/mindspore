@@ -53,7 +53,7 @@ TypePtr FastGeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(FastGeLU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FastGeLU, BaseOperator);
 AbstractBasePtr FastGeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = FastGeLUInferType(primitive, input_args);

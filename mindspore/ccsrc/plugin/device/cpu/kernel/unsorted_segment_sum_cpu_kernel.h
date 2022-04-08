@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class UnsortedSegmentSumCpuKernelMod : public NativeCpuKernelMod {
+class UnsortedSegmentSumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UnsortedSegmentSumCpuKernelMod() = default;
   ~UnsortedSegmentSumCpuKernelMod() override = default;

@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class IndexAddGpuKernelMod : public NativeGpuKernelMod {
+class IndexAddGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   IndexAddGpuKernelMod()
       : dst_size_(0),

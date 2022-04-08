@@ -42,7 +42,7 @@ struct GradientSize {
   cudaDataType_t dtype;
 };
 template <typename T>
-class UpdateThorGradientGpuKernelMod : public NativeGpuKernelMod {
+class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UpdateThorGradientGpuKernelMod() : split_dim(128), handle_(nullptr) {}
   ~UpdateThorGradientGpuKernelMod() = default;

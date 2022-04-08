@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class LstsqCpuKernelMod : public NativeCpuKernelMod {
+class LstsqCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   LstsqCpuKernelMod() = default;
   ~LstsqCpuKernelMod() override = default;

@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(InstanceNorm, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(InstanceNorm, BaseOperator);
 void InstanceNorm::Init(const float epsilon) { this->set_epsilon(epsilon); }
 
 void InstanceNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class RandomChoiceWithMaskGpuKernelMod : public NativeGpuKernelMod {
+class RandomChoiceWithMaskGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RandomChoiceWithMaskGpuKernelMod()
       : input_shape_size_(0), seed_(0), seed2_(0), input_size_(1), count_(0), ceil_power2_(0), is_null_input_(false) {}

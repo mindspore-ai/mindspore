@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SliceCpuKernelMod : public NativeCpuKernelMod {
+class SliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SliceCpuKernelMod() = default;
   ~SliceCpuKernelMod() override = default;

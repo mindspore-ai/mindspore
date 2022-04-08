@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LuSolveGpuKernelMod : public NativeGpuKernelMod {
+class LuSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LuSolveGpuKernelMod() = default;
   ~LuSolveGpuKernelMod() = default;

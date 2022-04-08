@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TileFusion, PrimitiveC, Tile);
+MIND_API_OPERATOR_IMPL(TileFusion, Tile);
 void TileFusion::Init(const std::vector<int64_t> &dims) { this->set_dims(dims); }
 
 void TileFusion::set_dims(const std::vector<int64_t> &dims) { (void)this->AddAttr(kDims, api::MakeValue(dims)); }

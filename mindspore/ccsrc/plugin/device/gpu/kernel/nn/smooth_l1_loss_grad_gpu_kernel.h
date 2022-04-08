@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SmoothL1LossGradGpuKernelMod : public NativeGpuKernelMod {
+class SmoothL1LossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SmoothL1LossGradGpuKernelMod() : input_size_(1), beta_(1.0) {}
   ~SmoothL1LossGradGpuKernelMod() override = default;

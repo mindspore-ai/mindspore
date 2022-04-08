@@ -48,7 +48,7 @@ TypePtr MatrixInverseInferType(const PrimitivePtr &prim, const std::vector<Abstr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(MatrixInverse, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MatrixInverse, BaseOperator);
 AbstractBasePtr MatrixInverseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

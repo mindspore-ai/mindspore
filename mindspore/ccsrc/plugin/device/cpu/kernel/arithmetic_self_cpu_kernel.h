@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr auto kUnknown = "Unknown";
 
-class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
+class ArithmeticSelfCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ArithmeticSelfCpuKernelMod() = default;
   explicit ArithmeticSelfCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
@@ -51,7 +51,7 @@ class ArithmeticSelfCpuKernelMod : public NativeCpuKernelMod {
 };
 
 using LaunchFunc = std::function<bool(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
-class IdentityCpuKernelMod : public NativeCpuKernelMod {
+class IdentityCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   IdentityCpuKernelMod() = default;
   ~IdentityCpuKernelMod() override = default;

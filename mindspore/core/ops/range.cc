@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Range, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Range, BaseOperator);
 void Range::set_d_type(const int64_t d_type) { (void)this->AddAttr(kDType, api::MakeValue(d_type)); }
 
 int64_t Range::get_d_type() const {

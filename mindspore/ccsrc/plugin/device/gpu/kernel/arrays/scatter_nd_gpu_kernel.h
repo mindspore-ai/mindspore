@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ScatterNdFwdGpuKernelMod : public NativeGpuKernelMod {
+class ScatterNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ScatterNdFwdGpuKernelMod()
       : input_size_(1),

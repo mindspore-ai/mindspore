@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(RandomStandardNormal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(RandomStandardNormal, BaseOperator);
 void RandomStandardNormal::Init(const int64_t seed, const int64_t seed2) {
   this->set_seed(seed);
   this->set_seed2(seed2);

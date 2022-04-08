@@ -23,7 +23,7 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
+class LowerBoundCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   LowerBoundCpuKernelMod() = default;
   ~LowerBoundCpuKernelMod() override = default;

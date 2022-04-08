@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class IOUCpuKernelMod : public NativeCpuKernelMod {
+class IOUCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   IOUCpuKernelMod() = default;
   ~IOUCpuKernelMod() override = default;

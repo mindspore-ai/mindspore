@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class MapCenterOfMassGpuKernelMod : public NativeGpuKernelMod {
+class MapCenterOfMassGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MapCenterOfMassGpuKernelMod() : ele_start(1) {}
   ~MapCenterOfMassGpuKernelMod() override = default;

@@ -399,7 +399,7 @@ TypePtr StridedSliceInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(StridedSlice, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(StridedSlice, BaseOperator);
 void StridedSlice::set_begin_mask(int64_t begin_mask) {
   (void)CheckAndConvertUtils::CheckInteger(kBeginMask, begin_mask, kGreaterEqual, 0, this->name());
   (void)this->AddAttr(kBeginMask, api::MakeValue(begin_mask));

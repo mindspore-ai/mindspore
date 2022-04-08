@@ -28,7 +28,7 @@ int64_t Pack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
 
 void Pack::Init(const int64_t &axis) { this->set_axis(axis); }
 
-MIND_API_BASE_IMPL(Pack, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Pack, BaseOperator);
 REGISTER_PRIMITIVE_C(kNamePack, Pack);
 }  // namespace ops
 }  // namespace mindspore

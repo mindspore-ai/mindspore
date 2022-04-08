@@ -36,13 +36,13 @@ using mindspore::kernel::USE_NESTEROV;
 
 // OptimizerKernelMod is the kernel in server for weights' optimizing.
 // Normally server's optimizer kernels should be inherited from CPU's optimzier kernels to reuse the implementation.
-class OptimizerKernelMod : public NativeCpuKernelMod {
+class OptimizerKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   OptimizerKernelMod() = default;
   virtual ~OptimizerKernelMod() = default;
 
-  // InitKernel and Launch methods are inherited from pure virtual function of NativeCpuKernelMod so it must have
-  // implementation.
+  // InitKernel and Launch methods are inherited from pure virtual function of DeprecatedNativeCpuKernelMod so it must
+  // have implementation.
   virtual void InitKernel(const CNodePtr &kernel_node) {}
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) {

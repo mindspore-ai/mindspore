@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class RecvGpuKernelMod : public NativeGpuKernelMod {
+class RecvGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RecvGpuKernelMod() {}
   ~RecvGpuKernelMod() override = default;

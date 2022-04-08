@@ -379,14 +379,28 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
     if (cpu_kernel_mod == nullptr) {
       KernelNotSupportException(kernel_node);
     }
-    try {
-      cpu_kernel_mod->SetCpuRefMapToKernelInfo(kernel_node);
-      cpu_kernel_mod->Init(kernel_node);
-    } catch (std::exception &e) {
-      MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel_node);
+    // This branch would be removed When KernelMode rectification is complete
+    auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel_mod);
+    if (discard_cpu_kernel_mod) {
+      try {
+        discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(kernel_node);
+        discard_cpu_kernel_mod->Init(kernel_node);
+      } catch (std::exception &e) {
+        MS_LOG(EXCEPTION) << e.what() << trace::DumpSourceLines(kernel_node);
+      }
+      AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, kernel_node.get());
+      MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";
+    } else {
+      auto kernel_attrs = cpu_kernel_mod->GetOpSupport();
+      SetCpuRefMapToKernelInfo(kernel_node, kernel_attrs);
+      auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(kernel_node);
+      auto ret = cpu_kernel_mod->Init(base_operator, input_tensors, output_tensors);
+      if (!ret) {
+        MS_LOG(EXCEPTION) << trace::DumpSourceLines(kernel_node);
+      }
+      AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
+      MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";
     }
-    AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
-    MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";
   }
 #ifdef ENABLE_AKG
   kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;

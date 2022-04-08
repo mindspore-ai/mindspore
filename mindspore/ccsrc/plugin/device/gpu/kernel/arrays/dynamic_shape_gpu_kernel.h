@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class TensorShapeGpuKernelMod : public NativeGpuKernelMod {
+class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TensorShapeGpuKernelMod() { ResetResource(); }
   ~TensorShapeGpuKernelMod() = default;

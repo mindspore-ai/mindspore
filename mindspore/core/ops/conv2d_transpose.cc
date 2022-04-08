@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Conv2DTranspose, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Conv2DTranspose, BaseOperator);
 void Conv2DTranspose::Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size,
                            int64_t mode, const PadMode &pad_mode, const std::vector<int64_t> &pad,
                            const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t group,

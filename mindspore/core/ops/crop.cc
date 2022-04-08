@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Crop, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Crop, BaseOperator);
 void Crop::Init(const int64_t axis, const std::vector<int64_t> &offsets) {
   this->set_axis(axis);
   this->set_offsets(offsets);

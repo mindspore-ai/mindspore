@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class GetCenterOfGeometryGpuKernelMod : public NativeGpuKernelMod {
+class GetCenterOfGeometryGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GetCenterOfGeometryGpuKernelMod() : ele_center_atoms(1) {}
   ~GetCenterOfGeometryGpuKernelMod() override = default;

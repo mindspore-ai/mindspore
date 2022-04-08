@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class GridSampler3DGradCpuKernelMod : public NativeCpuKernelMod {
+class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   GridSampler3DGradCpuKernelMod() = default;
   ~GridSampler3DGradCpuKernelMod() override = default;

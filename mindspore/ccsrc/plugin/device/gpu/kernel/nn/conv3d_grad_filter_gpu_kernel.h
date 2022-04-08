@@ -59,7 +59,7 @@ constexpr size_t kHeight3DDilationIdx = 3;
 constexpr size_t kWidth3DDilationIdx = 4;
 
 template <typename T>
-class Conv3dGradFilterGpuKernelMod : public NativeGpuKernelMod {
+class Conv3dGradFilterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   Conv3dGradFilterGpuKernelMod() { ResetResource(); }
   ~Conv3dGradFilterGpuKernelMod() override { DestroyResource(); }

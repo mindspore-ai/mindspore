@@ -50,7 +50,7 @@ constexpr size_t kProbDimsIdxForBatch = 1;
 constexpr size_t kProbDimsIdxForNumClass = 2;
 
 template <typename T>
-class CtcLossGpuKernelMod : public NativeGpuKernelMod {
+class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CtcLossGpuKernelMod()
       : label_indice_size_(0),

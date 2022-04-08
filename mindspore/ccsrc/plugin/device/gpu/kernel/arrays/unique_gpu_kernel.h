@@ -24,7 +24,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/unique_helper.h"
 namespace mindspore {
 namespace kernel {
-class UniqueGpuKernelMod : public NativeGpuKernelMod {
+class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UniqueGpuKernelMod() { ResetResource(); }
   ~UniqueGpuKernelMod() override = default;

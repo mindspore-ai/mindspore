@@ -73,7 +73,7 @@ TypePtr SoftplusGradInfertype(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SoftplusGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SoftplusGrad, BaseOperator);
 AbstractBasePtr SoftplusGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

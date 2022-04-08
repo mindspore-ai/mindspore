@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(BatchNorm, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BatchNorm, BaseOperator);
 void BatchNorm::Init(const bool is_training, const float epsilon, const float momentum, const Format &format) {
   set_is_training(is_training);
   set_epsilon(epsilon);

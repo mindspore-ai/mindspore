@@ -37,7 +37,7 @@ constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 
 template <typename T>
-class CholeskySolveGpuKernelMod : public NativeGpuKernelMod {
+class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   using pointer = T *;
   CholeskySolveGpuKernelMod() : is_null_input_(false) {}

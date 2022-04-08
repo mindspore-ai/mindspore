@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(EmbeddingLookup, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(EmbeddingLookup, BaseOperator);
 void EmbeddingLookup::Init(const bool setattr_flag) { this->set_setattr_flag(setattr_flag); }
 
 void EmbeddingLookup::set_setattr_flag(const bool setattr_flag) {

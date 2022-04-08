@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class MDTemperatureGpuKernelMod : public NativeGpuKernelMod {
+class MDTemperatureGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MDTemperatureGpuKernelMod() : ele_start(1) {}
   ~MDTemperatureGpuKernelMod() override = default;
