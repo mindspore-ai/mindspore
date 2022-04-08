@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,7 +200,7 @@ MIND_API_IMM_TRAIT(FP32Imm, float);
 
 // === Utility functions for Value === //
 
-/// \brief brief Create a Value object from a primitive type value.
+/// \brief Create a Value object from a primitive type value.
 ///
 /// \param[in] v The primitive type value.
 ///
@@ -210,21 +210,21 @@ inline ValuePtr MakeValue(T v) {
   return MakeShared<U>(v);
 }
 
-/// \brief brief Create a StringImm Value object from a C string.
+/// \brief Create a StringImm Value object from a C string.
 ///
 /// \param[in] s The C string.
 ///
 /// \return The created StringImm Value object.
 inline ValuePtr MakeValue(const char *s) { return MakeShared<StringImm>(std::string(s)); }
 
-/// \brief brief Create an Int64Imm Value object from a int value.
+/// \brief Create an Int64Imm Value object from a int value.
 ///
 /// \param[in] i The int value.
 ///
 /// \return The created Int64Imm Value object.
 inline ValuePtr MakeValue(int i) { return MakeShared<Int64Imm>(static_cast<int64_t>(i)); }
 
-/// \brief brief Create a ValueSequence object from a vector of values.
+/// \brief Create a ValueSequence object from a vector of values.
 ///
 /// \param[in] values The vector of values.
 ///
@@ -246,7 +246,7 @@ inline ValuePtr MakeValue(const T &values) {
   return MakeShared<ValueTuple>(value_vector);
 }
 
-/// \brief brief Get primitive type value from a Value object.
+/// \brief Get primitive type value from a Value object.
 ///
 /// \param[in] value The pointer to the Value object.
 ///
@@ -263,7 +263,7 @@ inline T GetValue(const ValuePtr &value) {
   return imm->value();
 }
 
-/// \brief brief Get element values from a ValueSequence object.
+/// \brief Get element values from a ValueSequence object.
 ///
 /// \param[in] value The pointer to the ValueSequence object.
 ///
