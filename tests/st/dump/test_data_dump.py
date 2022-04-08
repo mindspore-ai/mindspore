@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -609,6 +609,23 @@ def test_ascend_full_dump():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_saved_data_dump_test('test_async_dump', 'full')
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_ascend_full_dump_kernel_by_kernel():
+    """
+    Feature: Ascend Full Dump in kernel-by-kernel (MindRT) mode
+    Description: Test Ascend full dump
+    Expectation: Tensors are stored in npy files and their statistics stored in statistic.csv
+    """
+    os.environ['GRAPH_OP_RUN'] = "1"
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_async_dump', 'full')
+    del os.environ['GRAPH_OP_RUN']
 
 
 @constexpr
