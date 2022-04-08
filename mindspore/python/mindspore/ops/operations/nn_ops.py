@@ -6667,8 +6667,7 @@ class Dropout(PrimitiveWithCheck):
         Seed1 (int): Seed1 value for random generating. Default: 0.
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
+        - **x** (Tensor) - The input of Dropout, a Tensor of any shape with data type of float16 or float32.
 
     Outputs:
         - **output** (Tensor) - With the same shape and data type as `x`.
