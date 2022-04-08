@@ -30,8 +30,8 @@ class CPUTensorArray : public TensorArray {
   CPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~CPUTensorArray() override = default;
-  void ReleaseMemory(const DeviceMemPtr addr) override;
-  void *CreateMemory(const size_t size) override;
+  void FreeMemory(const DeviceMemPtr addr) override;
+  void *AllocateMemory(const size_t size) override;
   void ClearMemory(void *addr, const size_t size) override;
 };
 using CPUTensorArrayPtr = std::shared_ptr<CPUTensorArray>;

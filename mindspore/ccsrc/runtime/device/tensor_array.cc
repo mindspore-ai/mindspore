@@ -69,7 +69,7 @@ bool TensorArray::Write(const int64_t index, const mindspore::kernel::AddressPtr
     size_t create_size = (LongToSize(index) > tensors_.size()) ? (LongToSize(index) - tensors_.size()) : 0;
     for (size_t i = 0; i < create_size; i++) {
       kernel::AddressPtr create_dev = std::make_shared<kernel::Address>();
-      create_dev->addr = CreateMemory(dev_value->size);
+      create_dev->addr = AllocateMemory(dev_value->size);
       create_dev->size = dev_value->size;
       tensors_.push_back(create_dev);
     }
@@ -99,7 +99,7 @@ void TensorArray::Free() {
   MS_LOG(DEBUG) << "Free device memory for " << name_;
   for (const auto &addr : tensors_) {
     if (addr != nullptr) {
-      ReleaseMemory(static_cast<DeviceMemPtr>(addr->addr));
+      FreeMemory(static_cast<DeviceMemPtr>(addr->addr));
     }
   }
 }
