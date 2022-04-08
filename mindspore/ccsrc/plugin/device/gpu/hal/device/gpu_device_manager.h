@@ -20,6 +20,7 @@
 #include <cudnn.h>
 #include <cublas_v2.h>
 #include <cusolverDn.h>
+#include <cusparse.h>
 #include <vector>
 #include <memory>
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
@@ -45,6 +46,7 @@ class GPUDeviceManager {
   const cudnnHandle_t &GetCudnnHandle() const;
   const cublasHandle_t &GetCublasHandle() const;
   const cusolverDnHandle_t &GetCusolverDnHandle() const;
+  const cusparseHandle_t &GetCuSparseHandle() const;
 
   bool CopyDeviceMemToHost(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size) const;
   bool CopyHostMemToDevice(const DeviceMemPtr &dst, const void *src, size_t size) const;
@@ -80,6 +82,9 @@ class GPUDeviceManager {
 
   // handle used for cusolver dn kernels;
   cusolverDnHandle_t cusolver_dn_handle_{nullptr};
+
+  // handle used for cusparse kernels;
+  cusparseHandle_t cusparse_handle_{nullptr};
   bool dev_id_init_;
   uint32_t cur_dev_id_;
   bool dev_alive_;

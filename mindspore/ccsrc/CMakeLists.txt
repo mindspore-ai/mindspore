@@ -365,7 +365,8 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib64/libcudart.so
             ${CUDA_PATH}/lib64/stubs/libcuda.so
             ${CUDA_PATH}/lib64/libcusolver.so
-            ${CUDA_PATH}/lib64/libcufft.so)
+            ${CUDA_PATH}/lib64/libcufft.so
+            ${CUDA_PATH}/lib64/libcusparse.so)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
         target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
     endif()
