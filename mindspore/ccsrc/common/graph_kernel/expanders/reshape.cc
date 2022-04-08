@@ -32,7 +32,8 @@ class ExpandDims : public OpDesc {
     for (auto x : axis) {
       int64_t rank = static_cast<int64_t>(new_shape.size());
       if (x > rank || x < -rank - 1) {
-        MS_LOG(EXCEPTION) << "ExpandDims axis " << x << " is out of range of [" << (-rank - 1) << ", " << rank << "]";
+        MS_LOG(EXCEPTION) << "ExpandDims attr 'axis' value " << x << " is out of range of [" << (-rank - 1) << ", "
+                          << rank << "]";
       }
       if (x >= 0) {
         (void)new_shape.insert(new_shape.begin() + x, 1LL);

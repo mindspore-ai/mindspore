@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,11 @@ bool CompileSingleJson(const std::string &json_name) {
   std::string cmd = "unset LD_LIBRARY_PATH;python -c \"" + py_cmd.str() + "\"";
   auto ret = system(cmd.c_str());
   if (!WIFEXITED(ret)) {
-    MS_LOG(ERROR) << "python process start fail!";
+    MS_LOG(ERROR) << "Python process start fail! process content is as follows:\n" << cmd;
     return false;
   }
   if (WEXITSTATUS(ret) != 0) {
-    MS_LOG(ERROR) << "Error json file is: " << json_name;
+    MS_LOG(ERROR) << "Failed to compile json: " << json_name;
     return false;
   }
   return true;

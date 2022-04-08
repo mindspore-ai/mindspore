@@ -391,15 +391,10 @@ MemorySize AutoRecompute::SelectThreshold(EdgeLifeTimeType type) const {
   MemorySize threshold = 0;
   auto local_peak_th = local_peak_threshold_ == 0 ? std::numeric_limits<MemorySize>::max() : local_peak_threshold_;
   auto lifetime_th = lifetime_threshold_ == 0 ? std::numeric_limits<MemorySize>::max() : lifetime_threshold_;
-  switch (type) {
-    case EdgeLifeTimeType::ShortTerm:
-      threshold = local_peak_th;
-      break;
-    case EdgeLifeTimeType::LongTerm:
-      threshold = std::min(local_peak_th, lifetime_th);
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unknown edge type!";
+  if (type == EdgeLifeTimeType::ShortTerm) {
+    threshold = local_peak_th;
+  } else if (type == EdgeLifeTimeType::LongTerm) {
+    threshold = std::min(local_peak_th, lifetime_th);
   }
 
   return threshold;

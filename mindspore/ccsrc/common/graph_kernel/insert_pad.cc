@@ -113,7 +113,7 @@ std::tuple<bool, bool, bool> NeedPad(const CNodePtr &matmul, vec *pad_shape_a, v
                                      vec *tail_shape_a, vec *tail_shape_b, vec *tail_shape_unpad) {
   auto mm_attrs = common::AnfAlgo::GetCNodePrimitive(matmul)->attrs();
   if (mm_attrs.count("transpose_a") == 0 || mm_attrs.count("transpose_b") == 0) {
-    MS_LOG(ERROR) << "attrs transpose_a and transpose_b need to be set in node " << matmul->fullname_with_scope();
+    MS_LOG(ERROR) << "Can not find attr 'transpose_a' or 'transpose_b' in node " << matmul->fullname_with_scope();
     return std::tuple(false, false, false);
   }
   auto tran_a = GetValue<bool>(mm_attrs["transpose_a"]);

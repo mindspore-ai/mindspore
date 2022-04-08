@@ -279,8 +279,11 @@ ShapeVector GetShape(const AnfNodePtr &node) {
   auto abstract = node->abstract();
   MS_EXCEPTION_IF_NULL(abstract);
   auto shape = abstract->GetShapeTrack();
-  if (shape == nullptr || !shape->isa<abstract::Shape>()) {
-    MS_LOG(EXCEPTION) << "Cannot get shape from " << node->fullname_with_scope();
+  if (shape == nullptr) {
+    MS_LOG(EXCEPTION) << "The shape of node " << node->fullname_with_scope() << " is nullptr";
+  } else if (!shape->isa<abstract::Shape>()) {
+    MS_LOG(EXCEPTION) << "The shape of node " << node->fullname_with_scope() << " should be of type Shape, but got "
+                      << shape->ToString();
   }
   auto shape_vec = shape->cast<abstract::ShapePtr>()->shape();
   if (shape_vec.empty()) {
@@ -306,7 +309,7 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
   const auto &attrs = prim->attrs();
   auto iter = attrs.find(kAttrAxis);
   if (iter == attrs.end()) {
-    MS_LOG(EXCEPTION) << "Can not find attribute " << kAttrAxis << " in node " << node->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Can not find attribute '" << kAttrAxis << "' in node " << node->fullname_with_scope();
   }
 
   std::vector<int64_t> axis;
@@ -318,14 +321,14 @@ std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {
       if (value->isa<Int64Imm>()) {
         axis.push_back(GetValue<int64_t>(value));
       } else {
-        MS_LOG(EXCEPTION) << "Element in attribute axis should be of type int64 in node "
+        MS_LOG(EXCEPTION) << "Element in attribute 'axis' should be of type int64 in node "
                           << node->fullname_with_scope();
       }
     }
   } else if (v->isa<Int64Imm>()) {
     axis.push_back(GetValue<int64_t>(v));
   } else {
-    MS_LOG(EXCEPTION) << "Attribute axis should be a list or tuple in node " << node->fullname_with_scope();
+    MS_LOG(EXCEPTION) << "Attribute 'axis' should be a list or tuple in node " << node->fullname_with_scope();
   }
 
   return axis;

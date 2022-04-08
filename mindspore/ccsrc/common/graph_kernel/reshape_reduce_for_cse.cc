@@ -131,8 +131,8 @@ bool ReshapeReduceForCSE::Run(const FuncGraphPtr &graph) {
         size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
         size_t target_output_num = common::AnfAlgo::GetOutputTensorNum(target);
         if (output_num != target_output_num) {
-          MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(node->cast<CNodePtr>())
-                            << " to be CSE should have same output num, but got " << output_num << " vs "
+          MS_LOG(EXCEPTION) << "Node " << node->fullname_with_scope() << " and node " << target->fullname_with_scope()
+                            << " can not CSE, because their output num is different: " << output_num << " vs "
                             << target_output_num << ".";
         }
 

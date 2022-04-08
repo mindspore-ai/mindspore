@@ -476,7 +476,8 @@ bool AkgKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, cons
           attrs_json->push_back(attr_json);
         }
       } else {
-        MS_LOG(ERROR) << "op [" << anf_node->fullname_with_scope() << "] should have attr: " << op_attr->name();
+        MS_LOG(ERROR) << "Can not find attr '" << op_attr->name() << "' in node [" << anf_node->fullname_with_scope()
+                      << "]";
         return false;
       }
     } else {

@@ -273,7 +273,7 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
           output_shape[i] = align_shape[i];
         }
         if (output_shape[i] != align_shape[i]) {
-          MS_LOG(EXCEPTION) << "Shape broadcast failed. " << output_shape[i] << " vs " << align_shape[i];
+          MS_LOG(EXCEPTION) << "Shape broadcast failed: " << output_shape[i] << " vs " << align_shape[i];
         }
       }
     }
@@ -342,7 +342,8 @@ DShape ReshapeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
     }
   }
   if (origin_product != new_product) {
-    MS_LOG(EXCEPTION) << "The shape product before and after reshaping should be equal";
+    MS_LOG(EXCEPTION) << "The shape product before and after reshaping should be equal, but got " << origin_product
+                      << " vs " << new_product;
   }
   return new_shape;
 }

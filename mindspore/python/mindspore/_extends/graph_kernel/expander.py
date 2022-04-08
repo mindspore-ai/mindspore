@@ -27,7 +27,7 @@ def create_expander(expand_info):
         return func(arg)
     op_name = str(expand_info['name'])
     if not hasattr(expanders, op_name):
-        raise GraphKernelUnsupportedException("Generator do not support op: {}".format(op_name))
+        raise GraphKernelUnsupportedException("Expander does not support op: {}".format(op_name))
     expander = getattr(expanders, op_name)
     return call_func(expander, expand_info)
 
@@ -66,7 +66,7 @@ def get_op_expander(json_str: str):
         return json.dumps(desc)
 
     except jd.JSONDecodeError:
-        logger.error("Failed to generate graph kernel op")
+        logger.error("Decode input json str failed in expander, json is: {}".format(json_str))
         logger.error(traceback.format_exc())
         return ""
     except GraphKernelUnsupportedException as e:
