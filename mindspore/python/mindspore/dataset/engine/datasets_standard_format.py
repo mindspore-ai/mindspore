@@ -421,20 +421,8 @@ class OBSMindDataset(GeneratorDataset):
 
 
     def add_sampler(self, new_sampler):
-        """
-        Add a sampler for current dataset, it's not supported for OBSMindDataset.
-
-        Args:
-            new_sampler (Sampler): The sampler to be added as the parent sampler for current dataset.
-        """
         raise NotImplementedError("add_sampler is not supported for OBSMindDataset.")
 
 
     def use_sampler(self, new_sampler):
-        """
-        Make the current dataset use the new_sampler provided by other API, it's not supported for OBSMindDataset.
-
-        Args:
-            new_sampler (Sampler): The sampler to use for the current dataset.
-        """
         raise NotImplementedError("use_sampler is not supported for OBSMindDataset.")

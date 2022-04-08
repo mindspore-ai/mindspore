@@ -42,8 +42,8 @@ class FileWriter:
 
     Args:
         file_name (str): File name of MindRecord file.
-        shard_num (int, optional): The Number of MindRecord files. Default: 1.
-            It should be between [1, 1000].
+        shard_num (int, optional): The Number of MindRecord files.
+            It should be between [1, 1000]. Default: 1.
         overwrite (bool, optional): Whether to overwrite if the file already exists. Default: False.
 
     Raises:
@@ -273,7 +273,7 @@ class FileWriter:
 
     def open_and_set_header(self):
         """
-        Open writer and set header. The function is only used for parallel \
+        Open writer and set header which stores meta information. The function is only used for parallel \
         writing and is called before the `write_raw_data`.
 
         Returns:

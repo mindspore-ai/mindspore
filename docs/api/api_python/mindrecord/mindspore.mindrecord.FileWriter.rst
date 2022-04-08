@@ -9,7 +9,7 @@
     **参数：**
 
     - **file_name** (str) - 转换生成的MindRecord文件路径。
-    - **shard_num** (int，可选) - 生成MindRecord的文件个数。默认值：1。取值范围为[1, 1000]。
+    - **shard_num** (int，可选) - 生成MindRecord的文件个数。取值范围为[1, 1000]。默认值：1。
     - **overwrite** (bool，可选) - 当指定目录存在同名文件时是否覆盖写。默认值：False。
 
     **异常：**
@@ -52,7 +52,7 @@
         **参数：**
 
         - **content** (dict) - schema内容的字典。
-        - **desc** (str，可选) - schema的描述字符。默认值：None。
+        - **desc** (str，可选) - schema的描述。默认值：None。
 
         **返回：**
 
@@ -87,7 +87,7 @@
 
     .. py:method:: open_and_set_header()
 
-        打开MindRecord文件准备写入并且设置header。该函数仅用于并行写入，并在 `write_raw_data` 函数之前调用。
+        打开MindRecord文件准备写入并且设置描述其meta信息的头部，该函数仅用于并行写入，并在 `write_raw_data` 函数之前调用。
 
         **返回：**
 
