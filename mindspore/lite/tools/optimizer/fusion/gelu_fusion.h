@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,23 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "backend/common/optimizer/optimizer.h"
 #include "include/common/utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/optimizer/common/multiple_pattern_process_pass.h"
 
 namespace mindspore {
 namespace opt {
-class GeLUFusion : public PatternProcessPass {
+class GeLUFusion : public MultiplePatternProcessPass {
  public:
   explicit GeLUFusion(const std::string &name = "GeLUFusion", bool multigraph = true)
-      : PatternProcessPass(name, multigraph), input_(std::make_shared<Var>()) {}
+      : MultiplePatternProcessPass(name, multigraph), input_(std::make_shared<Var>()) {}
 
   ~GeLUFusion() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &, const AnfNodePtr &,
+                     const EquivPtr &) const override;
 
  protected:
-  virtual bool Init() const;
-  virtual bool CheckPattern(const EquivPtr &equiv) const = 0;
+  virtual bool CheckPattern(const std::string &pattern_name, const EquivPtr &equiv) const = 0;
   const float GetParameterValue(const EquivPtr &equiv, const VarPtr &input) const;
 
  private:
