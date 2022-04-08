@@ -10,7 +10,7 @@
 
     **参数：**
 
-    - **exclusive** (bool) - 如果为True，则执行独占模式。默认值：False。
+    - **exclusive** (bool) - 表示输出结果的第一个元素是否与输入的第一个元素一致。如果为False，表示输出的第一个元素与输入的第一个元素一致。默认值：False。
     - **reverse** (bool) - 如果为True，则逆向计算累加和。默认值：False。
 
     **输入：**

@@ -6,7 +6,7 @@ mindspore.ops.GetNext
     返回数据集队列中的下一个元素。
 
     .. note::
-        GetNext操作需要联网，且依赖init_dataset接口，不能单独操作。详见 :class:`mindspore.connect_network_with_dataset` 的源码。
+        GetNext操作需要联网，且依赖'dataset'接口，例如： :class:`mindspore.dataset.MnistDataset` 。不能单独操作。详见 :class:`mindspore.connect_network_with_dataset` 的源码。
 
     **参数：**
 
@@ -14,6 +14,7 @@ mindspore.ops.GetNext
     - **shapes** (list[tuple[int]]) - 输出数据的shape大小。
     - **output_num** (int) - 输出编号、 `types` 和 `shapes` 的长度。
     - **shared_name** (str) - `init_dataset` 接口名称。
+    - **shared_name** (str) - 待获取数据的队列名称。
 
     **输入：**
 
