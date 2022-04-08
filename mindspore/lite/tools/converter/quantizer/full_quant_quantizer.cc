@@ -97,7 +97,7 @@ int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const Para
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_,
                                             weight_q_min_, bit_num_, weight_quant_type, kNumberTypeInt8,
-                                            input_index - 1, preferred_dim, weight_symmetry_, true);
+                                            input_index - 1, preferred_dim, weight_symmetric_, true);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -117,7 +117,7 @@ int FullQuantQuantizer::DoValueNodeWeightQuant(const ValueNodePtr &weight, const
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status =
     FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_, weight_q_min_,
-                                bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetry_, true);
+                                bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetric_, true);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -384,8 +384,8 @@ void FullQuantQuantizer::InitCpuConfig() {
   activation_quant_data_type_ = kNumberTypeInt8;
   activation_target_data_type_ = kNumberTypeInt8;
   weight_data_type_ = kNumberTypeInt8;
-  activation_symmetry_ = false;
-  weight_symmetry_ = true;
+  activation_symmetric_ = false;
+  weight_symmetric_ = true;
   support_int8_ops_ = {
     // Compute
     prim::kPrimConv2DFusion,
@@ -411,8 +411,8 @@ void FullQuantQuantizer::InitKirinConfig() {
   activation_quant_data_type_ = kNumberTypeUInt8;
   activation_target_data_type_ = kTypeUnknown;
   weight_data_type_ = kNumberTypeInt8;
-  activation_symmetry_ = false;
-  weight_symmetry_ = true;
+  activation_symmetric_ = false;
+  weight_symmetric_ = true;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
   flags_.fullQuantParam.bias_correction = false;
   per_channel_ops_ = {prim::kPrimConv2DFusion};
@@ -421,9 +421,9 @@ void FullQuantQuantizer::InitKirinConfig() {
 void FullQuantQuantizer::InitNvGpuConfig() {
   // `kTypeUnknown` represents the original data type
   activation_target_data_type_ = kTypeUnknown;
-  activation_symmetry_ = true;
+  activation_symmetric_ = true;
   weight_data_type_ = kTypeUnknown;
-  weight_symmetry_ = true;
+  weight_symmetric_ = true;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimActivation,
                        prim::kPrimConv2dTransposeFusion};
   per_channel_ops_ = {};
@@ -433,16 +433,16 @@ void FullQuantQuantizer::InitNvGpuConfig() {
 void FullQuantQuantizer::InitQMinMax() {
   MS_ASSERT(activation_quant_data_type_ == kNumberTypeInt8 || activation_quant_data_type_ == kNumberTypeUInt8);
   if (activation_quant_data_type_ == kNumberTypeInt8) {
-    activation_q_min_ = QuantMin(this->bit_num_, false, activation_symmetry_);  // -128
-    activation_q_max_ = QuantMax(this->bit_num_, false);                        // 127
+    activation_q_min_ = QuantMin(this->bit_num_, false, activation_symmetric_);  // -128
+    activation_q_max_ = QuantMax(this->bit_num_, false);                         // 127
   } else if (activation_quant_data_type_ == kNumberTypeUInt8) {
     activation_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
     activation_q_max_ = QuantMax(this->bit_num_, true);         // 255
   }
   MS_ASSERT(weight_data_type_ == kNumberTypeInt8 || weight_data_type_ == kNumberTypeUInt8);
   if (weight_data_type_ == kNumberTypeInt8) {
-    weight_q_min_ = QuantMin(this->bit_num_, false, weight_symmetry_);  // -127
-    weight_q_max_ = QuantMax(this->bit_num_, false);                    // 127
+    weight_q_min_ = QuantMin(this->bit_num_, false, weight_symmetric_);  // -127
+    weight_q_max_ = QuantMax(this->bit_num_, false);                     // 127
   } else if (activation_quant_data_type_ == kNumberTypeUInt8) {
     weight_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
     weight_q_max_ = QuantMax(this->bit_num_, true);         // 255
@@ -495,7 +495,7 @@ int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
   InitQMinMax();
   calibrator_ = std::make_shared<Calibrator>(this->bit_num_, activation_q_max_, activation_q_min_,
                                              this->flags_.fullQuantParam.activation_quant_method,
-                                             this->flags_.dataPreProcessParam, activation_symmetry_);
+                                             this->flags_.dataPreProcessParam, activation_symmetric_);
   MSLITE_CHECK_PTR(calibrator_);
   quant_strategy_ = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
                                                     flags_.commonQuantParam.min_quant_weight_channel,
@@ -519,6 +519,7 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
   }
 
   for (size_t calib_index = 0; calib_index < calibrator_->GetBatchNum(); calib_index++) {
+    MS_LOG(INFO) << "Do inference round:" << calib_index;
     // set multi-input data
     for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
       int status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), calib_index, inputs[input_index]);

@@ -179,11 +179,11 @@ int DataDistribution::ComputeThreshold() {
   return RET_OK;
 }
 
-double DataDistribution::CalculateMinMaxScale() { return CalculateScaleAndZp(this->real_min_, this->real_max_); }
+double DataDistribution::CalculateMinMaxScale() { return CalculateScale(this->real_min_, this->real_max_); }
 
 double DataDistribution::CalculateRemovalOutlierScale() {
   this->percent_result_ = CalQuantileMinMax(min_datas_, max_datas_);
-  return CalculateScaleAndZp(percent_result_.first, percent_result_.second);
+  return CalculateScale(percent_result_.first, percent_result_.second);
 }
 
 std::pair<float, float> DataDistribution::CalQuantileMinMax(const std::vector<float> &min_datas,
@@ -195,40 +195,16 @@ std::pair<float, float> DataDistribution::CalQuantileMinMax(const std::vector<fl
   return {avg_min, avg_max};
 }
 
-double DataDistribution::CalculateScaleAndZp(float min_value, float max_value) {
-  if (symmetry_) {
-    auto abs_max = std::max(fabs(min_value), fabs(max_value));
-    encode_min_ = -abs_max;
-    encode_max_ = abs_max;
-  } else {
-    encode_min_ = min_value;
-    encode_max_ = max_value;
-  }
-
-  // Handling 0
-  // Inputs are strictly positive, set the real min to 0. e.g. input range = [1.0, 5.0] -> [0.0, 5.0]
-  if (encode_min_ > 0.0f) {
-    MS_LOG(DEBUG) << "min " << encode_min_ << " is bigger then 0, set to 0, this may course low precision";
-    encode_min_ = 0.0f;
-  }
-  // Inputs are strictly negative, set the real max to 0. e.g. input range = [-5.0, -1.0] -> [-5.0, 0.0]
-  if (encode_max_ < 0.0f) {
-    MS_LOG(DEBUG) << "real_max " << encode_max_ << " is smaller than 0, set to 0, this may course low precision";
-    encode_max_ = 0.0f;
-  }
-  // Inputs are both negative and positive, real_min and real_max are slightly shifted to make the floating point zero
-  // exactly representable. e.g. input range = [-5.1, 5.1] -> [-5.12, 5.08]
-
-  // handle case where encode_min_ == encode_max_
-  float epsilon = 1e-5;
-  encode_max_ = std::max(encode_max_, encode_min_ + epsilon);
-  auto range = encode_max_ - encode_min_;
+double DataDistribution::CalculateScale(float min_value, float max_value) {
+  EncodeMinMax(min_value, max_value, quant_min_, quant_max_, symmetric_, &encode_min_, &encode_max_);
+  auto q_range = quant_max_ - quant_min_;
   MS_ASSERT(quant_max_ - quant_min_ > 0);
-  return range / (quant_max_ - quant_min_);
+  auto range = encode_max_ - encode_min_;
+  return range / q_range;
 }
 
 double DataDistribution::CalculateKLScale() {
-  return CalculateScaleAndZp(-std::abs(this->best_T_), std::abs(this->best_T_));
+  return CalculateScale(-std::abs(this->best_T_), std::abs(this->best_T_));
 }
 
 double DataDistribution::GetScale() {
@@ -250,7 +226,7 @@ double DataDistribution::GetScale() {
 }
 
 int32_t DataDistribution::GetZeroPoint() {
-  if (symmetry_) {
+  if (symmetric_) {
     zero_point_ = 0;
   } else {
     MS_ASSERT(scale_ > 0);

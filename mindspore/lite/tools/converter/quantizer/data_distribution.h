@@ -25,7 +25,7 @@ class DataDistribution {
  public:
   DataDistribution() = default;
   DataDistribution(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min,
-                   ActivationQuantizedMethod activation_quant_method, bool symmetry) {
+                   ActivationQuantizedMethod activation_quant_method, bool symmetric) {
     this->activation_quant_method_ = activation_quant_method;
     this->cnode_ = std::move(cnode);
     this->bin_num_ = bins;
@@ -37,9 +37,9 @@ class DataDistribution {
     this->quant_min_ = quant_min;
     std::fill(histogram_.begin(), histogram_.end(), 1.0e-7);
     if (this->activation_quant_method_ == KL) {
-      symmetry_ = true;
+      symmetric_ = true;
     } else {
-      symmetry_ = symmetry;
+      symmetric_ = symmetric;
     }
   }
 
@@ -74,7 +74,7 @@ class DataDistribution {
   double CalculateMinMaxScale();
   double CalculateRemovalOutlierScale();
   double CalculateKLScale();
-  double CalculateScaleAndZp(float min_value, float max_value);
+  double CalculateScale(float min_value, float max_value);
 
   std::pair<float, float> CalQuantileMinMax(const std::vector<float> &min_datas, const std::vector<float> &max_datas);
 
@@ -97,7 +97,7 @@ class DataDistribution {
   std::pair<float, float> percent_result_{0.0, 0.0};
   double scale_ = 0;
   int zero_point_ = 0;
-  bool symmetry_ = true;
+  bool symmetric_ = true;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_DATA_DISTRIBUTION_H
