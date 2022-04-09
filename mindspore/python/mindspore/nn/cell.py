@@ -434,7 +434,8 @@ class Cell(Cell_):
     def _check_construct_args(self, *inputs, **kwargs):
         """Check the args needed by the function construct"""
         if kwargs:
-            raise ValueError(f"Expect no kwargs here. maybe you pass wrong arguments, rgs: {inputs}, kwargs: {kwargs}")
+            raise ValueError(f"For 'Cell', expect no kwargs here, "
+                             "maybe you pass wrong arguments, args: {inputs}, kwargs: {kwargs}")
         positional_args = 0
         default_args = 0
         for value in inspect.signature(self.construct).parameters.values():
@@ -569,7 +570,7 @@ class Cell(Cell_):
     def __call__(self, *args, **kwargs):
         if self.__class__.construct is Cell.construct:
             logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
-                           f"will call the super class(Cell) 'construct'.")
+                           f"it will call the super class(Cell) 'construct'.")
         if kwargs:
             bound_arguments = inspect.signature(self.construct).bind(*args, **kwargs)
             bound_arguments.apply_defaults()
@@ -1071,7 +1072,7 @@ class Cell(Cell_):
         """
         if not child_name or '.' in child_name:
             raise KeyError("For 'insert_child_to_cell', the argument 'child_name' should not be None and "
-                           "should not contain \".\"")
+                           "should not contain '.'")
         if hasattr(self, child_name) and child_name not in self._cells:
             raise KeyError("For 'insert_child_to_cell', the {} child cell already exists in the network. Cannot "
                            "insert another child cell with the same name.".format(child_name))
@@ -2104,7 +2105,9 @@ class Cell(Cell_):
 
         for key, _ in kwargs.items():
             if key not in ('mp_comm_recompute', 'parallel_optimizer_comm_recompute', 'recompute_slice_activation'):
-                raise ValueError("Recompute keyword %s is not recognized!" % key)
+                raise ValueError("For 'recompute', keyword '%s' is not recognized! "
+                                 "the key kwargs must be 'mp_comm_recompute', "
+                                 "'parallel_optimizer_comm_recompute', 'recompute_slice_activation'" % key)
 
     def infer_param_pipeline_stage(self):
         """
@@ -2226,7 +2229,7 @@ class GraphCell(Cell):
 
         params_init = {} if params_init is None else params_init
         if not isinstance(params_init, dict):
-            raise TypeError(f"The 'params_init' must be a dict, but got {type(params_init)}.")
+            raise TypeError(f"For 'GraphCell', the argument 'params_init' must be a dict, but got {type(params_init)}.")
         for name, value in params_init.items():
             if not isinstance(name, str) or not isinstance(value, Tensor):
                 raise TypeError("For 'GraphCell', the key of the 'params_init' must be str, "
