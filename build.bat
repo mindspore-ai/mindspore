@@ -21,16 +21,8 @@ SET BUILD_PATH=%BASE_PATH%/build
 SET threads=8
 SET ENABLE_GITEE=OFF
 
-set VERSION_MAJOR=''
-set VERSION_MINOR=''
-set ERSION_REVISION=''
-
-for /f "delims=\= tokens=2" %%a in ('findstr /C:"const int ms_version_major = " mindspore\lite\include\version.h') do (set x=%%a)
-set VERSION_MAJOR=%x:~1,1%
-for /f "delims=\= tokens=2" %%b in ('findstr /C:"const int ms_version_minor = " mindspore\lite\include\version.h') do (set y=%%b)
-set VERSION_MINOR=%y:~1,1%
-for /f "delims=\= tokens=2" %%c in ('findstr /C:"const int ms_version_revision = " mindspore\lite\include\version.h') do (set z=%%c)
-set VERSION_REVISION=%z:~1,1%
+set VERSION_STR=''
+for /f "tokens=1" %%a in (version.txt) do (set VERSION_STR=%%a)
 
 ECHO %2%|FINDSTR "^[0-9][0-9]*$"
 IF %errorlevel% == 0 (
@@ -52,16 +44,14 @@ IF NOT EXIST "%BUILD_PATH%/mindspore" (
 
 cd %BUILD_PATH%/mindspore
 IF "%1%" == "lite" (
-    echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
+    echo "======Start building MindSpore Lite %VERSION_STR%======"
     rd /s /q "%BASE_PATH%\output"
     (git log -1 | findstr "^commit") > %BUILD_PATH%\.commit_id
     IF defined VisualStudioVersion (
-        cmake -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off ^
-            -DMS_VERSION_MAJOR=%VERSION_MAJOR% -DMS_VERSION_MINOR=%VERSION_MINOR% -DMS_VERSION_REVISION=%VERSION_REVISION% ^
+        cmake -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off -DVERSION_STR=%VERSION_STR% ^
             -DCMAKE_BUILD_TYPE=Release -G "Ninja" "%BASE_PATH%/mindspore/lite"
     ) ELSE (
-        cmake -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off ^
-            -DMS_VERSION_MAJOR=%VERSION_MAJOR% -DMS_VERSION_MINOR=%VERSION_MINOR% -DMS_VERSION_REVISION=%VERSION_REVISION% ^
+        cmake -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off -DVERSION_STR=%VERSION_STR% ^
             -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" "%BASE_PATH%/mindspore/lite"
     )
 ) ELSE (
