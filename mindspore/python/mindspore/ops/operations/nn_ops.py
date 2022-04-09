@@ -516,7 +516,7 @@ class Mish(PrimitiveWithInfer):
 
     .. math::
 
-        \text{output} = x * \tan(\log(1 + \exp(\text{x})))
+        \text{output} = x * \tanh(\log(1 + \exp(\text{x})))
 
     See more details in `A Self Regularized Non-Monotonic Neural Activation Function
     <https://arxiv.org/abs/1908.08681>`_.
@@ -529,7 +529,7 @@ class Mish(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.
@@ -539,21 +539,15 @@ class Mish(PrimitiveWithInfer):
         >>> mish = ops.Mish()
         >>> output = mish(x)
         >>> print(output)
-        [[-0.30273438  3.9974136 -0.015625]
-         [ 1.9439697  -0.02929688 8.999999]]
+        [[-0.3034014  3.9974129 -0.00026832]
+         [ 1.9439590  -0.0033576 9.0000000]]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Mish"""
+        super().__init__("Mish")
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32], self.name)
-        return x_dtype
 
 
 class SeLU(Primitive):
