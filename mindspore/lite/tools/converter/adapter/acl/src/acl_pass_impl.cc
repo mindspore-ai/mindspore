@@ -328,6 +328,7 @@ STATUS AclPassImpl::SetAclModelOptions(const FuncGraphPtr &func_graph) {
     input_names.push_back(name);
   }
   options_->RenameInput(input_names);
+  options_->SetOmFilePath(user_options_cfg_.om_file_path);
   MS_LOG(INFO) << "Set acl model options success.";
   return lite::RET_OK;
 }
