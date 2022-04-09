@@ -209,22 +209,20 @@ namespace gpu {
     }                                                                                 \
   }
 
-#define CHECK_CUSPARSE_RET_WITH_ERROR(expression, message)                          \
-  do {                                                                              \
-    cusparseStatus_t result = (expression);                                         \
-    if (result != CUSPARSE_STATUS_SUCCESS) {                                        \
-      MS_LOG(ERROR) << "cusparse Error: " << message << " | Error Code: " << result \
-                    << "| Error String: " << cusparseGetErrorString(result);        \
-    }                                                                               \
+#define CHECK_CUSPARSE_RET_WITH_ERROR(expression, message)                           \
+  do {                                                                               \
+    cusparseStatus_t result = (expression);                                          \
+    if (result != CUSPARSE_STATUS_SUCCESS) {                                         \
+      MS_LOG(ERROR) << "cusparse Error: " << message << " | Error Code: " << result; \
+    }                                                                                \
   } while (0)
 
-#define CHECK_CUSPARSE_RET_WITH_EXCEPT(expression, message)                             \
-  do {                                                                                  \
-    cusparseStatus_t result = (expression);                                             \
-    if (result != CUSPARSE_STATUS_SUCCESS) {                                            \
-      MS_LOG(EXCEPTION) << "cusparse Error: " << message << " | Error Code: " << result \
-                        << "| Error String: " << cusparseGetErrorString(result);        \
-    }                                                                                   \
+#define CHECK_CUSPARSE_RET_WITH_EXCEPT(expression, message)                              \
+  do {                                                                                   \
+    cusparseStatus_t result = (expression);                                              \
+    if (result != CUSPARSE_STATUS_SUCCESS) {                                             \
+      MS_LOG(EXCEPTION) << "cusparse Error: " << message << " | Error Code: " << result; \
+    }                                                                                    \
   } while (0)
 
 #define VARIABLE_NOT_USED(var) \
