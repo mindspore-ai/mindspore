@@ -328,14 +328,15 @@ class CheckpointConfig:
             if isinstance(element, dict):
                 dict_num += 1
                 if dict_num > 1:
-                    raise TypeError(f"For 'CheckpointConfig', the element of 'append_info' must has only one dict.")
+                    raise TypeError(f"For 'CheckpointConfig', the element of 'append_info' must has only one dict, "
+                                    "but got {dict_num}")
                 for key, value in element.items():
                     if isinstance(key, str) and isinstance(value, (int, float, bool)):
                         handle_append_info[key] = value
                     else:
-                        raise TypeError(f"For 'CheckpointConfig', the type of dict in 'append_info' "
-                                        f"must be key: string, value: int or float, "
-                                        f"but got key: {type(key)}, value: {type(value)}")
+                        raise TypeError(f"For 'CheckpointConfig', the key type of the dict 'append_info' "
+                                        f"must be string, the value type must be int or float or bool, "
+                                        f"but got key type {type(key)}, value type {type(value)}")
 
         return handle_append_info
 
@@ -374,7 +375,7 @@ class ModelCheckpoint(Callback):
 
         if not isinstance(prefix, str) or prefix.find('/') >= 0:
             raise ValueError("For 'ModelCheckpoint', the argument 'prefix' "
-                             "for checkpoint file name is invalid, 'prefix' must be "
+                             "for checkpoint file name is invalid, it must be "
                              "string and does not contain '/', but got {}.".format(prefix))
         self._prefix = prefix
         self._exception_prefix = prefix
@@ -391,8 +392,8 @@ class ModelCheckpoint(Callback):
             self._config = CheckpointConfig()
         else:
             if not isinstance(config, CheckpointConfig):
-                raise TypeError("For 'ModelCheckpoint', the argument 'config' should be "
-                                "'CheckpointConfig' type, "
+                raise TypeError("For 'ModelCheckpoint', the type of argument 'config' should be "
+                                "'CheckpointConfig', "
                                 "but got {}.".format(type(config)))
             self._config = config
 

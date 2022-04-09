@@ -879,8 +879,9 @@ class Model:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
 
         if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:
-            raise ValueError("when use Model.build to initialize model, the value of parameter `epoch` in Model.build "
-                             "should be equal to value in Model.train, but got {} and {} separately."
+            raise ValueError("when use Model.build to initialize model, the value of parameter 'epoch' in Model.build "
+                             "should be equal to value in Model.train, but got the value of epoch in build {} and "
+                             "the value of epoch in train {} separately."
                              .format(train_dataset._warmup_epoch, epoch))
 
         if dataset_sink_mode and _is_ps_mode() and not _cache_enable():
@@ -1063,7 +1064,7 @@ class Model:
 
         _device_number_check(self._parallel_mode, self._device_number)
         if not self._metric_fns:
-            raise ValueError("The model argument 'metrics' can not be None or empty, "
+            raise ValueError("For Model.eval, the model argument 'metrics' can not be None or empty, "
                              "you should set the argument 'metrics' for model.")
         if isinstance(self._eval_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Sink mode is currently not supported when evaluating with a GraphCell.")

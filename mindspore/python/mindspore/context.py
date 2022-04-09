@@ -156,7 +156,7 @@ class _Context:
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)
         if attr == "_context_handle" and value is None:
-            raise ValueError("Context handle is none in context!!!")
+            raise ValueError("Get {} failed, please check whether 'env_config_path' is correct.".format(attr))
         return value
 
     def get_param(self, param):
@@ -181,8 +181,10 @@ class _Context:
                 self.set_backend_policy("vm")
             parallel_mode = _get_auto_parallel_context("parallel_mode")
             if parallel_mode not in (ParallelMode.DATA_PARALLEL, ParallelMode.STAND_ALONE):
-                raise ValueError(f"Pynative Only support STAND_ALONE and DATA_PARALLEL for ParallelMode,"
-                                 f"but got {parallel_mode.upper()}.")
+                raise ValueError(f"Got {parallel_mode}, when the user enabled SEMI_AUTO_PARALELL or AUTO_PARALLEL, "
+                                 f"pynative mode dose not support, you should set "
+                                 f"context.set_auto_parallel_context(parallel_mode='data_parallel') "
+                                 f"or context.set_auto_parallel_context(parallel_mode='stand_alone').")
             self._context_switches.push(True, None)
         elif mode == GRAPH_MODE:
             if self.enable_debug_runtime:
@@ -282,15 +284,18 @@ class _Context:
     def set_mempool_block_size(self, mempool_block_size):
         """Set the block size of memory pool."""
         if _get_mode() == GRAPH_MODE:
-            logger.warning("Graph mode doesn't supportto set parameter 'mempool_block_size' of context currently")
+            logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
+                           "you can use context.set_context to set pynative mode.")
             return
         if not Validator.check_str_by_regular(mempool_block_size, _re_pattern):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
-                             "correct format! Such as \"10GB\"")
+                             "correct format! Such as \"10GB\", "
+                             "but got {}".format(mempool_block_size))
         mempool_block_size_value = float(mempool_block_size[:-2])
         if mempool_block_size_value < 1.0:
             raise ValueError("For 'context.set_context',  the argument 'mempool_block_size' should be "
-                             "greater or equal to \"1GB\"")
+                             "greater or equal to \"1GB\", "
+                             "but got {}GB".format(float(mempool_block_size[:-2])))
         self.set_param(ms_ctx_param.mempool_block_size, mempool_block_size_value)
 
     def set_print_file_path(self, file_path):
@@ -630,9 +635,8 @@ def _check_target_specific_cfgs(device, arg_key):
     if device in supported_devices:
         return True
     logger.warning(f"For 'context.set_context', "
-                   f"the argument 'device_target' only supports devices in {supported_devices}, "
-                   f"but got '{arg_key}', current device is '{device}'"
-                   f", ignore it.")
+                   f"the argument 'device_target' only supports devices in '{supported_devices}', "
+                   f"but got '{device}', ignore it.")
     return False
 
 
