@@ -4019,7 +4019,7 @@ class Lerp(Primitive):
         ValueError: If `weight` could not be broadcast to tensors with shapes of `start` and `end` when it is a tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
@@ -4032,6 +4032,7 @@ class Lerp(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        super().__init__("Lerp")
         self.init_prim_io_names(inputs=['start', 'end', 'weight'], outputs=['output'])
 
 
