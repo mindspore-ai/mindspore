@@ -23,7 +23,7 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class LerpCpuKernelMod : public NativeCpuKernelMod {
+class LerpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   LerpCpuKernelMod() = default;
   explicit LerpCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
