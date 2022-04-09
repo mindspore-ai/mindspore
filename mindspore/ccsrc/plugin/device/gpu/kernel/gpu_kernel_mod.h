@@ -25,6 +25,7 @@ class GpuKernelMod : public KernelMod {
  public:
   GpuKernelMod() = default;
   ~GpuKernelMod() override = default;
+  enum KernelModType GetKernelModType() const override { return KernelModType::GpuKernelMod; }
 };
 }  // namespace kernel
 }  // namespace mindspore

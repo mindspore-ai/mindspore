@@ -28,6 +28,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/anf_utils.h"
 #include "kernel/kernel.h"
+#include "kernel/common_utils.h"
 #include "utils/ms_context.h"
 #include "abstract/primitive_infer_map.h"
 
@@ -191,7 +192,19 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node, bool fake_flag) {
   } else {
     auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
     MS_EXCEPTION_IF_NULL(kernel_mod);
-    actor_func = [kernel_mod, cnode](void *) { kernel_mod->InitOp(cnode->user_data<kernel::InitOpArgs>()); };
+    actor_func = [kernel_mod, cnode](void *) {
+      auto init_op_args = cnode->user_data<kernel::InitOpArgs>();
+      if (init_op_args == nullptr) {
+        init_op_args = std::make_shared<kernel::InitOpArgs>();
+        cnode->set_user_data(init_op_args);
+      }
+      if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
+          kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
+        std::tie(init_op_args->base_operator, init_op_args->inputs, init_op_args->outputs) =
+          kernel::GetArgsFromCNode(cnode);
+      }
+      kernel_mod->InitOp(init_op_args);
+    };
   }
 
   auto init_node = AnfUtils::NewInitActorNode(actor_func, cnode, fake_flag);
@@ -207,7 +220,27 @@ AnfNodePtr GenUpdateNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto update_node = AnfUtils::NewUpdateActorNode([kernel_mod](void *) { kernel_mod->UpdateOp(); }, cnode);
+  auto update_node = AnfUtils::NewUpdateActorNode(
+    [cnode, kernel_mod](void *) {
+      kernel_mod->UpdateOp();
+      auto output_tensor = kernel_mod->GetDynamicShapeOutputs();
+      if (output_tensor.empty()) {
+        return;
+      }
+      std::vector<TypeId> type_ids;
+      std::vector<std::vector<size_t>> shapes;
+      size_t output_num = output_tensor.size();
+      for (size_t i = 0; i < output_num; ++i) {
+        MS_EXCEPTION_IF_NULL(output_tensor[i]);
+        auto out_shape = output_tensor[i]->GetShapeVector();
+        std::vector<size_t> u_out_shape;
+        std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(u_out_shape), LongToSize);
+        shapes.emplace_back(std::move(u_out_shape));
+        type_ids.emplace_back(output_tensor[i]->GetDtype());
+      }
+      common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
+    },
+    cnode);
   update_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return update_node;
 }

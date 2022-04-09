@@ -286,6 +286,8 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs);
 
 void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &kernel_attrs);
+Format GetFormatFromStrToEnum(const std::string &format_str);
+std::string GetFormatFromEnumToStr(Format format);
 
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \

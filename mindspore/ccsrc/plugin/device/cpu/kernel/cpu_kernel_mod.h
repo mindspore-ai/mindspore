@@ -25,6 +25,7 @@ class CpuKernelMod : public KernelMod {
  public:
   CpuKernelMod() = default;
   ~CpuKernelMod() override = default;
+  enum KernelModType GetKernelModType() const override { return KernelModType::CpuKernelMod; }
 };
 }  // namespace kernel
 }  // namespace mindspore

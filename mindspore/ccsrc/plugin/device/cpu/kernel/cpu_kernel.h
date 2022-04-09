@@ -156,6 +156,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   }
 
   virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
+  enum KernelModType GetKernelModType() const override { return KernelModType::NativeCpuKernelMod; }
 
   ParallelSearchInfo parallel_search_info_;
 
@@ -185,6 +186,7 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   const CNodeWeakPtr &GetCNodePtr() { return cnode_ptr_; }
 
   void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
+  enum KernelModType GetKernelModType() const override { return KernelModType::DeprecatedNativeCpuKernelMod; }
 
  protected:
   virtual void InitInputOutputSize(const CNodePtr &kernel_node);

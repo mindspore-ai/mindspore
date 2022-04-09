@@ -19,6 +19,8 @@
 #include <utility>
 #include <string>
 #include <algorithm>
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -42,26 +44,74 @@ const std::vector<std::pair<KernelAttr, UniquePtrCreatorFunc>> kernel_attr = {
    CreateUniqueKernelPtr<int64_t, int64_t>}};
 }  // namespace
 
-bool UniqueGpuKernelMod::Init(const CNodePtr &kernel_node) {
-  kernel_node_ = kernel_node;
-  auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto index = GetMatchKernelAttrIdxWithException(kernel_node, GetOpSupport());
-  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name, deprecated_id_));
+bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  base_operator_ = base_operator;
+  inputs_ = inputs;
+  outputs_ = outputs;
+  auto [is_match, index] = MatchKernelAttr(GetKernelAttrFromTensors(inputs, outputs), GetOpSupport());
+  if (!is_match) {
+    return false;
+  }
+  helper_ptr_ = kernel_attr[index].second(kernel_name_, deprecated_id_);
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
+  if (inputs.empty()) {
+    MS_LOG(ERROR) << "Invalid inputs is empty.";
+    return false;
+  }
+  std::vector<size_t> shape =
+    std::vector<size_t>(inputs[0]->GetDeviceShapeAdaptively().begin(), inputs[0]->GetDeviceShapeAdaptively().end());
+  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
   if (is_null_input_) {
     InitSizeLists();
     return true;
   }
-  std::vector<int64_t> int64_shape;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(int64_shape), SizeToLong);
-  input_shapes.emplace_back(int64_shape);
+
+  input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   is_need_updateop_ = true;
+  if (!is_input_dynamic_shape_.has_value()) {
+    bool is_input_dynamic_shape = false;
+    for (const auto &input : inputs) {
+      auto input_shape = input->GetShapeVector();
+      if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
+        is_input_dynamic_shape = true;
+        break;
+      }
+    }
+    is_input_dynamic_shape_ = is_input_dynamic_shape;
+  }
   return true;
+}
+
+void UniqueGpuKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
+    DestroyResource();
+    ResetResource();
+    Init(args->base_operator, args->inputs, args->outputs);
+  } else {
+    base_operator_ = args->base_operator;
+    inputs_ = args->inputs;
+    outputs_ = args->outputs;
+  }
+}
+
+void UniqueGpuKernelMod::UpdateOp() {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                                     "cudaStreamSynchronized failed");
+  size_t output_num = outputs_.size();
+  for (size_t i = 0; i < output_num; ++i) {
+    std::vector<int64_t> shape = outputs_[i]->GetShapeVector();
+    if (i == 0) {
+      auto dyn_out = helper_ptr_->GetOutputTensorInfo();
+      MS_EXCEPTION_IF_CHECK_FAIL(dyn_out.shapes.size() == 1 && dyn_out.shapes[0].size() == 1,
+                                 "Unique output info error.");
+      shape[0] = dyn_out.shapes[0][0];
+    }
+    outputs_[i]->SetShapeVector(std::vector<int64_t>(shape.begin(), shape.end()));
+  }
 }
 
 std::vector<KernelAttr> UniqueGpuKernelMod::GetOpSupport() {

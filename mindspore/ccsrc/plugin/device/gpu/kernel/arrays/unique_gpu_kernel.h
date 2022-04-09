@@ -24,9 +24,12 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/unique_helper.h"
 namespace mindspore {
 namespace kernel {
-class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class UniqueGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UniqueGpuKernelMod() { ResetResource(); }
+  UniqueGpuKernelMod() {
+    KernelMod::kernel_name_ = "Unique";
+    ResetResource();
+  }
   ~UniqueGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -44,30 +47,14 @@ class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool Init(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  void UpdateOp() override {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                               "cudaStreamSynchronized failed");
-    std::vector<TypeId> type_ids;
-    std::vector<std::vector<size_t>> shapes;
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node_.lock());
-    for (size_t i = 0; i < output_num; ++i) {
-      std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(kernel_node_.lock(), i);
-      if (i == 0) {
-        auto dyn_out = helper_ptr_->GetOutputTensorInfo();
-        MS_EXCEPTION_IF_CHECK_FAIL(dyn_out.shapes.size() == 1 && dyn_out.shapes[0].size() == 1,
-                                   "Unique output info error.");
-        shape[0] = dyn_out.shapes[0][0];
-      }
-      TypeId type_id = common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), i);
-      type_ids.emplace_back(type_id);
-      shapes.emplace_back(shape);
-    }
-    common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, kernel_node_.lock().get());
-  }
+  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
+  void UpdateOp() override;
+  std::vector<KernelTensorPtr> GetDynamicShapeOutputs() override { return outputs_; }
 
-  void ResetResource() noexcept override {
+  void ResetResource() noexcept {
     is_null_input_ = false;
     stream_ptr_ = nullptr;
     input_size_list_.clear();
@@ -76,7 +63,7 @@ class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  protected:
-  void InitSizeLists() override {
+  void InitSizeLists() {
     input_size_list_ = helper_ptr_->GetInputSizeList();
     output_size_list_ = helper_ptr_->GetOutputSizeList();
     workspace_size_list_ = helper_ptr_->GetWorkSizeList();
@@ -89,6 +76,10 @@ class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool is_null_input_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   uint32_t deprecated_id_;
+  std::optional<bool> is_input_dynamic_shape_ = {};
+  BaseOperatorPtr base_operator_ = nullptr;
+  std::vector<KernelTensorPtr> inputs_ = {};
+  std::vector<KernelTensorPtr> outputs_ = {};
 };
 }  // namespace kernel
 }  // namespace mindspore

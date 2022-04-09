@@ -101,6 +101,7 @@ class NativeGpuKernelMod : public GpuKernelMod {
     return Factory<NativeGpuKernelMod>::Instance().Create(kernel_name)->ReducePrecisionCheck(kernel_name, kernel_attr);
   }
   virtual std::vector<KernelAttr> GetOpSupport() { return {}; }
+  enum KernelModType GetKernelModType() const override { return KernelModType::NativeGpuKernelMod; }
 
  protected:
   virtual void InitResource() {}
@@ -117,6 +118,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
   bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
   void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
+  enum KernelModType GetKernelModType() const override { return KernelModType::DeprecatedNativeGpuKernelMod; }
 
  protected:
   std::weak_ptr<CNode> kernel_node_;
