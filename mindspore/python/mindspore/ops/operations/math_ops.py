@@ -188,9 +188,7 @@ class Add(_MathBinaryOp):
         out_{i} = x_{i} + y_{i}
 
     .. note::
-        - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
-          to make the data types consistent.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
@@ -1895,9 +1893,7 @@ class Sub(_MathBinaryOp):
         out_{i} = x_{i} - y_{i}
 
     .. note::
-        - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
-          to make the data types consistent.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
@@ -1949,9 +1945,7 @@ class Mul(_MathBinaryOp):
 
         out_{i} = x_{i} * y_{i}
     .. note::
-        - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
-          to make the data types consistent.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
@@ -2207,7 +2201,7 @@ class Reciprocal(PrimitiveWithInfer):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
@@ -2251,9 +2245,7 @@ class Pow(Primitive):
         out_{i} = x_{i} ^{ y_{i}}
 
     .. note::
-        - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
-          to make the data types consistent.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
@@ -2879,9 +2871,7 @@ class Div(_MathBinaryOp):
         out_{i} = \frac{x_i}{y_i}
 
     .. note::
-        - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
-          to make the data types consistent.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
@@ -4092,9 +4082,7 @@ class LessEqual(_LogicBinaryOp):
             \end{cases}
 
     .. note::
-        - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
-          to make the data types consistent.
+        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be both bool , and the shapes of them can be broadcast.
@@ -5434,7 +5422,7 @@ class Inv(Primitive):
         TypeError: If dtype of `x` is not one of float16, float32, int32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> inv = ops.Inv()

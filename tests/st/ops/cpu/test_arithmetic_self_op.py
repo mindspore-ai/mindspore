@@ -199,28 +199,44 @@ def test_round():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_reciprocal():
+@pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
+@pytest.mark.parametrize('dtype, tol',
+                         [(np.int32, 1.0e-7), (np.float16, 1.0e-5), (np.float32, 1.0e-5), (np.float64, 1.0e-7)])
+def test_reciprocal(shape, dtype, tol):
+    """
+    Feature: ALL To ALL
+    Description: test cases for reciprocal
+    Expectation: the result match to numpy
+    """
     net = ReciprocalNet()
     prop = 100 if np.random.random() > 0.5 else -100
-    x = np.random.randn(3, 4, 5, 6).astype(np.float16) * prop
+    x = np.random.randn(*shape).astype(dtype) * prop
     output = net(Tensor(x))
-    expect_output = (1. / x).astype(np.float16)
+    expect_output = (1. / x).astype(dtype)
     diff = output.asnumpy() - expect_output
-    error = np.ones(shape=expect_output.shape) * 1.0e-5
+    error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
 
-    x = np.random.randn(3, 4, 5, 6).astype(np.float32) * prop
-    output = net(Tensor(x))
-    expect_output = (1. / x).astype(np.float32)
-    diff = output.asnumpy() - expect_output
-    error = np.ones(shape=expect_output.shape) * 1.0e-5
-    assert np.all(np.abs(diff) < error)
 
-    x = np.random.randn(3, 4, 5, 6).astype(np.float64) * prop
-    output = net(Tensor(x))
-    expect_output = (1. / x).astype(np.float64)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
+@pytest.mark.parametrize('dtype, tol',
+                         [(np.int32, 1.0e-7), (np.float16, 1.0e-5), (np.float32, 1.0e-5)])
+def test_inv(shape, dtype, tol):
+    """
+    Feature: ALL To ALL
+    Description: test cases for inv
+    Expectation: the result match to numpy
+    """
+    inv = P.Inv()
+    prop = 100 if np.random.random() > 0.5 else -100
+    x = np.random.randn(*shape).astype(dtype) * prop
+    output = inv(Tensor(x))
+    expect_output = (1. / x).astype(dtype)
     diff = output.asnumpy() - expect_output
-    error = np.ones(shape=expect_output.shape) * 1.0e-7
+    error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
 
 
