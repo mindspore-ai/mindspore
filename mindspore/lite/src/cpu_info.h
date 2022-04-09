@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,24 @@
 #endif
 
 inline bool PlatformInstructionSetSupportCheck() {
-  bool flag = true;
-
 #if defined(ENABLE_AVX512) || defined(ENABLE_AVX)
-  flag = IntelX86InstructionSetSupportCheck();
+  auto ret = IntelX86InstructionSetSupportCheck();
+  if (ret == X86CPUINFO_PLATFORM_ERR) {
+    MS_LOG(WARNING) << "This is not intel platform.";
+    return true;
+  } else if (ret == X86CPUINFO_AVX512_ERR) {
+    MS_LOG(ERROR) << "This is avx512 version, but the platform don't support avx512 instruction.";
+    return false;
+  } else if (ret == X86CPUINFO_AVX_ERR) {
+    MS_LOG(ERROR) << "This is avx version, but the platform don't support avx instruction.";
+    return false;
+  } else if (ret == X86CPUINFO_SSE_ERR) {
+    MS_LOG(ERROR) << "This is sse version, but the platform don't support sse instruction.";
+    return false;
+  }
 #endif
 
-  return flag;
+  return true;
 }
 
 #ifdef ENABLE_ARM

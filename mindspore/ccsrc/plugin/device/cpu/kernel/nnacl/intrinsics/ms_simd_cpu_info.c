@@ -92,26 +92,26 @@ int IntelX86CpuInfoInit(void) {
   return NNACL_OK;
 }
 
-bool IntelX86InstructionSetSupportCheck(void) {
+X86CpuInfoErrorCodeEnum IntelX86InstructionSetSupportCheck(void) {
   if (IntelX86CpuInfoInit() != NNACL_OK) {
-    return false;
+    return X86CPUINFO_PLATFORM_ERR;
   }
 #ifdef ENABLE_AVX512
   if (!X86_Avx512_Support()) {
-    return false;
+    return X86CPUINFO_AVX512_ERR;
   }
 #endif
 
 #ifdef ENABLE_AVX
   if (!X86_Avx_Support()) {
-    return false;
+    return X86CPUINFO_AVX_ERR;
   }
 #endif
 
 #ifdef ENABLE_SSE
   if (!X86_Sse_Support()) {
-    return false;
+    return X86CPUINFO_SSE_ERR;
   }
 #endif
-  return true;
+  return X86CPUINFO_OK;
 }
