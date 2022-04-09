@@ -106,7 +106,7 @@ void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void TopKCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t element_size = outer_size_ * inner_size_;
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
 }

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TransposeFwdCpuKernelMod : public NativeCpuKernelMod {
+class TransposeFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TransposeFwdCpuKernelMod() = default;
   ~TransposeFwdCpuKernelMod() override = default;

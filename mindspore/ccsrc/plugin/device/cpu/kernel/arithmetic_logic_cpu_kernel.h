@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ArithmeticLogicCpuKernelMod : public NativeCpuKernelMod {
+class ArithmeticLogicCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ArithmeticLogicCpuKernelMod() = default;
   explicit ArithmeticLogicCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

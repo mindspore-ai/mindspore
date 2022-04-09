@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(L2Normalize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(L2Normalize, BaseOperator);
 void L2Normalize::Init(const std::vector<int64_t> &axis, const float epsilon) {
   this->set_axis(axis);
   this->set_epsilon(epsilon);

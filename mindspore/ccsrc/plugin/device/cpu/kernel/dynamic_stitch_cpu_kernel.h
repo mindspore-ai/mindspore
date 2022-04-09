@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 
-class DynamicStitchCpuKernelMod : public NativeCpuKernelMod {
+class DynamicStitchCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   DynamicStitchCpuKernelMod() = default;
   ~DynamicStitchCpuKernelMod() override = default;

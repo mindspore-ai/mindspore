@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SoftmaxGpuKernelMod : public NativeGpuKernelMod {
+class SoftmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SoftmaxGpuKernelMod()
       : cudnn_handle_(nullptr),

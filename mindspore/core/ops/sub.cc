@@ -53,7 +53,7 @@ TypePtr SubInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Sub, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Sub, BaseOperator);
 AbstractBasePtr SubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   auto shape = SubInferShape(primitive, input_args);

@@ -24,7 +24,7 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class SpaceToDepthCpuKernelMod : public NativeCpuKernelMod {
+class SpaceToDepthCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SpaceToDepthCpuKernelMod() = default;
   ~SpaceToDepthCpuKernelMod() override = default;

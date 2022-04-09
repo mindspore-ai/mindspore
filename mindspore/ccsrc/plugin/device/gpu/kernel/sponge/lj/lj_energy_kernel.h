@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class LJEnergyGpuKernelMod : public NativeGpuKernelMod {
+class LJEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LJEnergyGpuKernelMod() : ele_uint_crd(1) {}
   ~LJEnergyGpuKernelMod() override = default;

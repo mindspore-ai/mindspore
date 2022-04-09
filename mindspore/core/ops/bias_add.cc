@@ -102,7 +102,7 @@ TypePtr BiasAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BiasAdd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BiasAdd, BaseOperator);
 void BiasAdd::set_format(const Format &format) {
   int64_t f = format;
   (void)this->AddAttr(kFormat, api::MakeValue(f));

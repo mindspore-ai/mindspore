@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BufferCPUSampleKernelMod : public NativeCpuKernelMod {
+class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BufferCPUSampleKernelMod() : element_nums_(0), capacity_(0), batch_size_(0), seed_(0), unique_(false) {}
 

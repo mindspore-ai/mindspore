@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int kMaxDimsSize = 3;
 template <typename T>
-class CumProdGpuKernelMod : public NativeGpuKernelMod {
+class CumProdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CumProdGpuKernelMod()
       : exclusive_(false),

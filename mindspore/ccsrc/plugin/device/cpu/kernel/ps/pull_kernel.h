@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PullKernelMod : public NativeCpuKernelMod {
+class PullKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PullKernelMod() : key_(UINT64_MAX), keys_size_(sizeof(size_t)), var_size_(sizeof(size_t)) {}
   ~PullKernelMod() override = default;

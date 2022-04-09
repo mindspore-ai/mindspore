@@ -36,7 +36,7 @@ constexpr size_t kDxIndexForH = 2;
 constexpr size_t kDxIndexForW = 3;
 
 template <typename T>
-class ResizeBilinearGradGpuKernelMod : public NativeGpuKernelMod {
+class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ResizeBilinearGradGpuKernelMod() { ResetResource(); }
   ~ResizeBilinearGradGpuKernelMod() override = default;

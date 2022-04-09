@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DropoutGradBwdCpuKernelMod : public NativeCpuKernelMod {
+class DropoutGradBwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   DropoutGradBwdCpuKernelMod() = default;
   ~DropoutGradBwdCpuKernelMod() override = default;

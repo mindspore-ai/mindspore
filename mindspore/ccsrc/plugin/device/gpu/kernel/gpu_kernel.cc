@@ -17,6 +17,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include <tuple>
 #include <set>
+#include <numeric>
 
 namespace mindspore {
 namespace kernel {
@@ -43,26 +44,13 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
   }
 }
 }  // namespace
-void NativeGpuKernelMod::InferOp() {
-  anf_node_ = kernel_node_.lock();
-  if (common::AnfAlgo::IsDynamicShape(kernel_node_.lock())) {
-    auto cnode = kernel_node_.lock();
-    if (NeedSkipExecute(cnode)) {
-      std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
-      common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0)},
-                                                  cnode.get());
-    } else {
-      KernelMod::InferShape();
-    }
-  }
-}
 
-void NativeGpuKernelMod::InitOp() {
+void DeprecatedNativeGpuKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
   auto cnode = kernel_node_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  KernelMod::GetDepndLists(cnode);
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
-      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) && depend_list_.empty()) {
+      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
+      abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
     return;
   }
 
@@ -72,7 +60,7 @@ void NativeGpuKernelMod::InitOp() {
   Init(cnode);
 }
 
-void NativeGpuKernelMod::SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
+void DeprecatedNativeGpuKernelMod::SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
   MS_EXCEPTION_IF_NULL(apply_kernel);
   auto kernel_attrs = GetOpSupport();
   if (kernel_attrs.empty()) {
@@ -151,5 +139,229 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
 
 std::map<std::string, std::vector<KernelAttr>> NativeGpuKernelMod::support_map_{};
 std::set<std::string> NativeGpuKernelMod::initialize_{};
+
+std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs) {
+  std::vector<void *> out_ptrs;
+  std::transform(input_ptrs.begin(), input_ptrs.end(), std::back_inserter(out_ptrs),
+                 [](const auto &cur_addr) { return cur_addr->addr; });
+  return out_ptrs;
+}
+
+bool ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
+  const size_t nd_maximum_size = 4;
+  if (src.size() > nd_maximum_size) {
+    MS_LOG(ERROR) << src.size() << "-D data is not supported!";
+    return false;
+  }
+
+  dst->push_back(src.size() < kShapeIndex4th ? 1 : src[src.size() - kShapeIndex4th]);
+  dst->push_back(src.size() < kShapeIndex3rd ? 1 : src[src.size() - kShapeIndex3rd]);
+  dst->push_back(src.size() < kShapeIndex2nd ? 1 : src[src.size() - kShapeIndex2nd]);
+  dst->push_back(src.size() == 0 ? 1 : src[src.size() - kShapeIndex1st]);
+  return true;
+}
+
+int AxisTransform(const std::string &origin_data_format, const std::string &cal_format, int axis) {
+  if (((origin_data_format == kOpFormat_DEFAULT) || (origin_data_format == kOpFormat_NCHW)) &&
+      (cal_format == kOpFormat_NHWC)) {
+    return kNCHWToNHWCAxisMap[axis];
+  } else if (((cal_format == kOpFormat_DEFAULT) || (cal_format == kOpFormat_NCHW)) &&
+             (origin_data_format == kOpFormat_NHWC)) {
+    return kNHWCToNCHWAxisMap[axis];
+  } else {
+    return axis;
+  }
+}
+
+void ShapeNCHW2NHWC(std::vector<size_t> *shape) {
+  std::swap((*shape)[kShapeIndex1st], (*shape)[kShapeIndex3rd]);
+  std::swap((*shape)[kShapeIndex2nd], (*shape)[kShapeIndex1st]);
+}
+
+void ShapeNCDHW2NDHWC(std::vector<size_t> *shape) {
+  std::swap((*shape)[kShapeIndex1st], (*shape)[kShapeIndex2nd]);
+  std::swap((*shape)[kShapeIndex2nd], (*shape)[kShapeIndex3rd]);
+  std::swap((*shape)[kShapeIndex3rd], (*shape)[kShapeIndex4th]);
+}
+
+void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format) {
+  if (shape.size() != len) {
+    MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
+  }
+  if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
+    for (size_t i = 0; i < len; ++i) {
+      dimA[i] = SizeToInt(shape[i]);
+    }
+  } else if (format == "NHWC") {
+    dimA[0] = SizeToInt(shape[0]);
+    dimA[kShapeIndex1st] = SizeToInt(shape[kShapeIndex3rd]);
+    dimA[kShapeIndex2nd] = SizeToInt(shape[kShapeIndex1st]);
+    dimA[kShapeIndex3rd] = SizeToInt(shape[kShapeIndex2nd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << format;
+  }
+}
+
+void SetStrideA(const std::vector<size_t> &shape, int *strideA, size_t len, const std::string &format) {
+  if (shape.size() != len) {
+    MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with strideA " << len << "-D.";
+  }
+  if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
+    for (size_t i = 0; i < len; ++i) {
+      strideA[i] = SizeToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<size_t>()));
+    }
+  } else if (format == "NHWC") {
+    strideA[0] = SizeToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+    strideA[1] = 1;
+    strideA[kShapeIndex2nd] = SizeToInt(shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+    strideA[kShapeIndex3rd] = SizeToInt(shape[kShapeIndex3rd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << format;
+  }
+}
+
+void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format) {
+  if (Anyone(format, "NCHW", "DefaultFormat")) {
+    *n = SizeToInt(shape[0]);
+    *c = SizeToInt(shape[kShapeIndex1st]);
+    *h = SizeToInt(shape[kShapeIndex2nd]);
+    *w = SizeToInt(shape[kShapeIndex3rd]);
+  } else if (format == "NHWC") {
+    *n = SizeToInt(shape[0]);
+    *c = SizeToInt(shape[kShapeIndex3rd]);
+    *h = SizeToInt(shape[kShapeIndex1st]);
+    *w = SizeToInt(shape[kShapeIndex2nd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << format;
+  }
+}
+
+void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format) {
+  if (Anyone(format, "NCDHW", "DefaultFormat")) {
+    *n = SizeToInt(shape[0]);
+    *c = SizeToInt(shape[kShapeIndex1st]);
+    *d = SizeToInt(shape[kShapeIndex2nd]);
+    *h = SizeToInt(shape[kShapeIndex3rd]);
+    *w = SizeToInt(shape[kShapeIndex4th]);
+  } else if (format == "NDHWC") {
+    *n = SizeToInt(shape[0]);
+    *c = SizeToInt(shape[kShapeIndex4th]);
+    *d = SizeToInt(shape[kShapeIndex1st]);
+    *h = SizeToInt(shape[kShapeIndex2nd]);
+    *w = SizeToInt(shape[kShapeIndex3rd]);
+  } else {
+    MS_LOG(ERROR) << "Unsupported data format " << format;
+  }
+}
+
+bool CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B, const std::vector<int> &Out) {
+  if (A != Out && B != Out) {
+    MS_LOG(ERROR) << "Double-sided broadcast was not supported in cudnn of cudnnOpTensor:\n"
+                     "InputA must match the corresponding dimension of the destination tensor outC, and each "
+                     "dimension of the inputB "
+                     "must match the corresponding dimension of outC or must be equal to 1.";
+    return false;
+  }
+  return true;
+}
+
+bool CheckTensorSize(const std::initializer_list<std::vector<size_t>> &shapes) {
+  for (auto shape : shapes) {
+    size_t total_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+    if (total_size >= SHAPE_SIZE_LIMIT) {
+      MS_LOG(ERROR) << "The total size of the tensor exceeds the max_limit of 2 Giga-elements, which is " << total_size
+                    << " elements (" << shape << ").";
+      return false;
+    }
+  }
+  return true;
+}
+
+bool CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
+                                cudnnDataType_t data_type, const std::string &node_name) {
+  if (shape.size() < 3) {
+    MS_LOG(ERROR) << "cudnnSetTensorNdDescriptor don't support" << shape.size() << "D.";
+    return false;
+  }
+  const int nbDims = shape.size();
+  std::unique_ptr<int[]> dim = std::make_unique<int[]>(nbDims);
+  std::unique_ptr<int[]> stride = std::make_unique<int[]>(nbDims);
+
+  for (int i = 0; i < nbDims; i++) {
+    dim[i] = SizeToInt(shape[i]);
+    stride[i] = 1;
+  }
+
+  for (int i = nbDims - 2; i >= 0; i--) {
+    stride[i] = stride[i + 1] * SizeToInt(shape[i + 1]);
+  }
+
+  cudnnStatus_t status = cudnnSetTensorNdDescriptor(descriptor, data_type, nbDims, dim.get(), stride.get());
+  if (status != CUDNN_STATUS_SUCCESS) {
+    MS_LOG(ERROR) << "cuDNN Error: cudnnSetTensorNdDescriptor failed | Error Number: " << status << " "
+                  << cudnnGetErrorString(status);
+    return false;
+  }
+  return true;
+}
+
+bool GetCudnnDataType(const std::string &Type, cudnnDataType_t *out_type) {
+  auto type = kCudnnDtypeMap.find(Type);
+  if (type == kCudnnDtypeMap.end()) {
+    MS_LOG(ERROR) << Type << " is not supported.";
+    return false;
+  }
+  *out_type = type->second;
+  return true;
+}
+
+bool GetCudaDataType(const std::string &Type, cudaDataType_t *out_type) {
+  auto type = kCudaDtypeMap.find(Type);
+  if (type == kCudaDtypeMap.end()) {
+    MS_LOG(ERROR) << Type << " is not supported.";
+    return false;
+  }
+  *out_type = type->second;
+  return true;
+}
+
+bool GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index, const std::string &kernel_name,
+                       const std::string &tensor_name, std::vector<int64_t> *tensor_value) {
+  if (!input_tensor) {
+    MS_LOG(ERROR) << "For `" << kernel_name << "`, the " << input_index << " of pointer[" << tensor_name
+                  << "] is null.";
+    return false;
+  }
+  size_t data_size = input_tensor->DataSize();
+  auto tensor_type = input_tensor->Dtype();
+  if (tensor_type->type_id() == kNumberTypeInt32) {
+    auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
+    if (!tensor_data) {
+      MS_LOG(ERROR) << "For `" << kernel_name << "`, the " << input_index << " of pointer[" << tensor_name
+                    << "]->data() is null.";
+      return false;
+    }
+    tensor_value->assign(tensor_data, tensor_data + data_size);
+  } else if (tensor_type->type_id() == kNumberTypeInt64) {
+    auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
+    if (!tensor_data) {
+      MS_LOG(ERROR) << "For `" << kernel_name << "`, the " << input_index << " of pointer[" << tensor_name
+                    << "]->data() is null.";
+      return false;
+    }
+    tensor_value->assign(tensor_data, tensor_data + data_size);
+  } else {
+    MS_LOG(ERROR) << "For `" << kernel_name << "`, the " << input_index << "of " << tensor_name
+                  << "must be a Tensor[Int64] or Tensor[Int32] type, but got " << input_tensor->ToString();
+    return false;
+  }
+  return true;
+}
+
+bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2) {
+  std::vector<size_t> s2_trans;
+  std::transform(s2.begin(), s2.end(), std::back_inserter(s2_trans), [](const int64_t &e) { return LongToSize(e); });
+  return std::equal(s1.begin(), s1.end(), s2_trans.begin(), s2_trans.end());
+}
 }  // namespace kernel
 }  // namespace mindspore

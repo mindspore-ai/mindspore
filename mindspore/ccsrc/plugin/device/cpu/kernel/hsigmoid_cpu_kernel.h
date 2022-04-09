@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class HSigmoidCpuKernelMod : public NativeCpuKernelMod {
+class HSigmoidCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   HSigmoidCpuKernelMod() = default;
   ~HSigmoidCpuKernelMod() override = default;

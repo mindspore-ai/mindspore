@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-class GetKeysKernelMod : public NativeCpuKernelMod {
+class GetKeysKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   GetKeysKernelMod() = default;
   ~GetKeysKernelMod() override = default;

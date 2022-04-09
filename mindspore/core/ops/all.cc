@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(All, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(All, BaseOperator);
 void All::Init(const int64_t keep_dims) { this->set_keep_dims(keep_dims); }
 
 void All::set_keep_dims(const int64_t keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }

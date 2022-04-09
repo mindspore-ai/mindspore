@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <set>
+#include <string>
 #include <memory>
 #include "utils/hash_map.h"
 #include "ir/primitive.h"
@@ -50,6 +51,8 @@ MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap();
 MS_CORE_API PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap();
 
 MS_CORE_API StandardPrimitiveImplReg GetPrimitiveInferImpl(const PrimitivePtr &primitive);
+
+MS_CORE_API std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num);
 
 MS_CORE_API std::set<int64_t> GetDependsFormMap(const CNodePtr &cnode);
 

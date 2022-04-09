@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class OnesLikeGpuKernelMod : public NativeGpuKernelMod {
+class OnesLikeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   OnesLikeGpuKernelMod() : input_size_(0), output_size_(0), is_null_input_(false) {}
   ~OnesLikeGpuKernelMod() override = default;

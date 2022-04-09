@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-class RightShiftCpuKernelMod : public NativeCpuKernelMod {
+class RightShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RightShiftCpuKernelMod() = default;
   ~RightShiftCpuKernelMod() override = default;

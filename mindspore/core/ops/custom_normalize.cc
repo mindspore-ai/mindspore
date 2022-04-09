@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(CustomNormalize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CustomNormalize, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameCustomNormalize, CustomNormalize);
 }  // namespace ops
 }  // namespace mindspore

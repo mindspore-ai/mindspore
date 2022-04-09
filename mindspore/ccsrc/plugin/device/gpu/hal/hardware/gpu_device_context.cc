@@ -38,6 +38,7 @@
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/common/debug/rdr/recorder_manager.h"
 #include "debug/rdr/mem_address_recorder.h"
@@ -433,8 +434,8 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
 
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
       common::AnfAlgo::GetBooleanAttr(kernel, kAttrSingleOpCompile)) {
-    gpu_kernel->InferOp();
-    gpu_kernel->InitOp();
+    opt::dynamic_shape::InferOp(kernel);
+    gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
   }
 }
 

@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class InstanceNormGradGpuKernelMod : public NativeGpuKernelMod {
+class InstanceNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   InstanceNormGradGpuKernelMod()
       : x_size_(0),

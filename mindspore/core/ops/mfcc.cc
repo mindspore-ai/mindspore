@@ -63,7 +63,7 @@ void Mfcc::set_dct_coeff_num(const int64_t dct_coeff_num) {
 
 int64_t Mfcc::get_dct_coeff_num() const { return GetValue<int64_t>(GetAttr(kDctCoeffNum)); }
 
-MIND_API_BASE_IMPL(Mfcc, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Mfcc, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMfcc, Mfcc);
 }  // namespace ops
 }  // namespace mindspore

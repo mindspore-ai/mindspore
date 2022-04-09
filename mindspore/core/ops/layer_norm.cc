@@ -36,7 +36,7 @@ ShapeVector CalLayerNormMeanAndVarShape(int64_t begin_norm_axis, const ShapeVect
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LayerNorm, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LayerNorm, BaseOperator);
 AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   // Inputs: three tensors(x, gamma, beta).

@@ -36,7 +36,7 @@ Reduction BinaryCrossEntropyGrad::get_reduction() const {
   return Reduction(GetValue<int64_t>(value_ptr));
 }
 
-MIND_API_BASE_IMPL(BinaryCrossEntropyGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BinaryCrossEntropyGrad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameBinaryCrossEntropyGrad, BinaryCrossEntropyGrad);
 }  // namespace ops
 }  // namespace mindspore

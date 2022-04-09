@@ -108,7 +108,7 @@ TypePtr TileInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Tile, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Tile, BaseOperator);
 AbstractBasePtr TileInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(TileInferShape(primitive, input_args), TileInferType(primitive, input_args));

@@ -38,7 +38,7 @@ constexpr int ROI_SHAPE_INDEX0 = 0;
 constexpr int ROI_SHAPE_INDEX1 = 1;
 
 template <typename T>
-class PsROIPoolingBackGpuKernelMod : public NativeGpuKernelMod {
+class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PsROIPoolingBackGpuKernelMod()
       : batch_size_(0),

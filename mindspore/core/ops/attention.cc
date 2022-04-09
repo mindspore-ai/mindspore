@@ -20,6 +20,6 @@
 #include "mindapi/src/helper.h"
 
 namespace mindspore::ops {
-MIND_API_BASE_IMPL(Attention, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Attention, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameAttention, Attention);
 }  // namespace mindspore::ops

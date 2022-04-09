@@ -32,7 +32,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MultinomialGpuKernelMod : public NativeGpuKernelMod {
+class MultinomialGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MultinomialGpuKernelMod()
       : input_size_0_(0),

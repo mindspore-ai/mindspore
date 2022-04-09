@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BufferGetKernelMod : public NativeGpuKernelMod {
+class BufferGetKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BufferGetKernelMod();
   ~BufferGetKernelMod();

@@ -32,7 +32,7 @@ class HostKernelMod : public AscendKernelMod {
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                                    const std::vector<AddressPtr> &, uint32_t) override;
   bool Init(const AnfNodePtr &anf_node);
-  void InferOp() override;
+  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
   void UpdateOp() override {}
 
  protected:

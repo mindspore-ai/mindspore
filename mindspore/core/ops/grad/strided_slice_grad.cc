@@ -118,7 +118,7 @@ TypePtr StridedSliceGradInferType(const PrimitivePtr &primitive, const std::vect
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(StridedSliceGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(StridedSliceGrad, BaseOperator);
 AbstractBasePtr StridedSliceGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

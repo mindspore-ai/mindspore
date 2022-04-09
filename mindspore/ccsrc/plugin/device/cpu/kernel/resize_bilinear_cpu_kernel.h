@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ResizeBilinearCpuKernelMod : public NativeCpuKernelMod {
+class ResizeBilinearCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ResizeBilinearCpuKernelMod() = default;
   ~ResizeBilinearCpuKernelMod() override = default;

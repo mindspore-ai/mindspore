@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorCopyGpuKernelMod : public NativeGpuKernelMod {
+class TensorCopyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TensorCopyGpuKernelMod() : copy_size_(0) {}
   ~TensorCopyGpuKernelMod() = default;

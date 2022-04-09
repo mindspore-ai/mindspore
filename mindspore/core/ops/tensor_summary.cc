@@ -37,7 +37,7 @@ abstract::ShapePtr TensorSummaryInferShape(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(TensorSummary, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorSummary, BaseOperator);
 void TensorSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, api::MakeValue(true)); }
 
 bool TensorSummary::get_side_effect_io() const {

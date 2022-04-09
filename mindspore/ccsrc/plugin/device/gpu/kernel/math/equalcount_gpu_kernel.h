@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class EqualCountGpuKernelMod : public NativeGpuKernelMod {
+class EqualCountGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EqualCountGpuKernelMod() : input_size_(0), output_size_(0), workspace_size_(0), is_null_input_(false) {}
   ~EqualCountGpuKernelMod() = default;

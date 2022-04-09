@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class FusedCastAdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
+class FusedCastAdamWeightDecayCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   FusedCastAdamWeightDecayCpuKernelMod() = default;
   ~FusedCastAdamWeightDecayCpuKernelMod() override = default;

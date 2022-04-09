@@ -45,7 +45,7 @@ static const std::map<std::string, UnaryGradOptype> kUnaryGradOpTypeMap = {
   {"AcoshGrad", UNARY_OP_ACOSH_GRAD}, {"ReciprocalGrad", UNARY_OP_RECIPROCAL_GRAD}};
 
 template <typename T>
-class UnaryGradOpGpuKernelMod : public NativeGpuKernelMod {
+class UnaryGradOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UnaryGradOpGpuKernelMod()
       : unary_grad_op_type_(UNARY_OP_GRAD_INVALID_TYPE),

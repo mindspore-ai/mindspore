@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DepthToSpaceFwdKernelMod : public NativeGpuKernelMod {
+class DepthToSpaceFwdKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DepthToSpaceFwdKernelMod() { ResetResource(); }
   ~DepthToSpaceFwdKernelMod() = default;

@@ -164,7 +164,7 @@ TypePtr Conv2DBackpropInputInferType(const PrimitivePtr &prim, const std::vector
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Conv2DBackpropInput, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Conv2DBackpropInput, BaseOperator);
 AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

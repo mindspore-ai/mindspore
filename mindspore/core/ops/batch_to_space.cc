@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(BatchToSpace, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BatchToSpace, BaseOperator);
 void BatchToSpace::Init(const std::vector<int64_t> &block_size, const std::vector<std::vector<int64_t>> &crops) {
   this->set_block_size(block_size);
   this->set_crops(crops);

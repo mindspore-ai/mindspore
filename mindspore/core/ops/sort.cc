@@ -53,7 +53,7 @@ TuplePtr SortInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Sort, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Sort, BaseOperator);
 AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   auto infertype = SortInferType(primitive, input_args);

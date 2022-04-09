@@ -23,7 +23,8 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TensorShape, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorShape, BaseOperator);
+MIND_API_OPERATOR_IMPL(DynamicShape, BaseOperator);
 abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());

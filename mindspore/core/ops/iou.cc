@@ -79,7 +79,7 @@ TypePtr IOUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(IOU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(IOU, BaseOperator);
 AbstractBasePtr IOUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
   auto type = IOUInferType(primitive, input_args);

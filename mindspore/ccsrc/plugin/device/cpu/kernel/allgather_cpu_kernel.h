@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class AllGatherCpuKernelMod : public NativeCpuKernelMod {
+class AllGatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   AllGatherCpuKernelMod() = default;
   ~AllGatherCpuKernelMod() override = default;

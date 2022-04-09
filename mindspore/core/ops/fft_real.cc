@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FftReal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FftReal, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameFftReal, FftReal);
 }  // namespace ops
 }  // namespace mindspore

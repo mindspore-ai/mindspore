@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 3;
 template <typename T>
-class PoolingGradGpuKernelMod : public NativeGpuKernelMod {
+class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PoolingGradGpuKernelMod()
       : cudnn_handle_(nullptr),

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class KLDivLossGradGpuKernelMod : public NativeGpuKernelMod {
+class KLDivLossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   KLDivLossGradGpuKernelMod() : input_size_(1), reduction_(ReductionMode::kMean), is_null_input_(false) {}
   ~KLDivLossGradGpuKernelMod() override = default;

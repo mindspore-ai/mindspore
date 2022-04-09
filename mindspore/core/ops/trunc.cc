@@ -45,7 +45,7 @@ TypePtr TruncInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Trunc, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Trunc, BaseOperator);
 AbstractBasePtr TruncInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(TruncInferShape(primitive, input_args), TruncInferType(primitive, input_args));

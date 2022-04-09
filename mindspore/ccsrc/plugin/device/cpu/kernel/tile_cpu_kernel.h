@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TileCpuKernelMod : public NativeCpuKernelMod {
+class TileCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TileCpuKernelMod() = default;
   ~TileCpuKernelMod() override = default;

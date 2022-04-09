@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Unsqueeze, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Unsqueeze, BaseOperator);
 void Unsqueeze::Init(const std::vector<int64_t> axis) { this->set_axis(axis); }
 
 void Unsqueeze::set_axis(const std::vector<int64_t> axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }

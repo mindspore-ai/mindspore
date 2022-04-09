@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironCreateCpuKernelMod : public NativeCpuKernelMod {
+class EnvironCreateCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EnvironCreateCpuKernelMod() : handle_size_(0) {}
   ~EnvironCreateCpuKernelMod() = default;

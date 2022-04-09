@@ -57,7 +57,7 @@ AbstractBasePtr TriuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   return abstract::MakeAbstract(infershape, infertype);
 }
 
-MIND_API_BASE_IMPL(Triu, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Triu, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Triu, prim::kPrimTriu, TriuInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

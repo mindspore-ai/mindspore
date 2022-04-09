@@ -52,7 +52,7 @@ TypePtr MatrixDiagPartInferType(const PrimitivePtr &prim, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(MatrixDiagPartV3, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MatrixDiagPartV3, BaseOperator);
 AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(MatrixDiagPartInferShape(primitive, input_args),

@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MapUniformCpuKernelMod : public NativeCpuKernelMod {
+class MapUniformCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MapUniformCpuKernelMod() = default;
   ~MapUniformCpuKernelMod() override = default;

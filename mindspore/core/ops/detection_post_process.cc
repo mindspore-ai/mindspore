@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(DetectionPostProcess, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DetectionPostProcess, BaseOperator);
 void DetectionPostProcess::Init(const int64_t inputSize, const std::vector<float> &scale, const float NmsIouThreshold,
                                 const float NmsScoreThreshold, const int64_t MaxDetections,
                                 const int64_t DetectionsPerClass, const int64_t MaxClassesPerDetection,

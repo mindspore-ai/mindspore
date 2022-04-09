@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeQuantPerChannelGpuKernelMod : public NativeGpuKernelMod {
+class FakeQuantPerChannelGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FakeQuantPerChannelGpuKernelMod();
   ~FakeQuantPerChannelGpuKernelMod() = default;

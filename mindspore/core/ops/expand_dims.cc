@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ExpandDims, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ExpandDims, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameExpandDims, ExpandDims);
 }  // namespace ops
 }  // namespace mindspore

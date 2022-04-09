@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(LayerNormGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LayerNormGrad, BaseOperator);
 AbstractBasePtr LayerNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   // Inputs: five tensors(y_backprob, x, variance, mean, gamma).

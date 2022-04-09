@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class LastCrdToDrGpuKernelMod : public NativeGpuKernelMod {
+class LastCrdToDrGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LastCrdToDrGpuKernelMod() : ele_atom_crd(1) {}
   ~LastCrdToDrGpuKernelMod() override = default;

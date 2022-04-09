@@ -30,7 +30,7 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class ConcatCpuKernelMod : public NativeCpuKernelMod {
+class ConcatCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ConcatCpuKernelMod() = default;
   ~ConcatCpuKernelMod() override = default;

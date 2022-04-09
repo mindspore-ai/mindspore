@@ -40,7 +40,7 @@ struct PyFuncArgumentInfo {
   std::vector<PythonOjectType> object_types;
 };
 
-class PyFuncCpuKernelMod : public NativeCpuKernelMod {
+class PyFuncCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PyFuncCpuKernelMod() : init_(false), fake_output_(false), single_scalar_output_(false), func_id_(-1) {}
   ~PyFuncCpuKernelMod() = default;

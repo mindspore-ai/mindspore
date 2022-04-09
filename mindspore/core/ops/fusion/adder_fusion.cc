@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(AdderFusion, PrimitiveC, Adder);
+MIND_API_OPERATOR_IMPL(AdderFusion, Adder);
 void AdderFusion::Init(const int64_t in_channel, const int64_t out_channel, const std::vector<int64_t> &kernel_size,
                        const PadMode &pad_mode, const std::vector<int64_t> &stride,
                        const std::vector<int64_t> &pad_list, const std::vector<int64_t> &dilation, const int64_t group,

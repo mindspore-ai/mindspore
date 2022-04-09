@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironSetCpuKernelMod : public NativeCpuKernelMod {
+class EnvironSetCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EnvironSetCpuKernelMod() : value_type_attr_(kObjectTypeTensorType), handle_size_(0), key_size_(0), value_size_(0) {}
   ~EnvironSetCpuKernelMod() = default;

@@ -37,7 +37,7 @@ constexpr size_t kDyIndexForH = 2;
 constexpr size_t kDyIndexForW = 3;
 
 template <typename T, typename S>
-class MaxPoolWithArgmaxGradGpuKernelMod : public NativeGpuKernelMod {
+class MaxPoolWithArgmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MaxPoolWithArgmaxGradGpuKernelMod()
       : n_(0),

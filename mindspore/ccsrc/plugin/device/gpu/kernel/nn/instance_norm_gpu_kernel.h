@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kInputXDimSize = 4;
 template <typename T>
-class InstanceNormGpuKernelMod : public NativeGpuKernelMod {
+class InstanceNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   InstanceNormGpuKernelMod()
       : input_x_size_(0),

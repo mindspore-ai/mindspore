@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kInputMinNum = 2;
 constexpr size_t kOutputNum = 1;
-class EltWiseGradCpuKernelMod : public NativeCpuKernelMod {
+class EltWiseGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   EltWiseGradCpuKernelMod() = default;
   explicit EltWiseGradCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

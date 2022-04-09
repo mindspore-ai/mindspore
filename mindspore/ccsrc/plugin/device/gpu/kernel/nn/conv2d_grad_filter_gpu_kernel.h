@@ -49,7 +49,7 @@ constexpr auto StaticInput = 2;
 constexpr auto DynamicInput = 3;
 
 template <typename T, typename S = int64_t>
-class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
+class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ConvGradFilterBkwGpuKernelMod()
       : cudnn_handle_(nullptr),
@@ -331,7 +331,8 @@ class ConvGradFilterBkwGpuKernelMod : public NativeGpuKernelMod {
     if (input_num == DynamicInput) {
       is_dynamic_attr_ = true;
     }
-    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &filter_shape_)) {
+    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &filter_shape_,
+                               kernel_node->user_data<kernel::InitOpArgs>())) {
       get_dynamic_attr_value_ = true;
     }
     if (is_dynamic_attr_ && !get_dynamic_attr_value_) {

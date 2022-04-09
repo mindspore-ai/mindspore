@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr int SECRET_MAX_LEN = 32;
-class UpdateModelKernelMod : public NativeCpuKernelMod {
+class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UpdateModelKernelMod() = default;
   ~UpdateModelKernelMod() override = default;

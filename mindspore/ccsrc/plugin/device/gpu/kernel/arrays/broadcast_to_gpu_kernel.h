@@ -27,7 +27,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t SHAPE_SIZE = 4;
 template <typename T>
-class BroadcastToGpuKernelMod : public NativeGpuKernelMod {
+class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BroadcastToGpuKernelMod() : kernel_name_("BroadcastTo") {}
   ~BroadcastToGpuKernelMod() = default;

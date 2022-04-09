@@ -79,7 +79,7 @@ abstract::TupleShapePtr AdamInferShape(const PrimitivePtr &primitive, const std:
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Adam, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Adam, BaseOperator);
 void Adam::Init(const bool use_locking, const bool use_nesterov) {
   this->set_use_locking(use_locking);
   this->set_use_nesterov(use_nesterov);

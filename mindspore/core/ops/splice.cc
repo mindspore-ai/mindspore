@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Splice, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Splice, BaseOperator);
 void Splice::Init(const std::vector<int64_t> &contexts, const std::vector<int64_t> &forward_indexes,
                   int64_t output_dims) {
   this->set_context(contexts);

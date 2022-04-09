@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Scale, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Scale, BaseOperator);
 void Scale::Init(const int64_t axis) { set_axis(axis); }
 
 void Scale::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }

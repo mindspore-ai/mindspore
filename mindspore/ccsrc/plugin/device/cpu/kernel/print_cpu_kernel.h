@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PrintCpuKernelMod : public NativeCpuKernelMod {
+class PrintCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PrintCpuKernelMod() = default;
   ~PrintCpuKernelMod() override = default;

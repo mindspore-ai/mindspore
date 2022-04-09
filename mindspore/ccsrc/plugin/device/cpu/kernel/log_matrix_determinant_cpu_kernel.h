@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class LogMatrixDeterminantCpuKernelMod : public NativeCpuKernelMod {
+class LogMatrixDeterminantCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   LogMatrixDeterminantCpuKernelMod() = default;
   ~LogMatrixDeterminantCpuKernelMod() override = default;

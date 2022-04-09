@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ArgmaxGpuKernelMod : public NativeGpuKernelMod {
+class ArgmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ArgmaxGpuKernelMod()
       : input_size_(0),

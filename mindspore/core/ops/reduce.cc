@@ -32,7 +32,7 @@ bool Reduce::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); 
 
 void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
-MIND_API_BASE_IMPL(Reduce, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Reduce, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReduce, Reduce);
 }  // namespace ops
 }  // namespace mindspore

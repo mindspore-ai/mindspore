@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Clip, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Clip, BaseOperator);
 void Clip::Init(const float max, const float min) {
   this->set_max(max);
   this->set_min(min);

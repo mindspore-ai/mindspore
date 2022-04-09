@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ResizeNearestNeighborCpuKernelMod : public NativeCpuKernelMod {
+class ResizeNearestNeighborCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ResizeNearestNeighborCpuKernelMod() = default;
   ~ResizeNearestNeighborCpuKernelMod() override = default;

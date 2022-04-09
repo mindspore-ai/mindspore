@@ -47,7 +47,7 @@ using dt = dnnl::memory::data_type;
 }  // namespace
 
 void LSTMGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   input_size_list_[kInputWorkSpaceIndex] = reserve_size_;
 }
 

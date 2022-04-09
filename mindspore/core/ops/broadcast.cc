@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Broadcast, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Broadcast, BaseOperator);
 void Broadcast::Init(const int64_t root_rank, const std::string &group) {
   this->set_root_rank(root_rank);
   this->set_group(group);

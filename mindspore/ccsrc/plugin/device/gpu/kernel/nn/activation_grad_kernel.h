@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 constexpr float ReLU6_UP_TURNING_POINT = 5.999999;
 template <typename T>
-class ActivationGradGpuKernelMod : public NativeGpuKernelMod {
+class ActivationGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ActivationGradGpuKernelMod() { ResetResource(); }
   ~ActivationGradGpuKernelMod() override { DestroyResource(); }

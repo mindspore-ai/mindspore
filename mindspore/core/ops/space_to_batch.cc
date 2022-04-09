@@ -56,7 +56,7 @@ void SpaceToBatch::Init(const std::vector<int64_t> block_size, const std::vector
   this->set_block_size(block_size);
 }
 
-MIND_API_BASE_IMPL(SpaceToBatch, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SpaceToBatch, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSpaceToBatch, SpaceToBatch);
 }  // namespace ops
 }  // namespace mindspore

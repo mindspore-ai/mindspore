@@ -65,7 +65,7 @@ TypePtr EluGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(EluGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(EluGrad, BaseOperator);
 AbstractBasePtr EluGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto type = EluGradInferType(primitive, input_args);

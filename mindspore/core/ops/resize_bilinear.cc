@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ResizeBilinear, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ResizeBilinear, BaseOperator);
 void ResizeBilinear::set_size(const std::vector<int64_t> &size) { (void)this->AddAttr(kSize, api::MakeValue(size)); }
 
 std::vector<int64_t> ResizeBilinear::get_size() const { return GetValue<std::vector<int64_t>>(GetAttr(kSize)); }

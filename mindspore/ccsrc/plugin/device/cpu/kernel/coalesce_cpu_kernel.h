@@ -31,7 +31,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CoalesceCpuKernelMod : public NativeCpuKernelMod {
+class CoalesceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CoalesceCpuKernelMod() = default;
   ~CoalesceCpuKernelMod() override = default;

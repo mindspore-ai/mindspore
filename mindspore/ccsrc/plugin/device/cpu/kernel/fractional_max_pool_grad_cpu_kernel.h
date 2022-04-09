@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace kernel {
-class FractionalMaxPoolGradCpuKernelMod : public NativeCpuKernelMod {
+class FractionalMaxPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   FractionalMaxPoolGradCpuKernelMod() = default;
   ~FractionalMaxPoolGradCpuKernelMod() override = default;

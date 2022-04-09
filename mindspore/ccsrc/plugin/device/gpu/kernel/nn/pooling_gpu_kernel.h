@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class PoolingFwdGpuKernelMod : public NativeGpuKernelMod {
+class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PoolingFwdGpuKernelMod()
       : cudnn_handle_(nullptr),

@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class InTopKGpuKernelMod : public NativeGpuKernelMod {
+class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   InTopKGpuKernelMod() { ResetResource(); }
   ~InTopKGpuKernelMod() = default;

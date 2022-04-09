@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CustomJULIACpuKernelMod : public NativeCpuKernelMod {
+class CustomJULIACpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CustomJULIACpuKernelMod() = default;
   ~CustomJULIACpuKernelMod() = default;

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(DivFusion, PrimitiveC, Div);
+MIND_API_OPERATOR_IMPL(DivFusion, Div);
 void DivFusion::Init(const ActivationType &activation_type) { this->set_activation_type(activation_type); }
 
 void DivFusion::set_activation_type(const ActivationType &activation_type) {

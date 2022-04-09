@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TensorListSetItem, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorListSetItem, BaseOperator);
 void TensorListSetItem::Init(const int64_t element_dtype) { this->set_element_dtype(element_dtype); }
 
 void TensorListSetItem::set_element_dtype(const int64_t element_dtype) {

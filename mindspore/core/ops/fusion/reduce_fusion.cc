@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ReduceFusion, PrimitiveC, Reduce);
+MIND_API_OPERATOR_IMPL(ReduceFusion, Reduce);
 void ReduceFusion::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
 
 void ReduceFusion::set_mode(const ReduceMode mode) {

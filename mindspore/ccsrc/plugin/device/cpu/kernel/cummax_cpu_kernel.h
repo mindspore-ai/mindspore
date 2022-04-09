@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CummaxCPUKernelMod : public NativeCpuKernelMod {
+class CummaxCPUKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CummaxCPUKernelMod() = default;
   ~CummaxCPUKernelMod() override = default;

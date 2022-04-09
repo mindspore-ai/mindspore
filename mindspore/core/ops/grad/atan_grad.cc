@@ -54,7 +54,7 @@ TypePtr AtanGradInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(AtanGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(AtanGrad, BaseOperator);
 AbstractBasePtr AtanGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   auto type = AtanGradInferType(primitive, input_args);

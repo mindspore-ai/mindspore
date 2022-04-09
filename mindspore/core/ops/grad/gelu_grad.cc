@@ -53,7 +53,7 @@ TypePtr GeLUGradInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(GeLUGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GeLUGrad, BaseOperator);
 AbstractBasePtr GeLUGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -19,7 +19,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(RaggedRange, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(RaggedRange, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameRaggedRange, RaggedRange);
 }  // namespace ops
 }  // namespace mindspore

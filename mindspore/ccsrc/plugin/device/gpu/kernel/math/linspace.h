@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LinSpaceGpuKernelMod : public NativeGpuKernelMod {
+class LinSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LinSpaceGpuKernelMod() { ResetResource(); }
   ~LinSpaceGpuKernelMod() = default;

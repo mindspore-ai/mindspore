@@ -62,7 +62,7 @@ TypePtr ReLU6GradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ReLU6Grad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReLU6Grad, BaseOperator);
 AbstractBasePtr ReLU6GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

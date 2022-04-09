@@ -193,7 +193,7 @@ TypePtr NeighborExchangeInferType(const PrimitivePtr &primitive) {
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(NeighborExchange, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(NeighborExchange, BaseOperator);
 AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   NeighborExchangeCheck(primitive, input_args);

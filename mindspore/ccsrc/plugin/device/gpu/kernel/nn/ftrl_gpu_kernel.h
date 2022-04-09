@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 8;
 template <typename T>
-class FtrlGpuKernelMod : public NativeGpuKernelMod {
+class FtrlGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FtrlGpuKernelMod()
       : variable_size_(0),

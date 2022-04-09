@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_
 #define PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_
 

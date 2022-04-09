@@ -64,7 +64,7 @@ TypePtr GridSampler3DInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(GridSampler3D, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GridSampler3D, BaseOperator);
 AbstractBasePtr GridSampler3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

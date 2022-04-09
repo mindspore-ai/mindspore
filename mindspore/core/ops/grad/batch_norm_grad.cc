@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(BatchNormGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BatchNormGrad, BaseOperator);
 void BatchNormGrad::Init(const bool is_training, const float epsilon) {
   this->set_is_training(is_training);
   this->set_epsilon(epsilon);

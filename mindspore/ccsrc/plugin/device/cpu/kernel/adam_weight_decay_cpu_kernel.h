@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class AdamWeightDecayCpuKernelMod : public NativeCpuKernelMod {
+class AdamWeightDecayCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   AdamWeightDecayCpuKernelMod() = default;
   ~AdamWeightDecayCpuKernelMod() override = default;

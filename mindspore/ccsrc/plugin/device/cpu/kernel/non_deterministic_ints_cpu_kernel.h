@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class NonDeterministicIntsCPUKernelMod : public NativeCpuKernelMod {
+class NonDeterministicIntsCPUKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   NonDeterministicIntsCPUKernelMod() = default;
   ~NonDeterministicIntsCPUKernelMod() override = default;

@@ -28,7 +28,7 @@ constexpr size_t kBatchNormInputShapeSize2 = 2;
 }  // namespace
 
 void BatchNormCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = shape[1] * 2 * type_size;  // [2, c] to store scale and bias

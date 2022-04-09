@@ -79,7 +79,7 @@ TypePtr SoftMaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Softmax, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Softmax, BaseOperator);
 AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(SoftMaxInferShape(primitive, input_args), SoftMaxInferType(primitive, input_args));

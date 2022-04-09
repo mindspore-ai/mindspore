@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(InvertPermutation, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(InvertPermutation, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameInvertPermutation, InvertPermutation);
 }  // namespace ops
 }  // namespace mindspore

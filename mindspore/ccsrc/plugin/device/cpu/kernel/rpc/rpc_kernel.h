@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class RpcKernelMod : public NativeCpuKernelMod {
+class RpcKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RpcKernelMod() : remote_input_(nullptr) {}
   ~RpcKernelMod() override = default;

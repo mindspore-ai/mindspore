@@ -100,7 +100,7 @@ TypePtr LpNormInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LpNorm, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LpNorm, BaseOperator);
 AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

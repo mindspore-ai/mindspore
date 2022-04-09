@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixTriangularSolveCpuKernelMod : public NativeCpuKernelMod {
+class MatrixTriangularSolveCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MatrixTriangularSolveCpuKernelMod() = default;
   ~MatrixTriangularSolveCpuKernelMod() override = default;

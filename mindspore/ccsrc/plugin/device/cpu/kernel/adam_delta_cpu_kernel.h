@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class AdamDeltaCpuKernelMod : public NativeCpuKernelMod {
+class AdamDeltaCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   AdamDeltaCpuKernelMod() = default;
   ~AdamDeltaCpuKernelMod() override = default;

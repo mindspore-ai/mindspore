@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class RestrainEnergyGpuKernelMod : public NativeGpuKernelMod {
+class RestrainEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RestrainEnergyGpuKernelMod() : ele_crd(1) {}
   ~RestrainEnergyGpuKernelMod() override = default;

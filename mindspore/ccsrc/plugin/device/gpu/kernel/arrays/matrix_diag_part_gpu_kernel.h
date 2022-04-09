@@ -39,7 +39,7 @@ template <typename T>
 using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
-class MatrixDiagPartGpuKernelMod : public NativeGpuKernelMod {
+class MatrixDiagPartGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MatrixDiagPartGpuKernelMod() : is_null_input_(false) { ResetResource(); }
 

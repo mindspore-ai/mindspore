@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ROIAlignGradFwdGpuKernelMod : public NativeGpuKernelMod {
+class ROIAlignGradFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ROIAlignGradFwdGpuKernelMod()
       : pooled_height_(0),

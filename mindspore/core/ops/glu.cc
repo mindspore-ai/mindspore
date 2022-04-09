@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(GLU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GLU, BaseOperator);
 void GLU::Init(int64_t axis) { set_axis(axis); }
 
 void GLU::set_axis(int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }

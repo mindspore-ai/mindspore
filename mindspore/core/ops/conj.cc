@@ -50,7 +50,7 @@ AbstractBasePtr ConjInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Conj, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Conj, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Conj, prim::kPrimConj, ConjInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

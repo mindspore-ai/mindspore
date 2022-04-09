@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BinaryCrossEntropyGpuKernelMod : public NativeGpuKernelMod {
+class BinaryCrossEntropyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BinaryCrossEntropyGpuKernelMod()
       : weight_defined_(false),

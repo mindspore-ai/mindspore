@@ -99,7 +99,7 @@ TypePtr ApplyProximalGradientDescentInferType(const PrimitivePtr &prim,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ApplyProximalGradientDescent, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ApplyProximalGradientDescent, BaseOperator);
 AbstractBasePtr ApplyProximalGradientDescentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   const int64_t input_num = 5;

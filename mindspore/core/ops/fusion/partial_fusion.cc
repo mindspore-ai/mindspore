@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PartialFusion, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(PartialFusion, BaseOperator);
 void PartialFusion::Init(const int64_t sub_graph_index) { this->set_sub_graph_index(sub_graph_index); }
 void PartialFusion::set_sub_graph_index(const int64_t sub_graph_index) {
   (void)this->AddAttr(kSubGraphIndex, api::MakeValue(sub_graph_index));

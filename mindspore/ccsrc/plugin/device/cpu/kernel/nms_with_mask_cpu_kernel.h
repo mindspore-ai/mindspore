@@ -31,7 +31,7 @@ constexpr int Y1 = 3;
 constexpr int SCORE = 4;
 constexpr size_t INPUT_NUM = 1;
 constexpr size_t OUTPUT_NUM = 3;
-class NMSWithMaskCpuKernelMod : public NativeCpuKernelMod {
+class NMSWithMaskCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   NMSWithMaskCpuKernelMod() = default;
   ~NMSWithMaskCpuKernelMod() override = default;

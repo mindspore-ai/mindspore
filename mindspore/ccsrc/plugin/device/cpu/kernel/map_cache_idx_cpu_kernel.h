@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MapCacheIdxCpuKernelMod : public NativeCpuKernelMod {
+class MapCacheIdxCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MapCacheIdxCpuKernelMod() = default;
   ~MapCacheIdxCpuKernelMod() override = default;

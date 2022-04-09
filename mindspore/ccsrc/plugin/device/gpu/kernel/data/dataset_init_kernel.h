@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DatasetInitKernelMod : public NativeGpuKernelMod {
+class DatasetInitKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DatasetInitKernelMod();
   ~DatasetInitKernelMod() = default;

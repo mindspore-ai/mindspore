@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TensorArrayRead, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorArrayRead, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameTensorArrayRead, TensorArrayRead);
 }  // namespace ops
 }  // namespace mindspore

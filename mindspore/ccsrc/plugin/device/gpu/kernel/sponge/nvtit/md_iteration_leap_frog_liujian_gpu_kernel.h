@@ -37,7 +37,7 @@ constexpr size_t kIdx7 = 7;
 constexpr size_t kIdx3 = 3;
 
 template <typename T, typename T1>
-class MDIterationLeapFrogLiujianCudaGpuKernelMod : public NativeGpuKernelMod {
+class MDIterationLeapFrogLiujianCudaGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MDIterationLeapFrogLiujianCudaGpuKernelMod() {}
   ~MDIterationLeapFrogLiujianCudaGpuKernelMod() override = default;

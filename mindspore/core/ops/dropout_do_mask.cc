@@ -124,7 +124,7 @@ TypePtr DropoutDoMaskInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(DropoutDoMask, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DropoutDoMask, BaseOperator);
 AbstractBasePtr DropoutDoMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

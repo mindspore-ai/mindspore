@@ -64,6 +64,6 @@ AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const Primitive
 REGISTER_PRIMITIVE_EVAL_IMPL(Cummax, prim::kPrimCummax, CummaxInfer, nullptr, true);
 }  // namespace
 
-MIND_API_BASE_IMPL(Cummax, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Cummax, BaseOperator);
 }  // namespace ops
 }  // namespace mindspore

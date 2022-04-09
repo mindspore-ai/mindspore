@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TupleGetItem, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TupleGetItem, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameTupleGetItem, TupleGetItem);
 }  // namespace ops
 }  // namespace mindspore

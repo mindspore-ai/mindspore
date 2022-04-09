@@ -42,7 +42,7 @@ enum NaOption : int {
   OptionNotDefined,
 };
 }  // namespace rank
-class RankCpuKernelMod : public NativeCpuKernelMod {
+class RankCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RankCpuKernelMod() = default;
   ~RankCpuKernelMod() override = default;

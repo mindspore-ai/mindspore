@@ -33,7 +33,7 @@ namespace mindspore {
 namespace kernel {
 // The duration between two PullWeight requests when return code is ResponseCode_SucNotReady.
 constexpr int kRetryDurationOfPullWeights = 200;
-class FusedPullWeightKernelMod : public NativeCpuKernelMod {
+class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   FusedPullWeightKernelMod()
       : server_num_(0), indices_({}), weight_full_names_({}), fl_iteration_(0), total_iteration_(0) {}

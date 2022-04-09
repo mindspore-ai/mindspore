@@ -92,7 +92,7 @@ void LUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 void LUCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t lu_size = lu_col_ * sizeof(T);
   (void)workspace_size_list_.emplace_back(lu_size);
   (void)workspace_size_list_.emplace_back(lu_size);

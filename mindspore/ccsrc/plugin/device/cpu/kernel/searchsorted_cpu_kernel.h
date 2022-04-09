@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SearchSortedCpuKernelMod : public NativeCpuKernelMod {
+class SearchSortedCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SearchSortedCpuKernelMod() = default;
   ~SearchSortedCpuKernelMod() override = default;

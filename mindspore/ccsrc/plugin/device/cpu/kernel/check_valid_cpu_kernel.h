@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t COORDINATE = 4;
-class CheckValidCpuKernelMod : public NativeCpuKernelMod {
+class CheckValidCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CheckValidCpuKernelMod() = default;
   ~CheckValidCpuKernelMod() override = default;

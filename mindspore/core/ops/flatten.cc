@@ -71,7 +71,7 @@ TypePtr FlattenInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Flatten, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Flatten, BaseOperator);
 AbstractBasePtr FlattenInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = FlattenInferShape(primitive, input_args);

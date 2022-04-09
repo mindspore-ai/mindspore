@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class GeluGpuKernelMod : public NativeGpuKernelMod {
+class GeluGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GeluGpuKernelMod() : input_size_(0), is_null_input_(false) {}
   ~GeluGpuKernelMod() override = default;

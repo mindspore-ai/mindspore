@@ -63,7 +63,7 @@ TypePtr ApproximateEqualInferType(const PrimitivePtr &prim, const std::vector<Ab
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ApproximateEqual, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ApproximateEqual, BaseOperator);
 AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

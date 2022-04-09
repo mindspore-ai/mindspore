@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FullConnection, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FullConnection, BaseOperator);
 void FullConnection::set_has_bias(const bool has_bias) { (void)this->AddAttr(kHasBias, api::MakeValue(has_bias)); }
 
 bool FullConnection::get_has_bias() const {

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SigmoidCrossEntropyWithLogitsGradCpuKernelMod : public NativeCpuKernelMod {
+class SigmoidCrossEntropyWithLogitsGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SigmoidCrossEntropyWithLogitsGradCpuKernelMod() = default;
   ~SigmoidCrossEntropyWithLogitsGradCpuKernelMod() override = default;

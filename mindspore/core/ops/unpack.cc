@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Unpack, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Unpack, BaseOperator);
 void Unpack::Init(const int64_t axis) { this->set_axis(axis); }
 void Unpack::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
 int64_t Unpack::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }

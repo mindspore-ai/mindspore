@@ -53,7 +53,7 @@ ActivationType MaxPoolFusion::get_activation_type() const {
   return ActivationType(GetValue<int64_t>(value_ptr));
 }
 
-MIND_API_BASE_IMPL(MaxPoolFusion, PrimitiveC, MaxPool);
+MIND_API_OPERATOR_IMPL(MaxPoolFusion, MaxPool);
 REGISTER_PRIMITIVE_C(kNameMaxPoolFusion, MaxPoolFusion);
 }  // namespace ops
 }  // namespace mindspore

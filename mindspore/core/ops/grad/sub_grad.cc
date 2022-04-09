@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SubGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SubGrad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSubGrad, SubGrad);
 }  // namespace ops
 }  // namespace mindspore

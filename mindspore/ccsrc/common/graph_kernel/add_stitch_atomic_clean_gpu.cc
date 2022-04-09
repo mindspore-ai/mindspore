@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "common/graph_kernel/add_stitch_atomic_clean_gpu.h"
 
 #include <algorithm>

@@ -59,7 +59,7 @@ void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 void SplitCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back((sizeof(T *) * LongToSize(output_num_)));
 }
 

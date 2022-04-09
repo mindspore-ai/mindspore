@@ -64,7 +64,7 @@ TypePtr UpperBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(UpperBound, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(UpperBound, BaseOperator);
 AbstractBasePtr UpperBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FusedAdamWeightDecayGpuKernelMod : public NativeGpuKernelMod {
+class FusedAdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FusedAdamWeightDecayGpuKernelMod() : element_nums_(0), weight_decay_(false), is_null_input_(false) {}
   ~FusedAdamWeightDecayGpuKernelMod() override = default;

@@ -56,7 +56,7 @@ TypePtr EluInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Elu, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Elu, BaseOperator);
 void Elu::Init(const float alpha) { this->set_alpha(alpha); }
 
 void Elu::set_alpha(const float alpha) {

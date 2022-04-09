@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironDestroyAllGpuKernelMod : public NativeGpuKernelMod {
+class EnvironDestroyAllGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EnvironDestroyAllGpuKernelMod() = default;
   ~EnvironDestroyAllGpuKernelMod() = default;

@@ -50,7 +50,7 @@ TypePtr SinhInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Sinh, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Sinh, BaseOperator);
 AbstractBasePtr SinhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

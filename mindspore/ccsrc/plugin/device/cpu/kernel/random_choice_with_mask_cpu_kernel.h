@@ -27,7 +27,7 @@ constexpr int MAX_INPUT_DIMS = 5;
 constexpr size_t INPUT_NUM = 1;
 constexpr size_t OUTPUT_NUM = 2;
 
-class RandomChoiceWithMaskCpuKernelMod : public NativeCpuKernelMod {
+class RandomChoiceWithMaskCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RandomChoiceWithMaskCpuKernelMod() = default;
   ~RandomChoiceWithMaskCpuKernelMod() override = default;

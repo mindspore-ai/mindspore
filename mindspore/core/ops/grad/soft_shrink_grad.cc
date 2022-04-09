@@ -55,7 +55,7 @@ TypePtr SoftShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SoftShrinkGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SoftShrinkGrad, BaseOperator);
 AbstractBasePtr SoftShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(SoftShrinkGradInferType(primitive, input_args),

@@ -27,7 +27,7 @@ namespace mindspore {
 namespace kernel {
 enum ReductionType { kNone, kMean, kSum };
 
-class BinaryCrossEntropyCpuKernelMod : public NativeCpuKernelMod {
+class BinaryCrossEntropyCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BinaryCrossEntropyCpuKernelMod() = default;
   ~BinaryCrossEntropyCpuKernelMod() override = default;

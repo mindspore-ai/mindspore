@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 5;
 template <typename T, typename S>
-class SparseFtrlGpuKernelMod : public NativeGpuKernelMod {
+class SparseFtrlGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SparseFtrlGpuKernelMod() { ResetResource(); }
   ~SparseFtrlGpuKernelMod() override = default;

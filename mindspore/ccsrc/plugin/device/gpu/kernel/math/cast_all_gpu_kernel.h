@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class CastAllFwdGpuKernelMod : public NativeGpuKernelMod {
+class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   CastAllFwdGpuKernelMod() : max_(0), input_size_(0), output_size_(0), num_input_(0), is_null_input_(false) {}
   ~CastAllFwdGpuKernelMod() override = default;

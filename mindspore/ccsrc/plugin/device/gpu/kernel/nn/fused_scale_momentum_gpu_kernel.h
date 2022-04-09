@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 6;
 template <typename T, typename S>
-class FusedScaleMomentumGpuKernelMod : public NativeGpuKernelMod {
+class FusedScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FusedScaleMomentumGpuKernelMod() : element_num_(1), is_null_input_(false) {}
   ~FusedScaleMomentumGpuKernelMod() override = default;

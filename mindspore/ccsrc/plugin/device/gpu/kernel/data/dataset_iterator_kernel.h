@@ -28,7 +28,7 @@ namespace mindspore {
 namespace kernel {
 using mindspore::device::DataItemGpu;
 
-class DatasetIteratorKernelMod : public NativeGpuKernelMod {
+class DatasetIteratorKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DatasetIteratorKernelMod();
   ~DatasetIteratorKernelMod();

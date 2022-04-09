@@ -31,7 +31,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 7;
 template <typename T>
-class SparseApplyProximalAdagradKernelMod : public NativeGpuKernelMod {
+class SparseApplyProximalAdagradKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SparseApplyProximalAdagradKernelMod() { ResetResource(); }
   ~SparseApplyProximalAdagradKernelMod() override = default;

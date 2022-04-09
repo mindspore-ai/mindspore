@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TopK, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TopK, BaseOperator);
 void TopK::Init(const bool sorted) { this->set_sorted(sorted); }
 void TopK::set_sorted(const bool sorted) { (void)this->AddAttr(kSorted, api::MakeValue(sorted)); }
 

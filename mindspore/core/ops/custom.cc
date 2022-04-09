@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Custom, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Custom, BaseOperator);
 void Custom::Init(const std::string &type, const std::map<std::string, std::vector<uint8_t>> &attrs) {
   this->set_type(type);
   this->set_attr(attrs);

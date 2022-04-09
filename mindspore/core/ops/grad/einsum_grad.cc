@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(EinsumGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(EinsumGrad, BaseOperator);
 void EinsumGrad::Init(const std::string equation) { this->set_equation(equation); }
 
 void EinsumGrad::set_equation(const std::string equation) { (void)this->AddAttr(kEquation, api::MakeValue(equation)); }

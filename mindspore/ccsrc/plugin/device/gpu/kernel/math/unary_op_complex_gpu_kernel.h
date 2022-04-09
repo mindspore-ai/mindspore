@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class UnaryOpComplexGpuKernelMod : public NativeGpuKernelMod {
+class UnaryOpComplexGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UnaryOpComplexGpuKernelMod() { ResetResource(); }
   ~UnaryOpComplexGpuKernelMod() override = default;

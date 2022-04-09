@@ -219,7 +219,7 @@ static void element_map_shape(const std::string &prim_name, const std::vector<st
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Einsum, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Einsum, BaseOperator);
 void Einsum::Init(const std::string &equation) { this->set_equation(equation); }
 
 void Einsum::set_equation(const std::string &equation) { (void)this->AddAttr(kEquation, api::MakeValue(equation)); }

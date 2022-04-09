@@ -37,7 +37,7 @@ TypeId ArgMax::get_output_type() const {
   auto type_ptr = GetAttr(kOutputType)->cast<api::TensorTypePtr>()->element();
   return type_ptr->type_id();
 }
-MIND_API_BASE_IMPL(ArgMax, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_NAME_IMPL(ArgMax, kNameArgMax, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameArgMax, ArgMax);
 }  // namespace ops
 }  // namespace mindspore

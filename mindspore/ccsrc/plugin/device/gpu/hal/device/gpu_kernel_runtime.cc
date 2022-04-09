@@ -35,6 +35,7 @@
 #include "plugin/device/gpu/hal/device/gpu_memory_copy_manager.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "ir/dtype.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #ifndef ENABLE_SECURITY
 #include "profiler/device/gpu/gpu_profiling.h"
 #include "profiler/device/gpu/gpu_profiling_utils.h"
@@ -775,8 +776,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     }
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      gpu_kernel->InferOp();
-      gpu_kernel->InitOp();
+      opt::dynamic_shape::InferOp(kernel);
+      gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
     }
 
     AddressPtrList kernel_inputs;
@@ -893,8 +894,8 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     }
     // pre-processing for dynamic shape kernel
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      gpu_kernel->InferOp();
-      gpu_kernel->InitOp();
+      opt::dynamic_shape::InferOp(kernel);
+      gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
     }
     // alloc kernel res
     AddressPtrList kernel_inputs;

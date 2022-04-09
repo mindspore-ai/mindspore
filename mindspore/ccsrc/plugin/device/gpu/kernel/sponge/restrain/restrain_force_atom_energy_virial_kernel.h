@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class RestrainForceWithAtomenergyAndVirialGpuKernelMod : public NativeGpuKernelMod {
+class RestrainForceWithAtomenergyAndVirialGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RestrainForceWithAtomenergyAndVirialGpuKernelMod() : ele_crd(1) {}
   ~RestrainForceWithAtomenergyAndVirialGpuKernelMod() override = default;

@@ -154,7 +154,7 @@ void MirrorPadGradCpuKernelMod::InitWorkspaceSize() {
 }
 
 void MirrorPadGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   if (dtype_ == kNumberTypeFloat16) {
     InitWorkspaceSize<float16>();
   } else if (dtype_ == kNumberTypeFloat32) {

@@ -30,7 +30,7 @@ constexpr size_t k3DSize = 3;
 constexpr size_t kInputDimLowerLimit = 2;
 constexpr size_t kWeightDimLowerLimit = 3;
 template <typename T>
-class LstmGradDataGpuKernelMod : public NativeGpuKernelMod {
+class LstmGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LstmGradDataGpuKernelMod()
       : batch_size_(0),

@@ -43,7 +43,7 @@ TypePtr L2LossInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(L2Loss, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(L2Loss, BaseOperator);
 AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = L2LossInferType(primitive, input_args);

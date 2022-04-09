@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(GroupConv2DGradInput, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GroupConv2DGradInput, BaseOperator);
 void GroupConv2DGradInput::Init(const int64_t &in_channel, const int64_t &out_channel,
                                 const std::vector<int64_t> &kernel_size, const PadMode &pad_mode,
                                 const std::vector<int64_t> &pad_list, const std::vector<int64_t> &stride,

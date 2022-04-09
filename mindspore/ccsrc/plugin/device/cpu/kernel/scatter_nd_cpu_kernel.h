@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ScatterNdCpuKernelMod : public NativeCpuKernelMod {
+class ScatterNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ScatterNdCpuKernelMod() = default;
   ~ScatterNdCpuKernelMod() override = default;

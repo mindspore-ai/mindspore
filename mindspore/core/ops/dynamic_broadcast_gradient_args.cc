@@ -71,7 +71,7 @@ abstract::TupleShapePtr Infer(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(DynamicBroadcastGradientArgs, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DynamicBroadcastGradientArgs, BaseOperator);
 AbstractBasePtr DynamicBroadcastGradientArgsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto types = std::vector<TypePtr>{kInt64, kInt64};

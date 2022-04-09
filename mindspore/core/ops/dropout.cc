@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Dropout, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Dropout, BaseOperator);
 void Dropout::Init(const float keep_prob) { this->set_keep_prob(keep_prob); }
 
 void Dropout::set_keep_prob(const float keep_prob) {

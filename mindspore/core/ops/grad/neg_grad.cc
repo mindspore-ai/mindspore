@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(NegGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(NegGrad, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameNegGrad, NegGrad);
 }  // namespace ops
 }  // namespace mindspore

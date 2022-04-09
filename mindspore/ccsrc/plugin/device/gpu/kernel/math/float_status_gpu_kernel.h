@@ -32,7 +32,7 @@ enum Optype { OP_STATUS = 0, OP_INF, OP_NAN, OP_FINITE, OP_INVALID = 255 };
 static const std::map<std::string, Optype> kOpTypeMap = {
   {"FloatStatus", OP_STATUS}, {"IsInf", OP_INF}, {"IsNan", OP_NAN}, {"IsFinite", OP_FINITE}};
 template <typename T>
-class FloatStatusGpuKernelMod : public NativeGpuKernelMod {
+class FloatStatusGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FloatStatusGpuKernelMod() : kernel_name_(OP_INVALID), input_size_(0), output_size_(0), is_null_input_(false) {}
   ~FloatStatusGpuKernelMod() override = default;

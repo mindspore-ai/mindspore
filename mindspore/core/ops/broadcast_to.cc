@@ -76,7 +76,7 @@ TypePtr BroadcastToInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BroadcastTo, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BroadcastTo, BaseOperator);
 void BroadcastTo::Init(const std::vector<int64_t> &shape) { set_shape(shape); }
 
 void BroadcastTo::set_shape(const std::vector<int64_t> &shape) {

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class FakeLearnedScaleQuantPerLayerGpuKernelMod : public NativeGpuKernelMod {
+class FakeLearnedScaleQuantPerLayerGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FakeLearnedScaleQuantPerLayerGpuKernelMod();
   ~FakeLearnedScaleQuantPerLayerGpuKernelMod() = default;

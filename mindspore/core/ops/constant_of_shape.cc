@@ -41,7 +41,7 @@ std::vector<float> ConstantOfShape::get_value() const {
   return GetValue<std::vector<float>>(value_ptr);
 }
 
-MIND_API_BASE_IMPL(ConstantOfShape, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ConstantOfShape, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameConstantOfShape, ConstantOfShape);
 }  // namespace ops
 }  // namespace mindspore

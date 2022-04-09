@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Conv2DBackpropInputFusion, PrimitiveC, Conv2DBackpropInput);
+MIND_API_OPERATOR_IMPL(Conv2DBackpropInputFusion, Conv2DBackpropInput);
 void Conv2DBackpropInputFusion::Init(int64_t in_channel, int64_t out_channel, const std::vector<int64_t> &kernel_size,
                                      int64_t mode, const PadMode &pad_mode, const std::vector<int64_t> &pad,
                                      const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation,

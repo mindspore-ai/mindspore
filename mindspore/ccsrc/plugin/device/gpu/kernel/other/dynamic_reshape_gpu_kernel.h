@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class DynamicReshapeKernelMod : public NativeGpuKernelMod {
+class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DynamicReshapeKernelMod() : data_type_size_(0), shape_size_(0) { ResetResource(); }
   ~DynamicReshapeKernelMod() override = default;

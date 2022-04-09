@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class RangeCpuKernelMod : public NativeCpuKernelMod {
+class RangeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   RangeCpuKernelMod() = default;
   ~RangeCpuKernelMod() override = default;

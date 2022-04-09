@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SortGpuKernelMod : public NativeGpuKernelMod {
+class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SortGpuKernelMod() { ResetResource(); }
   ~SortGpuKernelMod() = default;

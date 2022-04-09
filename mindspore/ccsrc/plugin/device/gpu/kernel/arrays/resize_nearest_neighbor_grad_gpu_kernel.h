@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ResizeNearestNeighborGradGpuKernelMod : public NativeGpuKernelMod {
+class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ResizeNearestNeighborGradGpuKernelMod()
       : align_corners_(false),

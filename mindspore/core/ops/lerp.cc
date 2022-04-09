@@ -68,7 +68,7 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Lerp, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Lerp, BaseOperator);
 AbstractBasePtr LerpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(LerpInferType(primitive, input_args),

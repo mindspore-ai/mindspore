@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DynamicRangeGpuKernelMod : public NativeGpuKernelMod {
+class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DynamicRangeGpuKernelMod() { ResetResource(); }
   ~DynamicRangeGpuKernelMod() = default;

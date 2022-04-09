@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 2;
 template <typename T, typename S>
-class SigmoidCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMod {
+class SigmoidCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SigmoidCrossEntropyWithLogitsGpuKernelMod()
       : logits_size_(0), labels_size_(0), outputs_size_(0), is_null_input_(false) {}

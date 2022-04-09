@@ -33,13 +33,13 @@ namespace kernel {
 // For example, dense gradients accumulation, federated average, etc.
 // Normally the aggregation process in AggregationKernelMod is like a finite-state machine:
 // Initial->Aggregating->Aggregation done->Initial.
-class AggregationKernelMod : public NativeCpuKernelMod {
+class AggregationKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   AggregationKernelMod() : name_(""), done_(false), done_count_(0), accum_count_(0) {}
   virtual ~AggregationKernelMod() = default;
 
-  // InitKernel and Launch methods are inherited from pure virtual function of NativeCpuKernelMod so it must have
-  // implementation.
+  // InitKernel and Launch methods are inherited from pure virtual function of DeprecatedNativeCpuKernelMod so it must
+  // have implementation.
   virtual void InitKernel(const CNodePtr &kernel_node) {}
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) {

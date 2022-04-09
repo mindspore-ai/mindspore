@@ -36,7 +36,7 @@ constexpr size_t kAxisIndex2nd = 2;
 constexpr size_t kAxisIndex3rd = 3;
 
 template <typename T>
-class TransposeFwdGpuKernelMod : public NativeGpuKernelMod {
+class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TransposeFwdGpuKernelMod() { ResetResource(); }
   ~TransposeFwdGpuKernelMod() = default;

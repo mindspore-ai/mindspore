@@ -49,7 +49,7 @@ TypePtr ReciprocalGradInferType(const PrimitivePtr &primitive, const std::vector
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ReciprocalGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReciprocalGrad, BaseOperator);
 AbstractBasePtr ReciprocalGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

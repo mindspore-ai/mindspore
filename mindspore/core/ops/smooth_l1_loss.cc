@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SmoothL1Loss, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SmoothL1Loss, BaseOperator);
 void SmoothL1Loss::Init(const float beta) { this->set_beta(beta); }
 void SmoothL1Loss::set_beta(const float beta) { (void)this->AddAttr(kBeta, api::MakeValue(beta)); }
 

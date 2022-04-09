@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
+class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BCEWithLogitsLossKernelMod() { ResetResource(); }
   ~BCEWithLogitsLossKernelMod() override = default;

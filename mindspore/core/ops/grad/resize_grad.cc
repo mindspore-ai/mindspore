@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ResizeGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ResizeGrad, BaseOperator);
 void ResizeGrad::Init(const ResizeMethod method, const bool align_corners) {
   this->set_method(method);
   this->set_align_corners(align_corners);

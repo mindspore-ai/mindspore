@@ -43,7 +43,7 @@ bool MatMul::get_transpose_b() const {
   return GetValue<bool>(value_ptr);
 }
 
-MIND_API_BASE_IMPL(MatMul, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MatMul, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameMatMul, MatMul);
 }  // namespace ops
 }  // namespace mindspore

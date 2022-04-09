@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SparseSoftmaxCrossEntropyWithLogits, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SparseSoftmaxCrossEntropyWithLogits, BaseOperator);
 void SparseSoftmaxCrossEntropyWithLogits::Init(const bool is_grad) { this->set_is_grad(is_grad); }
 
 void SparseSoftmaxCrossEntropyWithLogits::set_is_grad(const bool is_grad) {

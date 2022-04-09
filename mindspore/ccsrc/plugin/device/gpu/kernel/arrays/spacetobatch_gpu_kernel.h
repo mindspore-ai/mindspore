@@ -30,7 +30,7 @@ constexpr size_t PADDING_SHAPE_0 = 2;
 constexpr size_t PADDING_SHAPE_1 = 2;
 
 template <typename T>
-class SpaceToBatchGpuKernelMod : public NativeGpuKernelMod {
+class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SpaceToBatchGpuKernelMod() { ResetResource(); }
   ~SpaceToBatchGpuKernelMod() = default;

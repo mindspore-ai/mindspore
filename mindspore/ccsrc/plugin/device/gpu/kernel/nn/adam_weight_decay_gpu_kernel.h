@@ -26,7 +26,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 9;
 template <typename T>
-class AdamWeightDecayGpuKernelMod : public NativeGpuKernelMod {
+class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AdamWeightDecayGpuKernelMod()
       : variable_size_(0),

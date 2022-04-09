@@ -29,7 +29,7 @@ constexpr size_t kScaleShiftNum = 2;
 }  // namespace
 
 void BatchNormGradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t type_size = sizeof(float);
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, Y_BACKPROP);
   size_t tensor_size = shape[C] * kScaleShiftNum * type_size;

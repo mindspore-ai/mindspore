@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S = int64_t>
-class FlattenFwdGpuKernelMod : public NativeGpuKernelMod {
+class FlattenFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FlattenFwdGpuKernelMod() : input_size_(0), is_null_input_(false) {}
   ~FlattenFwdGpuKernelMod() override = default;

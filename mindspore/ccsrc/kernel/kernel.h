@@ -24,10 +24,12 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "include/common/utils/utils.h"
+#include "mindspore/core/ops/base_operator.h"
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
 #include "abstract/primitive_infer_map.h"
+#include "include/api/format.h"
 
 #ifdef _MSC_VER
 #undef OPAQUE
@@ -45,7 +47,6 @@ enum KernelType : int {
   CPU_KERNEL,
   GPU_KERNEL,
 };
-
 namespace kernel {
 // Supported fusion type
 enum FusionType {
@@ -180,11 +181,53 @@ struct KernelLaunchInfo {
   AddressPtrList outputs_;
   AddressPtrList workspaces_;
 };
+struct TensorInfo {
+  mindspore::Format format;
+  abstract::AbstractBasePtr abstract_base;  // Store data type and shape.
+};
+using TensorInfoPtr = std::shared_ptr<TensorInfo>;
+using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
+
+class KernelTensor {
+ public:
+  KernelTensor() = default;
+  ~KernelTensor() = default;
+
+  AddressPtr GetData() const { return data_; }
+  TypeId GetDtype() const;
+  mindspore::Format GetFormat() const { return tensor_info_.format; }
+  // If real type is not a list or tuple tensor, it will return kTypeUnknown.
+  std::vector<TypeId> GetListOrTupleDtype() const;
+  // If real type is not a single shape vector, it will return empty.
+  std::vector<size_t> GetShapeVector() const;
+  // If real type is not a list or tuple shape vector, it will return empty.
+  std::vector<std::vector<size_t>> GetListOrTupleShapeVector() const;
+  void SetData(const AddressPtr &data) { data_ = data; }
+  void SetDtype(const TypePtr &dtype);
+  void SetFormat(mindspore::Format format) { tensor_info_.format = format; }
+  void SetShapeVector(const std::vector<int64_t> &shape);
+
+  abstract::BaseShapePtr GetBaseShape() const;
+  // If the shape need to be List or Tuple, `SetBaseShape` should be called.
+  void SetBaseShape(const abstract::BaseShapePtr &base_shape);
+  void SetAbstract(const abstract::AbstractBasePtr &base_abstract) { tensor_info_.abstract_base = base_abstract; }
+  void SetTensorInfo(const TensorInfo &tensor_info) { tensor_info_ = tensor_info; }
+
+ private:
+  TensorInfo tensor_info_;
+  AddressPtr data_{nullptr};
+};
+using KernelTensorPtr = std::shared_ptr<KernelTensor>;
+
+struct InitOpArgs {
+  std::map<uint32_t, tensor::TensorPtr> depend_tensor_map;
+  // Key for user data.
+  constexpr static char key[] = "InitOpArgs";
+};
 
 class KernelMod {
  public:
   KernelMod() {}
-  explicit KernelMod(const AnfNodePtr &anf_node_ptr) : anf_node_(anf_node_ptr) {}
   virtual ~KernelMod() = default;
 
   bool LaunchKernel(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
@@ -202,9 +245,12 @@ class KernelMod {
                       const std::vector<AddressPtr> &outputs, void *stream_ptr) = 0;
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
-
-  virtual void InferOp() {}
-  virtual void InitOp() {}
+  // Initialization for the kernel mod.
+  virtual bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                    const std::vector<KernelTensorPtr> &outputs) {
+    return true;
+  }
+  virtual void InitOp(const std::shared_ptr<InitOpArgs> &args) {}
   virtual void UpdateOp() {}
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
@@ -217,39 +263,42 @@ class KernelMod {
   const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
   void set_stream(StreamType stream) { stream_ = stream; }
   StreamType stream() const { return stream_; }
-  void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
   // set true if need to update output's shape after launch in dynamic_shape, like Unique
   virtual bool IsNeedUpdateOp() { return is_need_updateop_; }
 
  protected:
-  void InferShape();
-  void GetDepndLists(const CNodePtr &cnode);
-  void UpdateOutputSizeList();
-  bool NeedSkipExecute(const CNodePtr &cnode);
-
   std::string kernel_name_;
   std::string unique_name_;
   std::string fullname_;
   bool is_monad_{false};
   StreamType stream_{nullptr};
-  AnfNodeWeakPtr anf_node_;
-  std::map<uint32_t, tensor::TensorPtr> depend_tensor_map_;
-  std::vector<CNodeWeakPtr> atomic_clean_nodes_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  std::set<uint32_t> depend_list_;
   bool is_need_updateop_ = false;
 
  private:
-  void InferShapeForNopNode(const AnfNodePtr &input_node);
-  bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode);
-
   std::vector<AddressPtr> inputs_addr_;
   std::vector<AddressPtr> workspaces_addr_;
   std::vector<AddressPtr> outputs_addr_;
 };
 using KernelModPtr = std::shared_ptr<KernelMod>;
+
+template <typename T>
+inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
+  if (index >= addr_list.size()) {
+    MS_LOG(ERROR) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
+    return nullptr;
+  }
+
+  if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
+    MS_LOG(ERROR) << "The device address is empty, address index: " << index << ", and the length of 'addr_list' is "
+                  << addr_list.size();
+    return nullptr;
+  }
+
+  return reinterpret_cast<T *>(addr_list[index]->addr);
+}
 }  // namespace kernel
 }  // namespace mindspore
 

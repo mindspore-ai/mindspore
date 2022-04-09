@@ -87,7 +87,7 @@ abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(GetNext, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GetNext, BaseOperator);
 AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return GetnextInferShape(primitive);

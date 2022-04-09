@@ -70,7 +70,7 @@ TypePtr MaskedFillInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(MaskedFill, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MaskedFill, BaseOperator);
 AbstractBasePtr MaskedFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(MaskedFillInferType(primitive, input_args),

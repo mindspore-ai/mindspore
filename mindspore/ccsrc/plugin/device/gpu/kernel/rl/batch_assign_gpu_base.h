@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BatchAssignBaseMod : public NativeGpuKernelMod {
+class BatchAssignBaseMod : public DeprecatedNativeGpuKernelMod {
  public:
   BatchAssignBaseMod() = default;
   ~BatchAssignBaseMod() override = default;

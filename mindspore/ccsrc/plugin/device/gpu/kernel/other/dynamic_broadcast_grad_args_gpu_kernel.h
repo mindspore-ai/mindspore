@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr size_t kInputNum = 2;
 template <typename T, typename S>
-class DynamicBroadcastGradientArgsGpuKernelMod : public NativeGpuKernelMod {
+class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DynamicBroadcastGradientArgsGpuKernelMod() : r0_size_(0), r1_size_(0) { ResetResource(); }
   ~DynamicBroadcastGradientArgsGpuKernelMod() = default;

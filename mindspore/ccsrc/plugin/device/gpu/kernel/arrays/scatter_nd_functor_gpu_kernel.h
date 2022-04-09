@@ -35,7 +35,7 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
 };
 
 template <typename T, typename S>
-class ScatterNdFunctorKernelMod : public NativeGpuKernelMod {
+class ScatterNdFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ScatterNdFunctorKernelMod() { ResetResource(); }
   ~ScatterNdFunctorKernelMod() override = default;

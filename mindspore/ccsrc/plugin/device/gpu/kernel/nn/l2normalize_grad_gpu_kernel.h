@@ -30,7 +30,7 @@ namespace kernel {
 constexpr int MAX_DIMS = 7;
 constexpr size_t INPUT_SIZE = 3;
 template <typename T>
-class L2NormalizeGradGpuKernelMod : public NativeGpuKernelMod {
+class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   L2NormalizeGradGpuKernelMod()
       : cudnn_handle_(nullptr),

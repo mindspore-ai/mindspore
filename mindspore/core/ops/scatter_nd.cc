@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ScatterNd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ScatterNd, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameScatterNd, ScatterNd);
 }  // namespace ops
 }  // namespace mindspore

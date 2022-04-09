@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class AssignAddFwdGpuKernelMod : public NativeGpuKernelMod {
+class AssignAddFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AssignAddFwdGpuKernelMod() : is_null_input_(false), input_size_(0) {}
   ~AssignAddFwdGpuKernelMod() override = default;

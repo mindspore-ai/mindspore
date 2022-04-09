@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class HSwishGradCpuKernelMod : public NativeCpuKernelMod {
+class HSwishGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   HSwishGradCpuKernelMod() = default;
   ~HSwishGradCpuKernelMod() override = default;

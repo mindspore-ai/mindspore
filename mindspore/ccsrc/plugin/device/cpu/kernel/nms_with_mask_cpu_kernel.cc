@@ -231,7 +231,7 @@ void NMSWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 template <typename T>
 void NMSWithMaskCpuKernelMod::InitIOSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   num_input_ = SizeToInt(input_shape[0]);  //  Get N values in  [N, 5] data.
   ceil_power_2 = static_cast<size_t>(NmsRoundUpPower2(num_input_));

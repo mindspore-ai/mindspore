@@ -65,7 +65,7 @@ TypePtr LowerBoundInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LowerBound, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LowerBound, BaseOperator);
 AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

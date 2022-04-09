@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SplitFwdGpuKernelMod : public NativeGpuKernelMod {
+class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SplitFwdGpuKernelMod() { ResetResource(); }
   ~SplitFwdGpuKernelMod() override = default;

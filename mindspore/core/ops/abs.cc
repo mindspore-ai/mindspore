@@ -143,7 +143,7 @@ ValuePtr AbsInferValue(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Abs, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Abs, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Abs, prim::kPrimAbs, AbsInfer, AbsInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

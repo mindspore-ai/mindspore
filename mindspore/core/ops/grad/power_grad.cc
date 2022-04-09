@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(PowerGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(PowerGrad, BaseOperator);
 void PowerGrad::set_power(const float power) { (void)this->AddAttr(kPower, api::MakeValue(power)); }
 float PowerGrad::get_power() const {
   auto value_ptr = GetAttr(kPower);

@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MinMaxUpdatePerLayerGpuKernelMod : public NativeGpuKernelMod {
+class MinMaxUpdatePerLayerGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MinMaxUpdatePerLayerGpuKernelMod();
   ~MinMaxUpdatePerLayerGpuKernelMod() = default;

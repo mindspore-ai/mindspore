@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SplitWithOverlap, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SplitWithOverlap, BaseOperator);
 void SplitWithOverlap::Init(int64_t number_split, const std::vector<int64_t> &ratio,
                             const std::vector<int64_t> &extend_top, const std::vector<int64_t> &extend_bottom,
                             int64_t split_dim, int64_t stride, int64_t pad_top, bool trans_format) {

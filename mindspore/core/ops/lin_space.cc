@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(LinSpace, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LinSpace, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLinSpace, LinSpace);
 }  // namespace ops
 }  // namespace mindspore

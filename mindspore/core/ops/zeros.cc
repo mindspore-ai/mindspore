@@ -84,7 +84,7 @@ ValuePtr ZerosInferValue(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Zeros, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Zeros, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Zeros, prim::kPrimZeros, ZerosInfer, ZerosInferValue, false);
 }  // namespace ops
 }  // namespace mindspore

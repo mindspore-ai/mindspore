@@ -28,7 +28,7 @@ namespace kernel {
 constexpr auto kFusedAdaFactor = "FusedAdaFactor";
 constexpr auto kFusedAdaFactorWithGlobalNorm = "FusedAdaFactorWithGlobalNorm";
 constexpr auto kUnknown = "Unknown";
-class FusedAdaFactorCpuKernelMod : public NativeCpuKernelMod {
+class FusedAdaFactorCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   FusedAdaFactorCpuKernelMod() = default;
   explicit FusedAdaFactorCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

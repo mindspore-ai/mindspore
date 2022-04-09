@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class UnsortedSegmentMaxGpuKernelMod : public NativeGpuKernelMod {
+class UnsortedSegmentMaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   UnsortedSegmentMaxGpuKernelMod() { ResetResource(); }
   ~UnsortedSegmentMaxGpuKernelMod() override = default;

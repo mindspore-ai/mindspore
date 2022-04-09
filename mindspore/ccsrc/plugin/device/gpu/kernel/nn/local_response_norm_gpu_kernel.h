@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class LocalResponseNormGpuKernelMod : public NativeGpuKernelMod {
+class LocalResponseNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LocalResponseNormGpuKernelMod() { ResetResource(); }
   ~LocalResponseNormGpuKernelMod() override { DestroyResource(); }

@@ -50,7 +50,7 @@ TypePtr ReLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ReLU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReLU, BaseOperator);
 AbstractBasePtr ReLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
   auto type = ReLUInferType(primitive, input_args);

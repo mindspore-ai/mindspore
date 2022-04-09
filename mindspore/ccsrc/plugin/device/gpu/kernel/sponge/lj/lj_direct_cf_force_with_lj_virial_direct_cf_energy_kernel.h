@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1, typename T2>
-class LJForceWithVirialEnergyGpuKernelMod : public NativeGpuKernelMod {
+class LJForceWithVirialEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   LJForceWithVirialEnergyGpuKernelMod() : ele_uint_crd(1) {}
   ~LJForceWithVirialEnergyGpuKernelMod() override = default;

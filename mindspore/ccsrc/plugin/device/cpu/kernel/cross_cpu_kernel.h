@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CrossCpuKernelMod : public NativeCpuKernelMod {
+class CrossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CrossCpuKernelMod() = default;
   ~CrossCpuKernelMod() override = default;

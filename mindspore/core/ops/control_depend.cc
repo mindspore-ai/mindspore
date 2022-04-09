@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ControlDepend, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ControlDepend, BaseOperator);
 void ControlDepend::Init(const int64_t depend_mode) { this->set_depend_mode(depend_mode); }
 
 void ControlDepend::set_depend_mode(const int64_t depend_mode) {

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(LpNormalization, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LpNormalization, BaseOperator);
 void LpNormalization::Init(const int64_t axis, const int64_t p) {
   this->set_axis(axis);
   this->set_p(p);

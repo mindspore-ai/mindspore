@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
+class MatrixBandPartCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MatrixBandPartCpuKernelMod() = default;
   ~MatrixBandPartCpuKernelMod() override = default;

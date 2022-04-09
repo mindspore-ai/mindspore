@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ActivationGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ActivationGrad, BaseOperator);
 void ActivationGrad::Init(const ActivationType &type, const float alpha) {
   this->set_activation_type(type);
   this->set_alpha(alpha);

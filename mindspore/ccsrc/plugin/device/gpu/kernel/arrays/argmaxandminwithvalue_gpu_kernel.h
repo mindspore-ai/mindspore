@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class ArgMaxAndMinWithValueGpuKernelMod : public NativeGpuKernelMod {
+class ArgMaxAndMinWithValueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   ArgMaxAndMinWithValueGpuKernelMod() { ResetResource(); }
   ~ArgMaxAndMinWithValueGpuKernelMod() override = default;

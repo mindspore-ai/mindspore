@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class Expm1CpuKernelMod : public NativeCpuKernelMod {
+class Expm1CpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   Expm1CpuKernelMod() = default;
   ~Expm1CpuKernelMod() override = default;

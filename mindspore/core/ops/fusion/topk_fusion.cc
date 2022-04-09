@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TopKFusion, PrimitiveC, TopK);
+MIND_API_OPERATOR_IMPL(TopKFusion, TopK);
 void TopKFusion::Init(const bool sorted, const int64_t axis, const int64_t largest) {
   this->set_axis(axis);
   this->set_largest(largest);

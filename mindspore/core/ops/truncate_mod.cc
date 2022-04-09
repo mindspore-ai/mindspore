@@ -63,7 +63,7 @@ TypePtr TruncateModInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(TruncateMod, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TruncateMod, BaseOperator);
 AbstractBasePtr TruncateModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   auto shape = TruncateModInferShape(primitive, input_args);

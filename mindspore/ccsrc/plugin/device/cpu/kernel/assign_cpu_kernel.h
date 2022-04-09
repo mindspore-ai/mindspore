@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class AssignCpuKernelMod : public NativeCpuKernelMod {
+class AssignCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   AssignCpuKernelMod() = default;
   ~AssignCpuKernelMod() override = default;

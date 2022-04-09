@@ -29,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 constexpr int MAX_DIMS = 7;
 template <typename T>
-class L2NormalizeGpuKernelMod : public NativeGpuKernelMod {
+class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   L2NormalizeGpuKernelMod()
       : cudnn_handle_(nullptr),

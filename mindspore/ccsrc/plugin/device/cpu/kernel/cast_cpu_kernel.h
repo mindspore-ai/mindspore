@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class CastCpuKernelMod : public NativeCpuKernelMod {
+class CastCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CastCpuKernelMod() = default;
   ~CastCpuKernelMod() override = default;

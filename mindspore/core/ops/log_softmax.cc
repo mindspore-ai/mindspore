@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(LogSoftmax, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LogSoftmax, BaseOperator);
 void LogSoftmax::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
 int64_t LogSoftmax::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }

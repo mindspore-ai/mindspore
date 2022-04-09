@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class RMSPropGpuKernelMod : public NativeGpuKernelMod {
+class RMSPropGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RMSPropGpuKernelMod()
       : size_(1), use_center_(false), is_null_input_(false), decay_(0.0), momentum_(0.9), epsilon_(1e-12) {}

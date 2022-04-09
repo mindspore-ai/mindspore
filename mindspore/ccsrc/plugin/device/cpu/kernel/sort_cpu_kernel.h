@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SortCpuKernelMod : public NativeCpuKernelMod {
+class SortCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SortCpuKernelMod() = default;
   ~SortCpuKernelMod() = default;

@@ -30,7 +30,7 @@ namespace mindspore {
 namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
-class ArithmeticCpuKernelMod : public NativeCpuKernelMod {
+class ArithmeticCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ArithmeticCpuKernelMod() = default;
   explicit ArithmeticCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

@@ -40,7 +40,7 @@ constexpr size_t kIndexForMaxHeight = 2;
 constexpr size_t kMaxIndexOffset = 2;
 
 template <typename T>
-class MirrorPadBackGpuKernelMod : public NativeGpuKernelMod {
+class MirrorPadBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MirrorPadBackGpuKernelMod()
       : num_input_(0),

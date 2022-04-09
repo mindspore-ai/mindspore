@@ -61,7 +61,7 @@ AbstractBasePtr ImagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Imag, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Imag, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Imag, prim::kPrimImag, ImagInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

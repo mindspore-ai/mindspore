@@ -29,7 +29,7 @@ namespace kernel {
 constexpr size_t CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM = 6;
 constexpr size_t NO_CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION_INPUT_NUM = 5;
 template <typename T>
-class BatchNormGpuKernelMod : public NativeGpuKernelMod {
+class BatchNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   BatchNormGpuKernelMod() { ResetResource(); }
   ~BatchNormGpuKernelMod() override { DestroyResource(); }

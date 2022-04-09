@@ -33,7 +33,7 @@ namespace kernel {
 constexpr int kRetryDurationOfPushMetrics = 500;
 // Retry for 30 minutes.
 constexpr int kMaxRetryTime = 3600;
-class PushMetricsKernelMod : public NativeCpuKernelMod {
+class PushMetricsKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   PushMetricsKernelMod() : fbb_(nullptr), total_iteration_(0) {}
   ~PushMetricsKernelMod() override = default;

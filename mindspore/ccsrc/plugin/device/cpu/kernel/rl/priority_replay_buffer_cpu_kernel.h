@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace kernel {
-class PriorityReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
+class PriorityReplayBufferCreateCpuKernel : public DeprecatedNativeCpuKernelMod {
  public:
   PriorityReplayBufferCreateCpuKernel() = default;
   ~PriorityReplayBufferCreateCpuKernel() override = default;
@@ -51,7 +51,7 @@ class PriorityReplayBufferCreateCpuKernel : public NativeCpuKernelMod {
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferPushCpuKernel : public NativeCpuKernelMod {
+class PriorityReplayBufferPushCpuKernel : public DeprecatedNativeCpuKernelMod {
  public:
   PriorityReplayBufferPushCpuKernel() = default;
   ~PriorityReplayBufferPushCpuKernel() override = default;
@@ -68,7 +68,7 @@ class PriorityReplayBufferPushCpuKernel : public NativeCpuKernelMod {
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
+class PriorityReplayBufferSampleCpuKernel : public DeprecatedNativeCpuKernelMod {
  public:
   PriorityReplayBufferSampleCpuKernel() = default;
   ~PriorityReplayBufferSampleCpuKernel() override = default;
@@ -87,7 +87,7 @@ class PriorityReplayBufferSampleCpuKernel : public NativeCpuKernelMod {
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 
-class PriorityReplayBufferUpdateCpuKernel : public NativeCpuKernelMod {
+class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod {
  public:
   PriorityReplayBufferUpdateCpuKernel() = default;
   ~PriorityReplayBufferUpdateCpuKernel() override = default;

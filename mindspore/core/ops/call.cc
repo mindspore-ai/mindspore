@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Call, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Call, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameCall, Call);
 }  // namespace ops
 }  // namespace mindspore

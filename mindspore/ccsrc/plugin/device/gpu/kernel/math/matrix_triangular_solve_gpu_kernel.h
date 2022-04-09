@@ -39,7 +39,7 @@ constexpr size_t kIndexBBuffer = 2;
 constexpr size_t kIndexBTransposeShape = 3;
 constexpr size_t kIndexBTransposeAxis = 4;
 template <typename T>
-class MatrixTriangularSolveGpuKernelMod : public NativeGpuKernelMod {
+class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MatrixTriangularSolveGpuKernelMod() = default;
   ~MatrixTriangularSolveGpuKernelMod() = default;

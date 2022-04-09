@@ -107,7 +107,7 @@ int64_t Concat::get_axis() const {
 }
 void Concat::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
 
-MIND_API_BASE_IMPL(Concat, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Concat, BaseOperator);
 AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   const int64_t kInputNum = 1;

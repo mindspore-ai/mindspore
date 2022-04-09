@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TensorListStack, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorListStack, BaseOperator);
 void TensorListStack::Init(const int64_t num_elements, const int64_t element_dtype) {
   this->set_num_elements(num_elements);
   this->set_element_dtype(element_dtype);

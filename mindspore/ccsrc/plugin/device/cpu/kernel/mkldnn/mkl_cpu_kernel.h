@@ -164,7 +164,7 @@ struct PaddingInfo {
   bool ceil_mode{false};
 };
 
-class MKLCpuKernelMod : public NativeCpuKernelMod {
+class MKLCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
   MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0) {

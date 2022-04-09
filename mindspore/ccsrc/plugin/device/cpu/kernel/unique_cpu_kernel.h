@@ -100,7 +100,7 @@ size_t BucketId(DataType input, size_t bucket_num) {
   return data % bucket_num;
 }
 
-class UniqueCpuKernelMod : public NativeCpuKernelMod {
+class UniqueCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UniqueCpuKernelMod() = default;
   ~UniqueCpuKernelMod() override = default;

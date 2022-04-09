@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class HSwishKernelMod : public NativeGpuKernelMod {
+class HSwishKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   HSwishKernelMod() { ResetResource(); }
   ~HSwishKernelMod() override = default;

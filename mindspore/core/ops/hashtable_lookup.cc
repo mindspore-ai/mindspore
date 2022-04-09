@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(HashtableLookup, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(HashtableLookup, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameHashtableLookup, HashtableLookup);
 }  // namespace ops
 }  // namespace mindspore

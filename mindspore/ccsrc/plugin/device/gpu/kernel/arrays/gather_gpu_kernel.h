@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
+class GatherFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GatherFwdGpuKernelMod() : axis_(0), is_null_input_(false) {}
   ~GatherFwdGpuKernelMod() = default;

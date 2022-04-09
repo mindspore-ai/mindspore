@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class Dihedral14LJCFForceWithAtomEnergyGpuKernelMod : public NativeGpuKernelMod {
+class Dihedral14LJCFForceWithAtomEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   Dihedral14LJCFForceWithAtomEnergyGpuKernelMod() : ele_uint_crd(1) {}
   ~Dihedral14LJCFForceWithAtomEnergyGpuKernelMod() override = default;

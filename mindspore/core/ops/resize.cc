@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Resize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Resize, BaseOperator);
 void Resize::Init(const Format format, const ResizeMethod method, const int64_t new_height, const int64_t new_width,
                   const bool preserve_aspect_ratio, const CoordinateTransformMode coordinate_transform_mode,
                   const float cubic_coeff, const int64_t exclude_outside, const float extrapolation_value,

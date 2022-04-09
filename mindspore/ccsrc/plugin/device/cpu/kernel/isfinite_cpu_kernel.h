@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class IsFiniteCpuKernelMod : public NativeCpuKernelMod {
+class IsFiniteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   IsFiniteCpuKernelMod() = default;
   ~IsFiniteCpuKernelMod() override = default;

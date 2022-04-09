@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename G, typename S>
-class RandomCategoricalGpuKernelMod : public NativeGpuKernelMod {
+class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   RandomCategoricalGpuKernelMod() : is_null_input_(false), batch_size_(0), num_classes_(0), num_samples_(0), seed_(0) {}
   ~RandomCategoricalGpuKernelMod() override = default;

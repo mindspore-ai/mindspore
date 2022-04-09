@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class TensorCopySlicesCpuKernelMod : public NativeCpuKernelMod {
+class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   TensorCopySlicesCpuKernelMod() = default;
   ~TensorCopySlicesCpuKernelMod() override = default;

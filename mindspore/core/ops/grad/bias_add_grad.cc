@@ -73,7 +73,7 @@ TypePtr BiasAddGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BiasAddGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BiasAddGrad, BaseOperator);
 AbstractBasePtr BiasAddGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(BiasAddGradInferShape(primitive, input_args),

@@ -81,7 +81,7 @@ TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(BinaryCrossEntropy, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(BinaryCrossEntropy, BaseOperator);
 void BinaryCrossEntropy::set_reduction(const Reduction &reduction) {
   int64_t swi = reduction;
   (void)this->AddAttr(kReduction, api::MakeValue(swi));

@@ -62,7 +62,7 @@ TuplePtr MinimumGradInferType(const PrimitivePtr &primitive, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(MinimumGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(MinimumGrad, BaseOperator);
 abstract::AbstractBasePtr MinimumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                            const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

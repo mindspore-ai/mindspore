@@ -60,29 +60,13 @@ DynamicTbeKernelMod::~DynamicTbeKernelMod() {
   }
 }
 
-void DynamicTbeKernelMod::InferOp() {
-  if (common::AnfAlgo::IsDynamicShape(anf_node_.lock())) {
-    auto node = anf_node_.lock();
-    MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    need_skip_execute_ = NeedSkipExecute(cnode);
-    if (need_skip_execute_) {
-      std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
-      common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
-    } else {
-      KernelMod::InferShape();
-    }
-  }
-}
-
 void DynamicTbeKernelMod::UpdateOp() {
   if (need_skip_execute_) {
     AscendKernelMod::UpdateOp();
   }
 }
 
-void DynamicTbeKernelMod::InitOp() {
+void DynamicTbeKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -94,14 +78,15 @@ void DynamicTbeKernelMod::InitOp() {
 
   if (!atomic_clean_nodes_.empty()) {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      AnfAlgo::GetKernelMod(atomic_clean_node.lock())->InitOp();
+      AnfAlgo::GetKernelMod(atomic_clean_node.lock())->InitOp(nullptr);
     }
   } else {
     // update output size after InferShape.
     // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
-    KernelMod::UpdateOutputSizeList();
+    AscendKernelMod::UpdateOutputSizeList();
   }
 
+  need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
     return;
   }
@@ -126,7 +111,9 @@ void DynamicTbeKernelMod::InitOp() {
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   device::tiling::OpTilingCalculateAdapter converter;
   ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
-  auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map_, op_compile_info_);
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map =
+    (args == nullptr) ? std::map<uint32_t, tensor::TensorPtr>{} : args->depend_tensor_map;
+  auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
   auto ret = optiling::OpParaCalculateV2(ge_node, op_run_info_v2);
   if (ret != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "Compute tiling failed!";

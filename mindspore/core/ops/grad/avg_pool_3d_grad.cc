@@ -61,7 +61,7 @@ TypePtr AvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(AvgPool3DGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(AvgPool3DGrad, BaseOperator);
 AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto res = std::make_shared<abstract::AbstractTensor>(AvgPool3DGradInferType(primitive, input_args),

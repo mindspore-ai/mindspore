@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DetTriangleGpuKernelMod : public NativeGpuKernelMod {
+class DetTriangleGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DetTriangleGpuKernelMod() : input_size_(sizeof(T)), output_size_(sizeof(T)) {}
   ~DetTriangleGpuKernelMod() override = default;

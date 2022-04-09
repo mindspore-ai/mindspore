@@ -47,7 +47,7 @@ void SkipGram::Init(const bool include_all_grams, const int64_t max_skip_size, c
   this->set_ngram_size(ngram_size);
 }
 
-MIND_API_BASE_IMPL(SkipGram, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SkipGram, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSkipGram, SkipGram);
 }  // namespace ops
 }  // namespace mindspore

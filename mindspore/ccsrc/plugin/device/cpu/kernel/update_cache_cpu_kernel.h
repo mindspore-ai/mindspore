@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class UpdateCacheCpuKernelMod : public NativeCpuKernelMod {
+class UpdateCacheCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   UpdateCacheCpuKernelMod() = default;
   ~UpdateCacheCpuKernelMod() override = default;

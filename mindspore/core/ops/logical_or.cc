@@ -45,7 +45,7 @@ TypePtr LogicalOrInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LogicalOr, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LogicalOr, BaseOperator);
 AbstractBasePtr LogicalOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

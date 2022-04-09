@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class EnvironGetGpuKernelMod : public NativeGpuKernelMod {
+class EnvironGetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EnvironGetGpuKernelMod() : value_type_attr_(kObjectTypeTensorType), handle_size_(0), key_size_(0), value_size_(0) {}
   ~EnvironGetGpuKernelMod() = default;

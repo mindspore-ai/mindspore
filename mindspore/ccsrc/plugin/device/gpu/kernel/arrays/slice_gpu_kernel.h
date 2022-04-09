@@ -41,7 +41,7 @@ constexpr auto kIdx5 = 5;
 constexpr auto kIdx6 = 6;
 
 template <typename T, typename S = int64_t>
-class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
+class SliceFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SliceFwdGpuKernelMod() { kernel_name_ = "Slice"; }
   ~SliceFwdGpuKernelMod() override = default;
@@ -220,8 +220,8 @@ class SliceFwdGpuKernelMod : public NativeGpuKernelMod {
       size = GetAttr<std::vector<int64_t>>(kernel_node, "size");
       begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
     } else {
-      if (GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin) &&
-          GetDynamicAttrIntValue(kernel_node, kSizeIndex_, &size)) {
+      if (GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin, kernel_node->user_data<kernel::InitOpArgs>()) &&
+          GetDynamicAttrIntValue(kernel_node, kSizeIndex_, &size, kernel_node->user_data<kernel::InitOpArgs>())) {
         get_dynamic_attr_value_ = true;
       }
       if (!get_dynamic_attr_value_) {

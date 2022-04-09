@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class DropoutGradBwdGpuKernelMod : public NativeGpuKernelMod {
+class DropoutGradBwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   DropoutGradBwdGpuKernelMod()
       : cudnn_handle_(nullptr), is_null_input_(false), kernel_name_("DropoutGrad"), num_count_(0), keep_prob_(0.0) {}

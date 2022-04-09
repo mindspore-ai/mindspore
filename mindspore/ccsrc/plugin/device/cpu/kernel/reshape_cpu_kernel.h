@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ReshapeCpuKernelMod : public NativeCpuKernelMod {
+class ReshapeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ReshapeCpuKernelMod() = default;
   explicit ReshapeCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

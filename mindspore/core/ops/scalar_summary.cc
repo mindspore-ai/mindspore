@@ -36,7 +36,7 @@ abstract::ShapePtr ScalarSummaryInferShape(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ScalarSummary, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ScalarSummary, BaseOperator);
 void ScalarSummary::set_side_effect_io() { (void)this->AddAttr(kSideEffectIO, api::MakeValue(true)); }
 
 bool ScalarSummary::get_side_effect_io() const {

@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_MINDAPI_BASE_FORMAT_H_
 
 #include <cstdint>
-
+#include <map>
 namespace mindspore {
 enum Format : int64_t {
   NCHW = 0,

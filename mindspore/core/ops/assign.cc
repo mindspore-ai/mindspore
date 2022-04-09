@@ -28,7 +28,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Assign, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Assign, BaseOperator);
 abstract::ShapePtr AssignInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();

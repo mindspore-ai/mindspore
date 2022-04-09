@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "backend/common/pass/erase_visit_attr.h"
 #include <memory>
 #include "kernel/common_utils.h"

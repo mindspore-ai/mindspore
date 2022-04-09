@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SwitchLayer, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SwitchLayer, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSwitchLayer, SwitchLayer);
 }  // namespace ops
 }  // namespace mindspore

@@ -33,7 +33,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class PMEExcludedForceUpdateGpuKernelMod : public NativeGpuKernelMod {
+class PMEExcludedForceUpdateGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PMEExcludedForceUpdateGpuKernelMod() : ele_uint_crd(1) {}
   ~PMEExcludedForceUpdateGpuKernelMod() override = default;

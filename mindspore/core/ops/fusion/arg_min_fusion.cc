@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ArgMinFusion, PrimitiveC, ArgMin);
+MIND_API_OPERATOR_IMPL(ArgMinFusion, ArgMin);
 void ArgMinFusion::Init(bool keep_dims, bool out_max_value, int64_t top_k, int64_t axis) {
   set_axis(axis);
   set_keep_dims(keep_dims);

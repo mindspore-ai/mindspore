@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SquareSumAllFwdGpuKernelMod : public NativeGpuKernelMod {
+class SquareSumAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SquareSumAllFwdGpuKernelMod() : input_size_(1), is_null_input_(false) {}
   ~SquareSumAllFwdGpuKernelMod() override {}

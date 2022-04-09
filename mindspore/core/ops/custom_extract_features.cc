@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(CustomExtractFeatures, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(CustomExtractFeatures, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameCustomExtractFeatures, CustomExtractFeatures);
 }  // namespace ops
 }  // namespace mindspore

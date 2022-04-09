@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(TensorArray, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorArray, BaseOperator);
 constexpr auto kTensorArrayDynamicSize = "dynamic_size";
 constexpr auto kTensorArrayIdenticalElementShapes = "identical_element_shapes";
 constexpr auto kTensorArrayElementShape = "element_shape";

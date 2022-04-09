@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class FusedAddReluV2GpuKernelMod : public NativeGpuKernelMod {
+class FusedAddReluV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   FusedAddReluV2GpuKernelMod() { ResetResource(); }
   ~FusedAddReluV2GpuKernelMod() override = default;

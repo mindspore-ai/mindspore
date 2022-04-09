@@ -44,7 +44,7 @@ void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 }
 
 void UniqueCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  NativeCpuKernelMod::InitInputOutputSize(kernel_node);
+  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));
   (void)workspace_size_list_.emplace_back(input_size_ * sizeof(int64_t));

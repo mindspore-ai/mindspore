@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MinMaxUpdatePerChannelGpuKernelMod : public NativeGpuKernelMod {
+class MinMaxUpdatePerChannelGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MinMaxUpdatePerChannelGpuKernelMod();
   ~MinMaxUpdatePerChannelGpuKernelMod() = default;

@@ -113,7 +113,7 @@ TypePtr DepthToSpaceInferType(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(DepthToSpace, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(DepthToSpace, BaseOperator);
 AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = DepthToSpaceInferType(primitive, input_args);

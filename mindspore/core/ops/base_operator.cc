@@ -32,5 +32,15 @@ void BaseOperator::InitIOName(const std::vector<std::string> &inputs_name,
   (void)AddAttr("input_names", api::MakeValue(inputs_name));
   (void)AddAttr("output_names", api::MakeValue(outputs_name));
 }
+
+OperatorRegister &OperatorRegister::GetInstance() {
+  static OperatorRegister instance;
+  return instance;
+}
+
+std::map<std::string, OperatorDefineFunc> OperatorRegister::GetOperatorMap() { return operator_fns_; }
+void OperatorRegister::SetOperatorMap(const std::string &kname, const OperatorDefineFunc &fn) {
+  operator_fns_[kname] = fn;
+}
 }  // namespace ops
 }  // namespace mindspore

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class RandpermGpuKernelMod : public NativeGpuKernelMod {
+class RandpermGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   // initialize rng here to minimize how many times we seed it.
   RandpermGpuKernelMod() : rng_(std::random_device()()) { ResetResource(); }

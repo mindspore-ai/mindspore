@@ -41,7 +41,7 @@ constexpr size_t BOX_INDEX = 2;
 constexpr size_t CROP_SIZE = 3;
 constexpr size_t IMAGE_HEIGHT = 1;
 constexpr size_t IMAGE_WEIGHT = 2;
-class CropAndResizeCpuKernelMod : public NativeCpuKernelMod {
+class CropAndResizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   CropAndResizeCpuKernelMod() = default;
   ~CropAndResizeCpuKernelMod() override = default;

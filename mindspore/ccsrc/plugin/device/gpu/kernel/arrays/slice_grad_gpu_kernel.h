@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class SliceGradGpuKernelMod : public NativeGpuKernelMod {
+class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SliceGradGpuKernelMod()
       : is_strided_slice_(false),

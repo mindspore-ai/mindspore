@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename T1>
-class PMEEnergyUpdateGpuKernelMod : public NativeGpuKernelMod {
+class PMEEnergyUpdateGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   PMEEnergyUpdateGpuKernelMod() : ele_uint_crd(1) {}
   ~PMEEnergyUpdateGpuKernelMod() override = default;

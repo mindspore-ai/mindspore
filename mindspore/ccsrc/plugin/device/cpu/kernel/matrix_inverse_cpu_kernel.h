@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixInverseCpuKernelMod : public NativeCpuKernelMod {
+class MatrixInverseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MatrixInverseCpuKernelMod() = default;
   ~MatrixInverseCpuKernelMod() override = default;

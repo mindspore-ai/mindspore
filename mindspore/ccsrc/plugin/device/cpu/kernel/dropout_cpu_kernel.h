@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class DropoutCpuKernelMod : public NativeCpuKernelMod {
+class DropoutCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   DropoutCpuKernelMod() = default;
   ~DropoutCpuKernelMod() override = default;

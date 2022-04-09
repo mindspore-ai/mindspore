@@ -70,7 +70,7 @@ TypePtr LstsqInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Lstsq, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Lstsq, BaseOperator);
 AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Assert, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Assert, BaseOperator);
 void Assert::Init(const int64_t summarize) { set_summarize(summarize); }
 
 void Assert::set_summarize(const int64_t summarize) { (void)this->AddAttr(kSummarize, api::MakeValue(summarize)); }

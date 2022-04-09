@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(GRU, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GRU, BaseOperator);
 void GRU::Init(bool bidirectional) { this->set_bidirectional(bidirectional); }
 
 void GRU::set_bidirectional(bool bidirectional) { (void)AddAttr(kBidirectional, api::MakeValue(bidirectional)); }

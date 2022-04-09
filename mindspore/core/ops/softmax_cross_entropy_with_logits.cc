@@ -81,7 +81,7 @@ TuplePtr SoftmaxCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SoftmaxCrossEntropyWithLogits, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SoftmaxCrossEntropyWithLogits, BaseOperator);
 AbstractBasePtr SoftmaxCrossEntropyWithLogitsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = SoftmaxCrossEntropyWithLogitsInferType(primitive, input_args);

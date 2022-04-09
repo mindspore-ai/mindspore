@@ -80,7 +80,7 @@ void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
   this->set_round_mode(round_mode);
 }
 
-MIND_API_BASE_IMPL(AvgPool, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(AvgPool, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameAvgPool, AvgPool);
 }  // namespace ops
 }  // namespace mindspore

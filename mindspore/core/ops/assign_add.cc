@@ -41,7 +41,7 @@ TypePtr AssignAddInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(AssignAdd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(AssignAdd, BaseOperator);
 AbstractBasePtr AssignAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

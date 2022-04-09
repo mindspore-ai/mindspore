@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(Shape, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Shape, BaseOperator);
 AbstractBasePtr ShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   // infer shape

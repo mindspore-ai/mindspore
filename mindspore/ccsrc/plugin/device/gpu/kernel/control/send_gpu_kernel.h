@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SendGpuKernelMod : public NativeGpuKernelMod {
+class SendGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SendGpuKernelMod() {}
   ~SendGpuKernelMod() override = default;

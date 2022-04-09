@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class GatherV2FwdGpuKernelMod : public NativeGpuKernelMod {
+class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GatherV2FwdGpuKernelMod() { ResetResource(); }
   ~GatherV2FwdGpuKernelMod() = default;

@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseToDenseCpuKernelMod : public NativeCpuKernelMod {
+class SparseToDenseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SparseToDenseCpuKernelMod() = default;
   ~SparseToDenseCpuKernelMod() override = default;

@@ -30,7 +30,7 @@ std::vector<int64_t> ReverseV2::get_axis() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-MIND_API_BASE_IMPL(ReverseV2, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ReverseV2, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReverseV2, ReverseV2);
 }  // namespace ops
 }  // namespace mindspore

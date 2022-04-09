@@ -32,7 +32,7 @@ namespace kernel {
 constexpr auto kBroadcastTo = "BroadcastTo";
 constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
 constexpr auto kUnknown = "Unknown";
-class BroadcastToCpuKernelMod : public NativeCpuKernelMod {
+class BroadcastToCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BroadcastToCpuKernelMod() = default;
   explicit BroadcastToCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

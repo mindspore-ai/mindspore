@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(SparseToDense, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SparseToDense, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameSparseToDense, SparseToDense);
 }  // namespace ops
 }  // namespace mindspore

@@ -61,7 +61,7 @@ TypePtr SigmoidGradInfertype(const PrimitivePtr &prim, const std::vector<Abstrac
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SigmoidGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SigmoidGrad, BaseOperator);
 AbstractBasePtr SigmoidGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

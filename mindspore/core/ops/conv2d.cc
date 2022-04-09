@@ -262,7 +262,7 @@ TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Conv2D, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Conv2D, BaseOperator);
 void Conv2D::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode, const PadMode &pad_mode,
                   const std::vector<int64_t> &pad, const std::vector<int64_t> &stride,
                   const std::vector<int64_t> &dilation, int64_t group, const Format &format) {

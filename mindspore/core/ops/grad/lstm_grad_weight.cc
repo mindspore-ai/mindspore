@@ -90,7 +90,7 @@ void LSTMGradWeight::Init(const int64_t input_size, const int64_t hidden_size, c
   this->set_zoneout_hidden(zoneout_hidden);
 }
 
-MIND_API_BASE_IMPL(LSTMGradWeight, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LSTMGradWeight, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameLSTMGradWeight, LSTMGradWeight);
 }  // namespace ops
 }  // namespace mindspore

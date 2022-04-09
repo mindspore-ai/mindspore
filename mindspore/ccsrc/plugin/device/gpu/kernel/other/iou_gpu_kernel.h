@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class IOUGpuKernelMod : public NativeGpuKernelMod {
+class IOUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   IOUGpuKernelMod() : gt_boxes_size_(0), anchor_boxes_size_(0), iou_size_(0), mode_(0), is_null_input_(false) {}
   ~IOUGpuKernelMod() override = default;

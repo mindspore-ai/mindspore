@@ -30,7 +30,7 @@ namespace mindspore {
 namespace kernel {
 #define NBDIMS 4
 template <typename T>
-class Conv2dFwdGpuKernelMod : public NativeGpuKernelMod {
+class Conv2dFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   Conv2dFwdGpuKernelMod() { ResetResource(); }
   ~Conv2dFwdGpuKernelMod() override { DestroyResource(); }

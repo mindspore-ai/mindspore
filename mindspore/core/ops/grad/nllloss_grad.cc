@@ -33,7 +33,7 @@ Reduction NLLLossGrad::get_reduction() const {
   return Reduction(GetValue<int64_t>(value_ptr));
 }
 
-MIND_API_BASE_IMPL(NLLLossGrad, PrimitiveC, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameNLLLossGrad, NLLLossGrad)
+MIND_API_OPERATOR_IMPL(NLLLossGrad, BaseOperator);
+REGISTER_PRIMITIVE_C(kNameNLLLossGrad, NLLLossGrad);
 }  // namespace ops
 }  // namespace mindspore

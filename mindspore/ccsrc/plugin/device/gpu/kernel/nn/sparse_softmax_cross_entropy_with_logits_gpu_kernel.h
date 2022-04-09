@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
-class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public NativeGpuKernelMod {
+class SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   SparseSoftmaxCrossEntropyWithLogitsGpuKernelMod()
       : cudnn_handle_(nullptr),

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(MaxPoolGrad, PrimitiveC, PoolGrad);
+MIND_API_OPERATOR_IMPL(MaxPoolGrad, PoolGrad);
 REGISTER_PRIMITIVE_C(kNameMaxPoolGrad, MaxPoolGrad);
 }  // namespace ops
 }  // namespace mindspore

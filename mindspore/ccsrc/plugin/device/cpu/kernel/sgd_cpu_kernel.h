@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SGDCpuKernelMod : public NativeCpuKernelMod {
+class SGDCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SGDCpuKernelMod() = default;
   ~SGDCpuKernelMod() override = default;

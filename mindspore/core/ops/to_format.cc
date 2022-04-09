@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(ToFormat, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ToFormat, BaseOperator);
 void ToFormat::set_src_t(const int64_t src_t) { (void)this->AddAttr(kSrcT, api::MakeValue(src_t)); }
 int64_t ToFormat::get_src_t() const {
   auto value_ptr = GetAttr(kSrcT);

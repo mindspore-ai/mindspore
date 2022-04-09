@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(FakeQuantWithMinMaxVarsPerChannel, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FakeQuantWithMinMaxVarsPerChannel, BaseOperator);
 void FakeQuantWithMinMaxVarsPerChannel::Init(const int64_t num_bits, const bool narrow_range) {
   this->set_num_bits(num_bits);
   this->set_narrow_range(narrow_range);

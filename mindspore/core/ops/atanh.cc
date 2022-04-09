@@ -60,7 +60,7 @@ TypePtr AtanhInferType(const PrimitivePtr &primitive, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Atanh, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Atanh, BaseOperator);
 AbstractBasePtr AtanhInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   auto type = AtanhInferType(primitive, input_args);

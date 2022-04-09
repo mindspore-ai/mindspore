@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_BASE_IMPL(L2NormalizeFusion, PrimitiveC, L2Normalize);
+MIND_API_OPERATOR_IMPL(L2NormalizeFusion, L2Normalize);
 void L2NormalizeFusion::Init(const std::vector<int64_t> &axis, const float epsilon,
                              const ActivationType &activation_type) {
   this->set_axis(axis);

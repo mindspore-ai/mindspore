@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-class L2LossCpuKernelMod : public NativeCpuKernelMod {
+class L2LossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   L2LossCpuKernelMod() = default;
   ~L2LossCpuKernelMod() override = default;

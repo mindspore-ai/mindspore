@@ -66,7 +66,7 @@ TypePtr SquaredDifferenceInferType(const PrimitivePtr &prim, const std::vector<A
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SquaredDifference, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SquaredDifference, BaseOperator);
 AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

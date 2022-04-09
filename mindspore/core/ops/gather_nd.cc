@@ -85,7 +85,7 @@ TypePtr GatherNdInferType(const PrimitivePtr &primitive, const std::vector<Abstr
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(GatherNd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GatherNd, BaseOperator);
 AbstractBasePtr GatherNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

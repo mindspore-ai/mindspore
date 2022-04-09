@@ -48,7 +48,7 @@ TypePtr XlogyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Xlogy, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Xlogy, BaseOperator);
 AbstractBasePtr XlogyInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

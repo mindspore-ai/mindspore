@@ -31,7 +31,7 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class MeshgridGpuKernelMod : public NativeGpuKernelMod {
+class MeshgridGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MeshgridGpuKernelMod() { ResetResource(); }
   ~MeshgridGpuKernelMod() override = default;

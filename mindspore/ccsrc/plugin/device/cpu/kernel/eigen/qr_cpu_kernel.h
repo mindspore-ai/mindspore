@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class QRCpuKernelMod : public NativeCpuKernelMod {
+class QRCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   QRCpuKernelMod() = default;
   ~QRCpuKernelMod() override = default;

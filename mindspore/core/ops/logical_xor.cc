@@ -41,7 +41,7 @@ TypePtr LogicalXorInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(LogicalXor, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(LogicalXor, BaseOperator);
 AbstractBasePtr LogicalXorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

@@ -27,7 +27,7 @@
 #include "kernel/common_utils.h"
 namespace mindspore {
 namespace kernel {
-class MatrixSetDiagCpuKernelMod : public NativeCpuKernelMod {
+class MatrixSetDiagCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MatrixSetDiagCpuKernelMod() = default;
   ~MatrixSetDiagCpuKernelMod() override = default;

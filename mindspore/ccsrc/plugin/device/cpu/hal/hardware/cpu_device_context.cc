@@ -28,6 +28,7 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pass_manager.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
@@ -220,15 +221,32 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       continue;
     }
     std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
+
     std::shared_ptr<kernel::NativeCpuKernelMod> cpu_kernel =
       kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Create(kernel_name);
+
     if (!cpu_kernel) {
       MS_LOG(EXCEPTION) << "Build cpu operator[" << node->fullname_with_scope() << "] failed";
     }
 
-    cpu_kernel->SetCpuRefMapToKernelInfo(node);
-    cpu_kernel->Init(node);
-    AnfAlgo::SetKernelMod(cpu_kernel, node.get());
+    // This branch would be removed When KernelMode rectification is complete
+    auto discard_cpu_kernel_mod = std::dynamic_pointer_cast<kernel::DeprecatedNativeCpuKernelMod>(cpu_kernel);
+    if (discard_cpu_kernel_mod) {
+      discard_cpu_kernel_mod->SetCpuRefMapToKernelInfo(node);
+      discard_cpu_kernel_mod->Init(node);
+      AnfAlgo::SetKernelMod(discard_cpu_kernel_mod, node.get());
+    } else {
+      auto kernel_attrs = cpu_kernel->GetOpSupport();
+      kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
+      auto thread_pool = kernel::GetActorMgrInnerThreadPool();
+      cpu_kernel->SetThreadPool(thread_pool);
+      auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(node);
+      auto ret = cpu_kernel->Init(base_operator, input_tensors, output_tensors);
+      if (!ret) {
+        MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
+      }
+      AnfAlgo::SetKernelMod(cpu_kernel, node.get());
+    }
   }
 #ifdef ENABLE_AKG
   kernel::AkgCpuKernelBuilder akg_cpu_kernel_builder;
@@ -247,10 +265,10 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
   }
 
-  kernel::NativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
+  kernel::DeprecatedNativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(cpu_kernel);
-  cpu_kernel->InferOp();
-  cpu_kernel->InitOp();
+  opt::dynamic_shape::InferOp(kernel);
+  cpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
 }
 
 void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
@@ -280,7 +298,7 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   // launch.
   if (kOpNotSupportMultiThreadExecList.find(common::AnfAlgo::GetCNodeName(kernel)) !=
       kOpNotSupportMultiThreadExecList.end()) {
-    auto cpu_kernel_mod = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
+    auto cpu_kernel_mod = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
     cpu_kernel_mod->InitKernel(kernel);
   }

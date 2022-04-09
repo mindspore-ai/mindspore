@@ -90,7 +90,7 @@ TypePtr ExtractVolumePatchesInferType(const PrimitivePtr &prim, const std::vecto
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ExtractVolumePatches, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ExtractVolumePatches, BaseOperator);
 AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

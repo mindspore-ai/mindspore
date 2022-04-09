@@ -108,7 +108,7 @@ TypePtr ApplyCenteredRMSPropInferType(const PrimitivePtr &primitive, const std::
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(ApplyCenteredRMSProp, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ApplyCenteredRMSProp, BaseOperator);
 AbstractBasePtr ApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = ApplyCenteredRMSPropInferType(primitive, input_args);

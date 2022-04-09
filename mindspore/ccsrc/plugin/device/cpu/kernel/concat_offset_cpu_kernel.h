@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ConcatOffsetCpuKernelMod : public NativeCpuKernelMod {
+class ConcatOffsetCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   ConcatOffsetCpuKernelMod() = default;
   ~ConcatOffsetCpuKernelMod() override = default;

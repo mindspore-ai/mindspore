@@ -37,7 +37,7 @@ constexpr size_t kOutputIndexForH = 2;
 constexpr size_t kOutputIndexForW = 3;
 
 template <typename T, typename S>
-class MaxPoolWithArgmaxFwdGpuKernelMod : public NativeGpuKernelMod {
+class MaxPoolWithArgmaxFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   MaxPoolWithArgmaxFwdGpuKernelMod()
       : n_(0),

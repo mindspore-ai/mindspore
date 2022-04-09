@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseTensorDenseMatmulCpuKernelMod : public NativeCpuKernelMod {
+class SparseTensorDenseMatmulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   SparseTensorDenseMatmulCpuKernelMod() = default;
   ~SparseTensorDenseMatmulCpuKernelMod() override = default;

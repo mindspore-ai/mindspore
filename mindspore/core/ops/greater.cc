@@ -44,7 +44,7 @@ TypePtr GreaterInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(Greater, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(Greater, BaseOperator);
 AbstractBasePtr GreaterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   auto infer_type = GreaterInferType(primitive, input_args);

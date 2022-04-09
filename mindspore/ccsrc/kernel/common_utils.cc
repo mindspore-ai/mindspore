@@ -23,6 +23,7 @@
 #include <fstream>
 #include <algorithm>
 #include <thread>
+#include <tuple>
 #include "nlohmann/json.hpp"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -1089,10 +1090,10 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
 KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {
   MS_EXCEPTION_IF_NULL(build_info);
   KernelAttr kernel_attr;
-  for (size_t i = 0; i < build_info->GetInputNum(); i++) {
+  for (size_t i = 0; i < build_info->GetInputNum(); ++i) {
     (void)kernel_attr.AddInputAttr(build_info->GetInputDeviceType(i), build_info->GetInputFormat(i));
   }
-  for (size_t j = 0; j < build_info->GetOutputNum(); j++) {
+  for (size_t j = 0; j < build_info->GetOutputNum(); ++j) {
     (void)kernel_attr.AddOutputAttr(build_info->GetOutputDeviceType(j), build_info->GetOutputFormat(j));
   }
   return kernel_attr;
@@ -1101,6 +1102,143 @@ KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info) {
 KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   return GetKernelAttrFromBuildInfo(build_info);
+}
+
+const std::map<std::string, Format> format_relation_map = {
+  {"NCHW", Format::NCHW},   {"NHWC", Format::NHWC},     {"NHWC4", Format::NHWC4},
+  {"HWKC", Format::HWKC},   {"HWCK", Format::HWCK},     {"KCHW", Format::KCHW},
+  {"CKHW", Format::CKHW},   {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
+  {"HW", Format::HW},       {"HW4", Format::HW4},       {"NC", Format::NC},
+  {"NC4", Format::NC4},     {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+  {"NCDHW", Format::NCDHW}, {"NWC", Format::NWC},       {"NCW", Format::NCW},
+};
+
+Format GetFormatFromStrToEnum(const std::string &format_str) {
+  auto iter = format_relation_map.find(format_str);
+  if (iter != format_relation_map.end()) {
+    MS_LOG(WARNING) << "The data format " << format_str << " can not be converted to enum.";
+    return Format::NCHW;
+  }
+  return iter->second;
+}
+
+std::string GetFormatFromEnumToStr(Format format) {
+  std::string format_str = kOpFormat_DEFAULT;
+  auto iter = std::find_if(format_relation_map.begin(), format_relation_map.end(),
+                           [format](auto item) { return item.second == format; });
+  if (iter != format_relation_map.end()) {
+    return iter->first;
+  }
+  return format_str;
+}
+
+KernelArgs GetArgsFromCNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
+  auto kernel_name = prim->name();
+  // Create PrimtiveC from map and create BaseOperator.
+  ops::PrimitiveCPtr primc_ptr = nullptr;
+  static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  if (primc_fns.find(kernel_name) != primc_fns.end()) {
+    primc_ptr = primc_fns[kernel_name]();
+    primc_ptr->SetAttrs(prim->attrs());
+  }
+  MS_EXCEPTION_IF_NULL(primc_ptr);
+
+  BaseOperatorPtr base_operator = nullptr;
+  static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
+  if (operator_fns.find(kernel_name) != operator_fns.end()) {
+    base_operator = operator_fns[kernel_name](primc_ptr);
+  }
+  MS_EXCEPTION_IF_NULL(base_operator);
+
+  // Makeup input tensors.
+  std::vector<KernelTensorPtr> input_tensors;
+  auto real_intput_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
+  size_t input_num = common::AnfAlgo::GetInputNum(cnode);
+  for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
+    const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
+    auto prev_abstract = prev_node->abstract();
+    abstract::AbstractBasePtr input_abstract;
+    if (prev_abstract->isa<abstract::AbstractTuple>()) {
+      auto abs_tuple = prev_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
+      MS_EXCEPTION_IF_NULL(abs_tuple);
+      MS_EXCEPTION_IF_CHECK_FAIL((output_idx < abs_tuple->elements().size()), "Index is out of range.");
+      auto abs_index = abs_tuple->elements()[output_idx];
+      input_abstract = abs_index;
+    } else {
+      input_abstract = prev_abstract->Clone();
+    }
+    input_abstract->set_type(TypeIdToType(real_intput_types[input_idx]));
+    auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), input_abstract};
+    KernelTensorPtr input_tensor = std::make_shared<KernelTensor>();
+    input_tensor->SetTensorInfo(tensor_info);
+    input_tensors.push_back(input_tensor);
+  }
+
+  // Makeup otuput tensors.
+  std::vector<KernelTensorPtr> output_tensors;
+  auto real_output_types = AnfAlgo::GetAllOutputDeviceTypes(cnode);
+  auto cur_abstract = cnode->abstract();
+  if (cur_abstract->isa<abstract::AbstractTuple>()) {
+    auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
+    MS_EXCEPTION_IF_NULL(abs_tuple);
+    size_t output_num = abs_tuple->elements().size();
+    for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
+      auto output_abstract = abs_tuple->elements()[output_idx];
+      output_abstract->set_type(TypeIdToType(real_output_types[output_idx]));
+      auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
+      TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract};
+      KernelTensorPtr output_tensor = std::make_shared<KernelTensor>();
+      output_tensor->SetTensorInfo(tensor_info);
+      output_tensors.push_back(output_tensor);
+    }
+  } else {
+    auto output_abstract = cur_abstract->Clone();
+    output_abstract->set_type(TypeIdToType(real_output_types[0]));
+    auto format_str = AnfAlgo::GetOutputFormat(cnode, 0);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract};
+    KernelTensorPtr output_tensor = std::make_shared<KernelTensor>();
+    output_tensor->SetTensorInfo(tensor_info);
+    output_tensors.push_back(output_tensor);
+  }
+
+  return std::make_tuple(base_operator, input_tensors, output_tensors);
+}
+
+KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  KernelAttr kernel_attr;
+  for (auto tensor : inputs) {
+    (void)kernel_attr.AddInputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
+  }
+  for (auto tensor : outputs) {
+    (void)kernel_attr.AddOutputAttr(tensor->GetDtype(), GetFormatFromEnumToStr(tensor->GetFormat()));
+  }
+  return kernel_attr;
+}
+
+void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &kernel_attrs) {
+  if (kernel_attrs.empty()) {
+    return;
+  }
+
+  auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
+                      << " does not support this kernel data type: " << kernel_attr;
+  }
+
+  MS_EXCEPTION_IF_NULL(apply_kernel);
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  const auto &matched_kernel_attr = kernel_attrs[index];
+  if (!matched_kernel_attr.GetOutInRefMap().empty()) {
+    kernel_info->set_ref_map(matched_kernel_attr.GetOutInRefMap());
+  }
 }
 }  // namespace kernel
 }  // namespace mindspore
