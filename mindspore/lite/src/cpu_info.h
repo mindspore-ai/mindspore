@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_SRC_CPU_INFO_H
 #define MINDSPORE_LITE_SRC_CPU_INFO_H
 
-#if defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_AVX512) || defined(ENABLE_AVX)
 #include "nnacl/intrinsics/ms_simd_cpu_info.h"
 #endif
 
 inline bool PlatformInstructionSetSupportCheck() {
   bool flag = true;
 
-#if defined(ENABLE_AVX512) || defined(ENABLE_AVX) || defined(ENABLE_SSE)
+#if defined(ENABLE_AVX512) || defined(ENABLE_AVX)
   flag = IntelX86InstructionSetSupportCheck();
 #endif
 
