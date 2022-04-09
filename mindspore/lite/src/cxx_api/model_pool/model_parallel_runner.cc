@@ -16,9 +16,13 @@
 #include "include/api/model_parallel_runner.h"
 #include "src/cxx_api/model_pool/model_pool.h"
 #include "src/common/log_adapter.h"
+#include "src/cpu_info.h"
 
 namespace mindspore {
 Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+  if (!PlatformInstructionSetSupportCheck()) {
+    return kLiteNotSupport;
+  }
   model_pool_ = std::make_shared<ModelPool>();
   if (model_pool_ == nullptr) {
     MS_LOG(ERROR) << "model pool is nullptr.";

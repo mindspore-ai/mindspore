@@ -23,13 +23,22 @@
 extern "C" {
 #endif
 
+typedef enum X86CpuInfoErrorCodeEnum {
+  X86CPUINFO_OK = 0,
+  X86CPUINFO_PLATFORM_ERR = 1,
+  X86CPUINFO_AVX512_ERR,
+  X86CPUINFO_AVX_ERR,
+  X86CPUINFO_SSE_ERR,
+  X86CPUINFO_END = 9999
+} X86CpuInfoErrorCodeEnum;
+
 const bool X86_Fma_Support(void);
 const bool X86_Sse_Support(void);
 const bool X86_Avx_Support(void);
 const bool X86_Avx512_Support(void);
 
 bool IsIntelX86Platform(void);
-bool IntelX86InstructionSetSupportCheck(void);
+X86CpuInfoErrorCodeEnum IntelX86InstructionSetSupportCheck(void);
 
 int IntelX86CpuInfoInit(void);
 
