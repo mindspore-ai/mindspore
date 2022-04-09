@@ -53,6 +53,8 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             target_name = "return_value"
         elif isinstance(node, (ast.BinOp, ast.boolop, ast.UnaryOp)):
             target_name = type(node.op).__name__
+        elif isinstance(node, ast.Tuple):
+            target_name = type(node).__name__
         else:
             logger.warning("unhandled type of node while generating new target name: %s ", type(node))
             target_name = type(node).__name__
@@ -63,21 +65,6 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
             result = f"{target_name}_{suffix}"
         target_names.append(result)
         return result
-
-    @staticmethod
-    def _fill_in_original_target_names(target_names, node):
-        """Fill in original target names before getting unique names."""
-        for function_index in range(len(node.body)):
-            child = node.body[function_index]
-            if not isinstance(child, ast.Assign):
-                continue
-            targets = child.targets
-            for target in targets:
-                if not isinstance(target, ast.Name):
-                    raise RuntimeError("currently only support ast.Name targets")
-                target_name = target.id
-                if target_name not in target_names:
-                    target_names.append(target_name)
 
     @staticmethod
     def _create_new_assign_node(node: ast.AST, target_names) -> Tuple[str, ast.AST]:
@@ -121,6 +108,35 @@ class FlattenRecursiveStmt(ast.NodeTransformer):
                     setattr(node, todo_name, ast.Name(id=new_target_name, ctx=ast.Load()))
                     results.append(new_node)
         return results
+
+    def _fill_in_original_target_names(self, target_names, node):
+        """Fill in original target names before getting unique names."""
+        for function_index in range(len(node.body)):
+            child = node.body[function_index]
+            if isinstance(child, (ast.Assign, ast.Expr)):
+                child_value = child.value
+            else:
+                child_value = child
+            if not self._flatten_table.get(type(child_value)):
+                continue
+
+            if not isinstance(child, ast.Assign):
+                continue
+            targets = child.targets
+            for target in targets:
+                if not isinstance(target, (ast.Name, ast.Tuple)):
+                    raise RuntimeError("currently only support ast.Name targets")
+                if isinstance(target, ast.Name):
+                    target_name = target.id
+                    if target_name not in target_names:
+                        target_names.append(target_name)
+                elif isinstance(target, ast.Tuple):
+                    for elt in target.elts:
+                        if not isinstance(elt, ast.Name):
+                            raise RuntimeError("currently only support ast.Name in ast.Tuple.")
+                        target_name = elt.id
+                        if target_name not in target_names:
+                            target_names.append(target_name)
 
     def visit_FunctionDef(self, node: FunctionDef) -> Any:
         """Traverse construct node and flatten recursive nodes."""

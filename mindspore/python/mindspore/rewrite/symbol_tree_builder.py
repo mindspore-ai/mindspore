@@ -23,7 +23,7 @@ from .symbol_tree import SymbolTree
 from .node import TreeNode
 from .parser_register import ParserRegister
 from .parser import Parser
-from .ast_transformers import FlattenRecursiveStmt
+from .ast_transformers import FlattenRecursiveStmt, RemoveReturnOutOfIf
 from .ast_helpers import AstModifier
 from .ast_helpers import AstFinder
 
@@ -55,7 +55,7 @@ class SymbolTreeBuilder:
         Returns:
              An instance of ast been optimized.
         """
-        transform_list = [FlattenRecursiveStmt()]
+        transform_list = [FlattenRecursiveStmt(), RemoveReturnOutOfIf()]
         for transformer in transform_list:
             ast_root = transformer.transform(ast_root)
         return ast_root

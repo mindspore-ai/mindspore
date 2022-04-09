@@ -342,8 +342,8 @@ class AstModifier(ast.NodeTransformer):
             dst_ast.value = src_argument.value
             return
         if isinstance(dst_ast, ast.Name):
-            if src_argument.type != ValueType.NamingValue:
-                raise RuntimeError("src_argument.type should equal to ValueType.NamingValue")
+            if src_argument.type not in [ValueType.NamingValue, ValueType.StringValue]:
+                raise RuntimeError("src_argument.type should be ValueType.NamingValue or ValueType.StringValue.")
             if src_argument.scope:
                 raise RuntimeError("src_argument.scope should be empty")
             dst_ast.id = src_argument.value

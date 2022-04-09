@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Parse ast.Assign in construct function to node of SymbolTree."""
+from typing import Union
 import ast
 import astunparse
 
@@ -24,7 +25,7 @@ from ..symbol_tree import SymbolTree
 from ..node import Node, TreeNode
 from ..parser import Parser
 from ..parser_register import reg_parser
-from ..api.scoped_value import ScopedValue
+from ..api.scoped_value import ScopedValue, ValueType
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..ast_helpers import AstReplacer, AstModifier
 
@@ -59,9 +60,12 @@ class AssignParser(Parser):
         tuple_elts = node.elts
         tuple_values = []
         for tuple_elt in tuple_elts:
-            if not isinstance(tuple_elt, ast.Constant):
-                raise RuntimeError("Only support ast.Constant as elts of ast.Tuple.")
-            tuple_values.append(tuple_elt.value)
+            if not isinstance(tuple_elt, (ast.Constant, ast.Name)):
+                raise RuntimeError("Only support ast.Constant or ast.Name as elts of ast.Tuple.")
+            if isinstance(tuple_elt, ast.Constant):
+                tuple_values.append(tuple_elt.value)
+            elif isinstance(tuple_elt, ast.Name):
+                tuple_values.append(tuple_elt.id)
         return ScopedValue.create_variable_value(tuple(tuple_values))
 
     @staticmethod
@@ -111,7 +115,9 @@ class AssignParser(Parser):
             return func.id
         if isinstance(func, ast.Attribute):
             return func.attr
-        raise RuntimeError("FuncValue is should be Name or a Attribute:", astunparse.unparse(func))
+        if isinstance(func, ast.Call):
+            return AssignParser._get_func_name(func)
+        raise RuntimeError("FuncValue is should be Name or a Attribute or a Call:", astunparse.unparse(func))
 
     @staticmethod
     def _get_func_scope(ast_node: ast.Call) -> str:
@@ -136,7 +142,9 @@ class AssignParser(Parser):
             if not isinstance(value, ast.Name):
                 raise RuntimeError("FuncValue is should be Name:", ast.dump(func))
             return value.id
-        raise RuntimeError("FuncValue is should be Name or a Attribute:", ast.dump(func))
+        if isinstance(func, ast.Call):
+            return AssignParser._get_func_scope(func)
+        raise RuntimeError("FuncValue should be Name or a Attribute or a Call:", ast.dump(func))
 
     @staticmethod
     def _get_symbol_object(symbol_name, origin_net):
@@ -206,6 +214,19 @@ class AssignParser(Parser):
                 return type(value), value
         return type(None), None
 
+    @staticmethod
+    def _get_targets(all_targets: ScopedValue) -> [Union[ScopedValue, str]]:
+        """Get targets from tuple or single value."""
+        targets: [Union[ScopedValue, str]] = []
+        if all_targets.type == ValueType.TupleValue:
+            for single_target in all_targets.value:
+                if not isinstance(single_target, ScopedValue) and not isinstance(single_target.value, str):
+                    raise RuntimeError("Only support str target in tuple.")
+                targets.append(single_target)
+        else:
+            targets.append(all_targets)
+        return targets
+
     def _update_field_in_init(self, func_scope, func_name, stree: SymbolTree, sub_tree: SymbolTree):
         """
         When node is an invoking to sub-network, update value of ast.Assign of corresponding field in `__init__` method.
@@ -269,7 +290,7 @@ class AssignParser(Parser):
         Raises:
             RuntimeError: If operator instance invoked by assign is undefined.
         """
-        target = AssignParser._create_scopedvalue(father_ast_node.targets[0])
+        targets = AssignParser._get_targets(AssignParser._create_scopedvalue(father_ast_node.targets[0]))
         func_name = AssignParser._get_func_name(ast_node)
         if func_name is None or func_name == "":
             raise RuntimeError("function name not exist")
@@ -283,7 +304,7 @@ class AssignParser(Parser):
             raise RuntimeError("Operator instance undefined: '", ast.unparse(ast_node.func), "' of '",
                                ast.unparse(ast_node), "'")
         if isinstance(op, Primitive):
-            return Node.create_call_buildin_op(op, father_ast_node, [target], func, call_args, call_kwargs, func_name)
+            return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         if isinstance(op, Cell):
             is_sub_tree = self._is_subtree_cell(op)
             if is_sub_tree:
@@ -292,9 +313,9 @@ class AssignParser(Parser):
                 self._update_field_in_init(func_scope, func_name, stree, new_stree)
                 replacer = AstReplacer(new_stree.get_class_ast())
                 replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
-                return TreeNode(new_stree, father_ast_node, [target], func, call_args, call_kwargs, func_name,
+                return TreeNode(new_stree, father_ast_node, targets, func, call_args, call_kwargs, func_name,
                                 new_stree.get_origin_network())
-            return Node.create_call_buildin_op(op, father_ast_node, [target], func, call_args, call_kwargs, func_name)
+            return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         raise RuntimeError("Only support Cell operator or Primitive operator, got ", type(op).__name__)
 
     def process(self, stree: SymbolTree, node: ast.Assign):
@@ -332,9 +353,9 @@ class AssignParser(Parser):
                 node_name = "constant_assign"
             else:
                 node_name = "attribute_assign"
-            target = AssignParser._create_scopedvalue(node.targets[0])
+            targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
             call_args = [AssignParser._create_scopedvalue(value)]
-            node_ = Node.create_call_pass_through_method(node, [target], call_args, {}, node_name)
+            node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)
             stree.append_origin_field(node_)
         elif isinstance(value, (ast.List, ast.Tuple, ast.Dict)):
             # add these as callmethod node if necessary
