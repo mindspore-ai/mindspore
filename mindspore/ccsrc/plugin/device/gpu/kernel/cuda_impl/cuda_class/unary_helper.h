@@ -38,6 +38,7 @@ enum UnaryOptype {
   UNARY_OP_RSQRT,
   UNARY_OP_SIN,
   UNARY_OP_COS,
+  UNARY_OP_COSH,
   UNARY_OP_ASIN,
   UNARY_OP_ACOS,
   UNARY_OP_ATAN,
@@ -61,13 +62,14 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
   {"Neg", UNARY_OP_NEG},       {"Reciprocal", UNARY_OP_RECIPROCAL},
   {"Square", UNARY_OP_SQUARE}, {"Sqrt", UNARY_OP_SQRT},
   {"Rsqrt", UNARY_OP_RSQRT},   {"Sin", UNARY_OP_SIN},
-  {"Cos", UNARY_OP_COS},       {"Asin", UNARY_OP_ASIN},
-  {"ACos", UNARY_OP_ACOS},     {"Atan", UNARY_OP_ATAN},
-  {"Asinh", UNARY_OP_ASINH},   {"Acosh", UNARY_OP_ACOSH},
-  {"Abs", UNARY_OP_ABS},       {"Floor", UNARY_OP_FLOOR},
-  {"Rint", UNARY_OP_RINT},     {"Round", UNARY_OP_ROUND},
-  {"Real", UNARY_OP_REAL},     {"Imag", UNARY_OP_IMAG},
-  {"Sign", UNARY_OP_SIGN},     {"Conj", UNARY_OP_CONJ}};
+  {"Cos", UNARY_OP_COS},       {"Cosh", UNARY_OP_COSH},
+  {"Asin", UNARY_OP_ASIN},     {"ACos", UNARY_OP_ACOS},
+  {"Atan", UNARY_OP_ATAN},     {"Asinh", UNARY_OP_ASINH},
+  {"Acosh", UNARY_OP_ACOSH},   {"Abs", UNARY_OP_ABS},
+  {"Floor", UNARY_OP_FLOOR},   {"Rint", UNARY_OP_RINT},
+  {"Round", UNARY_OP_ROUND},   {"Real", UNARY_OP_REAL},
+  {"Imag", UNARY_OP_IMAG},     {"Sign", UNARY_OP_SIGN},
+  {"Conj", UNARY_OP_CONJ}};
 
 template <typename T>
 class UnaryHelperGpuKernel : public GpuKernelHelperBase {
@@ -102,12 +104,12 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
       {UNARY_OP_NEG, Negative<T>},    {UNARY_OP_RECIPROCAL, Reciprocal<T>},
       {UNARY_OP_SQUARE, Square<T>},   {UNARY_OP_SQRT, Sqrt<T>},
       {UNARY_OP_RSQRT, Rsqrt<T>},     {UNARY_OP_SIN, Sin<T>},
-      {UNARY_OP_COS, Cos<T>},         {UNARY_OP_ASIN, Asin<T>},
-      {UNARY_OP_ACOS, ACos<T>},       {UNARY_OP_ATAN, Atan<T>},
-      {UNARY_OP_ASINH, Asinh<T>},     {UNARY_OP_ACOSH, Acosh<T>},
-      {UNARY_OP_ABS, Abs<T>},         {UNARY_OP_FLOOR, Floor<T>},
-      {UNARY_OP_RINT, Rint<T>},       {UNARY_OP_ROUND, Round<T>},
-      {UNARY_OP_SIGN, Sign<T>}};
+      {UNARY_OP_COS, Cos<T>},         {UNARY_OP_COSH, Cosh<T>},
+      {UNARY_OP_ASIN, Asin<T>},       {UNARY_OP_ACOS, ACos<T>},
+      {UNARY_OP_ATAN, Atan<T>},       {UNARY_OP_ASINH, Asinh<T>},
+      {UNARY_OP_ACOSH, Acosh<T>},     {UNARY_OP_ABS, Abs<T>},
+      {UNARY_OP_FLOOR, Floor<T>},     {UNARY_OP_RINT, Rint<T>},
+      {UNARY_OP_ROUND, Round<T>},     {UNARY_OP_SIGN, Sign<T>}};
 
     auto iter = func_map.find(unary_op_type_);
     if (iter != func_map.end()) {
