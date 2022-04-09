@@ -68,7 +68,7 @@ def test_net01():
     y3 = np.random.randn(2, 3).astype(np.bool)
     try:
         net(Tensor(x3), Tensor(y3)).asnumpy()
-    except TypeError:
+    except (TypeError, ValueError, RuntimeError):
         assert True
 
 
@@ -105,7 +105,7 @@ def test_net02():
     y4 = np.random.randn(1, 2).astype(np.float32)
     try:
         net(Tensor(x4), Tensor(y4)).asnumpy()
-    except ValueError:
+    except (TypeError, ValueError, RuntimeError):
         assert True
 
     x5 = np.random.randn(2, 3, 2, 3, 4, 5, 6, 7).astype(np.float32)

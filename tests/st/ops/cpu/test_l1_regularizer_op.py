@@ -70,7 +70,7 @@ def test_l1_regularizer_input_int():
     try:
         output = net(weights)
         print("output : ", output.asnumpy())
-    except TypeError:
+    except (TypeError, RuntimeError):
         assert True
 
 
@@ -84,5 +84,5 @@ def test_l1_regularizer_input_tuple():
     try:
         output = net(weights)
         print("output : ", output.asnumpy())
-    except TypeError:
+    except (TypeError, RuntimeError):
         assert True
