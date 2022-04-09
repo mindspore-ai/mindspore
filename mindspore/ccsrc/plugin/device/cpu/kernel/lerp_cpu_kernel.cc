@@ -22,14 +22,10 @@ namespace mindspore {
 namespace kernel {
 void LerpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "backend cpu need kernel type:  " << kernel_type_ << " but got kernel name as "
-                      << kernel_name_;
-  }
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Lerp does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
   start_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
@@ -103,8 +99,6 @@ std::vector<KernelAttr> LerpCpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, LerpFunc> &pair) { return pair.first; });
   return support_list;
 }
-
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Lerp,
-                                 []() { return std::make_shared<LerpCpuKernelMod>(prim::kPrimLerp->name()); });
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Lerp, LerpCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

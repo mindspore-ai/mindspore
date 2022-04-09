@@ -582,7 +582,7 @@ class SeLU(Primitive):
         Tensor, with the same type and shape as the `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
@@ -5193,7 +5193,6 @@ class BinaryCrossEntropy(Primitive):
     def __init__(self, reduction='mean'):
         """Initialize BinaryCrossEntropy."""
         self.reduction = validator.check_string(reduction, ['none', 'mean', 'sum'], 'reduction', self.name)
-
 
 
 class ApplyAdaMax(Primitive):
