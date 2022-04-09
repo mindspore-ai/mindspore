@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LERP_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LERP_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SELU_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SELU_CPU_KERNEL_H_
 #include <string>
 #include <vector>
 #include <utility>
@@ -23,10 +23,10 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class LerpCpuKernelMod : public NativeCpuKernelMod {
+class SeluCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  LerpCpuKernelMod() = default;
-  ~LerpCpuKernelMod() override = default;
+  SeluCpuKernelMod() = default;
+  ~SeluCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -39,17 +39,14 @@ class LerpCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using LerpFunc = std::function<bool(LerpCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using SeluFunc = std::function<bool(SeluCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                       const std::vector<kernel::AddressPtr> &)>;
   size_t output_size_{1};
-  LerpFunc kernel_func_;
-  std::string kernel_type_;
-  std::vector<size_t> start_shape_;
-  std::vector<size_t> end_shape_;
-  std::vector<size_t> weight_shape_;
+  SeluFunc kernel_func_;
+  std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  static std::vector<std::pair<KernelAttr, LerpFunc>> func_list_;
+  static std::vector<std::pair<KernelAttr, SeluFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LERP_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SELU_CPU_KERNEL_H_
