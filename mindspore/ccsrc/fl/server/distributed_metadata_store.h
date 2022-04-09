@@ -55,8 +55,8 @@ class DistributedMetadataStore {
   // Reset the metadata value for the name.
   void ResetMetadata(const std::string &name);
 
-  // Update the metadata for the name. Parameter 'reason' is the reason why updating meta data failed.
-  bool UpdateMetadata(const std::string &name, const PBMetadata &meta, std::string *reason = nullptr);
+  // Update the metadata for the name.
+  bool UpdateMetadata(const std::string &name, const PBMetadata &meta);
 
   // Get the metadata for the name.
   PBMetadata GetMetadata(const std::string &name);

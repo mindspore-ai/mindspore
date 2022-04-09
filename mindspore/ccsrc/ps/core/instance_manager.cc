@@ -35,7 +35,7 @@ void InstanceManager::NewInstanceAsync(const std::shared_ptr<TcpClient> &client,
     MS_LOG(WARNING) << "Send new instance timeout!";
   }
 
-  MS_LOG(INFO) << "The scheduler is sending new instance to workers and servers!";
+  MS_LOG(INFO) << "The scheduler is sending new instance to " << node_info.node_id_;
 }
 
 void InstanceManager::QueryInstanceAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
@@ -55,7 +55,7 @@ void InstanceManager::QueryInstanceAsync(const std::shared_ptr<TcpClient> &clien
     MS_LOG(WARNING) << "Send query instance timeout!";
   }
 
-  MS_LOG(INFO) << "The scheduler is sending query instance to workers and servers!";
+  MS_LOG(INFO) << "The scheduler is sending query instance to " << node_info.node_id_;
 }
 
 void InstanceManager::EnableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
@@ -75,7 +75,7 @@ void InstanceManager::EnableFLSAsync(const std::shared_ptr<TcpClient> &client, c
     MS_LOG(WARNING) << "Send query instance timeout!";
   }
 
-  MS_LOG(INFO) << "The scheduler is sending query instance to workers and servers!";
+  MS_LOG(INFO) << "The scheduler is sending enable FLS to " << node_info.node_id_;
 }
 
 void InstanceManager::DisableFLSAsync(const std::shared_ptr<TcpClient> &client, const NodeManager &,
@@ -95,7 +95,7 @@ void InstanceManager::DisableFLSAsync(const std::shared_ptr<TcpClient> &client, 
     MS_LOG(WARNING) << "Send query instance timeout!";
   }
 
-  MS_LOG(INFO) << "The scheduler is sending query instance to workers and servers!";
+  MS_LOG(INFO) << "The scheduler is sending disable FLS to " << node_info.node_id_;
 }
 
 void InstanceManager::QueryNodeScaleState(const std::shared_ptr<TcpClient> &client, const NodeManager &,
@@ -115,7 +115,7 @@ void InstanceManager::QueryNodeScaleState(const std::shared_ptr<TcpClient> &clie
     MS_LOG(WARNING) << "Send query node scale state timeout!";
   }
 
-  MS_LOG(INFO) << "The scheduler is sending query node scale state to workers and servers!";
+  MS_LOG(INFO) << "The scheduler is sending query node scale state to " << node_info.node_id_;
 }
 }  // namespace core
 }  // namespace ps

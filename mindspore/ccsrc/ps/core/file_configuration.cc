@@ -117,7 +117,6 @@ void FileConfiguration::PersistNodes(const core::ClusterConfig &clusterConfig) c
     res["node_id"] = node_info.node_id_;
     res["rank_id"] = std::to_string(node_info.rank_id_);
     res["role"] = CommUtil::NodeRoleToString(node_info.node_role_);
-    res["alive"] = CommUtil::BoolToString(node_info.is_alive);
     persist_js["node_ids"].push_back(res);
   }
 
@@ -138,6 +137,7 @@ void FileConfiguration::PersistFile(const core::ClusterConfig &clusterConfig) co
   persist_js[kRecoveryServerNum] = clusterConfig.initial_server_num;
   persist_js[kRecoverySchedulerIp] = clusterConfig.scheduler_host;
   persist_js[kRecoverySchedulerPort] = clusterConfig.scheduler_port;
+  persist_js[kRecoveryClusterState] = CommUtil::ClusterStateToString(clusterConfig.initial_cluster_state);
 
   std::ofstream output_file(file_path_);
   output_file << persist_js.dump();

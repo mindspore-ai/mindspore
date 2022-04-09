@@ -49,7 +49,6 @@ class NodeManager {
         next_worker_rank_id_(0),
         next_server_rank_id_(0),
         meta_data_(nullptr),
-        node_state_(NodeState::NODE_STARTING),
         cluster_state_(ClusterState::CLUSTER_STARTING) {}
   virtual ~NodeManager() = default;
   using OnPersist = std::function<void()>;
@@ -104,9 +103,7 @@ class NodeManager {
   uint32_t next_worker_rank_id() const;
   uint32_t next_server_rank_id() const;
 
-  void UpdateNodeState(const NodeState &state);
   void UpdateClusterState(const ClusterState &state);
-  NodeState GetNodeState();
   ClusterState GetClusterState();
 
   // When the scheduler receives the scale out or scale in message, the metadata needs to be reset, because all nodes
@@ -179,7 +176,6 @@ class NodeManager {
   // Cluster metadata information can be dynamically changed
   std::unique_ptr<ClusterMetadata> meta_data_;
 
-  NodeState node_state_;
   ClusterState cluster_state_;
 
   std::deque<uint32_t> recovery_worker_rank_id_;
