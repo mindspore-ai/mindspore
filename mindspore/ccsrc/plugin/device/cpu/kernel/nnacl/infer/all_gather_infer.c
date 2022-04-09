@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-#include "nnacl/errorcode.h"
+#include "nnacl/infer/all_gather_infer.h"
 #include "nnacl/infer/infer_register.h"
-#include "nnacl/infer/common_infer.h"
-#include "nnacl/all_gather_parameter.h"
 
 int AllGatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                         OpParameter *parameter) {
