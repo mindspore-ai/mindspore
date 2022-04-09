@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,30 +18,85 @@
 #include <math.h>
 #include "nnacl/fp32/arithmetic_fp32.h"
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptDivCoreCalc1(block_size, block_num, in0, in1, out, size, index)             \
+  do {                                                                                            \
+    MS_FLOAT_32xN(block_num) vin0_opt_##block_num = MS_MOVN_F32(block_size, in0[0]);              \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                         \
+      MS_FLOAT_32xN(block_num) vout = MS_DIV_F32(block_size, vin0_opt_##block_num, vin1);         \
+      MS_ST_F32(block_size, out + index, vout);                                                   \
+    }                                                                                             \
+  } while (0)
+
+#define SimdElementOptDivCoreCalc2(block_size, block_num, in0, in1, out, size, index)             \
+  do {                                                                                            \
+    MS_FLOAT_32xN(block_num) vin1_opt_##block_num = MS_MOVN_F32(block_size, in1[0]);              \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                         \
+      MS_FLOAT_32xN(block_num) vout = MS_DIV_F32(block_size, vin0, vin1_opt_##block_num);         \
+      MS_ST_F32(block_size, out + index, vout);                                                   \
+    }                                                                                             \
+  } while (0)
+
 int ElementOptDiv(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+
   if (param->in_elements_num0_ == 1) {
-    for (int index = 0; index < size; index++) {
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivCoreCalc1, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
       out[index] = in0[0] / in1[index];
     }
   } else {
     if (in1[0] == 0) {
       return NNACL_ERRCODE_DIVISOR_ZERO;
     }
-    for (int index = 0; index < size; index++) {
+
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivCoreCalc2, in0, in1, out, size, index);
+    for (; index < size; index++) {
       out[index] = in0[index] / in1[0];
     }
   }
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptDivReluCoreCalc1(block_size, block_num, in0, in1, out, size, index)         \
+  do {                                                                                            \
+    MS_FLOAT_32xN(block_num) vin0_opt_##block_num = MS_MOVN_F32(block_size, in0[0]);              \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                         \
+      MS_FLOAT_32xN(block_num) vout =                                                             \
+        MS_MAX_N_F32(block_size, MS_DIV_F32(block_size, vin0_opt_##block_num, vin1), 0.0f);       \
+      MS_ST_F32(block_size, out + index, vout);                                                   \
+    }                                                                                             \
+  } while (0)
+
+#define SimdElementOptDivReluCoreCalc2(block_size, block_num, in0, in1, out, size, index)         \
+  do {                                                                                            \
+    MS_FLOAT_32xN(block_num) vin1_opt_##block_num = MS_MOVN_F32(block_size, in1[0]);              \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                         \
+      MS_FLOAT_32xN(block_num) vout =                                                             \
+        MS_MAX_N_F32(block_size, MS_DIV_F32(block_size, vin0, vin1_opt_##block_num), 0.0f);       \
+      MS_ST_F32(block_size, out + index, vout);                                                   \
+    }                                                                                             \
+  } while (0)
+
 int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
   if (param->in_elements_num0_ == 1) {
-    for (int index = 0; index < size; index++) {
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivReluCoreCalc1, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
       out[index] = in0[0] / in1[index];
       out[index] = out[index] > 0 ? out[index] : 0;
     }
   } else {
-    for (int index = 0; index < size; index++) {
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivReluCoreCalc2, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
       out[index] = in0[index] / in1[0];
       out[index] = out[index] > 0 ? out[index] : 0;
     }
@@ -49,28 +104,85 @@ int ElementOptDivRelu(const float *in0, const float *in1, float *out, int size, 
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptDivRelu6CoreCalc1(block_size, block_num, in0, in1, out, size, index)                     \
+  do {                                                                                                         \
+    MS_FLOAT_32xN(block_num) vin0_opt_##block_num = MS_MOVN_F32(block_size, in0[0]);                           \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {              \
+      MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                      \
+      MS_FLOAT_32xN(block_num) vout = MS_MIN_N_F32(                                                            \
+        block_size, MS_MAX_N_F32(block_size, MS_DIV_F32(block_size, vin0_opt_##block_num, vin1), 0.0f), 6.0f); \
+      MS_ST_F32(block_size, out + index, vout);                                                                \
+    }                                                                                                          \
+  } while (0)
+
+#define SimdElementOptDivRelu6CoreCalc2(block_size, block_num, in0, in1, out, size, index)                     \
+  do {                                                                                                         \
+    MS_FLOAT_32xN(block_num) vin1_opt_##block_num = MS_MOVN_F32(block_size, in1[0]);                           \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {              \
+      MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                                      \
+      MS_FLOAT_32xN(block_num) vout = MS_MIN_N_F32(                                                            \
+        block_size, MS_MAX_N_F32(block_size, MS_DIV_F32(block_size, vin0, vin1_opt_##block_num), 0.0f), 6.0f); \
+      MS_ST_F32(block_size, out + index, vout);                                                                \
+    }                                                                                                          \
+  } while (0)
+
 int ElementOptDivRelu6(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+
   if (param->in_elements_num0_ == 1) {
-    for (int index = 0; index < size; index++) {
-      out[index] = MSMIN(MSMAX(in0[0] / in1[index], 0), 6);
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivRelu6CoreCalc1, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
+      out[index] = MSMIN(MSMAX(in0[0] / in1[index], RELU6_MIN_VAL), RELU6_MAX_VAL);
     }
   } else {
-    for (int index = 0; index < size; index++) {
-      out[index] = MSMIN(MSMAX(in0[index] / in1[0], 0), 6);
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivRelu6CoreCalc2, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
+      out[index] = MSMIN(MSMAX(in0[index] / in1[0], RELU6_MIN_VAL), RELU6_MAX_VAL);
     }
   }
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementOptDivIntCoreCalc1(block_size, block_num, in0, in1, out, size, index)          \
+  do {                                                                                            \
+    MS_INT_32xN(block_num) vin0_opt_##block_num = MS_MOVN_EPI32(block_size, in0[0]);              \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_INT_32xN(block_num) vin1 = MS_LD_EPI32(block_size, in1 + index);                         \
+      MS_INT_32xN(block_num) vout = MS_DIV_EPI32(block_size, vin0_opt_##block_num, vin1);         \
+      MS_ST_EPI32(block_size, out + index, vout);                                                 \
+    }                                                                                             \
+  } while (0)
+
+#define SimdElementOptDivIntCoreCalc2(block_size, block_num, in0, in1, out, size, index)          \
+  do {                                                                                            \
+    MS_INT_32xN(block_num) vin1_opt_##block_num = MS_MOVN_EPI32(block_size, in1[0]);              \
+    for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+      MS_INT_32xN(block_num) vin0 = MS_LD_EPI32(block_size, in0 + index);                         \
+      MS_INT_32xN(block_num) vout = MS_DIV_EPI32(block_size, vin0, vin1_opt_##block_num);         \
+      MS_ST_EPI32(block_size, out + index, vout);                                                 \
+    }                                                                                             \
+  } while (0)
+
 int ElementOptDivInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param) {
+  int index = 0;
+
   if (param->in_elements_num0_ == 1) {
-    for (int index = 0; index < size; index++) {
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivIntCoreCalc1, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
       NNACL_CHECK_ZERO_RETURN_ERR(in1[index] != 0);
       out[index] = in0[0] / in1[index];
     }
   } else {
     NNACL_CHECK_ZERO_RETURN_ERR(in1[0] != 0);
-    for (int index = 0; index < size; index++) {
+
+    MS_SIMD_RUN_NO_SCALAR(SimdElementOptDivIntCoreCalc2, in0, in1, out, size, index);
+
+    for (; index < size; index++) {
       out[index] = in0[index] / in1[0];
     }
   }
@@ -83,24 +195,61 @@ int BroadcastDiv(const float *in0, const float *in1, float *tile_in0, float *til
   return ElementDiv(tile_in0, tile_in1, out, size);
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementDivCoreCalc(block_size, block_num, in0, in1, out, size, index)               \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) { \
+    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                         \
+    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                         \
+    MS_FLOAT_32xN(block_num) vout = MS_DIV_F32(block_size, vin0, vin1);                         \
+    MS_ST_F32(block_size, out + index, vout);                                                   \
+  }
+
 int ElementDiv(const float *in0, const float *in1, float *out, int size) {
-  for (int i = 0; i < size; i++) {
-    out[i] = in0[i] / in1[i];
+  int index = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementDivCoreCalc, in0, in1, out, size, index);
+  for (; index < size; index++) {
+    out[index] = in0[index] / in1[index];
   }
   return NNACL_OK;
 }
+
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementDivReluCoreCalc(block_size, block_num, in0, in1, out, size, index)                   \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {         \
+    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                                 \
+    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                 \
+    MS_FLOAT_32xN(block_num) vout = MS_MAX_N_F32(block_size, MS_DIV_F32(block_size, vin0, vin1), 0.0f); \
+    MS_ST_F32(block_size, out + index, vout);                                                           \
+  }
 
 int ElementDivRelu(const float *in0, const float *in1, float *out, int size) {
-  for (int i = 0; i < size; i++) {
-    float res = in0[i] / in1[i];
-    out[i] = res > 0 ? res : 0;
+  int index = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementDivReluCoreCalc, in0, in1, out, size, index);
+  for (; index < size; index++) {
+    float res = in0[index] / in1[index];
+    out[index] = res > 0 ? res : 0;
   }
   return NNACL_OK;
 }
 
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdElementDivRelu6CoreCalc(block_size, block_num, in0, in1, out, size, index)                    \
+  for (int block_max_size = size - block_num + 1; index < block_max_size; index += block_num) {           \
+    MS_FLOAT_32xN(block_num) vin0 = MS_LD_F32(block_size, in0 + index);                                   \
+    MS_FLOAT_32xN(block_num) vin1 = MS_LD_F32(block_size, in1 + index);                                   \
+    MS_FLOAT_32xN(block_num) vout =                                                                       \
+      MS_MIN_N_F32(block_size, MS_MAX_N_F32(block_size, MS_DIV_F32(block_size, vin0, vin1), 0.0f), 6.0f); \
+    MS_ST_F32(block_size, out + index, vout);                                                             \
+  }
+
 int ElementDivRelu6(const float *in0, const float *in1, float *out, int size) {
-  for (int i = 0; i < size; i++) {
-    out[i] = MSMIN(MSMAX(in0[i] / in1[i], 0), 6);
+  int index = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdElementDivRelu6CoreCalc, in0, in1, out, size, index);
+  for (; index < size; index++) {
+    out[index] = MSMIN(MSMAX(in0[index] / in1[index], RELU6_MIN_VAL), RELU6_MAX_VAL);
   }
   return NNACL_OK;
 }

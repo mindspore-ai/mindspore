@@ -139,6 +139,9 @@
 #define CLIDX_Y 1
 #define CLIDX_Z 2
 
+#define RELU6_MIN_VAL 0
+#define RELU6_MAX_VAL 6
+
 #if ENABLE_HIGH_PERFORMANCE
 #define MS_CHECK_TRUE_RET(value, errcode)
 #define MS_CHECK_TRUE_RET_VOID(value)
