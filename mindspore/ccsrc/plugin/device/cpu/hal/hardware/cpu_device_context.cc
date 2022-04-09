@@ -265,18 +265,29 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
   }
 
-  kernel::DeprecatedNativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(cpu_kernel);
-  opt::dynamic_shape::InferOp(kernel);
-  cpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
+  auto func_graph = kernel->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (!(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
+    kernel::DeprecatedNativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
+    MS_EXCEPTION_IF_NULL(cpu_kernel);
+    opt::dynamic_shape::InferOp(kernel);
+    cpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
+  }
 }
 
 void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
+
   // Remove reorder after PS feature finish adapting push/pull in auto_monad.
   auto execution_order = graph->execution_order();
   common::AnfAlgo::ReorderPosteriorExecList(NOT_NULL(&execution_order));
   graph->set_execution_order(execution_order);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (graph->is_dynamic_shape() && ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    opt::DynamicShapeConvertPass(graph);
+  }
 }
 
 bool CPUDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {

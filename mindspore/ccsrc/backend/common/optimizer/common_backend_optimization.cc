@@ -186,6 +186,7 @@ void DynamicShapeConvertPass(const std::shared_ptr<session::KernelGraph> &kernel
   dynamic_shape_convert_pm->AddPass(std::make_shared<opt::dynamic_shape::LinkCustomOp>());
   optimizer->AddPassManager(dynamic_shape_convert_pm);
   (void)optimizer->Optimize(kernel_graph);
+  kernel_graph->set_attr(kAttrHasCustomOp, MakeValue(true));
 #ifdef ENABLE_DUMP_IR
   if (save_graphs) {
     std::string file_name =
