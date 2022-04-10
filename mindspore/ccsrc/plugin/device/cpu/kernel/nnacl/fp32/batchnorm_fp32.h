@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_NNACL_FP32_BATCHNORM_H_
-#define MINDSPORE_NNACL_FP32_BATCHNORM_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP32_BATCHNORM_FP32_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP32_BATCHNORM_FP32_H_
 
 #include "nnacl/batchnorm_parameter.h"
 
@@ -30,9 +30,9 @@ void FusedBatchNormFp32(const float *input, const float *scale, const float *off
                         const float *variance, const BatchNormParameter *param, int task_id, float *output);
 
 void FusedBatchNormFp32MeanVar(const float *input, float *run_mean, float *run_var, const BatchNormParameter *param,
-                               float *save_mean, float *save_var);
+                               float *save_mean, float *save_var, bool isBatchNorm2d);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_NNACL_FUSED_BATCHNORM_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_NNACL_FP32_BATCHNORM_FP32_H_
