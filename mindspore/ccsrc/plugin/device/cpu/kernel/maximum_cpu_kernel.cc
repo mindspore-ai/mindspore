@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/maximum_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include "mindspore/core/ops/maximum.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -33,18 +34,30 @@ constexpr size_t kMaximumInputsNum = 2;
 constexpr size_t kMaximumOutputsNum = 1;
 }  // namespace
 
-void MaximumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_y_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  TypeId input_x_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  TypeId input_y_dtype = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Maximum>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast Maximum ops failed!";
+    return false;
+  }
+  kernel_name_ = kernel_ptr->name();
+  if (inputs.size() != kMaximumInputsNum || outputs.size() != kMaximumOutputsNum) {
+    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kMaximumInputsNum << " and "
+                  << kMaximumOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+  workspace_size_list_.clear();
+  InitInputOutputSize(inputs, outputs);
+  input_x_shape_ = inputs[0]->GetShapeVector();
+  input_y_shape_ = inputs[1]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  TypeId input_x_dtype = inputs[0]->GetDtype();
+  TypeId input_y_dtype = inputs[1]->GetDtype();
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
   for (size_t i = 0; i < output_shape_.size(); i++) {
-    output_num_ *= output_shape_[i];
+    output_num_ *= static_cast<size_t>(output_shape_[i]);
   }
   if ((input_x_shape_.size() == 0 && input_y_shape_.size() != 0) ||
       (input_x_shape_.size() != 0 && input_y_shape_.size() == 0)) {
@@ -52,20 +65,23 @@ void MaximumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (max_input_shape_size == output_shape_.size() && output_shape_.size() != 0) {
     InitInputTensors(input_x_dtype, input_y_dtype);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', inputs should be two tensors or one tensor and one scalar, but got " << input_x_dtype
-                      << " and " << input_y_dtype;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', inputs should be two tensors or one tensor and one scalar, but got "
+                  << input_x_dtype << " and " << input_y_dtype;
+    return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, MaximumLaunchFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "Maximum does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "Maximum does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+
+  return true;
 }
 
 void MaximumCpuKernelMod::InitInputTensorAndScalar(size_t max_input_shape_size) {
@@ -149,18 +165,18 @@ void MaximumCpuKernelMod::InitTensorBroadcastShape() {
   broadcast_input_y_shape_.resize(max_dims_, 1);
   broadcast_output_shape_.resize(max_dims_, 1);
   for (size_t i = 0; i < output_shape_.size(); i++) {
-    broadcast_output_shape_[i] = output_shape_[i];
+    broadcast_output_shape_[i] = static_cast<size_t>(output_shape_[i]);
   }
   int input_x_dim_offset = output_shape_.size() - input_x_shape_.size();
   for (size_t j = 0; j < input_x_shape_.size(); j++) {
-    broadcast_input_x_shape_[j + IntToSize(input_x_dim_offset)] = input_x_shape_[j];
-    input_x_num_ *= input_x_shape_[j];
+    broadcast_input_x_shape_[j + IntToSize(input_x_dim_offset)] = static_cast<size_t>(input_x_shape_[j]);
+    input_x_num_ *= static_cast<size_t>(input_x_shape_[j]);
   }
   int input_y_dim_offset = output_shape_.size() - input_y_shape_.size();
   for (size_t k = 0; k < input_y_shape_.size(); k++) {
     if (need_broadcast_) {
-      broadcast_input_y_shape_[k + IntToSize(input_y_dim_offset)] = input_y_shape_[k];
-      input_y_num_ *= input_y_shape_[k];
+      broadcast_input_y_shape_[k + IntToSize(input_y_dim_offset)] = static_cast<size_t>(input_y_shape_[k]);
+      input_y_num_ *= static_cast<size_t>(input_y_shape_[k]);
     }
   }
 }

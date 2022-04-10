@@ -23,12 +23,13 @@
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
 namespace kernel {
-class LowerBoundCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class LowerBoundCpuKernelMod : public NativeCpuKernelMod {
  public:
   LowerBoundCpuKernelMod() = default;
   ~LowerBoundCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -45,9 +46,9 @@ class LowerBoundCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                             const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, LowerBoundFunc>> func_list_;
   LowerBoundFunc kernel_func_;
-  std::vector<size_t> sorted_x_shape_;
-  std::vector<size_t> values_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> sorted_x_shape_;
+  std::vector<int64_t> values_shape_;
+  std::vector<int64_t> output_shape_;
   size_t sorted_x_num_;
   size_t values_num_;
   size_t output_num_;

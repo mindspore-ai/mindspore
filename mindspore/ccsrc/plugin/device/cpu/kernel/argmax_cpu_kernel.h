@@ -25,12 +25,13 @@
 
 namespace mindspore {
 namespace kernel {
-class ArgmaxCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ArgmaxCpuKernelMod : public NativeCpuKernelMod {
  public:
   ArgmaxCpuKernelMod() = default;
   ~ArgmaxCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -46,10 +47,10 @@ class ArgmaxCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   ArgmaxFunc kernel_func_;
 
-  std::vector<size_t> shape_;
-  size_t num_before_axis_{0};
-  size_t num_after_axis_{0};
-  size_t dim_axis_{0};
+  std::vector<int64_t> shape_;
+  int64_t num_before_axis_{0};
+  int64_t num_after_axis_{0};
+  int64_t dim_axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
