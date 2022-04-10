@@ -105,9 +105,11 @@ add_subdirectory(mindspore/ccsrc)
 add_subdirectory(mindspore/core)
 
 if(DEFINED ENV{ENABLE_CLOUD_AND_LITE})
-  set(ENABLE_CLOUD_AND_LITE $ENV{ENABLE_CLOUD_AND_LITE})
+    set(ENABLE_CLOUD_AND_LITE $ENV{ENABLE_CLOUD_AND_LITE})
 endif()
 if(ENABLE_CLOUD_AND_LITE)
+    set(ENV{MSLITE_ENABLE_RUNTIME_CONVERT} "on")
+    set(ENV{MSLITE_ENABLE_ACL} "on")
     add_subdirectory(mindspore/lite)
 endif()
 

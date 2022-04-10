@@ -14,8 +14,10 @@ add_library(mindir_proto_mid OBJECT ${PROTO_SRCS})
 add_compile_definitions(MINDIR_EXPORT_TENSOR_LAYOUT_CLIP)
 add_compile_definitions(COMMON_DLL)
 
-set(MINDIR_EXPORT_DIR ${CCSRC_DIR}/transform/express_ir)
-add_subdirectory(${MINDIR_EXPORT_DIR} mindir_exporter)
+if(NOT ENABLE_CLOUD_AND_LITE)
+    set(MINDIR_EXPORT_DIR ${CCSRC_DIR}/transform/express_ir)
+    add_subdirectory(${MINDIR_EXPORT_DIR} mindir_exporter)
+endif()
 
 add_library(mindir_serializer_mid OBJECT
         ${MINDIR_EXPORTER_SRC_LIST}

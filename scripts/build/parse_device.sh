@@ -56,6 +56,7 @@ parse_device()
       ENABLE_CPU="on"
       export ENABLE_MPI="on"
       export ENABLE_AKG="on"
+      export ENABLE_CLOUD_AND_LITE="on"
     else
       echo "Invalid value ${DEVICE_VERSION} for option -V"
       usage

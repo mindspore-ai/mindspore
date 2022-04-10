@@ -302,12 +302,14 @@ target_link_libraries(converter_lite PRIVATE
         preprocess_mid
         config_parser_mid
         coder_mid
-        ccsrc_debug_common_mid_
-        mindir_proto_mid
-        _mindspore_transform_express_ir_obj
         mindir_serializer_mid
         )
-
+if(NOT ENABLE_CLOUD_AND_LITE)
+    target_link_libraries(converter_lite PRIVATE
+            ccsrc_debug_common_mid_
+            mindir_proto_mid
+            _mindspore_transform_express_ir_obj)
+endif()
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(converter_lite PRIVATE
             lite_acl_mid
