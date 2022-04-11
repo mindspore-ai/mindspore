@@ -39,6 +39,10 @@ class ComputeGraphNode : public NodeBase {
   // Send the specified message to the meta server node.
   bool SendMessageToMSN(const std::string msg_name, const std::string &msg_body);
 
+  // Query the specified message from the meta server node according to the given message name.
+  // Returns nullptr if no message returned after timeout.
+  std::shared_ptr<std::string> RetrieveMessageFromMSN(const std::string &msg_name, uint32_t timeout = 5);
+
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();

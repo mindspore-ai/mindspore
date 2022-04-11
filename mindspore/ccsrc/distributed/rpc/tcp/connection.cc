@@ -256,7 +256,12 @@ int Connection::ReceiveMessage() {
 
   // Call msg handler if set
   if (message_handler) {
-    message_handler(recv_message);
+    auto result = message_handler(recv_message);
+    if (result != rpc::NULL_MSG) {
+      // Send the result message back to the tcp client if any.
+      FillSendMessage(result, "", false);
+      (void)Flush();
+    }
   } else {
     MS_LOG(INFO) << "Message handler was not found";
   }
@@ -415,6 +420,11 @@ void Connection::FillRecvMessage() {
   recv_kernel_msg.msg_iov = recv_io_vec;
   recv_kernel_msg.msg_iovlen = IntToSize(i);
   total_recv_len = msg->name.size() + recv_to.size() + recv_from.size() + msg->body.size();
+
+  if (recv_message != nullptr) {
+    delete recv_message;
+    recv_message = nullptr;
+  }
   recv_message = msg;
 }
 

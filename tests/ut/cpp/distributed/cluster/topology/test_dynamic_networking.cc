@@ -117,6 +117,52 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
 
   msn.Finalize();
 }
+
+/// Feature: test retrieve message from the meta server node.
+/// Description: send a retrieve request to msn.
+/// Expectation: get message from msn successfully.
+TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
+  std::string server_host = "127.0.0.1";
+  std::string server_port = "8090";
+  common::SetEnv(kEnvMetaServerHost, server_host.c_str());
+  common::SetEnv(kEnvMetaServerPort, server_port.c_str());
+
+  size_t total_node_num = 1;
+  MetaServerNode msn("meta_server_node", total_node_num);
+  ASSERT_TRUE(msn.Initialize());
+
+  std::string message_name = "get_route";
+  static std::string received_message = "127.0.0.1::1234";
+  auto func = std::make_shared<std::function<std::string(const std::string &)>>(
+    [](const std::string &) -> std::string { return received_message; });
+  msn.RegisterMessageHandler(message_name, func);
+
+  ComputeGraphNode cgn("compute_graph_node");
+  ASSERT_TRUE(cgn.Initialize());
+
+  size_t interval = 1;
+  size_t retry = 30;
+  while (((msn.GetAliveNodeNum() != total_node_num) || (msn.TopologyState() != TopoState::kInitialized)) &&
+         (retry-- > 0)) {
+    sleep(interval);
+  }
+
+  ASSERT_EQ(total_node_num, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
+
+  std::shared_ptr<std::string> ret_msg = cgn.RetrieveMessageFromMSN(message_name);
+
+  cgn.Finalize();
+
+  retry = 30;
+  while (msn.GetAliveNodeNum() > 0 && retry-- > 0) {
+    sleep(interval);
+  }
+  ASSERT_EQ(*ret_msg, received_message);
+  ASSERT_EQ(0, msn.GetAliveNodeNum());
+
+  msn.Finalize();
+}
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

@@ -91,8 +91,10 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
       MS_LOG(ERROR) << "Unknown message name: " << name;
       return rpc::NULL_MSG;
     }
-    (*message_handlers_[name])(message->Body());
-    return rpc::NULL_MSG;
+    const auto &result = (*message_handlers_[name])(message->Body());
+    auto rt_msg = CreateMessage(meta_server_addr_.GetUrl(), name, result);
+    MS_EXCEPTION_IF_NULL(rt_msg);
+    return rt_msg.release();
   }
 }
 

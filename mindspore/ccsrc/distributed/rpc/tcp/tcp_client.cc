@@ -24,6 +24,14 @@ bool TCPClient::Initialize() {
   if (tcp_comm_ == nullptr) {
     tcp_comm_ = std::make_unique<TCPComm>();
     MS_EXCEPTION_IF_NULL(tcp_comm_);
+
+    // This message handler is used to accept and maintain the received message from the tcp server.
+    tcp_comm_->SetMessageHandler([this](MessageBase *const message) -> MessageBase *const {
+      received_message_ = message;
+      std::unique_lock<std::mutex> lock(mutex_);
+      wait_msg_cond_.notify_one();
+      return NULL_MSG;
+    });
     rt = tcp_comm_->Initialize();
   } else {
     rt = true;
@@ -88,6 +96,19 @@ bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
 int TCPClient::SendSync(std::unique_ptr<MessageBase> &&msg) { return tcp_comm_->Send(msg.release(), true); }
 
 void TCPClient::SendAsync(std::unique_ptr<MessageBase> &&msg) { (void)tcp_comm_->Send(msg.release(), false); }
+
+MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout) {
+  int retval = tcp_comm_->Send(msg.release(), true);
+  if (retval > 0) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    bool res =
+      wait_msg_cond_.wait_for(lock, std::chrono::seconds(timeout), [this] { return received_message_ != nullptr; });
+    if (res) {
+      return received_message_;
+    }
+  }
+  return NULL_MSG;
+}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

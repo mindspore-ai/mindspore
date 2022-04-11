@@ -19,6 +19,8 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
+#include <condition_variable>
 
 #include "distributed/rpc/tcp/tcp_comm.h"
 #include "utils/ms_utils.h"
@@ -47,9 +49,21 @@ class TCPClient {
   // Send the message from the source to the destination asynchronously.
   void SendAsync(std::unique_ptr<MessageBase> &&msg);
 
+  // Retrieve a message from tcp server specified by the input message.
+  // Returns nullptr after timeout.
+  MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout);
+
  private:
   // The basic TCP communication component used by the client.
   std::unique_ptr<TCPComm> tcp_comm_;
+
+  // The mutex and condition variable used to synchronize the write and read of the received message returned by calling
+  // the `ReceiveSync` method.
+  std::mutex mutex_;
+  std::condition_variable wait_msg_cond_;
+
+  // The received message from the meta server by calling the method `ReceiveSync`.
+  MessageBase *received_message_{nullptr};
 
   DISABLE_COPY_AND_ASSIGN(TCPClient);
 };
