@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "tools/optimizer/fusion/gelu_fusion.h"
 
 namespace mindspore {
@@ -32,9 +33,10 @@ class TfGeLUFusion : public GeLUFusion {
   ~TfGeLUFusion() override = default;
 
  private:
-  bool Init() const override;
-  bool CheckPattern(const EquivPtr &equiv) const override;
-  const BaseRef DefinePattern() const override;
+  bool Init() const;
+  bool CheckPattern(const std::string &pattern_name, const EquivPtr &equiv) const override;
+  std::unordered_map<std::string, VectorRef> DefinePatterns() const override;
+  VectorRef DefineFirstStructurePattern() const;
 
  private:
   mutable VarPtr power_ = nullptr;

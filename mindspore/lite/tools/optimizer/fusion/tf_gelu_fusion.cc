@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #define USE_DEPRECATED_API
 #include "tools/optimizer/fusion/tf_gelu_fusion.h"
+#include <unordered_map>
 #include "ops/op_utils.h"
 #include "nnacl/op_base.h"
 #include "mindapi/base/types.h"
@@ -47,10 +48,8 @@ bool CheckTanh(const EquivPtr &equiv, const VarPtr &input) {
 }  // namespace
 
 bool TfGeLUFusion::Init() const {
-  if (!GeLUFusion::Init()) {
-    MS_LOG(ERROR) << "basic class initial member failed.";
-    return false;
-  }
+  input_ = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(input_ != nullptr, false);
   power_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(power_ != nullptr, false);
   power_y_ = std::make_shared<Var>();
@@ -69,11 +68,7 @@ bool TfGeLUFusion::Init() const {
 }
 
 // gelu(x) = 1/2 * x * [1 + tanh(0.79788 * (x + 0.044715 * x ^ 3))]
-const BaseRef TfGeLUFusion::DefinePattern() const {
-  if (!Init()) {
-    MS_LOG(ERROR) << "initial member failed.";
-    return {};
-  }
+VectorRef TfGeLUFusion::DefineFirstStructurePattern() const {
   VectorRef pow_ref({power_, input_, power_y_});
   auto is_mul1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMulFusion>);
   MS_CHECK_TRUE_RET(is_mul1 != nullptr, {});
@@ -97,7 +92,17 @@ const BaseRef TfGeLUFusion::DefinePattern() const {
   return mul4_ref;
 }
 
-bool TfGeLUFusion::CheckPattern(const EquivPtr &equiv) const {
+std::unordered_map<std::string, VectorRef> TfGeLUFusion::DefinePatterns() const {
+  if (!Init()) {
+    MS_LOG(ERROR) << "initial member failed.";
+    return {};
+  }
+  std::unordered_map<std::string, VectorRef> patterns;
+  patterns["FirstStructure"] = DefineFirstStructurePattern();
+  return patterns;
+}
+
+bool TfGeLUFusion::CheckPattern(const std::string &pattern_name, const EquivPtr &equiv) const {
   MS_ASSERT(equiv != nullptr);
   if (!CheckTanh(equiv, tanh_)) {
     return false;
