@@ -182,6 +182,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMaskedSelect, R{InferImplMaskedSelect, nullptr, true}},
     {prim::kPrimTensorCopySlices, R{InferImplTensorCopySlices, nullptr, true}},
     {prim::kPrimNonZero, R{InferImplNonZero, nullptr, true}},
+    {prim::kPrimFlattenConcat, R{InferImplFlattenConcat, nullptr, true}},
     // Structure
     {prim::kPrimMakeTuple, R{InferImplMakeTuple, nullptr, true}},
     {prim::kPrimMakeList, R{InferImplMakeList, nullptr, true}},

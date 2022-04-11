@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,5 +18,19 @@
 #define MINDSPORE_SHAPE_UTILS_INFO_H_
 
 #include "mindapi/base/shape_vector.h"
+
+namespace mindspore {
+inline size_t SizeOf(const ShapeVector &shape) {
+  int64_t data_size = 1;
+  for (auto dim : shape) {
+    if (dim < 0) {
+      // For dynamic shape which has negative dimensions, data size should be zero.
+      return 0;
+    }
+    data_size *= dim;
+  }
+  return static_cast<size_t>(data_size);
+}
+}  // namespace mindspore
 
 #endif  // MINDSPORE_SHAPE_UTILS_INFO_H_

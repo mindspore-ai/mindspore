@@ -30,6 +30,7 @@
 #include "base/complex_storage.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils_secure.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace tensor {
@@ -48,18 +49,6 @@ static std::string MakeId() {
 
 static TypeId TypeIdOf(const TypePtr &data_type, TypeId defaultTypeId) {
   return data_type ? data_type->type_id() : defaultTypeId;
-}
-
-static size_t SizeOf(const ShapeVector &shape) {
-  int64_t data_size = 1;
-  for (auto dim : shape) {
-    if (dim < 0) {
-      // For dynamic shape which has negative dimensions, data size should be zero.
-      return 0;
-    }
-    data_size *= dim;
-  }
-  return static_cast<size_t>(data_size);
 }
 
 static std::string ShapeToString(const ShapeVector &shape) {

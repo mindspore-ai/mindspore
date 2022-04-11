@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@
 #include <functional>
 #include <iterator>
 #include <numeric>
+#include "abstract/abstract_value.h"
 #include "abstract/ops/infer_functions.h"
-#include "abstract/utils.h"
 #include "abstract/param_validator.h"
-#include "utils/shape_utils.h"
+#include "abstract/utils.h"
 #include "ops/op_utils.h"
 #include "utils/anf_utils.h"
 #include "utils/check_convert_utils.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace abstract {
@@ -1124,6 +1125,54 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   max_shape[axis_value] = max_all_shp;
   ret->set_shape(std::make_shared<Shape>(shape, min_shape, max_shape));
   return ret;
+}
+
+AbstractBasePtr InferImplFlattenConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  auto seq = dyn_cast<abstract::AbstractSequence>(args_spec_list[0]);
+  if (seq == nullptr) {
+    MS_LOG(EXCEPTION) << "The input for '" << primitive->name() << "' should be tuple or list, but got "
+                      << args_spec_list[0]->type_name();
+  }
+  // Group inputs by data type and calculate their chunk sizes.
+  std::map<TypeId, size_t> chunks;
+  for (auto &element : seq->elements()) {
+    auto abs_tensor = dyn_cast<abstract::AbstractTensor>(element);
+    if (abs_tensor == nullptr) {
+      MS_LOG(EXCEPTION) << "The input element for '" << primitive->name() << "' should be Tensor, but got "
+                        << element->type_name();
+    }
+    // Calculate data size (number of elements) by shape.
+    auto base_shape = abs_tensor->BuildShape();
+    MS_EXCEPTION_IF_NULL(base_shape);
+    auto shape = base_shape->cast<ShapePtr>();
+    if (shape == nullptr) {
+      MS_LOG(EXCEPTION) << "The input tensors for '" << primitive->name() << "' should have shape, but got "
+                        << base_shape->ToString();
+    }
+    auto data_size = SizeOf(shape->shape());
+    if (data_size == 0) {
+      MS_LOG(EXCEPTION) << "The input tensors for '" << primitive->name() << "'should have static shape, but got "
+                        << shape->ToString();
+    }
+    // Find data type from the AbstractTensor.
+    const auto &element_abs = abs_tensor->element();
+    MS_EXCEPTION_IF_NULL(element_abs);
+    auto dtype = element_abs->BuildType();
+    MS_EXCEPTION_IF_NULL(dtype);
+    // Group them by data type.
+    chunks[dtype->type_id()] += data_size;
+  }
+  // Make result AbstractTuple.
+  AbstractBasePtrList tuple_element;
+  tuple_element.reserve(chunks.size());
+  for (auto &chunk : chunks) {
+    ShapeVector shape_vec{static_cast<int64_t>(chunk.second)};
+    auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(chunk.first), shape_vec);
+    (void)tuple_element.emplace_back(abs);
+  }
+  return std::make_shared<abstract::AbstractTuple>(std::move(tuple_element));
 }
 
 AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
