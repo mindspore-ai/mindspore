@@ -2519,7 +2519,8 @@ class Log(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
+        TypeError: If dtype of `x` is not float16, float32 or float64 on GPU and CPU.
+        TypeError: If dtype of `x` is not float16 or float32 on Ascend.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -26,6 +26,8 @@ MS_REG_GPU_KERNEL_ONE(Expm1, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOu
                       UnaryOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Expm1, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       UnaryOpGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(Log, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      UnaryOpGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(Log, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       UnaryOpGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Log, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
