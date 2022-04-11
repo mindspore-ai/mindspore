@@ -153,6 +153,7 @@ constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
 constexpr auto kGridSampler3D = "GridSampler3D";
 constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
+constexpr auto kMish = "Mish";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -565,6 +566,7 @@ GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdate, std::make_shared<Primitive>("BNTra
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdateGrad, std::make_shared<Primitive>("BNTrainingUpdateGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool, std::make_shared<Primitive>("FractionalMaxPool"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPoolGrad, std::make_shared<Primitive>("FractionalMaxPoolGrad"));
+GVAR_DEF(PrimitivePtr, kPrimMish, std::make_shared<Primitive>(kMish));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

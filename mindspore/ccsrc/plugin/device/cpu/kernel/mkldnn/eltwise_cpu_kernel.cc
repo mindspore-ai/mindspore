@@ -45,6 +45,7 @@ dnnl::eltwise_forward::desc EltWiseCpuKernelMod::GetForwardEltwiseDesc(const dnn
     {prim::kPrimTanh->name(), DescParam{dnnl::algorithm::eltwise_tanh}},
     {prim::kPrimElu->name(), DescParam{dnnl::algorithm::eltwise_elu, 1.0f, 0.0f}},
     {prim::kPrimSoftplus->name(), DescParam{dnnl::algorithm::eltwise_soft_relu}},
+    {prim::kPrimMish->name(), DescParam{dnnl::algorithm::eltwise_mish}},
   };
   const auto desc_pair = eltWiseOpDescMap.find(kernel_name_);
   if (desc_pair == eltWiseOpDescMap.end()) {
@@ -94,5 +95,7 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kTanh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kSoftplus); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,
+                                 []() { return std::make_shared<EltWiseCpuKernelMod>(prim::kPrimMish->name()); });
 }  // namespace kernel
 }  // namespace mindspore

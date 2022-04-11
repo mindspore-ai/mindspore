@@ -156,6 +156,7 @@ tensor_scatter_sub = P.TensorScatterSub()
 tensor_scatter_mul = P.TensorScatterMul()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
+mish = P.Mish()
 
 
 def csr_mul(x, y):
