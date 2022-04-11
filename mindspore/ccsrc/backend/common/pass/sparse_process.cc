@@ -32,7 +32,7 @@ constexpr auto kCSRValueNodeNum = 2;
 constexpr auto kSparseAttrIndex = 1;
 
 // Convert CSRTensor Parameter or ValueNode to Tuple by setting its abstract.
-void AbstractCSRToAbstractTuple(const AnfNodePtr &sparse) {
+void AbstractSparseToAbstractTuple(const AnfNodePtr &sparse) {
   MS_EXCEPTION_IF_NULL(sparse);
   if (!(sparse->isa<Parameter>() || sparse->isa<ValueNode>())) {
     return;
@@ -43,6 +43,12 @@ void AbstractCSRToAbstractTuple(const AnfNodePtr &sparse) {
     auto abs_sparse = param_abs->cast<abstract::AbstractCSRTensorPtr>();
     std::vector<AbstractBasePtr> abstract_list{abs_sparse->indptr(), abs_sparse->indices(), abs_sparse->values(),
                                                abs_sparse->dense_shape()};
+    auto abs_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
+    abs_tuple->set_type(abs_tuple->BuildType());
+    sparse->set_abstract(abs_tuple);
+  } else if (param_abs->isa<abstract::AbstractCOOTensor>()) {
+    auto abs_sparse = param_abs->cast<abstract::AbstractCOOTensorPtr>();
+    std::vector<AbstractBasePtr> abstract_list{abs_sparse->indices(), abs_sparse->values(), abs_sparse->dense_shape()};
     auto abs_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);
     abs_tuple->set_type(abs_tuple->BuildType());
     sparse->set_abstract(abs_tuple);
@@ -183,7 +189,7 @@ CNodePtr ConvertSparseGetAttrToTupleGetItem(int64_t index, const AnfNodePtr &nod
   if (inputs.size() <= kSparseAttrIndex) {
     MS_LOG(EXCEPTION) << "For SparseGetAttr, CNode must have 2 inputs (Prim, Sparse)";
   }
-  AbstractCSRToAbstractTuple(inputs[kSparseAttrIndex]);
+  AbstractSparseToAbstractTuple(inputs[kSparseAttrIndex]);
   auto index_node = NewValueNode(index);
   AbstractBasePtr index_abs = std::make_shared<abstract::AbstractScalar>(std::make_shared<Int64Imm>(index));
   index_node->set_abstract(index_abs);
