@@ -29,17 +29,13 @@ class LossMonitor(Callback):
 
     Note:
         If per_print_times is 0, do not print loss.
-        Parameter `has_trained_epoch` use for failure recovery scenarios.
 
     Args:
         per_print_times (int): How many steps to print once loss. During sink mode, it will print loss in the
                                nearest step. Default: 1.
-        has_trained_epoch (int): How many epochs has trained. If this parameter is set, LossMonitor will monitor the
-                                 loss after has_trained_epoch's epoch. Default: 0.
 
     Raises:
         ValueError: If per_print_times is not an integer or less than zero.
-        ValueError: If has_trained_epoch is not an integer or less than zero.
 
     Examples:
         >>> from mindspore import Model, nn
@@ -54,13 +50,11 @@ class LossMonitor(Callback):
         >>> model.train(10, dataset, callbacks=loss_monitor)
     """
 
-    def __init__(self, per_print_times=1, has_trained_epoch=0):
+    def __init__(self, per_print_times=1):
         super(LossMonitor, self).__init__()
         Validator.check_non_negative_int(per_print_times)
-        Validator.check_non_negative_int(has_trained_epoch)
         self._per_print_times = per_print_times
         self._last_print_time = 0
-        self._has_trained_epoch = has_trained_epoch
 
     def step_end(self, run_context):
         """
@@ -83,7 +77,7 @@ class LossMonitor(Callback):
 
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
-                cb_params.cur_epoch_num, cur_step_in_epoch + self._has_trained_epoch))
+                cb_params.cur_epoch_num, cur_step_in_epoch))
 
         #In disaster recovery scenario, the cb_params.cur_step_num may be rollback to previous step
         # and be less than self._last_print_time, so self._last_print_time need to be updated.
@@ -94,5 +88,4 @@ class LossMonitor(Callback):
 
         if self._per_print_times != 0 and (cb_params.cur_step_num - self._last_print_time) >= self._per_print_times:
             self._last_print_time = cb_params.cur_step_num
-            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num + self._has_trained_epoch,
-                                                      cur_step_in_epoch, loss), flush=True)
+            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss), flush=True)
