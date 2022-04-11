@@ -775,10 +775,10 @@ AnfNodePtr UpdatestatePureNodeEliminater::operator()(const OptimizerPtr &, const
   }
 
   auto &attach = update_state_node->input(kAttachIndex);
+  // update_state(u, param) or update_state(u, value_node) is redundant.
   auto cnode = dyn_cast<CNode>(attach);
   if (cnode == nullptr) {
-    // Skip value node or parameter.
-    return nullptr;
+    return update_state_node->input(kInputIndex);
   }
   if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) || IsPrimitiveCNode(cnode, prim::kPrimDepend) ||
       IsPrimitiveCNode(cnode, prim::kPrimPartial) || IsPrimitiveCNode(cnode, prim::kPrimMakeTuple) ||
