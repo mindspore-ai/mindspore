@@ -36,4 +36,3 @@ if(ENABLE_PYTHON)
 endif()
 
 add_library(engine-datasetops OBJECT ${DATASET_ENGINE_DATASETOPS_SRC_FILES})
-add_dependencies(engine-datasetops engine-cache-client)
