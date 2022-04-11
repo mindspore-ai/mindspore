@@ -35,7 +35,7 @@ class MIND_API Tril : public BaseOperator {
 };
 
 abstract::AbstractBasePtr TrilInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args);
+                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

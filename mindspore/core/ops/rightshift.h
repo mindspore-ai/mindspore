@@ -17,9 +17,9 @@
 #define MINDSPORE_CORE_OPS_RIGHTSHIFT_H_
 #include <vector>
 #include <memory>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
@@ -35,7 +35,7 @@ class MIND_API RightShift : public BaseOperator {
   void Init() {}
 };
 abstract::AbstractBasePtr RightShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<AbstractBasePtr> &input_args);
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRightShift = std::shared_ptr<RightShift>;
 }  // namespace ops
 }  // namespace mindspore

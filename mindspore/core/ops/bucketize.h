@@ -22,10 +22,9 @@
 #include <set>
 #include <map>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
 #include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,8 +40,8 @@ class MIND_API Bucketize : public BaseOperator {
   MIND_API_BASE_MEMBER(Bucketize);
 };
 
-AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_BUCKETIZE_H_
