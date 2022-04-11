@@ -19,9 +19,11 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 celu_op_info = TBERegOp("CeLU") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
-    .binfile_name("celu.so") \
+    .binfile_name("celu_v2.so") \
     .compute_cost(10) \
-    .kernel_name("celu") \
+    .kernel_name("celu_v2") \
+    .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .partial_flag(True) \
     .attr("alpha", "optional", "float", "all", "1.0") \
     .input(0, "x", False, "required", "all") \
