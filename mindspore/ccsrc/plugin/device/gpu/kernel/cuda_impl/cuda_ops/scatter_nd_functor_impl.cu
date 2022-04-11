@@ -90,7 +90,7 @@ __global__ void ScatterNdSub(const size_t unit_size, const size_t index_depth, c
     write_index += j;
 
     if (!out_bound) {
-      MsAtomicAdd(&input[write_index], -updates[read_index]);
+      MsAtomicSub(&input[write_index], updates[read_index]);
     }
   }
 }
