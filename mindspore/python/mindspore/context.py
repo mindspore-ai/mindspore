@@ -285,7 +285,7 @@ class _Context:
         """Set the block size of memory pool."""
         if _get_mode() == GRAPH_MODE:
             logger.warning("Graph mode doesn't support to set parameter 'mempool_block_size' of context currently, "
-                           "you can use context.set_context to set pynative mode")
+                           "you can use context.set_context to set pynative mode.")
             return
         if not Validator.check_str_by_regular(mempool_block_size, _re_pattern):
             raise ValueError("For 'context.set_context', the argument 'mempool_block_size' should be in "
@@ -634,7 +634,7 @@ def _check_target_specific_cfgs(device, arg_key):
     supported_devices = device_cfgs[arg_key]
     if device in supported_devices:
         return True
-    logger.warning(f"For 'context.set_context', "
+    logger.warning(f"For 'context.set_context', when set the argument '{arg_key}', "
                    f"the argument 'device_target' only supports devices in '{supported_devices}', "
                    f"but got '{device}', ignore it.")
     return False
