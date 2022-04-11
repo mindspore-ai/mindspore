@@ -170,7 +170,8 @@ def _download_work(shard_id, current_idx, local_path, cache, q):
         used_disk = get_used_disk_per()
         while used_disk > float(config.DISK_THRESHOLD):
             logger.info("[{} FUNCTION] Used disk space is {}%, and the disk threshold is {}%.".format(
-                sys._getframe().f_code.co_name, used_disk*100, float(config.DISK_THRESHOLD)*100))  # pylint: disable=W0212
+                sys._getframe().f_code.co_name, used_disk*100,  # pylint: disable=W0212
+                float(config.DISK_THRESHOLD)*100))
             retry_cnt = 0
             has_deleted = _delete_candidate_datasets(
                 current_idx.value, idx, cache, q, local_path)
@@ -257,7 +258,8 @@ def _sync_up_for_obs_mindrecord_dataset(rank_id, current_epoch):
 
     file_upload_to_obs(config.SYNC_OBS_PATH, ready_dir, ready_file_name)
     logger.info("[{} FUNCTION] Current rank:{}'s sync file:{} is ready for epoch:{}.".format(
-        sys._getframe().f_code.co_name, rank_id, os.path.join(ready_dir, ready_file_name), current_epoch))  # pylint: disable=W0212
+        sys._getframe().f_code.co_name, rank_id, os.path.join(ready_dir, ready_file_name),  # pylint: disable=W0212
+        current_epoch))
 
 
 def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
@@ -319,8 +321,8 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
             logger.error(traceback.format_exc())
         time.sleep(config.RETRY_DELTA_TIME)
         logger.info("[{} FUNCTION] Waiting for sync dir:{} and current_rank:{}, total_rank:{}, "
-                    "ready_rank:{} in epoch:{}.".format(sys._getframe().f_code.co_name, ready_dir,  # pylint: disable=W0212
-                                                        rank_id, rank_size, ready_num, current_epoch))
+                    "ready_rank:{} in epoch:{}.".format(sys._getframe().f_code.co_name,  # pylint: disable=W0212
+                                                        ready_dir, rank_id, rank_size, ready_num, current_epoch))
     logger.info("[{} FUNCTION] Succeed to sync dir:{} and begin epoch:{}.".format(
         sys._getframe().f_code.co_name, ready_dir, current_epoch))  # pylint: disable=W0212
 
@@ -435,7 +437,8 @@ class MindRecordFromOBS:
                 # cache miss
                 self._cache_miss_times += 1
                 logger.info("[{} FUNCTION]  Cache miss in shard {} for times {}, expect dataset {}.".format(
-                    sys._getframe().f_code.co_name, self._shard_id, self._cache_miss_times, current_dataset))  # pylint: disable=W0212
+                    sys._getframe().f_code.co_name, self._shard_id, self._cache_miss_times,  # pylint: disable=W0212
+                    current_dataset))
                 time.sleep(self._cache_miss_times * config.WAIT_STEP_TIME)
             return next(self)
 
