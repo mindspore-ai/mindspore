@@ -860,6 +860,13 @@ AnfNodePtr AnfAlgo::GetInputNode(const CNodePtr &node, size_t index) {
 void AnfAlgo::SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(input_node);
+  if (node->func_graph() != nullptr) {
+    auto manager = node->func_graph()->manager();
+    if (manager != nullptr) {
+      manager->SetEdge(node, index + 1, input_node);
+      return;
+    }
+  }
   node->set_input(index + 1, input_node);
 }
 
