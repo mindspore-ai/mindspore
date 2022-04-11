@@ -26,12 +26,6 @@ if(ENABLE_PYTHON)
             python/pybind_register.cc
             )
     target_include_directories(APItoPython PRIVATE ${pybind11_INCLUDE_DIRS})
-
-    if(ENABLE_CACHE)
-        add_dependencies(APItoPython engine-cache-server)
-    else()
-        add_dependencies(APItoPython engine-cache-client)
-    endif()
 endif()
 
 add_library(cpp-API OBJECT
@@ -46,10 +40,3 @@ add_library(cpp-API OBJECT
         text.cc
         vision.cc
         )
-
-# for include pb.h
-if(ENABLE_CACHE)
-    add_dependencies(cpp-API engine-cache-server)
-else()
-    add_dependencies(cpp-API engine-cache-client)
-endif()
