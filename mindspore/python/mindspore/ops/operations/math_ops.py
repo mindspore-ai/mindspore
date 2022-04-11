@@ -5560,7 +5560,7 @@ class LinSpace(PrimitiveWithInfer):
         TypeError: If `num` is not a int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> linspace = ops.LinSpace()

@@ -57,7 +57,7 @@ void LinSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "SolveTriangular does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "LinSpace does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
 }
