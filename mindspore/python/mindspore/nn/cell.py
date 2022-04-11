@@ -909,12 +909,10 @@ class Cell(Cell_):
         NOTE:
             This is an experimental interface that is subject to change or deletion.
         """
-
+        self._dynamic_shape_inputs = inputs
         for ele in self._dynamic_shape_inputs:
             if isinstance(ele, (str, int, dict)):
-                raise TypeError(f"For element in 'set_inputs', the type must be Tensor,\
-                     but got {type(ele)}.")
-        self._dynamic_shape_inputs = inputs
+                raise TypeError(f"For element in 'set_inputs', the type must be Tensor, but got {type(ele)}.")
 
     def get_inputs(self):
         """
