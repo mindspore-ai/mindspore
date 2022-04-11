@@ -634,7 +634,7 @@ def _check_target_specific_cfgs(device, arg_key):
     supported_devices = device_cfgs[arg_key]
     if device in supported_devices:
         return True
-    logger.warning(f"For 'context.set_context', "
+    logger.warning(f"For 'context.set_context', when set the argument '{arg_key}', "
                    f"the argument 'device_target' only supports devices in '{supported_devices}', "
                    f"but got '{device}', ignore it.")
     return False
