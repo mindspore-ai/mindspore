@@ -477,3 +477,32 @@ def test_continue_stuck_in_vm():
     grad_net = Grad(net)
     grad = grad_net(x, y)
     print(grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_partial_eliminate_while_for_if_break():
+    """
+    Feature: nest control flow.
+    Description: nest control flow with while,for,if and break.
+    Expectation: Null.
+    """
+
+    class NetWork(nn.Cell):
+        def construct(self, x):
+            while x < 3:
+                for _ in range(2):
+                    if x <= 4:
+                        x = x + 1
+                        break
+                x = 1 + x
+            return x
+
+    x = np.array([0], np.float32)
+    net = NetWork()
+    grad_net = Grad(net)
+    grad = grad_net(Tensor(x))
+    print(grad)
