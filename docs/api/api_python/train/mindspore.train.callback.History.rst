@@ -7,14 +7,6 @@
     .. note::
         通常使用在 `mindspore.Model.train` 中。
 
-    **参数：**
-
-    - **has_trained_epoch** (int) - 表示已经训练了多少个epoch，如果设置了该参数，History将监控该数值之后epoch的网络输出信息。默认值：0。
-
-    **异常：**
-
-    - **ValueError** - 当 `has_trained_epoch` 不是整数或小于零。
-
     .. py:method:: begin(run_context)
 
         训练开始时初始化History对象的epoch属性。
