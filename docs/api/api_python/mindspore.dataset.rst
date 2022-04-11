@@ -8,7 +8,7 @@ mindspore.dataset
 
 大多数数据集可以通过指定参数 `cache` 启用缓存服务，以提升整体数据处理效率。
 请注意Windows平台上还不支持缓存服务，因此在Windows上加载和处理数据时，请勿使用。更多介绍和限制，
-请参考 `Single-Node Tensor Cache <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_。
+请参考 `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/data_engine/cache.html>`_。
 
 在API示例中，常用的模块导入方法如下：
 

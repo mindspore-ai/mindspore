@@ -7,7 +7,7 @@ mindspore.nn.Flatten
 
     **输入：**
 
-    - **x** (Tensor) - 要展平的输入Tensor。shape为 :math:`(N, *)`，其中 :math:`*` 表示任意的附加维度。数据类型为 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+    - **x** (Tensor) - 要展平的输入Tensor。shape为 :math:`(N, *)`，其中 :math:`*` 表示任意的附加维度。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore.html#mindspore.dtype>`_。
 
     **输出：**
 

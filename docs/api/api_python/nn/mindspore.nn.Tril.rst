@@ -11,7 +11,7 @@ mindspore.nn.Tril
 
     **输入：**
 
-    - **x** (Tensor)：输入Tensor。数据类型为 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
+    - **x** (Tensor)：输入Tensor。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore.html#mindspore.dtype>`_ 。
     - **k** (int)：对角线的索引。默认值：0。假设输入的矩阵的维度分别为d1，d2，则k的范围应在[-min(d1, d2)+1, min(d1, d2)-1]，超出该范围时输出值与输入 `x` 一致。
 
     **输出：**

@@ -16,7 +16,7 @@
 This file contains contains basic classes that help users do flexible dataset loading.
 You can define your own dataset loading class, and use GeneratorDataset to help load data.
 You can refer to the
-`tutorial <https://www.mindspore.cn/docs/programming_guide/en/master/dataset_loading.html#loading-user-defined-dataset>`
+`tutorial <https://www.mindspore.cn/tutorials/en/r1.7/advanced/dataset/custom.html#loading-user-defined-dataset>`
 to help define your dataset loading.
 After declaring the dataset object, you can further apply dataset operations
 (e.g. filter, skip, concat, map, batch) on it.

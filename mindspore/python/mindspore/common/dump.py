@@ -25,8 +25,8 @@ def set_dump(target, enabled=True):
 
     `target` should be an instance of :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` .
     Please note that this API takes effect only when Asynchronous Dump is enabled and the `dump_mode`
-    field in dump config file is "2". See the `dump document <https://mindspore.cn/docs/programming_guide/
-    en/master/dump_in_graph_mode.html>`_ for details.
+    field in dump config file is "2". See the `dump document <https://www.mindspore.cn/docs/tutorials/experts/
+    en/r1.7/debug/dump_in_graph_mode.html>`_ for details.
     The default enabled status for a :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` is False.
 
     .. warning::

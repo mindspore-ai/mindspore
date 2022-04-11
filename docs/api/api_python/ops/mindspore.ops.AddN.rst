@@ -9,7 +9,7 @@ mindspore.ops.AddN
 
     **输入：**
 
-    - **x** (Union(tuple[Tensor], list[Tensor])) - Tensor组成的tuble或list，类型为 `bool_ <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或 `number <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
+    - **x** (Union(tuple[Tensor], list[Tensor])) - Tensor组成的tuble或list，类型为 `bool_ <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore.html#mindspore.dtype>`_ 或 `number <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore.html#mindspore.dtype>`_ 。
 
     **输出：**
 

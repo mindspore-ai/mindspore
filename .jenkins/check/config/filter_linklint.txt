@@ -46,3 +46,4 @@ https://github.com/google/googletestcd
 https://github.com/dmlc/dgl/blob/master/examples/pytorch/gcn/train.pyfrom
 https://github.com/FrozenGene/tflite/releases/download/v1.13.1/tflite-1.13.1-py3-none-any.whlpip3
 https://github.com/siju-samuel/darknet/blob/master/
+https://www.mindspore.cn/*/r1.7/*
