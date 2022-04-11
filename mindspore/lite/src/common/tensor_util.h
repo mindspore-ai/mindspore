@@ -21,9 +21,11 @@
 #include <memory>
 #include "src/tensor.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/tensor_c_utils.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
 #include "nnacl/infer/common_infer.h"
+#include "nnacl/tensorlist_c_utils.h"
 #endif
 #include "src/cxx_api/tensor/tensor_impl.h"
 

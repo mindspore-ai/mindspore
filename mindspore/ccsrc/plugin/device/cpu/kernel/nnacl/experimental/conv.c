@@ -21,7 +21,7 @@
 #include "nnacl/op_base.h"
 #include "nnacl/kernel.h"
 
-static KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
+KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
   if (in[0]->format_ == Format_NHWC) {
     return NULL;
   } else if (in[0]->format_ == Format_NCHW) {

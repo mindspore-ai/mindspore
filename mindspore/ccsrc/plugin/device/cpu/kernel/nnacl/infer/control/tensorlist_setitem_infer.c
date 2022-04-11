@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/control/tensorlist_setitem_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensorlist_c_utils.h"
 
 int PreJudge(const TensorC *get_index, TensorListC *input0, const TensorC *value_tensor) {
   if (get_index->data_ == NULL) {

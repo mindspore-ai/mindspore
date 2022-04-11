@@ -18,6 +18,9 @@
 #include "nnacl/op_base.h"
 #include "nnacl/experimental/fp32_funcs.h"
 #include "nnacl/experimental/fp16_funcs.h"
+#ifdef _MSC_VER
+#include "nnacl/experimental/conv.h"
+#endif
 
 static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
 
@@ -26,6 +29,15 @@ void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
 }
 
 KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
+#ifdef _MSC_VER
+  /* VS env do not support automatic register
+   * register here first time */
+  static bool inited = false;
+  if (inited == false) {
+    g_kernelCreatorRegistry[PrimType_Conv2DFusion][kNumberTypeFloat32 - kNumberTypeBegin - 1] = CreateConv;
+    inited = true;
+  }
+#endif
   int dtype = in[kInputIndex]->data_type_;
   KernelCreator creator = g_kernelCreatorRegistry[param->type_][dtype - kNumberTypeBegin - 1];
   if (creator == NULL) {

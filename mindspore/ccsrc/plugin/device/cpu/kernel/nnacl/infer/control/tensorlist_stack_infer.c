@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/control/tensorlist_stack_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensorlist_c_utils.h"
 
 int TensorListStackInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                               OpParameter *parameter) {

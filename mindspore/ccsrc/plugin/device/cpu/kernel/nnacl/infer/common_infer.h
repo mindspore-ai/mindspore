@@ -21,6 +21,8 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/tensor_c_utils.h"
+#include "nnacl/tensorlist_c_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,46 +48,12 @@ enum NNACLQuantType {
   QuantType_MAX = QuantType_QUANT_DYNAMIC
 };
 
-typedef struct vvector {
-  int **shape_;      // value of shapes
-  int *shape_size_;  // size of shape
-  size_t size_;      // number of shapes
-} vvector;
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-typedef struct TensorListC {
-  bool is_ready_;
-  int data_type_;
-  int format_;
-  int shape_value_;
-  int tensors_data_type_;  // element_data_type_, keep same as c++
-  int max_elements_num_;
-  int element_shape_[8];
-  size_t element_num_;
-  size_t element_shape_size_;
-  TensorC *tensors_;
-} TensorListC;
-#endif
-
 typedef struct VectorC {
   int *data_;
   size_t size_;
   size_t max_size_;
   size_t per_malloc_size_;
 } VectorC;
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-int MallocTensorListData(TensorListC *tensor_list, TypeIdC dtype, const vvector *tensor_shape);
-int TensorListMergeShape(int *element_shape, size_t *element_shape_size, const int *tmp, size_t tmp_size);
-bool TensorListIsFullyDefined(const int *shape, size_t shape_size);
-#endif
-
-int GetBatch(const TensorC *tensor);
-int GetHeight(const TensorC *tensor);
-int GetWidth(const TensorC *tensor);
-int GetChannel(const TensorC *tensor);
-int GetElementNum(const TensorC *tensor);
-int GetDimensionSize(const TensorC *tensor, const size_t index);
 
 int CheckAugmentNull(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      const OpParameter *parameter);
@@ -125,9 +93,7 @@ int CommonInferShapeWithNHWC(const TensorC *const *inputs, size_t inputs_size, T
                              OpParameter *parameter);
 int FftInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                   const OpParameter *parameter);
-
 bool InferFlag(const TensorC *const *inputs, size_t inputs_size);
-
 #ifdef __cplusplus
 }
 #endif

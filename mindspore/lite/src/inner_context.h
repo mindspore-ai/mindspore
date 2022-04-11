@@ -115,7 +115,7 @@ struct InnerContext : public Context {
 
   int CreateThreadPool();
 
-  void InitExperimentExecEnv();
+  void InitExperimentalExecEnv();
 
   bool device_and_pkg_support_fp16_ = false;
 
