@@ -359,12 +359,12 @@ class Cast(PrimitiveWithInfer):
                 min_value = Tensor(np.array(x['min_value']).astype(np_dst_type))
             else:
                 min_value = Tensor(x['min_value'].asnumpy().astype(np_dst_type))
-            min_value = tuple(min_value.asnumpy())
+            min_value = tuple(min_value.asnumpy().tolist())
             if isinstance(x['max_value'], (int, float, tuple, list)):
                 max_value = Tensor(np.array(x['max_value']).astype(np_dst_type))
             else:
                 max_value = Tensor(x['max_value'].asnumpy().astype(np_dst_type))
-            max_value = tuple(max_value.asnumpy())
+            max_value = tuple(max_value.asnumpy().tolist())
             out['min_value'] = min_value
             out['max_value'] = max_value
         return out
