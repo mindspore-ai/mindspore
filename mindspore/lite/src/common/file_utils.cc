@@ -278,5 +278,40 @@ std::string GetDirectory(const std::string &path) {
   }
   return dir;
 }
+
+bool ParserPathAndModelName(const std::string &output_path, std::string *save_path, std::string *model_name) {
+  auto pos = output_path.find_last_of('/');
+  if (pos == std::string::npos) {
+    pos = output_path.find_last_of('\\');
+  }
+  std::string tmp_model_name;
+  if (pos == std::string::npos) {
+#ifdef _WIN32
+    *save_path = ".\\";
+#else
+    *save_path = "./";
+#endif
+    tmp_model_name = output_path;
+  } else {
+    *save_path = output_path.substr(0, pos + 1);
+    tmp_model_name = output_path.substr(pos + 1);
+  }
+  *save_path = RealPath(save_path->c_str());
+  if (save_path->empty()) {
+    MS_LOG(DEBUG) << "File path not regular: " << save_path;
+    return false;
+  }
+  auto suffix_pos = tmp_model_name.find_last_of('.');
+  if (suffix_pos == std::string::npos) {
+    *model_name = tmp_model_name;
+  } else {
+    if (tmp_model_name.substr(suffix_pos + 1) == "ms") {
+      *model_name = tmp_model_name.substr(0, suffix_pos);
+    } else {
+      *model_name = tmp_model_name;
+    }
+  }
+  return true;
+}
 }  // namespace lite
 }  // namespace mindspore

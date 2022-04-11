@@ -94,7 +94,11 @@ Flags::Flags() {
           "");
 #endif
   AddFlag(&Flags::inferStr, "infer",
-          "Whether to do pre-inference after convert."
+          "Whether to do pre-inference after convert. "
+          "true | false",
+          "false");
+  AddFlag(&Flags::exportMindIR, "exportMindIR",
+          "Whether to export MindIR pb. "
           "true | false",
           "false");
 }
@@ -353,6 +357,18 @@ int Flags::InitPreInference() {
   return RET_OK;
 }
 
+int Flags::InitExportMindIR() {
+  if (this->exportMindIR == "true") {
+    this->export_mindir = true;
+  } else if (this->exportMindIR == "false") {
+    this->export_mindir = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: exportMindIR must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
 int Flags::InitEncrypt() {
   if (this->encryptionStr == "true") {
     this->encryption = true;
@@ -481,6 +497,12 @@ int Flags::Init(int argc, const char **argv) {
   ret = InitPreInference();
   if (ret != RET_OK) {
     std::cerr << "Init pre inference failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  ret = InitExportMindIR();
+  if (ret != RET_OK) {
+    std::cerr << "Init export mindir failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
   return RET_OK;

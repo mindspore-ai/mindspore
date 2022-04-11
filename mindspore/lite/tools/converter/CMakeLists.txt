@@ -74,6 +74,7 @@ if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
     add_subdirectory(adapter/dpico)
 endif()
 add_subdirectory(../anf_exporter anf_exporter)
+add_subdirectory(../mindir_serializer mindir_serializer)
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
 add_subdirectory(parser/onnx)
@@ -301,6 +302,10 @@ target_link_libraries(converter_lite PRIVATE
         preprocess_mid
         config_parser_mid
         coder_mid
+        ccsrc_debug_common_mid_
+        mindir_proto_mid
+        _mindspore_transform_express_ir_obj
+        mindir_serializer_mid
         )
 
 if(MSLITE_ENABLE_ACL)

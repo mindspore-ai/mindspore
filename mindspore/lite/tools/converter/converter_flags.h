@@ -75,6 +75,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   void InitAclDefaultOption();
 
+  int InitExportMindIR();
+
   int Init(int argc, const char **argv);
 
   int PreInit(int argc, const char **argv);
@@ -105,6 +107,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string encKeyStr;
   std::string encMode = "AES-GCM";
   std::string inferStr;
+  std::string exportMindIR;
 #ifdef ENABLE_OPENSSL
   std::string encryptionStr = "true";
   bool encryption = true;
@@ -115,6 +118,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   bool infer = false;
   unsigned char encKey[kEncMaxLen];
   size_t keyLen = 0;
+  bool export_mindir = false;
 
   lite::quant::CommonQuantParam commonQuantParam;
   lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;

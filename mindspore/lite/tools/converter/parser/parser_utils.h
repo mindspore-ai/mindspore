@@ -21,7 +21,6 @@
 #include <vector>
 #include <memory>
 #include "ops/primitive_c.h"
-#include "include/registry/model_parser.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "src/common/log_adapter.h"
@@ -43,16 +42,6 @@ int UnifyConstConvWeight(const FuncGraphPtr &graph, const AnfNodePtr &weight_nod
                          schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
 int HandleConstConvWeightShared(const FuncGraphPtr &graph, const AnfNodePtr &weight_node, schema::Format src_format,
                                 schema::Format dst_format, std::set<AnfNodePtr> *has_visited);
-
-template <class T>
-converter::ModelParser *LiteModelParserCreator() {
-  auto *parser = new (std::nothrow) T();
-  if (parser == nullptr) {
-    MS_LOG(ERROR) << "new model parser failed";
-    return nullptr;
-  }
-  return parser;
-}
 }  // namespace lite
 }  // namespace mindspore
 

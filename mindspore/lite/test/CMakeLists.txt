@@ -222,6 +222,10 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
             preprocess_mid
             config_parser_mid
             coder_mid
+            ccsrc_debug_common_mid_
+            mindir_proto_mid
+            _mindspore_transform_express_ir_obj
+            mindir_serializer_mid
             )
 endif()
 

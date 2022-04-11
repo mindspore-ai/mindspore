@@ -40,6 +40,7 @@
 #include "src/common/version_manager.h"
 #include "tools/common/tensor_util.h"
 #include "include/api/model.h"
+#include "tools/mindir_serializer/mindir_serializer.h"
 
 namespace mindspore {
 namespace lite {
@@ -148,21 +149,26 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     return nullptr;
   }
 
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
+  // funcgraph transform
+  graph = funcgraph_transform_->Transform(graph, flag.get());
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "Transform anf graph return nullptr";
+    return nullptr;
+  }
+
+  // export protobuf
+  auto status = MindIRSerialize(flag, graph);
+  if (status != RET_OK) {
+    MS_LOG(WARNING) << "Export to mindir proto return nullptr.";
+  }
+
   return TransferFuncGraph(flag, graph);
 }
 
 schema::MetaGraphT *Converter::TransferFuncGraph(const std::unique_ptr<converter::Flags> &flag,
                                                  FuncGraphPtr func_graph) {
-  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
   MS_CHECK_TRUE_MSG(metagraph_transform_ != nullptr, nullptr, "metagraph_transform_ init failed");
-
-  // funcgraph compile
-  func_graph = funcgraph_transform_->Transform(func_graph, flag.get());
-  if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "Transform anf graph return nullptr";
-    return nullptr;
-  }
-
 #ifdef MSLITE_ENABLE_GRAPH_KERNEL
   if (graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     graphkernel::GraphKernelOptimize(func_graph);

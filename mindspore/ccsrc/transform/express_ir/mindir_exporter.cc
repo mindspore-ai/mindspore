@@ -31,7 +31,9 @@
 #include "include/common/debug/dump_proto.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/utils.h"
+#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
 #include "frontend/parallel/tensor_layout/tensor_layout.h"
+#endif
 #include "abstract/abstract_function.h"
 
 namespace mindspore {
@@ -105,7 +107,9 @@ class IrExportBuilder {
   bool BuildModel(const FuncGraphPtr &func_graph);
   ModelProtoPtr Model() { return model_; }
 
+#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
   void BuildLayout(const FuncGraphPtr &func_graph);
+#endif
 
   bool BuildFuncGraph(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
   bool BuildFuncGraphAttrs(const FuncGraphPtr &func_graph, mind_ir::GraphProto *const graph_proto);
@@ -256,10 +260,12 @@ ModelProtoPtr IrExporter::GetDumpProto(const FuncGraphPtr &func_graph, const Fun
     return nullptr;
   }
 
+#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
   // Export layout information
   if (param_layout_fg) {
     builder_->BuildLayout(param_layout_fg);
   }
+#endif
   return builder_->Model();
 }
 
@@ -278,6 +284,7 @@ void IrExportBuilder::BuildModelInfo() {
   model_->set_mind_ir_version(mind_ir::Version_MAX);
 }
 
+#ifndef MINDIR_EXPORT_TENSOR_LAYOUT_CLIP
 void IrExportBuilder::BuildLayout(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> graph_params = func_graph->parameters();
@@ -315,6 +322,7 @@ void IrExportBuilder::BuildLayout(const FuncGraphPtr &func_graph) {
     }
   }
 }
+#endif
 
 bool IrExportBuilder::BuildModel(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
