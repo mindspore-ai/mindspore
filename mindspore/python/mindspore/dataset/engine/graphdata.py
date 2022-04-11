@@ -75,7 +75,8 @@ class GraphData:
     Support reading graph datasets like Cora, Citeseer and PubMed.
 
     About how to load raw graph dataset into MindSpore please
-    refer to `Loading Graph Dataset <https://mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_.
+    refer to `Loading Graph Dataset <https://www.mindspore.cn/tutorials/zh-CN/
+    master/advanced/dataset/enhanced_graph_data.html>`_.
 
     Args:
         dataset_file (str): One of file names in the dataset.
