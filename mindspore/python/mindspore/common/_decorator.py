@@ -17,6 +17,9 @@
 from mindspore import log
 
 
+DEPRECATE_SET = set()
+
+
 def deprecated(version, substitute, use_substitute_name=False):
     """deprecated warning
 
@@ -30,8 +33,10 @@ def deprecated(version, substitute, use_substitute_name=False):
         def wrapper(*args, **kwargs):
             cls = getattr(args[0], "__class__", None) if args else None
             name = cls.__name__ if cls else func.__name__
-            log.warning(f"'{name}' is deprecated from version {version} and "
-                        f"will be removed in a future version, use '{substitute}' instead.")
+            if name + version not in DEPRECATE_SET:
+                log.warning(f"'{name}' is deprecated from version {version} and "
+                            f"will be removed in a future version, use '{substitute}' instead.")
+                DEPRECATE_SET.add(name + version)
             if cls and use_substitute_name:
                 cls.substitute_name = substitute
             ret = func(*args, **kwargs)
