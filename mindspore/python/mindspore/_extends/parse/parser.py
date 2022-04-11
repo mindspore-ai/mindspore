@@ -426,6 +426,21 @@ def ms_isinstance(x, cmp_type):
     return isinstance(x, pytype_to_mstype.get(cmp_type))
 
 
+def is_cell_list(obj):
+    """Check if obj is nn.CellList"""
+    return isinstance(obj, nn.CellList)
+
+
+def convert_cell_list_to_sequence(obj):
+    """Convert nn.CellList to sequence."""
+    if not isinstance(obj, nn.CellList):
+        raise TypeError(f"Obj should be nn.CellList, but got {obj}")
+    if not hasattr(obj, "_cells"):
+        raise AttributeError(f"nn.CellList is missing _cells property.")
+    cells = getattr(obj, "_cells")
+    return list(cells.values())
+
+
 def get_obj_from_sequence(obj, index):
     """Implement `tuple_getitem`."""
     if not isinstance(obj, (tuple, list)):

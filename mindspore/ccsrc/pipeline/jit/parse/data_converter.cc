@@ -668,6 +668,9 @@ bool IsCellInstance(const py::object &obj) {
   return is_cell;
 }
 
+// Check if the object is MsClass instance.
+bool IsMsClassInstance(const py::object &obj) { return py::hasattr(obj, PYTHON_MS_CLASS); }
+
 // Check if the object is class type.
 bool IsClassType(const py::object &obj) {
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);

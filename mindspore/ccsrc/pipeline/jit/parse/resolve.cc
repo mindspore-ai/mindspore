@@ -376,71 +376,21 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
 }
 }  // namespace
 
-// Get python object with index from a list or the whole list if the index is not fixed.
-py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
-                                 const AnfNodePtr &index_node) {
-  MS_EXCEPTION_IF_NULL(node);
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
-  py::object obj = GetSymbolObject(name_space, symbol, node);
-  if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {
-    MS_LOG(EXCEPTION) << "Should not get item from non-sequence type, obj: " << py::str(obj);
-  }
-
-  MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index_node: " << index_node->ToString();
-  auto imm_value = GetValueNode<Int64ImmPtr>(index_node);
-  if (imm_value == nullptr) {
-    MS_LOG(DEBUG) << "The index is not a value node, so we return the whole list, node: " << node->DebugString()
-                  << ", index_node: " << index_node->DebugString();
-    // Index is not fixed, return the whole list.
-    return obj;
-  }
-  // It index is a value node, get the item of index directly.
-  const std::string fn = PYTHON_MOD_GET_ITEM_FROM_SEQUENCE;
-  const std::string module = "mindspore._extends.parse.parser";
-  auto index = imm_value->value();
-  py::object item_obj = python_adapter::GetPyFn(module, fn)(obj, py::int_(index));
-  return item_obj;
-}
-
-AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
-                                   const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
-                                   const CNodePtr &operand_cnode) {
-  std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
-  auto sequence = obj.cast<py::sequence>();
-  // Incorporate if all elements of the sequence are Cell instances.
-  for (size_t i = 0; i < sequence.size(); ++i) {
-    if (!parse::data_converter::IsCellInstance(sequence[i])) {
-      return nullptr;
-    }
-    // Resolve Cell instance.
-    auto res = parse::ResolveCellWithAttr(manager, sequence[i], resolve_node, attr);
-    inputs.emplace_back(res);
-  }
-
-  constexpr auto prim_index = 0;
-  constexpr auto index_index = 2;
-  auto fg = operand_cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
-  auto make_tuple_node = fg->NewCNodeInOrder(inputs);
-  return fg->NewCNodeInOrder({operand_cnode->input(prim_index), make_tuple_node, operand_cnode->input(index_index)});
-}
-
-std::pair<parse::NameSpacePtr, parse::SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
+std::pair<NameSpacePtr, SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node) {
   if (IsPrimitiveCNode(node, prim::kPrimResolve)) {
     auto resolve_cnode = node->cast<CNodePtr>();
     constexpr size_t namespace_index = 1;
     auto namespace_node = resolve_cnode->input(namespace_index);
     constexpr size_t symbol_index = 2;
     auto symbol_node = resolve_cnode->input(symbol_index);
-    if (!IsValueNode<parse::NameSpace>(namespace_node) || !IsValueNode<parse::Symbol>(symbol_node)) {
+    if (!IsValueNode<NameSpace>(namespace_node) || !IsValueNode<Symbol>(symbol_node)) {
       MS_LOG(EXCEPTION) << "Unexpected type, namespace: " << namespace_node->ToString()
                         << ", symbol: " << symbol_node->ToString();
     }
     // Deal with the case of GetAttr from a class member,
     // and avoid the case of GetAttr from self (the result of ParseSuper).
-    auto name_space = GetValueNode<parse::NameSpacePtr>(namespace_node);
-    auto symbol = GetValueNode<parse::SymbolPtr>(symbol_node);
+    auto name_space = GetValueNode<NameSpacePtr>(namespace_node);
+    auto symbol = GetValueNode<SymbolPtr>(symbol_node);
     return {name_space, symbol};
   }
   constexpr auto recursive_level = 2;
@@ -491,9 +441,8 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
     return res_node;
   }
 
-  const std::string fn = PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL;
-  const std::string module = "mindspore._extends.parse.parser";
-  py::object namespace_obj = python_adapter::GetPyFn(module, fn)(obj);
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  py::object namespace_obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
   auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
   std::string attr_as_string = GetValueNode<StringImmPtr>(attr)->value();
   auto new_symbol = std::make_shared<Symbol>(attr_as_string);
@@ -506,13 +455,99 @@ AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::obj
   return resolved_node;
 }
 
+AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
+                                   const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
+                                   const CNodePtr &operand_cnode) {
+  std::vector<AnfNodePtr> inputs;
+  inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
+  auto sequence = obj.cast<py::sequence>();
+  // Incorporate if all elements of the sequence are Cell instances or MsClass instances.
+  size_t count_cell = 0;
+  size_t count_msclass = 0;
+  size_t sequence_size = sequence.size();
+  for (size_t i = 0; i < sequence_size; ++i) {
+    if (data_converter::IsCellInstance(sequence[i])) {
+      ++count_cell;
+    } else if (data_converter::IsMsClassInstance(sequence[i])) {
+      ++count_msclass;
+    }
+  }
+  if (count_cell == sequence_size) {
+    // Resolve Cell instances.
+    for (size_t i = 0; i < sequence_size; ++i) {
+      auto res = ResolveCellWithAttr(manager, sequence[i], resolve_node, attr);
+      inputs.emplace_back(res);
+    }
+  } else if (count_msclass == sequence_size) {
+    // Resolve MsClass instances.
+    for (size_t i = 0; i < sequence_size; ++i) {
+      auto attr_str = GetValue<std::string>(GetValueNode(attr));
+      auto res = ResolveMsClassWithAttr(manager, sequence[i], attr_str, operand_cnode);
+      inputs.emplace_back(res);
+    }
+  } else {
+    return nullptr;
+  }
+
+  constexpr auto prim_index = 0;
+  constexpr auto index_index = 2;
+  auto fg = operand_cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(fg);
+  auto make_tuple_node = fg->NewCNodeInOrder(inputs);
+  return fg->NewCNodeInOrder({operand_cnode->input(prim_index), make_tuple_node, operand_cnode->input(index_index)});
+}
+
+AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &object_node,
+                                 const AnfNodePtr &attr_node, const AnfNodePtr &node) {
+  // {prim::kPrimGetAttr, {prim::kPrimResolve, namespace, symbol}, attr}
+  auto [name_space, symbol] = GetNamespaceAndSymbol(object_node);
+  auto module_name = name_space->module();
+  constexpr std::string_view parse_super_name = "namespace";
+  if (module_name.find(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER) != std::string::npos &&
+      symbol->symbol() != parse_super_name) {
+    auto symbol_obj = GetSymbolObject(name_space, symbol, node);
+    return ResolveCellWithAttr(manager, symbol_obj, object_node, attr_node);
+  }
+  return nullptr;
+}
+
+// Get python object with index from a list or the whole list if the index is not fixed.
+py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
+                                 const AnfNodePtr &index_node) {
+  MS_EXCEPTION_IF_NULL(node);
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
+  py::object obj = GetSymbolObject(name_space, symbol, node);
+  // If obj is nn.CellList, convert it to sequence.
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  bool is_celllist = py::cast<bool>(python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CELL_LIST, obj));
+  if (is_celllist) {
+    obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE, obj);
+  }
+  if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {
+    MS_LOG(EXCEPTION) << "Should not get item from non-sequence type, obj: " << py::str(obj);
+  }
+
+  MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index_node: " << index_node->ToString();
+  auto imm_value = GetValueNode<Int64ImmPtr>(index_node);
+  if (imm_value == nullptr) {
+    MS_LOG(DEBUG) << "The index is not a value node, so we return the whole list, node: " << node->DebugString()
+                  << ", index_node: " << index_node->DebugString();
+    // Index is not fixed, return the whole list.
+    return obj;
+  }
+  // It index is a value node, get the item of index directly.
+  py::object item_obj =
+    python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_ITEM_FROM_SEQUENCE, obj, py::int_(imm_value->value()));
+  return item_obj;
+}
+
 bool IsResolveNodeWithGetItem(const AnfNodePtr &node) {
   // Check if the node matches: {prim::kPrim::Resolve, ..., 'getitem'}.
   if (IsPrimitiveCNode(node, prim::kPrimResolve)) {
     constexpr size_t symbol_index = 2;
     constexpr auto getitem_symbol = "getitem";
     auto cnode = node->cast<CNodePtr>();
-    auto symbol = GetValueNode<parse::SymbolPtr>(cnode->input(symbol_index));
+    auto symbol = GetValueNode<SymbolPtr>(cnode->input(symbol_index));
     return symbol->symbol() == getitem_symbol;
   }
   return false;
@@ -531,21 +566,58 @@ bool IsGetItemCNode(const AnfNodePtr &node) {
   return IsResolveNodeWithGetItem(cnode->input(prim_index));
 }
 
-AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const MsClassObjectPtr &ms_class,
+AnfNodePtr ResolveGetItemInner(const FuncGraphManagerPtr &manager, const AnfNodePtr &data_node,
+                               const AnfNodePtr &index_node, const CNodePtr &getitem_cnode,
+                               const AnfNodePtr &attr_node) {
+  auto [name_space, symbol] = GetNamespaceAndSymbol(data_node);
+  auto obj = GetObjectFromSequence(name_space, symbol, data_node, index_node);
+  if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
+    return ResolveSequenceWithAttr(manager, obj, data_node, attr_node, getitem_cnode);
+  }
+  return ResolveCellWithAttr(manager, obj, data_node, attr_node);
+}
+
+AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &getitem_node,
+                                  const AnfNodePtr &attr_node, const AnfNodePtr &node) {
+  // {prim::kPrimGetAttr, {getitem, {prim::kPrimResolve, namespace, symbol}, index}, attr}
+  // {prim::kPrimGetAttr, {getitem, {prim::kPrimGetAttr, ResolveNode, member}, index}, attr}
+  constexpr auto data_index = 1;
+  constexpr auto index_index = 2;
+  auto getitem_cnode = getitem_node->cast<CNodePtr>();
+  auto data_node = getitem_cnode->input(data_index);
+  auto index_node = getitem_cnode->input(index_index);
+  if (IsPrimitiveCNode(data_node, prim::kPrimResolve)) {
+    return ResolveGetItemInner(manager, data_node, index_node, getitem_cnode, attr_node);
+  }
+  if (IsPrimitiveCNode(data_node, prim::kPrimGetAttr)) {
+    auto getattr_cnode = data_node->cast<CNodePtr>();
+    auto resolve_node = getattr_cnode->input(data_index);
+    auto member_node = getattr_cnode->input(index_index);
+    if (IsPrimitiveCNode(resolve_node, prim::kPrimResolve)) {
+      // Check if the result is a new resolve node.
+      auto item_node = ResolveSymbolWithAttr(manager, resolve_node, member_node, node);
+      if (IsPrimitiveCNode(item_node, prim::kPrimResolve)) {
+        return ResolveGetItemInner(manager, item_node, index_node, getitem_cnode, attr_node);
+      }
+    }
+  }
+  return nullptr;
+}
+
+AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::object &cls_obj,
                                   const std::string &attr, const AnfNodePtr &node) {
   // Get attribute or method from ms_class obj.
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
-  MS_LOG(DEBUG) << "Resolve ms_class obj (" << ms_class->name() << ") with attr " << attr << ".";
+  MS_LOG(DEBUG) << "Resolve ms_class obj (" << py::str(cls_obj) << ") with attr " << attr << ".";
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
 
   constexpr size_t prefix_index = 0;
   if (attr.size() > 0 && attr[prefix_index] == '_') {
     MS_LOG(EXCEPTION) << attr << " is a private variable or magic method, which is not supported.";
   }
-  py::object cls_obj = ms_class->obj();
   if (!py::hasattr(cls_obj, common::SafeCStr(attr))) {
-    MS_LOG(EXCEPTION) << ms_class->name() << " has not attribute: " << attr << ".";
+    MS_LOG(EXCEPTION) << py::str(cls_obj) << " has not attribute: " << attr << ".";
   }
   py::object attr_obj = py::getattr(cls_obj, common::SafeCStr(attr));
   AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, node);

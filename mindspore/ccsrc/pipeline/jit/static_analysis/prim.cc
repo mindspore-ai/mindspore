@@ -1355,7 +1355,7 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &e
   // Get the attr/method of ms_class object.
   auto out_node = out_conf->node();
   FuncGraphPtr func_graph = out_node->func_graph();
-  auto new_node = ResolveMsClassWithAttr(func_graph->manager(), ms_class, item_name, out_node);
+  auto new_node = parse::ResolveMsClassWithAttr(func_graph->manager(), ms_class->obj(), item_name, out_node);
   // Replace old node with the resolved new node in order list.
   func_graph->ReplaceInOrder(out_node, new_node);
   AnalysisEnginePtr eng = out_conf->engine();
