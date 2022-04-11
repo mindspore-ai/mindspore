@@ -198,7 +198,8 @@ class HcclParser:
         communication_operator_mapping_info = dict()
         for hccl_key, hccl_value in op_names_in_hccl_dic.items():
             for step_trace_key, step_trace_value in op_names_in_step_trace_dic.items():
-                if hccl_key.lower() == step_trace_key.lower():
+                # the step_trace_key format is: scope/operatorName
+                if hccl_key.lower() == step_trace_key.lower().split('/')[-1]:
                     communication_operator_mapping_info[hccl_key] = list(zip(hccl_value, step_trace_value))
 
         logger.info("Communication operator name mapping info is %s", communication_operator_mapping_info)
