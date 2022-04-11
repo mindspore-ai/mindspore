@@ -21,7 +21,7 @@
 #include "src/tensorlist.h"
 #endif
 #ifdef ENABLE_FP16
-#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
 #include "src/common/version_manager.h"
 #include "src/runtime/infer_manager.h"

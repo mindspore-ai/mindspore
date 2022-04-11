@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <set>
 #include "src/kernel_exec_util.h"
-#include "src/runtime/kernel/arm/base/partial_fusion.h"
+#include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #include "nnacl/call_parameter.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
 #include "src/control_flow/identity_kernel.h"

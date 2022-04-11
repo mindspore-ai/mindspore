@@ -22,7 +22,7 @@
 #include <algorithm>
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#include "src/runtime/kernel/arm/base/partial_fusion.h"
+#include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #include "nnacl/partial_fusion_parameter.h"
 #endif
 #include "include/errorcode.h"
@@ -48,7 +48,7 @@
 #ifndef WEIGHT_DECODE_CLIP
 #include "src/weight_decoder.h"
 #endif
-#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #include "nnacl/nnacl_common.h"
 #if GPU_OPENCL
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"

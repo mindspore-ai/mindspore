@@ -15,8 +15,8 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/arm/string/skip_gram.h"
-#include "src/runtime/kernel/arm/string/normalize.h"
+#include "src/runtime/kernel/cpu/string/skip_gram.h"
+#include "src/runtime/kernel/cpu/string/normalize.h"
 #include "mindspore/lite/src/kernel_registry.h"
 #include "nnacl/skip_gram_parameter.h"
 #include "src/common/file_utils.h"

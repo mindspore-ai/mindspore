@@ -22,7 +22,7 @@
 #include "src/common/tensor_util.h"
 #include "src/runtime/inner_allocator.h"
 #ifdef ENABLE_FP16
-#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
 namespace {
 const constexpr int kSwitchMaxInputKernelSize = 3;

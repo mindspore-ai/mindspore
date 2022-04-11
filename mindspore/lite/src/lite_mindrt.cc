@@ -22,7 +22,7 @@
 #include "src/common/tensor_util.h"
 #include "src/common/common.h"
 #include "src/runtime/inner_allocator.h"
-#include "src/runtime/kernel/arm/base/partial_fusion.h"
+#include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/actor/switch_actor.h"
 #include "src/control_flow/actor/entrance_actor.h"

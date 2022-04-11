@@ -22,7 +22,7 @@
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/nnacl/fp32/matmul_fp32_coder.h"
 #include "tools/converter/micro/coder/wrapper/base/affine_wrapper.h"
-#include "src/runtime/kernel/arm/fp32/affine_fp32.h"
+#include "src/runtime/kernel/cpu/fp32/affine_fp32.h"
 #include "tools/converter/micro/coder/opcoders/op_coder_builder.h"
 #include "coder/utils/common.h"
 

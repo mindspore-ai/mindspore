@@ -342,7 +342,7 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
     set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
 endif()
 
-add_subdirectory(runtime/kernel/arm)
+add_subdirectory(runtime/kernel/cpu)
 
 add_library(lite_src_mid OBJECT ${LITE_SRC})
 add_dependencies(lite_src_mid fbs_src)

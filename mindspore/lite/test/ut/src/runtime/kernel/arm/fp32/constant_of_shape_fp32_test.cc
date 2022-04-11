@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/base/constant_of_shape.h"
+#include "mindspore/lite/src/runtime/kernel/cpu/base/constant_of_shape.h"
 #include "src/tensor_category.h"
 #include "src/kernel_exec.h"
 

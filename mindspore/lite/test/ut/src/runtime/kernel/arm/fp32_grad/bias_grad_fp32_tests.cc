@@ -18,7 +18,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/kernel/arm/fp32_grad/bias_grad.h"
+#include "src/runtime/kernel/cpu/fp32_grad/bias_grad.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {

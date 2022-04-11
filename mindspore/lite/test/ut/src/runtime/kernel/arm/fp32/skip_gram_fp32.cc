@@ -15,7 +15,7 @@
  */
 
 #include <iostream>
-#include "src/runtime/kernel/arm/string/skip_gram.h"
+#include "src/runtime/kernel/cpu/string/skip_gram.h"
 #include "nnacl/skip_gram_parameter.h"
 #include "src/common/file_utils.h"
 #include "src/tensor_category.h"

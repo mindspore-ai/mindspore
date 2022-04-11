@@ -1,0 +1,188 @@
+/**
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "src/runtime/kernel/cpu/fp32/arithmetic_self_fp32.h"
+#include "src/kernel_registry.h"
+#include "nnacl/fp32/arithmetic_self_fp32.h"
+
+using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
+
+namespace mindspore::kernel {
+namespace {
+struct TYPE_FUNC_INFO {
+  int primitive_type_ = 0;
+  ArithmeticSelfFunc func_ = nullptr;
+};
+
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
+const std::map<int, float> arithmetic_self_compute_cost_map_ = {
+  // {schema::PrimitiveType_Abs, 0.5f},
+  // {schema::PrimitiveType_Cos, 1.0f},
+  // {schema::PrimitiveType_Log, 1.0f},
+  // {schema::PrimitiveType_Square, 10.0f},
+  {schema::PrimitiveType_Sqrt, 1.806f},  // dataNum about 100k
+  // {schema::PrimitiveType_Rsqrt, 1.0f},
+  // {schema::PrimitiveType_Sin, 1.0f},
+  // {schema::PrimitiveType_LogicalNot, 1.0f},
+  // {schema::PrimitiveType_Floor, 1.0f},
+  // {schema::PrimitiveType_Ceil, 1.0f},
+  // {schema::PrimitiveType_Round, 1.0f},
+  // {schema::PrimitiveType_Neg, 1.0f},
+  // {schema::PrimitiveType_Reciprocal, 1.0f},
+  // {schema::PrimitiveType_Erf, 1.0f},
+};
+#endif
+}  // namespace
+
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
+int ArithmeticSelfCPUKernel::UpdateThreadNumPass() {
+  if (thread_cost_context_ == nullptr && arithmetic_self_compute_cost_map_.count(type_) > 0) {
+    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
+    CHECK_NULL_RETURN(thread_cost_context_);
+
+    thread_cost_context_->per_unit_load_num_ = 1;
+    thread_cost_context_->per_unit_store_num_ = 1;
+    thread_cost_context_->per_unit_compute_cost_ = arithmetic_self_compute_cost_map_.at(type_);
+  }
+
+  if (thread_cost_context_ != nullptr) {
+    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
+    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
+  }
+  return RET_OK;
+}
+#endif
+
+ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_type) const {
+  TYPE_FUNC_INFO type_func_table[] = {{mindspore::schema::PrimitiveType_Abs, ElementAbs},
+                                      {mindspore::schema::PrimitiveType_Cos, ElementCos},
+                                      {mindspore::schema::PrimitiveType_Log, ElementLog},
+                                      {mindspore::schema::PrimitiveType_Square, ElementSquare},
+                                      {mindspore::schema::PrimitiveType_Sqrt, ElementSqrt},
+                                      {mindspore::schema::PrimitiveType_Rsqrt, ElementRsqrt},
+                                      {mindspore::schema::PrimitiveType_Sin, ElementSin},
+                                      {mindspore::schema::PrimitiveType_LogicalNot, ElementLogicalNot},
+                                      {mindspore::schema::PrimitiveType_Floor, ElementFloor},
+                                      {mindspore::schema::PrimitiveType_Ceil, ElementCeil},
+                                      {mindspore::schema::PrimitiveType_Round, ElementRound},
+                                      {mindspore::schema::PrimitiveType_Neg, ElementNegative},
+                                      {mindspore::schema::PrimitiveType_Reciprocal, ElementReciprocal},
+                                      {mindspore::schema::PrimitiveType_Erf, ElementErf}};
+  for (size_t i = 0; i < sizeof(type_func_table) / sizeof(TYPE_FUNC_INFO); i++) {
+    if (type_func_table[i].primitive_type_ == primitive_type) {
+      return type_func_table[i].func_;
+    }
+  }
+  return nullptr;
+}
+
+ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int primitive_type) const {
+  if (primitive_type == mindspore::schema::PrimitiveType_LogicalNot) {
+    return ElementLogicalNotBool;
+  }
+  return nullptr;
+}
+
+int ArithmeticSelfCPUKernel::Prepare() {
+  CHECK_NOT_EQUAL_RETURN(in_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
+
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int ArithmeticSelfCPUKernel::ReSize() {
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
+  if (UpdateThreadNumPass() != RET_OK) {
+    return RET_ERROR;
+  }
+#endif
+  return RET_OK;
+}
+
+int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
+  int elements_num = in_tensors_.at(0)->ElementsNum();
+  MS_CHECK_TRUE_RET(thread_num_ != 0, RET_ERROR);
+  int stride = UP_DIV(elements_num, thread_num_);
+  MS_CHECK_INT_MUL_NOT_OVERFLOW(task_id, stride, RET_ERROR);
+  int offset = task_id * stride;
+  int count = MSMIN(stride, elements_num - offset);
+  if (count <= 0) {
+    return RET_OK;
+  }
+  int ret = RET_ERROR;
+  if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
+    if (func_ == nullptr) {
+      MS_LOG(ERROR) << "Run function is null! ";
+      return RET_ERROR;
+    }
+    float *input_ptr = reinterpret_cast<float *>(in_tensors_.at(0)->data());
+    float *output_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->data());
+    ret = func_(input_ptr + offset, output_ptr + offset, count);
+  } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
+    if (func_bool_ == nullptr) {
+      MS_LOG(ERROR) << "Run function is null! ";
+      return RET_ERROR;
+    }
+    bool *input_ptr = reinterpret_cast<bool *>(in_tensors_.at(0)->data());
+    bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data());
+    ret = func_bool_(input_ptr + offset, output_ptr + offset, count);
+  } else {
+    MS_LOG(ERROR) << "Unsupported type: " << in_tensors_[0]->data_type() << ".";
+    return RET_ERROR;
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run failed, illegal input! ";
+  }
+  return ret;
+}
+
+int ArithmeticSelfRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  auto kernel = reinterpret_cast<ArithmeticSelfCPUKernel *>(cdata);
+  auto ret = kernel->DoExecute(task_id);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticSelfRuns error task_id[" << task_id << "] error_code[" << ret << "]";
+  }
+  return ret;
+}
+
+int ArithmeticSelfCPUKernel::Run() {
+  auto ret = ParallelLaunch(this->ms_context_, ArithmeticSelfRun, this, thread_num_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
+  }
+  return ret;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Abs, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Cos, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Log, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Square, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sqrt, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Rsqrt, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sin, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogicalNot, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_LogicalNot, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Floor, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Ceil, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Round, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Neg, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reciprocal, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Erf, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+}  // namespace mindspore::kernel

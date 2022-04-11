@@ -23,7 +23,7 @@
 #include "coder/opcoders/nnacl/int8/matmul_int8_coder.h"
 #include "tools/converter/micro/coder/wrapper/base/affine_wrapper.h"
 #include "tools/converter/micro/coder/opcoders/op_coder_builder.h"
-#include "src/runtime/kernel/arm/fp32/affine_fp32.h"
+#include "src/runtime/kernel/cpu/fp32/affine_fp32.h"
 #include "coder/opcoders/nnacl/fp32/affine_fp32_coder.h"
 
 using mindspore::schema::PrimitiveType_Affine;
