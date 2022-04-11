@@ -19,9 +19,14 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -Wno-inconsistent-missing-override \
+    set(MACOSX_CXX_WARNING_FLAGS "-Wno-inconsistent-missing-override \
         -Wno-unused-lambda-capture -Wno-unneeded-internal-declaration -Wno-unused-variable \
-        -Wno-return-std-move -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
+        -Wno-return-std-move")
+    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 13.1)
+        set(MACOSX_CXX_WARNING_FLAGS "${MACOSX_CXX_WARNING_FLAGS} -Wno-unused-but-set-variable")
+    endif()
+    set(CMAKE_CXX_FLAGS_RELEASE
+        "$ENV{CXXFLAGS} -O2 ${MACOSX_CXX_WARNING_FLAGS} -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
 elseif(ENABLE_SYM_FILE)
     set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -g -ggdb -Wl,--allow-shlib-undefined \
         -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2")
@@ -37,8 +42,7 @@ endif()
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer \
         -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 -DHALF_ENABLE_CPP11_USER_LITERALS=0 \
-        -D_FORTIFY_SOURCE=2 -Wno-cpp -Wno-inconsistent-missing-override -Wno-unused-lambda-capture \
-        -Wno-unneeded-internal-declaration -Wno-unused-variable -Wno-return-std-move")
+        -D_FORTIFY_SOURCE=2 -Wno-cpp ${MACOSX_CXX_WARNING_FLAGS}")
 else()
     set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer \
         -Wl,--allow-shlib-undefined -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 \
