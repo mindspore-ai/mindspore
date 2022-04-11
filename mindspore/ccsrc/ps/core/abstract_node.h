@@ -22,6 +22,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <queue>
 #include <unordered_map>
 #include <functional>
 
@@ -215,7 +216,7 @@ class BACKEND_EXPORT AbstractNode : public Node {
   uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                             const Protos &protos, const void *data, size_t size);
   void ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
-                                 const void *data, size_t size);
+                                 const Protos &protos, const void *data, size_t size);
   void ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                        const Protos &protos, const void *data, size_t size);
   void NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta);
@@ -274,7 +275,7 @@ class BACKEND_EXPORT AbstractNode : public Node {
   std::map<std::pair<NodeRole, uint32_t>, std::shared_ptr<TcpClient>> connected_nodes_;
 
   // the key is <rank_id, rank_request_id>
-  std::map<std::pair<uint32_t, uint64_t>, std::shared_ptr<std::vector<unsigned char>>> received_data_;
+  std::map<std::pair<uint32_t, uint64_t>, VectorPtr> received_data_;
   std::mutex receive_callbacks_mutex_;
   // the key is <rank_id, rank_request_id>
   std::map<std::pair<uint32_t, uint64_t>, MessageCallback> receive_callbacks_;
@@ -298,6 +299,7 @@ class BACKEND_EXPORT AbstractNode : public Node {
   // Workers and servers launch the server to process command: FINISH,SCALE_OUT,SCALE_IN,SEND_METADATA
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> server_thread_;
+  std::unique_ptr<std::thread> message_callback_thread_;
 
   uint32_t worker_num_;
   uint32_t server_num_;
@@ -342,6 +344,7 @@ class BACKEND_EXPORT AbstractNode : public Node {
   bool iteration_failed_ = false;
   CancelSafeModeFn cancelSafeModeFn_;
 };
+using AbstractNodePtr = std::shared_ptr<AbstractNode>;
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

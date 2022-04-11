@@ -16,13 +16,16 @@
 
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 
+#include "runtime/collective/collective_communication_lib.h"
+#include "plugin/device/cpu/hal/hardware/allreduce_impl.h"
+
 namespace mindspore {
 namespace device {
 namespace cpu {
 MsCollectiveCommLib::MsCollectiveCommLib() {
   node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
   // Generate the global group name with node role.
-  global_group_name_ = ClusterContext::instance()->node_role() + "_" + kMSGlobalGroupName;
+  global_group_name_ = kMCCLGlobalGroupName;
   MS_LOG(INFO) << "Global group name of MindSpore collective communication library is " << global_group_name_;
 }
 
@@ -213,6 +216,21 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
     return false;
   }
   return true;
+}
+
+bool MsCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,
+                                    CollectiveOpReduceType reduce_op, const std::string &group_name, void *) {
+  CHECK_IF_NULL(send_buff);
+  CHECK_IF_NULL(recv_buff);
+  CHECK_IF_NULL(node_);
+  if (data_type != TypeId::kNumberTypeFloat32) {
+    MS_LOG(EXCEPTION) << "AllReduce only support float32.";
+  }
+  if (reduce_op != CollectiveOpReduceType::Reduce_Sum) {
+    MS_LOG(EXCEPTION) << "AllReduce only support reduce sum.";
+  }
+  bool ret = AllReduceLauncher::GetInstance().Execute(send_buff, recv_buff, send_count);
+  return ret;
 }
 
 bool MsCollectiveCommLib::AllGather(const void *send_buff, void *recv_buff, size_t send_count, TypeId data_type,

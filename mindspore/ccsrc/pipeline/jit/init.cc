@@ -40,7 +40,9 @@
 #include "ps/util.h"
 #endif
 #include "ps/ps_context.h"
+#include "distributed/init.h"
 #include "distributed/recovery/recovery_context.h"
+#include "distributed/collective/collective_manager.h"
 
 #include "pybind_api/gil_scoped_long_running.h"
 
@@ -58,6 +60,7 @@ using ParallelContext = mindspore::parallel::ParallelContext;
 using CostModelContext = mindspore::parallel::CostModelContext;
 using mindspore::MsCtxParam;
 using PSContext = mindspore::ps::PSContext;
+using CollectiveManager = mindspore::distributed::collective::CollectiveManager;
 using RecoveryContext = mindspore::distributed::recovery::RecoveryContext;
 
 // Interface with python
@@ -137,6 +140,8 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("export_graph", &mindspore::pipeline::ExportGraph, "Export Graph.");
   (void)m.def("load_mindir", &mindspore::pipeline::LoadMindIR, py::arg("file_name"), py::arg("dec_key") = nullptr,
               py::arg("key_len") = py::int_(0), py::arg("dec_mode") = py::str("AES-GCM"), "Load model as Graph.");
+
+  (void)m.def("init_cluster", &mindspore::distributed::Initialize, "Init Cluster");
 
   (void)py::class_<mindspore::MpiConfig, std::shared_ptr<mindspore::MpiConfig>>(m, "MpiConfig")
     .def_static("get_instance", &mindspore::MpiConfig::GetInstance, "Get mpi config instance.")
@@ -384,6 +389,11 @@ PYBIND11_MODULE(_c_expression, m) {
   (void)m.def("get_rank_size", &mindspore::device::gpu::CollectiveFakeInitializer::GetRankSize,
               "Finalize gpu collective communication mode.");
 #endif
+
+  (void)py::class_<CollectiveManager, std::shared_ptr<CollectiveManager>>(m, "CollectiveManager")
+    .def_static("get_instance", &CollectiveManager::instance, "Get collective manager instance.")
+    .def("get_rank_id", &CollectiveManager::GetRankId, "Get the node rank id.")
+    .def("get_group_size", &CollectiveManager::GetGroupSize, "Get the nodes number in the collective communication.");
 
   (void)py::class_<PSContext, std::shared_ptr<PSContext>>(m, "PSContext")
     .def_static("get_instance", &PSContext::instance, "Get PS context instance.")

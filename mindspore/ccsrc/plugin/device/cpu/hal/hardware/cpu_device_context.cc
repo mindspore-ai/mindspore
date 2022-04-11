@@ -31,6 +31,7 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "plugin/device/cpu/optimizer/insert_cast_cpu.h"
 #include "plugin/device/cpu/optimizer/insert_format_transform_op.h"
+#include "backend/common/pass/communication_op_fusion.h"
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
@@ -120,6 +121,11 @@ void CPUDeviceContext::FreeMemory(void *const ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+bool CPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
+                                                const std::vector<size_t> &size_list) const {
+  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+}
+
 DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                        TypeId type_id, const ShapeVector &shape) const {
   auto device_address = std::make_shared<CPUDeviceAddress>(
@@ -158,6 +164,7 @@ void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
   pm->AddPass(std::make_shared<opt::InsertFormatTransformOpCPU>("insert_format_transform_op_cpu"));
+  pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::InsertCastCPU>("insert_cast"));
   pm->AddPass(std::make_shared<opt::EraseVisitAttr>());
   optimizer->AddPassManager(pm);

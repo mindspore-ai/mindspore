@@ -347,34 +347,28 @@ bool CommUtil::VerifyCertTime(const X509 *cert, int64_t time) {
   return true;
 }
 
-bool CommUtil::VerifyCRL(const X509 *cert, const std::string &crl_path) {
+bool CommUtil::VerifyCRL(const X509 *cert, const std::string &crl_path, X509_CRL **crl) {
   MS_ERROR_IF_NULL_W_RET_VAL(cert, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(crl, false);
+
+  EVP_PKEY *evp_pkey = X509_get_pubkey(const_cast<X509 *>(cert));
+  MS_ERROR_IF_NULL_W_RET_VAL(evp_pkey, false);
   BIO *bio = BIO_new_file(crl_path.c_str(), "r");
   MS_ERROR_IF_NULL_W_RET_VAL(bio, false);
+  *crl = PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
+  MS_ERROR_IF_NULL_W_RET_VAL(*crl, false);
 
-  X509_CRL *root_crl = nullptr;
-  EVP_PKEY *evp_pkey = nullptr;
-  bool result = true;
-  do {
-    root_crl = PEM_read_bio_X509_CRL(bio, nullptr, nullptr, nullptr);
-
-    MS_ERROR_IF_NULL_W_RET_VAL(root_crl, false);
-    evp_pkey = X509_get_pubkey(const_cast<X509 *>(cert));
-    MS_ERROR_IF_NULL_W_RET_VAL(evp_pkey, false);
-
-    int ret = X509_CRL_verify(root_crl, evp_pkey);
-    if (ret == 1) {
-      MS_LOG(WARNING) << "Equip cert in root crl, verify failed";
-      result = false;
-      break;
-    }
-  } while (0);
-
+  int ret = X509_CRL_verify(*crl, evp_pkey);
+  if (ret == 1) {
+    MS_LOG(INFO) << "VerifyCRL success.";
+  } else if (ret == 0) {
+    MS_LOG(ERROR) << "Verify CRL failed.";
+  } else {
+    MS_LOG(ERROR) << "CRL cannot be verified.";
+  }
   BIO_free_all(bio);
   EVP_PKEY_free(evp_pkey);
-  X509_CRL_free(root_crl);
-  MS_LOG(INFO) << "VerifyCRL success.";
-  return result;
+  return ret == 1;
 }
 
 bool CommUtil::VerifyCommonName(const X509 *caCert, const X509 *subCert) {
@@ -477,7 +471,7 @@ bool CommUtil::verifySingature(const X509 *caCert, const X509 *subCert) {
   ret = X509_verify(const_cast<X509 *>(subCert), caCertPubKey);
   if (ret != 1) {
     EVP_PKEY_free(caCertPubKey);
-    MS_LOG(ERROR) << "sub cert verify is failed";
+    MS_LOG(ERROR) << "sub cert verify is failed, error code " << ret;
     return false;
   }
   MS_LOG(INFO) << "verifyCAChain success.";
@@ -499,6 +493,21 @@ bool CommUtil::verifyExtendedAttributes(const X509 *caCert) {
   }
   MS_LOG(INFO) << "Subject Type is CA.";
   return true;
+}
+
+void CommUtil::InitOpensslLib() {
+  if (!SSL_library_init()) {
+    MS_LOG(EXCEPTION) << "SSL_library_init failed.";
+  }
+  if (!ERR_load_crypto_strings()) {
+    MS_LOG(EXCEPTION) << "ERR_load_crypto_strings failed.";
+  }
+  if (!SSL_load_error_strings()) {
+    MS_LOG(EXCEPTION) << "SSL_load_error_strings failed.";
+  }
+  if (!OpenSSL_add_all_algorithms()) {
+    MS_LOG(EXCEPTION) << "OpenSSL_add_all_algorithms failed.";
+  }
 }
 
 void CommUtil::verifyCertPipeline(const X509 *caCert, const X509 *subCert) {

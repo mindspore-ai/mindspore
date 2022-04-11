@@ -41,8 +41,7 @@ constexpr uint32_t kLookupInterval = 100;
 // across the network.
 class ActorRouteTableProxy {
  public:
-  explicit ActorRouteTableProxy(const std::shared_ptr<ps::core::AbstractNode> &node,
-                                uint32_t lookup_timeout = kDefaultLookupTimeout)
+  explicit ActorRouteTableProxy(const ps::core::AbstractNodePtr &node, uint32_t lookup_timeout = kDefaultLookupTimeout)
       : node_(node), lookup_timeout_(std::chrono::milliseconds(lookup_timeout)) {}
   ~ActorRouteTableProxy() = default;
 
@@ -57,7 +56,7 @@ class ActorRouteTableProxy {
 
  private:
   // The node variable helps proxy to communicate with scheduler, e.g., SendMessage.
-  std::shared_ptr<ps::core::AbstractNode> node_;
+  ps::core::AbstractNodePtr node_;
 
   // The timeout window for lookup route operation because time of route lookup_timeout of each process is different.
   std::chrono::milliseconds lookup_timeout_;
