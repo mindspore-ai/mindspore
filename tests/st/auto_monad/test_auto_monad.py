@@ -1556,9 +1556,9 @@ def test_print_assign_print():
         out = net(input_x)
         time.sleep(0.1)
 
-    patterns = {'param_1:\nTensor(shape=[], dtype=Int32, value=1)\n'
-                'res:\nTensor(shape=[], dtype=Int32, value=10)\n'
-                'param_2:\nTensor(shape=[], dtype=Int32, value=5)\n'
-                'param_3:\nTensor(shape=[], dtype=Int32, value=3)'}
+    patterns = {'param_1:\nTensor(shape=[], dtype=Int32, value=1)\n\n'
+                'res:\nTensor(shape=[], dtype=Int32, value=10)\n\n'
+                'param_2:\nTensor(shape=[], dtype=Int32, value=5)\n\n'
+                'param_3:\nTensor(shape=[], dtype=Int32, value=3)\n\n'}
     check_output(cap.output, patterns)
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
