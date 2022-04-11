@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_COMMON_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_CLASS_COMMON_H_
-
 #include <string>
 #include <vector>
 #include "mindspore/core/utils/log_adapter.h"
 namespace mindspore {
 namespace cukernel {
-// 1. 错误码细化
-
-inline std::string ConvertVectorToString(const std::vector<size_t> &value) {
+inline std::string ConvertVectorToString(const std::vector<int64_t> &value) {
   std::stringstream ss;
   ss << "(";
   for (auto it = value.begin(); it != value.end(); it++) {
@@ -39,7 +35,7 @@ inline std::string ConvertVectorToString(const std::vector<size_t> &value) {
 }
 
 template <typename T>
-int CalShapesSizeInBytes(const std::vector<std::vector<size_t>> &shapes, const size_t shape_num,
+int CalShapesSizeInBytes(const std::vector<std::vector<int64_t>> &shapes, const size_t shape_num,
                          const std::string kernel_name, const std::string param_name,
                          std::vector<size_t> *shapes_size) {
   if (shape_num != shapes.size()) {
@@ -47,7 +43,7 @@ int CalShapesSizeInBytes(const std::vector<std::vector<size_t>> &shapes, const s
                   << ", but got " << shapes.size();
     return -1;
   }
-  size_t return_flag = 0;
+  int return_flag = 0;
   for (size_t idx = 0; idx < shape_num; ++idx) {
     size_t cur_size = sizeof(T);
     if (shapes[idx].size() == 0) {
@@ -60,9 +56,9 @@ int CalShapesSizeInBytes(const std::vector<std::vector<size_t>> &shapes, const s
       cur_size *= val;
     }
     if (cur_size == 0) {
-      MS_LOG(WARNING) << "For '" << kernel_name << "', the shape cannot contain zero, but got shapes[" << idx << "] is "
+      MS_LOG(WARNING) << "For '" << kernel_name << "', got shapes[" << idx << "] is "
                       << ConvertVectorToString(shapes[idx]);
-      return_flag = -1;
+      return_flag = 1;
     }
     shapes_size->emplace_back(cur_size);
   }

@@ -68,6 +68,7 @@ class UnaryOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   bool is_null_input_;
   std::string kernel_type_{"Unknown"};
+  uint32_t deprecated_deviced_id_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

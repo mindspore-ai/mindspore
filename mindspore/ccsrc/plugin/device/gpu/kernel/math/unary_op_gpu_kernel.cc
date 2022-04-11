@@ -48,10 +48,12 @@ constexpr auto kSqrt = "Sqrt";
 constexpr auto kSquare = "Square";
 
 template <typename T>
-std::unique_ptr<cukernel::GpuKernelHelperBase> CreateUnaryKernelPtr(const std::string &kernel_name) {
-  return std::make_unique<cukernel::UnaryHelperGpuKernel<T>>(kernel_name);
+std::unique_ptr<cukernel::GpuKernelHelperBase> CreateUnaryKernelPtr(const std::string &kernel_name,
+                                                                    const uint32_t &device_id) {
+  return std::make_unique<cukernel::UnaryHelperGpuKernel<T>>(kernel_name, device_id);
 }
-using UnaryPtrCreatorFunc = std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &)>;
+using UnaryPtrCreatorFunc =
+  std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::map<std::string, std::vector<std::pair<KernelAttr, UnaryPtrCreatorFunc>>> kernel_attr_map = {
   {kExp,
@@ -143,10 +145,9 @@ bool UnaryOpGpuKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto index = GetMatchKernelAttrIdxWithException(kernel_node, GetOpSupport());
-  helper_ptr_ = std::move(kernel_attr_map.at(kernel_type_)[index].second(kernel_name));
-  helper_ptr_->ResetResource();
-  std::vector<std::vector<size_t>> input_shapes;
-  std::vector<std::vector<size_t>> output_shapes;
+  helper_ptr_ = std::move(kernel_attr_map.at(kernel_type_)[index].second(kernel_name, deprecated_deviced_id_));
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
   auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
   auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
@@ -155,8 +156,12 @@ bool UnaryOpGpuKernelMod::Init(const CNodePtr &kernel_node) {
     output_size_list_.emplace_back(0);
     return true;
   }
-  input_shapes.emplace_back(input_shape);
-  output_shapes.emplace_back(output_shape);
+  std::vector<int64_t> int64_inp_shape;
+  std::vector<int64_t> int64_out_shape;
+  std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(int64_inp_shape), SizeToLong);
+  std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(int64_out_shape), SizeToLong);
+  input_shapes.emplace_back(int64_inp_shape);
+  output_shapes.emplace_back(int64_out_shape);
   int flag = helper_ptr_->CalMemSize(input_shapes, output_shapes);
   if (flag != 0) {
     return false;

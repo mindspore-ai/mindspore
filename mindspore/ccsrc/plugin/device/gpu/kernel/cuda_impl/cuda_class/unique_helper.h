@@ -33,10 +33,14 @@ constexpr size_t CROPS_SHAPE_1 = 2;
 template <typename T, typename S>
 class UniqueHelperGpuKernel : public GpuKernelHelperBase {
  public:
-  explicit UniqueHelperGpuKernel(const std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
+  explicit UniqueHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
+      : GpuKernelHelperBase(kernel_name, device_id_) {
+    num_elements_ = 1;
+    post_output_size_ = 0;
+  }
   virtual ~UniqueHelperGpuKernel() = default;
-  int CalMemSize(const std::vector<std::vector<size_t>> &input_shapes,
-                 const std::vector<std::vector<size_t>> &output_shapes) override {
+  int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
+                 const std::vector<std::vector<int64_t>> &output_shapes) override {
     int flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
     if (flag != 0) {
       return flag;
@@ -85,17 +89,8 @@ class UniqueHelperGpuKernel : public GpuKernelHelperBase {
                                   s_output_index, reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
-
-  void ResetResource() override {
-    num_elements_ = 1;
-    post_output_size_ = 0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    work_size_list_.clear();
-  }
-
-  DynamicOutInfo GetDynOutInfo() override {
-    DynamicOutInfo dyn_out;
+  TensorInfo GetOutputTensorInfo() override {
+    TensorInfo dyn_out;
     dyn_out.shapes.push_back({{post_output_size_}});
     return dyn_out;
   }

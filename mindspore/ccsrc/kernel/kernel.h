@@ -199,9 +199,9 @@ class KernelTensor {
   // If real type is not a list or tuple tensor, it will return kTypeUnknown.
   std::vector<TypeId> GetListOrTupleDtype() const;
   // If real type is not a single shape vector, it will return empty.
-  std::vector<size_t> GetShapeVector() const;
+  std::vector<int64_t> GetShapeVector() const;
   // If real type is not a list or tuple shape vector, it will return empty.
-  std::vector<std::vector<size_t>> GetListOrTupleShapeVector() const;
+  std::vector<std::vector<int64_t>> GetListOrTupleShapeVector() const;
   void SetData(const AddressPtr &data) { data_ = data; }
   void SetDtype(const TypePtr &dtype);
   void SetFormat(mindspore::Format format) { tensor_info_.format = format; }

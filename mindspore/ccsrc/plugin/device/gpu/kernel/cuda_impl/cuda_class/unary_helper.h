@@ -72,10 +72,13 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
 template <typename T>
 class UnaryHelperGpuKernel : public GpuKernelHelperBase {
  public:
-  explicit UnaryHelperGpuKernel(const std::string &kernel_name) : GpuKernelHelperBase(kernel_name) {}
+  explicit UnaryHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
+      : GpuKernelHelperBase(kernel_name, device_id_) {
+    unary_op_type_ = UNARY_OP_INVALID_TYPE;
+  }
   virtual ~UnaryHelperGpuKernel() = default;
-  int CalMemSize(const std::vector<std::vector<size_t>> &input_shapes,
-                 const std::vector<std::vector<size_t>> &output_shapes) override {
+  int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
+                 const std::vector<std::vector<int64_t>> &output_shapes) override {
     auto iter = kUnaryOpTypeMap.find(kernel_name_);
     if (iter == kUnaryOpTypeMap.end()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
@@ -83,10 +86,10 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
                     << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << kernel_name_;
       return -1;
     }
-
     unary_op_type_ = iter->second;
     int flag = CalShapesSizeInBytes<T>(input_shapes, 1, kernel_name_, "input_shapes", &input_size_list_);
     output_size_list_ = input_size_list_;
+    is_null_input_ = (flag == 1);
     if (flag != 0) {
       return flag;
     }
@@ -95,6 +98,9 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
 
   int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
               const std::vector<void *> &work_ptrs, void *cuda_stream) override {
+    if (is_null_input_) {
+      return 0;
+    }
     static std::map<UnaryOptype, std::function<void(const T *, T *, const size_t, cudaStream_t)>> func_map = {
       {UNARY_OP_EXP, Exponential<T>}, {UNARY_OP_EXPM1, Expm1<T>},
       {UNARY_OP_LOG, Logarithm<T>},   {UNARY_OP_LOG1P, Log1p<T>},
@@ -133,14 +139,9 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
     return 0;
   }
 
-  void ResetResource() override {
-    unary_op_type_ = UNARY_OP_INVALID_TYPE;
-    input_size_list_.clear();
-    output_size_list_.clear();
-  }
-
  private:
   UnaryOptype unary_op_type_;
+  bool is_null_input_;
 };
 }  // namespace cukernel
 }  // namespace mindspore

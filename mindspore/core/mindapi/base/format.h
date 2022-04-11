@@ -21,6 +21,7 @@
 #include <map>
 namespace mindspore {
 enum Format : int64_t {
+  DEFAULT_FORMAT = -1,
   NCHW = 0,
   NHWC = 1,
   NHWC4 = 2,

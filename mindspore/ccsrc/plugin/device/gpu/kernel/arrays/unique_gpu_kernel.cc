@@ -24,10 +24,12 @@ namespace mindspore {
 namespace kernel {
 namespace {
 template <typename T, typename S>
-std::unique_ptr<cukernel::GpuKernelHelperBase> CreateUniqueKernelPtr(const std::string &kernel_name) {
-  return std::make_unique<cukernel::UniqueHelperGpuKernel<T, S>>(kernel_name);
+std::unique_ptr<cukernel::GpuKernelHelperBase> CreateUniqueKernelPtr(const std::string &kernel_name,
+                                                                     const uint32_t &device_id) {
+  return std::make_unique<cukernel::UniqueHelperGpuKernel<T, S>>(kernel_name, device_id);
 }
-using UniquePtrCreatorFunc = std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &)>;
+using UniquePtrCreatorFunc =
+  std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
 const std::vector<std::pair<KernelAttr, UniquePtrCreatorFunc>> kernel_attr = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
@@ -44,17 +46,18 @@ bool UniqueGpuKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto index = GetMatchKernelAttrIdxWithException(kernel_node, GetOpSupport());
-  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name));
-  helper_ptr_->ResetResource();
-  std::vector<std::vector<size_t>> input_shapes;
-  std::vector<std::vector<size_t>> output_shapes;
+  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name, deprecated_id_));
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
   std::vector<size_t> shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
   is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();
     return true;
   }
-  input_shapes.emplace_back(shape);
+  std::vector<int64_t> int64_shape;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(int64_shape), SizeToLong);
+  input_shapes.emplace_back(int64_shape);
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
   is_need_updateop_ = true;
