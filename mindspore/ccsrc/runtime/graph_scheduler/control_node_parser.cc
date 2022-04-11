@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <unordered_map>
 #include "runtime/graph_scheduler/control_node_parser.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "include/common/utils/convert_utils.h"
@@ -107,6 +108,25 @@ std::set<size_t> FetchRealIndexByAbstract(const AbstractBasePtr &abstract, std::
       case kCsrTensorDenseShapeIndex:
         dst_abstract = csr_abs->dense_shape();
         pre_abstract_num = kCsrTensorDenseShapeIndex;
+        break;
+      default:
+        MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
+    }
+  } else if (abstract->isa<abstract::AbstractCOOTensor>()) {
+    auto coo_abs = abstract->cast<abstract::AbstractCOOTensorPtr>();
+    MS_EXCEPTION_IF_NULL(coo_abs);
+    switch (index) {
+      case kCooTensorIndicesIndex:
+        dst_abstract = coo_abs->indices();
+        pre_abstract_num = kCooTensorIndicesIndex;
+        break;
+      case kCooTensorValuesIndex:
+        dst_abstract = coo_abs->values();
+        pre_abstract_num = kCooTensorValuesIndex;
+        break;
+      case kCooTensorDenseShapeIndex:
+        dst_abstract = coo_abs->values();
+        pre_abstract_num = kCooTensorDenseShapeIndex;
         break;
       default:
         MS_LOG(EXCEPTION) << "Invalid index:" << index << " for abstract:" << abstract->ToString();
@@ -394,8 +414,11 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
 
   // The node is divided into the following types:
   // 1. depend and load.
-  const auto &node_with_index =
-    common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple});
+  const auto &node_with_index = common::AnfAlgo::VisitKernelWithReturnType(
+    node, 0, false,
+    {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimCSRTensorGetIndptr, prim::kPrimCSRTensorGetIndices,
+     prim::kPrimCSRTensorGetValues, prim::kPrimCSRTensorGetDenseShape, prim::kPrimCOOTensorGetIndices,
+     prim::kPrimCOOTensorGetValues, prim::kPrimCOOTensorGetDenseShape});
   auto real_node = node_with_index.first;
   size_t real_index = node_with_index.second;
   MS_EXCEPTION_IF_NULL(real_node);
@@ -435,12 +458,14 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
         common::AnfAlgo::CheckPrimitiveType(src_node, prim::kPrimMakeCOOTensor)) {
       const auto &make_tensor_cnode = src_node->cast<CNodePtr>();
       const auto &make_tensor_inputs = make_tensor_cnode->inputs();
-      if (make_tensor_inputs.size() <= kMakeCSRTensorInputNum) {
-        MS_LOG(EXCEPTION) << "Invalid make csr tensor node:" << cnode->DebugString();
+      if (make_tensor_inputs.size() <= kMakeCSRTensorInputNum && make_tensor_inputs.size() <= kMakeCOOTensorInputNum) {
+        MS_LOG(EXCEPTION) << "Invalid make sparse tensor node:" << cnode->DebugString();
       }
       const auto &sub_results =
         FetchInputNodeByNode(make_tensor_inputs[LongToSize(iter->second) + kMakeTensorInputStartPos]);
       (void)results.insert(results.end(), sub_results.begin(), sub_results.end());
+    } else if (src_node->isa<Parameter>()) {
+      results.emplace_back(src_node, iter->second);
     } else {
       // Csr node from parameter or call node.
       auto abstract = src_node->abstract();

@@ -1930,8 +1930,7 @@ def csr_abs(x):
 
 
 def csr_mv(x, dense_vector):
-    """Implementation of `abs` for CSRTensor."""
-    check_value_type('dense_vector', dense_vector, (Tensor,), 'CSRTensor.mv')
+    """Implementation of `mv` for CSRTensor."""
     return F.csr_mv(x, dense_vector)
 
 

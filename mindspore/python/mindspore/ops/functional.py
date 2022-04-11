@@ -1023,7 +1023,7 @@ def print_info(info):
 
 def make_sparse_tensor(indices, values, dense_shape):
     """Call make_coo_tensor in this function."""
-    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
+    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " + \
                "Please use 'COOTensor' instead.")
     return make_coo_tensor(indices, values, dense_shape)
 
