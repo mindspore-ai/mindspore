@@ -67,6 +67,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
+      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+      debugger->InsertExecutedGraph(kernel_graph);
       std::string kernel_name = cnode->fullname_with_scope();
       debugger->SetCurNode(kernel_name);
       bool read_data = CheckReadData(cnode);
@@ -80,6 +82,8 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
+      auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
+      debugger->InsertExecutedGraph(kernel_graph);
       debugger->SetAscendKernelByKernelFlag(true);
       bool read_data = CheckReadData(cnode);
       if (read_data) {
@@ -108,6 +112,10 @@ void DebugActor::DebugForGraph(const KernelGraphPtr &graph, const DeviceContext 
   MS_EXCEPTION_IF_NULL(from_aid);
   MS_LOG(DEBUG) << "Super kernel debug for graph: " << graph->graph_id() << ".";
 #ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  if (debugger != nullptr) {
+    debugger->InsertExecutedGraph(graph);
+  }
   LoadDataForDebugger(graph);
   // This function updates graph history file and cur_dump_iter if dump is enabled.
   // When e2e dump is enabled, this function dumps the graph.

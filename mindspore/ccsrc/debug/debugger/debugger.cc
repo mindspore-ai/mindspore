@@ -292,6 +292,7 @@ void Debugger::Reset() {
   graph_proto_list_.clear();
   graph_ptr_list_.clear();
   graph_ptr_step_vec_.clear();
+  executed_graph_ptr_set_.clear();
   parameters_mindRT_.clear();
   visited_root_graph_ids_.clear();
   MS_LOG(INFO) << "Release Debugger resource.";
@@ -502,8 +503,10 @@ void Debugger::DumpParamsAndConstAndHistory() {
       // Dump constant data for Ascend.
       DumpConstantDataAscend(graph);
     }
+  }
+  for (auto kernel_graph : executed_graph_ptr_set_) {
     // Dump graph run hisotry for each graph.
-    E2eDump::DumpRunIter(graph, GetRankID());
+    E2eDump::DumpRunIter(kernel_graph, GetRankID());
   }
   if (!cur_root_graph_checked) {
     visited_root_graph_ids_.push_back(cur_root_graph_id_);
@@ -583,6 +586,7 @@ void Debugger::PostExecuteGraphDebugger() {
     debugger_->PostExecute();
   }
   E2eDump::UpdateIterMindRTDump();
+  executed_graph_ptr_set_.clear();
 }
 
 /*

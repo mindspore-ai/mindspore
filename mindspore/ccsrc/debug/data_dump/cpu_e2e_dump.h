@@ -51,6 +51,8 @@ class CPUE2eDump {
   static void DumpInputImpl(const CNodePtr &node, const std::string &dump_path, std::string *kernel_name);
 
   static void DumpOutputImpl(const CNodePtr &node, const std::string &dump_path, std::string *kernel_name);
+
+  inline static unsigned int prev_run_iter_ = UINT32_MAX;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_DEBUG_DATA_DUMP_CPU_E_2_E_DUMP_H_
