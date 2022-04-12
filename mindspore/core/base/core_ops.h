@@ -64,6 +64,7 @@ constexpr auto kACos = "ACos";
 constexpr auto kACosGrad = "ACosGrad";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kReciprocal = "Reciprocal";
+constexpr auto kInv = "Inv";
 constexpr auto kLog = "Log";
 constexpr auto kLogicalXor = "LogicalXor";
 constexpr auto kSelect = "Select";
@@ -703,6 +704,7 @@ GVAR_DEF(PrimitivePtr, kPrimTruncateMod, std::make_shared<Primitive>("TruncateMo
 GVAR_DEF(PrimitivePtr, kPrimSqrtGrad, std::make_shared<Primitive>("SqrtGrad"));
 GVAR_DEF(PrimitivePtr, kPrimReciprocal, std::make_shared<Primitive>(kReciprocal));
 GVAR_DEF(PrimitivePtr, kPrimReciprocalGrad, std::make_shared<Primitive>("ReciprocalGrad"));
+GVAR_DEF(PrimitivePtr, kPrimInv, std::make_shared<Primitive>(kInv));
 GVAR_DEF(PrimitivePtr, kPrimExpandDims, std::make_shared<Primitive>("ExpandDims"));
 GVAR_DEF(PrimitivePtr, kPrimAbs, std::make_shared<Primitive>(kAbs));
 GVAR_DEF(PrimitivePtr, kPrimAbsGrad, std::make_shared<Primitive>("AbsGrad"));
@@ -742,7 +744,6 @@ GVAR_DEF(PrimitivePtr, kPrimSquareSumAll, std::make_shared<Primitive>("SquareSum
 GVAR_DEF(PrimitivePtr, kPrimComplex, std::make_shared<Primitive>("Complex"));
 GVAR_DEF(PrimitivePtr, kPrimXdivy, std::make_shared<Primitive>("Xdivy"));
 GVAR_DEF(PrimitivePtr, kPrimXlogy, std::make_shared<Primitive>("Xlogy"));
-GVAR_DEF(PrimitivePtr, kPrimInv, std::make_shared<Primitive>("Inv"));
 GVAR_DEF(PrimitivePtr, kPrimBitwiseOr, std::make_shared<Primitive>("BitwiseOr"));
 GVAR_DEF(PrimitivePtr, kPrimBitwiseAnd, std::make_shared<Primitive>("BitwiseAnd"));
 GVAR_DEF(PrimitivePtr, kPrimBitwiseXor, std::make_shared<Primitive>("BitwiseXor"));

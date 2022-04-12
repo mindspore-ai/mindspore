@@ -46,6 +46,7 @@ constexpr auto kFloor = "Floor";
 constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kReciprocal = "Reciprocal";
+constexpr auto kInv = "Inv";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kLogicalNot = "LogicalNot";
 constexpr auto kAsin = "Asin";
@@ -169,6 +170,11 @@ void Reciprocal(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void Inv(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  Reciprocal<T>(content, in, out, size);
 }
 
 template <typename T>
@@ -483,6 +489,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimCosh->name(), Cosh<T>},
                           {prim::kPrimAsinh->name(), Asinh<T>},
                           {prim::kPrimReciprocal->name(), Reciprocal<T>},
+                          {prim::kPrimInv->name(), Inv<T>},
                           {prim::kPrimRint->name(), Rint<T>},
                           {prim::kPrimRound->name(), Round<T>},
                           {prim::kPrimAbs->name(), Abs<T>},
@@ -575,7 +582,12 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kReciprocal,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+  {kInv,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kGeLU, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kLogicalNot, {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc}}},
@@ -700,6 +712,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Round,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kRound); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Reciprocal,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReciprocal); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Inv,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInv); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GeLU,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kGeLU); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalNot,
