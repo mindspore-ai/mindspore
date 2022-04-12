@@ -146,30 +146,6 @@ def test_loss_monitor_args():
     """
     with pytest.raises(ValueError):
         LossMonitor(per_print_times=-1)
-    with pytest.raises(ValueError):
-        LossMonitor(has_trained_epoch=-100)
-
-
-def test_loss_monitor_has_trained_epoch():
-    """
-    Feature: callback
-    Description: Test loss monitor has_trained_epoch args
-    Expectation: run success
-    """
-    cb_params = _InternalCallbackParam()
-    run_context = RunContext(cb_params)
-    loss_cb = LossMonitor(has_trained_epoch=10)
-    cb_params.cur_epoch_num = 4
-    cb_params.cur_step_num = 1
-    cb_params.batch_num = 1
-    cb_params.net_outputs = Tensor(2.0)
-    cb_params.epoch_num = 4
-    loss_cb.begin(run_context)
-    loss_cb.epoch_begin(run_context)
-    loss_cb.step_begin(run_context)
-    loss_cb.step_end(run_context)
-    loss_cb.epoch_end(run_context)
-    loss_cb.end(run_context)
 
 
 def test_save_ckpt_and_test_chg_ckpt_file_name_if_same_exist():
@@ -355,7 +331,7 @@ def test_checkpoint_save_ckpt_with_encryption():
         ckpt_cb2.step_end(run_context)
 
 
-def test_CallbackManager():
+def test_callbackmanager():
     """
     Feature: callback
     Description: Test CallbackManager
@@ -377,7 +353,7 @@ def test_CallbackManager():
         _CallbackManager(callbacks)
 
 
-def test_CallbackManager_exit_called():
+def test_callbackmanager_exit_called():
     """
     Feature: callback
     Description: Test CallbackManager exit called
@@ -392,7 +368,7 @@ def test_CallbackManager_exit_called():
     assert mock_exit.call_count == 2
 
 
-def test_CallbackManager_exit_called_when_raises():
+def test_callbackmanager_exit_called_when_raises():
     """
     Feature: callback
     Description: Test when CallbackManager exit called
@@ -408,7 +384,7 @@ def test_CallbackManager_exit_called_when_raises():
     assert mock_exit.call_count == 2
 
 
-def test_CallbackManager_begin_called():
+def test_callbackmanager_begin_called():
     """
     Feature: callback
     Description: Test CallbackManager called begin
@@ -424,7 +400,7 @@ def test_CallbackManager_begin_called():
     assert mock_begin.call_count == 2
 
 
-def test_RunContext():
+def test_runcontext():
     """
     Feature: callback
     Description: Test RunContext init
@@ -448,7 +424,7 @@ def test_RunContext():
     assert should_stop
 
 
-def test_Checkpoint_Config():
+def test_checkpoint_config():
     """
     Feature: callback
     Description: Test checkpoint config error args
