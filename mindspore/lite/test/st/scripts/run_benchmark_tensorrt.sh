@@ -203,6 +203,16 @@ function Print_Benchmark_Result() {
     MS_PRINT_TESTCASE_END_MSG
 }
 
+function Kill_Pid() {
+    ## kill previous pid
+    whoami=$(whoami)
+    IFS=" " read -r -a pids <<< "$(ps -ef | grep benchmark | grep ${whoami} | awk -F ' ' '{print $2}')"
+    for pid in ${pids[*]}; do
+        echo "killing previous user pid ${pid} for ${whoami}"
+        kill -9 ${pid}
+    done
+}
+
 # Example:sh run_benchmark_tensorrt.sh -r /home/temp_test -m /home/temp_test/models -e x86_gpu -d 192.168.1.1:0
 while getopts "r:m:d:e:l:" opt; do
     case ${opt} in
