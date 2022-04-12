@@ -64,6 +64,60 @@ def test_make_coo():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_coo_tensor_with_control_if():
+    """
+    Feature: Test COOTensor in if.
+    Description: Test COOTensor computation in while loop.
+    Expectation: Success.
+    """
+    class COOTensorValuesDouble(nn.Cell):
+
+        def construct(self, x):
+            indices = x.indices
+            values = x.values * 2
+            shape = x.shape
+            return COOTensor(indices, values, shape)
+
+    class COOTensorValuesAdd2(nn.Cell):
+
+        def construct(self, x):
+            indices = x.indices
+            values = x.values + 2
+            shape = x.shape
+            return COOTensor(indices, values, shape)
+
+    class COOTensorWithControlIf(nn.Cell):
+        def __init__(self, shape):
+            super(COOTensorWithControlIf, self).__init__()
+            self.op1 = COOTensorValuesDouble()
+            self.op2 = COOTensorValuesAdd2()
+            self.shape = shape
+
+        def construct(self, a, b, indices, values):
+            x = COOTensor(indices, values, self.shape)
+            if a > b:
+                x = self.op1(x)
+            else:
+                x = self.op2(x)
+            return x.indices, x.values, x.shape
+
+    a = Tensor(0, mstype.int32)
+    b = Tensor(2, mstype.int32)
+    indices = Tensor([[0, 1], [1, 2]])
+    values = Tensor([1, 2], dtype=mstype.float32)
+    shape = (3, 4)
+    net = COOTensorWithControlIf(shape)
+    out = net(a, b, indices, values)
+    assert np.allclose(out[0].asnumpy(), indices.asnumpy(), .0, .0)
+    assert np.allclose(out[1].asnumpy(), values.asnumpy() + 2, .0, .0)
+    assert out[2] == shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_coo_tensor_in_while():
     """
     Feature: Test COOTensor in while loop.

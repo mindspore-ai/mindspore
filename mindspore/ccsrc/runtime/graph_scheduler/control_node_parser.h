@@ -66,6 +66,7 @@ constexpr size_t kCooTensorDenseShapeIndex = 2;
 constexpr size_t kMakeCSRTensorInputStartPos = 1;
 constexpr size_t kMakeTensorInputStartPos = 1;
 constexpr size_t kMakeCSRTensorInputNum = 4;
+constexpr size_t kMakeCOOTensorInputNum = 3;
 
 using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
 struct NodeWithContextCmp {

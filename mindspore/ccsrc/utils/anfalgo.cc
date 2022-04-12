@@ -37,6 +37,12 @@ namespace {
 constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kNopNodeRealInputIndex = 1;
 
+const PrimitiveSet expand_prims{
+  prim::kPrimMakeTuple,
+  prim::kPrimMakeCSRTensor,
+  prim::kPrimMakeCOOTensor,
+  prim::kPrimMakeRowTensor,
+};
 const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
 
 std::vector<size_t> TransShapeToSizet(const abstract::ShapePtr &shape) {
@@ -106,12 +112,6 @@ void GetRealOutputRecursively(const AnfNodePtr &node, size_t output_index, std::
 std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) {
   std::vector<KernelWithIndex> ret;
   std::vector<KernelWithIndex> ret_empty;
-  const PrimitiveSet expand_prims{
-    prim::kPrimMakeTuple,
-    prim::kPrimMakeCSRTensor,
-    prim::kPrimMakeCOOTensor,
-    prim::kPrimMakeRowTensor,
-  };
   // The MakeTuple/MakeSparse node need expand and recurse.
   if (IsOneOfPrimitiveCNode(node, expand_prims)) {
     auto make_tuple = node->cast<CNodePtr>();
@@ -157,7 +157,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
 
   // If the node is a call, the outputs num should get from the abstract.
   if (AnfAlgo::IsCallNode(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
-      AnfAlgo::CheckAbsCSRTensor(node)) {
+      AnfAlgo::CheckAbsCSRTensor(node) || AnfAlgo::CheckAbsCOOTensor(node)) {
     outputs_num = AnfAlgo::GetOutputNumByAbstract(node->abstract());
   }
 
@@ -211,16 +211,28 @@ bool IsNodeDynamicShape(const AnfNodePtr &node) {
 
 AnfNodePtr AnfAlgo::GetTupleGetItemRealInput(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
-  if (tuple_get_item->size() != kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+  if (CheckPrimitiveType(tuple_get_item, prim::kPrimTupleGetItem)) {
+    if (tuple_get_item->size() != kTupleGetItemInputSize) {
+      MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+    }
+  } else if (tuple_get_item->size() != kSparseGetAttrInputSize) {
+    MS_LOG(EXCEPTION) << "The node sparse_get_attribute must have 1 input!";
   }
   return tuple_get_item->input(kRealInputNodeIndexInTupleGetItem);
 }
 
 size_t AnfAlgo::GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_EXCEPTION_IF_NULL(tuple_get_item);
-  if (tuple_get_item->size() != kTupleGetItemInputSize) {
-    MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+  if (CheckPrimitiveType(tuple_get_item, prim::kPrimTupleGetItem)) {
+    if (tuple_get_item->size() != kTupleGetItemInputSize) {
+      MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
+    }
+  } else if (tuple_get_item->size() != kSparseGetAttrInputSize) {
+    MS_LOG(EXCEPTION) << "The node sparse_get_attribute must have 1 input!";
+  }
+  std::string prim_name = GetCNodeFuncName(tuple_get_item);
+  if (sparse_attr_map.find(prim_name) != sparse_attr_map.end()) {
+    return sparse_attr_map.at(prim_name);
   }
   auto output_index_value_node = tuple_get_item->input(kInputNodeOutputIndexInTupleGetItem);
   MS_EXCEPTION_IF_NULL(output_index_value_node);
@@ -248,11 +260,13 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
+  std::string prim_name = GetCNodeFuncName(cnode);
+  // TupleGetItem and SparseGetAttr needs to find real input
+  if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem) || sparse_attr_map.find(prim_name) != sparse_attr_map.end()) {
     abstract::AbstractBasePtr abs = nullptr;
     auto item_with_index_tmp = VisitKernelWithReturnType(
       GetTupleGetItemRealInput(cnode), GetTupleGetItemOutIndex(cnode), skip_nop_node, return_types, &abs);
-    if (CheckPrimitiveType(item_with_index_tmp.first, prim::kPrimMakeTuple)) {
+    if (IsOneOfPrimitiveCNode(item_with_index_tmp.first, expand_prims)) {
       MS_EXCEPTION_IF_NULL(item_with_index_tmp.first);
       auto make_tuple = item_with_index_tmp.first->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(make_tuple);
