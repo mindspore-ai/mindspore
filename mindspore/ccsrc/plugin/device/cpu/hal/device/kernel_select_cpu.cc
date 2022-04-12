@@ -370,6 +370,18 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
   return false;
 }
 
+kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs) {
+  kernel::KernelAttr attr;
+  for (auto in_dtype : inputs) {
+    (void)attr.AddInputAttr(in_dtype);
+  }
+  for (auto out_dtype : outputs) {
+    (void)attr.AddOutputAttr(out_dtype);
+  }
+  (void)attr.AddSkipCheckAttr(true);
+  return attr;
+}
+
 void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -419,6 +431,12 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   kernel::KernelAttr selected_kernel_attr;
   std::pair<bool, bool> matched = std::make_pair(false, false);
   auto kernel_attrs = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
+  // If GetSkipCheck is true, that means we do not check the build info between input and registered.
+  // Take the input attrs to build the kernel.
+  if (!kernel_attrs.empty() && kernel_attrs[0].GetSkipCheck()) {
+    kernel_attrs[0] = BuildKernelFromInput(input_types, output_types);
+    MS_LOG(DEBUG) << "Build kernel form input for " << op_name;
+  }
   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
                     output_types, &matched, true)) {
     if (op_name == "Cast") {

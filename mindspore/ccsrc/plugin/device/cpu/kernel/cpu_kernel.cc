@@ -52,6 +52,11 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
     std::vector<KernelAttr> kernel_attrs;
     auto kernel_support = GetOpSupport();
     (void)kernel_attrs.insert(kernel_attrs.end(), kernel_support.begin(), kernel_support.end());
+    if (!kernel_attrs.empty() && kernel_attrs[0].GetSkipCheck()) {
+      (void)support_map_.emplace(kernel_name, kernel_attrs);
+      (void)initialize_.insert(kernel_name);
+      return support_map_[kernel_name];
+    }
     if (kernel_attrs.empty()) {
       auto oplib_support = GetSupportFromOpLib(kernel_name);
       (void)kernel_attrs.insert(kernel_attrs.end(), oplib_support.begin(), oplib_support.end());
@@ -183,6 +188,11 @@ void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &appl
 
   auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
+  if (kernel_attrs[0].GetSkipCheck()) {
+    kernel_attrs[0] = kernel_attr;
+    is_match = true;
+    index = 0;
+  }
   if (!is_match) {
     MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
                       << " does not support this kernel data type: " << kernel_attr;
