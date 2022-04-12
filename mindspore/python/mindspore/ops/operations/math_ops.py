@@ -189,7 +189,7 @@ class Add(_MathBinaryOp):
 
     .. note::
         - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/r1.7/operator_list_implicit.html>`_
           to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
@@ -1851,7 +1851,7 @@ class Sub(_MathBinaryOp):
 
     .. note::
         - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/r1.7/operator_list_implicit.html>`_
           to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
@@ -1905,7 +1905,7 @@ class Mul(_MathBinaryOp):
         out_{i} = x_{i} * y_{i}
     .. note::
         - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/r1.7/operator_list_implicit.html>`_
           to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
@@ -2201,7 +2201,7 @@ class Pow(Primitive):
 
     .. note::
         - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/r1.7/operator_list_implicit.html>`_
           to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
@@ -2828,7 +2828,7 @@ class Div(_MathBinaryOp):
 
     .. note::
         - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/r1.7/operator_list_implicit.html>`_
           to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
@@ -4040,7 +4040,7 @@ class LessEqual(_LogicBinaryOp):
 
     .. note::
         - Inputs of `x` and `y` comply with the
-          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/master/operator_list_implicit.html>`_
+          `implicit type conversion rules <https://www.mindspore.cn/docs/note/en/r1.7/operator_list_implicit.html>`_
           to make the data types consistent.
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,

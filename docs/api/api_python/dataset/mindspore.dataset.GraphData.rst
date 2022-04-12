@@ -35,7 +35,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定 `edge_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
+        - **edge_type** (int) - 指定边的类型，在数据集转换为MindRecord格式时，需要指定 `edge_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.7/advanced/dataset/enhanced_graph_data.html>`_ 。
 
         **返回：**
 
@@ -154,7 +154,7 @@ mindspore.dataset.GraphData
 
         **参数：**
 
-        - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定 `node_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/load_dataset_gnn.html>`_ 。
+        - **node_type** (int) - 指定节点的类型。在数据集转换为MindRecord格式时，需要指定 `node_type` 的值，并在此API中对应使用。详见 `加载图数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.7/advanced/dataset/enhanced_graph_data.html>`_ 。
 
         **返回：**
 

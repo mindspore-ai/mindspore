@@ -27,7 +27,7 @@ class DatasetCache:
     A client to interface with tensor caching service.
 
     For details, please check `Tutorial <https://www.mindspore.cn/tutorials/experts/en/r1.7/\
-    data_engine/enable_cache.html>`_.
+    dataset/cache.html>`_.
 
     Args:
         session_id (int): A user assigned session id for the current pipeline.

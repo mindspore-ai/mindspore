@@ -4,7 +4,7 @@
     将CSV格式数据集转换为MindRecord格式数据集。
 
     .. note::
-        示例的详细信息，请参见 `转换CSV数据集 <https://mindspore.cn/docs/programming_guide/zh-CN/master/dataset_conversion.html#转换CSV数据集>`_。
+        示例的详细信息，请参见 `转换CSV数据集 <https://www.mindspore.cn/tutorials/zh-CN/r1.7/advanced/dataset/record.html#转换CSV数据集>`_。
 
     **参数：**
 
