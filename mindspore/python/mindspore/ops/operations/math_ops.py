@@ -6119,7 +6119,7 @@ class Cross(Primitive):
         >>> x2 = Tensor([1, 2, 3], mstype.int8)
         >>> output = cross(x1, x2)
         >>> print(output)
-        [0, 0, 0]
+        [0 0 0]
     """
 
     @prim_attr_register
