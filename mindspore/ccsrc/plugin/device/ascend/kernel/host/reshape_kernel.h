@@ -46,7 +46,7 @@ class ReshapeKernelMod : public HostKernelMod {
       kernel_ = std::dynamic_pointer_cast<ReshapeKernel>(GenDynamicKernel(cnode, stream_ptr));
       kernel_->Initialize();
     }
-    if (stream_ != nullptr) {
+    if (stream_ == nullptr) {
       stream_ = stream_ptr;
     }
     try {
