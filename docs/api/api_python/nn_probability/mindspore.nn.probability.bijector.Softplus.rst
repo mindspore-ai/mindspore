@@ -23,7 +23,7 @@ mindspore.nn.probability.bijector.Softplus
 
     - **TypeError** - sharpness中元素的数据类型不为float。
 
-    .. py:method:: scale
+    .. py:method:: sharpness
         :property:
 
         返回映射的锐度因子。
