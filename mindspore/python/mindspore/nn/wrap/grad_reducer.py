@@ -313,7 +313,7 @@ class DistributedGradReducer(Cell):
         >>> from mindspore.communication import init
         >>> from mindspore import ops
         >>> from mindspore import context
-        >>> from mindspore.context import ParallelMode
+        >>> from mindspore import ParallelMode
         >>> from mindspore import Parameter, Tensor
         >>> from mindspore import nn
         >>>

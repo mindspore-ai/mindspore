@@ -155,8 +155,9 @@ class WaitedDSCallback(Callback, DSCallback):
         >>> import mindspore.nn as nn
         >>> from mindspore.dataset import WaitedDSCallback
         >>> from mindspore import context
-        >>> from mindspore.train import Model
+        >>> from mindspore import Model
         >>> from mindspore.train.callback import Callback
+        >>> import mindspore.dataset as ds
         >>>
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
         >>>

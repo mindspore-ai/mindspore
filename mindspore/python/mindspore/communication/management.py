@@ -231,12 +231,12 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
     Examples:
-        >>> from mindspore.context import set_context, set_auto_parallel_context
+        >>> from mindspore import set_context, set_auto_parallel_context
         >>> from mindspore.communication.management import init, get_rank, get_local_rank
         >>> set_context(device_target="Ascend")
         >>> set_auto_parallel_context(device_num=16) # 2 server, each server with 8 NPU.
         >>> init()
-        >>> world_rank = get_rank() # rank_id is 9.
+        >>> world_rank = get_rank()
         >>> local_rank = get_local_rank()
         >>> print("local_rank is: {}, world_rank is {}".format(local_rank, world_rank))
         local_rank is: 1, world_rank is 9
@@ -268,7 +268,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If HCCL/NCCL is not available.
 
     Examples:
-        >>> from mindspore.context import set_context, set_auto_parallel_context
+        >>> from mindspore import set_context, set_auto_parallel_context
         >>> from mindspore.communication.management import init, get_group_size
         >>> set_context(device_target="Ascend")
         >>> set_auto_parallel_context(device_num=8)
@@ -304,7 +304,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
         ValueError: If backend is invalid.
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
     Examples:
-        >>> from mindspore.context import set_context, set_auto_parallel_context
+        >>> from mindspore import set_context, set_auto_parallel_context
         >>> from mindspore.communication.management import init, get_local_rank_size
         >>> set_context(device_target="Ascend")
         >>> set_auto_parallel_context(device_num=16) # 2 server, each server with 8 NPU.
@@ -343,7 +343,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
 
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore import set_context
         >>> from mindspore.communication.management import init, create_group, get_world_rank_from_group_rank
         >>> set_context(device_target="Ascend")
         >>> init()
@@ -385,7 +385,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
 
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore import set_context
         >>> from mindspore.communication.management import init, create_group, get_group_rank_from_world_rank
         >>> set_context(device_target="Ascend")
         >>> init()
@@ -424,7 +424,7 @@ def create_group(group, rank_ids):
         RuntimeError: If HCCL is not available or MindSpore is GPU version.
 
     Examples:
-        >>> from mindspore.context import set_context
+        >>> from mindspore import set_context
         >>> from mindspore.ops import operations as ops
         >>> from mindspore.communication.management import init, create_group
         >>> set_context(device_target="Ascend")

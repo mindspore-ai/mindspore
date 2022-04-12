@@ -401,8 +401,8 @@ class ModelCheckpoint(Callback):
         self._manager = CheckpointManager()
         self._prefix = _chg_ckpt_file_name_if_same_exist(self._directory, self._prefix)
         self._append_dict = self._config.append_dict or {}
-        self._append_epoch_num = self._append_dict["epoch_num"] if "epoch_num" in self._append_dict else 0
-        self._append_step_num = self._append_dict["step_num"] if "step_num" in self._append_dict else 0
+        self._append_epoch_num = self._append_dict.get("epoch_num") if "epoch_num" in self._append_dict else 0
+        self._append_step_num = self._append_dict.get("step_num") if "step_num" in self._append_dict else 0
         self._graph_saved = False
         self._need_flush_from_cache = True
 
