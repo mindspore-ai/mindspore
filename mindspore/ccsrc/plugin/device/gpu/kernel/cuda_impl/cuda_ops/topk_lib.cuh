@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #pragma once
-
+#include <limits>
 constexpr int kWarpSize = 32;
 
 constexpr __host__ __device__ int Log2(int n, int p = 0) { return (n <= 1) ? p : Log2(n / 2, p + 1); }
@@ -29,8 +29,27 @@ __device__ __forceinline__ int GetLaneId() {
 
 template <typename T, typename S>
 struct CmpKV {
-  __device__ static inline bool gt(T k1, S v1, T k2, S v2) { return k1 > k2 || (k1 == k2 && v1 < v2); }
-  __device__ static inline bool lt(T k1, S v1, T k2, S v2) { return k1 < k2 || (k1 == k2 && v1 > v2); }
+  __device__ static inline bool gt(T k1, S v1, T k2, S v2) {
+    if (k1 == k1 && k2 == k2) {
+      return k1 > k2 || (k1 == k2 && v1 < v2);
+    }
+    if (k2 == -std::numeric_limits<T>::lowest()) {
+      return false;
+    }
+    if (k1 != k1 && k2 != k2) {
+      return v1 < v2;
+    }
+    return k1 != k1;
+  }
+  __device__ static inline bool lt(T k1, S v1, T k2, S v2) {
+    if (k1 == k1 && k2 == k2) {
+      return k1 < k2 || (k1 == k2 && v1 > v2);
+    }
+    if (k1 != k1 && k2 != k2) {
+      return v1 > v2;
+    }
+    return k1 == k1;
+  }
 };
 
 template <typename T>
@@ -47,7 +66,7 @@ inline __device__ T shfl_xor(const T val, int laneMask, int width = kWarpSize) {
 template <typename T, typename S, bool is_descend>
 inline __device__ void L2CompareAndSwap(T *a, S *b, int i_1, int i_2) {
   bool swap =
-      is_descend ? CmpKV<T, S>::gt(a[i_1], b[i_1], a[i_2], b[i_2]) : CmpKV<T, S>::lt(a[i_1], b[i_1], a[i_2], b[i_2]);
+    is_descend ? CmpKV<T, S>::gt(a[i_1], b[i_1], a[i_2], b[i_2]) : CmpKV<T, S>::lt(a[i_1], b[i_1], a[i_2], b[i_2]);
 
   if (!swap) return;
 
@@ -185,8 +204,8 @@ inline __device__ void BitonicSortWarpLE16(T *k, S *v) {
     S other_V = shfl_xor((*v), 2 * L - 1);
 
     bool small = !(laneId & L);
-    bool small_compare = small ? CmpKV<T, S>::gt((*k), (*v), other_K, other_V) :
-                                 CmpKV<T, S>::lt((*k), (*v), other_K, other_V);
+    bool small_compare =
+      small ? CmpKV<T, S>::gt((*k), (*v), other_K, other_V) : CmpKV<T, S>::lt((*k), (*v), other_K, other_V);
     bool small_compare_descend = is_descend ? small_compare : !small_compare;
     ConditionalAssign(small_compare_descend, k, other_K);
     ConditionalAssign(small_compare_descend, v, other_V);
@@ -197,8 +216,8 @@ inline __device__ void BitonicSortWarpLE16(T *k, S *v) {
     S other_V = shfl_xor((*v), stride);
 
     bool small = !(laneId & stride);
-    bool small_compare = small ? CmpKV<T, S>::gt((*k), (*v), other_K, other_V) :
-                                 CmpKV<T, S>::lt((*k), (*v), other_K, other_V);
+    bool small_compare =
+      small ? CmpKV<T, S>::gt((*k), (*v), other_K, other_V) : CmpKV<T, S>::lt((*k), (*v), other_K, other_V);
     bool small_compare_descend = is_descend ? small_compare : !small_compare;
     ConditionalAssign(small_compare_descend, k, other_K);
     ConditionalAssign(small_compare_descend, v, other_V);
@@ -383,8 +402,8 @@ inline __device__ void MergeWarpByRegister(T k1[N1], S v1[N1], T k2[N2], S v2[N2
     ConditionalAssign(swapa, &va, other_Vb);
 
     if (FullMerge) {
-      bool swapb = is_descend ? CmpKV<T, S>::lt(kb, vb, other_Ka, other_Va) :
-                                CmpKV<T, S>::gt(kb, vb, other_Ka, other_Va);
+      bool swapb =
+        is_descend ? CmpKV<T, S>::lt(kb, vb, other_Ka, other_Va) : CmpKV<T, S>::gt(kb, vb, other_Ka, other_Va);
       ConditionalAssign(swapb, &kb, other_Ka);
       ConditionalAssign(swapb, &vb, other_Va);
     }
