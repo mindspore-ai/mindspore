@@ -24,7 +24,7 @@ mindspore.nn.probability.bijector.ScalarAffine
 
     - **TypeError** - `shift` 或 `scale` 中元素的数据类型不为float，或 `shift` 和 `scale` 的数据类型不相同。
 
-    .. py:method:: loc
+    .. py:method:: shift
         :property:
 
         返回映射的位置。
