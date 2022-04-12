@@ -102,7 +102,6 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
       *row_id_generated = msg->row_id();
     }
     auto size_of_this = msg->size_of_this();
-    size_t total_sz = size_of_this;
     auto column_hdr = msg->column();
     // Number of tensor buffer should match the number of columns plus one.
     if (buf.size() != column_hdr->size() + 1) {
@@ -116,7 +115,6 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
     all_data.emplace_back(fb, size_of_this);
     for (auto i = 0; i < column_hdr->size(); ++i) {
       all_data.emplace_back(buf.at(i + 1), msg->data_sz()->Get(i));
-      total_sz += msg->data_sz()->Get(i);
     }
     // Now we cache the buffer.
     Status rc = cp_->Insert(*row_id_generated, all_data);
