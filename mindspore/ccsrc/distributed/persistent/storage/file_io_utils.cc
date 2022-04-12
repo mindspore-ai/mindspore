@@ -174,15 +174,17 @@ void FileIOUtils::CreateDirRecursive(const std::string &dir_path, mode_t mode) {
 
 #if defined(_WIN32) || defined(_WIN64)
       int32_t ret = mkdir(tmp_dir_path);
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "Failed to create directory recursion: " << dir_path << ". Errno = " << errno;
+      }
 #else
       int32_t ret = mkdir(tmp_dir_path, mode);
       if (ret == 0) {
         ChangeFileMode(tmp_dir_path, mode);
-      }
-#endif
-      if (ret != 0) {
+      } else if (errno != EEXIST) {
         MS_LOG(EXCEPTION) << "Failed to create directory recursion: " << dir_path << ". Errno = " << errno;
       }
+#endif
     }
   }
 }
