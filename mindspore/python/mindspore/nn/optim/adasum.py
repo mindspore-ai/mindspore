@@ -508,7 +508,8 @@ class AdaSumByDeltaWeightWrapCell(Cell):
         >>> from mindspore import nn
         >>> from mindspore.nn import AdaSumByDeltaWeightWrapCell
         >>> net = Net()
-        >>> optim = AdaSumByGradWrapCell(nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9))
+        >>> optim = AdaSumByDeltaWeightWrapCell(nn.Momentum(params=net.trainable_params(),
+        ...                                                 learning_rate=0.1, momentum=0.9))
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
     """
