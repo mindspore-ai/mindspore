@@ -28,7 +28,7 @@ constexpr size_t kMinIndiceRank = 2;
 constexpr char kKernelName[] = "ScatterNdUpdate";
 
 template <typename T>
-void Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
+bool Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
   MS_EXCEPTION_IF_NULL(params);
   T *x = params->x_;
   int *indices = params->indices_;
@@ -41,20 +41,30 @@ void Compute(const ComputeParams<T> *params, const size_t start, const size_t en
 
   for (int i = SizeToInt(start); i < SizeToInt(end); ++i) {
     int offset = 0;
+    std::vector<int> local_indices;
     for (int j = 0; j < params->indices_unit_rank_; ++j) {
       auto index = indices[i * params->indices_unit_rank_ + j];
+      (void)local_indices.emplace_back(index);
       if (index < 0) {
-        MS_LOG(EXCEPTION) << "For '" << kKernelName
-                          << "', each element in 'indices' should be greater than or equal to 0, but got " << index;
+        MS_LOG(ERROR) << "For '" << kKernelName
+                      << "', each element in 'indices' should be greater than or equal to 0, but got " << index;
+        return false;
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
-    auto ret = memcpy_s(x + offset, params->x_mem_size_ - offset, updates + params->unit_size_ * i,
+    if (offset * sizeof(T) > params->x_mem_size_) {
+      MS_LOG(ERROR) << "For '" << kKernelName
+                    << "', indices out of range for input_x. Please check the indices which is " << local_indices;
+      return false;
+    }
+    auto ret = memcpy_s(x + offset, params->x_mem_size_ - offset * sizeof(T), updates + params->unit_size_ * i,
                         params->unit_size_ * sizeof(T));
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "For '" << kKernelName << "', memcpy_s error. Error no: " << ret;
+      MS_LOG(ERROR) << "For '" << kKernelName << "', memcpy_s error. Error no: " << ret;
+      return false;
     }
   }
+  return true;
 }
 }  // namespace
 
@@ -153,18 +163,24 @@ void ScatterUpdateCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
   std::vector<common::Task> tasks;
   size_t start = 0;
+  int status = 0;
   auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   size_t once_compute_size = (num_units_ + max_thread_num - 1) / max_thread_num;
   while (start < num_units_) {
     size_t end = (start + once_compute_size) > num_units_ ? num_units_ : (start + once_compute_size);
-    auto task = [&params, start, end]() {
-      Compute<T>(&params, start, end);
+    auto task = [&params, start, end, &status]() {
+      if (!Compute<T>(&params, start, end)) {
+        status = -1;
+      }
       return common::SUCCESS;
     };
     (void)tasks.emplace_back(task);
     start += once_compute_size;
   }
   ParallelLaunch(tasks);
+  if (status == -1) {
+    MS_LOG(EXCEPTION) << "Some errors occurred! The error message is as above";
+  }
   (void)memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
 }
 
