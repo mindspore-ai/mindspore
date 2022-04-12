@@ -23,7 +23,7 @@ def test_train(device_type):
         test_lenet()
 
 @security_off_wrap
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_train_with_CPU():
