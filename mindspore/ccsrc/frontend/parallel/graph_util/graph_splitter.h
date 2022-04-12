@@ -104,6 +104,16 @@ struct InterProcessOpEdge {
 using InterProcessOpPair = std::tuple<CNodePtr, CNodePtr, CNodePtr, int>;
 using InterProcessOpEdgesInfo = std::map<InterProcessOpEdge, InterProcessOpPair>;
 
+// The connection relationship for fused Send and Recv nodes.
+// First element represents the fused Send node.
+// Second element represents the fused Recv node.
+// Third element represents the output index of the fused Recv node.
+// Third element represents the user node which uses the fused Recv node output as an input.
+// Fourth element represents the input index of the user node.
+using FusedInterProcessOpPair = std::tuple<CNodePtr, CNodePtr, int, CNodePtr, int>;
+using FusedInterProcessOpPairMap =
+  std::map<std::pair<OperatorLabel, OperatorLabel>, std::vector<FusedInterProcessOpPair>>;
+
 // The list of in and out degrees of one segment.
 using InOutDegreeList = std::vector<std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>>>;
 
@@ -167,13 +177,14 @@ class DistributedExecutionMode {
   // Input 'node_labels' represents node labels of the origin graph. This method could modify this map.
   virtual void PreBuildDistributedGraph() {}
 
+  // Do rpc node fusion to decrease the overhead of network communication.
+  virtual FusedInterProcessOpPairMap DoRpcNodeFusion(InterProcessOpEdgesInfo *comm_edges_ptr) { return {}; }
+
   // Postbuild the distributed graph after splitting graph. For example, adding extra edges to the split graph.
   // Input 'node_labels' represents node labels of the split graph.
   // Input 'comm_edges' represents the inter-process edges generated after splitting the graph.
   virtual void PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {}
-
-  // After building the distributed graph, do rpc node fusion to decrease the overhead of network communication.
-  virtual void DoRpcNodeFusion() {}
+  virtual void PostBuildDistributedGraph(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs) {}
 
  protected:
   FuncGraphPtr func_graph_;
@@ -199,8 +210,9 @@ class ParameterServerMode : public DistributedExecutionMode {
   ~ParameterServerMode() = default;
 
   void PreBuildDistributedGraph() override;
+  FusedInterProcessOpPairMap DoRpcNodeFusion(InterProcessOpEdgesInfo *comm_edges_ptr) override;
   void PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) override;
-  void DoRpcNodeFusion() override;
+  void PostBuildDistributedGraph(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs) override;
 
  private:
   // Process optimizers split to the parameter server.
@@ -238,10 +250,10 @@ class ParameterServerMode : public DistributedExecutionMode {
   void FuseRpcNodesForSplitOptimizer();
 
   // Fuse the given rpc send nodes list. Only nodes which send data to the same peer can be fused.
-  bool FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes);
+  CNodePtr FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes);
 
   // Fuse the given rpc recv nodes list. Only nodes which recv data from the same peer can be fused.
-  bool FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_recv_nodes);
+  CNodePtr FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_recv_nodes);
 };
 
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
@@ -272,6 +284,7 @@ class GraphSplitter {
 
   // Eliminate nodes which are on other machine's graphs and add control edges for nodes of this process's graph.
   void SplitGraph(const std::vector<SplitGraphSegment> &segments, const InterProcessOpEdgesInfo &comm_edges);
+  void SplitGraph(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs);
 
   // Split the graph but don't eliminate the nodes so that a global graph ir could be exported.
   void DumpDistributedGraph(const InterProcessOpEdgesInfo &comm_edges);
@@ -306,6 +319,12 @@ class GraphSplitter {
   // Replace nodes inputs with Recv nodes to eliminate extra nodes not on this process.
   void EliminateExtraNodes(const InterProcessOpEdgesInfo &comm_edges);
 
+  // Replace nodes inputs with Recv nodes.
+  void ReplaceOriginNodesWithRecv(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs);
+
+  // Add outputs edges for send nodes so that they won't be optimized out.
+  void AddDependencyForSend(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs);
+
   // Judge whether two nodes have the same distributed label.
   bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);
 
@@ -329,6 +348,9 @@ class GraphSplitter {
 
   // The map of all nodes in the graph to their distributed split label.
   NodeLabels node_labels_;
+
+  // Whether need to fuse rpc nodes.
+  bool need_fuse_rpc_nodes_;
 };
 using GraphSplitterPtr = std::shared_ptr<GraphSplitter>;
 }  // namespace parallel
