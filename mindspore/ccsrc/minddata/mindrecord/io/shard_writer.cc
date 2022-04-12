@@ -183,8 +183,7 @@ Status ShardWriter::Open(const std::vector<std::string> &paths, bool append, boo
 }
 
 Status ShardWriter::OpenForAppend(const std::string &path) {
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    IsLegalFile(path), "Invalid file, failed to verify files for append mindrecord files. Please check file: " + path);
+  RETURN_IF_NOT_OK(CheckFile(path));
   std::shared_ptr<json> header_ptr;
   RETURN_IF_NOT_OK(ShardHeader::BuildSingleHeader(path, &header_ptr));
   auto ds = std::make_shared<std::vector<std::string>>();

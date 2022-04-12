@@ -118,7 +118,7 @@ bool CheckIsValidUtf8(const std::string &str) {
   return true;
 }
 
-bool IsLegalFile(const std::string &path) {
+Status CheckFile(const std::string &path) {
   struct stat s;
 #if defined(_WIN32) || defined(_WIN64)
   if (stat(FileUtils::UTF_8ToGB2312(path.data()).data(), &s) == 0) {
@@ -126,11 +126,13 @@ bool IsLegalFile(const std::string &path) {
   if (stat(common::SafeCStr(path), &s) == 0) {
 #endif
     if (S_ISDIR(s.st_mode)) {
-      return false;
+      RETURN_STATUS_UNEXPECTED("Invalid file, " + path + " is not a mindrecord file, but got directory.");
     }
-    return true;
+    return Status::OK();
   }
-  return false;
+  RETURN_STATUS_UNEXPECTED(
+    "Invalid file, mindrecord file: " + path +
+    " can not be found. Please check whether the mindrecord file exists and do not rename the mindrecord file.");
 }
 
 Status GetDiskSize(const std::string &str_dir, const DiskSizeType &disk_type, std::shared_ptr<uint64_t> *size_ptr) {

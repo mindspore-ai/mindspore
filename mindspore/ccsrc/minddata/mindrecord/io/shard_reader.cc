@@ -56,9 +56,7 @@ ShardReader::ShardReader()
 Status ShardReader::GetMeta(const std::string &file_path, std::shared_ptr<json> meta_data_ptr,
                             std::shared_ptr<std::vector<std::string>> *addresses_ptr) {
   RETURN_UNEXPECTED_IF_NULL(addresses_ptr);
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    IsLegalFile(file_path),
-    "Invalid file, failed to verify files for reading mindrecord files. Please check file: " + file_path);
+  RETURN_IF_NOT_OK(CheckFile(file_path));
   std::shared_ptr<json> header_ptr;
   RETURN_IF_NOT_OK(ShardHeader::BuildSingleHeader(file_path, &header_ptr));
 
@@ -77,9 +75,9 @@ Status ShardReader::Init(const std::vector<std::string> &file_paths, bool load_d
   if (file_paths.size() == 1 && load_dataset == true) {
     auto ds = std::make_shared<std::vector<std::string>>();
     RETURN_IF_NOT_OK(GetDatasetFiles(file_path, *addresses_ptr, &ds));
-    file_paths_ = *ds;
+    file_paths_ = *ds;  // load files according to shard_addresses
   } else if (file_paths.size() >= 1 && load_dataset == false) {
-    file_paths_ = file_paths;
+    file_paths_ = file_paths;  // load files according to the input
   } else {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] The values of 'load_dataset' and 'file_paths' are not as expected.");
   }
@@ -149,8 +147,8 @@ Status ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
   // sqlite3_open create a database if not found, use sqlite3_open_v2 instead of it
   CHECK_FAIL_RETURN_UNEXPECTED(
     sqlite3_open_v2(path_utf8.data(), db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK,
-    "Invalid file, failed to open mindrecord meta files while verifying meta file. Please check the meta file: " +
-      file + ".db");
+    "Invalid file, failed to open mindrecord meta file. Please check whether the meta file: " + file +
+      ".db exists and do not rename the mindrecord file and meta file.");
   MS_LOG(DEBUG) << "Succeed to open meta file, path: " << file << ".db.";
 
   string sql = "SELECT NAME from SHARD_NAME;";
@@ -169,8 +167,8 @@ Status ShardReader::VerifyDataset(sqlite3 **db, const string &file) {
     if (name.empty() || name[0][0] != *fn_ptr) {
       sqlite3_free(errmsg);
       sqlite3_close(*db);
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to verify while reading mindrecord file: " + *fn_ptr +
-                               ". Please make sure not rename mindrecord file or .db file.");
+      RETURN_STATUS_UNEXPECTED("Invalid file, mindrecord meta file: " + file + ".db and mindrecord file: " + file +
+                               " can not match. Please do not rename the mindrecord file or meta file.");
     }
   }
   return Status::OK();
@@ -183,37 +181,6 @@ Status ShardReader::CheckColumnList(const std::vector<std::string> &selected_col
     CHECK_FAIL_RETURN_UNEXPECTED(schema.find(selected_columns[i]) != schema.end(),
                                  "Invalid data, column name: " + selected_columns[i] +
                                    " can not found in schema. Please check the 'column_list'.");
-  }
-  return Status::OK();
-}
-
-Status ShardReader::Open() {
-  file_streams_.clear();
-  for (const auto &file : file_paths_) {
-    std::optional<std::string> dir = "";
-    std::optional<std::string> local_file_name = "";
-    FileUtils::SplitDirAndFileName(file, &dir, &local_file_name);
-    if (!dir.has_value()) {
-      dir = ".";
-    }
-
-    auto realpath = FileUtils::GetRealPath(dir.value().c_str());
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      realpath.has_value(), "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + file);
-
-    std::optional<std::string> whole_path = "";
-    FileUtils::ConcatDirAndFileName(&realpath, &local_file_name, &whole_path);
-
-    std::shared_ptr<std::fstream> fs = std::make_shared<std::fstream>();
-    fs->open(whole_path.value(), std::ios::in | std::ios::binary);
-    if (!fs->good()) {
-      RETURN_STATUS_UNEXPECTED(
-        "Invalid file, failed to open files for reading mindrecord files. Please check file path, permission and open "
-        "files limit(ulimit -a): " +
-        file);
-    }
-    file_streams_.push_back(fs);
-    MS_LOG(INFO) << "Succeed to open file, path: " << file;
   }
   return Status::OK();
 }

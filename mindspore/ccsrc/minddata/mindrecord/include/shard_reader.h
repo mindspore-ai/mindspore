@@ -88,10 +88,6 @@ class API_PUBLIC ShardReader {
   /// \return null
   void Close();
 
-  /// \brief read the file, get schema meta,statistics and index, single-thread mode
-  /// \return MSRStatus the status of MSRStatus
-  Status Open();
-
   /// \brief read the file, get schema meta,statistics and index, multiple-thread mode
   /// \return MSRStatus the status of MSRStatus
   Status Open(int n_consumer);
