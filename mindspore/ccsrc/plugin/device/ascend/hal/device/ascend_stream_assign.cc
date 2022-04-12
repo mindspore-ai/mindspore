@@ -276,8 +276,10 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   SetLoopSink();
   GetMaxStreamTaskNum();
   ReorderIndependentOrders(graph_ptr);
-  TrailingTimeOptimizationByReorder(graph_ptr);
-
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
+    TrailingTimeOptimizationByReorder(graph_ptr);
+  }
   AssignAllNodesStream(graph_ptr);
   UpdateAtomicAddrCleanStreamId(graph_ptr);
   InsertStreamActive(graph_ptr);
