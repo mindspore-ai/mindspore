@@ -111,14 +111,13 @@ bool LinkCustomOp::LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, Anf
       if (prev_custom_nodes.update_node != nullptr) {
         // link prev.update => curr.infer
         InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
-        changed = true;
       } else {
         // for CPU, its Updateop is in Launch function, so its update_node is set to nullptr, for reduce the time cast
         // of send messages between actors
         // link prev.launch => curr.infer
         InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
-        changed = true;
       }
+      changed = true;
     }
   }
   return changed;

@@ -558,8 +558,8 @@ constexpr auto kAttrPrecisionFlag = "precision_flag";
 
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
-// for single_op_compile_and_run condition and set_context GraphMode. should be delete later
-constexpr auto kAttrSingleOpCompile = "compile_and_run_in_single_op";
+// mark func_graph for the dynamic shape customop pass
+constexpr auto kAttrHasCustomOp = "graph_has_custom_op";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

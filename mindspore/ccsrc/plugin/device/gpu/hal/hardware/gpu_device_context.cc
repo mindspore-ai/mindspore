@@ -432,8 +432,9 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
   MS_EXCEPTION_IF_NULL(gpu_kernel);
 
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-      common::AnfAlgo::GetBooleanAttr(kernel, kAttrSingleOpCompile)) {
+  auto func_graph = kernel->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (!(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
     opt::dynamic_shape::InferOp(kernel);
     gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
   }
@@ -491,8 +492,10 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   }
 
   // Processing after execution of dynamic kernel to update output shape.
-  if (is_dynamic_shape && (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-                           common::AnfAlgo::GetBooleanAttr(kernel, kAttrSingleOpCompile))) {
+  auto func_graph = kernel->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  if (is_dynamic_shape &&
+      !(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
     kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
     gpu_kernel->UpdateOp();
