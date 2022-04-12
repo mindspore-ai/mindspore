@@ -518,10 +518,10 @@ Parameter操作算子
 注意，以下列表中的接口需要先配置好通信环境变量。
 
 针对Ascend设备，用户需要准备rank表，设置rank_id和device_id，详见 `Ascend指导文档 \
-<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html#id12>`_ 。
+<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html#准备环节>`_ 。
 
 针对GPU设备，用户需要准备host文件和mpi，详见 `GPU指导文档 \
-<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#id6>`_ 。
+<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#准备环节>`_ 。
 
 .. mscnplatformautosummary::
     :toctree: ops
@@ -550,6 +550,9 @@ Parameter操作算子
     mindspore.ops.ScalarSummary
     mindspore.ops.TensorSummary
     mindspore.ops.Print
+    mindspore.ops.NPUAllocFloatStatus
+    mindspore.ops.NPUClearFloatStatus
+    mindspore.ops.NPUGetFloatStatus
 
 稀疏算子
 ----------------

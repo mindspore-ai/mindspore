@@ -40,6 +40,15 @@ mindspore.nn.probability.distribution.TransformedDistribution
 
         Distribution, 变化前的概率分布。
 
+    .. py:method:: dtype
+        :property:
+
+        返回分布的数据类型。
+
+        **返回：**
+
+        mindspore.dtype, 分布的数据类型。
+
     .. py:method:: is_linear_transformation
         :property:
 
