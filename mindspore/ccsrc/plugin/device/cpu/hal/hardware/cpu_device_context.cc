@@ -82,7 +82,13 @@ bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (address->DeviceType() != DeviceAddressType::kCPU) {
-    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
+    MS_LOG(ERROR) << "The device address type is wrong: " << address->DeviceType();
+    return false;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
   }
 
   auto device_ptr = mem_manager_->MallocMemFromMemPool(size, 0);

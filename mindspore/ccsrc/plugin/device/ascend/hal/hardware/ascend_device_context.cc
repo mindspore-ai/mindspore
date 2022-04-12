@@ -540,6 +540,16 @@ void AscendDeviceContext::LoadModel(const NotNull<KernelGraphPtr> &root_graph) c
 bool AscendDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
+  if (address->DeviceType() != DeviceAddressType::kAscend) {
+    MS_LOG(ERROR) << "The device address type is wrong: " << address->DeviceType();
+    return false;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
+  }
+
   runtime_instance_->SetContext();
   auto device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem_);
   if (!device_ptr) {
