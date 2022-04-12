@@ -362,7 +362,8 @@ class DebugServices {
                         std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                         std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
                         ProcessedNPYFiles *const processed_npy_files,
-                        std::vector<std::shared_ptr<TensorData>> *const result_list, bool *no_mem_to_read = nullptr);
+                        std::vector<std::shared_ptr<TensorData>> *const result_list, bool is_base_request,
+                        bool *no_mem_to_read = nullptr);
 
   void ProcessTensorDataSync(const std::vector<ProtoDump> &proto_to_dump, const std::string &specific_dump_dir,
                              ProcessedNPYFiles processed_npy_files, unsigned int iteration, unsigned int device_id,
@@ -373,7 +374,7 @@ class DebugServices {
                               const std::vector<std::string> &matched_time_stamps, const std::string &backend_name,
                               const unsigned int device_id, const unsigned int root_graph_id, bool is_output,
                               size_t slot, bool *no_mem_to_read, unsigned int iteration,
-                              std::vector<std::shared_ptr<TensorData>> *result_list);
+                              std::vector<std::shared_ptr<TensorData>> *result_list, bool is_base_request = false);
 
   void ReadDumpedTensorSync(const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
                             const std::string &backend_name, size_t slot, unsigned int device_id,
@@ -384,7 +385,8 @@ class DebugServices {
                              const std::string &backend_name, size_t slot, unsigned int device_id,
                              unsigned int iteration, unsigned int root_graph_id, bool is_output,
                              const ProcessedNPYFiles &processed_npy_files,
-                             std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read);
+                             std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read,
+                             bool is_base_request = false);
 
   std::vector<std::shared_ptr<TensorData>> ReadNeededDumpedTensors(unsigned int iteration,
                                                                    ProcessedNPYFiles *const processed_npy_files,
@@ -395,7 +397,7 @@ class DebugServices {
 
   void ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name, std::string *const tensor_type,
                          std::size_t *const size, std::vector<int64_t> *const shape,
-                         std::vector<char> **const data_buffer, bool *no_mem_to_read);
+                         std::vector<char> **const data_buffer, bool *no_mem_to_read, bool is_base_request = false);
 
   AsyncPreProcessResult PreProcessDumpDirAsync(const std::string &specific_dump_dir);
 

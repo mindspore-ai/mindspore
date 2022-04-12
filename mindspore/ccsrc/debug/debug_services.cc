@@ -254,7 +254,7 @@ const void *DebugServices::GetPrevTensor(const std::shared_ptr<TensorData> &tens
                      std::vector<unsigned int>{tensor->GetDeviceId()},
                      std::vector<unsigned int>{tensor->GetPrevIteration()},
                      std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
-                     &processed_npy_files, &result_list_prev);
+                     &processed_npy_files, &result_list_prev, false);
     tensor_prev = result_list_prev[0];
     if (!tensor_prev->GetByteSize()) {
       tensor_prev.reset();
@@ -521,7 +521,7 @@ void DebugServices::CheckWatchpointsForTensor(
                      std::vector<unsigned int>{tensor->GetDeviceId()},
                      std::vector<unsigned int>{tensor->GetIteration()},
                      std::vector<unsigned int>{tensor->GetRootGraphId()}, std::vector<bool>{tensor->GetIsOutput()},
-                     processed_npy_files, &result_list, &no_mem_to_read);
+                     processed_npy_files, &result_list, false, &no_mem_to_read);
     tensor = result_list[0];
     if (!tensor->GetByteSize()) {
       CheckOutofMemoryandNoValue(no_mem_to_read, error_on_no_value, watchpoints_to_check, chunk_id, chunk_names,
@@ -780,7 +780,7 @@ void DebugServices::SortWatchpointsInfo(
 void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std::string &file_name,
                                       std::string *const tensor_type, std::size_t *const size,
                                       std::vector<int64_t> *const shape, std::vector<char> **const data_buffer,
-                                      bool *no_mem_to_read) {
+                                      bool *no_mem_to_read, bool is_base_request) {
   std::ifstream infile;
   std::string file_path = file_name;
   MS_LOG(INFO) << "Reading in file: " << file_path;
@@ -847,7 +847,9 @@ void DebugServices::ReadTensorFromNpy(const std::string &tensor_name, const std:
   }
   std::size_t data_len = std::accumulate(shape->begin(), shape->end(), 1, std::multiplies<uint64_t>());
   std::size_t data_size = data_len * word_size;
-  if (!data_size) {
+  if (!data_size || is_base_request) {
+    // for base request, reading the header is enough.
+    *size = data_size;
     return;
   }
   // Check memory available before loading tensor into host.
@@ -1521,7 +1523,7 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
                                      std::vector<unsigned int> device_id, std::vector<unsigned int> iteration,
                                      std::vector<unsigned int> root_graph_id, const std::vector<bool> &is_output,
                                      ProcessedNPYFiles *const processed_npy_files,
-                                     std::vector<std::shared_ptr<TensorData>> *const result_list,
+                                     std::vector<std::shared_ptr<TensorData>> *const result_list, bool is_base_request,
                                      bool *no_mem_to_read) {
   for (unsigned int i = 0; i < backend_name.size(); i++) {
     // form prefix of the tensor file to read from graph pb node name
@@ -1554,7 +1556,8 @@ void DebugServices::ReadDumpedTensor(std::vector<std::string> backend_name, std:
       *processed_npy_files = ProcessNPYFilePool(npy_files);
     }
     ReadDumpedTensorUtils(specific_dump_dir, prefix_dump_to_check, backend_name[i], slot[i], device_id[i], iteration[i],
-                          root_graph_id[i], is_output[i], *processed_npy_files, result_list, no_mem_to_read);
+                          root_graph_id[i], is_output[i], *processed_npy_files, result_list, no_mem_to_read,
+                          is_base_request);
   }
 }
 /*
@@ -1570,7 +1573,8 @@ void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<s
                                            const std::string &backend_name, const unsigned int device_id,
                                            const unsigned int root_graph_id, bool is_output, size_t slot,
                                            bool *no_mem_to_read, unsigned int iteration,
-                                           std::vector<std::shared_ptr<TensorData>> *result_list) {
+                                           std::vector<std::shared_ptr<TensorData>> *result_list,
+                                           bool is_base_request) {
   std::string time_stamp = "";
   std::string result_path = "";
   std::string type_name = "";
@@ -1587,7 +1591,8 @@ void DebugServices::ReadFileAndAddToTensor(const bool found, const std::vector<s
     std::string key_name_in_cache = backend_name + ":" + std::to_string(device_id) + ":" +
                                     std::to_string(root_graph_id) + ":" + std::to_string(is_output) + ":" +
                                     std::to_string(slot);
-    ReadTensorFromNpy(key_name_in_cache, result_path, &type_name, &data_size, &shape, &buffer, no_mem_to_read);
+    ReadTensorFromNpy(key_name_in_cache, result_path, &type_name, &data_size, &shape, &buffer, no_mem_to_read,
+                      is_base_request);
     AddToTensorData(backend_name, time_stamp, slot, iteration, device_id, root_graph_id, is_output, data_size,
                     type_name, shape, buffer, result_list);
   } else {
@@ -1608,7 +1613,8 @@ void DebugServices::ReadDumpedTensorUtils(const std::string &specific_dump_dir, 
                                           const std::string &backend_name, size_t slot, unsigned int device_id,
                                           unsigned int iteration, unsigned int root_graph_id, bool is_output,
                                           const ProcessedNPYFiles &processed_npy_files,
-                                          std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read) {
+                                          std::vector<std::shared_ptr<TensorData>> *result_list, bool *no_mem_to_read,
+                                          bool is_base_request) {
   bool found = false;
   std::vector<std::string> matched_paths;
   std::vector<std::string> matched_time_stamps;
@@ -1631,7 +1637,7 @@ void DebugServices::ReadDumpedTensorUtils(const std::string &specific_dump_dir, 
     }
   }
   ReadFileAndAddToTensor(found, matched_paths, matched_time_stamps, backend_name, device_id, root_graph_id, is_output,
-                         slot, no_mem_to_read, iteration, result_list);
+                         slot, no_mem_to_read, iteration, result_list, is_base_request);
 }
 
 /*

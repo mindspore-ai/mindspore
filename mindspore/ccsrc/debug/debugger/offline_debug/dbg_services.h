@@ -205,7 +205,8 @@ class DbgServices {
   std::vector<watchpoint_hit_t> CheckWatchpoints(unsigned int iteration, bool error_on_no_value = false);
   float CheckWatchpointProgress();
 
-  std::vector<std::shared_ptr<TensorData>> ReadTensorsUtil(std::vector<tensor_info_t> info);
+  std::vector<std::shared_ptr<TensorData>> ReadTensorsUtil(std::vector<tensor_info_t> info,
+                                                           bool is_base_request = false);
 
   std::vector<tensor_data_t> ReadTensors(const std::vector<tensor_info_t> info);
 
