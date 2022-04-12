@@ -80,6 +80,27 @@ int LiteKernel::PreProcess() {
   return RET_OK;
 }
 
+int LiteKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                                       int64_t unit_num) {
+  thread_num_ = lite::UpdateThreadNum(this->ms_context_, kernel_type, per_unit_load_num, per_unit_store_num, unit_num,
+                                      op_parameter_->thread_num_);
+  return lite::RET_OK;
+}
+
+int LiteKernel::UpdateThreadNumPass(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                                    int64_t unit_num) {
+#ifdef DYNAMIC_THREAD_DISTRIBUTE
+  if (UpdateThreadNumProcess(kernel_type, per_unit_load_num, per_unit_store_num, unit_num) != lite::RET_OK) {
+    MS_LOG(ERROR) << "update thread num failed";
+    return lite::RET_ERROR;
+  }
+#else
+  thread_num_ = op_parameter_->thread_num_ > 0 ? op_parameter_->thread_num_ : 1;
+#endif
+
+  return lite::RET_OK;
+}
+
 int LiteKernel::Execute() {
   auto ret = PreProcess();
   if (lite::RET_OK != ret) {

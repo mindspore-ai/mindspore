@@ -28,9 +28,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BiasAdd;
 
 namespace mindspore::kernel {
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-constexpr int kMinCostPerThread = 1 << 16;
-#endif
 int BiasAddRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   CHECK_NULL_RETURN(cdata);
   auto kernel = reinterpret_cast<BiasCPUKernel *>(cdata);
@@ -75,20 +72,15 @@ int BiasCPUKernel::ReSize() {
   }
   MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(inner_num_, outer_num_), RET_ERROR, "mul overflow.");
   total_num_ = inner_num_ * outer_num_;
-  return ChooseThreadCuttingstrategy();
+  return ChooseThreadCuttingStrategy();
 }
 
-int BiasCPUKernel::ChooseThreadCuttingstrategy() {
+int BiasCPUKernel::ChooseThreadCuttingStrategy() {
   split_points_.clear();
   int64_t block_size = 1;
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  block_size = MSMAX(total_num_ / op_parameter_->thread_num_, kMinCostPerThread);
-  thread_num_ = MSMIN(UP_DIV(total_num_, block_size), op_parameter_->thread_num_);
-#else
-  thread_num_ = op_parameter_->thread_num_;
-#endif
-  if (thread_num_ < 1) {
-    thread_num_ = 1;
+
+  if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_BiasAdd), 2, 1, total_num_) != RET_OK) {  // load 2, store 1
+    return RET_ERROR;
   }
   block_size = total_num_ / thread_num_;
   int64_t remain_data = total_num_ - block_size * thread_num_;

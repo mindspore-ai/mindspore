@@ -19,11 +19,9 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-constexpr int kMinCostPerThread = 16384;
-#endif
 int GatherRun(void *cdata, int task_id, float, float) {
   auto gather_kernel = reinterpret_cast<const GatherBaseCPUKernel *>(cdata);
   auto error_code = gather_kernel->DoGather(task_id);
@@ -51,7 +49,7 @@ int GatherBaseCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Gather init status failed when resizing." << name_;
     return status;
   }
-  return ChooseThreadCuttingstrategy();
+  return ChooseThreadCuttingStrategy();
 }
 
 int GatherBaseCPUKernel::DoGather(int task_id) const {
@@ -131,31 +129,30 @@ int GatherBaseCPUKernel::InitDynamicStatus() {
   return RET_OK;
 }
 
-int GatherBaseCPUKernel::ChooseThreadCuttingstrategy() {
+int GatherBaseCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num,
+                                                int64_t per_unit_store_num, int64_t unit_num) {
+  auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
+  constexpr int kMinCostPerThread = 16384;
+  if (all_bytes <= static_cast<int64_t>(kMinCostPerThread)) {
+    block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
+    return RET_OK;
+  }
+
+  thread_num_ = lite::UpdateThreadNum(this->ms_context_, kernel_type, per_unit_load_num, per_unit_store_num, unit_num,
+                                      op_parameter_->thread_num_);
+  return lite::RET_OK;
+}
+
+int GatherBaseCPUKernel::ChooseThreadCuttingStrategy() {
   block_boundary_infos_.clear();
   if (outer_size_ == 0 || indices_size_ == 0 || byte_inner_size_ == 0) {
     return RET_OK;
   }
   int64_t block_size = 1;
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
-  if (all_bytes <= static_cast<int64_t>(kMinCostPerThread)) {
-    block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
-    return RET_OK;
-  }
   auto total_block = outer_size_ * indices_size_;
-  int64_t min_block_per_unit = 1;
-  if (byte_inner_size_ < kMinCostPerThread) {
-    min_block_per_unit = UP_DIV(kMinCostPerThread, byte_inner_size_);
-  }
-  block_size = std::max(min_block_per_unit, total_block / op_parameter_->thread_num_);
-  thread_num_ = MSMIN(UP_DIV(total_block, block_size), op_parameter_->thread_num_);
-#else
-  auto total_block = outer_size_ * indices_size_;
-  thread_num_ = op_parameter_->thread_num_;
-#endif
-  if (thread_num_ < 1) {
-    thread_num_ = 1;
+  if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_Gather), 0, byte_inner_size_, out_tensors_.front()->Size()) !=
+      RET_OK) {
+    return RET_ERROR;
   }
   block_size = total_block / thread_num_;
   auto remain_block = total_block - block_size * thread_num_;

@@ -36,10 +36,6 @@ class ActivationCPUKernel : public LiteKernel {
   }
   ~ActivationCPUKernel() override = default;
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  int UpdateThreadNumPass();
-#endif
-
   int Prepare() override;
   int ReSize() override;
   int Run() override;

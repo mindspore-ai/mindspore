@@ -40,7 +40,9 @@ class GatherBaseCPUKernel : public LiteKernel {
 
  private:
   int InitDynamicStatus();
-  int ChooseThreadCuttingstrategy();
+  int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                             int64_t unit_num) override;
+  int ChooseThreadCuttingStrategy();
   struct BlockBoundaryInfo {
     int64_t begin_batch;
     int64_t begin_index;
