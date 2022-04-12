@@ -133,7 +133,7 @@ int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_ind
 class WeightDecoder {
  public:
   static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
-                         const std::string &model_version);
+                         const std::string &model_version, bool float_mode);
 
   static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
