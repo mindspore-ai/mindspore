@@ -104,7 +104,7 @@ def test_broadcast_dyn_init():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_broadcast_dyn_invalid_init():
