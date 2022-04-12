@@ -526,13 +526,21 @@ class Node:
             raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
         # update targets
         targets_ast = assign_ast.targets
-        if len(self._targets) != len(targets_ast):
+        if isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast[0].elts):
+            raise RuntimeError("self._targets should have the same length as targets_ast's elts")
+        if not isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast):
             raise RuntimeError("self._targets should have targets_ast same length")
         for i in range(0, len(self._targets)):
             target = self._targets[i]
-            target_ast = targets_ast[i]
-            if not isinstance(target_ast, ast.Name):
-                raise TypeError("target_ast should be ast.Name, got: ", type(target_ast))
+            target_ast = targets_ast[0]
+            if isinstance(target_ast, ast.Name):
+                target_ast.id = target.value
+            elif isinstance(target_ast, ast.Tuple):
+                if not isinstance(target_ast.elts[i], ast.Name):
+                    raise TypeError("target should be ast.Name, got:", type(target_ast.elts[i]))
+                target_ast.elts[i].id = target.value
+            else:
+                raise TypeError("target_ast should be ast.Name or ast.Tuple, got: ", type(target_ast))
             target_ast.id = target.value
         ast.fix_missing_locations(assign_ast)
 
