@@ -205,6 +205,7 @@ int GetChannel(const TensorC *tensor) {
     case Format_NHWC:
     case Format_NHWC4:
     case Format_NC4HW4:
+    case Format_NC8HW8:
     case Format_KHWC:
       return tensor->shape_[3];
     case Format_CKHW:
@@ -229,6 +230,22 @@ int GetElementNum(const TensorC *tensor) {
   }
   return res;
 }
+
+int GetElementCxNum(const TensorC *tensor) {
+  int ele = GetElementNum(tensor);
+  int c = GetChannel(tensor);
+  if (c == 0) {
+    return ele;
+  }
+  if (tensor->format_ == Format_NC4HW4) {
+    ele = ele / c * UP_ROUND(c, C4NUM);
+  }
+  if (tensor->format_ == Format_NC8HW8) {
+    ele = ele / c * UP_ROUND(c, C8NUM);
+  }
+  return ele;
+}
+
 int GetDimensionSize(const TensorC *tensor, const size_t index) {
   int dim_size = -1;
   if (index < tensor->shape_size_) {

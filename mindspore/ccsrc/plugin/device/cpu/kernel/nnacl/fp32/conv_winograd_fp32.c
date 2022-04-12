@@ -120,7 +120,7 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
 
       // step 4 : output transform
       float *output_ptr = output_data + out_batch_offset;
-      if (conv_param->out_format_ != NNACL_NC4HW4) {  // nc4hw4
+      if (conv_param->out_format_ != Format_NC4HW4) {  // nc4hw4
         WinogradOutputNHWCTransform(gemm_out, output_ptr, bias_data, cal_num, out_tile_index, out_w_block, conv_param,
                                     trans_func.out_func_);
       } else {

@@ -16,7 +16,6 @@
 
 #include "nnacl/experimental/conv.h"
 #include "nnacl/experimental/conv_fp32_nchwx_avx512.h"
-#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/conv_parameter.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
 #include "nnacl/kernel.h"
@@ -53,5 +52,5 @@ KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC
   return NULL;
 }
 
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat32, CreateConv);
-REG_KERNEL_CREATOR(PrimType_Conv2DFusion, kNumberTypeFloat16, CreateConv);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat32, CreateConv);
+REG_KERNEL_CREATOR(PrimType_Conv2DFusion, Format_NC4HW4, kNumberTypeFloat16, CreateConv);

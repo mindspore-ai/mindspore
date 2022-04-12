@@ -13,29 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_KERNEL_EXP_H_
+#define MINDSPORE_NNACL_KERNEL_EXP_H_
 
-#ifndef MINDSPORE_NNACL_TENSORC_UTILS_H_
-#define MINDSPORE_NNACL_TENSORC_UTILS_H_
-
-#include <stddef.h>
-#include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 #include "nnacl/tensor_c.h"
+#include "nnacl/kernel.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int GetBatch(const TensorC *tensor);
-int GetHeight(const TensorC *tensor);
-int GetWidth(const TensorC *tensor);
-int GetChannel(const TensorC *tensor);
-int GetElementNum(const TensorC *tensor);
-int GetElementCxNum(const TensorC *tensor);
-int GetDimensionSize(const TensorC *tensor, const size_t index);
+KernelBase *CreateExp(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif  // MINDSPORE_NNACL_TENSORC_UTILS_H_
+#endif  // MINDSPORE_NNACL_KERNEL_EXP_H_

@@ -101,10 +101,10 @@ void InitFp32Funcs(CoreFuncs *funcs_) {
   funcs_->pack = C4NUM;
   funcs_->byte = sizeof(float);
   funcs_->InitMatmulTileCount = InitBaseMMFp32TileCount;
-  funcs_->PackNcX = PackNCHWToNC4HW4Fp32;
-  funcs_->UnPackNcX = PackNC4HW4ToNCHWFp32;
+  funcs_->PackNcX = NULL;
+  funcs_->UnPackNcX = NULL;
   funcs_->PackLeft = PackMatmulA;
-  funcs_->PackRight = PackNCHWToNC4HW4Fp32;
+  funcs_->PackRight = NULL;
   funcs_->Matmul = BaseMatMul;
   funcs_->MatMulRes = BaseMatMulRes;
 }

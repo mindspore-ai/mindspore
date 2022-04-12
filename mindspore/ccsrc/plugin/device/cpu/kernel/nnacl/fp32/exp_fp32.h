@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 void ExpFp32(const float *src, float *dst, int num);
-int ExpFusionFp32(const float *src, float *dst, const ExpParameter *param, int task_id);
+int ExpFusionFp32(const void *src_data, void *dst_data, const ExpParameter *param, int task_id);
 
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 static inline MS_FLOAT32X4 VexpFp32(MS_FLOAT32X4 input) {

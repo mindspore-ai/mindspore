@@ -20,7 +20,7 @@ CPU_TRAIN_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_train.cf
 [ -n "${CPU_TRAIN_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
 
 ops_list=()
-DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16"
+DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DMSLITE_ENABLE_EXPERIMENTAL_KERNEL"
 # get the flatbuffers path
 if [ ${MSLIBS_CACHE_PATH} ]; then
   FLATBUFFERS_LIST=()
@@ -65,7 +65,7 @@ getDeep() {
       if [[ "$4" != "train_source" ]] ; then
         echo "${1},${3},${file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
       fi
-      echo "${1},${3},${file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP} 
+      echo "${1},${3},${file_split%h*}cc.o" >>${MAPPING_OUTPUT_FILE_NAME_TRAIN_TMP}
     fi
     if [[ -e ${array_deep_file%h*}c ]]; then
       file_split=$(echo ${array_deep_file} | awk -F '/' '{print $NF}')
@@ -138,7 +138,7 @@ getFilesFromArr() {
         getDeep "CommonFile" ${array_runtime_file%h*}c "common" $2 &
       fi
     done
-  done  
+  done
 }
 
 getCommonFile() {

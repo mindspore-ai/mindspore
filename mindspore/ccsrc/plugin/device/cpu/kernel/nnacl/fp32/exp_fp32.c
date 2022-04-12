@@ -38,8 +38,11 @@ void ExpFp32(const float *src, float *dst, int num) {
   }
 }
 
-int ExpFusionFp32(const float *src, float *dst, const ExpParameter *param, int task_id) {
+int ExpFusionFp32(const void *src_data, void *dst_data, const ExpParameter *param, int task_id) {
   NNACL_CHECK_ZERO_RETURN_ERR(param->op_parameter_.thread_num_);
+  const float *src = (const float *)src_data;
+  float *dst = (float *)dst_data;
+
   int stride = UP_DIV(param->element_num_, param->op_parameter_.thread_num_);
   int start = stride * task_id;
   int end = MSMIN(param->element_num_, start + stride);

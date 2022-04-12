@@ -20,12 +20,13 @@
 #include "nnacl/experimental/fp16_funcs.h"
 #ifdef _MSC_VER
 #include "nnacl/experimental/conv.h"
+#include "nnacl/kernel/exp.h"
 #endif
 
-static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][16];
+static KernelCreator g_kernelCreatorRegistry[PrimType_MAX][Format_MAX][16];
 
-void RegKernelCreator(int opType, int dataType, KernelCreator creator) {
-  g_kernelCreatorRegistry[opType][dataType - kNumberTypeBegin - 1] = creator;
+void RegKernelCreator(int opType, int format, int dataType, KernelCreator creator) {
+  g_kernelCreatorRegistry[opType][format][dataType - kNumberTypeBegin - 1] = creator;
 }
 
 KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
@@ -34,12 +35,19 @@ KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, Tenso
    * register here first time */
   static bool inited = false;
   if (inited == false) {
-    g_kernelCreatorRegistry[PrimType_Conv2DFusion][kNumberTypeFloat32 - kNumberTypeBegin - 1] = CreateConv;
+    g_kernelCreatorRegistry[PrimType_Conv2DFusion][Format_NC4HW4][kNumberTypeFloat32 - kNumberTypeBegin - 1] =
+      CreateConv;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NHWC][kNumberTypeFloat32 - kNumberTypeBegin - 1] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NHWC][kNumberTypeFloat16 - kNumberTypeBegin - 1] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NCHW][kNumberTypeFloat32 - kNumberTypeBegin - 1] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NCHW][kNumberTypeFloat16 - kNumberTypeBegin - 1] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NC4HW4][kNumberTypeFloat32 - kNumberTypeBegin - 1] = CreateExp;
+    g_kernelCreatorRegistry[PrimType_ExpFusion][Format_NC8HW8][kNumberTypeFloat16 - kNumberTypeBegin - 1] = CreateExp;
     inited = true;
   }
 #endif
-  int dtype = in[kInputIndex]->data_type_;
-  KernelCreator creator = g_kernelCreatorRegistry[param->type_][dtype - kNumberTypeBegin - 1];
+  int dtype = out[kInputIndex]->data_type_;
+  KernelCreator creator = g_kernelCreatorRegistry[param->type_][in[0]->format_][dtype - kNumberTypeBegin - 1];
   if (creator == NULL) {
     return NULL;
   }

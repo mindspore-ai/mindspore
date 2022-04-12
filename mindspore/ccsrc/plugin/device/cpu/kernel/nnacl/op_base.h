@@ -121,7 +121,6 @@
 #define MAX_AXIS_SIZE 6
 #define MAX_LEN 256
 #define FLT16_MAX 65504
-#define NNACL_NC4HW4 13
 #define kDefaulLiteMaxSpinCount 300000
 #define kDefaulLiteMinSpinCount 1
 #define kDefaulLiteIosSpinCount 1
@@ -524,6 +523,7 @@ typedef enum FormatC {
   Format_NCDHW,
   Format_NWC,
   Format_NCW,
+  Format_NC8HW8,
   Format_NC16HW16,
   Format_MAX,
   Format_MIN = Format_NCHW
