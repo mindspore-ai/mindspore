@@ -4,7 +4,7 @@
     将ImageNet数据集转换为MindRecord格式数据集。
 
     .. note::
-        示例的详细信息，请参见 `Converting the ImageNet Dataset <https:// www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-the-imagenet-dataset>`_。
+        示例的详细信息，请参见 `Converting the ImageNet Dataset <https://www.mindspore.cn/tutorials/zh-CN/r1.7/advanced/dataset/record.html#converting-the-imagenet-dataset>`_。
 
     **参数：**
 

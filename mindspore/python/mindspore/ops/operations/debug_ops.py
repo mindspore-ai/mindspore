@@ -423,7 +423,7 @@ class Print(PrimitiveWithInfer):
         This function is used for debugging. When too much data is printed at the same time,
         in order not to affect the main process, the framework may discard some data. At this time,
         if you need to record the data completely, you can recommended to use the `Summary` function. Please check
-        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html?highlight=summary#>`_.
+        `Summary <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.7/summary_record.html?highlight=summary#>`_.
 
     Inputs:
         - **input_x** (Union[Tensor, bool, int, float, str]) - The graph node to attach to.

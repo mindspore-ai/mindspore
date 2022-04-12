@@ -21,7 +21,7 @@ Besides, this module provides APIs to sample data while loading.
 
 We can enable cache in most of the dataset with its key arguments 'cache'. Please notice that cache is not supported
 on Windows platform yet. Do not use it while loading and processing data on Windows. More introductions and limitations
-can refer `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/en/r1.7/data_engine/cache.html>`_.
+can refer `Single-Node Tensor Cache <https://www.mindspore.cn/tutorials/experts/en/r1.7/dataset/cache.html>`_.
 
 Common imported modules in corresponding API examples are as follows:
 

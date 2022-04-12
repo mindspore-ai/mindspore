@@ -85,7 +85,7 @@ name: Softmax-7, DataType: 43, Size: 40, Shape: [1 10], Data:
 ```
 
 outputFile 指定micro代码生成目录，当前脚本目录下将生成source_code目录，其中包含了可编译构建的mnist分类模型的代码src和benchmark用例。
-> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html#id4)。
+> 关于codegen的更多使用命令说明，可参见[codegen使用说明](https://www.mindspore.cn/lite/docs/zh-CN/r1.7/use/micro.html#id4)。
 
 ### 部署应用
 
@@ -262,4 +262,4 @@ outputFile 指定micro代码生成目录，当前脚本目录下将生成source_
 ## 更多详情
 ### [Android平台编译部署](https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/examples/quick_start_micro/mobilenetv2_arm64/README.md)
 
-### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/master/use/micro.html)
+### [Arm&nbsp;Cortex-M平台编译部署](https://www.mindspore.cn/lite/docs/zh-CN/r1.7/use/micro.html)

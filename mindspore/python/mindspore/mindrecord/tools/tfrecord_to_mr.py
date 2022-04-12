@@ -69,7 +69,7 @@ class TFRecordToMR:
 
     Note:
         For details about Examples, please refer to `Converting TFRecord Dataset <https://
-        www.mindspore.cn/docs/programming_guide/en/master/dataset_conversion.html#converting-tfrecord-dataset>`_.
+        www.mindspore.cn/tutorials/zh-CN/r1.7/advanced/dataset/record.html#converting-tfrecord-dataset>`_.
 
     Args:
         source (str): TFRecord file to be transformed.

@@ -122,7 +122,7 @@ std::string GetOpDebugLevel() {
     if (!TbeUtils::IsOneOf(value_ranges, std::stoul(env_level.c_str()))) {
       MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
                       << ", the value should be in [0, 1, 2, 3, 4], now using the default value 3."
-                         "Get more detail info at https://www.mindspore.cn/docs/note/zh-CN/master/env_var_list.html";
+                         "Get more detail info at https://www.mindspore.cn/docs/note/zh-CN/r1.7/env_var_list.html";
     } else {
       op_debug_level = env_level;
     }
