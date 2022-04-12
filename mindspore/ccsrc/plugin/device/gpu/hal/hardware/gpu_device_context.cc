@@ -182,7 +182,13 @@ void GPUDeviceContext::Destroy() {
 bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->DeviceType() != DeviceAddressType::kGPU) {
-    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
+    MS_LOG(ERROR) << "The device address type is wrong: " << address->DeviceType();
+    return false;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
   }
 
   if (!BindDeviceToCurrentThread()) {
