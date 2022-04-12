@@ -613,7 +613,6 @@ bool PrimitiveAdjust::Run(const FuncGraphPtr &func_graphs) {
     MS_LOG(INFO) << "The framework type of model should be mindir.";
     return true;
   }
-  MS_ASSERT(graph != nullptr);
   static auto root_func_manager = Manage(func_graphs);
   std::set<FuncGraphPtr> all_func_graphs = {};
   lite::GetAllFuncGraph(func_graphs, &all_func_graphs);
