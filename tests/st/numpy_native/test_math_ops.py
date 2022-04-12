@@ -957,7 +957,7 @@ def onp_clip(x):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -1806,7 +1806,7 @@ def onp_lcm(x, y):
     return onp.lcm(x, y)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
@@ -2034,7 +2034,7 @@ def test_multi_dot():
     match_all_arrays(mnp.multi_dot(mnp_arrays[1:-1]), onp.linalg.multi_dot(arrays[1:-1]))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
