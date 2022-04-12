@@ -4301,7 +4301,7 @@ class ScatterMin(_ScatterOp):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([[0.0, 1.0, 2.0], [0.0, 0.0, 0.0]]), mindspore.float32),

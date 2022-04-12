@@ -28,10 +28,8 @@ namespace mindspore {
 namespace kernel {
 
 static const std::map<std::string, ScatterFunctorType> kScatterFunctorTypeMap = {
-  {"ScatterUpdate", SCATTER_FUNC_UPDATE},
-  {"ScatterAdd", SCATTER_FUNC_ADD},
-  {"ScatterSub", SCATTER_FUNC_SUB},
-  {"ScatterMax", SCATTER_FUNC_MAX},
+  {"ScatterUpdate", SCATTER_FUNC_UPDATE}, {"ScatterAdd", SCATTER_FUNC_ADD}, {"ScatterSub", SCATTER_FUNC_SUB},
+  {"ScatterMax", SCATTER_FUNC_MAX},       {"ScatterMin", SCATTER_FUNC_MIN},
 };
 
 template <typename T, typename S>
@@ -61,7 +59,7 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     auto iter = kScatterFunctorTypeMap.find(kernel_name);
     if (iter == kScatterFunctorTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "Only support these scatter functors: ScatterUpdate, ScatterAdd, "
-                        << "ScatterSub or ScatterMax currently, but got " << kernel_name;
+                        << "ScatterSub, ScatterMax or ScatterMin currently, but got " << kernel_name;
     } else {
       scatter_functor_type_ = iter->second;
     }
