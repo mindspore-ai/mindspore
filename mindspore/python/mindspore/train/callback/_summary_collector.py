@@ -396,12 +396,12 @@ class SummaryCollector(Callback):
         for _, interval in enumerate(intervals):
             check_value_type('each interval inintervals', interval, list)
             if len(interval) < 3:
-                raise ValueError(f'For "{self.__class__.__name__}", each landscape interval should not be less '
-                                 f'than three, but got the: {interval}')
+                raise ValueError(f'For "{self.__class__.__name__}", the length of each list in "intervals" should not '
+                                 f'be less than three, but got the: {interval}')
             for j in interval:
                 if not isinstance(j, int):
-                    raise TypeError(f'For "{self.__class__.__name__}", landscape interval value type should be int, '
-                                    f'but got the: {type(j)}')
+                    raise TypeError(f'For "{self.__class__.__name__}", the value of each list in "intervals" should '
+                                    f'be int, but got the: {type(j)}')
 
     def _check_collect_landscape_data(self, collect_landscape):
         """Check collect landscape data type and value."""
@@ -707,7 +707,7 @@ class SummaryCollector(Callback):
 
         if not isinstance(input_data, Tensor) and not input_data:
             self._collect_specified_data['collect_input_data'] = False
-            logger.warning("The 'train_dataset_element' in cb_params is empty, "
+            logger.warning("The 'train_dataset_element' in RunContext.original_args is empty, "
                            "so SummaryCollector will not record the input data. ")
             return False
 
