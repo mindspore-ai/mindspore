@@ -34,6 +34,7 @@
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include "tools/converter/parser/onnx/onnx_nonzero_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"

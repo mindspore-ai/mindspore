@@ -30,6 +30,7 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quant_param_holder.h"
 #include "tools/converter/parser/parser_utils.h"
+#include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/parser/unify_format.h"
 #include "nnacl/op_base.h"
