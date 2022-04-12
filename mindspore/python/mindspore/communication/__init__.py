@@ -15,9 +15,9 @@
 """
 Collective communication interface. Note the API in the file needs to preset communication environment variables. For
 the Ascend cards, users need to prepare the rank table, set rank_id and device_id. Please see the `Ascend tutorial \
-<https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_ascend.html>`_ for more details.
+<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html>`_ for more details.
 For the GPU device, users need to prepare the host file and mpi, please see the `GPU tutorial \
-<https://www.mindspore.cn/docs/programming_guide/zh-CN/master/distributed_training_gpu.html>`_
+<https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html>`_
 for more details.
 """
 

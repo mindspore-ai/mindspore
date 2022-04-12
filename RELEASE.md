@@ -6,23 +6,23 @@
 
 #### OS
 
-* [STABLE] Support macOS with CPU(X86)
-* [BETA] Supoport macOS with CPU(M1)
+- [STABLE] Support macOS with CPU(X86)
+- [BETA] Supoport macOS with CPU(M1)
 
 #### FrontEnd
 
-* [STABLE] Support JIT Fallback feature in Graph mode.
-* [STABLE] Support compile cache feature in Graph mode.
-* [STABLE] Add new optimizers, including ASGD and Rprop.
-* [STABLE] Add new initializers, including Identity, Orthogonal, Dirac, Sparse and VarianceScaling.
-* [STABLE] Support resuming training when an exception occurs in the process.
-* [STABLE] Change `mindspore.nn.LSTMCell` from single-layer LSTM to single-cell LSTM.
-* [BETA] Introduce `mindspore.ops.Custom` to customize your own operators for Ascend(AICore, AICPU), GPU, CPU backends, and the custom type can be one of TBE, AKG, pure Python function or prebuild binary(called aot operator).
+- [STABLE] Support JIT Fallback feature in Graph mode.
+- [STABLE] Support compile cache feature in Graph mode.
+- [STABLE] Add new optimizers, including ASGD and Rprop.
+- [STABLE] Add new initializers, including Identity, Orthogonal, Dirac, Sparse and VarianceScaling.
+- [STABLE] Support resuming training when an exception occurs in the process.
+- [STABLE] Change `mindspore.nn.LSTMCell` from single-layer LSTM to single-cell LSTM.
+- [BETA] Introduce `mindspore.ops.Custom` to customize your own operators for Ascend(AICore, AICPU), GPU, CPU backends, and the custom type can be one of TBE, AKG, pure Python function or prebuild binary(called aot operator).
 
 #### PyNative
 
-* [STABLE] Support heterogeneous feature in PyNative mode.
-* [STABLE] Optimize memory allocation in PyNative mode.
+- [STABLE] Support heterogeneous feature in PyNative mode.
+- [STABLE] Optimize memory allocation in PyNative mode.
 
 #### Auto Parallel
 
@@ -39,33 +39,33 @@
 
 #### Executor
 
-* [STABLE] Support multigraph sink and subgraph sink of MindRT.
-* [STABLE] Support memory swap to break the device memory size limit on Ascend platform.
-* [STABLE] Support dynamic deployment of distributed training cluster(GPU).
-* [BETA] Support automatic failover of parameter server.
+- [STABLE] Support multigraph sink and subgraph sink of MindRT.
+- [STABLE] Support memory swap to break the device memory size limit on Ascend platform.
+- [STABLE] Support dynamic deployment of distributed training cluster(GPU).
+- [BETA] Support automatic failover of parameter server.
 
 #### DataSet
 
-* [STABLE] Support overwrite feature in MindRecord.
-* [STABLE] Log improvement and more friendly to users.
-* [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
-* [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_autotune.html) to adjust parallelism of dataset pipeline automatically.
+- [STABLE] Support overwrite feature in MindRecord.
+- [STABLE] Log improvement and more friendly to users.
+- [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/zh-CN/master/design/dataset_offload.html) to speed up data processing by heterogeneous computing.
+- [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/auto_tune.html) to adjust parallelism of dataset pipeline automatically.
 
 #### GraphKernel Fusion
 
-* [STABLE] Support kernel fusion and generation for CPU backend.
+- [STABLE] Support kernel fusion and generation for CPU backend.
 
 #### Federated Learning
 
-* [STABLE] FL-Client framework and model decoupling.
-* [BETA] Support Cross-silo federated learning framework.
+- [STABLE] FL-Client framework and model decoupling.
+- [BETA] Support Cross-silo federated learning framework.
 
 #### Debug
 
-* [STABLE] Support dump in cell level(Ascend).
-* [STABLE] Support dump Tensor statistics(Ascend/GPU).
-* [STABLE] Support displaying corresponding code lines for fusion nodes.
-* [STABLE] Support passing dump flag in Ascend backend in order to dump correct operators after fusion transformation.
+- [STABLE] Support dump in cell level(Ascend).
+- [STABLE] Support dump Tensor statistics(Ascend/GPU).
+- [STABLE] Support displaying corresponding code lines for fusion nodes.
+- [STABLE] Support passing dump flag in Ascend backend in order to dump correct operators after fusion transformation.
 
 ### API Change
 
@@ -105,14 +105,14 @@
 
 #### Executor
 
-* Fix process hanging while calling MPI_comm_create in asymmetric pipeline split scenario. ([!28707](https://gitee.com/mindspore/mindspore/pulls/28707))
-* Fix the execution error when the weights are shared between graph mode and PyNative mode.([!26635](https://gitee.com/mindspore/mindspore/pulls/26635))
-* Fixed the probability coredump when free memory under PyNative mode.([!25472](https://gitee.com/mindspore/mindspore/pulls/25472))
+- Fix process hanging while calling MPI_comm_create in asymmetric pipeline split scenario. ([!28707](https://gitee.com/mindspore/mindspore/pulls/28707))
+- Fix the execution error when the weights are shared between graph mode and PyNative mode.([!26635](https://gitee.com/mindspore/mindspore/pulls/26635))
+- Fixed the probability coredump when free memory under PyNative mode.([!25472](https://gitee.com/mindspore/mindspore/pulls/25472))
 
 #### Dataset
 
-* Fix memory increase abnormally when running dataset for a long time. ([!26237](https://gitee.com/mindspore/mindspore/pulls/26237))
-* Fix saving MindRecord files with Chinese path on Windows. ([!28378](https://gitee.com/mindspore/mindspore/pulls/28378))
+- Fix memory increase abnormally when running dataset for a long time. ([!26237](https://gitee.com/mindspore/mindspore/pulls/26237))
+- Fix saving MindRecord files with Chinese path on Windows. ([!28378](https://gitee.com/mindspore/mindspore/pulls/28378))
 
 ## MindSpore Lite
 
@@ -120,29 +120,29 @@
 
 #### Converter and runtime
 
-* [STABLE] Add more fusion patterns in the converter tool to improve runtime performance.
-* [STABLE] Support take OpenGL texture as input and output of inference.
-* [STABLE] Refactor the JAVA API.
-* [BETA] Support inference on Ascend310.
+- [STABLE] Add more fusion patterns in the converter tool to improve runtime performance.
+- [STABLE] Support take OpenGL texture as input and output of inference.
+- [STABLE] Refactor the JAVA API.
+- [BETA] Support inference on Ascend310.
 
 #### x86 backend optimization
 
-* [STABLE] Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
+- [STABLE] Optimize kernels for x86 using Advanced Vector Extensions(AVX512).
 
 #### ARM backend optimization
 
-* [STABLE] Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
-* [STABLE] Add more FP16 operators.
+- [STABLE] Support heterogeneous parallel inference, including splitting operators, constructing heterogeneous subgraphs, and heterogeneous parallel scheduling between CPUs and GPUs.
+- [STABLE] Add more FP16 operators.
 
 #### Post quantization
 
-* [STABLE] Post quantization supports debugging.
-* [STABLE] Full quantization supports choosing non-quantized nodes.
-* [STABLE] Mixed bit quantization supports auto-tune.
+- [STABLE] Post quantization supports debugging.
+- [STABLE] Full quantization supports choosing non-quantized nodes.
+- [STABLE] Mixed bit quantization supports auto-tune.
 
 #### Training on Device
 
-* [STABLE] Support user-defined algorithm models to access the federated learning framework.
+- [STABLE] Support user-defined algorithm models to access the federated learning framework.
 
 ### Contributors
 
@@ -571,7 +571,7 @@ thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, ba
 
 ##### Dump Config
 
-Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/dump_in_graph_mode.html#dump).
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/dump.html#dump).
 
 | 1.2.1                                                  | 1.3.0                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
