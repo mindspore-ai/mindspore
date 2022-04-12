@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_
 #include <cuda_fp16.h>
 #include <algorithm>
-#include <type_traits>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 #define kThreadsPerBlock (256)
@@ -189,31 +188,22 @@ struct Div {
 struct Min {
   template <typename T>
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    return std::min(lhs, rhs);
+    return lhs < rhs ? lhs : rhs;
   }
 };
 
 struct Max {
   template <typename T>
   __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
-    return std::max(lhs, rhs);
+    return lhs > rhs ? lhs : rhs;
   }
 };
-
-// Implementation only for integral type or floating-point type, including:
-// integral: bool, char, char8_t (since C++20), char16_t, char32_t, wchar_t, short, int, long, long long
-// floating_point: half, float double
-template <typename Func, typename T>
-__device__ __forceinline__ std::enable_if_t<std::is_arithmetic<T>::value || std::is_same<half, T>::value, T>
-MsAtomicBinaryOp(T *address, T val) {
-  return MsAtomicBinaryOpImpl<Func, T>()(address, val);
-}
 }  // namespace atomic
 
 // atomic add
 template <typename T>
 __device__ __forceinline__ T MsAtomicAdd(T *address, const T val) {
-  return atomic::MsAtomicBinaryOp<atomic::Add>(address, val);
+  return atomic::MsAtomicBinaryOpImpl<atomic::Add, T>()(address, val);
 }
 
 // For following types, call CUDA API directly
@@ -247,7 +237,7 @@ __device__ __forceinline__ bool MsAtomicAdd(bool *address, bool val) {
 // atomic sub
 template <typename T>
 __device__ __forceinline__ T MsAtomicSub(T *address, const T val) {
-  return atomic::MsAtomicBinaryOp<atomic::Sub>(address, val);
+  return atomic::MsAtomicBinaryOpImpl<atomic::Sub, T>()(address, val);
 }
 
 // For following types, call CUDA API directly
@@ -259,7 +249,7 @@ __device__ __forceinline__ unsigned int MsAtomicSub(unsigned int *address, unsig
 // atomic min
 template <typename T>
 __device__ __forceinline__ T MsAtomicMin(T *address, const T val) {
-  return atomic::MsAtomicBinaryOp<atomic::Min>(address, val);
+  return atomic::MsAtomicBinaryOpImpl<atomic::Min, T>()(address, val);
 }
 
 // For following types, call CUDA API directly
@@ -287,7 +277,7 @@ __device__ __forceinline__ long long int MsAtomicMin(long long int *address, lon
 // atomic max
 template <typename T>
 __device__ __forceinline__ T MsAtomicMax(T *address, const T val) {
-  return atomic::MsAtomicBinaryOp<atomic::Max>(address, val);
+  return atomic::MsAtomicBinaryOpImpl<atomic::Max, T>()(address, val);
 }
 
 // For following types, call CUDA API directly
@@ -315,7 +305,7 @@ __device__ __forceinline__ long long int MsAtomicMax(long long int *address, lon
 // atomic mul
 template <typename T>
 __device__ __forceinline__ T MsAtomicMul(T *address, const T val) {
-  return atomic::MsAtomicBinaryOp<atomic::Mul>(address, val);
+  return atomic::MsAtomicBinaryOpImpl<atomic::Mul, T>()(address, val);
 }
 
 template <>
@@ -327,7 +317,7 @@ __device__ __forceinline__ bool MsAtomicMul(bool *address, bool val) {
 // atomic div
 template <typename T>
 __device__ __forceinline__ T MsAtomicDiv(T *address, const T val) {
-  return atomic::MsAtomicBinaryOp<atomic::Div>(address, val);
+  return atomic::MsAtomicBinaryOpImpl<atomic::Div, T>()(address, val);
 }
 
 __device__ __forceinline__ unsigned BallotSync(int predicate, unsigned mask = 0xffffffff) {
