@@ -18,6 +18,7 @@ from copy import copy
 import numbers
 import numpy as np
 from mindspore import log as logger
+from mindspore.log import _LogActionOnce
 from .._c_expression import ParamInfo
 from . import dtype as mstype
 from .. import context
@@ -514,6 +515,7 @@ class Parameter(Tensor_):
         new_param.param_info = self.param_info
         return new_param
 
+    @_LogActionOnce(logger=logger, key='add_pipeline_stage')
     def add_pipeline_stage(self, stage):
         logger.warning(f"This interface may be deleted in the future.")
         if not isinstance(stage, int) or stage < 0:
