@@ -179,13 +179,13 @@ def _nptype_to_prototype(np_value):
     }
     np_type = None
     if np_value is None:
-        logger.error("The numpy value in tensor of Summary is none")
+        logger.error("The numpy value in Summary is none")
     else:
         np_type = np_value.dtype.type
 
     proto = np2pt_tbl.get(np_type, None)
     if proto is None:
-        raise TypeError("No match for proto data type, np_value type expect value is one of ['np.bool_', 'np.int8', "
+        raise TypeError("Transform numpy type failed in Summary, expect numpy type is one of ['np.bool_', 'np.int8', "
                         "'np.int16', 'np.int32', 'np.int64', 'np.uint8', 'np.uint16', 'np.uint32', 'np.uint64', "
                         "'np.float16', 'np.float', 'np.float64'].")
 
