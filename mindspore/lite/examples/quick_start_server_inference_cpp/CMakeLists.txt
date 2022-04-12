@@ -17,6 +17,7 @@ add_executable(mindspore_quick_start_cpp ${QUICK_START_CXX})
 target_link_libraries(
         mindspore_quick_start_cpp
         -Wl,--whole-archive mindspore-lite -Wl,--no-whole-archive
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/libglog.so.0
         pthread
 )
 
