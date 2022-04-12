@@ -25,9 +25,13 @@ std::vector<std::pair<KernelAttr, RpcRecvKernelMod::RpcRecvFunc>> RpcRecvKernelM
      .AddInputAttr(kNumberTypeFloat32)
      .AddOutputAttr(kNumberTypeFloat32)
      .AddAllSameAttr(true)
-     .AddOutInRef(0, 0),
+     .AddAllOutInRef(true),
    &RpcRecvKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddAllSameAttr(true).AddOutInRef(0, 0),
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32)
+     .AddAllSameAttr(true)
+     .AddAllOutInRef(true),
    &RpcRecvKernelMod::LaunchKernel<int>}};
 
 std::vector<KernelAttr> RpcRecvKernelMod::GetOpSupport() {

@@ -1007,6 +1007,11 @@ KernelAttr &KernelAttr::AddOutInRef(size_t output_index, size_t input_index) {
   return *this;
 }
 
+KernelAttr &KernelAttr::AddAllOutInRef(const bool &all_out_in_ref) {
+  all_out_in_ref_ = all_out_in_ref;
+  return *this;
+}
+
 void KernelAttr::SetInputAttrList(const std::vector<DataType> &addr_list) {
   input_type_.assign(addr_list.begin(), addr_list.end());
 }
@@ -1236,8 +1241,8 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
   auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &matched_kernel_attr = kernel_attrs[index];
-  if (!matched_kernel_attr.GetOutInRefMap().empty()) {
-    kernel_info->set_ref_map(matched_kernel_attr.GetOutInRefMap());
+  if (!matched_kernel_attr.GetOutInRefMap().empty() || matched_kernel_attr.GetAllOutInRef()) {
+    kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
   }
 }
 }  // namespace kernel

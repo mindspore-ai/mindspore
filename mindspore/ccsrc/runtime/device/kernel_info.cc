@@ -141,5 +141,15 @@ bool KernelInfo::operator==(const KernelInfo &other) const {
   }
   return true;
 }
+
+void KernelInfo::set_ref_map(const bool &all_ref, const OutputInputRefMap &ref_map) {
+  if (all_ref) {
+    for (size_t i = 0; i < select_kernel_build_info_->GetInputNum(); i++) {
+      out_in_ref_map_[i] = i;
+    }
+  } else {
+    out_in_ref_map_ = ref_map;
+  }
+}
 }  // namespace device
 }  // namespace mindspore
