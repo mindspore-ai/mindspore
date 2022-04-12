@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_shape_fusion_pass.h"
 #include <set>
 #include <queue>
@@ -21,13 +22,11 @@
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
-#include "schema/inner/model_generated.h"
 
+namespace mindspore::lite {
 namespace {
 constexpr size_t kInitialSize = 1024;
 }  // namespace
-
-namespace mindspore::lite {
 int ShapeFusionPass::ConvertToShapeFusion(Model::Node *node) {
   MS_ASSERT(node != nullptr);
   auto input_tensor = src_tensors_->at(node->input_indices_.front());
@@ -382,3 +381,4 @@ int ShapeFusionPass::GetFusionMatrixFromConstantTensor(const lite::Tensor *tenso
   return RET_OK;
 }
 }  // namespace mindspore::lite
+#endif

@@ -39,9 +39,7 @@
 #include "src/common/tensor_util.h"
 #include "src/common/context_util.h"
 #include "src/runtime/infer_manager.h"
-#ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_pass.h"
-#endif
 #ifndef AUTO_PARALLEL_CLIP
 #include "src/sub_graph_split.h"
 #endif
@@ -259,7 +257,6 @@ int Scheduler::SchedulePreProcess() {
   schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
-
   *is_infershape_ = InferSubGraphShape(kMainSubGraphIndex);
   if (*is_infershape_ != RET_OK && *is_infershape_ != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "op infer shape failed.";
@@ -397,10 +394,9 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
     MS_LOG(ERROR) << "CheckInputParam failed! ret: " << check_input_ret;
     return check_input_ret;
   }
-#ifndef RUNTIME_PASS_CLIP
-  shape_fusion_pass_ = std::make_shared<ShapeFusionPass>(reinterpret_cast<LiteModel *>(src_model_), src_tensors_);
-#endif
 
+  shape_fusion_pass_ = std::make_shared<ShapeFusionPass>(reinterpret_cast<LiteModel *>(src_model_), src_tensors_);
+  MS_CHECK_TRUE_RET(shape_fusion_pass_ != nullptr, RET_ERROR);
   int ret = SchedulePreProcess();
   if (ret != RET_OK) {
     return ret;
@@ -428,15 +424,9 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
       return ret;
     }
   }
+  shape_fusion_pass_->FreeOutputTensorDataOfFusedShape();
 
 #ifndef DELEGATE_CLIP
-#ifndef RUNTIME_PASS_CLIP
-  // Free the output tensor data of shape fusion.
-  for (auto tensor : shape_fusion_outputs_) {
-    tensor->FreeData();
-    tensor->set_category(VAR);
-  }
-#endif
   ret = InitDelegateKernels(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
@@ -467,13 +457,11 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   }
 #endif
 
-#ifndef RUNTIME_PASS_CLIP
   auto status = RuntimePass(dst_kernels, src_tensors_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "runtime pass failed.";
     return RET_ERROR;
   }
-#endif
 
   ret = InitKernels(std::move(*dst_kernels));
   if (ret != RET_OK) {
@@ -742,11 +730,6 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
         return RET_ERROR;
       }
     }
-#if !defined(RUNTIME_PASS_CLIP) && !defined(DELEGATE_CLIP)
-    if (node->node_type_ == PrimType_Inner_ShapeFusion) {
-      shape_fusion_outputs_.insert(shape_fusion_outputs_.end(), outputs.begin(), outputs.end());
-    }
-#endif
   } else if (ret != RET_INFER_INVALID) {
     FreeOpParameters();
     return RET_ERROR;
@@ -877,17 +860,11 @@ int Scheduler::InferSubGraphShape(size_t subgraph_index) {
       MS_LOG(ERROR) << "Op " << node->name_ << " should exist in model!";
       return RET_ERROR;
     }
-#ifndef RUNTIME_PASS_CLIP
     if (node->node_type_ == schema::PrimitiveType_Shape) {
       // convert shape to built-in shape
       MS_CHECK_TRUE_RET(node->input_indices_.size() == 1, RET_ERROR);
-      if (shape_fusion_pass_->ConvertToShapeFusion(node) != RET_OK) {
-        MS_LOG(WARNING) << "Convert to built-in shape failed: " << node->name_;
-      } else if (shape_fusion_pass_->FusePostNodes(node, subgraph_index) != RET_OK) {
-        MS_LOG(WARNING) << "Fused to built-in shape failed: " << node->name_;
-      }
+      shape_fusion_pass_->Run(node, subgraph_index);
     }
-#endif
     auto ret = InferNodeShape(node);
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape interrupted, name: " << node->name_

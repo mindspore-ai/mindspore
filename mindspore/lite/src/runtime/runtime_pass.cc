@@ -17,11 +17,12 @@
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 
+namespace mindspore::lite {
+#ifndef RUNTIME_PASS_CLIP
 namespace {
 const constexpr int kMaxDepth = 2048;
 }
 
-namespace mindspore::lite {
 void Nc4hw4PassReplace(std::vector<kernel::KernelExec *> *kernels, std::vector<Tensor *> *tensors, size_t index) {
   kernel::KernelExec *conv_kernel = kernels->at(index);
   kernel::KernelExec *transpose_kernel = conv_kernel->out_kernels().front();
@@ -287,8 +288,10 @@ STATUS DeleteRedundantTrans(std::vector<kernel::KernelExec *> *kernels) {
   }
   return RET_OK;
 }
+#endif
 
 STATUS RuntimePass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Tensor *> *tensors) {
+#ifndef RUNTIME_PASS_CLIP
   for (auto subgraph : *subgraphs) {
     auto sub = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
     if (RuntimePassValid(sub) == false) {
@@ -305,10 +308,12 @@ STATUS RuntimePass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Ten
       return RET_ERROR;
     }
   }
+#endif
   return RET_OK;
 }
 
 STATUS GraphOptimizePass(std::vector<kernel::KernelExec *> *sub_graphs) {
+#ifndef RUNTIME_PASS_CLIP
   for (auto subgraph : *sub_graphs) {
     auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(subgraph);
     if (RuntimePassValid(sub_graph) == false) {
@@ -321,6 +326,7 @@ STATUS GraphOptimizePass(std::vector<kernel::KernelExec *> *sub_graphs) {
       return RET_ERROR;
     }
   }
+#endif
   return RET_OK;
 }
 }  // namespace mindspore::lite
