@@ -102,7 +102,10 @@ class BACKEND_EXPORT RecoveryContext {
   // Initialize recovery context.
   void Initialize();
 
-  // Create persitent json file, used to persist recovery config.
+  // Create config json file, used to persist node info of cluster.
+  void CreateConfigFile(const std::string &config_file_path);
+
+  // Create persitent json file, used to persist recovery config of Worker, such as ckpt path.
   void CreatePersistentFile();
 
   // Obtain the step corresponding to the local latest checkpoint in each training process.
