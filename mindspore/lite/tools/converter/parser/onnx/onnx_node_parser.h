@@ -37,6 +37,19 @@
 
 namespace mindspore {
 namespace lite {
+class ExternalDataInfo {
+ public:
+  const std::string GetRelPath() const { return rel_path_; }
+  static STATUS Create(const google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto> &externalData,
+                       ExternalDataInfo *externalDataInfo);
+
+ private:
+  std::string rel_path_;
+  off_t offset_ = 0;
+  size_t length_ = 0;
+  std::string checksum_;
+};
+
 class OnnxNodeParser {
  public:
   explicit OnnxNodeParser(std::string node_name) : name_(std::move(node_name)) {}
@@ -58,6 +71,9 @@ class OnnxNodeParser {
 
   static size_t GetOnnxElementNum(const onnx::TensorProto &onnx_tensor, bool *overflowed);
 
+  static STATUS LoadOnnxExternalTensorData(const onnx::TensorProto &onnx_const_tensor,
+                                           const tensor::TensorPtr &tensor_info, const std::string &model_file);
+
  protected:
   static mindspore::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
 
@@ -66,10 +82,16 @@ class OnnxNodeParser {
   static const void *GetOnnxRawData(const onnx::TensorProto &onnx_const_tensor, TypeId data_type, size_t data_count,
                                     size_t *data_size);
 
+  static STATUS SetExternalTensorFile(const std::string &model_file, std::string *external_tensor_dir);
+
+  static const void *LoadOnnxRawData(const onnx::TensorProto &onnx_const_tensor, size_t *data_size,
+                                     const std::string &model_file);
+
   const std::string name_{};
 
  private:
   static int64_t opset_version_;
+  static void *buffer_;
 };
 }  // namespace lite
 }  // namespace mindspore
