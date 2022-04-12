@@ -32,9 +32,9 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op1(dtype):
     """
-    Feature: ALL TO ALL
-    Description:  test cases for updating float values
-    Expectation: the result match scipy
+    Feature: Op ScatterNdUpdate
+    Description:  test ScatterNdUpdate
+    Expectation: success
     """
 
     class ScatterNdUpdate(nn.Cell):
@@ -64,9 +64,9 @@ def test_op1(dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_op2(dtype):
     """
-    Feature: ALL TO ALL
-    Description:  test cases for updating int values
-    Expectation: the result match scipy
+    Feature: Op ScatterNdUpdate
+    Description:  test ScatterNdUpdate
+    Expectation: success
     """
 
     class ScatterNdUpdate(nn.Cell):
@@ -96,9 +96,9 @@ def test_op2(dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_op3(dtype):
     """
-    Feature: ALL TO ALL
-    Description:  test cases for updating int values
-    Expectation: the result match scipy
+    Feature: Op ScatterNdUpdate
+    Description:  test ScatterNdUpdate
+    Expectation: success
     """
 
     class ScatterNdUpdate(nn.Cell):
@@ -132,9 +132,9 @@ def test_op3(dtype):
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op4(dtype):
     """
-    Feature: ALL TO ALL
-    Description:  test cases for updating single float value
-    Expectation: the result match scipy
+    Feature: Op ScatterNdUpdate
+    Description:  test ScatterNdUpdate
+    Expectation: success
     """
 
     class ScatterNdUpdate(nn.Cell):
@@ -154,3 +154,32 @@ def test_op4(dtype):
     print("x:\n", out)
     expect = [[-0.1, 1.0, 3.6], [0.4, 0.5, -3.2]]
     assert np.allclose(out.asnumpy(), np.array(expect, dtype=dtype))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_op5(dtype):
+    """
+    Feature: Op ScatterNdUpdate
+    Description:  test ScatterNdUpdate with index out of range
+    Expectation: raise RuntimeError
+    """
+
+    class ScatterNdUpdate(nn.Cell):
+        def __init__(self):
+            super(ScatterNdUpdate, self).__init__()
+            self.scatter_nd_update = P.ScatterNdUpdate()
+            self.x = Parameter(Tensor(np.ones([1, 4, 1], dtype=dtype)), name="x")
+
+        def construct(self, indices, update):
+            return self.scatter_nd_update(self.x, indices, update)
+
+    indices = Tensor(np.array([[0, 2], [3, 2], [1, 3]]), mstype.int32)
+    update = Tensor(np.array([[1], [1], [1]], dtype=dtype))
+
+    scatter_nd_update = ScatterNdUpdate()
+    with pytest.raises(RuntimeError) as errinfo:
+        scatter_nd_update(indices, update)
+    assert "Some errors occurred! The error message is as above" in str(errinfo.value)
