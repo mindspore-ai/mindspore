@@ -204,7 +204,7 @@ class COMMON_EXPORT DfGraphConvertor {
   mindspore::HashMap<AnfNode *, DfGraph> branches_map_;
   mindspore::HashMap<AnfNode *, OperatorPtr> op_cache_;
   mindspore::HashMap<AnfNode *, std::vector<ControlEdge>> control_edge_cache_;
-  mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> monad_control_edge_cache_;
+  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> monad_control_edge_cache_;
   /* record "tuple_getitem"<->"out_handler" mapping */
   mindspore::HashMap<AnfNode *, OutHandler> out_handle_cache_;
   /* record "make_tuple"<->"out_handler vector" mapping */
