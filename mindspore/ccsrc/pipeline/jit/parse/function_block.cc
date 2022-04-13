@@ -119,14 +119,18 @@ AnfNodePtr FunctionBlock::ReadLocalVariable(const std::string &var_name) {
 // Read variable from predecessors
 AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   MS_LOG(DEBUG) << "Read begin, var: " << var_name << ", block: " << ToString();
-  // Get var node if it is found
-  auto node = ReadLocalVariable(var_name);
-  if (node != nullptr) {
-    return node;
-  }
   // The fallback feature is enabled in default.
   // Not support change the flag during the process is alive.
   static const auto use_fallback = (parser_.support_fallback() != "0");
+  // Get var node if it is found
+  auto node = ReadLocalVariable(var_name);
+  if (node != nullptr) {
+    if (use_fallback) {
+      UpdateLocalPyParam(var_name, node);
+    }
+    return node;
+  }
+
   // Get var from predecessor block, if can't get then make a resolve node to it
   if (matured_) {
     // If only one predecessor block, read the definition of var from it.

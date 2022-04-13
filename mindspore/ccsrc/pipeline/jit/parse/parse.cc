@@ -1043,10 +1043,11 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   py::object function_ast_node = python_adapter::GetPyObjAttr(node, "func");
   py::list args = python_adapter::GetPyObjAttr(node, "args");
 
+  std::string name_id = "";
   auto arg_type =
     AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, function_ast_node)));
   if (arg_type == AST_SUB_TYPE_NAME) {
-    auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
+    name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
     if (name_id == "super") {
       return ParseSuper(block, args);
@@ -1064,10 +1065,29 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
   bool need_unpack = need_unpack_args || need_unpack_keywords;
 
   auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, packed_arguments, group_arguments, need_unpack);
+  static const auto use_fallback = (support_fallback() != "0");
+  if (!use_fallback) {
+    return call_cnode;
+  }
   UpdateInterpretForUserNode(call_cnode, call_function_node);
   MS_EXCEPTION_IF_NULL(call_cnode);
+  // Process special bulitin function(print).
   if (call_cnode->interpret_special_type() && need_fallback) {
     call_cnode = HandleInterpret(block, call_cnode, node);
+    return call_cnode;
+  }
+  // Process other bulitin function, for example, sum(np.array(xx))
+  py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, name_id);
+  constexpr size_t namespace_info_size = 4;
+  constexpr size_t symbol_index = 1;
+  constexpr size_t flag_index = 3;
+  if (namespace_info.size() == namespace_info_size) {
+    auto syntax_support = namespace_info[flag_index].cast<int32_t>();
+    SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[symbol_index].cast<std::string>());
+    if (syntax_support == SYNTAX_UNSUPPORTED_NAMESPACE && name_id == symbol->name()) {
+      call_cnode->set_interpret(true);
+      call_cnode = HandleInterpret(block, call_cnode, node);
+    }
   }
   return call_cnode;
 }
@@ -1255,8 +1275,9 @@ AnfNodePtr Parser::ParseCompare(const FunctionBlockPtr &block, const py::object 
   MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr op_node = block->MakeResolveAstOp(ops[0]);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  auto new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
+  AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_node, left_node, right_node});
   UpdateInterpretForUserNode(new_node, {left_node, right_node});
+  new_node = HandleInterpret(block, new_node, node);
   return new_node;
 }
 
@@ -2417,23 +2438,46 @@ bool Parser::IsTensorType(const AnfNodePtr &node, const std::string &script_text
   return false;
 }
 
+bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node,
+                                       const string &script_text) {
+  MS_EXCEPTION_IF_NULL(block);
+  MS_EXCEPTION_IF_NULL(node);
+  // If the Tensor is present as type, should not convert Interpret node.
+  if (IsTensorType(node, script_text)) {
+    return false;
+  }
+  // Check if script_text is in global/local params.
+  py::dict global_dict = block->global_py_params();
+  auto keys = std::get<0>(block->local_py_params());
+  if (IsScriptInParams(script_text, global_dict, keys, block->func_graph())) {
+    return false;
+  }
+  // If the current node is builtin function(print), and the inputs of node has Tensor,
+  // means that the builtin function can be implemented by using operators in graph mode.
+  bool is_special_node = node->interpret_special_type();
+  if (is_special_node && node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto &inputs = cnode->inputs();
+    for (auto input : inputs) {
+      if (IsPrimitiveCNode(input, prim::kPrimPyInterpret) && input->interpret_internal_type()) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                                      const string &script_text) {
   MS_EXCEPTION_IF_NULL(block);
   MS_EXCEPTION_IF_NULL(value_node);
-  // Check if script_text is in global/local params.
-  py::dict global_dict = block->global_py_params();
-  auto [keys, values] = block->local_py_params();
-  if (IsTensorType(value_node, script_text)) {
-    return value_node;
-  }
-  bool is_special_node = value_node->interpret_special_type();
-  if (IsScriptInParams(script_text, global_dict, keys, block->func_graph()) && !is_special_node) {
+  if (!CheckNeedConvertInterpret(block, value_node, script_text)) {
     return value_node;
   }
 
   // Prepare global parameters.
   ValuePtr globals_converted_value = nullptr;
+  py::dict global_dict = block->global_py_params();
   if (!ConvertData(global_dict, &globals_converted_value)) {
     MS_LOG(EXCEPTION) << "Convert data failed";
   }
@@ -2441,6 +2485,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
   // Prepare local parameters.
   // Filter the func_graph node where the current node is located.
   auto current_fg = value_node->func_graph();
+  auto [keys, values] = block->local_py_params();
   std::vector<AnfNodePtr> filter_keys;
   std::vector<AnfNodePtr> filter_values;
   for (auto iter = values.begin(); iter != values.end(); ++iter) {
