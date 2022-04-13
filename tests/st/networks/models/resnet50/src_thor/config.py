@@ -19,7 +19,7 @@ from easydict import EasyDict as ed
 
 config = ed({
     "class_num": 1001,
-    "batch_size": 32,
+    "batch_size": 64,
     "loss_scale": 128,
     "momentum": 0.9,
     "weight_decay": 5e-4,
@@ -33,7 +33,7 @@ config = ed({
     "save_checkpoint_path": "./",
     "label_smooth": 1,
     "label_smooth_factor": 0.1,
-    "frequency": 834,
+    "frequency": 2048,
     "eval_interval": 1,
     "eval_batch_size": 32,
     "train_image_size": 224,
