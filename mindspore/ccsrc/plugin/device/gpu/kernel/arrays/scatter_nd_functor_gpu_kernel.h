@@ -28,9 +28,8 @@ namespace mindspore {
 namespace kernel {
 
 static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMap = {
-  {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE},
-  {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
-  {"ScatterNdSub", SCATTER_ND_FUNC_SUB},
+  {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE}, {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
+  {"ScatterNdSub", SCATTER_ND_FUNC_SUB},       {"ScatterNdMul", SCATTER_ND_FUNC_MUL},
   {"ScatterNdDiv", SCATTER_ND_FUNC_DIV},
 };
 

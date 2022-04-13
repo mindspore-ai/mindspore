@@ -5100,7 +5100,7 @@ class ScatterNdMul(_ScatterNdOp):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
