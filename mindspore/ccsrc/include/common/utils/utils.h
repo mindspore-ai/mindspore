@@ -605,6 +605,7 @@ constexpr auto kAnfPrimitiveIndex = 0;
 constexpr auto kFirstDataInputIndex = 1;
 constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
+constexpr auto kSparseGetAttrInputSize = 2;
 constexpr auto kTupleGetItemInputSize = 3;
 // index define of partial
 constexpr auto kPartialMinInputSize = 2;

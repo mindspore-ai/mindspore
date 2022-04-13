@@ -73,6 +73,12 @@ inline void CheckSparseIndicesDtype(const mindspore::TypePtr data_type, const st
                                        << data_type->ToString() << ".";
   }
 }
+inline void CheckSparseIndicesDtypeInt32(const mindspore::TypePtr data_type, const std::string &arg_name) {
+  if (!data_type->equal(mindspore::kInt32)) {
+    MS_EXCEPTION(mindspore::TypeError) << "The dtype of " << arg_name << " only support Int32 for now, but got "
+                                       << data_type->ToString() << ".";
+  }
+}
 }  // namespace
 
 namespace mindspore {
@@ -485,6 +491,11 @@ AbstractBasePtr InferImplCSRElementWise(const AnalysisEnginePtr &, const Primiti
   MS_EXCEPTION_IF_NULL(sparse->indices());
   MS_EXCEPTION_IF_NULL(dense);
 
+  auto indptr = sparse->indptr();
+  auto indices = sparse->indices();
+  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+
   auto sparse_shape = sparse->shape()->shape();
   auto dense_shape = dense->shape()->shape();
   CheckSparseShape(sparse_shape, dense_shape);
@@ -513,6 +524,11 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
   MS_EXCEPTION_IF_NULL(sparse->values());
   MS_EXCEPTION_IF_NULL(sparse->indices());
   MS_EXCEPTION_IF_NULL(dense);
+
+  auto indptr = sparse->indptr();
+  auto indices = sparse->indices();
+  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
   auto sparse_shape = sparse->shape()->shape();
   auto dense_shape = dense->shape()->shape();
@@ -553,7 +569,13 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(sparse->shape());
   MS_EXCEPTION_IF_NULL(sparse->values());
   MS_EXCEPTION_IF_NULL(sparse->indices());
+  MS_EXCEPTION_IF_NULL(sparse->indptr());
   MS_EXCEPTION_IF_NULL(axis);
+
+  auto indptr = sparse->indptr();
+  auto indices = sparse->indices();
+  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
   auto sparse_shape = sparse->shape()->shape();
   if (sparse_shape.size() != kCSRReduceSumShapeSize) {
@@ -566,7 +588,7 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
     int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
     int64_t dim = static_cast<int64_t>(sparse_shape.size());
     if (axis_value < -dim || axis_value >= dim || (axis_value != 1 && axis_value != -1)) {
-      MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be -1 or 1. But got `axis`: " << axis_value;
+      MS_EXCEPTION(TypeError) << "For CSRReduceSum, `axis` should be -1 or 1. But got `axis`: " << axis_value;
     }
     if (axis_value < 0) {
       axis_value += dim;
@@ -605,6 +627,9 @@ AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(dense);
   MS_EXCEPTION_IF_NULL(sparse_shape);
 
+  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+  CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
+
   if (sparse_shape->size() != kCSRShapeSize) {
     MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRShapeSize << "-D inputs!"
                              << "But sparse tensor has " << sparse_shape->size() << " dimensions.";
@@ -631,6 +656,8 @@ AbstractBasePtr InferImplCSR2COO(const AnalysisEnginePtr &, const PrimitivePtr &
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kCSRArgsSize);
   auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
+
   auto nnz = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(indptr);
   MS_EXCEPTION_IF_NULL(nnz);
@@ -665,7 +692,7 @@ AbstractBasePtr InferImplCOO2CSR(const AnalysisEnginePtr &, const PrimitivePtr &
   auto height = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
   MS_EXCEPTION_IF_NULL(row_indices);
   MS_EXCEPTION_IF_NULL(height);
-
+  CheckSparseIndicesDtypeInt32(row_indices->element()->BuildType(), "row_indices");
   MS_EXCEPTION_IF_NULL(height->BuildValue());
   ShapeVector out_shape;
   if (height->BuildValue()->isa<Int32Imm>() || height->BuildValue()->isa<Int64Imm>()) {

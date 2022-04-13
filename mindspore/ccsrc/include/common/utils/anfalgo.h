@@ -233,6 +233,11 @@ class COMMON_EXPORT AnfAlgo {
     MS_EXCEPTION_IF_NULL(node->abstract());
     return node->abstract()->isa<abstract::AbstractCSRTensor>();
   }
+  static bool CheckAbsCOOTensor(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    MS_EXCEPTION_IF_NULL(node->abstract());
+    return node->abstract()->isa<abstract::AbstractCOOTensor>();
+  }
 };
 }  // namespace common
 }  // namespace mindspore

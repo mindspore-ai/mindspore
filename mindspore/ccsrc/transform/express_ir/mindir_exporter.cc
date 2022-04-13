@@ -123,6 +123,7 @@ class IrExportBuilder {
   bool SetParamToTensorProto(const ParameterPtr &param, mind_ir::TensorProto *const tensor_proto);
   bool SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto);
   bool SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
+  bool SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
   bool SetAttributeProto(const AnfNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetAbstractToNodeProto(const CNodePtr &node, mind_ir::NodeProto *const node_proto);
   bool SetAbstractToNodeProto(const abstract::AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto);
@@ -549,6 +550,16 @@ bool IrExportBuilder::SetCSRTensorToProto(const AbstractBasePtr &abstract, mind_
   return SetAbstractToNodeProto(csr_tensor_abs->dense_shape(), dense_proto);
 }
 
+bool IrExportBuilder::SetCOOTensorToProto(const AbstractBasePtr &abstract, mind_ir::AttributeProto *const attr_proto) {
+  abstract::AbstractCOOTensorPtr coo_tensor_abs = abstract->cast<abstract::AbstractCOOTensorPtr>();
+  MS_EXCEPTION_IF_NULL(coo_tensor_abs);
+  attr_proto->set_type(mind_ir::AttributeProto_AttributeType_COO_TENSOR);
+  (void)SetTensorProto(coo_tensor_abs->indices(), attr_proto->add_tensors());
+  (void)SetTensorProto(coo_tensor_abs->values(), attr_proto->add_tensors());
+  auto dense_proto = attr_proto->add_values();
+  return SetAbstractToNodeProto(coo_tensor_abs->dense_shape(), dense_proto);
+}
+
 bool IrExportBuilder::SetTensorProto(const AbstractBasePtr &abstract, mind_ir::TensorProto *const tensor_proto) {
   auto type = abstract->BuildType();
   auto shape = abstract->BuildShape();
@@ -712,6 +723,11 @@ bool IrExportBuilder::SetAbstractToNodeProto(const AbstractBasePtr &abs, mind_ir
   } else if (type->isa<CSRTensorType>()) {
     auto csr_tensor_abs = abs->cast<abstract::AbstractCSRTensorPtr>();
     if (!SetCSRTensorToProto(csr_tensor_abs, attr_proto)) {
+      return false;
+    }
+  } else if (type->isa<COOTensorType>()) {
+    auto coo_tensor_abs = abs->cast<abstract::AbstractCOOTensorPtr>();
+    if (!SetCOOTensorToProto(coo_tensor_abs, attr_proto)) {
       return false;
     }
   } else {

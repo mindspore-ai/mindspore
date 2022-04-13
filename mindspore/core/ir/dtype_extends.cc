@@ -126,7 +126,8 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kObjectTypeIOMonad, kIOMonadType},
                                                                 {kTypeUnknown, kTypeNone},
                                                                 {kMetaTypeProblem, kTypeNone},
-                                                                {kObjectTypeCSRTensorType, kCSRTensorType}};
+                                                                {kObjectTypeCSRTensorType, kCSRTensorType},
+                                                                {kObjectTypeCOOTensorType, kCOOTensorType}};
   const auto &it = type_id_to_type.find(id);
   if (it == type_id_to_type.end()) {
     MS_LOG(EXCEPTION) << "Not support the type: " << GetExcptionTypeString(id);

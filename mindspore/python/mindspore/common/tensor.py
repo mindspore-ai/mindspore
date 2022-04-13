@@ -2413,18 +2413,13 @@ class SparseTensor(COOTensor_):
         (3, 4)
     """
 
-    def __init__(self, indices=None, values=None, shape=None, coo_tensor=None):
+    def __init__(self, indices, values, shape):
         "Init COOTensor"
         print("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
               "Please use 'COOTensor' instead.")
-        if indices is None and values is None and shape is None and coo_tensor is not None:
-            if not isinstance(coo_tensor, (COOTensor, COOTensor_)):
-                raise TypeError("If only one input provided, it must be a COOTensor.")
-            COOTensor_.__init__(self, coo_tensor)
-        else:
-            if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
-                raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
-            COOTensor_.__init__(self, indices, values, shape)
+        if not (isinstance(indices, Tensor) and isinstance(values, Tensor) and isinstance(shape, tuple)):
+            raise TypeError("Inputs must follow: COOTensor(indices, values, shape).")
+        COOTensor_.__init__(self, indices, values, shape)
 
     @property
     def indices(self):
