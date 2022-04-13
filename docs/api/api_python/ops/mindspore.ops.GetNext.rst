@@ -13,7 +13,6 @@ mindspore.ops.GetNext
     - **types** (list[:class:`mindspore.dtype`]) - 输出的数据类型。
     - **shapes** (list[tuple[int]]) - 输出数据的shape大小。
     - **output_num** (int) - 输出编号、 `types` 和 `shapes` 的长度。
-    - **shared_name** (str) - `init_dataset` 接口名称。
     - **shared_name** (str) - 待获取数据的队列名称。
 
     **输入：**

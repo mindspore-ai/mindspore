@@ -4410,7 +4410,7 @@ class ScatterAdd(_ScatterOpDynamic):
 
     Args:
         use_locking (bool): Whether to protect the assignment by a lock.
-            If true, ` input_x` will be protected by the lock.
+            If true, `input_x` will be protected by the lock.
             Otherwise, the calculation result is undefined. Default: False.
 
     Inputs:
