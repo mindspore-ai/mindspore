@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Model
 from mindspore.train.callback import SummaryCollector, SummaryLandscape
+from mindspore.train.summary.summary_record import SummaryRecord
 from tests.st.summary.dataset import create_mnist_dataset
 from tests.summary_utils import SummaryReader
 from tests.security_utils import security_off_wrap
@@ -348,3 +349,23 @@ class TestSummary:
                np.all(abs(expe_pca_value_asc - tag_list_landscape[0]) < 1.e-6)
         assert np.all(abs(expected_random_value - tag_list_landscape[1]) < 1.e-6) or \
                np.all(abs(expe_random_value_asc - tag_list_landscape[1]) < 1.e-6)
+
+    @pytest.mark.level0
+    @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
+    @pytest.mark.platform_x86_gpu_training
+    @pytest.mark.env_onecard
+    @security_off_wrap
+    def test_summary_of_more_than_one_instance(self):
+        """
+        Feature: Test the multi instances of SummaryRecord in a script.
+        Description: Multi instances of SummaryRecord in a script.
+        Expectation: Throw RuntimeError.
+        """
+        with pytest.raises(RuntimeError) as errinfo:
+            summary_dir1 = tempfile.mkdtemp(dir=self.base_summary_dir)
+            summary_record1 = SummaryRecord(log_dir=summary_dir1)
+            summary_dir2 = tempfile.mkdtemp(dir=self.base_summary_dir)
+            _ = SummaryRecord(log_dir=summary_dir2)
+        assert "only one instance is supported in a training process" in str(errinfo.value)
+        summary_record1.close()

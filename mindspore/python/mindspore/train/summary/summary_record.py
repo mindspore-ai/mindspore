@@ -39,6 +39,8 @@ _summary_tensor_cache = {}
 _DEFAULT_EXPORT_OPTIONS = {
     'tensor_format': {'npy', None},
 }
+# Instance lock for counting SummaryRecord instance
+_instance_lock = threading.Lock()
 
 
 def _cache_summary_tensor_data(summary):
@@ -147,12 +149,16 @@ class SummaryRecord:
         ...         summary_record.close()
     """
 
+    count = 0
+
     def __init__(self, log_dir, file_prefix="events", file_suffix="_MS",
                  network=None, max_file_size=None, raise_exception=False, export_options=None):
-
+        self._check_count()
+        with _instance_lock:
+            self._check_count()
+            SummaryRecord.count += 1
         if security.enable_security():
             raise ValueError('The Summary is not supported, please without `-s on` and recompile source.')
-
         self._event_writer = None
         self._mode, self._data_pool = 'train', defaultdict(list)
         self._status = {
@@ -163,48 +169,18 @@ class SummaryRecord:
             'file_name': None,
             'file_path': None
         }
-
-        log_path = _make_directory(log_dir, "log_dir")
-
-        if not isinstance(max_file_size, (int, type(None))):
-            raise TypeError(f"For '{self.__class__.__name__}', the 'max_file_size' should be int type, "
-                            f"but got type {type(max_file_size)}")
-
-        if not isinstance(file_prefix, str) or not isinstance(file_suffix, str):
-            raise TypeError(f"For '{self.__class__.__name__}', `file_prefix` and `file_suffix`  should be str, "
-                            f"but got type {type(file_prefix)}")
-
-        Validator.check_str_by_regular(file_prefix)
-        Validator.check_str_by_regular(file_suffix)
-
-        if max_file_size is not None and max_file_size < 0:
-            logger.warning(f"For '{self.__class__.__name__}', the 'max_file_size' should be greater than 0. "
-                           f"but got value {max_file_size}.")
-            max_file_size = None
-
-        Validator.check_value_type(arg_name='raise_exception', arg_value=raise_exception, valid_types=bool)
-
+        self.base_log_dir = log_dir
+        self.file_prefix = file_prefix
+        self.file_suffix = file_suffix
         self.network = network
-
-        time_second = str(int(time.time()))
-        # create the summary writer file
-        self.file_info['file_name'] = get_event_file_name(file_prefix, file_suffix, time_second)
-        self.file_info['file_path'] = os.path.join(log_path, self.file_info.get('file_name'))
-
-        self._export_options = process_export_options(export_options)
-        export_dir = ''
-        if self._export_options is not None:
-            export_dir = "export_{}".format(time_second)
-
-        filename_dict = dict(summary=self.file_info.get('file_name'),
-                             lineage=get_event_file_name(file_prefix, '_lineage', time_second),
-                             exporter=export_dir)
-        self._event_writer = WriterPool(log_dir,
-                                        max_file_size,
-                                        raise_exception,
-                                        **filename_dict)
-        _get_summary_tensor_data()
-        atexit.register(self.close)
+        self.max_file_size = max_file_size
+        self.raise_exception = raise_exception
+        self._export_options = export_options
+        try:
+            self._initialize()
+        except (TypeError, ValueError) as err:
+            SummaryRecord.count -= 1
+            raise err
 
     def __enter__(self):
         """Enter the context manager."""
@@ -391,6 +367,48 @@ class SummaryRecord:
             self._event_writer.write(filtered)
         return True
 
+    def _initialize(self):
+        """Initialize the SummaryRecord instance."""
+        log_path = _make_directory(self.base_log_dir, "log_dir")
+
+        if not isinstance(self.max_file_size, (int, type(None))):
+            raise TypeError(f"For '{self.__class__.__name__}', the 'max_file_size' should be int type, "
+                            f"but got type {type(self.max_file_size)}")
+
+        if not isinstance(self.file_prefix, str) or not isinstance(self.file_suffix, str):
+            raise TypeError(f"For '{self.__class__.__name__}', `file_prefix` and `file_suffix`  should be str, "
+                            f"but got type {type(self.file_prefix)}")
+
+        Validator.check_str_by_regular(self.file_prefix)
+        Validator.check_str_by_regular(self.file_suffix)
+
+        if self.max_file_size is not None and self.max_file_size < 0:
+            logger.warning(f"For '{self.__class__.__name__}', the 'max_file_size' should be greater than 0. "
+                           f"but got value {self.max_file_size}.")
+            self.max_file_size = None
+
+        Validator.check_value_type(arg_name='raise_exception', arg_value=self.raise_exception, valid_types=bool)
+
+        time_second = str(int(time.time()))
+        # create the summary writer file
+        self.file_info['file_name'] = get_event_file_name(self.file_prefix, self.file_suffix, time_second)
+        self.file_info['file_path'] = os.path.join(log_path, self.file_info.get('file_name'))
+
+        self._export_options = process_export_options(self._export_options)
+        export_dir = ''
+        if self._export_options is not None:
+            export_dir = "export_{}".format(time_second)
+
+        filename_dict = dict(summary=self.file_info.get('file_name'),
+                             lineage=get_event_file_name(self.file_prefix, '_lineage', time_second),
+                             exporter=export_dir)
+        self._event_writer = WriterPool(self.base_log_dir,
+                                        self.max_file_size,
+                                        self.raise_exception,
+                                        **filename_dict)
+        _get_summary_tensor_data()
+        atexit.register(self.close)
+
     def _add_summary_tensor_data(self):
         summary_data = _get_summary_tensor_data()
         if not summary_data:
@@ -464,6 +482,16 @@ class SummaryRecord:
             self._event_writer.close()
             self._event_writer.join()
             self._status['closed'] = True
+        with _instance_lock:
+            SummaryRecord.count -= 1
+
+    @classmethod
+    def _check_count(cls):
+        if cls.count > 0:
+            raise RuntimeError(
+                f"For '{cls.__name__}', only one instance is supported in a training process, "
+                f"you are trying to create a new one when the existing instance number is {cls.count}. "
+                f"Please check your scripts.")
 
     @staticmethod
     def _parse_from(name: str = None):

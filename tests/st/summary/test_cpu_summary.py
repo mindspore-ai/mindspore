@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,3 +81,25 @@ def test_summary_step2_summary_record1():
                 event = summary_writer.read_event()
                 tags = set(value.tag for value in event.summary.value)
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_summary_record_for_multi_instances():
+    """
+    Feature: Test the multi instances of SummaryRecord in a script.
+    Description: Multi instances of SummaryRecord in a script.
+    Expectation: Throw RuntimeError.
+    """
+    if platform.system() == "Windows":
+        # Summary does not support windows currently.
+        return
+    with pytest.raises(RuntimeError) as errinfo:
+        summary_dir1 = tempfile.mkdtemp(suffix="summary_dir1")
+        summary_record1 = SummaryRecord(log_dir=summary_dir1)
+        summary_dir2 = tempfile.mkdtemp(suffix="summary_dir2")
+        _ = SummaryRecord(log_dir=summary_dir2)
+    assert "only one instance is supported in a training process" in str(errinfo.value)
+    summary_record1.close()
