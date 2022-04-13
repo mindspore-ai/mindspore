@@ -82,7 +82,7 @@ bool CheckAbstractScalar(const AnfNodePtr &node) {
   if (abstract->isa<AbstractScalar>()) {
     TypePtr type = abstract->GetTypeTrack();
     MS_EXCEPTION_IF_NULL(type);
-    if (type->isa<EnvType>()) {
+    if (type->isa<EnvType>() || type->isa<MsClassType>()) {
       MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
     }
     if (type->isa<Problem>() || type->isa<External>()) {

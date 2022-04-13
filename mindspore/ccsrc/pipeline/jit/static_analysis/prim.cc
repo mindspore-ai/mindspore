@@ -1304,6 +1304,35 @@ EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &eng
   return StaticGetterInferred(converted_value, data_conf, out_conf);
 }
 
+EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
+                                                      const ValuePtr &data_value, const ConfigPtr &data_conf,
+                                                      const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(item_value);
+  MS_EXCEPTION_IF_NULL(data_value);
+  // Get the name of item.
+  if (!item_value->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
+  }
+  std::string item_name = item_value->cast<StringImmPtr>()->value();
+  // Get ms_class object.
+  if (!data_value->isa<parse::MsClassObject>()) {
+    MS_LOG(EXCEPTION) << "Expect a ms_class object, but got " << data_value->ToString();
+  }
+  auto ms_class = data_value->cast<parse::MsClassObjectPtr>();
+  MS_LOG(DEBUG) << "Resolve ms_class (" << ms_class->name() << ") with item " << item_name << ".";
+
+  // Get the attr/method of ms_class object.
+  auto out_node = out_conf->node();
+  FuncGraphPtr func_graph = out_node->func_graph();
+  auto new_node = ResolveMsClassWithAttr(func_graph->manager(), ms_class, item_name, out_node);
+  // Replace old node with the resolved new node in order list.
+  func_graph->ReplaceInOrder(out_node, new_node);
+  AnalysisEnginePtr eng = out_conf->engine();
+  MS_EXCEPTION_IF_NULL(eng);
+  AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
+  return eng->ForwardConfig(out_conf, fn_conf);
+}
+
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
                                                           const TypePtr &data_type, const ConfigPtr &data_conf,
                                                           const AnfNodeConfigPtr &out_conf) {
@@ -1363,17 +1392,45 @@ int64_t GetResolveType(const TypePtr &data_type) {
   return kResolveTypeFunction;
 }
 
+ValuePtr GetMsClassObject(const AbstractBasePtr &abs) {
+  if (!abs->isa<abstract::PartialAbstractClosure>()) {
+    return nullptr;
+  }
+  auto partial_abs = abs->cast<abstract::PartialAbstractClosurePtr>();
+  auto fn = partial_abs->fn();
+  if (!fn->isa<abstract::PrimitiveAbstractClosure>()) {
+    return nullptr;
+  }
+  // Check if type is kObjectTypeClass.
+  auto args = partial_abs->args();
+  if (args.size() > 0) {
+    constexpr size_t first_input_index = 0;
+    auto first_arg = args[first_input_index];
+    MS_EXCEPTION_IF_NULL(first_arg);
+    auto type = first_arg->BuildType();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->type_id() == kObjectTypeClass) {
+      return first_arg->BuildValue();
+    }
+  }
+  return nullptr;
+}
+
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                            const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
   // Inputs: namespace and its static function; or class and its member function
   CheckArgsSize("StaticGetter", args_spec_list, 2);
 
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-  MS_LOG(DEBUG) << "Args[0]: " << args_spec_list[0]->ToString();
-  MS_LOG(DEBUG) << "Args[1]: " << args_spec_list[1]->ToString();
-  TypePtr data_type = args_spec_list[0]->BuildType();
-  ValuePtr item_value = args_spec_list[1]->BuildValue();
+  constexpr size_t data_index = 0;
+  constexpr size_t item_index = 1;
+  auto data_args = args_spec_list[data_index];
+  auto item_args = args_spec_list[item_index];
+  MS_EXCEPTION_IF_NULL(data_args);
+  MS_EXCEPTION_IF_NULL(item_args);
+  MS_LOG(DEBUG) << "StaticGetter, data: " << data_args->ToString() << ", item: " << item_args->ToString();
+  TypePtr data_type = data_args->BuildType();
+  ValuePtr item_value = item_args->BuildValue();
+
   ScopePtr scope = kDefaultScope;
   if (out_conf != nullptr) {
     scope = out_conf->node()->scope();
@@ -1384,6 +1441,10 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
 
+  auto class_value = GetMsClassObject(data_args);
+  if (class_value != nullptr) {
+    return GetEvaluatedValueForMsClassAttrOrMethod(engine, item_value, class_value, data_conf, out_conf);
+  }
   int64_t resolve_type = GetResolveType(data_type);
   if (resolve_type == kResolveTypeUserDefineClass) {
     return GetEvaluatedValueForClassAttrOrMethod(engine, args_spec_list, item_value, data_conf, out_conf);
@@ -1581,46 +1642,47 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
   MS_DECLARE_PARENT(CreateInstanceEvaluator, TransitionPrimEvaluator);
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override {
+    // Check the type parameter.
     if (args_spec_list.empty()) {
       MS_LOG(EXCEPTION) << "'args_spec_list' should not be empty";
     }
-
-    // Get the type parameter.
-    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-    TypePtr type = args_spec_list[0]->GetTypeTrack();
+    constexpr size_t type_index = 0;
+    auto arg_class_type = args_spec_list[type_index];
+    MS_EXCEPTION_IF_NULL(arg_class_type);
+    TypePtr type = arg_class_type->GetTypeTrack();
     MS_EXCEPTION_IF_NULL(type);
-    if (type->type_id() != kMetaTypeTypeType) {
-      MS_LOG(EXCEPTION) << "CreateInstanceEvaluator require first parameter should be an object of TypeType, but got "
-                        << type->ToString();
+    if (type->type_id() != kMetaTypeTypeType && type->type_id() != kObjectTypeClass) {
+      MS_LOG(EXCEPTION)
+        << "CreateInstanceEvaluator require first parameter should be an object of TypeType or TypeClass, but got "
+        << type->ToString();
     }
 
-    ValuePtr value_track = args_spec_list[0]->GetValueTrack();
+    ValuePtr value_track = arg_class_type->GetValueTrack();
     MS_EXCEPTION_IF_NULL(value_track);
-
-    std::shared_ptr<parse::PyObjectWrapper> type_obj = dyn_cast<parse::PyObjectWrapper>(value_track);
+    parse::PyObjectWrapperPtr type_obj = dyn_cast<parse::PyObjectWrapper>(value_track);
     if (type_obj == nullptr) {
       MS_LOG(EXCEPTION) << "Cast value failed, not PyObjectWrapper:" << value_track->ToString() << ".";
     }
-
-    if (!type_obj->isa<parse::ClassType>()) {
-      MS_LOG(EXCEPTION) << "CreateInstanceEvaluator the type_obj should be an object of ClassType, but got "
-                        << type_obj->ToString() << ".";
+    if (!type_obj->isa<parse::ClassType>() && !type_obj->isa<parse::MsClassObject>()) {
+      MS_LOG(EXCEPTION)
+        << "CreateInstanceEvaluator the type_obj should be an object of ClassType or MsClassObject, but got "
+        << type_obj->ToString() << ".";
     }
-
     auto class_type = type_obj->obj();
-    MS_LOG(DEBUG) << "Get class type is " << type_obj->ToString() << ".";
+    MS_LOG(DEBUG) << "Get class type: " << type_obj->ToString() << ".";
 
     // Get the create instance obj's parameters, `params` may contain tuple(args, kwargs).
     py::tuple params = GetParameters(args_spec_list);
-
     // Create class instance.
     auto obj = parse::data_converter::CreatePythonObject(class_type, params);
     if (py::isinstance<py::none>(obj)) {
       MS_LOG(EXCEPTION) << "Create python object `" << py::str(class_type)
-                        << "` failed, only support to create \'Cell\' or \'Primitive\' object.";
+                        << "` failed, only support to create \'Cell\', \'Primitive\' or "
+                        << "user-defined Class decorated with \'ms_class\'.";
     }
 
     // Process the object.
+    MS_EXCEPTION_IF_NULL(out_conf->node());
     TraceGuard guard(std::make_shared<TraceResolve>(out_conf->node()->debug_info()));
     ValuePtr converted_ret = nullptr;
     bool converted = parse::ConvertData(obj, &converted_ret, true);
@@ -1628,7 +1690,6 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
       MS_LOG(EXCEPTION) << "Convert the python object failed";
     }
     MS_EXCEPTION_IF_NULL(converted_ret);
-
     if (converted_ret->isa<FuncGraph>()) {
       AddToManager(engine, converted_ret->cast<FuncGraphPtr>());
     }
@@ -1661,6 +1722,63 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
       params[i] = param;
     }
     return params;
+  }
+};
+
+class CallInstanceEvaluator : public TransitionPrimEvaluator {
+ public:
+  CallInstanceEvaluator() : TransitionPrimEvaluator("CallInstanceEvaluator") {}
+  ~CallInstanceEvaluator() override = default;
+  MS_DECLARE_PARENT(CallInstanceEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override {
+    if (args_spec_list.empty()) {
+      MS_LOG(EXCEPTION) << "args_spec_list should not be empty.";
+    }
+    constexpr size_t cls_index = 0;
+    auto arg_cls = args_spec_list[cls_index];
+    MS_EXCEPTION_IF_NULL(arg_cls);
+    TypePtr type = arg_cls->GetTypeTrack();
+    MS_EXCEPTION_IF_NULL(type);
+    if (type->type_id() != kObjectTypeClass) {
+      MS_LOG(EXCEPTION) << "CallInstanceEvaluator require first parameter should be an object of TypeClass, but got "
+                        << type->ToString();
+    }
+    ValuePtr value_track = arg_cls->GetValueTrack();
+    MS_EXCEPTION_IF_NULL(value_track);
+    parse::MsClassObjectPtr ms_class = dyn_cast<parse::MsClassObject>(value_track);
+    if (ms_class == nullptr) {
+      MS_LOG(EXCEPTION) << "CallInstanceEvaluator only supports MsClassObject.";
+    }
+
+    // Call class instance, net(x, y) -> net.__call__(x, y)
+    py::object cls_obj = ms_class->obj();
+    const std::string call_func = "__call__";
+    if (!py::hasattr(cls_obj, common::SafeCStr(call_func))) {
+      MS_LOG(EXCEPTION) << ms_class->name() << " has no " << call_func << " function, please check the code.";
+    }
+    py::object call_obj = py::getattr(cls_obj, common::SafeCStr(call_func));
+    FuncGraphPtr call_func_graph = parse::ConvertToFuncGraph(call_obj);
+    if (call_func_graph == nullptr) {
+      MS_LOG(EXCEPTION) << "Parse python object " << call_func << " failed.";
+    }
+    FuncGraphManagerPtr manager = engine->func_graph_manager();
+    manager->AddFuncGraph(call_func_graph);
+
+    // Replace net with net.__call__
+    AnfNodePtr old_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(old_node);
+    CNodePtr old_cnode = dyn_cast<CNode>(old_node);
+    MS_EXCEPTION_IF_NULL(old_cnode);
+    std::vector<AnfNodePtr> inputs = {NewValueNode(call_func_graph)};
+    for (size_t i = 1; i < old_cnode->size(); i++) {
+      (void)inputs.emplace_back(old_cnode->input(i));
+    }
+    FuncGraphPtr func_graph = out_conf->func_graph();
+    auto new_cnode = func_graph->NewCNode(inputs);
+    // Continue to eval new_cnode.
+    AnfNodeConfigPtr fn_conf = engine->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
+    return engine->ForwardConfig(out_conf, fn_conf);
   }
 };
 
@@ -2085,6 +2203,7 @@ void InitPrimEvaluatorConstructors() {
   constructor[prim::kPrimGetAttr] = std::make_shared<GetAttrEvaluator>();
   constructor[prim::kPrimResolve] = std::make_shared<ResolveEvaluator>();
   constructor[prim::kPrimCreateInstance] = std::make_shared<CreateInstanceEvaluator>();
+  constructor[prim::kPrimCallInstance] = std::make_shared<CallInstanceEvaluator>();
   constructor[prim::kPrimPartial] = std::make_shared<PartialEvaluator>();
   constructor[prim::kPrimPyInterpret] = std::make_shared<PyInterpretEvaluator>();
   constructor[prim::kPrimMakeTuple] = std::make_shared<MakeTupleEvaluator>();

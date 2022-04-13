@@ -67,6 +67,7 @@ struct AnfDumpHandlerRegister {
   }
 } callback_register;
 }  // namespace
+
 abstract::AbstractBasePtr ClassObject::ToAbstract() {
   ClassPtr cls_ptr = ParseDataClass(obj());
   auto abs_scalar = std::make_shared<abstract::AbstractScalar>();
@@ -76,6 +77,24 @@ abstract::AbstractBasePtr ClassObject::ToAbstract() {
   AbstractBasePtrList args_spec_list = {abs_scalar};
   auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimMakeRecord);
   return std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_spec_list);
+}
+
+abstract::AbstractBasePtr MsClassObject::ToAbstract() {
+  auto abs_scalar =
+    std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<MsClassType>());
+  AbstractBasePtrList args_spec_list = {abs_scalar};
+  abstract::PrimitiveAbstractClosurePtr func_ptr = nullptr;
+  bool is_class_type = parse::data_converter::IsClassType(obj());
+  if (is_class_type) {
+    // Class type as func, such as Net(x, y)
+    func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCreateInstance);
+  } else {
+    // Class instance as func, such as net(x, y)
+    func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimCallInstance);
+  }
+  auto ret_val = std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_spec_list);
+  ret_val->set_value_desc(ToString());
+  return ret_val;
 }
 
 static inline bool IsSupportedCreateInstanceType(const py::object &obj) {
@@ -520,14 +539,15 @@ AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const MsCl
   MS_LOG(DEBUG) << "Resolve ms_class obj (" << ms_class->name() << ") with attr " << attr << ".";
   TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
 
+  constexpr size_t prefix_index = 0;
+  if (attr.size() > 0 && attr[prefix_index] == '_') {
+    MS_LOG(EXCEPTION) << attr << " is a private variable or magic method, which is not supported.";
+  }
   py::object cls_obj = ms_class->obj();
-  if (!py::hasattr(cls_obj, attr.c_str())) {
+  if (!py::hasattr(cls_obj, common::SafeCStr(attr))) {
     MS_LOG(EXCEPTION) << ms_class->name() << " has not attribute: " << attr << ".";
   }
-
-  const std::string fn = PYTHON_MOD_GET_MS_CLASS_ATTR;
-  const std::string module = "mindspore._extends.parse.parser";
-  py::object attr_obj = python_adapter::GetPyFn(module, fn)(cls_obj, attr);
+  py::object attr_obj = py::getattr(cls_obj, common::SafeCStr(attr));
   AnfNodePtr res_node = ResolveObjectAndAddToManager(manager, attr_obj, node);
   TraceManager::ClearParseOrResolveDebugInfo();
   return res_node;

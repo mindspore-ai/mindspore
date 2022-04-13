@@ -658,11 +658,17 @@ ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
   return class_type;
 }
 
-// Check the object is Cell Instance.
+// Check if the object is Cell instance.
 bool IsCellInstance(const py::object &obj) {
   auto class_type = GetClassInstanceType(obj);
   bool is_cell = (class_type == CLASS_INSTANCE_TYPE_CELL);
   return is_cell;
+}
+
+// Check if the object is class type.
+bool IsClassType(const py::object &obj) {
+  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+  return python_adapter::CallPyModFn(mod, PYTHON_MOD_IS_CLASS_TYPE, obj).cast<bool>();
 }
 
 // Create the python class instance.

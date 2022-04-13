@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,20 +18,18 @@ Interfaces for parser module in c++.
 
 from .parser import (Parser, create_instance, is_supported_create_instance_type, generate_scope,
                      get_bprop_method_of_class, get_class_instance_type, get_class_member_namespace_symbol,
-                     create_slice_obj, get_dataclass_attributes, get_dataclass_methods, get_obj_id,
-                     get_module_namespace, get_obj_type, get_object_key, get_ast_type, get_node_type,
-                     get_args, get_args_default_values, get_ast_namespace_symbol, get_operation_symbol,
-                     get_operation_namespace_symbol, get_parse_method_of_class, get_scope_name, eval_script,
-                     expand_expr_statement, is_class_member, parse_cb, resolve_symbol, convert_to_ms_tensor,
-                     get_object_description, get_class_attr_namespace_symbol, get_ms_class_name,
-                     get_ms_class_attr)
+                     create_slice_obj, get_obj_id, get_module_namespace, get_obj_type, get_object_key,
+                     get_ast_type, get_node_type, get_args, get_args_default_values, get_ast_namespace_symbol,
+                     get_operation_symbol, get_operation_namespace_symbol, get_parse_method_of_class, get_scope_name,
+                     eval_script, expand_expr_statement, is_class_member, parse_cb, resolve_symbol,
+                     convert_to_ms_tensor, get_object_description, get_class_attr_namespace_symbol, get_ms_class_name,
+                     is_class_type, get_dataclass_attributes, get_dataclass_methods)
 
-__all__ = ['parse_cb', 'get_parse_method_of_class', 'get_bprop_method_of_class', 'resolve_symbol',
-           'get_object_key', 'get_class_instance_type', 'is_class_member', 'get_ast_type', 'get_node_type',
-           'get_args_default_values', 'get_ast_namespace_symbol', 'get_operation_namespace_symbol',
-           'get_args', 'get_obj_type', 'create_instance', 'is_supported_create_instance_type',
-           'get_module_namespace', 'get_class_member_namespace_symbol', 'get_obj_id', 'Parser',
-           'get_dataclass_attributes', 'get_dataclass_methods', 'get_dataclass_methods', 'get_scope_name',
-           'eval_script', 'create_slice_obj', 'convert_to_ms_tensor', 'get_object_description', 'expand_expr_statement',
-           'generate_scope', 'get_operation_symbol', 'get_class_attr_namespace_symbol', 'get_ms_class_name',
-           'get_ms_class_attr']
+__all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope',
+           'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
+           'create_slice_obj', 'get_obj_id', 'get_module_namespace', 'get_obj_type', 'get_object_key',
+           'get_ast_type', 'get_node_type', 'get_args', 'get_args_default_values', 'get_ast_namespace_symbol',
+           'get_operation_symbol', 'get_operation_namespace_symbol', 'get_parse_method_of_class', 'get_scope_name',
+           'eval_script', 'expand_expr_statement', 'is_class_member', 'parse_cb', 'resolve_symbol',
+           'convert_to_ms_tensor', 'get_object_description', 'get_class_attr_namespace_symbol', 'get_ms_class_name',
+           'is_class_type', 'get_dataclass_attributes', 'get_dataclass_methods']

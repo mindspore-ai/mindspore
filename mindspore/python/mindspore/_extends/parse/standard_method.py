@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
 # limitations under the License.
 # ============================================================================
 """standard_method"""
-
-from dataclasses import dataclass
-
-from mindspore import Tensor, Parameter, CSRTensor, COOTensor
+from mindspore import Tensor, Parameter, CSRTensor, COOTensor, ms_class
 from mindspore import dtype as mstype
 
 from ..._checkparam import Validator as validator
@@ -1828,16 +1825,16 @@ def float_floordiv(x, y):
 #############
 
 
-@dataclass(frozen=True)
+@ms_class
 class SequenceIterator:
     """
-    SequenceIterator is a util dataclass for iterating sequence object.
+    SequenceIterator is a util class for iterating sequence object.
 
     Iterator to use for sequences like List, Array.
     """
-
-    idx: int
-    seq: list
+    def __init__(self, idx, seq):
+        self.idx = idx
+        self.seq = seq
 
     @core(ignore_values=True)
     def __ms_hasnext__(self):
