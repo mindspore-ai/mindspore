@@ -6729,7 +6729,7 @@ class Dropout2D(PrimitiveWithInfer):
                     or if the dim of input is not 4-D.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> dropout = ops.Dropout2D(keep_prob=0.5)
@@ -6742,18 +6742,9 @@ class Dropout2D(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, keep_prob=0.5):
         """Initialize Dropout2D."""
+        super().__init__("Dropout2D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
-
-    def infer_shape(self, x_shape):
-        validator.check_int(len(x_shape), 4, Rel.EQ, "dim of input", self.name)
-        return x_shape, x_shape
-
-    def infer_dtype(self, x_dtype):
-        valid_dtypes = mstype.int_type + (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        mask_dtype = mstype.tensor_type(mstype.bool_)
-        return x_dtype, mask_dtype
 
 
 class Dropout3D(PrimitiveWithInfer):
@@ -6787,7 +6778,7 @@ class Dropout3D(PrimitiveWithInfer):
                     or if the dim of input is not 5-D.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> dropout = ops.Dropout3D(keep_prob=0.5)
@@ -6800,18 +6791,9 @@ class Dropout3D(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, keep_prob=0.5):
         """Initialize Dropout3D."""
+        super().__init__("Dropout3D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
-
-    def infer_shape(self, x_shape):
-        validator.check_int(len(x_shape), 5, Rel.EQ, "dim of input", self.name)
-        return x_shape, x_shape
-
-    def infer_dtype(self, x_dtype):
-        valid_dtypes = mstype.int_type + (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
-        mask_dtype = mstype.tensor_type(mstype.bool_)
-        return x_dtype, mask_dtype
 
 
 class CTCLoss(Primitive):
