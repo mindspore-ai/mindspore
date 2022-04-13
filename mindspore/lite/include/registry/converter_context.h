@@ -20,7 +20,7 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "include/lite_utils.h"
+#include "include/api/types.h"
 #include "include/api/dual_abi_helper.h"
 
 namespace mindspore {

@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_INCLUDE_REGISTRY_MODEL_PARSER_REGISTRY_H
 
 #include <memory>
-#include "include/lite_utils.h"
 #include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
