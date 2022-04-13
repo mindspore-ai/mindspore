@@ -17,8 +17,13 @@
 #include "src/cxx_api/model_pool/model_pool.h"
 #include "src/common/log_adapter.h"
 #include "src/cpu_info.h"
-
 namespace mindspore {
+#ifdef USE_GLOG
+extern "C" {
+extern void mindspore_log_init();
+}
+#endif
+
 Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   if (!PlatformInstructionSetSupportCheck()) {
     return kLiteNotSupport;
@@ -28,6 +33,9 @@ Status ModelParallelRunner::Init(const std::string &model_path, const std::share
     MS_LOG(ERROR) << "model pool is nullptr.";
     return kLiteNullptr;
   }
+#ifdef USE_GLOG
+  mindspore::mindspore_log_init();
+#endif
   auto status = model_pool_->Init(model_path, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
