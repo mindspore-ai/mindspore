@@ -74,18 +74,14 @@ std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
   return data;
 }
 
-bool TrainExport::NeedQuantization(const lite::Tensor *t) {
+bool TrainExport::NeedQuantization(const lite::Tensor *t, const int tensor_quant_type) {
   return ((quant_type_ == QT_WEIGHT && t->shape().size() > 1) ||
-          ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited)));
+          ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) &&
+           (tensor_quant_type == schema::QuantType_QUANT_WEIGHT)));
 }
 
 schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel) {
-  if (std::any_of(kernel->in_tensors().cbegin(), kernel->in_tensors().cend(), [](const lite::Tensor *t) {
-        return (t->IsConst() && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited));
-      })) {
-    return schema::QuantType_QUANT_WEIGHT;
-  }
-  return schema::QuantType_QUANT_NONE;
+  return static_cast<schema::QuantType>(kernel->op_parameter()->quant_type_);
 }
 
 void TrainExport::TagQuantizedNodes() {
@@ -153,7 +149,7 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
 }
 
 std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite::Tensor *tensor,
-                                                           schema::Tensor *scTensor) {
+                                                           schema::Tensor *scTensor, const int tensor_quant_type) {
   auto tensorT = std::make_unique<schema::TensorT>();
   tensorT->nodeType = scTensor->nodeType();
   tensorT->dims = tensor->shape();
@@ -164,7 +160,7 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   tensorT->dataType = tensor->data_type();
   tensorT->enableHuffmanCode = false;
   if ((tensorT->nodeType == NodeType_ValueNode) && (scTensor->data() != nullptr) && (scTensor->data()->size() > 0)) {
-    if (NeedQuantization(tensor)) {
+    if (NeedQuantization(tensor, tensor_quant_type)) {
       QuantTensorData(tensorT.get(), tensor);
     } else {
       tensorT->data = CreateData(tensor);
@@ -348,7 +344,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
                            const std::vector<mindspore::lite::Tensor *> &tensors,
                            const std::vector<std::string> &output_names, const Model *model,
                            QuantizationType quant_type) {
-  std::vector<size_t> map_index;
+  std::vector<std::pair<size_t, tensor_info>> map_index;
   std::set<size_t> out_set;
   int offset = meta_graph_->allTensors.size();
   int tensor_idx = offset;
@@ -363,6 +359,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
 
   for (const auto kernel : kernels) {
     std::vector<uint32_t> in_idx, out_idx;
+    size_t input_index = 0;
     for (const auto tensor : kernel->in_tensors()) {
       size_t id = TSFindTensor(tensors, tensor) + offset;
       if (id == tensors.size()) {
@@ -373,12 +370,13 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
       if (it == remap_.end()) {
         remap_[id] = tensor_idx;
         in_idx.push_back(tensor_idx);
-        map_index.push_back(id);
+        map_index.push_back({id, {input_index++, kernel->op_parameter()}});
         tensor_idx++;
       } else {
         in_idx.push_back(it->second);
       }
     }
+    size_t output_index = 0;
     for (const auto tensor : kernel->out_tensors()) {
       size_t id = TSFindTensor(tensors, tensor) + offset;
       if (id == tensors.size()) {
@@ -388,7 +386,7 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
       auto it = remap_.find(id);
       if (it == remap_.end()) {
         remap_[id] = tensor_idx;
-        map_index.push_back(id);
+        map_index.push_back({id, {output_index++, kernel->op_parameter()}});
         out_idx.push_back(tensor_idx);
         out_set.insert(tensor_idx);
         tensor_idx++;
@@ -403,11 +401,12 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &k
       return ret;
     }
   }
-  for (auto id : map_index) {
+  for (auto index : map_index) {
+    auto id = index.first;
     size_t pid = id - offset;
     mindspore::lite::Tensor *tensor = tensors.at(pid);
     schema::Tensor *scTensor = model->all_tensors_.at(pid);
-    auto tensorT = CreateTensor(tensor, scTensor);
+    auto tensorT = CreateTensor(tensor, scTensor, index.second.op_parameter->quant_type_);
     if (tensorT == nullptr) {
       MS_LOG(ERROR) << "error in tensor creation";
       return RET_ERROR;
