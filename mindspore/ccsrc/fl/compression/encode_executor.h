@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "proto/comm.pb.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
 #include "fl/armour/secure_protocol/key_agreement.h"
