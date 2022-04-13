@@ -102,6 +102,10 @@ def test_write_two_diff_shape_images_mindrecord():
     assert os.path.exists(file_name)
     assert os.path.exists(file_name + ".db")
     read(file_name, bytes_num)
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
 
 
 def test_write_multi_images_mindrecord():
@@ -122,6 +126,10 @@ def test_write_multi_images_mindrecord():
     assert os.path.exists(file_name)
     assert os.path.exists(file_name + ".db")
     read(file_name, bytes_num)
+    if os.path.exists("{}".format(file_name + ".db")):
+        os.remove(file_name + ".db")
+    if os.path.exists("{}".format(file_name)):
+        os.remove(file_name)
 
 
 def test_write_two_images_and_array_mindrecord():

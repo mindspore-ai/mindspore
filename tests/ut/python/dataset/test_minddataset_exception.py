@@ -114,8 +114,7 @@ def test_minddataset_lack_db():
     os.remove("{}.db".format(file_name))
     columns_list = ["data", "file_name", "label"]
     num_readers = 4
-    with pytest.raises(RuntimeError, match="Invalid file, failed to open mindrecord meta files "
-                                           "while verifying meta file. Please check the meta file:"):
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
         data_set = ds.MindDataset(file_name, columns_list, num_readers)
         num_iter = 0
         for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -360,6 +359,339 @@ def test_shuffle_with_num_samples_exception():
                                          "cannot be specified at the same time."):
         _ = ds.MindDataset(MIND_DIR, shuffle=ds.Shuffle.INFILE, num_samples=5)
 
+
+def test_rename_exception_01():
+    """
+    Feature: rename mindrecord file
+    Description: dataset that contains single mindrecord file
+    Expectation: exception occurred
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
+
+    new_file_name = file_name + "_new"
+
+    os.rename(file_name, new_file_name)
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match="can not be found. Please check whether the mindrecord file exists" \
+                      " and do not rename the mindrecord file."):
+        data_set = ds.MindDataset(new_file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset([new_file_name], columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name)
+    os.remove(file_name + ".db")
+
+
+def test_rename_exception_02():
+    """
+    Feature: rename mindrecord meta file
+    Description: dataset that contains single mindrecord file
+    Expectation: exception occurred
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
+
+    new_file_name = file_name + "_new"
+    os.rename(file_name + ".db", new_file_name + ".db")
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset([file_name], columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(file_name)
+    os.remove(new_file_name + ".db")
+
+
+def test_rename_exception_03():
+    """
+    Feature: rename both mindrecord file and meta file
+    Description: dataset that contains single mindrecord file
+    Expectation: exception occurred
+    """
+    file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(file_name, 1)
+
+    new_file_name = file_name + "_new"
+
+    os.rename(file_name, new_file_name)
+    os.rename(file_name + ".db", new_file_name + ".db")
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match="can not be found. Please check whether the mindrecord file exists" \
+                      " and do not rename the mindrecord file."):
+        data_set = ds.MindDataset(new_file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    with pytest.raises(RuntimeError, match="can not match. Please do not rename the mindrecord file or meta file."):
+        data_set = ds.MindDataset([new_file_name], columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name)
+    os.remove(new_file_name + ".db")
+
+
+def test_rename_exception_04():
+    """
+    Feature: rename current mindrecord file
+    Description: dataset that contains multiple mindrecord files
+    Expectation: exception occurred
+    """
+    ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(ori_file_name, 4)
+
+    file_name = ori_file_name + '0'
+    new_file_name = file_name + "_new"
+
+    os.rename(file_name, new_file_name)
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match="can not be found. Please check whether the mindrecord file exists" \
+                      " and do not rename the mindrecord file."):
+        data_set = ds.MindDataset(new_file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    file_list = [ori_file_name + str(x) for x in range(4)]
+    file_list[0] = new_file_name
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_list, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name)
+    for x in range(4):
+        if os.path.exists(ori_file_name + str(x)):
+            os.remove(ori_file_name + str(x))
+        if os.path.exists(ori_file_name + str(x) + ".db"):
+            os.remove(ori_file_name + str(x) + ".db")
+
+
+def test_rename_exception_05():
+    """
+    Feature: rename other mindrecord file
+    Description: dataset that contains multiple mindrecord files
+    Expectation: exception occurred
+    """
+    ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(ori_file_name, 4)
+
+    other_file_name = ori_file_name + '2'
+    new_file_name = other_file_name + "_new"
+
+    os.rename(other_file_name, new_file_name)
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    file_name = ori_file_name + '0'
+    with pytest.raises(RuntimeError, match="can not be found. Please check whether the mindrecord file exists" \
+                      " and do not rename the mindrecord file."):
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    file_list = [ori_file_name + str(x) for x in range(4)]
+    file_list[2] = new_file_name
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_list, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name)
+    for x in range(4):
+        if os.path.exists(ori_file_name + str(x)):
+            os.remove(ori_file_name + str(x))
+        if os.path.exists(ori_file_name + str(x) + ".db"):
+            os.remove(ori_file_name + str(x) + ".db")
+
+
+def test_rename_exception_06():
+    """
+    Feature: rename current meta file
+    Description: dataset that contains multiple mindrecord files
+    Expectation: exception occurred
+    """
+    ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(ori_file_name, 4)
+
+    file_name = ori_file_name + '0'
+    new_file_name = file_name + "_new"
+
+    os.rename(file_name + ".db", new_file_name + ".db")
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    file_list = [ori_file_name + str(x) for x in range(4)]
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_list, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name + ".db")
+    for x in range(4):
+        if os.path.exists(ori_file_name + str(x)):
+            os.remove(ori_file_name + str(x))
+        if os.path.exists(ori_file_name + str(x) + ".db"):
+            os.remove(ori_file_name + str(x) + ".db")
+
+
+def test_rename_exception_07():
+    """
+    Feature: rename other meta file
+    Description: dataset that contains multiple mindrecord files
+    Expectation: exception occurred
+    """
+    ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(ori_file_name, 4)
+
+    other_file_name = ori_file_name + '2'
+    new_file_name = other_file_name + "_new"
+
+    os.rename(other_file_name + ".db", new_file_name + ".db")
+
+    file_name = ori_file_name + '0'
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    file_list = [ori_file_name + str(x) for x in range(4)]
+    with pytest.raises(RuntimeError, match=".db exists and do not rename the mindrecord file and meta file."):
+        data_set = ds.MindDataset(file_list, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name + ".db")
+    for x in range(4):
+        if os.path.exists(ori_file_name + str(x)):
+            os.remove(ori_file_name + str(x))
+        if os.path.exists(ori_file_name + str(x) + ".db"):
+            os.remove(ori_file_name + str(x) + ".db")
+
+
+def test_rename_exception_08():
+    """
+    Feature: rename both current mindrecord file and meta file
+    Description: dataset that contains multiple mindrecord files
+    Expectation: exception occurred
+    """
+    ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(ori_file_name, 4)
+
+    file_name = ori_file_name + '0'
+    new_file_name = file_name + "_new"
+
+    os.rename(file_name, new_file_name)
+    os.rename(file_name + ".db", new_file_name + ".db")
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    with pytest.raises(RuntimeError, match="can not be found. Please check whether the mindrecord file exists" \
+                      " and do not rename the mindrecord file."):
+        data_set = ds.MindDataset(new_file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    file_list = [ori_file_name + str(x) for x in range(4)]
+    file_list[0] = new_file_name
+    with pytest.raises(RuntimeError, match="can not match. Please do not rename the mindrecord file or meta file."):
+        data_set = ds.MindDataset(file_list, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name)
+    os.remove(new_file_name + ".db")
+    for x in range(4):
+        if os.path.exists(ori_file_name + str(x)):
+            os.remove(ori_file_name + str(x))
+        if os.path.exists(ori_file_name + str(x) + ".db"):
+            os.remove(ori_file_name + str(x) + ".db")
+
+
+def test_rename_exception_09():
+    """
+    Feature: rename both other mindrecord file and meta file
+    Description: dataset that contains multiple mindrecord files
+    Expectation: exception occurred
+    """
+    ori_file_name = os.environ.get('PYTEST_CURRENT_TEST').split(':')[-1].split(' ')[0]
+    create_cv_mindrecord(ori_file_name, 4)
+
+    other_file_name = ori_file_name + '2'
+    new_file_name = other_file_name + "_new"
+
+    os.rename(other_file_name, new_file_name)
+    os.rename(other_file_name + ".db", new_file_name + ".db")
+
+    columns_list = ["data", "file_name", "label"]
+    num_readers = 4
+    file_name = ori_file_name + '0'
+    with pytest.raises(RuntimeError, match="can not be found. Please check whether the mindrecord file exists" \
+                      " and do not rename the mindrecord file."):
+        data_set = ds.MindDataset(file_name, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    file_list = [ori_file_name + str(x) for x in range(4)]
+    file_list[2] = new_file_name
+    with pytest.raises(RuntimeError, match="can not match. Please do not rename the mindrecord file or meta file."):
+        data_set = ds.MindDataset(file_list, columns_list, num_readers)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+
+    os.remove(new_file_name)
+    os.remove(new_file_name + ".db")
+    for x in range(4):
+        if os.path.exists(ori_file_name + str(x)):
+            os.remove(ori_file_name + str(x))
+        if os.path.exists(ori_file_name + str(x) + ".db"):
+            os.remove(ori_file_name + str(x) + ".db")
+
+
 if __name__ == '__main__':
     test_cv_lack_json()
     test_cv_lack_mindrecord()
@@ -374,3 +706,12 @@ if __name__ == '__main__':
     test_minddataset_shard_id_bigger_than_num_shard()
     test_cv_minddataset_partition_num_samples_equals_0()
     test_mindrecord_exception()
+    test_rename_exception_01()
+    test_rename_exception_02()
+    test_rename_exception_03()
+    test_rename_exception_04()
+    test_rename_exception_05()
+    test_rename_exception_06()
+    test_rename_exception_07()
+    test_rename_exception_08()
+    test_rename_exception_09()
