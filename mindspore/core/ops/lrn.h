@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@
 #include <vector>
 #include <string>
 #include <memory>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
+// An unique id for MS Lite.
 constexpr auto kNameLRN = "LRN";
 /// \brief Local Response Normalization. Refer to Python API @ref mindspore.ops.LRN for more details.
 class MIND_API LRN : public BaseOperator {
@@ -69,7 +69,6 @@ class MIND_API LRN : public BaseOperator {
 };
 abstract::AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<abstract::AbstractBasePtr> &input_args);
-using PrimLrn = std::shared_ptr<LRN>;
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LRN_H_
