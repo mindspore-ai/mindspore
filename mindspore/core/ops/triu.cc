@@ -19,7 +19,9 @@
 #include <memory>
 #include <set>
 #include <vector>
+
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 

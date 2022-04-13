@@ -20,11 +20,11 @@
 #include <vector>
 #include <memory>
 #include <set>
-#include "abstract/abstract_value.h"
+
 #include "ops/op_utils.h"
+#include "mindapi/src/helper.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
-#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace ops {
