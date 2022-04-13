@@ -391,8 +391,8 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPt
               if (!IsDoubleEqual(a.second, b.second)) {
                 return a.second < b.second;
               }
-              auto cost_a = next_op->GetCostByStrategyPtr(a.first)[0]->communication_cost_;
-              auto cost_b = next_op->GetCostByStrategyPtr(b.first)[0]->communication_cost_;
+              auto cost_a = next_op->GetCostByStrategyPtr(a.first)[0]->communication_without_parameter_;
+              auto cost_b = next_op->GetCostByStrategyPtr(b.first)[0]->communication_without_parameter_;
               if (!IsDoubleEqual(cost_a, cost_b)) {
                 return cost_a < cost_b;
               }
@@ -441,8 +441,8 @@ StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPt
               if (!IsDoubleEqual(a.second, b.second)) {
                 return a.second < b.second;
               }
-              auto cost_a = prev_op->GetCostByStrategyPtr(a.first)[0]->communication_cost_;
-              auto cost_b = prev_op->GetCostByStrategyPtr(b.first)[0]->communication_cost_;
+              auto cost_a = prev_op->GetCostByStrategyPtr(a.first)[0]->communication_without_parameter_;
+              auto cost_b = prev_op->GetCostByStrategyPtr(b.first)[0]->communication_without_parameter_;
               if (!IsDoubleEqual(cost_a, cost_b)) {
                 return cost_a < cost_b;
               }
