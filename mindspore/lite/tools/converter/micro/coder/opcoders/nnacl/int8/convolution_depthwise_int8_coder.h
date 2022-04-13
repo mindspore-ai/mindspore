@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "coder/opcoders/base/conv2d_base_coder.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
+#include "src/runtime/kernel/cpu/int8/convolution_depthwise_int8.h"
 
 namespace mindspore::lite::micro {
 class ConvolutionDepthwiseINT8Coder : public Conv2DBaseCoder {

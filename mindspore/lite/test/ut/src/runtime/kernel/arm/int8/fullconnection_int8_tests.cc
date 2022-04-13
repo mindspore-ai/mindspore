@@ -16,7 +16,7 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/int8/fullconnection_int8.h"
+#include "mindspore/lite/src/runtime/kernel/cpu/int8/fullconnection_int8.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
 #include "mindspore/lite/src/kernel_registry.h"

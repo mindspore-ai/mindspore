@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "coder/opcoders/base/conv2d_base_coder.h"
-#include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
+#include "src/runtime/kernel/cpu/fp32/convolution_depthwise_fp32.h"
 
 namespace mindspore::lite::micro::nnacl {
 class ConvolutionDepthwiseFP32Coder final : public Conv2DBaseCoder {

@@ -28,7 +28,7 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/entrance_subgraph_kernel.h"
 #include "src/control_flow/exit_subgraph_kernel.h"
-#include "src/runtime/kernel/arm/base/partial_fusion.h"
+#include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #endif
 
 namespace mindspore::kernel {

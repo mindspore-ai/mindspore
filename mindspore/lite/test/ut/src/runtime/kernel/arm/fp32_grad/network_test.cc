@@ -32,7 +32,7 @@
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32_grad/convolution.h"
+#include "src/runtime/kernel/cpu/fp32_grad/convolution.h"
 
 using mindspore::lite::RET_OK;
 namespace mindspore {

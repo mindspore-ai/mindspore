@@ -18,7 +18,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/kernel/arm/fp32_grad/bn_grad.h"
+#include "src/runtime/kernel/cpu/fp32_grad/bn_grad.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "nnacl/fp32/batchnorm_fp32.h"
 #include "src/kernel_registry.h"

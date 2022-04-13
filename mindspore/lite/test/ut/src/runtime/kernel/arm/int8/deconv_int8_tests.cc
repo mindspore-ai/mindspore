@@ -23,7 +23,7 @@
 #include "nnacl/pack.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/int8/deconv_int8.h"
-#include "mindspore/lite/src/runtime/kernel/arm/int8/deconvolution_int8.h"
+#include "mindspore/lite/src/runtime/kernel/cpu/int8/deconvolution_int8.h"
 
 using mindspore::lite::DeviceType;
 

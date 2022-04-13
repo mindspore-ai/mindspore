@@ -18,7 +18,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "src/runtime/kernel/arm/fp32_grad/sparse_softmax_cross_entropy_with_logits.h"
+#include "src/runtime/kernel/cpu/fp32_grad/sparse_softmax_cross_entropy_with_logits.h"
 #include "src/kernel_registry.h"
 
 namespace mindspore {

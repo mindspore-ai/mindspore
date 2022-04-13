@@ -21,7 +21,7 @@
 #include "src/common/utils.h"
 #include "src/kernel_exec.h"
 #ifdef ENABLE_FP16
-#include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
+#include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
 
 namespace mindspore {

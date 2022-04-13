@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp32/roi_pooling_fp32.h"
+#include "mindspore/lite/src/runtime/kernel/cpu/fp32/roi_pooling_fp32.h"
 #include "src/kernel_registry.h"
 #include "src/kernel_exec.h"
 

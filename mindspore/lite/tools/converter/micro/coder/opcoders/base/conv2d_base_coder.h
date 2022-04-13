@@ -22,7 +22,7 @@
 #include <utility>
 #include <memory>
 #include "coder/opcoders/op_coder.h"
-#include "src/runtime/kernel/arm/base/layout_transform.h"
+#include "src/runtime/kernel/cpu/base/layout_transform.h"
 #include "nnacl/conv_parameter.h"
 namespace mindspore::lite::micro {
 class Conv2DBaseCoder : public OperatorCoder {

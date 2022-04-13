@@ -41,7 +41,7 @@ HEADER_LOCATION="-I${MINDSPORE_HOME}
 -I${MINDSPORE_HOME}/mindspore/ccsrc
 -I${MINDSPORE_HOME}/mindspore/lite
 -I${MINDSPORE_HOME}/mindspore/lite/src
--I${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm
+-I${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/cpu
 -I${MINDSPORE_HOME}/third_party
 -I${MINDSPORE_HOME}/mindspore/lite/build
 -I${MINDSPORE_HOME}/cmake/../third_party/securec/include
@@ -210,7 +210,7 @@ getCommonFile() {
     mindspore/lite/src/ops/populate/custom_populate.cc
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/shape_fusion_infer.c
-    mindspore/lite/src/runtime/kernel/arm/fp32/shape_fusion_fp32.cc
+    mindspore/lite/src/runtime/kernel/cpu/fp32/shape_fusion_fp32.cc
     mindspore/core/utils/status.cc
   )
   # save train files
@@ -305,11 +305,11 @@ sleep 1
 getOpsFile "REG_POPULATE\(PrimitiveType_" "mindspore/lite/src/ops/populate" "prototype" &
 getOpsFile "REG_INFER\(.*?, PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer" "prototype" &
 # support for cpu
-getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat32" &
-getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeFloat16" &
-getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt8" &
-getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt32" &
-getOpsFile "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "mindspore/lite/src/runtime/kernel/arm" "kNumberTypeInt32" &
+getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeFloat32" &
+getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat16, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeFloat16" &
+getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt8, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeInt8" &
+getOpsFile "REG_KERNEL\(.*?, kNumberTypeInt32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeInt32" &
+getOpsFile "REG_KERNEL\(.*?, kNumberTypeBool, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeInt32" &
 wait
 sleep 1
 # remove duplicate files

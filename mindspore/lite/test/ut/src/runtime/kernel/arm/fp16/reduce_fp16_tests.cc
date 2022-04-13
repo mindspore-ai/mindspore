@@ -17,7 +17,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/kernel_registry.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp16/reduce_fp16.h"
+#include "mindspore/lite/src/runtime/kernel/cpu/fp16/reduce_fp16.h"
 
 namespace mindspore {
 

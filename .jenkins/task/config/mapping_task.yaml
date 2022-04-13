@@ -23,8 +23,8 @@ MS_ALL:
     mindspore/ccsrc/CMakeLists.txt
     mindspore/lite/java
     mindspore/lite/src/train
-    mindspore/lite/src/runtime/kernel/arm/fp32
-    mindspore/lite/src/runtime/kernel/arm/fp32_grad
+    mindspore/lite/src/runtime/kernel/cpu/fp32
+    mindspore/lite/src/runtime/kernel/cpu/fp32_grad
     mindspore/ccsrc/backend/kernel_compiler
     mindspore/ccsrc/fl
     mindspore/ccsrc/ps

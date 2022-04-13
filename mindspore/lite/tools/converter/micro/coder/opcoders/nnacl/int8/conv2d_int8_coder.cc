@@ -23,7 +23,7 @@
 #include "coder/opcoders/nnacl/int8/conv2d_3x3_int8_coder.h"
 #include "coder/opcoders/nnacl/int8/convolution_depthwise_int8_coder.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
-#include "src/runtime/kernel/arm/base/convolution_base.h"
+#include "src/runtime/kernel/cpu/base/convolution_base.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/common/version_manager.h"
 #include "coder/log.h"
