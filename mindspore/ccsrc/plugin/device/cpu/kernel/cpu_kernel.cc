@@ -194,8 +194,8 @@ void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &appl
   const KernelBuildInfo *kernel_build_Info = kernel_info->select_kernel_build_info();
   MS_EXCEPTION_IF_NULL(kernel_build_Info);
   const auto &matched_kernel_attr = kernel_attrs[index];
-  if (!matched_kernel_attr.GetOutInRefMap().empty()) {
-    kernel_info->set_ref_map(matched_kernel_attr.GetOutInRefMap());
+  if (!matched_kernel_attr.GetOutInRefMap().empty() || matched_kernel_attr.GetAllOutInRef()) {
+    kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
   }
 }
 

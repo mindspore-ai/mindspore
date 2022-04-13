@@ -246,6 +246,7 @@ class KernelAttr {
   KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
   KernelAttr &AddAllSameAttr(const bool &all_same);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
+  KernelAttr &AddAllOutInRef(const bool &all_out_in_ref);
 
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
@@ -254,6 +255,7 @@ class KernelAttr {
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
   const OutputInputRefMap &GetOutInRefMap() const { return out_in_ref_map_; }
+  const bool &GetAllOutInRef() const { return all_out_in_ref_; }
 
   void SetInputAttrList(const std::vector<DataType> &addr_list);
 
@@ -264,6 +266,9 @@ class KernelAttr {
 
   // The map between kernel's output and input ref relationship.
   OutputInputRefMap out_in_ref_map_;
+
+  // The reference for all outputs and inputs of the same index.
+  bool all_out_in_ref_{false};
 };
 std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
 

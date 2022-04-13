@@ -32,7 +32,7 @@ using ps::core::GeneralResponseMsg;
 using ps::core::NodeCommand;
 
 // The timeout in milliseconds for one lookup.
-constexpr uint32_t kDefaultLookupTimeout = 30000;
+constexpr uint32_t kDefaultLookupTimeout = 300000;
 
 // The time in milliseconds between two lookup operations.
 constexpr uint32_t kLookupInterval = 100;

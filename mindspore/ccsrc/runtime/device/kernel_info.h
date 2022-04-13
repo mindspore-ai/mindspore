@@ -73,7 +73,9 @@ class KernelInfo : public KernelInfoDevice {
   const std::vector<std::shared_ptr<DeviceAddress>> &output_address_list() const { return output_address_list_; }
   const std::vector<std::shared_ptr<DeviceAddress>> &workspace_address_list() const { return workspace_address_list_; }
 
-  void set_ref_map(const OutputInputRefMap &ref_map) { out_in_ref_map_ = ref_map; }
+  // Set output and input reference. If all_ref is set true, each output is a reference to the input with the same
+  // index.
+  void set_ref_map(const bool &all_ref, const OutputInputRefMap &ref_map);
   const OutputInputRefMap &out_in_ref_map() const { return out_in_ref_map_; }
 
  private:

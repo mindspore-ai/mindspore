@@ -49,7 +49,7 @@ class SendActor : public RpcActor {
 
  private:
   // Client only supports to send MessageBase, so build MessageBase with data and url.
-  std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtr &data, const std::string &server_url);
+  std::unique_ptr<MessageBase> BuildRpcMessage(const kernel::AddressPtrList &data_list, const std::string &server_url);
 
   friend class GraphScheduler;
 

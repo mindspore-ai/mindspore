@@ -64,7 +64,7 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
     return;
   }
-  auto send_output = launch_info_.inputs_[0];
+  auto send_output = launch_info_.inputs_;
   for (const auto &peer : peer_actor_urls_) {
     std::string peer_server_url = peer.second;
     auto message = BuildRpcMessage(send_output, peer_server_url);
@@ -74,12 +74,20 @@ void SendActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
 }
 
-std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtr &data, const std::string &server_url) {
-  MS_ERROR_IF_NULL_W_RET_VAL(data, nullptr);
+std::unique_ptr<MessageBase> SendActor::BuildRpcMessage(const kernel::AddressPtrList &data_list,
+                                                        const std::string &server_url) {
   std::unique_ptr<MessageBase> message = std::make_unique<MessageBase>();
   MS_ERROR_IF_NULL_W_RET_VAL(message, nullptr);
   message->to = AID("", server_url);
-  message->body.assign(static_cast<char *>(data->addr), data->size);
+
+  size_t total_size = 0;
+  total_size =
+    std::accumulate(data_list.begin(), data_list.end(), total_size,
+                    [](size_t total_size, const kernel::AddressPtr &output) { return total_size + output->size; });
+  message->body.reserve(total_size);
+  for (const auto &data : data_list) {
+    message->body.append(static_cast<char *>(data->addr), data->size);
+  }
   return message;
 }
 }  // namespace runtime

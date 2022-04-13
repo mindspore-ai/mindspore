@@ -45,8 +45,8 @@ void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<ke
   auto kernel_info = dynamic_cast<device::KernelInfo *>(apply_kernel->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   const auto &matched_kernel_attr = kernel_attrs[index];
-  if (!matched_kernel_attr.GetOutInRefMap().empty()) {
-    kernel_info->set_ref_map(matched_kernel_attr.GetOutInRefMap());
+  if (!matched_kernel_attr.GetOutInRefMap().empty() || matched_kernel_attr.GetAllOutInRef()) {
+    kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
   }
 }
 }  // namespace

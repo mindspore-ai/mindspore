@@ -66,12 +66,19 @@ class RpcRecvKernelMod : public RpcKernelMod {
     }
 
     MS_EXCEPTION_IF_NULL(remote_input_);
-    T *recv_data = GetDeviceAddress<T>(outputs, 0);
-    int ret = memcpy_s(recv_data, outputs[0]->size, remote_input_->Body().data(), remote_input_->Body().size());
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+    size_t offset = 0;
+    for (size_t i = 0; i < inputs.size(); i++) {
+      T *recv_data = GetDeviceAddress<T>(inputs, i);
+      int ret = memcpy_s(recv_data, inputs[i]->size, remote_input_->Body().data() + offset, inputs[i]->size);
+      if (ret != 0) {
+        MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
+      }
+      offset += inputs[i]->size;
     }
 
+    // Pay attention that the remote_input_ is a pointer of MessageBase which is allocated as heap memory by rpc module.
+    // We need to delete it after launching kernel.
+    delete remote_input_;
     return true;
   }
   using RpcRecvFunc =

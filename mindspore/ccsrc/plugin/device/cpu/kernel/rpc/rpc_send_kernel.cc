@@ -19,9 +19,16 @@
 namespace mindspore {
 namespace kernel {
 std::vector<KernelAttr> RpcSendKernelMod::GetOpSupport() {
-  static std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddAllSameAttr(true),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32).AddAllSameAttr(true)};
+  static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32)
+                                                   .AddAllSameAttr(true)
+                                                   .AddAllOutInRef(true),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddOutputAttr(kNumberTypeInt32)
+                                                   .AddAllSameAttr(true)
+                                                   .AddAllOutInRef(true)};
   return support_list;
 }
 
