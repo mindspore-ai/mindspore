@@ -488,12 +488,14 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
             config_parser_mid mslite_converter_plugin mindspore_core coder_mid
-            mindspore::protobuf ${SECUREC_LIBRARY})
+            ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj
+            mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
             cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
             config_parser_mid mslite_converter_plugin mindspore_core coder_mid
-            mindspore::protobuf ${SECUREC_LIBRARY})
+            ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj
+            mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
     if(MSLITE_ENABLE_ACL)
         target_link_libraries(mindspore-lite lite_acl_mid
                 mindspore_shared_lib)

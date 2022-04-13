@@ -29,6 +29,7 @@
 #include "mindspore/core/utils/system/env.h"
 
 namespace mindspore::lite {
+#ifndef ENABLE_CLOUD_AND_LITE
 class MindIRSerializer {
  public:
   MindIRSerializer() = default;
@@ -71,7 +72,7 @@ class MindIRSerializer {
   std::fstream *data_fs_ = nullptr;
   std::shared_ptr<system::FileSystem> fs_{};
 };
-
+#endif
 // export func_graph
 int MindIRSerialize(const std::unique_ptr<converter::Flags> &flag, const FuncGraphPtr &func_graph);
 }  // namespace mindspore::lite
