@@ -94,6 +94,46 @@ def test_single_while_3():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_single_while_4():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        z = np.array(0)
+        while z <= 3:
+            z += 1
+        return Tensor(z)
+
+    res = control_flow_while()
+    assert res == 4
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_single_while_5():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        i = 0
+        while i <= 3:
+            i += int(1)
+        return i
+
+    res = control_flow_while()
+    assert res == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_single_while_two_cond_1():
     """
     Feature: JIT Fallback
