@@ -81,7 +81,7 @@ class Profiler:
         >>> from mindspore import nn, context
         >>> from mindspore import Model
         >>> import mindspore.dataset as ds
-        >>> from mindspore.profiler import Profiler
+        >>> from mindspore import Profiler
         >>>
         >>>
         >>> class Net(nn.Cell):
@@ -107,9 +107,7 @@ class Profiler:
         ...     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
         ...
         ...     # Init Profiler
-        ...     # Note that the Profiler should be initialized after context.set_context and before model.train
-        ...     # If you are running in parallel mode on Ascend, the Profiler should be initialized before HCCL
-        ...     # initialized.
+        ...     # Note that the Profiler should be initialized before model.train
         ...     profiler = Profiler()
         ...
         ...     # Train Model

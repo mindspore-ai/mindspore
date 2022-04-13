@@ -17,7 +17,7 @@
 
 import os
 import functools
-from mindspore.profiler import Profiler
+from mindspore import Profiler
 from .config import config
 
 _global_sync_count = 0
