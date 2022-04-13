@@ -14,6 +14,7 @@ inference_finish_tag="inference finish"
 resource_path=$1
 packages_path=$2
 jdk_path=$3
+case_code_path=$4
 
 
 scrip_path=$(dirname "$(dirname "$(readlink -f "$0")")")
@@ -24,14 +25,14 @@ echo "$tag the packages_path: $packages_path"
 echo "$tag the scrip_path: $scrip_path"
 echo "$tag the cloud_tarin file: $cloud_tarin"
 
-exit_opt()
+clear_env()
 {
   echo "$tag Clear temporary files."
   cd $scrip_path
   rm -rf temp
 
   echo "$tag finish server"
-  python finish_mobile.py --scheduler_port=6001
+  python finish_mobile.py --scheduler_port=${scheduler_port}
 
   echo "$tag finish client"
   cd ./ci_script
@@ -50,7 +51,7 @@ check_exe_result()
 {
   if [ "$?" != "0" ]; then
     echo "$tag catch error when $1, will return 1, please check"
-    exit_opt
+    clear_env
     exit 1
   fi
 }
@@ -58,7 +59,7 @@ check_exe_result()
 check_document() {
   if [ ! -d "$1" ]; then
     echo "$tag the $2: $1 is not exist, will return 1, please check"
-    exit_opt
+    clear_env
     exit 1
   fi
 }
@@ -66,7 +67,7 @@ check_document() {
 check_file() {
   if [ ! -f "$1" ]; then
     echo "$tag the $2: $1 is not exist, will return 1, please check"
-    exit_opt
+    clear_env
     exit 1
   fi
 }
@@ -83,7 +84,7 @@ echo "$tag the server_package: $server_package"
 
 if [ ! -f "$client_package" ] || [ ! -f "$server_package" ]; then
   echo "$tag the client_package or the server_package is not exist, do not start the FL ci, will return 0."
-  exit_opt
+  clear_env
   exit 0
 fi
 
@@ -116,14 +117,17 @@ temp_path=$scrip_path/temp
 
 echo "$tag ****add code for server****"
 cd $resource_path/server/script/
+sh del_code.sh $cloud_tarin   #delete first avoid, duplicate add
 sh add_code.sh $cloud_tarin
 check_exe_result "add code for server"
 
 echo "$tag **************** <4> prepare parameters for server ****************"
 scheduler_ip=$ip
-scheduler_port=6001
-scheduler_manage_port=6000
-fl_server_port=6003
+PORT_START_POS=6000
+#PORT_RANG=$(($RANDOM % 100 * 10 + $PORT_START_POS))
+scheduler_manage_port=${PORT_START_POS}
+scheduler_port=$((PORT_START_POS + 1))
+fl_server_port=$((PORT_START_POS + 3))
 server_num=1
 worker_num=0
 enable_ssl="False"
@@ -144,7 +148,7 @@ echo "$tag **************** <5> prepare libs,jar,initial model for client*******
 cd $resource_path/client/
 cp -rf $client_package $temp_path/packages/
 cd $temp_path/packages
-tar -zxvf mindspore-*.tar.gz
+tar -zxf mindspore-*.tar.gz
 libminddata_lite=$(ls $temp_path/packages/mindspore-*/runtime/lib/libminddata-lite.so)
 libmindspore_lite_jni=$(ls $temp_path/packages/mindspore-*/runtime/lib/libmindspore-lite-jni.so)
 libmindspore_lite_train=$(ls $temp_path/packages/mindspore-*/runtime/lib/libmindspore-lite-train.so)
@@ -183,17 +187,21 @@ echo "$tag the frame jar file: $frame_jar_path for fl is exist"
 
 echo "$tag ****5-3: prepare case jar for client****"
 mkdir case_jar
-root_path=$(dirname "$(dirname "$(dirname "$(dirname $scrip_path)")")")
-case_code_path=$root_path/mindspore/lite/examples/quick_start_flclient
-client_tar_path=$(ls $temp_path/packages/mindspore-*.tar.gz)
-cd $case_code_path
-sh ./build.sh -r $client_tar_path
-check_exe_result "sh ./build.sh -r $client_tar_path"
-build_case_jar_path=$case_code_path/target/quick_start_flclient.jar
-echo "$tag check the case jar file <$build_case_jar_path> after run sh build.sh in document <$case_code_path> for fl"
-check_file $build_case_jar_path "build_case_jar_path"
-echo "$tag the case jar file: $build_case_jar_path for fl is exist"
-cp -rf $build_case_jar_path $temp_path/packages/case_jar/
+#root_path=$(dirname "$(dirname "$(dirname "$(dirname $scrip_path)")")")
+#case_code_path=$root_path/mindspore/lite/examples/quick_start_flclient
+if [ -e "$resource_path"/ci_jar/quick_start_flclient.jar ]; then
+  cp -rf "$resource_path"/ci_jar/quick_start_flclient.jar "$temp_path"/packages/case_jar/
+else
+  client_tar_path=$(ls "$temp_path"/packages/mindspore-*.tar.gz)
+  cd $case_code_path
+  sh ./build.sh -r "$client_tar_path"
+  check_exe_result "sh ./build.sh -r $client_tar_path"
+  build_case_jar_path=$case_code_path/target/quick_start_flclient.jar
+  echo "$tag check the case jar file <$build_case_jar_path> after run sh build.sh in document <$case_code_path> for fl"
+  check_file $build_case_jar_path "build_case_jar_path"
+  echo "$tag the case jar file: $build_case_jar_path for fl is exist"
+  cp -rf $build_case_jar_path $temp_path/packages/case_jar/
+fi
 case_jar_path=$temp_path/packages/case_jar/quick_start_flclient.jar
 echo "$tag check the case jar file: $case_jar_path for fl"
 check_file $case_jar_path "case_jar_path"
@@ -248,7 +256,7 @@ echo "$tag $cmd_server"
 
 server_start=`date +%s`
 server_tag=1
-
+python finish_mobile.py --scheduler_port=${scheduler_port}  #stop server before start avoid pre stop not execute.
 python run_mobile_sched.py --scheduler_ip=$scheduler_ip --scheduler_port=$scheduler_port --server_num=$server_num --worker_num=$worker_num --scheduler_manage_port=$scheduler_manage_port --enable_ssl=$enable_ssl --config_file_path=$config_file_path \
 && python run_mobile_server.py --scheduler_ip=$scheduler_ip --scheduler_port=$scheduler_port --fl_server_port=$fl_server_port --server_num=$server_num \
 --worker_num=$worker_num --start_fl_job_threshold=$start_fl_job_threshold --client_batch_size=$client_batch_size --client_epoch_num=$client_epoch_num --fl_iteration_num=$fl_iteration_num \
@@ -272,6 +280,13 @@ do
 done
 if [ "$server_tag" = 0 ]; then
   echo "$tag server started successfully"
+else
+  echo "server_log log start ++++++++++++++++++++++++++++++++++++++"
+  cat $server_log
+  echo "server_log log end  ++++++++++++++++++++++++++++++++++++++"
+  echo "scheduler_log log start  ++++++++++++++++++++++++++++++++++++++"
+  cat $scrip_path/scheduler/scheduler.log
+  echo "scheduler_log log end  ++++++++++++++++++++++++++++++++++++++"
 fi
 server_end=`date +%s`
 server_time=`echo $server_start $server_end | awk '{print $2-$1}'`
@@ -292,6 +307,7 @@ check_exe_result "export PATH=$jdk_path:$PATH"
 train_start=`date +%s`
 train_tag=1
 cd ./ci_script
+python fl_client_finish.py --kill_tag=mindspore-lite-java-flclient #stop client before start
 python fl_client_run_lenet.py --jarPath=$frame_jar_path  --case_jarPath=$case_jar_path --train_dataset=$train_dataset \
 --test_dataset="null" --vocal_file="null" --ids_file="null" --flName=$flName --train_model_path=$train_model_path \
 --infer_model_path=$infer_model_path --ssl_protocol=$ssl_protocol  --deploy_env=$deploy_env --domain_name=$domain_name \
@@ -318,6 +334,11 @@ done
 
 if [ "$train_tag" = 0 ]; then
   echo "$tag client train finished"
+else
+ echo "begin dump train_log..."
+ cat ${train_log_path}
+ cat ${server_log}
+ cat ${scheduler_log}
 fi
 
 train_end=`date +%s`
@@ -446,12 +467,12 @@ fi
 
 if [ "$train_result" = failed ] || [ "$inference_result" = failed ]; then
   echo "$tag the total results are, train: $train_result, inference: $inference_result"
-  exit_opt
+  clear_env
   exit 1
 fi
 
 echo "$tag the total results are, train: $train_result, inference: $inference_result"
-exit_opt
+clear_env
 clear_log
 exit 0
 

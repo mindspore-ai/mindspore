@@ -28,6 +28,7 @@ MS_ALL:
     mindspore/ccsrc/backend/kernel_compiler
     mindspore/ccsrc/fl
     mindspore/ccsrc/ps
+    tests/st/fl
 MS_CLOUD:
     mindspore/python
     mindspore/ccsrc
