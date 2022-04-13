@@ -21,7 +21,7 @@
 #include <memory>
 #include <functional>
 #include "kernel/kernel.h"
-#include "plugin/device/cpu/kernel/rl/replay_buffer_factory.h"
+#include "plugin/factory/replay_buffer_factory.h"
 
 namespace mindspore {
 namespace kernel {
