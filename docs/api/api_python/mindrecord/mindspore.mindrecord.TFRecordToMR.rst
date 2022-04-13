@@ -11,7 +11,7 @@
     - **source** (str) - 待转换的TFRecord文件路径。
     - **destination** (str) - 转换生成的MindRecord文件路径，需提前创建目录并且目录下不能存在同名文件。
     - **feature_dict** (dict[str, FixedLenFeature]) - TFRecord的feature类别的字典，当前支持
-        `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ 类型。
+      `FixedLenFeature <https://www.tensorflow.org/api_docs/python/tf/io/FixedLenFeature>`_ 类型。
     - **bytes_fields** (list[str]，可选) - `feature_dict` 中的字节字段，可以为字节类型的图像字段。
 
     **异常：**
