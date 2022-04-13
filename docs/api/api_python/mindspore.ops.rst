@@ -233,6 +233,8 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.ACos
     mindspore.ops.Acosh
     mindspore.ops.Add
+    mindspore.ops.Addcdiv
+    mindspore.ops.Addcmul
     mindspore.ops.AddN
     mindspore.ops.Asin
     mindspore.ops.Asinh
@@ -250,6 +252,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.Cosh
     mindspore.ops.Div
     mindspore.ops.DivNoNan
+    mindspore.ops.Einsum
     mindspore.ops.Erf
     mindspore.ops.Erfc
     mindspore.ops.Erfinv
