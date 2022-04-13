@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <set>
 #include "backend/common/session/kernel_graph.h"
 #include "debug/debugger/grpc_client.h"
 #include "debug/debug_services.h"
@@ -174,6 +175,8 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::vector<KernelGraphPtr> GetStepGraphPtrList() const { return graph_ptr_step_vec_; }
 
+  void InsertExecutedGraph(const KernelGraphPtr &graph_ptr) { executed_graph_ptr_set_.insert(graph_ptr); }
+
   void SetGraphPtr(const KernelGraphPtr &graph_ptr) { graph_ptr_ = graph_ptr; }
 
   const KernelGraphPtr GetGraphPtr() const { return graph_ptr_; }
@@ -317,8 +320,10 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::list<GraphProto> graph_proto_list_;
   std::list<KernelGraphPtr> graph_ptr_list_;
-  // The vector of graph pointers that have been run in the current step.
+  // The vector of all the kernel graph pointers for the root graph that will execute in the current step.
   std::vector<KernelGraphPtr> graph_ptr_step_vec_;
+  // The set of graph pointers that have been run in the current step.
+  std::set<KernelGraphPtr> executed_graph_ptr_set_;
   // The vector of all the parameters for the current step for mindRT.
   std::vector<AnfNodePtr> parameters_mindRT_;
   std::vector<uint32_t> visited_root_graph_ids_;

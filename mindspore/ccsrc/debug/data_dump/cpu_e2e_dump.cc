@@ -44,7 +44,8 @@ void CPUE2eDump::DumpCNodeData(const CNodePtr &node, uint32_t graph_id) {
 
 void CPUE2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   auto &json_parser = DumpJsonParser::GetInstance();
-  if (!(json_parser.e2e_dump_enabled())) {
+  // avoid dumping same iteration over and over
+  if (!(json_parser.e2e_dump_enabled()) || json_parser.cur_dump_iter() == prev_run_iter_) {
     return;
   }
   std::string execution_order_path = json_parser.path() + "/rank_" + std::to_string(rank_id) + "/execution_order/";
@@ -65,6 +66,7 @@ void CPUE2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
   fout << std::to_string(json_parser.cur_dump_iter()) + "\n";
   fout.close();
   ChangeFileMode(file_name, S_IRUSR);
+  prev_run_iter_ = json_parser.cur_dump_iter();
 }
 
 void CPUE2eDump::DumpCNodeInputs(const CNodePtr &node, const std::string &dump_path) {
