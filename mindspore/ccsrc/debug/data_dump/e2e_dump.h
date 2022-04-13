@@ -93,6 +93,8 @@ class E2eDump {
 
   static bool IsDeviceTargetGPU();
 
+  static bool IsDeviceTargetAscend();
+
   static bool IsMindRTKernelByKernel();
 
  private:
