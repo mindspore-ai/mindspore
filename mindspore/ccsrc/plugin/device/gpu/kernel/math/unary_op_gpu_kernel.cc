@@ -30,6 +30,7 @@ constexpr auto kAsin = "Asin";
 constexpr auto kAsinh = "Asinh";
 constexpr auto kAtan = "Atan";
 constexpr auto kCos = "Cos";
+constexpr auto kCosh = "Cosh";
 constexpr auto kErf = "Erf";
 constexpr auto kErfc = "Erfc";
 constexpr auto kExp = "Exp";
@@ -109,6 +110,9 @@ const std::map<std::string, std::vector<std::pair<KernelAttr, UnaryPtrCreatorFun
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
+  {kCosh,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>}}},
   {kACos,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
@@ -195,6 +199,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Asinh,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Atan,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kAtan); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Cos, []() { return std::make_shared<UnaryOpGpuKernelMod>(kCos); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Cosh,
+                                 []() { return std::make_shared<UnaryOpGpuKernelMod>(kCosh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Erf, []() { return std::make_shared<UnaryOpGpuKernelMod>(kErf); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Erfc,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kErfc); });
