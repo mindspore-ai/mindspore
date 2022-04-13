@@ -21,7 +21,6 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import context
 from mindspore.common.parameter import Parameter
-from tests.security_utils import security_off_wrap
 
 context.set_context(mode=context.GRAPH_MODE)
 grad_all = C.GradOperation(get_all=True)
@@ -185,12 +184,11 @@ def test_if_after_if_in_while_break_forward():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-@security_off_wrap
 def test_if_after_if_in_while_break_backward():
     x = Tensor(np.array(1), mstype.int32)
     y = Tensor(np.array(3), mstype.int32)
     # Graph Mode
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    context.set_context(mode=context.GRAPH_MODE)
     graph_forward_net = IfAfterIfInWhileBreakForwardNet(max_cycles=10)
     graph_backward_net = Grad(graph_forward_net)
     graph_mode_grads = graph_backward_net(x, y)

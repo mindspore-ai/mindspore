@@ -17,36 +17,38 @@ Watchpoints test script for dump analyze_fail.dat when infer failed.
 """
 # pylint: disable=too-many-function-args
 import os
+import shutil
 import pytest
 import mindspore
 from mindspore import ops, Tensor, nn
 from tests.security_utils import security_off_wrap
 
 
+class Net(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.add = ops.Add()
+        self.sub = ops.Sub()
+        self.mul = ops.Mul()
+        self.div = ops.Div()
+
+    def func(self, x, y):
+        return self.div(x, y)
+
+    def construct(self, x, y):
+        a = self.sub(x, 1)
+        b = self.add(a, y)
+        c = self.mul(b, self.func(a, a, b))
+        return c
+
+
 @security_off_wrap
-def test_infer_fail_generate_analyze_fail_dat():
+def test_infer_fail_generate_analyze_fail_dat1():
     """
     Feature: test dump analyze_fail.dat.
     Description: test dump analyze_fail.dat if infer failed.
     Expectation: success.
     """
-
-    class Net(nn.Cell):
-        def __init__(self):
-            super().__init__()
-            self.add = ops.Add()
-            self.sub = ops.Sub()
-            self.mul = ops.Mul()
-            self.div = ops.Div()
-
-        def func(self, x, y):
-            return self.div(x, y)
-
-        def construct(self, x, y):
-            a = self.sub(x, 1)
-            b = self.add(a, y)
-            c = self.mul(b, self.func(a, a, b))
-            return c
 
     input1 = Tensor(3, mindspore.float32)
     input2 = Tensor(2, mindspore.float32)
@@ -56,3 +58,24 @@ def test_infer_fail_generate_analyze_fail_dat():
         net(input1, input2)
     assert "rank_0/om/analyze_fail.dat" in str(excinfo.value)
     assert os.path.exists("./rank_0/om/analyze_fail.dat") is True
+
+
+@security_off_wrap
+def test_infer_fail_generate_analyze_fail_dat2():
+    """
+    Feature: test dump analyze_fail.dat.
+    Description: test dump analyze_fail.dat if infer failed.
+    Expectation: success.
+    """
+
+    input1 = Tensor(3, mindspore.float32)
+    input2 = Tensor(2, mindspore.float32)
+    net = Net()
+    os.environ["MS_OM_PATH"] = "./analyze_fail_dat2"
+    with pytest.raises(TypeError) as excinfo:
+        net(input1, input2)
+    assert "analyze_fail_dat2/rank_0/om/analyze_fail.dat" in str(excinfo.value)
+    assert os.path.exists("./analyze_fail_dat2/rank_0/om/analyze_fail.dat") is True
+
+    shutil.rmtree("analyze_fail_dat2")
+    del os.environ['MS_OM_PATH']
