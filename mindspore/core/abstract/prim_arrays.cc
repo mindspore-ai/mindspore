@@ -149,7 +149,7 @@ AbstractBasePtr InferImplStack(const AnalysisEnginePtr &, const PrimitivePtr &pr
 
   ValuePtr axis = primitive->GetAttr("axis");
   // Axis value should be in [-(rank_base + 1), rank_base).
-  int64_t axis_value = CheckAxis(op_name, "axis", axis, -(rank_base + 1), rank_base, "input_x");
+  int64_t axis_value = CheckAxis(op_name, "axis", axis, -(rank_base + 1), rank_base + 1, "input_x");
 
   for (size_t i = 1; i < tuple_len; ++i) {
     AbstractTensorPtr tensor = nullptr;
