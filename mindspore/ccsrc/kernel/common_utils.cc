@@ -1002,6 +1002,11 @@ KernelAttr &KernelAttr::AddAllSameAttr(const bool &all_same) {
   return *this;
 }
 
+KernelAttr &KernelAttr::AddSkipCheckAttr(const bool &skip_check) {
+  skip_check_ = skip_check;
+  return *this;
+}
+
 KernelAttr &KernelAttr::AddOutInRef(size_t output_index, size_t input_index) {
   out_in_ref_map_[output_index] = input_index;
   return *this;
@@ -1051,7 +1056,6 @@ std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr,
   if (kernel_attr.GetAllSame()) {
     return std::make_pair(false, 0);
   }
-
   auto input_num = kernel_attr.GetInputSize();
   auto output_num = kernel_attr.GetOutputSize();
 

@@ -245,12 +245,14 @@ class KernelAttr {
   KernelAttr &AddInputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
   KernelAttr &AddOutputAttr(const TypeId &ms_type, const std::string &format = kOpFormat_DEFAULT);
   KernelAttr &AddAllSameAttr(const bool &all_same);
+  KernelAttr &AddSkipCheckAttr(const bool &skip_check);
   KernelAttr &AddOutInRef(size_t output_index, size_t input_index);
   KernelAttr &AddAllOutInRef(const bool &all_out_in_ref);
 
   const DataType &GetInputAttr(const size_t index) const { return input_type_[index]; }
   const DataType &GetOutputAttr(const size_t index) const { return output_type_[index]; }
   const bool &GetAllSame() const { return all_same_; }
+  const bool &GetSkipCheck() const { return skip_check_; }
 
   size_t GetInputSize() const { return input_type_.size(); }
   size_t GetOutputSize() const { return output_type_.size(); }
@@ -263,6 +265,7 @@ class KernelAttr {
   std::vector<DataType> input_type_;
   std::vector<DataType> output_type_;
   bool all_same_{false};
+  bool skip_check_{false};
 
   // The map between kernel's output and input ref relationship.
   OutputInputRefMap out_in_ref_map_;
