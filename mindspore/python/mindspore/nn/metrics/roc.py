@@ -180,9 +180,8 @@ class ROC(Metric):
         if self._is_update is False:
             raise RuntimeError("Please call the 'update' method before calling 'eval' method.")
 
-        y_pred = np.squeeze(np.vstack(self.y_pred))
-        y = np.squeeze(np.vstack(self.y))
-
+        y_pred = np.squeeze(self.y_pred)
+        y = np.squeeze(self.y)
         return self._roc_eval(y_pred, y, self.class_num, self.pos_label)
 
 
