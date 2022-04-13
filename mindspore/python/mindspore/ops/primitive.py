@@ -155,7 +155,7 @@ class Primitive(Primitive_):
         self.add_prim_attr("stage", stage)
         return self
 
-    @_LogActionOnce(logger=logger)
+    @_LogActionOnce(logger=logger, key='Primitive')
     def shard(self, in_strategy=None, out_strategy=None):
         """
         Add strategies to primitive attribute.
