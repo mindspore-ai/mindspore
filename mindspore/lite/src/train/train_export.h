@@ -69,7 +69,8 @@ class TrainExport {
   int TopologicalSort();
   void PrepareRemap(int offset);
   Model::Node *FindNode(const mindspore::kernel::KernelExec *kernel, const Model *model);
-  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor, int preferred_dim);
+  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor, int preferred_dim,
+                                                const int tensor_quant_type);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::KernelExec *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
                                               const Model *model);
@@ -81,7 +82,7 @@ class TrainExport {
   std::unique_ptr<schema::TensorT> CreateTransformTensor(size_t id);
   std::unique_ptr<schema::TensorT> CreateTransformConst(size_t last_id);
   int AddTransform();
-  bool NeedQuantization(const mindspore::lite::Tensor *tensor);
+  bool NeedQuantization(const mindspore::lite::Tensor *tensor, const int tensor_quant_type);
   int ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
                    const std::vector<std::pair<size_t, tensor_info>> &map_index,
                    const std::vector<std::string> &output_names, const std::set<size_t> &out_set);
