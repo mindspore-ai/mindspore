@@ -39,6 +39,7 @@ constexpr auto kAsinGrad = "AsinGrad";
 constexpr auto kACosGrad = "ACosGrad";
 constexpr auto kAtanGrad = "AtanGrad";
 constexpr auto kAsinhGrad = "AsinhGrad";
+constexpr auto kInvGrad = "InvGrad";
 constexpr auto kAcoshGrad = "AcoshGrad";
 constexpr auto kSoftplusGrad = "SoftplusGrad";
 constexpr auto kRsqrtGrad = "RsqrtGrad";
@@ -67,6 +68,7 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
   void AtanGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void ComplexAsinhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
+  void InvGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void ComplexAcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
   void SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const;
@@ -272,6 +274,16 @@ void EltWiseGradCpuTypeFunc<T>::ComplexAsinhGrad(const T *input1, const T *input
 }
 
 template <typename T>
+void EltWiseGradCpuTypeFunc<T>::InvGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
+  for (size_t i = start; i < end; i++) {
+    double inputf = static_cast<double>(input1[i]);
+    double doutf = static_cast<double>(input2[i]);
+    double res = -1 * doutf * inputf * inputf;
+    out[i] = static_cast<T>(res);
+  }
+}
+
+template <typename T>
 void EltWiseGradCpuTypeFunc<T>::AcoshGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
     T dividend = input2[i];
@@ -331,6 +343,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
               {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad},
               {prim::kPrimAtanGrad->name(), &EltWiseGradCpuTypeFunc<T>::AtanGrad},
               {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuTypeFunc<T>::AsinhGrad},
+              {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
               {prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
@@ -353,6 +366,7 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
               {prim::kPrimACosGrad->name(), &EltWiseGradCpuTypeFunc<T>::ACosGrad},
               {prim::kPrimAtanGrad->name(), &EltWiseGradCpuTypeFunc<T>::AtanGrad},
               {prim::kPrimAsinhGrad->name(), &EltWiseGradCpuTypeFunc<T>::AsinhGrad},
+              {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
               {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad},
               {prim::kPrimAcoshGrad->name(), &EltWiseGradCpuTypeFunc<T>::AcoshGrad},
               {prim::kPrimSoftplusGrad->name(), &EltWiseGradCpuTypeFunc<T>::SoftplusGrad}};
@@ -362,10 +376,12 @@ void EltWiseGradCpuTypeFunc<T>::InitFunc(const CNodePtr &kernel_node) {
     compute_func_ = elt_map.at(kernel_name_);
     return;
   }
-  if constexpr (std::is_same_v<T, int>) {
+  if constexpr ((std::is_same_v<T, int>) || (std::is_same_v<T, int8_t>)) {
     static const std::map<std::string,
                           std::function<void(EltWiseGradCpuTypeFunc *, const T *, const T *, T *, size_t, size_t)>>
-      elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad}};
+      elt_map{{prim::kPrimAbsGrad->name(), &EltWiseGradCpuTypeFunc<T>::AbsGrad},
+              {prim::kPrimInvGrad->name(), &EltWiseGradCpuTypeFunc<T>::InvGrad},
+              {prim::kPrimRsqrtGrad->name(), &EltWiseGradCpuTypeFunc<T>::RsqrtGrad}};
     if (elt_map.find(kernel_name_) == elt_map.end()) {
       MS_LOG(EXCEPTION) << "EltWiseGradCpu does not support " << kernel_name_ << " with int as input.";
     }
@@ -411,7 +427,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>}}},
   {kAbsGrad,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &SpecializeEltWiseGradFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      &SpecializeEltWiseGradFunc<int>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>},
@@ -463,6 +481,15 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, FuncCreator>>> ke
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      &SpecializeEltWiseGradFunc<complex128>}}},
+  {kInvGrad,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     &SpecializeEltWiseGradFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     &SpecializeEltWiseGradFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     &SpecializeEltWiseGradFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &SpecializeEltWiseGradFunc<double>}}},
   {kAcoshGrad,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &SpecializeEltWiseGradFunc<float>},
@@ -555,6 +582,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AtanGrad,
                                  []() { return std::make_shared<EltWiseGradCpuKernelMod>(kAtanGrad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AsinhGrad,
                                  []() { return std::make_shared<EltWiseGradCpuKernelMod>(kAsinhGrad); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, InvGrad,
+                                 []() { return std::make_shared<EltWiseGradCpuKernelMod>(kInvGrad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AcoshGrad,
                                  []() { return std::make_shared<EltWiseGradCpuKernelMod>(kAcoshGrad); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SoftplusGrad,
