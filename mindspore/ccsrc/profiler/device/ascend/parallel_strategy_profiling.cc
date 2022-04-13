@@ -137,7 +137,7 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
 }
 
 void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
-  if (!IsProfilingParallelStrategyEnabled()) {
+  if (has_save_parallel_strategy || !IsProfilingParallelStrategyEnabled()) {
     return;
   }
 
