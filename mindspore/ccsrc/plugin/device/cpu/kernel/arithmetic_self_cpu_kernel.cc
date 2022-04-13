@@ -253,6 +253,20 @@ void ComplexSin(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_
 }
 
 template <typename T>
+void ComplexSign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      if (in[i] != static_cast<T>(0)) {
+        out[i] = (in[i] / abs(in[i]));
+      } else {
+        out[i] = static_cast<T>(0);
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
 void ComplexSinh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -516,7 +530,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimAsinh->name(), ComplexAsinh<T>}, {prim::kPrimNeg->name(), Neg<T>},
                           {prim::kPrimSinh->name(), ComplexSinh<T>},   {prim::kPrimCosh->name(), ComplexCosh<T>},
                           {prim::kPrimSin->name(), ComplexSin<T>},     {prim::kPrimCos->name(), ComplexCos<T>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T>}};
+                          {prim::kPrimRsqrt->name(), Rsqrt<T>},        {prim::kPrimSign->name(), ComplexSign<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelFunc does not support " << kernel_name_;
@@ -569,7 +583,10 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
   {kSign,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
   {kFloor,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},

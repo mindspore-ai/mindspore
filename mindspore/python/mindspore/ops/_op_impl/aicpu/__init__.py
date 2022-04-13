@@ -53,6 +53,7 @@ from .sin import _sin_aicpu
 from .cos import _cos_aicpu
 from .sinh import _sinh_aicpu
 from .cosh import _cosh_aicpu
+from .sign import _sign_aicpu
 from .squeeze import _squeeze_aicpu
 from .acos import _acos_aicpu
 from .acos_grad import _acos_grad_aicpu
