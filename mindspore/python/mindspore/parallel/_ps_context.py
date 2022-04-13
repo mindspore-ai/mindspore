@@ -322,7 +322,7 @@ def _check_value(key, value):
 
 
 def _check_conflict_value(kwargs):
-    if "upload_compress_type" in kwargs and " encrypt_type" in kwargs:
+    if "upload_compress_type" in kwargs and "encrypt_type" in kwargs:
         if kwargs["upload_compress_type"] != "NO_COMPRESS" and kwargs["encrypt_type"] in ("SIGNDS", "PW_ENCRYPT"):
             logger.warning("The '{}' and '{}' are conflicted, and in '{}' mode the"
                            " 'upload_compress_type' will be 'NO_COMPRESS'".format(kwargs["encrypt_type"],

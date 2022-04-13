@@ -23,6 +23,7 @@ std::vector<int> DecodeExecutor::ConstructMaskArray(int seed, float upload_spars
   static int multiplier = 2147483647;
   static double increment = 4294967294.0;
   static int modulo = 48271;
+  static double carry = 0.5;
   size_t retain_num = size_t(static_cast<float>(param_num) * upload_sparse_rate);
   if (retain_num == 0) {
     MS_LOG(WARNING) << "The retain_num is 0, and upload_sparse_rate is too small.";
@@ -35,7 +36,7 @@ std::vector<int> DecodeExecutor::ConstructMaskArray(int seed, float upload_spars
   seed = ((seed + multiplier) * modulo) % multiplier;
   for (size_t i = 0; i < param_num; ++i) {
     // generate random number in (0, 1)
-    double rand = static_cast<double>(seed) / increment + 0.5;
+    double rand = static_cast<double>(seed) / increment + carry;
     // update seed
     seed = (seed * modulo) % multiplier;
     size_t j = size_t(rand * static_cast<double>(param_num - i)) + i;

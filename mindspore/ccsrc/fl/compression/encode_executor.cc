@@ -84,13 +84,19 @@ bool CompressExecutor::quant_min_max(std::map<std::string, CompressWeight> *comp
 
 schema::CompressType CompressExecutor::GetCompressType(const flatbuffers::Vector<int8_t> *download_compress_types) {
   schema::CompressType compressType = schema::CompressType_NO_COMPRESS;
+  schema::CompressType context_compress_type;
+  if (ps::PSContext::instance()->download_compress_type() == fl::server::kQuant) {
+    context_compress_type = schema::CompressType_QUANT;
+  } else {
+    context_compress_type = schema::CompressType_NO_COMPRESS;
+  }
   if (download_compress_types == nullptr) {
     MS_LOG(DEBUG) << "The client does not support current download compress type.";
   } else {
     for (size_t i = 0; i < download_compress_types->size(); ++i) {
       auto download_compress_type = download_compress_types->Get(i);
-      if (download_compress_type == schema::CompressType_QUANT) {
-        compressType = schema::CompressType_QUANT;
+      if (download_compress_type == context_compress_type) {
+        compressType = context_compress_type;
         break;
       }
     }
