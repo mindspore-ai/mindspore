@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_CONV_H_
-#define MINDSPORE_NNACL_EXPERIMENT_CONV_H_
-#include "nnacl/conv_parameter.h"
-#include "nnacl/kernel.h"
 
-typedef struct KConv2d {
-  KernelBase base;
-  char *im2colBuf;
-  char *packedWeight;
-} KConv2d;
+#ifndef MINDSPORE_NNACL_TENSORC_UTILS_H_
+#define MINDSPORE_NNACL_TENSORC_UTILS_H_
+
+#include <stddef.h>
+#include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
+#include "nnacl/tensor_c.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-KernelBase *CreateConv(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
+
+int GetBatch(const TensorC *tensor);
+int GetHeight(const TensorC *tensor);
+int GetWidth(const TensorC *tensor);
+int GetChannel(const TensorC *tensor);
+int GetElementNum(const TensorC *tensor);
+int GetDimensionSize(const TensorC *tensor, const size_t index);
+
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif  // MINDSPORE_NNACL_TENSORC_UTILS_H_

@@ -17,6 +17,7 @@
 #include "nnacl/infer/select_infer.h"
 #include <string.h>
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/tensorlist_c_utils.h"
 
 int SelectInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {

@@ -172,7 +172,7 @@ if(MSLITE_ENABLE_CONTROLFLOW)
     set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_SRC})
 endif()
 
-if(MSLITE_ENABLE_EXPERIMENT_KERNEL)
+if(MSLITE_ENABLE_EXPERIMENTAL_KERNEL)
     file(GLOB EXPERIMENT_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../experimental/src/exec_env_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../experimental/kernel/*.cc)

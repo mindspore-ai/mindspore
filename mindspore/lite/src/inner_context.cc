@@ -111,8 +111,8 @@ void InnerContext::SetContextDevice(const Context *context) {
   return;
 }
 
-void InnerContext::InitExperimentExecEnv() {
-#ifdef MSLITE_ENABLE_EXPERIMENT_KERNEL
+void InnerContext::InitExperimentalExecEnv() {
+#ifdef MSLITE_ENABLE_EXPERIMENTAL_KERNEL
   GetExecEnv()->allocator = this->allocator.get();
   GetExecEnv()->threadPool = this->thread_pool_;
   GetExecEnv()->alloc = experimental::DefaultAllocatorMalloc;
@@ -184,7 +184,7 @@ int InnerContext::Init() {
     MS_LOG(DEBUG) << "GPU enabled.";
   }
 
-  InitExperimentExecEnv();
+  InitExperimentalExecEnv();
   return RET_OK;
 }
 

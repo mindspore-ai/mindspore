@@ -520,10 +520,11 @@ typedef enum FormatC {
   Format_NC = 11,
   Format_NC4 = 12,
   Format_NC4HW4 = 13,
-  Format_NCDHW = 14,
-  Format_NWC = 15,
-  Format_NCW = 16,
-  Format_NC16HW16 = 17,
+  Format_NUM_OF_FORMAT = 14,  // compatibility with schema ops_type::Format
+  Format_NCDHW,
+  Format_NWC,
+  Format_NCW,
+  Format_NC16HW16,
   Format_MAX,
   Format_MIN = Format_NCHW
 } FormatC;
