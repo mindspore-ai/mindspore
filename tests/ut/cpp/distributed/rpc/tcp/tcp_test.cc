@@ -389,6 +389,45 @@ TEST_F(TCPTest, CreateManyConnectionPairs) {
     servers[i]->Finalize();
   }
 }
+
+/// Feature: test multi clients connecting to one single server.
+/// Description: start a socket server and multi clients.
+/// Expectation: these clients connected to the server successfully.
+TEST_F(TCPTest, SingleServerMultiClients) {
+  Init();
+
+  // Start the tcp server.
+  auto server_url = "127.0.0.1:8081";
+  std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
+  bool ret = server->Initialize(server_url);
+  ASSERT_TRUE(ret);
+
+  server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
+    IncrDataMsgNum(1);
+    return NULL_MSG;
+  });
+
+  // Start the tcp client.
+  std::vector<std::shared_ptr<TCPClient>> clients;
+  uint32_t client_num = 8;
+
+  for (uint32_t i = 0; i < client_num; ++i) {
+    std::shared_ptr<TCPClient> client = std::make_shared<TCPClient>();
+    clients.push_back(client);
+
+    auto ret = client->Initialize();
+    ASSERT_TRUE(ret);
+    ret = client->Connect(server_url);
+    ASSERT_TRUE(ret);
+  }
+
+  // Destroy
+  for (uint32_t i = 0; i < client_num; ++i) {
+    clients[i]->Disconnect(server_url);
+    clients[i]->Finalize();
+  }
+  server->Finalize();
+}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

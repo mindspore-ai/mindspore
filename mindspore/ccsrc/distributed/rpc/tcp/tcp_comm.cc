@@ -103,7 +103,8 @@ void OnAccept(int server, uint32_t events, void *arg) {
 
   conn->socket_fd = acceptFd;
   conn->source = tcpmgr->url_;
-  conn->peer = SocketOperation::GetPeer(acceptFd);
+  conn->destination = SocketOperation::GetPeer(acceptFd);
+  conn->peer = conn->destination;
 
   conn->is_remote = true;
   conn->recv_event_loop = tcpmgr->recv_event_loop_;
@@ -358,9 +359,6 @@ void TCPComm::Connect(const std::string &dst_url) {
         MS_LOG(ERROR) << "Failed to create new connection and link fail destination: " << dst_url;
         return false;
       }
-      conn->source = url_;
-      conn->destination = dst_url;
-
       conn->recv_event_loop = this->recv_event_loop_;
       conn->send_event_loop = this->send_event_loop_;
       conn->conn_mutex = conn_mutex_;
@@ -394,6 +392,8 @@ void TCPComm::Connect(const std::string &dst_url) {
         delete conn;
         return false;
       }
+      conn->source = SocketOperation::GetLocalIP() + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
+      conn->destination = dst_url;
       conn_pool_->AddConnection(conn);
     }
     conn_pool_->AddConnInfo(conn->socket_fd, dst_url, nullptr);
