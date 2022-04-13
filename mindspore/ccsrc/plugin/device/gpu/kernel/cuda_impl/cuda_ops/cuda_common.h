@@ -16,32 +16,21 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_COMMON_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_CUDA_COMMON_H_
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-#include <cudnn.h>
-#include <cublas_v2.h>
-#include <algorithm>
-#include <cusolverDn.h>
-
-#define CUDA_LIB_EXPORT __attribute__((visibility("default")))
-#define CUDA_KERNEL_ASSERT(cond)                                                       \
-  if (!(cond)) {                                                                       \
-    __assert_fail(#cond, __FILE__, static_cast<unsigned int>(__LINE__), __FUNCTION__); \
-  }
 namespace mindspore {
 namespace device {
 namespace gpu {
 class CudaCommon {
  public:
-  inline int threads_num() const { return threads_per_block_; }
-  inline int threads_num(int size) const { return std::min(size, threads_per_block_); }
-  inline int major_sm() const { return major_sm_; }
-  inline float cuda_cap() const { return static_cast<float>(major_sm_ * 10 + minor_sm_) / 10.0; }
-  inline int blocks_num(const int total_threads) const {
-    return std::min(((total_threads - 1) / threads_per_block_) + 1, max_blocks_);
-  }
-  size_t share_memory_size() const { return max_share_memory_; }
-  void set_check_sm(const bool &flag) { check_sm_ = flag; }
-  bool check_sm() const { return check_sm_; }
+  inline int threads_num() const { return CUDA_THREADS(device_id_); }
+  inline int threads_num(int size) const { return CUDA_THREADS_MAXSIZE(device_id_, size); }
+  inline int major_sm() const { return CUDA_MAJOR_SM(device_id_); }
+  inline float cuda_cap() const { return CUDA_CAP(device_id_); }
+  inline int blocks_num(const int total_threads) const { return CUDA_BLOCKS(device_id_, total_threads); }
+  size_t share_memory_size() const { return CUDA_SHARED_MEM_PER_BLOCK(device_id_); }
+  void set_check_sm(const bool &flag) { GPUdeviceInfo::GetInstance(device_id_)->set_check_sm(flag); }
+  bool check_sm() const { return GPUdeviceInfo::GetInstance(device_id_)->check_sm(); }
 
   static CudaCommon &GetInstance();
 
@@ -51,12 +40,7 @@ class CudaCommon {
   CudaCommon(const CudaCommon &) = delete;
   CudaCommon &operator=(const CudaCommon &) = delete;
 
-  int max_blocks_;
-  int threads_per_block_;
-  int major_sm_;
-  int minor_sm_;
-  size_t max_share_memory_;
-  bool check_sm_{true};
+  uint32_t device_id_;
 };
 #define GET_BLOCKS(total_threads) mindspore::device::gpu::CudaCommon::GetInstance().blocks_num(total_threads)
 #define GET_THREADS mindspore::device::gpu::CudaCommon::GetInstance().threads_num()
@@ -64,9 +48,6 @@ class CudaCommon {
 #define GET_MAJOR_SM mindspore::device::gpu::CudaCommon::GetInstance().major_sm()
 #define GET_CUDA_CAP mindspore::device::gpu::CudaCommon::GetInstance().cuda_cap()
 #define SHARED_MEM_PER_BLOCK mindspore::device::gpu::CudaCommon::GetInstance().share_memory_size()
-#define MINIUM_SM 6
-#define RECOMMEND_SM 7
-#define SUPPORTED_CAP 5.3
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

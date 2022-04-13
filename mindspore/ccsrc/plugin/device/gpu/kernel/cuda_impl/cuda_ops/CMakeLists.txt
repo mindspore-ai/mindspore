@@ -12,7 +12,7 @@ endif()
 
 set_property(SOURCE ${CUDA_OPS_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 if(ENABLE_GPU)
-    add_library(cuda_common_obj OBJECT cuda_common.cc)
+    add_library(cuda_common_obj OBJECT cuda_common.cc  cuda_device_info.cc)
     target_compile_options(cuda_common_obj PRIVATE "-std=c++17")
     cuda_add_library(cuda_ops SHARED ${CUDA_OPS_SRC_LIST} $<TARGET_OBJECTS:cuda_common_obj>)
     message("add gpu lib to cuda_ops")
