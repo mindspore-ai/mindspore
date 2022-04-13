@@ -55,7 +55,7 @@ class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = 0; i < output_num; ++i) {
       std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(kernel_node_.lock(), i);
       if (i == 0) {
-        auto dyn_out = helper_ptr_->GetDynOutInfo();
+        auto dyn_out = helper_ptr_->GetOutputTensorInfo();
         MS_EXCEPTION_IF_CHECK_FAIL(dyn_out.shapes.size() == 1 && dyn_out.shapes[0].size() == 1,
                                    "Unique output info error.");
         shape[0] = dyn_out.shapes[0][0];
@@ -88,6 +88,7 @@ class UniqueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void *stream_ptr_;
   bool is_null_input_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
+  uint32_t deprecated_id_;
 };
 }  // namespace kernel
 }  // namespace mindspore

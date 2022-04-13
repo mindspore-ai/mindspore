@@ -18,11 +18,10 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCHTOSPACE_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void CalBatchToSpace(const size_t size, const T *input, const size_t in,
-                                     const size_t ih, const size_t iw, const size_t ic,
-                                     const size_t on, const size_t oh, const size_t ow,
-                                     const size_t oc, const size_t crop_up, const size_t crop_dn,
-                                     const size_t crop_lft, const size_t crop_rht, const size_t block_num,
-                                     T *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalBatchToSpace(const size_t size, const T *input, const size_t in, const size_t ih,
+                                     const size_t iw, const size_t ic, const size_t on, const size_t oh,
+                                     const size_t ow, const size_t oc, const size_t crop_up, const size_t crop_dn,
+                                     const size_t crop_lft, const size_t crop_rht, const size_t block_num, T *output,
+                                     cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BATCHTOSPACE_IMPL_CUH_

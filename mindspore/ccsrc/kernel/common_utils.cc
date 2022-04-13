@@ -1114,21 +1114,34 @@ KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
 }
 
 const std::map<std::string, Format> format_relation_map = {
-  {"NCHW", Format::NCHW},   {"NHWC", Format::NHWC},     {"NHWC4", Format::NHWC4},
-  {"HWKC", Format::HWKC},   {"HWCK", Format::HWCK},     {"KCHW", Format::KCHW},
-  {"CKHW", Format::CKHW},   {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
-  {"HW", Format::HW},       {"HW4", Format::HW4},       {"NC", Format::NC},
-  {"NC4", Format::NC4},     {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
-  {"NCDHW", Format::NCDHW}, {"NWC", Format::NWC},       {"NCW", Format::NCW},
+  {"DefaultFormat", Format::DEFAULT_FORMAT},
+  {"NCHW", Format::NCHW},
+  {"NHWC", Format::NHWC},
+  {"NHWC4", Format::NHWC4},
+  {"HWKC", Format::HWKC},
+  {"HWCK", Format::HWCK},
+  {"KCHW", Format::KCHW},
+  {"CKHW", Format::CKHW},
+  {"KHWC", Format::KHWC},
+  {"CHWK", Format::CHWK},
+  {"HW", Format::HW},
+  {"HW4", Format::HW4},
+  {"NC", Format::NC},
+  {"NC4", Format::NC4},
+  {"NC4HW4", Format::NC4HW4},
+  {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+  {"NCDHW", Format::NCDHW},
+  {"NWC", Format::NWC},
+  {"NCW", Format::NCW},
 };
 
 Format GetFormatFromStrToEnum(const std::string &format_str) {
   auto iter = format_relation_map.find(format_str);
   if (iter != format_relation_map.end()) {
-    MS_LOG(WARNING) << "The data format " << format_str << " can not be converted to enum.";
-    return Format::NCHW;
+    return iter->second;
   }
-  return iter->second;
+  MS_LOG(WARNING) << "The data format " << format_str << " can not be converted to enum.";
+  return Format::DEFAULT_FORMAT;
 }
 
 std::string GetFormatFromEnumToStr(Format format) {

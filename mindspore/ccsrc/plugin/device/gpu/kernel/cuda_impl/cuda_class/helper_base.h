@@ -19,17 +19,22 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "mindspore/core/utils/log_adapter.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/cuda_class_common.h"
 #include "ir/dtype/type_id.h"
 #include "include/api/format.h"
 namespace mindspore {
 namespace cukernel {
-struct GpuKernelAttrBase {
+class GpuKernelAttrBase {
+ public:
+  GpuKernelAttrBase() = default;
   virtual ~GpuKernelAttrBase() = default;
 };
 
-struct DynamicOutInfo {
+using GpuKernelAttrBasePtr = std::shared_ptr<GpuKernelAttrBase>;
+
+struct TensorInfo {
   std::vector<std::vector<int>> shapes;
   std::vector<std::vector<TypeId>> types;
   std::vector<std::vector<Format>> formats;
@@ -37,37 +42,37 @@ struct DynamicOutInfo {
 
 class GpuKernelHelperBase {
  public:
-  explicit GpuKernelHelperBase(const std::string &kernel_name) : kernel_name_(kernel_name) {}
+  explicit GpuKernelHelperBase(const std::string &kernel_name, const uint32_t &device_id)
+      : kernel_name_(kernel_name), device_id_(device_id) {}
   virtual ~GpuKernelHelperBase() {
     input_size_list_.clear();
     output_size_list_.clear();
     work_size_list_.clear();
   }
 
-  virtual int CalMemSize(const std::vector<std::vector<size_t>> &input_shapes,
-                         const std::vector<std::vector<size_t>> &output_shapes) = 0;
+  virtual int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
+                         const std::vector<std::vector<int64_t>> &output_shapes) = 0;
 
   virtual int Process(const std::vector<void *> &input_ptrs, const std::vector<void *> &output_ptrs,
                       const std::vector<void *> &work_ptrs, void *cuda_stream) = 0;
-
-  virtual void ResetResource() {
-    MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
-  }
 
   std::vector<size_t> GetInputSizeList() { return input_size_list_; }
   std::vector<size_t> GetOutputSizeList() { return output_size_list_; }
   std::vector<size_t> GetWorkSizeList() { return work_size_list_; }
 
-  virtual int CheckKernelParam(GpuKernelAttrBase *kernel_attr) { return 0; }
-
   // Dynamic kernel can pass output information by this interface.
-  virtual DynamicOutInfo GetDynOutInfo() { return DynamicOutInfo(); }
+  virtual TensorInfo GetOutputTensorInfo() { return TensorInfo(); }
+  virtual void SetKernelParam(const GpuKernelAttrBasePtr &kernel_attr) {}
+
+ protected:
+  virtual int CheckKernelParam() { return 0; }
 
  protected:
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> work_size_list_;
   std::string kernel_name_;
+  uint32_t device_id_;
 };
 }  // namespace cukernel
 }  // namespace mindspore

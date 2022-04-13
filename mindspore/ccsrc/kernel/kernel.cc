@@ -47,16 +47,13 @@ TypeId KernelTensor::GetDtype() const {
   return elem->type_id();
 }
 
-std::vector<size_t> KernelTensor::GetShapeVector() const {
+std::vector<int64_t> KernelTensor::GetShapeVector() const {
   auto base_shape_ptr = GetBaseShape();
   if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::Shape>()) {
     return {};
   }
   auto shape = base_shape_ptr->cast<abstract::ShapePtr>()->shape();
-  std::vector<size_t> out_shape;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(out_shape),
-                 [](const int64_t &value) { return static_cast<size_t>(value); });
-  return out_shape;
+  return shape;
 }
 
 std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
@@ -87,7 +84,7 @@ std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
   return types;
 }
 
-std::vector<std::vector<size_t>> KernelTensor::GetListOrTupleShapeVector() const {
+std::vector<std::vector<int64_t>> KernelTensor::GetListOrTupleShapeVector() const {
   auto base_shape_ptr = GetBaseShape();
   // ListShape or TupleShape is inherited from SequenceShape.
   if (base_shape_ptr == nullptr || !base_shape_ptr->isa<abstract::SequenceShape>()) {
@@ -95,16 +92,13 @@ std::vector<std::vector<size_t>> KernelTensor::GetListOrTupleShapeVector() const
   }
   auto sequence_shape_ptr = base_shape_ptr->cast<abstract::SequenceShapePtr>();
   auto base_shape_list = sequence_shape_ptr->shape();
-  std::vector<std::vector<size_t>> shape_vector_list;
+  std::vector<std::vector<int64_t>> shape_vector_list;
   for (auto base_shape : base_shape_list) {
     if (base_shape == nullptr || !base_shape->isa<abstract::Shape>()) {
       return {};
     }
     auto tmp_shape = base_shape->cast<abstract::ShapePtr>()->shape();
-    std::vector<size_t> cur_out_shape;
-    std::transform(tmp_shape.begin(), tmp_shape.end(), std::back_inserter(cur_out_shape),
-                   [](const int64_t &value) { return static_cast<size_t>(value); });
-    shape_vector_list.push_back(cur_out_shape);
+    shape_vector_list.push_back(tmp_shape);
   }
 
   return shape_vector_list;

@@ -104,10 +104,6 @@ class NativeGpuKernelMod : public GpuKernelMod {
 
  protected:
   virtual void InitResource() {}
-  virtual void InitSizeLists() = 0;
-  virtual void ResetResource() {
-    MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
-  }
   uint32_t device_id_;
   static std::map<std::string, std::vector<KernelAttr>> support_map_;
   static std::set<std::string> initialize_;
@@ -124,7 +120,11 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
 
  protected:
   std::weak_ptr<CNode> kernel_node_;
-
+  virtual void InitSizeLists() {}
+  virtual void InitResource() {}
+  virtual void ResetResource() {
+    MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
+  }
   size_t GetMatchKernelAttrIdxWithException(const AnfNodePtr &node, const std::vector<KernelAttr> &kernel_attrs) {
     auto kernel_attr = GetKernelAttrFromNode(node);
     auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);

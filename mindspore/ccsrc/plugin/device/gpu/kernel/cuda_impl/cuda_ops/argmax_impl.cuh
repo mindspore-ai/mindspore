@@ -23,10 +23,10 @@
 extern "C" {
 #endif
 CUDA_LIB_EXPORT void CalArgmaxFp32(const float *input, const int bound, const size_t outer_size,
-                         const size_t inner_size, int *output, cudaStream_t cuda_stream);
+                                   const size_t inner_size, int *output, cudaStream_t cuda_stream);
 
-CUDA_LIB_EXPORT void CalArgmaxFp16(const half *input, const int bound, const size_t outer_size,
-                        const size_t inner_size, int *output, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void CalArgmaxFp16(const half *input, const int bound, const size_t outer_size, const size_t inner_size,
+                                   int *output, cudaStream_t cuda_stream);
 #ifdef __cplusplus
 }
 #endif
