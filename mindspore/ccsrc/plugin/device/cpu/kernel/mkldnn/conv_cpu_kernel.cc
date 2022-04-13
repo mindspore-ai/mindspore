@@ -23,6 +23,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+constexpr size_t kHDimPos = 2;
+constexpr size_t kWDimPos = 1;
 constexpr size_t kConvInputsNum = 2;
 constexpr size_t kConvOutputsNum = 1;
 }  // namespace
@@ -81,6 +83,14 @@ void ConvCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return value - 1; });
   PaddingInfo padding_info{pad_mode, kernel_size, strides, dilation, &padding_l, &padding_r};
   GetPadding(kernel_node, src_shape, padding_info);
+  size_t input_height = src_shape[src_shape.size() - kHDimPos] + padding_l[padding_l.size() - kWDimPos] +
+                        padding_l[padding_l.size() - kHDimPos];
+  size_t input_width = src_shape[src_shape.size() - kWDimPos] + padding_r[padding_r.size() - kWDimPos] +
+                       padding_r[padding_r.size() - kHDimPos];
+  if (input_height < weight_shape[weight_shape.size() - kHDimPos] ||
+      input_width < weight_shape[weight_shape.size() - kWDimPos]) {
+    MS_LOG(EXCEPTION) << "Shape error for Conv2d, input shape's h or w after padding is less than kernel_size";
+  }
 
   const auto desc = CreateDesc<dnnl::convolution_forward::desc>(
     dnnl::prop_kind::forward_training, dnnl::algorithm::convolution_auto, src_desc, weights_desc, dst_desc, strides,
