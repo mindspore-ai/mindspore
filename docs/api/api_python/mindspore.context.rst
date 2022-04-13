@@ -99,7 +99,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
       内存重用：
 
       - **mem_Reuse**：表示内存复用功能是否打开。设置为True时，将打开内存复用功能。设置为False时，将关闭内存复用功能。
-        有关running data recoder和内存复用配置详细信息，请查看 `配置RDR和内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/debug/custom_debugging_info.html>`_。
+        有关running data recoder和内存复用配置详细信息，请查看 `配置RDR和内存复用 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/debug/custom_debug.html>`_。
 
 
     - **precompile_only** (bool) - 表示是否仅预编译网络。默认值：False。设置为True时，仅编译网络，而不执行网络。
