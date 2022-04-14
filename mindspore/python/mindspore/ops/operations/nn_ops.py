@@ -4579,7 +4579,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
     Outputs:
         Tuple of 3 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **var** (Tensor) - A Tensor with shape :math:`(N, *)`.
         - **m** (Tensor) - A Tensor with shape :math:`(1, )`.
         - **v** (Tensor) - A Tensor with shape :math:`(1, )`.
 
@@ -4654,7 +4654,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
                              f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
                              f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
-        return [1], [1], [1]
+        return var_shape, [1], [1]
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
                     beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype, indices_dtype):
@@ -4729,7 +4729,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
     Outputs:
         Tuple of 3 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **var** (Tensor) - A Tensor with shape :math:`(N, *)`.
         - **m** (Tensor) - A Tensor with shape :math:`(1, )`.
         - **v** (Tensor) - A Tensor with shape :math:`(1, )`.
 
@@ -4805,7 +4805,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
             raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
                              f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
                              f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
-        return [1], [1], [1]
+        return var_shape, [1], [1]
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
                     beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype, indices_dtype):
@@ -4849,7 +4849,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
     Outputs:
         Tuple of 3 Tensor, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **var** (Tensor) - A Tensor with shape :math:`(N, *)`.
         - **accum** (Tensor) - A Tensor with shape :math:`(1, )`.
         - **linear** (Tensor) - A Tensor with shape :math:`(1, )`.
 
@@ -4919,7 +4919,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
             validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
         validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        return [1], [1], [1]
+        return var_shape, [1], [1]
 
     def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
         args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
@@ -4964,7 +4964,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     Outputs:
         Tuple of 2 Tensors, this operator will update the input parameters directly, the outputs are useless.
 
-        - **var** (Tensor) - A Tensor with shape :math:`(1, )`.
+        - **var** (Tensor) - A Tensor with shape :math:`(N, *)`.
         - **accum** (Tensor) - A Tensor with shape :math:`(1, )`.
 
     Raises:
@@ -5021,7 +5021,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape,
                     grad_shape, indices_shape):
         validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        return [1], [1]
+        return var_shape, [1]
 
     def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype,
                     grad_dtype, indices_dtype):

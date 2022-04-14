@@ -46,7 +46,8 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
                                                      .AddInputAttr(kNumberTypeInt32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutInRef(0, 0),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddInputAttr(kNumberTypeFloat32)
@@ -55,7 +56,8 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
                                                      .AddInputAttr(kNumberTypeInt64)
                                                      .AddOutputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32)};
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutInRef(0, 0)};
     return support_list;
   }
 
