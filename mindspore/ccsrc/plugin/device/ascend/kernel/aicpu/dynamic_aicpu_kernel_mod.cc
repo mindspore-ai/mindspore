@@ -141,8 +141,8 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   // copy extinfo to device
   AllocateExtInfoDeviceAddr(cnode);
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
-  auto ret = aclrtMemcpy(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
-                         ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE);
+  auto ret = aclrtMemcpyAsync(ext_info_addr_dev_, ext_info_size_, ext_info_handler_->GetExtInfo(),
+                              ext_info_handler_->GetExtInfoLen(), ACL_MEMCPY_HOST_TO_DEVICE, stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "UpdateExtInfo aclrtMemcpy failed. Node info: " << cnode->fullname_with_scope();
     return false;
