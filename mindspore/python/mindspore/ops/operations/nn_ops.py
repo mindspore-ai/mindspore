@@ -1175,6 +1175,8 @@ class BatchNorm(PrimitiveWithInfer):
         """Initialize BatchNorm."""
         if is_training is False:
             self.set_signatures(tuple())
+        else:
+            self.add_prim_attr('side_effect_mem', True)
         validator.check_value_type('is_training', is_training, (bool,), self.name)
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)

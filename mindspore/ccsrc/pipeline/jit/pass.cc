@@ -43,6 +43,7 @@
 #include "frontend/optimizer/slice_activation_in_recompute.h"
 #include "frontend/optimizer/comm_op_attrs.h"
 #include "frontend/optimizer/environ_conversion.h"
+#include "frontend/optimizer/batchnorm_transform.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
 #include "pipeline/pynative/pynative_execute.h"
@@ -81,6 +82,20 @@ void UpdateArgsSpec(const FuncGraphPtr &func_graph, const ResourcePtr &res) {
   res->set_args_spec(args_spec);
 }
 }  // namespace
+
+bool BatchNormTransformPass(const ResourcePtr &res) {
+  // Transform only work in train process;
+  auto env_ge = common::GetEnv("MS_GE_TRAIN");
+  if (env_ge != "1") {
+    MS_LOG(INFO) << "no need transfer batch norm in inference process";
+    return true;
+  }
+  MS_EXCEPTION_IF_NULL(res);
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  opt::BatchNormTransform(func_graph, res->manager());
+  return true;
+}
 
 bool SimplifyDataStructuresPass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res);
@@ -812,6 +827,7 @@ std::vector<PassItem> kVmPasses = {
 };
 
 std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStructuresPass},
+                                   {"batchnorm_transform", BatchNormTransformPass},
                                    {"opt_a", OptPassAGroup},
                                    {"clean_after_opta", CleanAfterOptAPass},
                                    {"opt_b", OptPassBGroup},

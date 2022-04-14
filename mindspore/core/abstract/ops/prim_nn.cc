@@ -122,10 +122,15 @@ AbstractBasePtr InferImplPoolingGrad(const AnalysisEnginePtr &, const PrimitiveP
 
 AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
-  // Inputs: five tensors(x, gamma, beta, mean, variance).
-  constexpr auto kBatchNormInputNum = 5;
+  // Inference inputs: 5 tensors (x, gamma, beta, mean, variance).
+  // Training inputs: 6 (x, gamma, beta, mean, variance, Umonad).
+  constexpr auto kBatchNormInferInputNum = 5;
+  constexpr auto kBatchNormTrainInputNum = 6;
   const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, kBatchNormInputNum);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    args_spec_list.size() == kBatchNormInferInputNum || args_spec_list.size() == kBatchNormTrainInputNum,
+    "Check BatchNorm input size fail!");
+  CheckArgsSize(op_name, args_spec_list, args_spec_list.size());
   AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());
@@ -137,7 +142,12 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   auto input_tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   (void)CheckTensorDType(input_tensor, {kFloat16, kFloat32}, "For 'BatchNorm', input argument \'input_x\'");
   AbstractTensorPtrList tensorPtrList = std::vector<AbstractTensorPtr>();
-  for (size_t i = 1; i < args_spec_list.size(); ++i) {
+  // In GE process, the input of mean and variance is None
+  constexpr size_t kNumofValidInputInGE = 3;
+  constexpr size_t kNumofValidInputInVM = 5;
+  auto env_ge = common::GetEnv("MS_ENABLE_GE");
+  size_t args_spec_list_size = env_ge == "1" ? kNumofValidInputInGE : kNumofValidInputInVM;
+  for (size_t i = 1; i < args_spec_list_size; ++i) {
     auto param = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
     tensorPtrList.push_back(param);
   }
@@ -152,7 +162,7 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   if (data_format == static_cast<int64_t>(Format::NHWC)) {
     c_axis = 3;
   }
-  for (size_t i = 1; i < args_spec_list.size(); ++i) {
+  for (size_t i = 1; i < args_spec_list_size; ++i) {
     AbstractTensorPtr arg_spec = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
     MS_EXCEPTION_IF_NULL(arg_spec);
     MS_EXCEPTION_IF_NULL(arg_spec->shape());
