@@ -46,6 +46,9 @@ class MatMulNPUOp : public NPUOp {
 
  private:
   bool has_bias_ = false;
+  bool use_batch_matmul_ = false;
+  ge::Operator *actual_matmul_ = nullptr;
+  hiai::op::BatchMatMul *batch_matmul_ = nullptr;
   hiai::op::MatMul *matmul_ = nullptr;
   hiai::op::Add *add_op_ = nullptr;
   hiai::op::Const *bias_ = nullptr;

@@ -62,19 +62,34 @@ int MatMulNPUOp::SetActivation(const ge::Operator *input) {
 
 int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                       const std::vector<mindspore::MSTensor> &out_tensors) {
-  matmul_ = new (std::nothrow) hiai::op::MatMul(name_);
-  if (matmul_ == nullptr) {
-    MS_LOG(ERROR) << "New matmul npu operator for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
   auto matmul_prim = primitive->value_as_MatMulFusion();
   if (matmul_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  matmul_->set_attr_transpose_x1(matmul_prim->transpose_a());
-  matmul_->set_attr_transpose_x2(matmul_prim->transpose_b());
   act_type_ = matmul_prim->activation_type();
+  auto input_dims_a = in_tensors[0].Shape().size();
+  auto input_dims_b = in_tensors[1].Shape().size();
+  if (input_dims_a == NPU_SHAPE_SIZE && input_dims_b == NPU_SHAPE_SIZE) {
+    use_batch_matmul_ = true;
+    batch_matmul_ = new (std::nothrow) hiai::op::BatchMatMul(name_);
+    if (batch_matmul_ == nullptr) {
+      MS_LOG(ERROR) << "New batch_matmul npu operator for op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+    batch_matmul_->set_attr_adj_x1(matmul_prim->transpose_a());
+    batch_matmul_->set_attr_adj_x2(matmul_prim->transpose_b());
+    actual_matmul_ = batch_matmul_;
+  } else {
+    matmul_ = new (std::nothrow) hiai::op::MatMul(name_);
+    if (matmul_ == nullptr) {
+      MS_LOG(ERROR) << "New matmul npu operator for op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+    matmul_->set_attr_transpose_x1(matmul_prim->transpose_a());
+    matmul_->set_attr_transpose_x2(matmul_prim->transpose_b());
+    actual_matmul_ = matmul_;
+  }
 
   if (in_tensors.size() == MATMUL_INPUT_SIZE) {
     has_bias_ = true;
@@ -90,10 +105,15 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
 int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors,
                               const std::vector<ge::Operator *> &npu_inputs) {
-  matmul_->set_input_x1(*npu_inputs[0]);
-  matmul_->set_input_x2(*npu_inputs[1]);
+  if (use_batch_matmul_) {
+    batch_matmul_->set_input_x1(*npu_inputs[0]);
+    batch_matmul_->set_input_x2(*npu_inputs[1]);
+  } else {
+    matmul_->set_input_x1(*npu_inputs[0]);
+    matmul_->set_input_x2(*npu_inputs[1]);
+  }
   if (has_bias_) {
-    add_op_->set_input_x1(*matmul_);
+    add_op_->set_input_x1(*actual_matmul_);
     auto bias_shape = in_tensors[BIAS_INDEX].Shape();
     auto bias_tensor = ConverterToNPUTensor(in_tensors[BIAS_INDEX]);
     if (bias_tensor == nullptr) {
@@ -120,7 +140,7 @@ int MatMulNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors
     if (has_bias_) {
       ret = SetActivation(add_op_);
     } else {
-      ret = SetActivation(matmul_);
+      ret = SetActivation(actual_matmul_);
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
@@ -135,16 +155,16 @@ ge::Operator *MatMulNPUOp::GetNPUOp() {
     if (has_bias_) {
       return add_op_;
     }
-    return matmul_;
+    return actual_matmul_;
   } else {
     return act_op_;
   }
 }
 
 MatMulNPUOp::~MatMulNPUOp() {
-  if (matmul_ != nullptr) {
-    delete matmul_;
-    matmul_ = nullptr;
+  if (actual_matmul_ != nullptr) {
+    delete actual_matmul_;
+    actual_matmul_ = nullptr;
   }
   if (add_op_ != nullptr) {
     delete add_op_;
