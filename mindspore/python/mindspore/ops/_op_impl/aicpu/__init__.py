@@ -88,6 +88,7 @@ from .masked_select_grad import _masked_select_grad_aicpu
 from .mirror_pad_grad import _mirror_pad_grad_aicpu
 from .standard_normal import _standard_normal_aicpu
 from .gamma import _gamma_aicpu
+from .sub import _sub_aicpu
 from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
 from .cache_swap_table import _cache_swap_table_aicpu
