@@ -35,6 +35,8 @@ CUDA_LIB_EXPORT void Negative(const T *input, T *output, const size_t count, cud
 template <typename T>
 CUDA_LIB_EXPORT void Reciprocal(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void Inv(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void Square(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void Sqrt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);

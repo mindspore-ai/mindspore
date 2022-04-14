@@ -5427,7 +5427,7 @@ class Inv(Primitive):
         TypeError: If dtype of `x` is not one of float16, float32, int32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> inv = ops.Inv()
