@@ -47,6 +47,7 @@ using AbstractScalarPtr = abstract::AbstractScalarPtr;
 using AbstractTensorPtr = abstract::AbstractTensorPtr;
 using ElemwiseMap = mindspore::HashMap<std::string, PrimitivePtr>;
 using ArgsPairList = std::vector<std::pair<AnfNodePtr, TypePtr>>;
+using AbstractListPtr = abstract::AbstractListPtr;
 
 class HyperMap : public MetaFuncGraph {
  public:
@@ -202,37 +203,55 @@ using TupleAddPtr = std::shared_ptr<TupleAdd>;
 
 class SequenceSlice : public MetaFuncGraph {
  public:
-  explicit SequenceSlice(const std::string &name, const PrimitivePtr &prim, const PrimitivePtr &get_item)
-      : MetaFuncGraph(name), prim_(prim), get_item_(get_item) {}
+  explicit SequenceSlice(const std::string &name) : MetaFuncGraph(name) {}
   ~SequenceSlice() override = default;
   MS_DECLARE_PARENT(SequenceSlice, MetaFuncGraph)
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) final;
   friend bool operator==(const SequenceSlice &lhs, const SequenceSlice &rhs) { return lhs.name_ == rhs.name_; }
-  virtual std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
-    const AbstractBasePtrList &args_spec_list) = 0;
+
+ protected:
+  virtual void CheckArgs(const AbstractBasePtrList &args_spec_list) = 0;
+  virtual FuncGraphPtr BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) = 0;
+  abstract::AbstractSequencePtr sequence_ = nullptr;
+  AbstractSlicePtr slice_ = nullptr;
+};
+
+class SequenceSliceGetItem : public SequenceSlice {
+ public:
+  explicit SequenceSliceGetItem(const std::string &name, const std::string &prim_name, const std::string &get_item_name)
+      : SequenceSlice(name),
+        prim_(std::make_shared<Primitive>(prim_name)),
+        get_item_(std::make_shared<Primitive>(get_item_name)) {}
+  ~SequenceSliceGetItem() override = default;
+  MS_DECLARE_PARENT(SequenceSliceGetItem, MetaFuncGraph)
+  friend bool operator==(const SequenceSliceGetItem &lhs, const SequenceSliceGetItem &rhs) {
+    return lhs.name_ == rhs.name_;
+  }
+
+ protected:
+  void CheckArgs(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) override;
 
  private:
   PrimitivePtr prim_;
   PrimitivePtr get_item_;
 };
 
-class TupleSlice : public SequenceSlice {
+class ListSliceSetItem : public SequenceSlice {
  public:
-  explicit TupleSlice(const std::string &name) : SequenceSlice(name, prim::kPrimMakeTuple, prim::kPrimTupleGetItem) {}
-  ~TupleSlice() override = default;
-  MS_DECLARE_PARENT(TupleSlice, SequenceSlice)
-  std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
-    const AbstractBasePtrList &args_spec_list) override;
-};
-using TupleSlicePtr = std::shared_ptr<TupleSlice>;
+  explicit ListSliceSetItem(const std::string &name) : SequenceSlice(name) {}
+  ~ListSliceSetItem() override = default;
+  MS_DECLARE_PARENT(ListSliceSetItem, MetaFuncGraph)
+  friend bool operator==(const ListSliceSetItem &lhs, const ListSliceSetItem &rhs) { return lhs.name_ == rhs.name_; }
 
-class ListSlice : public SequenceSlice {
- public:
-  explicit ListSlice(const std::string &name) : SequenceSlice(name, prim::kPrimMakeList, prim::kPrimListGetItem) {}
-  ~ListSlice() override = default;
-  MS_DECLARE_PARENT(ListSlice, SequenceSlice)
-  std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> CheckArgs(
-    const AbstractBasePtrList &args_spec_list) override;
+ protected:
+  void CheckArgs(const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) override;
+
+ private:
+  void CheckAssignRange(int64_t start_index, int64_t stop_index, int64_t step_value);
+  AnfNodePtr GetAssignNode(const FuncGraphPtr &func_graph, const AnfNodePtr &assign_node, int64_t step_value);
+  AbstractListPtr value_list_ = nullptr;
 };
 
 class TupleGetItemTensor : public MetaFuncGraph {

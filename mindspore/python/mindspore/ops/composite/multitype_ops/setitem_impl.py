@@ -17,10 +17,37 @@
 
 from . import _compile_utils as compile_utils
 from ... import functional as F
+from ...operations._inner_ops import SliceGetItem
 from ...composite import base
 from ....common import Tensor
 
 setitem = base.MultitypeFuncGraph('setitem')
+
+slice_get_item = SliceGetItem()
+
+
+class _ListSliceSetItem(base.ListSliceSetItem_):
+    """
+    List slice assign.
+
+    Inputs:
+        data (List): A List to be sliced.
+        s (slice): The index to slice list data.
+        value : The value to be assign
+
+    Outputs:
+        List, consists of some elements of data.
+    """
+
+    def __init__(self, name):
+        """Initialize _TupleSlice."""
+        base.ListSliceSetItem_.__init__(self, name)
+
+    def __call__(self, *args):
+        pass
+
+_list_slice_set_item = _ListSliceSetItem('list_slice_set_item')
+"""_list_slice_set_item is a MetaFuncGraph object which assign a list will slice."""
 
 
 @setitem.register("List", "Number", "String")
@@ -100,6 +127,75 @@ def _list_setitem_with_tuple(data, number_index, value):
         list, type is the same as the element type of data.
     """
     return F.list_setitem(data, number_index, value)
+
+
+@setitem.register("List", "Slice", "Tuple")
+def _list_slice_setitem_with_tuple(data, slice_index, value):
+    """
+    Assigns value to list.
+
+    Inputs:
+        data (list): Data of type list.
+        slice_index (slice): Index of data.
+        value (tuple): Value given.
+
+    Outputs:
+        list, type is the same as the element type of data.
+    """
+    list_value = list(value)
+    return _list_slice_set_item(data, slice_index, list_value)
+
+
+@setitem.register("List", "Slice", "List")
+def _list_slice_setitem_with_list(data, slice_index, value):
+    """
+    Assigns value to list.
+
+    Inputs:
+        data (list): Data of type list.
+        slice_index (slice): Index of data.
+        value (list): Value given.
+
+    Outputs:
+        list, type is the same as the element type of data.
+    """
+    return _list_slice_set_item(data, slice_index, value)
+
+
+@setitem.register("List", "Slice", "Tensor")
+def _list_slice_setitem_with_tensor(data, slice_index, value):
+    """
+    Assigns value to list.
+
+    Inputs:
+        data (list): Data of type list.
+        slice_index (slice): Index of data.
+        value (Tensor): Value given.
+
+    Outputs:
+        list, type is the same as the element type of data.
+    """
+    value_list = list(value)
+    return _list_slice_set_item(data, slice_index, value_list)
+
+
+@setitem.register("List", "Slice", "Number")
+def _list_slice_setitem_with_number(data, slice_index, value):
+    """
+    Assigns value to list.
+
+    Inputs:
+        data (list): Data of type list.
+        slice_index (slice): Index of data.
+        value (number): Value given.
+
+    Outputs:
+        lis/t, type is the same as the element type of data.
+    """
+    step = slice_get_item(slice_index, "step")
+    if step == 1 or step is None:
+        raise TypeError("can only assign an iterable")
+    raise TypeError("must assign iterable to extended slice")
 
 
 @setitem.register("Dictionary", "String", "Tensor")

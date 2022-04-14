@@ -291,6 +291,8 @@ class Parser {
                                     const std::vector<AnfNodePtr> &packed_arguments,
                                     const std::vector<AnfNodePtr> &group_arguments, bool need_unpack) const;
   ScopePtr GetScopeForParseFunction();
+  // Check the value is subscript is reference type
+  bool IsSubscriptReferenceType(const py::object &obj);
   void BuildMethodMap();
   FunctionBlockPtr MakeFunctionBlock(const Parser &parse) {
     FunctionBlockPtr block = std::make_shared<FunctionBlock>(parse);
