@@ -132,23 +132,24 @@ void UniformRealInfo::UpdateShape(const CNodePtr &cnode) {
 }
 
 void UniformRealInfo::ReplaceNodeInputOrAttrs() {
-  // Replace input 'shape' to slice shape
-  auto cnode = cnode_;
-  UpdateShape(cnode);
+  for (auto &cnode : cnodes_) {
+    // Replace input 'shape' to slice shape
+    UpdateShape(cnode);
 
-  // Update seed according rank_id
-  int64_t rank_id = g_device_manager->rank_index_in_stage();
-  int64_t seed_bias;
-  if (repeated_num_in_dev_matrix_right_) {
-    seed_bias = rank_id / repeated_calc_num_;
-  } else {
-    int64_t device_num = stage_device_size_;
-    seed_bias = rank_id % (device_num / repeated_calc_num_);
+    // Update seed according rank_id
+    int64_t rank_id = g_device_manager->rank_index_in_stage();
+    int64_t seed_bias;
+    if (repeated_num_in_dev_matrix_right_) {
+      seed_bias = rank_id / repeated_calc_num_;
+    } else {
+      int64_t device_num = stage_device_size_;
+      seed_bias = rank_id % (device_num / repeated_calc_num_);
+    }
+
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    prim->set_attr(SEED, MakeValue(seed_ + seed_bias));
+    prim->set_attr(SEED2, MakeValue(seed2_ + seed_bias));
   }
-
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  prim->set_attr(SEED, MakeValue(seed_ + seed_bias));
-  prim->set_attr(SEED2, MakeValue(seed2_ + seed_bias));
 }
 
 void UniformRealInfo::ResetInputsShape() {

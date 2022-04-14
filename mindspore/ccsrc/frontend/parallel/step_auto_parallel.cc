@@ -197,6 +197,9 @@ bool IsAutoParallelCareNode(const CNodePtr &cnode) {
   if (prim == nullptr) {
     return false;
   }
+  if (prim->name() == SEND || prim->name() == RECEIVE) {
+    return false;
+  }
   bool bool_result = IsParallelCareNode(cnode) && !IsSplittableOperator(prim->name());
   if (bool_result && (prim->name() != MAKE_TUPLE) && (prim->name() != MAKE_LIST)) {
     MS_LOG(EXCEPTION) << "Should implementing OperatorInfo for: " << prim->name();
@@ -560,6 +563,7 @@ void SetOperatorToCNode(const OperatorInfoPtr &current_op_ptr, const PrimitivePt
     ModifyInputsTensorNameListIfOperatorInfoCreated(current_op_ptr->name(), cnode->UniqueId());
 
     cnode->set_user_data<OperatorInfo>(current_op_ptr);
+    current_op_ptr->set_cnode(cnode);
     MS_LOG(INFO) << "The CNode with UniqueId: " << cnode->UniqueId()
                  << " and UniqueIdThroughCopy: " << cnode->UniqueIdThroughCopy()
                  << ", CNode fullname_with_scope: " << cnode->fullname_with_scope()
@@ -836,6 +840,10 @@ void AugmentCostGraph(const std::vector<AnfNodePtr> &all_nodes) {
     std::set<std::string> target_without_duplicate;
     for (auto &target : target_set) {
       auto target_cnode = target.first->cast<CNodePtr>();
+      // Eliminate the ops without cost.
+      if (IsSomePrimitive(target_cnode, SEND)) {
+        continue;
+      }
       auto input_index = target.second;
       (void)target_without_duplicate.insert(std::to_string(input_index) +
                                             target_cnode->user_data<OperatorInfo>()->name());
