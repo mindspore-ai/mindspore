@@ -1,6 +1,6 @@
-[查看中文](./RELEASE_CN.md)
+# MindSpore Release Notes
 
-# MindSpore 1.7.0
+[查看中文](./RELEASE_CN.md)
 
 ## MindSpore 1.7.0 Release Notes
 
@@ -8,37 +8,36 @@
 
 #### OS
 
-- [STABLE] Support Python 3.8(Linux/Windows/Mac).
+- [STABLE] Support Python 3.8 (Linux/Windows/Mac).
 - [STABLE] Installation improved with more detailed install guide and automated shell scripts.
 - [STABLE] Support operator computing with multi-thread under Windows.
 - [STABLE] Compatible with GCC from version 7.3 to 9.x.
 
 #### FrontEnd
 
-- [STABLE] Support dynamic weight decay for optimizers, that is weight decay value will change according to the global step during training.
-- [STABLE] Add four methods to create Tensor, they are `mindspore.numpy.rand()`, `mindspore.numpy.randn()`, `mindspore.numpy.randint()`, and  `mindspore.ops.arange()`.
-- [STABLE] Add  `mindspore.callback.History` and `mindspore.callback.LambdaCallback` in Callback.
-- [BETA] Support custom operator implemented by MindSpore Hybrid DSL.
-- [BETA] Support custom operator implemented by Julia.
-- [STABLE] Support accessing attributes and methods of user-defined classes  through `mindspore.ms_class` decorator.
+- [STABLE] Support dynamic weight decay for optimizers, that is weight decay value will change according to the increasing step during training.
+- [STABLE] Add four methods to create Tensor, which are `mindspore.numpy.rand()`, `mindspore.numpy.randn()`, `mindspore.numpy.randint()`, and `mindspore.ops.arange()`.
+- [STABLE] Add `mindspore.callback.History` and `mindspore.callback.LambdaCallback` in Callback.
+- [BETA] Support custom operator implemented by Julia operator.
+- [STABLE] Support accessing attributes and methods of user-defined classes  through `mindspore.ms_class` class decorator.
 - [STABLE] Support training when a network has side effect operations and  control flow statements at the same time.
-- [STABLE] Support for more complex control flow syntax, such as a `for` loop statement in the body of a `while` loop.
-- [STABLE] The performance of networks with complex syntax control flow statements are improved by decreasing the num of subgraphs.
+- [STABLE] Support for more complex control flow syntax, such as a for loop statement in the body of a while loop.
+- [STABLE] Improve the performance of networks with complex syntax control flow statements by decreasing the num of subgraphs.
 
 #### PyNative
 
-- [STABLE]  Add Hook functions in PyNative mode, including register_forward_pre_hook, register_forward_hook, register_backward_hook.
-- [STABLE] Optimize execution of PyNative mode，front-end and back-end execution in parallel.
+- [STABLE] Add Hook functions in PyNative mode, including register_forward_pre_hook, register_forward_hook of the forward hook interface, register_backward_hook of the reverse hook interface.
+- [STABLE] Optimize the execution performance of PyNative mode, and execute the front-end Python and the back-end C++ in parallel.
 
 #### Auto Parallel
 
-- [STABLE] Support Top-K routing, data parallel and optimizer state parallel when enable MoE.
-- [STABLE] Support AllGather/ReduceScatter communication operator fusion. Support AllReuduce fusion by the data volume size in data parallel mode.
-- [STABLE] Support ops.clip_by_global_norm.
-- [STABLE] Support AdaSum optimizer in parallel mode.
+- [STABLE] Support TopK routing, data parallel and optimizer state parallel when enable MoE.
+- [STABLE] Support AllGather/ReduceScatter communication operator fusion. Support AllReuduce fusion by the data volume size in DATA_PARALLEL mode.
+- [STABLE] Support ops.clip_by_global_norm in the parallel mode.
+- [STABLE] Support AdaSum optimizer in the parallel mode.
 - [STABLE] Support automatic optimizer state parallel.
 - [STABLE] Support AlltoAll configurable. Support automatically add virtualdataset cell.
-- [STABLE] Support automatically infer trainable parameters in pipeline training.
+- [STABLE] Support automatically infer trainable parameters in pipeline parallel training.
 - [STABLE] Support clusters where the device number is not the power of 2.
 - [STABLE] Support sharding propagation in auto parallel mode.
 - [STABLE] Support optimizer offload under the unified runtime.
@@ -48,16 +47,16 @@
 #### Executor
 
 - [BETA] [Failure Recovery Under Data Parallel Training](https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#%E5%AE%B9%E7%81%BE%E6%81%A2%E5%A4%8D) Support auto failure recovery under data parallel training mode.
-- [BETA] Support automatic search for the number of threads in CPU, which will get the optimal number of threads to run. It costs 50 steps for search, the performance will be stable and optimal after that. For test, the data should be available after 50 steps.
+- [BETA] Support searching for the number of threads under the CPU to obtain the optimal number of threads for execution. The entire search process takes 50 steps, and the overall performance will reach a stable state after 50 steps. When testing performance, data after 50 steps need to be used as a standard.
 
 #### DataSet
 
 - [STABLE] Add dataset operations mapping between TensorFlow.data module and MindSpore.dataset module, [check list](https://www.mindspore.cn/docs/en/master/note/api_mapping/tensorflow_api_mapping.html#tf-data).
 - [STABLE] Python multiprocessing optimization and make processes exit normally.
 - [STABLE] Support [Dataset Autotune](https://www.mindspore.cn/tutorials/experts/en/master/debug/dataset_autotune.html) for tuning the speed of dataset pipeline automatically.
-- [BETA]  [Dataset Offload](https://www.mindspore.cn/docs/en/master/design/dataset_offload.html) support new operations: RandomColorAdjust, RandomSharpness, TypeCast.
-- When `__getitem__`/`__next__` methods of GeneratorDataset return a single NumPy object, the corresponding output will be a single data column.
-- When specify too many processes or threads for loading dataset may cause `RuntimeError: can't start new thread`, use `ulimit -u 10240` to increase the number of workers available to resolve it.
+- [BETA]  [Dataset Offload](https://www.mindspore.cn/docs/en/master/design/dataset_offload.html) support new data augmentation operations: RandomColorAdjust, RandomSharpness, TypeCast.
+- Output a single data column when __getitem__/__next__ methods of GeneratorDataset return a single NumPy object.
+- Use ulimit -u 10240 to increase the number of threads/processes available to the current user when specify too many processes or threads for loading dataset may cause RuntimeError: can't start new thread.
 
 ### API Change
 
@@ -65,12 +64,10 @@
 
 ##### Python API
 
-- When using `register_backward_hook` interface and returning new gradient in backward hook function, the return format is changed to `tuple`.([Change single ret to tuple ret for pynative cell hook · Pull Request !31876 · MindSpore/mindspore - Gitee.com](https://gitee.com/mindspore/mindspore/pulls/31876))
-- Deprecated usage:  `import mindspore.dataset.engine.datasets as ds`.  Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.dataset.html).
+- Modify the gradient return value type of the hook corresponding to the register_backward_hook function, and change the gradient return value to the tuple type uniformly.([!31876](https://gitee.com/mindspore/mindspore/pulls/31876))
+- Deprecated usage: `import mindspore.dataset.engine.datasets as ds`. Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.dataset.html).
 - Add `mindspore.ms_class` interface, as class decorator for user-defined classes. It allows MindSpore to identify user-defined classes and access their attributes and methods([!30855](https://gitee.com/mindspore/mindspore/pulls/30855))
 - Deprecate `mindspore.SparseTensor` and use `mindspore.COOTensor` instead. ([!28505]())
-- Add Tensor init arg `internal` for internal use.
-- MindSpore's QAT feature is refactoring, and corresponding interfaces under the `mindspore.compression` package have been removed ([!31364]()). We will re-provide MindSpore's QAT feature based on MindSpore Rewrite in version r1.8, which is currently in the demo state ([!30974]()).
 
 ## MindSpore Lite
 
@@ -78,7 +75,7 @@
 
 #### Post quantization
 
-- [STABLE] Post training quantization support dynamic quant.
+- [STABLE] Support post quantization to run dynamic quantization algorithm.
 - [BETA] Support post quantized model to run on NVIDIA GPU.
 
 ### Contributors
