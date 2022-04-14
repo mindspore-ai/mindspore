@@ -206,6 +206,7 @@ mindspore.nn.probability.distribution.Beta
         计算标准差。
 
         **参数：**
+        
         - **concentration1** (Tensor) - Beta 分布的 alpha。默认值：None。
         - **concentration0** (Tensor) - Beta 分布的 beta。默认值：None。
 

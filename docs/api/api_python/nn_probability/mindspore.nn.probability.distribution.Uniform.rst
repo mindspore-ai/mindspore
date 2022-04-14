@@ -207,6 +207,7 @@ mindspore.nn.probability.distribution.Uniform
         计算标准差。
 
         **参数：**
+        
         - **high** (Tensor) - 分布的上限值。默认值：None。
         - **low** (Tensor) - 分布的下限值。默认值：None。
 
