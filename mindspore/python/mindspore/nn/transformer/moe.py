@@ -26,6 +26,8 @@ from mindspore.ops import functional as F
 from mindspore.ops.primitive import constexpr
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
+from mindspore.context import ParallelMode
+from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from .op_parallel_config import default_moeparallel_config
 
 __all__ = [
@@ -51,6 +53,7 @@ class MoEConfig:
             >>> from mindspore.nn.transformer import MoEConfig
             >>> moe_config = MoEConfig(expert_num=4, capacity_factor=5.0, aux_loss_factor=0.05, num_experts_chosen=1)
     """
+
     def __init__(self, expert_num=1, capacity_factor=1.1, aux_loss_factor=0.05,
                  num_experts_chosen=1):
         Validator.check_positive_int(expert_num, "expert_num")
@@ -133,6 +136,7 @@ class MoE(Cell):
     Outputs:
         Tensor, the output of this layer after mapping. The shape is `[batch, seq_length, hidden_size]`.
     """
+
     def __init__(self, hidden_size,
                  ffn_hidden_size,
                  dropout_rate,
@@ -141,36 +145,66 @@ class MoE(Cell):
                  moe_config=default_moe_config,
                  parallel_config=default_moeparallel_config):
         super(MoE, self).__init__()
-        self.hidden_size = hidden_size
-        self.expert_dim = moe_config.expert_num
-        self.capacity_factor = moe_config.capacity_factor
-        self.aux_loss_factor = moe_config.aux_loss_factor
-        self.num_experts_chosen = moe_config.num_experts_chosen
-        self.dp_group = parallel_config.data_parallel
-        self.dp = parallel_config.data_parallel
-        self.ep = parallel_config.expert_parallel
-        from .transformer import FeedForward
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            self.hidden_size = hidden_size
+            self.expert_dim = moe_config.expert_num
+            self.capacity_factor = moe_config.capacity_factor
+            self.aux_loss_factor = moe_config.aux_loss_factor
+            self.num_experts_chosen = moe_config.num_experts_chosen
+            self.dp_group = parallel_config.data_parallel
+            self.dp = parallel_config.data_parallel
+            self.ep = parallel_config.expert_parallel
+            from .transformer import FeedForward
 
-        self.ffn = FeedForward(hidden_size=hidden_size,
-                               ffn_hidden_size=ffn_hidden_size,
-                               dropout_rate=dropout_rate,
-                               hidden_act=hidden_act,
-                               expert_num=self.expert_dim,
-                               param_init_type=param_init_type,
-                               parallel_config=parallel_config)
-        self.reshape = P.Reshape()
-        self.shape = P.Shape()
-        self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
-        self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
-        self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
-        self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
-        self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
-        self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
-        self.mul = P.Mul().shard(((), ()))
-        self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
-                             training=True, parallel_config=parallel_config)
-        self.cast = P.Cast()
+            self.ffn = FeedForward(hidden_size=hidden_size,
+                                   ffn_hidden_size=ffn_hidden_size,
+                                   dropout_rate=dropout_rate,
+                                   hidden_act=hidden_act,
+                                   expert_num=self.expert_dim,
+                                   param_init_type=param_init_type,
+                                   parallel_config=parallel_config)
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
+            self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
+            self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
+            self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
+            self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
+            self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
+            self.mul = P.Mul()
+            self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
+                                 training=True, parallel_config=parallel_config)
+            self.cast = P.Cast()
+        else:
+            self.hidden_size = hidden_size
+            self.expert_dim = moe_config.expert_num
+            self.capacity_factor = moe_config.capacity_factor
+            self.aux_loss_factor = moe_config.aux_loss_factor
+            self.num_experts_chosen = moe_config.num_experts_chosen
+            self.dp_group = parallel_config.data_parallel
+            self.dp = parallel_config.data_parallel
+            self.ep = parallel_config.expert_parallel
+            from .transformer import FeedForward
 
+            self.ffn = FeedForward(hidden_size=hidden_size,
+                                   ffn_hidden_size=ffn_hidden_size,
+                                   dropout_rate=dropout_rate,
+                                   hidden_act=hidden_act,
+                                   expert_num=self.expert_dim,
+                                   param_init_type=param_init_type,
+                                   parallel_config=parallel_config)
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.transpose_2dim = P.Transpose().shard(((self.dp, 1),))
+            self.transpose_2dim_ep = P.Transpose().shard(((self.ep, 1),))
+            self.transpose_3dim = P.Transpose().shard(((self.dp, 1, 1),))
+            self.transpose_4dim_ep = P.Transpose().shard(((self.ep, 1, 1, 1),))
+            self.batch_mm = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
+            self.batch_mm2 = P.BatchMatMul().shard(((self.dp, 1, 1), (self.dp, 1, 1)))
+            self.mul = P.Mul().shard(((), ()))
+            self.router = Router(d_model=hidden_size, moe_config=moe_config, routing_policy=None,
+                                 training=True, parallel_config=parallel_config)
+            self.cast = P.Cast()
 
     def construct(self, input_tensor):
         input_shape = F.shape(input_tensor)
@@ -196,8 +230,8 @@ class MoE(Cell):
                                                    expert_capacity))
         # The following four ops are to implement transpose(expert_input, (2, 0, 3, 1)), for that a single transpose
         # has bad performance
-        expert_input = self.reshape(expert_input, (self.dp_group*self.hidden_size,
-                                                   self.expert_dim*expert_capacity))
+        expert_input = self.reshape(expert_input, (self.dp_group * self.hidden_size,
+                                                   self.expert_dim * expert_capacity))
         expert_input = self.transpose_2dim(expert_input, (1, 0))
         expert_input = self.reshape(expert_input, (self.expert_dim, expert_capacity, self.dp_group,
                                                    self.hidden_size))
@@ -213,18 +247,18 @@ class MoE(Cell):
         # The following five ops are to implement transpose(expert_output, (1, 3, 0, 2)), for that a single transpose
         # has bad performance
         expert_output = self.reshape(expert_output, (self.expert_dim,
-                                                     self.dp_group*expert_capacity*self.hidden_size))
+                                                     self.dp_group * expert_capacity * self.hidden_size))
         expert_output = self.transpose_2dim_ep(expert_output, (1, 0))
         expert_output = self.reshape(expert_output, (self.dp_group, expert_capacity,
-                                                     self.hidden_size*self.expert_dim))
+                                                     self.hidden_size * self.expert_dim))
         expert_output = self.transpose_3dim(expert_output, (0, 2, 1))
         # expert_output's shape: (self.dp_group, self.hidden_size, self.expert_dim, expert_capacity)
         expert_output = self.reshape(expert_output, (self.dp_group, self.hidden_size, self.expert_dim,
                                                      expert_capacity))
         expert_output = self.reshape(expert_output, (self.dp_group, self.hidden_size,
-                                                     self.expert_dim*expert_capacity))
+                                                     self.expert_dim * expert_capacity))
         combine_tensor = self.reshape(combine_tensor, (self.dp_group, tokens_per_group,
-                                                       self.expert_dim*expert_capacity))
+                                                       self.expert_dim * expert_capacity))
         # combine_tensor's shape: (self.dp_group, self.expert_dim*expert_capacity, tokens_per_group)
         combine_tensor = self.transpose_3dim(combine_tensor, (0, 2, 1))
         combine_tensor = self.cast(combine_tensor, F.dtype(expert_output))
@@ -268,27 +302,48 @@ class Router(Cell):
                  training=True,
                  parallel_config=None):
         super(Router, self).__init__()
-        dp = parallel_config.data_parallel
-        self.d_model = d_model
-        self.expert_dim = moe_config.expert_num
-        self.capacity_factor = moe_config.capacity_factor
-        self.num_experts_chosen = moe_config.num_experts_chosen
-        self.training = training
-        self.routing_policy = routing_policy
-        self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
-        self.noisy_epsilon = 1e-2
-        self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            self.d_model = d_model
+            self.expert_dim = moe_config.expert_num
+            self.capacity_factor = moe_config.capacity_factor
+            self.num_experts_chosen = moe_config.num_experts_chosen
+            self.training = training
+            self.routing_policy = routing_policy
+            self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
+            self.noisy_epsilon = 1e-2
+            self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
 
-        self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
-        self.dense.matmul.shard(((dp, 1), (1, 1)))
-        self.mul = P.Mul().shard(((dp, 1, 1), (dp,)))
-        self.cast = P.Cast()
+            self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
+            self.mul = P.Mul()
+            self.cast = P.Cast()
 
-        if self.routing_policy is None:
-            self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
-                                     parallel_config=parallel_config)
+            if self.routing_policy is None:
+                self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
+                                         parallel_config=parallel_config)
+            else:
+                self.router = routing_policy
         else:
-            self.router = routing_policy
+            dp = parallel_config.data_parallel
+            self.d_model = d_model
+            self.expert_dim = moe_config.expert_num
+            self.capacity_factor = moe_config.capacity_factor
+            self.num_experts_chosen = moe_config.num_experts_chosen
+            self.training = training
+            self.routing_policy = routing_policy
+            self.noisy_policy = None  # candidate: ["jitter", "rsample", "None"]
+            self.noisy_epsilon = 1e-2
+            self.noise = Tensor(np.random.uniform(1 - self.noisy_epsilon, 1 + self.noisy_epsilon, (d_model,)))
+
+            self.dense = Dense(in_channels=self.d_model, out_channels=self.expert_dim, has_bias=False)
+            self.dense.matmul.shard(((dp, 1), (1, 1)))
+            self.mul = P.Mul().shard(((dp, 1, 1), (dp,)))
+            self.cast = P.Cast()
+
+            if self.routing_policy is None:
+                self.router = TopkRouter(d_model=d_model, moe_config=moe_config, training=training,
+                                         parallel_config=parallel_config)
+            else:
+                self.router = routing_policy
 
     def construct(self, input_tensor):
         input_tensor = self.cast(input_tensor, mstype.float32)
@@ -326,53 +381,102 @@ class TopkRouter(Cell):
                  training=True,
                  parallel_config=None):
         super(TopkRouter, self).__init__()
-        dp = parallel_config.data_parallel
-        self.d_model = d_model
-        self.expert_dim = moe_config.expert_num
-        self.capacity_factor = moe_config.capacity_factor
-        self.training = training
-        self.dp_group = dp
-        self.noisy_policy = None
-        self.cast = P.Cast()
-        self.reshape = P.Reshape()
-        self.shape = P.Shape()
-        self.softmax = P.Softmax(axis=-1).shard(((dp, 1, 1,),))
-        self.argmax = P.ArgMaxWithValue(axis=-1, keep_dims=False).shard(((dp, 1, 1),))
-        self.num_experts_chosen = moe_config.num_experts_chosen
-        self.onehot = P.OneHot().shard(((dp, 1, 1), (), ()))
-        self.onehot2 = P.OneHot().shard(((dp, 1, 1), (), ()))
-        self.onehot3 = P.OneHot().shard(((dp, 1, 1, 1), (), ()))
-        self.on_value = Tensor(1.0, mstype.float32)
-        self.off_value = Tensor(0.0, mstype.float32)
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            dp = parallel_config.data_parallel
+            self.d_model = d_model
+            self.expert_dim = moe_config.expert_num
+            self.capacity_factor = moe_config.capacity_factor
+            self.training = training
+            self.dp_group = dp
+            self.noisy_policy = None
+            self.cast = P.Cast()
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.softmax = P.Softmax(axis=-1)
+            self.argmax = P.ArgMaxWithValue(axis=-1, keep_dims=False)
+            self.num_experts_chosen = moe_config.num_experts_chosen
+            self.onehot = P.OneHot()
+            self.onehot2 = P.OneHot()
+            self.onehot3 = P.OneHot()
+            self.on_value = Tensor(1.0, mstype.float32)
+            self.off_value = Tensor(0.0, mstype.float32)
 
-        self.reduce_mean = P.ReduceMean(keep_dims=False).shard(((dp, 1, 1),))
-        self.reduce_mean2 = P.ReduceMean(keep_dims=False).shard(((dp, 1, 1),))
-        self.reduce_mean3 = P.ReduceMean(keep_dims=False).shard(((dp, 1),))
-        self.mul = P.Mul().shard(((dp, 1), (dp, 1)))
-        self.mul2 = P.Mul().shard(((1,), ()))
-        self.mul3 = P.Mul().shard(((1,), ()))
-        self.mul4 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.mul5 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.mul6 = P.Mul().shard(((dp, 1), (dp, 1)))
-        self.mul7 = P.Mul().shard(((dp, 1), (dp, 1)))
-        self.mul8 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.mul9 = P.Mul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
-        self.not_equal = P.NotEqual().shard(((dp, 1, 1, 1), ()))
-        self.div1 = P.RealDiv().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.div2 = P.RealDiv().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
-        self.add = P.Add().shard(((dp, 1, 1), (dp, 1, 1)))
-        self.add2 = P.Add().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
-        self.add3 = P.Add().shard(((dp, 1), (dp, 1)))
-        self.add4 = P.Add().shard(((dp, 1, 1, 1), ()))
-        self.sub = P.Sub().shard(((), (dp, 1, 1)))
+            self.reduce_mean = P.ReduceMean(keep_dims=False)
+            self.reduce_mean2 = P.ReduceMean(keep_dims=False)
+            self.reduce_mean3 = P.ReduceMean(keep_dims=False)
+            self.mul = P.Mul()
+            self.mul2 = P.Mul()
+            self.mul3 = P.Mul()
+            self.mul4 = P.Mul()
+            self.mul5 = P.Mul()
+            self.mul6 = P.Mul()
+            self.mul7 = P.Mul()
+            self.mul8 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+            self.mul9 = P.Mul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+            self.not_equal = P.NotEqual()
+            self.div1 = P.RealDiv()
+            self.div2 = P.RealDiv()
+            self.add = P.Add()
+            self.add2 = P.Add()
+            self.add3 = P.Add()
+            self.add4 = P.Add()
+            self.sub = P.Sub()
 
-        self.cumsum = P.CumSum(exclusive=True).shard(((dp, 1, 1),))
-        self.less = P.Less().shard(((dp, 1, 1), ()))
-        self.reduce_sum = P.ReduceSum(keep_dims=False).shard(((dp, 1, 1),))
-        self.reduce_sum_keep = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1),))
-        self.reduce_sum_keep2 = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1, 1),))
-        self.expand = P.ExpandDims().shard(((dp, 1),))
-        self.expand2 = P.ExpandDims().shard(((dp, 1, 1),))
+            self.cumsum = P.CumSum(exclusive=True)
+            self.less = P.Less()
+            self.reduce_sum = P.ReduceSum(keep_dims=False)
+            self.reduce_sum_keep = P.ReduceSum(keep_dims=True)
+            self.reduce_sum_keep2 = P.ReduceSum(keep_dims=True)
+            self.expand = P.ExpandDims()
+            self.expand2 = P.ExpandDims()
+        else:
+            dp = parallel_config.data_parallel
+            self.d_model = d_model
+            self.expert_dim = moe_config.expert_num
+            self.capacity_factor = moe_config.capacity_factor
+            self.training = training
+            self.dp_group = dp
+            self.noisy_policy = None
+            self.cast = P.Cast()
+            self.reshape = P.Reshape()
+            self.shape = P.Shape()
+            self.softmax = P.Softmax(axis=-1).shard(((dp, 1, 1,),))
+            self.argmax = P.ArgMaxWithValue(axis=-1, keep_dims=False).shard(((dp, 1, 1),))
+            self.num_experts_chosen = moe_config.num_experts_chosen
+            self.onehot = P.OneHot().shard(((dp, 1, 1), (), ()))
+            self.onehot2 = P.OneHot().shard(((dp, 1, 1), (), ()))
+            self.onehot3 = P.OneHot().shard(((dp, 1, 1, 1), (), ()))
+            self.on_value = Tensor(1.0, mstype.float32)
+            self.off_value = Tensor(0.0, mstype.float32)
+
+            self.reduce_mean = P.ReduceMean(keep_dims=False).shard(((dp, 1, 1),))
+            self.reduce_mean2 = P.ReduceMean(keep_dims=False).shard(((dp, 1, 1),))
+            self.reduce_mean3 = P.ReduceMean(keep_dims=False).shard(((dp, 1),))
+            self.mul = P.Mul().shard(((dp, 1), (dp, 1)))
+            self.mul2 = P.Mul().shard(((1,), ()))
+            self.mul3 = P.Mul().shard(((1,), ()))
+            self.mul4 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+            self.mul5 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+            self.mul6 = P.Mul().shard(((dp, 1), (dp, 1)))
+            self.mul7 = P.Mul().shard(((dp, 1), (dp, 1)))
+            self.mul8 = P.Mul().shard(((dp, 1, 1), (dp, 1, 1)))
+            self.mul9 = P.Mul().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+            self.not_equal = P.NotEqual().shard(((dp, 1, 1, 1), ()))
+            self.div1 = P.RealDiv().shard(((dp, 1, 1), (dp, 1, 1)))
+            self.div2 = P.RealDiv().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+            self.add = P.Add().shard(((dp, 1, 1), (dp, 1, 1)))
+            self.add2 = P.Add().shard(((dp, 1, 1, 1), (dp, 1, 1, 1)))
+            self.add3 = P.Add().shard(((dp, 1), (dp, 1)))
+            self.add4 = P.Add().shard(((dp, 1, 1, 1), ()))
+            self.sub = P.Sub().shard(((), (dp, 1, 1)))
+
+            self.cumsum = P.CumSum(exclusive=True).shard(((dp, 1, 1),))
+            self.less = P.Less().shard(((dp, 1, 1), ()))
+            self.reduce_sum = P.ReduceSum(keep_dims=False).shard(((dp, 1, 1),))
+            self.reduce_sum_keep = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1),))
+            self.reduce_sum_keep2 = P.ReduceSum(keep_dims=True).shard(((dp, 1, 1, 1),))
+            self.expand = P.ExpandDims().shard(((dp, 1),))
+            self.expand2 = P.ExpandDims().shard(((dp, 1, 1),))
 
     def _auxiliary_loss(self, expert_mask, router_prob):
         """
@@ -432,10 +536,10 @@ class TopkRouter(Cell):
             expert_index, expert_gate = self.argmax(router_prob)
             # expert_mask's shape: (dp_group, tokens_per_group, self.expert_dim)
             expert_mask = self.onehot(expert_index, self.expert_dim, self.on_value, self.off_value)
-            #renormalize the rest prob to be of sum 1
+            # renormalize the rest prob to be of sum 1
             router_prob_normal = self.div1(router_prob, self.add(self.reduce_sum_keep(router_prob, -1), 1e-9))
 
-            #the balance loss is computed at each routing step
+            # the balance loss is computed at each routing step
             loss += self._auxiliary_loss(expert_mask, router_prob_normal)
 
             output = self._maskout_overflowed_tokens(expert_mask, expert_capacity, expert_gate,
@@ -456,7 +560,7 @@ class TopkRouter(Cell):
                                                     self.on_value, self.off_value))
             accum_combine_tensor = self.add2(accum_combine_tensor, combine_tensor)
 
-        #expert weights normalization
+        # expert weights normalization
         combine_tensor_sum = self.reduce_sum_keep2(self.reduce_sum_keep2(accum_combine_tensor, -1), -2)
         accum_combine_tensor = self.div2(accum_combine_tensor, self.add4(combine_tensor_sum, 1e-9))
         # dispatch_tensor is of boolean type. Here, using NotEqual instead of Cast, for that 'Cast to bool' has

@@ -22,6 +22,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn import Cell
 from mindspore.nn.loss.loss import _check_is_tensor
+from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
+from mindspore.context import ParallelMode
 from .layers import _check_input_dtype, _check_input_shape
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
@@ -65,32 +67,59 @@ class CrossEntropyLoss(Cell):
 
     def __init__(self, parallel_config=default_dpmp_config):
         super(CrossEntropyLoss, self).__init__()
-        if not isinstance(parallel_config, OpParallelConfig):
-            raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
-                            ", but got the type: {}.".format(type(parallel_config)))
-        dp = parallel_config.data_parallel
-        mp = parallel_config.model_parallel
-        self.sum = P.ReduceSum().shard(((dp, mp),))
-        self.onehot = P.OneHot().shard(((dp, mp), (), ()))
-        # on/off value for onehot, for smooth labeling, modify the off_value
-        self.on_value = Tensor(1.0, mstype.float32)
-        self.off_value = Tensor(0.0, mstype.float32)
-        self.max = P.ArgMaxWithValue(axis=-1, keep_dims=True).shard(
-            ((dp, mp),))
-        self.eps_const = Tensor(1e-24, mstype.float32)
-        self.sub = P.Sub().shard(((dp, mp), (dp, 1)))
-        self.exp = P.Exp().shard(((dp, mp),))
-        self.div = P.RealDiv().shard(((dp, mp), (dp, 1)))
-        self.log = P.Log().shard(((dp, mp),))
-        self.add = P.Add().shard(((dp, mp), ()))
-        self.mul = P.Mul().shard(
-            ((dp, mp), (dp, mp)))
-        self.neg = P.Neg().shard(((dp, mp),))
-        self.sum2 = P.ReduceSum().shard(((1,),))
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
+            if not isinstance(parallel_config, OpParallelConfig):
+                raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
+                                ", but got the type: {}.".format(type(parallel_config)))
+            dp = parallel_config.data_parallel
+            mp = parallel_config.model_parallel
+            self.sum = P.ReduceSum()
+            self.onehot = P.OneHot()
+            # on/off value for onehot, for smooth labeling, modify the off_value
+            self.on_value = Tensor(1.0, mstype.float32)
+            self.off_value = Tensor(0.0, mstype.float32)
+            self.max = P.ArgMaxWithValue(axis=-1, keep_dims=True).shard(
+                ((dp, mp),))
+            self.eps_const = Tensor(1e-24, mstype.float32)
+            self.sub = P.Sub()
+            self.exp = P.Exp()
+            self.div = P.RealDiv()
+            self.log = P.Log()
+            self.add = P.Add()
+            self.mul = P.Mul()
+            self.neg = P.Neg()
+            self.sum2 = P.ReduceSum().shard(((1,),))
 
-        self.mul2 = P.Mul().shard(((1,), (1,)))
-        self.add2 = P.Add()
-        self.div2 = P.RealDiv()
+            self.mul2 = P.Mul().shard(((1,), (1,)))
+            self.add2 = P.Add()
+            self.div2 = P.RealDiv()
+        else:
+            if not isinstance(parallel_config, OpParallelConfig):
+                raise TypeError("For 'CrossEntropyLoss', the class variable 'parallel_config' must be OpParallelConfig"
+                                ", but got the type: {}.".format(type(parallel_config)))
+            dp = parallel_config.data_parallel
+            mp = parallel_config.model_parallel
+            self.sum = P.ReduceSum().shard(((dp, mp),))
+            self.onehot = P.OneHot().shard(((dp, mp), (), ()))
+            # on/off value for onehot, for smooth labeling, modify the off_value
+            self.on_value = Tensor(1.0, mstype.float32)
+            self.off_value = Tensor(0.0, mstype.float32)
+            self.max = P.ArgMaxWithValue(axis=-1, keep_dims=True).shard(
+                ((dp, mp),))
+            self.eps_const = Tensor(1e-24, mstype.float32)
+            self.sub = P.Sub().shard(((dp, mp), (dp, 1)))
+            self.exp = P.Exp().shard(((dp, mp),))
+            self.div = P.RealDiv().shard(((dp, mp), (dp, 1)))
+            self.log = P.Log().shard(((dp, mp),))
+            self.add = P.Add().shard(((dp, mp), ()))
+            self.mul = P.Mul().shard(
+                ((dp, mp), (dp, mp)))
+            self.neg = P.Neg().shard(((dp, mp),))
+            self.sum2 = P.ReduceSum().shard(((1,),))
+
+            self.mul2 = P.Mul().shard(((1,), (1,)))
+            self.add2 = P.Add()
+            self.div2 = P.RealDiv()
 
     def construct(self, logits, label, input_mask):
         self._check_input(logits, label, input_mask)
