@@ -117,7 +117,8 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
 
   void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
   bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
-  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
+  void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+              const std::shared_ptr<ReinitArgs> &args) override;
   enum KernelModType GetKernelModType() const override { return KernelModType::DeprecatedNativeGpuKernelMod; }
 
  protected:
@@ -420,7 +421,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
-                                     std::vector<int64_t> *attr_value, const std::shared_ptr<InitOpArgs> &args) {
+                                     std::vector<int64_t> *attr_value, const std::shared_ptr<ReinitArgs> &args) {
     // The value of dynamic attr can only be obtained after the InferShape() is executed
     if (args == nullptr || args->depend_tensor_map.empty()) {
       MS_LOG(DEBUG) << "For '" << kernel_name_ << "', the depend_tensor_map is currently empty";

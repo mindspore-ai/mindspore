@@ -50,7 +50,8 @@ class HcclKernel : public AscendKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
+  void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+              const std::shared_ptr<ReinitArgs> &args) override;
 
  protected:
   std::vector<std::vector<size_t>> hccl_kernel_input_shape_list_;

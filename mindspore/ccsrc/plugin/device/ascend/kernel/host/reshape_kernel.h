@@ -43,7 +43,7 @@ class ReshapeKernelMod : public HostKernelMod {
     }
     return true;
   }
-  void UpdateOp() override { AscendKernelMod::UpdateOp(); }
+  void Wait() override { AscendKernelMod::Wait(); }
 
  private:
   void Execute();

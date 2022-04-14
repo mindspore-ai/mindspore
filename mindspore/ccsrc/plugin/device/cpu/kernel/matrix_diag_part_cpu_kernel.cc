@@ -43,7 +43,7 @@ void MatrixDiagPartCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "MatrixDiagPart does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  is_need_updateop_ = true;
+  is_need_wait_ = true;
 }
 
 template <typename T>

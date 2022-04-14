@@ -32,6 +32,7 @@
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_optimization.h"
 #include "kernel/ascend_kernel_mod.h"
+#include "kernel/common_utils.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_load.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
@@ -733,7 +734,8 @@ void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     opt::dynamic_shape::InferOp(kernel);
-    kernel_mod->InitOp(kernel->user_data<kernel::InitOpArgs>());
+    kernel_mod->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                       kernel::GetReinitArgs(kernel));
   }
 }
 
@@ -867,7 +869,7 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
         MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
         return false;
       }
-      kernel_mod->UpdateOp();
+      kernel_mod->Wait();
     } else {
       auto stream = GetKernelStream(kernel);
 #ifndef ENABLE_SECURITY

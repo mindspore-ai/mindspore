@@ -78,7 +78,7 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKerne
     input_size_list_.push_back(s1_size);
     output_size_list_.push_back(r0_shape[0] * sizeof(S));
     output_size_list_.push_back(r1_shape[0] * sizeof(S));
-    is_need_updateop_ = true;
+    is_need_wait_ = true;
     return true;
   }
   void ResetResource() noexcept override {
@@ -86,7 +86,7 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKerne
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
-  void UpdateOp() override {
+  void Wait() override {
     std::vector<size_t> r0_shape{r0_size_};
     std::vector<size_t> r1_shape{r1_size_};
     common::AnfAlgo::SetOutputInferTypeAndShape({TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt64},

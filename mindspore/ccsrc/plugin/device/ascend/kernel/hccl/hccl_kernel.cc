@@ -339,7 +339,8 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   return true;
 }
 
-void HcclKernel::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+void HcclKernel::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                        const std::shared_ptr<ReinitArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();

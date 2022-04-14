@@ -435,7 +435,8 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   if (!(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
     opt::dynamic_shape::InferOp(kernel);
-    gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
+    gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                       kernel::GetReinitArgs(kernel));
   }
 }
 
@@ -497,7 +498,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
       !(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
     kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
-    gpu_kernel->UpdateOp();
+    gpu_kernel->Wait();
   }
   return ret;
 }

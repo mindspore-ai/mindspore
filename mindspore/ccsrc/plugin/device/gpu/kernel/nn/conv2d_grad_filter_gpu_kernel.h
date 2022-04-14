@@ -331,8 +331,7 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (input_num == DynamicInput) {
       is_dynamic_attr_ = true;
     }
-    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &filter_shape_,
-                               kernel_node->user_data<kernel::InitOpArgs>())) {
+    if (GetDynamicAttrIntValue(kernel_node, kShapeIndex_, &filter_shape_, kernel::GetReinitArgs(kernel_node))) {
       get_dynamic_attr_value_ = true;
     }
     if (is_dynamic_attr_ && !get_dynamic_attr_value_) {

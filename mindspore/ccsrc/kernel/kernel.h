@@ -224,13 +224,9 @@ class KernelTensor {
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
-struct InitOpArgs {
+struct ReinitArgs {
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map;
   BaseOperatorPtr base_operator;
-  std::vector<KernelTensorPtr> inputs;
-  std::vector<KernelTensorPtr> outputs;
-  // Key for user data.
-  constexpr static char key[] = "InitOpArgs";
 };
 
 enum class KernelModType {
@@ -269,9 +265,10 @@ class KernelMod {
                     const std::vector<KernelTensorPtr> &outputs) {
     return true;
   }
-  virtual void InitOp(const std::shared_ptr<InitOpArgs> &args) {}
-  virtual void UpdateOp() {}
-  virtual std::vector<KernelTensorPtr> GetDynamicShapeOutputs() { return {}; }
+  virtual void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                      const std::shared_ptr<ReinitArgs> &args) {}
+  virtual void Wait() {}
+  virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
@@ -283,8 +280,8 @@ class KernelMod {
   const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
   void set_stream(StreamType stream) { stream_ = stream; }
   StreamType stream() const { return stream_; }
-  // set true if need to update output's shape after launch in dynamic_shape, like Unique
-  virtual bool IsNeedUpdateOp() { return is_need_updateop_; }
+  // set true if need to wait launch for output's shape, like Unique
+  virtual bool IsNeedWait() { return is_need_wait_; }
   virtual enum KernelModType GetKernelModType() const { return KernelModType::KernelMod; }
 
  protected:
@@ -296,7 +293,7 @@ class KernelMod {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  bool is_need_updateop_ = false;
+  bool is_need_wait_ = false;
 
  private:
   std::vector<AddressPtr> inputs_addr_;

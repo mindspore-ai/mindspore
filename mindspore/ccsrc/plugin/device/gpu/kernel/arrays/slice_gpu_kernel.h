@@ -220,8 +220,8 @@ class SliceFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       size = GetAttr<std::vector<int64_t>>(kernel_node, "size");
       begin = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
     } else {
-      if (GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin, kernel_node->user_data<kernel::InitOpArgs>()) &&
-          GetDynamicAttrIntValue(kernel_node, kSizeIndex_, &size, kernel_node->user_data<kernel::InitOpArgs>())) {
+      if (GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin, kernel::GetReinitArgs(kernel_node)) &&
+          GetDynamicAttrIntValue(kernel_node, kSizeIndex_, &size, kernel::GetReinitArgs(kernel_node))) {
         get_dynamic_attr_value_ = true;
       }
       if (!get_dynamic_attr_value_) {
