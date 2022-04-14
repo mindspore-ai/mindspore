@@ -119,6 +119,15 @@ schema::MetaGraphT *Converter::Convert(const std::unique_ptr<converter::Flags> &
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
   }
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed.");
+  // funcgraph_transform
+  graph = funcgraph_transform_->Transform(graph, flag.get());
+  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Transform anf graph return nullptr.");
+  // export protobuf
+  auto status = MindIRSerialize(flag, graph);
+  if (status != RET_OK) {
+    MS_LOG(WARNING) << "Export to mindir proto return nullptr.";
+  }
   return TransferFuncGraph(flag, graph);
 }
 

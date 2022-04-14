@@ -302,8 +302,15 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       if (user_input.MutableData() != input->data()) {
         if (input->Size() != user_input.DataSize()) {
           ResetTensorData(old_data, input_tensors);
+#ifndef ENABLE_LITE_ACL
           MS_LOG(ERROR) << "Tensor " << user_input.Name() << " has wrong data size.";
           return kLiteInputTensorError;
+#else
+          MS_LOG(WARNING) << "Please check tensor " << user_input.Name()
+                          << " has been modified data size by DVPP method.";
+          std::vector<int> truncate_shape = {static_cast<int>(user_input.DataSize())};
+          input->set_shape(truncate_shape);
+#endif
         }
         input->set_data(user_input.MutableData());
       }
