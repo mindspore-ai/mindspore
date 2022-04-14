@@ -19,7 +19,6 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "nnacl/conv_parameter.h"
-#include "schema/model_v0_generated.h"
 
 using mindspore::kernel::KernelExec;
 using mindspore::kernel::OpenCLSubGraph;
@@ -40,14 +39,8 @@ void TestMain(const std::vector<ArgsTuple> &input_infos, const std::vector<ArgsT
 void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vector<ArgsTupleOutWithDType> &output_info,
               OpParameter *op_parameter, bool fp16_enable, float atol, float rtol, bool print_data) {
   auto primitive_type = static_cast<schema::PrimitiveType>(op_parameter->type_);
-#ifdef ENABLE_V0
-  static std::set<int> packed_op = {schema::v0::PrimitiveType_Conv2D, schema::v0::PrimitiveType_DeConv2D,
-                                    schema::v0::PrimitiveType_DepthwiseConv2D,
-                                    schema::v0::PrimitiveType_DeDepthwiseConv2D, schema::v0::PrimitiveType_MatMul};
-#else
   static std::set<int> packed_op = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
                                     schema::PrimitiveType_MatMulFusion};
-#endif
 
   // simulating benchmark: session::LiteSession::CreateSession() -> session->Init()
   MS_LOG(DEBUG) << "initialize OpenCLRuntime and OpenCLAllocator";

@@ -46,10 +46,6 @@ const char *const unsupport_delegate_log =
   "The mindspore-lite library does not support delegate. Set environment variable "
   "MSLITE_ENABLE_DELEGATE to on to "
   "recompile it.";
-const char *const unsupport_v0_log =
-  "The mindspore-lite library does not support v0 ms. Set environment variable "
-  "MSLITE_ENABLE_V0 to on to "
-  "recompile it. Or use a new converter tool to re transform the model";
 const char *const unsupport_fp16_log =
   "The mindspore-lite library does not support fp16. Set environment variable "
   "MSLITE_ENABLE_FP16 to on to "

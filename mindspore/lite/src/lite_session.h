@@ -109,9 +109,6 @@ class LiteSession : public session::LiteSession {
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
   int SetTensorInitRefCount(const Model *model);
-#ifdef ENABLE_V0
-  void TensorNameCompatibleWithV0(const lite::Model *model);
-#endif
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::KernelExec *> &non_tail_call_kernels);
 #endif

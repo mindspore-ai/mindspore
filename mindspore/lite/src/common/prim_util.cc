@@ -20,9 +20,6 @@
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
-#ifdef ENABLE_V0
-#include "schema/model_v0_generated.h"
-#endif
 
 namespace mindspore {
 namespace lite {
@@ -30,22 +27,11 @@ static std::set<schema::PrimitiveType> tensor_list_ops = {
   schema::PrimitiveType_TensorListFromTensor, schema::PrimitiveType_TensorListGetItem,
   schema::PrimitiveType_TensorListReserve, schema::PrimitiveType_TensorListSetItem,
   schema::PrimitiveType_TensorListStack};
-#ifdef ENABLE_V0
-static std::set<schema::v0::PrimitiveType> v0_tensor_list_ops = {
-  schema::v0::PrimitiveType_TensorListFromTensor, schema::v0::PrimitiveType_TensorListGetItem,
-  schema::v0::PrimitiveType_TensorListReserve, schema::v0::PrimitiveType_TensorListSetItem,
-  schema::v0::PrimitiveType_TensorListStack};
-#endif
 
 int GetPrimitiveType(const void *primitive, int schema_version) {
   if (primitive == nullptr) {
     return -1;
   }
-#ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
-    return static_cast<const schema::v0::Primitive *>(primitive)->value_type();
-  }
-#endif
   return static_cast<const schema::Primitive *>(primitive)->value_type();
 }
 
@@ -53,11 +39,6 @@ const char *GetPrimitiveTypeName(const void *primitive, int schema_version) {
   if (primitive == nullptr) {
     return "NONE";
   }
-#ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
-    return schema::v0::EnumNamePrimitiveType(static_cast<const schema::v0::Primitive *>(primitive)->value_type());
-  }
-#endif
   return schema::EnumNamePrimitiveType(static_cast<const schema::Primitive *>(primitive)->value_type());
 }
 
@@ -72,12 +53,6 @@ bool IsPartialNode(const void *primitive, int schema_version) {
   if (schema_version == SCHEMA_CUR) {
     return reinterpret_cast<const schema::Primitive *>(primitive)->value_type() == schema::PrimitiveType_PartialFusion;
   }
-#ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
-    return reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_type() ==
-           schema::v0::PrimitiveType_Partial;
-  }
-#endif
   return false;
 }
 
@@ -121,14 +96,6 @@ bool IsTensorListNode(const void *primitive, int schema_version) {
       return true;
     }
   }
-#ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
-    if (v0_tensor_list_ops.find(reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_type()) !=
-        v0_tensor_list_ops.end()) {
-      return true;
-    }
-  }
-#endif
   return false;
 }
 
@@ -142,15 +109,6 @@ int GetPartialGraphIndex(const void *primitive, int schema_version) {
     }
     index = partial_fusion->sub_graph_index();
   }
-#ifdef ENABLE_V0
-  if (schema_version == SCHEMA_V0) {
-    auto partial = reinterpret_cast<const schema::v0::Primitive *>(primitive)->value_as_Partial();
-    if (partial == nullptr) {
-      return -1;
-    }
-    index = partial->subGraphIndex();
-  }
-#endif
   return index;
 }
 }  // namespace lite

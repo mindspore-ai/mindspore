@@ -1,7 +1,5 @@
 add_compile_definitions(USE_ANDROID_LOG)
-if(MSLITE_ENABLE_V0)
-    add_definitions(-DENABLE_V0)
-endif()
+
 include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 include_directories(${CORE_DIR})
 
@@ -306,13 +304,6 @@ set(TRAIN_SRC
         ${TOOLS_DIR}/converter/legacy_optimizer/graph/isolated_node_remove_pass.cc
         ${TOOLS_DIR}/converter/legacy_optimizer/graph/subgraph_node_pass.cc
         )
-
-if(MSLITE_ENABLE_V0)
-    set(TRAIN_SRC
-            ${TRAIN_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter_v0.cc
-            )
-endif()
 
 if(MSLITE_ENABLE_MINDRT)
     if(NOT ENABLE_CLOUD_AND_LITE)
