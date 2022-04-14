@@ -410,7 +410,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
           input_tensor == nullptr) {
         continue;
       }
-
+      // Synchronize dynamic shape info of the input tensor to the parameter node of graph.
       UpdateDynamicShape(input_node, input_tensor);
 
       auto tensor_position = host_data_source_actor_->FetchNodePosition(input_node);
@@ -423,12 +423,19 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
       auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
       auto device_address = AnfAlgo::GetMutableOutputAddr(input_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_address);
+      // Passthrough input node: graph(..., input_node, ...) -> return(..., input_node, ...)
+      auto passthrough_inp_node =
+        graph->GetFrontNodeWithIndexByGraphOutput(std::make_pair(input_node, 0)).first != nullptr;
+      // In order to avoid the device ptr_ being hold by the input tensor and the output tensor, the tensor address
+      // cannot be directly set to the passthrough input node. The 'ptr_' of passthrough input node is re-malloced and
+      // device to device copy by input tensor address.
       if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType()) &&
-          !device_address->is_ptr_persisted() && tensor_address->format() == device_address->format()) {
+          !device_address->is_ptr_persisted() && tensor_address->format() == device_address->format() &&
+          !passthrough_inp_node) {
         AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
         tensor_address->SetNodeIndex(input_node, 0);
       }
-      device_address->SetSize(host_tensors[tensor_position]->data().nbytes());
+      device_address->SetSize(input_tensor->data().nbytes());
     }
   }
 

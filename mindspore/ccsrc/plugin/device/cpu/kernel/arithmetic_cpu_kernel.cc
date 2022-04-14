@@ -97,12 +97,17 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     }
 
     size_t l = input_shape1_.size();
-    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-      (void)input_shape1_.insert(input_shape1_.begin(), 1);
+    if (l < output_shape_.size()) {
+      for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+        (void)input_shape1_.insert(input_shape1_.begin(), 1);
+      }
     }
+
     l = input_shape2_.size();
-    for (size_t i = 0; i < output_shape_.size() - l; ++i) {
-      (void)input_shape2_.insert(input_shape2_.begin(), 1);
+    if (l < output_shape_.size()) {
+      for (size_t i = 0; i < output_shape_.size() - l; ++i) {
+        (void)input_shape2_.insert(input_shape2_.begin(), 1);
+      }
     }
     CPUKernelUtils::GetElementNumEveryDim(input_shape1_, &input_element_num1_);
     CPUKernelUtils::GetElementNumEveryDim(input_shape2_, &input_element_num2_);

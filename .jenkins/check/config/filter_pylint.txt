@@ -25,7 +25,7 @@
 "mindspore/mindspore/python/mindspore/ops/_op_impl/_custom_op"                                                           "dangerous-default-value
 "mindspore/mindspore/python/mindspore/ops/_op_impl/_custom_op"                                                           "simplifiable-if-expression"
 "mindspore/mindspore/python/mindspore/ops/_op_impl/_custom_op"                                                           "unused-variable"
-"mindspore/mindspore/python/mindspore/ops/composite/base.py"                                                             "protected-acces"
+"mindspore/mindspore/python/mindspore/ops/composite/base.py"                                                             "protected-access"
 "mindspore/mindspore/python/mindspore/ops/primitive.py"                                                                  "assignment-from-none"
 "mindspore/mindspore/python/mindspore/nn/cell.py"                                                                        "assignment-from-none"
 "mindspore/mindspore/python/mindspore/_extends/parse/resources.py"                                                       "bad-whitespace"

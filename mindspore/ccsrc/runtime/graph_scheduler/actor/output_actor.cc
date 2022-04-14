@@ -37,9 +37,9 @@ bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const An
     return true;
   }
 
-  // In the input as output scenario, the output device tensor may come from the input tensor and can't be replaced.
-  // But in the dynamic shape scenario, need to free the old memory and alloc new memory using the new shape size.
-  if (output_node->isa<Parameter>() && !(output_node->cast<ParameterPtr>()->has_dynamic_shape())) {
+  // In the input as output scenario.
+  // If the input node is the weight of graph, its output device tensor does not need to be replaced.
+  if (output_node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(output_node->cast<ParameterPtr>())) {
     return true;
   }
 

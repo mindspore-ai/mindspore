@@ -25,7 +25,7 @@ import importlib
 from collections import OrderedDict
 from functools import wraps
 import numpy as np
-
+import mindspore as ms
 from mindspore import context
 from mindspore import log as logger
 from mindspore._extends.remote import kernel_build_server
@@ -249,7 +249,6 @@ class _MindsporeFunctionExecutor:
         self._graph_executor.updata_param_node_default_input(phase, new_param)
         obj.load_parameter_slice(None)
 
-
         if _pynative_executor.get_optimizer():
             params = obj.trainable_params()
             opt_params = _pynative_executor.get_optimizer().trainable_params()
@@ -282,17 +281,8 @@ class _MindsporeFunctionExecutor:
                 logger.warning(f"For 'Cell', it's not support hook function when using ms_function. If you want to "
                                f"use hook function, please use context.set_context to set pynative mode and remove "
                                f"`ms_function`.")
-        # Verify the signature for both function and method
-        if self.input_signature is not None:
-            signatures = []
-            for sig_spec in self.input_signature:
-                if not isinstance(sig_spec, MetaTensor):
-                    raise TypeError("Input_signature is not MetaTensor")
-                signatures.append(sig_spec)
-            is_valid_input = verify_inputs_signature(signatures, args_list)
-            if not is_valid_input:
-                raise ValueError("Inputs is incompatible with input signature!")
-
+        # Chose dynamic shape tensors or actual input tensors as compile args.
+        compile_args = self._generate_compile_args(args_list)
         generate_name = self.fn.__module__ + "." + self.fn.__name__ + "." + self.fn.__code__.co_filename + "." + \
                         str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
         if _pynative_executor.grad_flag():
@@ -314,7 +304,7 @@ class _MindsporeFunctionExecutor:
             self.enable_tuple_broaden = self.obj.enable_tuple_broaden
 
         self._graph_executor.set_enable_tuple_broaden(self.enable_tuple_broaden)
-        key = self._graph_executor.generate_arguments_key(args_list, self.enable_tuple_broaden)
+        key = self._graph_executor.generate_arguments_key(compile_args, self.enable_tuple_broaden)
         phase = generate_name + '.' + str(key)
         if phase in ms_compile_cache:
             return phase
@@ -323,10 +313,10 @@ class _MindsporeFunctionExecutor:
         self._set_compile_cache_dep_files()
 
         if self.obj is None:
-            is_compile = self._graph_executor.compile(self.fn, args_list, phase, True)
+            is_compile = self._graph_executor.compile(self.fn, compile_args, phase, True)
         else:
             self._graph_executor.set_weights_values(self.obj.parameters_dict())
-            is_compile = self._graph_executor.compile(self.obj, args_list, phase, True)
+            is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
         if is_pynative_parallel():
             self._parallel_process_for_ms_function(phase)
@@ -373,6 +363,43 @@ class _MindsporeFunctionExecutor:
             output = _pynative_executor.grad_ms_function(output, *new_inputs)
 
         return output
+
+    def _generate_compile_args(self, args_list):
+        """Chose dynamic shape tensors or actual input tensors as compile args."""
+        compile_args = args_list
+        # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
+        if isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
+            compile_args = self.obj.get_inputs()
+            for args in compile_args:
+                if not isinstance(args, MsTensor):
+                    raise TypeError(f"The args in `set_inputs()` of Cell object should be a Tensor, "
+                                    f"but got {type(args)}.")
+            Validator.check_dynamic_shape(compile_args, args_list)
+        # Case: The dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
+        if self.input_signature is not None:
+            if not isinstance(self.input_signature, (tuple, list)):
+                self.input_signature = (self.input_signature,)
+            self.input_signature = list(self.input_signature)
+            dyn_shape = False
+            for sig_args in self.input_signature:
+                if not isinstance(sig_args, (MetaTensor, MsTensor)):
+                    raise TypeError(f"The args in `input_signature` of `ms_function` should be a Tensor, "
+                                    f"but got {type(sig_args)}.")
+                if -1 in sig_args.shape:
+                    dyn_shape = True
+            if not dyn_shape:
+                if not verify_inputs_signature(self.input_signature, args_list):
+                    raise ValueError("The input args is incompatible with the args in `input_signature`!")
+            else:
+                # Checkout whether the `sens` has been added to args_list.
+                if len(self.input_signature) == len(args_list) - 1:
+                    logger.warning(f"The number of actual input args `{len(args_list)}` is one more than the number "
+                                   f"of dynamic shape args `{len(self.input_signature)}`. The last actual args may be "
+                                   f" `sens` and added to compile args.")
+                    self.input_signature.append(args_list[-1])
+                Validator.check_dynamic_shape(self.input_signature, args_list)
+                compile_args = self.input_signature
+        return tuple(compile_args)
 
 
 def ms_function(fn=None, obj=None, input_signature=None):
@@ -932,9 +959,6 @@ class _CellGraphExecutor:
         self._graph_executor.set_queue_name(queue_name)
         return True
 
-    def _build_data_graph(self, obj, phase):
-        self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
-
     def set_queue_name(self, queue_name):
         """
         while a mode use shared dataset with others, need set queue_name which saved in data_set
@@ -951,6 +975,9 @@ class _CellGraphExecutor:
             _set_dataset_mode_config('sink')
         else:
             _set_dataset_mode_config('normal')
+
+    def _build_data_graph(self, obj, phase):
+        self._graph_executor.build_data_graph(obj.parameters_dict(), phase, obj.parameters_broadcast_dict())
 
     @staticmethod
     def _use_vm_mode():
