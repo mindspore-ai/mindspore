@@ -53,8 +53,8 @@ constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
 
 template <typename T>
-float TensorSum(void *data, int size) {
-  T *typed_data = reinterpret_cast<T *>(data);
+float TensorSum(const void *data, int size) {
+  const T *typed_data = reinterpret_cast<const T *>(data);
   float sum = 0.f;
   for (int i = 0; i < size; i++) {
     sum += static_cast<float>(typed_data[i]);
@@ -85,6 +85,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::virtual_batch_, "virtualBatch", "use virtual batch", false);
     AddFlag(&NetTrainFlags::resize_dims_in_, "inputShapes",
             "Shape of input data, the format should be NHWC. e.g. 1,32,32,32:1,1,32,32,1", "");
+    AddFlag(&NetTrainFlags::unified_api_, "unifiedApi", "do unified api test", false);
   }
 
   ~NetTrainFlags() override = default;
@@ -117,6 +118,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
   std::vector<std::vector<int>> resize_dims_;
   std::string loss_name_ = "";
   std::string inference_file_ = "";
+  bool unified_api_ = false;
 };
 
 class MS_API NetTrain {
@@ -126,49 +128,19 @@ class MS_API NetTrain {
 
   int Init();
   int RunNetTrain();
-
- private:
-  // call GenerateInputData or ReadInputFile to init inputTensors
-  int LoadInput(Vector<tensor::MSTensor *> *ms_inputs);
-  void CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_type, int id, std::string in_out);
-  // call GenerateRandomData to fill inputTensors
-  int GenerateInputData(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
-
-  int GenerateRandomData(mindspore::tensor::MSTensor *tensor);
-
-  int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
-  int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session, int epochs,
-                          bool check_accuracy = true);
-
-  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForInference(const std::string &filename,
-                                                                        const Context &context);
-
-  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForTrain(const std::string &filename,
-                                                                    const std::string &bb_filename,
-                                                                    const Context &context, const TrainCfg &train_cfg,
-                                                                    int epochs);
-
-  int InitCallbackParameter();
-
-  int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
-
-  template <typename T>
-  void PrintInputData(tensor::MSTensor *input) {
-    MS_ASSERT(input != nullptr);
-    static int i = 0;
-    auto inData = reinterpret_cast<T *>(input->MutableData());
-    size_t tensorSize = input->ElementsNum();
-    size_t len = (tensorSize < 20) ? tensorSize : 20;
-    std::cout << "InData" << i++ << ": ";
-    for (size_t j = 0; j < len; j++) {
-      std::cout << inData[j] << " ";
+  static float *ReadFileBuf(const std::string file, size_t *size);
+  static int SetNr(std::function<int(NetTrainFlags *)> param);
+  static int RunNr(NetTrainFlags *flags) {
+    if (nr_cb_ != nullptr) {
+      return nr_cb_(flags);
     }
-    std::cout << std::endl;
+    MS_LOG(WARNING) << "unified api was not tested";
+    std::cout << "unified api was not tested";
+    return RET_OK;
   }
-
   // tensorData need to be converter first
   template <typename T>
-  float CompareData(const float *refOutput, int size, T *msTensorData) {
+  static float CompareData(const float *refOutput, int size, const T *msTensorData) {
     size_t errorCount = 0;
     float meanError = 0;
     std::cout << "Out tensor size is: " << size << std::endl;
@@ -219,6 +191,45 @@ class MS_API NetTrain {
     return meanError;
   }
 
+ private:
+  // call GenerateInputData or ReadInputFile to init inputTensors
+  int LoadInput(Vector<tensor::MSTensor *> *ms_inputs);
+  void CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_type, int id, std::string in_out);
+  // call GenerateRandomData to fill inputTensors
+  int GenerateInputData(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
+
+  int GenerateRandomData(mindspore::tensor::MSTensor *tensor);
+
+  int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
+  int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session, int epochs,
+                          bool check_accuracy = true);
+
+  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForInference(const std::string &filename,
+                                                                        const Context &context);
+
+  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForTrain(const std::string &filename,
+                                                                    const std::string &bb_filename,
+                                                                    const Context &context, const TrainCfg &train_cfg,
+                                                                    int epochs);
+
+  int InitCallbackParameter();
+
+  int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
+
+  template <typename T>
+  void PrintInputData(tensor::MSTensor *input) {
+    MS_ASSERT(input != nullptr);
+    static int i = 0;
+    auto inData = reinterpret_cast<T *>(input->MutableData());
+    size_t tensorSize = input->ElementsNum();
+    size_t len = (tensorSize < 20) ? tensorSize : 20;
+    std::cout << "InData" << i++ << ": ";
+    for (size_t j = 0; j < len; j++) {
+      std::cout << inData[j] << " ";
+    }
+    std::cout << std::endl;
+  }
+
   int MarkPerformance(const std::unique_ptr<session::LiteSession> &session);
   int MarkAccuracy(const std::unique_ptr<session::LiteSession> &session, bool enforce_accuracy = true);
   int CompareOutput(const session::LiteSession &lite_session);
@@ -242,8 +253,8 @@ class MS_API NetTrain {
     }
   }
 #endif
-  NetTrainFlags *flags_;
-
+  NetTrainFlags *flags_{nullptr};
+  static std::function<int(NetTrainFlags *)> nr_cb_;
   // callback parameters
   uint64_t op_begin_ = 0;
   int op_call_times_total_ = 0;

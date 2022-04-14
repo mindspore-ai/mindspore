@@ -5,10 +5,23 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         )
 
+
+set(TEST_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/net_train.cc
+    )
+
+if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
+    set(TEST_SRC
+    ${TEST_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/net_runner.cc
+    )
+endif()
+
 add_executable(benchmark_train
-        ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/net_train.cc
+        ${TEST_SRC}
         ${COMMON_SRC})
+
 if(WIN32)
     add_dependencies(benchmark_train fbs_src mindspore-lite_static mindspore-lite-train_static)
 else()

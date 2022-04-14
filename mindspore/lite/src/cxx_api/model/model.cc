@@ -22,11 +22,15 @@
 #ifdef ENABLE_LITE_ACL
 #include "acl/acl_base.h"
 #endif
+#include "flatbuffers/flatbuffers.h"
 #include "include/api/callback/callback.h"
 #include "include/api/context.h"
 #include "include/api/dual_abi_helper.h"
 #include "include/api/types.h"
+#include "include/api/serialization.h"
+#include "include/api/graph.h"
 #include "src/common/log_adapter.h"
+#include "src/cxx_api/expression/net_impl.h"
 #include "src/cxx_api/callback/callback_adapter.h"
 #include "src/cxx_api/callback/callback_impl.h"
 #include "src/cxx_api/model/model_impl.h"

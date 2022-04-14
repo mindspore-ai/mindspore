@@ -25,6 +25,7 @@
 
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
+#define C0NUM 0
 #define C1NUM 1
 #define C2NUM 2
 #define C3NUM 3
@@ -33,6 +34,8 @@
 #define C6NUM 6
 #define C7NUM 7
 #define C8NUM 8
+#define C9NUM 9
+#define C10NUM 10
 #define C12NUM 12
 #define C13NUM 13
 #define C16NUM 16

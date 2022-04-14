@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,13 +25,13 @@
 #include "include/api/types.h"
 
 namespace mindspore {
-
+constexpr int iter_th = 1000;
 class MixPrecisionCfg {
  public:
   MixPrecisionCfg() {
     this->dynamic_loss_scale_ = false;
     this->loss_scale_ = 128.0f;
-    this->num_of_not_nan_iter_th_ = 1000;
+    this->num_of_not_nan_iter_th_ = iter_th;
   }
 
   ~MixPrecisionCfg() = default;
@@ -53,6 +53,5 @@ class TrainCfg {
   MixPrecisionCfg mix_precision_cfg_; /**< Mix precision configuration */
   bool accumulate_gradients_ = false;
 };
-
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CFG_H

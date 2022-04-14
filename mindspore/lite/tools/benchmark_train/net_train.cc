@@ -24,6 +24,7 @@
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
+#include "tools/benchmark_train/net_runner.h"
 #include "src/common/common.h"
 #include "include/ms_tensor.h"
 #include "include/context.h"
@@ -49,14 +50,20 @@ constexpr int kCPUBindFlag2 = 2;
 constexpr int kCPUBindFlag1 = 1;
 static const int kTHOUSAND = 1000;
 
-namespace {
-float *ReadFileBuf(const char *file, size_t *size) {
-  if (file == nullptr) {
+std::function<int(NetTrainFlags *)> NetTrain::nr_cb_ = nullptr;
+
+int NetTrain::SetNr(std::function<int(NetTrainFlags *)> param) {
+  nr_cb_ = param;
+  return 0;
+}
+
+float *NetTrain::ReadFileBuf(const std::string file, size_t *size) {
+  if (file.empty()) {
     MS_LOG(ERROR) << "file is nullptr";
     return nullptr;
   }
   MS_ASSERT(size != nullptr);
-  std::string real_path = RealPath(file);
+  std::string real_path = RealPath(file.c_str());
   std::ifstream ifs(real_path);
   if (!ifs.good()) {
     MS_LOG(ERROR) << "file: " << real_path << " is not exist";
@@ -83,7 +90,6 @@ float *ReadFileBuf(const char *file, size_t *size) {
 
   return buf.release();
 }
-}  // namespace
 
 int NetTrain::GenerateRandomData(mindspore::tensor::MSTensor *tensor) {
   auto input_data = tensor->MutableData();
@@ -832,7 +838,9 @@ int RunNetTrain(int argc, const char **argv) {
     std::cerr << flags.Usage() << std::endl;
     return RET_OK;
   }
-
+  if (flags.unified_api_) {
+    return NetTrain::RunNr(&flags);
+  }
   NetTrain net_trainer(&flags);
   auto status = net_trainer.Init();
   if (status != RET_OK) {

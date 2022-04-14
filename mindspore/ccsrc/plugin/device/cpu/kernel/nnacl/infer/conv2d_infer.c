@@ -157,7 +157,7 @@ int Conv2dInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   param->output_h_ = out_shape[DIMENSION_1D];
   param->output_w_ = out_shape[DIMENSION_2D];
   param->output_channel_ = out_shape[DIMENSION_3D];
-
+  param->out_format_ = out_tensor->format_;
   return NNACL_OK;
 }
 

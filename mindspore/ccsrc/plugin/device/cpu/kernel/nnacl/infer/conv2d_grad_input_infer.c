@@ -37,20 +37,26 @@ int Conv2dGradInputInferShape(const TensorC *const *inputs, size_t inputs_size, 
   }
   SetDataTypeFormat(out, in0);
 
-  if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {
+  if (inputs[THIRD_INPUT]->shape_size_ < 1 || inputs[THIRD_INPUT]->data_ == NULL) {
     return NNACL_ERR;
   }
   size_t data_size = (size_t)inputs[2]->shape_[0];
   if (data_size != 4) {
     return NNACL_ERR;
   }
+
   int shape[MAX_SHAPE_SIZE];
-  const int nchw2nhwc[4] = {0, 2, 3, 1};
-  for (size_t i = 0; i < data_size; i++) {
-    shape[i] = *((int *)(inputs[2]->data_) + nchw2nhwc[i]);
+  if (inputs[THIRD_INPUT]->format_ == Format_NCHW || inputs[THIRD_INPUT]->format_ == Format_KCHW) {
+    const int nchw2nhwc[4] = {kNCHW_N, kNCHW_H, kNCHW_W, kNCHW_C};
+    for (size_t i = 0; i < data_size; i++) {
+      shape[i] = *((int *)(inputs[THIRD_INPUT]->data_) + nchw2nhwc[i]);
+    }
+  } else if (inputs[THIRD_INPUT]->format_ == Format_NHWC || inputs[THIRD_INPUT]->format_ == Format_KHWC) {
+    memcpy(shape, inputs[THIRD_INPUT]->data_, data_size * sizeof(int));
+  } else {
+    return NNACL_ERR;
   }
   SetShapeArray(out, shape, data_size);
-
   return NNACL_OK;
 }
 

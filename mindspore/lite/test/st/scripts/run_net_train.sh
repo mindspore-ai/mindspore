@@ -1,6 +1,6 @@
 #!/bin/bash
 source ./scripts/base_functions.sh
-version=1.5.0
+version=1.6.1
 
 # Run Export on x86 platform and create output test files:
 docker_image=mindspore_build:210301
@@ -69,6 +69,9 @@ function Run_Converter() {
             model_prefix="${line_array[0]}_head"
             model_name=${line_array[0]}'_head'
         fi
+        if [[ "${expression}" == "1" ]]; then
+            model_prefix="${model_name}_fwd"
+        fi
         if [[ ${check_convert} == "1" ]]; then
             ms_file=$ms_models_path'/'$model_name'.ms'
             if [ -f "$ms_file" ]; then
@@ -80,7 +83,7 @@ function Run_Converter() {
         {
           echo ${model_name} >> "${run_converter_log_file}"
           echo './converter_lite  --fmk=MINDIR --modelFile='${models_path}'/'${model_prefix}'.mindir --outputFile='${ms_models_path}'/'${model_name}' --trainModel=true' ${WEIGHT_QUANT} >> "${run_converter_log_file}"
-          ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${WEIGHT_QUANT}
+          ./converter_lite --fmk=MINDIR --modelFile=${models_path}/${model_prefix}.mindir --outputFile=${ms_models_path}/${model_name} --trainModel=true ${no_opt} ${WEIGHT_QUANT}
           if [ $? = 0 ]; then
               converter_result='converter mindspore '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
@@ -118,8 +121,11 @@ function should_run_example() {
       continue
     fi
     if [[ $model_name == "$1" ]]; then
-      if [[ ${line_array[1]} == "code_example" ]]; then
+      if [[ "${line_array[1]}" == "code_example" ]]; then
         ret=1
+      fi
+      if [[ "${line_array[2]}" == "expression" ]]; then
+        ret=2
       fi
     fi
   done < ${models_ms_train_config}
@@ -146,6 +152,9 @@ function parse_line() {
     enable_transfer=0
     suffix_print=""
     check_convert=0
+    do_api=false
+    no_opt="--NoFusion=false"
+    expression=0
     model_name=${line_array[0]}_train
     while [[ $i < ${#line_array[@]} ]] ; do
         case ${line_array[i]} in
@@ -189,6 +198,12 @@ function parse_line() {
             i=$(($i+1))
             inputShapes=${line_array[i]}
             ;;
+          "expression")
+            model_name="${line_array[0]}_expr"
+            do_api=true
+            no_opt="--NoFusion=true"
+            expression=1
+            ;;
           *)
             check=`echo "${line_array[i]}" | grep -E '^\-?[0-9]*\.?[0-9]+$'`
             if [ "${check}" != "" ] ; then
@@ -214,12 +229,14 @@ function Run_x86() {
           continue
         fi
         local model_prefix=${line_array[0]}
+        local bb_model_file=""
         local log_suffix="_train"
         parse_line x86
         if [[ "$?" == "1" ]]; then continue; fi
+        if [[ "${expression}" == "1" ]]; then
+            model_prefix=${model_prefix}_expr
+        fi
         local model_file="${ms_models_path}/${model_name}.ms"
-        local bb_model_file=""
-        local export_file="${ms_models_path}/${model_name}_tod"
         local inference_file="${ms_models_path}/${model_name}_infer"
         if [[ "${enable_transfer}" == "1" ]]; then
             model_file="${ms_models_path}/${model_prefix}_head.ms"
@@ -247,7 +264,8 @@ function Run_x86() {
             --exportFile=${export_file} \
             --virtualBatch=${virtual_batch} \
             --inputShapes=${inputShapes} \
-            --lossName=${loss_name} " >> ${run_x86_log_file}
+            --lossName=${loss_name}  \
+            --unifiedApi=${do_api}" >> ${run_x86_log_file}
         ${run_valgrind} ./tools/benchmark_train/benchmark_train \
             --modelFile=${model_file} \
             --bbModelFile=${bb_model_file} \
@@ -257,7 +275,8 @@ function Run_x86() {
             --exportFile=${export_file} \
             --virtualBatch=${virtual_batch} \
             --inputShapes=${inputShapes} \
-            --lossName=${loss_name} >> "${run_x86_log_file}"
+            --lossName=${loss_name} \
+            --unifiedApi=${do_api} >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86'${log_suffix}': '${model_name}''${suffix_print}' pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
@@ -327,24 +346,27 @@ function Run_arm() {
     echo "cd ${tmp_dir}" > ${adb_cmd_file}
     echo 'chmod 777 benchmark_train' >> ${adb_cmd_file}
     adb -s ${device_id} shell < ${adb_cmd_file}
-
     local fail=0
     # Run mindir converted train models:
     while read line; do
         local line_array
+        local bb_model_file=""
         LFS=" " read -r -a line_array <<< ${line}
         if [[ ${line_array[0]} == \#* || ${line_array[0]} == "" ]]; then
           continue
         fi
+        parse_line $1
+        if [[ "$?" == "1" ]]; then continue; fi
         local model_prefix=${line_array[0]}
+        if [[ ${expression} == "1" ]]; then
+          model_prefix=${model_prefix}_expr
+        fi
         local run_result=""
         local log_suffix="_train"
-        parse_line $1
         if [[ "$?" == "1" ]]; then continue; fi
         local export_file="${tmp_dir}/${model_name}_tod"
         local inference_file="${tmp_dir}/${model_name}_infer"
         local model_file="${model_name}.ms"
-        local bb_model_file=""
         if [[ "${enable_transfer}" == "1" ]]; then
             model_file="${model_prefix}_head.ms"
             bb_model_file="${model_prefix}_bb.ms"
@@ -388,7 +410,8 @@ function Run_arm() {
         --exportFile=${export_file} \
         --virtualBatch=${virtual_batch} \
         --inputShapes=${inputShapes} \
-        --lossName=${loss_name}
+        --lossName=${loss_name} \
+        --unifiedApi=${do_api}
 ENDM
 )
         echo "${adb_cmd}" >> ${run_arm_log_file}
@@ -443,11 +466,16 @@ function Run_CodeExamples() {
 
       should_run_example "unified_api"
       should_run=$?
+      local expression_flag=""
+      if [[ "$should_run" == "2" ]]; then
+        expression_flag="-x"
+        should_run=1
+      fi
       if [[ "$should_run" == "1" ]]; then
         cd ${basepath}/../../examples/unified_api || exit 1
         chmod 777 ./prepare_and_run.sh
         chmod 777 ./*/*.sh
-        ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
+        ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 ${expression_flag} >> ${run_code_examples_log_file}
         if [ "$?" != "0" ]; then
           echo "Unified API prepare_and_run.sh failed"
           exit 1
@@ -492,6 +520,10 @@ while getopts "r:c:m:d:i:e:vt:q:D:M:l:" opt; do
             models_path=${OPTARG}
             echo "models_path is ${OPTARG}"
             ;;
+         c)
+           models_ms_train_config=${OPTARG}
+           echo  "models_ms_train_config ${models_ms_train_config}"
+           ;;
         i)
             train_io_path=${OPTARG}
             echo "train_io_path is ${OPTARG}"
@@ -539,7 +571,9 @@ config_folder="config_level0"
 if [[ ${level} == "level1" ]];then
     config_folder="config_level1"
 fi
-models_ms_train_config=${basepath}/../${config_folder}/models_ms_train.cfg
+if [[ "${models_ms_train_config}" == "" ]]; then
+    models_ms_train_config=${basepath}/../${config_folder}/models_ms_train.cfg
+fi
 
 if [[ $train_io_path == "" ]]; then
   echo "train_io path is empty"

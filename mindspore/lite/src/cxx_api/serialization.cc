@@ -20,6 +20,7 @@
 #include "include/api/graph.h"
 #include "include/api/types.h"
 #include "include/model.h"
+#include "src/cxx_api/expression/net_impl.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/model/model_impl.h"
 #include "src/cxx_api/converters.h"
@@ -27,6 +28,8 @@
 #include "src/lite_session.h"
 
 namespace mindspore {
+std::function<int(void *)> ExpressionCallback;
+
 Key::Key(const char *dec_key, size_t key_len) {
   len = 0;
   if (key_len >= max_key_len) {
@@ -115,19 +118,31 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
     MS_LOG(ERROR) << "Read model file failed";
     return kLiteNullptr;
   }
-  auto model =
-    std::shared_ptr<lite::Model>(lite::ImportFromBuffer(static_cast<const char *>(model_buf), model_size, true));
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "New model failed.";
-    return kLiteNullptr;
+  if (graph->IsExecutable()) {
+    auto model =
+      std::shared_ptr<lite::Model>(lite::ImportFromBuffer(static_cast<const char *>(model_buf), model_size, true));
+    if (model == nullptr) {
+      MS_LOG(ERROR) << "New model failed.";
+      return kLiteNullptr;
+    }
+    auto graph_data = std::shared_ptr<Graph::GraphData>(new (std::nothrow) Graph::GraphData(model));
+    if (graph_data == nullptr) {
+      MS_LOG(ERROR) << "New graph data failed.";
+      return kLiteMemoryFailed;
+    }
+    *graph = Graph(graph_data);
+    return kSuccess;
+  } else {
+    auto loader = CreateExpressionLoader();
+    if (loader == nullptr) {
+      MS_LOG(ERROR) << "Unsupported Feature.";
+      delete[] model_buf;
+      return kLiteError;
+    }
+    loader(model_buf, graph);
+    delete[] model_buf;
+    return kSuccess;
   }
-  auto graph_data = std::shared_ptr<Graph::GraphData>(new (std::nothrow) Graph::GraphData(model));
-  if (graph_data == nullptr) {
-    MS_LOG(ERROR) << "New graph data failed.";
-    return kLiteMemoryFailed;
-  }
-  *graph = Graph(graph_data);
-  return kSuccess;
 }
 
 Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelType model_type,
