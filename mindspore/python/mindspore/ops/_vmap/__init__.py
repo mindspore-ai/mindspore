@@ -14,6 +14,7 @@
 # ============================================================================
 
 """vmap impl."""
+from . import vmap_base, vmap_array_ops, vmap_debug_ops, vmap_math_ops, vmap_nn_ops, vmap_other_ops
 from .vmap_base import get_vmap_rule, vmap_monad_rule, _broadcast_by_axis, vmap_bind_all_none,\
     vmap_unstack, vmap_general_output_process
 
