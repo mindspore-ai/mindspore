@@ -21,7 +21,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/shared_ptr.h"
 #include "./op_name.h"
 

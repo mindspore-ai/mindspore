@@ -23,7 +23,7 @@
 #include "pipeline/jit/parse/parse_base.h"
 #include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace prim {

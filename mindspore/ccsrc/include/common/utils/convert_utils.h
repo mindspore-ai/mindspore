@@ -28,7 +28,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/any.h"
 #include "base/base_ref.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "base/base.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"

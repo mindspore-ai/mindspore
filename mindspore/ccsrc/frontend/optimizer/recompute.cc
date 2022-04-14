@@ -23,7 +23,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "ir/func_graph.h"
-#include "mindspore/core/base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

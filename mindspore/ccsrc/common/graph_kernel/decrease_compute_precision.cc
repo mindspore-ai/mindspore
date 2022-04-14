@@ -19,7 +19,7 @@
 #include <string>
 #include <map>
 #include <memory>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

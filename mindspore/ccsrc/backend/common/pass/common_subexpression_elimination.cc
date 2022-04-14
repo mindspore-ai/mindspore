@@ -20,7 +20,7 @@
 #include <map>
 #include <utility>
 #include "runtime/device/kernel_info.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/flags.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"

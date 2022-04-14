@@ -22,7 +22,7 @@
 #include <memory>
 #include "ir/anf.h"
 #include "ir/primitive.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 // namespace to support primitive operators

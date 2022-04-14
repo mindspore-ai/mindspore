@@ -25,7 +25,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
-#include "mindspore/core/base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/transform/graph_ir/util.h"
 #include "plugin/device/ascend/hal/hccl_adapter/all_to_all_v_calc_param.h"
 

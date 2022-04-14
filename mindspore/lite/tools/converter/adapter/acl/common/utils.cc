@@ -18,7 +18,7 @@
 #include <functional>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "base/base_ref.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/utils.h"

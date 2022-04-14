@@ -21,7 +21,7 @@
 #include <stack>
 #include "include/common/utils/utils.h"
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"

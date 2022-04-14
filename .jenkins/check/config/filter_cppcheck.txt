@@ -4,7 +4,7 @@
 "mindspore/mindspore/ccsrc/backend/graph_compiler/transform.cc"                                       "constVariable"
 "mindspore/mindspore/ccsrc/utils/tensorprint_utils.cc"                                                "invalidPointerCast"
 "mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/mpi/mpi_initializer.cc"                       "syntaxError"
-"mindspore/mindspore/core/abstract/prim_nn.cc"                                                        "zerodivcond"
+"mindspore/mindspore/core/abstract/ops/prim_nn.cc"                                                    "zerodivcond"
 "mindspore/mindspore/ccsrc/frontend/operator/ops_front_infer_function.cc"                             "zerodivcond"
 "mindspore/mindspore/ccsrc/pipeline/jit/pipeline_split.cc"                                            "zerodivcond"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/device/ascend_stream_assign.cc"                   "useStlAlgorithm"

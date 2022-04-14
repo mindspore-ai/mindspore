@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include <string>
 #include <vector>
 #include <set>
@@ -36,7 +36,7 @@
 #include "ops/strided_slice.h"
 #include "ops/reduce_sum.h"
 #include "abstract/abstract_function.h"
-#include "abstract/infer_functions.h"
+#include "abstract/ops/infer_functions.h"
 #include "utils/ms_context.h"
 #include "ops/tile.h"
 #include "ops/slice.h"

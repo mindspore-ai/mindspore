@@ -25,7 +25,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "ops/split_with_overlap.h"
 #include "ops/concat.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "tools/optimizer/parallel/spliter.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"

@@ -23,7 +23,7 @@
 #include "src/ops/ops_func_declare.h"
 
 #ifdef PRIMITIVE_WRITEABLE
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace lite {

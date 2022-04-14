@@ -18,7 +18,7 @@
 #include <memory>
 #include <string>
 #include <list>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/trace_base.h"
 #include "include/common/utils/utils.h"
 

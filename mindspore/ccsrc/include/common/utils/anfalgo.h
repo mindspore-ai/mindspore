@@ -32,7 +32,7 @@
 #include "base/base.h"
 #include "ir/primitive.h"
 #include "ir/kernel_info_dev.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/contract.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"

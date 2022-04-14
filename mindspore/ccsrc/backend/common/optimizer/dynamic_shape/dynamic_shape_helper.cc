@@ -30,7 +30,7 @@
 #include "kernel/kernel.h"
 #include "kernel/common_utils.h"
 #include "utils/ms_context.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {

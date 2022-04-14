@@ -19,7 +19,7 @@
 #include <string>
 #include <set>
 #include "ops/op_utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
 

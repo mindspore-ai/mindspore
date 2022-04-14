@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "backend/common/optimizer/helper.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/trace_base.h"

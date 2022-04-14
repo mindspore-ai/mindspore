@@ -25,7 +25,7 @@
 #include "backend/common/optimizer/visit.h"
 #include "backend/common/optimizer/helper.h"
 #include "base/base_ref.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"
 

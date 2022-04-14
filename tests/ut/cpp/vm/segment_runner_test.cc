@@ -31,7 +31,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/log_adapter.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace compile {

@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"

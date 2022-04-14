@@ -19,7 +19,7 @@
 #include <vector>
 #include <memory>
 #include "tools/optimizer/common/gllo_utils.h"
-#include "mindspore/core/base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/abstract/dshape.h"
 #include "ops/tensor_array.h"
 #include "ops/tensor_array_read.h"

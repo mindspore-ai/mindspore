@@ -20,7 +20,6 @@
 
 #include "ir/manager.h"
 #include "ir/param_info.h"
-#include "base/core_ops.h"
 #include "abstract/abstract_function.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -28,6 +27,7 @@
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
 #include "utils/parallel_node_check.h"
+#include "mindspore/core/ops/core_ops.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {

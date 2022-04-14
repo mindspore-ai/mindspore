@@ -21,7 +21,7 @@
 #include <map>
 #include <memory>
 #include "ir/primitive.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "ir/value.h"
 namespace mindspore {
 namespace ops {

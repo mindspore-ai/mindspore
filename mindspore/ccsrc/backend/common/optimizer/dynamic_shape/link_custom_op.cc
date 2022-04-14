@@ -23,7 +23,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace opt::dynamic_shape {

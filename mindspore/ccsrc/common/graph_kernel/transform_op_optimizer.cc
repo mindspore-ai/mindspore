@@ -23,7 +23,7 @@
 #include <map>
 #include <utility>
 #include <string>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
 #include "include/common/debug/common.h"
 #include "kernel/common_utils.h"

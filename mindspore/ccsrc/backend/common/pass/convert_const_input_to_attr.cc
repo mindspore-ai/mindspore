@@ -19,7 +19,7 @@
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {

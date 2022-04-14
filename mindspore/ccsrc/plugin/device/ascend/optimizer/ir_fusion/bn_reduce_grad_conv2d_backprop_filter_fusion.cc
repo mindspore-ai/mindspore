@@ -22,7 +22,7 @@
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
 #include "utils/trace_base.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "backend/common/optimizer/helper.h"
 

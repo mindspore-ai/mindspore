@@ -21,7 +21,7 @@
 #include "pybind11/pybind11.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "pipeline/jit/parse/parse_base.h"

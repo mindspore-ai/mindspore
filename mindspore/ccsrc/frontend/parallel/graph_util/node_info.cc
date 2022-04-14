@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/param_info.h"
 #include "ir/meta_tensor.h"
 #include "include/common/utils/python_adapter.h"

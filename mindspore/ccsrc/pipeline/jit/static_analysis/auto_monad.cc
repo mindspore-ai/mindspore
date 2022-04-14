@@ -31,7 +31,7 @@
 #include "utils/ordered_map.h"
 #include "utils/ordered_set.h"
 #include "base/effect_info.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

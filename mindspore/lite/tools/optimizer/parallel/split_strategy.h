@@ -23,7 +23,7 @@
 #include <map>
 #include <unordered_map>
 #include "schema/ops_generated.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/lite_types.h"
 
 namespace mindspore {

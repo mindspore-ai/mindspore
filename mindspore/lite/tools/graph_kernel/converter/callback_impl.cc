@@ -20,7 +20,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/dtype.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"

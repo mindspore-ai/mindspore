@@ -21,7 +21,7 @@
 #include <algorithm>
 #include "frontend/parallel/graph_util/pipeline_split_utils.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/value.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"

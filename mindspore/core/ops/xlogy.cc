@@ -21,7 +21,7 @@
 #include <vector>
 #include <set>
 #include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "abstract/abstract_value.h"
 #include "ops/primitive_c.h"

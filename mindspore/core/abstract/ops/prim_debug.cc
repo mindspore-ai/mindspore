@@ -15,7 +15,7 @@
  */
 
 #include "abstract/param_validator.h"
-#include "abstract/infer_functions.h"
+#include "abstract/ops/infer_functions.h"
 #include "abstract/utils.h"
 #include "utils/symbolic.h"
 

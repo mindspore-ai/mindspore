@@ -25,7 +25,7 @@
 #include <utility>
 #include "abstract/abstract_value.h"
 #include "base/base.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "pipeline/jit/debug/trace.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/operator/composite/composite.h"

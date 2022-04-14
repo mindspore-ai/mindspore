@@ -26,14 +26,14 @@
 #include "base/base_ref.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
 #include "backend/common/optimizer/const_input_to_attr.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace opt {

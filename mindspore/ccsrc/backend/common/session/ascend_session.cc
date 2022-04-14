@@ -22,7 +22,7 @@
 #include <list>
 
 #include "utils/hash_set.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "base/base_ref_utils.h"
 #include "ir/tensor.h"
 #include "ir/anf.h"

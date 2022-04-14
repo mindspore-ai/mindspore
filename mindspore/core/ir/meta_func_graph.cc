@@ -17,9 +17,9 @@
  */
 
 #include "ir/meta_func_graph.h"
-#include "base/core_ops.h"
 #include "utils/ms_context.h"
 #include "abstract/abstract_function.h"
+#include "mindspore/core/ops/core_ops.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {

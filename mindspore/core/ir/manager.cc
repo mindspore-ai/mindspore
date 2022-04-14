@@ -24,7 +24,7 @@
 #include "ir/func_graph.h"
 #include "utils/convert_utils_base.h"
 #include "utils/counter.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace change {

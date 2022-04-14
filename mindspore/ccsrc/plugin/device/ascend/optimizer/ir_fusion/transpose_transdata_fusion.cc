@@ -19,7 +19,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {

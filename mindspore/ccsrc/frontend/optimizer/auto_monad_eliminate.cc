@@ -24,7 +24,7 @@
 
 #include "utils/hash_map.h"
 #include "utils/ordered_map.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "abstract/abstract_value.h"
 
 namespace mindspore {

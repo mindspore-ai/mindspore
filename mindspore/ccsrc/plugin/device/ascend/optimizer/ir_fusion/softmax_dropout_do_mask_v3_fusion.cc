@@ -19,7 +19,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "ir/primitive.h"
 #include "include/common/utils/utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 
 namespace mindspore {

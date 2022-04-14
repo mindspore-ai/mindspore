@@ -22,7 +22,7 @@
 #include "ops/addn.h"
 #include "ops/tuple_get_item.h"
 #include "include/common/utils/utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"

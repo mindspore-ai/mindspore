@@ -20,7 +20,7 @@
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {

@@ -28,7 +28,7 @@
 #include "ir/tensor.h"
 #include "abstract/dshape.h"
 #include "utils/log_adapter.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "include/api/format.h"
 
 #ifdef _MSC_VER

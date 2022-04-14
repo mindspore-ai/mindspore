@@ -19,7 +19,7 @@
 #include <string>
 
 #include "ir/anf.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/trace_base.h"
 
 namespace mindspore {

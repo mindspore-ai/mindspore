@@ -27,7 +27,7 @@
 #include "include/common/debug/draw.h"
 #include "ir/tensor.h"
 #include "utils/symbolic.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace abstract {
