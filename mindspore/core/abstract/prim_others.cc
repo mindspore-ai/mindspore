@@ -588,7 +588,7 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
     int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
     int64_t dim = static_cast<int64_t>(sparse_shape.size());
     if (axis_value < -dim || axis_value >= dim || (axis_value != 1 && axis_value != -1)) {
-      MS_EXCEPTION(TypeError) << "For CSRReduceSum, `axis` should be -1 or 1. But got `axis`: " << axis_value;
+      MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be -1 or 1. But got `axis`: " << axis_value;
     }
     if (axis_value < 0) {
       axis_value += dim;
@@ -596,8 +596,8 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
     out_shape[LongToSize(axis_value)] = 1;
     primitive->set_attr(kCSRAxis, MakeValue(axis_value));
   } else {
-    MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be int32 or int64, but got "
-                             << axis->BuildValue()->ToString();
+    MS_EXCEPTION(TypeError) << "For CSRReduceSum, `axis` should be int32 or int64, but got "
+                            << axis->BuildValue()->ToString();
   }
 
   MS_EXCEPTION_IF_NULL(sparse->values()->element());
