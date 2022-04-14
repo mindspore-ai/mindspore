@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,34 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_H_
-#define MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_H_
-#include <vector>
-#include <memory>
+#ifndef MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_V3_H_
+#define MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_V3_H_
 
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixDiagPartV3 = "MatrixDiagPartV3";
-/// \brief get the specified part of the inner most diag matrix of a matrix, fill with padding value .
-/// Refer to Python API @ref mindspore.ops.MatrixDiagPart for more details.
+
+/// \brief Returns the batched diagonal part of a batched tensor.
+/// Refer to Python API @ref mindspore.ops.MatrixDiagPartV3 for more details.
 class MIND_API MatrixDiagPartV3 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixDiagPartV3);
   /// \brief Constructor.
-  MatrixDiagPartV3() : BaseOperator(kNameMatrixDiagPartV3) { InitIOName({"input", "k", "padding_value"}, {"output"}); }
+  MatrixDiagPartV3() : BaseOperator(kNameMatrixDiagPartV3) { InitIOName({"x", "k", "padding_value"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr MatrixDiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args);
+
+using PrimMatrixDiagPartV3Ptr = std::shared_ptr<MatrixDiagPartV3>;
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_H_
+
+#endif  // MINDSPORE_CORE_OPS_MATRIX_DIAG_PART_V3_H_
