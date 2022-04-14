@@ -15,7 +15,7 @@
 """Variable class for setting constants mutable."""
 
 from .._c_expression import Variable_
-from ..common.tensor import Tensor, CSRTensor, COOTensor
+from ..common.tensor import Tensor
 
 
 class Variable(Variable_):
@@ -26,11 +26,17 @@ class Variable(Variable_):
     A 'mutable' constant input means that it is changed to be a variable input just like Tensor and the most important
     thing is that it is differentiable from now on.
 
+    Besides, currently when the network input is tuple[Tensor], list[Tensor] or dict[Tensor], if the value of tensor is
+    changed without changing the shape and dtype, the network will be re-compiled because the these inputs are regarded
+    as constant values. Now we can avoid this problem by using 'Variable' to store these inputs.
+
     .. warning::
-        This is an experimental prototype that is subject to change or deletion.
+        - This is an experimental prototype that is subject to change or deletion.
+        - The runtime has not yet supported to handle the scalar data flow. So we only support tuple[Tensor],
+          list[Tensor] or dict[Tensor] for network input to avoid the re-compiled problem now.
 
     Args:
-        value (Union[bool, float, int, tuple, list, dict, Tensor]): The value to be stored.
+        value (Union[tuple[Tensor], list[Tensor], dict[Tensor]]): The value to be stored.
 
     Examples:
         >>> import mindspore.nn as nn
@@ -60,10 +66,10 @@ class Variable(Variable_):
     """
 
     def __init__(self, value):
-        if not isinstance(value, (bool, int, float, tuple, list, dict, Tensor, COOTensor, CSRTensor)):
+        if isinstance(value, Tensor) or not self._check_all_tensor(value):
             raise TypeError(
-                f"For 'Varibale', the 'value' should be one of (int, float, tuple, list, dict, Tensor, COOTensor, "
-                f"CSRTensor), but got {type(value).__name__}")
+                f"For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) "
+                f"or their nested structures, but got {value}")
         Variable_.__init__(self, value)
         self._value = value
 
@@ -74,3 +80,17 @@ class Variable(Variable_):
     @value.setter
     def value(self, value):
         self._value = value
+
+    def _check_all_tensor(self, value):
+        """Check if all the elements are Tensor."""
+        if isinstance(value, (tuple, list)):
+            for element in value:
+                if not self._check_all_tensor(element):
+                    return False
+            return True
+        if isinstance(value, dict):
+            for element in value.values():
+                if not self._check_all_tensor(element):
+                    return False
+            return True
+        return isinstance(value, Tensor)
