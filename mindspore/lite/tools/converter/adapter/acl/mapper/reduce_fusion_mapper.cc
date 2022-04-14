@@ -53,7 +53,9 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
   CHECK_NULL_RETURN(dst_prim);
   dst_prim->SetAttrs(src_prim->attrs());
   value_node->set_value(dst_prim);
-
+  if (mode == static_cast<int64_t>(ReduceMode::Reduce_Mean)) {
+    return lite::RET_OK;
+  }
   if (AdjustInput(cnode) != RET_OK) {
     MS_LOG(ERROR) << "Adjust reduce input failed.";
     return lite::RET_ERROR;
