@@ -31,21 +31,25 @@ class TestDynamicNetworking : public UT::Common {
   void TearDown() {}
 };
 
-/// Feature: test the normal node registration from compute graph node to meta server node.
-/// Description: start a compute graph node and meta server node and send a register message.
-/// Expectation: the register message is received by meta server node successfully.
+/// Feature: test the normal node registration from compute graph nodes to meta server node.
+/// Description: start some compute graph nodes and meta server node and send a register message.
+/// Expectation: these register messages are received by meta server node successfully.
 TEST_F(TestDynamicNetworking, NodeRegister) {
   std::string server_host = "127.0.0.1";
   std::string server_port = "8090";
   common::SetEnv(kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(kEnvMetaServerPort, server_port.c_str());
 
-  size_t total_node_num = 1;
+  size_t total_node_num = 8;
+  std::vector<std::shared_ptr<ComputeGraphNode>> cgns;
   MetaServerNode msn("meta_server_node", total_node_num);
   ASSERT_TRUE(msn.Initialize());
 
-  ComputeGraphNode cgn("compute_graph_node");
-  ASSERT_TRUE(cgn.Initialize());
+  for (size_t i = 0; i < total_node_num; ++i) {
+    auto cgn = std::make_shared<ComputeGraphNode>("compute_graph_node_" + std::to_string(i + 1));
+    ASSERT_TRUE(cgn->Initialize());
+    cgns.push_back(cgn);
+  }
 
   size_t interval = 1;
   size_t retry = 30;
@@ -57,7 +61,9 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   ASSERT_EQ(total_node_num, msn.GetAliveNodeNum());
   ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
 
-  cgn.Finalize();
+  for (auto &cgn : cgns) {
+    cgn->Finalize();
+  }
 
   retry = 30;
   while (msn.GetAliveNodeNum() > 0 && retry-- > 0) {

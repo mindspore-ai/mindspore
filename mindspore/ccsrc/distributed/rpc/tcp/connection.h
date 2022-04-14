@@ -178,7 +178,7 @@ struct Connection {
   struct iovec recv_io_vec[RECV_MSG_IO_VEC_LEN];
   struct iovec send_io_vec[SEND_MSG_IO_VEC_LEN];
 
-  ParseType recv_message_type{kUnknown};
+  ParseType recv_message_type{kTcpMsg};
 
   // Callbacks for io events
   ConnectionCallBack event_callback;
