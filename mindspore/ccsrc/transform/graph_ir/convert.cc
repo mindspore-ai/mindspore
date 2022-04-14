@@ -1119,9 +1119,9 @@ OperatorPtr DfGraphConvertor::ToOperatorPtr(const AnfNodePtr &node) {
 void DfGraphConvertor::AddEdgeToCache(const AnfNodePtr &src, const AnfNodePtr &dest) {
   auto item = monad_control_edge_cache_.find(src);
   if (item == monad_control_edge_cache_.end()) {
-    monad_control_edge_cache_[src] = std::set<AnfNodePtr>{dest};
+    monad_control_edge_cache_[src] = std::vector<AnfNodePtr>{dest};
   } else {
-    (void)item->second.insert(dest);
+    (void)item->second.emplace_back(dest);
   }
 }
 
