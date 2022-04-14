@@ -176,6 +176,7 @@ mindspore.nn.probability.distribution.Bernoulli
         计算标准差。
 
         **参数：**
+        
         - **probs1** (Tensor) - 伯努利实验成功的概率。默认值：None。
 
         **返回：**

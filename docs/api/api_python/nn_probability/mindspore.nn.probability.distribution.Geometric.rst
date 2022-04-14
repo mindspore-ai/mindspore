@@ -179,6 +179,7 @@ mindspore.nn.probability.distribution.Geometric
         计算标准差。
 
         **参数：**
+        
         - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
 
         **返回：**

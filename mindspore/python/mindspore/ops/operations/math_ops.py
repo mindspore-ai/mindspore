@@ -2322,10 +2322,12 @@ class Einsum(Primitive):
 
     Args:
         equation (str): An attribute, represent the operation you want to do.
-        the value can contain only letters([a-z][A-Z]), commas(,), ellipsis(...), and arrow(->). the letters represent
-        inputs's tensor dimension, commas(,)represent separate tensors, ellipsis(...) indicates
-        the tensor dimension that you do not care about, the left of the arrow(->) indicates the input tensors,
-        and the right of it indicates the desired output dimension.
+            the value can contain only letters([a-z][A-Z]), commas(,), ellipsis(...),
+            and arrow(->). the letters represent inputs's tensor dimension,
+            commas(,)represent separate tensors, ellipsis(...) indicates
+            the tensor dimension that you do not care about, the left of the
+            arrow(->) indicates the input tensors,
+            and the right of it indicates the desired output dimension.
 
     Inputs:
         - **x** (Tuple) - input tensor used for calculation. the data type of the tensor must be the same.

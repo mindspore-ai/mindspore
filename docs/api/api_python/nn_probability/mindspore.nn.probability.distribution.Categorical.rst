@@ -176,6 +176,7 @@ mindspore.nn.probability.distribution.Categorical
         计算标准差。
 
         **参数：**
+        
         - **probs** (Tensor) - 事件发生的概率。默认值：None。
 
         **返回：**
