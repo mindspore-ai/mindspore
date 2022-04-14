@@ -77,18 +77,14 @@ std::vector<uint8_t> TrainExport::CreateData(const lite::Tensor *tensor) {
   return data;
 }
 
-bool TrainExport::NeedQuantization(const lite::Tensor *t) {
+bool TrainExport::NeedQuantization(const lite::Tensor *t, const int tensor_quant_type) {
   return ((quant_type_ == QT_WEIGHT && t->shape().size() > 1) ||
-          ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited)));
+          ((quant_type_ == QT_DEFAULT) && (t->quant_params().size() > 0) &&
+           (tensor_quant_type == schema::QuantType_QUANT_WEIGHT)));
 }
 
 schema::QuantType TrainExport::GetNodeQuantType(const kernel::LiteKernel *kernel) {
-  if (std::any_of(kernel->in_tensors().cbegin(), kernel->in_tensors().cend(), [](const lite::Tensor *t) {
-        return (t->IsConst() && (t->quant_params().size() > 0) && (t->quant_params().at(0).inited));
-      })) {
-    return schema::QuantType_QUANT_WEIGHT;
-  }
-  return schema::QuantType_QUANT_NONE;
+  return static_cast<schema::QuantType>(kernel->op_parameter()->quant_type_);
 }
 
 void TrainExport::TagQuantizedNodes() {
@@ -155,7 +151,8 @@ int TrainExport::QuantTensorData(schema::TensorT *dest_tensor, const lite::Tenso
 }
 
 std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite::Tensor *tensor,
-                                                           schema::Tensor *scTensor, int preferred_dim) {
+                                                           schema::Tensor *scTensor, int preferred_dim,
+                                                           const int tensor_quant_type) {
   auto tensorT = std::make_unique<schema::TensorT>();
   tensorT->nodeType = scTensor->nodeType();
   tensorT->dims = tensor->shape();
@@ -166,7 +163,7 @@ std::unique_ptr<schema::TensorT> TrainExport::CreateTensor(const mindspore::lite
   tensorT->dataType = tensor->data_type();
   tensorT->enableHuffmanCode = false;
   if ((tensorT->nodeType == NodeType_ValueNode) && (scTensor->data() != nullptr) && (scTensor->data()->size() > 0)) {
-    if (NeedQuantization(tensor)) {
+    if (NeedQuantization(tensor, tensor_quant_type)) {
       auto ret = QuantTensorData(tensorT.get(), tensor, preferred_dim);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "QuantTensorData failed.";
@@ -367,7 +364,7 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
     schema::Tensor *scTensor = model->all_tensors_.at(pid);
     auto preferred_dim = WeightDecoder::GetPreferredDim(in_tensors, index.second.op_parameter, index.second.input_index,
                                                         tensor->shape(), model->version_);
-    auto tensorT = CreateTensor(tensor, scTensor, preferred_dim);
+    auto tensorT = CreateTensor(tensor, scTensor, preferred_dim, index.second.op_parameter->quant_type_);
     if (tensorT == nullptr) {
       MS_LOG(ERROR) << "error in tensor creation";
       return RET_ERROR;
