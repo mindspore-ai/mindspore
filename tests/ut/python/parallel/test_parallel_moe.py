@@ -66,6 +66,20 @@ class NetWithLossFiveInputs(nn.Cell):
         return self.loss(predict)
 
 
+class NetWithLossMoe(nn.Cell):
+    def __init__(self, network):
+        super(NetWithLossMoe, self).__init__()
+        self.network = network
+        self.add = P.Add().shard(((), ()))
+        self.reduce_mean = P.ReduceMean(keep_dims=False).shard(((1, 1),))
+
+    def construct(self, x1, x2, x3, x4, x5):
+        predict, _, _, moe_loss = self.network(x1, x2, x3, x4, x5)
+        predict = P.Reshape()(predict, (-1, 1))
+        predict = self.reduce_mean(predict)
+        return self.add(predict, moe_loss)
+
+
 def test_transformer_model():
     """
     Feature: Test Transformer+MoE, with All2All enabled.
@@ -91,7 +105,7 @@ def test_transformer_model():
     decoder_input_value = Tensor(np.ones((2, 10, 64)), mstype.float32)
     decoder_input_mask = Tensor(np.ones((2, 10, 10)), mstype.float16)
     memory_mask = Tensor(np.ones((2, 10, 20)), mstype.float16)
-    net = NetWithLossFiveInputs(net)
+    net = NetWithLossMoe(net)
     params = net.trainable_params()
     optimizer = AdamWeightDecay(params)
     dataset = Dataset(encoder_input_value, encoder_input_mask, decoder_input_value, decoder_input_mask,
