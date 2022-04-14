@@ -1371,6 +1371,9 @@ class MatMul(PrimitiveWithCheck):
 
     where the :math:`i,j` indicates the output of the i-th row and j-th column element.
 
+    Note:
+        If :math:`N * M` cannot be divided by 16, the performance will be poor in ascend environment.
+
     Args:
         transpose_a (bool): If true, `a` is transposed before multiplication. Default: False.
         transpose_b (bool): If true, `b` is transposed before multiplication. Default: False.
