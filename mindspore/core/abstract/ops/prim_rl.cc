@@ -18,7 +18,7 @@
 
 #include "ir/dtype.h"
 #include "utils/ms_utils.h"
-#include "abstract/infer_functions.h"
+#include "abstract/ops/infer_functions.h"
 #include "abstract/utils.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"

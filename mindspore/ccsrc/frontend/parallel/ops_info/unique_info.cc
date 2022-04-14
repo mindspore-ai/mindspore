@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "ir/value.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/strategy.h"

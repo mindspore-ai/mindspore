@@ -22,7 +22,7 @@
 #include <memory>
 #include "abstract/abstract_value.h"
 #include "abstract/param_validator.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 namespace mindspore {
 namespace abstract {
 AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,

@@ -28,7 +28,7 @@
 #include "pipeline/jit/resource.h"
 #include "include/common/debug/draw.h"
 #include "utils/log_adapter.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace abstract {

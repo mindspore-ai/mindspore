@@ -19,7 +19,7 @@
 #include <set>
 #include <exception>
 #include "utils/hash_set.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/param_info.h"
 #include "include/common/utils/utils.h"
 #include "utils/check_convert_utils.h"

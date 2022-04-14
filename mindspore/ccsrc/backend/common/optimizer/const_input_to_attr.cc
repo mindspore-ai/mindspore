@@ -19,7 +19,7 @@
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {

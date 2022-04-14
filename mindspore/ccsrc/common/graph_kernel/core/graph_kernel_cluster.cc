@@ -22,7 +22,7 @@
 #include <string>
 
 #include "utils/hash_map.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"

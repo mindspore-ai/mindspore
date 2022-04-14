@@ -33,7 +33,7 @@
 #include "runtime/device/device_address.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/contract.h"
 #include "utils/anf_utils.h"
 #include "backend/common/session/kernel_graph.h"

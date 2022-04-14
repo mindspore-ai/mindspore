@@ -34,7 +34,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "ir/anf.h"
 #include "ir/graph_utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "mindspore/core/utils/parallel_node_check.h"

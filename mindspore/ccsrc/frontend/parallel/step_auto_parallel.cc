@@ -28,7 +28,7 @@
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/dp_algo_costmodel.h"

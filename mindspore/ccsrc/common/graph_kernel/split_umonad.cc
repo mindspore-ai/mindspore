@@ -20,7 +20,7 @@
 #include <algorithm>
 #include <memory>
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "runtime/device/kernel_info.h"
 #include "backend/common/optimizer/helper.h"

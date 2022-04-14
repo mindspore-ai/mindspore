@@ -26,7 +26,7 @@
 #undef private
 #undef protected
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/value.h"
 #include "include/common/utils/utils.h"

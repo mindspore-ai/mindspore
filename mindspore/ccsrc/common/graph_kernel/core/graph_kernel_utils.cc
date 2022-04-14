@@ -24,7 +24,7 @@
 #include <cuda.h>
 #endif
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"

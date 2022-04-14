@@ -31,7 +31,7 @@
 #include "ops/custom.h"
 #include "ops/op_utils.h"
 #include "ops/tuple_get_item.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "cxx_api/model/acl/model_converter.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "src/common/log_util.h"

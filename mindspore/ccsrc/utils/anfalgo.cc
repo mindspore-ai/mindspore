@@ -20,7 +20,7 @@
 #include <set>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
 #include "utils/trace_base.h"

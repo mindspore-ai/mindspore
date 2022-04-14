@@ -22,7 +22,7 @@
 #include "ops/op_utils.h"
 #include "ops/dynamic_resize_nearest_neighbor.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

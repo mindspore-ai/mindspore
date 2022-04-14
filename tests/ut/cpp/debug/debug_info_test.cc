@@ -22,7 +22,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 class TestDebugInfo : public UT::Common {

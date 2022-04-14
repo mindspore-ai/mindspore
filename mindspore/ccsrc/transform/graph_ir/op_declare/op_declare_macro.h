@@ -23,7 +23,7 @@
 #include "transform/graph_ir/op_adapter.h"
 #include "transform/graph_ir/op_adapter_desc.h"
 #include "include/transform/graph_ir/op_adapter_map.h"
-#include "mindspore/core/base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore::transform {
 #define DECLARE_OP_ADAPTER(T)                                        \

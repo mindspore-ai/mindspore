@@ -27,7 +27,7 @@
 #include "external/graph/operator.h"
 #include "graph/utils/op_desc_utils.h"
 #include "graph/utils/graph_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace device {

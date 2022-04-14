@@ -15,7 +15,7 @@
  */
 
 #include "frontend/operator/prim_to_function.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 // namespace to support prim related definition

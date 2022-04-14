@@ -20,7 +20,7 @@
 #include <string>
 #include <map>
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

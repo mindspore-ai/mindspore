@@ -19,11 +19,11 @@
 #include "ir/func_graph.h"
 
 #include "ir/manager.h"
-#include "base/core_ops.h"
 #include "utils/ordered_set.h"
 #include "abstract/abstract_value.h"
 #include "abstract/abstract_function.h"
 #include "utils/flags.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 using mindspore::abstract::AbstractFunction;

@@ -27,7 +27,7 @@
 #include <algorithm>
 #include "utils/ms_context.h"
 #include "utils/ordered_map.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "pipeline/jit/base.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

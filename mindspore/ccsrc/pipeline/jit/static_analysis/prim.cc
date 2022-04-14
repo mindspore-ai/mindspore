@@ -42,7 +42,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
 #include "pipeline/jit/parse/data_converter.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"

@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <memory>
 #include "include/common/utils/utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/draw.h"

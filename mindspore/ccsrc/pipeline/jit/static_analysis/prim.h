@@ -26,7 +26,7 @@
 
 #include "utils/hash_map.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace abstract {

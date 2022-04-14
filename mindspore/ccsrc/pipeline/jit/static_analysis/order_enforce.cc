@@ -25,7 +25,7 @@
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
 #include "include/common/utils/utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore::pipeline {
 namespace {

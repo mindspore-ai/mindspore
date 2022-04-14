@@ -52,7 +52,7 @@
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
 #endif
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace runtime {

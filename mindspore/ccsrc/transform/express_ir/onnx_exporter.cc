@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/func_graph.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"

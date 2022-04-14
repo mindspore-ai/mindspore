@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "ir/tensor.h"

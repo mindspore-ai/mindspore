@@ -18,7 +18,7 @@
 #include <functional>
 #include <iterator>
 #include <numeric>
-#include "abstract/infer_functions.h"
+#include "abstract/ops/infer_functions.h"
 #include "abstract/utils.h"
 #include "abstract/param_validator.h"
 #include "utils/shape_utils.h"

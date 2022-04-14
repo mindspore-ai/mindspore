@@ -24,11 +24,11 @@
 #include <queue>
 
 #include "utils/hash_map.h"
-#include "base/core_ops.h"
 #include "ir/func_graph.h"
 #include "ir/primitive.h"
 #include "utils/ms_context.h"
 #include "utils/anf_utils.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 const AbstractBasePtr &AnfNode::abstract() const {

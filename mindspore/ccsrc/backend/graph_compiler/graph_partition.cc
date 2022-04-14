@@ -23,7 +23,7 @@
 #include <stack>
 #include <set>
 #include <algorithm>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"

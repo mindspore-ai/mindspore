@@ -17,7 +17,7 @@
 
 #include <algorithm>
 #include <string>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/tensor.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"

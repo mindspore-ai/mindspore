@@ -25,7 +25,7 @@
 #include "ir/tensor.h"
 #include "ir/param_info.h"
 #include "ir/func_graph.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "proto/mind_ir.pb.h"
 #include "utils/check_convert_utils.h"
 #include "include/common/debug/dump_proto.h"

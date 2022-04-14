@@ -22,7 +22,7 @@
 #include <vector>
 #include "ops/expand_dims.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "utils/log_adapter.h"
 #include "mindapi/src/helper.h"
 

@@ -27,7 +27,7 @@
 #include "ir/manager.h"
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "base/base_ref_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/config_manager.h"

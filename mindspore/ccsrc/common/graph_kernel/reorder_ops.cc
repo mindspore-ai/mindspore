@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "utils/hash_set.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

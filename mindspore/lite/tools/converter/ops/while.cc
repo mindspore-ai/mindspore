@@ -18,7 +18,7 @@
 #include "tools/common/tensor_util.h"
 #include "tools/converter/ops/while.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

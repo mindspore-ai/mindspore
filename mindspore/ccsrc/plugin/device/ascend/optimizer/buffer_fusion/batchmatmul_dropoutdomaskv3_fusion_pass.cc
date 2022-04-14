@@ -18,7 +18,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/ms_context.h"
 #include "backend/common/optimizer/fusion_id_allocator.h"
 

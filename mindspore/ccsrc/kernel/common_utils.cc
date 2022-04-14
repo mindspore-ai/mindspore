@@ -31,7 +31,7 @@
 #include "utils/ms_utils.h"
 #include "ir/manager.h"
 #include "ir/meta_tensor.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ir/graph_utils.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"

@@ -24,7 +24,7 @@
 #include "runtime/device/kernel_info.h"
 #include "kernel/oplib/oplib.h"
 #include "kernel/common_utils.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"

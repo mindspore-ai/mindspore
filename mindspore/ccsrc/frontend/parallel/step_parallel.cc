@@ -28,7 +28,7 @@
 #include <queue>
 
 #include "utils/hash_map.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"

@@ -21,7 +21,7 @@
 #include <functional>
 #include <numeric>
 #include "ir/anf.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/shape_utils.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"

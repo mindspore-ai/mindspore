@@ -37,7 +37,7 @@
 #include "utils/any.h"
 #include "ir/dtype.h"
 #include "ir/meta_func_graph.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 // namespace to support composite operators definition

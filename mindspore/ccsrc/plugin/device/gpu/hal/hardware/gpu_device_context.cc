@@ -48,7 +48,7 @@
 #include "debug/debugger/debugger.h"
 #endif
 #include "backend/common/pass/optimize_updatestate.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 
 namespace mindspore {
 namespace device {

@@ -18,7 +18,7 @@
 #include <string>
 
 #include "utils/parallel_node_check.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 // clang-format off

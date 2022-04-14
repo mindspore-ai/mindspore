@@ -25,7 +25,7 @@
 #include "tools/common/tensor_util.h"
 #include "include/errorcode.h"
 #include "base/base.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "ops/concat.h"
 #include "ops/batch_norm.h"
 #include "ops/fused_batch_norm.h"

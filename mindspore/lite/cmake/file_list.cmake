@@ -9,7 +9,7 @@ set(ABSTRACT_HEADER
         ${CORE_DIR}/abstract/abstract_value.h
         ${CORE_DIR}/abstract/dshape.h
         ${CORE_DIR}/abstract/param_validator.h
-        ${CORE_DIR}/abstract/primitive_infer_map.h
+        ${CORE_DIR}/abstract/ops/primitive_infer_map.h
         ${CORE_DIR}/abstract/utils.h
         )
 file(GLOB MINDAPI_BASE_HEADER ${CORE_DIR}/mindapi/base/*.h)
@@ -17,7 +17,6 @@ file(GLOB MINDAPI_IR_HEADER ${CORE_DIR}/mindapi/ir/*.h)
 set(BASE_HEADER
         ${CORE_DIR}/base/base.h
         ${CORE_DIR}/base/base_ref.h
-        ${CORE_DIR}/base/core_ops.h
         ${CORE_DIR}/base/effect_info.h
         ${CORE_DIR}/base/float16.h
         ${CORE_DIR}/base/user_data.h

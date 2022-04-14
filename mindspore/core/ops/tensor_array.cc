@@ -16,7 +16,7 @@
 
 #include "ops/tensor_array.h"
 #include <vector>
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {

@@ -21,7 +21,7 @@
 #include <set>
 #include <string>
 #include "ir/anf.h"
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::lite::quant {

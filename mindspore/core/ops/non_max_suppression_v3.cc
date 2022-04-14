@@ -18,7 +18,7 @@
 
 #include "ops/non_max_suppression_v3.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
 #include "abstract/dshape.h"
 #include "mindapi/src/helper.h"
 

@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <memory>
-#include "base/core_ops.h"
+#include "mindspore/core/ops/core_ops.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/irpass/vmap_eliminate.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
