@@ -38,7 +38,7 @@ class MIND_API MatrixSetDiagV3 : public BaseOperator {
 };
 
 abstract::AbstractBasePtr MatrixSetDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args);
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimMatrixSetDiagV3Ptr = std::shared_ptr<MatrixSetDiagV3>;
 }  // namespace ops

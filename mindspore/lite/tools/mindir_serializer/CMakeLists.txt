@@ -17,6 +17,7 @@ add_compile_definitions(COMMON_DLL)
 if(NOT ENABLE_CLOUD_AND_LITE)
     set(MINDIR_EXPORT_DIR ${CCSRC_DIR}/transform/express_ir)
     add_subdirectory(${MINDIR_EXPORT_DIR} mindir_exporter)
+    add_dependencies(_mindspore_transform_express_ir_obj mindir_proto_mid)
 endif()
 
 add_library(mindir_serializer_mid OBJECT
