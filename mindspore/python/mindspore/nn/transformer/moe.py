@@ -47,7 +47,7 @@ class MoEConfig:
             num_experts_chosen (int): The number of experts is chosen by each token and it should not be larger
                 than expert_num. Default: 1.
         Supported Platforms:
-            ``Ascend`` ``GPU``
+            ``Ascend``
 
         Examples:
             >>> from mindspore.nn.transformer import MoEConfig
