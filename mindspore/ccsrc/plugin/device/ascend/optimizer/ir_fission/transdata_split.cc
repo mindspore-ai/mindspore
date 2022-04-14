@@ -121,6 +121,10 @@ CNodePtr TransDataSplit::DoSplit(const FuncGraphPtr &func_graph, const AnfNodePt
     new_transdata_node->set_abstract(node->abstract());
     new_replace_node = new_transdata_node;
   }
+  // replace ref pair since transdata will be inserted in DealRefOutput
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  kernel_graph->ReplaceRefPair({node, 0}, {new_replace_node, 0});
   MS_LOG(INFO) << "Transdata node:" << cnode->DebugString() << "split success.";
   return new_replace_node;
 }
