@@ -71,6 +71,15 @@ class VmapGeneralRule : public MetaFuncGraph {
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 
+  std::string prim_name() const {
+    if (!prim_) {
+      return "";
+    }
+    return prim_->name();
+  }
+
+  int64_t axis_size() const { return axis_size_; }
+
  private:
   CNodeInpusList ConstructMapInput(const InputsAbstractList &tuple_elements_abstract, bool wrapped_tuple,
                                    int64_t args_size);
@@ -78,6 +87,7 @@ class VmapGeneralRule : public MetaFuncGraph {
   int64_t axis_size_ = 0;
   FuncGraphPtr fg_{nullptr};
 };
+using VmapGeneralRulePtr = std::shared_ptr<VmapGeneralRule>;
 }  // namespace prim
 }  // namespace mindspore
 
