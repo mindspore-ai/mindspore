@@ -183,7 +183,8 @@ struct KernelLaunchInfo {
 };
 struct TensorInfo {
   mindspore::Format format;
-  abstract::AbstractBasePtr abstract_base;  // Store data type and shape.
+  abstract::AbstractBasePtr abstract_base;       // Store data type and shape.
+  std::vector<int64_t> device_shape_adaptively;  // deprecated field for dynamic shape
 };
 using TensorInfoPtr = std::shared_ptr<TensorInfo>;
 using BaseOperatorPtr = std::shared_ptr<ops::BaseOperator>;
@@ -213,6 +214,10 @@ class KernelTensor {
   void SetAbstract(const abstract::AbstractBasePtr &base_abstract) { tensor_info_.abstract_base = base_abstract; }
   void SetTensorInfo(const TensorInfo &tensor_info) { tensor_info_ = tensor_info; }
 
+  // deprecated field for dynamic shape
+  const std::vector<int64_t> &GetDeviceShapeAdaptively() const;
+  void SetDeviceShapeAdaptively(const std::vector<int64_t> &device_shape_adaptively);
+
  private:
   TensorInfo tensor_info_;
   AddressPtr data_{nullptr};
@@ -221,8 +226,22 @@ using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
 struct InitOpArgs {
   std::map<uint32_t, tensor::TensorPtr> depend_tensor_map;
+  BaseOperatorPtr base_operator;
+  std::vector<KernelTensorPtr> inputs;
+  std::vector<KernelTensorPtr> outputs;
   // Key for user data.
   constexpr static char key[] = "InitOpArgs";
+};
+
+enum class KernelModType {
+  Invalid = 0,
+  KernelMod,
+  GpuKernelMod,
+  NativeGpuKernelMod,
+  DeprecatedNativeGpuKernelMod,
+  CpuKernelMod,
+  NativeCpuKernelMod,
+  DeprecatedNativeCpuKernelMod,
 };
 
 class KernelMod {
@@ -252,6 +271,7 @@ class KernelMod {
   }
   virtual void InitOp(const std::shared_ptr<InitOpArgs> &args) {}
   virtual void UpdateOp() {}
+  virtual std::vector<KernelTensorPtr> GetDynamicShapeOutputs() { return {}; }
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
@@ -265,6 +285,7 @@ class KernelMod {
   StreamType stream() const { return stream_; }
   // set true if need to update output's shape after launch in dynamic_shape, like Unique
   virtual bool IsNeedUpdateOp() { return is_need_updateop_; }
+  virtual enum KernelModType GetKernelModType() const { return KernelModType::KernelMod; }
 
  protected:
   std::string kernel_name_;

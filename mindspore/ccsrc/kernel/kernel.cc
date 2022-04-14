@@ -131,5 +131,13 @@ void KernelTensor::SetBaseShape(const abstract::BaseShapePtr &base_shape) {
   }
   tensor_info_.abstract_base->set_shape(base_shape);
 }
+
+const std::vector<int64_t> &KernelTensor::GetDeviceShapeAdaptively() const {
+  return tensor_info_.device_shape_adaptively;
+}
+
+void KernelTensor::SetDeviceShapeAdaptively(const std::vector<int64_t> &device_shape_adaptively) {
+  tensor_info_.device_shape_adaptively = device_shape_adaptively;
+}
 }  // namespace kernel
 }  // namespace mindspore

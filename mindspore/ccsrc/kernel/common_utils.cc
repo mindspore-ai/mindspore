@@ -1194,7 +1194,9 @@ KernelArgs GetArgsFromCNode(const CNodePtr &cnode) {
     }
     input_abstract->set_type(TypeIdToType(real_intput_types[input_idx]));
     auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), input_abstract};
+    auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), input_abstract,
+                           std::vector<int64_t>(device_shape_adaptively.begin(), device_shape_adaptively.end())};
     KernelTensorPtr input_tensor = std::make_shared<KernelTensor>();
     input_tensor->SetTensorInfo(tensor_info);
     input_tensors.push_back(input_tensor);
@@ -1212,7 +1214,9 @@ KernelArgs GetArgsFromCNode(const CNodePtr &cnode) {
       auto output_abstract = abs_tuple->elements()[output_idx];
       output_abstract->set_type(TypeIdToType(real_output_types[output_idx]));
       auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
-      TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract};
+      auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
+      TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract,
+                             std::vector<int64_t>(device_shape_adaptively.begin(), device_shape_adaptively.end())};
       KernelTensorPtr output_tensor = std::make_shared<KernelTensor>();
       output_tensor->SetTensorInfo(tensor_info);
       output_tensors.push_back(output_tensor);
@@ -1221,7 +1225,9 @@ KernelArgs GetArgsFromCNode(const CNodePtr &cnode) {
     auto output_abstract = cur_abstract->Clone();
     output_abstract->set_type(TypeIdToType(real_output_types[0]));
     auto format_str = AnfAlgo::GetOutputFormat(cnode, 0);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract};
+    auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, 0);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract,
+                           std::vector<int64_t>(device_shape_adaptively.begin(), device_shape_adaptively.end())};
     KernelTensorPtr output_tensor = std::make_shared<KernelTensor>();
     output_tensor->SetTensorInfo(tensor_info);
     output_tensors.push_back(output_tensor);
