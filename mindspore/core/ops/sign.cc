@@ -40,8 +40,9 @@ abstract::ShapePtr SignInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 TypePtr SignInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64, kComplex64, kComplex128};
   auto x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, primitive->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
   return x_type;
 }
 }  // namespace
