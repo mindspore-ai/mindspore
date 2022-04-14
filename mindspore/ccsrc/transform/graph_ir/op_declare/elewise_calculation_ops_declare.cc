@@ -652,4 +652,10 @@ ATTR_MAP(Eltwise) = {{"n", ATTR_DESC(N, AnyTraits<int64_t>())},
                      {"coeff", ATTR_DESC(coeff, AnyTraits<std::vector<float>>(), AnyTraits<float>())}};
 OUTPUT_MAP(Eltwise) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Eltwise, kNameEltwise, ADPT_DESC(Eltwise))
+
+// TensorMove
+INPUT_MAP(TensorMove) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(TensorMove) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(TensorMove) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(TensorMove, kNameTensorMove, ADPT_DESC(TensorMove))
 }  // namespace mindspore::transform
