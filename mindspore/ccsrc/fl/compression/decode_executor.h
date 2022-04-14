@@ -28,7 +28,6 @@
 #include <regex>
 #include <map>
 #include <utility>
-#include "proto/comm.pb.h"
 #include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
 #include "fl/server/model_store.h"
