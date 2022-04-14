@@ -18,6 +18,7 @@ package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import mindspore.schema.FeatureMap;
 
 import java.security.SecureRandom;
@@ -33,7 +34,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class SecureProtocol {
-    private static final Logger LOGGER = Logger.getLogger(SecureProtocol.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(SecureProtocol.class.toString());
     private static double deltaError = 1e-6d;
     private static Map<String, float[]> modelMap;
 
@@ -83,7 +84,7 @@ public class SecureProtocol {
      */
     public void setPWParameter(int iter, int minSecretNum, byte[] prime, int featureSize) {
         if (prime == null || prime.length == 0) {
-            LOGGER.severe(Common.addTag("[PairWiseMask] the input argument <prime> is null, please check!"));
+            LOGGER.severe("[PairWiseMask] the input argument <prime> is null, please check!");
             throw new IllegalArgumentException();
         }
         this.iteration = iter;
@@ -163,7 +164,7 @@ public class SecureProtocol {
                 localFLParameter.getFlID()));
         // round 0
         if (localFLParameter.isStopJobFlag()) {
-            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+            LOGGER.info("the stopJObFlag is set to true, the job will be stop");
             return status;
         }
         status = cipherClient.exchangeKeys();
@@ -175,7 +176,7 @@ public class SecureProtocol {
         }
         // round 1
         if (localFLParameter.isStopJobFlag()) {
-            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+            LOGGER.info("the stopJObFlag is set to true, the job will be stop");
             return status;
         }
         status = cipherClient.shareSecrets();
@@ -187,13 +188,13 @@ public class SecureProtocol {
         }
         // round2
         if (localFLParameter.isStopJobFlag()) {
-            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+            LOGGER.info("the stopJObFlag is set to true, the job will be stop");
             return status;
         }
         featureMask = cipherClient.doubleMaskingWeight();
         if (featureMask == null || featureMask.length <= 0) {
-            LOGGER.severe(Common.addTag("[Encrypt] the returned featureMask from cipherClient.doubleMaskingWeight" +
-                    " is null, please check!"));
+            LOGGER.severe("[Encrypt] the returned featureMask from cipherClient.doubleMaskingWeight" +
+                    " is null, please check!");
             return FLClientStatus.FAILED;
         }
         retCode = cipherClient.getRetCode();
@@ -352,7 +353,7 @@ public class SecureProtocol {
             double sNegative = calculateSNegative(eps, targetDelta, 0, 1);
             alpha = Math.sqrt(1.0 + sNegative / 2.0) + Math.sqrt(sNegative / 2.0);
         } else {
-            LOGGER.info(Common.addTag("[Encrypt] targetDelta = deltaZero"));
+            LOGGER.info("[Encrypt] targetDelta = deltaZero");
         }
         return alpha * clipNorm / Math.sqrt(2.0 * eps);
     }
@@ -372,7 +373,7 @@ public class SecureProtocol {
         int featureSize = updateFeatureName.size();
         // calculate sigma
         double gaussianSigma = calculateSigma(dpNormClip, dpEps, dpDelta);
-        LOGGER.info(Common.addTag("[Encrypt] =============Noise sigma of DP is: " + gaussianSigma + "============="));
+        LOGGER.info("[Encrypt] =============Noise sigma of DP is: " + gaussianSigma + "=============");
 
         // calculate l2-norm of all layers' update array
         double updateL2Norm = 0d;
@@ -393,7 +394,7 @@ public class SecureProtocol {
         }
         updateL2Norm = Math.sqrt(updateL2Norm);
         if (updateL2Norm == 0) {
-            LOGGER.severe(Common.addTag("[Encrypt] updateL2Norm is 0, please check"));
+            LOGGER.severe("[Encrypt] updateL2Norm is 0, please check");
             return new HashMap<>();
         }
         double clipFactor = Math.min(1.0, dpNormClip / updateL2Norm);
@@ -504,7 +505,7 @@ public class SecureProtocol {
             pmfSum += pmf.get(i);
         }
         if (pmfSum == 0) {
-            LOGGER.severe(Common.addTag("[SignDS] probability mass function is 0, please check"));
+            LOGGER.severe("[SignDS] probability mass function is 0, please check");
             return new ArrayList<>();
         }
         for (int i = 0; i < pmf.size(); i++) {
@@ -624,15 +625,15 @@ public class SecureProtocol {
      */
     private static void randomSelect(SecureRandom secureRandom, List<Integer> inputList, List<Integer> outputList, int num) {
         if (num <= 0) {
-            LOGGER.severe(Common.addTag("[SignDS] The number to be selected is set incorrectly!"));
+            LOGGER.severe("[SignDS] The number to be selected is set incorrectly!");
             return;
         }
         if (inputList.isEmpty()) {
-            LOGGER.severe(Common.addTag("[SignDS] The input List is empty!"));
+            LOGGER.severe("[SignDS] The input List is empty!");
             return;
         }
         if (inputList.size() < num) {
-            LOGGER.severe(Common.addTag("[SignDS] The size of inputList is small than num!"));
+            LOGGER.severe("[SignDS] The size of inputList is small than num!");
             return;
         }
         for (int i = inputList.size(); i > inputList.size() - num; i--) {
@@ -684,7 +685,7 @@ public class SecureProtocol {
         }
         double denominator = combLessInter + Math.exp(signEps) * combMoreInter;
         if (denominator == 0) {
-            LOGGER.severe(Common.addTag("[SignDS] denominator is 0, please check"));
+            LOGGER.severe("[SignDS] denominator is 0, please check");
             return new int[0];
         }
         int numInter = countInters(thrDim, denominator, topkDim, inputDim, signDimOut, signEps);
@@ -709,7 +710,7 @@ public class SecureProtocol {
         randomSelect(secureRandom, topkKeyList, outputDimensionIndexList, numInter);
         randomSelect(secureRandom, nonTopkKeyList, outputDimensionIndexList, numOuter);
         outputDimensionIndexList.sort(Integer::compare);
-        LOGGER.info(Common.addTag("[SignDS] outputDimension size is " + outputDimensionIndexList.size()));
+        LOGGER.info("[SignDS] outputDimension size is " + outputDimensionIndexList.size());
         return outputDimensionIndexList.stream().mapToInt(i -> i).toArray();
     }
 }

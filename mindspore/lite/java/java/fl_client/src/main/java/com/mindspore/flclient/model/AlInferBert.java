@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class AlInferBert extends AlBert {
-    private static final Logger logger = Logger.getLogger(AlInferBert.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(AlInferBert.class.toString());
 
     private static volatile AlInferBert alInferBert;
 
@@ -64,7 +65,7 @@ public class AlInferBert extends AlBert {
      */
     public int initDataSet(String exampleFile, String vocabFile, String idsFile, boolean isEvalMode) {
         if (exampleFile == null || vocabFile == null || idsFile == null) {
-            logger.severe(Common.addTag("dataset init failed,trainFile,idsFile,vocabFile cannot be empty"));
+            logger.severe("dataset init failed,trainFile,idsFile,vocabFile cannot be empty");
             return -1;
         }
         if (isEvalMode) {
@@ -78,19 +79,19 @@ public class AlInferBert extends AlBert {
     private int[] infer() {
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
-            logger.severe(Common.addTag("trainSession switch eval mode failed"));
+            logger.severe("trainSession switch eval mode failed");
             return new int[0];
         }
         int[] predictLabels = new int[features.size()];
         for (int j = 0; j < batchNum; j++) {
             List<Integer> labels = fillModelInput(j, false);
             if (labels == null) {
-                logger.severe(Common.addTag("fill model input failed"));
+                logger.severe("fill model input failed");
                 return new int[0];
             }
             isSuccess = trainSession.runGraph();
             if (!isSuccess) {
-                logger.severe(Common.addTag("run graph failed"));
+                logger.severe("run graph failed");
                 return new int[0];
             }
             int[] batchLabels = getBatchLabel();
@@ -110,28 +111,28 @@ public class AlInferBert extends AlBert {
      */
     public int[] inferModel(String modelPath, String dataFile, String vocabFile, String idsFile) {
         if (modelPath == null || vocabFile == null || idsFile == null || dataFile == null) {
-            logger.severe(Common.addTag("dataset init failed,modelPath,idsFile,vocabFile,dataFile cannot be empty"));
+            logger.severe("dataset init failed,modelPath,idsFile,vocabFile,dataFile cannot be empty");
             return new int[0];
         }
-        logger.info(Common.addTag("Infer model," + modelPath + ",Data file," + dataFile + ",vocab file," + vocabFile +
-                ",idsFile," + idsFile));
+        logger.info("Infer model," + modelPath + ",Data file," + dataFile + ",vocab file," + vocabFile +
+                ",idsFile," + idsFile);
         int status = initSessionAndInputs(modelPath, false);
         if (status == -1) {
-            logger.severe(Common.addTag("init session and inputs failed"));
+            logger.severe("init session and inputs failed");
             return new int[0];
         }
         int inferSize = initDataSet(dataFile, vocabFile, idsFile, false);
         if (inferSize == 0) {
-            logger.severe(Common.addTag("infer size should more than 0"));
+            logger.severe("infer size should more than 0");
             return new int[0];
         }
         status = padSamples();
         if (status == -1) {
-            logger.severe(Common.addTag("infer model failed"));
+            logger.severe("infer model failed");
             return new int[0];
         }
         if (batchSize <= 0) {
-            logger.severe(Common.addTag("batch size must bigger than 0"));
+            logger.severe("batch size must bigger than 0");
             return new int[0];
         }
         batchNum = features.size() / batchSize;

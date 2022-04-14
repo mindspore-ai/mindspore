@@ -392,7 +392,7 @@ train_result="success"
 inference_result="success"
 train_keywords1="the total response of 1: SUCCESS"
 train_keywords2="\[onFlJobFinished\] modelName: $flName iterationCount: 1 resultCode: 200"
-inference_keywords1="the predicted outputs"
+inference_keywords1="total run time"
 inference_keywords2="inference finish"
 scheduler_log=$scrip_path/scheduler/scheduler.log
 worker_log=$scrip_path/worker_0/worker.log
@@ -436,14 +436,7 @@ r4=$?
 echo "$tag inference_logcat1: $inference_logcat1"
 echo "$tag inference_logcat2: $inference_logcat2"
 
-labels=${inference_logcat1##*:}
-#array=(${labels//,/ })
-IFS="," read -r -a array <<< "$labels"
-labels_num=${#array[@]}
-echo "$tag predicted labels: $labels"
-echo "$tag the number of predicted labels is: $labels_num"
-
-if [ "$r3" != "0" ] || [ "$r4" != "0" ] || [ "$labels_num" != "$batch_size" ]; then
+if [ "$r3" != "0" ] || [ "$r4" != "0" ] ; then
   echo "$tag inference failed: "
   if [ "$r3" != "0" ]; then
     echo "$tag the Keyword < $inference_keywords1 > does not appear in the log"
@@ -451,10 +444,6 @@ if [ "$r3" != "0" ] || [ "$r4" != "0" ] || [ "$labels_num" != "$batch_size" ]; t
 
   if [ "$r4" != "0" ]; then
     echo "$tag the Keyword < $inference_keywords2 > does not appear in the log"
-  fi
-
-  if [ "$labels_num" != "$batch_size" ]; then
-    echo "$tag the number of predicted labels is not right, must be $batch_size"
   fi
 
   echo "$tag please check: "

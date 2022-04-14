@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +39,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class CustomTokenizer {
-    private static final Logger logger = Logger.getLogger(CustomTokenizer.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(CustomTokenizer.class.toString());
     private Map<String, Integer> vocabs = new HashMap<>();
     private final int maxInputChars = 100;
     private final String[] notSplitStrs = {"UNK"};
@@ -95,7 +96,7 @@ public class CustomTokenizer {
      */
     public void init(String vocabFile, String idsFile, int seqLen) {
         if (vocabFile == null || idsFile == null) {
-            logger.severe(Common.addTag("idsFile,vocabFile cannot be empty"));
+            logger.severe("idsFile,vocabFile cannot be empty");
             return;
         }
         Path vocabPath = Paths.get(vocabFile);
@@ -103,7 +104,7 @@ public class CustomTokenizer {
         try {
             vocabLines = Files.readAllLines(vocabPath, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            logger.severe(Common.addTag("read vocab file failed, please check vocab file path"));
+            logger.severe("read vocab file failed, please check vocab file path");
             return;
         }
         Path idsPath = Paths.get(idsFile);
@@ -111,14 +112,14 @@ public class CustomTokenizer {
         try {
             idsLines = Files.readAllLines(idsPath, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            logger.severe(Common.addTag("read ids file failed, please check ids file path"));
+            logger.severe("read ids file failed, please check ids file path");
             return;
         }
         for (int i = 0; i < idsLines.size(); ++i) {
             try {
                 vocabs.put(vocabLines.get(i), Integer.parseInt(idsLines.get(i)));
             } catch (NumberFormatException e) {
-                logger.severe(Common.addTag("id lines has invalid content"));
+                logger.severe("id lines has invalid content");
                 return;
             }
         }
@@ -270,7 +271,7 @@ public class CustomTokenizer {
      */
     public Optional<Feature> getFeatures(List<Integer> tokens, String label) {
         if (tokens == null || label == null) {
-            logger.warning(Common.addTag("tokens or label is null"));
+            logger.warning("tokens or label is null");
             return Optional.empty();
         }
         if (!labelMap.containsKey(label)) {
@@ -298,7 +299,7 @@ public class CustomTokenizer {
      */
     public List<Integer> tokenize(String text, boolean isTrainMode) {
         if (text == null) {
-            logger.warning(Common.addTag("text is empty,skip it"));
+            logger.warning("text is empty,skip it");
             return new ArrayList<>();
         }
         String[] splitTokens = splitText(text);

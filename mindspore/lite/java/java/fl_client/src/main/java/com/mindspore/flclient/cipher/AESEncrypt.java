@@ -20,6 +20,7 @@ import static com.mindspore.flclient.LocalFLParameter.I_VEC_LEN;
 import static com.mindspore.flclient.LocalFLParameter.KEY_LEN;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -41,7 +42,7 @@ import javax.crypto.spec.SecretKeySpec;
  * @since 2021-06-30
  */
 public class AESEncrypt {
-    private static final Logger LOGGER = Logger.getLogger(AESEncrypt.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(AESEncrypt.class.toString());
 
     /**
      * encrypt/decrypt algorithm name
@@ -64,11 +65,11 @@ public class AESEncrypt {
      */
     public AESEncrypt(byte[] key, String mode) {
         if (key == null) {
-            LOGGER.severe(Common.addTag("Key is null"));
+            LOGGER.severe("Key is null");
             return;
         }
         if (key.length != KEY_LEN) {
-            LOGGER.severe(Common.addTag("the length of key is not correct"));
+            LOGGER.severe("the length of key is not correct");
             return;
         }
 
@@ -90,11 +91,11 @@ public class AESEncrypt {
      */
     public byte[] encrypt(byte[] key, byte[] data) {
         if (key == null) {
-            LOGGER.severe(Common.addTag("Key is null"));
+            LOGGER.severe("Key is null");
             return new byte[0];
         }
         if (data == null) {
-            LOGGER.severe(Common.addTag("data is null"));
+            LOGGER.severe("data is null");
             return new byte[0];
         }
         try {
@@ -114,9 +115,9 @@ public class AESEncrypt {
             return encryptedAddIv;
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                 InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException ex) {
-            LOGGER.severe(Common.addTag("catch NoSuchAlgorithmException or " +
+            LOGGER.severe("catch NoSuchAlgorithmException or " +
                     "NoSuchPaddingException or InvalidKeyException or InvalidAlgorithmParameterException or " +
-                    "IllegalBlockSizeException or BadPaddingException: " + ex.getMessage()));
+                    "IllegalBlockSizeException or BadPaddingException: " + ex.getMessage());
             return new byte[0];
         }
     }
@@ -131,16 +132,16 @@ public class AESEncrypt {
      */
     public byte[] encryptCTR(byte[] key, byte[] data, byte[] iVec) {
         if (key == null) {
-            LOGGER.severe(Common.addTag("Key is null"));
+            LOGGER.severe("Key is null");
             return new byte[0];
         }
         if (data == null) {
-            LOGGER.severe(Common.addTag("data is null"));
+            LOGGER.severe("data is null");
             return new byte[0];
         }
         if (iVec == null || iVec.length != I_VEC_LEN) {
-            LOGGER.severe(Common.addTag("iVec is null or the length of iVec is not valid, it should be " + "I_VEC_LEN"
-            ));
+            LOGGER.severe("iVec is null or the length of iVec is not valid, it should be " + "I_VEC_LEN"
+            );
             return new byte[0];
         }
         try {
@@ -151,9 +152,9 @@ public class AESEncrypt {
             return cipher.doFinal(data);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                 InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException ex) {
-            LOGGER.severe(Common.addTag("[encryptCTR] catch NoSuchAlgorithmException or " +
+            LOGGER.severe("[encryptCTR] catch NoSuchAlgorithmException or " +
                     "NoSuchPaddingException or InvalidKeyException or InvalidAlgorithmParameterException or " +
-                    "IllegalBlockSizeException or BadPaddingException: " + ex.getMessage()));
+                    "IllegalBlockSizeException or BadPaddingException: " + ex.getMessage());
             return new byte[0];
         }
     }
@@ -167,16 +168,16 @@ public class AESEncrypt {
      */
     public byte[] decrypt(byte[] key, byte[] encryptDataAddIv) {
         if (key == null) {
-            LOGGER.severe(Common.addTag("Key is null"));
+            LOGGER.severe("Key is null");
             return new byte[0];
         }
         if (encryptDataAddIv == null) {
-            LOGGER.severe(Common.addTag("encryptDataAddIv is null"));
+            LOGGER.severe("encryptDataAddIv is null");
             return new byte[0];
         }
         if (encryptDataAddIv.length <= I_VEC_LEN) {
-            LOGGER.severe(Common.addTag("the length of encryptDataAddIv is not valid: " + encryptDataAddIv.length +
-                    ", it should be > " + I_VEC_LEN));
+            LOGGER.severe("the length of encryptDataAddIv is not valid: " + encryptDataAddIv.length +
+                    ", it should be > " + I_VEC_LEN);
             return new byte[0];
         }
         try {
@@ -189,9 +190,9 @@ public class AESEncrypt {
             return cipher.doFinal(encryptData);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                 InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException ex) {
-            LOGGER.severe(Common.addTag("catch NoSuchAlgorithmException or " +
+            LOGGER.severe("catch NoSuchAlgorithmException or " +
                     "NoSuchPaddingException or InvalidKeyException or InvalidAlgorithmParameterException or " +
-                    "IllegalBlockSizeException or BadPaddingException: " + ex.getMessage()));
+                    "IllegalBlockSizeException or BadPaddingException: " + ex.getMessage());
             return new byte[0];
         }
     }
