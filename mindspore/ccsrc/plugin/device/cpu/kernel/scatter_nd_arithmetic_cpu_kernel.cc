@@ -29,7 +29,7 @@ namespace {
 constexpr size_t kScatterNdArithmeticInputsNum = 3;
 constexpr size_t kScatterNdArithmeticOutputsNum = 1;
 constexpr size_t kMinIndicesRank = 2;
-constexpr size_t kMaxIndicesRank = 8;
+constexpr size_t kMinBlockSize = 128;
 constexpr size_t kInputIndex = 0;
 constexpr size_t kIndicesIndex = 1;
 constexpr size_t kUpdatesIndex = 2;
@@ -48,10 +48,8 @@ class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
 
  private:
   void InitComputeFunc();
-  void ScatterNdMul(const T *in, T *out) const;
 
-  using TypeComputeFunc = std::function<void(ScatterNdArithmeticCpuKernelFunc *, const T *in, T *out)>;
-
+  using TypeComputeFunc = std::function<void(T *a, size_t a_idx, T *b, size_t b_idx)>;
   TypeComputeFunc compute_func_;
   bool use_locking_{true};
   size_t slice_size_;
@@ -64,12 +62,27 @@ class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
 
 template <typename T, typename S>
 void ScatterNdArithmeticCpuKernelFunc<T, S>::InitComputeFunc() {
-  static const std::map<std::string, TypeComputeFunc> scatterNdArithmeticFuncMap{
-    {prim::kPrimScatterNdMul->name(), &ScatterNdArithmeticCpuKernelFunc<T, S>::ScatterNdMul}};
+  static const std::map<std::string, std::function<T(const T &a, const T &b)>> scatterNdArithmeticFuncMap{
+    {prim::kPrimScatterNdMul->name(), [](const T &a, const T &b) { return a * b; }}};
   if (scatterNdArithmeticFuncMap.find(kernel_name_) == scatterNdArithmeticFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
   }
-  compute_func_ = scatterNdArithmeticFuncMap.at(kernel_name_);
+  auto &binary_func = scatterNdArithmeticFuncMap.at(kernel_name_);
+  // If 'use_locking' is set, we use atomic operation to conduct the scatter operation.
+  if (use_locking_) {
+    compute_func_ = [&binary_func](T *a, size_t a_idx, T *b, size_t b_idx) {
+      auto &atomic_ = reinterpret_cast<std::atomic<T> *>(a)[a_idx];
+      T expect = atomic_.load();
+      T result;
+      do {
+        result = binary_func(expect, b[b_idx]);
+      } while (!atomic_.compare_exchange_weak(expect, result));
+    };
+  } else {
+    compute_func_ = [&binary_func](T *a, size_t a_idx, T *b, size_t b_idx) {
+      a[a_idx] = binary_func(a[a_idx], b[b_idx]);
+    };
+  }
 }
 
 template <typename T, typename S>
@@ -136,13 +149,6 @@ void ScatterNdArithmeticCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_nod
 }
 
 template <typename T, typename S>
-void ScatterNdArithmeticCpuKernelFunc<T, S>::ScatterNdMul(const T *in, T *out) const {
-  for (size_t i = 0; i < inner_size_; i++) {
-    out[i] *= in[i];
-  }
-}
-
-template <typename T, typename S>
 bool ScatterNdArithmeticCpuKernelFunc<T, S>::RunFunc(const std::vector<kernel::AddressPtr> &inputs,
                                                      const std::vector<kernel::AddressPtr> &,
                                                      const std::vector<kernel::AddressPtr> &outputs) {
@@ -155,31 +161,38 @@ bool ScatterNdArithmeticCpuKernelFunc<T, S>::RunFunc(const std::vector<kernel::A
 
   // ScatterNd* operations need to write input data and copy into output data,
   // while TensorScatter* operations need to copy input data and write into output data.
-  auto *target = input;
-  auto task = [this, &target, &indices, &updates](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      size_t upd_index = i * inner_size_;
-      size_t out_index = 0;
-      bool is_valid = true;  // Check if index is valid.
-      for (size_t j = 0; j < slice_size_; j++) {
-        auto idx_index = indices[i * slice_size_ + j];
-        out_index += batch_strides_[j] * idx_index * inner_size_;
-        is_valid &= (idx_index >= 0 && idx_index < static_cast<S>(input_shape_[j]));
+  auto target = input;
+  bool out_bound = false;
+  auto task = [this, &target, &indices, &updates, &out_bound](size_t start, size_t end) {
+    size_t pre_batch_idx = -1;
+    for (size_t upd_idx = start, out_idx = 0; upd_idx < end; ++upd_idx, ++out_idx) {
+      size_t batch_idx = upd_idx / inner_size_;
+      // If current position in the same batch, we can same some duplicate computation,
+      // otherwise, recompute the out_idx and check if index is valid.
+      if (batch_idx != pre_batch_idx) {
+        pre_batch_idx = batch_idx;
+        out_idx = upd_idx % inner_size_;
+        for (size_t i = 0; i < slice_size_; i++) {
+          auto index = indices[batch_idx * slice_size_ + i];
+          out_idx += batch_strides_[i] * index * inner_size_;
+          if (index < 0 && index >= static_cast<S>(input_shape_[i])) {
+            out_bound = true;
+          }
+        }
+        if (out_bound) {
+          break;
+        }
       }
-      if (!is_valid) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'indices' is out of bounds.";
-      }
-      compute_func_(this, updates + upd_index, target + out_index);
+      compute_func_(target, out_idx, updates, upd_idx);
     }
     return common::SUCCESS;
   };
 
-  // If 'use_locking' is false, we can use multi-process to parallelize the scatter operation.
-  if (use_locking_) {
-    task(0, batch_size_);
-  } else {
-    auto block_size = batch_size_ / GetActorMgrInnerThreadPool()->GetKernelThreadNum();
-    ParallelLaunch(task, batch_size_, block_size, this);
+  auto element_size = batch_size_ * inner_size_;
+  auto block_size = std::max(kMinBlockSize, element_size / GetActorMgrInnerThreadPool()->GetKernelThreadNum());
+  ParallelLaunch(task, element_size, block_size, this);
+  if (out_bound) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'indices' is out of bounds.";
   }
 
   auto ret = memcpy_s(output, outputs[kOutputIndex]->size, input, inputs[kInputIndex]->size);
