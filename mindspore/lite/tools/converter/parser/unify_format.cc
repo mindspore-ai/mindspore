@@ -223,6 +223,40 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
   return RET_OK;
 }
 
+namespace {
+template <typename T>
+int SetTensorInfoData(const tensor::Tensor *shape_tensor, tensor::TensorPtr tensor_info) {
+  std::vector<T> new_shape{};
+  T *shape_data = static_cast<T *>(shape_tensor->data_c());
+  MS_CHECK_TRUE_MSG(shape_tensor->data_c() != nullptr, RET_ERROR, "shape_tensor->data_c() is nullptr.");
+  new_shape = {shape_data[kNumIndex_2], shape_data[kNumIndex_3]};
+  auto status = memcpy_s(static_cast<T *>(tensor_info->data_c()), tensor_info->Size(), new_shape.data(),
+                         sizeof(T) * new_shape.size());
+  MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "shape_tensor->data_c() is nullptr.");
+  return RET_OK;
+}
+
+int SetShapeTensorInfo(const tensor::Tensor *shape_tensor, tensor::TensorPtr tensor_info) {
+  int ret = RET_ERROR;
+  switch (shape_tensor->data_type()) {
+    case kNumberTypeFloat:
+    case kNumberTypeFloat32: {
+      ret = SetTensorInfoData<float>(shape_tensor, tensor_info);
+    } break;
+    case kNumberTypeInt:
+    case kNumberTypeInt32: {
+      ret = SetTensorInfoData<int32_t>(shape_tensor, tensor_info);
+    } break;
+    case kNumberTypeInt64: {
+      ret = SetTensorInfoData<int64_t>(shape_tensor, tensor_info);
+    } break;
+    default:
+      MS_LOG(ERROR) << "not support shape tensor data type: " << shape_tensor->data_type();
+  }
+  return ret;
+}
+}  // namespace
+
 STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr && cnode != nullptr);
   auto resize_shape_node = cnode->input(kNumResizeInputShape)->cast<ParameterPtr>();
@@ -232,20 +266,14 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     return RET_ERROR;
   }
   MS_CHECK_TRUE_MSG(shape_tensor->data_c() != nullptr, RET_ERROR, "shape_tensor->data_c() is nullptr.");
-  auto shape_data = static_cast<float *>(shape_tensor->data_c());
-  std::vector<float> new_shape;
   MS_CHECK_TRUE_MSG(!shape_tensor->shape().empty(), RET_NULL_PTR, "out of range.");
-  if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_4) {
-    if (shape_data[kNumIndex_0] != 1 || shape_data[kNumIndex_1] != 1) {
-      MS_LOG(ERROR) << "Op resize don't support, which N dimension and C dimension is not 1.";
-      return RET_NOT_SUPPORT;
-    }
-    new_shape = {shape_data[kNumIndex_2], shape_data[kNumIndex_3]};
-  } else if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_2) {
-    return RET_OK;
-  } else {
+  if (shape_tensor->shape().at(0) != kNumGatherIndiceSize_2 && shape_tensor->shape().at(0) != kNumGatherIndiceSize_4) {
     return RET_ERROR;
   }
+  if (shape_tensor->shape().at(0) == kNumGatherIndiceSize_2) {
+    return RET_OK;
+  }
+
   auto new_shape_node = func_graph->add_parameter();
   MS_CHECK_TRUE_MSG(new_shape_node != nullptr, RET_NULL_PTR, "new_shape_node is nullptr.");
   auto tensor_info = CreateTensorInfo(nullptr, 0, std::vector<int64_t>{kNumInputSize}, shape_tensor->data_type());
@@ -253,14 +281,9 @@ STATUS UnifyFormatToNHWC::ConvertOnnxResizeForConstShape(const FuncGraphPtr &fun
     MS_LOG(ERROR) << "create tensor info failed.";
     return RET_ERROR;
   }
-  auto new_shape_data = static_cast<float *>(tensor_info->data_c());
-  if (new_shape_data == nullptr) {
-    MS_LOG(ERROR) << "data is nullptr";
-    return RET_ERROR;
-  }
-  auto status = memcpy_s(new_shape_data, tensor_info->Size(), new_shape.data(), sizeof(float) * new_shape.size());
+  auto status = SetShapeTensorInfo(shape_tensor.get(), tensor_info);
   if (status != RET_OK) {
-    MS_LOG(ERROR) << "init parameter from tensor info failed";
+    MS_LOG(ERROR) << "set shape for tensor info failed";
     return RET_ERROR;
   }
   status = InitParameterFromTensorInfo(new_shape_node, tensor_info);
