@@ -16,15 +16,25 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 #include <unordered_map>
-#include <mutex>
+#include <shared_mutex>
 
 namespace mindspore {
 namespace device {
 namespace gpu {
 std::shared_ptr<GPUdeviceInfo> GPUdeviceInfo::GetInstance(uint32_t device_id) {
   static std::unordered_map<uint32_t, std::shared_ptr<GPUdeviceInfo>> instances;
-  static std::mutex mutex;
-  std::lock_guard<std::mutex> _l(mutex);
+  static std::shared_mutex share_lock;
+  // read lock
+  {
+    std::shared_lock<std::shared_mutex> read_lock(share_lock);
+    auto iter = instances.find(device_id);
+    if (iter != instances.end()) {
+      return iter->second;
+    }
+  }
+
+  // write lock
+  std::unique_lock<std::shared_mutex> write_lock(share_lock);
   auto iter = instances.find(device_id);
   if (iter != instances.end()) {
     return iter->second;
