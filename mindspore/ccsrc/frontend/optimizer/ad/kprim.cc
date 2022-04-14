@@ -471,22 +471,17 @@ MetaFuncGraphPtr KPrim::KMetaFuncGraph(const PrimitivePtr &prim) {
   MS_LOG(EXCEPTION) << "Fail to find bprop function for " << prim->name() << ".";
 }
 
-bool HasUMonadInput(const CNodePtr &node) {
-  for (size_t index = node->inputs().size() - 1; index > 0; --index) {
-    if (HasAbstractUMonad(node->input(index))) {
-      return true;
-    }
+static void AddMonad(const FuncGraphPtr &bprop_fg, const CNodePtr &output, const AnfNodePtr &monad) {
+  if (!IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
+    constexpr char model_name[] = "mindspore.ops.composite.multitype_ops.add_impl";
+    constexpr char python_ops[] = "_tuple_add";
+    auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
+    auto maketuple_monad = bprop_fg->NewCNode({NewValueNode(prim::kPrimMakeTuple), monad});
+    auto tuple_add_monad = bprop_fg->NewCNode({tuple_add_ops, output, maketuple_monad});
+    bprop_fg->set_output(tuple_add_monad);
+  } else {
+    output->add_input(monad);
   }
-  return false;
-}
-
-bool HasIOMonadInput(const CNodePtr &node) {
-  for (size_t index = node->inputs().size() - 1; index > 0; --index) {
-    if (HasAbstractIOMonad(node->input(index))) {
-      return true;
-    }
-  }
-  return false;
 }
 
 static void AppendMonadOutput(const FuncGraphPtr &bprop_fg, const AnfNodePtr &monad) {
@@ -501,17 +496,26 @@ static void AppendMonadOutput(const FuncGraphPtr &bprop_fg, const AnfNodePtr &mo
       output_cnode = real_input->cast<CNodePtr>();
     }
   }
+  constexpr char u_monad_in_output[] = "u_monad_in_output";
+  constexpr char io_monad_in_output[] = "io_monad_in_output";
   if (output_cnode != nullptr) {
-    bool need_umonad = HasAbstractUMonad(monad) && !HasUMonadInput(output_cnode);
-    bool need_iomonad = HasAbstractIOMonad(monad) && !HasIOMonadInput(output_cnode);
-    if (need_umonad || need_iomonad) {
-      output_cnode->add_input(monad);
+    if (HasAbstractUMonad(monad) && !bprop_fg->has_flag(u_monad_in_output)) {
+      AddMonad(bprop_fg, output_cnode, monad);
+      bprop_fg->set_flag(u_monad_in_output, true);
+    } else if (HasAbstractIOMonad(monad) && !bprop_fg->has_flag(io_monad_in_output)) {
+      AddMonad(bprop_fg, output_cnode, monad);
+      bprop_fg->set_flag(io_monad_in_output, true);
     }
     return;
   }
   // If output is an empty tuple, create a (make_tuple, monad) as the new output.
   auto make_tuple = NewValueNode(prim::kPrimMakeTuple);
   output_cnode = bprop_fg->NewCNode({make_tuple, monad});
+  if (HasAbstractUMonad(monad)) {
+    bprop_fg->set_flag(u_monad_in_output, true);
+  } else if (HasAbstractIOMonad(monad)) {
+    bprop_fg->set_flag(io_monad_in_output, true);
+  }
   bprop_fg->set_output(output_cnode);
 }
 
@@ -656,8 +660,8 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
   }
 
   // Set bprop output as (env, dx)
-  std::string model_name("mindspore.ops.composite.multitype_ops.add_impl");
-  std::string python_ops("_tuple_add");
+  constexpr char model_name[] = "mindspore.ops.composite.multitype_ops.add_impl";
+  constexpr char python_ops[] = "_tuple_add";
   auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewEnviron(bprop_fg)}, bprop_fg);
   auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
   if (!extra_args.empty()) {
