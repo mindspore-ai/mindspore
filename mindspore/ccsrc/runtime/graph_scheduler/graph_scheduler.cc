@@ -379,6 +379,12 @@ void GraphScheduler::ClearActorData(const ActorSet *actor_set) {
   // Clear the member of DeviceTensorCopyStore.
   DeviceTensorCopyStore::GetInstance().Clear();
 
+  // Clear the output tensors of output actor.
+  if (actor_set->output_actor_ != nullptr) {
+    actor_set->output_actor_->outputs_.clear();
+    actor_set->output_actor_->outputs_.resize(actor_set->output_actor_->outputs_num_);
+  }
+
   for (auto &super_kernel_actor : actor_set->super_kernel_actors_) {
     MS_EXCEPTION_IF_NULL(super_kernel_actor);
     super_kernel_actor->memory_free_lists_ = std::queue<std::vector<DeviceTensor *>>();
