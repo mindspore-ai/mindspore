@@ -308,7 +308,7 @@ int Convolution1x1CPUKernel::MallocWeightBiasData() {
   if (!op_parameter_->is_train_session_) {
     CHECK_LESS_RETURN(MAX_MALLOC_SIZE, size);
     packed_weight_ =
-      lite::PackWeightManager::GetInstance()->GetPackedTensor(in_tensors_[1]->data(), size, &weight_is_packed_);
+      lite::PackWeightManager::GetInstance()->GetPackData(in_tensors_[1]->data(), size, &weight_is_packed_);
     if (packed_weight_ == nullptr) {
       MS_LOG(ERROR) << "Conv1x1 Malloc packed_weight_ error!";
       return RET_ERROR;

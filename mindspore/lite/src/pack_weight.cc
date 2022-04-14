@@ -60,16 +60,16 @@ STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *orig
     return RET_ERROR;
   }
   auto &model_weight = buf_model_weight_[model_buf];
-  auto &packe_pair = model_weight->origin_and_packed_pair;
-  if (packe_pair.find(origin_tensor_data) != packe_pair.end()) {
+  auto &packed_pair = model_weight->origin_and_packed_pair;
+  if (packed_pair.find(origin_tensor_data) != packed_pair.end()) {
     MS_LOG(DEBUG) << "origin tensor data already store by other model.";
     return RET_OK;
   }
-  packe_pair.insert(std::make_pair(origin_tensor_data, nullptr));
+  packed_pair.insert(std::make_pair(origin_tensor_data, nullptr));
   return RET_OK;
 }
 
-void *PackWeight::GetPackedTensor(const void *tensor_data, const size_t size, bool *is_packed) {
+void *PackWeight::GetPackData(const void *tensor_data, const size_t size, bool *is_packed) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   MS_CHECK_TRUE_RET(tensor_data != nullptr, nullptr);
   for (auto &item : buf_model_weight_) {

@@ -350,14 +350,14 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     int numa_node_id = model_pool_context[i]->numa_id;
     auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
-    auto new_mdoel_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(numa_node_id);
-    MS_CHECK_TRUE_MSG(new_mdoel_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
+    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(numa_node_id);
+    MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
       MS_LOG(ERROR) << "model worker is nullptr.";
       return kLiteError;
     }
-    auto status = model_worker->Init(new_mdoel_buf, size, model_pool_context[i]->context);
+    auto status = model_worker->Init(new_model_buf, size, model_pool_context[i]->context);
     if (status != kSuccess) {
       MS_LOG(ERROR) << " model thread init failed.";
       return kLiteError;
