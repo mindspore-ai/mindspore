@@ -32,7 +32,7 @@ class ModelWorker {
 
   ~ModelWorker() = default;
 
-  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context, int node_id = -1);
+  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context);
 
   std::vector<MSTensor> GetInputs();
 

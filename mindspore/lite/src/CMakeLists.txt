@@ -132,6 +132,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
@@ -154,7 +155,7 @@ endif()
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight.cc
         )
 endif()
 

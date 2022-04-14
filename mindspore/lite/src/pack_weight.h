@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
-#define MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
+#ifndef MINDSPORE_LITE_SRC_PACK_WEIGHT_H_
+#define MINDSPORE_LITE_SRC_PACK_WEIGHT_H_
 #include <map>
 #include <string>
 #include <algorithm>
@@ -26,24 +26,30 @@
 #include <unordered_map>
 #include <memory>
 #include "src/tensor.h"
-#include "src/pack_weight.h"
+#include "src/lite_session.h"
 namespace mindspore::lite {
-enum PackStatus : int8_t { NOTPACK = 1, PACKED = 2, MALLOC = 3 };
+struct ModelConstWeight {
+  // origin tensor data <-> packed tensor data
+  std::map<const void *, void *> origin_and_packed_pair;
+  std::shared_ptr<Allocator> allocator = nullptr;
+  int numa_id = -1;
+};
 
-class PackWeightManager {
+class PackWeight {
  public:
-  static PackWeightManager *GetInstance();
-  ~PackWeightManager() = default;
-  STATUS InitByBuf(const char *model_buf, size_t model_size, int numa_id = -1);
+  PackWeight() = default;
+  ~PackWeight();
+  STATUS InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id = -1);
   char *GetNumaModelBuf(int numa_id);
-  STATUS StoreOriginTensorData(Model *model);
+  STATUS StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data);
   void *GetPackedTensor(const void *tensor_data, const size_t size, bool *is_packed);
-  void Free(void *tensor_data);
 
  private:
-  PackWeightManager() = default;
-  std::shared_ptr<PackWeight> pack_weight_ = nullptr;
-  std::vector<void *> malloc_data_;
+  void FreePackedWeight(ModelConstWeight *weight);
+
+  std::mutex mtx_weight_;
+  std::unordered_map<const char *, ModelConstWeight *> buf_model_weight_;
+  std::unordered_map<int, char *> numa_model_buf_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
+#endif  // MINDSPORE_LITE_SRC_PACK_WEIGHT_H_
