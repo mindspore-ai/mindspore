@@ -206,6 +206,7 @@ mindspore.nn.probability.distribution.Logistic
         计算标准差。
 
         **参数：**
+        
         - **loc** (Tensor) - 分布位置参数。默认值：None。
         - **scale** (Tensor) - 分布比例参数。默认值：None。
 
