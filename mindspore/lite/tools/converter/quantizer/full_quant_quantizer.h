@@ -50,7 +50,7 @@ class FullQuantQuantizer : public Quantizer {
   int DoQuantize(FuncGraphPtr func_graph) override;
 
  private:
-  int PreProcess(const FuncGraphPtr &func_graph);
+  int InitDeviceConfig(const FuncGraphPtr &func_graph);
   int DoInference(CollectType collect_type);
   int UpdateDivergeInterval();
   int QuantNodeSimpleOp(const CNodePtr &cnode);
@@ -69,6 +69,7 @@ class FullQuantQuantizer : public Quantizer {
   void InitCpuConfig();
   void InitKirinConfig();
   int MarkQuantNode(const FuncGraphPtr &func_graph);
+  int QuantWithKL();
 
  private:
   // Config

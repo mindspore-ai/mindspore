@@ -105,7 +105,7 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
                                                           flags_.commonQuantParam.min_quant_weight_channel,
                                                           flags_.commonQuantParam.skip_quant_node);
     CHECK_NULL_RETURN(quant_strategy);
-    int preferred_dim = GetPreferredDim(cnode, primitive, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+    int preferred_dim = GetPreferredDim(cnode, idx - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
     if (!quant_strategy->CanTensorQuantized(cnode, input, preferred_dim)) {
       MS_LOG(INFO) << input->fullname_with_scope() << " is not quantizable";
       continue;

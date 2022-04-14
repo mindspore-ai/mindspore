@@ -463,8 +463,9 @@ int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_
   return channels;
 }
 
-int GetPreferredDim(const CNodePtr &cnode, const PrimitivePtr &primitive, int input_index,
-                    const std::vector<int> &dims) {
+int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims) {
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(primitive);
   if (primitive->name() == ops::kNameMatMulFusion) {
     return GetMatMulPreferredDim(primitive, input_index, dims);
   } else if (primitive->name() == ops::kNameConv2dTransposeFusion) {

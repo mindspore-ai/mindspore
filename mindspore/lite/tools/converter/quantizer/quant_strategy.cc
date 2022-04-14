@@ -77,15 +77,10 @@ bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &
   return true;
 }
 
-bool QuantStrategy::CanOpFullQuantized(const AnfNodePtr &node, const std::set<PrimitivePtr> &support_int8_ops,
+bool QuantStrategy::CanOpFullQuantized(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_int8_ops,
                                        const std::set<PrimitivePtr> &skip_check_dtype_ops,
                                        const std::set<mindspore::ActivationType> &support_activation) {
-  MS_CHECK_TRUE_RET(node != nullptr, false);
-  if (!node->isa<mindspore::CNode>()) {
-    return false;
-  }
-  const auto cnode = node->cast<mindspore::CNodePtr>();
-  MS_ASSERT(cnode != nullptr);
+  MS_CHECK_TRUE_RET(cnode != nullptr, false);
   // The return node does not need to be quantified.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimReturn) || opt::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {
     return false;

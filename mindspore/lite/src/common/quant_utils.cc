@@ -113,8 +113,10 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
   return (data_index / stride) % bucket_count;
 }
 
-int GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
-                        std::map<int, MinMax> *per_channel_min_max) {
+void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                         std::map<int, MinMax> *per_channel_min_max) {
+  MS_ASSERT(raw_datas != nullptr);
+  MS_ASSERT(per_channel_min_max != nullptr);
   // the key is bucket_index
   std::map<int, std::vector<float>> sorted_data;
   for (int i = 0; i < elem_count; ++i) {
@@ -133,7 +135,6 @@ int GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vecto
     min_max.min = *min_element(data.begin(), data.end());
     per_channel_min_max->insert({i, min_max});
   }
-  return RET_OK;
 }
 
 int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim) {

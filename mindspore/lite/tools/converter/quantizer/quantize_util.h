@@ -92,8 +92,7 @@ int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
 
-int GetPreferredDim(const CNodePtr &cnode, const PrimitivePtr &primitive, int input_index,
-                    const std::vector<int> &dims);
+int GetPreferredDim(const CNodePtr &cnode, int input_index, const std::vector<int> &dims);
 
 std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 

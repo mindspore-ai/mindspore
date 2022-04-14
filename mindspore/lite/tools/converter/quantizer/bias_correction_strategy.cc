@@ -645,4 +645,25 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
   };
   return after_call_back;
 }
+
+int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_graph) {
+  int status;
+  switch (this->flags_.fullQuantParam.target_device) {
+    case CPU:
+      status = DoCPUBiasCorrection(quant_func_graph);
+      break;
+    case NVGPU:
+      status = DoNVGPUBiasCorrection(quant_func_graph);
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
+                    << " for bias correction.";
+      return RET_ERROR;
+  }
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "bias_correction failed.";
+    return status;
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite::quant

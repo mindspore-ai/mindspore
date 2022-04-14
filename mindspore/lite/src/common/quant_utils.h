@@ -139,8 +139,8 @@ int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_ind
 int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferred_dim);
 
 // Get the min max of each channel
-int GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
-                        std::map<int, MinMax> *per_channel_min_max);
+void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vector<int> &dims, int preferred_dim,
+                         std::map<int, MinMax> *per_channel_min_max);
 
 // Calculate the distribution difference between quant and origin
 int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vector<float> &dequant_datas,
@@ -177,11 +177,7 @@ int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::Q
   std::vector<float> dequant_datas(quant_datas->size());
   // the key is bucket_index
   std::map<int, MinMax> per_channel_min_max;
-  ret = GetAllChannelMinMax(raw_datas, elem_count, dims, preferred_dim, &per_channel_min_max);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get all channel min max failed.";
-    return ret;
-  }
+  GetAllChannelMinMax(raw_datas, elem_count, dims, preferred_dim, &per_channel_min_max);
 
   // Cal Quant param
   for (auto min_max_map : per_channel_min_max) {

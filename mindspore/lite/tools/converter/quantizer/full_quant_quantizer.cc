@@ -35,6 +35,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/bias_correction_strategy.h"
+#include "tools/converter/quantizer/cle_strategy.h"
 
 using std::string;
 using std::vector;
@@ -92,8 +93,7 @@ int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const Para
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
-  int preferred_dim =
-    GetPreferredDim(cnode, primitive, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
+  int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
   auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_,
                                             weight_q_min_, bit_num_, weight_quant_type, kNumberTypeInt8,
@@ -380,6 +380,28 @@ int FullQuantQuantizer::UpdateDivergeInterval() {
   return RET_OK;
 }
 
+int FullQuantQuantizer::QuantWithKL() {
+  MS_LOG(INFO) << "start to update divergence's interval";
+  auto status = UpdateDivergeInterval();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Update diverge interval failed.";
+    return status;
+  }
+  MS_LOG(INFO) << "start to collect data's distribution";
+  status = DoInference(KL_BIN);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Collect data frequency failed.";
+    return status;
+  }
+  MS_LOG(INFO) << "compute the best threshold";
+  status = this->calibrator_->ComputeThreshold();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "compute threshold failed.";
+    return status;
+  }
+  return RET_OK;
+}
+
 void FullQuantQuantizer::InitCpuConfig() {
   activation_quant_data_type_ = kNumberTypeInt8;
   activation_target_data_type_ = kNumberTypeInt8;
@@ -452,19 +474,14 @@ void FullQuantQuantizer::InitQMinMax() {
 int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
   auto cnodes = func_graph->GetOrderedCnodes();
   for (auto &cnode : cnodes) {
-    auto anode = cnode->cast<AnfNodePtr>();
-    if (anode == nullptr) {
-      MS_LOG(ERROR) << cnode->fullname_with_scope() << " cnode is null";
-      return RET_NULL_PTR;
-    }
-    auto is_skip_op = quant_strategy_->IsSkipOp(anode->fullname_with_scope());
+    auto is_skip_op = quant_strategy_->IsSkipOp(cnode->fullname_with_scope());
     if (is_skip_op) {
       MS_LOG(INFO) << cnode->fullname_with_scope() << " is skip quant.";
       continue;
     }
     //  Mark quantifiable nodes
     auto is_support_op =
-      quant_strategy_->CanOpFullQuantized(anode, support_int8_ops_, skip_check_dtype_ops_, support_activation_);
+      quant_strategy_->CanOpFullQuantized(cnode, support_int8_ops_, skip_check_dtype_ops_, support_activation_);
     if (is_support_op) {
       auto ret = calibrator_->AddQuantizedOp(cnode);
       if (ret != RET_OK) {
@@ -476,7 +493,7 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
-int FullQuantQuantizer::PreProcess(const FuncGraphPtr &func_graph) {
+int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
   switch (flags_.fullQuantParam.target_device) {
     case CPU:
       InitCpuConfig();
@@ -568,7 +585,17 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  int status = PreProcess(func_graph);
+  int status;
+  if (flags_.fullQuantParam.cle) {
+    CLEStrategy cle_strategy(func_graph);
+    status = cle_strategy.Run();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "do pre process failed!";
+      return status;
+    }
+  }
+
+  status = InitDeviceConfig(func_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;
@@ -584,6 +611,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "create session failed!";
     return RET_ERROR;
   }
+
   MS_LOG(INFO) << "start to update divergence's max value";
   status = DoInference(MIN_MAX);
   if (status != RET_OK) {
@@ -592,22 +620,9 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   if (flags_.fullQuantParam.activation_quant_method == KL) {
-    MS_LOG(INFO) << "start to update divergence's interval";
-    status = UpdateDivergeInterval();
+    status = QuantWithKL();
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "Update diverge interval failed.";
-      return status;
-    }
-    MS_LOG(INFO) << "start to collect data's distribution";
-    status = DoInference(KL_BIN);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "Collect data frequency failed.";
-      return status;
-    }
-    MS_LOG(INFO) << "compute the best threshold";
-    status = this->calibrator_->ComputeThreshold();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "compute threshold failed.";
+      MS_LOG(ERROR) << "Quant with KL failed.";
       return status;
     }
   }
@@ -618,6 +633,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "Quant node failed.";
     return status;
   }
+
   if (activation_target_data_type_ == kNumberTypeInt8 || activation_target_data_type_ == kNumberTypeUInt8) {
     // add quant_cast
     quant::InsertQuantNodeManager inset_quant_node_pass;
@@ -628,25 +644,16 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
       return RET_ERROR;
     }
   }
+
   if (this->flags_.fullQuantParam.bias_correction) {
     MS_LOG(INFO) << "do bias correction";
     BiasCorrectionStrategy strategy(flags_, calibrator_, quant_strategy_, fp32_session_, fp32_model_, activation_q_min_,
                                     activation_q_max_);
-    switch (this->flags_.fullQuantParam.target_device) {
-      case CPU:
-        status = strategy.DoCPUBiasCorrection(func_graph);
-        break;
-      case NVGPU:
-        status = strategy.DoNVGPUBiasCorrection(func_graph);
-        break;
-      default:
-        MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
-                      << " for bias correction.";
-        return RET_ERROR;
-    }
+    status = strategy.DoBiasCorrection(func_graph);
     if (status != RET_OK) {
-      MS_LOG(ERROR) << "bias_correction failed.";
-      return status;
+      MS_LOG(ERROR) << "Do bias correction failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+      return RET_ERROR;
     }
   }
   return RET_OK;
