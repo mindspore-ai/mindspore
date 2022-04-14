@@ -25,16 +25,7 @@ CudaCommon &CudaCommon::GetInstance() {
   return instance;
 }
 
-CudaCommon::CudaCommon() {
-  uint32_t device_id = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  cudaDeviceProp prop;
-  (void)cudaGetDeviceProperties(&prop, device_id);
-  threads_per_block_ = prop.maxThreadsPerBlock;
-  max_blocks_ = prop.multiProcessorCount;
-  major_sm_ = prop.major;
-  minor_sm_ = prop.minor;
-  max_share_memory_ = prop.sharedMemPerBlock;
-}
+CudaCommon::CudaCommon() { device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID); }
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
