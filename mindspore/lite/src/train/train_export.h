@@ -34,6 +34,10 @@ struct MetaGraphT;
 }  // namespace schema
 #endif
 namespace lite {
+struct tensor_info {
+  size_t input_index;
+  OpParameter *op_parameter;
+};
 
 class TrainExport {
  public:
@@ -61,7 +65,8 @@ class TrainExport {
   int TopologicalSort();
   void PrepareRemap(int offset);
   Model::Node *FindNode(const mindspore::kernel::LiteKernel *kernel, const Model *model);
-  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor);
+  std::unique_ptr<schema::TensorT> CreateTensor(const Tensor *tensor, schema::Tensor *scTensor,
+                                                const int tensor_quant_type);
   std::unique_ptr<schema::CNodeT> CreateCNode(const mindspore::kernel::LiteKernel *kernel,
                                               std::vector<uint32_t> inputIndex, std::vector<uint32_t> outputIndex,
                                               const Model *model);
@@ -73,7 +78,7 @@ class TrainExport {
   std::unique_ptr<schema::TensorT> CreateTransformTensor(size_t id);
   std::unique_ptr<schema::TensorT> CreateTransformConst(size_t last_id);
   int AddTransform();
-  bool NeedQuantization(const mindspore::lite::Tensor *tensor);
+  bool NeedQuantization(const mindspore::lite::Tensor *tensor, const int tensor_quant_type);
   virtual int QuantTensorData(schema::TensorT *dest_tensor, const mindspore::lite::Tensor *src_tensor);
   mindspore::schema::QuantType GetNodeQuantType(const mindspore::kernel::LiteKernel *kernel);
   void TagQuantizedNodes();
