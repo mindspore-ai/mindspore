@@ -469,6 +469,9 @@ def set_enable_autotune(enable, filepath_prefix=None):
     Note:
         - When `enable` is False, `json_filepath` will be ignored.
         - The JSON file can be loaded by API `mindspore.dataset.deserialize` to build a tuned pipeline.
+        - In distributed training scenario, set_enable_autotune() must be called after cluster communication has been
+          initialized (mindspore.communication.management.init()), otherwise the AutoTune file will always suffix with
+          rank id 0.
 
     An example of the generated JSON file is as follows. "remark" file will conclude that if the dataset has been
     tuned or not. "summary" filed will show the tuned configuration of dataset pipeline. Users can modify scripts
