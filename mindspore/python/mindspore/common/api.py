@@ -402,7 +402,32 @@ class _MindsporeFunctionExecutor:
         return tuple(compile_args)
 
 
-def ms_function(fn=None, obj=None, input_signature=None):
+# The attributes used to identify a given object.
+attr_op = {"__str__": lambda x: x.__str__(),
+           "__hash__": lambda x: str(x.__hash__()),
+           "__module__": lambda x: x.__module__,
+           "__name__": lambda x: x.__name__,
+           "__qualname__": lambda x: x.__qualname__,
+           "__len__": lambda x: str(x.__len__()),
+           "__code__": lambda x: x.__code__.co_filename + str(x.__code__.co_firstlineno)
+           }
+
+
+def _get_obj_id(input_obj):
+    """Get hash id of single object."""
+    obj_id = ".".join(
+        (map(lambda x: attr_op.get(x)(input_obj) if hasattr(input_obj, x) and getattr(input_obj, x) else "", attr_op)))
+    return obj_id + str(id(input_obj))
+
+
+def _get_ms_function_hash(hash_input):
+    """Get hash value of single object or list of objects."""
+    if isinstance(list, tuple):
+        return ".".join(map(_get_obj_id, hash_input))
+    return _get_obj_id(hash_input)
+
+
+def ms_function(fn=None, obj=None, input_signature=None, hash_args=None):
     """
     Create a callable MindSpore graph from a Python function.
 
@@ -415,6 +440,9 @@ def ms_function(fn=None, obj=None, input_signature=None):
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
             keep the same as input_signature. Otherwise, TypeError will be raised. Default: None.
+        hash_args (Object, List or Tuple of Objects): The local free variables used inside `fn`, like functions or
+            objects of class defined outside `fn`. Calling `fn` again with change of `hash_args` will trigger
+            recompilation.
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
@@ -456,10 +484,28 @@ def ms_function(fn=None, obj=None, input_signature=None):
         ...     return z
         ...
         >>> out = tensor_add_with_sig(x, y)
+        ...
+        ... # Set hash_args as fn, otherwise cache of compiled `closure_fn` will not be reused.
+        ... # While fn differs during calling again, recompilation will be triggered.
+        >>> def func(x):
+        ...     return P.exp(x)
+        ...
+        >>> def closure_fn(x, fn):
+        ...     @ms_function(hash_args=fn)
+        ...     def inner_fn(a):
+        ...         return fn(a)
+        ...     return inner_fn(x)
+        ...
+        ... inputs = Tensor(np.ones([10, 10, 10]).astype(np.float32))
+        ... for i in range(10):
+        ...     closure_fn(inputs, func)
     """
 
     def wrap_mindspore(func):
-        ms_create_time = int(time.time() * 1e9)
+        if hash_args:
+            hash_obj = _get_ms_function_hash(hash_args)
+        else:
+            hash_obj = int(time.time() * 1e9)
 
         @wraps(func)
         def staging_specialize(*args):
@@ -471,7 +517,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
                 process_obj = args[0]
             if process_obj is None and is_pynative_parallel():
                 process_obj = obj
-            out = _MindsporeFunctionExecutor(func, ms_create_time, input_signature, process_obj)(*args)
+            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj)(*args)
             return out
 
         return staging_specialize
@@ -1101,6 +1147,11 @@ class _CellGraphExecutor:
         real_phase = obj.phase + '.' + str(obj.create_time) + '.' + str(id(obj)) + '.' + obj.arguments_key
         return self._graph_executor.get_allreduce_fusion(real_phase)
 
+    def __call__(self, obj, *args, phase='predict'):
+        if context.get_context("precompile_only") or _is_role_pserver() or _is_role_sched():
+            return None
+        return self.run(obj, *args, phase=phase)
+
     def has_compiled(self, phase='predict'):
         """
         Specify whether have been compiled.
@@ -1112,11 +1163,6 @@ class _CellGraphExecutor:
             bool, specifies whether the specific graph has been compiled.
         """
         return self._graph_executor.has_compiled(phase)
-
-    def __call__(self, obj, *args, phase='predict'):
-        if context.get_context("precompile_only") or _is_role_pserver() or _is_role_sched():
-            return None
-        return self.run(obj, *args, phase=phase)
 
     @_wrap_func
     def _exec_pip(self, obj, *args, phase=''):
