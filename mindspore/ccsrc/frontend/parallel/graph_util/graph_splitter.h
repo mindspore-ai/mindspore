@@ -79,7 +79,7 @@ struct SplitGraphSegment {
   OperatorLabel label;
 };
 
-// The cross-process data flow edge.
+// The inter-process edge with nodes. This represents the edge between two nodes on two processes.
 struct InterProcessOpEdge {
   AnfNodePtr src_node;
   OperatorLabel src_label;
@@ -94,6 +94,22 @@ struct InterProcessOpEdge {
     return src_node->fullname_with_scope() + "_" + src_label.to_string() + "->" + dst_node->fullname_with_scope() +
            "_" + dst_label.to_string();
   }
+};
+
+// The inter-process edge without nodes. This just represents communication edge between two processes.
+struct InterProcessEdgeWithIndex {
+  OperatorLabel src_label;
+  OperatorLabel dst_label;
+
+  // If there are multiple independent edges between two processes, after rpc node fusion with segments, multiple
+  // InterProcessEdgeWithIndex will be generated. Index represents the segment index in this case.
+  size_t index;
+
+  bool operator==(const InterProcessEdgeWithIndex &e) const { return to_string() == e.to_string(); }
+
+  bool operator<(const InterProcessEdgeWithIndex &e) const { return to_string() < e.to_string(); }
+
+  std::string to_string() const { return src_label.to_string() + "->" + "_" + dst_label.to_string(); }
 };
 
 // The connection relationship for Send and Recv nodes.
@@ -111,8 +127,8 @@ using InterProcessOpEdgesInfo = std::map<InterProcessOpEdge, InterProcessOpPair>
 // Third element represents the user node which uses the fused Recv node output as an input.
 // Fourth element represents the input index of the user node.
 using FusedInterProcessOpPair = std::tuple<CNodePtr, CNodePtr, int, CNodePtr, int>;
-using FusedInterProcessOpPairMap =
-  std::map<std::pair<OperatorLabel, OperatorLabel>, std::vector<FusedInterProcessOpPair>>;
+using InterProcessOpPairMap = std::map<InterProcessEdgeWithIndex, std::vector<InterProcessOpPair>>;
+using FusedInterProcessOpPairMap = std::map<InterProcessEdgeWithIndex, std::vector<FusedInterProcessOpPair>>;
 
 // The list of in and out degrees of one segment.
 using InOutDegreeList = std::vector<std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>>>;
@@ -162,6 +178,9 @@ void SetRecvNodeAttr(const AnfNodePtr &recv_node, const InterProcessOpEdge &inte
 // node's.
 CNodePtr CreateSendNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge &inter_process_edge);
 CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge &inter_process_edge);
+
+// Calculate the index to segment number map.
+std::map<size_t, size_t> GetRealIndexToSeg(const std::vector<size_t> &split_segment, size_t real_size);
 
 // Base class for different execution modes. It builds distributed graphs, optimize execution performance, etc.
 class DistributedExecutionMode {
@@ -219,7 +238,7 @@ class ParameterServerMode : public DistributedExecutionMode {
   void ProcessForSplitOptimizer();
 
   // Filter out all optimizer nodes which are set on parameter server from the graph.
-  std::vector<CNodePtr> FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes);
+  std::vector<CNodePtr> FilterServerAwareOptimizerList();
 
   // Create gradients accumulator with mean operator for the given optimizer. It could be sparse or dense gradients.
   // 'total_gradient_number' represents how many workers' gradients will be accumulated for this optimizer.
@@ -247,13 +266,21 @@ class ParameterServerMode : public DistributedExecutionMode {
 
   // Fuse RpcSend and RpcRecv nodes for Parameter Server optimizers. Only one fused send node should be corresponding to
   // one fused recv node, vice versa.
-  void FuseRpcNodesForSplitOptimizer();
+  FusedInterProcessOpPairMap FuseRpcNodesForSplitOptimizer(
+    const InterProcessOpEdgesInfo &comm_edges_of_server_optimizer);
+
+  // Filter out all communication edges related to optimizers on Parameter Server.
+  InterProcessOpEdgesInfo FilterCommEdgesOfServerOptimizer(const InterProcessOpEdgesInfo &comm_edges);
 
   // Fuse the given rpc send nodes list. Only nodes which send data to the same peer can be fused.
   CNodePtr FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes);
 
   // Fuse the given rpc recv nodes list. Only nodes which recv data from the same peer can be fused.
   CNodePtr FuseRpcRecvNodes(const std::vector<CNodePtr> &rpc_recv_nodes);
+
+  // The fusion config for rpc nodes connected with optimizers on Parameter Server. This is similar to
+  // 'all_reduce_fusion_split_indices'.
+  std::vector<size_t> ps_optimizer_fusion_segments_;
 };
 
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the

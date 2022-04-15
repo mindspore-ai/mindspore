@@ -202,6 +202,41 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
   return recv_node;
 }
 
+std::map<size_t, size_t> GetRealIndexToSeg(const std::vector<size_t> &split_segment, size_t real_size) {
+  std::map<size_t, size_t> result;
+  // If split_segment is empty, return an empty map.
+  if (split_segment.empty()) {
+    return result;
+  }
+
+  // Check whether the vector of indices is valid.
+  std::vector<size_t> tmp = split_segment;
+  std::sort(tmp.begin(), tmp.end());
+  if (split_segment != tmp) {
+    MS_LOG(EXCEPTION) << "Indices of segments is not in a ascending order: " << split_segment;
+  }
+
+  size_t real_index = 0;
+  for (size_t seg_index = 0; seg_index < split_segment.size(); seg_index++) {
+    size_t upper_bound = split_segment[seg_index];
+    for (; real_index < real_size; real_index++) {
+      if (real_index <= upper_bound) {
+        result[real_index] = seg_index;
+      } else {
+        break;
+      }
+    }
+  }
+
+  // Map the rest of real index to a segment.
+  if (real_size > (*split_segment.rbegin()) + 1) {
+    for (; real_index < real_size; real_index++) {
+      result[real_index] = split_segment.size();
+    }
+  }
+  return result;
+}
+
 void ParameterServerMode::PreBuildDistributedGraph() {
   MS_LOG(INFO) << "Start pre-building distribtued graph in Parameter Server mode.";
   MS_EXCEPTION_IF_NULL(node_labels_);
@@ -211,51 +246,8 @@ void ParameterServerMode::PreBuildDistributedGraph() {
 
 FusedInterProcessOpPairMap ParameterServerMode::DoRpcNodeFusion(InterProcessOpEdgesInfo *comm_edges_ptr) {
   MS_EXCEPTION_IF_NULL(comm_edges_ptr);
-  InterProcessOpEdgesInfo &comm_edges = *comm_edges_ptr;
-
-  // Only edges with the same peers(with same OperatorLabels) can be fused.
-  std::map<std::pair<OperatorLabel, OperatorLabel>, std::vector<InterProcessOpPair>> rpc_nodes_list_need_to_be_fused;
-  for (auto &comm_edge_info : comm_edges) {
-    const InterProcessOpEdge &edge = comm_edge_info.first;
-    const InterProcessOpPair &node_pair = comm_edge_info.second;
-    rpc_nodes_list_need_to_be_fused[std::make_pair(edge.src_label, edge.dst_label)].emplace_back(node_pair);
-  }
-
-  FusedInterProcessOpPairMap fused_inter_process_op_pairs;
-  for (auto &rpc_nodes_fuse_info : rpc_nodes_list_need_to_be_fused) {
-    // Reorder the rpc node pairs list. Place monad inputs to the end of the list so that rpc send/recv nodes can be
-    // built.
-    std::vector<InterProcessOpPair> &inter_process_pairs = rpc_nodes_fuse_info.second;
-    std::vector<InterProcessOpPair> monad_pairs;
-    std::vector<InterProcessOpPair> no_monad_pairs;
-    std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(), [&](const auto &op_pair) {
-      if (HasAbstractMonad(std::get<1>(op_pair))) {
-        monad_pairs.emplace_back(op_pair);
-      } else {
-        no_monad_pairs.emplace_back(op_pair);
-      }
-    });
-    no_monad_pairs.insert(no_monad_pairs.end(), monad_pairs.begin(), monad_pairs.end());
-    inter_process_pairs = no_monad_pairs;
-
-    std::vector<CNodePtr> rpc_send_nodes, rpc_recv_nodes;
-    (void)std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(),
-                        [&rpc_send_nodes, &rpc_recv_nodes](const auto &node_pair) {
-                          rpc_send_nodes.emplace_back(std::get<0>(node_pair));
-                          rpc_recv_nodes.emplace_back(std::get<1>(node_pair));
-                        });
-    CNodePtr fused_send_node = FuseRpcSendNodes(rpc_send_nodes);
-    CNodePtr fused_recv_node = FuseRpcRecvNodes(rpc_recv_nodes);
-
-    std::vector<FusedInterProcessOpPair> fused_pairs;
-    for (size_t i = 0; i < inter_process_pairs.size(); i++) {
-      FusedInterProcessOpPair fused_inter_process_pair = std::make_tuple(
-        fused_send_node, fused_recv_node, i, std::get<2>(inter_process_pairs[i]), std::get<3>(inter_process_pairs[i]));
-      fused_pairs.emplace_back(fused_inter_process_pair);
-    }
-    fused_inter_process_op_pairs[rpc_nodes_fuse_info.first] = fused_pairs;
-  }
-  return fused_inter_process_op_pairs;
+  InterProcessOpEdgesInfo comm_edges_of_server_optimizer = FilterCommEdgesOfServerOptimizer(*comm_edges_ptr);
+  return FuseRpcNodesForSplitOptimizer(comm_edges_of_server_optimizer);
 }
 
 void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInfo &comm_edges) {
@@ -276,10 +268,7 @@ void ParameterServerMode::PostBuildDistributedGraph(const InterProcessOpEdgesInf
   }
 
   MS_EXCEPTION_IF_NULL(func_graph_);
-  auto return_node = func_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
-  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
+  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList();
 
   // Duplicate out degrees for ps optimizers because defaultly there's only one edge to the rank 0 worker.
   for (const auto &ps_optimizer : ps_optimizer_node_list) {
@@ -324,10 +313,7 @@ void ParameterServerMode::PostBuildDistributedGraph(const FusedInterProcessOpPai
   }
 
   MS_EXCEPTION_IF_NULL(func_graph_);
-  auto return_node = func_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
-  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
+  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList();
   if (ps_optimizer_node_list.empty()) {
     MS_LOG(INFO) << "This process has no ps optimizer on it. No need to do post building.";
     return;
@@ -340,6 +326,13 @@ void ParameterServerMode::PostBuildDistributedGraph(const FusedInterProcessOpPai
     // Node's inputs except primtive value node.
     std::vector<AnfNodePtr> fused_send_node_inputs = fused_send_node->inputs();
     (void)fused_send_node_inputs.erase(fused_send_node_inputs.begin());
+
+    // Only handle the edge whose src_node is optimizer.
+    if (std::find_if(ps_optimizer_node_list.begin(), ps_optimizer_node_list.end(), [&](const auto &ps_optimizer) {
+          return ps_optimizer.get() == fused_send_node_inputs[0].get();
+        }) == ps_optimizer_node_list.end()) {
+      continue;
+    }
 
     std::vector<AnfNodePtr> new_make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple), fused_send_node};
     for (uint32_t i = 1; i < worker_num; i++) {
@@ -381,10 +374,7 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
   }
 
   MS_EXCEPTION_IF_NULL(func_graph_);
-  auto return_node = func_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
-  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
-  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList(nodes);
+  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList();
   for (const auto &ps_optimizer : ps_optimizer_node_list) {
     MS_EXCEPTION_IF_NULL(ps_optimizer);
 
@@ -446,8 +436,13 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
   }
 }
 
-std::vector<CNodePtr> ParameterServerMode::FilterServerAwareOptimizerList(const std::vector<AnfNodePtr> &nodes) {
+std::vector<CNodePtr> ParameterServerMode::FilterServerAwareOptimizerList() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  auto return_node = func_graph_->get_return();
+  MS_EXCEPTION_IF_NULL(return_node);
+
   std::vector<CNodePtr> ps_optim_list;
+  std::vector<AnfNodePtr> nodes = FuncGraph::TopoSort(return_node);
   for (const auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -585,6 +580,90 @@ CNodePtr ParameterServerMode::CreateNodeWithInterProcessEdgeOnPServer(const std:
     new_node->set_abstract(real_input->abstract());
   }
   return new_node;
+}
+
+FusedInterProcessOpPairMap ParameterServerMode::FuseRpcNodesForSplitOptimizer(
+  const InterProcessOpEdgesInfo &comm_edges_of_server_optimizer) {
+  InterProcessOpPairMap comm_edges_with_same_peer;
+  for (const auto &comm_edge_info : comm_edges_of_server_optimizer) {
+    const InterProcessOpEdge &edge = comm_edge_info.first;
+    const InterProcessOpPair &node_pair = comm_edge_info.second;
+    comm_edges_with_same_peer[{edge.src_label, edge.dst_label, 0}].emplace_back(node_pair);
+  }
+
+  InterProcessOpPairMap comm_edges_segments;
+  for (const auto &comm_edge_info : comm_edges_with_same_peer) {
+    InterProcessEdgeWithIndex edge_with_index = comm_edge_info.first;
+    const std::vector<InterProcessOpPair> &op_pair_list = comm_edge_info.second;
+    std::map<size_t, size_t> real_index_to_segment =
+      GetRealIndexToSeg(ps_optimizer_fusion_segments_, op_pair_list.size());
+    if (real_index_to_segment.empty()) {
+      comm_edges_segments[edge_with_index] = op_pair_list;
+      continue;
+    } else {
+      if (real_index_to_segment.size() != op_pair_list.size()) {
+        MS_LOG(EXCEPTION) << "Real index to segment index map is invalid: size not matched.";
+      }
+      for (size_t i = 0; i < op_pair_list.size(); i++) {
+        edge_with_index.index = real_index_to_segment[i];
+        comm_edges_segments[edge_with_index].emplace_back(op_pair_list[i]);
+      }
+    }
+  }
+
+  FusedInterProcessOpPairMap results;
+  for (auto &rpc_nodes_fuse_info : comm_edges_segments) {
+    // Reorder the rpc node pairs list. Place monad inputs to the end of the list so that rpc send/recv nodes can be
+    // built.
+    std::vector<InterProcessOpPair> &inter_process_pairs = rpc_nodes_fuse_info.second;
+    std::vector<InterProcessOpPair> monad_pairs;
+    std::vector<InterProcessOpPair> no_monad_pairs;
+    std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(), [&](const auto &op_pair) {
+      if (HasAbstractMonad(std::get<1>(op_pair))) {
+        monad_pairs.emplace_back(op_pair);
+      } else {
+        no_monad_pairs.emplace_back(op_pair);
+      }
+    });
+    no_monad_pairs.insert(no_monad_pairs.end(), monad_pairs.begin(), monad_pairs.end());
+    inter_process_pairs = no_monad_pairs;
+
+    std::vector<CNodePtr> rpc_send_nodes, rpc_recv_nodes;
+    (void)std::for_each(inter_process_pairs.begin(), inter_process_pairs.end(),
+                        [&rpc_send_nodes, &rpc_recv_nodes](const auto &node_pair) {
+                          rpc_send_nodes.emplace_back(std::get<0>(node_pair));
+                          rpc_recv_nodes.emplace_back(std::get<1>(node_pair));
+                        });
+    CNodePtr fused_send_node = FuseRpcSendNodes(rpc_send_nodes);
+    CNodePtr fused_recv_node = FuseRpcRecvNodes(rpc_recv_nodes);
+
+    std::vector<FusedInterProcessOpPair> fused_pairs;
+    for (size_t i = 0; i < inter_process_pairs.size(); i++) {
+      FusedInterProcessOpPair fused_inter_process_pair = std::make_tuple(
+        fused_send_node, fused_recv_node, i, std::get<2>(inter_process_pairs[i]), std::get<3>(inter_process_pairs[i]));
+      fused_pairs.emplace_back(fused_inter_process_pair);
+    }
+    results[rpc_nodes_fuse_info.first] = fused_pairs;
+  }
+  return results;
+}
+
+InterProcessOpEdgesInfo ParameterServerMode::FilterCommEdgesOfServerOptimizer(
+  const InterProcessOpEdgesInfo &comm_edges) {
+  InterProcessOpEdgesInfo comm_edges_of_server_optimizer;
+  std::vector<CNodePtr> ps_optimizer_list = FilterServerAwareOptimizerList();
+  for (const auto &edge_info : comm_edges) {
+    AnfNodePtr src_node = edge_info.first.src_node;
+    MS_EXCEPTION_IF_NULL(src_node);
+    AnfNodePtr dst_node = edge_info.first.dst_node;
+    MS_EXCEPTION_IF_NULL(dst_node);
+    if (std::find_if(ps_optimizer_list.begin(), ps_optimizer_list.end(), [&](const auto &optimizer) {
+          return (optimizer.get() == src_node.get()) || (optimizer.get() == dst_node.get());
+        }) != ps_optimizer_list.end()) {
+      comm_edges_of_server_optimizer.insert(edge_info);
+    }
+  }
+  return comm_edges_of_server_optimizer;
 }
 
 CNodePtr ParameterServerMode::FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes) {
@@ -1049,8 +1128,8 @@ void GraphSplitter::EliminateExtraNodes(const InterProcessOpEdgesInfo &comm_edge
 void GraphSplitter::ReplaceOriginNodesWithRecv(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs) {
   MS_EXCEPTION_IF_NULL(func_graph_);
   for (const auto &op_pair_info : fused_inter_process_op_pairs) {
-    const OperatorLabel &send_label = op_pair_info.first.first;
-    const OperatorLabel &recv_label = op_pair_info.first.second;
+    const OperatorLabel &send_label = op_pair_info.first.src_label;
+    const OperatorLabel &recv_label = op_pair_info.first.dst_label;
     const std::vector<FusedInterProcessOpPair> &op_pairs = op_pair_info.second;
     if (op_pairs.empty()) {
       MS_LOG(EXCEPTION) << "Fused inter-process ops should not be empty for edge " << send_label.to_string() << "->"
@@ -1085,8 +1164,8 @@ void GraphSplitter::AddDependencyForSend(const FusedInterProcessOpPairMap &fused
   std::vector<AnfNodePtr> fused_send_node_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   MS_EXCEPTION_IF_NULL(func_graph_);
   for (const auto &op_pair_info : fused_inter_process_op_pairs) {
-    const OperatorLabel &send_label = op_pair_info.first.first;
-    const OperatorLabel &recv_label = op_pair_info.first.second;
+    const OperatorLabel &send_label = op_pair_info.first.src_label;
+    const OperatorLabel &recv_label = op_pair_info.first.dst_label;
     const std::vector<FusedInterProcessOpPair> &op_pairs = op_pair_info.second;
     if (op_pairs.empty()) {
       MS_LOG(EXCEPTION) << "Fused inter-process ops should not be empty for edge " << send_label.to_string() << "->"
