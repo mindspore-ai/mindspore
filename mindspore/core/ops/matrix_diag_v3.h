@@ -40,7 +40,7 @@ class MIND_API MatrixDiagV3 : public BaseOperator {
 };
 
 abstract::AbstractBasePtr MatrixDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args);
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimMatrixDiagV3Ptr = std::shared_ptr<MatrixDiagV3>;
 }  // namespace ops
