@@ -72,6 +72,7 @@ void FuncGraph::set_output(const AnfNodePtr &value, bool force_new_ret) {
 }
 
 void FuncGraph::set_return(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
   auto cnode_impl = ToImpl<CNodeImpl>(cnode);
   ToRef<FuncGraphImpl>(impl_).set_return(cnode_impl);
 }
