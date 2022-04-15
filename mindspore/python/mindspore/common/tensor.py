@@ -2457,7 +2457,8 @@ class COOTensor(COOTensor_):
     Args:
         indices (Tensor): A 2-D integer Tensor of shape `[N, ndims]`,
             where N and ndims are the number of `values` and number of dimensions in
-            the COOTensor, respectively. Please make sure that the indices are in range of the given shape.
+            the COOTensor, respectively. Currently, `ndims` must be 2.
+            Please make sure that the indices are in range of the given shape.
         values (Tensor): A 1-D tensor of any type and shape `[N]`, which
             supplies the values for each element in `indices`.
         shape (tuple(int)): A integer tuple of size `ndims`,
