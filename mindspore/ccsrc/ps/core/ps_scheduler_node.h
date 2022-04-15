@@ -36,7 +36,11 @@ namespace core {
 // the registration request of alive nodes.
 class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
  public:
-  PSSchedulerNode() : worker_num_(ps::PSContext::instance()->worker_num()) { host_hash_names_.resize(worker_num_); }
+  PSSchedulerNode() {
+    node_nums_[NodeRole::WORKER] = ps::PSContext::instance()->worker_num();
+    node_nums_[NodeRole::SERVER] = ps::PSContext::instance()->server_num();
+  }
+
   ~PSSchedulerNode() override = default;
 
  protected:
@@ -90,17 +94,18 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
 
   void RecoverFromPersistence() override;
 
-  // Record received host hash name from workers.
-  std::vector<size_t> host_hash_names_;
+  // Record received host hash name from workers or servers.
+  std::map<NodeRole, std::vector<size_t>> host_hash_names_;
   // Record rank id of the nodes which sended host name.
-  std::set<uint32_t> recv_rank_id_send_host_name_;
+  std::map<NodeRole, std::set<uint32_t>> recv_rank_ids_send_host_name_;
   // Record rank id of the nodes which queried host name.
-  std::set<uint32_t> recv_rank_id_query_host_name_;
+  std::map<NodeRole, std::set<uint32_t>> recv_rank_ids_query_host_name_;
 
-  // Record unique id of every group, key: group name, value: unique id.
-  std::map<std::string, std::string> unique_id_group_;
+  // Record unique id of every group of every node role, key: node role, value: {key: group name, value: unique id}.
+  std::map<NodeRole, std::map<std::string, std::string>> unique_id_groups_;
 
-  uint32_t worker_num_;
+  // Record node number of each node role.
+  std::map<NodeRole, uint32_t> node_nums_;
 
   std::mutex nodes_finish_trans_mutex_;
   // Key: actor set name, value: the set of rank ids of nodes who finish transform this actor.

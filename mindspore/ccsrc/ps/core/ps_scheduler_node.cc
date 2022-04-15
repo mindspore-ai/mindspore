@@ -85,18 +85,31 @@ void PSSchedulerNode::ProcessSendHostName(const std::shared_ptr<TcpServer> &serv
   size_t host_hash_name = send_host_name_msg.host_hash_name();
   MS_LOG(INFO) << "Receive send host name request, node id: " << node_id << ", rank id: " << rank_id;
 
-  bool ret = false;
-  std::string error = "";
-  if (rank_id >= worker_num_) {
-    error = "The rank id: " + std::to_string(rank_id) + " should be less than: " + std::to_string(worker_num_);
-    MS_LOG(ERROR) << error;
+  bool ret = true;
+  std::string error_message = "";
+  NodeInfo node_info = node_manager_.QueryNodeInfo(node_id);
+  if (node_info.node_id_.empty()) {
+    ret = false;
+    error_message = "The node info is empty";
+  }
+  auto node_role = node_info.node_role_;
+
+  if (!ret) {
+    MS_LOG(ERROR) << error_message;
+  } else if (rank_id >= node_nums_[node_role]) {
+    error_message =
+      "The rank id: " + std::to_string(rank_id) + " should be less than: " + std::to_string(node_nums_[node_role]);
+    MS_LOG(ERROR) << error_message;
   } else {
-    host_hash_names_[rank_id] = host_hash_name;
-    (void)recv_rank_id_send_host_name_.insert(rank_id);
+    if (host_hash_names_.find(node_role) == host_hash_names_.end()) {
+      host_hash_names_[node_role].resize(node_nums_[node_role]);
+    }
+    host_hash_names_[node_role][rank_id] = host_hash_name;
+    (void)recv_rank_ids_send_host_name_[node_role].insert(rank_id);
     ret = true;
   }
 
-  GeneralResponse(server, conn, meta, ret, error);
+  GeneralResponse(server, conn, meta, ret, error_message);
   MS_LOG(INFO) << "Respond send host name request, node id: " << node_id << ", rank id: " << rank_id;
 }
 
@@ -114,11 +127,20 @@ void PSSchedulerNode::ProcessQueryHostNames(const std::shared_ptr<TcpServer> &se
   uint32_t rank_id = query_msg.rank_id();
   MS_LOG(INFO) << "Receive query host name request, node id: " << node_id << ", rank id: " << rank_id;
 
-  bool is_success = recv_rank_id_send_host_name_.size() == host_hash_names_.size();
+  NodeInfo node_info = node_manager_.QueryNodeInfo(node_id);
+  if (node_info.node_id_.empty()) {
+    MS_LOG(ERROR) << "The node info is empty";
+    return;
+  }
+
+  NodeRole node_role = node_info.node_role_;
+  auto iter = host_hash_names_.find(node_role);
+  bool is_success =
+    (iter != host_hash_names_.end()) && (recv_rank_ids_send_host_name_[node_role].size() == node_nums_[node_role]);
   QueryHostHashNameRespMessage resp_msg;
   resp_msg.set_is_success(is_success);
   if (is_success) {
-    *resp_msg.mutable_host_hash_names() = {host_hash_names_.begin(), host_hash_names_.end()};
+    *resp_msg.mutable_host_hash_names() = {iter->second.begin(), iter->second.end()};
   }
   if (!server->SendMessage(conn, meta, Protos::PROTOBUF, resp_msg.SerializeAsString().data(),
                            resp_msg.ByteSizeLong())) {
@@ -128,11 +150,11 @@ void PSSchedulerNode::ProcessQueryHostNames(const std::shared_ptr<TcpServer> &se
   MS_LOG(INFO) << "Respond query host name request, node id: " << node_id << ", rank id: " << rank_id;
 
   if (is_success) {
-    (void)recv_rank_id_query_host_name_.insert(rank_id);
+    (void)recv_rank_ids_query_host_name_[node_role].insert(rank_id);
 
-    if (recv_rank_id_query_host_name_.size() == recv_rank_id_send_host_name_.size()) {
-      recv_rank_id_send_host_name_.clear();
-      recv_rank_id_query_host_name_.clear();
+    if (recv_rank_ids_query_host_name_[node_role].size() == recv_rank_ids_send_host_name_[node_role].size()) {
+      recv_rank_ids_send_host_name_[node_role].clear();
+      recv_rank_ids_query_host_name_[node_role].clear();
       node_timeout_ = false;
     }
   }
@@ -154,17 +176,21 @@ void PSSchedulerNode::ProcessSendUniqueID(const std::shared_ptr<TcpServer> &serv
   MS_LOG(INFO) << "Receive send unique id request, group name: " << group_name << ", node id: " << node_id
                << ", group rank id: " << rank_id;
 
-  bool ret = false;
-  std::string error = "";
-  if (rank_id != 0) {
-    error = "The group rank id: " + std::to_string(rank_id) + " of worker which sends unique id should be 0";
-    MS_LOG(ERROR) << error;
-  } else {
-    unique_id_group_[group_name] = send_unique_id_msg.unique_id();
-    ret = true;
+  bool ret = true;
+  std::string error_message = "";
+  NodeInfo node_info = node_manager_.QueryNodeInfo(node_id);
+  if (node_info.node_id_.empty()) {
+    ret = false;
+    error_message = "The node info is empty";
   }
 
-  GeneralResponse(server, conn, meta, ret, error);
+  if (!ret) {
+    MS_LOG(ERROR) << error_message;
+  } else {
+    unique_id_groups_[node_info.node_role_][group_name] = send_unique_id_msg.unique_id();
+  }
+
+  GeneralResponse(server, conn, meta, ret, error_message);
   MS_LOG(INFO) << "Respond send unique id request, group name: " << group_name << ", node id: " << node_id
                << ", group rank id: " << rank_id;
 }
@@ -183,13 +209,29 @@ void PSSchedulerNode::ProcessQueryUniqueID(const std::shared_ptr<TcpServer> &ser
   std::string group_name = query_msg.group_name();
   MS_LOG(INFO) << "Receive query unique id request, group name: " << group_name << ", node id: " << node_id;
 
-  auto iter = unique_id_group_.find(group_name);
-  bool is_success = (iter != unique_id_group_.end());
+  NodeInfo node_info = node_manager_.QueryNodeInfo(node_id);
+  if (node_info.node_id_.empty()) {
+    MS_LOG(ERROR) << "The node info is empty";
+    return;
+  }
+
+  bool is_success = false;
+  std::string unique_id;
+  auto node_role = node_info.node_role_;
+  auto role_iter = unique_id_groups_.find(node_role);
+  if (role_iter != unique_id_groups_.end()) {
+    const auto &unique_id_groups = role_iter->second;
+    auto group_iter = unique_id_groups.find(group_name);
+    if (group_iter != unique_id_groups.end()) {
+      is_success = true;
+      unique_id = group_iter->second;
+    }
+  }
 
   QueryUniqueIDRespMessage resp_msg;
   resp_msg.set_is_success(is_success);
   if (is_success) {
-    resp_msg.set_unique_id(iter->second);
+    resp_msg.set_unique_id(unique_id);
   }
 
   if (!server->SendMessage(conn, meta, Protos::PROTOBUF, resp_msg.SerializeAsString().data(),
@@ -252,8 +294,14 @@ void PSSchedulerNode::ProcessQueryFinishTransform(const std::shared_ptr<TcpServe
   std::string actor_set_name = query_msg.actor_set_name();
   MS_LOG(INFO) << "Receive query finish transform request, node id: " << node_id << ", rank id: " << rank_id;
 
+  NodeInfo node_info = node_manager_.QueryNodeInfo(node_id);
+  if (node_info.node_id_.empty()) {
+    MS_LOG(ERROR) << "The node info is empty";
+    return;
+  }
+  auto node_role = node_info.node_role_;
   std::unique_lock<std::mutex> lock(nodes_finish_trans_mutex_);
-  bool is_ready = nodes_finish_trans_[actor_set_name].size() == worker_num_;
+  bool is_ready = nodes_finish_trans_[actor_set_name].size() == node_nums_[node_role];
 
   QueryFinishTransformRespMessage resp_msg;
   resp_msg.set_is_ready(is_ready);
