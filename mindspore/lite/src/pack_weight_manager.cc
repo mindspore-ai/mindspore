@@ -22,9 +22,7 @@ PackWeightManager *PackWeightManager::GetInstance() {
 }
 
 STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, int numa_id) {
-#ifndef SHARING_MODEL_WEIGHT
-  return RET_OK;
-#endif
+#ifdef SHARING_MODEL_WEIGHT
   if (pack_weight_ == nullptr) {
     pack_weight_ = std::make_shared<PackWeight>();
     if (pack_weight_ == nullptr) {
@@ -37,20 +35,20 @@ STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, in
     MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
     return RET_ERROR;
   }
+#endif
   return RET_OK;
 }
 
 char *PackWeightManager::GetNumaModelBuf(int numa_id) {
-#ifndef SHARING_MODEL_WEIGHT
-  return nullptr;
+#ifdef SHARING_MODEL_WEIGHT
+  return pack_weight_->GetNumaModelBuf(numa_id);
 #endif
-  auto ret = pack_weight_->GetNumaModelBuf(numa_id);
-  return ret;
+  return nullptr;
 }
 
 STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
-  MS_CHECK_TRUE_MSG(model != nullptr, RET_ERROR, "model is nullptr in pack weight manager.");
 #ifdef SHARING_MODEL_WEIGHT
+  MS_CHECK_TRUE_MSG(model != nullptr, RET_ERROR, "model is nullptr in pack weight manager.");
   if (pack_weight_ == nullptr) {
     MS_LOG(DEBUG) << "define SHARING_MODEL_WEIGHT but not use parallel predict.";
     return RET_OK;
@@ -83,15 +81,17 @@ void *PackWeightManager::GetPackedTensor(const void *tensor_data, const size_t s
     MS_LOG(ERROR) << "malloc size is wrong.";
     return nullptr;
   }
+#ifdef SHARING_MODEL_WEIGHT
   if (pack_weight_ == nullptr) {
     void *data = malloc(size);
     *is_packed = false;
     return data;
   }
-#ifdef SHARING_MODEL_WEIGHT
   return pack_weight_->GetPackedTensor(tensor_data, size, is_packed);
 #endif
-  return nullptr;
+  void *data = malloc(size);
+  *is_packed = false;
+  return data;
 }
 
 void PackWeightManager::Free(void *tensor_data) {
