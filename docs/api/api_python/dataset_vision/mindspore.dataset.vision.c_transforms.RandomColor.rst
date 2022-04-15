@@ -7,7 +7,7 @@ mindspore.dataset.vision.c_transforms.RandomColor
 
     **参数：**
 
-    - **degrees**  (Sequence[float, 可选) - 色彩调节系数的范围，必须为非负数。它应该是(min, max)格式。
+    - **degrees**  (Sequence[float], 可选) - 色彩调节系数的范围，必须为非负数。它应该是(min, max)格式。
       如果min与max相等，则代表色彩变化步长固定，默认值：(0.1，1.9)。
 
     **异常：**
