@@ -5121,7 +5121,7 @@ class ScatterDiv(_ScatterOp):
     """
 
 
-class ScatterNdAdd(Primitive):
+class ScatterNdAdd(_ScatterNdOp):
     r"""
     Applies sparse addition to individual values or slices in a tensor.
 
@@ -5163,7 +5163,7 @@ class ScatterNdAdd(Primitive):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
@@ -5197,19 +5197,6 @@ class ScatterNdAdd(Primitive):
           [0 0 0 0]
           [0 0 0 0]]]
     """
-
-    __mindspore_signature__ = (
-        sig.make_sig('input_x', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
-        sig.make_sig('updates', dtype=sig.sig_dtype.T)
-    )
-
-    @prim_attr_register
-    def __init__(self, use_locking=False):
-        """Initialize ScatterNdAdd"""
-        validator.check_value_type('use_locking', use_locking, [bool], self.name)
-        self.init_prim_io_names(inputs=['input_x', 'indices', 'updates'], outputs=['y'])
-        self.add_prim_attr('side_effect_mem', True)
 
 
 class ScatterNdSub(_ScatterNdOp):
@@ -5254,7 +5241,7 @@ class ScatterNdSub(_ScatterNdOp):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
