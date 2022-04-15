@@ -24,12 +24,13 @@
 
 namespace mindspore {
 namespace kernel {
-class MaximumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MaximumCpuKernelMod : public NativeCpuKernelMod {
  public:
   MaximumCpuKernelMod() = default;
   ~MaximumCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
@@ -72,9 +73,9 @@ class MaximumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t input_x_num_{1};
   size_t input_y_num_{1};
   size_t output_num_{1};
-  std::vector<size_t> input_x_shape_;
-  std::vector<size_t> input_y_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_x_shape_;
+  std::vector<int64_t> input_y_shape_;
+  std::vector<int64_t> output_shape_;
   std::vector<size_t> broadcast_input_x_shape_;
   std::vector<size_t> broadcast_input_y_shape_;
   std::vector<size_t> broadcast_output_shape_;

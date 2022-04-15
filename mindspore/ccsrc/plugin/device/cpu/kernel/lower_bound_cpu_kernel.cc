@@ -20,31 +20,48 @@
 
 namespace mindspore {
 namespace kernel {
-void LowerBoundCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  sorted_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+namespace {
+constexpr size_t kInputsNum = 2;
+constexpr size_t kOutputsNum = 1;
+}  // namespace
+
+bool LowerBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs) {
+  if (inputs.size() != kInputsNum || outputs.size() != kOutputsNum) {
+    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kInputsNum << " and " << kOutputsNum
+                  << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+  workspace_size_list_.clear();
+  InitInputOutputSize(inputs, outputs);
+  sorted_x_shape_ = inputs[0]->GetShapeVector();
+  values_shape_ = inputs[1]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
   size_t size_exp = 2;
   if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
       sorted_x_shape_[0] != values_shape_[0]) {
-    MS_LOG(EXCEPTION) << "The shape of input is invalid.";
+    MS_LOG(ERROR) << "The shape of input is invalid.";
+    return false;
   }
-  sorted_x_num_ = sorted_x_shape_[0] * sorted_x_shape_[1];
-  values_num_ = values_shape_[0] * values_shape_[1];
-  output_num_ = output_shape_[0] * output_shape_[1];
+  sorted_x_num_ = static_cast<size_t>(sorted_x_shape_[0] * sorted_x_shape_[1]);
+  values_num_ = static_cast<size_t>(values_shape_[0] * values_shape_[1]);
+  output_num_ = static_cast<size_t>(output_shape_[0] * output_shape_[1]);
   if (values_num_ != output_num_) {
-    MS_LOG(EXCEPTION) << "Infer the shape of output error.";
+    MS_LOG(ERROR) << "Infer the shape of output error.";
+    return false;
   }
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, LowerBoundFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "LowerBound does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "LowerBound does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
 }
 
 template <typename I, typename O>
@@ -53,8 +70,8 @@ bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   auto sorted_x_data_addr = reinterpret_cast<I *>(inputs[0]->addr);
   auto values_data_addr = reinterpret_cast<I *>(inputs[1]->addr);
   auto output_data_addr = reinterpret_cast<O *>(outputs[0]->addr);
-  size_t sorted_x_data_column = sorted_x_shape_[1];
-  size_t values_data_column = values_shape_[1];
+  size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
+  size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,
                &values_data_column](size_t start, size_t end) {
     const size_t kTwo = 2;

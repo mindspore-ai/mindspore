@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "plugin/device/cpu/kernel/argmax_cpu_kernel.h"
-
 #include <string>
-
+#include "mindspore/core/ops/arg_max.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -27,28 +25,28 @@ constexpr size_t kArgMaxInputsNum = 1;
 constexpr size_t kArgMaxOutputsNum = 1;
 constexpr char kKernelName[] = "ArgMax";
 
-size_t get_element_num(const std::vector<size_t> &shape) {
-  size_t size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
+int64_t get_element_num(const std::vector<int64_t> &shape) {
+  int64_t size = 1;
+  for (int64_t i = 0; i < static_cast<int64_t>(shape.size()); i++) {
     size *= shape[i];
   }
   return size;
 }
 
 template <typename T>
-bool check_validation(const std::vector<size_t> &shape, const size_t num_before_axis, const size_t num_after_axis,
+bool check_validation(const std::vector<int64_t> &shape, const int64_t num_before_axis, const int64_t num_after_axis,
                       const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kArgMaxInputsNum, kKernelName);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kArgMaxOutputsNum, kKernelName);
-  size_t data_size = sizeof(T);
-  size_t input_size = get_element_num(shape) * data_size;
-  size_t output_num = num_before_axis * num_after_axis;
-  size_t output_size = output_num * sizeof(int);
-  if (inputs[0]->size != input_size) {
+  auto data_size = sizeof(T);
+  int64_t input_size = get_element_num(shape) * static_cast<int64_t>(data_size);
+  int64_t output_num = num_before_axis * num_after_axis;
+  int64_t output_size = output_num * static_cast<int64_t>(sizeof(int));
+  if (static_cast<int64_t>(inputs[0]->size) != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' should be equal to " << input_size
                       << ", but got the memory size is " << inputs[0]->size;
   }
-  if (outputs[0]->size != output_size) {
+  if (static_cast<int64_t>(outputs[0]->size) != output_size) {
     MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of output should be equal to " << output_size
                       << ", but got the memory size is " << outputs[0]->size;
   }
@@ -68,36 +66,48 @@ bool ArgmaxCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto *output = reinterpret_cast<int32_t *>(outputs[0]->addr);
 
   std::vector<float> array_axis(dim_axis_);
-  for (size_t i = 0; i < num_before_axis_; i++) {
-    size_t src_index_i = i * dim_axis_ * num_after_axis_;
-    for (size_t j = 0; j < num_after_axis_; j++) {
-      size_t src_index_j = src_index_i + j;
-      for (size_t k = 0; k < dim_axis_; k++) {
-        size_t src_index_k = k * num_after_axis_ + src_index_j;
+  for (int64_t i = 0; i < num_before_axis_; i++) {
+    int64_t src_index_i = i * dim_axis_ * num_after_axis_;
+    for (int64_t j = 0; j < num_after_axis_; j++) {
+      int64_t src_index_j = src_index_i + j;
+      for (int64_t k = 0; k < dim_axis_; k++) {
+        int64_t src_index_k = k * num_after_axis_ + src_index_j;
         array_axis[k] = static_cast<float>(input[src_index_k]);
       }
       auto max_ops = std::max_element(array_axis.begin(), array_axis.end());
       auto max_index = static_cast<int32_t>(std::distance(array_axis.begin(), max_ops));
-      auto dst_index = i * num_after_axis_ + j;
+      auto dst_index = static_cast<size_t>(i * num_after_axis_ + j);
       output[dst_index] = max_index;
     }
   }
   return true;
 }
-
-void ArgmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMax>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast ArgMax ops failed!";
+    return false;
+  }
+  if (inputs.size() < 1) {
+    MS_LOG(ERROR) << "Argmax input size should not less than 1!";
+    return false;
+  }
+  workspace_size_list_.clear();
+  InitInputOutputSize(inputs, outputs);
+  kernel_name_ = kernel_ptr->name();
+  shape_ = inputs[0]->GetShapeVector();
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
+    return false;
   }
-  int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  int64_t axis = kernel_ptr->get_axis();
   axis += SizeToLong(shape_len);
   if (axis < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
-                      << "], but got " << axis;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
+                  << "], but got " << axis;
+    return false;
   }
   axis = axis % SizeToLong(shape_len);
   num_before_axis_ = 1;
@@ -111,11 +121,7 @@ void ArgmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   dim_axis_ = shape_[LongToSize(axis)];
 
-  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
-  if (build_info->GetInputNum() < 1) {
-    MS_LOG(EXCEPTION) << "Argmax input size should not less than 1!";
-  }
-  auto input_type_id = build_info->GetInputDeviceType(0);
+  auto input_type_id = inputs[0]->GetDtype();
   switch (input_type_id) {
     case kNumberTypeFloat32:
       kernel_func_ = &ArgmaxCpuKernelMod::LaunchKernel<float>;
@@ -124,8 +130,10 @@ void ArgmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       kernel_func_ = &ArgmaxCpuKernelMod::LaunchKernel<float16>;
       break;
     default:
-      MS_LOG(EXCEPTION) << "Argmax kernel does not support " << TypeIdToString(input_type_id);
+      MS_LOG(ERROR) << "Argmax kernel does not support " << TypeIdToString(input_type_id);
+      return false;
   }
+  return true;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Argmax, ArgmaxCpuKernelMod);

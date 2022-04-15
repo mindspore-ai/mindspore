@@ -71,17 +71,19 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
 std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::string &kernel_name) {
   static std::set<std::string> same_op_name = {"Concat", "Pack", "Stack",        "Split",        "Transpose",
                                                "Unpack", "AddN", "ConcatOffset", "DynamicStitch"};
+  std::vector<KernelAttr> support_kernel_attrs;
   auto op_info = mindspore::kernel::OpLib::FindOp(kernel_name, kernel::OpImplyType::kCPU);
   if (op_info == nullptr) {
-    MS_LOG(EXCEPTION) << "Not find op[" << kernel_name << "] in cpu. For more details, "
-                      << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";
+    MS_LOG(WARNING) << "Not find op[" << kernel_name << "] in cpu. For more details, "
+                    << "please refer to the list of supported cpu operations at https://www.mindspore.cn.";
+    return support_kernel_attrs;
   }
 
-  std::vector<KernelAttr> support_kernel_attrs;
   auto inputs_ptr = op_info->inputs_ptr();
   auto outputs_ptr = op_info->outputs_ptr();
   if (outputs_ptr.empty()) {
-    MS_LOG(EXCEPTION) << "The output dimension of operator '" << kernel_name << "' should not be zero.";
+    MS_LOG(WARNING) << "The output dimension of operator '" << kernel_name << "' should not be zero.";
+    return support_kernel_attrs;
   }
 
   auto support_size = outputs_ptr[0]->dtypes().size();
