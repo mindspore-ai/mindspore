@@ -38,6 +38,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/reduce_sum_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/cdist_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/seed_adapter.h"
+#include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fusion.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
@@ -246,6 +247,10 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BNReduceGradConv2dBackpropFilterFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxDropoutDoMaskV3Fusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMinFusion>());
 }
 }  // namespace
 
@@ -408,6 +413,10 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterAddFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterSubFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMaxFusion>());
+  ir_fusion_pm->AddPass(std::make_shared<TensorScatterMinFusion>());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
