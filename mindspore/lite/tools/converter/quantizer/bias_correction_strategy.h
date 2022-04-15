@@ -50,11 +50,17 @@ class BiasCorrectionStrategy {
   ~BiasCorrectionStrategy() {
     if (int8_session_ != nullptr) {
       delete int8_session_;
+      int8_session_ = nullptr;
     }
     if (int8_model_ != nullptr) {
       delete int8_model_;
+      int8_model_ = nullptr;
     }
   }
+
+  int DoBiasCorrection(const FuncGraphPtr &quant_func_graph);
+
+ private:
   int DoCPUBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
   int DoNVGPUBiasCorrection(const FuncGraphPtr &quant_func_graph);

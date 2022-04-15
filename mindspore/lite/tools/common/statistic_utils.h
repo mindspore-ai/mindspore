@@ -29,6 +29,19 @@
 
 namespace mindspore::lite {
 template <typename T>
+std::pair<T, T> GetMinMaxValue(const T *data, size_t data_size) {
+  MS_ASSERT(data != nullptr);
+  MS_ASSERT(data_size > 1);
+  T min = data[0];
+  T max = data[0];
+  for (size_t i = 1; i < data_size; i++) {
+    min = std::min(min, data[i]);
+    max = std::max(max, data[i]);
+  }
+  return {min, max};
+}
+
+template <typename T>
 T GetMinValue(const std::vector<T> &data_vector) {
   MS_ASSERT(!data_vector.empty());
   return *min_element(data_vector.begin(), data_vector.end());
