@@ -44,6 +44,7 @@
 #include "src/delegate/tensorrt/op/allgather_tensorrt.h"
 #include "src/delegate/tensorrt/op/lstm_tensorrt.h"
 #include "src/delegate/tensorrt/op/fullyconnected_tensorrt.h"
+#include "src/delegate/tensorrt/op/normalize_tensorrt.h"
 
 namespace mindspore::lite {
 TensorRTDelegate::~TensorRTDelegate() {
@@ -104,6 +105,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Gather, GetTensorRTOp<GatherTensorRT>},
     {schema::PrimitiveType_LSTM, GetTensorRTOp<LSTMTensorRT>},
     {schema::PrimitiveType_MatMulFusion, GetTensorRTOp<MatMulTensorRT>},
+    {schema::PrimitiveType_LayerNormFusion, GetTensorRTOp<NormalizeTensorRT>},
     {schema::PrimitiveType_FullConnection, GetTensorRTOp<FullyConnectedTensorRT>},
     {schema::PrimitiveType_AvgPoolFusion, GetTensorRTOp<PoolTensorRT>},
     {schema::PrimitiveType_MaxPoolFusion, GetTensorRTOp<PoolTensorRT>},
@@ -112,7 +114,6 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_ReduceScatter, GetTensorRTOp<ReduceScatterTensorRT>},
     {schema::PrimitiveType_Resize, GetTensorRTOp<ResizeTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
-    {schema::PrimitiveType_LayerNormFusion, GetTensorRTOp<ScaleTensorRT>},
     {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
     {schema::PrimitiveType_Shape, GetTensorRTOp<ShapeTensorRT>},
     {schema::PrimitiveType_Unsqueeze, GetTensorRTOp<ShuffleTensorRT>},
