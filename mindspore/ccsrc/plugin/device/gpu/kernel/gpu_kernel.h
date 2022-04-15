@@ -117,7 +117,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
 
   void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
   bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
-  void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
               const std::shared_ptr<ReinitArgs> &args) override;
   enum KernelModType GetKernelModType() const override { return KernelModType::DeprecatedNativeGpuKernelMod; }
 

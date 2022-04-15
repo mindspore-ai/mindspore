@@ -1021,8 +1021,10 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      kernel_mod->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                         kernel::GetReinitArgs(kernel));
+      if (!kernel_mod->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                              kernel::GetReinitArgs(kernel))) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+      }
     }
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);

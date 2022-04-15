@@ -86,16 +86,17 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-void UniqueGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+bool UniqueGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                                 const std::shared_ptr<ReinitArgs> &args) {
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
-    Init(args->base_operator, inputs, outputs);
+    return Init(args->base_operator, inputs, outputs);
   } else {
     base_operator_ = args->base_operator;
     inputs_ = inputs;
     outputs_ = outputs;
+    return true;
   }
 }
 

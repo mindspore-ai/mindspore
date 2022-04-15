@@ -339,7 +339,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   return true;
 }
 
-void HcclKernel::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+bool HcclKernel::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                         const std::shared_ptr<ReinitArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -348,7 +348,7 @@ void HcclKernel::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::v
 
   if (!common::AnfAlgo::IsDynamicShape(cnode)) {
     MS_LOG(DEBUG) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
-    return;
+    return true;
   }
 
   MS_LOG(INFO) << "Start to InitOp. Node info: " << cnode->DebugString();
@@ -368,6 +368,7 @@ void HcclKernel::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::v
     MS_LOG(EXCEPTION) << "GetHcomCount fail! Node info: " << cnode->DebugString();
   }
   MS_LOG(INFO) << "Update Hccl count:" << hccl_count_;
+  return true;
 }
 }  // namespace kernel
 }  // namespace mindspore

@@ -178,7 +178,7 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   DeprecatedNativeCpuKernelMod() = default;
   ~DeprecatedNativeCpuKernelMod() override = default;
 
-  void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
               const std::shared_ptr<ReinitArgs> &args) override;
   virtual void Init(const CNodePtr &kernel_node);
   virtual void InitKernel(const CNodePtr &kernel_node) = 0;

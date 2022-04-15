@@ -111,7 +111,7 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
 std::map<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
 std::set<std::string> NativeCpuKernelMod::initialize_{};
 
-void DeprecatedNativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+bool DeprecatedNativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::shared_ptr<ReinitArgs> &args) {
   auto cnode = cnode_ptr_.lock();
@@ -119,12 +119,13 @@ void DeprecatedNativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &in
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
       common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
       abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
-    return;
+    return true;
   }
 
   MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
 
   Init(cnode);
+  return true;
 }
 
 void DeprecatedNativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {

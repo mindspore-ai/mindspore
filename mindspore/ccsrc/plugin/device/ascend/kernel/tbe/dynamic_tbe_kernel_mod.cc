@@ -66,7 +66,7 @@ void DynamicTbeKernelMod::Wait() {
   }
 }
 
-void DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+bool DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -79,7 +79,7 @@ void DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
 
   if (!atomic_clean_nodes_.empty()) {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      AnfAlgo::GetKernelMod(atomic_clean_node.lock())->Reinit({}, {}, nullptr);
+      (void)AnfAlgo::GetKernelMod(atomic_clean_node.lock())->Reinit({}, {}, nullptr);
     }
   } else {
     // update output size after InferShape.
@@ -89,7 +89,7 @@ void DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
 
   need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
-    return;
+    return true;
   }
 
   // gen FuncStub
@@ -130,6 +130,7 @@ void DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
   workspace_size_list_.resize(workspace_size_list.size());
   std::transform(workspace_size_list.begin(), workspace_size_list.end(), workspace_size_list_.begin(),
                  [](int64_t size) { return static_cast<size_t>(size); });
+  return true;
 }
 
 std::string DynamicTbeKernelMod::ParseCompileJson(const CNodePtr &cnode) {

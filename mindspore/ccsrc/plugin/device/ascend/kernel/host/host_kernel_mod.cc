@@ -78,7 +78,7 @@ bool HostKernelMod::Launch(const std::vector<AddressPtr> &, const std::vector<Ad
   return true;
 }
 
-void HostKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+bool HostKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                            const std::shared_ptr<ReinitArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -89,6 +89,7 @@ void HostKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std
   }
 
   Init(cnode);
+  return true;
 }
 
 std::vector<TaskInfoPtr> HostKernelMod::GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
