@@ -414,6 +414,9 @@ void SetTensorListShape(Tensor *dst, Tensor *src) {
   std::vector<std::vector<int>> tensor_shape{};
   std::transform(input_data_tensorlist->tensors().begin(), input_data_tensorlist->tensors().end(),
                  std::back_inserter(tensor_shape), [](const Tensor *tensor_item) { return tensor_item->shape(); });
+  if (input_data_tensorlist->shape().empty()) {
+    return;
+  }
   input_tensorlist->MallocTensorListData(input_data_tensorlist->tensors_data_type(), tensor_shape);
 }
 #endif
@@ -486,11 +489,13 @@ int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorl
   for (size_t i = 0; i < tensors_shapes.size(); ++i) {
     tensors_shapes[i] = src_tensorlist->tensors()[i]->shape();
   }
-  if (src_tensorlist->tensors_data_type() == kNumberTypeFloat16) {
-    dst_tensorlist->MallocTensorListData(kNumberTypeFloat32, tensors_shapes);
-  }
-  if (src_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
-    dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
+  if (!dst_tensorlist->shape().empty()) {
+    if (src_tensorlist->tensors_data_type() == kNumberTypeFloat16) {
+      dst_tensorlist->MallocTensorListData(kNumberTypeFloat32, tensors_shapes);
+    }
+    if (src_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
+      dst_tensorlist->MallocTensorListData(kNumberTypeFloat16, tensors_shapes);
+    }
   }
   dst_tensorlist->set_allocator(src_tensorlist->allocator());
   dst_tensorlist->ResetRefCount();

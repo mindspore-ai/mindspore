@@ -20,10 +20,10 @@ using mindspore::schema::PrimitiveType_UniformReal;
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
+OpParameter *PopulateUniformRealParameter(const void *prim) {
   auto *primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
-  auto value = primitive->value_as_RandomStandardNormal();
+  auto value = primitive->value_as_UniformReal();
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";
     return nullptr;
@@ -42,6 +42,6 @@ OpParameter *PopulateRandomStandardNormalParameter(const void *prim) {
   return reinterpret_cast<OpParameter *>(param);
 }
 
-REG_POPULATE(PrimitiveType_UniformReal, PopulateRandomStandardNormalParameter, SCHEMA_CUR)
+REG_POPULATE(PrimitiveType_UniformReal, PopulateUniformRealParameter, SCHEMA_CUR)
 }  // namespace lite
 }  // namespace mindspore
