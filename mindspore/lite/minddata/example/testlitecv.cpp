@@ -39,7 +39,7 @@ using mindspore::dataset::PaddBorderType;
 using mindspore::dataset::vision::Decode;
 
 int main(int argc, char **argv) {
-  std::ifstream ifs("test_image.jpg");
+  std::ifstream ifs("../../../../tests/ut/data/dataset/apple.jpg");
 
   if (!ifs.is_open() || !ifs.good()) {
     std::cout << "fail to load image, check image path" << std::endl;
