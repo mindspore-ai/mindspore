@@ -105,6 +105,9 @@ std::string GenDataFilePath(const CNodePtr &node, const std::string &kernel_name
   uint64_t timestamp = GetTimeStamp();
   uint32_t task_id = 0;
   uint32_t stream_id = 0;
+  if (E2eDump::IsDeviceTargetAscend()) {
+    stream_id = AnfAlgo::GetStreamId(node);
+  }
   std::string tensor_type = is_input ? ".input." : ".output.";
   std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                           std::to_string(stream_id) + '.' + std::to_string(timestamp) + tensor_type +
@@ -116,6 +119,12 @@ bool E2eDump::IsDeviceTargetGPU() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice;
+}
+
+bool E2eDump::IsDeviceTargetAscend() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  return context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice;
 }
 
 bool E2eDump::IsMindRTKernelByKernel() {
@@ -193,6 +202,9 @@ void E2eDump::DumpOutputImpl(const CNodePtr &node, bool trans_flag, const std::s
     std::string op_name = GetOpNameWithoutScope(*kernel_name);
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
+    if (IsDeviceTargetAscend()) {
+      stream_id = AnfAlgo::GetStreamId(node);
+    }
     uint64_t timestamp = GetTimeStamp();
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".output." +
@@ -297,6 +309,9 @@ void E2eDump::DumpInputImpl(const CNodePtr &node, bool trans_flag, const std::st
     uint64_t timestamp = GetTimeStamp();
     uint32_t task_id = 0;
     uint32_t stream_id = 0;
+    if (IsDeviceTargetAscend()) {
+      stream_id = AnfAlgo::GetStreamId(node);
+    }
     std::string file_path = dump_path + '/' + op_type + '.' + op_name + '.' + std::to_string(task_id) + '.' +
                             std::to_string(stream_id) + '.' + std::to_string(timestamp) + ".input." + std::to_string(j);
     auto addr = AnfAlgo::GetOutputAddr(input, index);
