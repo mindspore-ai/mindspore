@@ -45,8 +45,8 @@ class AscendKernelMod : public KernelMod {
     return false;
 #endif
   }
-  void UpdateOp() override;
-  bool IsNeedUpdateOp() override;
+  void Wait() override;
+  bool IsNeedWait() override;
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
 
  protected:

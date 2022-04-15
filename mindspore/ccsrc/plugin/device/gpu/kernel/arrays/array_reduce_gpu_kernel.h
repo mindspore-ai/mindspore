@@ -115,7 +115,7 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::vector<int64_t> attr_axis;
     if (is_dynamic_axis_) {
       get_dynamic_axis_value_ =
-        GetDynamicAttrIntValue(kernel_node, kAxisIndex_, &attr_axis, kernel_node->user_data<kernel::InitOpArgs>());
+        GetDynamicAttrIntValue(kernel_node, kAxisIndex_, &attr_axis, kernel::GetReinitArgs(kernel_node));
       if (!get_dynamic_axis_value_) {
         InitSizeLists();
         return true;

@@ -777,7 +777,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
+      gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                         kernel::GetReinitArgs(kernel));
     }
 
     AddressPtrList kernel_inputs;
@@ -803,7 +804,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
 
       if (gpu_kernel != nullptr && common::AnfAlgo::IsDynamicShape(kernel)) {
-        gpu_kernel->UpdateOp();
+        gpu_kernel->Wait();
       }
 #ifdef ENABLE_DEBUGGER
       MS_EXCEPTION_IF_NULL(debugger_);
@@ -895,7 +896,8 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     // pre-processing for dynamic shape kernel
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      gpu_kernel->InitOp(kernel->user_data<kernel::InitOpArgs>());
+      gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                         kernel::GetReinitArgs(kernel));
     }
     // alloc kernel res
     AddressPtrList kernel_inputs;
@@ -910,7 +912,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
       return false;
     }
     if (gpu_kernel != nullptr && common::AnfAlgo::IsDynamicShape(kernel)) {
-      gpu_kernel->UpdateOp();
+      gpu_kernel->Wait();
     }
   }
   return true;

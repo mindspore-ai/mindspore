@@ -73,6 +73,7 @@ using mindspore::dataset::TdtHandle;
 
 #include "backend/common/session/pynative_task_manager.h"
 #include "profiler/device/profiling.h"
+#include "kernel/common_utils.h"
 
 #ifndef ENABLE_SECURITY
 using mindspore::device::ascend::ProfilingManager;
@@ -1020,7 +1021,8 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      kernel_mod->InitOp(kernel->user_data<kernel::InitOpArgs>());
+      kernel_mod->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                         kernel::GetReinitArgs(kernel));
     }
     KernelLaunchInfo kernel_launch_info;
     device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
@@ -1056,7 +1058,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
       return false;
     }
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      kernel_mod->UpdateOp();
+      kernel_mod->Wait();
     }
   }
 

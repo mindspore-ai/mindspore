@@ -48,7 +48,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
     return true;
   }
 
-  void UpdateOp() override {
+  void Wait() override {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
                                "cudaStreamSynchronized failed");
 
@@ -77,7 +77,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
     }
 
     InitSizeLists();
-    is_need_updateop_ = true;
+    is_need_wait_ = true;
     return true;
   }
 

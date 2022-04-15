@@ -52,7 +52,9 @@ DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
   }
 }
 
-void DynamicAicpuOpKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+void DynamicAicpuOpKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::shared_ptr<ReinitArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -180,7 +182,7 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
   return true;
 }
 
-void DynamicAicpuOpKernelMod::UpdateOp() {
+void DynamicAicpuOpKernelMod::Wait() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();

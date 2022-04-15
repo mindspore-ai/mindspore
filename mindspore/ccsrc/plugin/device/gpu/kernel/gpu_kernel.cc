@@ -45,7 +45,9 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
 }
 }  // namespace
 
-void DeprecatedNativeGpuKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+void DeprecatedNativeGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::shared_ptr<ReinitArgs> &args) {
   auto cnode = kernel_node_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&

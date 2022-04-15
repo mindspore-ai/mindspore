@@ -66,11 +66,11 @@ class MatrixDiagPartGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitSizeLists();
     alignment_ = GetAlignments(common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
     kernel_node_ = kernel_node;
-    is_need_updateop_ = true;
+    is_need_wait_ = true;
     return true;
   }
 
-  void UpdateOp() override {
+  void Wait() override {
     auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
     output_shape[shapes_.size() - kDim1] = max_diag_len_;
     // If the out shape m' * n', the m' dimension is 1, then remove this dimension

@@ -92,7 +92,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void UpdateOp() override {
+  void Wait() override {
     // required synchronize for UpdateOp
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                "cudaStreamSynchronize failed");
@@ -121,7 +121,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");
     kernel_node_ = kernel_node;
     InitSizeLists();
-    is_need_updateop_ = true;
+    is_need_wait_ = true;
     return true;
   }
 

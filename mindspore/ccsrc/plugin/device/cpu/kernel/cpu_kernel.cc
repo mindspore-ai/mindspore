@@ -109,7 +109,9 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
 std::map<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
 std::set<std::string> NativeCpuKernelMod::initialize_{};
 
-void DeprecatedNativeCpuKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+void DeprecatedNativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::shared_ptr<ReinitArgs> &args) {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&

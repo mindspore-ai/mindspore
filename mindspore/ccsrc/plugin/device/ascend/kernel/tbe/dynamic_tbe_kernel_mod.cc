@@ -60,13 +60,14 @@ DynamicTbeKernelMod::~DynamicTbeKernelMod() {
   }
 }
 
-void DynamicTbeKernelMod::UpdateOp() {
+void DynamicTbeKernelMod::Wait() {
   if (need_skip_execute_) {
-    AscendKernelMod::UpdateOp();
+    AscendKernelMod::Wait();
   }
 }
 
-void DynamicTbeKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
+void DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &args) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -78,7 +79,7 @@ void DynamicTbeKernelMod::InitOp(const std::shared_ptr<InitOpArgs> &args) {
 
   if (!atomic_clean_nodes_.empty()) {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      AnfAlgo::GetKernelMod(atomic_clean_node.lock())->InitOp(nullptr);
+      AnfAlgo::GetKernelMod(atomic_clean_node.lock())->Reinit({}, {}, nullptr);
     }
   } else {
     // update output size after InferShape.

@@ -50,9 +50,10 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  void InitOp(const std::shared_ptr<InitOpArgs> &args) override;
-  void UpdateOp() override;
-  std::vector<KernelTensorPtr> GetDynamicShapeOutputs() override { return outputs_; }
+  void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+              const std::shared_ptr<ReinitArgs> &args) override;
+  void Wait() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 
   void ResetResource() noexcept {
     is_null_input_ = false;

@@ -40,7 +40,7 @@ void AscendKernelMod::UpdateOutputSizeList() {
   }
 }
 
-void AscendKernelMod::UpdateOp() {
+void AscendKernelMod::Wait() {
   MS_EXCEPTION_IF_NULL(stream_);
   // cppcheck-suppress unreadVariable
   auto lock = device::KernelRuntime::LockRuntime();
@@ -49,7 +49,7 @@ void AscendKernelMod::UpdateOp() {
   }
 }
 
-bool AscendKernelMod::IsNeedUpdateOp() {
+bool AscendKernelMod::IsNeedWait() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -57,9 +57,9 @@ bool AscendKernelMod::IsNeedUpdateOp() {
 
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
-    is_need_updateop_ = true;
+    is_need_wait_ = true;
   }
-  return is_need_updateop_;
+  return is_need_wait_;
 }
 }  // namespace kernel
 }  // namespace mindspore

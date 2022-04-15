@@ -193,17 +193,17 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node, bool fake_flag) {
     auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     actor_func = [kernel_mod, cnode](void *) {
-      auto init_op_args = cnode->user_data<kernel::InitOpArgs>();
-      if (init_op_args == nullptr) {
-        init_op_args = std::make_shared<kernel::InitOpArgs>();
-        cnode->set_user_data(init_op_args);
-      }
+      auto reinit_args = kernel::GetReinitArgs(cnode);
       if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
           kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
-        std::tie(init_op_args->base_operator, init_op_args->inputs, init_op_args->outputs) =
-          kernel::GetArgsFromCNode(cnode);
+        auto [op, inputs, outputs] = kernel::GetArgsFromCNode(cnode);
+        if (reinit_args == nullptr) {
+          reinit_args = std::make_shared<kernel::ReinitArgs>();
+        }
+        reinit_args->base_operator = op;
+        kernel::SetInitOpArgs(cnode, inputs, outputs, reinit_args);
       }
-      kernel_mod->InitOp(init_op_args);
+      kernel_mod->Reinit(kernel::GetReinitInputs(cnode), kernel::GetReinitOutputs(cnode), reinit_args);
     };
   }
 
@@ -222,8 +222,8 @@ AnfNodePtr GenUpdateNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   auto update_node = AnfUtils::NewUpdateActorNode(
     [cnode, kernel_mod](void *) {
-      kernel_mod->UpdateOp();
-      auto output_tensor = kernel_mod->GetDynamicShapeOutputs();
+      kernel_mod->Wait();
+      auto output_tensor = kernel_mod->GetOutputs();
       if (output_tensor.empty()) {
         return;
       }
@@ -251,7 +251,7 @@ bool IsNeedUpdateOp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->IsNeedUpdateOp();
+  return kernel_mod->IsNeedWait();
 }
 
 void InferOp(const CNodePtr &cnode) {
@@ -266,9 +266,9 @@ void InferOp(const CNodePtr &cnode) {
     std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
   } else {
-    auto init_op_args = std::make_shared<kernel::InitOpArgs>();
-    InferShape(cnode, &init_op_args->depend_tensor_map);
-    cnode->set_user_data(init_op_args);
+    auto reinit_args = std::make_shared<kernel::ReinitArgs>();
+    InferShape(cnode, &reinit_args->depend_tensor_map);
+    kernel::SetInitOpArgs(cnode, {}, {}, reinit_args);
   }
 }
 

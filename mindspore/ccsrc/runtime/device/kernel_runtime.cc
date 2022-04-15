@@ -40,6 +40,7 @@
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
+#include "kernel/common_utils.h"
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
@@ -1608,7 +1609,8 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       MS_EXCEPTION_IF_NULL(kernel_mod);
       opt::dynamic_shape::InferOp(kernel);
-      kernel_mod->InitOp(kernel->user_data<kernel::InitOpArgs>());
+      kernel_mod->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                         kernel::GetReinitArgs(kernel));
       KernelLaunchInfo kernel_launch_info;
       device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
 
@@ -1650,7 +1652,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
         MS_LOG(ERROR) << "SyncStream failed";
         return false;
       }
-      kernel_mod->UpdateOp();
+      kernel_mod->Wait();
     } else {
       // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
       // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.

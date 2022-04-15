@@ -39,6 +39,7 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
 constexpr auto kStridedSliceMaxDims = 8;
@@ -104,6 +105,14 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
 
+struct InitOpArgs {
+  std::vector<KernelTensorPtr> inputs;
+  std::vector<KernelTensorPtr> outputs;
+  std::shared_ptr<ReinitArgs> args;
+  // cppcheck-suppress unusedStructMember
+  constexpr static char key[] = "InitOpArgs";
+};
+}  // namespace
 std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment) {
   auto alignment_iter = MatrixDiag::AlignmentMap.find(alignment);
   if (alignment_iter == MatrixDiag::AlignmentMap.end()) {
@@ -1267,6 +1276,46 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
   if (!matched_kernel_attr.GetOutInRefMap().empty() || matched_kernel_attr.GetAllOutInRef()) {
     kernel_info->set_ref_map(matched_kernel_attr.GetAllOutInRef(), matched_kernel_attr.GetOutInRefMap());
   }
+}
+
+void SetInitOpArgs(const CNodePtr &cnode, const std::vector<KernelTensorPtr> &inputs,
+                   const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &reinit_args) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto init_op_args = cnode->user_data<InitOpArgs>();
+  if (init_op_args == nullptr) {
+    init_op_args = std::make_shared<InitOpArgs>();
+    cnode->set_user_data<InitOpArgs>(init_op_args);
+  }
+  init_op_args->inputs = inputs;
+  init_op_args->outputs = outputs;
+  init_op_args->args = reinit_args;
+}
+
+std::vector<KernelTensorPtr> GetReinitInputs(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto init_op_args = cnode->user_data<InitOpArgs>();
+  if (init_op_args == nullptr) {
+    return {};
+  }
+  return init_op_args->inputs;
+}
+
+std::vector<KernelTensorPtr> GetReinitOutputs(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto init_op_args = cnode->user_data<InitOpArgs>();
+  if (init_op_args == nullptr) {
+    return {};
+  }
+  return init_op_args->outputs;
+}
+
+std::shared_ptr<ReinitArgs> GetReinitArgs(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto init_op_args = cnode->user_data<InitOpArgs>();
+  if (init_op_args == nullptr) {
+    return nullptr;
+  }
+  return init_op_args->args;
 }
 }  // namespace kernel
 }  // namespace mindspore

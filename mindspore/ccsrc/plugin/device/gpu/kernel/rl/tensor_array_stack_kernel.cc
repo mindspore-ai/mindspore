@@ -55,11 +55,11 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
     value_size_ = ele_size_ * LongToSize(size);
   }
   InitSizeLists();
-  is_need_updateop_ = true;
+  is_need_wait_ = true;
   return true;
 }
 
-void TensorArrayStackKernelMod::UpdateOp() {
+void TensorArrayStackKernelMod::Wait() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "TensorArrayStack cudaStreamSynchronized failed");
   TensorArrayPtr tensors_ = TensorArrayMgr::GetInstance().GetTensorArray(handle_);

@@ -55,10 +55,10 @@ class StridedSliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod, public
       is_dynamic_attr_ = true;
     }
     if (is_dynamic_attr_) {
-      GetDynamicAttrIntValue(kernel_node, kShapexIndex_, &shapex_, kernel_node->user_data<kernel::InitOpArgs>());
-      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel_node->user_data<kernel::InitOpArgs>());
-      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel_node->user_data<kernel::InitOpArgs>());
-      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel_node->user_data<kernel::InitOpArgs>());
+      GetDynamicAttrIntValue(kernel_node, kShapexIndex_, &shapex_, kernel::GetReinitArgs(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetReinitArgs(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetReinitArgs(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetReinitArgs(kernel_node));
     } else {
       shapex_ = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
     }

@@ -112,7 +112,7 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
                                    "Set descriptor base index failed.");
 
     InitSizeLists();
-    is_need_updateop_ = true;
+    is_need_wait_ = true;
     return true;
   }
 
@@ -162,7 +162,7 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  void UpdateOp() {
+  void Wait() override {
     std::vector<TypeId> types;
     types.push_back(kNumberTypeInt32);
     types.push_back(kNumberTypeInt32);
