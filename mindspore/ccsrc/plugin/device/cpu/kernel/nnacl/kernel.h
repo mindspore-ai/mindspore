@@ -47,14 +47,16 @@ typedef struct KernelBase {
 } KernelBase;
 
 #ifdef _MSC_VER
-#define REG_KERNEL_CREATOR(op_type, data_type, func)
+#define REG_KERNEL_CREATOR(op_type, format, data_type, func)
 #else
-#define REG_KERNEL_CREATOR(op, data_type, func) \
-  __attribute__((constructor(102))) void Reg##op##data_type##Creator() { RegKernelCreator(op, data_type, func); }
+#define REG_KERNEL_CREATOR(op, format, data_type, func)                          \
+  __attribute__((constructor(102))) void Reg##op##format##data_type##Creator() { \
+    RegKernelCreator(op, format, data_type, func);                               \
+  }
 #endif
 
 typedef KernelBase *(*KernelCreator)(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
-void RegKernelCreator(int opType, int dataType, KernelCreator func);
+void RegKernelCreator(int opType, int format, int dataType, KernelCreator func);
 CoreFuncs *GetCoreFuncs(bool use_fp16);
 
 #ifdef __cplusplus

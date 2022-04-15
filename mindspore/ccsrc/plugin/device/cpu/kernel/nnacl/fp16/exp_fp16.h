@@ -25,7 +25,7 @@
 extern "C" {
 #endif
 void ExpFp16(const float16_t *src, float16_t *dst, int num);
-int ExpFusionFp16(const float16_t *src, float16_t *dst, const ExpParameter *param, int task_id);
+int ExpFusionFp16(const void *src_data, void *dst_data, const ExpParameter *param, int task_id);
 
 #ifdef ENABLE_NEON
 static inline float16x8_t VexpFp16(float16x8_t input) {

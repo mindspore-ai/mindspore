@@ -37,15 +37,9 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/infer/*.c
     ${NNACL_DIR}/base/*.c
     ${NNACL_DIR}/fp32_grad/*.c
+    ${NNACL_DIR}/kernel/*.c
+    ${NNACL_DIR}/experimental/*.c
 )
-list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/kernel.c)
-
-if(MSLITE_ENABLE_EXPERIMENTAL_KERNEL)
-    file(GLOB EXPERIMENT_SRC
-        ${NNACL_DIR}/experimental/*.c
-        ${NNACL_DIR}/kernel.c)
-    set(KERNEL_SRC ${KERNEL_SRC} ${EXPERIMENT_SRC})
-endif()
 
 if(NOT MSLITE_ENABLE_RUNTIME_PASS)
   list(REMOVE_ITEM KERNEL_SRC ${NNACL_DIR}/infer/shape_fusion_infer.c)

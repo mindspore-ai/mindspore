@@ -275,7 +275,7 @@ void ConvWinogardFp16(const float16_t *input_data, const float16_t *trans_weight
 #endif
 
       // step 4 : output transform
-      if (conv_param->out_format_ != NNACL_NC4HW4) {  // nc4hw4
+      if (conv_param->out_format_ != Format_NC4HW4) {  // nc4hw4
         WinogradOutputNHWCTransformFp16(gemm_out, output_data + out_batch_offset, bias_data, cal_num, out_tile_index,
                                         out_w_block, conv_param, trans_func.out_func_);
       } else {

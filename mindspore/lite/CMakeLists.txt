@@ -53,7 +53,7 @@ option(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE "enable distribute thread dynamic
 option(MSLITE_ENABLE_BFC_MEMORY "enable distribute BFC memory" off)
 option(MSLITE_ENABLE_PARALLEL_INFERENCE "enable parallel inference interface" off)
 option(MSLITE_ENABLE_SHARING_MODEL_WEIGHT "enable sharing model weight" off)
-option(MSLITE_ENABLE_EXPERIMENTAL_KERNEL "enable experimental kernel" off)
+option(MSLITE_ENABLE_EXPERIMENTAL_KERNEL "enable experimental kernel" on)
 option(MSLITE_ENABLE_GRAPH_KERNEL "enable graph kernel" off)
 
 #Option that can be configured through manually
