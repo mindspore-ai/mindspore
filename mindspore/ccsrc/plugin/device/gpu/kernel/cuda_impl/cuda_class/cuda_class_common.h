@@ -47,7 +47,7 @@ int CalShapesSizeInBytes(const std::vector<std::vector<int64_t>> &shapes, const 
   for (size_t idx = 0; idx < shape_num; ++idx) {
     size_t cur_size = sizeof(T);
     if (shapes[idx].size() == 0) {
-      // 常数
+      // Constant number.
       MS_LOG(WARNING) << "For '" << kernel_name << "', the shapes[" << idx << "] is ( )";
       shapes_size->emplace_back(cur_size);
       continue;

@@ -32,7 +32,7 @@ class NetInvGrad(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_grad_float32(mode):
@@ -41,7 +41,7 @@ def test_inv_grad_float32(mode):
     Description: test cases for InvGrad for float32
     Expectation: the result match to numpy
     """
-    context.set_context(mode=mode, device_target="CPU")
+    context.set_context(mode=mode, device_target="GPU")
     y = Tensor(np.array([[[[-1, 1, 12],
                            [5, 34, 6],
                            [10, 2, -1]]]]).astype(np.float32))
@@ -57,7 +57,7 @@ def test_inv_grad_float32(mode):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_grad_float16(mode):
@@ -66,7 +66,7 @@ def test_inv_grad_float16(mode):
     Description: test cases for InvGrad for float16
     Expectation: the result match to numpy
     """
-    context.set_context(mode=mode, device_target="CPU")
+    context.set_context(mode=mode, device_target="GPU")
     y = Tensor(np.array([[0.01, 0.2, 0.22],
                          [10.002, 2, -1]]).astype(np.float16))
     dy = Tensor(np.array([[34, 1, 55],
@@ -79,7 +79,7 @@ def test_inv_grad_float16(mode):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.int8, np.int32])
@@ -89,7 +89,7 @@ def test_inv_grad_int(mode, dtype):
     Description: test cases for InvGrad for int
     Expectation: the result match to numpy
     """
-    context.set_context(mode=mode, device_target="CPU")
+    context.set_context(mode=mode, device_target="GPU")
     y = Tensor(np.array([[[[-1, 1, 5],
                            [5, 3, 6],
                            [3, 2, -1]]]]).astype(dtype))
