@@ -47,27 +47,20 @@ void TCPClient::Finalize() {
   }
 }
 
-bool TCPClient::Connect(const std::string &dst_url, size_t timeout_in_sec) {
-  bool rt = false;
-  tcp_comm_->Connect(dst_url);
-
-  size_t timeout_in_ms = timeout_in_sec * 1000;
-  size_t sleep_in_ms = 100;
-  useconds_t sleep_in_us = 100000;
-
-  while (true) {
-    if (tcp_comm_->IsConnected(dst_url)) {
-      rt = true;
-      break;
-    }
-    if (timeout_in_ms > sleep_in_ms) {
-      timeout_in_ms -= sleep_in_ms;
+bool TCPClient::Connect(const std::string &dst_url, size_t retry_count) {
+  size_t interval = 5;
+  for (size_t i = 0; i < retry_count; ++i) {
+    if (tcp_comm_->Connect(dst_url)) {
+      MS_LOG(INFO) << "Connected to the tcp server " << dst_url << " successfully.";
+      return true;
     } else {
-      break;
+      MS_LOG(WARNING) << "Failed to connect to the tcp server : " << dst_url << ", retry to reconnect(" << (i + 1)
+                      << "/" << retry_count << ")...";
+      tcp_comm_->Disconnect(dst_url);
+      sleep(interval);
     }
-    (void)usleep(sleep_in_us);
   }
-  return rt;
+  return false;
 }
 
 bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
