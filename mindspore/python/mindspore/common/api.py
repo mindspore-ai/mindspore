@@ -49,7 +49,7 @@ cells_compile_cache = {}
 BROADCAST_PHASE = "_broadcast_"
 
 
-def _convert_data(data):
+def _convert_python_data(data):
     """
     Convert C++ data to python.
 
@@ -66,11 +66,11 @@ def _convert_data(data):
     if isinstance(data, COOTensor) and not isinstance(data, MsCOOTensor):
         return MsCOOTensor(coo_tensor=data)
     if isinstance(data, tuple):
-        return tuple(_convert_data(x) for x in data)
+        return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):
-        return list(_convert_data(x) for x in data)
+        return list(_convert_python_data(x) for x in data)
     if isinstance(data, dict):
-        return dict((_convert_data(key), _convert_data(value)) for key, value in data.items())
+        return dict((_convert_python_data(key), _convert_python_data(value)) for key, value in data.items())
     return data
 
 
@@ -88,7 +88,7 @@ def _wrap_func(fn):
     @wraps(fn)
     def wrapper(*arg, **kwargs):
         results = fn(*arg, **kwargs)
-        return _convert_data(results)
+        return _convert_python_data(results)
 
     return wrapper
 
