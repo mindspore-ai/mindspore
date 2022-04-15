@@ -234,7 +234,7 @@ bool SendFinishTransform(const std::string &actor_set_name) {
   MS_EXCEPTION_IF_NULL(output);
   (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
   if (!resp_msg.is_success()) {
-    MS_LOG(ERROR) << "Send finish transform to scheduler failed.";
+    MS_LOG(ERROR) << "Send finish transform to scheduler failed, error msg: " << resp_msg.error();
     return false;
   }
   return true;
