@@ -3819,7 +3819,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
@@ -3835,6 +3835,7 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, reduction='mean'):
         """Initialize BCEWithLogitsLoss"""
+        super().__init__("BCEWithLogitsLoss")
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
     def infer_shape(self, logits, label, weight, pos_weight):
