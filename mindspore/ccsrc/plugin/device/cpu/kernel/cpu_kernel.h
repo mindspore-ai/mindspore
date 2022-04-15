@@ -144,7 +144,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
                       const std::vector<AddressPtr> &outputs) = 0;
 
   // Should be called before Init.
-  void SetThreadPool(ActorThreadPool *pool) { pool_ = pool; }
+  void SetThreadPool(ThreadPool *pool) { pool_ = pool; }
 
   static std::vector<KernelAttr> GetCpuSupportedList(const std::string &kernel_name) {
     auto temp_mod = kernel::Factory<NativeCpuKernelMod>::Instance().Create(kernel_name);
@@ -164,7 +164,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   virtual void InitInputOutputSize(const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs);
 
-  ActorThreadPool *pool_{nullptr};
+  ThreadPool *pool_{nullptr};
 
  private:
   std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
