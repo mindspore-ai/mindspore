@@ -31,7 +31,7 @@ int exp_resize(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *o
   ExpStru *exp = (ExpStru *)self;
   ExpParameter *param = (ExpParameter *)exp->base.param;
 
-  param->element_num_ = GetElementCxNum(in[0]);
+  param->element_num_ = GetElementNum(in[0]);
   return NNACL_OK;
 }
 
@@ -68,7 +68,7 @@ int exp_do_compute(void *param, int task_id, float lhs_scale, float rhs_scale) {
   if (exp_stru->base.out[0]->data_type_ == kNumberTypeFloat32) {
     ret = ExpFusionFp32(exp_stru->base.in[0]->data_, exp_stru->base.out[0]->data_, exp_param, task_id);
 #ifdef ENABLE_FP16
-  } else if (exp_stru->base.in[0]->data_type_ == kNumberTypeFloat16) {
+  } else if (exp_stru->base.out[0]->data_type_ == kNumberTypeFloat16) {
     ret = ExpFusionFp16(exp_stru->base.in[0]->data_, exp_stru->base.out[0]->data_, exp_param, task_id);
 #endif
   }

@@ -13,29 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_EXP_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_BASE_EXP_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_KERNEL_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_KERNEL_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/kernel.h"
+#include "src/kernel_exec.h"
 
 namespace mindspore::kernel {
-class ExpCPUKernel : public LiteKernel {
+class CPUKernel : public LiteKernel {
  public:
-  explicit ExpCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+  explicit CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
       : LiteKernel(parameter, inputs, outputs, ctx) {}
-  ~ExpCPUKernel() override;
+  ~CPUKernel() override;
 
   int Prepare() override;
   int ReSize() override;
   int Run() override;
 
+  int Registry(const KernelKey &key);
+
  private:
-  KernelBase *kernel = nullptr;
-  TensorC *in[1] = {nullptr};
-  TensorC *out[1] = {nullptr};
+  void UpdateTensorC();
+
+ private:
+  KernelBase *kernel_ = nullptr;
+  TensorC *in_ = nullptr;
+  TensorC *out_ = nullptr;
+  size_t in_size_ = 0;
+  size_t out_size_ = 0;
 };
 }  // namespace mindspore::kernel
 

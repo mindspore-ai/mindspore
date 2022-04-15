@@ -29,7 +29,7 @@ void RegKernelCreator(int opType, int format, int dataType, KernelCreator creato
   g_kernelCreatorRegistry[opType][format][dataType - kNumberTypeBegin - 1] = creator;
 }
 
-KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize) {
+void Init_MSC_VER_kernels(void) {
 #ifdef _MSC_VER
   /* VS env do not support automatic register
    * register here first time */
@@ -46,8 +46,19 @@ KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, Tenso
     inited = true;
   }
 #endif
-  int dtype = out[kInputIndex]->data_type_;
-  KernelCreator creator = g_kernelCreatorRegistry[param->type_][in[0]->format_][dtype - kNumberTypeBegin - 1];
+  return;
+}
+
+bool SupportKernelC(int opType, int format, int dataType) {
+  Init_MSC_VER_kernels();
+  KernelCreator creator = g_kernelCreatorRegistry[opType][format][dataType - kNumberTypeBegin - 1];
+  return creator != NULL;
+}
+
+KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize,
+                         int data_type) {
+  Init_MSC_VER_kernels();
+  KernelCreator creator = g_kernelCreatorRegistry[param->type_][in[0]->format_][data_type - kNumberTypeBegin - 1];
   if (creator == NULL) {
     return NULL;
   }

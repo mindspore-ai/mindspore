@@ -36,11 +36,14 @@ void DefaultAllocatorFree(void *allocator, void *ptr) {
 }
 
 int DefaultThreadPoolParallelLunch(void *threadPool, void *task, void *param, int taskNr) {
+  using TaskFunc = int (*)(void *param, int task_id, float l, float r);
+  TaskFunc task_func = (TaskFunc)task;
+
   ThreadPool *pool = static_cast<ThreadPool *>(threadPool);
   if (pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";
     return RET_NULL_PTR;
   }
-  return pool->ParallelLaunch((TaskFunc)task, param, taskNr);
+  return pool->ParallelLaunch(task_func, param, taskNr);
 }
 }  // namespace mindspore::lite::experimental

@@ -122,7 +122,7 @@ struct InnerContext : public Context {
   std::unordered_map<void *, std::set<void *>> link_info_{};
 };
 
-int ParallelLaunch(const Context *context, const TaskFunc &func, Content content, int task_num);
+int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num);
 }  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_INNER_CONTEXT_H
