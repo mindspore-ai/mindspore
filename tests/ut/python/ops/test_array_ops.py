@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -359,6 +359,15 @@ class RangeNet(Cell):
         return self.range_ops(x)
 
 
+class NetForFlattenConcat(Cell):
+    def __init__(self):
+        super(NetForFlattenConcat, self).__init__()
+        self.flatten_concat = inner.FlattenConcat()
+
+    def construct(self, x1, x2, x3):
+        return self.flatten_concat([x1, x2, x3])
+
+
 test_case_array_ops = [
     ('CustNet1', {
         'block': CustNet1(),
@@ -408,6 +417,11 @@ test_case_array_ops = [
     ('RangeNet', {
         'block': RangeNet(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]}),
+    ('FlattenConcat', {
+        'block': NetForFlattenConcat(),
+        'desc_inputs': [Tensor(np.array([1], np.float32)),
+                        Tensor(np.array([2], np.float32)),
+                        Tensor(np.array([3], np.float64))]}),
     ('TensorShapeNet', {'block': TensorShapeNet(), 'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]})
 ]
 

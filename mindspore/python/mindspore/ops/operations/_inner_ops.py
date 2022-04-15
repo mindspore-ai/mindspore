@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1911,3 +1911,35 @@ class Format(PrimitiveWithInfer):
             var_value.append(item["value"])
         value = str_value.format(*var_value)
         return {'dtype': mstype.string, 'shape': [], 'value': value}
+
+
+class FlattenConcat(Primitive):
+    """
+    Flatten input tensors and concatenate them into several chunk tensors grouped by data types.
+
+    Inputs:
+        - **tensors** (tuple[Tensor], list[Tensor]) - The input Tensors to be flattened and concatenated.
+
+    Outputs:
+        tuple[Tensor], result chunk tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations import _inner_ops as inner
+        >>> t1 = Tensor(np.array([1]).astype(np.float32))
+        >>> t2 = Tensor(np.array([2]).astype(np.float32))
+        >>> t3 = Tensor(np.array([3]).astype(np.float64))
+        >>> t4 = Tensor(np.array([4]).astype(np.float32))
+        >>> t5 = Tensor(np.array([5]).astype(np.float64))
+        >>> chunks = inner.FlattenConcat()([t1, t2, t2, t3, t4, t5])
+        >>> print(chunks[0].asnumpy())
+        >>> print(chunks[1].asnumpy())
+        [1. 2. 4.]
+        [3. 5.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize FlattenConcat"""
