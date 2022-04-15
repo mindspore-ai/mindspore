@@ -4954,6 +4954,9 @@ class Tan(Primitive):
     r"""
     Computes tangent of `x` element-wise.
 
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
     .. math::
 
         out_i = tan(x_i)
@@ -4961,13 +4964,11 @@ class Tan(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
@@ -4984,6 +4985,7 @@ class Tan(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize Tan"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class Atan(Primitive):

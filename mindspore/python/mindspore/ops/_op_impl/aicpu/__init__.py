@@ -114,6 +114,7 @@ from .stack_push_pop import _stack_destroy_aicpu
 from .matrix_diag_v3 import _matrix_diag_v3_aicpu
 from .matrix_diag_part_v3 import _matrix_diag_part_v3_aicpu
 from .matrix_set_diag_v3 import _matrix_set_diag_v3_aicpu
+from .tan import _tan_aicpu
 from .ctc_greedy_decoder import _ctc_greedy_decoder_aicpu
 from .resize_bilinear import _resize_bilinear_aicpu
 from .resize_bilinear_grad import _resize_bilinear_grad_aicpu

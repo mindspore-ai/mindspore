@@ -300,7 +300,11 @@ template <typename T>
 void Tan(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(tan(static_cast<double>(in[i])));
+      if constexpr (std::is_same<T, float>::value) {
+        out[i] = static_cast<T>(tan(static_cast<double>(in[i])));
+      } else {
+        out[i] = static_cast<T>(tan(in[i]));
+      }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
@@ -462,10 +466,11 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
   } else if (dtype_ == kNumberTypeBool) {
     LaunchLogicalNot(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'x' should be float16, float32, float64, int16, int32, int64, or bool, "
-                         "but got "
-                      << TypeIdLabel(dtype_);
+    MS_LOG(EXCEPTION)
+      << "For '" << kernel_name_
+      << "', the type of 'x' should be float16, float32, float64, complex64, complex128, int16, int32, int64, or bool, "
+         "but got "
+      << TypeIdLabel(dtype_);
   }
   return true;
 }
@@ -530,10 +535,11 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimAsinh->name(), ComplexAsinh<T>}, {prim::kPrimNeg->name(), Neg<T>},
                           {prim::kPrimSinh->name(), ComplexSinh<T>},   {prim::kPrimCosh->name(), ComplexCosh<T>},
                           {prim::kPrimSin->name(), ComplexSin<T>},     {prim::kPrimCos->name(), ComplexCos<T>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T>},        {prim::kPrimSign->name(), ComplexSign<T>}};
+                          {prim::kPrimRsqrt->name(), Rsqrt<T>},        {prim::kPrimTan->name(), Tan<T>},
+                          {prim::kPrimSign->name(), ComplexSign<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelFunc does not support " << kernel_name_;
+    MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelFunc does not support " << kernel_name_ << " with complex as input. ";
   }
   func_pair->second(this, input, output, lens);
 }
@@ -629,7 +635,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
   {kTan,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc}}},
   {kSinh,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
