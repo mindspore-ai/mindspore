@@ -76,8 +76,8 @@ const size_t ARG_SIZE = 2;
 const size_t MAX_TOP_CELL_COUNTS = 20;
 
 // primitive unable to infer value for constant input in PyNative mode
-const std::set<std::string> kVmOperators = {"make_ref",     "InsertGradientOf", "stop_gradient", "mixed_precision_cast",
-                                            "HookBackward", "CellBackwardHook"};
+const std::set<std::string> kVmOperators = {"InsertGradientOf", "stop_gradient", "mixed_precision_cast", "HookBackward",
+                                            "CellBackwardHook"};
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 const char kGrad[] = "grad";
 std::map<std::string, std::shared_ptr<session::SessionBasic>> kSessionBackends;

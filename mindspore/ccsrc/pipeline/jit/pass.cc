@@ -281,7 +281,6 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.tile_eliminate_,
     irpass.transpose_eliminate_,
     irpass.minmaximum_grad_,
-    irpass.get_make_ref_eliminate_,
 
     // Arithmetic simplifications
     irpass.arithmetic_simplify_,
@@ -348,8 +347,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     false, true);
   opt::OptPassConfig accelerated_algorithm = opt::OptPassConfig({irpass.less_batch_normalization_});
   opt::OptPassConfig virtual_dataset = opt::OptPassConfig({irpass.virtual_dataset_eliminate_});
-  opt::OptPassConfig after_resolve_pass =
-    opt::OptPassConfig({irpass.get_make_ref_eliminate_, irpass.replace_old_param_});
+  opt::OptPassConfig after_resolve_pass = opt::OptPassConfig({irpass.replace_old_param_});
   opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
   opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
@@ -450,7 +448,6 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.load_eliminater_,
                                                irpass.stopgrad_eliminater_,
                                                irpass.special_op_eliminate_,
-                                               irpass.get_make_ref_eliminate_,
                                                irpass.incorporate_environ_get_,
                                                irpass.incorporate_environ_get_switch_,
                                                irpass.environ_get_eliminate_,
@@ -465,9 +462,6 @@ OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
                                                irpass.mirror_micro_step_},
                                               false, true);
   opt::OptPassConfig b_2 = opt::OptPassConfig({
-    irpass.replace_refkey_by_param_,
-    irpass.make_ref_eliminate_,
-    irpass.get_ref_param_eliminate_,
     irpass.row_tensor_eliminate_,
   });
   opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());

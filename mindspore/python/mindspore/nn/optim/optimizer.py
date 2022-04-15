@@ -39,6 +39,7 @@ __all__ = ['Optimizer', 'opt_init_args_register']
 
 def opt_init_args_register(fn):
     """Register optimizer init args."""
+
     def deco(self, *args, **kwargs):
         bound_args = inspect.signature(fn).bind(self, *args, **kwargs)
         bound_args.apply_defaults()
@@ -60,6 +61,7 @@ def opt_init_args_register(fn):
             arguments.pop('learning_rate')
         setattr(self, 'init_args', arguments)
         fn(self, *args, **kwargs)
+
     return deco
 
 
@@ -704,6 +706,7 @@ class Optimizer(Cell):
             >>> print(conv_lr[0].asnumpy())
             0.05
         """
+
         def get_lr_value(learning_rate):
             if isinstance(learning_rate, (_ConvertToCell, _IteratorLearningRate)):
                 return learning_rate.learning_rate
@@ -768,26 +771,23 @@ class Optimizer(Cell):
         Returns:
              bool, the status flag.
         """
+        # If rank_id is 0, 1, 2, 3, there are param0 ~ param7,
+        # then the value is[(param0, param4), (param1, param5), (param2, param6), (param3, param7)]
         param_group = []
-        key_group = []
         for _ in range(self.dev_num):
             param_group.append(F.make_tuple())
-            key_group.append(F.make_tuple())
         for i in range(self.param_length):
             param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (self.parameters[i],)
-            key = P.MakeRefKey(self.param_names[i])()
-            key_group[self.param_rank[i]] = key_group[self.param_rank[i]] + (key,)
         new_param_group = []
         for root in range(self.dev_num):
-            ops = P.Broadcast(root)
             if root > 0:
-                param_group[root] = F.depend(param_group[root], new_param_group[root-1])
+                depend = F.depend(param_group[root], new_param_group[root - 1])
             else:
-                param_group[root] = F.depend(param_group[root], optim_result)
-            next_params = ops(param_group[root])
+                depend = F.depend(param_group[root], optim_result)
+            next_params = P.Broadcast(root)(depend)
             new_param_group.append(next_params)
             for i in range(F.tuple_len(next_params)):
-                F.assign(key_group[root][i], next_params[i])
+                F.assign(param_group[root][i], next_params[i])
         return new_param_group
 
     def construct(self, *hyper_params):
@@ -899,6 +899,7 @@ def tensor_deduplicate_indice_slices(grad):
 
 class _ConvertToCell(LearningRateSchedule):
     """Inner api, convert learning rate of scalar to LearningRateSchedule."""
+
     def __init__(self, learning_rate):
         super(_ConvertToCell, self).__init__()
         if not isinstance(learning_rate, Parameter):
@@ -912,6 +913,7 @@ class _ConvertToCell(LearningRateSchedule):
 
 class _IteratorLearningRate(LearningRateSchedule):
     """Inner api, convert learning rate of Tensor(list) to LearningRateSchedule."""
+
     def __init__(self, learning_rate, name):
         super(_IteratorLearningRate, self).__init__()
         if isinstance(learning_rate, Tensor):
@@ -931,6 +933,7 @@ class _IteratorLearningRate(LearningRateSchedule):
 
 class _WrappedWeightDecay(Cell):
     """Inner api, a combination of dynamic or non-dynamic weight decay"""
+
     def __init__(self, weight_decay, loss_scale=1.0):
         super(_WrappedWeightDecay, self).__init__()
         self.weight_decay = weight_decay

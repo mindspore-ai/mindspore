@@ -151,24 +151,6 @@ def bprop_identity(x, out, dout):
     return (dout,)
 
 
-@bprops.register("make_ref")
-def bprop_make_ref(key, x, y, out, dout):
-    """Backpropagator for primitive `make_ref`."""
-    return (C.zeros_like(key), dout, C.zeros_like(y))
-
-
-@bprops.register("get_ref_value")
-def bprop_get_ref_value(x, out, dout):
-    """Backpropagator for primitive `get_ref_value`."""
-    return (dout,)
-
-
-@bprops.register("get_ref_key")
-def bprop_get_ref_key(x, out, dout):
-    """Backpropagator for primitive `get_ref_key`."""
-    return (C.zeros_like(x),)
-
-
 @bprops.register("scalar_to_array")
 def bprop_scalar_to_array(x, out, dout):
     """Backpropagator for primitive `scalar_to_array`."""

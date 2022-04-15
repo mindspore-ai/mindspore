@@ -60,7 +60,6 @@ from .debug_ops import (ImageSummary, InsertGradientOf, HookBackward, ScalarSumm
                         TensorSummary, HistogramSummary, Print, Assert)
 from .image_ops import (CropAndResize, NonMaxSuppressionV3, HSVToRGB)
 from .inner_ops import (ScalarCast, Randperm, NoRepeatNGram, LambApplyOptimizerAssign, LambApplyWeightAssign,
-                        MakeRefKey,
                         FusedWeightScaleApplyMomentum, FusedCastAdamWeightDecay, FusedAdaFactor,
                         FusedAdaFactorWithGlobalNorm)
 from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, AssignSub, Atan2, BatchMatMul,
@@ -360,7 +359,6 @@ __all__ = [
     'NMSWithMask',
     'IOU',
     'Partial',
-    'MakeRefKey',
     'Depend',
     'UpdateState',
     'identity',

@@ -36,7 +36,6 @@
 #include "frontend/optimizer/irpass/param_replace.h"
 #include "frontend/optimizer/irpass/partial_eliminate.h"
 #include "frontend/optimizer/irpass/reduce_eliminate.h"
-#include "frontend/optimizer/irpass/ref_eliminate.h"
 #include "frontend/optimizer/irpass/reshape_eliminate.h"
 #include "frontend/optimizer/irpass/special_op_eliminate.h"
 #include "frontend/optimizer/irpass/specialize_transform.h"
@@ -66,7 +65,7 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   special_op_eliminate_ =
     MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "special_op_eliminate",
                      {prim::kPrimInsertGradientOf, prim::kPrimStopGradient, prim::kPrimHookBackward,
-                      prim::kPrimCellBackwardHook, prim::kPrimPrintShapeType, prim::kPrimGetRefValue});
+                      prim::kPrimCellBackwardHook, prim::kPrimPrintShapeType});
   ad_related_special_op_eliminate_ =
     MakeSubstitution(std::make_shared<SpecialOpEliminater>(), "ad_related_special_op_eliminate",
                      {prim::kPrimMirror, prim::kPrimVirtualDiv});
@@ -154,15 +153,6 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
                      {prim::kPrimEnvironGet, prim::kPrimEnvironSet});
 
   // Ref eliminate
-  make_ref_eliminate_ =
-    MakeSubstitution(std::make_shared<MakeRefEliminater>(), "make_ref_eliminate", prim::kPrimMakeRef);
-  get_ref_param_eliminate_ =
-    MakeSubstitution(std::make_shared<GetRefParamEliminater>(), "get_ref_param_eliminate", {prim::kPrimGetRefValue});
-  get_make_ref_eliminate_ = MakeSubstitution(std::make_shared<GetMakeRefEliminater>(), "get_make_ref_eliminate",
-                                             {prim::kPrimGetRefKey, prim::kPrimGetRefValue});
-
-  replace_refkey_by_param_ = MakeSubstitution(std::make_shared<ReplaceRefkeyByParam>(), "replace_refkey_by_param",
-                                              IsValueNode<RefKey>, opt::FORCE_RENORM);
   replace_old_param_ = MakeSubstitution(std::make_shared<ReplaceOldParam>(), "replace_old_param", IsParam);
   minmaximum_grad_ = MakeSubstitution(std::make_shared<MinMaximumGrad>(), "minmaximum_grad", prim::kPrimTupleGetItem);
 
