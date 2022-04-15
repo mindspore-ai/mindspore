@@ -17,6 +17,7 @@ MS_ALL:
     include/api
     mindspore/core
     mindspore/ccsrc/cxx_api
+    mindspore/ccsrc/transform
     mindspore/ccsrc/backend/common
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl
     mindspore/ccsrc/minddata
