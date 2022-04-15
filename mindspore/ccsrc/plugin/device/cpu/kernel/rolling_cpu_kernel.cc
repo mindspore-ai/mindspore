@@ -225,33 +225,29 @@ bool RollingCpuKernelFunc<T, S>::RunFunc(const std::vector<AddressPtr> &inputs,
     nan_value = 0;
   }
 
-  std::vector<common::Task> tasks;
-  tasks.reserve(axisIterator_.OuterSize() * axisIterator_.InnerSize());
-  for (size_t i = 0; i < axisIterator_.OuterSize(); ++i) {
-    for (size_t j = 0; j < axisIterator_.InnerSize(); ++j) {
-      size_t offset = (i * axisIterator_.InnerSize() + j) * axisIterator_.AxisSize();
+  auto task = [this, nan_value, input_addr, workspace_addr, output_addr](size_t start, size_t end) {
+    size_t axis_size = axisIterator_.AxisSize();
+    AxisIterator iter(axisIterator_);
+    for (size_t index = start; index < end; index++) {
+      iter.SetOffset(index);
+
+      size_t offset = index * axisIterator_.AxisSize();
       size_t *ids = workspace_addr + offset;
-      (void)tasks.emplace_back([this, i, j, nan_value, input_addr, ids, output_addr] {
-        AxisIterator iter(axisIterator_);
-        iter.SetOffset(i, j);
+      // set indexes to avoid duplicate calculation
+      for (size_t k = 0; k < axis_size; ++k) {
+        ids[k] = iter.GetPos(k);
+      }
 
-        // set indexes to avoid duplicate calculation
-        for (size_t k = 0; k < iter.AxisSize(); ++k) {
-          ids[k] = iter.GetPos(k);
+      for (size_t w = 0; w < axis_size; ++w) {
+        if (ends_[w] - starts_[w] < static_cast<size_t>(min_periods_)) {
+          output_addr[iter.GetPos(w)] = nan_value;
+        } else {
+          output_addr[iter.GetPos(w)] = reduceMethod_(input_addr, ids, starts_[w], ends_[w]);
         }
-
-        for (size_t w = 0; w < iter.AxisSize(); ++w) {
-          if (ends_[w] - starts_[w] < static_cast<size_t>(min_periods_)) {
-            output_addr[iter.GetPos(w)] = nan_value;
-          } else {
-            output_addr[iter.GetPos(w)] = reduceMethod_(input_addr, ids, starts_[w], ends_[w]);
-          }
-        }
-        return common::SUCCESS;
-      });
+      }
     }
-  }
-  ParallelLaunch(tasks);
+  };
+  ParallelLaunchAutoSearch(task, axisIterator_.OuterSize() * axisIterator_.InnerSize(), this, &parallel_search_info_);
   return true;
 }
 

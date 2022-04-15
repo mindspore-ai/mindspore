@@ -282,30 +282,25 @@ bool RankCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto values_addr = reinterpret_cast<T *>(workspace[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
-  std::vector<common::Task> tasks;
-  tasks.reserve(axisIterator_.OuterSize() * axisIterator_.InnerSize());
-  for (size_t i = 0; i < axisIterator_.OuterSize(); ++i) {
-    for (size_t j = 0; j < axisIterator_.InnerSize(); ++j) {
-      (void)tasks.emplace_back([this, i, j, input_addr, ids_addr, values_addr, workspace, output_addr]() {
-        AxisIterator iter(axisIterator_);
-        iter.SetOffset(i, j);
+  auto task = [this, input_addr, ids_addr, values_addr, workspace, output_addr](size_t start, size_t end) {
+    AxisIterator iter(axisIterator_);
+    for (size_t index = start; index < end; index++) {
+      iter.SetOffset(index);
 
-        size_t offset = (i * iter.InnerSize() + j) * iter.AxisSize();
-        size_t *sort_idx = ids_addr + offset;
-        T *values = values_addr + offset;
+      size_t offset = index * iter.AxisSize();
+      size_t *sort_idx = ids_addr + offset;
+      T *values = values_addr + offset;
 
-        if constexpr (std::is_integral_v<T>) {
-          Launch1D<T>(input_addr, sort_idx, values, iter, output_addr);
-        } else {
-          auto flags_addr = reinterpret_cast<bool *>(workspace[2]->addr);
-          bool *is_nan = flags_addr + offset;
-          Launch1D<T>(input_addr, sort_idx, values, is_nan, iter, output_addr);
-        }
-        return common::SUCCESS;
-      });
+      if constexpr (std::is_integral_v<T>) {
+        Launch1D<T>(input_addr, sort_idx, values, iter, output_addr);
+      } else {
+        auto flags_addr = reinterpret_cast<bool *>(workspace[2]->addr);
+        bool *is_nan = flags_addr + offset;
+        Launch1D<T>(input_addr, sort_idx, values, is_nan, iter, output_addr);
+      }
     }
-  }
-  ParallelLaunch(tasks);
+  };
+  ParallelLaunchAutoSearch(task, axisIterator_.OuterSize() * axisIterator_.InnerSize(), this, &parallel_search_info_);
   return true;
 }
 

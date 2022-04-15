@@ -126,10 +126,8 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   }
 
   // normal procedure
-  std::vector<common::Task> tasks;
-  tasks.reserve(LongToSize(outer_size));
-  for (int i = 0; i < outer_size; ++i) {
-    (void)tasks.emplace_back([this, i, fill_value, axis_size, inner_size, input, output, outputs] {
+  auto task = [this, fill_value, axis_size, inner_size, input, output, outputs](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
       size_t offset = LongToSize(i * axis_size * inner_size);
       size_t input_offset = offset + LongToSize(copy_src_begin_ * inner_size);
       size_t output_offset = offset + LongToSize(copy_dst_begin_ * inner_size);
@@ -138,10 +136,9 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
       (void)memcpy_s(output + output_offset, dst_max_size, input + input_offset, copy_size);
       size_t fill_offset = offset + LongToSize(fill_begin_ * inner_size);
       (void)std::fill_n(output + fill_offset, fill_size_ * inner_size, fill_value);
-      return common::SUCCESS;
-    });
-  }
-  ParallelLaunch(tasks);
+    }
+  };
+  ParallelLaunchAutoSearch(task, outer_size, this, &parallel_search_info_);
   return true;
 }
 
