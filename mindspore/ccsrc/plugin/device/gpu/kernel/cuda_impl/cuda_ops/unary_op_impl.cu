@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <limits>
 #include "unary_op_impl.cuh"
 #include "include/cuda_fp16.h"
 template <typename T>
@@ -124,9 +125,20 @@ __global__ void NegativeKernel(const T *input, T *output, const size_t count) {
 }
 template <typename T>
 __global__ void ReciprocalKernel(const T *input, T *output, const size_t count) {
-  T one = 1.0;
+  T zero = static_cast<T>(0.0);
+  T one = static_cast<T>(1.0);
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = one / input[i];
+    if (input[i] != zero) {
+      output[i] = one / input[i];
+      continue;
+    }
+    if (std::numeric_limits<T>::has_infinity) {
+      // Referring to the execution result of numpy, We need to add 1 to positive infinity.
+      output[i] = std::numeric_limits<T>::infinity() + static_cast<T>(1.0);
+    } else {
+      // Referring to the execution result of numpy, We need to add 1 to positive infinity.
+      output[i] = std::numeric_limits<T>::max() + static_cast<T>(1.0);
+    }
   }
   return;
 }
@@ -490,6 +502,11 @@ void Reciprocal(const T *input, T *output, const size_t count, cudaStream_t cuda
   return;
 }
 template <typename T>
+void Inv(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  Reciprocal<T>(input, output, count, cuda_stream);
+  return;
+}
+template <typename T>
 void Square(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   SquareKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -627,6 +644,8 @@ template CUDA_LIB_EXPORT void Negative<double>(const double *input, double *outp
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<double>(const double *input, double *output, const size_t count,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<double>(const double *input, double *output, const size_t count,
+                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<double>(const double *input, double *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<double>(const double *input, double *output, const size_t count,
@@ -683,6 +702,8 @@ template CUDA_LIB_EXPORT void Negative<float>(const float *input, float *output,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<float>(const float *input, float *output, const size_t count,
                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<float>(const float *input, float *output, const size_t count,
+                                         cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<float>(const float *input, float *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<float>(const float *input, float *output, const size_t count,
@@ -737,6 +758,7 @@ template CUDA_LIB_EXPORT void Negative<half>(const half *input, half *output, co
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<half>(const half *input, half *output, const size_t count,
                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<half>(const half *input, half *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -778,6 +800,7 @@ template CUDA_LIB_EXPORT void Negative<char>(const char *input, char *output, co
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<char>(const char *input, char *output, const size_t count,
                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<char>(const char *input, char *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
@@ -821,6 +844,8 @@ template CUDA_LIB_EXPORT void Negative<unsigned char>(const unsigned char *input
                                                       const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<unsigned char>(const unsigned char *input, unsigned char *output,
                                                         const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<unsigned char>(const unsigned char *input, unsigned char *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -830,7 +855,7 @@ template CUDA_LIB_EXPORT void Sin<unsigned char>(const unsigned char *input, uns
 template CUDA_LIB_EXPORT void Cos<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
-                                                 cudaStream_t cuda_stream);
+                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ACos<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -873,6 +898,7 @@ template CUDA_LIB_EXPORT void Negative<int>(const int *input, int *output, const
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Reciprocal<int>(const int *input, int *output, const size_t count,
                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sin<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);

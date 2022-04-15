@@ -40,6 +40,7 @@ constexpr auto kLog = "Log";
 constexpr auto kLog1p = "Log1p";
 constexpr auto kNeg = "Neg";
 constexpr auto kReciprocal = "Reciprocal";
+constexpr auto kInv = "Inv";
 constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kRsqrt = "Rsqrt";
@@ -85,6 +86,11 @@ const std::map<std::string, std::vector<std::pair<KernelAttr, UnaryPtrCreatorFun
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>}}},
   {kReciprocal,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
+  {kInv,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
   {kSquare,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
@@ -215,6 +221,7 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Log1p,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Neg, []() { return std::make_shared<UnaryOpGpuKernelMod>(kNeg); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Reciprocal,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kReciprocal); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Inv, []() { return std::make_shared<UnaryOpGpuKernelMod>(kInv); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Rint,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kRint); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Round,
