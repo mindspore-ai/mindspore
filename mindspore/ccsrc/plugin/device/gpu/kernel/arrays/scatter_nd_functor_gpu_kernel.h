@@ -30,7 +30,7 @@ namespace kernel {
 static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMap = {
   {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE}, {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
   {"ScatterNdSub", SCATTER_ND_FUNC_SUB},       {"ScatterNdMul", SCATTER_ND_FUNC_MUL},
-  {"ScatterNdDiv", SCATTER_ND_FUNC_DIV},
+  {"ScatterNdDiv", SCATTER_ND_FUNC_DIV},       {"ScatterNdMax", SCATTER_ND_FUNC_MAX},
 };
 
 template <typename T, typename S>
