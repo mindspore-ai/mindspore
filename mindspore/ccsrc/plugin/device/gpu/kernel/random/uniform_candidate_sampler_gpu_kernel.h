@@ -127,6 +127,7 @@ class UniformCandidateSamplerGpuKernelMod : public NativeGpuKernelMod {
 
   void ReleaseResource() override {
     // Reset current seed.
+    set_input_.clear();
     if (init_seed_ == 0 && cur_seed_ != 0) {
       cur_seed_ = 0;
     }
