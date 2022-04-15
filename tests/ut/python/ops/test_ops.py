@@ -1025,6 +1025,7 @@ class EditDistance(nn.Cell):
         return self.edit_distance(hypothesis_indices, hypothesis_values, self.hypothesis_shape,
                                   truth_indices, truth_values, self.truth_shape)
 
+
 class ApplyAdamWithAmsgradNet(nn.Cell):
     def __init__(self, beta1=0.1, beta2=0.1, epsilon=0.001, use_locking=False):
         super(ApplyAdamWithAmsgradNet, self).__init__()
@@ -1037,6 +1038,7 @@ class ApplyAdamWithAmsgradNet(nn.Cell):
     def construct(self, beta1_power, beta2_power, lr, grad):
         out = self.apply_adam_with_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
         return out
+
 
 class SparseApplyAdadeltaNet(nn.Cell):
     def __init__(self, epsilon, use_locking=True):
@@ -1150,7 +1152,7 @@ test_case_math_ops = [
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)]}),
     ('Ger', {
         'block': P.Ger(),
-        'desc_inputs': [[3,], [4,]],
+        'desc_inputs': [[3], [4]],
         'desc_bprop': [[3, 4]]}),
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
@@ -2615,6 +2617,21 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([1, 2, 3]), mstype.int32),
                         Tensor(np.array([5, 2, 3]), mstype.int32)],
         'skip': ['backward']}),
+    ('BitwiseAnd', {
+        'block': P.BitwiseAnd(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseOr', {
+        'block': P.BitwiseOr(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
+    ('BitwiseXor', {
+        'block': P.BitwiseXor(),
+        'desc_inputs': [Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mstype.int16),
+                        Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mstype.int16)],
+        'skip': ['backward']}),
     ('Cast', {
         'block': P.Cast(),
         'desc_const': [mstype.int32],
@@ -2705,7 +2722,7 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([1], np.float32)),
                         Tensor(np.array([1], np.float32)),
                         Tensor(np.array([1], np.float32))],
-        'desc_bprop': [[3,]]}),
+        'desc_bprop': [[3]]}),
     ('Stack_0', {
         'block': NetForStackInput(P.Stack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -3250,7 +3267,7 @@ test_case_other_ops = [
                         Tensor(np.random.rand(1, 64).astype(np.float16)),
                         Tensor(np.random.rand(1, 64).astype(np.float16)),
                         Tensor(np.random.rand(96, 256).astype(np.float16)),
-                        Tensor(np.random.rand(256,).astype(np.float16))],
+                        Tensor(np.random.rand(256).astype(np.float16))],
         'desc_bprop': [Tensor(np.random.rand(1, 64).astype(np.float16)),
                        Tensor(np.random.rand(1, 64).astype(np.float16)),
                        Tensor(np.random.rand(1, 64).astype(np.float16)),
@@ -3284,7 +3301,7 @@ test_case_other_ops = [
                         Tensor(np.random.randint(0, 10, size=(4, 50, 50, 3)).astype(np.int32)),
                         Tensor(np.random.uniform(0, 1, size=(4, 4)).astype(np.float32)),
                         Tensor(np.random.randint(0, 4, size=(4)).astype(np.int32))
-                       ],
+                        ],
         'skip': ['backward']}),
 ]
 
