@@ -100,6 +100,7 @@ void PSSchedulerNode::ProcessSendHostName(const std::shared_ptr<TcpServer> &serv
     error_message =
       "The rank id: " + std::to_string(rank_id) + " should be less than: " + std::to_string(node_nums_[node_role]);
     MS_LOG(ERROR) << error_message;
+    ret = false;
   } else {
     if (host_hash_names_.find(node_role) == host_hash_names_.end()) {
       host_hash_names_[node_role].resize(node_nums_[node_role]);

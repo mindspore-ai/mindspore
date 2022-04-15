@@ -121,7 +121,7 @@ bool MsCollectiveCommLib::SendHostHashName(size_t host_hash_name) const {
   CHECK_IF_NULL(output);
   (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
   if (!resp_msg.is_success()) {
-    MS_LOG(WARNING) << "Send host hash name to scheduler failed.";
+    MS_LOG(WARNING) << "Send host hash name to scheduler failed, error msg: " << resp_msg.error();
     return false;
   }
   return true;
@@ -183,7 +183,7 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   CHECK_IF_NULL(output);
   (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
   if (!resp_msg.is_success()) {
-    MS_LOG(WARNING) << "Send unique id to scheduler failed.";
+    MS_LOG(WARNING) << "Send unique id to scheduler failed, error msg: " << resp_msg.error();
     return false;
   }
   return true;
