@@ -104,48 +104,62 @@ class TestUnsupportParam():
             SGD(paramsTensor)
 
 
-class TestFlattenParams:
-    """ Test Optimizer with flatten parameters """
+def test_not_flattened_params():
+    """
+    Feature: Flatten weights.
+    Description: Optimizer with not flattened parameters.
+    Expectation: The Optimizer works as expected.
+    """
+    p1 = Parameter(Tensor([1], ms.float32), name="p1")
+    p2 = Parameter(Tensor([2], ms.float32), name="p2")
+    p3 = Parameter(Tensor([3], ms.float32), name="p3")
+    paras = [p1, p2, p3]
+    opt = Optimizer(0.1, paras)
+    assert not opt._use_flattened_params  # pylint: disable=W0212
+    assert len(opt.parameters) == 3
+    assert len(opt.cache_enable) == 3
 
-    def __init__(self):
-        self.p1 = None
-        self.p2 = None
-        self.p3 = None
-        self.params = []
 
-    def setup_method(self):
-        self.p1 = Parameter(Tensor([1], ms.float32), name="p1")
-        self.p2 = Parameter(Tensor([2], ms.float32), name="p2")
-        self.p3 = Parameter(Tensor([3], ms.float32), name="p3")
-        self.params = [self.p1, self.p2, self.p3]
+def test_with_flattened_params():
+    """
+    Feature: Flatten weights.
+    Description: Optimizer with flattened parameters.
+    Expectation: The Optimizer works as expected.
+    """
+    p1 = Parameter(Tensor([1], ms.float32), name="p1")
+    p2 = Parameter(Tensor([2], ms.float32), name="p2")
+    p3 = Parameter(Tensor([3], ms.float32), name="p3")
+    paras = [p1, p2, p3]
+    Tensor._flatten_tensors(paras)  # pylint: disable=W0212
+    opt = Optimizer(0.1, paras)
+    assert opt._use_flattened_params  # pylint: disable=W0212
+    assert len(opt.parameters) == 1
+    assert len(opt.cache_enable) == 1
+    assert opt.parameters[0].dtype == ms.float32
+    assert opt.parameters[0].shape == [3]
+    assert opt.parameters[0]._size == 3  # pylint: disable=W0212
+    assert np.allclose(opt.parameters[0].asnumpy(), np.array([1, 2, 3]))
+    p1.asnumpy()[0] = 6
+    p2.asnumpy()[0] = 6
+    p3.asnumpy()[0] = 6
+    assert np.allclose(opt.parameters[0].asnumpy(), np.array([6, 6, 6]))
 
-    def test_not_flattened_params(self):
-        """
-        Feature: Flatten weights.
-        Description: Optimizer with not flattened parameters.
-        Expectation: The Optimizer works as expected.
-        """
-        opt = Optimizer(0.1, self.params)
-        assert not opt._use_flattened_params  # pylint: disable=W0212
-        assert len(opt.parameters) == 3
-        assert len(opt.cache_enable) == 3
 
-    def test_with_flattened_params(self):
-        """
-        Feature: Flatten weights.
-        Description: Optimizer with flattened parameters.
-        Expectation: The Optimizer works as expected.
-        """
-        Tensor._flatten_tensors(self.params)  # pylint: disable=W0212
-        opt = Optimizer(0.1, self.params)
-        assert opt._use_flattened_params  # pylint: disable=W0212
-        assert len(opt.parameters) == 1
-        assert len(opt.cache_enable) == 1
-        assert opt.parameters[0].dtype == ms.float32
-        assert opt.parameters[0].shape == (3,)
-        assert opt.parameters[0].size == 3
-        assert np.allclose(opt.parameters[0].asnumpy(), np.array([1, 2, 3]))
-        self.p1.asnumpy()[0] = 6
-        self.p2.asnumpy()[0] = 6
-        self.p3.asnumpy()[0] = 6
-        assert np.allclose(opt.parameters[0].asnumpy(), np.array([6, 6, 6]))
+def test_adam_with_flattened_params():
+    """
+    Feature: Flatten weights.
+    Description: Adam optimizer with flattened parameters.
+    Expectation: It is ok to compile the optimizer.
+    """
+    p1 = Parameter(Tensor([1], ms.float32), name="p1")
+    p2 = Parameter(Tensor([2], ms.float32), name="p2")
+    p3 = Parameter(Tensor([3], ms.float32), name="p3")
+    paras = [p1, p2, p3]
+    Tensor._flatten_tensors(paras)  # pylint: disable=W0212
+    adam = Adam(paras)
+    g1 = Tensor([0.1], ms.float32)
+    g2 = Tensor([0.2], ms.float32)
+    g3 = Tensor([0.3], ms.float32)
+    grads = (g1, g2, g3)
+    with pytest.raises(NotImplementedError):
+        adam(grads)
