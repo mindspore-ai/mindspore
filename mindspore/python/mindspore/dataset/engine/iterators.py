@@ -84,7 +84,7 @@ class Iterator:
             def _transform(t, do_copy):
                 array = t.as_array()
                 if array.dtype.type is np.bytes_:
-                    array = array.astype(np.str_)
+                    array = np.char.decode(array)
                 if do_copy:
                     return Tensor(array)
                 return Tensor.from_numpy(array)
