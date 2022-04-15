@@ -7448,7 +7448,7 @@ class LRN(PrimitiveWithInfer):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[[[0.1], [0.2]],
@@ -7465,6 +7465,7 @@ class LRN(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
         """Initialize LRN"""
+        super().__init__("LRN")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("depth_radius", depth_radius, [int], self.name)
         validator.check_value_type("bias", bias, [float], self.name)
@@ -7473,14 +7474,6 @@ class LRN(PrimitiveWithInfer):
         validator.check_value_type("norm_region", norm_region, [str], self.name)
         validator.check_string(norm_region, ['ACROSS_CHANNELS'], 'norm_region', self.name)
         validator.check_non_negative_int(depth_radius, "depth_radius", self.name)
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid("x", x_dtype, (mstype.float16, mstype.float32,), self.name)
-        return x_dtype
-
-    def infer_shape(self, x_shape):
-        validator.check_int(len(x_shape), 4, Rel.EQ, "x_shape", self.name)
-        return x_shape
 
 
 class AvgPool3D(Primitive):
