@@ -358,6 +358,8 @@ void AicpuOpKernelLoad::FreeDeviceMemory() {
       }
     }
   }
+  allocated_mem_list_.clear();
+
   for (auto stream : stream_list_) {
     if (stream != nullptr) {
       auto rt_error = rtStreamDestroy(stream);
@@ -366,6 +368,8 @@ void AicpuOpKernelLoad::FreeDeviceMemory() {
       }
     }
   }
+  stream_list_.clear();
+
   so_name_and_realpath_map_.clear();
   cust_aicpu_so_.clear();
 }

@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <set>
 #include <utility>
 #include <unordered_map>
 #include <unordered_set>
@@ -92,6 +93,7 @@ class AscendKernelRuntime : public KernelRuntime {
 
  private:
   bool InitDevice();
+  bool SetRtDevice(uint32_t device_id);
   bool ResetDevice(uint32_t device_id);
   static bool HcclInit();
   static bool NeedDestroyHccl();
@@ -125,7 +127,10 @@ class AscendKernelRuntime : public KernelRuntime {
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   static std::map<std::string, uint32_t> overflow_tasks_;
   static std::vector<rtExceptionInfo> task_fail_infoes_;
+  std::map<uint32_t, std::shared_ptr<std::map<uint32_t, void *>>> device_stream_id_map_;
   std::map<uint32_t, void *> stream_id_map_;
+  std::set<uint32_t> initialized_device_set_{};
+  bool CreateDefaultStream(uint32_t device_id);
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);
