@@ -1264,12 +1264,7 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const Kernel
 }
 
 void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
-  // Update forward op output ref counts, release it
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
-  }
+  graph_compiler_->UpdateForwardOpOutputRefCount(input_tensors, &forward_op_output_tensor_id_);
 }
 
 void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks) {
@@ -1311,7 +1306,9 @@ void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> 
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, context->is_pynative_infer());
   runtime::RunSingleOpGraph(context->graph(), GetTensorWithoutValueMask(context->op_run_info()),
                             context->device_context());
-  ReleaseForwardOutput(context->op_run_info().input_tensors);
+  if (!context->op_run_info().is_infer) {
+    ReleaseForwardOutput(context->op_run_info().input_tensors);
+  }
   ClearGraphDeviceAddress(context->graph(), context->device_context(), context->op_run_info().is_gradient_out);
   ClearInputDeviceAddress(context->graph(), context->device_context());
   // Reset PyNative infer flag.
@@ -1432,7 +1429,9 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
   auto tensors_without_value_mask = GetTensorWithoutValueMask(*op_run_info);
   runtime::UpdateDeviceAddress(graph, tensors_without_value_mask, device_context);
   runtime::RunSingleOpGraph(graph, tensors_without_value_mask, device_context);
-  ReleaseForwardOutput(op_run_info->input_tensors);
+  if (!op_run_info->is_infer) {
+    ReleaseForwardOutput(op_run_info->input_tensors);
+  }
   UpdateOutput(output_nodes, outputs);
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddress(graph, device_context);

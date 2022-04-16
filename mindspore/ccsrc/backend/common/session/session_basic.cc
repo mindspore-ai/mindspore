@@ -1354,7 +1354,8 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
                 [cnode](const std::pair<KernelWithIndex, std::vector<std::vector<size_t>>> &output_index) {
                   return output_index.first.first == cnode;
                 });
-  OpRunInfo op_run_info = {.is_gradient_out = is_gradient_out,
+  OpRunInfo op_run_info = {.is_infer = false,
+                           .is_gradient_out = is_gradient_out,
                            .op_name = primitive->name(),
                            .primitive = primitive.get(),
                            .abstract = abstract,
@@ -1442,9 +1443,6 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
                                               std::map<std::string, size_t> *forward_op_output_tensor_id) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
-    return;
-  }
   // Cpu can not clear device address, because it's device address and host address is the same
   if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     return;
@@ -1453,10 +1451,7 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
     MS_LOG(INFO) << "Graph " << graph->ToString() << " has no forward op output id attr, skip.";
     return;
   }
-  auto forward_op_output_id_vec =
-    common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(graph->get_return(), kAttrForwardOpOutputId);
-  std::set<std::string> forward_op_output_id(forward_op_output_id_vec.begin(), forward_op_output_id_vec.end());
-  MS_LOG(DEBUG) << "Total forward op out put size " << forward_op_output_id.size();
+
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &kernel : graph->execution_order()) {
     const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
@@ -1470,7 +1465,7 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
         if (tensor == nullptr) {
           continue;
         }
-        if (forward_op_output_id.find(tensor->id()) != forward_op_output_id.end()) {
+        if (tensor->is_forward_output()) {
           (*forward_op_output_tensor_id)[tensor->id()] += 1;
         }
       }
@@ -1478,7 +1473,7 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
   }
   // Forward op output use as sens, so need add reference
   for (const auto &tensor : inputs) {
-    if (forward_op_output_id.find(tensor->id()) != forward_op_output_id.end()) {
+    if (tensor->is_forward_output()) {
       (*forward_op_output_tensor_id)[tensor->id()] += 1;
     }
   }
