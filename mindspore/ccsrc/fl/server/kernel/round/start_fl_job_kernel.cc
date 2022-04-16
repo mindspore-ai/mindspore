@@ -107,8 +107,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   }
   PBMetadata metadata;
   *metadata.mutable_device_meta() = device_meta;
-  std::string update_reason = "";
-  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata, &update_reason)) {
+  if (!DistributedMetadataStore::GetInstance().UpdateMetadata(kCtxDeviceMetas, metadata)) {
     std::string reason = "Updating device metadata failed for fl id " + device_meta.fl_id();
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_OutOfTime, reason, false,
@@ -116,7 +115,6 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
     return false;
   }
-
   // If calling ReportCount before ReadyForStartFLJob, the result will be inconsistent if the device is not selected.
   result_code = CountForStartFLJob(fbb, start_fl_job_req);
   if (result_code != ResultCode::kSuccess) {
@@ -299,8 +297,7 @@ ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder>
   MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kFail);
   MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), ResultCode::kFail);
 
-  std::string count_reason = "";
-  if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str(), &count_reason)) {
+  if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason =
       "Counting start fl job request failed for fl id " + start_fl_job_req->fl_id()->str() + ", Please retry later.";
     BuildStartFLJobRsp(

@@ -70,8 +70,7 @@ uint32_t NodeManager::checkIfRankIdExist(const RegisterMessage &register_message
       registered_nodes_info_[node_id] = recovery_node_infos[node_id];
       MS_LOG(INFO) << "The node id: " << node_id << " is recovery successful!"
                    << ", ip: " << recovery_node_infos[node_id].ip_ << ", port: " << recovery_node_infos[node_id].port_
-                   << ", rank id: " << rank_id << ", alive: " << recovery_node_infos[node_id].is_alive
-                   << ", fl iteration num: " << new_fl_iteration_num
+                   << ", rank id: " << rank_id << ", fl iteration num: " << new_fl_iteration_num
                    << ", the node_role:" << CommUtil::NodeRoleToString(recovery_node_infos[node_id].node_role_);
       return rank_id;
     }
@@ -235,12 +234,15 @@ void NodeManager::UpdateCluster(bool is_cluster_ready) {
         timeout_nodes_info_[it->first] = registered_nodes_info_[it->first];
         registered_nodes_info_[it->first].is_alive = false;
       }
+    } else {
+      if (registered_nodes_info_.count(it->first) && !registered_nodes_info_[it->first].is_alive) {
+        MS_LOG(WARNING) << registered_nodes_info_[it->first].node_id_ << " is alive.";
+        registered_nodes_info_[it->first].is_alive = true;
+      }
     }
   }
 
   if (!timeout_nodes_info_.empty()) {
-    UpdateClusterState(ClusterState::NODE_TIMEOUT);
-
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_RECOVERY)) {
@@ -249,25 +251,14 @@ void NodeManager::UpdateCluster(bool is_cluster_ready) {
         finish_nodes_id_.insert(iter->first);
       }
     }
-    if (onPersist_) {
-      onPersist_();
+    if (cluster_state_ != ClusterState::CLUSTER_DISABLE_FLS) {
+      UpdateClusterState(ClusterState::NODE_TIMEOUT);
     }
-  } else if (SizeToUint(heartbeats_.size()) == total_node_num_) {
-    if (cluster_state_ == ClusterState::NODE_TIMEOUT) {
-      for (auto it = registered_nodes_info_.begin(); it != registered_nodes_info_.end(); ++it) {
-        if (registered_nodes_info_.count(it->first) && !it->second.is_alive) {
-          MS_LOG(WARNING) << it->second.node_id_ << " is alive.";
-          it->second.is_alive = true;
-        }
-      }
-      if (onPersist_) {
-        onPersist_();
-      }
-      if (is_cluster_ready) {
-        UpdateClusterState(ClusterState::CLUSTER_READY);
-      } else {
-        UpdateClusterState(ClusterState::CLUSTER_STARTING);
-      }
+  } else if (SizeToUint(heartbeats_.size()) == total_node_num_ && cluster_state_ == ClusterState::NODE_TIMEOUT) {
+    if (is_cluster_ready) {
+      UpdateClusterState(ClusterState::CLUSTER_READY);
+    } else {
+      UpdateClusterState(ClusterState::CLUSTER_STARTING);
     }
   }
 
@@ -324,11 +315,6 @@ void NodeManager::UpdateNodesInfo() {
   nodes_info_ = registered_nodes_info_;
 }
 
-void NodeManager::UpdateNodeState(const NodeState &state) {
-  std::lock_guard<std::mutex> lk(node_mutex_);
-  node_state_ = state;
-}
-
 void NodeManager::UpdateClusterState(const ClusterState &state) {
   std::lock_guard<std::mutex> lk(cluster_mutex_);
   std::string state_str = CommUtil::ClusterStateToString(state);
@@ -338,11 +324,6 @@ void NodeManager::UpdateClusterState(const ClusterState &state) {
   MS_LOG(INFO) << "[state]: Cluster state change from:" << CommUtil::ClusterStateToString(cluster_state_) << " to "
                << state_str;
   cluster_state_ = state;
-}
-
-NodeState NodeManager::GetNodeState() {
-  std::lock_guard<std::mutex> lk(node_mutex_);
-  return node_state_;
 }
 
 ClusterState NodeManager::GetClusterState() {
