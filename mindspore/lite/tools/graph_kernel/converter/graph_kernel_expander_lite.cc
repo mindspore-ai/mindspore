@@ -18,6 +18,8 @@
 
 #include <utility>
 #include <vector>
+#include <map>
+#include <string>
 
 #include "backend/common/optimizer/const_input_to_attr.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
@@ -26,11 +28,10 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtr LiteExpander::Run(const AnfNodePtr &node) {
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
+AnfNodePtr InputToAttrDeco::PreProcess(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
   opt::ConstInputToAttr(cnode, input_idx_);
-  return DefaultExpander::Run(cnode);
+  return cnode;
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
@@ -45,15 +46,14 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
 }
 
 ExpanderPtr GraphKernelExpanderLite::GetExpander(const AnfNodePtr &node) {
-  HashSet<size_t> ReduceSumIdx{1};
-  std::vector<std::pair<PrimitivePtr, ExpanderPtr>> expanders = {
-    {prim::kPrimReduceFusion, std::make_shared<LiteExpander>(ReduceSumIdx)},
+  auto expander = std::make_shared<DefaultExpander>();
+  std::map<std::string, ExpanderCreatorFuncList> creators = {
+    {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1})}},
   };
-  for (auto &e : expanders) {
-    if (IsPrimitiveCNode(node, e.first)) {
-      return e.second;
-    }
+  auto iter = creators.find(GetCNodePrimitive(node)->name());
+  if (iter != creators.end()) {
+    return WrapExpander(expander, iter->second);
   }
-  return std::make_shared<DefaultExpander>();
+  return expander;
 }
 }  // namespace mindspore::graphkernel

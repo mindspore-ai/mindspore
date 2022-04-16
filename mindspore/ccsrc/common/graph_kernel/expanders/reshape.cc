@@ -16,7 +16,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 
 namespace mindspore::graphkernel::expanders {
 class ExpandDims : public OpDesc {
@@ -52,7 +52,7 @@ class ExpandDims : public OpDesc {
     return {result};
   }
 };
-OP_EXPANDER_REGISTER("ExpandDims", ExpandDims);
+EXPANDER_OP_DESC_REGISTER("ExpandDims", ExpandDims);
 
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis) {
   return ExpandDims::InferShape(shape, axis);

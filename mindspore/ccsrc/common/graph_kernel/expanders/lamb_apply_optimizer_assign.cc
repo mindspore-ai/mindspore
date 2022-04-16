@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
@@ -94,5 +94,5 @@ class LambApplyOptimizerAssign : public OpDesc {
     return result;
   }
 };
-OP_EXPANDER_REGISTER("LambApplyOptimizerAssign", LambApplyOptimizerAssign);
+EXPANDER_OP_DESC_REGISTER("LambApplyOptimizerAssign", LambApplyOptimizerAssign);
 }  // namespace mindspore::graphkernel::expanders

@@ -28,12 +28,40 @@
 #include "common/graph_kernel/core/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 
 namespace mindspore::graphkernel {
-FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
-  auto expander_ptr = expanders::OpExpanderFactory::Instance().GetExpander(AnfUtils::GetCNodeName(node));
-  if (expander_ptr == nullptr) {
+ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators) {
+  ExpanderPtr result = base;
+  for (auto &creator : deco_creators) {
+    result = creator(result);
+  }
+  return result;
+}
+
+AnfNodePtr ExpanderDecorator::Run(const AnfNodePtr &node) {
+  if (node == nullptr) return nullptr;
+  auto newnode = PreProcess(node);
+  if (newnode == nullptr) return nullptr;
+  newnode = decorated_->Run(newnode);
+  if (newnode == nullptr) return nullptr;
+  return PostProcess(newnode);
+}
+
+CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node) const {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto func_graph = node->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  CNodePtr new_node = func_graph->NewCNode(cnode->inputs());
+  new_node->set_abstract(node->abstract());
+  new_node->set_kernel_info(node->kernel_info_ptr());
+  return new_node;
+}
+
+FuncGraphPtr DefaultExpander::ExpandToGraph(const CNodePtr &node) {
+  auto op_desc = expanders::OpDescFactory::Instance().GetOp(AnfUtils::GetCNodeName(node));
+  if (op_desc == nullptr) {
     MS_LOG(INFO) << "expander not found " << node->fullname_with_scope();
     return nullptr;
   }
@@ -52,7 +80,7 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
     outputs[i].format = cb->GetOutputFormat(node, i);
   }
   auto &attrs = GetCNodePrimitive(node)->attrs();
-  auto litegraph = expander_ptr->Run(inputs, outputs, attrs, cb->GetProcessor(node));
+  auto litegraph = op_desc->Run(inputs, outputs, attrs, cb->GetProcessor(node));
   if (litegraph == nullptr) {
     MS_LOG(INFO) << "undo expanding " << node->fullname_with_scope();
     return nullptr;
@@ -60,11 +88,12 @@ FuncGraphPtr DefaultExpander::CreateExpandFuncGraph(const CNodePtr &node) {
   return GkUtils::LiteGraph2AnfGraph(litegraph);
 }
 
-AnfNodePtr DefaultExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func_graph, const CNodePtr &old_node) {
-  auto func_graph = old_node->func_graph();
-  std::vector<AnfNodePtr> inputs(old_node->inputs().begin() + 1, old_node->inputs().end());
-  auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_func_graph, inputs);
-  MS_LOG(DEBUG) << "Expand node: " << old_node->fullname_with_scope()
+AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node) {
+  auto new_fg = GetCNodeFuncGraph(node);
+  auto func_graph = node->func_graph();
+  std::vector<AnfNodePtr> inputs(node->inputs().begin() + 1, node->inputs().end());
+  auto graph_kernel_node = CreateNewFuseCNode(func_graph, new_fg, inputs);
+  MS_LOG(DEBUG) << "Expand node: " << node->fullname_with_scope()
                 << " with: " << graph_kernel_node->fullname_with_scope();
   return graph_kernel_node;
 }
@@ -72,22 +101,13 @@ AnfNodePtr DefaultExpander::CreateExpandGraphKernel(const FuncGraphPtr &new_func
 AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto new_func_graph = CreateExpandFuncGraph(cnode);
-  if (new_func_graph == nullptr) {
-    return nullptr;
-  }
-  new_func_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(AnfUtils::GetCNodeName(cnode)));
-  auto graph_kernel_node = CreateExpandGraphKernel(new_func_graph, cnode);
-  if (AnfUtils::GetOutputTensorNum(node) != AnfUtils::GetOutputTensorNum(graph_kernel_node)) {
-    MS_LOG(ERROR) << "The output num of composite node (" << AnfUtils::GetOutputTensorNum(graph_kernel_node)
-                  << ") does not match the original basic node (" << AnfUtils::GetOutputTensorNum(node) << ")."
-                  << node->fullname_with_scope();
-    return nullptr;
-  }
-  return graph_kernel_node;
+  auto new_fg = ExpandToGraph(cnode);
+  if (new_fg == nullptr) return nullptr;
+  new_fg->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(AnfUtils::GetCNodeName(cnode)));
+  AnfNodePtrList inputs = {NewValueNode(new_fg)};
+  inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  return node->func_graph()->NewCNode(inputs);
 }
-
-ExpanderPtr GraphKernelExpander::GetExpander(const AnfNodePtr &) { return std::make_shared<DefaultExpander>(); }
 
 bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
   bool changed = false;
@@ -103,12 +123,17 @@ bool GraphKernelExpander::DoExpand(const FuncGraphPtr &func_graph) {
     }
 
     MS_LOG(DEBUG) << "Expanding node: " << node->fullname_with_scope();
-    auto new_node = GetExpander(node)->Run(node);
-    if (new_node == nullptr) {
+    auto newnode = GetExpander(node)->Run(node);
+    if (newnode == nullptr) {
       MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
       continue;
     }
-    (void)mng->Replace(node, new_node);
+    newnode = CreateExpandedNode(newnode->cast<CNodePtr>());
+    if (newnode == nullptr) {
+      MS_LOG(DEBUG) << "Skipped node: " << node->fullname_with_scope();
+      continue;
+    }
+    (void)mng->Replace(node, newnode);
     changed = true;
   }
   return changed;

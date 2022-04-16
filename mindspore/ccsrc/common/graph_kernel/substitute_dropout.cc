@@ -38,12 +38,13 @@ namespace graphkernel {
 using opt::CheckCNodeInputSize;
 using opt::kDropoutInputTensorNum;
 
-int64_t DropoutExpander::seed_ = time(nullptr);
+int64_t DropoutExpanderDeco::seed_ = time(nullptr);
 
-AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+AnfNodePtr DropoutExpanderDeco::PreProcess(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
+  auto func_graph = node->func_graph();
   CheckCNodeInputSize(cnode, kDropoutInputTensorNum);
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
   ShapeVector shape_i64;
@@ -91,11 +92,6 @@ AnfNodePtr DropoutExpander::PreProcess(const FuncGraphPtr &func_graph, const Anf
   dropout_kernel_info_builder->SetInputsDeviceType({old_kernel_info->GetInputDeviceType(0), kNumberTypeFloat32});
   AnfAlgo::SetSelectKernelBuildInfo(dropout_kernel_info_builder->Build(), new_dropout_node.get());
   return new_dropout_node;
-}
-
-AnfNodePtr DropoutExpander::Run(const AnfNodePtr &node) {
-  auto gkdropout_node = PreProcess(node->func_graph(), node);
-  return PyExpander::Run(gkdropout_node);
 }
 }  // namespace graphkernel
 }  // namespace mindspore

@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 
-#include "common/graph_kernel/expanders/expander_factory.h"
+#include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
@@ -39,7 +39,7 @@ class ReLU : public OpDesc {
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override { return {Exec(gb, inputs)}; }
 };
-OP_EXPANDER_REGISTER("ReLU", ReLU);
+EXPANDER_OP_DESC_REGISTER("ReLU", ReLU);
 
 NodePtr ReluExpand(const inner::GraphBuilder &gb, const NodePtrList &inputs) { return ReLU::Exec(gb, inputs); }
 }  // namespace mindspore::graphkernel::expanders
