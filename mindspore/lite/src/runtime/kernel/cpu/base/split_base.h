@@ -43,9 +43,6 @@ class SplitBaseCPUKernel : public LiteKernel {
   int Run() override;
   virtual int Split(int task_id);
   static int CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param);
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  int UpdateThreadNumPass();
-#endif
 
  protected:
   int thread_n_stride_ = 0;

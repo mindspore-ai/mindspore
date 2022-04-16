@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,11 @@ int CastCPUKernel::ReSize() {
   if (data_num_ == 0) {
     return RET_OK;
   }
+
+  if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_Cast), 1, 1, out_tensors_.front()->Size()) != RET_OK) {
+    return RET_ERROR;
+  }
+
   op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, static_cast<int>(data_num_));
   stride_ = UP_DIV(data_num_, op_parameter_->thread_num_);
   return RET_OK;
