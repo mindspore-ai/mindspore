@@ -546,6 +546,9 @@ class Parameter(Tensor_):
             raise TypeError(f"The type of input must be Tensor, but got {type(tensor)}.")
         param = Tensor_.__new__(Parameter)
         Tensor_.__init__(param, tensor)
+        param.init = None
+        param.init_mode = None
+        param.is_default_input_init = False
         Parameter.__init__(param, tensor, *args, **kwargs)
         return param
 

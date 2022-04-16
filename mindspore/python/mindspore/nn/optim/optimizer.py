@@ -331,32 +331,24 @@ class Optimizer(Cell):
             raise ValueError(f"For 'Optimizer', the argument {param_info} must not be empty.")
         return parameters
 
-    def _set_base_target(self, value):
+    def flatten_gradients(self, gradients):
         """
-        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
-        optimizer operation.
+        Flatten gradients into several chunk tensors grouped by data type if network parameters are flattened.
+
+        A method to enable performance improvement by using contiguous memory for parameters and gradients.
+        User-defined optimizers based on :class:`mindspore.nn.Optimizer` should call this interface to support
+        contiguous memory for network parameters.
+
+        Args:
+            gradients (tuple[Tensor]): The gradients of network parameters.
+
+        Returns:
+            tuple[Tensor], The gradients after flattened, or the original gradients if parameters are not flattened.
         """
-        if not isinstance(value, str):
-            raise TypeError("For 'Optimizer', the property 'target' must be string, but got {}".format(type(value)))
-
-        if value not in ('CPU', 'Ascend', 'GPU'):
-            raise ValueError("For 'Optimizer', the property 'target' must be one of ['CPU', 'Ascend' ,'GPU'], "
-                             "but got {}".format(value))
-
-        if self._target == "CPU" and value in ('Ascend', 'GPU'):
-            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'GPU' or 'Ascend' "
-                             "in the 'CPU' environment.")
-
-        if self._target == "Ascend" and value == 'GPU':
-            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'GPU' "
-                             "in the 'Ascend' environment.")
-
-        if self._target == "GPU" and value == 'Ascend':
-            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'Ascend' "
-                             "in the 'GPU' environment.")
-
-        self._is_device = (value != 'CPU')
-        self._target = value
+        if self._use_flattened_params:
+            flatten_concat = inner.FlattenConcat()
+            return flatten_concat(gradients)
+        return gradients
 
     def decay_weight(self, gradients):
         """
@@ -418,6 +410,33 @@ class Optimizer(Cell):
             gradients = self.map_(F.partial(_grad_scale, self.reciprocal_scale), gradients)
 
         return gradients
+
+    def _set_base_target(self, value):
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation.
+        """
+        if not isinstance(value, str):
+            raise TypeError("For 'Optimizer', the property 'target' must be string, but got {}".format(type(value)))
+
+        if value not in ('CPU', 'Ascend', 'GPU'):
+            raise ValueError("For 'Optimizer', the property 'target' must be one of ['CPU', 'Ascend' ,'GPU'], "
+                             "but got {}".format(value))
+
+        if self._target == "CPU" and value in ('Ascend', 'GPU'):
+            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'GPU' or 'Ascend' "
+                             "in the 'CPU' environment.")
+
+        if self._target == "Ascend" and value == 'GPU':
+            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'GPU' "
+                             "in the 'Ascend' environment.")
+
+        if self._target == "GPU" and value == 'Ascend':
+            raise ValueError("For 'Optimizer', the property 'target' cannot be set to 'Ascend' "
+                             "in the 'GPU' environment.")
+
+        self._is_device = (value != 'CPU')
+        self._target = value
 
     def _grad_sparse_indices_deduplicate(self, gradients):
         """ In the case of using big operators, deduplicate the 'indexes' in gradients."""
