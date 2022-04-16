@@ -76,7 +76,10 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
   }
   mul_node->inputIndex.push_back(bias_tensor_index);
   mul_node->outputIndex = {bias_node->outputIndex};
-  graph->nodes.erase(bias_index + graph->nodes.begin());
+  // cannot delete node here, otherwise will destroy order in other pattern's node index
+  // make it an isolated node to be removed in IsolatedNodeRemovePass
+  bias_node->inputIndex.clear();
+  bias_node->outputIndex.clear();
   auto it = find(graph->subGraph.at(0)->nodeIndices.begin(), graph->subGraph.at(0)->nodeIndices.end(),
                  static_cast<uint32_t>(bias_index));
   if (it == graph->subGraph.at(0)->nodeIndices.end()) {

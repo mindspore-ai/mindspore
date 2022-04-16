@@ -17,6 +17,7 @@
 #include "src/train/graph_fusion.h"
 #include "tools/converter/optimizer.h"
 #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
+#include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
 
 namespace mindspore {
 namespace lite {
@@ -27,6 +28,7 @@ STATUS GraphFusion::Run(schema::MetaGraphT *graph) {
   }
   Optimizer fusion_optimizer;
   fusion_optimizer.AddPass(new (std::nothrow) MatMulBiasAddFusionPass());
+  fusion_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
   auto status = fusion_optimizer.Run(graph);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "graph fusion failed.";
