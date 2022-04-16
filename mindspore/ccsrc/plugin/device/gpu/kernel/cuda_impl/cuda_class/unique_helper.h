@@ -34,13 +34,14 @@ template <typename T, typename S>
 class UniqueHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit UniqueHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
-      : GpuKernelHelperBase(kernel_name, device_id_) {
+      : GpuKernelHelperBase(kernel_name, device_id) {
     num_elements_ = 1;
     post_output_size_ = 0;
   }
   virtual ~UniqueHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
+    ResetResource();
     int flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
     if (flag != 0) {
       return flag;

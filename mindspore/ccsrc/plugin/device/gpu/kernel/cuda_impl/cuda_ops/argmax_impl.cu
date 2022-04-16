@@ -37,12 +37,15 @@ __global__ void Argmax(const T *input, const S bound, const size_t outer_size, c
 
 template <typename T, typename S>
 void CalArgmax(const T *input, const S bound, const size_t outer_size, const size_t inner_size, S *output,
-               cudaStream_t cuda_stream) {
-  Argmax<<<GET_BLOCKS(outer_size), GET_THREADS, 0, cuda_stream>>>(input, bound, outer_size, inner_size, output);
+               const uint32_t &device_id, cudaStream_t cuda_stream) {
+  Argmax<<<CUDA_BLOCKS(device_id, outer_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(input, bound, outer_size,
+                                                                                          inner_size, output);
   return;
 }
 
 template CUDA_LIB_EXPORT void CalArgmax<float, int>(const float *input, const int bound, const size_t outer_size,
-                                                    const size_t inner_size, int *output, cudaStream_t cuda_stream);
+                                                    const size_t inner_size, int *output, const uint32_t &device_id,
+                                                    cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalArgmax<half, int>(const half *input, const int bound, const size_t outer_size,
-                                                   const size_t inner_size, int *output, cudaStream_t cuda_stream);
+                                                   const size_t inner_size, int *output, const uint32_t &device_id,
+                                                   cudaStream_t cuda_stream);

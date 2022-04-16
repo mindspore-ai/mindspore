@@ -35,7 +35,7 @@ template <typename T, typename S>
 class ArgMaxHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit ArgMaxHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
-      : GpuKernelHelperBase(kernel_name, device_id_) {
+      : GpuKernelHelperBase(kernel_name, device_id) {
     axis_ = 0;
     bound_ = 0;
     is_null_input_ = false;
@@ -46,7 +46,7 @@ class ArgMaxHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
-
+    ResetResource();
     int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
     if (inp_flag == -1) {
       return inp_flag;
@@ -88,7 +88,8 @@ class ArgMaxHelperGpuKernel : public GpuKernelHelperBase {
     }
 
     // call cuda kernel
-    CalArgmax(input_ptr, bound_, outer_size, inner_size, output_ptr, reinterpret_cast<cudaStream_t>(cuda_stream));
+    CalArgmax(input_ptr, bound_, outer_size, inner_size, output_ptr, device_id_,
+              reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
 

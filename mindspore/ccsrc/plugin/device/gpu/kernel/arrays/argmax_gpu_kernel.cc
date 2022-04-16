@@ -45,7 +45,7 @@ bool ArgmaxGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
 bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                               const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::make_shared<ops::ArgMax>(base_operator->GetPrim());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::ArgMax>(base_operator);
   kernel_name_ = kernel_ptr->name();
   auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
@@ -55,6 +55,11 @@ bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   attr_ptr_->axis = kernel_ptr->get_axis();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
+  return true;
+}
+
+bool ArgmaxGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                                const std::shared_ptr<ReinitArgs> &args) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();

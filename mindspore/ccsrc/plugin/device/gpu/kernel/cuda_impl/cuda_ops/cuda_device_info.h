@@ -60,12 +60,15 @@ class GPUdeviceInfo {
   bool check_sm_{true};
 };
 
-#define CUDA_BLOCKS(device_id, total_threads) GPUdeviceInfo::GetInstance(device_id)->blocks_num(total_threads)
-#define CUDA_THREADS(device_id) GPUdeviceInfo::GetInstance(device_id)->threads_num()
-#define CUDA_THREADS_MAXSIZE(device_id, size) GPUdeviceInfo::GetInstance(device_id)->threads_num(size)
-#define CUDA_MAJOR_SM(device_id) GPUdeviceInfo::GetInstance(device_id)->major_sm()
-#define CUDA_CAP(device_id) GPUdeviceInfo::GetInstance(device_id)->cuda_cap()
-#define CUDA_SHARED_MEM_PER_BLOCK(device_id) GPUdeviceInfo::GetInstance(device_id)->share_memory_size()
+#define CUDA_BLOCKS(device_id, total_threads) \
+  mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->blocks_num(total_threads)
+#define CUDA_THREADS(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->threads_num()
+#define CUDA_THREADS_MAXSIZE(device_id, size) \
+  mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->threads_num(size)
+#define CUDA_MAJOR_SM(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->major_sm()
+#define CUDA_CAP(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->cuda_cap()
+#define CUDA_SHARED_MEM_PER_BLOCK(device_id) \
+  mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->share_memory_size()
 
 #define MINIUM_SM 6
 #define RECOMMEND_SM 7

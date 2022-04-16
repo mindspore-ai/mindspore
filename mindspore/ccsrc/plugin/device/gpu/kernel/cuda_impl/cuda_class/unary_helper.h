@@ -69,12 +69,13 @@ template <typename T>
 class UnaryHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit UnaryHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
-      : GpuKernelHelperBase(kernel_name, device_id_) {
+      : GpuKernelHelperBase(kernel_name, device_id) {
     unary_op_type_ = UNARY_OP_INVALID_TYPE;
   }
   virtual ~UnaryHelperGpuKernel() = default;
   int CalMemSize(const std::vector<std::vector<int64_t>> &input_shapes,
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
+    ResetResource();
     auto iter = kUnaryOpTypeMap.find(kernel_name_);
     if (iter == kUnaryOpTypeMap.end()) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
