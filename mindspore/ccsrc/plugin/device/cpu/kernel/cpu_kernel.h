@@ -309,11 +309,28 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content = nu
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
                               ParallelSearchInfo *parallel_search_info);
 
+// Deal with pytorch style axis iteration, to iterate every value on specific axis
 class AxisIterator {
  public:
   AxisIterator() = default;
   virtual ~AxisIterator() = default;
   void Init(const std::vector<size_t> &input_shape, size_t axis);
+  // Iterate index through outer_size_ * inner_size_, combine inner iteration and outer iteration
+  // into one single iteration to fit ParallelLaunchAutoSearch
+  // Possible usage:
+  //  auto task = [this](size_t start, size_t end) {
+  //    AxisIterator iter(axisIterator_);
+  //    for (size_t index = start; i < end; i++) {
+  //      iter.SetOffset(index);
+  //      // Do computation
+  //    }
+  //  };
+  // ParallelLaunchAutoSearch(task, outer_size_ * inner_size_, this, &parallel_search_info_);
+  inline void SetOffset(size_t index) {
+    size_t outer_index = index / inner_size_;
+    size_t inner_index = index % inner_size_;
+    axis_offset_ = outer_index * axis_size_ * inner_size_ + inner_index;
+  }
 
   inline void SetOffset(size_t outer_index, size_t inner_index) {
     axis_offset_ = outer_index * axis_size_ * inner_size_ + inner_index;

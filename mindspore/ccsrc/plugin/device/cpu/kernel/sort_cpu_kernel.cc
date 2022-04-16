@@ -94,33 +94,29 @@ bool SortCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
     comparator = [&input](size_t index_1, size_t index_2) { return input[index_1] < input[index_2]; };
   }
 
-  std::vector<common::Task> tasks;
-  tasks.reserve(axisIterator_.OuterSize() * axisIterator_.InnerSize());
-  for (size_t i = 0; i < axisIterator_.OuterSize(); ++i) {
-    for (size_t j = 0; j < axisIterator_.InnerSize(); ++j) {
-      auto task = [this, i, j, ids_addr, input, indices, output, &comparator]() {
-        AxisIterator iter(axisIterator_);
-        iter.SetOffset(i, j);
+  auto task = [this, ids_addr, input, indices, output, &comparator](size_t start, size_t end) {
+    size_t axis_size = axisIterator_.AxisSize();
+    AxisIterator iter(axisIterator_);
+    for (size_t index = start; index < end; index++) {
+      iter.SetOffset(index);
 
-        size_t offset = (i * iter.InnerSize() + j) * iter.AxisSize();
-        size_t *idx = ids_addr + offset;
-        for (size_t k = 0; k < iter.AxisSize(); ++k) {
-          idx[k] = iter.GetPos(k);
-        }
+      size_t offset = index * axis_size;
+      size_t *idx = ids_addr + offset;
+      for (size_t k = 0; k < axis_size; ++k) {
+        idx[k] = iter.GetPos(k);
+      }
 
-        std::stable_sort(idx, idx + iter.AxisSize(), comparator);
+      std::stable_sort(idx, idx + axis_size, comparator);
 
-        for (size_t k = 0; k < iter.AxisSize(); ++k) {
-          const auto index = iter.GetPos(k);
-          indices[index] = SizeToInt(iter.RevertPos(idx[k]));
-          output[index] = input[idx[k]];
-        }
-        return common::SUCCESS;
-      };
-      (void)tasks.emplace_back(task);
+      for (size_t k = 0; k < axis_size; ++k) {
+        const auto output_index = iter.GetPos(k);
+        indices[output_index] = SizeToInt(iter.RevertPos(idx[k]));
+        output[output_index] = input[idx[k]];
+      }
     }
-  }
-  ParallelLaunch(tasks);
+  };
+  ParallelLaunchAutoSearch(task, axisIterator_.OuterSize() * axisIterator_.InnerSize(), this, &parallel_search_info_);
+
   return true;
 }
 
