@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include "runtime/device/tensor_array.h"
+#include "runtime/device/tensors_queue.h"
 
 namespace mindspore {
 namespace device {
@@ -34,7 +35,21 @@ class CPUTensorArray : public TensorArray {
   void *AllocateMemory(const size_t size) override;
   void ClearMemory(void *addr, const size_t size) override;
 };
+
+class CPUTensorsQueue : public TensorsQueue {
+ public:
+  CPUTensorsQueue(const string &name, const TypePtr &dtype, const int64_t size, const int64_t elements_num,
+                  const std::vector<std::vector<int64_t>> &shapes)
+      : TensorsQueue(name, dtype, size, elements_num, shapes) {}
+  ~CPUTensorsQueue() override = default;
+  void FreeMemory(const DeviceMemPtr addr) override;
+  void *AllocateMemory(const size_t size) override;
+  void ClearMemory(void *addr, const size_t size) override;
+  void CopyTensor(const mindspore::kernel::AddressPtr &dst, const mindspore::kernel::AddressPtr &src) override;
+};
+
 using CPUTensorArrayPtr = std::shared_ptr<CPUTensorArray>;
+using CPUTensorsQueuePtr = std::shared_ptr<CPUTensorsQueue>;
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore
