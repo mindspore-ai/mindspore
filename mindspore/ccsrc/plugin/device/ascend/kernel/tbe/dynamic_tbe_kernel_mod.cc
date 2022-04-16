@@ -66,8 +66,9 @@ void DynamicTbeKernelMod::Wait() {
   }
 }
 
-bool DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &args) {
+bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -79,7 +80,7 @@ bool DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
 
   if (!atomic_clean_nodes_.empty()) {
     for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      (void)AnfAlgo::GetKernelMod(atomic_clean_node.lock())->Reinit({}, {}, nullptr);
+      (void)AnfAlgo::GetKernelMod(atomic_clean_node.lock())->Resize(nullptr, {}, {});
     }
   } else {
     // update output size after InferShape.
@@ -112,8 +113,7 @@ bool DynamicTbeKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   device::tiling::OpTilingCalculateAdapter converter;
   ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
-  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map =
-    (args == nullptr) ? std::map<uint32_t, tensor::TensorPtr>{} : args->depend_tensor_map;
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = others;
   auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
   auto ret = optiling::OpParaCalculateV2(ge_node, op_run_info_v2);
   if (ret != ::ge::GRAPH_SUCCESS) {

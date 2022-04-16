@@ -72,9 +72,9 @@ bool DepthToSpaceFwdKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-bool DepthToSpaceFwdKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+bool DepthToSpaceFwdKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs,
-                                      const std::shared_ptr<ReinitArgs> &args) {
+                                      const std::map<uint32_t, tensor::TensorPtr> &others) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();

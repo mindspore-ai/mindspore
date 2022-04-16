@@ -140,8 +140,9 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
 
   void SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel);
   bool IsDynamicShape() { return common::AnfAlgo::IsDynamicShape(kernel_node_.lock()); }
-  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::shared_ptr<ReinitArgs> &args) override;
+  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+              const std::vector<KernelTensorPtr> &outputs,
+              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   enum KernelModType GetKernelModType() const override { return KernelModType::DeprecatedNativeGpuKernelMod; }
 
  protected:
@@ -423,14 +424,15 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
-                                     std::vector<int64_t> *attr_value, const std::shared_ptr<ReinitArgs> &args) {
+                                     std::vector<int64_t> *attr_value,
+                                     const std::map<uint32_t, tensor::TensorPtr> &depends) {
     // The value of dynamic attr can only be obtained after the InferShape() is executed
-    if (args == nullptr || args->depend_tensor_map.empty()) {
+    if (depends.empty()) {
       MS_LOG(DEBUG) << "For '" << kernel_name_ << "', the depend_tensor_map is currently empty";
       return false;
     }
-    auto depend_iter = args->depend_tensor_map.find(input_index);
-    if (depend_iter == args->depend_tensor_map.end()) {
+    auto depend_iter = depends.find(input_index);
+    if (depend_iter == depends.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to find the " << input_index
                         << "th input in the depend_tensor_map";
     }
@@ -517,13 +519,13 @@ using uchar = unsigned char;
 
 std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs,
                                                            const size_t input_index,
-                                                           const std::shared_ptr<ReinitArgs> &args,
+                                                           const std::map<uint32_t, tensor::TensorPtr> &depends,
                                                            const std::string &kernel_name);
 
 inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                                   const std::shared_ptr<ReinitArgs> &args, const std::string &kernel_name,
+                                   const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
                                    int64_t *attr_value) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, args, kernel_name);
+  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name);
   if (!res.has_value()) {
     return false;
   }
@@ -535,9 +537,9 @@ inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, c
 }
 
 inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
-                                   const std::shared_ptr<ReinitArgs> &args, const std::string &kernel_name,
+                                   const std::map<uint32_t, tensor::TensorPtr> &depends, const std::string &kernel_name,
                                    std::vector<int64_t> *attr_value) {
-  auto res = GetDynamicAttrIntValue(inputs, input_index, args, kernel_name);
+  auto res = GetDynamicAttrIntValue(inputs, input_index, depends, kernel_name);
   if (!res.has_value()) {
     return false;
   }

@@ -27,8 +27,9 @@
 
 namespace mindspore {
 namespace kernel {
-bool NativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                                const std::shared_ptr<ReinitArgs> &args) {
+bool NativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &others) {
   workspace_size_list_.clear();
   input_size_list_.clear();
   for (auto &input : inputs) {
@@ -115,9 +116,10 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
 std::map<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
 std::set<std::string> NativeCpuKernelMod::initialize_{};
 
-bool DeprecatedNativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+bool DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
-                                          const std::shared_ptr<ReinitArgs> &args) {
+                                          const std::map<uint32_t, tensor::TensorPtr> &others) {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&

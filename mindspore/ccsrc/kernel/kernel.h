@@ -224,11 +224,6 @@ class KernelTensor {
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 
-struct ReinitArgs {
-  std::map<uint32_t, tensor::TensorPtr> depend_tensor_map;
-  BaseOperatorPtr base_operator;
-};
-
 enum class KernelModType {
   Invalid = 0,
   KernelMod,
@@ -244,12 +239,6 @@ class KernelMod {
  public:
   KernelMod() {}
   virtual ~KernelMod() = default;
-
-  bool LaunchKernel(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
-    return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
-                  stream_ptr);
-  }
-
   virtual void SetInputSizeList(const std::vector<size_t> &size_list) { input_size_list_ = size_list; }
   virtual void SetOutputSizeList(const std::vector<size_t> &size_list) { output_size_list_ = size_list; }
   virtual void SetWorkspaceSizeList(const std::vector<size_t> &size_list) { workspace_size_list_ = size_list; }
@@ -265,13 +254,15 @@ class KernelMod {
                     const std::vector<KernelTensorPtr> &outputs) {
     return true;
   }
-  // If init stage we can not get some info, e.g., the input/output shape, which leads to init operation not completed,
-  // we should reinit in later stage, this method will be invoked in proper time.
-  virtual bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                      const std::shared_ptr<ReinitArgs> &args) {
+  // Resize is for updating shape related information and performing shape related operation(e.g., calculat output
+  // tensor size and allocate output tensor memory).
+  virtual bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                      const std::vector<KernelTensorPtr> &outputs,
+                      const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) {
     return true;
   }
-  // This routine is invoked when framework need wait the async launch finished.
+  // Some kernels, e.g., Unique, should provide Wait() operation as its output shape can only be gotten until its
+  // computing.
   virtual void Wait() {}
   virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
@@ -288,6 +279,10 @@ class KernelMod {
   // set true if need to wait launch for output's shape, like Unique
   virtual bool IsNeedWait() { return is_need_wait_; }
   virtual enum KernelModType GetKernelModType() const { return KernelModType::KernelMod; }
+  bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
+    return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
+                  stream_ptr);
+  }
 
  protected:
   std::string kernel_name_;

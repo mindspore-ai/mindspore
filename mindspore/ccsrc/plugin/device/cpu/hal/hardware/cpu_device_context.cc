@@ -274,12 +274,13 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       kernel::SetCpuRefMapToKernelInfo(node, kernel_attrs);
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
-      auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(node);
-      if (!cpu_kernel->Init(base_operator, input_tensors, output_tensors)) {
+      auto args = kernel::AbstractArgsFromCNode(node);
+      auto ret = cpu_kernel->Init(args.op, args.inputs, args.outputs);
+      if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
-      if (!cpu_kernel->Reinit(input_tensors, output_tensors, kernel::GetReinitArgs(node))) {
-        MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Reinit failed.";
+      if (!cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(node))) {
+        MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel, node.get());
     }
@@ -307,9 +308,9 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     kernel::DeprecatedNativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(cpu_kernel);
     opt::dynamic_shape::InferOp(kernel);
-    if (!cpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                            kernel::GetReinitArgs(kernel))) {
-      MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+    auto args = kernel::GetArgsFromCNode(kernel);
+    if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+      MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
     }
   }
 }

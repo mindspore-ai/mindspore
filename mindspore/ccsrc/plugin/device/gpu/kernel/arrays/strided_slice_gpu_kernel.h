@@ -65,9 +65,9 @@ class StridedSliceGpuKernelMod : public DeprecatedNativeGpuKernelMod, public Str
                         << ", but got " << input_shape_.size();
     }
     if (!is_dynamic_attr_) {
-      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetReinitArgs(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetReinitArgs(kernel_node));
-      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetReinitArgs(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetKernelDepends(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetKernelDepends(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetKernelDepends(kernel_node));
     }
     CollectInfo(kernel_node, is_dynamic_attr_);
     InitSizeLists();

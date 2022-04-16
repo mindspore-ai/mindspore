@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/unique_helper.h"
@@ -50,8 +51,9 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::shared_ptr<ReinitArgs> &args) override;
+  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+              const std::vector<KernelTensorPtr> &outputs,
+              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   void Wait() override;
   std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
 

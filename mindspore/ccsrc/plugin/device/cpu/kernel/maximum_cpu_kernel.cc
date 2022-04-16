@@ -62,9 +62,10 @@ bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-bool MaximumCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &args) {
-  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+bool MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return false;
   }

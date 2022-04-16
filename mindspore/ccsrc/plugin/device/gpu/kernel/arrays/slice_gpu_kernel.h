@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include <map>
 #include "mindspore/core/ops/slice.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -40,14 +41,14 @@ class SliceGpuKernelMod : public NativeGpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::shared_ptr<ReinitArgs> &args) override;
+  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+              const std::vector<KernelTensorPtr> &outputs,
+              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   void CheckParam(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs);
   void ProccessAttr(const std::vector<KernelTensorPtr> &inputs);
-
   std::vector<int64_t> begin_;
   std::vector<int64_t> size_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_{nullptr};

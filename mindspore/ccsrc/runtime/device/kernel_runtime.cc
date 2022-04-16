@@ -1336,7 +1336,7 @@ bool KernelRuntime::LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_
   start->set_record_stream(stream);
   end->set_record_stream(stream);
   start->RecordEvent();
-  bool ret = kernel_mod->LaunchKernel(kernel_launch_info, stream);
+  bool ret = kernel_mod->Launch(kernel_launch_info, stream);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Launch kernel failed, kernel name is : " << op_name;
   }
@@ -1565,7 +1565,7 @@ bool KernelRuntime::LaunchKernel(const session::KernelGraph &graph, const AnfNod
     if (pynative_mode_profiling_flag_) {
       ret = LaunchKernelWithPynativeProfiling(kernel_mod, kernel->fullname_with_scope(), kernel_launch_info, stream);
     } else {
-      ret = kernel_mod->LaunchKernel(kernel_launch_info, stream);
+      ret = kernel_mod->Launch(kernel_launch_info, stream);
     }
     if (!ret) {
       return ret;
@@ -1609,9 +1609,9 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
       MS_EXCEPTION_IF_NULL(kernel_mod);
       opt::dynamic_shape::InferOp(kernel);
-      if (!kernel_mod->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                              kernel::GetReinitArgs(kernel))) {
-        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+      auto args = kernel::GetArgsFromCNode(kernel);
+      if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize  failed.";
       }
       KernelLaunchInfo kernel_launch_info;
       device::KernelRuntime::GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);

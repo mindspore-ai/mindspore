@@ -183,18 +183,19 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   AnfUtils::CustomActorCallback actor_func = [kernel_mod, cnode](void *) {
-    auto reinit_args = kernel::GetReinitArgs(cnode);
+    auto args = cnode->user_data<kernel::KernelArgs>();
     if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
         kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
-      auto [op, inputs, outputs] = kernel::GetArgsFromCNode(cnode);
-      if (reinit_args == nullptr) {
-        reinit_args = std::make_shared<kernel::ReinitArgs>();
+      auto update = kernel::AbstractArgsFromCNode(cnode);
+      if (args == nullptr) {
+        args = std::make_shared<kernel::KernelArgs>();
       }
-      reinit_args->base_operator = op;
-      kernel::SetInitOpArgs(cnode, inputs, outputs, reinit_args);
+      args->op = update.op;
+      update.depend_tensor_map = args->depend_tensor_map;
+      kernel::SetArgsToCNode(cnode, update);
     }
-    if (!kernel_mod->Reinit(kernel::GetReinitInputs(cnode), kernel::GetReinitOutputs(cnode), reinit_args)) {
-      MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Reinit failed.";
+    if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+      MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Resize failed.";
     }
   };
 
@@ -215,9 +216,9 @@ void InferOp(const CNodePtr &cnode) {
     std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
   } else {
-    auto reinit_args = std::make_shared<kernel::ReinitArgs>();
-    InferShape(cnode, &reinit_args->depend_tensor_map);
-    kernel::SetInitOpArgs(cnode, {}, {}, reinit_args);
+    kernel::KernelArgs args;
+    InferShape(cnode, &args.depend_tensor_map);
+    kernel::SetArgsToCNode(cnode, args);
   }
 }
 

@@ -166,11 +166,12 @@ bool SliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool SliceGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                               const std::shared_ptr<ReinitArgs> &args) {
+bool SliceGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &others) {
   if (is_dynamic_attr_) {
-    if (GetDynamicAttrIntValue(inputs, kBeginIndex_, args, kernel_name_, &begin_) &&
-        GetDynamicAttrIntValue(inputs, kSizeIndex_, args, kernel_name_, &size_)) {
+    if (GetDynamicAttrIntValue(inputs, kBeginIndex_, others, kernel_name_, &begin_) &&
+        GetDynamicAttrIntValue(inputs, kSizeIndex_, others, kernel_name_, &size_)) {
       get_dynamic_attr_value_ = true;
       ProccessAttr(inputs);
     }

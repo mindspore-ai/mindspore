@@ -777,9 +777,9 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      if (!gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                              kernel::GetReinitArgs(kernel))) {
-        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+      auto args = kernel::GetArgsFromCNode(kernel);
+      if (!gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
       }
     }
 
@@ -898,9 +898,9 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     // pre-processing for dynamic shape kernel
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      if (!gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                              kernel::GetReinitArgs(kernel))) {
-        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+      auto args = kernel::GetArgsFromCNode(kernel);
+      if (!gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
       }
     }
     // alloc kernel res
@@ -910,7 +910,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     KernelLaunchInfo kernel_launch_info;
     GenLaunchArgs(*kernel_mod, kernel, &kernel_launch_info);
     MS_EXCEPTION_IF_NULL(stream_);
-    auto ret = kernel_mod->LaunchKernel(kernel_launch_info, stream_);
+    auto ret = kernel_mod->Launch(kernel_launch_info, stream_);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed.";
       return false;
