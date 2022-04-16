@@ -318,14 +318,10 @@ class AxisIterator {
   // Iterate index through outer_size_ * inner_size_, combine inner iteration and outer iteration
   // into one single iteration to fit ParallelLaunchAutoSearch
   // Possible usage:
-  //  auto task = [this](size_t start, size_t end) {
-  //    AxisIterator iter(axisIterator_);
-  //    for (size_t index = start; i < end; i++) {
-  //      iter.SetOffset(index);
-  //      // Do computation
-  //    }
-  //  };
-  // ParallelLaunchAutoSearch(task, outer_size_ * inner_size_, this, &parallel_search_info_);
+  // for (i = 0; i < outer_size_ * inner_size_; i ++) {
+  //    axisIterator.SetOffset(i);
+  //    // Do computation
+  // }
   inline void SetOffset(size_t index) {
     size_t outer_index = index / inner_size_;
     size_t inner_index = index % inner_size_;
