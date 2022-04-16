@@ -201,6 +201,11 @@ std::string IrExportBuilder::GetPrimitiveUniqueName(const PrimitivePtr &primitiv
   if (it != primitive_name_map_.end()) {
     return it->second;
   }
+  // Remove this check if we find a way to handle save/load training model with flattened parameters.
+  if (IsPrimitiveEquals(primitive_ptr, prim::kPrimFlattenConcat)) {
+    MS_LOG(EXCEPTION) << "Export model with operator '" << primitive_ptr->name() << "' is not supported yet.\n"
+                      << "Please remove 'net.flatten_weights()' in your script and try again.";
+  }
   auto answer = primitive_ptr->name() + ":" + std::to_string(GetUniqueID());
   primitive_name_map_[primitive_ptr] = answer;
   return answer;
