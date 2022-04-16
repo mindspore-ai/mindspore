@@ -251,7 +251,9 @@ py::object ValueToPyData(const ValuePtr &value) {
   }
   for (auto &iter : value_name_to_converter) {
     if (value->IsFromTypeId(iter.first)) {
-      return iter.second(value);
+      py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+      auto ret = iter.second(value);
+      return python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_PYTHON_DATA, ret);
     }
   }
   MS_LOG(EXCEPTION) << "Unsupported to convert " << value->ToString() << "[" << value->type_name() << "] to a PyData";

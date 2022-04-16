@@ -60,7 +60,7 @@ def test_str_format_constant_tensor_input():
         ms_str = "{} is {}".format("string", a)
         return ms_str
 
-    assert foo() == "string is Tensor(shape=[1], dtype=Int64, value=[1])"
+    assert foo() == "string is [1]"
 
 
 def test_str_format_variable_input():
