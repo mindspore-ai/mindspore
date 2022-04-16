@@ -32,7 +32,7 @@ int InstanceNormNPUOp::Init(const schema::Primitive *primitive, const std::vecto
     MS_LOG(ERROR) << name_ << " inputs empty";
     return RET_ERROR;
   }
-  if (in_tensors.at(0).format() != mindspore::Format::NHWC && in_tensors.at(0).format() != mindspore::Format::NHWC) {
+  if (in_tensors.at(0).format() != mindspore::Format::NHWC && in_tensors.at(0).format() != mindspore::Format::NCHW) {
     MS_LOG(ERROR) << "instance_norm input[0] should be NHWC or NCHW";
     return RET_ERROR;
   }
