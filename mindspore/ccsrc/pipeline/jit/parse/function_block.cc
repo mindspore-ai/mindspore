@@ -97,13 +97,9 @@ void FunctionBlock::WriteVariable(const std::string &var_name, const AnfNodePtr 
       AddIsolatedNode(hidden_node);
     }
     iter->second = std::make_pair(node, false);
-    if (use_fallback) {
-      UpdateLocalPyParam(var_name, node);
-    }
-  } else {
-    if (use_fallback) {
-      AddLocalPyParam(var_name, node);
-    }
+  }
+  if (use_fallback) {
+    UpdateLocalPyParam(var_name, node);
   }
 }
 

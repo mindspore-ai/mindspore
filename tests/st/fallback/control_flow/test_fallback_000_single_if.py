@@ -240,3 +240,26 @@ def test_single_if_builtin_function_sum():
         return x * 2
     res = control_flow_if()
     assert res == -21
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_if_change_variable_value():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if():
+        x = np.array([1, 2, 3, 4])
+        y = np.array([4, 5, 6])
+        if max(x) <= min(y):
+            x += 3
+            return Tensor(x)
+        return Tensor(0)
+    res = control_flow_if()
+    assert np.all(res.asnumpy() == np.array([4, 5, 6, 7]))
