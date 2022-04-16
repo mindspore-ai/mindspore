@@ -23,10 +23,14 @@ from mindspore.common import Tensor, Parameter
 
 func_map = {
     "mul": ops.ScatterNdMul,
+    "add": ops.ScatterNdAdd,
+    "sub": ops.ScatterNdSub,
 }
 
 np_func_map = {
     "mul": lambda a, b: a * b,
+    "add": lambda a, b: a + b,
+    "sub": lambda a, b: a - b,
 }
 
 
@@ -75,7 +79,7 @@ def compare_with_numpy(func, lock, input_x, indices, updates):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.float64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_small_float(lock, func, data_type, index_type):
@@ -95,7 +99,7 @@ def test_scatter_nd_small_float(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_small_int(lock, func, data_type, index_type):
@@ -115,7 +119,7 @@ def test_scatter_nd_small_int(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_multi_dims(lock, func, data_type, index_type):
@@ -143,7 +147,7 @@ def test_scatter_nd_multi_dims(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_one_value(lock, func, data_type, index_type):
@@ -163,7 +167,7 @@ def test_scatter_nd_one_value(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True])
-@pytest.mark.parametrize('func', ['mul'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
 @pytest.mark.parametrize('data_type', [mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_lock(lock, func, data_type, index_type):

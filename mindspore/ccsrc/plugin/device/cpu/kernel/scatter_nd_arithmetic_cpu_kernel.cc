@@ -52,7 +52,7 @@ class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
   using TypeComputeFunc = std::function<void(T *a, size_t a_idx, T *b, size_t b_idx)>;
   TypeComputeFunc compute_func_;
   bool use_locking_{true};
-  size_t slice_size_;
+  size_t slice_size_{1};
   size_t batch_size_{1};
   size_t inner_size_{1};
   std::vector<size_t> batch_strides_;
@@ -63,7 +63,9 @@ class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
 template <typename T, typename S>
 void ScatterNdArithmeticCpuKernelFunc<T, S>::InitComputeFunc() {
   static const std::map<std::string, std::function<T(const T &a, const T &b)>> scatterNdArithmeticFuncMap{
-    {prim::kPrimScatterNdMul->name(), [](const T &a, const T &b) { return a * b; }}};
+    {prim::kPrimScatterNdMul->name(), [](const T &a, const T &b) { return a * b; }},
+    {prim::kPrimScatterNdAdd->name(), [](const T &a, const T &b) { return a + b; }},
+    {prim::kPrimScatterNdSub->name(), [](const T &a, const T &b) { return a - b; }}};
   if (scatterNdArithmeticFuncMap.find(kernel_name_) == scatterNdArithmeticFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
   }
@@ -355,5 +357,9 @@ void ScatterNdArithmeticCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterNdMul,
                                  []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kScatterNdMul); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterNdAdd,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kScatterNdAdd); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterNdSub,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kScatterNdSub); });
 }  // namespace kernel
 }  // namespace mindspore
