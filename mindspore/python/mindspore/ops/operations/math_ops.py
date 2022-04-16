@@ -4734,9 +4734,10 @@ class Asin(Primitive):
 class NMSWithMask(PrimitiveWithInfer):
     r"""
     When object detection problem is performed in the computer vision field, object detection algorithm generates
-    a plurality of bounding boxes. Selects some bounding boxes in descending order of score(Descending order is not
-    supported in Ascend platform currently). Use the box with the highest score calculate the overlap between other
-    boxes and the current box, and delete the box based on a certain threshold(IOU). The IOU is as follows,
+    a plurality of bounding boxes. Use the box with the highest score, calculate the overlap between other boxes and
+    the current box, and delete the box based on a certain threshold(IOU). On Ascend platform, the input box score is
+    ignored, which only selects boexs based on the IOU between boxes, which means if you want to remove boxes that has
+    lower scores, you need to sort the input boxes by score in descending order in advance. The IOU is as follows,
 
     .. math::
         \text{IOU} = \frac{\text{Area of Overlap}}{\text{Area of Union}}
@@ -4756,14 +4757,16 @@ class NMSWithMask(PrimitiveWithInfer):
           The data type must be float16 or float32.
 
     Outputs:
-        tuple[Tensor], tuple of three tensors, they are selected_boxes, selected_idx and selected_mask.
+        tuple[Tensor], tuple of three tensors, they are output_boxes, output_idx and selected_mask.
 
-        - **selected_boxes** (Tensor) - The shape of tensor is :math:`(N, 5)`. The list of bounding boxes
-          after non-max suppression calculation.
-        - **selected_idx** (Tensor) - The shape of tensor is :math:`(N,)`. The indexes list of
-          valid input bounding boxes.
+        - **output_boxes** (Tensor) - The shape of tensor is :math:`(N, 5)`. On GPU and CPU platform, it is a sorted
+          list of bounding boxes by sorting the input `bboxes` in descending order of score. On Ascend platform,
+          it is same as input `bboxes`.
+        - **output_idx** (Tensor) - The shape of tensor is :math:`(N,)`. The indexes list of `output_boxes`.
         - **selected_mask** (Tensor) - The shape of tensor is :math:`(N,)`. A mask list of
-          valid output bounding boxes.
+          valid output bounding boxes. Apply this mask on `output_boxes` to get the list of bounding boxes after
+          non-max suppression calculation, or apply this mask on `output_idx` to get the indexes list of bounding boxes
+          after non-max suppression calculation.
 
     Raises:
         ValueError: If the `iou_threshold` is not a float number.
