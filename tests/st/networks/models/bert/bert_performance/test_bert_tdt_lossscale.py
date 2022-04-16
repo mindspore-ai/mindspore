@@ -244,12 +244,12 @@ def test_bert_performance():
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
     epoch_mseconds = np.array(time_monitor_callback.epoch_mseconds_list)[2]
-    expect_epoch_mseconds = 1400
+    expect_epoch_mseconds = 1500
     print("epoch mseconds: {}".format(epoch_mseconds))
     assert epoch_mseconds <= expect_epoch_mseconds + 5
 
     per_step_mseconds = np.array(time_monitor_callback.per_step_mseconds_list)[2]
-    expect_per_step_mseconds = 14
+    expect_per_step_mseconds = 15
     print("per step mseconds: {}".format(per_step_mseconds))
     assert per_step_mseconds <= expect_per_step_mseconds + 1
 
