@@ -115,7 +115,5 @@ def test_broadcast_dyn_invalid_init():
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     ms_shape = (2, -1, 4, 5)
     x_np = np.random.rand(4, 5).astype(np.float32)
-    try:
+    with pytest.raises(ValueError):
         P.BroadcastTo(ms_shape)(Tensor(x_np))
-    except (ValueError, RuntimeError):
-        assert True
