@@ -226,38 +226,6 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.matmul 
-
-Parameter操作算子
---------------------
-
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
-   * - mindspore.ops.assign
-     - Refer to :class:`mindspore.ops.Assign`.
-   * - mindspore.ops.assign_add
-     - Refer to :class:`mindspore.ops.AssignAdd`.
-   * - mindspore.ops.assign_sub
-     - Refer to :class:`mindspore.ops.AssignSub`.
-   * - mindspore.ops.scatter_nd_update
-     - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
-   * - mindspore.ops.scatter_update
-     - Refer to :class:`mindspore.ops.ScatterUpdate`.
-
-调试算子
-----------------
-
-.. list-table::
-   :widths: 50 50
-   :header-rows: 1
-
-   * - functional
-     - Description
-   * - mindspore.ops.print\_
-     - Refer to :class:`mindspore.ops.Print`.
    
 Tensor操作算子
 ----------------
@@ -371,6 +339,38 @@ Array操作
      - Refer to :class:`mindspore.ops.ScalarToTensor`.
    * - mindspore.ops.tuple_to_array
      - Refer to :class:`mindspore.ops.TupleToArray`.
+
+Parameter操作算子
+--------------------
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - functional
+     - Description
+   * - mindspore.ops.assign
+     - Refer to :class:`mindspore.ops.Assign`.
+   * - mindspore.ops.assign_add
+     - Refer to :class:`mindspore.ops.AssignAdd`.
+   * - mindspore.ops.assign_sub
+     - Refer to :class:`mindspore.ops.AssignSub`.
+   * - mindspore.ops.scatter_nd_update
+     - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
+   * - mindspore.ops.scatter_update
+     - Refer to :class:`mindspore.ops.ScatterUpdate`.
+
+调试算子
+----------------
+
+.. list-table::
+   :widths: 50 50
+   :header-rows: 1
+
+   * - functional
+     - Description
+   * - mindspore.ops.print\_
+     - Refer to :class:`mindspore.ops.Print`.
 
 其他算子
 ----------------
