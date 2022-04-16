@@ -914,9 +914,9 @@ SearchSubGraph::SearchSubGraph(const InnerContext *context, Model *model, std::v
 
   major_dt_ = DT_CPU;
   minor_dt_ = DT_CPU;
-  if (context_->IsNpuEnabled()) {
+  if (context_->IsDeviceTypeEnabled(DT_NPU)) {
     major_dt_ = DT_NPU;
-  } else if (context_->IsGpuEnabled()) {
+  } else if (context_->IsDeviceTypeEnabled(DT_GPU)) {
     major_dt_ = DT_GPU;
   }
 

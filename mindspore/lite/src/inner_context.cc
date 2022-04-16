@@ -124,8 +124,8 @@ void InnerContext::InitExperimentalExecEnv() {
 int InnerContext::CreateThreadPool() {
   if (this->thread_pool_ == nullptr) {
     BindMode bind_mode = Power_NoBind;
-    if (this->IsCpuEnabled()) {
-      bind_mode = static_cast<BindMode>(this->GetCpuDeviceInfo()->cpu_bind_mode_);
+    if (this->IsDeviceTypeEnabled(DT_CPU)) {
+      bind_mode = static_cast<BindMode>(this->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_);
     }
 
 #ifdef ENABLE_MINDRT
@@ -164,7 +164,7 @@ int InnerContext::Init() {
     this->allocator = mindspore::Allocator::Create();
     CHECK_NULL_RETURN(this->allocator);
   }
-  if (IsNpuEnabled()) {
+  if (IsDeviceTypeEnabled(DT_NPU)) {
     MS_LOG(DEBUG) << "NPU enabled.";
 #ifdef SUPPORT_NPU
     for (auto &device_ctx : this->device_list_) {
@@ -180,7 +180,7 @@ int InnerContext::Init() {
     }
 #endif
   }
-  if (IsGpuEnabled()) {
+  if (IsDeviceTypeEnabled(DT_GPU)) {
     MS_LOG(DEBUG) << "GPU enabled.";
   }
 
@@ -219,13 +219,13 @@ int InnerContext::IsValid() const {
   }
 
 #ifndef SUPPORT_GPU
-  if (IsUserSetGpu()) {
+  if (IsDeviceTypeEnabled(DT_GPU)) {
     MS_LOG(ERROR) << "GPU is not supported.";
     return RET_NOT_SUPPORT;
   }
 #endif
 #ifndef SUPPORT_NPU
-  if (IsUserSetNpu()) {
+  if (IsDeviceTypeEnabled(DT_NPU)) {
     MS_LOG(ERROR) << "NPU is not supported.";
     return RET_NOT_SUPPORT;
   }
@@ -234,67 +234,38 @@ int InnerContext::IsValid() const {
 }
 
 bool InnerContext::IsCpuFloat16Enabled() const {
-  if (!IsCpuEnabled()) {
+  if (!IsDeviceTypeEnabled(DT_CPU)) {
     return false;
   }
   if (!device_and_pkg_support_fp16_) {
     return false;
   }
-  return GetCpuInfo().enable_float16_;
+  return GetDeviceInfo(DT_CPU).cpu_device_info_.enable_float16_;
 }
 
 bool InnerContext::IsGpuFloat16Enabled() const {
 #ifdef GPU_OPENCL
-  if (!IsGpuEnabled()) {
+  if (!IsDeviceTypeEnabled(DT_GPU)) {
     return false;
   }
   opencl::OpenCLRuntimeInnerWrapper wrapper;
   if (!wrapper.GetInstance()->GetFp16Enable()) {
     return false;
   }
-  return GetGpuInfo().enable_float16_;
+  return GetDeviceInfo(DT_GPU).gpu_device_info_.enable_float16_;
 #else
   return false;
 #endif
 }
 
 #ifdef ENABLE_OPENGL_TEXTURE
-bool InnerContext::IsGLTextureEnabled() const { return GetGpuInfo().enable_gl_texture_; }
+bool InnerContext::IsGLTextureEnabled() const { return GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_; }
 #endif
 
-bool InnerContext::IsCpuEnabled() const { return IsUserSetCpu(); }
-
-const CpuDeviceInfo *InnerContext::GetCpuDeviceInfo() const {
-  if (IsUserSetCpu() == false) {
-    return nullptr;
-  }
-  const DeviceInfo *device_info = nullptr;
-
-  (void)std::find_if(this->device_list_.begin(), this->device_list_.end(), [&](const DeviceContext &device) {
-    if (device.device_type_ == DeviceType::DT_CPU) {
-      device_info = &device.device_info_;
-      return true;
-    }
-    return false;
-  });
-
-  return reinterpret_cast<const CpuDeviceInfo *>(device_info);
-}
-
-bool InnerContext::IsGpuEnabled() const {
-#ifdef SUPPORT_GPU
-  return IsUserSetGpu();
-#else
-  return false;
-#endif
-}
-
-bool InnerContext::IsNpuEnabled() const {
-#ifdef SUPPORT_NPU
-  return IsUserSetNpu();
-#else
-  return false;
-#endif
+bool InnerContext::IsDeviceTypeEnabled(DeviceType type) const {
+  return device_list_.end() !=
+         std::find_if(device_list_.begin(), device_list_.end(),
+                      [type](const DeviceContext &device) { return device.device_type_ == type; });
 }
 
 bool InnerContext::IsProviderEnabled() const {
@@ -317,24 +288,6 @@ bool InnerContext::IsCpuBindModeInvalid() const {
          });
 }
 
-bool InnerContext::IsUserSetCpu() const {
-  return this->device_list_.end() !=
-         std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                      [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
-}
-
-bool InnerContext::IsUserSetGpu() const {
-  return this->device_list_.end() !=
-         std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                      [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
-}
-
-bool InnerContext::IsUserSetNpu() const {
-  return this->device_list_.end() !=
-         std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                      [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
-}
-
 std::set<std::string> InnerContext::GetProviders() const {
   std::set<std::string> providers;
   for (auto &&device : device_list_) {
@@ -345,33 +298,13 @@ std::set<std::string> InnerContext::GetProviders() const {
   return providers;
 }
 
-CpuDeviceInfo InnerContext::GetCpuInfo() const {
-  auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                           [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
-  if (iter == this->device_list_.end()) {
+DeviceInfo InnerContext::GetDeviceInfo(DeviceType type) const {
+  auto iter = std::find_if(device_list_.begin(), device_list_.end(),
+                           [type](const DeviceContext &device) { return device.device_type_ == type; });
+  if (iter == device_list_.end()) {
     return {};
   } else {
-    return iter->device_info_.cpu_device_info_;
-  }
-}
-
-GpuDeviceInfo InnerContext::GetGpuInfo() const {
-  auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                           [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
-  if (iter == this->device_list_.end()) {
-    return {};
-  } else {
-    return iter->device_info_.gpu_device_info_;
-  }
-}
-
-NpuDeviceInfo InnerContext::GetNpuInfo() const {
-  auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
-                           [](const DeviceContext &device) { return device.device_type_ == DT_NPU; });
-  if (iter == this->device_list_.end()) {
-    return {};
-  } else {
-    return iter->device_info_.npu_device_info_;
+    return iter->device_info_;
   }
 }
 
