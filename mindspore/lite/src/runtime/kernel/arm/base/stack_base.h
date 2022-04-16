@@ -35,9 +35,6 @@ class StackBaseCPUKernel : public InnerKernel {
   int ReSize() override;
   int Run() override;
   int StackExecute(int task_id);
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  int UpdateThreadNumPass();
-#endif
 
  protected:
   StackParameter *stack_param_ = nullptr;

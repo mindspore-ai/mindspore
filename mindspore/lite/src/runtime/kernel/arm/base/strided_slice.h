@@ -39,9 +39,6 @@ class StridedSliceCPUKernel : public InnerKernel {
   int NormalRun();
   int FastRun();
   int FastRunImpl(int task_id);
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  int UpdateThreadNumPass();
-#endif
 
  private:
   StridedSliceParameter *param_ = nullptr;

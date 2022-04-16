@@ -50,24 +50,6 @@ static inline int GetOuterSize(const std::vector<int> &in_shape, int axis) {
   return outer_size;
 }
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-int StackBaseCPUKernel::UpdateThreadNumPass() {
-  if (thread_cost_context_ == nullptr) {
-    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
-    CHECK_NULL_RETURN(thread_cost_context_);
-
-    thread_cost_context_->per_unit_load_num_ = copy_size_;
-    thread_cost_context_->per_unit_store_num_ = copy_size_;
-    thread_cost_context_->per_unit_compute_cost_ = 9.286;  // 9.286 : stack per unit compute cost, dataNum about 12k
-  }
-
-  thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-  thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-
-  return RET_OK;
-}
-#endif
-
 int StackBaseCPUKernel::ReSize() {
   CHECK_NULL_RETURN(in_tensors_.front());
   auto input0_shape = in_tensors_.front()->shape();
@@ -83,14 +65,10 @@ int StackBaseCPUKernel::ReSize() {
     outer_size_ = GetOuterSize(input0_shape, axis_);
   }
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  if (UpdateThreadNumPass() != RET_OK) {
+  if (UpdateThreadNumPass(TC_PTYPE(type_), copy_size_, copy_size_, out_tensors_.at(0)->ElementsNum()) != RET_OK) {
     return RET_ERROR;
   }
-  thread_num_ = MSMIN(outer_size_, thread_num_);
-#else
   thread_num_ = MSMIN(UP_DIV(outer_size_, 64), op_parameter_->thread_num_);  // 64 : stack step
-#endif
 
   return RET_OK;
 }

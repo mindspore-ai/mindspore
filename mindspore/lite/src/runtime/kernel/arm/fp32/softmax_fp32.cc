@@ -43,22 +43,6 @@ int SoftmaxCPUKernel::Prepare() {
   return ReSize();
 }
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-int SoftmaxCPUKernel::UpdateThreadNumPass() {
-  if (thread_cost_context_ == nullptr) {
-    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
-    thread_cost_context_->per_unit_load_num_ = softmax_param_->input_shape_[softmax_param_->axis_];
-    thread_cost_context_->per_unit_store_num_ = softmax_param_->input_shape_[softmax_param_->axis_];
-    thread_cost_context_->per_unit_compute_cost_ = 521.0;  // 521.0 : compute cost, dataNum about 0.5k
-  }
-
-  thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-  thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-
-  return RET_OK;
-}
-#endif
-
 int SoftmaxCPUKernel::ReSize() {
   auto ret = SoftmaxBaseCPUKernel::ReSize();
   if (ret != RET_OK) {
@@ -90,11 +74,11 @@ int SoftmaxCPUKernel::ReSize() {
     }
   }
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  if (UpdateThreadNumPass() != RET_OK) {
+  if (UpdateThreadNumPass(
+        TC_PTYPE(softmax_param_->op_parameter_.type_), softmax_param_->input_shape_[softmax_param_->axis_],
+        softmax_param_->input_shape_[softmax_param_->axis_], out_tensors_.at(0)->ElementsNum()) != RET_OK) {
     return RET_ERROR;
   }
-#endif
   return RET_OK;
 }
 

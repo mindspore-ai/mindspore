@@ -34,7 +34,7 @@ class BiasCPUKernel : public InnerKernel {
   int DoExecute(int task_id);
 
  private:
-  int ChooseThreadCuttingstrategy();
+  int ChooseThreadCuttingStrategy();
   bool batch_priority_{false};
   int64_t inner_num_{0};
   int64_t outer_num_{0};

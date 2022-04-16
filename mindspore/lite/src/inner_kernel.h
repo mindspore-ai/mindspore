@@ -31,10 +31,7 @@
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "include/api/context.h"
 #include "include/api/kernel.h"
-
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
 #include "src/thread_cost_model.h"
-#endif
 
 namespace mindspore::kernel {
 class InnerKernel : public Kernel {
@@ -47,8 +44,8 @@ class InnerKernel : public Kernel {
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
         ms_context_(ctx) {
-    if (parameter != nullptr) {
-      thread_num_ = parameter->thread_num_;
+    if (ctx != nullptr) {
+      thread_num_ = ctx->thread_num_;
     }
   }
 
@@ -58,13 +55,6 @@ class InnerKernel : public Kernel {
       op_parameter_ = nullptr;
       FreeWorkspace();
     }
-
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-    if (thread_cost_context_ != nullptr) {
-      free(thread_cost_context_);
-      thread_cost_context_ = nullptr;
-    }
-#endif
   }
 
   int Execute() override;
@@ -76,6 +66,10 @@ class InnerKernel : public Kernel {
   virtual int PreProcess();
   // called after Run
   virtual int PostProcess() { return FreeInWorkTensor(); }
+
+  virtual int UpdateThreadNumProcess(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                                     int64_t unit_num);
+  int UpdateThreadNumPass(int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num, int64_t unit_num);
 
   virtual bool CheckInputsValid() const { return true; }
 
@@ -207,9 +201,6 @@ class InnerKernel : public Kernel {
   const lite::Context *ms_context_ = nullptr;
 
   int thread_num_ = 1;
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  lite::ThreadCostContext *thread_cost_context_ = nullptr;
-#endif
 };
 }  // namespace mindspore::kernel
 

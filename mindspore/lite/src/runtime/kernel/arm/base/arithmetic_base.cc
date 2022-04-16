@@ -24,41 +24,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
-namespace {
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-const std::map<std::pair<int, int>, float> arithmetic_compute_cost_map_ = {
-  {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU}, 2.288f},           // dataNum about 80k
-  {{schema::PrimitiveType_MulFusion, schema::ActivationType_RELU6}, 2.288f},          // dataNum about 80k
-  {{schema::PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION}, 1.806f},  // dataNum about 100k
-
-  {{schema::PrimitiveType_AddFusion, schema::ActivationType_RELU}, 2.288f},           // dataNum about 80k
-  {{schema::PrimitiveType_AddFusion, schema::ActivationType_RELU6}, 2.288f},          // dataNum about 80k
-  {{schema::PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION}, 1.806f},  // dataNum about 100k
-
-  {{schema::PrimitiveType_SubFusion, schema::ActivationType_RELU}, 2.288f},           // dataNum about 80k
-  {{schema::PrimitiveType_SubFusion, schema::ActivationType_RELU6}, 2.288f},          // dataNum about 80k
-  {{schema::PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION}, 1.806f},  // dataNum about 100k
-
-  // {{schema::PrimitiveType_DivFusion, schema::ActivationType_RELU}, 1.0f},
-  // {{schema::PrimitiveType_DivFusion, schema::ActivationType_RELU6}, 1.0f},
-  // {{schema::PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-
-  // {{schema::PrimitiveType_RealDiv, schema::ActivationType_RELU}, 1.0f},
-  // {{schema::PrimitiveType_RealDiv, schema::ActivationType_RELU6}, 1.0f},
-  // {{schema::PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-
-  // {{schema::PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_LogicalOr, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_Maximum, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_Minimum, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_FloorMod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_FloorDiv, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_Mod, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-  // {{schema::PrimitiveType_SquaredDifference, schema::ActivationType_NO_ACTIVATION}, 1.0f},
-};
-#endif
-}  // namespace
-
 int ArithmeticBaseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
   auto kernel = reinterpret_cast<ArithmeticBaseCPUKernel *>(cdata);
   auto ret = kernel->DoArithmetic(task_id);
@@ -109,7 +74,7 @@ int ArithmeticBaseCPUKernel::ReSize() {
     return ret;
   }
   ComputeOfflineInfo();
-  return ChooseThreadCuttingstrategy();
+  return ChooseThreadCuttingStrategy();
 }
 
 int ArithmeticBaseCPUKernel::Run() {
@@ -330,18 +295,13 @@ void ArithmeticBaseCPUKernel::ComputeOfflineInfo() {
   }
 }
 
-int ArithmeticBaseCPUKernel::ChooseThreadCuttingstrategy() {
+int ArithmeticBaseCPUKernel::ChooseThreadCuttingStrategy() {
   auto total_num = out_tensors_.front()->ElementsNum();
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  if (UpdateThreadNumPass() != RET_OK) {
+  if (UpdateThreadNumPass(TC_TYPE(primitive_type_, param_->activation_type_), 1, 1,
+                          out_tensors_.at(0)->ElementsNum()) != RET_OK) {
     return RET_ERROR;
   }
-#else
-  thread_num_ = op_parameter_->thread_num_;
-#endif
-  if (thread_num_ < 1) {
-    thread_num_ = 1;
-  }
+
   int64_t block_size = UP_DIV(total_num, thread_num_);
   int64_t split_point = 0;
   while (split_point < total_num) {
@@ -448,24 +408,4 @@ void ArithmeticBaseCPUKernel::ComputeOffset(int task_id) {
     block_boundary_infos_[task_id].b_offset.push_back(b_offset * b_matric_.inner_size * in_data_size_);
   }
 }
-
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-int ArithmeticBaseCPUKernel::UpdateThreadNumPass() {
-  std::pair<int, int> fusion_type = std::make_pair(primitive_type_, param_->activation_type_);
-  if (thread_cost_context_ == nullptr && arithmetic_compute_cost_map_.count(fusion_type) > 0) {
-    thread_cost_context_ = new lite::ThreadCostContext();
-    CHECK_NULL_RETURN(thread_cost_context_);
-
-    thread_cost_context_->per_unit_load_num_ = 1;
-    thread_cost_context_->per_unit_store_num_ = 1;
-    thread_cost_context_->per_unit_compute_cost_ = arithmetic_compute_cost_map_.at(fusion_type);
-  }
-
-  if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = out_tensors_.front()->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-  }
-  return RET_OK;
-}
-#endif
 }  // namespace mindspore::kernel

@@ -38,10 +38,13 @@ int FillCPUKernel::Prepare() {
 }
 
 int FillCPUKernel::ReSize() {
+  if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_Fill), 0, 1, out_tensors_.front()->Size()) != RET_OK) {
+    return RET_ERROR;
+  }
   auto output = out_tensors_.front();
   CHECK_NULL_RETURN(output);
   data_size_ = output->ElementsNum();
-  thread_sz_count_ = MSMIN(thread_count_, data_size_);
+  thread_sz_count_ = MSMIN(thread_num_, data_size_);
   if (thread_sz_count_ != 0) {
     thread_sz_stride_ = UP_DIV(data_size_, thread_sz_count_);
   }
