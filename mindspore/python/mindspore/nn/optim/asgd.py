@@ -177,6 +177,8 @@ class ASGD(Optimizer):
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lrs = self.get_lr()
+        if not self.is_dynamic_lr_or_weight_decay():
+            self.assignadd(self.global_step, self.global_step_increase_tensor)
         success = True
 
         for index, (grad, param, mu, eta, ax) in enumerate(zip(gradients, self.parameters, self.mu, self.eta, self.ax)):
