@@ -57,7 +57,7 @@ class TCPComm {
   bool StartServerSocket();
 
   // Connection operation for a specified destination.
-  void Connect(const std::string &dst_url);
+  bool Connect(const std::string &dst_url);
   bool IsConnected(const std::string &dst_url);
   bool Disconnect(const std::string &dst_url);
 

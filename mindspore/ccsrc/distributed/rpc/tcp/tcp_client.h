@@ -38,7 +38,7 @@ class TCPClient {
   void Finalize();
 
   // Connect to the specified server.
-  bool Connect(const std::string &dst_url, size_t timeout_in_sec = 5);
+  bool Connect(const std::string &dst_url, size_t retry_count = 60);
 
   // Disconnect from the specified server.
   bool Disconnect(const std::string &dst_url, size_t timeout_in_sec = 5);
