@@ -1036,9 +1036,9 @@ def check_input_data(*data, data_class):
                 data_class_str = tuple(i.__name__ if hasattr(i, '__name__') else i for i in data_class) \
                                  if isinstance(data_class, (tuple, list)) else \
                                  (data_class if data_class is None else data_class.__name__)
-                raise ValueError(f'Please provide as model inputs either a single or '
-                                 f'a tuple or a list or a dict of {data_class_str}, '
-                                 f'but got part data type is {item if item is None else type(item).__name__}.')
+                raise TypeError(f'Please provide as model inputs either a single or '
+                                f'a tuple or a list or a dict of {data_class_str}, '
+                                f'but got part data type is {item if item is None else type(item).__name__}.')
 
 
 def check_input_dataset(*dataset, dataset_type):
