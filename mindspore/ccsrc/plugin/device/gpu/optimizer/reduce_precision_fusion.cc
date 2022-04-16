@@ -81,8 +81,8 @@ bool ReducePrecisionFusion::Run(const FuncGraphPtr &graph) {
         auto deviceType = AnfAlgo::GetInputDeviceDataType(node, i);
         if (inferType == kNumberTypeInt64 && deviceType == kNumberTypeInt32) {
           ReducePrecision(graph, node, i, inferType, deviceType);
-          MS_LOG(WARNING) << "Reduce precision for [" << common::AnfAlgo::GetCNodeName(utils::cast<CNodePtr>(node))
-                          << "] input " << i;
+          MS_LOG(INFO) << "Reduce precision for [" << common::AnfAlgo::GetCNodeName(utils::cast<CNodePtr>(node))
+                       << "] input " << i;
         }
       }
       for (size_t i = 0; i < output_num; i++) {
