@@ -116,6 +116,7 @@ class PyObjectWrapper : public Named {
   // the object that needs to be resolved
   py::object obj_;
 };
+using PyObjectWrapperPtr = std::shared_ptr<PyObjectWrapper>;
 
 // InterpretedObject class wrappers interpreted python object.
 class InterpretedObject final : public PyObjectWrapper {
@@ -137,9 +138,7 @@ class MsClassObject final : public PyObjectWrapper {
       : PyObjectWrapper(obj, "MsClassObject: \'" + name + "\'") {}
   ~MsClassObject() override = default;
   MS_DECLARE_PARENT(MsClassObject, PyObjectWrapper);
-  abstract::AbstractBasePtr ToAbstract() override {
-    return std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<External>());
-  }
+  abstract::AbstractBasePtr ToAbstract() override;
 };
 using MsClassObjectPtr = std::shared_ptr<MsClassObject>;
 

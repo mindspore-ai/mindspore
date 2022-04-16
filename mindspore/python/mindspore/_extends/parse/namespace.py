@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -118,7 +118,11 @@ class ClassMemberNamespace(Namespace):
         except ValueError:
             raise UnboundLocalError(name)
         except KeyError:
-            logger.info(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', so will return None.")
+            # Check if cls is user-defined class decorated with ms_class. If true, an exception will be thrown.
+            cls = d.__class__
+            if hasattr(cls, '__ms_class__'):
+                raise NotImplementedError(f"'{cls.__name__ }' object has no attribute or method: '{name}'.")
+            logger.info(f"'{cls.__name__ }' object has no attribute or method: '{name}', so will return None.")
             raise AttributeError(name)
 
 
@@ -142,5 +146,4 @@ class ClassAttrNamespace(Namespace):
         except ValueError:
             raise UnboundLocalError(name)
         except KeyError:
-            logger.info(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}', so will return None.")
-            raise AttributeError(name)
+            raise AttributeError(f"'{d.__class__.__name__ }' object has no attribute or method: '{name}'.")

@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import hashlib
 import inspect
 import types
 import importlib
-from dataclasses import is_dataclass
 from textwrap import dedent
 
 import asttokens
@@ -324,24 +323,26 @@ def get_class_instance_type(obj):
     """Get the class instance detail type."""
     # check the obj type
     logger.debug("Get the class type(%r)", obj)
-    class_type = CLASS_INSTANCE_TYPE_INVALID
-    if _is_class_instance(obj):
-        if isinstance(obj, nn.Cell):
-            class_type = CLASS_INSTANCE_TYPE_CELL
-        elif isinstance(obj, ops.Primitive):
-            class_type = CLASS_INSTANCE_TYPE_PRIMITIVE
-        # Add the other type base requirement
-    return class_type
+    if isinstance(obj, nn.Cell):
+        return CLASS_INSTANCE_TYPE_CELL
+    if isinstance(obj, ops.Primitive):
+        return CLASS_INSTANCE_TYPE_PRIMITIVE
+    return CLASS_INSTANCE_TYPE_INVALID
 
 
-def _is_class_instance(obj):
-    """Confirm the obj is class instance."""
-    return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_dataclass_instance(obj)
+def _is_ms_class(obj):
+    """Check if obj is ms_class object."""
+    return hasattr(obj, '__ms_class__')
 
 
 def _is_dataclass_instance(obj):
     """Check whether a class is an instance of a dataclass (and not a dataclass itself)"""
-    return is_dataclass(obj) and not isinstance(obj, type)
+    return hasattr(obj, "__dataclass_fields__") and not isinstance(obj, type)
+
+
+def _is_class_instance(obj):
+    """Confirm the obj is class instance."""
+    return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_dataclass_instance(obj) or _is_ms_class(obj)
 
 
 def _convert_tuple_to_args_kwargs(params):
@@ -358,7 +359,7 @@ def _convert_tuple_to_args_kwargs(params):
 
 def is_supported_create_instance_type(cls_type):
     """Check if cls_type is a supported instance type."""
-    return issubclass(cls_type, (nn.Cell, ops.Primitive))
+    return issubclass(cls_type, (nn.Cell, ops.Primitive)) or _is_ms_class(cls_type)
 
 
 def create_instance(cls_type, params=None):
@@ -440,28 +441,19 @@ def get_dataclass_methods(cls):
     return methods
 
 
+def is_class_type(cls):
+    """Check if cls is a class type."""
+    return isinstance(cls, type)
+
+
 def get_ms_class_name(cls):
     """Get the name of the class instance decorated by ms_class."""
     # Check if cls is nn.Cell.
     if isinstance(cls, nn.Cell):
         raise TypeError(f"ms_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     if isinstance(cls, type):
-        name = cls.__name__
-    else:
-        name = cls.__class__.__name__
-    # Get the name of cls.
-    cls_name = cls.__module__ + '.' + name
-    return cls_name
-
-
-def get_ms_class_attr(cls, name: str):
-    """Get attribute or method of ms_class obj."""
-    # Don't take into account python magic methods and private variables.
-    if name.startswith('_'):
-        raise AttributeError(f"{name} is a private variable or magic method, which is not supported.")
-    if not hasattr(cls, name):
-        raise AttributeError(f"{cls} has no attribute: {name}.")
-    return getattr(cls, name)
+        return cls.__name__
+    return cls.__class__.__name__
 
 
 def convert_to_ms_tensor(data):

@@ -345,6 +345,24 @@ class MS_CORE_API Problem final : public Type {
 };
 using ProblemPtr = std::shared_ptr<Problem>;
 
+/// \brief MsClassType defines a type which is ms_class.
+class MS_CORE_API MsClassType final : public Type {
+ public:
+  /// \brief The constructor of External.
+  ///
+  /// \return The instance of External.
+  MsClassType() : Type(kObjectTypeClass) {}
+
+  /// \brief The destructor of External.
+  ~MsClassType() override = default;
+  MS_DECLARE_PARENT(MsClassType, Type)
+
+  TypeId generic_type_id() const override { return kObjectTypeClass; }
+  TypePtr DeepCopy() const override { return std::make_shared<MsClassType>(); }
+  std::string DumpText() const override { return "MsClassType"; }
+};
+using MsClassTypePtr = std::shared_ptr<MsClassType>;
+
 /// \brief External defines a type which is external.
 class MS_CORE_API External final : public Type {
  public:
@@ -360,9 +378,6 @@ class MS_CORE_API External final : public Type {
   TypeId generic_type_id() const override { return kMetaTypeExternal; }
   TypePtr DeepCopy() const override { return std::make_shared<External>(); }
   std::string DumpText() const override { return "ExternalType"; }
-
- private:
-  TypePtr kind;
 };
 using ExternalPtr = std::shared_ptr<External>;
 
