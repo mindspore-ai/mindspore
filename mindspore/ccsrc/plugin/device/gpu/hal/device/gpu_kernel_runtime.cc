@@ -777,8 +777,10 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
 
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                         kernel::GetReinitArgs(kernel));
+      if (!gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                              kernel::GetReinitArgs(kernel))) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+      }
     }
 
     AddressPtrList kernel_inputs;
@@ -896,8 +898,10 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     // pre-processing for dynamic shape kernel
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
-      gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                         kernel::GetReinitArgs(kernel));
+      if (!gpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                              kernel::GetReinitArgs(kernel))) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+      }
     }
     // alloc kernel res
     AddressPtrList kernel_inputs;

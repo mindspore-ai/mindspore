@@ -32,7 +32,7 @@ class DynamicAicpuOpKernelMod : public AicpuOpKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
               const std::shared_ptr<ReinitArgs> &args) override;
   void Wait() override;
 

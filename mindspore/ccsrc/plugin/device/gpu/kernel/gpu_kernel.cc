@@ -45,21 +45,24 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
 }
 }  // namespace
 
-void DeprecatedNativeGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+bool DeprecatedNativeGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::shared_ptr<ReinitArgs> &args) {
   auto cnode = kernel_node_.lock();
-  MS_EXCEPTION_IF_NULL(cnode);
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "kernel_node_ is not a cnode.";
+    return false;
+  }
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
       common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
       abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
-    return;
+    return true;
   }
 
   MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
   DestroyResource();
   ResetResource();
-  Init(cnode);
+  return Init(cnode);
 }
 
 void DeprecatedNativeGpuKernelMod::SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {

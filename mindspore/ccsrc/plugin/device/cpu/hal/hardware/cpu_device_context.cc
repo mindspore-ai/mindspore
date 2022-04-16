@@ -278,8 +278,10 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
     kernel::DeprecatedNativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(cpu_kernel);
     opt::dynamic_shape::InferOp(kernel);
-    cpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                       kernel::GetReinitArgs(kernel));
+    if (!cpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                            kernel::GetReinitArgs(kernel))) {
+      MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed.";
+    }
   }
 }
 

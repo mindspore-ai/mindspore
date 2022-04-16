@@ -203,7 +203,9 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node, bool fake_flag) {
         reinit_args->base_operator = op;
         kernel::SetInitOpArgs(cnode, inputs, outputs, reinit_args);
       }
-      kernel_mod->Reinit(kernel::GetReinitInputs(cnode), kernel::GetReinitOutputs(cnode), reinit_args);
+      if (!kernel_mod->Reinit(kernel::GetReinitInputs(cnode), kernel::GetReinitOutputs(cnode), reinit_args)) {
+        MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Reinit failed.";
+      }
     };
   }
 

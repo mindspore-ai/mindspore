@@ -267,8 +267,10 @@ class KernelMod {
   }
   // If init stage we can not get some info, e.g., the input/output shape, which leads to init operation not completed,
   // we should reinit in later stage, this method will be invoked in proper time.
-  virtual void Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                      const std::shared_ptr<ReinitArgs> &args) {}
+  virtual bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                      const std::shared_ptr<ReinitArgs> &args) {
+    return true;
+  }
   // This routine is invoked when framework need wait the async launch finished.
   virtual void Wait() {}
   virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
