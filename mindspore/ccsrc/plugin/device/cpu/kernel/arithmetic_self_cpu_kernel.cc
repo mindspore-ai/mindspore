@@ -374,7 +374,11 @@ template <typename T>
 void Atanh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      out[i] = static_cast<T>(atanh(static_cast<double>(in[i])));
+      if constexpr (std::is_same<T, float>::value) {
+        out[i] = static_cast<T>(atanh(static_cast<double>(in[i])));
+      } else {
+        out[i] = static_cast<T>(atanh(in[i]));
+      }
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
@@ -536,7 +540,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimSinh->name(), ComplexSinh<T>},   {prim::kPrimCosh->name(), ComplexCosh<T>},
                           {prim::kPrimSin->name(), ComplexSin<T>},     {prim::kPrimCos->name(), ComplexCos<T>},
                           {prim::kPrimRsqrt->name(), Rsqrt<T>},        {prim::kPrimTan->name(), Tan<T>},
-                          {prim::kPrimSign->name(), ComplexSign<T>}};
+                          {prim::kPrimAtanh->name(), Atanh<T>},        {prim::kPrimSign->name(), ComplexSign<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "ArithmeticSelfCpuKernelFunc does not support " << kernel_name_ << " with complex as input. ";
@@ -659,7 +663,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kAtanh,
-   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+   {{KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kAbs,
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
