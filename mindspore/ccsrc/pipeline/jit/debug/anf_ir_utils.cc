@@ -170,7 +170,8 @@ inline bool Skip(const MetaFuncGraphPtr &meta_func_graph) {
          meta_func_graph->isa<prim::MakeListGradient>() || meta_func_graph->isa<prim::TupleAdd>() ||
          meta_func_graph->isa<prim::SequenceSlice>() || meta_func_graph->isa<prim::UnpackCall>() ||
          meta_func_graph->isa<prim::ZipOperation>() || meta_func_graph->isa<prim::ListAppend>() ||
-         meta_func_graph->isa<prim::ListInsert>() || meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>();
+         meta_func_graph->isa<prim::ListInsert>() || meta_func_graph->isa<prim::DoSignatureMetaFuncGraph>() ||
+         meta_func_graph->isa<prim::VmapMatchOutAxis>() || meta_func_graph->isa<prim::VmapGeneralPreprocess>();
 }
 
 /* inherit relation of MetaFuncGraph
@@ -223,8 +224,10 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
     prim::GradOperationPtr grad_op = meta_func_graph->cast<prim::GradOperationPtr>();
     oss << "{get_all=" << grad_op->get_all_ << ", get_by_list=" << grad_op->get_by_list_
         << ", sens_param=" << grad_op->sens_param_ << "}";
-  } else if (meta_func_graph->isa<prim::VmapMatchOutAxis>() || meta_func_graph->isa<prim::VmapGeneralPreprocess>() ||
-             Skip(meta_func_graph)) {
+  } else if (meta_func_graph->isa<prim::VmapGeneralRule>()) {
+    prim::VmapGeneralRulePtr general_rule_fg = meta_func_graph->cast<prim::VmapGeneralRulePtr>();
+    oss << "{prim=" << general_rule_fg->prim_name() << ", axis_size=" << general_rule_fg->axis_size() << "}";
+  } else if (Skip(meta_func_graph)) {
     // Do nothing.
   } else {
     MS_LOG(EXCEPTION) << "Unknown MetaFuncGraph type " << meta_func_graph->type_name();
