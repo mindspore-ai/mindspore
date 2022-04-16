@@ -45,12 +45,11 @@ def test_inv(mode, shape, dtype, tol):
     Expectation: the result match to numpy
     """
     context.set_context(mode=mode, device_target="GPU")
-    inv = P.Inv()
+    inv = NetInv()
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(*shape).astype(dtype) * prop
     output = inv(Tensor(x))
     expect_output = (1. / x).astype(dtype)
-    expect_output = (np.array(1.) / x).astype(dtype)
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)

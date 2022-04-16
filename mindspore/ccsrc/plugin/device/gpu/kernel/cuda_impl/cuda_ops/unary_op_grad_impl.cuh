@@ -34,5 +34,7 @@ CUDA_LIB_EXPORT void AcoshGrad(const T *input, const T *dout, T *output, const s
 template <typename T>
 CUDA_LIB_EXPORT void ReciprocalGrad(const T *input, const T *dout, T *output, const size_t count,
                                     cudaStream_t cuda_stream);
+template <typename T>
+CUDA_LIB_EXPORT void InvGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNARY_OP_GRAD_IMPL_CUH_
