@@ -175,7 +175,7 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
-  } else if (CheckNodeInSet(cnode, per_channel_ops_)) {
+  } else if (flags_.fullQuantParam.per_channel && CheckNodeInSet(cnode, per_channel_ops_)) {
     ret = DoParameterWeightQuant(cnode, input_node, primitive, true, input_index);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
