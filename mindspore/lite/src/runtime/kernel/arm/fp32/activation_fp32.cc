@@ -33,39 +33,6 @@ using mindspore::schema::ActivationType_SWISH;
 using mindspore::schema::PrimitiveType_Activation;
 
 namespace mindspore::kernel {
-namespace {
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-const std::map<int, float> activation_compute_cost_map_ = {
-  {schema::ActivationType_RELU, 1.806f},        // dataNum about 100k
-  {schema::ActivationType_RELU6, 1.806f},       // dataNum about 100k
-  {schema::ActivationType_LEAKY_RELU, 1.806f},  // dataNum about 100k
-  // {schema::ActivationType_SIGMOID, 10.0f}, {schema::ActivationType_TANH, 10.0f},
-  // {schema::ActivationType_SWISH, 1.0f}, {schema::ActivationType_HSWISH, 1.0f},
-  // {schema::ActivationType_HSIGMOID, 1.0f}, {schema::ActivationType_HARD_TANH, 1.0f},
-  // {schema::ActivationType_GELU, 1.0f}, {schema::ActivationType_SOFTPLUS, 1.0f},   {schema::ActivationType_ELU, 1.0f},
-};
-#endif
-}  // namespace
-
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-int ActivationCPUKernel::UpdateThreadNumPass() {
-  if (thread_cost_context_ == nullptr && activation_compute_cost_map_.count(type_) > 0) {
-    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
-    CHECK_NULL_RETURN(thread_cost_context_);
-
-    thread_cost_context_->per_unit_load_num_ = 1;
-    thread_cost_context_->per_unit_store_num_ = 1;
-    thread_cost_context_->per_unit_compute_cost_ = activation_compute_cost_map_.at(type_);
-  }
-
-  if (thread_cost_context_ != nullptr) {
-    thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-    thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-  }
-  return RET_OK;
-}
-#endif
-
 int ActivationCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -96,12 +63,10 @@ int ActivationCPUKernel::Prepare() {
 }
 
 int ActivationCPUKernel::ReSize() {
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  if (UpdateThreadNumPass() != RET_OK) {
+  if (UpdateThreadNumPass(TC_TYPE(PrimitiveType_Activation, type_), 1, 1, out_tensors_.at(0)->ElementsNum()) !=
+      RET_OK) {
     return RET_ERROR;
   }
-#endif
-
   return RET_OK;
 }
 

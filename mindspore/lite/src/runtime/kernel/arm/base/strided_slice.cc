@@ -56,46 +56,17 @@ void StridedSliceCPUKernel::InitFastRunParam() {
   for (size_t i = split_axis_ + 1; i < in_shape.size(); i++) {
     inner_ *= in_shape[i];
   }
-  // decide multi-thread launch strategy
-  if (thread_num_ == 0) {
-    MS_LOG(ERROR) << "thread num is zero.";
-    return;
-  }
-
   outer_ == 1 ? (parallel_on_split_axis_ = true) : (parallel_on_outer_ = true);
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  if (UpdateThreadNumPass() != RET_OK) {
-    MS_LOG(ERROR) << "thread num update thread file.";
+  if (UpdateThreadNumPass(TC_TYPE(PrimitiveType_StridedSlice, parallel_on_outer_), 1, 1,
+                          out_tensors_.at(0)->ElementsNum()) != RET_OK) {
+    MS_LOG(ERROR) << "thread num update thread failed.";
     return;
   }
-#endif
 
   cal_num_per_thread_ =
     parallel_on_split_axis_ ? UP_DIV(out_shape[split_axis_], thread_num_) : UP_DIV(outer_, thread_num_);
 }
-
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-int StridedSliceCPUKernel::UpdateThreadNumPass() {
-  if (thread_cost_context_ == nullptr) {
-    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
-    CHECK_NULL_RETURN(thread_cost_context_);
-
-    thread_cost_context_->per_unit_load_num_ = 1;
-    thread_cost_context_->per_unit_store_num_ = 1;
-    if (parallel_on_outer_) {                                 // parallel on outer tile
-      thread_cost_context_->per_unit_compute_cost_ = 42.042;  // 42.042 : compute cost, dataNum about 4.5k
-    } else {                                                  // parallel on split axis
-      thread_cost_context_->per_unit_compute_cost_ = 38.027;  // 38.027 : compute cost, dataNum about 5.2k
-    }
-  }
-
-  thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-  thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-
-  return RET_OK;
-}
-#endif
 
 int StridedSliceCPUKernel::ReSize() {
   auto input_tensor = in_tensors_.at(0);

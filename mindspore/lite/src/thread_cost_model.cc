@@ -15,11 +15,44 @@
  */
 
 #include "src/thread_cost_model.h"
+#include <map>
 #include "src/common/log_util.h"
 #include "src/inner_context.h"
 #include "thread/threadpool.h"
 
 namespace mindspore::lite {
+const std::map<int32_t, float> kernel_compute_cost_map_ = {
+  {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_RELU), 1.806f},        // dataNum about 100k
+  {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_RELU6), 1.806f},       // dataNum about 100k
+  {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_LEAKY_RELU), 1.806f},  // dataNum about 100k
+
+  {TC_TYPE(schema::PrimitiveType_Sqrt, 0), 1.806f},    // dataNum about 100k
+  {TC_TYPE(schema::PrimitiveType_Split, 0), 21.573f},  // dataNum about 8k
+  {TC_TYPE(schema::PrimitiveType_Stack, 0), 9.286},    // dataNum about 12k
+  {TC_TYPE(schema::PrimitiveType_Softmax, 0), 521.0},  // dataNum about 0.5k
+
+  {TC_TYPE(schema::PrimitiveType_MulFusion, schema::ActivationType_RELU), 2.288f},           // dataNum about 80k
+  {TC_TYPE(schema::PrimitiveType_MulFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 80k
+  {TC_TYPE(schema::PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 100k
+
+  {TC_TYPE(schema::PrimitiveType_AddFusion, schema::ActivationType_RELU), 2.288f},           // dataNum about 80k
+  {TC_TYPE(schema::PrimitiveType_AddFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 80k
+  {TC_TYPE(schema::PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 100k
+
+  {TC_TYPE(schema::PrimitiveType_SubFusion, schema::ActivationType_RELU), 2.288f},           // dataNum about 80k
+  {TC_TYPE(schema::PrimitiveType_SubFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 80k
+  {TC_TYPE(schema::PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 100k
+
+  {TC_TYPE(schema::PrimitiveType_StridedSlice, 0), 38.027f},  // type 0 : parallel on outer tile, dataNum about 5.2k
+  {TC_TYPE(schema::PrimitiveType_StridedSlice, 1), 42.042f},  // type 1 : parallel on split axis, dataNum about 4.5k
+
+  {TC_TYPE(schema::PrimitiveType_BiasAdd, 0), 2.723f},  // dataNum about 65k
+  {TC_TYPE(schema::PrimitiveType_Gather, 0), 11.438f},  // dataNum about 16k
+
+  {TC_TYPE(schema::PrimitiveType_Fill, 0), 0.181f},  // dataNum about 260k(float/int IO : load 0, store 1)
+  {TC_TYPE(schema::PrimitiveType_Cast, 0), 0.181f},  // dataNum about 100k(float/int IO : load 1, store 1)
+};
+
 float ThreadCostModel::per_unit_load_cost_ = 1.0 / 64 * 11;   // 64: L2 cache size, 11 : L2 cache latency on Haswell
 float ThreadCostModel::per_unit_store_cost_ = 1.0 / 64 * 11;  // 64: L2 cache size, 11 : L2 cache latency on Haswell
 int64_t ThreadCostModel::per_unit_compute_num_ = 1;           // 1 : per unit compute num
@@ -28,10 +61,10 @@ float ThreadCostModel::thread_startup_cost_ = 100000.0f;  // 100000 : thread sta
 float ThreadCostModel::single_thread_cost_ = 100000.0f;   // 100000 : Minimum cost of single-threaded
 float ThreadCostModel::parallel_thread_cost_ = 40000.0f;  // 40000 : Minimum cost of per thread in parallel-thread
 
-int ThreadCostModel::get_optimal_thread_num(const ThreadCostContext *thread_cost_context, const int thread_num) {
+int ThreadCostModel::GetOptimalThreadNum(const ThreadCostContext *thread_cost_context, const int thread_num) {
   const int64_t max_oversharding_factor = 4;
 
-  int64_t block_size = MSVALID(max_oversharding_factor * thread_num, thread_block_size(thread_cost_context),
+  int64_t block_size = MSVALID(max_oversharding_factor * thread_num, ThreadBlockSize(thread_cost_context),
                                thread_cost_context->total_unit_num_);
   int64_t block_count = UP_DIV(thread_cost_context->total_unit_num_, block_size);
   // the maximum block size should be 2 times of the regular block size.
@@ -58,7 +91,7 @@ int ThreadCostModel::get_optimal_thread_num(const ThreadCostContext *thread_cost
   return block_count;
 }
 
-int UpdateThreadNum(const Context *context, const ThreadCostContext *thread_cost_context, int task_num) {
+int ThreadNumUpdateStrategy(const Context *context, const ThreadCostContext *thread_cost_context, int task_num) {
   if (task_num <= 1) {
     return task_num;
   }
@@ -69,13 +102,26 @@ int UpdateThreadNum(const Context *context, const ThreadCostContext *thread_cost
   }
 
   if (thread_cost_context != nullptr) {
-    if (ThreadCostModel::thread_num(thread_cost_context) == 1) {
+    if (ThreadCostModel::ThreadNum(thread_cost_context) == 1) {
       return 1;
     }
-    int opt_thread = static_cast<int>(ThreadCostModel::parallel_degree(thread_cost_context));
+    int opt_thread = static_cast<int>(ThreadCostModel::ParallelDegree(thread_cost_context));
     task_num = MSVALID(1, opt_thread, task_num);
     task_num = MSMIN(task_num, thread_cost_context->total_unit_num_);
   }
   return task_num;
+}
+
+int UpdateThreadNum(const Context *context, int32_t kernel_type, int64_t per_unit_load_num, int64_t per_unit_store_num,
+                    int64_t unit_num, int thread_num) {
+  if (kernel_compute_cost_map_.count(kernel_type) > 0) {
+    lite::ThreadCostContext thread_cost_context;
+    thread_cost_context.per_unit_compute_cost_ = kernel_compute_cost_map_.at(kernel_type);
+    thread_cost_context.per_unit_load_num_ = per_unit_load_num;
+    thread_cost_context.per_unit_store_num_ = per_unit_store_num;
+    thread_cost_context.total_unit_num_ = unit_num;
+    return ThreadNumUpdateStrategy(context, &thread_cost_context, thread_num);
+  }
+  return thread_num;
 }
 }  // namespace mindspore::lite

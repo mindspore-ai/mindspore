@@ -25,24 +25,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-int SplitBaseCPUKernel::UpdateThreadNumPass() {
-  if (thread_cost_context_ == nullptr && num_unit_ > 0) {
-    thread_cost_context_ = new (std::nothrow) lite::ThreadCostContext();
-    CHECK_NULL_RETURN(thread_cost_context_);
-
-    thread_cost_context_->per_unit_load_num_ = in_tensors_.at(0)->ElementsNum() / num_unit_;
-    thread_cost_context_->per_unit_store_num_ = in_tensors_.at(0)->ElementsNum() / num_unit_;
-    thread_cost_context_->per_unit_compute_cost_ = 17.573;  // 17.573 : compute cost, dataNum about 8k
-  }
-
-  thread_cost_context_->total_unit_num_ = out_tensors_.at(0)->ElementsNum();
-  thread_num_ = UpdateThreadNum(this->ms_context_, thread_cost_context_, op_parameter_->thread_num_);
-
-  return RET_OK;
-}
-#endif
-
 int SplitBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
@@ -57,6 +39,7 @@ int SplitBaseCPUKernel::Prepare() {
 
   return ReSize();
 }
+
 int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, SplitParameter *param) {
   auto input_shape = in_tensor.shape();
   CHECK_LESS_RETURN(input_shape.size(), 1);
@@ -121,11 +104,9 @@ int SplitBaseCPUKernel::ReSize() {
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->split_count_, param->num_split_), RET_ERROR);
   num_unit_ = param->split_count_ * param->num_split_;
 
-#ifdef DYNAMIC_THREAD_DISTRIBUTE
-  if (UpdateThreadNumPass() != RET_OK) {
+  if (UpdateThreadNumPass(TC_PTYPE(type_), 1, 1, out_tensors_.at(0)->ElementsNum()) != RET_OK) {
     return RET_ERROR;
   }
-#endif
 
   thread_num_ = MSMIN(thread_num_, num_unit_);
   if (thread_num_ != 0) {
