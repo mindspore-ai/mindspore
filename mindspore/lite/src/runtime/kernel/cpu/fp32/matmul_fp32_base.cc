@@ -81,7 +81,7 @@ int MatmulFp32BaseCPUKernel::PackMatrixA() {
     }
   } else {
     bool is_packed = false;
-    void *data = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+    void *data = lite::PackWeightManager::GetInstance()->GetPackData(
       in_tensors()[FIRST_INPUT]->data(), static_cast<size_t>(matrix_a_.pack_size) * sizeof(float), &is_packed);
     matrix_a_.pack_ptr = reinterpret_cast<float *>(data);
     if (matrix_a_.pack_ptr == nullptr) {
@@ -129,7 +129,7 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
     }
   } else {
     bool is_packed = false;
-    void *data = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+    void *data = lite::PackWeightManager::GetInstance()->GetPackData(
       in_tensors()[SECOND_INPUT]->data(), static_cast<size_t>(matrix_b_.pack_size) * sizeof(float), &is_packed);
     matrix_b_.pack_ptr = reinterpret_cast<float *>(data);
     if (matrix_b_.pack_ptr == nullptr) {

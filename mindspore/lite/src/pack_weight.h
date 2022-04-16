@@ -42,7 +42,7 @@ class PackWeight {
   STATUS InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id = -1);
   char *GetNumaModelBuf(int numa_id);
   STATUS StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data);
-  void *GetPackedTensor(const void *tensor_data, const size_t size, bool *is_packed);
+  void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
 
  private:
   void FreePackedWeight(ModelConstWeight *weight);

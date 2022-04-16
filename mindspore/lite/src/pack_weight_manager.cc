@@ -71,12 +71,11 @@ STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
       }
     }
   }
-  return RET_OK;
 #endif
   return RET_OK;
 }
 
-void *PackWeightManager::GetPackedTensor(const void *tensor_data, const size_t size, bool *is_packed) {
+void *PackWeightManager::GetPackData(const void *tensor_data, const size_t size, bool *is_packed) {
   if (size > MAX_MALLOC_SIZE || size == 0) {
     MS_LOG(ERROR) << "malloc size is wrong.";
     return nullptr;
@@ -87,7 +86,7 @@ void *PackWeightManager::GetPackedTensor(const void *tensor_data, const size_t s
     *is_packed = false;
     return data;
   }
-  return pack_weight_->GetPackedTensor(tensor_data, size, is_packed);
+  return pack_weight_->GetPackData(tensor_data, size, is_packed);
 #endif
   void *data = malloc(size);
   *is_packed = false;
