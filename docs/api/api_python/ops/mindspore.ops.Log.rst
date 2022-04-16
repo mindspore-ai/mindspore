@@ -26,6 +26,6 @@ mindspore.ops.Log
     **异常：**
 
     - **TypeError** - `x` 不是Tensor。
-    - **TypeError** - 在GPU和CPU平台上运行时，`x` 的数据类型不是float16、float32或float64。
-    - **TypeError** - 在Ascend平台上运行时，`x` 的数据类型不是float16或float32。
+    - **TypeError** - 在GPU和CPU平台上运行时， `x` 的数据类型不是float16、float32或float64。
+    - **TypeError** - 在Ascend平台上运行时， `x` 的数据类型不是float16或float32。
 
