@@ -3632,7 +3632,7 @@ class TransferDataset(Dataset):
         self._send_epoch_end = replace_none(send_epoch_end, True)
         self._create_data_info_queue = create_data_info_queue
         self._to_device = None
-        self.column_name = self.get_col_names()
+        self.column_name = input_dataset.get_col_names()
 
     def parse(self, children=None):
         total_batch = 0
