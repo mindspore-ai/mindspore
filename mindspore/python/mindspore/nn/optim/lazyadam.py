@@ -283,19 +283,21 @@ class LazyAdam(Optimizer):
         gradients = self._grad_sparse_indices_deduplicate(gradients)
         lr = self.get_lr()
 
-        self.beta1_power = self.beta1_power * self.beta1
-        self.beta2_power = self.beta2_power * self.beta2
+        beta1_power = self.beta1_power * self.beta1
+        self.beta1_power = beta1_power
+        beta2_power = self.beta2_power * self.beta2
+        self.beta2_power = beta2_power
 
         if self.is_group_lr:
             success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
                                                  self._ps_pull, self.use_locking, self.use_nesterov, self._is_device,
-                                                 self.beta1_power, self.beta2_power, self.beta1, self.beta2, self.eps),
+                                                 beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
                                        lr, gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters,
                                        self.cache_enable)
         else:
             success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
                                                  self._ps_pull, self.use_locking, self.use_nesterov, self._is_device,
-                                                 self.beta1_power, self.beta2_power, self.beta1, self.beta2, self.eps,
+                                                 beta1_power, beta2_power, self.beta1, self.beta2, self.eps,
                                                  lr),
                                        gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters,
                                        self.cache_enable)
