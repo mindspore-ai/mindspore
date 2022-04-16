@@ -32,8 +32,8 @@ DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2)
 DECLARE_OP_ADAPTER(ResizeNearestNeighborV2Grad)
 DECLARE_OP_USE_OUTPUT(ResizeNearestNeighborV2Grad)
 
-DECLARE_OP_ADAPTER(ResizeBilinearV2D)
-DECLARE_OP_USE_OUTPUT(ResizeBilinearV2D)
+DECLARE_OP_ADAPTER(ResizeBilinearV2)
+DECLARE_OP_USE_OUTPUT(ResizeBilinearV2)
 
 DECLARE_OP_ADAPTER(ResizeBilinearV2Grad)
 DECLARE_OP_USE_OUTPUT(ResizeBilinearV2Grad)

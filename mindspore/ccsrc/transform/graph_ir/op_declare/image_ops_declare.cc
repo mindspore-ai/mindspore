@@ -45,13 +45,11 @@ ATTR_MAP(ResizeBilinearV2Grad) = {{"align_corners", ATTR_DESC(align_corners, Any
 OUTPUT_MAP(ResizeBilinearV2Grad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(ResizeBilinearV2Grad, kNameResizeBilinearGrad, ADPT_DESC(ResizeBilinearV2Grad))
 
-// ResizeBilinearV2D
-INPUT_MAP(ResizeBilinearV2D) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(ResizeBilinearV2D) = {
-  {"size", ATTR_DESC(size, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
-OUTPUT_MAP(ResizeBilinearV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ResizeBilinearV2D, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2D))
+// ResizeBilinearV2
+INPUT_MAP(ResizeBilinearV2) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(size)}};
+ATTR_MAP(ResizeBilinearV2) = {{"align_corners", ATTR_DESC(align_corners, AnyTraits<bool>())}};
+OUTPUT_MAP(ResizeBilinearV2) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ResizeBilinearV2, kNameResizeBilinear, ADPT_DESC(ResizeBilinearV2))
 
 // CropAndResize
 INPUT_MAP(CropAndResize) = {

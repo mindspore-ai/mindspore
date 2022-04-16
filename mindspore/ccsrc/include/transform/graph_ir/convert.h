@@ -163,6 +163,7 @@ class COMMON_EXPORT DfGraphConvertor {
   void ConvertTupleGetItem(const CNodePtr node);
   void ConvertMakeTuple(const CNodePtr node);
   void ConvertTopK(const CNodePtr node);
+  void ConvertResizeBilinear(const FuncGraphPtr anf_graph);
   void ConvertReshape(const CNodePtr node);
   void ConvertConv2D(const CNodePtr node);
   std::vector<int64_t> CastToInt(const ValuePtr &value);
