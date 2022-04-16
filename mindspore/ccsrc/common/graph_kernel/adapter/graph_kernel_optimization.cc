@@ -166,19 +166,12 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   auto recompute_lv = GetPassLevelByFlag(flags.recompute_increment_threshold > 0 || flags.recompute_peak_threshold > 0);
   pm->Add(std::make_shared<GraphKernelRecompute>(), recompute_lv);
 
-  // Replace Assign with InplaceAssign, and replace original output with overridden parameters
-  pm->Add(std::make_shared<OptimizeAssign>(), OptLevel_2);
-
-  pm->Add(std::make_shared<ExtendOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
-  pm->Add(std::make_shared<MergeOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
-  pm->Add(std::make_shared<EliminateRedundantOutput>(), std::min(recompute_lv, OptLevel_2));
-
   // Enable atomic add
-  pm->Add(std::make_shared<AtomicCleanInsertter>(), OptLevel_2, is_gpu || is_ascend);
+  pm->Add(std::make_shared<AtomicCleanInserter>(), OptLevel_2, is_gpu || is_ascend);
 
   // Enable atomic add for stitch nodes.
   auto level = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_stitch_fusion);
-  pm->Add(std::make_shared<StitchAtomicCleanInsertter>(), level, is_gpu);
+  pm->Add(std::make_shared<StitchAtomicCleanInserter>(), level, is_gpu);
 
   // Enable low precision
   auto level_low_precision = GetPassLevelByFlag(GraphKernelFlags::GetInstance().enable_low_precision);
@@ -188,6 +181,12 @@ PassManagerPtr GraphKernelOptimizer::HighLevelOpt2() const {
   // Enable tsa and uss
   pm->Add(std::make_shared<TsaAtomicAddToFirstTensor>(), OptLevel_1, is_gpu);
   pm->Add(std::make_shared<UssAtomicAdd>(), OptLevel_1, is_gpu);
+
+  // Replace Assign with InplaceAssign, and replace original output with overridden parameters
+  pm->Add(std::make_shared<OptimizeAssign>(), OptLevel_2);
+  pm->Add(std::make_shared<ExtendOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
+  pm->Add(std::make_shared<MergeOutputForUpdateState>(), std::min(recompute_lv, OptLevel_2));
+  pm->Add(std::make_shared<EliminateRedundantOutput>(), std::min(recompute_lv, OptLevel_2));
 
   return pm;
 }

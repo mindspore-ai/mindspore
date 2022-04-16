@@ -44,7 +44,7 @@ class TsaChecker : public AtomicAddChecker {
     }
 
     for (auto atomic_add_info : atomic_add_infos_) {
-      auto tsa_cnode = atomic_add_info.atomic_add_node;
+      auto tsa_cnode = atomic_add_info.op_node;
       if (!utils::isa<ParameterPtr>(tsa_cnode->input(1))) {
         return false;
       }
@@ -86,7 +86,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::FindTsaFirstRealInputIn
 }
 
 std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstNode(
-  const KernelGraphPtr &main_graph, const AtomicAddInfo &atomic_add_info, const AnfNodePtr &node) {
+  const KernelGraphPtr &main_graph, const CleanZeroUserInfo &atomic_add_info, const AnfNodePtr &node) {
   auto mng = main_graph->manager();
   if (mng == nullptr) {
     mng = Manage(main_graph, true);
@@ -94,7 +94,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
   }
 
   // Find first input of tsa
-  auto tsa_first_input = FindTsaFirstRealInputInGraph(main_graph, atomic_add_info.atomic_add_node, node);
+  auto tsa_first_input = FindTsaFirstRealInputInGraph(main_graph, atomic_add_info.op_node, node);
   auto users = mng->node_users()[tsa_first_input.first];
   if (users.size() == 1 &&
       !(utils::isa<ValueNodePtr>(tsa_first_input.first) || utils::isa<ParameterPtr>(tsa_first_input.first))) {
@@ -147,7 +147,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstN
 }
 
 void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
-  const AnfNodePtr &composite_node, const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_infos) {
+  const AnfNodePtr &composite_node, const std::vector<std::tuple<CleanZeroUserInfo, AnfNodePtr, size_t>> &outer_infos) {
   // Change kernel build info with modify input
   auto kernel_info = static_cast<device::KernelInfo *>(composite_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -176,7 +176,7 @@ void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
 }
 
 void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
-  const AnfNodePtr &composite_node, const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes) {
+  const AnfNodePtr &composite_node, const std::vector<std::tuple<CleanZeroUserInfo, AnfNodePtr, size_t>> &outer_nodes) {
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
@@ -185,8 +185,8 @@ void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
   }
 
   // Modify input
-  std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> parameters_infos;
-  std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> info_and_tsa_outers;
+  std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> parameters_infos;
+  std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> info_and_tsa_outers;
   for (const auto &[atomic_add_info, outer_node, tsa_first_input_index] : outer_nodes) {
     composite_node->cast<CNodePtr>()->set_input(tsa_first_input_index + 1, outer_node);
     auto parameter = sub_graph->parameters()[tsa_first_input_index];
@@ -194,7 +194,7 @@ void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
     (void)info_and_tsa_outers.emplace_back(atomic_add_info, outer_node);
   }
 
-  CreateInplaceAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
+  CreateAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
   ChangeKernelBuildInfo(composite_node, outer_nodes);
 
   auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
@@ -205,14 +205,14 @@ void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
 }
 
 void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
-                                           const std::vector<AtomicAddInfo> &atomic_add_infos,
+                                           const std::vector<CleanZeroUserInfo> &atomic_add_infos,
                                            const FuncGraphManagerPtr &mng) {
   auto origin_composite_node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(origin_composite_node);
 
   // Create identity node.
-  std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> info_and_outer_nodes_with_index;
-  std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> info_and_outer_nodes;
+  std::vector<std::tuple<CleanZeroUserInfo, AnfNodePtr, size_t>> info_and_outer_nodes_with_index;
+  std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> info_and_outer_nodes;
   for (auto atomic_add_info : atomic_add_infos) {
     auto outer = GetOrCreateNewTsaFirstNode(main_graph, atomic_add_info, anf_node);
     (void)info_and_outer_nodes_with_index.emplace_back(atomic_add_info, outer.first, outer.second);
@@ -220,7 +220,6 @@ void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, con
   }
 
   // Insert extra input(broadcast node output) to composite node, and make origin TensorScatterAdd inplace-assign to it.
-  // Note: InplaceAssign outputs will increase total memory because of fake out.
   ProcessOriginalCNode(origin_composite_node, info_and_outer_nodes_with_index);
 
   // Insert UpdateState + Load before origin TensorScatterAdd's user to keep execution order.

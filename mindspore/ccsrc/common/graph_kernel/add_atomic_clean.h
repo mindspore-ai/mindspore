@@ -24,14 +24,9 @@
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/session/kernel_graph.h"
+#include "common/graph_kernel/clean_inserter.h"
 
 namespace mindspore::graphkernel {
-struct AtomicAddInfo {
-  CNodePtr atomic_add_node{nullptr};
-  size_t reduce_real_output_index{0};
-  size_t real_output_num{0};
-};
-
 struct AtomicAddUserInfo {
   AnfNodePtr clean_node{nullptr};
   AnfNodePtr update_state_node{nullptr};
@@ -46,13 +41,13 @@ class AtomicAddChecker {
   static std::shared_ptr<AtomicAddChecker> Init();
 
   bool Check(const AnfNodePtr &node);
-  std::vector<AtomicAddInfo> GetAtomicAddInfo() { return atomic_add_infos_; }
+  std::vector<CleanZeroUserInfo> GetAtomicAddInfo() { return atomic_add_infos_; }
 
  protected:
   virtual bool SuitableForAtomicAdd(const AnfNodePtr &) { return false; }
   virtual bool FindCandidate(const AnfNodePtr &anf_node);
   virtual bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
-  std::vector<AtomicAddInfo> atomic_add_infos_;
+  std::vector<CleanZeroUserInfo> atomic_add_infos_;
   PrimitivePtr target_type_{prim::kPrimReduceSum};
 };
 
@@ -74,34 +69,26 @@ class AtomicAddCheckerAscend : public AtomicAddChecker {
   bool SuitableForAtomicAdd(const AnfNodePtr &node) override;
 };
 
-class AtomicCleanInsertter : public opt::Pass {
+class AtomicCleanInserter : public CleanInserter {
  public:
-  explicit AtomicCleanInsertter(const std::string &name = "atomic_clean") : Pass(name) {}
-  ~AtomicCleanInsertter() override = default;
+  explicit AtomicCleanInserter(const std::string &name = "atomic_clean") : CleanInserter(name) {}
+  ~AtomicCleanInserter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
-  virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
-                                      const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos);
-  virtual void ProcessOriginCNode(const AnfNodePtr &composite_node,
-                                  const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes);
-  virtual CNodePtr CreateAtomicCleanCompositeNode(const AtomicAddInfo &atomic_add_info,
-                                                  const KernelGraphPtr &main_graph, TypeId dst_type);
-  void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
-                         const std::vector<AtomicAddInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
-  CNodePtr InsertUpdateState(const KernelGraphPtr &main_graph, const AnfNodePtr &node) const;
-  void CreateInplaceAssignNodeAndCorrectReturn(
-    const FuncGraphPtr &sub_graph, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &parameters_infos);
-  void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-                              const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+  void InsertAtomicClean(const FuncGraphPtr &main_graph, const AnfNodePtr &anf_node,
+                         const std::vector<CleanZeroUserInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
+
+  void ProcessOriginCNodeUser(const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+                              const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
                               const FuncGraphManagerPtr &mng);
 
  private:
   std::vector<AtomicAddUserInfo> FindOriginCNodeUsers(
-    const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-    const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+    const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+    const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
     const FuncGraphManagerPtr &mng) const;
 };
-using AtomicCleanInsertterPtr = std::shared_ptr<AtomicCleanInsertter>;
+using AtomicCleanInserterPtr = std::shared_ptr<AtomicCleanInserter>;
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_ATOMIC_CLEAN_H_

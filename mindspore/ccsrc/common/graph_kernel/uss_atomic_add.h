@@ -36,13 +36,13 @@ namespace mindspore::graphkernel {
  * output = broadcast_to(0.0) // attrs{"shape": [shape of origin output.]}
  * fake_out = SubGraph'(input_x, segment_ids, output) {
  *   %0 = UnsortedSegmentSum(%para1, %para2)
- *   %1 = InplaceAssign(%para3, %0, %0) // attrs{"fake_output":true}
+ *   %1 = Assign(%para3, %0, umond)
  *   return %1
  * }
  */
-class UssAtomicAdd : public AtomicCleanInsertter {
+class UssAtomicAdd : public AtomicCleanInserter {
  public:
-  UssAtomicAdd() : AtomicCleanInsertter("unsorted_segment_sum_atomic_add_process") {}
+  UssAtomicAdd() : AtomicCleanInserter("unsorted_segment_sum_atomic_add_process") {}
   ~UssAtomicAdd() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
