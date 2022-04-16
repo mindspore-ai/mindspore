@@ -19,22 +19,28 @@ from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataTyp
 strided_slice_grad_op_info = AiCPURegOp("StridedSliceGrad") \
     .fusion_type("OPAQUE") \
     .input(0, "dy", "required") \
+    .input(1, "shape", "required") \
+    .input(2, "begin", "required") \
+    .input(3, "end", "required") \
+    .input(4, "strides", "required") \
     .output(0, "output", "required") \
-    .attr("shapex", "listInt") \
-    .attr("begin", "listInt") \
-    .attr("end", "listInt") \
-    .attr("strides", "listInt") \
     .attr("begin_mask", "int") \
     .attr("end_mask", "int") \
     .attr("ellipsis_mask", "int") \
     .attr("new_axis_mask", "int") \
     .attr("shrink_axis_mask", "int") \
-    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
-    .dtype_format(DataType.I8_Default, DataType.I8_Default) \
-    .dtype_format(DataType.U8_Default, DataType.U8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default, DataType.BOOL_Default) \
+    .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default, DataType.I8_Default) \
+    .dtype_format(DataType.U8_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default, DataType.U8_Default) \
+    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default, DataType.I32_Default) \
+    .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
+                  DataType.I32_Default, DataType.F32_Default) \
     .get_op_info()
 
 
