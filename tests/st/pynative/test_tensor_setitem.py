@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_tensor_setitem """
-import numpy as onp
+import numpy as np
 import pytest
 
 from mindspore import Tensor, context
@@ -38,7 +38,7 @@ def setup_testcase(input_np, case_fn):
 
     out_ms = TensorSetItem()(input_ms)
     out_np = NumpySetItem()(input_np)
-    assert onp.all(out_ms.asnumpy() == out_np)
+    assert np.all(out_ms.asnumpy() == out_np)
 
 
 class TensorSetItemByList(Cell):
@@ -63,7 +63,7 @@ class NumpySetItemByList():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_list():
-    x = onp.ones((2, 3, 4), dtype=onp.float32)
+    x = np.ones((2, 3, 4), dtype=np.float32)
 
     def cases(x):
         x[[0, 1], [1, 2], [1, 3]] = [3, 4]
@@ -79,7 +79,7 @@ def test_setitem_by_list():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_with_sequence():
-    x = onp.ones((2, 3, 4), dtype=onp.float32)
+    x = np.ones((2, 3, 4), dtype=np.float32)
 
     def cases(x):
         x[...] = [3]
@@ -96,7 +96,7 @@ def test_setitem_with_sequence():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_dtype():
-    x = onp.ones((2, 3, 4), dtype=onp.float32)
+    x = np.ones((2, 3, 4), dtype=np.float32)
 
     def cases(x):
         x[...] = 3
@@ -113,7 +113,7 @@ def test_setitem_dtype():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_tuple_with_int():
-    x = onp.arange(24).reshape(2, 3, 4).astype(onp.float32)
+    x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
     def cases(x):
         x[..., 2, False, 1] = -1
@@ -130,7 +130,7 @@ def test_setitem_by_tuple_with_int():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_tuple_with_list():
-    x = onp.arange(24).reshape(2, 3, 4).astype(onp.float32)
+    x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
     def cases(x):
         x[..., 2, False, 1] = [-1]
@@ -148,7 +148,7 @@ def test_setitem_by_tuple_with_list():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_nested_unit_list():
-    x = onp.arange(24).reshape(2, 3, 4).astype(onp.float32)
+    x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
     def cases(x):
         x[[[[0]]], True] = -1
@@ -164,9 +164,9 @@ def test_setitem_by_nested_unit_list():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_with_broadcast():
-    x = onp.arange(2*3*4*5*6).reshape(2, 3, 4, 5, 6).astype(onp.float32)
-    v1 = onp.full((1, 4, 5), -1).tolist()
-    v2 = onp.full((4, 1, 6), -2).tolist()
+    x = np.arange(2*3*4*5*6).reshape(2, 3, 4, 5, 6).astype(np.float32)
+    v1 = np.full((1, 4, 5), -1).tolist()
+    v2 = np.full((4, 1, 6), -2).tolist()
 
     def cases(x):
         x[..., 4] = v1
@@ -183,7 +183,7 @@ def test_setitem_with_broadcast():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_mul_by_scalar():
-    x = onp.ones((4, 5), dtype=onp.float32)
+    x = np.ones((4, 5), dtype=np.float32)
 
     def cases(x):
         x[1, :] = x[1, :]*2
@@ -198,7 +198,7 @@ def test_setitem_mul_by_scalar():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_slice():
-    x = onp.ones((3, 4, 5), dtype=onp.float32)
+    x = np.ones((3, 4, 5), dtype=np.float32)
 
     def cases(x):
         x[1:2] = 2
@@ -218,7 +218,7 @@ def test_setitem_by_slice():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_by_tuple_of_slices():
-    x = onp.ones((3, 4, 5), dtype=onp.float32)
+    x = np.ones((3, 4, 5), dtype=np.float32)
 
     def cases(x):
         x[1:2, 2] = 2
@@ -243,10 +243,10 @@ class TensorItemSetWithNumber(Cell):
 @pytest.mark.env_onecard
 def test_itemset_with_number():
     net = TensorItemSetWithNumber()
-    input_1d_np = onp.ndarray([1]).astype(onp.float32)
+    input_1d_np = np.array([1]).astype(np.float32)
     input_1d_ms = Tensor(input_1d_np, mstype.float32)
 
-    input_3d_np = onp.arange(60).reshape(3, 4, 5).astype(onp.int32)
+    input_3d_np = np.arange(60).reshape(3, 4, 5).astype(np.int32)
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
 
     value_np_1, value_np_2 = 1, 2.0
@@ -255,9 +255,9 @@ def test_itemset_with_number():
     output_1d_ms_2 = net(input_1d_ms, value_np_2)
 
     input_1d_np.itemset(value_np_1)
-    assert onp.all(output_1d_ms_1.asnumpy() == input_1d_np)
+    assert np.all(output_1d_ms_1.asnumpy() == input_1d_np)
     input_1d_np.itemset(value_np_2)
-    assert onp.all(output_1d_ms_2.asnumpy() == input_1d_np)
+    assert np.all(output_1d_ms_2.asnumpy() == input_1d_np)
 
     with pytest.raises(IndexError):
         net(input_3d_ms, value_np_1)
@@ -277,7 +277,7 @@ class TensorItemSetByItemWithNumber(Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_setitem_dim_expand():
-    x = onp.ones((2, 3, 4), dtype=onp.float32)
+    x = np.ones((2, 3, 4), dtype=np.float32)
     def cases(x):
         x[None, True, [1, 0], (False, True, True), [2]] = 2
         x[([[0]]), ..., [[1]]] = [[[3, 3, 3]]]
@@ -294,10 +294,10 @@ def test_setitem_dim_expand():
 @pytest.mark.env_onecard
 def test_itemset_by_number_with_number():
     net = TensorItemSetByItemWithNumber()
-    input_1d_np = onp.ndarray([1]).astype(onp.float32)
+    input_1d_np = np.array([1]).astype(np.float32)
     input_1d_ms = Tensor(input_1d_np, mstype.float32)
 
-    input_3d_np = onp.arange(60).reshape(3, 4, 5).astype(onp.int32)
+    input_3d_np = np.arange(60).reshape(3, 4, 5).astype(np.int32)
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
 
     index_np_1, index_np_2, index_np_3, index_np_4 = 0, 30, 60, 2.0
@@ -311,17 +311,17 @@ def test_itemset_by_number_with_number():
     output_3d_ms_4 = net(output_3d_ms_3, index_np_2, value_np_2)
 
     input_1d_np.itemset(index_np_1, value_np_1)
-    assert onp.all(output_1d_ms_1.asnumpy() == input_1d_np)
+    assert np.all(output_1d_ms_1.asnumpy() == input_1d_np)
     input_1d_np.itemset(index_np_1, value_np_2)
-    assert onp.all(output_1d_ms_2.asnumpy() == input_1d_np)
+    assert np.all(output_1d_ms_2.asnumpy() == input_1d_np)
     input_3d_np.itemset(index_np_1, value_np_1)
-    assert onp.all(output_3d_ms_1.asnumpy() == input_3d_np)
+    assert np.all(output_3d_ms_1.asnumpy() == input_3d_np)
     input_3d_np.itemset(index_np_1, value_np_2)
-    assert onp.all(output_3d_ms_2.asnumpy() == input_3d_np)
+    assert np.all(output_3d_ms_2.asnumpy() == input_3d_np)
     input_3d_np.itemset(index_np_2, value_np_1)
-    assert onp.all(output_3d_ms_3.asnumpy() == input_3d_np)
+    assert np.all(output_3d_ms_3.asnumpy() == input_3d_np)
     input_3d_np.itemset(index_np_2, value_np_2)
-    assert onp.all(output_3d_ms_4.asnumpy() == input_3d_np)
+    assert np.all(output_3d_ms_4.asnumpy() == input_3d_np)
 
     with pytest.raises(IndexError):
         net(input_1d_ms, index_np_2, value_np_1)
@@ -348,10 +348,10 @@ def test_itemset_by_number_with_number():
 @pytest.mark.env_onecard
 def test_itemset_by_tuple_with_number():
     net = TensorItemSetByItemWithNumber()
-    input_1d_np = onp.ndarray([1]).astype(onp.float32)
+    input_1d_np = np.array([1]).astype(np.float32)
     input_1d_ms = Tensor(input_1d_np, mstype.float32)
 
-    input_3d_np = onp.arange(60).reshape(3, 4, 5).astype(onp.int32)
+    input_3d_np = np.arange(60).reshape(3, 4, 5).astype(np.int32)
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
 
     index_np_1, index_np_2, index_np_3, index_np_4, index_np_5 = (0,), (1, 2), (1, 1, 0), (3, 4, 5), (1, 2, 3, 4)
@@ -359,19 +359,19 @@ def test_itemset_by_tuple_with_number():
 
     output_1d_ms_1 = net(input_1d_ms, index_np_1, value_np_1)
     input_1d_np.itemset(index_np_1, value_np_1)
-    assert onp.all(output_1d_ms_1.asnumpy() == input_1d_np)
+    assert np.all(output_1d_ms_1.asnumpy() == input_1d_np)
 
     output_1d_ms_2 = net(input_1d_ms, index_np_1, value_np_2)
     input_1d_np.itemset(index_np_1, value_np_2)
-    assert onp.all(output_1d_ms_2.asnumpy() == input_1d_np)
+    assert np.all(output_1d_ms_2.asnumpy() == input_1d_np)
 
     output_3d_ms_1 = net(input_3d_ms, index_np_3, value_np_1)
     input_3d_np.itemset(index_np_3, value_np_1)
-    assert onp.all(output_3d_ms_1.asnumpy() == input_3d_np)
+    assert np.all(output_3d_ms_1.asnumpy() == input_3d_np)
 
     output_3d_ms_2 = net(input_3d_ms, index_np_3, value_np_2)
     input_3d_np.itemset(index_np_3, value_np_2)
-    assert onp.all(output_3d_ms_2.asnumpy() == input_3d_np)
+    assert np.all(output_3d_ms_2.asnumpy() == input_3d_np)
 
     with pytest.raises(IndexError):
         net(input_1d_ms, index_np_2, value_np_1)
