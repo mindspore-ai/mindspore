@@ -15,6 +15,7 @@
 """test variable"""
 
 import numpy as np
+import pytest
 from mindspore.ops.composite import GradOperation
 from mindspore.common.variable import Variable
 from mindspore.common.api import _CellGraphExecutor
@@ -25,6 +26,7 @@ from mindspore import Tensor
 from mindspore import Parameter
 
 
+@pytest.mark.skip(reason="No runtime support")
 def test_variable_scalar_mul_grad_first():
     """
     Feature: Set Constants mutable.
@@ -51,6 +53,7 @@ def test_variable_scalar_mul_grad_first():
     assert output == 3
 
 
+@pytest.mark.skip(reason="No runtime support")
 def test_variable_scalar_mul_grad_all():
     """
     Feature: Set Constants mutable.
@@ -78,6 +81,7 @@ def test_variable_scalar_mul_grad_all():
     assert output == (3, 2)
 
 
+@pytest.mark.skip(reason="No runtime support")
 def test_variable_tuple_or_list_scalar_mul_grad():
     """
     Feature: Set Constants mutable.
@@ -108,6 +112,7 @@ def test_variable_tuple_or_list_scalar_mul_grad():
     assert output == (3, 2)
 
 
+@pytest.mark.skip(reason="No runtime support")
 def test_variable_dict_scalar_mul_grad():
     """
     Feature: Set Constants mutable.
@@ -134,6 +139,7 @@ def test_variable_dict_scalar_mul_grad():
     assert output == (3, 2)
 
 
+@pytest.mark.skip(reason="No runtime support")
 def test_variable_mix_scalar_mul_grad_all():
     """
     Feature: Set Constants mutable.
@@ -164,7 +170,7 @@ def test_variable_mix_scalar_mul_grad_all():
 def test_tuple_inputs_compile_phase():
     """
     Feature: Set Constants mutable.
-    Description: Test whether the compilation phase for tuple input twice are the same.
+    Description: Test whether the compilation phase for tuple(Tensor) input twice are the same.
     Expectation: The phases are the same.
     """
 
@@ -187,9 +193,83 @@ def test_tuple_inputs_compile_phase():
     q = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
     net = Net()
     _cell_graph_executor = _CellGraphExecutor()
+    # tuple of Tensor
     phase1, _ = _cell_graph_executor.compile(net, (x, y))
     phase2, _ = _cell_graph_executor.compile(net, (p, q))
     assert phase1 != phase2
     phase1, _ = _cell_graph_executor.compile(net, Variable((x, y)))
     phase2, _ = _cell_graph_executor.compile(net, Variable((p, q)))
     assert phase1 == phase2
+    # list of Tensor
+    phase1, _ = _cell_graph_executor.compile(net, [x, y])
+    phase2, _ = _cell_graph_executor.compile(net, [p, q])
+    assert phase1 != phase2
+    phase1, _ = _cell_graph_executor.compile(net, Variable([x, y]))
+    phase2, _ = _cell_graph_executor.compile(net, Variable([p, q]))
+    assert phase1 == phase2
+
+
+def test_dict_inputs_compile_phase():
+    """
+    Feature: Set Constants mutable.
+    Description: Test whether the compilation phase for dict(Tensor) input twice are the same.
+    Expectation: The phases are the same.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, tuple_input):
+            x = tuple_input['a']
+            y = tuple_input['b']
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    p = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    q = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    net = Net()
+    _cell_graph_executor = _CellGraphExecutor()
+    phase1, _ = _cell_graph_executor.compile(net, {'a': x, 'b': y})
+    phase2, _ = _cell_graph_executor.compile(net, {'a': p, 'b': q})
+    assert phase1 != phase2
+    phase1, _ = _cell_graph_executor.compile(net, Variable({'a': x, 'b': y}))
+    phase2, _ = _cell_graph_executor.compile(net, Variable({'a': p, 'b': q}))
+    assert phase1 == phase2
+
+
+def test_check_variable_value():
+    """
+    Feature: Set Constants mutable.
+    Description: Check the illegal variable value.
+    Expectation: Raise the correct error log.
+    """
+
+    try:
+        Variable(1)
+    except TypeError as e:
+        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
+               "their nested structures, but got" in str(e)
+
+    try:
+        Variable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), {'a': 2}))
+    except TypeError as e:
+        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
+               "their nested structures, but got" in str(e)
+
+    try:
+        Variable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (2,)])
+    except TypeError as e:
+        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
+               "their nested structures, but got" in str(e)
+
+    try:
+        Variable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), 'b': (2,)})
+    except TypeError as e:
+        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
+               "their nested structures, but got" in str(e)
