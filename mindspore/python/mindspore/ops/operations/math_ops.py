@@ -276,7 +276,7 @@ class Addcdiv(Primitive):
         y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
 
     Inputs:
-        - **input_data**(Tensor) - The tensor to be added, with data type float16 and float32.
+        - **input_data** (Tensor) - The tensor to be added, with data type float16 and float32.
         - **x1** (Tensor) - The numerator tensor, with data type float16 and float32.
         - **x2** (Tensor) - The denominator tensor, with data type float16 and float32.
         - **value** (Tensor) - The multiplier for tensor x1/x2, with data type float16, float32.
@@ -322,7 +322,7 @@ class Addcmul(Primitive):
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
 
     Inputs:
-        - **input_data**(Tensor) - The tensor to be added, with data type float16, float32 and int32.
+        - **input_data** (Tensor) - The tensor to be added, with data type float16, float32 and int32.
         - **x1** (Tensor) - The tensor to be multiplied, with data type float16, float32 and int32.
         - **x2** (Tensor) - The tensor to be multiplied, with data type float16, float32 and int32.
         - **value** (Tensor) - The multiplier for tensor x1*x2, with data type float16, float32 and int32.

@@ -12,7 +12,7 @@ mindspore.ms_function
     - **fn**  (Function) - 要编译成图的Python函数。默认值：None。
     - **obj**  (Object) - 用于区分编译后函数的Python对象。默认值：None。
     - **input_signature** (Tensor) - 用于表示输入参数的Tensor。Tensor的shape和dtype将作为函数的输入shape和dtype。默认值：None。
-    - **hash_args**  (Union[Object, List or Tuple of Objects]) - `fn`里面用到的自由变量，比如外部函数或类对象，再次调用时若`hash_args`出现变化会触发重新编译。默认值：None。
+    - **hash_args**  (Union[Object, List or Tuple of Objects]) - `fn` 里面用到的自由变量，比如外部函数或类对象，再次调用时若 `hash_args` 出现变化会触发重新编译。默认值：None。
 
     .. note::
         - 如果指定了 `input_signature` ，则 `fn` 的每个输入都必须是Tensor。并且 `fn` 的输入参数将不会接受 `**kwargs` 参数。
