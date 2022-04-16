@@ -19,6 +19,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <set>
 #include <utility>
 #include "include/common/thread_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -58,6 +59,9 @@ class ScatterNdArithmeticCpuKernelFunc : public CpuKernelFunc {
   std::vector<size_t> batch_strides_;
   std::vector<size_t> input_shape_;
   std::string kernel_name_;
+  std::set<std::string> tensor_scatter_kernel_types_{kernel::kTensorScatterAdd, kernel::kTensorScatterSub,
+                                                     kernel::kTensorScatterMax, kernel::kTensorScatterMin};
+  bool is_tensor_scatter_arithmetric_{false};
 };
 
 template <typename T, typename S>
@@ -65,7 +69,11 @@ void ScatterNdArithmeticCpuKernelFunc<T, S>::InitComputeFunc() {
   static const std::map<std::string, std::function<T(const T &a, const T &b)>> scatterNdArithmeticFuncMap{
     {prim::kPrimScatterNdMul->name(), [](const T &a, const T &b) { return a * b; }},
     {prim::kPrimScatterNdAdd->name(), [](const T &a, const T &b) { return a + b; }},
-    {prim::kPrimScatterNdSub->name(), [](const T &a, const T &b) { return a - b; }}};
+    {prim::kPrimScatterNdSub->name(), [](const T &a, const T &b) { return a - b; }},
+    {prim::kPrimTensorScatterAdd->name(), [](const T &a, const T &b) { return a + b; }},
+    {prim::kPrimTensorScatterSub->name(), [](const T &a, const T &b) { return a - b; }},
+    {prim::kPrimTensorScatterMax->name(), [](const T &a, const T &b) { return std::max(a, b); }},
+    {prim::kPrimTensorScatterMin->name(), [](const T &a, const T &b) { return std::min(a, b); }}};
   if (scatterNdArithmeticFuncMap.find(kernel_name_) == scatterNdArithmeticFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
   }
@@ -147,6 +155,10 @@ void ScatterNdArithmeticCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_nod
       batch_strides_[idx] = batch_strides_[idx + 1] * input_shape_[idx + 1];
     }
   }
+  if (tensor_scatter_kernel_types_.count(kernel_name_) != 0) {
+    use_locking_ = false;
+    is_tensor_scatter_arithmetric_ = true;
+  }
   InitComputeFunc();
 }
 
@@ -164,6 +176,13 @@ bool ScatterNdArithmeticCpuKernelFunc<T, S>::RunFunc(const std::vector<kernel::A
   // ScatterNd* operations need to write input data and copy into output data,
   // while TensorScatter* operations need to copy input data and write into output data.
   auto target = input;
+  if (is_tensor_scatter_arithmetric_) {
+    auto ret = memcpy_s(output, outputs[kOutputIndex]->size, input, inputs[kInputIndex]->size);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+    }
+    target = output;
+  }
   bool out_bound = false;
   auto task = [this, &target, &indices, &updates, &out_bound](size_t start, size_t end) {
     size_t pre_batch_idx = -1;
@@ -196,10 +215,11 @@ bool ScatterNdArithmeticCpuKernelFunc<T, S>::RunFunc(const std::vector<kernel::A
   if (out_bound) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'indices' is out of bounds.";
   }
-
-  auto ret = memcpy_s(output, outputs[kOutputIndex]->size, input, inputs[kInputIndex]->size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+  if (!is_tensor_scatter_arithmetric_) {
+    auto ret = memcpy_s(output, outputs[kOutputIndex]->size, input, inputs[kInputIndex]->size);
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
+    }
   }
   return true;
 }
@@ -361,5 +381,13 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterNdAdd,
                                  []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kScatterNdAdd); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ScatterNdSub,
                                  []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kScatterNdSub); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterAdd,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterAdd); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterSub,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterSub); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterMax,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterMax); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, TensorScatterMin,
+                                 []() { return std::make_shared<ScatterNdArithmeticCpuKernelMod>(kTensorScatterMin); });
 }  // namespace kernel
 }  // namespace mindspore
