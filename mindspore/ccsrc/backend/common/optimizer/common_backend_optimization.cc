@@ -34,6 +34,7 @@
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/sparse_process.h"
 #include "backend/common/pass/insert_assign_for_custom_op.h"
+#include "backend/common/pass/flatten_concat_fission.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 #include "utils/ms_context.h"
@@ -67,6 +68,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertConstScalarToTensor>());
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   common_pm->AddPass(std::make_shared<AddTrainingAttr>());
+  common_pm->AddPass(std::make_shared<FlattenConcatFission>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
