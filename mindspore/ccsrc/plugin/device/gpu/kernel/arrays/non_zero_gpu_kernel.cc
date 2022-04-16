@@ -1,0 +1,152 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "plugin/device/gpu/kernel/arrays/non_zero_gpu_kernel.h"
+#include <functional>
+#include <utility>
+#include <string>
+#include <algorithm>
+#include "mindspore/core/abstract/utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/non_zero_impl.cuh"
+#include "kernel/common_utils.h"
+
+namespace mindspore {
+namespace kernel {
+namespace {
+constexpr int kNonZeroInputsNum = 1;
+constexpr int kNonZeroOutputsNum = 1;
+}  // namespace
+
+bool NonZeroGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kNonZeroInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kNonZeroOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  is_need_retrieve_output_shape_ = true;  // NonZero is a dynamic shape operator.
+  kernel_func_ = func_list_[index].second;
+  data_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  index_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
+  return true;
+}
+
+void NonZeroGpuKernelMod::ResetResource() noexcept {
+  real_output_size_ = 0;
+  input_shape_.clear();
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
+
+int NonZeroGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  outputs_ = outputs;
+  auto shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(input_shape_),
+                       [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
+  rank_ = input_shape_.size();
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
+  if (input_size_ == 0) {
+    return KRET_INVALID_SHAPE;
+  }
+
+  input_size_list_.push_back(input_size_ * data_size_);
+  workspace_size_list_.push_back(input_size_ * sizeof(size_t));
+  workspace_size_list_.push_back(rank_ * sizeof(size_t));
+  output_size_list_.push_back(input_size_ * rank_ * index_size_);
+  return KRET_OK;
+}
+
+template <typename DataType, typename IndexType>
+bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  cuda_stream_ = reinterpret_cast<cudaStream_t>(stream_ptr);
+  if (input_size_ == 0) {
+    return true;
+  }
+  auto input_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(input_ptr);
+  auto index_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
+  MS_EXCEPTION_IF_NULL(index_ptr);
+  auto shape_ptr = GetDeviceAddress<size_t>(workspace, kIndex1);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto output_ptr = GetDeviceAddress<IndexType>(outputs, kIndex0);
+  MS_EXCEPTION_IF_NULL(output_ptr);
+
+  // Copy input shape to device.
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemcpyAsync(shape_ptr, input_shape_.data(), rank_ * sizeof(size_t), cudaMemcpyHostToDevice, cuda_stream_),
+    "NonZero cudaMemcpyAsync failed.");
+
+  NonZero(input_ptr, index_ptr, shape_ptr, output_ptr, input_size_, rank_, cuda_stream_);
+
+  // The last element of index_ptr is the final output size of NonZero.
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&real_output_size_, index_ptr + input_size_ - 1, sizeof(int64_t),
+                                                     cudaMemcpyDeviceToHost, cuda_stream_),
+                                     "NonZero cudaMemcpyAsync failed.");
+  return true;
+}
+
+void NonZeroGpuKernelMod::SyncData() {
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "NonZero cudaStreamSynchronized failed");
+  std::vector<int64_t> new_output_shape = {SizeToLong(real_output_size_), SizeToLong(rank_)};
+  outputs_[kIndex0]->SetShapeVector(new_output_shape);
+}
+
+std::vector<std::pair<KernelAttr, NonZeroGpuKernelMod::NonZeroLaunchFunc>> NonZeroGpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<bool, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<int8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<int16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<int32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<half, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<double, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeInt64),
+   &NonZeroGpuKernelMod::LaunchKernel<uint64_t, int64_t>}};
+
+std::vector<KernelAttr> NonZeroGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(
+    func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+    [](const std::pair<KernelAttr, NonZeroGpuKernelMod::NonZeroLaunchFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, NonZero, NonZeroGpuKernelMod);
+}  // namespace kernel
+}  // namespace mindspore
