@@ -108,17 +108,17 @@ def dynamic_concat_run(is_grad):
     data_list = []
     for i in [2, 64]:
         data = []
-        data.append(np.random.rand(i, 16).astype(dtype))
-        data.append(np.random.rand(i, 32).astype(dtype))
+        data.append(np.random.rand(16, i).astype(dtype))
+        data.append(np.random.rand(16, i).astype(dtype))
         if is_grad:
-            data.append(np.random.rand(i, 48).astype(dtype))
+            data.append(np.random.rand(16, i*2).astype(dtype))
         data_list.append(tuple(data))
     column_names = get_columns(len(data_list[0]))
     dataset = ds.GeneratorDataset(data_list, column_names, shuffle=False)
     dynamic_columns = {column_names[0]: [
-        None, 16], column_names[1]: [None, 32]}
+        16, None], column_names[1]: [16, None]}
     if is_grad:
-        dynamic_columns[column_names[-1]] = [None, 48]
+        dynamic_columns[column_names[-1]] = [16, None]
     dataset.set_dynamic_columns(columns=dynamic_columns)
     net = ConcatNet(axis)
     if is_grad:

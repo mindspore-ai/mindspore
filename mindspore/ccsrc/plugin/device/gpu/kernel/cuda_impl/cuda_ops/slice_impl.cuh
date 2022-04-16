@@ -31,41 +31,44 @@ CUDA_LIB_EXPORT void CalSlice4DGrad(const size_t s1, const size_t s2, const size
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const T *input, T *output,
-                                   cudaStream_t stream);
+                                   const uint32_t &device_id, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2, const size_t d1,
-                                   const size_t d2, const T *input, T *output, cudaStream_t stream);
+                                   const size_t d2, const T *input, T *output, const uint32_t &device_id,
+                                   cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1, const size_t l2,
                                    const size_t l3, const size_t d1, const size_t d2, const size_t d3, const T *input,
-                                   T *output, cudaStream_t stream);
+                                   T *output, const uint32_t &device_id, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                                    const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
-                                   const size_t d3, const size_t d4, const T *input, T *output, cudaStream_t stream);
+                                   const size_t d3, const size_t d4, const T *input, T *output,
+                                   const uint32_t &device_id, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
                                    const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5,
                                    const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                   const T *input, T *output, cudaStream_t stream);
+                                   const T *input, T *output, const uint32_t &device_id, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
                                    const size_t s6, const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                    const size_t l5, const size_t l6, const size_t d1, const size_t d2, const size_t d3,
                                    const size_t d4, const size_t d5, const size_t d6, const T *input, T *output,
-                                   cudaStream_t stream);
+                                   const uint32_t &device_id, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
                                    const size_t s6, const size_t s7, const size_t l1, const size_t l2, const size_t l3,
                                    const size_t l4, const size_t l5, const size_t l6, const size_t l7, const size_t d1,
                                    const size_t d2, const size_t d3, const size_t d4, const size_t d5, const size_t d6,
-                                   const size_t d7, const T *input, T *output, cudaStream_t stream);
+                                   const size_t d7, const T *input, T *output, const uint32_t &device_id,
+                                   cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void StridedSlice(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,

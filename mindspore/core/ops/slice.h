@@ -35,6 +35,14 @@ class MIND_API Slice : public BaseOperator {
   Slice() : BaseOperator(kNameSlice) { InitIOName({"x", "begin", "size"}, {"output"}); }
   /// \brief Init.
   void Init() const {}
+  /// \brief Method to get begin attributes.
+  ///
+  /// \return begin attributes.
+  std::vector<int64_t> get_begin() const;
+  /// \brief Method to get size attributes.
+  ///
+  /// \return size attributes.
+  std::vector<int64_t> get_size() const;
 };
 abstract::AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<abstract::AbstractBasePtr> &input_args);

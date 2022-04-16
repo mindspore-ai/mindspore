@@ -96,6 +96,16 @@ AbstractBasePtr SliceInfer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   return abstract::MakeAbstract(SliceInferShape(primitive, input_args), SliceInferType(primitive, input_args));
 }
 
+std::vector<int64_t> Slice::get_begin() const {
+  auto value_ptr = GetAttr(kBegin);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+std::vector<int64_t> Slice::get_size() const {
+  auto value_ptr = GetAttr(kSize);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_C(kNameSlice, Slice);
 }  // namespace ops
 }  // namespace mindspore

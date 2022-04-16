@@ -1122,27 +1122,26 @@ KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node) {
   return GetKernelAttrFromBuildInfo(build_info);
 }
 
-const std::map<std::string, Format> format_relation_map = {
-  {"DefaultFormat", Format::DEFAULT_FORMAT},
-  {"NCHW", Format::NCHW},
-  {"NHWC", Format::NHWC},
-  {"NHWC4", Format::NHWC4},
-  {"HWKC", Format::HWKC},
-  {"HWCK", Format::HWCK},
-  {"KCHW", Format::KCHW},
-  {"CKHW", Format::CKHW},
-  {"KHWC", Format::KHWC},
-  {"CHWK", Format::CHWK},
-  {"HW", Format::HW},
-  {"HW4", Format::HW4},
-  {"NC", Format::NC},
-  {"NC4", Format::NC4},
-  {"NC4HW4", Format::NC4HW4},
-  {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
-  {"NCDHW", Format::NCDHW},
-  {"NWC", Format::NWC},
-  {"NCW", Format::NCW},
-};
+const std::map<std::string, Format> format_relation_map = {{"DefaultFormat", Format::DEFAULT_FORMAT},
+                                                           {"NCHW", Format::NCHW},
+                                                           {"NHWC", Format::NHWC},
+                                                           {"NHWC4", Format::NHWC4},
+                                                           {"HWKC", Format::HWKC},
+                                                           {"HWCK", Format::HWCK},
+                                                           {"KCHW", Format::KCHW},
+                                                           {"CKHW", Format::CKHW},
+                                                           {"KHWC", Format::KHWC},
+                                                           {"CHWK", Format::CHWK},
+                                                           {"HW", Format::HW},
+                                                           {"HW4", Format::HW4},
+                                                           {"NC", Format::NC},
+                                                           {"NC4", Format::NC4},
+                                                           {"NC4HW4", Format::NC4HW4},
+                                                           {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+                                                           {"NCDHW", Format::NCDHW},
+                                                           {"NWC", Format::NWC},
+                                                           {"NCW", Format::NCW},
+                                                           {"NDHWC", Format::NDHWC}};
 
 Format GetFormatFromStrToEnum(const std::string &format_str) {
   auto iter = format_relation_map.find(format_str);

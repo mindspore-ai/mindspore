@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <tuple>
 #include <set>
+#include <optional>
 #include "kernel/kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_mod.h"
 #include "plugin/factory/ms_factory.h"
@@ -77,6 +78,28 @@ inline int CeilDivide(int m, int n) { return (m + n - 1) / n; }
 
 inline int GetPad(int input, int kernel, int stride) {
   return std::max<int>(0, (CeilDivide(input, stride) - 1) * stride + kernel - input);
+}
+
+inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index,
+                                              const std::string &kernel_name) {
+  std::vector<int64_t> tensor_value;
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  size_t data_size = input_tensor->DataSize();
+  auto tensor_type = input_tensor->Dtype();
+  if (tensor_type->type_id() == kNumberTypeInt32) {
+    auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value.assign(tensor_data, tensor_data + data_size);
+  } else if (tensor_type->type_id() == kNumberTypeInt64) {
+    auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    tensor_value.assign(tensor_data, tensor_data + data_size);
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name << "', the " << input_index
+                            << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
+                            << input_tensor->ToString();
+  }
+  return tensor_value;
 }
 
 class NativeGpuKernelMod : public GpuKernelMod {
@@ -393,27 +416,6 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     return type->second;
   }
 
-  inline std::vector<int64_t> GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index) {
-    std::vector<int64_t> tensor_value;
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    size_t data_size = input_tensor->DataSize();
-    auto tensor_type = input_tensor->Dtype();
-    if (tensor_type->type_id() == kNumberTypeInt32) {
-      auto tensor_data = reinterpret_cast<int32_t *>(input_tensor->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      tensor_value.assign(tensor_data, tensor_data + data_size);
-    } else if (tensor_type->type_id() == kNumberTypeInt64) {
-      auto tensor_data = reinterpret_cast<int64_t *>(input_tensor->data_c());
-      MS_EXCEPTION_IF_NULL(tensor_data);
-      tensor_value.assign(tensor_data, tensor_data + data_size);
-    } else {
-      MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the " << input_index
-                              << "th input must be a Tensor[Int64] or Tensor[Int32] type, but got "
-                              << input_tensor->ToString();
-    }
-    return tensor_value;
-  }
-
   inline bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2) {
     std::vector<size_t> s2_trans;
     std::transform(s2.begin(), s2.end(), std::back_inserter(s2_trans), [](const int64_t &e) { return LongToSize(e); });
@@ -443,7 +445,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "',  the format of the " << input_index
                         << "th input currently should be the default format and does not support " << data_format;
     }
-    *attr_value = GetTensorIntValue(input_tensor, input_index);
+    *attr_value = GetTensorIntValue(input_tensor, input_index, kernel_name_);
     return true;
   }
 };
@@ -512,6 +514,36 @@ bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2);
 // problem by writing uchar when calling these macros, and expanding uchar after the
 // variable has been created.
 using uchar = unsigned char;
+
+std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs,
+                                                           const size_t input_index,
+                                                           const std::shared_ptr<ReinitArgs> &args,
+                                                           const std::string &kernel_name);
+
+inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+                                   const std::shared_ptr<ReinitArgs> &args, const std::string &kernel_name,
+                                   int64_t *attr_value) {
+  auto res = GetDynamicAttrIntValue(inputs, input_index, args, kernel_name);
+  if (!res.has_value()) {
+    return false;
+  }
+  if (res.value().empty()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', value of the dynamic attr is empty!";
+  }
+  *attr_value = res.value()[0];
+  return true;
+}
+
+inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+                                   const std::shared_ptr<ReinitArgs> &args, const std::string &kernel_name,
+                                   std::vector<int64_t> *attr_value) {
+  auto res = GetDynamicAttrIntValue(inputs, input_index, args, kernel_name);
+  if (!res.has_value()) {
+    return false;
+  }
+  *attr_value = res.value();
+  return true;
+}
 }  // namespace kernel
 }  // namespace mindspore
 
