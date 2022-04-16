@@ -90,16 +90,16 @@ bool NativeGpuKernelModFactory::ReducePrecision(
           (iter->second)[attr_index].first.GetInputAttr(input_index % attr_size).first == kNumberTypeInt32) {
         builder->SetInputDeviceType(kNumberTypeInt32, input_index);
         reduce_flag_.first.push_back(input_index);
-        MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast input " << input_index
-                        << " to int32.";
+        MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast input " << input_index
+                     << " to int32.";
       }
     }
     for (size_t output_index = 0; output_index < kernel_info->GetOutputNum(); output_index++) {
       if (kernel_info->GetOutputDeviceType(output_index) == kNumberTypeInt64 &&
           (iter->second)[attr_index].first.GetOutputAttr(output_index % attr_size).first == kNumberTypeInt32) {
         builder->SetOutputDeviceType(kNumberTypeInt32, output_index);
-        MS_LOG(WARNING) << "Kernel [" << kernel_name << "] does not support int64, cast output " << output_index
-                        << " to int32.";
+        MS_LOG(INFO) << "Kernel [" << kernel_name << "] does not support int64, cast output " << output_index
+                     << " to int32.";
       }
     }
   }
