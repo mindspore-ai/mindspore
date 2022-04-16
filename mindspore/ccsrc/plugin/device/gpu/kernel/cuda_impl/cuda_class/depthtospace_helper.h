@@ -34,7 +34,7 @@ template <typename T>
 class DepthToSpaceHelperGpuKernel : public GpuKernelHelperBase {
  public:
   explicit DepthToSpaceHelperGpuKernel(const std::string &kernel_name, const uint32_t &device_id)
-      : GpuKernelHelperBase(kernel_name, device_id_) {
+      : GpuKernelHelperBase(kernel_name, device_id) {
     kernel_size_ = 0;
     is_null_input_ = false;
   }
@@ -43,6 +43,7 @@ class DepthToSpaceHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     constexpr size_t INPUT_NUM = 1;
     constexpr size_t OUTPUT_NUM = 1;
+    ResetResource();
     int inp_flag = CalShapesSizeInBytes<T>(input_shapes, INPUT_NUM, kernel_name_, "input_shapes", &input_size_list_);
     if (inp_flag == -1) {
       return inp_flag;
@@ -86,7 +87,7 @@ class DepthToSpaceHelperGpuKernel : public GpuKernelHelperBase {
 
     // call cuda kernel
     CalDepthToSpace(kernel_size_, input_ptr, in, ic, ih, iw, on, oc, oh, ow, attr_ptr_->block_size, output_ptr,
-                    reinterpret_cast<cudaStream_t>(cuda_stream));
+                    device_id_, reinterpret_cast<cudaStream_t>(cuda_stream));
     return 0;
   }
 

@@ -69,6 +69,12 @@ bool DepthToSpaceFwdKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   attr_ptr_->block_size = kernel_ptr->get_block_size();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
+  return true;
+}
+
+bool DepthToSpaceFwdKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs,
+                                      const std::shared_ptr<ReinitArgs> &args) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();

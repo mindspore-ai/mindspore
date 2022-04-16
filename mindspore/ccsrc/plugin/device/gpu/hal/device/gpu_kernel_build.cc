@@ -116,6 +116,10 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         if (!gpu_kernel_mod->Init(base_operator, input_tensors, output_tensors)) {
           MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
         }
+        auto reinit_args = std::make_shared<kernel::ReinitArgs>();
+        if (!gpu_kernel_mod->Reinit(input_tensors, output_tensors, reinit_args)) {
+          MS_LOG(EXCEPTION) << "gpu kernel op[" << kernel->fullname_with_scope() << "] ReInit failed.";
+        }
         session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
       }
     }

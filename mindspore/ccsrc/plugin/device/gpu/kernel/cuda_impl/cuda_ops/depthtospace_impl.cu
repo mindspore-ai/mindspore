@@ -57,56 +57,57 @@ __global__ void DepthToSpace(const size_t size, const T *input, const size_t in,
 template <typename T>
 void CalDepthToSpace(const size_t size, const T *input, const size_t in, const size_t ic, const size_t ih,
                      const size_t iw, const size_t on, const size_t oc, const size_t oh, const size_t ow,
-                     const size_t r, T *output, cudaStream_t cuda_stream) {
-  DepthToSpace<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, in, ic, ih, iw, on, oc, oh, ow, r,
-                                                                  output);
+                     const size_t r, T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
+  DepthToSpace<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(size, input, in, ic, ih, iw,
+                                                                                          on, oc, oh, ow, r, output);
   return;
 }
 
 template CUDA_LIB_EXPORT void CalDepthToSpace<float>(const size_t size, const float *input, const size_t in,
                                                      const size_t ic, const size_t ih, const size_t iw, const size_t on,
                                                      const size_t oc, const size_t oh, const size_t ow, const size_t r,
-                                                     float *output, cudaStream_t cuda_stream);
+                                                     float *output, const uint32_t &device_id,
+                                                     cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<half>(const size_t size, const half *input, const size_t in,
                                                     const size_t ic, const size_t ih, const size_t iw, const size_t on,
                                                     const size_t oc, const size_t oh, const size_t ow, const size_t r,
-                                                    half *output, cudaStream_t cuda_stream);
+                                                    half *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<int>(const size_t size, const int *input, const size_t in,
                                                    const size_t ic, const size_t ih, const size_t iw, const size_t on,
                                                    const size_t oc, const size_t oh, const size_t ow, const size_t r,
-                                                   int *output, cudaStream_t cuda_stream);
+                                                   int *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<int64_t>(const size_t size, const int64_t *input, const size_t in,
                                                        const size_t ic, const size_t ih, const size_t iw,
                                                        const size_t on, const size_t oc, const size_t oh,
                                                        const size_t ow, const size_t r, int64_t *output,
-                                                       cudaStream_t cuda_stream);
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<int16_t>(const size_t size, const int16_t *input, const size_t in,
                                                        const size_t ic, const size_t ih, const size_t iw,
                                                        const size_t on, const size_t oc, const size_t oh,
                                                        const size_t ow, const size_t r, int16_t *output,
-                                                       cudaStream_t cuda_stream);
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<int8_t>(const size_t size, const int8_t *input, const size_t in,
                                                       const size_t ic, const size_t ih, const size_t iw,
                                                       const size_t on, const size_t oc, const size_t oh,
                                                       const size_t ow, const size_t r, int8_t *output,
-                                                      cudaStream_t cuda_stream);
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<uint8_t>(const size_t size, const uint8_t *input, const size_t in,
                                                        const size_t ic, const size_t ih, const size_t iw,
                                                        const size_t on, const size_t oc, const size_t oh,
                                                        const size_t ow, const size_t r, uint8_t *output,
-                                                       cudaStream_t cuda_stream);
+                                                       const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<uint16_t>(const size_t size, const uint16_t *input, const size_t in,
                                                         const size_t ic, const size_t ih, const size_t iw,
                                                         const size_t on, const size_t oc, const size_t oh,
                                                         const size_t ow, const size_t r, uint16_t *output,
-                                                        cudaStream_t cuda_stream);
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<uint32_t>(const size_t size, const uint32_t *input, const size_t in,
                                                         const size_t ic, const size_t ih, const size_t iw,
                                                         const size_t on, const size_t oc, const size_t oh,
                                                         const size_t ow, const size_t r, uint32_t *output,
-                                                        cudaStream_t cuda_stream);
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalDepthToSpace<uint64_t>(const size_t size, const uint64_t *input, const size_t in,
                                                         const size_t ic, const size_t ih, const size_t iw,
                                                         const size_t on, const size_t oc, const size_t oh,
                                                         const size_t ow, const size_t r, uint64_t *output,
-                                                        cudaStream_t cuda_stream);
+                                                        const uint32_t &device_id, cudaStream_t cuda_stream);

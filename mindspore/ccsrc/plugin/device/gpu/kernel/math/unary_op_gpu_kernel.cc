@@ -156,7 +156,7 @@ bool UnaryOpGpuKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   auto index = GetMatchKernelAttrIdxWithException(kernel_node, GetOpSupport());
-  helper_ptr_ = std::move(kernel_attr_map.at(kernel_type_)[index].second(kernel_name, deprecated_deviced_id_));
+  helper_ptr_ = std::move(kernel_attr_map.at(kernel_type_)[index].second(kernel_name, device_id_));
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);

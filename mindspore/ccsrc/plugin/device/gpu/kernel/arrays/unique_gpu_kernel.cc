@@ -53,7 +53,7 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   if (!is_match) {
     return false;
   }
-  helper_ptr_ = kernel_attr[index].second(kernel_name_, deprecated_id_);
+  helper_ptr_ = kernel_attr[index].second(kernel_name_, device_id_);
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   if (inputs.empty()) {

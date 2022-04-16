@@ -76,7 +76,6 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
   void *stream_ptr_;
   bool is_null_input_;
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
-  uint32_t deprecated_id_;
   std::optional<bool> is_input_dynamic_shape_ = {};
   BaseOperatorPtr base_operator_ = nullptr;
   std::vector<KernelTensorPtr> inputs_ = {};

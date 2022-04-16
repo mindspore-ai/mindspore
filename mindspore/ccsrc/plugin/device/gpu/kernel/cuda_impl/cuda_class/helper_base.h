@@ -63,6 +63,11 @@ class GpuKernelHelperBase {
   // Dynamic kernel can pass output information by this interface.
   virtual TensorInfo GetOutputTensorInfo() { return TensorInfo(); }
   virtual void SetKernelParam(const GpuKernelAttrBasePtr &kernel_attr) {}
+  virtual void ResetResource() {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    work_size_list_.clear();
+  }
 
  protected:
   virtual int CheckKernelParam() { return 0; }
