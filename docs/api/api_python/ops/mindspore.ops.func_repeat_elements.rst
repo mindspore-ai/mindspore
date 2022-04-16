@@ -11,6 +11,6 @@ mindspore.ops.repeat_elements
     - **rep** (int) - 指定复制次数，为正数。
     - **axis** (int) - 指定复制轴，默认值：0。
 
-    **输出：**
+    **返回：**
 
     Tensor，值沿指定轴复制。如果 `x` 的shape为 :math:`(s1, s2, ..., sn)` ，轴为i，则输出的shape为 :math:`(s1, s2, ..., si * rep, ..., sn)` 。输出的数据类型与 `x` 相同。
