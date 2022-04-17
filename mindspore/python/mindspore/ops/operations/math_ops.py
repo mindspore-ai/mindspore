@@ -1320,7 +1320,7 @@ class LpNorm(Primitive):
         - **input** (Tensor) - Input tensor.
 
     Outputs:
-        Tensor, has the same dtype as `input`, which shape depends on the args axis.For example, if the size of input
+        Tensor, has the same dtype as `input`, which shape depends on the args axis. For example, if the size of input
         is (2, 3, 4), axis is [0, 1], Outputs' shape will be (4,).
 
     Raises:
@@ -1334,7 +1334,7 @@ class LpNorm(Primitive):
         ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
@@ -1347,6 +1347,7 @@ class LpNorm(Primitive):
     @prim_attr_register
     def __init__(self, axis, p=2, keep_dims=False, epsilon=1e-12):
         """Initialize LpNorm"""
+        super().__init__("LpNorm")
         validator.check_value_type("p", p, [int], self.name)
         validator.check_value_type("axis", axis, [int, tuple, list], self.name)
         validator.check_value_type("keep_dims", keep_dims, [bool], self.name)
