@@ -44,7 +44,7 @@ constexpr int SENDMSG_DROPED = -1;
 constexpr size_t MAX_KMSG_FROM_LEN = 1024;
 constexpr size_t MAX_KMSG_TO_LEN = 1024;
 constexpr size_t MAX_KMSG_NAME_LEN = 1024;
-constexpr size_t MAX_KMSG_BODY_LEN = 104857600;
+constexpr size_t MAX_KMSG_BODY_LEN = 1073741824;
 
 enum ParseType { kTcpMsg = 1, kHttpReq, kHttpRsp, kUnknown };
 enum State { kMsgHeader, kBody };
