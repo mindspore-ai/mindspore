@@ -57,3 +57,4 @@ from .square_sum_all import SquareSumAll
 from .squeeze import Squeeze
 from .tanh_grad import TanhGrad
 from .tile import Tile
+from .softsign import Softsign

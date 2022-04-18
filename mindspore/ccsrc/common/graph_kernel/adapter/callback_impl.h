@@ -21,7 +21,7 @@
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
-class CallbackImpl : public Callback {
+class COMMON_EXPORT CallbackImpl : public Callback {
  public:
   virtual ~CallbackImpl() = default;
   ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
@@ -40,6 +40,17 @@ class CallbackImpl : public Callback {
   void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
   void SetEmptyKernelInfo(const AnfNodePtr &node) override;
   void ResetKernelInfo(const AnfNodePtr &node) override;
+};
+class COMMON_EXPORT CallbackImplWithInferShape : public CallbackImpl {
+ public:
+  ShapeVector GetInputShape(const AnfNodePtr &node, size_t i) override;
+  ShapeVector GetOutputShape(const AnfNodePtr &node, size_t i) override;
+  TypeId GetInputType(const AnfNodePtr &node, size_t i) override;
+  TypeId GetOutputType(const AnfNodePtr &node, size_t i) override;
+  std::string GetInputFormat(const AnfNodePtr &node, size_t i) override;
+  std::string GetOutputFormat(const AnfNodePtr &node, size_t i) override;
+  std::string GetProcessor(const AnfNodePtr &node) override;
+  void SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_CALLBACK_IMPL_H_

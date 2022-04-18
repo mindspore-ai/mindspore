@@ -138,7 +138,7 @@ void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   // Update Graph Dynamic Shape Attr.
   opt::AddDynamicShapeAttrPass(graph);
 
-  SetOperatorInfo(graph->execution_order());
+  SetOperatorInfo(graph);
   OptimizeGraphImpl(graph);
 
   // Run final optimization.
@@ -155,7 +155,7 @@ void CPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 
 void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
-  SetOperatorInfo(graph->execution_order());
+  SetOperatorInfo(graph);
   OptimizeGraphImpl(graph);
 }
 
@@ -200,7 +200,8 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
 }
 }  // namespace
 
-void CPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
+void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
+  auto &nodes = graph->execution_order();
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {

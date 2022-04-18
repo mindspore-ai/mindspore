@@ -24,63 +24,8 @@
 
 #include "utils/ms_context.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
-#include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
-#include "common/graph_kernel/graph_kernel_helper.h"
-#include "common/graph_kernel/split_umonad.h"
-#include "common/graph_kernel/substitute_dropout.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/core/ir/graph_utils.h"
-#include "include/common/utils/python_adapter.h"
-#include "pybind_api/ir/primitive_py.h"
-#include "common/graph_kernel/expanders/op_desc_registry.h"
-
 namespace mindspore::graphkernel {
-constexpr size_t kAssignInputIdx = 1;
-constexpr size_t kLambOptimizerInputIdx = 12;
-constexpr size_t kLambWeightInputIdx = 4;
-constexpr size_t kRandomInputIdx = 1;
-constexpr size_t kAdamInputIdx = 10;
-
-bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
-  DumpOption dump_option;
-  dump_option.extract_opinfo_from_anfnode = true;
-  AkgKernelJsonGenerator json_generator(dump_option);
-  return json_generator.CollectJson(node, kernel_json);
-}
-
-FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
-  // use cpp OpDesc in priority
-  if (expanders::OpDescFactory::Instance().HasOp(AnfUtils::GetCNodeName(node))) {
-    return DefaultExpander::ExpandToGraph(node);
-  }
-  nlohmann::json kernel_json;
-  if (!CreateJsonInfo(node, &kernel_json)) {
-    constexpr int recursive_level = 2;
-    MS_LOG(ERROR) << "Expand json info to: " << node->DebugString(recursive_level) << " failed, ori_json:\n"
-                  << kernel_json.dump();
-    return nullptr;
-  }
-  auto node_desc_str = kernel_json.dump();
-
-  // call graph kernel ops generator.
-  MS_LOG(DEBUG) << "CallPyFn: [" << kGetGraphKernelOpExpander << "] with input json:\n" << node_desc_str;
-  auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGetGraphKernelOpExpander, node_desc_str);
-  // parse result.
-  if (py::isinstance<py::none>(ret)) {
-    MS_LOG(ERROR) << "CallPyFn: [" << kGetGraphKernelOpExpander << "] return invalid result, input json:\n"
-                  << node_desc_str;
-    return nullptr;
-  }
-  std::string kernel_desc_str = py::cast<std::string>(ret);
-  if (kernel_desc_str.empty()) {
-    return nullptr;
-  }
-  // decode json to func_graph.
-  return JsonDescToAnf(kernel_desc_str);
-}
-
 std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kAllTarget, OpLevel_0, prim::kPrimAddN},
@@ -143,46 +88,5 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
   return GkUtils::FilterExcludedOps(ops);
 }
 
-ExpanderPtr GraphKernelExpanderWithPy::GetExpander(const AnfNodePtr &node) {
-  auto expander = std::make_shared<PyExpander>();
-  std::map<std::string, ExpanderCreatorFuncList> creators = {
-    {prim::kPrimAssignAdd->name(), {OpUMonadExpanderDeco::GetCreator(kAssignInputIdx)}},
-    {prim::kLambApplyOptimizerAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambOptimizerInputIdx)}},
-    {prim::kLambApplyWeightAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambWeightInputIdx)}},
-    {prim::kPrimStandardNormal->name(), {OpUMonadExpanderDeco::GetCreator(kRandomInputIdx)}},
-    {prim::kPrimAdam->name(), {OpUMonadExpanderDeco::GetCreator(kAdamInputIdx)}},
-    {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
-  };
-  auto iter = creators.find(GetCNodePrimitive(node)->name());
-  if (iter != creators.end()) {
-    return WrapExpander(expander, iter->second);
-  }
-  return expander;
-}
-
-AnfNodePtr ComplexOpDecorator::PreProcess(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node);
-  auto prim = GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(prim);
-  cnode->set_input(0, NewValueNode(std::make_shared<Primitive>("C" + prim->name(), prim->attrs())));
-  return cnode;
-}
-
-bool GraphKernelComplexExpander::CanExpand(const CNodePtr &node) const {
-  bool has_complex = false;
-  auto all_inputs_type = AnfAlgo::GetAllInputDeviceTypes(node);
-  for (size_t i = 0; i < all_inputs_type.size(); ++i) {
-    if (all_inputs_type[i] == kNumberTypeComplex64) {
-      has_complex = true;
-      break;
-    }
-  }
-  return has_complex;
-}
-
-ExpanderPtr GraphKernelComplexExpander::GetExpander(const AnfNodePtr &node) {
-  return ComplexOpDecorator::Creator(std::make_shared<PyExpander>());
-}
-
-bool GraphKernelComplexExpander::Run(const FuncGraphPtr &func_graph) { return DoExpand(func_graph); }
+ExpanderPtr GraphKernelExpanderWithPy::InitExpander(const AnfNodePtr &node) { return GetExpander(node); }
 }  // namespace mindspore::graphkernel

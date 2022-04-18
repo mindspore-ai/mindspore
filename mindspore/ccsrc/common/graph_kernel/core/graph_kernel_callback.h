@@ -24,9 +24,10 @@
 #include "ir/dtype/type_id.h"
 #include "utils/shape_utils.h"
 #include "common/graph_kernel/model/node.h"
+#include "include/common/visible.h"
 
 namespace mindspore::graphkernel {
-class Callback {
+class COMMON_EXPORT Callback {
  public:
   virtual ~Callback() = default;
   static Callback *Instance() { return instance_.get(); }
@@ -169,7 +170,8 @@ class CallbackImplRegister {
   bool rev_{false};
 };
 
-#define GRAPH_KERNEL_CALLBACK_REGISTER(cls) \
-  const CallbackImplRegister g_graphkernel_callback([]() { return static_cast<Callback *>(new cls()); })
+#define GRAPH_KERNEL_CALLBACK_REGISTER(cls)         \
+  const graphkernel::CallbackImplRegister callback( \
+    []() { return static_cast<graphkernel::Callback *>(new graphkernel::cls()); })
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_CALLBACK_H_

@@ -20,30 +20,10 @@
 #include <string>
 #include <nlohmann/json.hpp>
 #include "common/graph_kernel/core/graph_kernel_expander.h"
+#include "common/graph_kernel/adapter/expander.h"
 #include "ir/func_graph.h"
 
 namespace mindspore::graphkernel {
-class PyExpander : public DefaultExpander {
- public:
-  virtual ~PyExpander() = default;
-
- protected:
-  virtual bool CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
-  FuncGraphPtr ExpandToGraph(const CNodePtr &node) override;
-};
-
-class ComplexOpDecorator : public ExpanderDecorator {
- public:
-  explicit ComplexOpDecorator(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
-  ~ComplexOpDecorator() override = default;
-  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
-    return std::static_pointer_cast<Expander>(std::make_shared<ComplexOpDecorator>(decorated));
-  }
-
- protected:
-  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
-};
-
 class GraphKernelExpanderWithPy : public GraphKernelExpander {
  public:
   GraphKernelExpanderWithPy() : GraphKernelExpander() {}
@@ -52,18 +32,11 @@ class GraphKernelExpanderWithPy : public GraphKernelExpander {
 
  protected:
   std::vector<PrimitivePtr> InitOpList() override;
-  ExpanderPtr GetExpander(const AnfNodePtr &node) override;
-};
-
-class GraphKernelComplexExpander : public GraphKernelExpanderWithPy {
- public:
-  GraphKernelComplexExpander() : GraphKernelExpanderWithPy("graph_kernel_complex_expander") {}
-  ~GraphKernelComplexExpander() override = default;
-  bool Run(const FuncGraphPtr &func_graph) override;
-
- protected:
-  ExpanderPtr GetExpander(const AnfNodePtr &node) override;
-  bool CanExpand(const CNodePtr &node) const override;
+  ExpanderPtr InitExpander(const AnfNodePtr &node) override;
+  bool CanExpand(const CNodePtr &node) const override {
+    if (IsComplexOp(node)) return true;
+    return GraphKernelExpander::CanExpand(node);
+  }
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_GRAPH_KERNEL_EXPANDER_WITH_PY_H_

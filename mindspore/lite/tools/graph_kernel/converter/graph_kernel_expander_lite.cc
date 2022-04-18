@@ -28,10 +28,10 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtr InputToAttrDeco::PreProcess(const AnfNodePtr &node) {
+AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   opt::ConstInputToAttr(cnode, input_idx_);
-  return cnode;
+  return decorated_->Run(cnode);
 }
 
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
@@ -45,7 +45,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
                               flags.enable_expand_ops, flags.disable_expand_ops);
 }
 
-ExpanderPtr GraphKernelExpanderLite::GetExpander(const AnfNodePtr &node) {
+ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
   auto expander = std::make_shared<DefaultExpander>();
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1})}},

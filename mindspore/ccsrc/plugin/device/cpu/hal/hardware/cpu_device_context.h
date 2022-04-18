@@ -53,7 +53,7 @@ class CPUDeviceContext : public DeviceContext {
   void OptimizeGraph(const KernelGraphPtr &graph) const override;
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
-  void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
+  void SetOperatorInfo(const KernelGraphPtr &graph) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
   void UpdateDynamicShape(const CNodePtr &kernel) const override;
 
