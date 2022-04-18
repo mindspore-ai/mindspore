@@ -713,7 +713,7 @@ class SyncBatchNorm(_BatchNorm):
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import context
-        >>> from mindspore.context import ParallelMode
+        >>> from mindspore import ParallelMode
         >>> from mindspore import Tensor
         >>> from mindspore import nn
         >>> from mindspore import dtype as mstype

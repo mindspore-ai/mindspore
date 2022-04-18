@@ -441,7 +441,7 @@ In classification task, for example, the model is lenet model. The MNIST dateset
 
 ```python
 from mindspore.nn.probability.toolbox.uncertainty_evaluation import UncertaintyEvaluation
-from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore import load_checkpoint, load_param_into_net
 
 network = LeNet5()
 param_dict = load_checkpoint('checkpoint_lenet.ckpt')

@@ -1183,7 +1183,7 @@ class Model:
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import Model, context, Tensor, nn, FixedLossScaleManager
-            >>> from mindspore.context import ParallelMode
+            >>> from mindspore import ParallelMode
             >>> from mindspore.communication import init
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
@@ -1239,7 +1239,7 @@ class Model:
             >>> import numpy as np
             >>> import mindspore as ms
             >>> from mindspore import Model, context, Tensor
-            >>> from mindspore.context import ParallelMode
+            >>> from mindspore import ParallelMode
             >>> from mindspore.communication import init
             >>>
             >>> context.set_context(mode=context.GRAPH_MODE)
