@@ -63,7 +63,7 @@ class Tensor(Tensor_):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> from mindspore import Tensor
-        >>> from mindspore.common.initializer import One
+        >>> from mindspore import One
         >>> # initialize a tensor with numpy.ndarray
         >>> t1 = Tensor(np.zeros([1, 2, 3]), ms.float32)
         >>> print(t1)
@@ -1554,8 +1554,9 @@ class Tensor(Tensor_):
 
         Examples:
             >>> import mindspore as ms
-            >>> import mindspore.common.initializer as init
-            >>> x = init.initializer(init.Constant(1), [2, 2], ms.float32)
+            >>> from mindspore import Constant
+            >>> from mindspore.common.initializer import initializer
+            >>> x = initializer(Constant(1), [2, 2], ms.float32)
             >>> out = x.init_data()
             >>> print(out)
             [[1. 1.]
@@ -1629,8 +1630,9 @@ class Tensor(Tensor_):
 
         Examples:
             >>> import mindspore as ms
-            >>> import mindspore.common.initializer as init
-            >>> x = init.initializer(init.Constant(1), [2, 2], ms.float32)
+            >>> from mindspore import Constant
+            >>> from mindspore.common.initializer import initializer
+            >>> x = initializer(Constant(1), [2, 2], ms.float32)
             >>> out = x.to_tensor()
             >>> print(out)
             [[1. 1.]

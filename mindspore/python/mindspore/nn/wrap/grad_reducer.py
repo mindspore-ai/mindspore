@@ -312,15 +312,15 @@ class DistributedGradReducer(Cell):
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import ops
-        >>> from mindspore import context
+        >>> from mindspore import set_context, reset_auto_parallel_context, set_auto_parallel_context, GRAPH_MODE
         >>> from mindspore import ParallelMode
         >>> from mindspore import Parameter, Tensor
         >>> from mindspore import nn
         >>>
-        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> set_context(mode=GRAPH_MODE)
         >>> init()
-        >>> context.reset_auto_parallel_context()
-        >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
+        >>> reset_auto_parallel_context()
+        >>> set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
         >>>
         >>> class TrainingWrapper(nn.Cell):
         ...     def __init__(self, network, optimizer, sens=1.0):

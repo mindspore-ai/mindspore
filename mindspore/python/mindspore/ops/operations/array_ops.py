@@ -6390,7 +6390,6 @@ class EditDistance(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import context
         >>> from mindspore import Tensor
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops

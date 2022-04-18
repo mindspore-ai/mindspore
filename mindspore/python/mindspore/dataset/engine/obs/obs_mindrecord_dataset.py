@@ -279,7 +279,7 @@ def sync_wait_for_dataset(rank_id, rank_size, current_epoch):
         >>> # Create a synchronization callback
         >>>
         >>> from mindspore.dataset import sync_wait_for_dataset
-        >>> from mindspore.train.callback import Callback
+        >>> from mindspore import Callback
         >>>
         >>> class SyncForDataset(Callback):
         ...     def __init__(self):

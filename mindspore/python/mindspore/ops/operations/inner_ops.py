@@ -515,7 +515,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.context as context
+        >>> from mindspore import set_context, GRAPH_MODE
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor, Parameter
@@ -530,7 +530,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad):
         ...         out = self.opt(self.var, self.m, self.v, lr, beta1, beta2, epsilon, decay, grad)
         ...         return out
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>> set_context(mode=GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> gradient = Tensor(np.ones([2, 2]), mstype.float16)
         >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
@@ -644,7 +644,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
 
     Examples:
         >>> import numpy as np
-        >>> import mindspore.context as context
+        >>> from mindspore import set_context, GRAPH_MODE
         >>> import mindspore.nn as nn
         >>> import mindspore.ops as ops
         >>> from mindspore import Tensor, Parameter
@@ -664,7 +664,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
         ...         out = self.opt(epsilon, clip_threshold, beta1, beta2, weight_decay, lr, grad, self.param,
         ...                        self.exp_avg, self.exp_avg_sq_row, self.exp_avg_sq_col, self.exp_avg_sq)
         ...         return out
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>> set_context(mode=GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> gradient = Tensor(np.ones(param_shape), mstype.float32)
         >>> net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)

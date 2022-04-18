@@ -358,9 +358,9 @@ class HookBackward(PrimitiveWithInfer):
         >>> import mindspore
         >>> from mindspore import ops
         >>> from mindspore import Tensor
-        >>> from mindspore import context
+        >>> from mindspore import set_context, PYNATIVE_MODE
         >>> from mindspore.ops import GradOperation
-        >>> context.set_context(mode=context.PYNATIVE_MODE)
+        >>> set_context(mode=PYNATIVE_MODE)
         >>> def hook_fn(grad):
         ...     print(grad)
         ...

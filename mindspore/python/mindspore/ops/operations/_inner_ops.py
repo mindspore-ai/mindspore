@@ -662,6 +662,10 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
 
     Examples:
           >>> # make a model, since dynamic shape operators must be in GRAPH_MODE
+          >>> import mindspore.nn as nn
+          >>> from mindspore import set_context, GRAPH_MODE
+          >>> from mindspore.ops.operations import _inner_ops as inner
+          >>> from mindspore.ops import operations as P
           >>> class TestDynamicShapeReshapeNet(nn.Cell):
           >>>     def __init__(self):
           >>>         super(TestDynamicShapeReshapeNet, self).__init__()
@@ -673,7 +677,7 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
           >>>         dynamic_shape_input = self.convert_to_dynamic_shape(input)
           >>>         reshaped_input = self.reshape(input, new_shape)
           >>>
-          >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+          >>> set_context(mode=GRAPH_MODE, device_target="GPU")
           >>> input = Tensor(np.array([0, 1, 2, 3])
           >>> new_shape = (2, 2)
           >>> net = TestDynamicShapeReshapeNet()
@@ -706,6 +710,10 @@ class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
 
     Examples:
           >>> # make a model, since dynamic shape operators must be in GRAPH_MODE
+          >>> import mindspore.nn as nn
+          >>> from mindspore.ops.operations import _inner_ops as inner
+          >>> from mindspore.ops import operations as P
+          >>> from mindspore import set_context, GRAPH_MODE
           >>> class AssertDynamicShapeNet(nn.Cell):
           >>>     def __init__(self):
           >>>         super(AssertDynamicShapeNet, self).__init__()
@@ -716,7 +724,7 @@ class ErrorOnDynamicShapeInput(PrimitiveWithInfer):
           >>>         dynamic_shape_input = self.convert_to_dynamic_shape(input)
           >>>         self.error_on_dynamic_shape_input(dynamic_shape_input)
           >>>
-          >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+          >>> set_context(mode=GRAPH_MODE, device_target="GPU")
           >>> input = Tensor(np.array([0])
           >>> net = TestDynamicShapeReshapeNet()
           >>> output = net(input, new_shape)
@@ -1774,10 +1782,10 @@ class CellBackwardHook(PrimitiveWithInfer):
     Examples:
         >>> import mindspore
         >>> from mindspore import Tensor
-        >>> from mindspore import context
+        >>> from mindspore import set_context, PYNATIVE_MODE
         >>> from mindspore.ops import GradOperation
         >>> from mindspore.ops.operations import _inner_ops as inner
-        >>> context.set_context(mode=context.PYNATIVE_MODE)
+        >>> set_context(mode=PYNATIVE_MODE)
         >>> def hook_fn(grad):
         ...     print(grad)
         ...

@@ -712,16 +712,16 @@ class SyncBatchNorm(_BatchNorm):
         >>> # Variables, Calling the Collective Communication Library, Running the Script.
         >>> import numpy as np
         >>> from mindspore.communication import init
-        >>> from mindspore import context
+        >>> from mindspore import set_context, GRAPH_MODE, reset_auto_parallel_context, set_auto_parallel_context
         >>> from mindspore import ParallelMode
         >>> from mindspore import Tensor
         >>> from mindspore import nn
         >>> from mindspore import dtype as mstype
         >>>
-        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> set_context(mode=GRAPH_MODE)
         >>> init()
-        >>> context.reset_auto_parallel_context()
-        >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
+        >>> reset_auto_parallel_context()
+        >>> set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
         >>> sync_bn_op = nn.SyncBatchNorm(num_features=3, process_groups=[[0, 1], [2, 3]])
         >>> x = Tensor(np.ones([1, 3, 2, 2]), mstype.float32)
         >>> output = sync_bn_op(x)

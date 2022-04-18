@@ -197,7 +197,8 @@ def _set_ps_context(**kwargs):
         ValueError: If input key is not the attribute in parameter server training mode context.
 
     Examples:
-        >>> context.set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
+        >>> from mindspore import set_ps_context
+        >>> set_ps_context(enable_ps=True, enable_ssl=True, client_password='123456', server_password='123456')
     """
     kwargs = _check_conflict_value(kwargs)
     for key, value in kwargs.items():

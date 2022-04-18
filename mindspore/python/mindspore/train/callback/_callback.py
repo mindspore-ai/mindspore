@@ -87,7 +87,7 @@ class Callback:
     Examples:
         >>> import numpy as np
         >>> from mindspore import Model, nn
-        >>> from mindspore.train.callback import Callback
+        >>> from mindspore import Callback
         >>> from mindspore import dataset as ds
         >>> class Print_info(Callback):
         ...     def step_end(self, run_context):

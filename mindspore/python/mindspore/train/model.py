@@ -1182,13 +1182,13 @@ class Model:
             >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, context, Tensor, nn, FixedLossScaleManager
-            >>> from mindspore import ParallelMode
+            >>> from mindspore import Model, set_context, Tensor, nn, FixedLossScaleManager, GRAPH_MODE
+            >>> from mindspore import ParallelMode, set_auto_parallel_context
             >>> from mindspore.communication import init
             >>>
-            >>> context.set_context(mode=context.GRAPH_MODE)
+            >>> set_context(mode=GRAPH_MODE)
             >>> init()
-            >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+            >>> set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
             >>>
             >>> # For details about how to build the dataset, please refer to the tutorial
             >>> # document on the official website.
@@ -1238,13 +1238,13 @@ class Model:
             >>> # mindspore.cn.
             >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import Model, context, Tensor
-            >>> from mindspore import ParallelMode
+            >>> from mindspore import Model, set_context, Tensor, GRAPH_MODE
+            >>> from mindspore import ParallelMode, set_auto_parallel_context
             >>> from mindspore.communication import init
             >>>
-            >>> context.set_context(mode=context.GRAPH_MODE)
+            >>> set_context(mode=GRAPH_MODE)
             >>> init()
-            >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+            >>> set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 1, 32, 32]), ms.float32)
             >>> model = Model(Net())
             >>> predict_map = model.infer_predict_layout(input_data)

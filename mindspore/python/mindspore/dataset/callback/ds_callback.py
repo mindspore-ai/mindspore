@@ -154,12 +154,12 @@ class WaitedDSCallback(Callback, DSCallback):
     Examples:
         >>> import mindspore.nn as nn
         >>> from mindspore.dataset import WaitedDSCallback
-        >>> from mindspore import context
+        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore import Model
-        >>> from mindspore.train.callback import Callback
+        >>> from mindspore import Callback
         >>> import mindspore.dataset as ds
         >>>
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        >>> set_context(mode=GRAPH_MODE, device_target="CPU")
         >>>
         >>> # custom callback class for data synchronization in data pipeline
         >>> class MyWaitedCallback(WaitedDSCallback):
