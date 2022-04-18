@@ -18,9 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 
 namespace mindspore::kernel {
 class SelectCPUKernel : public LiteKernel {

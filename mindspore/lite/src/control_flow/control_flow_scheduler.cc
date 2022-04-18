@@ -15,21 +15,24 @@
  */
 
 #include "src/control_flow/control_flow_scheduler.h"
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include <algorithm>
 #include <set>
 #include "src/kernel_exec_util.h"
 #include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #include "nnacl/call_parameter.h"
-#include "src/control_flow/exit_subgraph_kernel.h"
-#include "src/control_flow/identity_kernel.h"
+#include "src/control_flow/kernel/exit_subgraph_kernel.h"
+#include "src/control_flow/kernel/identity_kernel.h"
 #include "src/tensorlist.h"
 #include "src/common/prim_inner.h"
 
 namespace {
 const constexpr int kMinNonTailCallCount = 2;
 }
+#endif
 
 namespace mindspore::lite {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int ControlFlowScheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   auto ret = this->IsolateSameInputPartials(dst_kernels);
   MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "IsolateSameInputPartials failed.");
@@ -769,4 +772,16 @@ int ControlFlowScheduler::RecordPartialInputLinkInfo() {
   }
   return RET_OK;
 }
+
+#else
+int ControlFlowScheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) { return RET_OK; }
+void ControlFlowScheduler::SetSubgraphForPartialNode(
+  std::unordered_map<kernel::KernelExec *, size_t> *partial_kernel_subgraph_index_map,
+  std::unordered_map<size_t, kernel::KernelExec *> *subgraph_index_subgraph_kernel_map) {
+  return;
+}
+void ControlFlowScheduler::RecordSubgraphCaller(const size_t &subgraph_index, kernel::KernelExec *partial_node) {
+  return;
+}
+#endif
 }  // namespace mindspore::lite

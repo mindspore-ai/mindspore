@@ -17,9 +17,6 @@
 #include "src/runtime/kernel/cpu/base/call.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-#include "src/tensorlist.h"
-#endif
 #include "src/common/utils.h"
 
 using mindspore::lite::KernelRegistrar;

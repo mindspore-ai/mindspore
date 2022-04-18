@@ -24,9 +24,7 @@
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 #include "include/registry/register_kernel_interface.h"
 #include "src/kernel_registry.h"
 
@@ -136,12 +134,6 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     MS_LOG(ERROR) << "No input!";
     return RET_ERROR;
   }
-#ifdef CONTROLFLOW_TENSORLIST_CLIP
-  if (parameter->type_ == schema::PrimitiveType_Switch) {
-    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-    return RET_ERROR;
-  }
-#endif
   std::vector<TensorC *> in_tensors;
   std::vector<TensorC *> out_tensors;
   if (parameter->type_ == schema::PrimitiveType_PartialFusion || parameter->type_ == schema::PrimitiveType_Switch ||
@@ -175,16 +167,14 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     if (out_tensors.at(i) == nullptr) {
       continue;
     }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (reinterpret_cast<TensorListC *>(out_tensors.at(i))->data_type_ == TypeIdC::kObjectTypeTensorType) {
       auto *tensor_list_c = reinterpret_cast<TensorListC *>(out_tensors.at(i));
-      auto *tensor_list = reinterpret_cast<TensorList *>(outputs.at(i));
-      tensor_list->set_shape({static_cast<int>(tensor_list_c->element_num_)});
-      auto tensor_shape = std::vector<std::vector<int>>(
-        tensor_list_c->element_num_,
-        std::vector<int>(tensor_list_c->element_shape_,
-                         tensor_list_c->element_shape_ + tensor_list_c->element_shape_size_));
-      tensor_list->MallocTensorListData(static_cast<TypeId>(tensor_list_c->data_type_), tensor_shape);
+      auto tensor_list = MallocTensorListDataAccordingToTensorListC(outputs.at(i), tensor_list_c);
+      if (tensor_list == nullptr) {
+        MS_LOG(ERROR) << "get as tensorlist failed";
+        FreeAllTensorC(&out_tensors, allocator);
+        return RET_ERROR;
+      }
       auto tensor_ret = TensorListC2TensorList(tensor_list_c, tensor_list);
       if (tensor_ret != RET_OK) {
         MS_LOG(ERROR) << "TensorCList2TensorList failed";
@@ -192,16 +182,13 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
         return tensor_ret;
       }
     } else {
-#endif
       auto tensor_ret = TensorC2Tensor(out_tensors.at(i), outputs.at(i), allocator);
       if (tensor_ret != RET_OK) {
         MS_LOG(ERROR) << "TensorC2Tensor failed";
         FreeAllTensorC(&out_tensors, allocator);
         return tensor_ret;
       }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
-#endif
 
     if (ret == NNACL_INFER_INVALID) {
       outputs.at(i)->set_shape({-1});

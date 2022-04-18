@@ -206,17 +206,8 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
 
   /* tensor list convert */
   if (dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-    auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
-    if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data())) != RET_OK) {
-      MS_LOG(ERROR) << "Decode tensorlist data failed";
-      return RET_ERROR;
-    }
-    return RET_OK;
-#else
-    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-    return RET_NOT_SUPPORT;
-#endif
+    const int *src_data = reinterpret_cast<const int *>(src_tensor->data());
+    return DecodeTensorLsit(dst_tensor, src_data);
   }
 
   /* normal tensor check */
@@ -269,18 +260,8 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(data_type) == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-    dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
-    // set tensor list datatype
-    auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
-    MS_CHECK_TRUE_RET(tensor_list != nullptr, nullptr);
-    if (src_tensor.data() != nullptr) {
-      auto tensor_data_type = TypeId(reinterpret_cast<const int *>(src_tensor.data()->data())[0]);
-      tensor_list->set_tensors_data_type(tensor_data_type);
-    }
-#else
-    MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-#endif
+    auto src_data = src_tensor.data()->data();
+    dst_tensor = CreateTensorList(shape, src_category, src_data);
   } else {
     dst_tensor = new (std::nothrow)
       Tensor(TypeId(data_type), shape, static_cast<mindspore::Format>(src_tensor.format()), src_category);
@@ -753,14 +734,11 @@ int LiteSession::SetTensorInitRefCount(const Model *model) {
   AdjustModelOutputTensorInitRefCount(model);
 
   if (!non_tail_call_kernels_.empty()) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     return SetNonTaiCallSubgraphOutputInitRefCount(non_tail_call_kernels_);
-#endif
   }
   return RET_OK;
 }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
   const std::vector<kernel::KernelExec *> &non_tail_call_kernels) {
   for (auto call_kernel : non_tail_call_kernels_) {
@@ -783,7 +761,6 @@ int LiteSession::SetNonTaiCallSubgraphOutputInitRefCount(
   }
   return RET_OK;
 }
-#endif
 
 std::vector<mindspore::tensor::MSTensor *> LiteSession::GetInputs() const { return this->input_vec_; }
 

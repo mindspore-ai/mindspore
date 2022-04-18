@@ -32,9 +32,7 @@
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 #ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
 #endif
@@ -109,9 +107,7 @@ class LiteSession : public session::LiteSession {
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);
   int PrepareKernels(const Model *model);
   int SetTensorInitRefCount(const Model *model);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   int SetNonTaiCallSubgraphOutputInitRefCount(const std::vector<kernel::KernelExec *> &non_tail_call_kernels);
-#endif
   static int ReSizeKernels(
     const std::vector<kernel::KernelExec *> &kernels,
     const std::unordered_map<Tensor *, Tensor *> &isolate_input_map = std::unordered_map<Tensor *, Tensor *>());

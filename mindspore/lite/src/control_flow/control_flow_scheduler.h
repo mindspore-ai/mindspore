@@ -33,6 +33,7 @@
 #include "include/model.h"
 
 namespace mindspore::lite {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 class ControlFlowScheduler {
  public:
   ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, std::vector<Tensor *> *src_tensors)
@@ -103,6 +104,26 @@ class ControlFlowScheduler {
   std::unordered_map<size_t, kernel::KernelExec *> *subgraph_index_subgraph_kernel_map_{};
   std::unordered_map<kernel::KernelExec *, size_t> *partial_kernel_subgraph_index_map_{};
 };
+
+#else
+
+class ControlFlowScheduler {
+ public:
+  ControlFlowScheduler(InnerContext *ctx, const mindspore::Context *ms_ctx, std::vector<Tensor *> *src_tensors)
+      : context_(ctx), src_tensors_(src_tensors) {}
+  ~ControlFlowScheduler() = default;
+  int Schedule(std::vector<kernel::KernelExec *> *dst_kernels);
+  void SetSubgraphForPartialNode(std::unordered_map<kernel::KernelExec *, size_t> *partial_kernel_subgraph_index_map,
+                                 std::unordered_map<size_t, kernel::KernelExec *> *subgraph_index_subgraph_kernel_map);
+  std::vector<kernel::KernelExec *> GetNonTailCalls() const { return {}; }
+  void RecordSubgraphCaller(const size_t &subgraph_index, kernel::KernelExec *partial_node);
+
+ private:
+  InnerContext *context_ = nullptr;
+  int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
+  std::vector<Tensor *> *src_tensors_ = nullptr;
+};
+#endif
 
 using ControlFlowSchedulerPtr = std::shared_ptr<ControlFlowScheduler>;
 }  // namespace mindspore::lite

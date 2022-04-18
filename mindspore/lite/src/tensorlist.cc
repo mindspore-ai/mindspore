@@ -23,6 +23,7 @@
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category)
     : Tensor(kObjectTypeTensorType, std::move(shape), mindspore::NHWC, category),
       element_shape_(std::move(element_shape)) {}
@@ -32,6 +33,34 @@ TensorList::~TensorList() {
     this->TensorList::FreeData();
     this->FreeTensorListData();
   }
+}
+
+void TensorList::FreeData() {
+  if (this->IsConst() || this->IsGraphInput()) {
+    return;
+  }
+  // free data buf of each tensor in tensors_
+  for (auto tensor : tensors_) {
+    if (tensor == nullptr) {
+      continue;
+    }
+    tensor->FreeData();
+  }
+}
+
+int TensorList::FreeTensorListData() {
+  // del each tensor in tensors_ and clear tensors_
+  if (this->tensors_.empty()) {
+    return RET_OK;
+  }
+  for (auto &tensor : this->tensors_) {
+    if (tensor != nullptr) {
+      delete tensor;
+      tensor = nullptr;
+    }
+  }
+  tensors_.clear();
+  return RET_OK;
 }
 
 int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector<int> > &tensor_shape) {
@@ -94,34 +123,6 @@ int TensorList::MallocData(const AllocatorPtr allocator) {
       }
     }
   }
-  return RET_OK;
-}
-
-void TensorList::FreeData() {
-  if (this->IsConst() || this->IsGraphInput()) {
-    return;
-  }
-  // free data buf of each tensor in tensors_
-  for (auto tensor : tensors_) {
-    if (tensor == nullptr) {
-      continue;
-    }
-    tensor->FreeData();
-  }
-}
-
-int TensorList::FreeTensorListData() {
-  // del each tensor in tensors_ and clear tensors_
-  if (this->tensors_.empty()) {
-    return RET_OK;
-  }
-  for (auto &tensor : this->tensors_) {
-    if (tensor != nullptr) {
-      delete tensor;
-      tensor = nullptr;
-    }
-  }
-  tensors_.clear();
   return RET_OK;
 }
 
@@ -299,4 +300,5 @@ TensorList *TensorList::CopyTensorList(const TensorList &src, bool copy_data, Al
 
   return result;
 }
+#endif
 }  // namespace mindspore::lite

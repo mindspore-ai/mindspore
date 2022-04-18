@@ -18,9 +18,7 @@
 #include <algorithm>
 #include <queue>
 #include "src/tensor.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
@@ -103,7 +101,6 @@ int SubGraphKernel::ReSize() {
         MS_LOG(ERROR) << "kernel(" << kernel->name() << ")'s op_parameter is nullptr!";
         return RET_ERROR;
       }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
       // replace with custom op in the future.
       if (parameter->type_ == static_cast<int>(PrimType::PrimType_Inner_Identity)) {
         ret = kernel->ReSize();
@@ -113,7 +110,6 @@ int SubGraphKernel::ReSize() {
         }
         continue;
       }
-#endif
       ret = lite::KernelInferShape(inputs, outputs, parameter, context_->allocator);
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     }

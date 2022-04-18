@@ -26,6 +26,7 @@
 #include "src/tensor.h"
 
 namespace mindspore::lite {
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
 /**
  * Tensorlist is a container of vector, in which each element is a tensor object.
  * Member objects:
@@ -183,5 +184,11 @@ class TensorList : public Tensor {
   std::vector<int> element_shape_{};
   int max_elements_num_ = -1;
 };
+
+#else
+
+using TensorList = void;
+
+#endif
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_TENSORLIST_H_

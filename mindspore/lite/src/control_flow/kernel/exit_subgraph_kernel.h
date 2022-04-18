@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_ENTRANCE_SUBGRAPH_KERNEL_H_
-#define MINDSPORE_LITE_SRC_ENTRANCE_SUBGRAPH_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
+#define MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_
 #include <atomic>
 #include <utility>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
+#include <set>
 #include <memory>
 #include "src/kernel_exec.h"
 #include "src/executor.h"
@@ -30,13 +31,11 @@
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
-class EntranceSubGraphKernel : public SubGraphKernel {
+class ExitSubGraphKernel : public SubGraphKernel {
  public:
-  explicit EntranceSubGraphKernel(Kernel *kernel) : SubGraphKernel({}, {}, {}, kernel) {
-    subgraph_type_ = kEntranceSubGraph;
-  }
+  explicit ExitSubGraphKernel(Kernel *kernel) : SubGraphKernel({}, {}, {}, kernel) { subgraph_type_ = kExitSubGraph; }
 
-  ~EntranceSubGraphKernel() override = default;
+  ~ExitSubGraphKernel() override = default;
 
   static SubGraphKernel *Create(Kernel *kernel);
 
@@ -48,8 +47,13 @@ class EntranceSubGraphKernel : public SubGraphKernel {
 
   int ReSize() override { return RET_OK; };
 
+  void SetPartial(kernel::KernelExec *partial_node);
+
+  std::set<kernel::KernelExec *> GetPartials() const { return partials_; }
+
  protected:
   int schema_version_ = lite::SCHEMA_VERSION::SCHEMA_CUR;
+  std::set<kernel::KernelExec *> partials_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_ENTRANCE_SUBGRAPH_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_EXIT_SUBGRAPH_KERNEL_H_

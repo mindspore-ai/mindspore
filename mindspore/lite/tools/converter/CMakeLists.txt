@@ -151,6 +151,8 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/pack_weight_manager.cc
         ${SRC_DIR}/huffman_decode.cc
         ${SRC_DIR}/delegate/tensorrt/distribution/distribution_base.cc
+        ${SRC_DIR}/control_flow/control_flow_scheduler.cc
+        ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         )
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
@@ -182,10 +184,10 @@ if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
 endif()
 
 if(MSLITE_ENABLE_CONTROLFLOW)
-    file(GLOB CONTROL_FLOW_SRC
-            ${SRC_DIR}/control_flow/*.cc
+    file(GLOB CONTROL_FLOW_KERNEL_SRC
+            ${SRC_DIR}/control_flow/kernel/*.cc
             )
-    set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_SRC})
+    set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_KERNEL_SRC})
 endif()
 
 if(MSLITE_ENABLE_MINDRT)
@@ -207,6 +209,7 @@ if(MSLITE_ENABLE_MINDRT)
             ${MINDRT_SRC}
             ${SRC_DIR}/lite_mindrt.cc
             ${SRC_DIR}/mindrt_executor.cc
+            ${SRC_DIR}/control_flow/control_actor_creator.cc
             )
 
     if(MSLITE_ENABLE_CONTROLFLOW)
