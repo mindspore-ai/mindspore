@@ -28,13 +28,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int kIndexFillInputsNum = 4;
-constexpr int kIndexFillOutputsNum = 1;
-constexpr int kIndexFillX = 0;      // x
-constexpr int kIndexFillDim = 1;    // dim
-constexpr int kIndexFillIndex = 2;  // index
-constexpr int kIndexFillValue = 3;  // value
-constexpr int kIndexFillY = 0;      // output
+constexpr size_t kIndexFillInputsNum = 4;
+constexpr size_t kIndexFillOutputsNum = 1;
 using kIndexType = int32_t;
 template <typename T>
 class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
@@ -45,26 +40,37 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
+    // Check the number of inputs and outputs.
+    auto inputs_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    if (inputs_num != kIndexFillInputsNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kIndexFillInputsNum
+                        << ", but got " << inputs_num;
+    }
+    auto outputs_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
+    if (outputs_num != kIndexFillOutputsNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kIndexFillOutputsNum
+                        << ", but got " << outputs_num;
+    }
     // 'dim' and 'value' must be tensor with empty shape.
-    auto dim_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexFillDim);
+    auto dim_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
     if (!(dim_shape.empty() || (dim_shape.size() == 1 && dim_shape.front() == 1))) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'dim' should be empty or (1,), but got "
-                        << CONVERT_VECTOR_TO_STRING(dim_shape);
+                        << dim_shape;
     }
-    auto value_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexFillValue);
+    auto value_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex3);
     if (!(value_shape.empty() || (value_shape.size() == 1 && value_shape.front() == 1))) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'value' should be empty or (1,), but got "
-                        << CONVERT_VECTOR_TO_STRING(value_shape);
+                        << value_shape;
     }
     // 'index' must be vector/scalar.
-    auto index_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexFillIndex);
+    auto index_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
     if (index_shape.size() > 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'index' should not be greater than 1D, but got "
-                        << CONVERT_VECTOR_TO_STRING(index_shape);
+                        << index_shape;
     }
     // The shape of 'x' and 'y' is equal.
-    auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexFillX);
-    auto y_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexFillY);
+    auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
+    auto y_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex0);
     bool is_equal = x_shape.size() == y_shape.size();
     for (size_t i = 0; is_equal && i < x_shape.size(); ++i) {
       is_equal &= (x_shape[i] == y_shape[i]);
@@ -72,7 +78,7 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (!is_equal) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'x' and 'y' must be equal, but got "
                         << "shape of 'x' is " << CONVERT_VECTOR_TO_STRING(x_shape) << ", shape of 'output' is "
-                        << CONVERT_VECTOR_TO_STRING(y_shape);
+                        << y_shape;
     }
 
     is_null_input_ = CHECK_SHAPE_NULL(x_shape_, kernel_name_, "x");
@@ -89,39 +95,25 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexFillInputsNum, kernel_name_);
-    CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexFillOutputsNum, kernel_name_);
     if (is_null_input_) {
       return true;
     }
-    auto x_ptr = GetDeviceAddress<T>(inputs, kIndexFillX);
-    auto dim_ptr = GetDeviceAddress<kIndexType>(inputs, kIndexFillDim);
-    auto index_ptr = GetDeviceAddress<kIndexType>(inputs, kIndexFillIndex);
-    auto value_ptr = GetDeviceAddress<T>(inputs, kIndexFillValue);
-    auto y_ptr = GetDeviceAddress<T>(outputs, kIndexFillY);
+    auto x_ptr = GetDeviceAddress<T>(inputs, kIndex0);
+    auto dim_ptr = GetDeviceAddress<kIndexType>(inputs, kIndex1);
+    auto index_ptr = GetDeviceAddress<kIndexType>(inputs, kIndex2);
+    auto value_ptr = GetDeviceAddress<T>(inputs, kIndex3);
+    auto y_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+    auto out_bound_ptr = GetDeviceAddress<bool>(workspace, kIndex0);
     auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
 
     // Check and Initialize 'dim'.
     kIndexType dim, rank = SizeToInt(x_shape_.size());
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&dim, dim_ptr, sizeof(kIndexType), cudaMemcpyDeviceToHost, cuda_stream),
-                               "cudaMemcpyAsync input 'dim' to host failed");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&dim, dim_ptr, sizeof(kIndexType), cudaMemcpyDeviceToHost),
+                               "cudaMemcpy input 'dim' to host failed");
     if (dim < -rank || dim >= rank) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'dim' should be in the range [-" << rank << "," << rank
                         << "), but got " << dim;
     }
-
-    // Initialize 'value'.
-    T value;
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                               cudaMemcpyAsync(&value, value_ptr, sizeof(T), cudaMemcpyDeviceToHost, cuda_stream),
-                               "cudaMemcpyAsync input 'value' to host failed");
-
-    // Copy from 'x' into 'y'.
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemcpyAsync(y_ptr, x_ptr, x_size_ * sizeof(T), cudaMemcpyDeviceToDevice, cuda_stream),
-      "cudaMemcpyAsync output 'y' from 'x' failed.");
-
     // Prepare index_num, dim_size, outer_size, inner_size
     dim = dim >= 0 ? dim : dim + rank;
     int dim_size = 1;
@@ -136,11 +128,25 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
     }
     size_t index_num = index_size_ * (outer_size * inner_size);
+    // Copy from 'x' into 'y'.
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_, cudaMemcpyAsync(y_ptr, x_ptr, x_size_ * sizeof(T), cudaMemcpyDeviceToDevice, cuda_stream),
+      "cudaMemcpyAsync output 'y' from 'x' failed.");
+    // Initialize out_bound_ptr.
+    bool out_bound = false;
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_, cudaMemcpyAsync(out_bound_ptr, &out_bound, sizeof(bool), cudaMemcpyHostToDevice, cuda_stream),
+      "cudaMemcpyAsync out_bound variable failed.");
 
-    bool out_bound = IndexFill(y_ptr, index_ptr, index_num, outer_size, dim_size, inner_size, value, cuda_stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaGetLastError(), "Implementing IndexFill failed");
+    IndexFill(y_ptr, index_ptr, index_num, outer_size, dim_size, inner_size, value_ptr, out_bound_ptr, cuda_stream);
+
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_, cudaMemcpyAsync(&out_bound, out_bound_ptr, sizeof(bool), cudaMemcpyDeviceToHost, cuda_stream),
+      "cudaMemcpyAsync out_bound_ variable failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(cuda_stream),
+                               "IndexFill cudaStreamSynchronized failed");
     if (out_bound) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'index' out of bounds";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'index' is out of bound.";
     }
     return true;
   }
@@ -161,6 +167,7 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_size_list_.push_back(sizeof(kIndexType));
     input_size_list_.push_back(index_size_ * sizeof(kIndexType));
     input_size_list_.push_back(sizeof(T));
+    workspace_size_list_.push_back(sizeof(bool));  // Place out_bound.
     output_size_list_.push_back(x_size_ * sizeof(T));
   }
 

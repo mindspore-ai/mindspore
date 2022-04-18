@@ -19,9 +19,8 @@
 
 template <typename T>
 __global__ void IndexFillKernel(T *out_ptr, const int *index_ptr, const size_t index_size, const size_t outer_size,
-                                const int dim_size, const size_t inner_size, const T value, bool *out_bound_ptr) {
-  size_t stride1 = outer_size * inner_size;
-  size_t stride2 = dim_size * inner_size;
+                                const int dim_size, const size_t inner_size, const T *value_ptr, bool *out_bound_ptr,
+                                size_t stride1, size_t stride2) {
   for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < index_size; tid += blockDim.x * gridDim.x) {
     // Each index must be [-dim_size, dim_size)
     int index = index_ptr[tid / stride1];
@@ -35,41 +34,40 @@ __global__ void IndexFillKernel(T *out_ptr, const int *index_ptr, const size_t i
     size_t inner_idx = offset % inner_size;
     size_t outer_idx = offset / inner_size;
     size_t out_idx = outer_idx * stride2 + index * inner_size + inner_idx;
-    out_ptr[out_idx] = value;
+    out_ptr[out_idx] = *value_ptr;
   }
 }
 
 template <typename T>
-bool IndexFill(T *out_ptr, const int *index_ptr, const size_t index_size, const size_t outer_size, const int dim_size,
-               const size_t inner_size, const T value, cudaStream_t cuda_stream) {
-  // We use a bool to indicate whether all the index is valid.
-  bool out_bound, *out_bound_ptr;
-  cudaMalloc(&out_bound_ptr, sizeof(bool));
-  IndexFillKernel<<<GET_BLOCKS(index_size), GET_THREADS, 0, cuda_stream>>>(out_ptr, index_ptr, index_size, outer_size,
-                                                                           dim_size, inner_size, value, out_bound_ptr);
-  cudaMemcpyAsync(&out_bound, out_bound_ptr, sizeof(bool), cudaMemcpyDeviceToHost, cuda_stream);
-  cudaFree(out_bound_ptr);
-  return out_bound;
+void IndexFill(T *out_ptr, const int *index_ptr, const size_t index_size, const size_t outer_size, const int dim_size,
+               const size_t inner_size, const T *value_ptr, bool *out_bound_ptr, cudaStream_t cuda_stream) {
+  size_t stride1 = outer_size * inner_size;
+  size_t stride2 = dim_size * inner_size;
+  IndexFillKernel<<<GET_BLOCKS(index_size), GET_THREADS, 0, cuda_stream>>>(
+    out_ptr, index_ptr, index_size, outer_size, dim_size, inner_size, value_ptr, out_bound_ptr, stride1, stride2);
 }
 
-template CUDA_LIB_EXPORT bool IndexFill<double>(double *out_ptr, const int *index_ptr, const size_t index_size,
+template CUDA_LIB_EXPORT void IndexFill<double>(double *out_ptr, const int *index_ptr, const size_t index_size,
                                                 const size_t outer_size, const int dim_size, const size_t inner_size,
-                                                const double value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool IndexFill<float>(float *out_ptr, const int *index_ptr, const size_t index_size,
+                                                const double *value_ptr, bool *out_bound_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<float>(float *out_ptr, const int *index_ptr, const size_t index_size,
                                                const size_t outer_size, const int dim_size, const size_t inner_size,
-                                               const float value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool IndexFill<half>(half *out_ptr, const int *index_ptr, const size_t index_size,
+                                               const float *value_ptr, bool *out_bound_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<half>(half *out_ptr, const int *index_ptr, const size_t index_size,
                                               const size_t outer_size, const int dim_size, const size_t inner_size,
-                                              const half value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool IndexFill<int8_t>(int8_t *out_ptr, const int *index_ptr, const size_t index_size,
+                                              const half *value_ptr, bool *out_bound_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<int8_t>(int8_t *out_ptr, const int *index_ptr, const size_t index_size,
                                                 const size_t outer_size, const int dim_size, const size_t inner_size,
-                                                const int8_t value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool IndexFill<int16_t>(int16_t *out_ptr, const int *index_ptr, const size_t index_size,
+                                                const int8_t *value_ptr, bool *out_bound_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<int16_t>(int16_t *out_ptr, const int *index_ptr, const size_t index_size,
                                                  const size_t outer_size, const int dim_size, const size_t inner_size,
-                                                 const int16_t value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool IndexFill<int>(int *out_ptr, const int *index_ptr, const size_t index_size,
-                                             const size_t outer_size, const int dim_size, const size_t inner_size,
-                                             const int value, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT bool IndexFill<int64_t>(int64_t *out_ptr, const int *index_ptr, const size_t index_size,
+                                                 const int16_t *value_ptr, bool *out_bound_ptr,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<int32_t>(int *out_ptr, const int *index_ptr, const size_t index_size,
                                                  const size_t outer_size, const int dim_size, const size_t inner_size,
-                                                 const int64_t value, cudaStream_t cuda_stream);
+                                                 const int32_t *value_ptr, bool *out_bound_ptr,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void IndexFill<int64_t>(int64_t *out_ptr, const int *index_ptr, const size_t index_size,
+                                                 const size_t outer_size, const int dim_size, const size_t inner_size,
+                                                 const int64_t *value_ptr, bool *out_bound_ptr,
+                                                 cudaStream_t cuda_stream);

@@ -103,3 +103,23 @@ def test_index_fill_int(dim, data_type):
     x_np = np.random.randint(20, size=(5, 5, 5)).astype(data_type)
     index_np = np.random.randint(low=0, high=5, size=4).astype(np.int32)
     assert compare_with_numpy(x_np, dim, index_np, fill_value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dim', [0, 1])
+@pytest.mark.parametrize('data_type', [np.int32])
+def test_index_fill_error(dim, data_type):
+    """
+    Feature: IndexFill
+    Description:  test cases for IndexFill operator with int.
+    Expectation: raise RuntimeError.
+    """
+    ms_x = Tensor([[1, 2], [3, 4]]).astype(data_type)
+    ms_index = Tensor([2]).astype(data_type)
+    ms_dim = Tensor(dim, dtype=mstype.int32)
+    ms_value = Tensor(20, dtype=ms_x.dtype)
+
+    with pytest.raises(RuntimeError):
+        IndexFillNet()(ms_x, ms_dim, ms_index, ms_value)
