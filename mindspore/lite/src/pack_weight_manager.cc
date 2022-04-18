@@ -13,197 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight_manager.h"
+#include "src/common/graph_util.h"
 namespace mindspore::lite {
-namespace {
-constexpr size_t kMemAliginSize = 64;
-
-size_t RoundMemSize(size_t size) { return (size + kMemAliginSize - 1) & (~(kMemAliginSize - 1)); }
-}  // namespace
 PackWeightManager *PackWeightManager::GetInstance() {
   static PackWeightManager instance;
   return &instance;
 }
 
-STATUS PackWeightManager::InitWeightManagerByBuf(const char *model_buf) {
-  MS_CHECK_TRUE_RET(model_buf != nullptr, RET_ERROR);
-  if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
-    auto *model_const_weight = new (std::nothrow) ModelConstWeight();
-    if (model_const_weight == nullptr) {
-      MS_LOG(ERROR) << "model_const_weight is nullptr.";
+STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, int numa_id) {
+#ifdef SHARING_MODEL_WEIGHT
+  if (pack_weight_ == nullptr) {
+    pack_weight_ = std::make_shared<PackWeight>();
+    if (pack_weight_ == nullptr) {
+      MS_LOG(ERROR) << "pack_weight_ is nullptr.";
       return RET_ERROR;
     }
-    buf_model_weight_[model_buf] = model_const_weight;
   }
+  auto status = pack_weight_->InitWeightManagerByBuf(model_buf, model_size, numa_id);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "InitWeightManagerByBuf failed.";
+    return RET_ERROR;
+  }
+#endif
   return RET_OK;
 }
 
-void PackWeightManager::InitWeightManagerByPath(const std::string &model_path, const char *model_buf) {
-  MS_CHECK_TRUE_RET_VOID(model_buf != nullptr);
-  if (path_model_buf_.find(model_path) == path_model_buf_.end()) {
-    auto *model_const_weight = new (std::nothrow) ModelConstWeight();
-    if (model_const_weight == nullptr) {
-      return;
-    }
-    path_model_weight_[model_path] = model_const_weight;
-  }
-  path_model_buf_[model_path].push_back(model_buf);
-}
-
-STATUS PackWeightManager::StoreLiteModel(const char *model_buf, const Model *model) {
-  MS_CHECK_TRUE_RET(model_buf != nullptr, RET_ERROR);
-  MS_CHECK_TRUE_RET(model != nullptr, RET_ERROR);
-  for (auto &item : path_model_buf_) {
-    auto &model_bufs = item.second;
-    auto path = item.first;
-    if (find(model_bufs.begin(), model_bufs.end(), model_buf) != model_bufs.end()) {
-      path_model_weight_[path]->lite_models.push_back(model);
-      return RET_OK;
-    }
-  }
-  {
-    if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
-      MS_LOG(ERROR) << "set model failed.";
-      return RET_ERROR;
-    }
-    buf_model_weight_[model_buf]->lite_models.push_back(model);
-  }
-  return RET_OK;
-}
-
-void *PackWeightManager::GetTensorData(const LiteModel *model, const SchemaTensorWrapper *origin_tensor,
-                                       size_t tensor_index) {
-  MS_CHECK_TRUE_RET(model != nullptr, nullptr);
-  for (auto &item : path_model_weight_) {
-    auto &path = item.first;
-    auto &model_weight = item.second;
-    auto &models = model_weight->lite_models;
-    if (find(models.begin(), models.end(), model) != models.end()) {
-      if (model_weight->packed_weight.find(tensor_index) != model_weight->packed_weight.end()) {
-        return model_weight->packed_weight[tensor_index];
-      }
-      path_model_weight_[path]->origin_weight[tensor_index] = origin_tensor->data();
-      path_model_weight_[path]->origin_data_index[origin_tensor->data()] = tensor_index;
-      return nullptr;
-    }
-  }
-  for (auto &item : buf_model_weight_) {
-    auto &model_buf = item.first;
-    auto &model_weight = item.second;
-    auto &models = model_weight->lite_models;
-    if (find(models.begin(), models.end(), model) != models.end()) {
-      if (model_weight->packed_weight.find(tensor_index) != model_weight->packed_weight.end()) {
-        return model_weight->packed_weight[tensor_index];
-      }
-      buf_model_weight_[model_buf]->origin_weight[tensor_index] = origin_tensor->data();
-      buf_model_weight_[model_buf]->origin_data_index[origin_tensor->data()] = tensor_index;
-      return nullptr;
-    }
-  }
-  MS_LOG(DEBUG) << "tensor data not packed.";
+char *PackWeightManager::GetNumaModelBuf(int numa_id) {
+#ifdef SHARING_MODEL_WEIGHT
+  return pack_weight_->GetNumaModelBuf(numa_id);
+#endif
   return nullptr;
 }
 
-std::pair<PackStatus, void *> PackWeightManager::FindPackedTensor(ModelConstWeight *weight, const Tensor *tensor,
-                                                                  const size_t size) {
-  std::unique_lock<std::mutex> weight_lock(mtx_weight_);
-  MS_CHECK_TRUE_RET(tensor != nullptr, std::make_pair(MALLOC, nullptr));
-  auto &packed_weights = weight->packed_weight;
-  if (size > MAX_MALLOC_SIZE) {
-    MS_LOG(ERROR) << "malloc size more than MAX_MALLOC_SIZE";
-    return std::make_pair(MALLOC, nullptr);
+STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
+#ifdef SHARING_MODEL_WEIGHT
+  MS_CHECK_TRUE_MSG(model != nullptr, RET_ERROR, "model is nullptr in pack weight manager.");
+  if (pack_weight_ == nullptr) {
+    MS_LOG(DEBUG) << "define SHARING_MODEL_WEIGHT but not use parallel predict.";
+    return RET_OK;
   }
-  if (weight->packed_data.find(tensor->data()) != weight->packed_data.end()) {
-    return std::make_pair(PACKED, tensor->data());
-  } else if (weight->origin_data_index.find(tensor->data()) != weight->origin_data_index.end()) {
-    auto origin_index = weight->origin_data_index[tensor->data()];
-    void *data = nullptr;
-#ifdef _WIN32
-    data = _aligned_malloc(allocate_size, kMemAlginSize);
-#else
-    auto ret = posix_memalign(&data, kMemAliginSize, size);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "posix_memalign failed.";
-      return std::make_pair(MALLOC, nullptr);
+  auto lite_model = reinterpret_cast<LiteModel *>(model);
+  auto kernel_num = model->all_nodes_.size();
+  for (size_t i = 0; i < kernel_num; i++) {
+    auto node = model->all_nodes_[i];
+    for (size_t j = 0; j < node->input_indices_.size(); j++) {
+      auto tensor_index = node->input_indices_[j];
+      auto src_tensor = lite_model->GetSchemaTensor(tensor_index);
+      if (src_tensor == nullptr || src_tensor->handler() == nullptr || src_tensor->data() == nullptr ||
+          src_tensor->length() == 0) {
+        continue;
+      }
+      auto status = pack_weight_->StoreOriginTensorData(lite_model->buf, src_tensor->data());
+      if (status != RET_OK) {
+        MS_LOG(DEBUG) << "data not packed.";
+        return RET_ERROR;
+      }
     }
+  }
+  return RET_OK;
 #endif
-    weight->packed_data.insert(data);
-    packed_weights.insert(std::make_pair(origin_index, data));
-    return std::make_pair(NOTPACK, packed_weights.at(origin_index));
-  }
-  return std::make_pair(MALLOC, nullptr);
+  return RET_OK;
 }
 
-std::pair<PackStatus, void *> PackWeightManager::GetPackedTensor(const Tensor *tensor, const size_t size) {
-  MS_CHECK_TRUE_RET(tensor != nullptr, std::make_pair(MALLOC, nullptr));
-  auto round_size = RoundMemSize(size);
-  for (auto &item : path_model_weight_) {
-    auto &model_weight = item.second;
-    auto packed_tensor_pair = FindPackedTensor(model_weight, tensor, round_size);
-    if (packed_tensor_pair.second != nullptr) {
-      return packed_tensor_pair;
-    }
+void *PackWeightManager::GetPackData(const void *tensor_data, const size_t size, bool *is_packed) {
+  if (size > MAX_MALLOC_SIZE || size == 0) {
+    MS_LOG(ERROR) << "malloc size is wrong.";
+    return nullptr;
   }
-  for (auto &item : buf_model_weight_) {
-    auto &model_weight = item.second;
-    auto packed_tensor_pair = FindPackedTensor(model_weight, tensor, round_size);
-    if (packed_tensor_pair.second != nullptr) {
-      return packed_tensor_pair;
-    }
+#ifdef SHARING_MODEL_WEIGHT
+  if (pack_weight_ == nullptr) {
+    void *data = malloc(size);
+    *is_packed = false;
+    return data;
   }
-  MS_LOG(DEBUG) << "not const tensor, need pack in kernel.";
-  return std::make_pair(MALLOC, nullptr);
-}
-
-void PackWeightManager::DeleteSavedModelPtr(LiteModel *delete_model) {
-  std::unique_lock<std::mutex> weight_lock(mtx_weight_);
-  MS_CHECK_TRUE_RET_VOID(delete_model != nullptr);
-  for (auto &item : path_model_weight_) {
-    auto &weight = item.second;
-    auto it = find(weight->lite_models.begin(), weight->lite_models.end(), delete_model);
-    if (it != weight->lite_models.end()) {
-      weight->lite_models.erase(it);
-    }
-  }
-  for (auto &item : buf_model_weight_) {
-    auto &weight = item.second;
-    auto it = find(weight->lite_models.begin(), weight->lite_models.end(), delete_model);
-    if (it != weight->lite_models.end()) {
-      weight->lite_models.erase(it);
-    }
-  }
-}
-
-void PackWeightManager::FreePackedWeight(ModelConstWeight *weight) {
-  for (auto &&packed_data : weight->packed_data) {
-    auto data = const_cast<void *>(packed_data);
-    if (data != nullptr) {
-#ifdef _WIN32
-      _aligned_free(data);
-#else
-      free(data);
+  return pack_weight_->GetPackData(tensor_data, size, is_packed);
 #endif
-      data = nullptr;
-    }
-  }
-  weight->packed_weight.clear();
-  weight->packed_data.clear();
-  if (weight != nullptr) {
-    delete weight;
-    weight = nullptr;
-  }
+  void *data = malloc(size);
+  *is_packed = false;
+  return data;
 }
 
-PackWeightManager::~PackWeightManager() {
-  for (auto &item : path_model_weight_) {
-    FreePackedWeight(item.second);
+void PackWeightManager::Free(void *tensor_data) {
+#ifdef SHARING_MODEL_WEIGHT
+  return;
+#endif
+  if (tensor_data != nullptr) {
+    free(tensor_data);
+    tensor_data = nullptr;
   }
-  path_model_weight_.clear();
-  for (auto &item : buf_model_weight_) {
-    FreePackedWeight(item.second);
-  }
-  buf_model_weight_.clear();
 }
 }  // namespace mindspore::lite
-#endif
