@@ -598,7 +598,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
        [2816. 2816. 2816. 2816.]]
   
 
-  > 目前静态图不支持在Python交互式模式下运行，并且有部分语法限制。`ms_function`的更多信息可参考[API: ms_function](https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore/mindspore.ms_function.html)。
+  > 目前静态图不支持在Python交互式模式下运行，并且有部分语法限制。`ms_function` 的更多信息可参考 `API ms_function <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore/mindspore.ms_function.html>`_ 。
 
 - GradOperation使用示例
 
@@ -651,7 +651,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  更多细节可参考[API: GradOperation](https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/ops/mindspore.ops.GradOperation.html)。
+  更多细节可参考 `API GradOperation <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/ops/mindspore.ops.GradOperation.html>`_ 。
 
 - mindspore.context使用示例
 
@@ -677,7 +677,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
       context.set_context(device_target="Ascend")
       ...
 
-  更多细节可参考[API: mindspore.context](https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore.context.html)。
+  更多细节可参考 `API mindspore.context <https://www.mindspore.cn/docs/zh-CN/r1.7/api_python/mindspore.context.html>`_ 。
 
 - mindspore.numpy使用示例
 
