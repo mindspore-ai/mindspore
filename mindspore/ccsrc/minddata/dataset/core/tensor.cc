@@ -122,12 +122,18 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
     if (byte_size == 0) {
       return Status::OK();
     }
+    std::string err_msg =
+      "Failed to copy data into tensor. If GeneratorDataset(source=Pyfunc, ...) or map(operations=Pyfunc, ...) is "
+      "used, please check whether the memory of the "
+      "Numpy object returned by Pyfunc has been unexpectedly freed. Adding copy.deepcopy(numpy_object) before "
+      "numpy_object returned by Pyfunc maybe solve the issue. For more details, please refer to the FAQ at "
+      "https://www.mindspore.cn/docs/en/master/faq/data_processing.html.";
     if (byte_size < SECUREC_MEM_MAX_LEN) {
       int ret_code = memcpy_s((*out)->data_, byte_size, src, byte_size);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, "Failed to copy data into tensor.");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == 0, err_msg);
     } else {
       auto ret_code = std::memcpy((*out)->data_, src, byte_size);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == (*out)->data_, "Failed to copy data into tensor.");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == (*out)->data_, err_msg);
     }
   }
   return Status::OK();
