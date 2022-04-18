@@ -25,6 +25,7 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
   {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_RELU), 1.806f},        // dataNum about 100k
   {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_RELU6), 1.806f},       // dataNum about 100k
   {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_LEAKY_RELU), 1.806f},  // dataNum about 100k
+  {TC_TYPE(schema::PrimitiveType_Activation, schema::ActivationType_TANH), 41.65625},      // dataNum about 5k
 
   {TC_TYPE(schema::PrimitiveType_Sqrt, 0), 1.806f},    // dataNum about 100k
   {TC_TYPE(schema::PrimitiveType_Split, 0), 21.573f},  // dataNum about 8k
@@ -43,6 +44,14 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
   {TC_TYPE(schema::PrimitiveType_SubFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 80k
   {TC_TYPE(schema::PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 100k
 
+  {TC_TYPE(schema::PrimitiveType_DivFusion, schema::ActivationType_RELU), 2.288f},           // dataNum about 15k
+  {TC_TYPE(schema::PrimitiveType_DivFusion, schema::ActivationType_RELU6), 2.288f},          // dataNum about 15k
+  {TC_TYPE(schema::PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION), 1.806f},  // dataNum about 30k
+
+  {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_RELU), 13.65625f},          // dataNum about 15k
+  {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_RELU6), 13.65625f},         // dataNum about 15k
+  {TC_TYPE(schema::PrimitiveType_RealDiv, schema::ActivationType_NO_ACTIVATION), 6.65625f},  // dataNum about 30k
+
   {TC_TYPE(schema::PrimitiveType_StridedSlice, 0), 38.027f},  // type 0 : parallel on outer tile, dataNum about 5.2k
   {TC_TYPE(schema::PrimitiveType_StridedSlice, 1), 42.042f},  // type 1 : parallel on split axis, dataNum about 4.5k
 
@@ -51,6 +60,9 @@ const std::map<int32_t, float> kernel_compute_cost_map_ = {
 
   {TC_TYPE(schema::PrimitiveType_Fill, 0), 0.181f},  // dataNum about 260k(float/int IO : load 0, store 1)
   {TC_TYPE(schema::PrimitiveType_Cast, 0), 0.181f},  // dataNum about 100k(float/int IO : load 1, store 1)
+
+  {TC_TYPE(schema::PrimitiveType_LayerNormFusion, 0), 507.812f},  // dataNum about 0.5k
+  {TC_TYPE(schema::PrimitiveType_OneHot, 0), 136.562f},           // dataNum about 1.5k
 };
 
 float ThreadCostModel::per_unit_load_cost_ = 1.0 / 64 * 11;   // 64: L2 cache size, 11 : L2 cache latency on Haswell
