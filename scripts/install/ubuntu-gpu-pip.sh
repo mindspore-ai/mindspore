@@ -110,14 +110,14 @@ python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simp
 echo "installing CUDA and cuDNN"
 cd /tmp
 declare -A cuda_url_map=()
-cuda_url_map["10.1"]=https://developer.download.nvidia.com/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
-cuda_url_map["11.1"]=https://developer.download.nvidia.com/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run
+cuda_url_map["10.1"]=https://developer.download.nvidia.cn/compute/cuda/10.1/Prod/local_installers/cuda_10.1.243_418.87.00_linux.run
+cuda_url_map["11.1"]=https://developer.download.nvidia.cn/compute/cuda/11.1.1/local_installers/cuda_11.1.1_455.32.00_linux.run
 cuda_url=${cuda_url_map[$CUDA_VERSION]}
 wget $cuda_url
 sudo sh ${cuda_url##*/} --silent --toolkit
 cd -
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-sudo add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu1804/x86_64/ /"
 sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu1804/x86_64/ /"
 sudo apt-get update
 declare -A cudnn_name_map=()
