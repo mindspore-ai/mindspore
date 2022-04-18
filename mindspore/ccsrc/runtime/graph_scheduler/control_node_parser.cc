@@ -517,7 +517,9 @@ void AddFormalToRealParameter(const AnfNodePtr &formal_parameter, const AnfNodeP
                               FormalToRealParameter *const formal_to_real_parameters) {
   MS_EXCEPTION_IF_NULL(formal_parameter);
   auto abstract = formal_parameter->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
+  if (abstract == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty abstract for parameter:" << formal_parameter->DebugString();
+  }
   size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(abstract);
 
   for (size_t i = 0; i < output_num; ++i) {
@@ -559,6 +561,30 @@ bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_no
   return true;
 }
 }  // namespace
+
+bool IsInvalidPartial(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  if (inputs.size() <= kPartialFuncGraphPos) {
+    return false;
+  }
+
+  if (!common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+    return false;
+  }
+
+  auto func_value = GetValueNode<StringImmPtr>(inputs[kPartialFuncGraphPos]);
+  if (func_value != nullptr && func_value->value() == kDeadNodeName) {
+    return true;
+  }
+  return false;
+}
 
 KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index) {
   MS_EXCEPTION_IF_NULL(node_with_index.first);
@@ -1784,6 +1810,10 @@ void ControlNodeParser::ParseNeedStackControlNode(const std::vector<AnfNodePtr> 
 
   for (const auto &control_node : control_nodes) {
     MS_EXCEPTION_IF_NULL(control_node);
+    if (IsInvalidPartial(control_node)) {
+      continue;
+    }
+
     if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
       auto input_with_indexs = FetchInputNodeByCNode(control_node);
       size_t call_input_num = 0;

@@ -102,7 +102,6 @@ void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       auto output_partial = input_partials_[IntToSize(arrow->from_output_index_)];
-      MS_EXCEPTION_IF_NULL(output_partial->func_graph_);
       ActorDispatcher::Send(arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
                             IntToSize(arrow->to_input_index_), context);
     }

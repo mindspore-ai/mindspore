@@ -486,7 +486,10 @@ bool ExistGraphCaller(const AnfNodePtr &partial_node) {
   auto partial_cnode = partial_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(partial_cnode);
   auto partial_graph = GetValueNode<FuncGraphPtr>(partial_cnode->input(kFirstDataInputIndex));
-  MS_EXCEPTION_IF_NULL(partial_graph);
+  // If graph is nullptr, it means that the funcgraph in the partial node is a deadnode, and the processing is skipped.
+  if (partial_graph == nullptr) {
+    return false;
+  }
   auto graph_nodes = TopoSort(partial_graph->get_return());
   return std::any_of(graph_nodes.begin(), graph_nodes.end(), IsValueNode<FuncGraph>);
 }
@@ -2205,7 +2208,10 @@ std::string SessionBasic::AddPartialParametersMap(const AnfNodePtr &partial_node
   auto partial_cnode = partial_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(partial_cnode);
   auto partial_graph = GetValueNode<FuncGraphPtr>(partial_cnode->input(kFirstDataInputIndex));
-  MS_EXCEPTION_IF_NULL(partial_graph);
+  // If graph is nullptr, it means that the funcgraph in the partial node is a deadnode, and the processing is skipped.
+  if (partial_graph == nullptr) {
+    return kNoTarget;
+  }
   auto parameters = partial_graph->parameters();
   auto partial_inputs = partial_cnode->inputs();
   const size_t kNonParameterNum = 2;

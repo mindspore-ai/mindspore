@@ -140,7 +140,7 @@ void GatherActor::GatherInput(OpContext<DeviceTensor> *const context) {
 
   // Put other partials in the first partial.
   for (size_t i = 1; i < input_partials_.size(); ++i) {
-    if (input_partials_[i] != nullptr && input_partials_[i]->func_graph_ != nullptr) {
+    if (input_partials_[i] != nullptr) {
       (void)gather_input_->partials_.emplace_back(i + offset, input_partials_[i]);
     }
   }
