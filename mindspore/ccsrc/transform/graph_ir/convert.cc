@@ -582,7 +582,8 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
 #endif
   restore_checkpoint_sout_.clear();
   restore_checkpoint_sout_ << "digraph {" << endl;
-
+  // Convert ResizeBilinear attr size to input
+  ConvertResizeBilinear(anf_graph_);
   // Convert all anf node to Operator
   MS_LOG(DEBUG) << "convert all node";
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
@@ -1531,6 +1532,29 @@ void DfGraphConvertor::ConvertTopK(const CNodePtr node) {
   auto op = adpt->generate(value_ptr);
   (void)adpt->setAttr(op, "value", static_cast<int32_t>(int64_value));
   op_cache_[value_ptr.get()] = op;
+}
+
+void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) {
+  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
+  for (auto &it : nodes) {
+    if (it->isa<CNode>()) {
+      auto node = it->cast<CNodePtr>();
+      std::string name = GetCNodeTargetFuncName(node);
+      if (name == prim::kPrimResizeBilinear->name()) {
+        AnfNodePtr op = node->input(0);
+        if (IsValueNode<Primitive>(op)) {
+          auto prim = GetValueNode<PrimitivePtr>(op);
+          ValuePtr size_value = prim->GetAttr("size");
+          auto int64_value = GetValue<std::vector<int64_t>>(size_value);
+          std::vector<int32_t> int32_value;
+          (void)std::transform(int64_value.begin(), int64_value.end(), std::back_inserter(int32_value), LongToInt);
+          auto valuend = NewValueNode(int32_value);
+          valuend->set_abstract(size_value->ToAbstract());
+          node->add_input(valuend);
+        }
+      }
+    }
+  }
 }
 
 std::vector<int64_t> DfGraphConvertor::CastToInt(const ValuePtr &value) {
