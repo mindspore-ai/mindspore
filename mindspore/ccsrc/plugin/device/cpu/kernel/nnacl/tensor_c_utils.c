@@ -228,22 +228,18 @@ int GetElementNum(const TensorC *tensor) {
     MS_CHECK_INT_MUL_NOT_OVERFLOW(res, tensor->shape_[i], NNACL_ERRCODE_MUL_OVERFLOW);
     res = res * tensor->shape_[i];
   }
-  return res;
-}
 
-int GetElementCxNum(const TensorC *tensor) {
-  int ele = GetElementNum(tensor);
   int c = GetChannel(tensor);
   if (c == 0) {
-    return ele;
+    return res;
   }
   if (tensor->format_ == Format_NC4HW4) {
-    ele = ele / c * UP_ROUND(c, C4NUM);
+    res = res / c * UP_ROUND(c, C4NUM);
   }
   if (tensor->format_ == Format_NC8HW8) {
-    ele = ele / c * UP_ROUND(c, C8NUM);
+    res = res / c * UP_ROUND(c, C8NUM);
   }
-  return ele;
+  return res;
 }
 
 int GetDimensionSize(const TensorC *tensor, const size_t index) {

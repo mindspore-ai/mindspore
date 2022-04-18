@@ -355,7 +355,7 @@ void InnerContext::ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_s
   }
 }
 
-int ParallelLaunch(const Context *context, const TaskFunc &func, Content content, int task_num) {
+int ParallelLaunch(const Context *context, const Func &func, Content content, int task_num) {
   ThreadPool *pool = static_cast<const lite::InnerContext *>(context)->thread_pool();
   if (pool == nullptr) {
     MS_LOG(ERROR) << "thread pool is nullptr";

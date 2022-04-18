@@ -49,7 +49,7 @@ Convolution1x1CPU::~Convolution1x1CPU() {
 }
 
 int Convolution1x1CPU::Prepare() {
-  kernel = CreateKernel(op_parameter_, in, in_tensors().size(), out, 1);
+  kernel = CreateKernel(op_parameter_, in, in_tensors().size(), out, 1, kNumberTypeFloat32);
   if (kernel == nullptr) {
     return -1;
   }

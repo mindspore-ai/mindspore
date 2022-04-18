@@ -31,7 +31,6 @@ int GetHeight(const TensorC *tensor);
 int GetWidth(const TensorC *tensor);
 int GetChannel(const TensorC *tensor);
 int GetElementNum(const TensorC *tensor);
-int GetElementCxNum(const TensorC *tensor);
 int GetDimensionSize(const TensorC *tensor, const size_t index);
 
 #ifdef __cplusplus
