@@ -597,6 +597,9 @@ FuncGraphPtr ConvertToFuncGraph(const py::object &obj, const std::string &python
     data_converter::SetObjGraphValue(obj_key, func_graph);
   }
 
+  PyObjectWrapperPtr python_obj = std::make_shared<PyObjectWrapper>(obj, "graph python obj");
+  func_graph->set_python_obj(python_obj);
+
   return func_graph;
 }
 

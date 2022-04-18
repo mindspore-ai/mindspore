@@ -15,7 +15,8 @@
 # limitations under the License.
 # ============================================================================
 """standard_method"""
-from mindspore import Tensor, Parameter, CSRTensor, COOTensor, ms_class
+
+from mindspore import Tensor, CSRTensor, COOTensor, ms_class
 from mindspore import dtype as mstype
 
 from ..._checkparam import Validator as validator
@@ -1536,34 +1537,6 @@ def view(x, *shape):
     return F.reshape(x, shape)
 
 
-@constexpr
-def check_is_tuple(x):
-    """check whether x is tuple."""
-    return isinstance(x, mstype.Tuple)
-
-
-@constexpr
-def check_is_func(x):
-    """check whether x is function."""
-    return isinstance(x, mstype.function_type)
-
-
-def isinstance_(x, base_type):
-    """Determine whether x is an instance of base."""
-    x_type = F.typeof(x)
-    cmp_type = base_type
-    if check_is_tuple(F.typeof(base_type)):
-        cmp_type = ()
-        for i in base_type:
-            if check_is_func(F.typeof(i)) and i.__is_csr_func__():
-                cmp_type += (mstype.csr_tensor_type,)
-            else:
-                cmp_type += (i,)
-    if check_is_func(F.typeof(base_type)) and base_type.__is_csr_func__():
-        cmp_type = mstype.csr_tensor_type
-    return check_type_same(x_type, cmp_type)
-
-
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
@@ -1609,55 +1582,6 @@ def csr_to_dense(x):
 def empty_tensor(dtype):
     """Return empty tensor"""
     return Tensor([], dtype)
-
-
-@constexpr
-def check_type_same(x_type, base_type):
-    """Check x_type is same as base_type."""
-    pytype_to_mstype = {
-        bool: mstype.Bool,
-        int: mstype.Int,
-        float: mstype.Float,
-        str: mstype.String,
-        list: mstype.List,
-        tuple: mstype.Tuple,
-        dict: mstype.Dict,
-        Tensor: mstype.tensor_type,
-        Parameter: mstype.ref_type,
-        slice: mstype.Slice,
-    }
-    sparse_mstype_set = (mstype.csr_tensor_type,)
-
-    has_int = False
-    has_tensor = False
-
-    def to_target_type(origin_type):
-        try:
-            if isinstance(origin_type, type):
-                ret_type = None
-                if origin_type in pytype_to_mstype:
-                    ret_type = pytype_to_mstype[origin_type]
-                elif origin_type in sparse_mstype_set:
-                    ret_type = origin_type
-
-                if ret_type == mstype.Int:
-                    nonlocal has_int
-                    has_int = True
-                if ret_type == mstype.tensor_type:
-                    nonlocal has_tensor
-                    has_tensor = True
-                return (ret_type,)
-            if isinstance(origin_type, tuple):
-                return tuple(to_target_type(i) for i in origin_type)
-            raise TypeError(f"The second arg of 'isinstance' must be a type or a tuple of types, "
-                            f"but got a {type(origin_type).__name__}")
-        except KeyError:
-            raise TypeError(f"The second arg of 'isinstance' should be bool, int, float, str, list, tuple, "
-                            f"Tensor, Parameter, or a tuple containing only these types, but got {origin_type}")
-    target_type = to_target_type(base_type)
-    if (isinstance(x_type, mstype.Bool) and has_int) or (isinstance(x_type, mstype.ref_type) and has_tensor):
-        return True
-    return isinstance(x_type, target_type)
 
 
 @constexpr

@@ -20,6 +20,7 @@ import math
 
 from mindspore import RowTensor, SparseTensor, COOTensor, CSRTensor
 from mindspore.ops import functional as F, composite as C
+from mindspore.ops import Primitive
 from mindspore.ops.composite import multitype_ops
 from mindspore._c_expression import security
 from . import standard_method as M
@@ -133,7 +134,7 @@ convert_object_map = {
     T.partial:      F.partial,
     T.zip:          C.zip_operation,
     T.enumerate:    M.enumerate_,
-    T.isinstance:   M.isinstance_,
+    T.isinstance:   Primitive('isinstance'),
 
     # custom define operation
     T.iter:         M.ms_iter,

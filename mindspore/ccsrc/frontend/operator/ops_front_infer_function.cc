@@ -23,6 +23,7 @@
 #include <map>
 
 #include "abstract/abstract_value.h"
+#include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/static_analysis/prim.h"
 #include "abstract/param_validator.h"
 #include "pybind_api/ir/tensor_py.h"
@@ -216,6 +217,193 @@ AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &
   MS_EXCEPTION_IF_NULL(args_spec_list[0]);
   bool v = IsSubtype(args_spec_list[0], mode_t);
   return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(v), kBool);
+}
+
+bool CheckPythonIsInstance(const py::object &x, const AbstractBasePtr &cmp, const py::module &mod, bool is_const) {
+  if (cmp->isa<abstract::AbstractTuple>()) {
+    const auto &cmp_tuple_elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
+    return std::any_of(cmp_tuple_elements.begin(), cmp_tuple_elements.end(),
+                       [&x, &mod, is_const](const AbstractBasePtr &element) {
+                         return CheckPythonIsInstance(x, element, mod, is_const);
+                       });
+  }
+  if (std::find(kSparsePrimStr.begin(), kSparsePrimStr.end(), cmp->ToString()) != kSparsePrimStr.end()) {
+    return false;
+  }
+  auto cmp_value = cmp->BuildValue();
+  if (cmp_value == kAnyValue) {
+    return false;
+  }
+  py::object cmp_type = ValueToPyData(cmp_value);
+  py::object result = is_const ? python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_PYTHON_ISINSTANCE, x, cmp_type)
+                               : python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_MS_ISINSTANCE, x, cmp_type);
+  return result.cast<bool>();
+}
+
+bool CheckIsInstanceForFunc(const py::object &x_py_obj, const AbstractBasePtr &cmp, const py::module &mod) {
+  if (cmp->isa<abstract::AbstractTuple>()) {
+    const auto &cmp_tuple_elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
+    return std::any_of(
+      cmp_tuple_elements.begin(), cmp_tuple_elements.end(),
+      [&x_py_obj, &mod](const AbstractBasePtr &element) { return CheckIsInstanceForFunc(x_py_obj, element, mod); });
+  }
+
+  if (!cmp->isa<abstract::PartialAbstractClosure>()) {
+    return false;
+  }
+  const auto &cmp_closure_args = cmp->cast<abstract::PartialAbstractClosurePtr>()->args();
+  // CheckCmpValid ensures size of cmp_closure_args to be 1.
+  auto cmp_closure_first_input = cmp_closure_args[0];
+  auto cmp_py_obj = ValueToPyData(cmp_closure_first_input->BuildValue());
+  auto result = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_PYTHON_ISINSTANCE, x_py_obj, cmp_py_obj);
+  return result.cast<bool>();
+}
+
+bool CheckIsInstanceForSparse(const AbstractBasePtr &cmp, const std::string &target) {
+  if (!cmp->isa<abstract::AbstractTuple>()) {
+    return cmp->ToString() == target;
+  }
+  const auto &cmp_tuple_elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
+  return std::any_of(cmp_tuple_elements.begin(), cmp_tuple_elements.end(),
+                     [&target](const AbstractBasePtr &element) { return CheckIsInstanceForSparse(element, target); });
+}
+
+py::object GetPrimitivePyObj(const abstract::PrimitiveAbstractClosurePtr &prim_abs) {
+  auto prim = prim_abs->prim();
+  MS_EXCEPTION_IF_NULL(prim);
+  auto prim_signature = prim->cast<prim::DoSignaturePrimitivePtr>();
+  MS_EXCEPTION_IF_NULL(prim_signature);
+  auto function = prim_signature->function();
+  MS_EXCEPTION_IF_NULL(function);
+  auto primitive_py_function = function->cast<PrimitivePyPtr>();
+  return primitive_py_function->GetPyObj();
+}
+
+py::object GetMsClassPyObj(const abstract::PartialAbstractClosurePtr &ms_class_abs) {
+  const auto &ms_class_args = ms_class_abs->args();
+  if (ms_class_args.size() != 1) {
+    MS_LOG(EXCEPTION) << "When the first input to IsInstance is PartialAbstractClosure, its args size should be 1 but "
+                      << "got: " << ms_class_args.size() << ".";
+  }
+  auto first_arg = ms_class_args[0];
+  auto arg_type = first_arg->BuildType();
+  auto arg_type_id = arg_type->type_id();
+  if (arg_type_id != kObjectTypeClass) {
+    MS_LOG(EXCEPTION) << "When the first input to IsInstance is PartialAbstractClosure, its first arg should be of "
+                      << "type kObjectTypeClass but got: " << TypeIdToString(arg_type_id) << ".";
+  }
+  auto class_value = first_arg->BuildValue();
+  MS_EXCEPTION_IF_NULL(class_value);
+  return ValueToPyData(class_value);
+}
+
+bool CheckCmpValid(const AbstractBasePtr &cmp) {
+  if (cmp->isa<abstract::AbstractSequence>()) {
+    if (!cmp->isa<abstract::AbstractTuple>()) {
+      return false;
+    }
+    const auto &elements = cmp->cast<abstract::AbstractTuplePtr>()->elements();
+    return std::all_of(elements.begin(), elements.end(),
+                       [](const AbstractBasePtr &element) { return CheckCmpValid(element); });
+  }
+  if (cmp->isa<abstract::AbstractScalar>()) {
+    auto cmp_type = cmp->BuildType();
+    MS_EXCEPTION_IF_NULL(cmp_type);
+    return cmp_type->type_id() == kMetaTypeTypeType;
+  } else if (cmp->isa<abstract::PartialAbstractClosure>()) {
+    auto cmp_closure = cmp->cast<abstract::PartialAbstractClosurePtr>();
+    const auto &cmp_closure_args = cmp_closure->args();
+    if (cmp_closure_args.size() != 1) {
+      return false;
+    }
+    auto cmp_closure_first_input = cmp_closure_args[0];
+    auto cmp_type = cmp_closure_first_input->BuildType();
+    MS_EXCEPTION_IF_NULL(cmp_type);
+    auto cmp_type_id = cmp_type->type_id();
+    if (cmp_type_id == kObjectTypeClass) {
+      // When cmp type is ms_class, fn should be create_instance.
+      auto cmp_closure_fn = cmp_closure->fn();
+      MS_EXCEPTION_IF_NULL(cmp_closure_fn);
+      const std::string ms_class_type_fn_name = "Prim: create_instance";
+      return cmp_closure_fn->ToString() == ms_class_type_fn_name;
+    }
+    return cmp_type_id == kMetaTypeTypeType;
+  }
+  return std::find(kSparsePrimStr.begin(), kSparsePrimStr.end(), cmp->ToString()) != kSparsePrimStr.end();
+}
+
+AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  constexpr size_t args_num = 2;
+  CheckArgsSize(primitive->name(), args_spec_list, args_num);
+  py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+  auto x = args_spec_list[0];
+  auto cmp = args_spec_list[1];
+  bool result = false;
+
+  if (!CheckCmpValid(cmp)) {
+    MS_LOG(EXCEPTION) << "isinstance() arg 2 must be a type or tuple of types.";
+  }
+
+  // x is Cell object.
+  if (x->isa<abstract::FuncGraphAbstractClosure>()) {
+    auto x_fg = x->cast<abstract::FuncGraphAbstractClosurePtr>()->func_graph();
+    MS_EXCEPTION_IF_NULL(x_fg);
+    auto wrapper_obj = x_fg->python_obj();
+    if (wrapper_obj != nullptr) {
+      if (!wrapper_obj->isa<parse::PyObjectWrapper>()) {
+        MS_LOG(EXCEPTION) << "The wrapper_obj of FuncGraphAbstractClosure must be PyObjectWrapper but got: "
+                          << wrapper_obj->ToString() << ".";
+      }
+      auto x_py_obj = wrapper_obj->cast<parse::PyObjectWrapperPtr>()->obj();
+      result = CheckIsInstanceForFunc(x_py_obj, cmp, mod);
+    }
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  }
+
+  // x is Primitive.
+  if (x->isa<abstract::PrimitiveAbstractClosure>()) {
+    auto x_py_obj = GetPrimitivePyObj(x->cast<abstract::PrimitiveAbstractClosurePtr>());
+    result = CheckIsInstanceForFunc(x_py_obj, cmp, mod);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  }
+
+  // x is ms_class.
+  if (x->isa<abstract::PartialAbstractClosure>()) {
+    auto x_py = GetMsClassPyObj(x->cast<abstract::PartialAbstractClosurePtr>());
+    result = CheckIsInstanceForFunc(x_py, cmp, mod);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  }
+
+  // x is sparse tensor, now support RowTensor, CSRTensor, COOTensor.
+  if (x->isa<abstract::AbstractCSRTensor>()) {
+    const size_t csr_index = 0;
+    result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[csr_index]);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  } else if (x->isa<abstract::AbstractCOOTensor>()) {
+    const size_t coo_index = 1;
+    result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[coo_index]);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  } else if (x->isa<abstract::AbstractRowTensor>()) {
+    const size_t row_index = 2;
+    result = CheckIsInstanceForSparse(cmp, kSparsePrimStr[row_index]);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  }
+
+  auto x_value = x->BuildValue();
+  // x is variable built-in type.
+  if (x_value == kAnyValue) {
+    auto x_abs_type = std::make_shared<AbstractType>(x->BuildType());
+    auto py_x_type = ValueToPyData(x_abs_type->BuildValue());
+    result = CheckPythonIsInstance(py_x_type, cmp, mod, false);
+    return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
+  }
+
+  // x is python built-in constant type or external type.
+  py::object x_py_obj = ValueToPyData(x_value);
+  result = CheckPythonIsInstance(x_py_obj, cmp, mod, true);
+  return std::make_shared<AbstractScalar>(std::make_shared<BoolImm>(result), kBool);
 }
 
 bool CompareShape(const std::vector<ValuePtr> &x_shape, const std::vector<ValuePtr> &y_shape) {
@@ -860,6 +1048,7 @@ AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePt
 
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType, nullptr);
+REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(IsInstance, prim::kPrimIsInstance, InferImplIsInstance, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRecord, prim::kPrimMakeRecord, InferImplMakeRecord, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListMap, prim::kPrimListMap, InferImplListMap, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);
