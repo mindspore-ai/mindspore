@@ -312,3 +312,28 @@ def test_raise_12():
         res = net()
         print("res:", res)
     assert "The var name is x, it can not be 1." in str(raise_info_12.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_raise_13():
+    """
+    Feature: graph raise by JIT Fallback.
+    Description: Test raise(string % var).
+    Expectation: No exception.
+    """
+    class RaiseNet(nn.Cell):
+        def construct(self):
+            x = Tensor(1)
+            if x == 1:
+                raise ValueError("The input should not be Tensor(1).")
+            return x
+
+    with pytest.raises(ValueError) as raise_info_13:
+        net = RaiseNet()
+        res = net()
+        print("res:", res)
+    assert "The input should not be Tensor(1)." in str(raise_info_13.value)

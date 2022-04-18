@@ -191,6 +191,12 @@ class MS_CORE_API AbstractBase : public Base {
 
   void set_value_mutable(bool value_mutable) { value_mutable_ = value_mutable; }
 
+  /// \brief Process the abstract with InterpretedObject.
+  using InterpretBoolChecker = std::pair<bool, bool> (*)(const AbstractBasePtr &cond);
+  static inline InterpretBoolChecker interpret_bool_checker_ = nullptr;
+  static void set_interpret_bool_checker(InterpretBoolChecker checker) { interpret_bool_checker_ = checker; }
+  static inline InterpretBoolChecker interpret_bool_checker() { return interpret_bool_checker_; }
+
  protected:
   /// \brief Build a value when value is not set.
   ///
@@ -605,18 +611,18 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   explicit AbstractTensor(const AbstractBasePtr &element, const BaseShapePtr &shape = std::make_shared<Shape>())
       : AbstractUndetermined(element, shape) {}
 
-  /// \brief Constructor of AbstractScalar.
+  /// \brief Constructor of AbstractTensor.
   ///
   /// \param[in] element_type The type of abstract tensor.
   /// \param[in] shape A vector of the tensor's shape.
   AbstractTensor(const TypePtr &element_type, const ShapeVector &shape) : AbstractUndetermined(element_type, shape) {}
 
-  /// \brief Constructor of AbstractScalar.
+  /// \brief Constructor of AbstractTensor.
   ///
   /// \param[in] tensor The tensor to be abstracted.
   explicit AbstractTensor(const tensor::TensorPtr &tensor) : AbstractUndetermined(tensor->Dtype(), tensor->shape()) {}
 
-  /// \brief Constructor of AbstractScalar.
+  /// \brief Constructor of AbstractTensor.
   ///
   /// \param[in] element_type The type of a tensor.
   /// \param[in] shape The dimension of a tensor.

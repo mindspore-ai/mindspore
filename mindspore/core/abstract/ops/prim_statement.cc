@@ -34,7 +34,7 @@ AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
   return abs_base;
 }
 
-void SetTensorFlag(const AbstractBasePtr abs) {
+void SetVariableFlag(const AbstractBasePtr abs) {
   if (abs->isa<abstract::AbstractFunction>()) {
     const auto &func_abs = abs->cast<abstract::AbstractFunctionPtr>();
     MS_EXCEPTION_IF_NULL(func_abs);
@@ -46,6 +46,13 @@ void SetTensorFlag(const AbstractBasePtr abs) {
       MS_LOG(DEBUG) << "Set is_tensor_condition_branch for func_graph:" << func->ToString();
     }
   }
+}
+
+std::pair<bool, bool> CheckCondAbstractIsInterpretedObj(const AbstractBasePtr &cond) {
+  if (abstract::AbstractBase::interpret_bool_checker()) {
+    return abstract::AbstractBase::interpret_bool_checker()(cond);
+  }
+  return {false, false};
 }
 
 AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
@@ -63,15 +70,29 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
 
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
-  // For tensor as condition, keeps both true and false branch.
-  if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
-    // Need record two func_graph
-    if (cond->isa<AbstractTensor>()) {
-      SetTensorFlag(tb);
-      SetTensorFlag(fb);
-    }
+  // If the value of condition is AnyValue, keeps both true and false branch.
+  if (v->isa<AnyValue>()) {
     MS_EXCEPTION_IF_NULL(tb);
+    // Need record two func_graph
+    SetVariableFlag(tb);
+    SetVariableFlag(fb);
     return tb->Join(fb);
+  }
+
+  if (cond->isa<AbstractTensor>()) {
+    // Check the value of tensor
+    auto cond_tensor = cond->cast<AbstractTensorPtr>();
+    TypePtr tensor_dtype = cond_tensor->element()->BuildType();
+    auto build_value = cond_tensor->BuildValue();
+    MS_EXCEPTION_IF_NULL(build_value);
+    auto value = build_value->cast<tensor::TensorPtr>();
+    if (value != nullptr) {
+      if (!tensor_dtype->isa<Bool>()) {
+        MS_LOG(EXCEPTION) << "Not support this condition value: " << cond->GetValueTrack()->ToString();
+      }
+      auto *bool_value = static_cast<bool *>(value->data_c());
+      return (*bool_value) ? tb : fb;
+    }
   }
 
   if (v->isa<Scalar>()) {
@@ -79,6 +100,16 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
       return tb;
     } else {
       return fb;
+    }
+  }
+  TypePtr cond_type = cond->GetTypeTrack();
+  MS_EXCEPTION_IF_NULL(cond_type);
+  if (cond->isa<AbstractScalar>() && cond_type->type_id() == kMetaTypeExternal) {
+    // Check the abstract of condition, if the value is InterpretedObject, and has "True" in it, return true branch.
+    // For example, AbstractScalar(Type: kMetaTypeExternal, Value: InterpretedObject: "True", ...)
+    auto [is_interpret, has_true] = CheckCondAbstractIsInterpretedObj(cond);
+    if (is_interpret) {
+      return (has_true ? tb : fb);
     }
   }
 
