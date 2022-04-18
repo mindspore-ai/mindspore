@@ -5279,7 +5279,7 @@ class BesselI0(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32 or float64.
+          Data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -5310,7 +5310,7 @@ class BesselI1(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16, float32 or float64.
+          Data type must be float16 or float32.
 
     Outputs:
         Tensor, has the same shape as `x`.
@@ -5412,6 +5412,130 @@ class BesselI1e(Primitive):
     def __init__(self):
         """Initialize BesselI1e"""
         self.init_prim_io_names(inputs=['x'], outputs='output')
+
+
+class BesselK0(Primitive):
+    r"""
+    Computes BesselK0 of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> bessel_k0 = ops.BesselK0()
+        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_k0(x)
+        >>> print(output)
+        [1.579826  0.5402144 1.3424659 2.5310173]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselK0"""
+
+
+class BesselK1(Primitive):
+    r"""
+    Computes BesselK1 of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> bessel_k1 = ops.BesselK1()
+        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_k1(x)
+        >>> print(output)
+        [3.9190812  0.8143549  2.9440577 10.974864]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselK1"""
+
+
+class BesselK0e(Primitive):
+    """
+    Computes BesselK0e of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> bessel_k0e = ops.BesselK0e()
+        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_k0e(x)
+        >>> print(output)
+        [2.0083523 1.2388839 1.8303517 2.769374 ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselK0e"""
+
+
+class BesselK1e(Primitive):
+    """
+    Computes BesselK1e of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> bessel_k1e = ops.BesselK1e()
+        >>> x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
+        >>> output = bessel_k1e(x)
+        >>> print(output)
+        [ 4.9821286  1.8675754  4.0140023 12.008413 ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselK1e"""
 
 
 class Inv(Primitive):
