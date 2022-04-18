@@ -86,17 +86,26 @@ class MS_CORE_API AbstractBase : public Base {
   /// \brief Set the value for the AbstractBase.
   ///
   /// \param[in] value The value of an anf node.
-  void set_value(const ValuePtr &value) { value_ = value; }
+  void set_value(const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
+    value_ = value;
+  }
 
   /// \brief Set the type for the AbstractBase.
   ///
   /// \param[in] value The type of an anf node.
-  void set_type(const TypePtr &type) { type_ = type; }
+  void set_type(const TypePtr &type) {
+    MS_EXCEPTION_IF_NULL(type);
+    type_ = type;
+  }
 
   /// \brief Set the shape for the AbstractBase.
   ///
   /// \param[in] value The shape of an anf node.
-  virtual void set_shape(const BaseShapePtr &shape) { shape_ = shape; }
+  virtual void set_shape(const BaseShapePtr &shape) {
+    MS_EXCEPTION_IF_NULL(shape);
+    shape_ = shape;
+  }
 
   /// \brief Set the value description for the AbstractBase.
   ///
