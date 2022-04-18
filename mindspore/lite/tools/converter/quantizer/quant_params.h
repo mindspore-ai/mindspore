@@ -54,6 +54,7 @@ struct FullQuantParam {
   ActivationQuantizedMethod activation_quant_method = MAX_MIN;
   bool bias_correction = true;
   bool cle = false;
+  bool per_channel = true;
   TargetDevice target_device = CPU;
 };
 }  // namespace mindspore::lite::quant

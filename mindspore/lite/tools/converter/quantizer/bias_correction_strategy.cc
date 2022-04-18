@@ -456,13 +456,10 @@ int BiasCorrectionStrategy::AddBiasToInt32Tensor(const CNodePtr &cnode, const te
                   << " not the same as bias_diff: " << bias_diff.size();
     return RET_ERROR;
   }
-  if (bias_quant_params.size() != bias_diff.size()) {
-    MS_LOG(ERROR) << op_name << " unexpected bias quant params size: " << bias_quant_params.size()
-                  << " not the same as bias_diff: " << bias_diff.size();
-    return RET_ERROR;
-  }
+  bool per_tensor = bias_quant_params.size() != bias_diff.size();
   for (size_t i = 0; i < bias_tensor->DataSize(); i++) {
-    auto scale = bias_quant_params[i].scale;
+    auto bias_quant_param_index = per_tensor ? 0 : i;
+    auto scale = bias_quant_params[bias_quant_param_index].scale;
     if (fabs(scale) <= 0.0f) {
       MS_LOG(ERROR) << op_name << " divisor 'scale' cannot be 0.";
       return RET_ERROR;
