@@ -212,12 +212,8 @@ void Connection::Close() {
       MS_LOG(ERROR) << "Failed to delete epoll event " << socket_fd;
     }
   }
-  if (!destination.empty()) {
-    if (recv_message != nullptr) {
-      delete recv_message;
-      recv_message = nullptr;
-    }
-  }
+
+  // There's no need to release the recv_message because the lifecycle of this data is passed to the caller.
 
   if (total_send_len != 0 && send_message != nullptr) {
     delete send_message;
@@ -421,10 +417,8 @@ void Connection::FillRecvMessage() {
   recv_kernel_msg.msg_iovlen = IntToSize(i);
   total_recv_len = msg->name.size() + recv_to.size() + recv_from.size() + msg->body.size();
 
-  if (recv_message != nullptr) {
-    delete recv_message;
-    recv_message = nullptr;
-  }
+  // There is no need to delete recv_message first because the recv_message has already been returned to the caller and
+  // it's the caller's responsibility to release the received message after using it.
   recv_message = msg;
 }
 
