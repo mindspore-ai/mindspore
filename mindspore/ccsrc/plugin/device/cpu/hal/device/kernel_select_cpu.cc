@@ -248,9 +248,49 @@ void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
   SetKernelBuildInfo(input_formats, input_types, output_formats, output_types, kernel_node.get());
 }
 
+bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info,
+                     const std::shared_ptr<KernelBuildInfo> &selected_kernel_info) {
+  MS_EXCEPTION_IF_NULL(selected_kernel_info);
+  MS_EXCEPTION_IF_NULL(alternative_kernel_info);
+  size_t selected_input_num = selected_kernel_info->GetInputNum();
+  size_t alternative_input_num = alternative_kernel_info->GetInputNum();
+  if (selected_input_num != alternative_input_num) {
+    return false;
+  }
+  for (size_t i = 0; i < selected_input_num; i++) {
+    auto format = alternative_kernel_info->GetInputFormat(i);
+    if (selected_kernel_info->GetInputFormat(i) != format && (!format.empty())) {
+      return false;
+    }
+    auto type = alternative_kernel_info->GetInputDeviceType(i);
+    if (selected_kernel_info->GetInputDeviceType(i) != type && (type != TypeId::kMetaTypeNone)) {
+      return false;
+    }
+  }
+
+  size_t selected_output_num = selected_kernel_info->GetOutputNum();
+  size_t alternative_output_num = alternative_kernel_info->GetOutputNum();
+  if (selected_output_num != alternative_output_num) {
+    return false;
+  }
+  for (size_t i = 0; i < selected_output_num; i++) {
+    auto format = alternative_kernel_info->GetOutputFormat(i);
+    if (selected_kernel_info->GetOutputFormat(i) != format && (!format.empty())) {
+      return false;
+    }
+    auto type = alternative_kernel_info->GetOutputDeviceType(i);
+    if (selected_kernel_info->GetOutputDeviceType(i) != type && (type != TypeId::kMetaTypeNone)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::shared_ptr<mindspore::kernel::OpInfo> kernel_attr = nullptr;
   if (is_akg_op) {
 #ifndef USE_LLVM
     MS_LOG(EXCEPTION) << "When calling AKG-CPU operator, found LLVM 12.0.1 not installed, please check: "
@@ -258,6 +298,12 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
 #else
     builder->SetKernelType(KernelType::AKG_KERNEL);
 #endif
+    kernel_attr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
+    if (kernel_attr == nullptr) {
+      MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
+                      << "Infer operator information from inputs. For more details, "
+                      << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
+    }
   } else {
     builder->SetKernelType(KernelType::CPU_KERNEL);
   }
@@ -278,6 +324,24 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   builder->SetOutputsDeviceType(output_types);
   builder->SetOutputsFormat(output_formats);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+
+  // check reg info if kernel_attr is not null
+  if (kernel_attr != nullptr) {
+    std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
+    if (!ParseMetadata(kernel_node, kernel_attr, kernel::Processor::CPU, &kernel_info_list)) {
+      MS_LOG(EXCEPTION) << "Parsed metadata of op[" << op_name << "] failed.";
+    }
+    if (kernel_info_list.empty()) {
+      MS_LOG(EXCEPTION) << "Not find valid metadata of op[" << op_name << "].";
+    }
+    bool match = std::any_of(kernel_info_list.begin(), kernel_info_list.end(),
+                             [&](const std::shared_ptr<KernelBuildInfo> &alternative_kernel_info) {
+                               return CheckKernelInfo(alternative_kernel_info, builder->Build());
+                             });
+    if (!match) {
+      MS_LOG(ERROR) << "Not find op[" << op_name << "] which both match data type and format in akg";
+    }
+  }
 }
 
 kernel::KernelAttr FillNoneInKernelAttr(const CNodePtr &kernel_node, const std::vector<TypeId> &input_types,
@@ -394,8 +458,12 @@ std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   std::pair<bool, std::string> result = std::make_pair(true, "");
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
+    auto tp = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
+    if (kCustomTypeAkg.find(tp) != kCustomTypeAkg.end()) {
+      UpdateCustomKernelBuildInfo(kernel_node, true);
+      return result;
+    }
     if (!kernel::Factory<kernel::NativeCpuKernelMod>::Instance().IsRegistered(op_name)) {
-      auto tp = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
       if (tp == kCustomTypePyfunc) {
         kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
           op_name, []() { return std::make_shared<kernel::PyFuncCpuKernelMod>(); });
@@ -406,9 +474,9 @@ std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
         kernel::Factory<kernel::NativeCpuKernelMod>::Instance().Register(
           op_name, []() { return std::make_shared<kernel::CustomJULIACpuKernelMod>(); });
       } else {
-        MS_LOG(EXCEPTION)
-          << "Unsupported func type for Custom operator on CPU, it should be 'pyfunc' or 'aot' or 'julia', "
-          << "but got [" << tp << "] for Custom operator [" << op_name << "]";
+        MS_LOG(EXCEPTION) << "Unsupported func type for Custom operator on CPU, it should be "
+                          << "'hybrid', 'akg', 'pyfunc' or 'aot' or 'julia', "
+                          << "but got [" << tp << "] for Custom operator [" << op_name << "]";
       }
     }
     // If Custom op has not set reg info, then infer info from inputs

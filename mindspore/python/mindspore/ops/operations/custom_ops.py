@@ -161,8 +161,8 @@ class Custom(ops.PrimitiveWithInfer):
             Each `func_type` only supports specific platforms(targets). Default: "hybrid".
             The supported platforms of `func_type`:
 
-            - "hybrid": supports ["Ascend", "GPU"].
-            - "akg": supports ["Ascend", "GPU"].
+            - "hybrid": supports ["Ascend", "GPU", "CPU"].
+            - "akg": supports ["Ascend", "GPU", "CPU"].
             - "tbe": supports ["Ascend"].
             - "aot": supports ["GPU", "CPU"].
             - "pyfunc": supports ["CPU"].
@@ -418,7 +418,8 @@ class Custom(ops.PrimitiveWithInfer):
                              .format(self.log_prefix, self.supported_func_type, self.func_type))
         if self.func_type == "aot":
             if not isinstance(self.func, str):
-                raise TypeError("{}, 'func' should be of type str, but got {}".format(self.log_prefix, type(self.func)))
+                raise TypeError("{}, 'func' should be of type str, but got {}".format(
+                    self.log_prefix, type(self.func)))
         elif self.func_type == "julia":
             self._check_julia_func()
         elif self.func_type == "hybrid":
@@ -801,7 +802,7 @@ class Custom(ops.PrimitiveWithInfer):
         else:
             infer_shape = self.out_shape
 
-        if callable(self.out_shape):
+        if callable(self.out_dtype):
             infer_dtype = self.out_dtype(*(x["dtype"] for x in args))
         else:
             infer_dtype = self.out_dtype
