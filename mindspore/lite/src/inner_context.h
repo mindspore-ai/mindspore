@@ -53,23 +53,13 @@ struct InnerContext : public Context {
   bool IsGLTextureEnabled() const;
 #endif
 
-  bool IsCpuEnabled() const;
-
-  const CpuDeviceInfo *GetCpuDeviceInfo() const;
-
-  bool IsGpuEnabled() const;
-
-  bool IsNpuEnabled() const;
+  bool IsDeviceTypeEnabled(DeviceType type) const;
 
   bool IsProviderEnabled() const;
 
   std::set<std::string> GetProviders() const;
 
-  CpuDeviceInfo GetCpuInfo() const;
-
-  GpuDeviceInfo GetGpuInfo() const;
-
-  NpuDeviceInfo GetNpuInfo() const;
+  DeviceInfo GetDeviceInfo(DeviceType type) const;
 
   int IsValid() const;
 
@@ -95,12 +85,6 @@ struct InnerContext : public Context {
   bool IsAllDeviceTypeValid() const;
 
   bool IsCpuBindModeInvalid() const;
-
-  bool IsUserSetCpu() const;
-
-  bool IsUserSetGpu() const;
-
-  bool IsUserSetNpu() const;
 
   void SetContextDevice(const Context *context);
 

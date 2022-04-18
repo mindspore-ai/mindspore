@@ -288,7 +288,7 @@ int Scheduler::SchedulePreProcess() {
 }
 
 int Scheduler::CheckCpuValid(const std::vector<kernel::KernelExec *> *dst_kernels) const {
-  if (context_->IsCpuEnabled()) {
+  if (context_->IsDeviceTypeEnabled(DT_CPU)) {
     return RET_OK;
   }
   for (auto kernel : *dst_kernels) {
@@ -1075,7 +1075,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
                              TypeId prefer_data_type) {
   MS_ASSERT(op_parameter != nullptr);
   MS_ASSERT(kernel != nullptr);
-  if (!context_->IsGpuEnabled()) {
+  if (!context_->IsDeviceTypeEnabled(DT_GPU)) {
     return RET_NOT_SUPPORT;
   }
 

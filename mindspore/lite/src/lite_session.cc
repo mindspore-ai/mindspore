@@ -894,7 +894,7 @@ int LiteSession::CreateTensorRTDelegate() {
 
 int LiteSession::CreateNPUDelegate() {
 #if SUPPORT_NPU
-  delegate_ = std::make_shared<NPUDelegate>(context_->GetNpuInfo());
+  delegate_ = std::make_shared<NPUDelegate>(context_->GetDeviceInfo(DT_NPU).npu_device_info_);
   if (delegate_ == nullptr) {
     MS_LOG(ERROR) << "New delegate_ failed";
     return RET_ERROR;
@@ -911,14 +911,14 @@ int LiteSession::DelegateInit() {
     delegate_ = context_->delegate;
     delegate_device_type_ = -1;
   } else {
-    if (context_->IsNpuEnabled()) {
+    if (context_->IsDeviceTypeEnabled(DT_NPU)) {
       auto ret = CreateNPUDelegate();
       if (ret != RET_OK) {
         return ret;
       }
     }
 
-    if (context_->IsGpuEnabled()) {
+    if (context_->IsDeviceTypeEnabled(DT_GPU)) {
       auto ret = CreateTensorRTDelegate();
       if (ret != RET_OK) {
         return ret;
@@ -1180,7 +1180,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
 #ifdef ENABLE_OPENGL_TEXTURE
 int LiteSession::BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
                                        std::map<std::string, GLuint> *outputGLTexture) {
-  if (!this->context_->GetGpuInfo().enable_gl_texture_) {
+  if (!this->context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_) {
     MS_LOG(ERROR) << "the context isn't set to support OpenGL texture";
     return RET_ERROR;
   }
@@ -1302,7 +1302,7 @@ int LiteSession::PreCheck(Model *model) {
   }
 
 #ifndef ENABLE_FP16
-  if (context_->GetCpuInfo().enable_float16_) {
+  if (context_->GetDeviceInfo(DT_CPU).cpu_device_info_.enable_float16_) {
     MS_LOG(WARNING) << unsupport_fp16_log;
   }
 #endif
@@ -1531,8 +1531,8 @@ int LiteSession::RuntimeAllocatorSetData() {
 }
 
 int LiteSession::InitGPURuntime() {
-  if (context_->IsCpuEnabled()) {
-    CpuBindMode cpu_bind_mode = context_->GetCpuDeviceInfo()->cpu_bind_mode_;
+  if (context_->IsDeviceTypeEnabled(DT_CPU)) {
+    CpuBindMode cpu_bind_mode = context_->GetDeviceInfo(DT_CPU).cpu_device_info_.cpu_bind_mode_;
     ThreadPool *thread_pool = this->context_->thread_pool();
     if (thread_pool == nullptr) {
       MS_LOG(ERROR) << "thread pool is nullptr";
@@ -1542,13 +1542,13 @@ int LiteSession::InitGPURuntime() {
     thread_pool->SetProcessAffinity(static_cast<BindMode>(cpu_bind_mode));
   }
 #if GPU_OPENCL
-  if (this->context_->IsGpuEnabled()) {
+  if (this->context_->IsDeviceTypeEnabled(DT_GPU)) {
     opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeInnerWrapper();
     if (opencl_runtime_wrapper_ == nullptr) {
       MS_LOG(ERROR) << "create OpenCLRuntimeInnerWrapper failed";
       return RET_ERROR;
     }
-    auto gpu_device_info = this->context_->GetGpuInfo();
+    const auto &gpu_device_info = this->context_->GetDeviceInfo(DT_GPU).gpu_device_info_;
     auto opencl_runtime = opencl_runtime_wrapper_->GetInstance();
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
 #ifdef ENABLE_OPENGL_TEXTURE
@@ -1583,7 +1583,7 @@ int LiteSession::InitGPURuntime() {
   }
 #endif
   // Setting the binding core will affect the opencl drive scheduling.
-  if (context_->IsCpuEnabled()) {
+  if (context_->IsDeviceTypeEnabled(DT_CPU)) {
     ThreadPool *thread_pool = this->context_->thread_pool();
     thread_pool->SetProcessAffinity(static_cast<BindMode>(NO_BIND));
   }
