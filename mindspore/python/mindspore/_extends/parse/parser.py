@@ -319,6 +319,12 @@ def get_obj_type(obj):
     return obj_type
 
 
+def check_obj_bool(obj):
+    """Check if the type of the current object is bool."""
+    logger.debug("Check if the type of the current object(%r) is bool: %r", obj, bool(obj))
+    return bool(obj)
+
+
 def get_class_instance_type(obj):
     """Get the class instance detail type."""
     # check the obj type

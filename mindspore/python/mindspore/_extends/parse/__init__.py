@@ -23,7 +23,8 @@ from .parser import (Parser, create_instance, is_supported_create_instance_type,
                      get_operation_symbol, get_operation_namespace_symbol, get_parse_method_of_class, get_scope_name,
                      eval_script, expand_expr_statement, is_class_member, parse_cb, resolve_symbol,
                      convert_to_ms_tensor, get_object_description, get_class_attr_namespace_symbol, get_ms_class_name,
-                     is_class_type, get_dataclass_attributes, get_dataclass_methods, convert_python_data)
+                     is_class_type, get_dataclass_attributes, get_dataclass_methods, convert_python_data,
+                     check_obj_bool)
 
 __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'generate_scope',
            'get_bprop_method_of_class', 'get_class_instance_type', 'get_class_member_namespace_symbol',
@@ -32,4 +33,5 @@ __all__ = ['Parser', 'create_instance', 'is_supported_create_instance_type', 'ge
            'get_operation_symbol', 'get_operation_namespace_symbol', 'get_parse_method_of_class', 'get_scope_name',
            'eval_script', 'expand_expr_statement', 'is_class_member', 'parse_cb', 'resolve_symbol',
            'convert_to_ms_tensor', 'get_object_description', 'get_class_attr_namespace_symbol', 'get_ms_class_name',
-           'is_class_type', 'get_dataclass_attributes', 'get_dataclass_methods', 'convert_python_data']
+           'is_class_type', 'get_dataclass_attributes', 'get_dataclass_methods', 'convert_python_data',
+           'check_obj_bool']
