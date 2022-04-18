@@ -78,7 +78,6 @@ const char PYTHON_MOD_GET_OBJECT_DESCRIPTION[] = "get_object_description";
 const char PYTHON_MOD_GET_ITEM_FROM_SEQUENCE[] = "get_obj_from_sequence";
 const char PYTHON_MOD_CONVERT_TO_MS_TENSOR[] = "convert_to_ms_tensor";
 const char PYTHON_MOD_EVAL_PY_SCRIPT[] = "eval_script";
-const char PYTHON_MOD_CONVERT_PYTHON_DATA[] = "convert_python_data";
 
 const char PYTHON_PARSE_GET_ARGS[] = "get_args";
 const char PYTHON_PARSE_GET_ARGS_DEFAULT_VALUES[] = "get_args_default_values";

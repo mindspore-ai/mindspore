@@ -631,10 +631,6 @@ def is_third_party_module(value):
     return False
 
 
-def convert_python_data(data):
-    return _convert_python_data(data)
-
-
 def eval_script(exp_str, params):
     """Evaluate a python expression."""
     if not isinstance(params, tuple):
@@ -647,6 +643,7 @@ def eval_script(exp_str, params):
     global_params = params[0]
     local_params = params[1]
     try:
+        local_params = _convert_python_data(local_params)
         obj = eval(exp_str, global_params, local_params)
     except Exception as e:
         error_info = f"When eval '{exp_str}' by using JIT Fallback feature, an error occurred: " + str(e) + \

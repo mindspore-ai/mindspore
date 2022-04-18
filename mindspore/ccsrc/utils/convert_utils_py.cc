@@ -245,15 +245,15 @@ static ValueNameToConverterVector value_name_to_converter = {
   // Ellipsis
   {Ellipsis::kTypeId, [](const ValuePtr &) -> py::object { return py::ellipsis(); }}};
 
+// When converting data to tensor, ValueToPyData will only return _c_expression Tensor,
+// but not python tensor. If python tensor is needed, call _convert_python_data to the output.
 py::object ValueToPyData(const ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(EXCEPTION) << "The `value` should not be null";
   }
   for (auto &iter : value_name_to_converter) {
     if (value->IsFromTypeId(iter.first)) {
-      py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
-      auto ret = iter.second(value);
-      return python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_CONVERT_PYTHON_DATA, ret);
+      return iter.second(value);
     }
   }
   MS_LOG(EXCEPTION) << "Unsupported to convert " << value->ToString() << "[" << value->type_name() << "] to a PyData";
