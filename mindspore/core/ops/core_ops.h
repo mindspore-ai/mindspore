@@ -965,7 +965,6 @@ GVAR_DEF(PrimitivePtr, kPrimCallInstance, std::make_shared<Primitive>("call_inst
 GVAR_DEF(PrimitivePtr, kPrimInsertGradientOf, std::make_shared<Primitive>("InsertGradientOf"));
 GVAR_DEF(PrimitivePtr, kPrimCheckBprop, std::make_shared<Primitive>("CheckBprop"));
 GVAR_DEF(PrimitivePtr, kPrimMixedPrecisionCast, std::make_shared<Primitive>("mixed_precision_cast"));
-GVAR_DEF(PrimitivePtr, kPrimMakeRecord, std::make_shared<Primitive>("make_record"));
 
 // Structures
 GVAR_DEF(PrimitivePtr, kPrimListReduce, std::make_shared<Primitive>("list_reduce"));

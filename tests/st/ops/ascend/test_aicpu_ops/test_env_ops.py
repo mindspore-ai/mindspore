@@ -13,11 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test grad ops """
-from dataclasses import dataclass
-
 import mindspore.ops as ops
 import mindspore.nn as nn
-from mindspore import ms_function
+from mindspore import ms_function, ms_class
 from mindspore import Tensor, context
 from mindspore.common import dtype as mstype
 from mindspore import ParameterTuple, Parameter
@@ -126,9 +124,10 @@ def test_reftoembed_with_two_weights():
                  even SimplifyDataStructures (one more round of Renormalize) takes effect.
     Expectation: return expected value.
     """
-    @dataclass
+    @ms_class
     class SimpleData:
-        a: int
+        def __init__(self, a):
+            self.a = a
 
         def get_data(self):
             return self.a
@@ -156,9 +155,8 @@ def test_reftoembed_with_two_weights():
             return output
 
     context.set_context(mode=context.GRAPH_MODE)
-    x = Tensor([5], mstype.int32)
     expected_weight_grad = Tensor([15], mstype.int32)
     expected_bias_grad = Tensor([10], mstype.int32)
     net = Net()
     first_grad = Grad(net)
-    assert first_grad(x) == (expected_weight_grad, expected_bias_grad)
+    assert first_grad(5) == (expected_weight_grad, expected_bias_grad)

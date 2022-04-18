@@ -40,7 +40,6 @@ namespace opt {
 using mindspore::abstract::AbstractAttribute;
 using mindspore::abstract::AbstractBase;
 using mindspore::abstract::AbstractBasePtr;
-using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractCOOTensor;
 using mindspore::abstract::AbstractDictionary;
 using mindspore::abstract::AbstractDictionaryPtr;
@@ -177,34 +176,6 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   // From:
-  //   GetAttr(data:AbstractClass, attr:StringImm)
-  // To:
-  //   TupleGetItem(data, index:Int64Imm)
-  AnfNodePtr ConvertGetAttrToTupleGetItem(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    // Inputs should be [getattr, data, attribute].
-    const size_t expect_inputs_size = 3;
-    CheckInputsSize(node, expect_inputs_size);
-
-    // Input arguments.
-    constexpr size_t data_index = 1;
-    constexpr size_t attr_index = 2;
-    const auto &inputs = node->inputs();
-    auto &data = inputs[data_index];
-    auto &attr = inputs[attr_index];
-    MS_EXCEPTION_IF_NULL(data);
-    MS_EXCEPTION_IF_NULL(attr);
-
-    auto abs_class = GetAbstract<AbstractClass>(data);
-    if (abs_class == nullptr) {
-      return nullptr;
-    }
-    return NewTupleGetCNode(node, data, abs_class->attributes(), attr);
-  }
-
-  // From:
   //   DictGetItem(data:AbstractDictionary, cons:StringImm)
   // To:
   //   TupleGetItem(data, index:Int64Imm)
@@ -273,54 +244,6 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     }
     auto index_node = NewValueNode(index);
     return node->func_graph()->NewCNode({NewValueNode(prim::kPrimTupleSetItem), data, index_node, item_value});
-  }
-
-  // From:
-  //   MakeRecord(klass, attr1, attr2, ...)
-  // To:
-  //   MakeTuple(attr1, attr2, ...)
-  AnfNodePtr ConvertMakeRecordToMakeTuple(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-    std::vector<AnfNodePtr> inputs;
-    inputs.reserve(node->size() - 1);
-    (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    // Inputs of node should be [make_record, klass, attr1, attr2, ...], so offset by 2 to get attr.
-    constexpr auto attr_start_index = 2;
-    auto &old_inputs = node->inputs();
-    (void)inputs.insert(inputs.end(), old_inputs.begin() + attr_start_index, old_inputs.end());
-    return node->func_graph()->NewCNode(std::move(inputs));
-  }
-
-  // From:
-  //   Partial(MakeRecord, arg1, arg2, ...)
-  // To:
-  //   Partial(MakeTuple, arg1, arg2, ...)
-  // Or:
-  //   MakeTuple  # not args
-  AnfNodePtr ConvertPartialMakeRecord(const CNodePtr &node) {
-    MS_EXCEPTION_IF_NULL(node);
-    MS_EXCEPTION_IF_NULL(node->func_graph());
-
-    const auto &inputs = node->inputs();
-    // Inputs should be [partial, fn, arg1, ...], so offset by 2 to get arg;
-    constexpr auto min_inputs_size = 2;
-    if (inputs.size() < min_inputs_size) {
-      MS_LOG(EXCEPTION) << "Partial should have at least 2 inputs, but got " << inputs.size();
-    }
-    if (!IsPrimitive(inputs[1], prim::kPrimMakeRecord)) {
-      return nullptr;
-    }
-    if (inputs.size() == min_inputs_size) {
-      return NewValueNode(prim::kPrimMakeTuple);
-    }
-    std::vector<AnfNodePtr> new_inputs;
-    new_inputs.reserve(inputs.size());
-    constexpr auto first_arg_idx = 2;
-    (void)new_inputs.emplace_back(inputs[0]);
-    (void)new_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
-    (void)new_inputs.insert(new_inputs.end(), inputs.begin() + first_arg_idx, inputs.end());
-    return node->func_graph()->NewCNode(std::move(new_inputs));
   }
 
   // From:
@@ -415,9 +338,6 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &);
   using ConverterMap = mindspore::HashMap<PrimitivePtr, Converter, PrimitiveHasher, PrimitiveEqual>;
   static inline const ConverterMap converters_{
-    {prim::kPrimGetAttr, &ThisClass::ConvertGetAttrToTupleGetItem},
-    {prim::kPrimMakeRecord, &ThisClass::ConvertMakeRecordToMakeTuple},
-    {prim::kPrimPartial, &ThisClass::ConvertPartialMakeRecord},
     {prim::kPrimDictGetItem, &ThisClass::ConvertDictGetItemToTupleGetItem},
     {prim::kPrimDictSetItem, &ThisClass::ConvertDictSetItemToTupleSetItem},
     {prim::kPrimDictGetValues, &ThisClass::EraseDictGetValues},
@@ -438,10 +358,6 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &, const ValuePtr &value) override {
-    // Convert ClassObject value node.
-    if (value->isa<parse::ClassObject>()) {
-      return NewValueNode(prim::kPrimMakeTuple);
-    }
     // Convert Dictionary value node.
     if (value->isa<ValueDictionary>()) {
       return NewValueNode(DictToTuple(value->cast<ValueDictionaryPtr>()));
@@ -457,7 +373,7 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
     return std::make_shared<AbstractTuple>(std::move(elements));
   }
 
-  // AbstractDictionary, AbstractClass --> AbstractSequence.
+  // AbstractDictionary --> AbstractSequence.
   static AbstractSequencePtr ConvertToAbstractSequence(const AbstractBasePtr &abs, size_t depth) {
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List or Dict nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
@@ -512,16 +428,11 @@ class SimplifyDataStructuresRewriter : public BaseRewriter {
       }
       return std::make_shared<AbstractTuple>(elements);
     }
-    // AbstractClass --> AbstractTuple.
-    auto abs_class = abs->cast<abstract::AbstractClassPtr>();
-    if (abs_class != nullptr) {
-      return MakeAbstractTuple(abs_class->attributes());
-    }
     return nullptr;
   }
 
   AbstractBasePtr ConvertAbstract(const AbstractBasePtr &abs) override {
-    // AbstractDictionary, AbstractClass --> AbstractSequence.
+    // AbstractDictionary --> AbstractSequence.
     return ConvertToAbstractSequence(abs, 0);
   }
 };

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,71 +88,6 @@ class MS_CORE_API List final : public Object {
   TypePtrList elements_;
 };
 using ListPtr = std::shared_ptr<List>;
-
-using ClassAttrVector = std::vector<std::pair<std::string, TypePtr>>;
-
-/// \brief Class defines interface for class data type.
-class MS_CORE_API Class final : public Object {
- public:
-  /// \brief Constructor for Class.
-  Class() : Object(kObjectTypeClass), tag_(Named("Class")) {}
-
-  /// \brief Constructor for Class.
-  ///
-  /// \param[in] tag Define the tag of Class object.
-  /// \param[in] attributes Define the attributes of Class object.
-  /// \param[in] methods Define the methods of Class object.
-  Class(const Named &tag, const ClassAttrVector &attributes, const mindspore::HashMap<std::string, ValuePtr> &methods);
-
-  /// \brief Destructor of Class.
-  ~Class() override {}
-  MS_DECLARE_PARENT(Class, Object)
-
-  TypeId generic_type_id() const override { return kObjectTypeClass; }
-  bool operator==(const Type &other) const override;
-  TypePtr DeepCopy() const override;
-  std::string ToString() const override { return DumpContent(false); }
-  std::string DumpText() const override { return DumpContent(true); };
-
-  /// \brief Set attributes value of Class object.
-  ///
-  /// \param[in] v Define the attributes value to be set.
-  void set_value(const mindspore::HashMap<std::string, ValuePtr> &v) { attributes_value_ = v; }
-
-  /// \brief Get the tag of Class object.
-  ///
-  /// \return The tag of Class object.
-  Named tag() { return tag_; }
-
-  /// \brief Get the value of Class object.
-  ///
-  /// \return The attributes value of Class object.
-  mindspore::HashMap<std::string, ValuePtr> GetValue() { return attributes_value_; }
-
-  /// \brief Get the methods of Class object.
-  ///
-  /// \return The methods of Class object.
-  mindspore::HashMap<std::string, ValuePtr> methods() { return methods_; }
-
-  /// \brief Get the attributes of Class object.
-  ///
-  /// \return The attributes of Class object.
-  ClassAttrVector &GetAttributes() { return attributes_; }
-
-  ClassAttrVector attributes_;
-
- private:
-  /// \brief Show each element.
-  ///
-  /// \param[in] is_dumptext whether to show each element DumpText
-  /// \return The description of the Class object.
-  std::string DumpContent(bool is_dumptext) const;
-  Named tag_;
-  mindspore::HashMap<std::string, ValuePtr> methods_;
-  // For AbstractClass build value
-  mindspore::HashMap<std::string, ValuePtr> attributes_value_;
-};
-using ClassPtr = std::shared_ptr<Class>;
 
 /// \brief Tuple defines interface for tuple data type.
 class MS_CORE_API Tuple final : public Object {

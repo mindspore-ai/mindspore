@@ -395,7 +395,6 @@ void Resource::Clean() {
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
   is_cleaned_ = true;
 }

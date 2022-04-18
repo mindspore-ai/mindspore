@@ -2862,7 +2862,6 @@ void GradExecutor::GradNetInner(py::object *ret, const prim::GradOperationPtr &g
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
 }
 

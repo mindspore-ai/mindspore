@@ -37,7 +37,6 @@ ABSTRACT_REPORT_NAME_DEC(Slice)
 ABSTRACT_REPORT_NAME_DEC(Function)
 ABSTRACT_REPORT_NAME_DEC(Type)
 ABSTRACT_REPORT_NAME_DEC(KeywordArg)
-ABSTRACT_REPORT_NAME_DEC(Class)
 
 TypePtr CheckType(TypePtr type, const TypePtrList &accepts, const std::string &error_message_prefix) {
   auto ori_type = type;

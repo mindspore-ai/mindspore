@@ -53,11 +53,7 @@ ValuePtr PyDataToValue(const py::object &obj);
 void ClearObjectCache();
 }  // namespace data_converter
 
-ClassPtr ParseDataClass(const py::object &cls_obj);
 FuncGraphPtr ConvertToBpropCut(const py::object &obj);
-
-void CleanDataClassToClassMap();
-
 }  // namespace parse
 }  // namespace mindspore
 

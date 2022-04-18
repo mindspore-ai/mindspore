@@ -30,7 +30,6 @@
 namespace mindspore {
 namespace validator {
 using mindspore::abstract::AbstractBase;
-using mindspore::abstract::AbstractClass;
 using mindspore::abstract::AbstractCOOTensor;
 using mindspore::abstract::AbstractCSRTensor;
 using mindspore::abstract::AbstractError;
@@ -107,7 +106,7 @@ void ValidateAbstract(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "Abstract is null in node: " << node->DebugString();
     return;
   }
-  if (abstract->isa<AbstractClass>() || abstract->isa<AbstractJTagged>()) {
+  if (abstract->isa<AbstractJTagged>()) {
     // Validate a type.
     MS_LOG(EXCEPTION) << "Illegal type in the graph: " << abstract->ToString() << ", node: " << node->DebugString();
   }

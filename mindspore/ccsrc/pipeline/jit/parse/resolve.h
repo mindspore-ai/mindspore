@@ -142,16 +142,6 @@ class MsClassObject final : public PyObjectWrapper {
 };
 using MsClassObjectPtr = std::shared_ptr<MsClassObject>;
 
-// ClassObject class wrappers dataclass
-class ClassObject final : public PyObjectWrapper {
- public:
-  explicit ClassObject(const py::object &obj, const std::string &name = "Python dataclass")
-      : PyObjectWrapper(obj, name) {}
-  ~ClassObject() override = default;
-  MS_DECLARE_PARENT(ClassObject, PyObjectWrapper);
-  abstract::AbstractBasePtr ToAbstract() override;
-};
-
 // ClassType class wrappers class name in python
 class ClassType final : public PyObjectWrapper {
  public:

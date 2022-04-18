@@ -250,15 +250,6 @@ ValuePtr ConvertModuleNameSpace(const py::object &obj) {
   return converted;
 }
 
-ValuePtr ConvertDataClass(const py::object &obj) {
-  MS_LOG(DEBUG) << "Converting dataclass";
-  // Maybe the obj is dataclass define
-  auto desc = py::cast<std::string>(python_adapter::CallPyObjMethod(obj, PYTHON_GET_OBJ_DESC, obj));
-  // desc has format "<class xxxx>", strip the '<' and '>' by offset 1
-  auto converted = std::make_shared<ClassObject>(obj, std::string(desc.begin() + 1, desc.end() - 1));
-  return converted;
-}
-
 ValuePtr ConvertMsClass(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting ms class";
   // Convert class instance decorated with ms_class.
@@ -517,7 +508,6 @@ static const std::vector<DataConverterPtr> &GetDataConverters() {
     std::make_shared<ByTypeDataConverter<py::none>>(kNone),
     std::make_shared<ByTypeDataConverter<py::ellipsis>>(kEllipsis),
     std::make_shared<ByTypeDataConverter<py::module>>(ConvertModuleNameSpace),
-    std::make_shared<ByAttrDataConverter>(PYTHON_DATACLASS_FIELDS, ConvertDataClass),
     std::make_shared<ByAttrDataConverter>(PYTHON_MS_CLASS, ConvertMsClass),
     std::make_shared<ByTypeDataConverter<Type>>(ObjCast<TypePtr>),
     std::make_shared<ByTypeDataConverter<UMonad>>(ObjCast<UMonadPtr>),
@@ -724,46 +714,5 @@ void ClearObjectCache() {
   object_graphs_map_.clear();
 }
 }  // namespace data_converter
-
-static mindspore::HashMap<std::string, ClassPtr> g_dataClassToClass = {};
-
-// Parse dataclass to mindspore Class type
-ClassPtr ParseDataClass(const py::object &cls_obj) {
-  std::string cls_name = py::cast<std::string>(python_adapter::GetPyObjAttr(cls_obj, "__name__"));
-  std::string cls_module = py::cast<std::string>(python_adapter::GetPyObjAttr(cls_obj, "__module__"));
-  std::string cls = cls_module + "." + cls_name;
-  auto iterator = g_dataClassToClass.find(cls);
-  if (iterator != g_dataClassToClass.end()) {
-    return iterator->second;
-  }
-
-  py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  ClassAttrVector attributes;
-  py::dict names = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_ATTRS, cls_obj);
-  for (auto &item : names) {
-    auto type_value = item.second.cast<TypePtr>();
-    MS_EXCEPTION_IF_NULL(type_value);
-    MS_LOG(DEBUG) << "(Name: " << py::cast<std::string>(item.first) << ", type: " << type_value->ToString() << ")";
-    attributes.push_back(std::make_pair(py::cast<std::string>(item.first), type_value));
-  }
-
-  mindspore::HashMap<std::string, ValuePtr> methods_map;
-  py::dict methods = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_DATACLASS_METHODS, cls_obj);
-  for (auto &item : methods) {
-    auto fun_name = item.first.cast<std::string>();
-    auto obj = py::cast<py::object>(item.second);
-    std::shared_ptr<PyObjectWrapper> method_obj = std::make_shared<PyObjectWrapper>(obj, fun_name);
-    methods_map[fun_name] = method_obj;
-  }
-
-  std::shared_ptr<Class> me_class = std::make_shared<Class>(Named(cls_name), attributes, methods_map);
-  // static Variable for cache
-  // cppcheck-suppress unreadVariable
-  g_dataClassToClass[cls] = me_class;
-
-  return me_class;
-}
-
-void CleanDataClassToClassMap() { g_dataClassToClass.clear(); }
 }  // namespace parse
 }  // namespace mindspore

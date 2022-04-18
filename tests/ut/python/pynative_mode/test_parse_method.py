@@ -19,15 +19,13 @@
 @Desc  : test parse the object's method
 """
 import logging
-from dataclasses import dataclass
-
 import numpy as np
 import pytest
 
 import mindspore.nn as nn
 from mindspore import context
 from mindspore._extends.parse.standard_method import ms_len
-from mindspore.common.api import ms_function
+from mindspore.common.api import ms_function, ms_class
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import core
 from mindspore.ops.primitive import constexpr
@@ -282,10 +280,11 @@ def test_set_flag():
     log.debug("finished test_set_flag, ret = %r", ret)
 
 
-@dataclass
+@ms_class
 class Access:
-    a: int
-    b: int
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
 
     def max(self):
         if self.a > self.b:
@@ -294,20 +293,22 @@ class Access:
 
 
 @ms_function
-def invoke_dataclass(x, y):
-    """ invoke_dataclass """
+def invoke_msclass(x, y):
+    """ invoke_msclass """
     acs = Access(x, y)
     return acs.max()
 
 
 def test_access():
     """ test_access """
-    invoke_dataclass(1, 2)
+    invoke_msclass(1, 2)
 
-@dataclass
+
+@ms_class
 class Access2:
-    a: int
-    b: int
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
 
     def max(self):
         if self.a > self.b:
@@ -316,16 +317,16 @@ class Access2:
 
 
 @ms_function
-def invoke_dataclass2(x, y):
-    """ invoke_dataclass """
+def invoke_msclass2(x, y):
+    """ invoke_msclass """
     acs = Access2(x, y)
     return acs.max()
 
 
 def test_access_attr_error():
     """ test_access """
-    with pytest.raises(AttributeError):
-        invoke_dataclass2(2, 1)
+    with pytest.raises(Exception):
+        invoke_msclass2(2, 1)
 
 
 def myfunc(x):

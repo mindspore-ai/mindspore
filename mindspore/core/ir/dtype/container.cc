@@ -90,10 +90,6 @@ bool List::operator==(const Type &other) const {
   return true;
 }
 
-Class::Class(const Named &tag, const ClassAttrVector &attributes,
-             const mindspore::HashMap<std::string, ValuePtr> &methods)
-    : Object(kObjectTypeClass, false), attributes_(attributes), tag_(tag), methods_(methods) {}
-
 std::string List::DumpContent(bool is_dumptext) const {
   std::ostringstream buffer;
   if (IsGeneric()) {
@@ -101,41 +97,6 @@ std::string List::DumpContent(bool is_dumptext) const {
   } else {
     buffer << "List[";
     buffer << DumpTypeVector(elements_, is_dumptext);
-    buffer << "]";
-  }
-  return buffer.str();
-}
-
-bool Class::operator==(const Type &other) const {
-  // Class is cached for each pyobj in ParseDataClass, so ClassPtr is one by one map to pyobj.
-  return &other == this;
-}
-
-TypePtr Class::DeepCopy() const {
-  if (IsGeneric()) {
-    return std::make_shared<Class>();
-  } else {
-    auto copy = std::make_shared<Class>(tag_, attributes_, methods_);
-    return copy;
-  }
-}
-
-std::string Class::DumpContent(bool is_dumptext) const {
-  std::ostringstream buffer;
-  if (IsGeneric()) {
-    buffer << "Cls";
-  } else {
-    bool begin = true;
-    buffer << "Cls." << tag_ << "[";
-    for (auto &attr : attributes_) {
-      if (!begin) {
-        buffer << ", ";
-      } else {
-        begin = false;
-      }
-      auto sub_content = is_dumptext ? attr.second->DumpText() : attr.second->ToString();
-      buffer << attr.first << ":" << sub_content;
-    }
     buffer << "]";
   }
   return buffer.str();

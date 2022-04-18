@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ const char PYTHON_MOD_GET_OBJ_ID[] = "get_obj_id";
 const char PYTHON_MOD_GET_CLASS_INSTANCE_TYPE[] = "get_class_instance_type";
 const char PYTHON_MOD_CREATE_INSTANCE[] = "create_instance";
 const char PYTHON_MOD_IS_SUPPORTED_CREATE_INSTANCE_TYPE[] = "is_supported_create_instance_type";
-const char PYTHON_MOD_GET_DATACLASS_ATTRS[] = "get_dataclass_attributes";
-const char PYTHON_MOD_GET_DATACLASS_METHODS[] = "get_dataclass_methods";
 const char PYTHON_MOD_IS_CLASS_TYPE[] = "is_class_type";
 const char PYTHON_MOD_GET_MS_CLASS_NAME[] = "get_ms_class_name";
 const char PYTHON_MOD_GET_MODULE_NAMESPACE[] = "get_module_namespace";

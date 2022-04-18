@@ -975,50 +975,9 @@ AbstractBasePtr InferImplFakeBprop(const AnalysisEnginePtr &, const PrimitivePtr
   return args_spec_list[0]->Broaden();
 }
 
-// Eval the return type of make_record
-AbstractBasePtr InferImplMakeRecord(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
-  // Inputs: at lease two objects of a subclass of AbstractBase.
-  const size_t args_num = 2;
-  if (args_spec_list.size() < args_num) {
-    MS_LOG(EXCEPTION) << "The size of arguments of MakeRecord operator must greater than 1, but the input size is "
-                      << args_spec_list.size() << ".";
-  }
-
-  // args_spec_list[0] maybe AbstractScalarPtr or AbstractTypePtr
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  TypePtr type = args_spec_list[0]->GetTypeTrack();
-  MS_EXCEPTION_IF_NULL(type);
-  if (type->type_id() != kMetaTypeTypeType) {
-    MS_LOG(EXCEPTION) << "The type of first argument of MakeRecord must be TypeType, but got " << type->ToString();
-  }
-
-  auto value_track = args_spec_list[0]->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_track);
-  auto type_ptr = value_track->cast<TypePtr>();
-  if (type_ptr == nullptr) {
-    MS_LOG(EXCEPTION) << "The value type of first argument of MakeRecord is wrong, the type is "
-                      << value_track->ToString();
-  }
-
-  auto cls = dyn_cast<Class>(type_ptr);
-  MS_EXCEPTION_IF_NULL(cls);
-  ClassAttrVector attributes = cls->GetAttributes();
-  CheckArgsSize(primitive->name(), args_spec_list, attributes.size() + 1);
-
-  std::vector<AbstractAttribute> abs_attributes;
-  for (size_t i = 0; i < attributes.size(); i++) {
-    AbstractAttribute elem(attributes[i].first, args_spec_list[i + 1]);
-    abs_attributes.push_back(elem);
-  }
-
-  return std::make_shared<AbstractClass>(cls->tag(), abs_attributes, cls->methods());
-}
-
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(IsInstance, prim::kPrimIsInstance, InferImplIsInstance, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRecord, prim::kPrimMakeRecord, InferImplMakeRecord, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleReversed, prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ReducedShape, prim::kPrimReducedShape, InferImplReduceShape, nullptr);
