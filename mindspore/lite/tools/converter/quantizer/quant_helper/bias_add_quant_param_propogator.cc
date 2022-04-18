@@ -17,7 +17,7 @@
 #define USE_DEPRECATED_API
 #include "tools/converter/quantizer/quant_helper/bias_add_quant_param_propogator.h"
 #include "mindspore/core/ir/dtype/type_id.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore::lite {

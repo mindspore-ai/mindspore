@@ -16,7 +16,7 @@
 #include "tools/converter/quantizer/quant_helper/quant_node_helper.h"
 #include <unordered_map>
 #include <memory>
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "tools/converter/quantizer/quant_helper/bias_add_quant_param_propogator.h"
 #include "tools/converter/quantizer/quant_helper/carry_data_quant_param_propogator.h"
 #include "tools/converter/quantizer/quant_helper/carry_data_quant_type_determiner.h"

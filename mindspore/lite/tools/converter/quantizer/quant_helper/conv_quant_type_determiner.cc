@@ -17,7 +17,7 @@
 #define USE_DEPRECATED_API
 #include "tools/converter/quantizer/quant_helper/conv_quant_type_determiner.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 namespace mindspore::lite {
 bool ConvQuantTypeDeterminer::DetermineQuantWeight(const mindspore::schema::MetaGraphT &graph,
