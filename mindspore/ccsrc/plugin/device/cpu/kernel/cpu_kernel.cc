@@ -27,8 +27,9 @@
 
 namespace mindspore {
 namespace kernel {
-void NativeCpuKernelMod::InitInputOutputSize(const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs) {
+bool NativeCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                                const std::shared_ptr<ReinitArgs> &args) {
+  workspace_size_list_.clear();
   input_size_list_.clear();
   for (auto &input : inputs) {
     size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
@@ -47,6 +48,7 @@ void NativeCpuKernelMod::InitInputOutputSize(const std::vector<KernelTensorPtr> 
     tensor_size = std::max(tensor_size, type_size);
     output_size_list_.emplace_back(tensor_size);
   }
+  return true;
 }
 
 std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {

@@ -24,6 +24,7 @@
 #include <functional>
 #include <exception>
 #include "kernel/kernel.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "utils/ms_context.h"
@@ -417,6 +418,33 @@ void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutput
   static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseSummaryRefCount(summary_outputs);
 }
 
+void CPUKernelRuntime::GetRuntimeAddressFromNode(const AnfNodePtr &node, std::vector<kernel::AddressPtr> *inputs,
+                                                 std::vector<kernel::AddressPtr> *outputs,
+                                                 std::vector<kernel::AddressPtr> *workspaces) {
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(workspaces);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+  for (size_t i = 0; i < input_num; ++i) {
+    auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(node, i).get();
+    MS_EXCEPTION_IF_NULL(device_address);
+    AddRuntimeAddress(device_address, inputs);
+  }
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
+  for (size_t i = 0; i < output_num; ++i) {
+    auto device_address = AnfAlgo::GetMutableOutputAddr(node, i).get();
+    MS_EXCEPTION_IF_NULL(device_address);
+    AddRuntimeAddress(device_address, outputs);
+  }
+  auto kernel_mod = AnfAlgo::GetKernelMod(node);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
+    auto device_address = AnfAlgo::GetWorkspaceAddr(node, i);
+    MS_EXCEPTION_IF_NULL(device_address);
+    AddRuntimeAddress(device_address, workspaces);
+  }
+}
+
 bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
   static_cast<CPUMemoryManager *>(mem_manager_.get())->IncreaseAddressRefCount(&kernel_graph);
 
@@ -435,31 +463,26 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
 #ifdef ENABLE_PROFILE
     double start_time = GetTime();
 #endif
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    // akg kernel do not support dynamic shape by now
+    kernel::NativeCpuKernelMod *cpu_kernel = nullptr;
+    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
+      cpu_kernel = dynamic_cast<kernel::NativeCpuKernelMod *>(kernel_mod);
+      MS_EXCEPTION_IF_NULL(cpu_kernel);
+    }
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       AnfAlgo::InferShape(kernel);
+      if (cpu_kernel != nullptr &&
+          !cpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
+                              kernel::GetReinitArgs(kernel))) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed!";
+      }
     }
     std::vector<kernel::AddressPtr> kernel_inputs;
     std::vector<kernel::AddressPtr> kernel_workspaces;
     std::vector<kernel::AddressPtr> kernel_outputs;
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel);
-    for (size_t i = 0; i < input_num; ++i) {
-      auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel, i).get();
-      MS_EXCEPTION_IF_NULL(device_address);
-      AddRuntimeAddress(device_address, &kernel_inputs);
-    }
-    size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
-    for (size_t i = 0; i < output_num; ++i) {
-      auto device_address = AnfAlgo::GetMutableOutputAddr(kernel, i).get();
-      MS_EXCEPTION_IF_NULL(device_address);
-      AddRuntimeAddress(device_address, &kernel_outputs);
-    }
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    for (size_t i = 0; i < kernel_mod->GetWorkspaceSizeList().size(); ++i) {
-      auto device_address = AnfAlgo::GetWorkspaceAddr(kernel, i);
-      MS_EXCEPTION_IF_NULL(device_address);
-      AddRuntimeAddress(device_address, &kernel_workspaces);
-    }
+    GetRuntimeAddressFromNode(kernel, &kernel_inputs, &kernel_outputs, &kernel_workspaces);
     bool ret = true;
 #ifndef ENABLE_SECURITY
     auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();

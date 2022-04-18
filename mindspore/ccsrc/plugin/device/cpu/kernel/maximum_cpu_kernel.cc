@@ -47,8 +47,27 @@ bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
                   << kMaximumOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  workspace_size_list_.clear();
-  InitInputOutputSize(inputs, outputs);
+
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MaximumLaunchFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(ERROR) << "Maximum does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+
+  return true;
+}
+
+bool MaximumCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &args) {
+  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
+    return false;
+  }
   input_x_shape_ = inputs[0]->GetShapeVector();
   input_y_shape_ = inputs[1]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
@@ -65,22 +84,11 @@ bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   } else if (max_input_shape_size == output_shape_.size() && output_shape_.size() != 0) {
     InitInputTensors(input_x_dtype, input_y_dtype);
   } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', inputs should be two tensors or one tensor and one scalar, but got "
-                  << input_x_dtype << " and " << input_y_dtype;
+    MS_LOG(WARNING) << "For '" << kernel_name_
+                    << "', inputs should be two tensors or one tensor and one scalar, but got " << input_x_dtype
+                    << " and " << input_y_dtype;
     return false;
   }
-
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, MaximumLaunchFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(ERROR) << "Maximum does not support this kernel data type: " << kernel_attr;
-    return false;
-  }
-  kernel_func_ = func_list_[index].second;
-
   return true;
 }
 

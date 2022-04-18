@@ -156,7 +156,6 @@ bool InPlaceOpCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
   }
-  InitInputOutputSize(inputs, outputs);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

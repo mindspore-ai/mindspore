@@ -32,24 +32,6 @@ bool LowerBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
                   << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
-  workspace_size_list_.clear();
-  InitInputOutputSize(inputs, outputs);
-  sorted_x_shape_ = inputs[0]->GetShapeVector();
-  values_shape_ = inputs[1]->GetShapeVector();
-  output_shape_ = outputs[0]->GetShapeVector();
-  size_t size_exp = 2;
-  if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
-      sorted_x_shape_[0] != values_shape_[0]) {
-    MS_LOG(ERROR) << "The shape of input is invalid.";
-    return false;
-  }
-  sorted_x_num_ = static_cast<size_t>(sorted_x_shape_[0] * sorted_x_shape_[1]);
-  values_num_ = static_cast<size_t>(values_shape_[0] * values_shape_[1]);
-  output_num_ = static_cast<size_t>(output_shape_[0] * output_shape_[1]);
-  if (values_num_ != output_num_) {
-    MS_LOG(ERROR) << "Infer the shape of output error.";
-    return false;
-  }
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   std::vector<KernelAttr> support_list;
@@ -61,6 +43,32 @@ bool LowerBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
     return false;
   }
   kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+bool LowerBoundCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::shared_ptr<ReinitArgs> &args) {
+  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
+    return false;
+  }
+  sorted_x_shape_ = inputs[0]->GetShapeVector();
+  values_shape_ = inputs[1]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  size_t size_exp = 2;
+  if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
+      sorted_x_shape_[0] != values_shape_[0]) {
+    MS_LOG(WARNING) << "The shape of input is invalid.";
+    return false;
+  }
+  sorted_x_num_ = static_cast<size_t>(sorted_x_shape_[0] * sorted_x_shape_[1]);
+  values_num_ = static_cast<size_t>(values_shape_[0] * values_shape_[1]);
+  output_num_ = static_cast<size_t>(output_shape_[0] * output_shape_[1]);
+  if (values_num_ != output_num_) {
+    MS_LOG(WARNING) << "Infer the shape of output error.";
+    return false;
+  }
   return true;
 }
 

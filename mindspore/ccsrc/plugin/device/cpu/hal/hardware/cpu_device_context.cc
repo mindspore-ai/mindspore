@@ -249,9 +249,11 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       auto thread_pool = kernel::GetActorMgrInnerThreadPool();
       cpu_kernel->SetThreadPool(thread_pool);
       auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(node);
-      auto ret = cpu_kernel->Init(base_operator, input_tensors, output_tensors);
-      if (!ret) {
+      if (!cpu_kernel->Init(base_operator, input_tensors, output_tensors)) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
+      }
+      if (!cpu_kernel->Reinit(input_tensors, output_tensors, kernel::GetReinitArgs(node))) {
+        MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Reinit failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel, node.get());
     }

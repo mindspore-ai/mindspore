@@ -85,9 +85,11 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
     auto thread_pool = kernel::GetActorMgrInnerThreadPool();
     cpu_kernel->SetThreadPool(thread_pool);
     auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(cast);
-    auto ret = cpu_kernel->Init(base_operator, input_tensors, output_tensors);
-    if (!ret) {
+    if (!cpu_kernel->Init(base_operator, input_tensors, output_tensors)) {
       MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
+    }
+    if (!cpu_kernel->Reinit(input_tensors, output_tensors, kernel::GetReinitArgs(cast))) {
+      MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Reinit failed.";
     }
     AnfAlgo::SetKernelMod(cpu_kernel, cast.get());
   }
