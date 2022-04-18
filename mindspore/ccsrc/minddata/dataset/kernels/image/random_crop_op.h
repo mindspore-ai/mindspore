@@ -73,7 +73,7 @@ class RandomCropOp : public TensorOp {
                       int32_t *padded_image_h, bool *crop_further);
 
   // Function breaks X,Y generation functionality out of original compute function and makes available to other Ops
-  void GenRandomXY(int *x, int *y, const int32_t &padded_image_w, const int32_t &padded_image_h);
+  void GenRandomXY(int32_t *x, int32_t *y, int32_t padded_image_w, int32_t padded_image_h);
 
   Status OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) override;
 
@@ -88,6 +88,11 @@ class RandomCropOp : public TensorOp {
   int32_t crop_width_ = 0;
 
  private:
+  Status RandomCropImg(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t *x, int32_t *y,
+                       int32_t index);
+
+  Status ConstructShape(const TensorShape &in_shape, std::shared_ptr<TensorShape> *out_shape);
+
   int32_t pad_top_ = 0;
   int32_t pad_bottom_ = 0;
   int32_t pad_left_ = 0;

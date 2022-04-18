@@ -39,4 +39,4 @@ mindspore.dataset.vision.RandomCrop
         - **ValueError** - 如果 `size` 不是正数。
         - **ValueError** - 如果 `padding` 为负数。
         - **ValueError** - 如果 `fill_value` 不在 [0, 255] 范围内。
-        - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。
+        - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <..., H, W, C>。
