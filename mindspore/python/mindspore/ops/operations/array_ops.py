@@ -560,10 +560,9 @@ class Reshape(PrimitiveWithInfer):
             shape_v[neg_index] = int(arr_prod / dim_prod)
             dim_prod *= shape_v[neg_index]
         if dim_prod != arr_prod:
-            raise ValueError(f"For '{self.name}', the shape of 'input_x' is {x_shp}, "
-                             f"the value of 'input_shape' value is {shape_v}. "
-                             f"The product of the shape of 'input_x' should be equal to that of 'input_shape', "
-                             f"but got {arr_prod} and {dim_prod}.")
+            raise ValueError(f"For '{self.name}', the product of the 'input_x' shape "
+                             f"should be equal to product of 'input_shape', but got product of the"
+                             f" shape of 'input_x': {arr_prod}, product of 'input_shape': {dim_prod}.")
         out['shape'] = tuple(shape_v)
 
         if x['value'] is not None:
