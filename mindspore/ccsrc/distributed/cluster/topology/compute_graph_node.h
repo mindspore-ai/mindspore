@@ -30,7 +30,7 @@ namespace topology {
 // The ComputeGraphNode is a separate process representing a sub-graph of the distributed computation graph.
 class ComputeGraphNode : public NodeBase {
  public:
-  explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id) {}
+  explicit ComputeGraphNode(const std::string &node_id) : NodeBase(node_id), authenticated_(false) {}
   ~ComputeGraphNode() override = default;
 
   bool Initialize() override;
@@ -58,6 +58,9 @@ class ComputeGraphNode : public NodeBase {
 
   // The TCP client is used to send messages to meta server node.
   std::unique_ptr<rpc::TCPClient> tcp_client_;
+
+  // Incidate whether this node is authenticated by meta server node.
+  std::atomic<bool> authenticated_;
 };
 }  // namespace topology
 }  // namespace cluster

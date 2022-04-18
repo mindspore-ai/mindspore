@@ -51,7 +51,7 @@ class TCPClient {
 
   // Retrieve a message from tcp server specified by the input message.
   // Returns nullptr after timeout.
-  MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout);
+  MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout = 30);
 
  private:
   // The basic TCP communication component used by the client.

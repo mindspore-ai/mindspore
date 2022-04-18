@@ -36,13 +36,13 @@ bool ComputeGraphNode::Initialize() {
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Initialize(), "Failed to create the TCP client.");
 
   // Register itself to meta server node.
-  RETURN_IF_FALSE_WITH_LOG(Register(), "Failed to register to the meta server node.");
+  EXECUTE_WITH_RETRY(Register, kExecuteRetryNum, kExecuteInterval, "Failed to register");
   return true;
 }
 
 bool ComputeGraphNode::Finalize() {
   // Exit the compute graph node from the cluster topology.
-  RETURN_IF_FALSE_WITH_LOG(Unregister(), "Failed to send unregistration message to the meta server.");
+  EXECUTE_WITH_RETRY(Unregister, kExecuteRetryNum, kExecuteInterval, "Failed to unregister");
 
   // Release the TCP client.
   if (tcp_client_ != nullptr) {
@@ -57,6 +57,8 @@ bool ComputeGraphNode::Finalize() {
 bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(tcp_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
+  RETURN_IF_FALSE_WITH_LOG(tcp_client_->Disconnect(server_url),
+                           "Failed to disconnect from the meta server node url: " << server_url);
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url),
                            "Failed to connect to the meta server node url: " << server_url);
   RegistrationMessage reg_msg;
@@ -66,8 +68,20 @@ bool ComputeGraphNode::Register() {
   auto message = CreateMessage(server_url, MessageName::kRegistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  tcp_client_->SendSync(std::move(message));
-  return true;
+  MessageBase *response = tcp_client_->ReceiveSync(std::move(message));
+  if (response == nullptr) {
+    return false;
+  }
+  auto reg_rt = response->body;
+  delete response;
+  response = nullptr;
+
+  if (std::to_string(static_cast<int>(MessageName::kSuccess)) == reg_rt) {
+    authenticated_ = true;
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool ComputeGraphNode::Unregister() {
@@ -80,8 +94,15 @@ bool ComputeGraphNode::Unregister() {
   auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kUnregistration, content);
   MS_EXCEPTION_IF_NULL(message);
 
-  auto retval = tcp_client_->SendSync(std::move(message));
-  if (retval > 0) {
+  MessageBase *response = tcp_client_->ReceiveSync(std::move(message));
+  if (response == nullptr) {
+    return false;
+  }
+  auto unreg_rt = response->body;
+  delete response;
+  response = nullptr;
+
+  if (std::to_string(static_cast<int>(MessageName::kSuccess)) == unreg_rt) {
     return true;
   } else {
     return false;
