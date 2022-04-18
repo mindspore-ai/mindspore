@@ -61,7 +61,8 @@ bool PriorityReplayBuffer::Push(const std::vector<AddressPtr> &items) {
   auto idx = fifo_replay_buffer_->head();
 
   // Set max priority for the newest item.
-  priority_tree_->Insert(idx, {max_priority_, max_priority_});
+  float priority = static_cast<float>(pow(max_priority_, alpha_));
+  priority_tree_->Insert(idx, {priority, priority});
   return true;
 }
 
@@ -79,7 +80,7 @@ bool PriorityReplayBuffer::UpdatePriorities(const std::vector<size_t> &indices, 
     priority_tree_->Insert(indices[i], {priority, priority});
 
     // Record max priority of transitions
-    max_priority_ = std::max(max_priority_, priority);
+    max_priority_ = std::max(max_priority_, priorities[i]);
   }
 
   return true;
