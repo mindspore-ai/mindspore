@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "tools/converter/quantizer/full_quant_quantizer.h"
 #include <dirent.h>
 #include <set>
@@ -36,6 +37,7 @@
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/bias_correction_strategy.h"
 #include "tools/converter/quantizer/cle_strategy.h"
+#include "tools/anf_exporter/anf_exporter.h"
 
 using std::string;
 using std::vector;
@@ -46,10 +48,7 @@ static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion
                                                          prim::kPrimMatMulFusion, prim::kPrimFullConnection,
                                                          prim::kPrimLayerNormFusion};
 }  // namespace
-FullQuantQuantizer::~FullQuantQuantizer() {
-  delete fp32_session_;
-  delete fp32_model_;
-}
+FullQuantQuantizer::~FullQuantQuantizer() {}
 
 int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                                            const PrimitivePtr &primitive, bool is_input, size_t index) const {
@@ -528,7 +527,7 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
 
 int FullQuantQuantizer::DoInference(CollectType collect_type) {
   // get input tensor
-  vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
+  vector<mindspore::MSTensor> inputs = fp32_ms_model_->GetInputs();
   if (inputs.size() != calibrator_->GetInputNum()) {
     MS_LOG(ERROR) << "model's input tensor count: " << inputs.size() << " != "
                   << " calibrator count:" << calibrator_->GetInputNum();
@@ -538,14 +537,13 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
   for (size_t calib_index = 0; calib_index < calibrator_->GetBatchNum(); calib_index++) {
     MS_LOG(INFO) << "Do inference round:" << calib_index;
     // set multi-input data
-    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      int status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), calib_index, inputs[input_index]);
+    for (auto tensor : inputs) {
+      int status = calibrator_->GenerateInputData(tensor.Name(), calib_index, &tensor);
       MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "generate input data from images failed!");
     }
-
-    KernelCallBack beforeCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &beforeInputs,
-                                        const std::vector<mindspore::tensor::MSTensor *> &beforeOutputs,
-                                        const CallBackParam &callParam) -> bool {
+    MSKernelCallBack beforeCallBack = [&](const std::vector<mindspore::MSTensor> &beforeInputs,
+                                          const std::vector<mindspore::MSTensor> &beforeOutputs,
+                                          const MSCallBackParam &callParam) -> bool {
       auto diverg_info_map = calibrator_->GetInputDivergInfo();
       auto ret = calibrator_->CollectDataDistribution(callParam.node_name, beforeInputs, diverg_info_map, collect_type);
       if (ret != RET_OK) {
@@ -555,9 +553,9 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
       return true;
     };
     // func
-    KernelCallBack afterCallBack = [&](const std::vector<mindspore::tensor::MSTensor *> &afterInputs,
-                                       const std::vector<mindspore::tensor::MSTensor *> &afterOutputs,
-                                       const CallBackParam &callParam) -> bool {
+    MSKernelCallBack afterCallBack = [&](const std::vector<mindspore::MSTensor> &afterInputs,
+                                         const std::vector<mindspore::MSTensor> &afterOutputs,
+                                         const MSCallBackParam &callParam) -> bool {
       auto diverg_info_map = calibrator_->GetOutputDivergInfo();
       auto ret = calibrator_->CollectDataDistribution(callParam.node_name, afterOutputs, diverg_info_map, collect_type);
       if (ret != RET_OK) {
@@ -566,10 +564,9 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
       }
       return true;
     };
-    fp32_session_->BindThread(true);
-    auto status = fp32_session_->RunGraph(beforeCallBack, afterCallBack);
-    fp32_session_->BindThread(false);
-    if (status != RET_OK) {
+    auto outputs = fp32_ms_model_->GetOutputs();
+    auto status = fp32_ms_model_->Predict(inputs, &outputs, beforeCallBack, afterCallBack);
+    if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
     }
@@ -584,7 +581,6 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
-
   int status;
   if (flags_.fullQuantParam.cle) {
     CLEStrategy cle_strategy(func_graph);
@@ -604,14 +600,20 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   // anf -- fb
   flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
-  auto sm = CreateSessionByFuncGraph(func_graph, flags_, this->flags_.commonQuantParam.thread_num);
-  fp32_session_ = sm.session;
-  fp32_model_ = sm.model;
-  if (fp32_session_ == nullptr || fp32_model_ == nullptr) {
-    MS_LOG(ERROR) << "create session failed!";
+  fp32_ms_model_ = std::make_shared<mindspore::Model>();
+  if (fp32_ms_model_ == nullptr) {
+    MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-
+  auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, flags_);
+  if (ret != mindspore::kSuccess) {
+    MS_LOG(ERROR) << "Build model failed.";
+    return RET_ERROR;
+  }
+  if (fp32_ms_model_ == nullptr) {
+    MS_LOG(ERROR) << "fp32_ms_model_ nullptr.";
+    return RET_ERROR;
+  }
   MS_LOG(INFO) << "start to update divergence's max value";
   status = DoInference(MIN_MAX);
   if (status != RET_OK) {
@@ -647,7 +649,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
 
   if (this->flags_.fullQuantParam.bias_correction) {
     MS_LOG(INFO) << "do bias correction";
-    BiasCorrectionStrategy strategy(flags_, calibrator_, quant_strategy_, fp32_session_, fp32_model_, activation_q_min_,
+    BiasCorrectionStrategy strategy(flags_, calibrator_, quant_strategy_, fp32_ms_model_, activation_q_min_,
                                     activation_q_max_);
     status = strategy.DoBiasCorrection(func_graph);
     if (status != RET_OK) {

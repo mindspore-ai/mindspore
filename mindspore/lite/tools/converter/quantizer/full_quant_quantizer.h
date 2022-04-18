@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,24 +51,40 @@ class FullQuantQuantizer : public Quantizer {
 
  private:
   int InitDeviceConfig(const FuncGraphPtr &func_graph);
+
   int DoInference(CollectType collect_type);
+
   int UpdateDivergeInterval();
+
   int QuantNodeSimpleOp(const CNodePtr &cnode);
+
   int QuantNode(const FuncGraphPtr &func_graph);
+
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
                          const PrimitivePtr &primitive, bool is_input, size_t index) const;
+
   int DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight, const PrimitivePtr &primitive,
                              bool per_channel, int input_index) const;
+
   int DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive, bool per_channel,
                              int input_index) const;
+
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
+
   int DoValueNodeQuant(const CNodePtr &cnode, const ValueNodePtr &input_node, size_t input_index);
+
   int IsSupportWeightQuant(const CNodePtr &cnode, const AnfNodePtr &input_node, size_t input_index);
+
   void InitQMinMax();
+
   void InitNvGpuConfig();
+
   void InitCpuConfig();
+
   void InitKirinConfig();
+
   int MarkQuantNode(const FuncGraphPtr &func_graph);
+
   int QuantWithKL();
 
  private:
@@ -91,8 +107,7 @@ class FullQuantQuantizer : public Quantizer {
 
   std::shared_ptr<Calibrator> calibrator_{nullptr};
   std::shared_ptr<QuantStrategy> quant_strategy_{nullptr};
-  session::LiteSession *fp32_session_{nullptr};
-  Model *fp32_model_{nullptr};
+  std::shared_ptr<mindspore::Model> fp32_ms_model_{nullptr};
 
   // key is tensor_name
   std::map<std::string, std::vector<schema::QuantParamT>> weight_quant_params_bak;

@@ -45,6 +45,8 @@ class Calibrator {
 
   int GenerateInputData(const std::string &input_name, size_t image_index, mindspore::tensor::MSTensor *tensor) const;
 
+  int GenerateInputData(const std::string &input_name, size_t image_index, mindspore::MSTensor *tensor) const;
+
   int AddQuantizedOp(const CNodePtr &cnode);
 
   int RecordMaxMinValue(const std::vector<float> &data, const std::unique_ptr<DataDistribution> &diverg_info);
@@ -68,7 +70,7 @@ class Calibrator {
   }
 
   int CollectDataDistribution(
-    const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensors,
+    const std::string &node_name, const std::vector<mindspore::MSTensor> &tensors,
     std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *diverg_info_map,
     CollectType collect_type);
 

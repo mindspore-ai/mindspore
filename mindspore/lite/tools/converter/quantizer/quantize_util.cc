@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 #include <cmath>
 #include <string>
@@ -321,6 +322,55 @@ SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const conv
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
   int size = 0;
   return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size);
+}
+
+Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
+                             const converter::Flags &flags) {
+  int size = 0;
+  return BuildModelByFuncGraph(model, func_graph, flags, &size);
+}
+
+Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
+                             const converter::Flags &flags, int *size) {
+  auto meta_graph = Export(func_graph, true, true);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "Export to meta_graph failed";
+    return kLiteNullptr;
+  }
+
+  // transform
+  GraphDefTransform fb_transform;
+  fb_transform.SetGraphDef(meta_graph);
+  auto status = fb_transform.Transform(flags);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "FBTransform model failed";
+    delete meta_graph;
+    return kLiteError;
+  }
+  meta_graph->version = Version();
+
+  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
+  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
+  builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
+  *size = builder.GetSize();
+  auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
+  if (content == nullptr) {
+    MS_LOG(ERROR) << "GetBufferPointer return null";
+    delete meta_graph;
+    return kLiteNullptr;
+  }
+  auto context = std::make_shared<mindspore::Context>();
+  context->SetThreadAffinity(kCpuBindMode);
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "New context failed while running.";
+    delete meta_graph;
+    return kLiteNullptr;
+  }
+  std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
+  auto &device_list = context->MutableDeviceInfo();
+  device_list.push_back(device_info);
+  return model->Build(content, *size, kMindIR, context);
 }
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
@@ -693,9 +743,9 @@ int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive
   return RET_OK;
 }
 
-int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
-  return DeQuantData(static_cast<int8_t *>(tensor->data()), tensor->ElementsNum(), tensor->quant_params(), dequant_data,
-                     preferred_dim);
+int DeQuantData(mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim) {
+  return DeQuantData(reinterpret_cast<const int8_t *>(tensor->Data().get()), tensor->ElementNum(),
+                     tensor->QuantParams(), dequant_data, preferred_dim);
 }
 
 int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input) {

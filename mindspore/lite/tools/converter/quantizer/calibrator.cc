@@ -160,8 +160,13 @@ int Calibrator::GenerateInputData(const std::string &input_name, size_t image_in
   return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
 }
 
+int Calibrator::GenerateInputData(const std::string &input_name, size_t image_index,
+                                  mindspore::MSTensor *tensor) const {
+  return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
+}
+
 int Calibrator::CollectDataDistribution(
-  const std::string &node_name, const std::vector<mindspore::tensor::MSTensor *> &tensors,
+  const std::string &node_name, const std::vector<mindspore::MSTensor> &tensors,
   std::unordered_map<std::string, std::map<int, std::unique_ptr<DataDistribution>>> *diverg_info_map,
   CollectType collect_type) {
   MS_CHECK_TRUE_MSG(diverg_info_map != nullptr, RET_ERROR, "diverg_info_map is nullptr.");
@@ -170,29 +175,29 @@ int Calibrator::CollectDataDistribution(
   }
   for (size_t i = 0; i < tensors.size(); i++) {
     auto tensor = tensors[i];
-    if (tensor->IsConst() || tensor->data_type() != kNumberTypeFloat32) {
+    if (tensor.IsConst() || tensor.DataType() != DataType::kNumberTypeFloat32) {
       continue;
     }
-    const auto *tensor_data = static_cast<const float *>(tensor->data());
+    const auto *tensor_data = reinterpret_cast<const float *>(tensor.Data().get());
     if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << tensor->tensor_name() << " tensor_data is nullptr.";
+      MS_LOG(ERROR) << tensor.Name() << " tensor_data is nullptr.";
       return RET_ERROR;
     }
-    size_t elem_count = tensor->ElementsNum();
+    size_t elem_count = tensor.ElementNum();
     MS_CHECK_GT(elem_count, 0, RET_ERROR);
     std::vector<float> data(tensor_data, tensor_data + elem_count);
     if (collect_type == MIN_MAX) {
       MS_CHECK_LT(i, (*diverg_info_map)[node_name].size(), RET_ERROR);
       auto ret = RecordMaxMinValue(data, (*diverg_info_map)[node_name][i]);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << tensor->tensor_name() << " record max min value failed.";
+        MS_LOG(ERROR) << tensor.Name() << " record max min value failed.";
         return RET_ERROR;
       }
     } else if (collect_type == KL_BIN) {
       MS_CHECK_LT(i, (*diverg_info_map)[node_name].size(), RET_ERROR);
       auto ret = UpdateDataFrequency(data, (*diverg_info_map)[node_name][i]);
       if (ret != RET_OK) {
-        MS_LOG(ERROR) << tensor->tensor_name() << " update data frequency failed.";
+        MS_LOG(ERROR) << tensor.Name() << " update data frequency failed.";
         return RET_ERROR;
       }
     }

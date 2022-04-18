@@ -21,6 +21,7 @@
 #include <opencv2/opencv.hpp>
 #include "tools/converter/preprocess/preprocess_param.h"
 #include "include/ms_tensor.h"
+#include "include/api/model.h"
 namespace mindspore {
 namespace lite {
 namespace preprocess {
@@ -40,6 +41,9 @@ int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::str
 
 int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
                size_t image_index, mindspore::tensor::MSTensor *tensor);
+
+int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
+               size_t image_index, mindspore::MSTensor *tensor);
 
 int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size);
 
