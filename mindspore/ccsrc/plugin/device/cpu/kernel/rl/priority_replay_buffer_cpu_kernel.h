@@ -112,6 +112,28 @@ class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod 
   std::vector<size_t> priorities_shape_;
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
+
+class PriorityReplayBufferDestroyCpuKernel : public DeprecatedNativeCpuKernelMod {
+ public:
+  PriorityReplayBufferDestroyCpuKernel() = default;
+  ~PriorityReplayBufferDestroyCpuKernel() override = default;
+
+  // Collect and prepare kernel algorithm parameter.
+  void InitKernel(const CNodePtr &kernel_node);
+
+  // Execute kernel.
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &) override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
+    return support_list;
+  }
+
+ private:
+  int64_t handle_{-1};
+};
 }  // namespace kernel
 }  // namespace mindspore
 

@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferCreate, PriorityReplayBufferPush
 from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferSample, PriorityReplayBufferUpdate
+from mindspore.ops.operations._rl_inner_ops import PriorityReplayBufferDestroy
 
 
 class PriorityReplayBuffer(nn.Cell):
@@ -30,6 +31,7 @@ class PriorityReplayBuffer(nn.Cell):
         self.push_op = PriorityReplayBufferPush(handle).add_prim_attr('side_effect_io', True)
         self.sample_op = PriorityReplayBufferSample(handle, sample_size, shapes, dtypes)
         self.update_op = PriorityReplayBufferUpdate(handle).add_prim_attr('side_effect_io', True)
+        self.destroy_op = PriorityReplayBufferDestroy(handle).add_prim_attr('side_effect_io', True)
 
     def push(self, *transition):
         return self.push_op(transition)
@@ -39,6 +41,9 @@ class PriorityReplayBuffer(nn.Cell):
 
     def update_priorities(self, indices, priorities):
         return self.update_op(indices, priorities)
+
+    def destroy(self):
+        return self.destroy_op()
 
 
 @pytest.mark.level0
@@ -86,3 +91,5 @@ def test_priority_replay_buffer_ops():
     actions_expect = np.broadcast_to(indices_new.asnumpy().reshape(-1, 1), actions.shape)
     assert np.allclose(states_new.asnumpy(), states_expect)
     assert np.allclose(actions_new.asnumpy(), actions_expect)
+
+    prb.destroy()
