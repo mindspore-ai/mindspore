@@ -605,13 +605,14 @@ class Tensor(Tensor_):
 
     def view(self, *shape):
         """
-        Reshape the tensor according to the input shape.
+        Reshape the tensor according to the input shape. It's the same as :func:`mindspore.Tensor.reshape`,
+        implemented by the underlying reshape operator.
 
         Args:
             shape (Union[tuple(int), int]): Dimension of the output tensor.
 
         Returns:
-            Tensor, has the same dimension as the input shape.
+            Tensor, which dimension is the input shape's value.
 
         Examples:
             >>> from mindspore import Tensor
