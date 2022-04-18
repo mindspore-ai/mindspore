@@ -1823,6 +1823,7 @@ void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const DeviceConte
   MS_EXCEPTION_IF_NULL(kernel_graph_group_info);
 
   const auto &outputs = kernel_graph_group_info->front_output_nodes_;
+  const auto &monad_outputs = kernel_graph_group_info->monad_outputs_;
   const auto &real_parameters = graph->input_nodes();
   for (const auto &parameter : real_parameters) {
     auto front_node_with_index = GetFrontNodeByKernelGraph(parameter, graph.get());
@@ -1831,7 +1832,10 @@ void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const DeviceConte
     // the group inputs.
     if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter) ||
         outputs.find(front_node_with_index) != outputs.end() || front_node_with_index.first->isa<ValueNode>()) {
-      if (HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter)) {
+      // The monad input is used to link the control arrow of the graph. If it comes from other graphs in the same
+      // group, it is not used as the monad input of the group.
+      if ((HasAbstractMonad(front_node_with_index.first) || HasAbstractMonad(parameter)) &&
+          monad_outputs.find(front_node_with_index) == monad_outputs.end()) {
         (void)kernel_graph_group_info->monad_inputs_.emplace(front_node_with_index.first);
         MS_LOG(DEBUG) << "Kernel graph:" << graph->ToString()
                       << " add front monad input node:" << front_node_with_index.first->DebugString();
@@ -1850,7 +1854,8 @@ void CollectEffectiveInputByGraph(const KernelGraphPtr &graph, const DeviceConte
 }
 
 void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *const device_context,
-                                   FrontToBackendKernelWithContext *const outputs) {
+                                   FrontToBackendKernelWithContext *const outputs,
+                                   std::set<KernelWithIndex> *monad_outputs) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(outputs);
@@ -1860,6 +1865,9 @@ void CollectEffectiveOutputByGraph(const KernelGraphPtr &graph, DeviceContext *c
         backend_to_front.first.first->isa<Parameter>() ||
         common::AnfAlgo::CheckPrimitiveType(backend_to_front.second.first, prim::kPrimPartial) ||
         backend_to_front.second.first->isa<ValueNode>()) {
+      if (HasAbstractMonad(backend_to_front.second.first) || HasAbstractMonad(backend_to_front.first.first)) {
+        monad_outputs->emplace(backend_to_front.second);
+      }
       continue;
     }
 
@@ -1905,7 +1913,8 @@ void ControlNodeParser::ParseKernelGraphGroup(const KernelGraphToDeviceContext &
         CollectEffectiveInputByGraph(kernel_graph, iter->second, kernel_graph_group_info.get());
 
         // Collect outputs in group.
-        CollectEffectiveOutputByGraph(kernel_graph, iter->second, &(kernel_graph_group_info->front_output_nodes_));
+        CollectEffectiveOutputByGraph(kernel_graph, iter->second, &(kernel_graph_group_info->front_output_nodes_),
+                                      &(kernel_graph_group_info->monad_outputs_));
 
         kernel_graphs_to_group_info_[kernel_graph] = kernel_graph_group_info;
         if (kernel_graph_group_info->need_stack_) {
