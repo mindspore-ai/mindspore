@@ -347,7 +347,7 @@ Array操作
 
 - 加法
 
-  以下代码实现了`input_x`和`input_y`两数组相加的操作：
+  以下代码实现了 `input_x` 和 `input_y` 两数组相加的操作：
 
   .. code-block:: python
 
@@ -366,7 +366,7 @@ Array操作
 
 - 矩阵乘法
 
-  以下代码实现了`input_x`和`input_y`两矩阵相乘的操作：
+  以下代码实现了 `input_x` 和 `input_y` 两矩阵相乘的操作：
 
   .. code-block:: python
 
@@ -384,7 +384,7 @@ Array操作
 
 - 求平均值
 
-  以下代码实现了求`input_x`所有元素的平均值的操作：
+  以下代码实现了求 `input_x` 所有元素的平均值的操作：
 
   .. code-block:: python
 
@@ -400,7 +400,7 @@ Array操作
 
 - 指数
 
-  以下代码实现了自然常数`e`的`input_x`次方的操作：
+  以下代码实现了自然常数 `e` 的 `input_x` 次方的操作：
 
   .. code-block:: python
 
@@ -581,7 +581,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
        [2816. 2816. 2816. 2816.]]
     
 
-  对上述示例，我们可以借助`ms_function`将所有算子编译到一张静态图里以加快运行效率，示例如下：
+  对上述示例，我们可以借助 `ms_function` 将所有算子编译到一张静态图里以加快运行效率，示例如下：
 
   .. code-block:: python
 
@@ -602,7 +602,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
 - GradOperation使用示例
 
-  `GradOperation` 可以实现自动求导。以下示例可以实现对上述没有用`ms_function`修饰的`forward`函数定义的计算求导。
+  `GradOperation` 可以实现自动求导。以下示例可以实现对上述没有用 `ms_function` 修饰的 `forward` 函数定义的计算求导。
 
   .. code-block:: python
 
@@ -626,7 +626,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
         ...
        Tensor(shape=[4], dtype=Float32, value= [ 2.00000000e+00,  2.00000000e+00,  2.00000000e+00,  2.00000000e+00]))
 
-  如果要对`ms_function`修饰的`forward`计算求导，需要提前使用`context`设置运算模式为图模式，示例如下：
+  如果要对 `ms_function` 修饰的 `forward` 计算求导，需要提前使用 `context` 设置运算模式为图模式，示例如下：
 
   .. code-block:: python
 
@@ -655,7 +655,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
 - mindspore.context使用示例
 
-  MindSpore支持多后端运算，可以通过`mindspore.context`进行设置。`mindspore.numpy` 的多数算子可以使用图模式或者PyNative模式运行，也可以运行在CPU，CPU或者Ascend等多种后端设备上。
+  MindSpore支持多后端运算，可以通过 `mindspore.context` 进行设置。`mindspore.numpy` 的多数算子可以使用图模式或者PyNative模式运行，也可以运行在CPU，CPU或者Ascend等多种后端设备上。
 
   .. code-block:: python
 
@@ -681,9 +681,9 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
 - mindspore.numpy使用示例
 
-  这里提供一个使用`mindspore.numpy`构建网络模型的示例。
+  这里提供一个使用 `mindspore.numpy` 构建网络模型的示例。
 
-  `mindspore.numpy` 接口可以定义在`nn.Cell`代码块内进行网络的构建，示例如下：
+  `mindspore.numpy` 接口可以定义在 `nn.Cell` 代码块内进行网络的构建，示例如下：
 
   .. code-block:: python
 
