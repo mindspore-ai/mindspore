@@ -377,7 +377,8 @@ int64_t CheckAndConvertUtils::CheckInteger(const std::string &arg_name, int64_t 
                                            int64_t match_value, const std::string &prim_name) {
   auto iter = kCompareMap<float>.find(compare_operator);
   if (iter == kCompareMap<float>.end()) {
-    MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
+    MS_EXCEPTION(NotExistsError) << "For " << prim_name << ". Compare_operator " << compare_operator
+                                 << " cannot find in the compare map";
   }
   if (iter->second(arg_value, match_value)) {
     return arg_value;

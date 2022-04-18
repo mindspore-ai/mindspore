@@ -2603,7 +2603,7 @@ class Concat(Primitive):
         TypeError: If `input_x` have different type of tensor.
         ValueError: If `input_x` have different dimension of tensor.
         ValueError: If `axis` not in [-dims, dims - 1].
-        RuntimeError: If tensor's shape in `input_x` except for `axis` are different.
+        ValueError: If tensor's shape in `input_x` except for `axis` are different.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
