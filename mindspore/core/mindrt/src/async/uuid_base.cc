@@ -38,15 +38,6 @@ std::string uuid::ToBytes(const uuid &u) {
   return std::string(reinterpret_cast<const char *>(u.uuidData), sizeof(u.uuidData));
 }
 
-Option<uuid> uuid::FromBytes(const std::string &s) {
-  if (s.size() != UUID_SIZE) {
-    return Option<uuid>(MindrtNone());
-  }
-  uuid u;
-  (void)memcpy(&u.uuidData, s.data(), s.size());
-  return Option<uuid>(u);
-}
-
 Option<unsigned char> uuid::GetValue(char c) {
   static char const digitsBegin[] = "0123456789abcdefABCDEF";
   static const size_t digitsLen = (sizeof(digitsBegin) / sizeof(char)) - 1;
@@ -122,49 +113,5 @@ const uint8_t *uuid::Get() const { return uuidData; }
 uint8_t *uuid::BeginAddress() { return uuidData; }
 
 uint8_t *uuid::EndAddress() { return uuidData + UUID_SIZE; }
-
-uuid RandomBasedGenerator::GenerateRandomUuid() {
-  const int VARIANT_BIT_OFFSET = 8;
-  const int VERSION_BIT_OFFSET = 6;
-  const int RIGHT_SHIFT_BITS = 8;
-  uuid tmpUUID;
-
-  // This is used to generate a random number as a random seed
-  std::random_device rd;
-
-  // Mersenne Twister algorithm, as a generator engine,
-  // which is used to generate a random number
-  std::mt19937 gen(rd());
-
-  // We use uniform distribution
-  std::uniform_int_distribution<uint64_t> distribution((std::numeric_limits<uint64_t>::min)(),
-                                                       (std::numeric_limits<uint64_t>::max)());
-  uint64_t randomValue = distribution(gen);
-
-  unsigned int i = 0;
-  for (uint8_t *it = tmpUUID.BeginAddress(); it != tmpUUID.EndAddress(); ++it, ++i) {
-    if (i == sizeof(uint64_t)) {
-      randomValue = distribution(gen);
-      i = 0;
-    }
-    *it = static_cast<uint8_t>((randomValue >> (i * RIGHT_SHIFT_BITS)) & 0xFF);
-  }
-
-  // use atomic ++ to replace random
-  static std::atomic<uint64_t> ul(1);
-  uint64_t lCount = ul.fetch_add(1);
-  uint64_t offSet = distribution(gen) % RIGHT_SHIFT_BITS;
-  (void)memcpy(tmpUUID.BeginAddress() + offSet, &lCount, sizeof(lCount));
-
-  // set the variant
-  *(tmpUUID.BeginAddress() + VARIANT_BIT_OFFSET) &= 0xBF;
-  *(tmpUUID.BeginAddress() + VARIANT_BIT_OFFSET) |= 0x80;
-
-  // set the uuid generation version
-  *(tmpUUID.BeginAddress() + VERSION_BIT_OFFSET) &= 0x4F;
-  *(tmpUUID.BeginAddress() + VERSION_BIT_OFFSET) |= 0x40;
-
-  return tmpUUID;
-}
 }  // namespace uuids
 }  // namespace mindspore

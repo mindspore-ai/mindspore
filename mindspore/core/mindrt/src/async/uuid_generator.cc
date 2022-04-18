@@ -20,8 +20,6 @@
 
 namespace mindspore {
 namespace uuid_generator {
-UUID UUID::GetRandomUUID() { return UUID(mindspore::uuids::RandomBasedGenerator::GenerateRandomUuid()); }
-
 std::string UUID::ToString() {
   std::ostringstream ret;
   ret << *this;
