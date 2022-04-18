@@ -863,6 +863,7 @@ class SyncBatchNorm(PrimitiveWithInfer):
         validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
         self.init_prim_io_names(inputs=['x', 'scale', 'offset', 'mean', 'variance'],
                                 outputs=['y', 'batch_mean', 'batch_variance', 'reserve_space_1', 'reserve_space_2'])
+        self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, input_x, scale, bias, mean, variance):
         validator.check_equal_int(len(scale), 1, "scale rank", self.name)
