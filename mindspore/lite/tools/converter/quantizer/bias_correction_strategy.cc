@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "tools/converter/quantizer/bias_correction_strategy.h"
 #include <dirent.h>
 #include <future>
@@ -40,7 +41,7 @@ const std::set<std::string> kSupportBiasCorrectionNode = {
 
 int BiasCorrectionStrategy::QuantOriginFeatureMap(const float *origin_feature_map_data,
                                                   size_t origin_feature_map_data_size,
-                                                  const std::vector<lite::LiteQuantParam> &feature_map_quant_params,
+                                                  const std::vector<mindspore::QuantParam> &feature_map_quant_params,
                                                   size_t quant_size, std::vector<int8_t> *quant_datas) {
   CHECK_NULL_RETURN(quant_datas);
   if (feature_map_quant_params.size() != 1) {
@@ -49,7 +50,7 @@ int BiasCorrectionStrategy::QuantOriginFeatureMap(const float *origin_feature_ma
   }
   schema::QuantParamT feature_map_quant_param_t;
   feature_map_quant_param_t.scale = feature_map_quant_params[0].scale;
-  feature_map_quant_param_t.zeroPoint = feature_map_quant_params[0].zeroPoint;
+  feature_map_quant_param_t.zeroPoint = feature_map_quant_params[0].zero_point;
   for (size_t i = 0; i < origin_feature_map_data_size; i++) {
     auto quant_data = QuantizeData<int8_t>(origin_feature_map_data[i], &feature_map_quant_param_t, activation_q_max_,
                                            activation_q_min_);
@@ -63,7 +64,7 @@ int BiasCorrectionStrategy::QuantOriginFeatureMap(const float *origin_feature_ma
   return RET_OK;
 }
 
-void BiasCorrectionStrategy::CalcAccumulativeError(const CallBackParam &call_param,
+void BiasCorrectionStrategy::CalcAccumulativeError(const MSCallBackParam &call_param,
                                                    const std::vector<float> &fp32_op_output_ch_mean,
                                                    const std::vector<float> &dequant_op_output_ch_mean) {
   std::vector<float> bias_diff(fp32_op_output_ch_mean.size());
@@ -130,7 +131,7 @@ bool BiasCorrectionStrategy::OpOutputChMeanDataHandle(OperationType type, const 
   return false;
 }
 
-KernelCallBack BiasCorrectionStrategy::GetBeforeCallBack(CallBackType call_back_flag) {
+MSKernelCallBack BiasCorrectionStrategy::GetBeforeCallBack(CallBackType call_back_flag) {
   switch (call_back_flag) {
     case CPUFP32:
       return GetCPUFloatBeforeCallBack();
@@ -144,7 +145,7 @@ KernelCallBack BiasCorrectionStrategy::GetBeforeCallBack(CallBackType call_back_
   }
 }
 
-KernelCallBack BiasCorrectionStrategy::GetAfterCallBack(CallBackType call_back_flag) {
+MSKernelCallBack BiasCorrectionStrategy::GetAfterCallBack(CallBackType call_back_flag) {
   switch (call_back_flag) {
     case CPUFP32:
       return GetCPUFloatAfterCallBack();
@@ -158,10 +159,10 @@ KernelCallBack BiasCorrectionStrategy::GetAfterCallBack(CallBackType call_back_f
   }
 }
 
-KernelCallBack BiasCorrectionStrategy::GetCPUFloatBeforeCallBack() {
-  auto before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                                 const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                                 const CallBackParam &call_param) -> bool {
+MSKernelCallBack BiasCorrectionStrategy::GetCPUFloatBeforeCallBack() {
+  auto before_call_back = [this](const std::vector<mindspore::MSTensor> &before_inputs,
+                                 const std::vector<mindspore::MSTensor> &before_outputs,
+                                 const MSCallBackParam &call_param) -> bool {
     auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
     if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
@@ -169,14 +170,15 @@ KernelCallBack BiasCorrectionStrategy::GetCPUFloatBeforeCallBack() {
     auto tensor = before_inputs[0];
     MS_ASSERT(tensor != nullptr);
     // op can be skipped.
-    if (tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+    if (tensor.DataType() != DataType::kNumberTypeFloat32) {
+      MS_LOG(INFO) << "tensor type is " << tensor.DataType();
       return true;
     }
-    size_t elem_count = tensor->ElementsNum();
+    size_t elem_count = tensor.ElementNum();
     MS_CHECK_GT(elem_count, 0, false);
     std::vector<float> fp32_op_input(elem_count);
-    auto ret = memcpy_s(fp32_op_input.data(), fp32_op_input.size() * sizeof(float), tensor->data(), tensor->Size());
+    auto ret =
+      memcpy_s(fp32_op_input.data(), fp32_op_input.size() * sizeof(float), tensor.Data().get(), tensor.DataSize());
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return false;
@@ -189,10 +191,10 @@ KernelCallBack BiasCorrectionStrategy::GetCPUFloatBeforeCallBack() {
   return before_call_back;
 }
 
-KernelCallBack BiasCorrectionStrategy::GetCPUInt8BeforeCallBack() {
-  auto before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                                 const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                                 const CallBackParam &call_param) -> bool {
+MSKernelCallBack BiasCorrectionStrategy::GetCPUInt8BeforeCallBack() {
+  auto before_call_back = [this](const std::vector<mindspore::MSTensor> &before_inputs,
+                                 const std::vector<mindspore::MSTensor> &before_outputs,
+                                 const MSCallBackParam &call_param) -> bool {
     auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
     if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
@@ -200,8 +202,8 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8BeforeCallBack() {
     auto tensor = before_inputs[0];
     MS_ASSERT(tensor != nullptr);
     // op can be skipped.
-    if (tensor->data_type() != kNumberTypeInt8) {
-      MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+    if (tensor.DataType() != DataType::kNumberTypeInt8) {
+      MS_LOG(INFO) << "tensor type is " << tensor.DataType();
       return true;
     }
     // Get origin data
@@ -211,13 +213,14 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8BeforeCallBack() {
     }
     std::vector<int8_t> quant_datas;
     // do quantization: activation is always per layer quantized
-    auto ret = QuantOriginFeatureMap(fp32_op_input.data(), fp32_op_input.size(), tensor->quant_params(), tensor->Size(),
-                                     &quant_datas);
+    auto ret = QuantOriginFeatureMap(fp32_op_input.data(), fp32_op_input.size(), tensor.QuantParams(),
+                                     tensor.DataSize(), &quant_datas);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Quant origin feature map failed.";
       return ret;
     }
-    ret = memcpy_s(tensor->data(), tensor->Size(), quant_datas.data(), quant_datas.size() * sizeof(int8_t));
+    ret = memcpy_s(const_cast<void *>(tensor.Data().get()), tensor.DataSize(), quant_datas.data(),
+                   quant_datas.size() * sizeof(int8_t));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return false;
@@ -228,10 +231,10 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8BeforeCallBack() {
   return before_call_back;
 }
 
-KernelCallBack BiasCorrectionStrategy::GetCPUInt8AfterCallBack() {
-  auto after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                                const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                                const CallBackParam &call_param) -> bool {
+MSKernelCallBack BiasCorrectionStrategy::GetCPUInt8AfterCallBack() {
+  auto after_call_back = [this](const std::vector<mindspore::MSTensor> &after_inputs,
+                                const std::vector<mindspore::MSTensor> &after_outputs,
+                                const MSCallBackParam &call_param) -> bool {
     auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
     if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
@@ -239,8 +242,8 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8AfterCallBack() {
     auto tensor = after_outputs[0];
     MS_ASSERT(tensor != nullptr);
     // op can be skipped.
-    if (tensor->data_type() != kNumberTypeInt8) {
-      MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+    if (tensor.DataType() != DataType::kNumberTypeInt8) {
+      MS_LOG(INFO) << "tensor type is " << tensor.DataType();
       return true;
     }
     std::vector<float> fp32_op_output_ch_mean;
@@ -251,14 +254,14 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8AfterCallBack() {
     // Calculate the difference between original and quantified
     // DeQuant Data
     std::vector<double> dequant_data;
-    auto ret = DeQuantData(tensor, &dequant_data);
+    auto ret = DeQuantData(&tensor, &dequant_data);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeQuant data failed.";
       return false;
     }
     std::vector<float> dequant_op_output_ch_mean;
     // Calculate output per channel means
-    ret = CalculatePerChannelMeans<double>(dequant_data.data(), dequant_data.size(), tensor->shape(),
+    ret = CalculatePerChannelMeans<double>(dequant_data.data(), dequant_data.size(), tensor.Shape(),
                                            &dequant_op_output_ch_mean);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Calculate Per channel means failed.";
@@ -271,10 +274,10 @@ KernelCallBack BiasCorrectionStrategy::GetCPUInt8AfterCallBack() {
   return after_call_back;
 }
 
-KernelCallBack BiasCorrectionStrategy::GetCPUFloatAfterCallBack() {
-  auto after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                                const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                                const CallBackParam &call_param) -> bool {
+MSKernelCallBack BiasCorrectionStrategy::GetCPUFloatAfterCallBack() {
+  auto after_call_back = [this](const std::vector<mindspore::MSTensor> &after_inputs,
+                                const std::vector<mindspore::MSTensor> &after_outputs,
+                                const MSCallBackParam &call_param) -> bool {
     auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
     if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
@@ -282,14 +285,14 @@ KernelCallBack BiasCorrectionStrategy::GetCPUFloatAfterCallBack() {
     auto tensor = after_outputs[0];
     MS_ASSERT(tensor != nullptr);
     // op can be skipped.
-    if (tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+    if (tensor.DataType() != DataType::kNumberTypeFloat32) {
+      MS_LOG(INFO) << "tensor type is " << tensor.DataType();
       return true;
     }
     std::vector<float> fp32_op_output_ch_mean;
     // Calculate output per channel means
-    auto ret = CalculatePerChannelMeans<float>(static_cast<float *>(tensor->data()), tensor->ElementsNum(),
-                                               tensor->shape(), &fp32_op_output_ch_mean);
+    auto ret = CalculatePerChannelMeans<float>(reinterpret_cast<const float *>(tensor.Data().get()),
+                                               tensor.ElementNum(), tensor.Shape(), &fp32_op_output_ch_mean);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Calculate Per channel means failed.";
       return false;
@@ -302,22 +305,32 @@ KernelCallBack BiasCorrectionStrategy::GetCPUFloatAfterCallBack() {
   return after_call_back;
 }
 
-int BiasCorrectionStrategy::Int8Inference(const KernelCallBack &before_call_back,
-                                          const KernelCallBack &after_call_back) {
+int BiasCorrectionStrategy::Int8Inference(const MSKernelCallBack &before_call_back,
+                                          const MSKernelCallBack &after_call_back,
+                                          const FuncGraphPtr &quant_func_graph) {
+  auto int8_model = std::make_shared<mindspore::Model>();
+  if (int8_model == nullptr) {
+    MS_LOG(ERROR) << "New model failed.";
+    return RET_ERROR;
+  }
+  auto ret = BuildModelByFuncGraph(int8_model, quant_func_graph, flags_);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Build error.";
+    return RET_ERROR;
+  }
   // int8 inference
-  std::vector<mindspore::tensor::MSTensor *> inputs = int8_session_->GetInputs();
+  std::vector<mindspore::MSTensor> inputs = int8_model->GetInputs();
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      int status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
+    for (auto tensor : inputs) {
+      int status = calibrator_->GenerateInputData(tensor.Name(), i, &tensor);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data failed!";
         return RET_ERROR;
       }
     }
-    int8_session_->BindThread(true);
-    auto status = int8_session_->RunGraph(before_call_back, after_call_back);
-    int8_session_->BindThread(false);
-    if (status != RET_OK) {
+    auto outputs = int8_model->GetOutputs();
+    auto status = int8_model->Predict(inputs, &outputs, before_call_back, after_call_back);
+    if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
     }
@@ -325,47 +338,33 @@ int BiasCorrectionStrategy::Int8Inference(const KernelCallBack &before_call_back
   return RET_OK;
 }
 
-int BiasCorrectionStrategy::Fp32Inference(const KernelCallBack &before_call_back,
-                                          const KernelCallBack &after_call_back) {
+int BiasCorrectionStrategy::Fp32Inference(const MSKernelCallBack &before_call_back,
+                                          const MSKernelCallBack &after_call_back) {
   // get input tensor
-  std::vector<mindspore::tensor::MSTensor *> inputs = fp32_session_->GetInputs();
+  std::vector<mindspore::MSTensor> inputs = fp32_ms_model_->GetInputs();
   // fp32 inference
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
-    for (size_t input_index = 0; input_index < inputs.size(); input_index++) {
-      int status = calibrator_->GenerateInputData(inputs[input_index]->tensor_name(), i, inputs[input_index]);
+    for (auto tensor : inputs) {
+      int status = calibrator_->GenerateInputData(tensor.Name(), i, &tensor);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "generate input data from images failed!";
         return RET_ERROR;
       }
     }
-    fp32_session_->BindThread(true);
-    auto status = fp32_session_->RunGraph(before_call_back, after_call_back);
-    fp32_session_->BindThread(false);
-    if (status != RET_OK) {
+    auto outputs = fp32_ms_model_->GetOutputs();
+    auto status = fp32_ms_model_->Predict(inputs, &outputs, before_call_back, after_call_back);
+    if (status != mindspore::kSuccess) {
       MS_LOG(ERROR) << "run model failed!";
       return RET_ERROR;
     }
   }  // end for images
-  return RET_OK;
-}
-
-int BiasCorrectionStrategy::CreateQuantModel(const FuncGraphPtr &quant_func_graph) {
-  // init in8 session
-  MS_LOG(INFO) << "create quant session";
-  flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_ALL;
-  auto int8_sm = CreateSessionByFuncGraph(quant_func_graph, flags_, this->flags_.commonQuantParam.thread_num);
-  int8_session_ = int8_sm.session;
-  int8_model_ = int8_sm.model;
-  CHECK_NULL_RETURN(int8_session_);
-  CHECK_NULL_RETURN(int8_model_);
   return RET_OK;
 }
 
 int BiasCorrectionStrategy::DoCPUBiasCorrection(const FuncGraphPtr &quant_func_graph) {
   CHECK_NULL_RETURN(calibrator_);
   CHECK_NULL_RETURN(quant_strategy_);
-  CHECK_NULL_RETURN(fp32_session_);
-  CHECK_NULL_RETURN(fp32_model_);
+  CHECK_NULL_RETURN(fp32_ms_model_);
   int8_before_call_back_ = GetBeforeCallBack(CPUInt8);
   int8_after_call_back_ = GetAfterCallBack(CPUInt8);
   fp32_before_call_back_ = GetBeforeCallBack(CPUFP32);
@@ -376,8 +375,7 @@ int BiasCorrectionStrategy::DoCPUBiasCorrection(const FuncGraphPtr &quant_func_g
 int BiasCorrectionStrategy::DoNVGPUBiasCorrection(const FuncGraphPtr &quant_func_graph) {
   CHECK_NULL_RETURN(calibrator_);
   CHECK_NULL_RETURN(quant_strategy_);
-  CHECK_NULL_RETURN(fp32_session_);
-  CHECK_NULL_RETURN(fp32_model_);
+  CHECK_NULL_RETURN(fp32_ms_model_);
   int8_before_call_back_ = GetBeforeCallBack(NVGPUInt8);
   int8_after_call_back_ = GetAfterCallBack(NVGPUInt8);
   fp32_before_call_back_ = GetBeforeCallBack(CPUFP32);
@@ -386,18 +384,13 @@ int BiasCorrectionStrategy::DoNVGPUBiasCorrection(const FuncGraphPtr &quant_func
 }
 
 int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_graph, bool int32_bias) {
-  auto ret = CreateQuantModel(quant_func_graph);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Create quant model failed:" << ret;
-    return ret;
-  }
   if (calibrator_->GetBatchNum() == 0) {
     MS_LOG(ERROR) << "divisor 'calibrate_size' cannot be 0.";
     return RET_ERROR;
   }
 
   std::future<int> int8_inference = std::async(std::launch::async, &BiasCorrectionStrategy::Int8Inference, this,
-                                               int8_before_call_back_, int8_after_call_back_);
+                                               int8_before_call_back_, int8_after_call_back_, quant_func_graph);
   auto status = Fp32Inference(fp32_before_call_back_, fp32_after_call_back_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "int8 inference failed!";
@@ -565,10 +558,10 @@ int BiasCorrectionStrategy::DoCNodeBiasCorrection(const FuncGraphPtr &quant_func
   return RET_OK;
 }
 
-KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
-  auto before_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                                 const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                                 const CallBackParam &call_param) -> bool {
+MSKernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
+  auto before_call_back = [this](const std::vector<mindspore::MSTensor> &before_inputs,
+                                 const std::vector<mindspore::MSTensor> &before_outputs,
+                                 const MSCallBackParam &call_param) -> bool {
     auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
     if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
@@ -576,8 +569,8 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
     auto feature_map_tensor = before_inputs[0];
     MS_ASSERT(feature_map_tensor != nullptr);
     // op can be skipped.
-    if (feature_map_tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(INFO) << "feature_map_tensor type is " << feature_map_tensor->data_type();
+    if (feature_map_tensor.DataType() != DataType::kNumberTypeFloat32) {
+      MS_LOG(INFO) << "feature_map_tensor type is " << feature_map_tensor.DataType();
       return true;
     }
     // Get origin data
@@ -587,21 +580,21 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
     }
     // do quantization: activation is always per layer quantized
     std::vector<int8_t> quant_datas;
-    auto ret = QuantOriginFeatureMap(static_cast<float *>(feature_map_tensor->data()),
-                                     feature_map_tensor->ElementsNum(), feature_map_tensor->quant_params(),
-                                     feature_map_tensor->ElementsNum() * sizeof(int8_t), &quant_datas);
+    auto ret = QuantOriginFeatureMap(reinterpret_cast<const float *>(feature_map_tensor.Data().get()),
+                                     feature_map_tensor.ElementNum(), feature_map_tensor.QuantParams(),
+                                     feature_map_tensor.ElementNum() * sizeof(int8_t), &quant_datas);
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << feature_map_tensor->tensor_name() << " Quant origin feature map failed. " << ret;
+      MS_LOG(ERROR) << feature_map_tensor.Name() << " Quant origin feature map failed. " << ret;
       return false;
     }
     std::vector<float> dequant_data;
-    ret = DeQuantData(quant_datas.data(), quant_datas.size(), feature_map_tensor->quant_params(), &dequant_data);
+    ret = DeQuantData(quant_datas.data(), quant_datas.size(), feature_map_tensor.QuantParams(), &dequant_data);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "DeQuant origin feature map failed. " << ret;
       return false;
     }
-    ret = memcpy_s(feature_map_tensor->data(), feature_map_tensor->Size(), dequant_data.data(),
-                   dequant_data.size() * sizeof(float));
+    ret = memcpy_s(const_cast<void *>(feature_map_tensor.Data().get()), feature_map_tensor.DataSize(),
+                   dequant_data.data(), dequant_data.size() * sizeof(float));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy error: " << ret;
       return false;
@@ -611,10 +604,10 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8BeforeCallBack() {
   return before_call_back;
 }
 
-KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
-  auto after_call_back = [this](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                                const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                                const CallBackParam &call_param) -> bool {
+MSKernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
+  auto after_call_back = [this](const std::vector<mindspore::MSTensor> &after_inputs,
+                                const std::vector<mindspore::MSTensor> &after_outputs,
+                                const MSCallBackParam &call_param) -> bool {
     auto is_skip_op = quant_strategy_->IsSkipOp(call_param.node_name);
     if (kSupportBiasCorrectionNode.find(call_param.node_type) == kSupportBiasCorrectionNode.end() || is_skip_op) {
       return true;
@@ -622,8 +615,8 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
     auto tensor = after_outputs[0];
     MS_ASSERT(tensor != nullptr);
     // op can be skipped.
-    if (tensor->data_type() != kNumberTypeFloat32) {
-      MS_LOG(INFO) << "tensor type is " << tensor->data_type();
+    if (tensor.DataType() != DataType::kNumberTypeFloat32) {
+      MS_LOG(INFO) << "tensor type is " << tensor.DataType();
       return true;
     }
     std::vector<float> fp32_op_output_ch_mean;
@@ -634,8 +627,8 @@ KernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
     // Calculate the difference between original and quantified
     // Calculate output per channel means
     std::vector<float> dequant_op_output_ch_mean;
-    auto ret = CalculatePerChannelMeans<float>(static_cast<float *>(tensor->data()), tensor->ElementsNum(),
-                                               tensor->shape(), &dequant_op_output_ch_mean);
+    auto ret = CalculatePerChannelMeans<float>(reinterpret_cast<const float *>(tensor.Data().get()),
+                                               tensor.ElementNum(), tensor.Shape(), &dequant_op_output_ch_mean);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Calculate Per channel means failed.";
       return false;

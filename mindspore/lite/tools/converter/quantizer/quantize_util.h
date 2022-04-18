@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@
 #include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
+#include "include/api/model.h"
 
 namespace mindspore::lite::quant {
 enum WeightQuantType {
@@ -65,9 +66,10 @@ constexpr size_t k32Bit = 32;
 constexpr size_t kMaxNum1024 = 1024;
 constexpr float kPercentBase = 100.0;
 constexpr size_t kMillisecondsBase = 10;
-constexpr float delta = 0.1;
-constexpr float ratio = 10.0;
-constexpr int percent = 10;
+constexpr float kDelta = 0.1;
+constexpr float kRatio = 10.0;
+constexpr int kPercent = 10;
+constexpr int kCpuBindMode = 1;
 
 struct SessionModel {
   session::LiteSession *session{nullptr};
@@ -98,21 +100,21 @@ std::vector<int> ConvertShapeVectorToInt32(const ShapeVector &dims);
 
 int DoParameterBiasQuant(const ParameterPtr &bias, const PrimitivePtr &primitive);
 
-int DeQuantData(mindspore::tensor::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
+int DeQuantData(mindspore::MSTensor *tensor, std::vector<double> *dequant_data, int preferred_dim = 0);
 
 int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
 
 int GetQuantType(const CNodePtr &cnode);
 
 template <typename T>
-int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<lite::LiteQuantParam> quant_params,
+int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<mindspore::QuantParam> quant_params,
                 std::vector<T> *dequant_data, int preferred_dim = 0) {
   if (quant_params.size() != 1) {
     MS_LOG(ERROR) << "unexpected quant_params size: " << quant_params.size() << " only support per-layer now.";
     return RET_ERROR;
   }
   auto scale = quant_params[0].scale;
-  auto zp = quant_params[0].zeroPoint;
+  auto zp = quant_params[0].zero_point;
   dequant_data->resize(elements_num);
   for (int64_t i = 0; i < elements_num; i++) {
     dequant_data->at(i) = scale * (tensor_data[i] - zp);
@@ -196,8 +198,16 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
+
 SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
                                       int *size);
+
+Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
+                             const converter::Flags &flags);
+
+Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
+                             const converter::Flags &flags, int *size);
+
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types);

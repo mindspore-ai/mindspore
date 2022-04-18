@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_BIASCORRECTION_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_BIASCORRECTION_H
+
 #include <memory>
 #include <map>
 #include <string>
@@ -35,28 +36,20 @@ enum CallBackType {
   CPUInt8,
   NVGPUInt8,
 };
+
 class BiasCorrectionStrategy {
  public:
   BiasCorrectionStrategy(const converter::Flags &flags, const std::shared_ptr<Calibrator> &calibrator,
-                         const std::shared_ptr<QuantStrategy> &quant_strategy, session::LiteSession *fp32_session,
-                         Model *fp32_model, int activation_q_min, int activation_q_max)
+                         const std::shared_ptr<QuantStrategy> &quant_strategy,
+                         std::shared_ptr<mindspore::Model> fp32_ms_model, int activation_q_min, int activation_q_max)
       : flags_(flags),
         calibrator_(calibrator),
         quant_strategy_(quant_strategy),
-        fp32_session_(fp32_session),
-        fp32_model_(fp32_model),
+        fp32_ms_model_(fp32_ms_model),
         activation_q_min_(activation_q_min),
         activation_q_max_(activation_q_max) {}
-  ~BiasCorrectionStrategy() {
-    if (int8_session_ != nullptr) {
-      delete int8_session_;
-      int8_session_ = nullptr;
-    }
-    if (int8_model_ != nullptr) {
-      delete int8_model_;
-      int8_model_ = nullptr;
-    }
-  }
+
+  ~BiasCorrectionStrategy() {}
 
   int DoBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
@@ -66,26 +59,40 @@ class BiasCorrectionStrategy {
   int DoNVGPUBiasCorrection(const FuncGraphPtr &quant_func_graph);
 
  private:
-  int CreateQuantModel(const FuncGraphPtr &quant_func_graph);
   int DoBiasCorrection(const FuncGraphPtr &quant_func_graph, bool int32_bias);
+
   int DoCNodeBiasCorrection(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode, bool int32_bias);
-  int Int8Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
-  int Fp32Inference(const KernelCallBack &before_call_back, const KernelCallBack &after_call_back);
+
+  int Int8Inference(const MSKernelCallBack &before_call_back, const MSKernelCallBack &after_call_back,
+                    const FuncGraphPtr &quant_func_graph);
+
+  int Fp32Inference(const MSKernelCallBack &before_call_back, const MSKernelCallBack &after_call_back);
+
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
+
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
-  void CalcAccumulativeError(const CallBackParam &call_param, const std::vector<float> &fp32_op_output_ch_mean,
+
+  void CalcAccumulativeError(const MSCallBackParam &call_param, const std::vector<float> &fp32_op_output_ch_mean,
                              const std::vector<float> &dequant_op_output_ch_mean);
-  KernelCallBack GetBeforeCallBack(CallBackType call_back_flag);
-  KernelCallBack GetCPUFloatBeforeCallBack();
-  KernelCallBack GetCPUInt8BeforeCallBack();
-  KernelCallBack GetNVGPUInt8BeforeCallBack();
-  KernelCallBack GetAfterCallBack(CallBackType call_back_flag);
-  KernelCallBack GetCPUInt8AfterCallBack();
-  KernelCallBack GetCPUFloatAfterCallBack();
-  KernelCallBack GetNVGPUInt8AfterCallBack();
+
+  MSKernelCallBack GetBeforeCallBack(CallBackType call_back_flag);
+
+  MSKernelCallBack GetCPUFloatBeforeCallBack();
+
+  MSKernelCallBack GetCPUInt8BeforeCallBack();
+
+  MSKernelCallBack GetNVGPUInt8BeforeCallBack();
+
+  MSKernelCallBack GetAfterCallBack(CallBackType call_back_flag);
+
+  MSKernelCallBack GetCPUInt8AfterCallBack();
+
+  MSKernelCallBack GetCPUFloatAfterCallBack();
+
+  MSKernelCallBack GetNVGPUInt8AfterCallBack();
 
   int QuantOriginFeatureMap(const float *origin_feature_map_data, size_t origin_feature_map_data_size,
-                            const std::vector<lite::LiteQuantParam> &feature_map_quant_params, size_t quant_size,
+                            const std::vector<mindspore::QuantParam> &feature_map_quant_params, size_t quant_size,
                             std::vector<int8_t> *quant_datas);
 
   int CreateFp32BiasTensor(const FuncGraphPtr &quant_func_graph, const CNodePtr &cnode, const ParameterPtr &parameter,
@@ -97,8 +104,9 @@ class BiasCorrectionStrategy {
 
   int AddBiasToFp32Tensor(const CNodePtr &cnode, const tensor::TensorPtr &bias_tensor,
                           const std::vector<float> &bias_diff);
+
   template <typename T>
-  int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int> shapes,
+  int CalculatePerChannelMeans(const T *tensor_data, size_t elem_count, std::vector<int64_t> shapes,
                                std::vector<float> *per_channel_mean) {
     CHECK_NULL_RETURN(tensor_data);
     MS_CHECK_GT(elem_count, 0, RET_ERROR);
@@ -128,18 +136,14 @@ class BiasCorrectionStrategy {
   converter::Flags flags_;
   std::shared_ptr<Calibrator> calibrator_{nullptr};
   std::shared_ptr<QuantStrategy> quant_strategy_{nullptr};
-  session::LiteSession *fp32_session_{nullptr};
-  Model *fp32_model_{nullptr};
+  std::shared_ptr<mindspore::Model> fp32_ms_model_{nullptr};
   int activation_q_min_{INT8_MIN};
   int activation_q_max_{INT8_MAX};
 
-  session::LiteSession *int8_session_{nullptr};
-  Model *int8_model_{nullptr};
-
-  KernelCallBack int8_before_call_back_;
-  KernelCallBack int8_after_call_back_;
-  KernelCallBack fp32_before_call_back_;
-  KernelCallBack fp32_after_call_back_;
+  MSKernelCallBack int8_before_call_back_;
+  MSKernelCallBack int8_after_call_back_;
+  MSKernelCallBack fp32_before_call_back_;
+  MSKernelCallBack fp32_after_call_back_;
 
   std::map<std::string, std::vector<float>> fp32_op_input_map_;           // concurrency
   std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map_;  // concurrency
