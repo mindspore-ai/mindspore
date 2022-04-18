@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,6 +68,41 @@ def test_random_rotation_op_c(plot=False):
             visualize_image(original, rotation_de, mse, rotation_cv)
 
 
+def test_random_rotation_op_c_area():
+    """
+    Feature: RandomRotation op
+    Description: Test RandomRotation in C++ transformations op with Interpolation AREA
+    Expectation: Number of returned data rows is correct
+    """
+    logger.info("test_random_rotation_op_c_area")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
+    decode_op = c_vision.Decode()
+    # Use [180, 180] to force rotate 180 degrees, expand is set to be True to match output size
+    # Use resample with Interpolation AREA
+    random_rotation_op = c_vision.RandomRotation((180, 180), expand=True, resample=Inter.AREA)
+    data1 = data1.map(operations=decode_op, input_columns=["image"])
+    data1 = data1.map(operations=random_rotation_op, input_columns=["image"])
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = data2.map(operations=decode_op, input_columns=["image"])
+
+    num_iter = 0
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        rotation_de = item1["image"]
+        original = item2["image"]
+        logger.info("shape before rotate: {}".format(original.shape))
+        rotation_cv = cv2.rotate(original, cv2.ROTATE_180)
+        mse = diff_mse(rotation_de, rotation_cv)
+        logger.info("random_rotation_op_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse == 0
+        num_iter += 1
+    assert num_iter == 3
+
+
 def test_random_rotation_op_py(plot=False):
     """
     Test RandomRotation in python transformations op
@@ -104,6 +139,7 @@ def test_random_rotation_op_py(plot=False):
         if plot:
             visualize_image(original, rotation_de, mse, rotation_cv)
 
+
 def test_random_rotation_op_py_ANTIALIAS():
     """
     Test RandomRotation in python transformations op
@@ -124,6 +160,7 @@ def test_random_rotation_op_py_ANTIALIAS():
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         num_iter += 1
     logger.info("use RandomRotation by Inter.ANTIALIAS process {} images.".format(num_iter))
+
 
 def test_random_rotation_expand():
     """
@@ -238,6 +275,7 @@ def test_rotation_diff(plot=False):
 
 if __name__ == "__main__":
     test_random_rotation_op_c(plot=True)
+    test_random_rotation_op_c_area()
     test_random_rotation_op_py(plot=True)
     test_random_rotation_op_py_ANTIALIAS()
     test_random_rotation_expand()

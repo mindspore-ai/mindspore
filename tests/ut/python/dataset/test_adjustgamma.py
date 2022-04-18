@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,6 +42,11 @@ def generate_numpy_random_rgb(shape):
 
 
 def test_adjust_gamma_c_eager():
+    """
+    Feature: AdjustGamma op
+    Description: Test eager support for AdjustGamma C++ op
+    Expectation: Receive non-None output image from op
+    """
     # Eager 3-channel
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.float32)
     img_in = rgb_flat.reshape((8, 8, 3))
@@ -50,8 +55,19 @@ def test_adjust_gamma_c_eager():
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
+    img_in2 = PIL.Image.open("../data/dataset/apple.jpg").convert("RGB")
+
+    adjustgamma_op2 = C.AdjustGamma(10, 1)
+    img_out2 = adjustgamma_op2(img_in2)
+    assert img_out2 is not None
+
 
 def test_adjust_gamma_py_eager():
+    """
+    Feature: AdjustGamma op
+    Description: Test eager support for AdjustGamma Python op
+    Expectation: Receive non-None output image from op
+    """
     # Eager 3-channel
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.uint8)
     img_in = PIL.Image.fromarray(rgb_flat.reshape((8, 8, 3)))
@@ -59,6 +75,12 @@ def test_adjust_gamma_py_eager():
     adjustgamma_op = F.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
+
+    img_in2 = PIL.Image.open("../data/dataset/apple.jpg").convert("RGB")
+
+    adjustgamma_op2 = F.AdjustGamma(10, 1)
+    img_out2 = adjustgamma_op2(img_in2)
+    assert img_out2 is not None
 
 
 def test_adjust_gamma_c_eager_gray():

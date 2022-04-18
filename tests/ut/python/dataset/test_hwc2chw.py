@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,9 +30,11 @@ DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 
-def test_HWC2CHW_callable():
+def test_hwc2chw_callable():
     """
-    Test HWC2CHW is callable
+    Feature: HWC2CHW op
+    Description: Test HWC2CHW op is callable.
+    Expectation: Valid input succeeds. Invalid input fails.
     """
     logger.info("Test HWC2CHW callable")
     img = np.zeros([50, 50, 3])
@@ -59,7 +61,7 @@ def test_HWC2CHW_callable():
     assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
 
 
-def test_HWC2CHW_multi_channels():
+def test_hwc2chw_multi_channels():
     """
     Feature: Test HWC2CHW feature
     Description: The input is a HWC format array with 5 channels
@@ -81,9 +83,11 @@ def test_HWC2CHW_multi_channels():
         assert np.allclose(item[0], expect_output)
 
 
-def test_HWC2CHW(plot=False):
+def test_hwc2chw(plot=False):
     """
-    Test HWC2CHW
+    Feature: HWC2CHW op
+    Description: Test HWC2CHW op in pipeline
+    Expectation: Pipelines succeed with comparison mse=0
     """
     logger.info("Test HWC2CHW")
 
@@ -115,9 +119,11 @@ def test_HWC2CHW(plot=False):
         visualize_list(image, image_transposed)
 
 
-def test_HWC2CHW_md5():
+def test_hwc2chw_md5():
     """
-    Test HWC2CHW(md5)
+    Feature: HWC2CHW op
+    Description: Test HWC2CHW op with md5 check.
+    Expectation: Pipeline results match in md5 comparison
     """
     logger.info("Test HWC2CHW with md5 comparison")
 
@@ -133,9 +139,11 @@ def test_HWC2CHW_md5():
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_HWC2CHW_comp(plot=False):
+def test_hwc2chw_comp(plot=False):
     """
-    Test HWC2CHW between python and c image augmentation
+    Feature: HWC2CHW op
+    Description: Test HWC2CHW between Python and C image augmentation
+    Expectation: Image augmentations should be almost the same with mse < 0.001
     """
     logger.info("Test HWC2CHW with c_transform and py_transform comparison")
 
@@ -150,9 +158,7 @@ def test_HWC2CHW_comp(plot=False):
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
         py_vision.Decode(),
-        py_vision.ToTensor(),
-        py_vision.HWC2CHW()
-    ]
+        py_vision.ToTensor()]
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
@@ -161,7 +167,7 @@ def test_HWC2CHW_comp(plot=False):
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
                             data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         c_image = item1["image"]
-        py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        py_image = (item2["image"] * 255).astype(np.uint8)
 
         # Compare images between that applying c_transform and py_transform
         mse = diff_mse(py_image, c_image)
@@ -174,8 +180,8 @@ def test_HWC2CHW_comp(plot=False):
 
 
 if __name__ == '__main__':
-    test_HWC2CHW_callable()
-    test_HWC2CHW_multi_channels()
-    test_HWC2CHW(True)
-    test_HWC2CHW_md5()
-    test_HWC2CHW_comp(True)
+    test_hwc2chw_callable()
+    test_hwc2chw_multi_channels()
+    test_hwc2chw(True)
+    test_hwc2chw_md5()
+    test_hwc2chw_comp(True)

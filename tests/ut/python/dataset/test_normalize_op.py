@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 Testing Normalize op in DE
 """
 import numpy as np
+from PIL import Image
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.c_transforms as c_vision
@@ -367,9 +368,37 @@ def test_multiple_channels():
     util_test(np.ones(shape=[20, 45, 4]) * 1.3, mean=[0.5, 0.6, 0.7, 0.8], std=[0.1, 0.2, 0.3, 0.4])
     util_test(np.ones(shape=[2, 2]), mean=[0.5], std=[0.1])
     util_test(np.ones(shape=[2, 2, 5]), mean=[0.5], std=[0.1])
-    util_test(np.ones(shape=[6, 6, 129]), mean=[0.5]*129, std=[0.1]*129)
+    util_test(np.ones(shape=[6, 6, 129]), mean=[0.5] * 129, std=[0.1] * 129)
     util_test(np.ones(shape=[6, 6, 129]), mean=[0.5], std=[0.1])
 
+
+def test_normalize_c_eager():
+    """
+    Feature: Normalize op
+    Description: Test eager support for Normalize C++ op
+    Expectation: Receive non-None output image from op
+    """
+    img_in = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    mean_vec = [1, 100, 255]
+    std_vec = [1, 20, 255]
+    normalize_op = c_vision.Normalize(mean=mean_vec, std=std_vec)
+    img_out = normalize_op(img_in)
+    assert img_out is not None
+
+
+def test_normalize_py_eager():
+    """
+    Feature: Normalize op
+    Description: Test eager support for Normalize Python op
+    Expectation: Receive non-None output image from op
+    """
+    img_in = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    img_in = py_vision.ToTensor()(img_in)
+    mean_vec = [0.1, 0.5, 1.0]
+    std_vec = [0.1, 0.4, 1.0]
+    normalize_op = py_vision.Normalize(mean=mean_vec, std=std_vec)
+    img_out = normalize_op(img_in)
+    assert img_out is not None
 
 
 if __name__ == "__main__":
@@ -386,3 +415,5 @@ if __name__ == "__main__":
     test_normalize_grayscale_md5_01()
     test_normalize_grayscale_md5_02()
     test_normalize_grayscale_exception()
+    test_normalize_c_eager()
+    test_normalize_py_eager()

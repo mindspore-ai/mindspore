@@ -77,7 +77,6 @@ def create_dataset_pyop_multiproc(num_parallel_workers=None, max_rowsize=16, bat
 
     # Setup transforms list which include Python ops
     transforms_list = [
-        py_vision.ToTensor(),
         lambda x: x,
         py_vision.HWC2CHW(),
         py_vision.RandomErasing(0.9, value='random'),
