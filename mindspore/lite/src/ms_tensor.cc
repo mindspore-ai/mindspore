@@ -104,7 +104,24 @@ tensor::MSTensor *tensor::MSTensor::CreateTensorByDeepCopy(const std::string &na
     tensor->set_data(const_cast<void *>(new_data));
   }
 
-  tensor->set_shape(shape);
+  size_t shape_size = 1;
+  if (shape.empty()) {
+    shape_size = 0;
+  } else {
+    for (size_t i = 0; i < shape.size(); ++i) {
+      if (shape[i] < 0) {
+        delete tensor;
+        return nullptr;
+      }
+      shape_size *= static_cast<size_t>(shape[i]);
+    }
+  }
+  if (data_len != shape_size * data_type_size) {
+    std::vector<int> truncate_shape = {static_cast<int>(data_len)};
+    tensor->set_shape(truncate_shape);
+  } else {
+    tensor->set_shape(shape);
+  }
   tensor->set_tensor_name(name);
   tensor->set_data_type(type);
   return tensor;

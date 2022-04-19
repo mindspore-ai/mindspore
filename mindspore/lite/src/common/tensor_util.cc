@@ -315,6 +315,20 @@ int CheckTensorsInvalid(const std::vector<Tensor *> &tensors) {
   return RET_OK;
 }
 
+std::string ShapeToString(const std::vector<int> &shape) {
+  std::string result = "[";
+  int max_size = 40;
+  result.reserve(max_size);
+  for (size_t i = 0; i < shape.size(); ++i) {
+    result += std::to_string(shape[i]);
+    if (i + 1 < shape.size()) {
+      result += ", ";
+    }
+  }
+  result += "]";
+  return result;
+}
+
 int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
                           const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map) {
   for (const auto input : inputs) {
@@ -324,9 +338,17 @@ int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
       return RET_ERROR;
     }
     if (!input_shape_map.at(input).empty() && input_shape_map.at(input) != input->shape()) {
+#ifndef ENABLE_LITE_ACL
       MS_LOG(ERROR) << "graph input:" << input->tensor_name()
                     << " shape has been illegally modified, please modify the input shape with method Resize().";
       return RET_ERROR;
+#else
+      MS_LOG(WARNING) << "Please check graph input " << input->tensor_name()
+                      << " shape:" << ShapeToString(input->shape())
+                      << " has been modified by DVPP method to shape:" << ShapeToString(input_shape_map.at(input))
+                      << "."
+                      << "If not, the modification is illegal, please modify the input shape with method Resize().";
+#endif
     }
   }
   return RET_OK;
