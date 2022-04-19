@@ -318,6 +318,7 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
     thread_pool = actor_manager->GetActorThreadPool();
     MS_EXCEPTION_IF_NULL(thread_pool);
   }
+  thread_pool->SetKernelThreadMaxSpinCount(kDefaultKernelSpinCount);
   return thread_pool;
 }
 
