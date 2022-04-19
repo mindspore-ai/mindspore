@@ -81,9 +81,10 @@ class GPUEnvChecker(EnvChecker):
 
     def _get_nvcc_version(self, is_set_env):
         """Get cuda version by nvcc command."""
-        nvcc_result = subprocess.run(["nvcc", "--version | grep release"],
-                                     timeout=3, text=True, capture_output=True, check=False)
-        if nvcc_result.returncode:
+        try:
+            nvcc_result = subprocess.run(["nvcc", "--version | grep release"],
+                                         timeout=3, text=True, capture_output=True, check=False)
+        except OSError:
             if not is_set_env:
                 for path in self.cuda_bin_path:
                     if Path(path + "/nvcc").is_file():
