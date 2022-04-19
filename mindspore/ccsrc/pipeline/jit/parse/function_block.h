@@ -103,22 +103,20 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   std::tuple<std::map<std::string, AnfNodePtr>, std::map<std::string, AnfNodePtr>> local_py_params() {
     return {local_py_params_keys_, local_py_params_values_};
   }
-  void AddLocalPyParam(const std::string &name, const AnfNodePtr &node) {
-    MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();
-    (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(name, NewValueNode(name)));
-    (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(name, node));
-  }
 
-  // Call this methon only if you need update a variable. Usually variable override.
+  // Call this method to update or add a variable.
   void UpdateLocalPyParam(const std::string &name, const AnfNodePtr &node) {
     auto key_iter = local_py_params_keys_.find(name);
     if (key_iter == local_py_params_keys_.end()) {
-      MS_LOG(EXCEPTION) << "Only for updating. Should not call this method if '" << name << "' not exist.";
+      MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();
+      (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(name, NewValueNode(name)));
+      (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(name, node));
+    } else {
+      // Find the same position in 'values', and update the node.
+      MS_LOG(DEBUG) << "Update '" << name << "', " << local_py_params_values_[name]->DebugString() << " -> "
+                    << node->DebugString();
+      local_py_params_values_[name] = node;
     }
-    // Find the same position in 'values', and update the node.
-    MS_LOG(DEBUG) << "Update '" << name << "', " << local_py_params_values_[name]->DebugString() << " -> "
-                  << node->DebugString();
-    local_py_params_values_[name] = node;
   }
 
   void EraseLocalPyParam(const std::string &name) {
