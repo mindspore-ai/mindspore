@@ -645,6 +645,12 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
                    << ", block: " << block << "/"
                    << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(no_return_node->debug_info(), "", kSourceLineTipDiscard);
+      // Some builtin functions need to be implemented using operators.
+      if (call_node->interpret_special_type()) {
+        block->AddIsolatedNode(call_node);
+        return block;
+      }
+      // Some builtin functions need to be implemented using fallback.
       auto isolated_node = HandleInterpret(block, no_return_node, value_object);
       block->AddIsolatedNode(isolated_node);
     } else {
