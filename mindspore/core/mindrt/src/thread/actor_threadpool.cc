@@ -21,7 +21,6 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
-constexpr size_t MAX_READY_ACTOR_NR = 8192;
 void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSpin, this); }
 
 void ActorWorker::RunWithSpin() {
@@ -37,19 +36,10 @@ void ActorWorker::RunWithSpin() {
 #endif
   while (alive_) {
     // only run either local KernelTask or PoolQueue ActorTask
-    if (RunLocalKernelTask()) {
+    if (RunLocalKernelTask() || RunQueueActorTask()) {
       spin_count_ = 0;
     } else {
       YieldAndDeactive();
-    }
-#ifdef OPERATOR_PARALLELISM
-    if (RunQueueActorTask() || RunQueueWorkTask()) {
-#else
-    if (RunQueueActorTask()) {
-#endif
-      if (spin_count_ > 0) {
-        spin_count_ = 1;
-      }
     }
     if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
@@ -66,16 +56,17 @@ bool ActorWorker::RunQueueActorTask() {
   if (actor == nullptr) {
     return false;
   }
-#ifndef OPERATOR_PARALLELISM
+  bool ret = false;
   if (available() || check_task_nullptr()) {
     status_ = kThreadBusy;
     set_task_free(true);
+    ret = true;
   } else {
     set_task_free(false);
   }
-#endif
+
   actor->Run();
-  return true;
+  return ret;
 }
 
 bool ActorWorker::ActorActive() {
@@ -158,81 +149,45 @@ void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
   }
 }
 
-int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list) {
+int ActorThreadPool::ActorQueueInit() {
 #ifdef USE_HQUEUE
   if (actor_queue_.Init(MAX_READY_ACTOR_NR) != true) {
     THREAD_ERROR("init actor queue failed.");
     return THREAD_ERROR;
   }
-#ifdef OPERATOR_PARALLELISM
-  if (task_queue_.Init(MAX_READY_TASK_NR) != true) {
-    THREAD_ERROR("Init task queue failed");
+#endif
+  return THREAD_OK;
+}
+
+int ActorThreadPool::CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list) {
+  if (actor_thread_num > all_thread_num) {
+    THREAD_ERROR("thread num is invalid");
     return THREAD_ERROR;
   }
-#endif
-#endif
+  if (ActorQueueInit() != THREAD_OK) {
+    return THREAD_ERROR;
+  }
   if (affinity_ != nullptr) {
     affinity_->SetCoreId(core_list);
   }
   size_t core_num = std::thread::hardware_concurrency();
   THREAD_INFO("ThreadInfo, Actor: [%zu], All: [%zu], CoreNum: [%zu]", actor_thread_num, all_thread_num, core_num);
   actor_thread_num_ = actor_thread_num < core_num ? actor_thread_num : core_num;
-  if (actor_thread_num > all_thread_num) {
-    THREAD_ERROR("thread num is invalid");
+  core_num -= actor_thread_num_;
+  if (ThreadPool::CreateThreads<ActorWorker>(actor_thread_num_, core_list) != THREAD_OK) {
     return THREAD_ERROR;
   }
-  for (size_t i = 0; i < actor_thread_num_; ++i) {
-    std::lock_guard<std::mutex> _l(pool_mutex_);
-    auto worker = new (std::nothrow) ActorWorker(this);
-    THREAD_ERROR_IF_NULL(worker);
-#ifdef OPERATOR_PARALLELISM
-    auto task_messages = reinterpret_cast<TaskMessage *>(malloc(sizeof(TaskMessage) * all_thread_num));
-    if (task_messages == nullptr) {
-      delete worker;
-      THREAD_ERROR("malloc TaskMessages failed.");
-      return THREAD_ERROR;
-    }
-    for (size_t j = 0; j < all_thread_num; j++) {
-      task_messages[j].task_id = j;
-    }
-    worker->SetTaskMessages(task_messages);
-#endif
-    worker->InitWorkerMask(core_list, workers_.size());
-    worker->CreateThread();
-    workers_.push_back(worker);
-    THREAD_INFO("create actor thread[%zu]", i);
-  }
-  size_t kernel_thread_num = all_thread_num - actor_thread_num_;
+
+  size_t kernel_thread_num =
+    (all_thread_num - actor_thread_num_) < core_num ? (all_thread_num - actor_thread_num_) : core_num;
   if (kernel_thread_num > 0) {
-    return ThreadPool::CreateThreads(kernel_thread_num, core_list);
+    return ThreadPool::CreateThreads<Worker>(kernel_thread_num, core_list);
   }
   return THREAD_OK;
 }
 
-ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num, BindMode bind_mode) {
-  ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
-  if (pool == nullptr) {
-    return nullptr;
-  }
-
-  auto ret = pool->InitAffinityInfo();
-  if (ret != THREAD_OK) {
-    delete pool;
-    return nullptr;
-  }
-  auto core_list = pool->affinity_->GetCoreId(all_thread_num, bind_mode);
-
-  ret = pool->CreateThreads(actor_thread_num, all_thread_num, core_list);
-  if (ret != THREAD_OK) {
-    delete pool;
-    return nullptr;
-  }
-
-  return pool;
-}
-
 ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
-                                                   const std::vector<int> &core_list) {
+                                                   const std::vector<int> &core_list, BindMode bind_mode) {
   ActorThreadPool *pool = new (std::nothrow) ActorThreadPool();
   if (pool == nullptr) {
     return nullptr;
@@ -242,7 +197,12 @@ ActorThreadPool *ActorThreadPool::CreateThreadPool(size_t actor_thread_num, size
     delete pool;
     return nullptr;
   }
-  ret = pool->CreateThreads(actor_thread_num, all_thread_num, core_list);
+  if (core_list.empty()) {
+    ret = pool->CreateThreads(actor_thread_num, all_thread_num, pool->affinity_->GetCoreId(all_thread_num, bind_mode));
+  } else {
+    ret = pool->CreateThreads(actor_thread_num, all_thread_num, core_list);
+  }
+
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;

@@ -71,6 +71,7 @@ struct DeviceContext {
 struct Context {
   String vendor_name_;
   int thread_num_ = 2; /**< thread number config for thread pool */
+  int inter_op_parallel_num_ = 1;
   bool enable_parallel_ = false;
   Vector<int> affinity_core_list_; /**< explicitly specify the core to be bound. priority use affinity core list */
   AllocatorPtr allocator = nullptr;
