@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import platform
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -185,6 +186,8 @@ def test_pynative_hook_base_line():
     Description: The base line case for PyNative hook function.
     Expectation: The calculation result is correct.
     """
+    if platform.system() == 'Windows':
+        return
 
     context.set_context(mode=context.PYNATIVE_MODE)
     input_x = Tensor(np.ones([2, 2, 2, 2]).astype(np.float32) * 2)
