@@ -31,6 +31,7 @@ func_map = {
     "mul": ops.ScatterNdMul,
     "div": ops.ScatterNdDiv,
     "max": ops.ScatterNdMax,
+    "min": ops.ScatterNdMin,
 }
 
 np_func_map = {
@@ -40,6 +41,7 @@ np_func_map = {
     "mul": lambda a, b: a * b,
     "div": lambda a, b: a / b,
     "max": np.maximum,
+    "min": np.minimum,
 }
 
 
@@ -80,7 +82,7 @@ def compare_scatter_nd_func(func, lock, inputx, indices, updates):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
                           mstype.float64])
@@ -119,7 +121,7 @@ def test_scatter_nd_func_small_update(lock):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
                           mstype.float64])
@@ -141,7 +143,7 @@ def test_scatter_nd_func_small_int(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
                           mstype.float64])
@@ -163,7 +165,7 @@ def test_scatter_nd_func_small_negative(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
                           mstype.float64])
@@ -193,7 +195,7 @@ def test_scatter_nd_func_multi_dims(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max'])
+@pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.float16, mstype.float32,
                           mstype.float64])
