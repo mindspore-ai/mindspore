@@ -18,15 +18,20 @@
 
 #include <map>
 #include <string>
+#include <memory>
 #include "include/common/utils/python_adapter.h"
 #include "kernel/akg/akg_kernel_json_generator.h"
 #include "common/graph_kernel/split_umonad.h"
 #include "common/graph_kernel/substitute_dropout.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
+#include "common/graph_kernel/adapter/callback_impl.h"
 
 namespace mindspore::graphkernel {
-ExpanderPtr GetExpander(const AnfNodePtr &node) {
-  auto expander = std::make_shared<PyExpander>();
+ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
+  auto expander =
+    abstract
+      ? std::make_shared<PyExpander>(std::static_pointer_cast<Callback>(std::make_shared<CallbackImplWithInferShape>()))
+      : std::make_shared<PyExpander>(Callback::Instance());
   if (IsComplexOp(node)) return ComplexOpDecorator::Creator(expander);
 
   constexpr size_t kAssignInputIdx = 1;
@@ -52,7 +57,7 @@ ExpanderPtr GetExpander(const AnfNodePtr &node) {
 bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   DumpOption dump_option;
   dump_option.extract_opinfo_from_anfnode = true;
-  AkgKernelJsonGenerator json_generator(dump_option);
+  AkgKernelJsonGenerator json_generator(dump_option, cb_);
   return json_generator.CollectJson(node, kernel_json);
 }
 

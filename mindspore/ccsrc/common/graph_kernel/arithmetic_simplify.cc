@@ -650,7 +650,7 @@ bool ArithmeticSimplify::Run(const FuncGraphPtr &func_graph) {
       }
       if (!change_anf_graph) continue;
       ReorganizeEmptyGraph(lg);
-      auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(lg);
+      auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(lg, Callback::Instance());
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());

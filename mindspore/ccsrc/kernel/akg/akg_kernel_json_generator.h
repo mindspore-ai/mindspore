@@ -93,7 +93,9 @@ class AkgKernelJsonGenerator {
  public:
   explicit AkgKernelJsonGenerator(DumpOption dump_option)
       : dump_option_(std::move(dump_option)), cb_(Callback::Instance()) {}
-  ~AkgKernelJsonGenerator() { cb_ = nullptr; }
+  AkgKernelJsonGenerator(DumpOption dump_option, const CallbackPtr &cb)
+      : dump_option_(std::move(dump_option)), cb_(cb) {}
+  ~AkgKernelJsonGenerator() = default;
 
   bool CollectJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
   bool CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes, const std::vector<AnfNodePtr> &input_list,
@@ -154,7 +156,7 @@ class AkgKernelJsonGenerator {
   std::vector<size_t> output_size_list_;
   std::map<std::string, AnfNodePtr> address_node_map_;
   bool is_basic_op_{false};
-  Callback *cb_{nullptr};
+  CallbackPtr cb_;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_JSON_GENERATOR_H_

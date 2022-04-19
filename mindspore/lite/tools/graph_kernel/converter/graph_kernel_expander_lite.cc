@@ -46,7 +46,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
 }
 
 ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
-  auto expander = std::make_shared<DefaultExpander>();
+  auto expander = std::make_shared<DefaultExpander>(Callback::Instance());
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1})}},
   };

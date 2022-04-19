@@ -51,7 +51,6 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "common/graph_kernel/adapter/expander.h"
 #include "common/graph_kernel/value_graph_binder.h"
-#include "common/graph_kernel/adapter/callback_impl.h"
 
 namespace mindspore {
 namespace device {
@@ -407,7 +406,6 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 }
 
 void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
-  GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImplWithInferShape);
   AnfNodeSet cache;
   bool retry;
   do {

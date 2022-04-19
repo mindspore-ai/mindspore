@@ -88,5 +88,5 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
   return GkUtils::FilterExcludedOps(ops);
 }
 
-ExpanderPtr GraphKernelExpanderWithPy::InitExpander(const AnfNodePtr &node) { return GetExpander(node); }
+ExpanderPtr GraphKernelExpanderWithPy::InitExpander(const AnfNodePtr &node) { return GetExpander(node, false); }
 }  // namespace mindspore::graphkernel

@@ -19,6 +19,7 @@
 #include <memory>
 #include "ir/func_graph.h"
 #include "include/common/visible.h"
+#include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
 class COMMON_EXPORT Expander {
@@ -34,11 +35,13 @@ using ExpanderPtr = std::shared_ptr<Expander>;
 
 class DefaultExpander : public Expander {
  public:
-  AnfNodePtr Run(const AnfNodePtr &node) override;
+  explicit DefaultExpander(const CallbackPtr &cb) : cb_(cb) {}
   virtual ~DefaultExpander() = default;
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
   virtual FuncGraphPtr ExpandToGraph(const CNodePtr &node);
+  CallbackPtr cb_;
 };
 
 class COMMON_EXPORT ExpanderDecorator : public Expander {

@@ -25,6 +25,7 @@
 #include "utils/hash_map.h"
 #include "common/graph_kernel/model/lite_graph.h"
 #include "common/graph_kernel/model/graph_builder.h"
+#include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
@@ -88,12 +89,12 @@ class GkUtils {
    * @brief Create CNode.
    */
   static CNodePtr NewRealCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
-                               const std::vector<inner::NodeBase> &out_info_list);
+                               const std::vector<inner::NodeBase> &out_info_list, const CallbackPtr &cb);
 
   /**
    * @brief Transform  LiteGraph to FuncGraph.
    */
-  static FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph);
+  static FuncGraphPtr LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, const CallbackPtr &cb);
 
   /**
    * @brief Transform FuncGraph to LiteGraph

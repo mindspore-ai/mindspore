@@ -28,7 +28,6 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
-#include "common/graph_kernel/core/graph_kernel_callback.h"
 
 constexpr int MINIMUM_MAJOR_VERSION = 7;
 
@@ -181,7 +180,7 @@ bool GkUtils::IsKeepBasicNode(const AnfNodePtr &node) {
 }
 
 CNodePtr GkUtils::NewRealCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph,
-                               const std::vector<inner::NodeBase> &out_info_list) {
+                               const std::vector<inner::NodeBase> &out_info_list, const CallbackPtr &cb) {
   auto cnode = func_graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -203,19 +202,19 @@ CNodePtr GkUtils::NewRealCNode(const std::vector<AnfNodePtr> &inputs, const Func
   }
 
   // Setup kernel build info.
-  Callback::Instance()->SetBasicNodeKernelInfo(cnode, out_info_list);
+  cb->SetBasicNodeKernelInfo(cnode, out_info_list);
   func_graph->AddNode(cnode);
   return cnode;
 }
 
-FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) {
+FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, const CallbackPtr &cb) {
   auto func_graph = std::make_shared<FuncGraph>();
   std::map<inner::NodePtr, AnfNodePtr> node_map;
   for (const auto &inp : lite_graph->inputs()) {
     auto param = func_graph->add_parameter();
     node_map[inp] = param;
     param->set_abstract(std::make_shared<abstract::AbstractTensor>(TypeIdToType(inp->type), inp->shape));
-    Callback::Instance()->SetBasicNodeKernelInfo(param, {{inp->shape, inp->type, inp->format}});
+    cb->SetBasicNodeKernelInfo(param, {{inp->shape, inp->type, inp->format}});
   }
   // Create CNodes.
   for (const auto &op_node : lite_graph->GetOrderedNodes()) {
@@ -224,24 +223,23 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
     }
     auto op = std::static_pointer_cast<inner::PrimOp>(op_node);
     AnfNodePtrList inputs = {NewValueNode(std::make_shared<Primitive>(op->op(), op->attrs()))};
-    (void)std::transform(
-      op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
-      [&node_map](const inner::NodePtr &inp) -> AnfNodePtr {
-        auto iter = node_map.find(inp);
-        if (iter != node_map.end()) {
-          return iter->second;
-        } else {
-          if (inp->NodeType() != inner::NType::Value) {
-            MS_LOG(EXCEPTION) << "Node " << inp->debug_name() << " should be a Value node";
-          }
-          auto inp_value = inp->As<inner::ConstTensorNode>()->data();
-          auto value_node = NewValueNode(inp_value);
-          value_node->set_abstract(inp_value->ToAbstract());
-          Callback::Instance()->SetBasicNodeKernelInfo(value_node, {{inp->shape, inp->type, inp->format}});
-          return value_node;
-        }
-      });
-    auto cnode = NewRealCNode(inputs, func_graph, {{op->shape, op->type, op->format}});
+    (void)std::transform(op->inputs().begin(), op->inputs().end(), std::back_inserter(inputs),
+                         [&node_map, &cb](const inner::NodePtr &inp) -> AnfNodePtr {
+                           auto iter = node_map.find(inp);
+                           if (iter != node_map.end()) {
+                             return iter->second;
+                           } else {
+                             if (inp->NodeType() != inner::NType::Value) {
+                               MS_LOG(EXCEPTION) << "Node " << inp->debug_name() << " should be a Value node";
+                             }
+                             auto inp_value = inp->As<inner::ConstTensorNode>()->data();
+                             auto value_node = NewValueNode(inp_value);
+                             value_node->set_abstract(inp_value->ToAbstract());
+                             cb->SetBasicNodeKernelInfo(value_node, {{inp->shape, inp->type, inp->format}});
+                             return value_node;
+                           }
+                         });
+    auto cnode = NewRealCNode(inputs, func_graph, {{op->shape, op->type, op->format}}, cb);
     MS_EXCEPTION_IF_NULL(cnode);
     node_map[op_node] = cnode;
   }
@@ -261,7 +259,7 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph) 
                          });
     auto mt = func_graph->NewCNode(prim::kPrimMakeTuple, mt_inputs);
     mt->set_abstract(std::make_shared<abstract::AbstractTuple>(out_abs_list));
-    Callback::Instance()->SetEmptyKernelInfo(mt);
+    cb->SetEmptyKernelInfo(mt);
     func_graph->AddNode(mt);
     func_graph->set_output(mt);
   }

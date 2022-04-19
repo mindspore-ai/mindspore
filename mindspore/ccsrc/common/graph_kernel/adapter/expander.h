@@ -25,6 +25,7 @@
 namespace mindspore::graphkernel {
 class PyExpander : public DefaultExpander {
  public:
+  explicit PyExpander(const CallbackPtr &cb) : DefaultExpander(cb) {}
   virtual ~PyExpander() = default;
 
  protected:
@@ -45,7 +46,7 @@ class ComplexOpDecorator : public ExpanderDecorator {
 /**
  * Get the Expander which is used to expand a cnode to a funcgraph which composite same function with core ops.
  */
-COMMON_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &);
+COMMON_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &, bool abstract = true);
 
 /**
  * Inline the expanded func graph to main graph.
