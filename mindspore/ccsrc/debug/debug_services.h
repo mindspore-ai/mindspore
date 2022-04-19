@@ -267,6 +267,20 @@ class DebugServices {
     uint64_t zero_count = 0;
   };
 
+  struct ChunkData {
+    partitioned_names chunk_names;
+    partitioned_names chunk_slots;
+    partitioned_numbers chunk_conditions;
+    partitioned_id chunk_watchpoint_id;
+    partitioned_parameters chunk_parameters;
+    partitioned_error_code chunk_error_codes;
+    partitioned_numbers chunk_exec_orders;
+    partitioned_id chunk_device_id;
+    partitioned_id chunk_root_graph_id;
+    std::vector<uint64_t> chunk_tensor_byte_size;
+    partitioned_names chunk_time_stamp;
+  };
+
   static TensorStat GetTensorStatistics(const std::shared_ptr<TensorData> &tensor);
 
   void AddWatchpoint(
@@ -278,32 +292,23 @@ class DebugServices {
   void RemoveWatchpoint(unsigned int id);
 
 #ifdef OFFLINE_DBG_MODE
-  void CheckOutofMemoryandNoValue(
-    const bool no_mem_to_read, const bool error_on_no_value, const std::vector<watchpoint_t> watchpoints_to_check,
-    const int chunk_id, partitioned_names *const chunk_names, partitioned_names *const chunk_slots,
-    partitioned_numbers *const chunk_conditions, partitioned_id *const chunk_watchpoint_id,
-    partitioned_parameters *const chunk_parameters, partitioned_error_code *const chunk_error_codes,
-    partitioned_numbers *const chunk_exec_orders, partitioned_names *const chunk_time_stamp,
-    partitioned_id *const chunk_device_id, partitioned_id *const chunk_root_graph_id,
-    std::vector<unsigned int> *const device_id, std::vector<unsigned int> *const root_graph_id, const int exec_order,
-    const std::string time_stamp, const std::string &qualified_tensor_name, const std::string &tensor_slot,
-    const unsigned int device_id_val, const unsigned int root_graph_id_val,
-    const std::vector<parameter_t> &parameter_list);
+  void CheckOutofMemoryandNoValue(const bool no_mem_to_read, const bool error_on_no_value,
+                                  const std::vector<watchpoint_t> watchpoints_to_check, const int chunk_id,
+                                  ChunkData *chunk_data, std::vector<unsigned int> *const device_id,
+                                  std::vector<unsigned int> *const root_graph_id, const int exec_order,
+                                  const std::string time_stamp, const std::string &qualified_tensor_name,
+                                  const std::string &tensor_slot, const unsigned int device_id_val,
+                                  const unsigned int root_graph_id_val, const std::vector<parameter_t> &parameter_list);
 #endif
 
   const void *PreparePrevTensor(uint64_t *prev_num_elements, const std::string &tensor_name);
 
   void CheckHistoryErrorCode(int *error_code, bool history_not_found);
 
-  void CheckWatchpointsForTensor(partitioned_names *chunk_names, partitioned_names *chunk_slots,
-                                 partitioned_numbers *chunk_conditions, partitioned_id *const chunk_watchpoint_id,
-                                 partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
-                                 const std::vector<std::string> &op_overflows,
-                                 ProcessedNPYFiles *const processed_npy_files, partitioned_numbers *chunk_exec_orders,
+  void CheckWatchpointsForTensor(ChunkData *chunk_data, const std::vector<std::string> &op_overflows,
+                                 ProcessedNPYFiles *const processed_npy_files,
                                  std::vector<std::shared_ptr<TensorData>> *tensor_list, int begin, int end,
                                  int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
-                                 partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
-                                 std::vector<uint64_t> *chunk_tensor_byte_size, partitioned_names *chunk_time_stamp,
                                  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
                                  bool error_on_no_value = false);
 
@@ -322,12 +327,7 @@ class DebugServices {
                            std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                            std::vector<unsigned int> *const watchpoint_id,
                            std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_codes,
-                           partitioned_names *chunk_names, partitioned_names *chunk_slots,
-                           partitioned_numbers *chunk_conditions, partitioned_id *chunk_watchpoint_id,
-                           partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
-                           partitioned_numbers *chunk_exec_orders, partitioned_names *chunk_time_stamp,
-                           std::vector<uint64_t> *chunk_tensor_byte_size, partitioned_id *chunk_device_id,
-                           partitioned_id *chunk_root_graph_id, std::vector<unsigned int> *device_id,
+                           ChunkData *chunk_data, std::vector<unsigned int> *device_id,
                            std::vector<unsigned int> *root_graph_id);
 #ifdef OFFLINE_DBG_MODE
   void SetTensorToNotInUse(const std::shared_ptr<TensorData> &tensor, const void *previous_tensor_ptr);
@@ -337,17 +337,12 @@ class DebugServices {
                              const std::shared_ptr<TensorData> &tensor, bool *previous_iter_tensor_needed,
                              std::string *qualified_tensor_name, std::vector<watchpoint_t> *watchpoints_to_check);
 
-  void SetCheckWatchpointsResult(const int chunk_id, partitioned_names *chunk_names, partitioned_names *chunk_slots,
-                                 partitioned_numbers *chunk_conditions, partitioned_id *chunk_watchpoint_id,
-                                 partitioned_parameters *chunk_parameters, partitioned_error_code *chunk_error_codes,
-                                 partitioned_numbers *chunk_exec_orders, partitioned_names *chunk_time_stamp,
-                                 partitioned_id *chunk_device_id, partitioned_id *chunk_root_graph_id,
-                                 std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
-                                 const int exec_order, const std::string time_stamp,
-                                 const std::string &qualified_tensor_name, const std::string &tensor_slot,
-                                 const watchpoint_t &wp, const unsigned int device_id_val,
-                                 const unsigned int root_graph_id_val, const std::vector<parameter_t> &parameter_list,
-                                 const int32_t error_code);
+  void SetCheckWatchpointsResult(const int chunk_id, ChunkData *chunk_data, std::vector<unsigned int> *device_id,
+                                 std::vector<unsigned int> *root_graph_id, const int exec_order,
+                                 const std::string time_stamp, const std::string &qualified_tensor_name,
+                                 const std::string &tensor_slot, const watchpoint_t &wp,
+                                 const unsigned int device_id_val, const unsigned int root_graph_id_val,
+                                 const std::vector<parameter_t> &parameter_list, const int32_t error_code);
 #ifdef OFFLINE_DBG_MODE
   void AddToTensorData(const std::string &backend_name, const std::string &time_stamp, const std::size_t slot,
                        const unsigned int iteration, const unsigned int device_id, const unsigned int root_graph_id,
