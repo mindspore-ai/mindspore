@@ -841,7 +841,9 @@ AnfNodePtr Parser::ParseBinOp(const FunctionBlockPtr &block, const py::object &n
       MS_LOG(EXCEPTION) << "Unexpected symbol node:" << op_node->DebugString();
     }
     auto mod_node = op_cnode->input(symbol_index);
-    if (IsValueNode<Symbol>(mod_node)) {
+    auto symbol = GetValueNode<parse::SymbolPtr>(mod_node);
+    // Only support the pattern (string % xxx) by fallback.
+    if (symbol != nullptr && symbol->symbol() == "mod") {
       if (IsPrimitiveCNode(left_node, prim::kPrimMakeTuple)) {
         // left_node created by ParseJoinedStr
         auto inputs = left_node->cast<CNodePtr>()->inputs();

@@ -60,8 +60,8 @@ std::pair<bool, bool> InterpretAbstractBoolChecker(const AbstractBasePtr &cond) 
     is_interpret = true;
     auto interpreted_obj = value->cast<parse::InterpretedObjectPtr>();
     py::object obj = interpreted_obj->obj();
-    const char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
-    const char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
+    constexpr char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
+    constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
     py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
     bool res = python_adapter::CallPyModFn(mod, PYTHON_MOD_CHECK_OBJ_BOOL, obj).cast<bool>();
     // eval("np.array(1) >= 1")                            ---> obj: array([ True])

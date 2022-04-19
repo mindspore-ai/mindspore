@@ -324,3 +324,28 @@ def test_print_string_format():
 
     patterns = {"I'm MindSpore. I'm 3 years old.\n"}
     check_output(cap.output, patterns)
+
+
+@security_off_wrap
+def test_print_string_add_string():
+    """
+    Feature: JIT Fallback
+    Description: Support print(string + string).
+    Expectation: No exception.
+    """
+    def name():
+        return "MindSpore"
+
+    @ms_function
+    def print_func():
+        print("I'm " + name() + ". I'm 3 years old.")
+        return 0
+
+    cap = Capture()
+    with capture(cap):
+        res = print_func()
+        assert res == 0
+        time.sleep(0.1)
+
+    patterns = {"I'm MindSpore. I'm 3 years old.\n"}
+    check_output(cap.output, patterns)
