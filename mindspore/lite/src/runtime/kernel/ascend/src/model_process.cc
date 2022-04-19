@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/ascend/src/model_process.h"
+#include <sys/time.h>
 #include <utility>
 #include <algorithm>
 #include <map>
@@ -426,9 +427,9 @@ STATUS ModelProcess::CheckTensorByTensorInfo(const std::vector<mindspore::MSTens
   if (!IsDynamicShape()) {
     for (size_t i = 0; i < tensor_info.size(); ++i) {
       if (tensor[i].Shape() != tensor_info[i].dims) {
-        MS_LOG(ERROR) << "Note: input " << i << " shape not match, required " << ShapeToString(tensor_info[i].dims)
-                      << ", given " << ShapeToString(tensor[i].Shape());
-        return lite::RET_ERROR;
+        MS_LOG(WARNING) << "Note: input " << i << " shape not match, required " << ShapeToString(tensor_info[i].dims)
+                        << ", given " << ShapeToString(tensor[i].Shape()) << "."
+                        << "Please check input shape has been modified by DVPP method.";
       }
       if (tensor[i].DataType() != TransToDataType(tensor_info[i].data_type)) {
         MS_LOG(ERROR) << "Note: input " << i << " data type not match, required "
@@ -588,7 +589,24 @@ STATUS ModelProcess::PredictFromHost(const std::vector<mindspore::MSTensor> &inp
     DestroyInputsDataset();
     return ret;  // forward status error
   }
-  aclError acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+
+  aclError acl_ret;
+  auto env = std::getenv("GLOG_v");
+  if (env != nullptr && env[0] == '1') {
+    struct timeval start_time;
+    struct timeval end_time;
+    (void)gettimeofday(&start_time, nullptr);
+    acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+    (void)gettimeofday(&end_time, nullptr);
+    constexpr uint64_t kUSecondInSecond = 1000000;
+    uint64_t cost =
+      (kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec) + static_cast<uint64_t>(end_time.tv_usec)) -
+      (kUSecondInSecond * static_cast<uint64_t>(start_time.tv_sec) + static_cast<uint64_t>(start_time.tv_usec));
+    MS_LOG(INFO) << "Model execute in " << cost << " us";
+  } else {
+    acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+  }
+
   DestroyInputsDataset();
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Execute Model Failed, ret = " << acl_ret;
