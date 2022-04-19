@@ -254,7 +254,7 @@ class TensorItemByNone(Cell):
 @pytest.mark.env_onecard
 def test_item_by_none():
     net = TensorItemByNone()
-    input_1d_np = np.ndarray([1]).astype(np.float32)
+    input_1d_np = np.array([1]).astype(np.float32)
     input_1d_ms = Tensor(input_1d_np, mstype.float32)
     input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
@@ -279,7 +279,7 @@ class TensorItemByItem(Cell):
 @pytest.mark.env_onecard
 def test_item_by_int():
     net = TensorItemByItem()
-    input_1d_np = np.ndarray([1]).astype(np.float32)
+    input_1d_np = np.array([1]).astype(np.float32)
     input_1d_ms = Tensor(input_1d_np, mstype.float32)
 
     input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
@@ -315,7 +315,7 @@ def test_item_by_int():
 @pytest.mark.env_onecard
 def test_item_by_tuple():
     net = TensorItemByItem()
-    input_1d_np = np.ndarray([1]).astype(np.float32)
+    input_1d_np = np.array([1]).astype(np.float32)
     input_1d_ms = Tensor(input_1d_np, mstype.float32)
     input_3d_np = np.random.randint(3, size=(3, 4, 5)).astype(np.int32)
     input_3d_ms = Tensor(input_3d_np, mstype.float32)
