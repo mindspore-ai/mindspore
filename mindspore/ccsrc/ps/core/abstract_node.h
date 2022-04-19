@@ -212,8 +212,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
                        const uint32_t &timeout = kCommTimeoutInSeconds);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                        const Protos &, const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
-  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
-                            const Protos &protos, const void *data, size_t size);
+  uint64_t SendCollectiveMeta(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                              const Protos &protos, const void *data, size_t size);
   void ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                  const void *data, size_t size);
   void ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
