@@ -27,9 +27,9 @@ class DropoutExpanderDeco : public ExpanderDecorator {
   static ExpanderPtr Creator(const ExpanderPtr &decorated) {
     return std::static_pointer_cast<Expander>(std::make_shared<DropoutExpanderDeco>(decorated));
   }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
-  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
   static int64_t seed_;
 };
 }  // namespace mindspore::graphkernel

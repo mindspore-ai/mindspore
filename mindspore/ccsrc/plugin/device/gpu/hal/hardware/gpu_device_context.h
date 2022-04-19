@@ -58,7 +58,7 @@ class GPUDeviceContext : public DeviceContext {
   // Optimize the single operator graph for PyNative mode.
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
-  void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const override;
+  void SetOperatorInfo(const KernelGraphPtr &graph) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   // Infer kernel shape and update abstract info for dynamic shape kernel.

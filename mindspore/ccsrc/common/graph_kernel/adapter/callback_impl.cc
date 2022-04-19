@@ -32,9 +32,7 @@
 #include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
 
 namespace mindspore::graphkernel {
-// register the callback object
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
-
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) {
   auto vec = AnfAlgo::GetInputDeviceShape(node, i);
   ShapeVector ret;
@@ -230,5 +228,34 @@ void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   device::cpu::SetKernelInfo(cnode);
 #endif
+}
+
+ShapeVector CallbackImplWithInferShape::GetInputShape(const AnfNodePtr &node, size_t i) {
+  return CallbackImpl::GetInputInferShape(node, i);
+}
+
+ShapeVector CallbackImplWithInferShape::GetOutputShape(const AnfNodePtr &node, size_t i) {
+  return CallbackImpl::GetOutputInferShape(node, i);
+}
+
+TypeId CallbackImplWithInferShape::GetInputType(const AnfNodePtr &node, size_t i) {
+  return CallbackImpl::GetInputInferType(node, i);
+}
+
+TypeId CallbackImplWithInferShape::GetOutputType(const AnfNodePtr &node, size_t i) {
+  return CallbackImpl::GetOutputInferType(node, i);
+}
+
+std::string CallbackImplWithInferShape::GetInputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_DEFAULT; }
+
+std::string CallbackImplWithInferShape::GetOutputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_DEFAULT; }
+
+void CallbackImplWithInferShape::SetBasicNodeKernelInfo(const AnfNodePtr &node,
+                                                        const std::vector<inner::NodeBase> &outputs_info) {
+  return CallbackImpl::SetEmptyKernelInfo(node);
+}
+
+std::string CallbackImplWithInferShape::GetProcessor(const AnfNodePtr &node) {
+  return kernel::GetStrProcessorFromContext();
 }
 }  // namespace mindspore::graphkernel

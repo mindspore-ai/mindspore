@@ -40,10 +40,9 @@ class OpUMonadExpanderDeco : public ExpanderDecorator {
       return std::static_pointer_cast<Expander>(std::make_shared<OpUMonadExpanderDeco>(decorated, input_idx));
     };
   }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
-  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
-
   size_t input_idx_;
 };
 }  // namespace mindspore::graphkernel

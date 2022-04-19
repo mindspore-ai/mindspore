@@ -105,7 +105,7 @@ class DeviceContext {
   // Select the matching backend kernels according to the data type and format of input and output for all
   // execution operators, and set final device data type and format information for backend kernels, device
   // data type and format which replace original data type and format will use for executing kernels.
-  virtual void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const = 0;
+  virtual void SetOperatorInfo(const KernelGraphPtr &graph) const = 0;
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.

@@ -49,6 +49,9 @@
 #endif
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "common/graph_kernel/adapter/expander.h"
+#include "common/graph_kernel/value_graph_binder.h"
+#include "common/graph_kernel/adapter/callback_impl.h"
 
 namespace mindspore {
 namespace device {
@@ -250,7 +253,7 @@ void GPUDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   OptimizeGraphWithoutDeviceInfo(graph);
 
   FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
-  SetOperatorInfo(graph->execution_order());
+  SetOperatorInfo(graph);
 
   // Optimization pass which is relevant to device type or format.
   OptimizeGraphWithDeviceInfo(graph);
@@ -395,7 +398,7 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
   RunOpOptimize(graph);
 
   FormatTransformChecker::GetInstance().CheckSupportFormatTransform(graph);
-  SetOperatorInfo(graph->execution_order());
+  SetOperatorInfo(graph);
 
   RunOpHardwareOptimize(graph);
 
@@ -403,10 +406,32 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
   RunOpRemoveNopNode(graph);
 }
 
-void GPUDeviceContext::SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {
-  for (const auto &node : nodes) {
-    SetKernelInfo(node);
-  }
+void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
+  GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImplWithInferShape);
+  AnfNodeSet cache;
+  bool retry;
+  do {
+    retry = false;
+    auto &node_list = graph->execution_order();
+    for (auto &node : node_list) {
+      if (cache.count(node)) continue;
+      auto msg = SetKernelInfo(node, false);
+      if (msg.empty()) {
+        cache.insert(node);
+        continue;
+      }
+      auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+      if (expand_fg == nullptr) {
+        MS_LOG(EXCEPTION) << msg;
+      }
+      MS_LOG(WARNING) << msg << " but expand success.";
+      graphkernel::InlineExpandFuncGraph(node, expand_fg);
+      graph->SetExecOrderByDefault();
+      retry = true;
+      break;
+    }
+  } while (retry);
+  graphkernel::BindValueToGraph().Run(graph);
 }
 
 void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }

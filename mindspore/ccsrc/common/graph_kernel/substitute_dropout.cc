@@ -40,7 +40,7 @@ using opt::kDropoutInputTensorNum;
 
 int64_t DropoutExpanderDeco::seed_ = time(nullptr);
 
-AnfNodePtr DropoutExpanderDeco::PreProcess(const AnfNodePtr &node) {
+AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   CNodePtr cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -91,7 +91,7 @@ AnfNodePtr DropoutExpanderDeco::PreProcess(const AnfNodePtr &node) {
   dropout_kernel_info_builder->SetInputsFormat({old_kernel_info->GetInputFormat(0), kOpFormat_DEFAULT});
   dropout_kernel_info_builder->SetInputsDeviceType({old_kernel_info->GetInputDeviceType(0), kNumberTypeFloat32});
   AnfAlgo::SetSelectKernelBuildInfo(dropout_kernel_info_builder->Build(), new_dropout_node.get());
-  return new_dropout_node;
+  return decorated_->Run(new_dropout_node);
 }
 }  // namespace graphkernel
 }  // namespace mindspore

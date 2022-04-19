@@ -36,7 +36,7 @@ class InputToAttrDeco : public ExpanderDecorator {
   }
 
  protected:
-  AnfNodePtr PreProcess(const AnfNodePtr &node) override;
+  AnfNodePtr Run(const AnfNodePtr &node) override;
   HashSet<size_t> input_idx_;
 };
 
@@ -47,7 +47,7 @@ class GraphKernelExpanderLite : public GraphKernelExpander {
 
  protected:
   std::vector<PrimitivePtr> InitOpList() override;
-  ExpanderPtr GetExpander(const AnfNodePtr &node) override;
+  ExpanderPtr InitExpander(const AnfNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_LITE_H_

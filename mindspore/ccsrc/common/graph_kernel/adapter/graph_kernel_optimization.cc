@@ -31,6 +31,7 @@
 #include "common/graph_kernel/insert_pad.h"
 #include "common/graph_kernel/adapter/graph_kernel_splitter_with_py.h"
 #include "common/graph_kernel/adapter/graph_kernel_expander_with_py.h"
+#include "common/graph_kernel/adapter/callback_impl.h"
 #include "common/graph_kernel/cast_matmul_fusion.h"
 #include "common/graph_kernel/raise_reduction_precision.h"
 #include "common/graph_kernel/graph_kernel_cse.h"
@@ -90,9 +91,6 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
-
-  // Expand complex op to composite kernels
-  pm->Add(std::make_shared<GraphKernelComplexExpander>(), OptLevel_1, is_gpu);
 
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderWithPy>(), OptLevel_1);
@@ -238,6 +236,7 @@ void GraphKernelOptimizer::Run(const KernelGraphPtr &kernel_graph) {
   is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   is_cpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
 
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
   optimizer->AddPassManager(PreProcess());

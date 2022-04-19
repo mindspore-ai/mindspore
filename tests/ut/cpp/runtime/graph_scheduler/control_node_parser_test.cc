@@ -74,7 +74,7 @@ class TestDeviceContext : public DeviceContext {
     return std::make_shared<TestDeviceAddress>(nullptr, 0);
   }
   virtual DeviceAddressType GetDeviceAddressType() const { return DeviceAddressType::kCPU; }
-  virtual void SetOperatorInfo(const std::vector<CNodePtr> &nodes) const {}
+  virtual void SetOperatorInfo(const KernelGraphPtr &graph) const {}
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
 };
 
@@ -193,7 +193,6 @@ void BuildGraphs(std::vector<AnfNodePtr> *control_nodes, FuncGraphPtr *func_grap
 
   (*func_graph) = root_func_graph;
 }
-
 
 /// Feature: control flow support dynamic shape.
 /// Description: Test the parse interface.
