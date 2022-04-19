@@ -69,6 +69,7 @@ FuncGraphPtr Converter::BuildFuncGraph(const converter::Flags &flag) {
   } else {
     model_parser_ = registry::ModelParserRegistry::GetModelParser(flag.fmk);
     if (model_parser_ == nullptr) {
+      MS_LOG(ERROR) << "Unsupported to converter models with fmk: " << flag.fmkIn;
       return nullptr;
     }
     converter::ConverterParameters converter_parameters;

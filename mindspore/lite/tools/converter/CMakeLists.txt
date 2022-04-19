@@ -79,6 +79,10 @@ add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
 add_subdirectory(parser/onnx)
 add_subdirectory(parser/tf)
+if(ENABLE_CONVERT_PYTORCH_MODEL AND NOT WIN32)
+    add_subdirectory(parser/pytorch)
+endif()
+
 add_subdirectory(legacy_optimizer)
 add_subdirectory(quantizer)
 add_subdirectory(registry)
@@ -308,6 +312,10 @@ target_link_libraries(converter_lite PRIVATE
 
 if(SUPPORT_TRAIN)
     target_link_libraries(converter_lite PRIVATE train_cpu_kernel_mid)
+endif()
+
+if(ENABLE_CONVERT_PYTORCH_MODEL)
+    target_link_libraries(converter_lite PRIVATE pytorch_parser_mid)
 endif()
 
 if(NOT ENABLE_CLOUD_AND_LITE)

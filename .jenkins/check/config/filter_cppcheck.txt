@@ -46,6 +46,7 @@
 "mindspore/mindspore/lite/tools/common/flag_parser.cc"                                                "useStlAlgorithm"
 "mindspore/mindspore/lite/tools/common/tensor_util.cc"                                                "useStlAlgorithm"
 "mindspore/mindspore/lite/tools/converter/parser/onnx/onnx_relu_parser.cc"                            "useStlAlgorithm"
+"mindspore/mindspore/lite/tools/converter/parser/pytorch/pytorch_model_parser.cc"                     "variableScope"
 "mindspore/mindspore/lite/tools/converter/quantizer/quantize_util.cc"                                 "useStlAlgorithm"
 "mindspore/mindspore/lite/src/runtime/kernel/opencl/kernel/"                                          "unreadVariable"
 "mindspore/mindspore/lite/src/runtime/kernel/opencl/cl/"                                              "unreadVariable"

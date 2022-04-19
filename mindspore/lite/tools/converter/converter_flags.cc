@@ -147,6 +147,8 @@ int Flags::InitFmk() {
     this->fmk = kFmkTypeOnnx;
   } else if (this->fmkIn == "TF") {
     this->fmk = kFmkTypeTf;
+  } else if (this->fmkIn == "PYTORCH") {
+    this->fmk = kFmkTypePytorch;
   } else {
     std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX" << std::endl;
     return RET_INPUT_PARAM_INVALID;

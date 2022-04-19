@@ -121,7 +121,7 @@ STATUS TfliteInputsAdjust::ReplaceInt64ParameterNode(const FuncGraphPtr &func_gr
       MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = opt::BuildParameterNode(func_graph, param_node, tensor_info);
+    auto param_node_new = opt::BuildParameterNode(func_graph, tensor_info, param_node->fullname_with_scope());
     if (!manager->Replace(param_node, param_node_new)) {
       MS_LOG(ERROR) << "Replace param node failed.";
       return RET_ERROR;
