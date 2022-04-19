@@ -140,6 +140,7 @@ class MS_API MSTensor {
 
   MSTensor();
   explicit MSTensor(const std::shared_ptr<Impl> &impl);
+  // if malloc data, user need to free after constructing MSTensor, else memory leak.
   inline MSTensor(const std::string &name, DataType type, const std::vector<int64_t> &shape, const void *data,
                   size_t data_len);
   explicit MSTensor(std::nullptr_t);
