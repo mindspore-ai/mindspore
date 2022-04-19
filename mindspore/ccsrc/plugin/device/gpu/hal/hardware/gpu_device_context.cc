@@ -500,7 +500,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
       !(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
     kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(gpu_kernel);
-    gpu_kernel->Wait();
+    kernel::UpdateNodeShape(kernel);
   }
   return ret;
 }

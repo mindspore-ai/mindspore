@@ -293,6 +293,7 @@ void SetInitOpArgs(const CNodePtr &cnode, const std::vector<KernelTensorPtr> &in
 std::vector<KernelTensorPtr> GetReinitInputs(const CNodePtr &cnode);
 std::vector<KernelTensorPtr> GetReinitOutputs(const CNodePtr &cnode);
 std::shared_ptr<ReinitArgs> GetReinitArgs(const CNodePtr &cnode);
+void UpdateNodeShape(const CNodePtr &cnode);
 
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \

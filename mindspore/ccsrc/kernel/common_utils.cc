@@ -1317,5 +1317,28 @@ std::shared_ptr<ReinitArgs> GetReinitArgs(const CNodePtr &cnode) {
   }
   return init_op_args->args;
 }
+
+void UpdateNodeShape(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  kernel_mod->Wait();
+  auto output_tensor = kernel_mod->GetOutputs();
+  if (output_tensor.empty()) {
+    return;
+  }
+  std::vector<TypeId> type_ids;
+  std::vector<std::vector<size_t>> shapes;
+  size_t output_num = output_tensor.size();
+  for (size_t i = 0; i < output_num; ++i) {
+    MS_EXCEPTION_IF_NULL(output_tensor[i]);
+    auto out_shape = output_tensor[i]->GetShapeVector();
+    std::vector<size_t> u_out_shape;
+    std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(u_out_shape), LongToSize);
+    shapes.emplace_back(std::move(u_out_shape));
+    type_ids.emplace_back(output_tensor[i]->GetDtype());
+  }
+  common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
+}
 }  // namespace kernel
 }  // namespace mindspore
