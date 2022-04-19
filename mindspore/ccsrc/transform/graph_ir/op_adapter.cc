@@ -34,9 +34,10 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from input index to input name.
   mindspore::HashMap<int, std::string> input_map;
+  auto op_type = GetCustomOpType(prim);
   auto value = prim->GetAttr("input_names");
   if (value == nullptr) {
-    (*cus_output_map_)[prim->name()] = input_map;
+    (*cus_output_map_)[op_type] = input_map;
     return NOT_FOUND;
   }
 
@@ -47,8 +48,8 @@ Status OpAdapterImpl::GenerateCustomOpInputMap(const CusOperatorPtr &op, const P
     op->CustomInputRegister(input_names[i]);
   }
 
-  if (cus_input_map_->find(prim->name()) == cus_input_map_->end()) {
-    (*cus_input_map_)[prim->name()] = input_map;
+  if (cus_input_map_->find(op_type) == cus_input_map_->end()) {
+    (*cus_input_map_)[op_type] = input_map;
   }
   return SUCCESS;
 }
@@ -58,10 +59,11 @@ Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const 
   MS_EXCEPTION_IF_NULL(prim);
   // Create the map of custom op from output index to output name.
   mindspore::HashMap<int, std::string> output_map;
+  auto op_type = GetCustomOpType(prim);
   auto value = prim->GetAttr("output_names");
   if (value == nullptr) {
     // generate a empty output_map for it
-    (*cus_output_map_)[prim->name()] = output_map;
+    (*cus_output_map_)[op_type] = output_map;
     return NOT_FOUND;
   }
 
@@ -72,10 +74,21 @@ Status OpAdapterImpl::GenerateCustomOpOutputMap(const CusOperatorPtr &op, const 
     op->CustomOutputRegister(output_names[i]);
   }
 
-  if (cus_output_map_->find(prim->name()) == cus_output_map_->end()) {
-    (*cus_output_map_)[prim->name()] = output_map;
+  if (cus_output_map_->find(op_type) == cus_output_map_->end()) {
+    (*cus_output_map_)[op_type] = output_map;
   }
   return SUCCESS;
+}
+
+std::string OpAdapterImpl::GetCustomOpType(const PrimitivePtr &prim) const {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto value = prim->GetAttr("reg_op_name");
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "Custom op has no func_type attr.";
+    return "";
+  }
+  auto op_type = GetValue<std::string>(value);
+  return op_type;
 }
 
 OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
@@ -91,7 +104,8 @@ OperatorPtr OpAdapterImpl::GenerateCustomOp(const AnfNodePtr anf) {
 
   auto prim = GetValueNode<PrimitivePtr>(node->inputs()[0]);
   MS_EXCEPTION_IF_NULL(prim);
-  auto op = std::make_shared<ge::CustomOperator>(node->fullname_with_scope(), prim->name());
+  auto op_type = GetCustomOpType(prim);
+  auto op = std::make_shared<ge::CustomOperator>(node->fullname_with_scope() + op_type, op_type);
   if (GenerateCustomOpInputMap(op, prim) != SUCCESS) {
     MS_LOG(WARNING) << "Custom op node has no input_names, op[" << prim->name() << "].";
   }

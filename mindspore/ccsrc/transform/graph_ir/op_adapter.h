@@ -62,6 +62,7 @@ class OpAdapterImpl {
   }
   ~OpAdapterImpl() {}
   bool IsCustomOp(const OperatorPtr &op);
+  std::string GetCustomOpType(const PrimitivePtr &prim) const;
   Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
   Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
   OperatorPtr GenerateCustomOp(const AnfNodePtr anf);

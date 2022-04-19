@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace transform {
-constexpr const char kNameCustomOp[] = "CustomOp";
+constexpr const char kNameCustomOp[] = "Custom";
 constexpr const char kNameConst[] = "Const";
 constexpr const char kNameParam[] = "parameter";
 constexpr const char kNameRandomUniform[] = "RandomUniform";
