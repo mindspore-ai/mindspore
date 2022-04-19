@@ -15,14 +15,20 @@
  */
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPERATE_OPS_FRONT_INFER_FUNCTION_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPERATE_OPS_FRONT_INFER_FUNCTION_H_
+#include <string>
+#include <vector>
 #include "abstract/abstract_value.h"
 #include "abstract/ops/primitive_infer_map.h"
 namespace mindspore {
 namespace abstract {
+const std::vector<std::string> kSparsePrimStr = {"Prim: S-Prim-MakeCSRTensor", "Prim: S-Prim-MakeCOOTensor",
+                                                 "Prim: S-Prim-MakeRowTensor"};
 AbstractBasePtr InferImplTypeof(const AnalysisEnginePtr &, const PrimitivePtr &,
                                 const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplHasType(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list);
+AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const AbstractBasePtrList &args_spec_list);
 AbstractBasePtr InferImplListMap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

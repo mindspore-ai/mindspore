@@ -33,6 +33,8 @@ from mindspore import nn
 from mindspore import ops
 from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_data
 from mindspore.common.dtype import pytype_to_dtype
+from mindspore.common import dtype as mstype
+from mindspore.common.parameter import Parameter
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
 from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
@@ -394,6 +396,34 @@ def create_instance(cls_type, params=None):
             raise ValueError(f"When call 'create_instance', the parameter should be *args or **kwargs, "
                              f"but got {params.__class__.__name__}, params: {params}")
     return obj
+
+
+def python_isinstance(x, cmp_type):
+    """Python isinstance function."""
+    # Convert _c_expression tensor to python tensor.
+    x = _convert_python_data(x)
+    return isinstance(x, cmp_type)
+
+
+def ms_isinstance(x, cmp_type):
+    """Isinstance for ms type."""
+    pytype_to_mstype = {
+        bool: mstype.Bool,
+        int: mstype.Int,
+        float: mstype.Float,
+        str: mstype.String,
+        list: mstype.List,
+        tuple: mstype.Tuple,
+        dict: mstype.Dict,
+        Tensor: mstype.tensor_type,
+        Parameter: mstype.ref_type,
+        slice: mstype.Slice,
+    }
+    if cmp_type not in pytype_to_mstype:
+        return False
+    if isinstance(x, mstype.Bool) and cmp_type == int:
+        return True
+    return isinstance(x, pytype_to_mstype.get(cmp_type))
 
 
 def get_obj_from_sequence(obj, index):

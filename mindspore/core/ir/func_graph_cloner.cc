@@ -750,7 +750,9 @@ FuncGraphPtr Cloner::operator[](const FuncGraphPtr &func_graph) {
   MsProfile::StatTime("func_graph_cloner_run.FuncGraphClonerGraph", GetTime() - time);
 #endif
   auto iter = repl_func_graph_.find(func_graph);
-  return ((iter == repl_func_graph_.end()) ? func_graph : iter->second);
+  auto ret = ((iter == repl_func_graph_.end()) ? func_graph : iter->second);
+  ret->set_python_obj(func_graph->python_obj());
+  return ret;
 }
 
 FuncGraphPtr BasicClone(const FuncGraphPtr &func_graph, bool clone_value_nodes, const UpdateInfoPtr update_info) {

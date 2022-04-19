@@ -375,6 +375,9 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   /// \return The sorted nodes.
   static std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &node);
 
+  void set_python_obj(const ValuePtr &python_obj) { python_obj_ = python_obj; }
+  ValuePtr python_obj() { return python_obj_; }
+
  private:
   // Only used for func_graph manager to control resource free.
   int attached_mng_cnt() const { return attached_mng_cnt_; }
@@ -466,6 +469,8 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   mindspore::HashSet<AnfNodePtr> used_forward_nodes_;
   // If the func_graph is input of switch node, and the condition of switch is AbstractTensor, need set true.
   bool is_tensor_condition_branch_ = false;
+  // Corresponding python obj.
+  ValuePtr python_obj_ = nullptr;
 };
 
 inline CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) {
