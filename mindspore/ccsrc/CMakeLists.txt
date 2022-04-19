@@ -366,9 +366,10 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib64/stubs/libcuda.so
             ${CUDA_PATH}/lib64/libcusolver.so
             ${CUDA_PATH}/lib64/libcufft.so)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
-    endif()
+endif()
+
+if(NOT WIN32)
+    target_link_libraries(mindspore_backend PRIVATE mindspore::ssl mindspore::crypto)
 endif()
 
 if(ENABLE_DEBUGGER)
@@ -535,13 +536,9 @@ if(USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(mindspore PUBLIC mindspore::crypto mindspore::ssl)
-endif()
-
 if(ENABLE_GPU)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_link_libraries(_c_expression PRIVATE mindspore::crypto mindspore::ssl)
+        target_link_libraries(_c_expression PRIVATE mindspore::ssl mindspore::crypto)
     endif()
     if(ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
