@@ -1013,7 +1013,14 @@ void TopCellInfo::ClearDeviceMemory() {
   for (const auto &tensor : tensors_in_bprop_graph) {
     MS_EXCEPTION_IF_NULL(tensor);
     MS_LOG(DEBUG) << "Clear device address for tensor: " << tensor->ToString();
-    tensor->set_device_address(nullptr);
+    auto device_sync = tensor->device_address();
+    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(device_sync);
+    if (device_address == nullptr) {
+      continue;
+    }
+    if (!device_address->from_persistent_mem()) {
+      tensor->set_device_address(nullptr);
+    }
   }
 }
 
