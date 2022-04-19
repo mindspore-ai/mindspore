@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "tools/converter/quantizer/quant_helper/quant_dtype_cast_quant_param_propogator.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "nnacl/op_base.h"
 

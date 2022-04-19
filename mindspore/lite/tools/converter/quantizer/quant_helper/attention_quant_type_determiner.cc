@@ -17,7 +17,7 @@
 #include "tools/converter/quantizer/quant_helper/attention_quant_type_determiner.h"
 #include "tools/converter/quantizer/quant_helper/conv_quant_param_propogator.h"
 #include "tools/converter/quantizer/quantize_util.h"
-#include "mindspore/core/utils/log_adapter.h"
+#include "src/common/log_adapter.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "nnacl/op_base.h"
 
