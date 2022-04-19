@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 class MaskedFillNet(nn.Cell):
@@ -35,7 +35,6 @@ class MaskedFillNet(nn.Cell):
 
 def maskedfill_fun(ntype):
     maskedfill_net = MaskedFillNet()
-
     inputs = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(ntype))
     mask = Tensor(np.array([[True, True, False, True], [False, False, True, False]]).astype(np.bool))
     value = Tensor(np.array(22).astype(ntype))
@@ -64,7 +63,7 @@ def maskedfill_fun(ntype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedfill_float():
     """
@@ -76,7 +75,7 @@ def test_maskedfill_float():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedfill_float16():
     """
@@ -88,7 +87,7 @@ def test_maskedfill_float16():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedfill_int():
     """
@@ -100,7 +99,7 @@ def test_maskedfill_int():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedfill_int8():
     """
@@ -121,7 +120,7 @@ def maskedfill_value(value):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedfill_float_value():
     """
@@ -133,7 +132,7 @@ def test_maskedfill_float_value():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maskedfill_tensor_value():
     """
