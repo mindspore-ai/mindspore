@@ -100,4 +100,10 @@ ATTR_MAP(WtsARQ) = {{"num_bits", ATTR_DESC(num_bits, AnyTraits<int64_t>())},
                     {"offset_flag", ATTR_DESC(offset_flag, AnyTraits<bool>())}};
 OUTPUT_MAP(WtsARQ) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(WtsARQ, kNameWtsARQ, ADPT_DESC(WtsARQ))
+
+// IsFinite
+INPUT_MAP(IsFinite) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(IsFinite) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(IsFinite) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IsFinite, kNameIsFinite, ADPT_DESC(IsFinite))
 }  // namespace mindspore::transform

@@ -84,6 +84,10 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
     cnode_abstract = cnode->abstract();
   }
   CHECK_NULL_RETURN(cnode_abstract);
+  if (cnode_abstract->BuildShape() == mindspore::abstract::kNoShape) {
+    *shape_vector = std::vector<int64_t>();
+    return lite::RET_OK;
+  }
   if (!mindspore::utils::isa<mindspore::abstract::AbstractTensorPtr>(cnode_abstract)) {
     MS_LOG(ERROR) << "Abstract is not abstract tensor. " << cnode->fullname_with_scope();
     return lite::RET_ERROR;
