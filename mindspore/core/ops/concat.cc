@@ -28,15 +28,15 @@ namespace {
 abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  const int64_t kOneNum = 1;
   auto x_shape_ptr = input_args[0]->isa<abstract::AbstractTuple>()
                        ? input_args[0]->cast<abstract::AbstractTuplePtr>()->BuildShape()
                        : input_args[0]->cast<abstract::AbstractListPtr>()->BuildShape();
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()
                     ? input_args[0]->cast<abstract::AbstractTuplePtr>()->elements()
                     : input_args[0]->cast<abstract::AbstractListPtr>()->elements();
-  (void)CheckAndConvertUtils::CheckInteger("concat element num", SizeToLong(elements.size()), kGreaterEqual, kOneNum,
-                                           prim_name);
+  if (elements.size() < 1) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", The number of inputs is less than 1.";
+  }
   (void)primitive->AddAttr("N", MakeValue(SizeToLong(elements.size())));
   (void)primitive->AddAttr("inputNums", MakeValue(SizeToLong(elements.size())));
   auto element0 = elements[0]->cast<abstract::AbstractTensorPtr>();
@@ -44,16 +44,18 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
   auto element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(element0->BuildShape())[kShape];
   auto element0_rank = element0_shape.size();
   auto axis_temp = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  CheckAndConvertUtils::CheckInRange<int64_t>("Concat axis", axis_temp, kIncludeBoth,
-                                              {-SizeToLong(element0_rank), SizeToLong(element0_rank) - kOneNum},
-                                              prim_name);
+  if (axis_temp < static_cast<int64_t>(-element0_rank) || axis_temp > static_cast<int64_t>(element0_rank - 1)) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", The aixs value is not within the allowable range.";
+  }
   auto axis = axis_temp < 0 ? LongToSize(axis_temp + element0_rank) : LongToSize(axis_temp);
   int64_t all_shp = element0_shape[axis];
   for (size_t i = 1; i < elements.size(); ++i) {
     std::string elementi = "element" + std::to_string(i);
     auto elementi_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
-    (void)CheckAndConvertUtils::CheckInteger(elementi + " shape rank", SizeToLong(elementi_shape.size()), kEqual,
-                                             SizeToLong(element0_shape.size()), prim_name);
+    if (elementi_shape.size() != element0_shape.size()) {
+      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the ranks of the first and the " << i
+                               << "st input are not equal.";
+    }
     for (size_t j = 0; j < element0_rank; ++j) {
       if (j != axis && elementi_shape[j] != element0_shape[j]) {
         MS_LOG(EXCEPTION) << "For '" << prim_name << "', element " << i
