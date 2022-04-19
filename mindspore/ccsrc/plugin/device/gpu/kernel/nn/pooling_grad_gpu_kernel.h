@@ -27,7 +27,8 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t INPUT_NUM = 3;
+constexpr size_t kInputNum = 3;
+constexpr size_t kAvgPool3DGradInputNum = 1;
 template <typename T>
 class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -65,10 +66,23 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *x_data = GetDeviceAddress<T>(inputs, 0);
-    T *y = GetDeviceAddress<T>(inputs, 1);
-    T *dy = GetDeviceAddress<T>(inputs, 2);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
+    T *x_data = nullptr;
+    T *y = nullptr;
+    T *dy = nullptr;
+    T *dx = nullptr;
+    if (kernel_name_ == kAvgPool3DGradOpName) {
+      dy = GetDeviceAddress<T>(inputs, 0);
+      dx = GetDeviceAddress<T>(outputs, 0);
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMalloc(reinterpret_cast<void **>(&x_data), outputs[0]->size),
+                                 "cudaMalloc failed.");
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMalloc(reinterpret_cast<void **>(&y), inputs[0]->size),
+                                 "cudaMalloc failed.");
+    } else {
+      x_data = GetDeviceAddress<T>(inputs, 0);
+      y = GetDeviceAddress<T>(inputs, 1);
+      dy = GetDeviceAddress<T>(inputs, 2);
+      dx = GetDeviceAddress<T>(outputs, 0);
+    }
 
     const float alpha = 1;
     const float beta = 0;
@@ -82,11 +96,20 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool InitShape(const CNodePtr &kernel_node, int *dimA, int *strideAin, int *dimAy, int *strideAiny, int *dimAdy,
                  int *strideAdy, int *dimAout, int *strideAout, int nbDims) {
-    const size_t kDoutIdx = 2;
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    auto input_mask = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kDoutIdx);
-    auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    std::vector<size_t> dout_shape, input_mask, output_shape, input_shape;
+    if (kernel_name_ == kAvgPool3DGradOpName) {
+      dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+      output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+      input_mask = dout_shape;
+      input_shape = output_shape;
+    } else {
+      const size_t kDoutIdx = 2;
+      input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+      input_mask = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+      dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kDoutIdx);
+      output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    }
+
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     format_attr_ = GetAttr<std::string>(kernel_node, "format");
     if (Anyone(format_attr_, kOpFormat_NHWC, kOpFormat_NDHWC)) {
@@ -210,9 +233,10 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  private:
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != INPUT_NUM) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_NUM << ", but got "
-                        << input_num;
+    size_t expect_input_num = (kernel_name_ == kAvgPool3DGradOpName) ? kAvgPool3DGradInputNum : kInputNum;
+    if (input_num != expect_input_num) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << expect_input_num
+                        << ", but got " << input_num;
     }
   }
   void SetPad(const CNodePtr &kernel_node) {
@@ -340,8 +364,7 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   void SetPoolingMode(const CNodePtr &kernel_node) {
-    mode_ = common::AnfAlgo::GetCNodeName(kernel_node);
-    if (mode_ == "AvgPoolGrad") {
+    if (kernel_name_ == kAvgPoolGradOpName || kernel_name_ == kAvgPool3DGradOpName) {
       pooling_mode_ = CUDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
       pad_value_ = 0.0;
     } else {
@@ -359,7 +382,6 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   cudnnPoolingMode_t pooling_mode_ = CUDNN_POOLING_MAX;
   std::vector<int> stride_;
 
-  std::string mode_;
   std::string pad_mode_;
   std::string format_attr_ = kOpFormat_NCHW;
   cudnnDataType_t cudnn_data_type_;
