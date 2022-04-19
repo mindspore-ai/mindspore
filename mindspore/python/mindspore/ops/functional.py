@@ -954,7 +954,6 @@ make_list = Primitive('make_list')
 make_slice = Primitive('make_slice')
 tuple_equal = Primitive("tuple_equal")
 list_equal = Primitive("list_equal")
-make_ref = Primitive("make_ref")
 
 scalar_add = Primitive(_constants.kScalarAdd)
 scalar_mul = Primitive(_constants.kScalarMul)

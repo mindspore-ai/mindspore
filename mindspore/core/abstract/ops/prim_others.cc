@@ -172,62 +172,6 @@ AbstractBasePtr InferImplEnvironDestroyAll(const AnalysisEnginePtr &, const Prim
   return std::make_shared<abstract::AbstractScalar>(kAnyValue, std::make_shared<Bool>());
 }
 
-AbstractBasePtr InferImplMakeRefKey(const AnalysisEnginePtr &, const PrimitivePtr &prim, const AbstractBasePtrList &) {
-  ValuePtr name_value = prim->GetAttr("tag");
-  MS_EXCEPTION_IF_NULL(name_value);
-  auto name = name_value->cast<StringImmPtr>();
-  if (name == nullptr) {
-    MS_LOG(EXCEPTION) << "MakeRefKey attr tag should be a String " << name_value->ToString() << ".";
-  }
-  auto refkey = std::make_shared<RefKey>(name->value());
-  if (refkey == nullptr) {
-    MS_LOG(EXCEPTION) << "MakeRefKey std::make_shared<RefKey> failed";
-  }
-  return refkey->ToAbstract();
-}
-
-AbstractBasePtr InferImplMakeRef(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                 const AbstractBasePtrList &args_spec_list) {
-  // arguments: key, value, target type(None if no target type)
-  if (args_spec_list.size() != 3) {
-    MS_LOG(EXCEPTION) << "make_ref evaluator requires 3 parameters, while the input size is " << args_spec_list.size()
-                      << ".";
-  }
-  auto tensor = args_spec_list[1]->cast<abstract::AbstractTensorPtr>();
-  return std::make_shared<AbstractRef>(args_spec_list[0], tensor);
-}
-
-AbstractBasePtr InferImplGetRefKey(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                   const AbstractBasePtrList &args_spec_list) {
-  // arguments: value
-  if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "get_ref_key requires 1 parameters, while the input size is " << args_spec_list.size() << ".";
-  }
-  TypePtr type = args_spec_list[0]->GetTypeTrack();
-  if (type->type_id() != kObjectTypeRef) {
-    MS_LOG(EXCEPTION) << "First input of get_ref_key should be a Ref but a " << type->ToString();
-  }
-  auto abs_ref = args_spec_list[0]->cast<AbstractRefPtr>();
-  MS_EXCEPTION_IF_NULL(abs_ref);
-  return abs_ref->ref();
-}
-
-AbstractBasePtr InferImplGetRefValue(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                     const AbstractBasePtrList &args_spec_list) {
-  // arguments: value
-  if (args_spec_list.size() != 1) {
-    MS_LOG(EXCEPTION) << "get_ref_value requires 1 parameters, while the input size is " << args_spec_list.size()
-                      << ".";
-  }
-  TypePtr type = args_spec_list[0]->GetTypeTrack();
-  if (type->type_id() != kObjectTypeRef) {
-    return args_spec_list[0];
-  }
-  auto abs_ref = args_spec_list[0]->cast<AbstractRefPtr>();
-  MS_EXCEPTION_IF_NULL(abs_ref);
-  return abs_ref->ref();
-}
-
 AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const AbstractBasePtrList &args_spec_list) {
   // args: Two objects of a subclass of AbstractBase, key and value.

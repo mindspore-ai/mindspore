@@ -175,17 +175,6 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
   BaseShapePtr base_shape_ptr = node->Shape();
   if (node->isa<CNode>()) {
     auto cnode = node->cast<CNodePtr>();
-    if (IsValueNode<Primitive>(cnode->input(0))) {
-      PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-      MS_EXCEPTION_IF_NULL(prim);
-      if (prim->name() == MAKEREF) {
-        AnfNodePtr ref_node = cnode->input(1);
-        auto func_graph = cnode->func_graph();
-        MS_EXCEPTION_IF_NULL(ref_node);
-        MS_EXCEPTION_IF_NULL(func_graph);
-        return GetRefKeyNodeShape(ref_node, func_graph);
-      }
-    }
     if (cnode->input(0)->isa<CNode>()) {
       if (cnode->inputs().size() < 2) {
         MS_LOG(EXCEPTION) << "GetNodeShape: " << node->ToString() << " size is smaller than 2";

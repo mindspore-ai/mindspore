@@ -869,10 +869,6 @@ GVAR_DEF(PrimitivePtr, kPrimEnvironSet, std::make_shared<Primitive>(kEnvironSet)
 GVAR_DEF(PrimitivePtr, kPrimEnvironGet, std::make_shared<Primitive>(kEnvironGet));
 GVAR_DEF(PrimitivePtr, kPrimEnvironAdd, std::make_shared<Primitive>(kEnvironAdd));
 GVAR_DEF(PrimitivePtr, kPrimEnvironDestroyAll, std::make_shared<Primitive>(kEnvironDestroyAll));
-GVAR_DEF(PrimitivePtr, kPrimMakeRefKey, std::make_shared<Primitive>("MakeRefKey"));
-GVAR_DEF(PrimitivePtr, kPrimGetRefKey, std::make_shared<Primitive>("get_ref_key"));
-GVAR_DEF(PrimitivePtr, kPrimMakeRef, std::make_shared<Primitive>("make_ref"));
-GVAR_DEF(PrimitivePtr, kPrimGetRefValue, std::make_shared<Primitive>("get_ref_value"));
 
 // Python interpreter runner
 GVAR_DEF(PrimitivePtr, kPrimPyInterpret, std::make_shared<Primitive>("PyInterpret"));
@@ -955,7 +951,6 @@ GVAR_DEF(PrimitivePtr, kPrimCreateInstance, std::make_shared<Primitive>("create_
 GVAR_DEF(PrimitivePtr, kPrimCallInstance, std::make_shared<Primitive>("call_instance"));
 
 // Other miscellaneous
-GVAR_DEF(PrimitivePtr, kPrimGetRefOrigin, std::make_shared<Primitive>("get_ref_origin"));
 GVAR_DEF(PrimitivePtr, kPrimInsertGradientOf, std::make_shared<Primitive>("InsertGradientOf"));
 GVAR_DEF(PrimitivePtr, kPrimCheckBprop, std::make_shared<Primitive>("CheckBprop"));
 GVAR_DEF(PrimitivePtr, kPrimMixedPrecisionCast, std::make_shared<Primitive>("mixed_precision_cast"));

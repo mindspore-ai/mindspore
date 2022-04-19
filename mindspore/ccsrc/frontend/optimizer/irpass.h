@@ -79,10 +79,6 @@ class OptimizeIRPassLib {
   SubstitutionPtr split_environ_get_set_with_tuple_value_;
 
   // Ref eliminate
-  SubstitutionPtr make_ref_eliminate_;
-  SubstitutionPtr get_ref_param_eliminate_;
-  SubstitutionPtr get_make_ref_eliminate_;
-  SubstitutionPtr replace_refkey_by_param_;
   SubstitutionPtr replace_old_param_;
 
   // Branch culling

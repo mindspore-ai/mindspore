@@ -150,11 +150,6 @@ def Load(value, u=None):
     return value
 
 
-# only used in PyNative mode
-def make_ref(key, value, ref):
-    return value
-
-
 def scalar_cast(x, t):
     """Implement scalar_cast."""
     np_type = dtype_to_nptype(t)
