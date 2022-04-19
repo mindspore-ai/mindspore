@@ -57,7 +57,6 @@
 
 #define UP_DIV(x, y) (((x) + (y) - (1)) / (y))
 #define UP_ROUND(x, y) (((x) + (y) - (1)) / (y) * (y))
-#define UP_ROUND_DIV(x, y) (x % y == 0 ? (x / y) : (x / y) + 1)
 #define DOWN_DIV(x, y) ((x) / (y))
 #define DOWN_ROUND(x, y) ((x) / (y) * (y))
 

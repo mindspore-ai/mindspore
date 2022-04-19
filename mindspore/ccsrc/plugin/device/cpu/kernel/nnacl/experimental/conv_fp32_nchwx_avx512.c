@@ -21,7 +21,7 @@
 
 static const int UNIT_LEN = 512;  // register length
 
-static const int UNIT_NR = 512 / sizeof(float);
+#define UNIT_NR 128  // (512 / sizeof(float))
 static const int TILE_ROW;
 int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self) {
   KConv2d *conv = (KConv2d *)self;
@@ -36,7 +36,7 @@ int conv2d_prepare_fp32_nchwx_avx512(struct KernelBase *self) {
   int kw = weight->shape_[kNCHW_W];
 
   size_t lineLen = cin * kw * kh;
-  conv->packedWeight = malloc(lineLen * UP_ROUND_DIV(cout, UNIT_NR) * sizeof(float));  // allocate packed weight buf
+  conv->packedWeight = malloc(lineLen * UP_DIV(cout, UNIT_NR) * sizeof(float));  // allocate packed weight buf
 
   float *rpos[16] = {0};
   float *data = (float *)weight->data_;
@@ -154,12 +154,10 @@ int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self) {
 #ifdef VECTORIZE_OPTIMIZE
 // use AVX2 instruction to optimize gemm
 #else
-  int InputRegNr = 16;
-  int WeightRegNr = 16;
-  int OutputRegNr = 16;
-  float intputReg[InputRegNr][UNIT_NR];
-  float weightReg[WeightRegNr][UNIT_NR];
-  float outputReg[OutputRegNr][UNIT_NR];
+
+  float intputReg[C16NUM][UNIT_NR];
+  float weightReg[C16NUM][UNIT_NR];
+  float outputReg[C16NUM][UNIT_NR];
   memset(outputReg, 0, sizeof(outputReg));
   int lpos = 0;
   int rpos = 0;
@@ -192,7 +190,7 @@ int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self) {
         tilePos += n;
       }
       // flush outputReg to output tensor memory
-      memcpy(out->data_ + outOffset, outputReg, m * k * sizeof(float));
+      memcpy((float *)out->data_ + outOffset, outputReg, m * k * sizeof(float));
       outOffset += m * k * sizeof(float);
       y += m;
     }
@@ -201,6 +199,7 @@ int conv2d_compute_fp32_nchwx_avx512(struct KernelBase *self) {
 #endif
   return 0;
 }
+
 int conv2d_infershape_fp32_nchwx_avx512(struct KernelBase *self) {
   return Conv2dInferShape((const struct TensorC *const *)self->in, self->insize, self->out, self->outsize, self->param);
 }
@@ -220,7 +219,7 @@ int conv2d_resize_fp32_nchwx_avx512(struct KernelBase *self, TensorC *inputs[], 
 
   self->inferShape(self);
   out->format_ = Format_NC16HW16;
-  out->shape_[1] = UP_ROUND_DIV(out->shape_[1], C16NUM);
+  out->shape_[1] = UP_DIV(out->shape_[1], C16NUM);
   out->shape_[4] = 16;
   out->shape_size_ = 5;
 
