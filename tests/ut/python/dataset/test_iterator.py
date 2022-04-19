@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -153,7 +153,10 @@ def test_iterator_exception():
 
 class MyDict(dict):
     def __getattr__(self, key):
-        return self[key]
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -164,9 +167,10 @@ class MyDict(dict):
 
 def test_tree_copy():
     """
-    Testing copying the tree with a pyfunc that cannot be pickled
+    Feature: Iterators
+    Description: Test copying the tree with a pyfunc that cannot be pickled
+    Expectation: ids of iterator data are different than pre-iterator data
     """
-
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=COLUMNS)
     data1 = data.map(operations=[MyDict()])
 
@@ -174,7 +178,6 @@ def test_tree_copy():
 
     assert id(data1) != id(itr.dataset)
     assert id(data) != id(itr.dataset.children[0])
-    assert id(data1.operations[0]) == id(itr.dataset.operations[0])
 
     itr.release()
 

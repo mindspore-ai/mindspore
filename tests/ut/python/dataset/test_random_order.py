@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_random_order_op(plot=False):
     """
-    Test RandomOrder in python transformations
+    Feature: RandomOrder op
+    Description: Test RandomOrder in python transformations
+    Expectation: Pipelines execute successfully
     """
     logger.info("test_random_order_op")
     # define map operations
@@ -70,7 +72,9 @@ def test_random_order_op(plot=False):
 
 def test_random_order_md5():
     """
-    Test RandomOrder op with md5 check
+    Feature: RandomOrder op
+    Description: Test RandomOrder op with md5 check
+    Expectation: Pipeline results match in md5 comparison
     """
     logger.info("test_random_order_md5")
     original_seed = config_get_set_seed(8)
