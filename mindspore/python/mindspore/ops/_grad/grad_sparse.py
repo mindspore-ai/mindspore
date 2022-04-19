@@ -74,11 +74,18 @@ def get_bprop_sparse_tensor_dense_matmul(self):
         perm = (1, 0)
         if adj_d:
             dense_grad = F.transpose(dense_grad, perm)
+        is_half = False
+        if dense.dtype == mstype.float16:
+            dense = P.Cast()(dense, mstype.float32)
+            dout = P.Cast()(dout, mstype.float32)
+            is_half = True
         rows = indices[:, 0]
         cols = indices[:, 1]
         parts_a = F.gather(dout, cols if adj_s else rows, 0)
         parts_b = F.gather(F.transpose(dense, perm) if adj_d else dense, rows if adj_s else cols, 0)
         values_grad = F.reduce_sum(parts_a * parts_b, 1)
+        if is_half:
+            values_grad = P.Cast()(values_grad, mstype.float16)
         return zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad
     return bprop
 

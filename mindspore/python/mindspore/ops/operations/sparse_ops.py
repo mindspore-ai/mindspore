@@ -89,7 +89,7 @@ class SparseToDense(PrimitiveWithInfer):
         return out
 
 
-class SparseTensorDenseMatmul(PrimitiveWithInfer):
+class SparseTensorDenseMatmul(Primitive):
     """
     Multiplies sparse matrix `A` by dense matrix `B`.
     The rank of sparse matrix and dense matrix must be equal to `2`.
@@ -102,9 +102,10 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         - **indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
           Support int32, int64, each element value should be a non-negative int number. The shape is :math:`(n, 2)`.
         - **values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `indices`.
-          Support float16, float32, float64, int32, int64. The shape should be :math:`(n,)`.
-        - **sparse_shape** (tuple(int)) - A positive int tuple which specifies the shape of sparse tensor,
-          should have 2 elements, represent sparse tensor shape is :math:`(N, C)`.
+          Support float16, float32, float64, int32, int64, complex64, complex128. The shape should be :math:`(n,)`.
+        - **sparse_shape** (tuple(int)) or (Tensor) - A positive int tuple or tensor which specifies the shape of
+          sparse tensor, and only constant value is allowed when sparse_shape is a tensor, should have 2 elements,
+          represent sparse tensor shape is :math:`(N, C)`.
         - **dense** (Tensor) - A 2-D Tensor, the dtype is same as `values`.
           If `adjoint_st` is False and `adjoint_dt` is False, the shape must be :math:`(C, M)`.
           If `adjoint_st` is False and `adjoint_dt` is True, the shape must be :math:`(M, C)`.
@@ -123,13 +124,13 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
             and shape of `dense` don't meet the parameter description.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
         >>> values = Tensor([1, 2], dtype=ms.float32)
         >>> sparse_shape = (3, 4)
-        >>> dense = Tensor([[1,1], [2,2], [3,3 ], [4, 4]], dtype=ms.float32)
+        >>> dense = Tensor([[1, 1], [2, 2], [3, 3], [4, 4]], dtype=ms.float32)
         >>> sparse_dense_matmul = ops.SparseTensorDenseMatmul()
         >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
         >>> print(out)
@@ -145,10 +146,11 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
         self.adjoint_dt = adjoint_dt
         self.init_prim_io_names(inputs=['indices', 'values', 'sparse_shape', 'dense'],
                                 outputs=['output'])
-        self.add_prim_attr('adjoint_st', self.adjoint_st)
-        self.add_prim_attr('adjoint_dt', self.adjoint_dt)
+        self.add_prim_attr('adjoint_a', self.adjoint_st)
+        self.add_prim_attr('adjoint_b', self.adjoint_dt)
         validator.check_value_type("adjoint_st", adjoint_st, [bool], self.name)
         validator.check_value_type("adjoint_dt", adjoint_dt, [bool], self.name)
+        self.set_const_input_indexes([2])
 
     def __infer__(self, indices, values, sparse_shape, dense):
         validator.check_tensor_dtype_valid('indices', indices['dtype'], [mstype.int32, mstype.int64], self.name)
