@@ -34,6 +34,7 @@ enum UnaryOptype {
   UNARY_OP_NEG,
   UNARY_OP_RECIPROCAL,
   UNARY_OP_INV,
+  UNARY_OP_INVERT,
   UNARY_OP_SQUARE,
   UNARY_OP_SQRT,
   UNARY_OP_RSQRT,
@@ -57,13 +58,21 @@ enum UnaryOptype {
 };
 
 static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
-  {"Exp", UNARY_OP_EXP},   {"Expm1", UNARY_OP_EXPM1},   {"Log", UNARY_OP_LOG},     {"Log1p", UNARY_OP_LOG1P},
-  {"Erf", UNARY_OP_ERF},   {"Erfc", UNARY_OP_ERFC},     {"Neg", UNARY_OP_NEG},     {"Reciprocal", UNARY_OP_RECIPROCAL},
-  {"Inv", UNARY_OP_INV},   {"Square", UNARY_OP_SQUARE}, {"Sqrt", UNARY_OP_SQRT},   {"Rsqrt", UNARY_OP_RSQRT},
-  {"Sin", UNARY_OP_SIN},   {"Cos", UNARY_OP_COS},       {"Cosh", UNARY_OP_COSH},   {"Asin", UNARY_OP_ASIN},
-  {"ACos", UNARY_OP_ACOS}, {"Atan", UNARY_OP_ATAN},     {"Asinh", UNARY_OP_ASINH}, {"Acosh", UNARY_OP_ACOSH},
-  {"Abs", UNARY_OP_ABS},   {"Floor", UNARY_OP_FLOOR},   {"Rint", UNARY_OP_RINT},   {"Round", UNARY_OP_ROUND},
-  {"Real", UNARY_OP_REAL}, {"Imag", UNARY_OP_IMAG},     {"Sign", UNARY_OP_SIGN},   {"Conj", UNARY_OP_CONJ}};
+  {"Exp", UNARY_OP_EXP},       {"Expm1", UNARY_OP_EXPM1},
+  {"Log", UNARY_OP_LOG},       {"Log1p", UNARY_OP_LOG1P},
+  {"Erf", UNARY_OP_ERF},       {"Erfc", UNARY_OP_ERFC},
+  {"Neg", UNARY_OP_NEG},       {"Reciprocal", UNARY_OP_RECIPROCAL},
+  {"Inv", UNARY_OP_INV},       {"Invert", UNARY_OP_INVERT},
+  {"Square", UNARY_OP_SQUARE}, {"Sqrt", UNARY_OP_SQRT},
+  {"Rsqrt", UNARY_OP_RSQRT},   {"Sin", UNARY_OP_SIN},
+  {"Cos", UNARY_OP_COS},       {"Cosh", UNARY_OP_COSH},
+  {"Asin", UNARY_OP_ASIN},     {"ACos", UNARY_OP_ACOS},
+  {"Atan", UNARY_OP_ATAN},     {"Asinh", UNARY_OP_ASINH},
+  {"Acosh", UNARY_OP_ACOSH},   {"Abs", UNARY_OP_ABS},
+  {"Floor", UNARY_OP_FLOOR},   {"Rint", UNARY_OP_RINT},
+  {"Round", UNARY_OP_ROUND},   {"Real", UNARY_OP_REAL},
+  {"Imag", UNARY_OP_IMAG},     {"Sign", UNARY_OP_SIGN},
+  {"Conj", UNARY_OP_CONJ}};
 
 template <typename T>
 class UnaryHelperGpuKernel : public GpuKernelHelperBase {
@@ -78,9 +87,8 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
     ResetResource();
     auto iter = kUnaryOpTypeMap.find(kernel_name_);
     if (iter == kUnaryOpTypeMap.end()) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
-                    << " Neg, Reciprocal, Inv, Square, Sqrt, Rsqrt, Sin, Cos, Asin, ACos, Atan, Asinh, Acosh, Abs, "
-                    << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << kernel_name_;
+      MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(kUnaryOpTypeMap)
+                    << " currently, but got " << kernel_name_;
       return -1;
     }
     unary_op_type_ = iter->second;
@@ -103,15 +111,15 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
       {UNARY_OP_LOG, Logarithm<T>},   {UNARY_OP_LOG1P, Log1p<T>},
       {UNARY_OP_ERF, Erf<T>},         {UNARY_OP_ERFC, Erfc<T>},
       {UNARY_OP_NEG, Negative<T>},    {UNARY_OP_RECIPROCAL, Reciprocal<T>},
-      {UNARY_OP_INV, Inv<T>},         {UNARY_OP_SQUARE, Square<T>},
-      {UNARY_OP_SQRT, Sqrt<T>},       {UNARY_OP_RSQRT, Rsqrt<T>},
-      {UNARY_OP_SIN, Sin<T>},         {UNARY_OP_COS, Cos<T>},
-      {UNARY_OP_COSH, Cosh<T>},       {UNARY_OP_ASIN, Asin<T>},
-      {UNARY_OP_ACOS, ACos<T>},       {UNARY_OP_ATAN, Atan<T>},
-      {UNARY_OP_ASINH, Asinh<T>},     {UNARY_OP_ACOSH, Acosh<T>},
-      {UNARY_OP_ABS, Abs<T>},         {UNARY_OP_FLOOR, Floor<T>},
-      {UNARY_OP_RINT, Rint<T>},       {UNARY_OP_ROUND, Round<T>},
-      {UNARY_OP_SIGN, Sign<T>}};
+      {UNARY_OP_INV, Inv<T>},         {UNARY_OP_INVERT, Invert<T>},
+      {UNARY_OP_SQUARE, Square<T>},   {UNARY_OP_SQRT, Sqrt<T>},
+      {UNARY_OP_RSQRT, Rsqrt<T>},     {UNARY_OP_SIN, Sin<T>},
+      {UNARY_OP_COS, Cos<T>},         {UNARY_OP_COSH, Cosh<T>},
+      {UNARY_OP_ASIN, Asin<T>},       {UNARY_OP_ACOS, ACos<T>},
+      {UNARY_OP_ATAN, Atan<T>},       {UNARY_OP_ASINH, Asinh<T>},
+      {UNARY_OP_ACOSH, Acosh<T>},     {UNARY_OP_ABS, Abs<T>},
+      {UNARY_OP_FLOOR, Floor<T>},     {UNARY_OP_RINT, Rint<T>},
+      {UNARY_OP_ROUND, Round<T>},     {UNARY_OP_SIGN, Sign<T>}};
 
     auto iter = func_map.find(unary_op_type_);
     if (iter != func_map.end()) {
@@ -128,9 +136,8 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
       iter->second(input_addr, output_addr, input_size_list_[0] / sizeof(T),
                    reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << ", only support these types: Exp, Expm1, Log, Log1p, Erf, Erfc,"
-                    << " Neg, Reciprocal, Inv, Square, Sqrt, Rsqrt, Sin, Cos, Asin, ACos, Atan, Asinh, Acosh, Abs, "
-                    << "Floor, Rint, Round, Real, Imag, Sign, Conj currently, but got " << unary_op_type_;
+      MS_LOG(ERROR) << "For 'UnaryOp', only support these types: " << kernel::Map2Str(kUnaryOpTypeMap)
+                    << " currently, but got " << kernel_name_;
       return -1;
     }
 

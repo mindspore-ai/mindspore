@@ -5468,7 +5468,7 @@ class Invert(Primitive):
         TypeError: If dtype of `x` is neither int16 nor uint16.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> invert = ops.Invert()

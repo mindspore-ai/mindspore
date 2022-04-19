@@ -58,9 +58,8 @@ class UnaryGradHelperGpuKernel : public GpuKernelHelperBase {
                  const std::vector<std::vector<int64_t>> &output_shapes) override {
     auto iter = kUnaryGradOpTypeMap.find(kernel_name_);
     if (iter == kUnaryGradOpTypeMap.end()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: SqrtGrad, RsqrtGrad, AsinGrad, "
-                        << "ACosGrad, AtanGrad, AsinhGrad, AcoshGrad, ReciprocalGrad, InvGrad currently, but got "
-                        << kernel_name_;
+      MS_LOG(ERROR) << "For 'UnaryGradOp', only support these types: " << kernel::Map2Str(kUnaryGradOpTypeMap)
+                    << " currently, but got " << kernel_name_;
       return -1;
     }
     unary_grad_op_type_ = iter->second;
@@ -105,9 +104,8 @@ class UnaryGradHelperGpuKernel : public GpuKernelHelperBase {
       iter->second(input_x_addr, input_dx_addr, output_y_addr, input_size_list_[0] / sizeof(T),
                    reinterpret_cast<cudaStream_t>(cuda_stream));
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", only support these types: SqrtGrad, RsqrtGrad, AsinGrad, "
-                        << "ACosGrad, AtanGrad, AsinhGrad, AcoshGrad, ReciprocalGrad, InvGrad currently, but got "
-                        << unary_grad_op_type_;
+      MS_LOG(ERROR) << "For 'UnaryGradOp', only support these types: " << kernel::Map2Str(kUnaryGradOpTypeMap)
+                    << " currently, but got " << kernel_name_;
       return -1;
     }
 

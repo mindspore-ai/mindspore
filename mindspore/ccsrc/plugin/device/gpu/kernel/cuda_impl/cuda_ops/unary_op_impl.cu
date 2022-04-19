@@ -123,6 +123,34 @@ __global__ void NegativeKernel(const T *input, T *output, const size_t count) {
   }
   return;
 }
+template <>
+__global__ void NegativeKernel(const uint8_t *input, uint8_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void NegativeKernel(const uint16_t *input, uint16_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void NegativeKernel(const uint32_t *input, uint32_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void NegativeKernel(const uint64_t *input, uint64_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
 template <typename T>
 __global__ void ReciprocalKernel(const T *input, T *output, const size_t count) {
   T zero = static_cast<T>(0.0);
@@ -134,11 +162,40 @@ __global__ void ReciprocalKernel(const T *input, T *output, const size_t count) 
     }
     if (std::numeric_limits<T>::has_infinity) {
       // Referring to the execution result of numpy, We need to add 1 to positive infinity.
-      output[i] = std::numeric_limits<T>::infinity() + static_cast<T>(1.0);
+      output[i] = std::numeric_limits<T>::infinity();
+      output[i] += 1;
     } else {
-      // Referring to the execution result of numpy, We need to add 1 to positive infinity.
-      output[i] = std::numeric_limits<T>::max() + static_cast<T>(1.0);
+      // Referring to the execution result of numpy, We need to add 1 to positive max.
+      output[i] = std::numeric_limits<T>::max();
+      output[i] += 1;
     }
+  }
+  return;
+}
+template <typename T>
+__global__ void InvertKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = ~input[i];
+  }
+}
+template <>
+__global__ void InvertKernel(const double *input, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void InvertKernel(const float *input, float *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void InvertKernel(const half *input, half *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
   }
   return;
 }
@@ -339,6 +396,34 @@ __global__ void AbsKernel(const half *input, half *output, const size_t count) {
   }
   return;
 }
+template <>
+__global__ void AbsKernel(const uint8_t *input, uint8_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void AbsKernel(const uint16_t *input, uint16_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void AbsKernel(const uint32_t *input, uint32_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
+template <>
+__global__ void AbsKernel(const uint64_t *input, uint64_t *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = input[i];
+  }
+  return;
+}
 template <typename T>
 __global__ void AbsKernel(const Complex<T> *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -461,6 +546,62 @@ __global__ void SignKernel(const T *input, T *output, const size_t count) {
   }
   return;
 }
+template <>
+__global__ void SignKernel(const uint8_t *input, uint8_t *output, const size_t count) {
+  uint8_t zero = 0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    uint8_t res;
+    if (input[i] > zero) {
+      res = 1;
+    } else {
+      res = 0;
+    }
+    output[i] = res;
+  }
+  return;
+}
+template <>
+__global__ void SignKernel(const uint16_t *input, uint16_t *output, const size_t count) {
+  uint16_t zero = 0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    uint16_t res;
+    if (input[i] > zero) {
+      res = 1;
+    } else {
+      res = 0;
+    }
+    output[i] = res;
+  }
+  return;
+}
+template <>
+__global__ void SignKernel(const uint32_t *input, uint32_t *output, const size_t count) {
+  uint32_t zero = 0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    uint32_t res;
+    if (input[i] > zero) {
+      res = 1;
+    } else {
+      res = 0;
+    }
+    output[i] = res;
+  }
+  return;
+}
+template <>
+__global__ void SignKernel(const uint64_t *input, uint64_t *output, const size_t count) {
+  uint64_t zero = 0;
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    uint64_t res;
+    if (input[i] > zero) {
+      res = 1;
+    } else {
+      res = 0;
+    }
+    output[i] = res;
+  }
+  return;
+}
 template <typename T>
 void Exponential(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   ExponentialKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
@@ -504,6 +645,11 @@ void Reciprocal(const T *input, T *output, const size_t count, cudaStream_t cuda
 template <typename T>
 void Inv(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   Reciprocal<T>(input, output, count, cuda_stream);
+  return;
+}
+template <typename T>
+void Invert(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  InvertKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
@@ -646,6 +792,8 @@ template CUDA_LIB_EXPORT void Reciprocal<double>(const double *input, double *ou
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<double>(const double *input, double *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<double>(const double *input, double *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<double>(const double *input, double *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<double>(const double *input, double *output, const size_t count,
@@ -704,6 +852,8 @@ template CUDA_LIB_EXPORT void Reciprocal<float>(const float *input, float *outpu
                                                 cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<float>(const float *input, float *output, const size_t count,
                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<float>(const float *input, float *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<float>(const float *input, float *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<float>(const float *input, float *output, const size_t count,
@@ -759,6 +909,8 @@ template CUDA_LIB_EXPORT void Negative<half>(const half *input, half *output, co
 template CUDA_LIB_EXPORT void Reciprocal<half>(const half *input, half *output, const size_t count,
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<half>(const half *input, half *output, const size_t count,
+                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<half>(const half *input, half *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -801,6 +953,8 @@ template CUDA_LIB_EXPORT void Negative<char>(const char *input, char *output, co
 template CUDA_LIB_EXPORT void Reciprocal<char>(const char *input, char *output, const size_t count,
                                                cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<char>(const char *input, char *output, const size_t count,
+                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<char>(const char *input, char *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
@@ -846,6 +1000,8 @@ template CUDA_LIB_EXPORT void Reciprocal<unsigned char>(const unsigned char *inp
                                                         const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<unsigned char>(const unsigned char *input, unsigned char *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<unsigned char>(const unsigned char *input, unsigned char *output,
                                                     const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -899,6 +1055,7 @@ template CUDA_LIB_EXPORT void Negative<int>(const int *input, int *output, const
 template CUDA_LIB_EXPORT void Reciprocal<int>(const int *input, int *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Inv<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Square<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sin<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
@@ -918,6 +1075,276 @@ template CUDA_LIB_EXPORT void Sign<int>(const int *input, int *output, const siz
 template CUDA_LIB_EXPORT void Real<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Imag<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Conj<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+
+// uint32
+template CUDA_LIB_EXPORT void Exponential<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Expm1<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erf<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erfc<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Negative<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cosh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rsqrt<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Abs<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Floor<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rint<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Round<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sign<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+
+// int16
+template CUDA_LIB_EXPORT void Exponential<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Expm1<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erf<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erfc<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Negative<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cosh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rsqrt<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Abs<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Floor<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rint<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Round<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sign<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+
+// uint16
+template CUDA_LIB_EXPORT void Exponential<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Expm1<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erf<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erfc<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Negative<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cosh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rsqrt<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Abs<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Floor<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rint<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Round<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sign<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+
+// int64
+template CUDA_LIB_EXPORT void Exponential<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Expm1<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erf<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erfc<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Negative<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cosh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rsqrt<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Abs<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Floor<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rint<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Round<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sign<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+
+// uint64
+template CUDA_LIB_EXPORT void Exponential<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                                    cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Expm1<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Logarithm<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erf<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Erfc<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Negative<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Reciprocal<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Inv<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Invert<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Square<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sqrt<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sin<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cos<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Cosh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asin<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void ACos<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Atan<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Asinh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Acosh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rsqrt<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Abs<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Floor<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Rint<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Round<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sign<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 
 // complex64
 template CUDA_LIB_EXPORT void Real<float>(const Complex<float> *input, float *output, const size_t count,
