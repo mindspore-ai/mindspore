@@ -47,6 +47,7 @@ constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kInv = "Inv";
+constexpr auto kInvert = "Invert";
 constexpr auto kGeLU = "GeLU";
 constexpr auto kLogicalNot = "LogicalNot";
 constexpr auto kAsin = "Asin";
@@ -175,6 +176,23 @@ void Reciprocal(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_
 template <typename T>
 void Inv(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   Reciprocal<T>(content, in, out, size);
+}
+
+template <typename T>
+void Invert(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  if constexpr ((std::is_same_v<T, double>) || (std::is_same_v<T, float>) || (std::is_same_v<T, float16>)) {
+    MS_LOG(EXCEPTION) << "For 'Invert', the dtype of 'input_x' should be int8, int16, int32, int64, uint8, uint16, "
+                         "uint32 or uint64, but got "
+                      << typeid(T).name();
+    return;
+  } else {
+    auto task = [&in, &out](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = ~in[i];
+      }
+    };
+    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  }
 }
 
 template <typename T>
@@ -386,12 +404,19 @@ void Atanh(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t siz
 
 template <typename T>
 void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
-  auto task = [&in, &out](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      out[i] = abs(in[i]);
-    }
-  };
-  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
+                (std::is_same_v<T, uint64_t>)) {
+    MS_LOG(EXCEPTION) << "For 'Abs', the dtype of 'input_x' should be int32, int64, float32 or float64, but got "
+                      << typeid(T).name();
+    return;
+  } else {
+    auto task = [&in, &out](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = abs(in[i]);
+      }
+    };
+    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  }
 }
 
 template <typename T>
@@ -463,18 +488,25 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
     LaunchKernelComplex<std::complex<float>>(inputs, outputs);
   } else if (dtype_ == kNumberTypeComplex128) {
     LaunchKernelComplex<std::complex<double>>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt8) {
+    LaunchKernel<int8_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt8) {
+    LaunchKernel<uint8_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt32 || dtype_ == kNumberTypeUInt16) {
+    LaunchKernel<uint32_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt64) {
+    LaunchKernel<uint64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeBool) {
     LaunchLogicalNot(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION)
-      << "For '" << kernel_name_
-      << "', the type of 'x' should be float16, float32, float64, complex64, complex128, int16, int32, int64, or bool, "
-         "but got "
-      << TypeIdLabel(dtype_);
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the type of 'x' should be float16, float32, float64, complex64, complex128, int8, int16, "
+                         "int32, int64, uint8, uint16, uint32, uint64, or bool, but got "
+                      << TypeIdLabel(dtype_);
   }
   return true;
 }
@@ -513,6 +545,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimAsinh->name(), Asinh<T>},
                           {prim::kPrimReciprocal->name(), Reciprocal<T>},
                           {prim::kPrimInv->name(), Inv<T>},
+                          {prim::kPrimInvert->name(), Invert<T>},
                           {prim::kPrimRint->name(), Rint<T>},
                           {prim::kPrimRound->name(), Round<T>},
                           {prim::kPrimAbs->name(), Abs<T>},
@@ -616,6 +649,15 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+  {kInvert,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateArithSelfFunc}}},
   {kGeLU, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kLogicalNot, {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc}}},
   {kAsin,
@@ -745,6 +787,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Reciprocal,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kReciprocal); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Inv,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInv); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Invert,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInvert); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GeLU,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kGeLU); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalNot,

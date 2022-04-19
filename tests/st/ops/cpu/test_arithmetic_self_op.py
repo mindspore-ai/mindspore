@@ -212,7 +212,7 @@ def test_reciprocal(shape, dtype, tol):
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(*shape).astype(dtype) * prop
     output = net(Tensor(x))
-    expect_output = (1. / x).astype(dtype)
+    expect_output = np.reciprocal(x).astype(dtype)
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
@@ -234,10 +234,29 @@ def test_inv(shape, dtype, tol):
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(*shape).astype(dtype) * prop
     output = inv(Tensor(x))
-    expect_output = (1. / x).astype(dtype)
+    expect_output = np.reciprocal(x).astype(dtype)
     diff = output.asnumpy() - expect_output
     error = np.ones(shape=expect_output.shape) * tol
     assert np.all(np.abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
+@pytest.mark.parametrize('dtype', [np.int16, np.uint16])
+def test_invert(shape, dtype):
+    """
+    Feature: ALL To ALL
+    Description: test cases for invert
+    Expectation: the result match to numpy
+    """
+    invert = P.Invert()
+    prop = 100 if np.random.random() > 0.5 else -100
+    input_x = (np.random.randn(*shape) * prop).astype(dtype)
+    output = invert(Tensor(input_x))
+    expect_output = np.invert(input_x)
+    np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
 @pytest.mark.level0
