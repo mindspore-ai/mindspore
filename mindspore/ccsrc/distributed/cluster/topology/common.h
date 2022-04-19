@@ -46,7 +46,28 @@ static const int kDecimal = 10;
 static const std::chrono::milliseconds kTopoInitTimeout = std::chrono::milliseconds(1000 * 60 * 10);
 
 // All kinds of messages sent between compute graph nodes and meta server node.
-enum class MessageName { kRegistration, kUnregistration, kHeartbeat };
+enum class MessageName { kRegistration, kUnregistration, kHeartbeat, kSuccess, kInvalidNode, kUninitTopo };
+
+// The retry and interval configuration used for the macro `EXECUTE_WITH_RETRY`.
+static const size_t kExecuteRetryNum = 30;
+static const uint32_t kExecuteInterval = 10;
+
+#define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                   \
+  do {                                                                       \
+    bool success = false;                                                    \
+    for (size_t i = 1; i <= retry; ++i) {                                    \
+      success = func();                                                      \
+      if (!success) {                                                        \
+        MS_LOG(ERROR) << err_msg << ", retry(" << i << "/" << retry << ")."; \
+        sleep(interval);                                                     \
+      } else {                                                               \
+        break;                                                               \
+      }                                                                      \
+    }                                                                        \
+    if (!success) {                                                          \
+      return false;                                                          \
+    }                                                                        \
+  } while (false)
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

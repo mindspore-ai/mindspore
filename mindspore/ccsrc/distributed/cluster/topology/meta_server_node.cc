@@ -42,16 +42,23 @@ bool MetaServerNode::Initialize() {
 }
 
 bool MetaServerNode::Finalize() {
-  // Release the TCP server.
-  if (tcp_server_ != nullptr) {
-    tcp_server_->Finalize();
-    tcp_server_.reset();
-  }
+  std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
+  if (topo_state_ != TopoState::kFinished) {
+    MS_LOG(WARNING) << "The meta server node can not be finalized because there are still " << nodes_.size()
+                    << " alive nodes.";
+    return false;
+  } else {
+    // Release the TCP server.
+    if (tcp_server_ != nullptr) {
+      tcp_server_->Finalize();
+      tcp_server_.reset();
+    }
 
-  // Stop the topo monitor thread.
-  enable_monitor_ = false;
-  topo_monitor_.join();
-  return true;
+    // Stop the topo monitor thread.
+    enable_monitor_ = false;
+    topo_monitor_.join();
+    return true;
+  }
 }
 
 bool MetaServerNode::InitTCPServer() {
@@ -81,8 +88,7 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
       MS_LOG(ERROR) << "Unknown system message name: " << message->Name();
       return rpc::NULL_MSG;
     }
-    system_msg_handlers_[message_name](message);
-    return rpc::NULL_MSG;
+    return system_msg_handlers_[message_name](message);
 
     // Handle user defined messages.
   } else {
@@ -92,9 +98,13 @@ MessageBase *const MetaServerNode::HandleMessage(MessageBase *const message) {
       return rpc::NULL_MSG;
     }
     const auto &result = (*message_handlers_[name])(message->Body());
-    auto rt_msg = CreateMessage(meta_server_addr_.GetUrl(), name, result);
-    MS_EXCEPTION_IF_NULL(rt_msg);
-    return rt_msg.release();
+    if (result.length() > 0) {
+      auto rt_msg = CreateMessage(meta_server_addr_.GetUrl(), name, result);
+      MS_EXCEPTION_IF_NULL(rt_msg);
+      return rt_msg.release();
+    } else {
+      return rpc::NULL_MSG;
+    }
   }
 }
 
@@ -110,10 +120,19 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
     nodes_[node_id] = node_state;
     MS_LOG(INFO) << "The new node: " << node_id << " is registered successfully.";
+
+    auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
+                                 std::to_string(static_cast<int>(MessageName::kSuccess)));
+    MS_EXCEPTION_IF_NULL(message);
+    return message.release();
   } else {
     MS_LOG(ERROR) << "The node: " << node_id << " have been registered before.";
+
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode,
+                                  std::to_string(static_cast<int>(MessageName::kInvalidNode)));
+    MS_EXCEPTION_IF_NULL(response);
+    return response.release();
   }
-  return rpc::NULL_MSG;
 }
 
 MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message) {
@@ -122,13 +141,29 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
   unregistration.ParseFromArray(body.c_str(), body.length());
 
   const auto &node_id = unregistration.node_id();
+
+  if (topo_state_ != TopoState::kInitialized) {
+    MS_LOG(ERROR) << "Unable to process unreg message from node " << node_id << " because the state of the topology is "
+                  << topo_state_;
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kUninitTopo,
+                                  std::to_string(static_cast<int>(MessageName::kUninitTopo)));
+    MS_EXCEPTION_IF_NULL(response);
+    return response.release();
+  }
+
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
     MS_LOG(ERROR) << "Received unregistration message from invalid compute graph node: " << node_id;
-    return rpc::NULL_MSG;
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode,
+                                  std::to_string(static_cast<int>(MessageName::kInvalidNode)));
+    MS_EXCEPTION_IF_NULL(response);
+    return response.release();
   }
   nodes_.erase(node_id);
-  return rpc::NULL_MSG;
+  auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
+                                std::to_string(static_cast<int>(MessageName::kSuccess)));
+  MS_EXCEPTION_IF_NULL(response);
+  return response.release();
 }
 
 MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) {
@@ -167,6 +202,11 @@ void MetaServerNode::UpdateTopoState() {
       }
       MS_LOG(INFO) << "The cluster topology is in the process of constructing, current alive node num: ("
                    << nodes_.size() << "/" << total_node_num_ << ")";
+    } else if (topo_state_ == TopoState::kInitialized) {
+      std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+      if (nodes_.size() == 0) {
+        topo_state_ = TopoState::kFinished;
+      }
     }
     static const size_t interval = 3;
     sleep(interval);

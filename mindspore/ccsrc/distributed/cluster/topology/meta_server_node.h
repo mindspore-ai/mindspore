@@ -48,10 +48,13 @@ enum class TopoState {
   kInitializing = 0,
 
   // All the nodes of this cluster has been started and registered to the meta server node successfully.
-  kInitialized = 1,
+  kInitialized,
 
   // The topo of this cluster failed to construct at specified time.
-  kFailed = 2
+  kFailed,
+
+  // All the nodes of this cluster have finished their tasks and unregistered successfully.
+  kFinished
 };
 
 // The MetaServerNode is a separate process representing the meta server node which stores all the metadata and status

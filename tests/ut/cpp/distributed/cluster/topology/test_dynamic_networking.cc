@@ -66,10 +66,11 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   }
 
   retry = 30;
-  while (msn.GetAliveNodeNum() > 0 && retry-- > 0) {
+  while ((msn.GetAliveNodeNum() > 0 || msn.TopologyState() != TopoState::kFinished) && retry-- > 0) {
     sleep(interval);
   }
   ASSERT_EQ(0, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kFinished, msn.TopologyState());
 
   msn.Finalize();
 }
@@ -92,7 +93,7 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
   auto func =
     std::make_shared<std::function<std::string(const std::string &)>>([](const std::string &message) -> std::string {
       received_message = message;
-      return message;
+      return "";
     });
   msn.RegisterMessageHandler(message_name, func);
 
@@ -115,10 +116,11 @@ TEST_F(TestDynamicNetworking, AddMessageHandler) {
   cgn.Finalize();
 
   retry = 30;
-  while (msn.GetAliveNodeNum() > 0 && retry-- > 0) {
+  while ((msn.GetAliveNodeNum() > 0 || msn.TopologyState() != TopoState::kFinished) && retry-- > 0) {
     sleep(interval);
   }
   ASSERT_EQ(0, msn.GetAliveNodeNum());
+  ASSERT_EQ(TopoState::kFinished, msn.TopologyState());
   ASSERT_EQ(message_body, received_message);
 
   msn.Finalize();
@@ -161,10 +163,11 @@ TEST_F(TestDynamicNetworking, RetrieveMessageFromMSN) {
   cgn.Finalize();
 
   retry = 30;
-  while (msn.GetAliveNodeNum() > 0 && retry-- > 0) {
+  while ((msn.GetAliveNodeNum() > 0 || msn.TopologyState() != TopoState::kFinished) && retry-- > 0) {
     sleep(interval);
   }
   ASSERT_EQ(*ret_msg, received_message);
+  ASSERT_EQ(TopoState::kFinished, msn.TopologyState());
   ASSERT_EQ(0, msn.GetAliveNodeNum());
 
   msn.Finalize();
