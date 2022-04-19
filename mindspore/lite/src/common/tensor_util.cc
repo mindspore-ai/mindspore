@@ -23,13 +23,18 @@
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif
-
 namespace mindspore {
 namespace lite {
-int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector<TensorC *> *tensors_c) {
+int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector<TensorC *> *tensors_c,
+                         std::shared_ptr<Allocator> allocator) {
   MS_ASSERT(tensors_c != nullptr);
   for (size_t i = 0; i < tensors.size(); ++i) {
-    auto *tensor_c = static_cast<TensorC *>(malloc(sizeof(TensorC)));
+    TensorC *tensor_c = nullptr;
+    if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+      tensor_c = static_cast<TensorC *>(allocator->Malloc(sizeof(TensorC)));
+    } else {
+      tensor_c = static_cast<TensorC *>(malloc(sizeof(TensorC)));
+    }
     if (tensor_c == nullptr) {
       MS_LOG(ERROR) << "malloc tensor fail!";
       return RET_ERROR;
@@ -43,7 +48,7 @@ int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector
   return RET_OK;
 }
 
-void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
+void FreeAllTensorC(std::vector<TensorC *> *tensors_in, std::shared_ptr<Allocator> allocator) {
   if (tensors_in == nullptr) {
     return;
   }
@@ -54,11 +59,15 @@ void FreeAllTensorC(std::vector<TensorC *> *tensors_in) {
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (i->data_type_ == kObjectTypeTensorType) {
       TensorListC *tensorListC = reinterpret_cast<TensorListC *>(i);
-      FreeTensorListC(tensorListC);
+      FreeTensorListC(tensorListC, allocator);
       tensorListC = nullptr;
     } else {
 #endif
-      free(i);
+      if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+        allocator->Free(i);
+      } else {
+        free(i);
+      }
       i = nullptr;
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     }
@@ -84,7 +93,7 @@ int Tensor2TensorC(const Tensor *src, TensorC *dst) {
   return RET_OK;
 }
 
-int TensorC2Tensor(const TensorC *src, Tensor *dst) {
+int TensorC2Tensor(const TensorC *src, Tensor *dst, std::shared_ptr<Allocator> allocator) {
   MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->set_format(static_cast<mindspore::Format>(src->format_));
   dst->set_data_type(static_cast<TypeId>(src->data_type_));  // get data during the runtime period
@@ -94,22 +103,34 @@ int TensorC2Tensor(const TensorC *src, Tensor *dst) {
     MS_CHECK_TRUE_RET(data != nullptr, RET_ERROR);
     memcpy(data, src->data_, dst->Size());
     dst->set_category(CONST_TENSOR);
-    free(src->data_);
+    if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+      allocator->Free(src->data_);
+    } else {
+      free(src->data_);
+    }
   }
   return RET_OK;
 }
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-void FreeTensorListC(TensorListC *tensorlist_c) {
+void FreeTensorListC(TensorListC *tensorlist_c, std::shared_ptr<Allocator> allocator) {
   MS_ASSERT(tensorlist_c != nullptr);
   if (tensorlist_c->tensors_ != nullptr) {
-    free(tensorlist_c->tensors_);
+    if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+      allocator->Free(tensorlist_c->tensors_);
+    } else {
+      free(tensorlist_c->tensors_);
+    }
     tensorlist_c->tensors_ = nullptr;
   }
-  free(tensorlist_c);
+  if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+    allocator->Free(tensorlist_c);
+  } else {
+    free(tensorlist_c);
+  }
 }
 
-int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
+int TensorList2TensorListC(TensorList *src, TensorListC *dst, std::shared_ptr<Allocator> allocator) {
   MS_CHECK_TRUE_RET(src != nullptr && dst != nullptr, RET_ERROR);
   dst->is_ready_ = src->IsReady();
   dst->data_type_ = static_cast<TypeIdC>(src->data_type());
@@ -122,7 +143,11 @@ int TensorList2TensorListC(TensorList *src, TensorListC *dst) {
     MS_LOG(ERROR) << "data size error.";
     return RET_ERROR;
   }
-  dst->tensors_ = reinterpret_cast<TensorC *>(malloc(dst->element_num_ * sizeof(TensorC)));
+  if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+    dst->tensors_ = reinterpret_cast<TensorC *>(allocator->Malloc(dst->element_num_ * sizeof(TensorC)));
+  } else {
+    dst->tensors_ = reinterpret_cast<TensorC *>(malloc(dst->element_num_ * sizeof(TensorC)));
+  }
   if (dst->tensors_ == nullptr) {
     return RET_ERROR;
   }
@@ -168,7 +193,7 @@ int TensorListC2TensorList(const TensorListC *src, TensorList *dst) {
 #endif
 
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
-                       std::vector<TensorC *> *out_tensor_c) {
+                       std::vector<TensorC *> *out_tensor_c, std::shared_ptr<Allocator> allocator) {
   MS_CHECK_TRUE_RET(out_tensor_c != nullptr && parameter != nullptr, RET_ERROR);
   if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
       parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
@@ -176,7 +201,12 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
     // TensorListC ->TensorC
     MS_CHECK_TRUE_RET(!outputs.empty() && outputs.front()->data_type() == TypeId::kObjectTypeTensorType, RET_ERROR);
-    auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+    TensorListC *tensor_list_c = nullptr;
+    if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+      tensor_list_c = reinterpret_cast<TensorListC *>(allocator->Malloc(sizeof(TensorListC)));
+    } else {
+      tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+    }
     if (tensor_list_c == nullptr) {
       return RET_ERROR;
     }
@@ -188,12 +218,12 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
     return RET_ERROR;
 #endif
   } else {
-    return OutputTensor2TensorC(outputs, out_tensor_c);
+    return OutputTensor2TensorC(outputs, out_tensor_c, allocator);
   }
 }
 
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      std::vector<TensorC *> *in_tensor_c) {
+                      std::vector<TensorC *> *in_tensor_c, std::shared_ptr<Allocator> allocator) {
   MS_CHECK_TRUE_RET(in_tensor_c != nullptr, RET_ERROR);
   int ret = RET_OK;
   for (auto input : inputs) {
@@ -201,16 +231,26 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
       // Tensor ->TensorList -> TensorListC -> TensorC
       auto *tensor_list = reinterpret_cast<TensorList *>(input);
-      auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+      TensorListC *tensor_list_c = nullptr;
+      if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+        tensor_list_c = reinterpret_cast<TensorListC *>(allocator->Malloc(sizeof(TensorListC)));
+      } else {
+        tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));
+      }
       if (tensor_list_c == nullptr) {
         ret = RET_NULL_PTR;
         break;
       }
       memset(tensor_list_c, 0, sizeof(TensorListC));
-      ret = TensorList2TensorListC(tensor_list, tensor_list_c);
+      ret = TensorList2TensorListC(tensor_list, tensor_list_c, allocator);
       if (ret != RET_OK) {
-        free(tensor_list_c->tensors_);
-        free(tensor_list_c);
+        if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+          allocator->Free(tensor_list_c->tensors_);
+          allocator->Free(tensor_list_c);
+        } else {
+          free(tensor_list_c->tensors_);
+          free(tensor_list_c);
+        }
         return NNACL_ERR;
       }
       in_tensor_c->push_back(reinterpret_cast<TensorC *>(tensor_list_c));
@@ -220,7 +260,12 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
 #endif
     } else {
       // Tensor -> TensorC
-      auto *tensor_c = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
+      TensorC *tensor_c = nullptr;
+      if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+        tensor_c = reinterpret_cast<TensorC *>(allocator->Malloc(sizeof(TensorC)));
+      } else {
+        tensor_c = reinterpret_cast<TensorC *>(malloc(sizeof(TensorC)));
+      }
       if (tensor_c == nullptr) {
         ret = RET_NULL_PTR;
         break;
@@ -228,7 +273,11 @@ int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite
       ret = Tensor2TensorC(input, tensor_c);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Tensor to TensorC failed.";
-        free(tensor_c);
+        if (allocator != nullptr && !IS_RUNTIME_ALLOCATOR(allocator)) {
+          allocator->Free(tensor_c);
+        } else {
+          free(tensor_c);
+        }
         return ret;
       }
       in_tensor_c->emplace_back(tensor_c);

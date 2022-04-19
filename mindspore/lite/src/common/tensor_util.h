@@ -31,19 +31,20 @@
 
 namespace mindspore {
 namespace lite {
-int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out);
-void FreeAllTensorC(std::vector<TensorC *> *tensors_in);
+int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out,
+                         std::shared_ptr<Allocator> allocator = nullptr);
+void FreeAllTensorC(std::vector<TensorC *> *tensors_in, std::shared_ptr<Allocator> allocator = nullptr);
 int Tensor2TensorC(const Tensor *src, TensorC *dst);
-int TensorC2Tensor(const TensorC *src, Tensor *dst);
+int TensorC2Tensor(const TensorC *src, Tensor *dst, std::shared_ptr<Allocator> allocator = nullptr);
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
-void FreeTensorListC(TensorListC *tensorListC);
-int TensorList2TensorListC(TensorList *src, TensorListC *dst);
+void FreeTensorListC(TensorListC *tensorListC, std::shared_ptr<Allocator> allocator = nullptr);
+int TensorList2TensorListC(TensorList *src, TensorListC *dst, std::shared_ptr<Allocator> allocator = nullptr);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);
 #endif
 int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      std::vector<TensorC *> *in_tensor_c);
+                      std::vector<TensorC *> *in_tensor_c, std::shared_ptr<Allocator> allocator = nullptr);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
-                       std::vector<TensorC *> *out_tensor_c);
+                       std::vector<TensorC *> *out_tensor_c, std::shared_ptr<Allocator> allocator = nullptr);
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
 int CheckGraphInputShapes(const std::vector<Tensor *> &inputs,
                           const std::unordered_map<Tensor *, std::vector<int>> &input_shape_map);

@@ -723,7 +723,7 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   if (IsCallNode(primitive, schema_version_)) {
     return InferCallShape(node);
   }
-  ret = KernelInferShape(inputs, outputs, parameter);
+  ret = KernelInferShape(inputs, outputs, parameter, context_->allocator);
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {

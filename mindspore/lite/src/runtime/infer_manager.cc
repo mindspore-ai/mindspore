@@ -130,7 +130,7 @@ int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
 }
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                     OpParameter *parameter) {
+                     OpParameter *parameter, std::shared_ptr<Allocator> allocator) {
   MS_ASSERT(parameter != nullptr);
   if (inputs.empty()) {
     MS_LOG(ERROR) << "No input!";
@@ -150,27 +150,27 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     return RET_OK;
   }
 
-  int ret = GenerateInTensorC(parameter, inputs, &in_tensors);
+  int ret = GenerateInTensorC(parameter, inputs, &in_tensors, allocator);
   if (ret != RET_OK) {
-    FreeAllTensorC(&in_tensors);
+    FreeAllTensorC(&in_tensors, allocator);
     return RET_ERROR;
   }
-  ret = GenerateOutTensorC(parameter, outputs, &out_tensors);
+  ret = GenerateOutTensorC(parameter, outputs, &out_tensors, allocator);
   if (ret != RET_OK) {
-    FreeAllTensorC(&in_tensors);
-    FreeAllTensorC(&out_tensors);
+    FreeAllTensorC(&in_tensors, allocator);
+    FreeAllTensorC(&out_tensors, allocator);
     return RET_ERROR;
   }
   auto infer_shape_func = GetInferFunc(parameter->type_);
   if (infer_shape_func == nullptr) {
     MS_LOG(ERROR) << "Get infershape func failed! type:" << PrimitiveCurVersionTypeName(parameter->type_);
-    FreeAllTensorC(&in_tensors);
-    FreeAllTensorC(&out_tensors);
+    FreeAllTensorC(&in_tensors, allocator);
+    FreeAllTensorC(&out_tensors, allocator);
     return RET_ERROR;
   }
   ret = infer_shape_func(static_cast<TensorC **>(in_tensors.data()), in_tensors.size(), out_tensors.data(),
                          out_tensors.size(), parameter);
-  FreeAllTensorC(&in_tensors);
+  FreeAllTensorC(&in_tensors, allocator);
   for (size_t i = 0; i < out_tensors.size(); i++) {
     if (out_tensors.at(i) == nullptr) {
       continue;
@@ -188,15 +188,15 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
       auto tensor_ret = TensorListC2TensorList(tensor_list_c, tensor_list);
       if (tensor_ret != RET_OK) {
         MS_LOG(ERROR) << "TensorCList2TensorList failed";
-        FreeAllTensorC(&out_tensors);
+        FreeAllTensorC(&out_tensors, allocator);
         return tensor_ret;
       }
     } else {
 #endif
-      auto tensor_ret = TensorC2Tensor(out_tensors.at(i), outputs.at(i));
+      auto tensor_ret = TensorC2Tensor(out_tensors.at(i), outputs.at(i), allocator);
       if (tensor_ret != RET_OK) {
         MS_LOG(ERROR) << "TensorC2Tensor failed";
-        FreeAllTensorC(&out_tensors);
+        FreeAllTensorC(&out_tensors, allocator);
         return tensor_ret;
       }
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
@@ -207,7 +207,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
       outputs.at(i)->set_shape({-1});
     }
   }
-  FreeAllTensorC(&out_tensors);
+  FreeAllTensorC(&out_tensors, allocator);
 
   return CheckInfershapeResult(ret, inputs, outputs, parameter);
 }
