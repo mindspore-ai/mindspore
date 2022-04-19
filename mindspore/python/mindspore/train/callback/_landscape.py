@@ -297,9 +297,14 @@ class SummaryLandscape:
         summary_record = SummaryRecord(output_path)
         self._check_device_ids(device_ids)
         if collect_landscape is not None:
-            self._check_collect_landscape_data(collect_landscape)
+            try:
+                self._check_collect_landscape_data(collect_landscape)
+            except (ValueError, TypeError) as err:
+                summary_record.close()
+                raise err
             json_path = os.path.join(self._ckpt_dir, 'train_metadata.json')
             if not os.path.exists(json_path):
+                summary_record.close()
                 raise FileNotFoundError(f'For "{self.__class__.__name__}", '
                                         f'train_metadata.json file path of {json_path} not exists.')
             with open(json_path, 'r') as file:
