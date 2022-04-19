@@ -17,7 +17,7 @@
 
 - [STABLE] 优化器支持动态权重衰减，即训练期间权重衰减值随着step的增加而变化。
 - [STABLE] 增加四种创建Tensor的方法，分别是`mindspore.numpy.rand()`、`mindspore.numpy.randn()`、`mindspore.numpy.randint()`和`mindspore.ops.arange ()`。
-- [STABLE] 增加两种callback方法 `mindspore.callback.History` 和 `mindspore.callback.LambdaCallback`。
+- [STABLE] 增加一种callback方法 `mindspore.callback.History`。
 - [BETA] 自定义算子支持Julia算子。
 - [STABLE] 通过 `mindspore.ms_class` 类装饰器，支持获取用户自定义类的属性和方法。
 - [STABLE] 支持同时存在副作用算子和控制流语句的网络的训练。
