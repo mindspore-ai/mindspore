@@ -15,8 +15,6 @@
 """lamb"""
 import numpy as np
 from mindspore import context
-from mindspore.common import dtype as mstype
-from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner
@@ -25,11 +23,6 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
-
-from .. import layer
-
-
-num_one = Tensor(np.ones([1]), mstype.float32)
 
 _lamb_opt = C.MultitypeFuncGraph("lamb_opt")
 
@@ -58,93 +51,14 @@ def _update_run_op(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v
         Tensor, the new value of v after updating.
     """
     if optim_filter:
-        op_mul = P.Mul()
-        op_sqrt = P.Sqrt()
-        op_rsqrt = P.Rsqrt()
-        op_square = P.Square()
-        op_cast = P.Cast()
-        op_reshape = P.Reshape()
-        op_shape = P.Shape()
-        op_pow = P.Pow()
-        op_norm = layer.Norm()
-        op_select = P.Select()
-        op_greater = P.Greater()
-        op_fill = P.Fill()
-        op_dtype = P.DType()
-
-        param_fp32 = op_cast(param, mstype.float32)
-        m_fp32 = op_cast(m, mstype.float32)
-        v_fp32 = op_cast(v, mstype.float32)
-        gradient_fp32 = op_cast(gradient, mstype.float32)
-
-        next_m = op_mul(beta1, m_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta1, gradient_fp32)
-
-        next_v = op_mul(beta2, v_fp32) + op_mul(op_cast(num_one, mstype.float32) - beta2, op_square(gradient_fp32))
-
-        next_mm = next_m / (op_cast(num_one, mstype.float32)
-                            - op_pow(beta1, op_cast(global_step, mstype.float32)))
-        next_vv = next_v / (op_cast(num_one, mstype.float32) -
-                            op_pow(beta2, op_cast(global_step, mstype.float32)))
-        w_norm = op_norm(param_fp32)
-        g_norm = op_norm(gradient_fp32)
-
-        g_norm_hat = op_norm(op_mul(next_mm, op_rsqrt(next_vv + eps)) + weight_decay * param_fp32)
-        zeros = F.zeros_like(w_norm)
-        ones = op_fill(op_dtype(w_norm), op_shape(w_norm), 1.0)
-        trust_ratio = op_select(
-            op_greater(w_norm, zeros),
-            op_select(op_greater(g_norm, zeros), w_norm / g_norm_hat, ones),
-            ones)
-        tens = op_fill(op_dtype(trust_ratio), op_shape(trust_ratio), 10.0)
-        trust_ratio = C.clip_by_value(trust_ratio, zeros, tens)
-        update = next_mm / (op_sqrt(next_vv) + eps)
-
-        if decay_flag:
-            update = update + op_mul(weight_decay, param_fp32)
-
-        update_with_lr = op_mul(op_mul(trust_ratio, lr), update)
-
-        next_param = param_fp32 - op_reshape(update_with_lr, op_shape(param_fp32))
-
-        next_param = F.depend(next_param, F.assign(param, op_cast(next_param, F.dtype(param))))
-        next_param = F.depend(next_param, F.assign(m, op_cast(next_m, F.dtype(m))))
-        next_param = F.depend(next_param, F.assign(v, op_cast(next_v, F.dtype(v))))
-
-        return op_cast(next_param, F.dtype(param))
-    return gradient
-
-_lamb_opt_ascend = C.MultitypeFuncGraph("lamb_opt_ascend")
-
-
-@_lamb_opt_ascend.register("Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
-                           "Tensor", "Bool", "Bool")
-def _update_run_op_ascend(beta1, beta2, eps, global_step, lr, weight_decay, param, m, v, gradient, decay_flag,
-                          optim_filter):
-    """
-    Update parameters function when device target is ascend.
-
-    Args:
-        beta1 (Tensor): The exponential decay rate for the 1st moment estimations. Should be in range (0.0, 1.0).
-        beta2 (Tensor): The exponential decay rate for the 2nd moment estimations. Should be in range (0.0, 1.0).
-        eps (Tensor): Term added to the denominator to improve numerical stability. Should be greater than 0.
-        lr (Tensor): Learning rate.
-        weight_decay (numbers.Number): Weight decay. Should be equal to or greater than 0.
-        global_step (Tensor): Global step.
-        param (Tensor): Parameters.
-        m (Tensor): m value of parameters.
-        v (Tensor): v value of parameters.
-        gradient (Tensor): Gradient of parameters.
-        decay_flag (bool): Specifies whether param update with weight decay.
-        optim_filter(bool): Applies parameter update or not.
-
-    Returns:
-        Tensor, the new value of v after updating.
-    """
-    if optim_filter:
         op_lamb = inner.Lamb()
-        return op_lamb(param, m, v, lr, beta1, beta2, eps, weight_decay, global_step,
-                       gradient, decay_flag)
-    return gradient
+        if decay_flag:
+            ret = op_lamb(param, m, v, lr, beta1, beta2, eps, weight_decay, global_step, gradient)
+        else:
+            ret = op_lamb(param, m, v, lr, beta1, beta2, eps, 0.0, global_step, gradient)
+    else:
+        ret = gradient
+    return ret
 
 
 def _check_param_value(beta1, beta2, eps, prim_name):
@@ -345,7 +259,7 @@ class Lamb(Optimizer):
         lr = self.get_lr()
         if not self.is_dynamic_lr_or_weight_decay():
             self.assignadd(self.global_step, self.global_step_increase_tensor)
-        lamb_opt = _lamb_opt_ascend if self.device_ascend else _lamb_opt
+        lamb_opt = _lamb_opt
         gradients = self.flatten_gradients(gradients)
         gradients = self.gradients_centralization(gradients)
         if self.is_group:

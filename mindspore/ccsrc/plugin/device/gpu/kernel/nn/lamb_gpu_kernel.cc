@@ -30,7 +30,6 @@ MS_REG_GPU_KERNEL_ONE(Lamb,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat32)
-                        .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat32),
                       LambGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(Lamb,
@@ -45,7 +44,6 @@ MS_REG_GPU_KERNEL_ONE(Lamb,
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeFloat16)
-                        .AddInputAttr(kNumberTypeBool)
                         .AddOutputAttr(kNumberTypeFloat16),
                       LambGpuKernelMod, half)
 }  // namespace kernel

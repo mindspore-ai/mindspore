@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-// Lamb's inputs: param, m, v, lr, beta1, beta2, eps, weight_decay, global_step, gradient, decay_flag
+// Lamb's inputs: param, m, v, lr, beta1, beta2, eps, weight_decay, global_step, gradient
 constexpr size_t kParamIndex = 1;
 constexpr size_t kMIndex = 2;
 constexpr size_t kVIndex = 3;
@@ -35,10 +35,9 @@ constexpr size_t kEpsilonIndex = 7;
 constexpr size_t kWeightDecayIndex = 8;
 constexpr size_t kGlobalStepIndex = 9;
 constexpr size_t kGradientIndex = 10;
-constexpr size_t kDecayFlagIndex = 11;
-constexpr size_t kUMonadIndex = 12;
-constexpr size_t kLambInputNum = 11;
-constexpr size_t kLambInputNumWithUMonad = 12;
+constexpr size_t kUMonadIndex = 11;
+constexpr size_t kLambInputNum = 10;
+constexpr size_t kLambInputNumWithUMonad = 11;
 constexpr size_t kLambApplyOptimizerAssignOutputNum = 3;
 constexpr size_t kLambApplyOptimizerAssignUpdateIndex = 0;
 
@@ -246,7 +245,7 @@ const AnfNodePtr LambFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   auto new_global_step = CreateCastNode(graph, global_step_node, kNumberTypeFloat32);
 
   // cast delay flag to float32
-  auto weight_decay_flag = CreateCastNode(graph, ori_inputs[kDecayFlagIndex], kNumberTypeFloat32);
+  auto weight_decay_flag = CreateValueNode(graph, 1.0);
 
   auto num_one = CreateValueNode(graph, 1.0);
   // create 1-beta1

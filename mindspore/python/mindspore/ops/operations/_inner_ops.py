@@ -300,7 +300,6 @@ class Lamb(PrimitiveWithInfer):
           Default: 0.0.
         - **global_step** (Tensor) - Tensor to record current global step.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
-        - **decay_flag** (bool) - Specifies whether param update with weight decay.
     Outputs:
         Tensor, the updated parameters.
         - **var** (Tensor) - The same shape and data type as `var`.
@@ -315,19 +314,19 @@ class Lamb(PrimitiveWithInfer):
         self.add_prim_attr('side_effect_mem', True)
 
     def infer_shape(self, var_shape, m_shape, v_shape, lr_shape, beta1_shape, beta2_shape,
-                    epsilon_shape, decay_shape, global_step_shape, gradient_shape, decay_flag_shape):
+                    epsilon_shape, decay_shape, global_step_shape, gradient_shape):
         validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
         validator.check("var_shape", var_shape, "gradient_shape", gradient_shape, Rel.EQ, self.name)
         return var_shape
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
-                    epsilon_dtype, decay_dtype, global_step_dtype, gradient_dtype, decay_flag_dtype):
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "lr": lr_dtype, "grad": gradient_dtype,
-                "decay": decay_dtype}
+                    epsilon_dtype, decay_dtype, global_step_dtype, gradient_dtype):
+        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": gradient_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
 
-        args = {"beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype}
+        args = {"lr": lr_dtype, "decay": decay_dtype, "beta1": beta1_dtype, "beta2": beta2_dtype,
+                "epsilon": epsilon_dtype}
         validator.check_scalar_or_tensor_types_same(args, [mstype.float32], self.name, True)
         return var_dtype
 
