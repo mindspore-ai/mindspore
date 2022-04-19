@@ -20,7 +20,7 @@ from mindspore import ms_function
 def test_fallback_dict_empty():
     """
     Feature: JIT Fallback
-    Description: Test dict() in graoh mode.
+    Description: Test dict() in graph mode.
     Expectation:No exception
     """
 
@@ -36,7 +36,7 @@ def test_fallback_dict_empty():
 def test_fallback_dict_zip_iter_assign():
     """
     Feature: JIT Fallback
-    Description: Test dict() in graoh mode.
+    Description: Test dict() in graph mode.
     Expectation:No exception
     """
 
