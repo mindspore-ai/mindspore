@@ -158,9 +158,24 @@ bool PriorityReplayBufferUpdateCpuKernel::Launch(const std::vector<AddressPtr> &
   return true;
 }
 
+void PriorityReplayBufferDestroyCpuKernel::InitKernel(const CNodePtr &kernel_node) {
+  handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "handle");
+}
+
+bool PriorityReplayBufferDestroyCpuKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                                  const std::vector<AddressPtr> &outputs) {
+  auto &factory = PriorityReplayBufferFactory::GetInstance();
+  factory.Delete(handle_);
+
+  auto handle = GetDeviceAddress<int64_t>(outputs, 0);
+  *handle = handle_;
+  return true;
+}
+
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferCreate, PriorityReplayBufferCreateCpuKernel);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferPush, PriorityReplayBufferPushCpuKernel);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferSample, PriorityReplayBufferSampleCpuKernel);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferUpdate, PriorityReplayBufferUpdateCpuKernel);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PriorityReplayBufferDestroy, PriorityReplayBufferDestroyCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore

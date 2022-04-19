@@ -82,5 +82,18 @@ class PriorityReplayBufferUpdate : public KernelBase {
   size_t batch_size_{0};
   std::vector<AddressPtr> inputs_;
 };
+
+class PriorityReplayBufferDestroy : public KernelBase {
+ public:
+  PriorityReplayBufferDestroy() : KernelBase("PriorityReplayBufferDestroy") {}
+  ~PriorityReplayBufferDestroy() = default;
+
+ protected:
+  uint32_t DoCompute() override;
+  uint32_t ParseKernelParam() override;
+
+ private:
+  int64_t handle_{-1};
+};
 }  // namespace aicpu
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_OPS_PRIORITY_REPLAY_BUFFER_H_

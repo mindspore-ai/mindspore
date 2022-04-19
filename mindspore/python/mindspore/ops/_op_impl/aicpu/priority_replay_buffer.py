@@ -76,6 +76,13 @@ prb_update_op_info = AiCPURegOp("PriorityReplayBufferUpdate") \
     .get_op_info()
 
 
+prb_destroy_op_info = AiCPURegOp("PriorityReplayBufferDestroy") \
+    .output(0, "handle", "required") \
+    .attr("handle", "int") \
+    .dtype_format(DataType.I64_Default) \
+    .get_op_info()
+
+
 @op_info_register(prb_create_op_info)
 def _prb_create_op_cpu():
     """PriorityReplayBufferSample AICPU register"""
@@ -97,4 +104,10 @@ def _prb_sample_op_cpu():
 @op_info_register(prb_update_op_info)
 def _prb_update_op_cpu():
     """PriorityReplayBufferUpdate AICPU register"""
+    return
+
+
+@op_info_register(prb_destroy_op_info)
+def _prb_destroy_op_cpu():
+    """PriorityReplayBufferDestroy AICPU register"""
     return

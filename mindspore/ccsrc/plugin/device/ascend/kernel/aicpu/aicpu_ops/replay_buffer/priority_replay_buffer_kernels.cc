@@ -196,6 +196,17 @@ uint32_t PriorityReplayBufferUpdate::DoCompute() {
   output_data[0] = handle_;
   return AICPU_KERNEL_STATE_SUCCESS;
 }
+
+uint32_t PriorityReplayBufferDestroy::ParseKernelParam() {
+  ::google::protobuf::Map<::std::string, ::aicpuops::AttrValue> attrs = node_def_.attrs();
+  handle_ = attrs["handle"].i();
+  return AICPU_KERNEL_STATE_SUCCESS;
+}
+
+uint32_t PriorityReplayBufferDestroy::DoCompute() {
+  PriorityReplayBufferFactory::GetInstance().Delete(handle_);
+  return AICPU_KERNEL_STATE_SUCCESS;
+}
 }  // namespace aicpu
 
 extern "C" {
@@ -217,5 +228,10 @@ __attribute__((visibility("default"))) uint32_t PriorityReplayBufferSample(void 
 __attribute__((visibility("default"))) uint32_t PriorityReplayBufferUpdate(void *param) {
   aicpu::PriorityReplayBufferUpdate prb_update;
   return prb_update.Compute(param);
+}
+
+__attribute__((visibility("default"))) uint32_t PriorityReplayBufferDestroy(void *param) {
+  aicpu::PriorityReplayBufferDestroy prb_destroy;
+  return prb_destroy.Compute(param);
 }
 }

@@ -334,7 +334,7 @@ class PriorityReplayBufferCreate(PrimitiveWithInfer):
         TypeError: The args not provided.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -375,7 +375,7 @@ class PriorityReplayBufferPush(PrimitiveWithInfer):
         TypeError: The priority replay buffer not created before.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -410,7 +410,7 @@ class PriorityReplayBufferSample(PrimitiveWithInfer):
         TypeError: The priority replay buffer not created before.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -456,7 +456,7 @@ class PriorityReplayBufferUpdate(PrimitiveWithInfer):
         TypeError: The priority replay buffer not created before.
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -468,6 +468,35 @@ class PriorityReplayBufferUpdate(PrimitiveWithInfer):
         return (1,)
 
     def infer_dtype(self, indices, priorities):
+        return mstype.int64
+
+
+class PriorityReplayBufferDestroy(PrimitiveWithInfer):
+    r"""
+    Destroy the replay buffer.
+
+    Args:
+        handle(Tensor): Priority replay buffer instance handle with dtype int64 and shape (1,).
+
+    Outputs:
+        Priority replay buffer instance handle with dtype int64 and shape (1,).
+
+    Raises:
+        TypeError: The priority replay buffer not created before.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, handle):
+        """Initialize PriorityReplayBufferDestroy."""
+        validator.check_int(handle, 0, Rel.GE, "handle", self.name)
+
+    def infer_shape(self):
+        return (1,)
+
+    def infer_dtype(self):
         return mstype.int64
 
 
