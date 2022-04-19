@@ -17,7 +17,7 @@
 
 - [STABLE] Support dynamic weight decay for optimizers, that is weight decay value will change according to the increasing step during training.
 - [STABLE] Add four methods to create Tensor, which are `mindspore.numpy.rand()`, `mindspore.numpy.randn()`, `mindspore.numpy.randint()`, and `mindspore.ops.arange()`.
-- [STABLE] Add `mindspore.callback.History` and `mindspore.callback.LambdaCallback` in Callback.
+- [STABLE] Add `mindspore.callback.History` in Callback.
 - [BETA] Support custom operator implemented by Julia operator.
 - [STABLE] Support accessing attributes and methods of user-defined classes  through `mindspore.ms_class` class decorator.
 - [STABLE] Support training when a network has side effect operations and  control flow statements at the same time.
