@@ -464,30 +464,6 @@ function Run_CodeExamples() {
         rm -rf package*/dataset
         cd -
       fi
-
-      should_run_example "train_lenet"
-      should_run=$?
-      if [[ "$should_run" == "1" ]]; then
-        cd ${basepath}/../../examples/train_lenet || exit 1
-        chmod 777 ./prepare_and_run.sh
-        chmod 777 ./*/*.sh
-        ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 >> ${run_code_examples_log_file}
-        if [ "$?" != "0" ]; then
-          echo "train_lenet prepare_and_run.sh failed"
-          exit 1
-        fi
-        accurate=$(tail -10 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
-        if [ $accurate -eq 1 ]; then
-          echo "Lenet Trained and reached accuracy" >> ${run_code_examples_log_file}
-          echo 'code_examples: train_lenet pass' >> ${run_benchmark_train_result_file}
-        else
-          echo "Train Lenet demo failure" >> ${run_code_examples_log_file}
-          echo 'code_examples: train_lenet failed' >> ${run_benchmark_train_result_file}
-          fail=1
-        fi
-        rm -rf package*/dataset
-        cd -
-      fi
     fi
     return ${fail}
 }
