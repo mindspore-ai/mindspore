@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_LAMB_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include <string>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
@@ -104,12 +105,16 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override {
+    auto kernel_ptr = std::dynamic_pointer_cast<ops::Lamb>(base_operator);
+    kernel_name_ = kernel_ptr->name();
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override {
     if (inputs.size() != INPUT_NUM) {
       MS_LOG(EXCEPTION) << "For 'Lamb', the number of inputs should be " << INPUT_NUM << ", but got " << inputs.size();
     }
-
-    auto kernel_ptr = std::dynamic_pointer_cast<ops::Lamb>(base_operator);
-    kernel_name_ = kernel_ptr->name();
 
     InitResource();
     InitParamSizeByType();
@@ -135,7 +140,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient");
     if (is_null_input_) {
       InitSizeLists();
-      return true;
+      return 0;
     }
 
     InitParamSizeByShape(variable_shape, m_shape, v_shape, gradient_shape);
@@ -145,7 +150,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
 
     size_t input_dim = variable_shape.size();
     if (!CheckValidShape(variable_shape, output_shape, input_dim)) {
-      return true;
+      return 0;
     }
 
     InitShapeInfo(variable_shape, output_shape);
@@ -156,7 +161,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
       "For " + kernel_name_ + " cudnnSetReduceTensorDescriptor failed");
 
     InitSizeLists();
-    return true;
+    return 0;
   }
 
  protected:
@@ -195,8 +200,6 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
                                         "For " + kernel_name_ + " cudnnGetTensorSizeInBytes failed.");
     workspace_size_list_.emplace_back(reduce_output_size_);
 
-    output_size_list_.push_back(0);
-    output_size_list_.push_back(0);
     output_size_list_.push_back(0);
   }
 
