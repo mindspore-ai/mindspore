@@ -6,6 +6,9 @@
 
     请注意，callback的每个阶段都需要一个位置参数：`run_context`。
 
+    .. note::
+        - 这是一个会变更或删除的实验性接口。
+
     **参数：**
 
     - **epoch_begin** (Function) - 每个epoch开始时被调用。
