@@ -15,6 +15,7 @@
  */
 
 #include "common/graph_kernel/add_atomic_clean.h"
+
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -37,8 +38,6 @@
 
 namespace mindspore::graphkernel {
 namespace {
-constexpr auto kAttrFakeOutput = "fake_output";
-
 std::set<int64_t> GetUniqReduceAxes(const AnfNodePtr &node, bool is_ascend = false) {
   if (!IsPrimitiveCNode(node, prim::kPrimReduceSum)) {
     MS_LOG(EXCEPTION) << "Expect ReduceSum node, but got " << common::AnfAlgo::GetCNodeName(node);
@@ -103,21 +102,6 @@ size_t GetItemIdx(const AnfNodePtr &node) {
   auto item_idx = LongToSize(GetValue<int64_t>(value_node->value()));
   return item_idx;
 }
-
-CNodePtr CreateInplaceAssign(const FuncGraphPtr &sub_graph,
-                             const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &parameters_infos, size_t idx) {
-  if (idx >= parameters_infos.size()) {
-    MS_LOG(EXCEPTION) << "idx " << idx << " is out of range [0, " << parameters_infos.size() << ")";
-  }
-  MS_EXCEPTION_IF_NULL(sub_graph);
-  const auto &atomic_add_node = parameters_infos[idx].first.atomic_add_node;
-  const auto &new_parameter = parameters_infos[idx].second;
-  auto node = CreateCNode(
-    {NewValueNode(prim::kPrimInplaceAssign), new_parameter, atomic_add_node, atomic_add_node}, sub_graph,
-    {.format = GetFormat(atomic_add_node), .shape = GetShape(atomic_add_node), .type = GetType(atomic_add_node)});
-  SetNodeAttrSafely(kAttrFakeOutput, MakeValue(true), node);
-  return node;
-}
 }  // namespace
 
 std::shared_ptr<AtomicAddChecker> AtomicAddChecker::Init() {
@@ -141,19 +125,19 @@ bool AtomicAddChecker::FindCandidate(const AnfNodePtr &anf_node) {
     sub_graph->set_manager(mng_sub);
   }
 
-  auto CheckSuitableTarget = [&mng_sub](const AtomicAddInfo &atomic_add_info) {
+  auto CheckSuitableTarget = [&mng_sub](const CleanZeroUserInfo &atomic_add_info) {
     // Target type should not fuse any other ops in out direction, which means it should be in output list.
-    return mng_sub->node_users()[atomic_add_info.atomic_add_node].size() <= 1;
+    return mng_sub->node_users()[atomic_add_info.op_node].size() <= 1;
   };
 
   auto real_return_node = sub_graph->get_return()->input(kFirstDataInputIndex);
-  AtomicAddInfo atomic_add_info;
+  CleanZeroUserInfo atomic_add_info;
   if (IsPrimitiveCNode(real_return_node, prim::kPrimMakeTuple)) {
     const auto &inputs = real_return_node->cast<CNodePtr>()->inputs();
     for (size_t i = 1; i < inputs.size(); ++i) {
       if (IsPrimitiveCNode(inputs[i], target_type_)) {
-        atomic_add_info.atomic_add_node = inputs[i]->cast<CNodePtr>();
-        atomic_add_info.reduce_real_output_index = i - 1;
+        atomic_add_info.op_node = inputs[i]->cast<CNodePtr>();
+        atomic_add_info.real_output_index = i - 1;
         atomic_add_info.real_output_num = inputs.size() - 1;
         // Target type should not fuse any other ops in out direction, which means it should be in output list.
         if (!CheckSuitableTarget(atomic_add_info)) {
@@ -163,7 +147,7 @@ bool AtomicAddChecker::FindCandidate(const AnfNodePtr &anf_node) {
       }
     }
   } else if (IsPrimitiveCNode(real_return_node, target_type_)) {
-    atomic_add_info.atomic_add_node = real_return_node->cast<CNodePtr>();
+    atomic_add_info.op_node = real_return_node->cast<CNodePtr>();
     atomic_add_info.real_output_num = 1;
     if (CheckSuitableTarget(atomic_add_info)) {
       atomic_add_infos_.push_back(atomic_add_info);
@@ -191,12 +175,12 @@ bool AtomicAddChecker::CanActivateAtomicAdd(const AnfNodePtr &anf_node) {
   }
 
   // Rule 2.
-  if (!SuitableForAtomicAdd(atomic_add_infos_[0].atomic_add_node)) {
+  if (!SuitableForAtomicAdd(atomic_add_infos_[0].op_node)) {
     return false;
   }
 
   // Rule 3.
-  return !HaveReduceInPredecessors(atomic_add_infos_[0].atomic_add_node);
+  return !HaveReduceInPredecessors(atomic_add_infos_[0].op_node);
 }
 
 bool AtomicAddChecker::Check(const AnfNodePtr &node) {
@@ -264,167 +248,15 @@ bool AtomicAddCheckerAscend::SuitableForAtomicAdd(const AnfNodePtr &node) {
   return false;
 }
 
-void AtomicCleanInsertter::CorrectKernelBuildInfo(
-  const AnfNodePtr &composite_node, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos) {
-  // Change kernel build info.
-  auto kernel_info = dynamic_cast<device::KernelInfo *>(composite_node->kernel_info());
-  MS_EXCEPTION_IF_NULL(kernel_info);
-  const auto &origin_kernel_build_info = kernel_info->GetMutableSelectKernelBuildInfo();
-  MS_EXCEPTION_IF_NULL(origin_kernel_build_info);
-  auto origin_inputs_format = origin_kernel_build_info->GetAllInputFormats();
-  auto origin_inputs_type = origin_kernel_build_info->GetAllInputDeviceTypes();
-
-  std::vector<std::string> &new_inputs_format = origin_inputs_format;
-  std::vector<TypeId> &new_inputs_type = origin_inputs_type;
-  for (const auto &clean_info : clean_infos) {
-    auto &new_input = clean_info.second;
-    auto kernel_with_index = common::AnfAlgo::VisitKernel(new_input, 0);
-    new_inputs_format.push_back(AnfAlgo::GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
-    new_inputs_type.push_back(AnfAlgo::GetOutputDeviceDataType(kernel_with_index.first, kernel_with_index.second));
-  }
-
-  auto new_selected_info = BuildSelectKernelBuildInfo(
-    new_inputs_format, new_inputs_type, origin_kernel_build_info->GetAllOutputFormats(),
-    origin_kernel_build_info->GetAllOutputDeviceTypes(), origin_kernel_build_info->processor());
-  AnfAlgo::SetSelectKernelBuildInfo(new_selected_info, composite_node.get());
-}
-
-void AtomicCleanInsertter::CreateInplaceAssignNodeAndCorrectReturn(
-  const FuncGraphPtr &sub_graph, const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &parameters_infos) {
-  std::map<size_t, size_t> reduce_indices;
-  for (size_t i = 0; i < parameters_infos.size(); ++i) {
-    reduce_indices[parameters_infos[i].first.reduce_real_output_index + 1] = i;
-  }
-
-  // Change atomic add output to InplaceAssign node.
-  auto output = sub_graph->output();
-  if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
-    auto output_cnode = output->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(output_cnode);
-    for (size_t i = 1; i < output_cnode->inputs().size(); ++i) {
-      auto iter = reduce_indices.find(i);
-      if (iter == reduce_indices.end()) continue;
-      auto inplace = CreateInplaceAssign(sub_graph, parameters_infos, iter->second);
-      output_cnode->set_input(i, inplace);
-    }
-  } else if (parameters_infos.size() == 1) {
-    auto inplace = CreateInplaceAssign(sub_graph, parameters_infos, 0);
-    sub_graph->set_output(inplace);
-  }
-}
-
-void AtomicCleanInsertter::ProcessOriginCNode(
-  const AnfNodePtr &composite_node,
-  const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) {
-  auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
-  auto mng_sub = sub_graph->manager();
-  if (mng_sub == nullptr) {
-    mng_sub = Manage(sub_graph, false);
-    sub_graph->set_manager(mng_sub);
-  }
-
-  // Add input
-  std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> parameters_infos;
-  for (const auto &[atomic_add_info, new_input] : info_and_broadcast_to_nodes) {
-    // Add atomic attribute to ReduceSum node.
-    SetNodeAttrSafely("enable_atomic_add", MakeValue(true), atomic_add_info.atomic_add_node);
-    // add parameter
-    auto parameter = sub_graph->add_parameter();
-    parameter->set_abstract(new_input->abstract());
-    parameter->set_kernel_info(new_input->kernel_info_ptr());
-    (void)parameters_infos.emplace_back(atomic_add_info, parameter);
-  }
-
-  auto inputs = composite_node->cast<CNodePtr>()->inputs();
-  (void)std::transform(info_and_broadcast_to_nodes.cbegin(), info_and_broadcast_to_nodes.cend(),
-                       std::back_inserter(inputs),
-                       [](const std::pair<AtomicAddInfo, AnfNodePtr> &pair_item) { return pair_item.second; });
-  composite_node->cast<CNodePtr>()->set_inputs(inputs);
-
-  CreateInplaceAssignNodeAndCorrectReturn(sub_graph, parameters_infos);
-  CorrectKernelBuildInfo(composite_node, info_and_broadcast_to_nodes);
-
-  auto old_graph_name = GetValue<std::string>(sub_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
-  auto new_graph_name = GkUtils::ExtractGraphKernelName(TopoSort(sub_graph->get_return()), "", "atomic_add");
-  sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(new_graph_name));
-  MS_LOG(INFO) << "Convert " << old_graph_name << " to atomic add graph " << new_graph_name;
-}
-
-CNodePtr AtomicCleanInsertter::InsertUpdateState(const KernelGraphPtr &main_graph, const AnfNodePtr &node) const {
-  // Insert update_state_node, need mount a monad node.
-  auto u = NewValueNode(kUMonad);
-  u->set_abstract(kUMonad->ToAbstract());
-  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, node};
-  auto update_state_cnode = main_graph->NewCNode(update_state_inputs);
-  update_state_cnode->set_abstract(kUMonad->ToAbstract());
-  main_graph->AddNode(update_state_cnode);
-  return update_state_cnode;
-}
-
-CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const AtomicAddInfo &atomic_add_info,
-                                                              const KernelGraphPtr &main_graph, TypeId dst_type) {
-  std::set<TypeId> data_support = {kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
-
-  if (!std::any_of(data_support.cbegin(), data_support.cend(), [&dst_type](TypeId type) { return dst_type == type; })) {
-    MS_LOG(EXCEPTION) << "For AtomicAdd, the data type: " << TypeIdToString(dst_type, true)
-                      << " is not in supported list: [float16, float32, float64].";
-  }
-
-  // Create zero value which will be broadcast to target shape.
-  auto format = GetFormat(atomic_add_info.atomic_add_node);
-  auto dtype = (dst_type == kNumberTypeFloat16) ? kNumberTypeFloat32 : dst_type;
-  ValueNodePtr value_node;
-  if (dtype == kNumberTypeFloat32) {
-    value_node = CreateScalarTensorValueNode<float>({.format = format, .shape = {1}, .type = TypeIdToType(dtype)},
-                                                    static_cast<float>(0), sizeof(float));
-  } else {
-    value_node = CreateScalarTensorValueNode<double>({.format = format, .shape = {1}, .type = TypeIdToType(dtype)},
-                                                     static_cast<double>(0), sizeof(double));
-  }
-
-  // Create composite op's sub-graph.
-  auto new_sub_graph = std::make_shared<FuncGraph>();
-
-  AnfNodePtr broadcast_input_node;
-  if (dst_type == kNumberTypeFloat16) {
-    AnfNodePtrList cast_inputs = {NewValueNode(prim::kPrimCast), value_node};
-    auto cast_node_inner =
-      CreateCNode(cast_inputs, new_sub_graph, {.format = format, .shape = {1}, .type = TypeIdToType(dst_type)});
-    SetNodeAttrSafely("dst_type", MakeValue("float32"), cast_node_inner);
-    broadcast_input_node = cast_node_inner;
-  } else {
-    broadcast_input_node = value_node;
-  }
-
-  // Create broadcast basic op.
-  auto dst_shape_vec = GetShape(atomic_add_info.atomic_add_node);
-  AnfNodePtrList atomic_clean_inputs = {NewValueNode(prim::kPrimBroadcastTo), broadcast_input_node};
-  auto broadcast_to_node_inner =
-    CreateCNode(atomic_clean_inputs, new_sub_graph,
-                {.format = format, .shape = dst_shape_vec, .type = GetType(atomic_add_info.atomic_add_node)});
-  SetNodeAttrSafely("shape", MakeValue(GetDeviceShape(atomic_add_info.atomic_add_node)), broadcast_to_node_inner);
-
-  // Makeup sub-graph.
-  new_sub_graph->set_output(broadcast_to_node_inner);
-  auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
-  broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
-  SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner});
-  auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "atomic_clean");
-  new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
-  new_sub_graph->set_attr("composite_type", MakeValue("atomic_clean"));
-
-  return broadcast_to_composite_node;
-}
-
-std::vector<AtomicAddUserInfo> AtomicCleanInsertter::FindOriginCNodeUsers(
-  const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-  const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+std::vector<AtomicAddUserInfo> AtomicCleanInserter::FindOriginCNodeUsers(
+  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
   const FuncGraphManagerPtr &mng) const {
   std::vector<AtomicAddUserInfo> reduce_user_nodes;
 
   std::map<size_t, AnfNodePtr> real_indices_and_clean_node;
   for (auto &[info, clean] : info_and_broadcast_to_nodes) {
-    (void)real_indices_and_clean_node.emplace(info.reduce_real_output_index, clean);
+    (void)real_indices_and_clean_node.emplace(info.real_output_index, clean);
   }
 
   if (info_and_broadcast_to_nodes[0].first.real_output_num <= 1) {
@@ -462,9 +294,9 @@ std::vector<AtomicAddUserInfo> AtomicCleanInsertter::FindOriginCNodeUsers(
   return reduce_user_nodes;
 }
 
-void AtomicCleanInsertter::ProcessOriginCNodeUser(
-  const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
-  const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+void AtomicCleanInserter::ProcessOriginCNodeUser(
+  const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
+  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
   const FuncGraphManagerPtr &mng) {
   // 1. Find users.
   auto reduce_user_nodes = FindOriginCNodeUsers(main_graph, composite_node, info_and_broadcast_to_nodes, mng);
@@ -481,24 +313,22 @@ void AtomicCleanInsertter::ProcessOriginCNodeUser(
   }
 }
 
-void AtomicCleanInsertter::InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
-                                             const std::vector<AtomicAddInfo> &atomic_add_infos,
-                                             const FuncGraphManagerPtr &mng) {
+void AtomicCleanInserter::InsertAtomicClean(const FuncGraphPtr &main_graph, const AnfNodePtr &anf_node,
+                                            const std::vector<CleanZeroUserInfo> &atomic_add_infos,
+                                            const FuncGraphManagerPtr &mng) {
   auto origin_composite_node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(origin_composite_node);
 
   // Create broadcast node.
-  std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> info_and_broadcast_to_nodes;
+  std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> info_and_broadcast_to_nodes;
   for (auto atomic_add_info : atomic_add_infos) {
-    auto out_type = GetType(atomic_add_info.atomic_add_node)->cast<TensorTypePtr>();
+    auto out_type = GetType(atomic_add_info.op_node)->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(out_type);
-    auto broadcast_to_node =
-      CreateAtomicCleanCompositeNode(atomic_add_info, main_graph, out_type->element()->type_id());
+    auto broadcast_to_node = CreateCleanCompositeNode(atomic_add_info, main_graph, out_type->element()->type_id());
     (void)info_and_broadcast_to_nodes.emplace_back(atomic_add_info, broadcast_to_node);
   }
 
   // Insert extra input(broadcast node output) to composite node, and make ReduceSum inplace-assign to it.
-  // Note: InplaceAssign outputs will increase total memory because of fake out.
   ProcessOriginCNode(origin_composite_node, info_and_broadcast_to_nodes);
 
   // Insert UpdateState + Load before origin ReduceSum's user to keep execution order.
@@ -512,7 +342,7 @@ void AtomicCleanInsertter::InsertAtomicClean(const KernelGraphPtr &main_graph, c
   MS_LOG(INFO) << ss.str();
 }
 
-bool AtomicCleanInsertter::Run(const FuncGraphPtr &func_graph) {
+bool AtomicCleanInserter::Run(const FuncGraphPtr &func_graph) {
   auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(func_graph);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto mng = kernel_graph->manager();

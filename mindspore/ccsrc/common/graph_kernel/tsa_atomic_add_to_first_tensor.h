@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,26 +36,26 @@ namespace mindspore::graphkernel {
  * output = Reshape(input_x)
  * fake_out = SubGraph'(output, indices, update) {
  *   %0 = TensorScatterAdd(%para1, %para2, %para3)
- *   %1 = InplaceAssign(%para1, %0, %0) // attrs{"fake_output":true}
+ *   %1 = Assign(%para1, %0, umond) //
  *   return %1
  * }
  */
-class TsaAtomicAddToFirstTensor : public AtomicCleanInsertter {
+class TsaAtomicAddToFirstTensor : public AtomicCleanInserter {
  public:
-  TsaAtomicAddToFirstTensor() : AtomicCleanInsertter("tensor_scatter_add_atomic_add_to_first_tensor") {}
+  TsaAtomicAddToFirstTensor() : AtomicCleanInserter("tensor_scatter_add_atomic_add_to_first_tensor") {}
   ~TsaAtomicAddToFirstTensor() override = default;
 
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   void ProcessOriginalCNode(const AnfNodePtr &composite_node,
-                            const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_nodes);
+                            const std::vector<std::tuple<CleanZeroUserInfo, AnfNodePtr, size_t>> &outer_nodes);
   void ChangeKernelBuildInfo(const AnfNodePtr &composite_node,
-                             const std::vector<std::tuple<AtomicAddInfo, AnfNodePtr, size_t>> &outer_infos);
+                             const std::vector<std::tuple<CleanZeroUserInfo, AnfNodePtr, size_t>> &outer_infos);
   void ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
-                  const std::vector<AtomicAddInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
+                  const std::vector<CleanZeroUserInfo> &atomic_add_infos, const FuncGraphManagerPtr &mng);
   std::pair<AnfNodePtr, size_t> GetOrCreateNewTsaFirstNode(const KernelGraphPtr &main_graph,
-                                                           const AtomicAddInfo &atomic_add_info,
+                                                           const CleanZeroUserInfo &atomic_add_info,
                                                            const AnfNodePtr &node);
   std::pair<AnfNodePtr, size_t> FindTsaFirstRealInputInGraph(const KernelGraphPtr &, const CNodePtr &tsa_node,
                                                              const AnfNodePtr &node);

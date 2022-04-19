@@ -26,31 +26,31 @@
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore::graphkernel {
-class StitchAtomicCleanInsertter : public AtomicCleanInsertter {
+class StitchAtomicCleanInserter : public AtomicCleanInserter {
  public:
-  StitchAtomicCleanInsertter() : AtomicCleanInsertter("stitch_atomic_clean") {}
-  ~StitchAtomicCleanInsertter() override = default;
+  StitchAtomicCleanInserter() : AtomicCleanInserter("stitch_atomic_clean") {}
+  ~StitchAtomicCleanInserter() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
  protected:
   void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
-                              const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &clean_infos) override;
-  void ProcessOriginCNode(
-    const AnfNodePtr &composite_node,
-    const std::vector<std::pair<AtomicAddInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) override;
+                              const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &clean_infos) override;
+  void ProcessOriginCNode(const AnfNodePtr &composite_node,
+                          const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
+                          bool atomic_add_attr = true) override;
 
  private:
-  CNodePtr CreateInplaceAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter,
-                                   const AtomicAddInfo &info) const;
+  CNodePtr CreateAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter,
+                            const CleanZeroUserInfo &info) const;
   std::vector<std::pair<AnfNodePtr, int>> FindInnerCNodeUsers(const AnfNodePtr &inner_node,
                                                               const CNodePtr &target) const;
-  std::pair<bool, AtomicAddInfo> IsStitchWithAtomic(const AnfNodePtr &anf_node);
+  std::pair<bool, CleanZeroUserInfo> IsStitchWithAtomic(const AnfNodePtr &anf_node);
 
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
                  const AnfNodePtr &user_node, int index) const;
 
   AnfNodePtr stitch_node_{nullptr};
 };
-using StitchAtomicCleanInsertterPtr = std::shared_ptr<StitchAtomicCleanInsertter>;
+using StitchAtomicCleanInserterPtr = std::shared_ptr<StitchAtomicCleanInserter>;
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADD_STITCH_ATOMIC_CLEAN_GPU_H_
