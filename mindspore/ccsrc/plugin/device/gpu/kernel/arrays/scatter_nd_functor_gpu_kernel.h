@@ -31,6 +31,7 @@ static const std::map<std::string, ScatterNdFunctorType> kScatterNdFunctorTypeMa
   {"ScatterNdUpdate", SCATTER_ND_FUNC_UPDATE}, {"ScatterNdAdd", SCATTER_ND_FUNC_ADD},
   {"ScatterNdSub", SCATTER_ND_FUNC_SUB},       {"ScatterNdMul", SCATTER_ND_FUNC_MUL},
   {"ScatterNdDiv", SCATTER_ND_FUNC_DIV},       {"ScatterNdMax", SCATTER_ND_FUNC_MAX},
+  {"ScatterNdMin", SCATTER_ND_FUNC_MIN},
 };
 
 template <typename T, typename S>
@@ -65,9 +66,8 @@ class ScatterNdFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kScatterNdFunctorTypeMap.find(kernel_name);
     if (iter == kScatterNdFunctorTypeMap.end()) {
-      MS_LOG(EXCEPTION)
-        << "Only support these scatter functors: ScatterNdUpdate, ScatterNdAdd or ScatterNdSub currently, but got "
-        << kernel_name;
+      MS_LOG(EXCEPTION) << "Only support these scatter functors: " << Map2Str(kScatterNdFunctorTypeMap)
+                        << " currently, but got " << kernel_name;
     } else {
       scatter_nd_functor_type_ = iter->second;
     }
