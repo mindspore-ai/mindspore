@@ -16,7 +16,7 @@
 
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_update_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
