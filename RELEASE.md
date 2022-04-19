@@ -20,7 +20,7 @@
 - [STABLE] Add `mindspore.callback.History` and `mindspore.callback.LambdaCallback` in Callback.
 - [BETA] Support custom operator implemented by Julia operator.
 - [STABLE] Support accessing attributes and methods of user-defined classes  through `mindspore.ms_class` class decorator.
-- [STABLE] Support training when a network has side effect operations and  control flow statements at the same time.
+- [STABLE] Support training when a network has side effect operations and control flow statements at the same time.
 - [STABLE] Support for more complex control flow syntax, such as a for loop statement in the body of a while loop.
 - [STABLE] Improve the performance of networks with complex syntax control flow statements by decreasing the num of subgraphs.
 
@@ -37,9 +37,9 @@
 - [STABLE] Support AdaSum optimizer in the parallel mode.
 - [STABLE] Support automatic optimizer state parallel.
 - [STABLE] Support AlltoAll configurable. Support automatically add virtualdataset cell.
-- [STABLE] Support automatically infer trainable parameters in pipeline parallel training.
+- [STABLE] Support automatically inference trainable parameters in pipeline parallel training.
 - [STABLE] Support clusters where the device number is not the power of 2.
-- [STABLE] Support sharding propagation in auto parallel mode.
+- [STABLE] Support sharding propagation in auto-parallel mode.
 - [STABLE] Support optimizer offload under the unified runtime.
 - [STABLE] Support Adafactor operator on CPU.
 - [STABLE] Support sharding at H/W axis for Conv2d/Conv2DTranspose operator. Support operators such as ResizeBilinear，ROIAlign, CropAndResize, BoundingBoxEncode, IOU and RandomChoiceWithMask.

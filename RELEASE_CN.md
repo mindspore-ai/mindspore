@@ -1,6 +1,6 @@
-[View English](./RELEASE.md)
+# MindSpore Release Notes
 
-# MindSpore 1.7.0
+[View English](./RELEASE.md)
 
 ## MindSpore 1.7.0 Release Notes
 
