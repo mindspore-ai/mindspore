@@ -172,12 +172,7 @@ Execute::~Execute() {
 #endif
 }
 
-Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output) {
-  // Validate input tensor
-  RETURN_UNEXPECTED_IF_NULL(output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
-  CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
-
+Status Execute::BuildTransforms() {
   // Parse TensorTransform transforms_ into TensorOperation ops_
   if (info_->init_with_shared_ptr_) {
     RETURN_IF_NOT_OK(ParseTransforms());
@@ -185,12 +180,10 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
   }
   CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided.");
 
-  // Validate and build runtime ops
-  std::vector<std::shared_ptr<TensorOp>> transforms;  // record the transformations
-
   std::map<MapTargetDevice, std::string> env_list = {
     {MapTargetDevice::kCpu, "kCpu"}, {MapTargetDevice::kGpu, "kGpu"}, {MapTargetDevice::kAscend310, "kAscend310"}};
 
+  // Validate and build runtime ops
   for (int32_t i = 0; i < ops_.size(); i++) {
     if (ops_[i] == nullptr) {
       std::string err_msg = "Input TensorOperation[" + std::to_string(i) +
@@ -199,7 +192,20 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
-    transforms.emplace_back(ops_[i]->Build());
+    transforms_rt_.emplace_back(ops_[i]->Build());
+  }
+  return Status::OK();
+}
+
+Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output) {
+  // Validate input tensor
+  RETURN_UNEXPECTED_IF_NULL(output);
+  CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data.");
+  CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
+
+  if (!ops_created) {
+    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+    ops_created = true;
   }
 
   if (device_type_ == MapTargetDevice::kCpu) {
@@ -214,7 +220,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     }
 
     // Apply transforms on tensor
-    for (auto &t : transforms) {
+    for (auto &t : transforms_rt_) {
       TensorRow de_tensor_row;
       TensorRow de_output_row;
       de_tensor_row.push_back(de_tensor);
@@ -244,7 +250,7 @@ Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor
     std::shared_ptr<mindspore::dataset::DeviceTensor> device_input;
     RETURN_IF_NOT_OK(device_resource_->Sink(input, &device_input));
 
-    for (auto &t : transforms) {
+    for (auto &t : transforms_rt_) {
       // Initialize AscendResource for each operators
       std::shared_ptr<DeviceTensor> device_output;
       RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
@@ -276,28 +282,11 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
   }
   CHECK_FAIL_RETURN_UNEXPECTED(ValidateDevice(), "Device Type should be 'Ascend310' or 'CPU'.");
 
-  // Parse TensorTransform transforms_ into TensorOperation ops_
-  if (info_->init_with_shared_ptr_) {
-    RETURN_IF_NOT_OK(ParseTransforms());
-    info_->init_with_shared_ptr_ = false;
+  if (!ops_created) {
+    CHECK_FAIL_RETURN_UNEXPECTED(BuildTransforms(), "Building Transform ops failed!");
+    ops_created = true;
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided.");
 
-  std::map<MapTargetDevice, std::string> env_list = {
-    {MapTargetDevice::kCpu, "kCpu"}, {MapTargetDevice::kGpu, "kGpu"}, {MapTargetDevice::kAscend310, "kAscend310"}};
-
-  // Validate and build runtime ops
-  std::vector<std::shared_ptr<TensorOp>> transforms;
-  for (int32_t i = 0; i < ops_.size(); i++) {
-    if (ops_[i] == nullptr) {
-      std::string err_msg = "Input TensorOperation[" + std::to_string(i) +
-                            "] is unsupported on your input device:" + env_list.at(device_type_);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-    RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
-    transforms.emplace_back(ops_[i]->Build());
-  }
   if (device_type_ == MapTargetDevice::kCpu) {  // Case CPU
     TensorRow de_tensor_list;
     for (auto &tensor : input_tensor_list) {
@@ -312,7 +301,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       de_tensor_list.emplace_back(std::move(de_tensor));
     }
     // Apply transforms on tensor
-    for (auto &t : transforms) {
+    for (auto &t : transforms_rt_) {
       TensorRow de_output_list;
       RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
       // For next transform
@@ -340,7 +329,7 @@ Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::
       std::shared_ptr<dataset::DeviceTensor> device_input;
       RETURN_IF_NOT_OK(device_resource_->Sink(input_tensor, &device_input));
 
-      for (auto &t : transforms) {
+      for (auto &t : transforms_rt_) {
         std::shared_ptr<DeviceTensor> device_output;
         RETURN_IF_NOT_OK(t->SetAscendResource(device_resource_));
 

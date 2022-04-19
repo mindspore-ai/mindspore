@@ -56,8 +56,10 @@ from .validators import check_lookup, check_jieba_add_dict, check_to_vectors, \
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
 from ..transforms.c_transforms import TensorOperation
+from ..transforms.validators import invalidate_callable
 
 
+# pylint: disable=super-init-not-called
 class TextTensorOperation(TensorOperation):
     """
     Base class of Text Tensor Ops
@@ -149,6 +151,7 @@ class JiebaTokenizer(TextTensorOperation):
             jieba_tokenizer.add_word(word[0], word[1])
         return jieba_tokenizer
 
+    @invalidate_callable
     @check_jieba_add_word
     def add_word(self, word, freq=None):
         """
@@ -178,6 +181,7 @@ class JiebaTokenizer(TextTensorOperation):
         else:
             self.words.append((word, freq))
 
+    @invalidate_callable
     @check_jieba_add_dict
     def add_dict(self, user_dict):
         """
