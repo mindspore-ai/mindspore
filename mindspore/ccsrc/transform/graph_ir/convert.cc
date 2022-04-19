@@ -1384,10 +1384,14 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
       SetTupleOpInput(adpt, node, pred, src, index);
     } else {
       auto op = Convert(pred);
-      int ret = adpt->setInput(src, index, op);
-      if (ret == 0) {
-        compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << i << endl;
-        AddGraphConstInput(op);
+      if (op != nullptr) {
+        int ret = adpt->setInput(src, index, op);
+        if (ret == 0) {
+          compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << i << endl;
+          AddGraphConstInput(op);
+        }
+      } else if (tuple_out_handle_cache_.find(pred.get()) != tuple_out_handle_cache_.end()) {
+        SetTupleOpInput(adpt, node, pred, src, index);
       }
     }
   }
@@ -1955,6 +1959,7 @@ Status DfGraphConvertor::TryConvertValueNodeToMultiConst(const ValueNodePtr node
     if (vec[i]->isa<MeTensor>()) {
       GeTensorPtr ge_tensor = transform::TransformUtil::ConvertTensor(vec[i]->cast<MeTensorPtr>(), kOpFormat_NCHW);
       auto const_op = std::make_shared<Constant>(node->fullname_with_scope() + "/const/inputs/" + std::to_string(i));
+      AddGraphConstInput(const_op);
       (void)const_op->set_attr_value(*ge_tensor);
       (void)const_op->update_output_desc_y(ge_tensor->GetTensorDesc());
       (void)tuple_items->emplace_back(OutHandler(const_op, ""));
