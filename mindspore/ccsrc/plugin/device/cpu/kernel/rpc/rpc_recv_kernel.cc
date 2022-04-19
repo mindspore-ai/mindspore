@@ -20,24 +20,8 @@
 
 namespace mindspore {
 namespace kernel {
-std::vector<std::pair<KernelAttr, RpcRecvKernelMod::RpcRecvFunc>> RpcRecvKernelMod::func_list_ = {
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeFloat32)
-     .AddOutputAttr(kNumberTypeFloat32)
-     .AddAllSameAttr(true)
-     .AddAllOutInRef(true),
-   &RpcRecvKernelMod::LaunchKernel<float>},
-  {KernelAttr()
-     .AddInputAttr(kNumberTypeInt32)
-     .AddOutputAttr(kNumberTypeInt32)
-     .AddAllSameAttr(true)
-     .AddAllOutInRef(true),
-   &RpcRecvKernelMod::LaunchKernel<int>}};
-
 std::vector<KernelAttr> RpcRecvKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, RpcRecvFunc> &pair) { return pair.first; });
+  static std::vector<KernelAttr> support_list = {KernelAttr().AddSkipCheckAttr(true).AddAllOutInRef(true)};
   return support_list;
 }
 
