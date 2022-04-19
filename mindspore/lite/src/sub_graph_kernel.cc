@@ -112,7 +112,7 @@ int SubGraphKernel::ReSize() {
         continue;
       }
 #endif
-      ret = lite::KernelInferShape(inputs, outputs, parameter);
+      ret = lite::KernelInferShape(inputs, outputs, parameter, context_->allocator);
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
     }
 #endif

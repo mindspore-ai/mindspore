@@ -21,16 +21,18 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <memory>
 #include "src/common/prim_util.h"
 #include "src/common/common.h"
 #include "src/tensor.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/infer/infer.h"
 #include "include/api/kernel.h"
+#include "include/api/allocator.h"
 
 namespace mindspore::lite {
 int KernelInferShape(const std::vector<lite::Tensor *> &tensors_in, const std::vector<lite::Tensor *> &outputs,
-                     OpParameter *parameter);
+                     OpParameter *parameter, std::shared_ptr<Allocator> allocator = nullptr);
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers, int schema_version,
