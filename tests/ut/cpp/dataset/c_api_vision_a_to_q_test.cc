@@ -288,6 +288,58 @@ TEST_F(MindDataTestPipeline, TestCenterCrop) {
   iter->Stop();
 }
 
+/// Feature: CenterCrop
+/// Description: Use batched dataset as video inputs
+/// Expectation: The log will print correct shape
+TEST_F(MindDataTestPipeline, TestCenterCropBatch) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCenterCropBatch.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 5));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 3;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+  // Create a Batch operation on ds, choose batch size 5 to test high dimension input
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create centre crop object with square crop
+  const std::vector<int32_t> crop_size{30};
+  std::shared_ptr<TensorTransform> centre_out1 = std::make_shared<vision::CenterCrop>(crop_size);
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({centre_out1});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 /// Feature: CenterCrop op
 /// Description: Test CenterCrop op basic usage
 /// Expectation: Output is equal to the expected output
