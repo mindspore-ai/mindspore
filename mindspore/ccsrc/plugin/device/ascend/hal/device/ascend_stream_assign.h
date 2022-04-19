@@ -129,13 +129,14 @@ class AscendStreamAssign {
   uint32_t GetIndexByKey(const NotNull<KernelGraphPtr> &graph_ptr, const CNodeKey &key);
   uint32_t GetIndependentStreamSwitchStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetIndependentMaxTarget(const NotNull<KernelGraphPtr> &graph_ptr);
-  bool IsNopNodeTarget(const AnfNodePtr &nop_node, const CNodePtr &target_node, const CNodePtr &cur_node,
-                       bool exclude_hcom);
   bool IsTaskSink();
   bool IsHcom(const CNodePtr &cur_cnode_ptr);
   bool IsIndependentNode(const CNodePtr &node_ptr);
-  vector<CNodePtr>::iterator FindTargetOp(vector<CNodePtr>::iterator begin, vector<CNodePtr>::iterator end,
-                                          const CNodePtr &node, bool exclude_hcom);
+  vector<CNodePtr>::iterator FindFirstUserInExecutionOrder(vector<CNodePtr>::iterator begin,
+                                                           vector<CNodePtr>::iterator end, const CNodePtr &node,
+                                                           bool exclude_hcom);
+  bool IsNopNodeTarget(const AnfNodePtr &nop_node, const CNodePtr &target_node, const CNodePtr &cur_node,
+                       bool exclude_hcom);
   void SetLoopSink();
   void GetMaxStreamTaskNum();
   void Reset();

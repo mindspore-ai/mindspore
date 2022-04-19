@@ -349,7 +349,7 @@ void AscendStreamAssign::ReorderIndependentOrders(const NotNull<KernelGraphPtr> 
         continue;
       }
 
-      auto res = FindTargetOp(begin, end, cur_independent, false);
+      auto res = FindFirstUserInExecutionOrder(begin, end, cur_independent, false);
       if (res != end) {
         flag = true;
         exe_orders.emplace_back(cur_independent);
@@ -1282,7 +1282,7 @@ void AscendStreamAssign::InsertEventCommonDependHcom(const NotNull<KernelGraphPt
       CNodePtr send_cnode_ptr = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId(*it));
       it = cnodes.insert(it + 1, send_cnode_ptr);
 
-      auto target = FindTargetOp(it, cnodes.end(), cur_hcom_node, true);
+      auto target = FindFirstUserInExecutionOrder(it, cnodes.end(), cur_hcom_node, true);
       if (target == cnodes.end()) {
         if (IsAllOutGraphOut(graph_ptr, cur_hcom_node)) {
           // if hcom's all output is graph output, we need to insert send/recv to fpbp end in data sink mode
@@ -1654,7 +1654,7 @@ void AscendStreamAssign::InsertEventForIndependentParallel(const NotNull<KernelG
       MS_LOG(DEBUG) << "Deal independent op[" << (*it)->DebugString() << "]";
       CNodePtr send_cnode_ptr = CreateSendApplyKernel(graph_ptr, cur_event_id, AnfAlgo::GetStreamId(*it));
 
-      auto target = FindTargetOp(it + 1, cnodes.end(), *it, false);
+      auto target = FindFirstUserInExecutionOrder(it + 1, cnodes.end(), *it, false);
       if (target == cnodes.end()) {
         MS_LOG(DEBUG) << "Independent node[" << (*it)->fullname_with_scope()
                       << "] can't find target for insert recv op, no insert send/recv";
@@ -1995,15 +1995,30 @@ bool AscendStreamAssign::IsNopNodeTarget(const AnfNodePtr &nop_node, const CNode
         if (!(exclude_hcom && IsHcom(cur_node))) {
           return true;
         }
+      } else if (common::AnfAlgo::IsNopNode(new_real_input.first)) {
+        if (IsNopNodeTarget(new_real_input.first, target_node, cur_node, exclude_hcom)) {
+          return true;
+        }
       }
     }
   }
   return false;
 }
 
-vector<CNodePtr>::iterator AscendStreamAssign::FindTargetOp(vector<CNodePtr>::iterator begin,
-                                                            vector<CNodePtr>::iterator end, const CNodePtr &node,
-                                                            bool exclude_hcom) {
+// Return the first user of node in graph execution order
+// args node: the target node, find the node user
+// args exclude_hcom: whether return hcom node, true: return node can be hcom node, false: return node can not be hcom.
+// scenario-1: node -> target user
+// scenario-2: node -> reshape -> target user
+// scenario-3: node -> reshape ->reshape ->target user
+// scenario-3: node -> depend -> target user
+// scenario-4: node -> reshape -> depend ->target user
+// scenario-5: execution order(node,hcom user,common user)
+//             exclude_hcom(true): return hcom user
+//             exclude_hcom(false): return common user
+vector<CNodePtr>::iterator AscendStreamAssign::FindFirstUserInExecutionOrder(vector<CNodePtr>::iterator begin,
+                                                                             vector<CNodePtr>::iterator end,
+                                                                             const CNodePtr &node, bool exclude_hcom) {
   while (begin != end) {
     auto inputs = (*begin)->inputs();
     for (size_t i = 1; i < inputs.size(); i++) {
@@ -2018,6 +2033,10 @@ vector<CNodePtr>::iterator AscendStreamAssign::FindTargetOp(vector<CNodePtr>::it
         if (node == real_input.first) {
           if (!(exclude_hcom && IsHcom(*begin))) {
             MS_LOG(DEBUG) << "Nop node find target op[" << (*begin)->DebugString() << "]";
+            return begin;
+          }
+        } else if (common::AnfAlgo::IsNopNode(real_input.first)) {
+          if (IsNopNodeTarget(real_input.first, node, *begin, exclude_hcom)) {
             return begin;
           }
         }
