@@ -39,6 +39,10 @@ PYTHON_VERSION=${PYTHON_VERSION:-3.7}
 MINDSPORE_VERSION=${MINDSPORE_VERSION:-EMPTY}
 CUDA_VERSION=${CUDA_VERSION:-11.1}
 OPENMPI=${OPENMPI:-off}
+release_info=$(lsb_release -a | grep Release)
+UBUNTU_VERSION=${release_info//[!0-9]/}
+
+[[ "$UBUNTU_VERSION" == "2004" &&  "$CUDA_VERSION" == "10.1" ]] && echo "CUDA 10.1 is not supported on Ubuntu 20.04" && exit 1
 
 version_less() {
     test "$(echo "$@" | tr ' ' '\n' | sort -rV | head -n 1)" != "$1";
@@ -144,13 +148,13 @@ cuda_url=${cuda_url_map[$CUDA_VERSION]}
 wget $cuda_url
 sudo sh ${cuda_url##*/} --silent --toolkit
 cd -
-sudo apt-key adv --fetch-keys https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu1804/x86_64/ /"
-sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu1804/x86_64/ /"
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/x86_64/7fa2af80.pub
+sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/cuda/repos/ubuntu${UBUNTU_VERSION}/x86_64/ /"
+sudo add-apt-repository "deb https://developer.download.nvidia.cn/compute/machine-learning/repos/ubuntu${UBUNTU_VERSION}/x86_64/ /"
 sudo apt-get update
 declare -A cudnn_name_map=()
 cudnn_name_map["10.1"]="libcudnn7=7.6.5.32-1+cuda10.1 libcudnn7-dev=7.6.5.32-1+cuda10.1"
-cudnn_name_map["11.1"]="libcudnn8=8.0.4.30-1+cuda11.1 libcudnn8-dev=8.0.4.30-1+cuda11.1"
+cudnn_name_map["11.1"]="libcudnn8=8.0.5.39-1+cuda11.1 libcudnn8-dev=8.0.5.39-1+cuda11.1"
 sudo apt-get install --no-install-recommends ${cudnn_name_map[$CUDA_VERSION]} -y
 
 # add cuda to path
