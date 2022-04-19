@@ -54,6 +54,44 @@ class ExpandDims : public OpDesc {
 };
 EXPANDER_OP_DESC_REGISTER("ExpandDims", ExpandDims);
 
+class Squeeze : public OpDesc {
+ public:
+  Squeeze() {
+    std::initializer_list<std::string> attrs{"axis"};
+    (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
+  }
+  ~Squeeze() = default;
+
+  static ShapeVector InferShape(const ShapeVector &shape, const std::vector<int64_t> &axis) {
+    ShapeVector new_shape;
+    if (axis.size() == 0) {
+      for (auto s : shape) {
+        if (s != 1) {
+          (void)new_shape.emplace_back(s);
+        }
+      }
+    } else {
+      auto ndim = SizeToLong(shape.size());
+      for (int64_t i = 0; i < ndim; i++) {
+        if (std::find(axis.begin(), axis.end(), i) == axis.end() &&
+            std::find(axis.begin(), axis.end(), i - ndim) == axis.end()) {
+          (void)new_shape.emplace_back(shape[i]);
+        }
+      }
+    }
+    return new_shape;
+  }
+
+ protected:
+  NodePtrList Expand(const NodePtrList &inputs) override {
+    const auto &input_x = inputs[0];
+    auto target_shape = Squeeze::InferShape(input_x->shape, GetAxisList(this->attrs_["axis"]));
+    auto result = gb.Reshape(input_x, target_shape);
+    return {result};
+  }
+};
+EXPANDER_OP_DESC_REGISTER("Squeeze", Squeeze);
+
 ShapeVector ExpandDimsInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis) {
   return ExpandDims::InferShape(shape, axis);
 }

@@ -40,6 +40,23 @@ class InputToAttrDeco : public ExpanderDecorator {
   HashSet<size_t> input_idx_;
 };
 
+class ParaToValueDeco : public ExpanderDecorator {
+ public:
+  ParaToValueDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
+      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
+  ~ParaToValueDeco() = default;
+
+  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
+    return [input_idx](const ExpanderPtr &decorated) {
+      return std::static_pointer_cast<Expander>(std::make_shared<ParaToValueDeco>(decorated, input_idx));
+    };
+  }
+
+ protected:
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+  HashSet<size_t> input_idx_;
+};
+
 class GraphKernelExpanderLite : public GraphKernelExpander {
  public:
   GraphKernelExpanderLite() : GraphKernelExpander() {}
@@ -48,6 +65,7 @@ class GraphKernelExpanderLite : public GraphKernelExpander {
  protected:
   std::vector<PrimitivePtr> InitOpList() override;
   ExpanderPtr InitExpander(const AnfNodePtr &node) override;
+  bool CanExpand(const CNodePtr &node) const override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_GRAPH_KERNEL_EXPANDER_LITE_H_

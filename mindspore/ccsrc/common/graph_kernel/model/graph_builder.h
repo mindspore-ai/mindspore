@@ -48,6 +48,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   }
   NodePtr Reshape(const NodePtr &input, const ShapeVector &shape) const;
   NodePtr BroadcastTo(const NodePtr &input, const ShapeVector &shape) const;
+  NodePtr Transpose(const NodePtr &input, const ShapeVector &shape) const;
 
   NodePtr ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;
   NodePtr ReduceMax(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims = false) const;

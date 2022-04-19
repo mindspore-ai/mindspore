@@ -22,21 +22,21 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class AddFusion : public OpDesc {
+class Reshape : public OpDesc {
  public:
-  AddFusion() {
-    (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>());
-    (void)validators_.emplace_back(std::make_unique<CheckActivationType>(ActivationType::NO_ACTIVATION));
+  Reshape() {
+    std::initializer_list<std::string> attrs{"shape"};
+    (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
-  ~AddFusion() = default;
+  ~Reshape() = default;
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    const auto &input_y = inputs[1];
-    auto result = gb.Add(input_x, input_y);
+    auto shape = GetValue<ShapeVector>(attrs_["shape"]);
+    auto result = gb.Reshape(input_x, shape);
     return {result};
   }
 };
-EXPANDER_OP_DESC_REGISTER("AddFusion", AddFusion);
+EXPANDER_OP_DESC_REGISTER("Reshape", Reshape);
 }  // namespace mindspore::graphkernel::expanders

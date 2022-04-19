@@ -374,6 +374,18 @@ void AnfUtils::SetNodeAttr(const std::string &key, const ValuePtr &value, const 
   fg->set_attr(key, value);
 }
 
+int64_t AnfUtils::GetIntValue(const AnfNodePtr &anf_node) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto value_node = anf_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  if (value->isa<Int64Imm>()) {
+    return GetValue<int64_t>(value);
+  } else {
+    return IntToLong(GetValue<int>(value));
+  }
+}
+
 std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, size_t index) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (anf_node->isa<ValueNode>()) {
@@ -399,10 +411,7 @@ std::pair<AnfNodePtr, size_t> AnfUtils::VisitKernel(const AnfNodePtr &anf_node, 
         MS_LOG(EXCEPTION) << "The node tuple_get_item must have 2 inputs!";
       }
       auto input2 = cnode->input(kInputNodeOutputIndexInTupleGetItem);
-      MS_EXCEPTION_IF_NULL(input2);
-      auto value_node = input2->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto item_idx = GetValue<int64_t>(value_node->value());
+      auto item_idx = AnfUtils::GetIntValue(input2);
       return VisitKernel(cnode->input(kRealInputNodeIndexInTupleGetItem), LongToSize(item_idx));
     } else if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
       return VisitKernel(cnode->input(kUpdateStateRealInput), 0);

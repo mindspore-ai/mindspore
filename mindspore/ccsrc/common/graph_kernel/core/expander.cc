@@ -24,8 +24,8 @@
 namespace mindspore::graphkernel {
 ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators) {
   ExpanderPtr result = base;
-  for (auto &creator : deco_creators) {
-    result = creator(result);
+  for (auto it = deco_creators.rbegin(); it != deco_creators.rend(); it++) {
+    result = (*it)(result);
   }
   return result;
 }

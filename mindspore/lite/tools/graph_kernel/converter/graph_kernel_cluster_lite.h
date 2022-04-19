@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONVERT_CONST_INPUT_TO_ATTR_H_
-#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONVERT_CONST_INPUT_TO_ATTR_H_
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_CLUSTER_LITE_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_CLUSTER_LITE_H_
+#include <memory>
+#include <vector>
+
+#include "common/graph_kernel/core/graph_kernel_cluster.h"
 #include "ir/func_graph.h"
-#include "backend/common/optimizer/pass.h"
 
 namespace mindspore::graphkernel {
-class ConvertConstInputToAttr : public opt::Pass {
+class GraphKernelClusterLite : public GraphKernelCluster {
  public:
-  ConvertConstInputToAttr() : Pass("convert_const_input_to_attr") {}
-  ~ConvertConstInputToAttr() override = default;
-  bool Run(const FuncGraphPtr &func_graph) override;
+  GraphKernelClusterLite() : GraphKernelCluster() {}
+  ~GraphKernelClusterLite() override = default;
+
+ protected:
+  std::vector<PrimitivePtr> GetClusterableOpList() override;
+  bool IsClusterableOp(const AnfNodePtr &node) override;
 };
 }  // namespace mindspore::graphkernel
-
-#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_CONVERT_CONST_INPUT_TO_ATTR_H_
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_GRAPH_KERNEL_CLUSTER_LITE_H_
