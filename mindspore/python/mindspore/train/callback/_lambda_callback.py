@@ -22,9 +22,11 @@ class LambdaCallback(Callback):
     Callback for creating simple, custom callbacks.
 
     This callback is constructed with anonymous functions that will be called
-    at the appropriate time (during `mindspore.Model.{train | eval}`).
+    at the appropriate time (during `mindspore.Model.{train | eval}`). Note that
+    each stage of callbacks expects one positional arguments: `run_context`.
 
-    Note that each stage of callbacks expects one positional arguments: `run_context`.
+    Note:
+        This is an experimental interface that is subject to change or deletion.
 
     Args:
         epoch_begin (Function): called at the beginning of every epoch.
