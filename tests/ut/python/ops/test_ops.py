@@ -30,7 +30,7 @@ from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
-from mindspore.ops.operations.math_ops import Bucketize
+from mindspore.ops.operations.math_ops import BesselK0, BesselK1, BesselK0e, BesselK1e, Bucketize
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
@@ -1827,6 +1827,22 @@ test_case_math_ops = [
         'desc_bprop': [[2, 3]]}),
     ('BesselI1e', {
         'block': P.BesselI1e(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('BesselK0', {
+        'block': BesselK0(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('BesselK1', {
+        'block': BesselK1(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('BesselK0e', {
+        'block': BesselK0e(),
+        'desc_inputs': [[2, 3]],
+        'desc_bprop': [[2, 3]]}),
+    ('BesselK1e', {
+        'block': BesselK1e(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
     ('Atan', {
