@@ -20,7 +20,6 @@
 #include <vector>
 #include "include/api/types.h"
 #include "include/api/status.h"
-#include "include/lite_utils.h"
 #include "schema/model_generated.h"
 
 namespace mindspore {
