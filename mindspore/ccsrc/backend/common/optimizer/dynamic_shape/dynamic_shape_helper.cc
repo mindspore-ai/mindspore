@@ -166,74 +166,41 @@ bool IsRealCNode(const BaseRef &n) {
   return false;
 }
 
-AnfNodePtr GenInferNode(const AnfNodePtr &node, bool fake_flag) {
+AnfNodePtr GenInferNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  AnfUtils::CustomActorCallback actor_func;
-  if (fake_flag) {
-    actor_func = [](void *) -> void { return; };
-  } else {
-    actor_func = [cnode](void *) { InferOp(cnode); };
-  }
-
-  auto infer_node = AnfUtils::NewInferActorNode(actor_func, cnode, fake_flag);
+  auto infer_node = AnfUtils::NewInferActorNode([cnode](void *) { InferOp(cnode); }, cnode);
   infer_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return infer_node;
 }
 
-AnfNodePtr GenInitNode(const AnfNodePtr &node, bool fake_flag) {
+AnfNodePtr GenInitNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  AnfUtils::CustomActorCallback actor_func;
-  if (fake_flag) {
-    actor_func = [](void *) -> void { return; };
-  } else {
-    auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    actor_func = [kernel_mod, cnode](void *) {
-      auto reinit_args = kernel::GetReinitArgs(cnode);
-      if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
-          kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
-        auto [op, inputs, outputs] = kernel::GetArgsFromCNode(cnode);
-        if (reinit_args == nullptr) {
-          reinit_args = std::make_shared<kernel::ReinitArgs>();
-        }
-        reinit_args->base_operator = op;
-        kernel::SetInitOpArgs(cnode, inputs, outputs, reinit_args);
-      }
-      if (!kernel_mod->Reinit(kernel::GetReinitInputs(cnode), kernel::GetReinitOutputs(cnode), reinit_args)) {
-        MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Reinit failed.";
-      }
-    };
-  }
 
-  auto init_node = AnfUtils::NewInitActorNode(actor_func, cnode, fake_flag);
+  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  AnfUtils::CustomActorCallback actor_func = [kernel_mod, cnode](void *) {
+    auto reinit_args = kernel::GetReinitArgs(cnode);
+    if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
+        kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
+      auto [op, inputs, outputs] = kernel::GetArgsFromCNode(cnode);
+      if (reinit_args == nullptr) {
+        reinit_args = std::make_shared<kernel::ReinitArgs>();
+      }
+      reinit_args->base_operator = op;
+      kernel::SetInitOpArgs(cnode, inputs, outputs, reinit_args);
+    }
+    if (!kernel_mod->Reinit(kernel::GetReinitInputs(cnode), kernel::GetReinitOutputs(cnode), reinit_args)) {
+      MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Reinit failed.";
+    }
+  };
+
+  auto init_node = AnfUtils::NewInitActorNode(actor_func, cnode);
   init_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return init_node;
-}
-
-AnfNodePtr GenUpdateNode(const AnfNodePtr &node) {
-  // Some not dynamic shape node should sync after launch for latter node.
-  // Use a flag `just_sync_flag` to distinguish them with dynamic ones.
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto update_node = AnfUtils::NewUpdateActorNode([cnode](void *) { kernel::UpdateNodeShape(cnode); }, cnode);
-  update_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-  return update_node;
-}
-
-bool IsNeedUpdateOp(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->IsNeedWait();
 }
 
 void InferOp(const CNodePtr &cnode) {

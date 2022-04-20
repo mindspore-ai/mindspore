@@ -19,6 +19,8 @@
 
 #include <utility>
 #include <string>
+#include <vector>
+#include <algorithm>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 

@@ -129,17 +129,14 @@ class TestDynamicShapePass : public BackendCommon {
 ///   b = A(a) (1, -1)
 /// Expectation: Graph as following.
 ///   after:
-///     Unique_Update Unique(%p) Unique_Init Unique_Infer
-///              \     /  |   \     /      \    /     |
-///              depend   |   depend       depend     |
-///                       |                           |
-///                      A         A_Init  A_Infer   |
-///                       \       /    \    /   \    |
-///                        depend      depend   depend
+///    Unique(%p) Unique_Init Unique_Infer
+///      |   \     /      \    /     |
+///      |   depend       depend     |
+///      |                           |
+///      A         A_Init  A_Infer   |
+///       \       /    \    /   \    |
+///        depend      depend   depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -165,20 +162,18 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
 
   auto infer_uniq = dynamic_shape::GenInferNode(after_uniq_node);
   auto init_uniq = dynamic_shape::GenInitNode(after_uniq_node);
-  auto update_uniq = dynamic_shape::GenUpdateNode(after_uniq_node);
 
   auto infer_a = dynamic_shape::GenInferNode(after_a_node);
   auto init_a = dynamic_shape::GenInitNode(after_a_node);
 
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_uniq, infer_uniq});
   auto depend1 = TestCreateDepend(after_fg, AnfNodePtrList{after_uniq_node, init_uniq});
-  auto depend2 = TestCreateDepend(after_fg, AnfNodePtrList{update_uniq, after_uniq_node});
   auto depend3 = TestCreateDepend(after_fg, AnfNodePtrList{init_a, infer_a});
   auto depend4 = TestCreateDepend(after_fg, AnfNodePtrList{after_a_node, init_a});
   auto depend5 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, infer_uniq});
-  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, update_uniq});
-  auto make_tuple = TestCreateMakeTuple(
-    after_fg, AnfNodePtrList{after_a_node, depend0, depend1, depend2, depend3, depend4, depend5, depend6});
+  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, after_uniq_node});
+  auto make_tuple =
+    TestCreateMakeTuple(after_fg, AnfNodePtrList{after_a_node, depend0, depend1, depend3, depend4, depend5, depend6});
   auto get_item = TestCreateCNode(after_fg, "TupleGetItem",
                                   AnfNodePtrList{make_tuple, NewValueNode(SizeToLong(kTupleFirstItemIndex))},
                                   after_a_node->abstract());
@@ -186,7 +181,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -199,9 +193,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_0) {
 ///       \    /  \     /
 ///       depend  depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -235,7 +226,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -262,9 +252,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_1) {
 ///                \  /            Depend
 ///               MakeTuple
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_2) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -306,20 +293,18 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_2) {
 
   auto infer_tuple = dynamic_shape::GenInferNode(after_tuple);
   auto init_tuple = dynamic_shape::GenInitNode(after_tuple);
-  auto update_tuple = dynamic_shape::GenUpdateNode(after_tuple);
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_tuple, infer_tuple});
   auto depend1 = TestCreateDepend(after_fg, AnfNodePtrList{after_tuple, init_tuple});
-  auto depend2 = TestCreateDepend(after_fg, AnfNodePtrList{update_tuple, after_tuple});
 
   auto infer_a = dynamic_shape::GenInferNode(after_a);
   auto init_a = dynamic_shape::GenInitNode(after_a);
   auto depend3 = TestCreateDepend(after_fg, AnfNodePtrList{init_a, infer_a});
   auto depend4 = TestCreateDepend(after_fg, AnfNodePtrList{after_a, init_a});
   auto depend5 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, infer_tuple});
-  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, update_tuple});
+  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, after_tuple});
 
   auto make_tuple = TestCreateMakeTuple(
-    after_fg, AnfNodePtrList{after_make_tuple, depend0, depend1, depend2, depend3, depend4, depend5, depend6});
+    after_fg, AnfNodePtrList{after_make_tuple, depend0, depend1, depend3, depend4, depend5, depend6});
   auto get_item = TestCreateCNode(after_fg, "TupleGetItem",
                                   AnfNodePtrList{make_tuple, NewValueNode(SizeToLong(kTupleFirstItemIndex))},
                                   after_make_tuple->abstract());
@@ -327,16 +312,12 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_2) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
 /// Description: Complecate case case.
 /// Expectation: Graph as expected.
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -406,7 +387,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 
   auto infer_tuple = dynamic_shape::GenInferNode(after_tuple);
   auto init_tuple = dynamic_shape::GenInitNode(after_tuple);
-  auto update_tuple = dynamic_shape::GenUpdateNode(after_tuple);
 
   auto infer_b = dynamic_shape::GenInferNode(after_b);
   auto init_b = dynamic_shape::GenInitNode(after_b);
@@ -419,7 +399,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 
   auto infer_de = dynamic_shape::GenInferNode(after_dync_end);
   auto init_de = dynamic_shape::GenInitNode(after_dync_end);
-  auto update_de = dynamic_shape::GenUpdateNode(after_dync_end);
 
   auto infer_e = dynamic_shape::GenInferNode(after_e);
   auto init_e = dynamic_shape::GenInitNode(after_e);
@@ -429,13 +408,12 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 
   auto depend2 = TestCreateDepend(after_fg, AnfNodePtrList{init_tuple, infer_tuple});
   auto depend3 = TestCreateDepend(after_fg, AnfNodePtrList{after_tuple, init_tuple});
-  auto depend4 = TestCreateDepend(after_fg, AnfNodePtrList{update_tuple, after_tuple});
   auto depend5 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tuple, infer_a});
 
   auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{init_b, infer_b});
   auto depend7 = TestCreateDepend(after_fg, AnfNodePtrList{after_b, init_b});
   auto depend8 = TestCreateDepend(after_fg, AnfNodePtrList{infer_b, infer_tuple});
-  auto depend9 = TestCreateDepend(after_fg, AnfNodePtrList{infer_b, update_tuple});
+  auto depend9 = TestCreateDepend(after_fg, AnfNodePtrList{infer_b, after_tuple});
 
   auto depend10 = TestCreateDepend(after_fg, AnfNodePtrList{init_c, infer_c});
   auto depend11 = TestCreateDepend(after_fg, AnfNodePtrList{after_c, init_c});
@@ -444,23 +422,21 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
   auto depend13 = TestCreateDepend(after_fg, AnfNodePtrList{init_d, infer_d});
   auto depend14 = TestCreateDepend(after_fg, AnfNodePtrList{after_d, init_d});
   auto depend15 = TestCreateDepend(after_fg, AnfNodePtrList{infer_d, infer_tuple});
-  auto depend16 = TestCreateDepend(after_fg, AnfNodePtrList{infer_d, update_tuple});
+  auto depend16 = TestCreateDepend(after_fg, AnfNodePtrList{infer_d, after_tuple});
 
   auto depend17 = TestCreateDepend(after_fg, AnfNodePtrList{init_de, infer_de});
   auto depend18 = TestCreateDepend(after_fg, AnfNodePtrList{after_dync_end, init_de});
-  auto depend19 = TestCreateDepend(after_fg, AnfNodePtrList{update_de, after_dync_end});
   auto depend20 = TestCreateDepend(after_fg, AnfNodePtrList{infer_de, infer_d});
 
   auto depend21 = TestCreateDepend(after_fg, AnfNodePtrList{init_e, infer_e});
   auto depend22 = TestCreateDepend(after_fg, AnfNodePtrList{after_e, init_e});
   auto depend23 = TestCreateDepend(after_fg, AnfNodePtrList{infer_e, infer_de});
-  auto depend24 = TestCreateDepend(after_fg, AnfNodePtrList{infer_e, update_de});
+  auto depend24 = TestCreateDepend(after_fg, AnfNodePtrList{infer_e, after_dync_end});
 
   auto make_tuple = TestCreateMakeTuple(
-    after_fg,
-    AnfNodePtrList{after_make_tuple, depend0,  depend1,  depend2,  depend3,  depend4,  depend5,  depend6,  depend7,
-                   depend8,          depend9,  depend10, depend11, depend12, depend13, depend14, depend15, depend16,
-                   depend17,         depend18, depend19, depend20, depend21, depend22, depend23, depend24});
+    after_fg, AnfNodePtrList{after_make_tuple, depend0,  depend1,  depend2,  depend3,  depend5,  depend6,  depend7,
+                             depend8,          depend9,  depend10, depend11, depend12, depend13, depend14, depend15,
+                             depend16,         depend17, depend18, depend20, depend21, depend22, depend23, depend24});
   auto get_item = TestCreateCNode(after_fg, "TupleGetItem",
                                   AnfNodePtrList{make_tuple, NewValueNode(SizeToLong(kTupleFirstItemIndex))},
                                   after_make_tuple->abstract());
@@ -468,7 +444,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -489,9 +464,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_3) {
 ///               \     /  \       /    \    /   \    |
 ///               depend    depend      depend   depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -523,7 +495,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
 
   auto infer_uniq = dynamic_shape::GenInferNode(after_uniq_node);
   auto init_uniq = dynamic_shape::GenInitNode(after_uniq_node);
-  auto update_uniq = dynamic_shape::GenUpdateNode(after_uniq_node);
 
   auto infer_a = dynamic_shape::GenInferNode(after_a_node);
   auto init_a = dynamic_shape::GenInitNode(after_a_node);
@@ -533,16 +504,15 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
 
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_uniq, infer_uniq});
   auto depend1 = TestCreateDepend(after_fg, AnfNodePtrList{after_uniq_node, init_uniq});
-  auto depend2 = TestCreateDepend(after_fg, AnfNodePtrList{update_uniq, after_uniq_node});
   auto depend3 = TestCreateDepend(after_fg, AnfNodePtrList{init_a, infer_a});
   auto depend4 = TestCreateDepend(after_fg, AnfNodePtrList{after_a_node, init_a});
   auto depend5 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, infer_uniq});
-  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, update_uniq});
+  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_a, after_uniq_node});
   auto depend7 = TestCreateDepend(after_fg, AnfNodePtrList{init_b, infer_b});
   auto depend8 = TestCreateDepend(after_fg, AnfNodePtrList{after_b_node, init_b});
 
-  auto make_tuple = TestCreateMakeTuple(after_fg, AnfNodePtrList{after_depend_node, depend0, depend1, depend2, depend3,
-                                                                 depend4, depend5, depend6, depend7, depend8});
+  auto make_tuple = TestCreateMakeTuple(after_fg, AnfNodePtrList{after_depend_node, depend0, depend1, depend3, depend4,
+                                                                 depend5, depend6, depend7, depend8});
   auto get_item = TestCreateCNode(after_fg, "TupleGetItem",
                                   AnfNodePtrList{make_tuple, NewValueNode(SizeToLong(kTupleFirstItemIndex))},
                                   after_a_node->abstract());
@@ -550,7 +520,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
@@ -576,9 +545,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_depend) {
 ///                                                                    |      /
 ///                                                                     depend
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -624,7 +590,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
 
   auto infer_uniq = dynamic_shape::GenInferNode(after_uniq_node);
   auto init_uniq = dynamic_shape::GenInitNode(after_uniq_node);
-  auto update_uniq = dynamic_shape::GenUpdateNode(after_uniq_node);
 
   auto infer_assign = dynamic_shape::GenInferNode(after_assign);
   auto init_assign = dynamic_shape::GenInitNode(after_assign);
@@ -633,10 +598,9 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
   auto depend1 = TestCreateDepend(after_fg, AnfNodePtrList{after_assign, init_assign});
   auto depend2 = TestCreateDepend(after_fg, AnfNodePtrList{init_uniq, infer_uniq});
   auto depend3 = TestCreateDepend(after_fg, AnfNodePtrList{after_uniq_node, init_uniq});
-  auto depend4 = TestCreateDepend(after_fg, AnfNodePtrList{update_uniq, after_uniq_node});
 
   auto make_tuple =
-    TestCreateMakeTuple(after_fg, AnfNodePtrList{after_depend_node, depend0, depend1, depend2, depend3, depend4});
+    TestCreateMakeTuple(after_fg, AnfNodePtrList{after_depend_node, depend0, depend1, depend2, depend3});
   auto get_item = TestCreateCNode(after_fg, "TupleGetItem",
                                   AnfNodePtrList{make_tuple, NewValueNode(SizeToLong(kTupleFirstItemIndex))},
                                   after_uniq_node->abstract());
@@ -644,16 +608,12 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_with_monad) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 
 /// Feature: Dynamic shape
 /// Description: Need sync case(contain op such as Tile...).
 /// Expectation: Graph as expected.
 TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
   // construct before graph
   auto before_fg = std::make_shared<session::KernelGraph>();
   ASSERT_TRUE(before_fg != nullptr);
@@ -700,7 +660,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
 
   auto infer_uniq = dynamic_shape::GenInferNode(after_uniq_node);
   auto init_uniq = dynamic_shape::GenInitNode(after_uniq_node);
-  auto update_uniq = dynamic_shape::GenUpdateNode(after_uniq_node);
 
   auto infer_tile1 = dynamic_shape::GenInferNode(after_tile1_node);
   auto init_tile1 = dynamic_shape::GenInitNode(after_tile1_node);
@@ -710,7 +669,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
 
   auto infer_b = dynamic_shape::GenInferNode(after_b_node);
   auto init_b = dynamic_shape::GenInitNode(after_b_node);
-  auto update_b = dynamic_shape::GenUpdateNode(after_b_node);
 
   auto infer_tile2 = dynamic_shape::GenInferNode(after_tile2_node);
   auto init_tile2 = dynamic_shape::GenInitNode(after_tile2_node);
@@ -720,12 +678,11 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
 
   auto depend0 = TestCreateDepend(after_fg, AnfNodePtrList{init_uniq, infer_uniq});
   auto depend1 = TestCreateDepend(after_fg, AnfNodePtrList{after_uniq_node, init_uniq});
-  auto depend2 = TestCreateDepend(after_fg, AnfNodePtrList{update_uniq, after_uniq_node});
 
   auto depend3 = TestCreateDepend(after_fg, AnfNodePtrList{init_tile1, infer_tile1});
   auto depend4 = TestCreateDepend(after_fg, AnfNodePtrList{after_tile1_node, init_tile1});
   auto depend5 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile1, infer_uniq});
-  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile1, update_uniq});
+  auto depend6 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile1, after_uniq_node});
 
   auto depend7 = TestCreateDepend(after_fg, AnfNodePtrList{init_a, infer_a});
   auto depend8 = TestCreateDepend(after_fg, AnfNodePtrList{after_a_node, init_a});
@@ -738,8 +695,7 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
   auto depend13 = TestCreateDepend(after_fg, AnfNodePtrList{after_tile2_node, init_tile2});
   auto depend14 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile2, infer_a});
   auto depend15 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile2, infer_b});
-  auto depend16 = TestCreateDepend(after_fg, AnfNodePtrList{update_b, after_b_node});
-  auto depend17 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile2, update_b});
+  auto depend17 = TestCreateDepend(after_fg, AnfNodePtrList{infer_tile2, after_b_node});
 
   auto depend18 = TestCreateDepend(after_fg, AnfNodePtrList{init_add, infer_add});
   auto depend19 = TestCreateDepend(after_fg, AnfNodePtrList{after_add_node, init_add});
@@ -747,9 +703,9 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
   auto depend21 = TestCreateDepend(after_fg, AnfNodePtrList{infer_add, infer_tile2});
 
   auto make_tuple = TestCreateMakeTuple(
-    after_fg, AnfNodePtrList{after_add_node, depend0,  depend1,  depend2,  depend3,  depend4,  depend5,  depend6,
-                             depend7,        depend8,  depend9,  depend10, depend11, depend12, depend13, depend14,
-                             depend15,       depend16, depend17, depend18, depend19, depend20, depend21});
+    after_fg, AnfNodePtrList{after_add_node, depend0,  depend1,  depend3,  depend4,  depend5,  depend6,
+                             depend7,        depend8,  depend9,  depend10, depend11, depend12, depend13,
+                             depend14,       depend15, depend17, depend18, depend19, depend20, depend21});
   auto get_item = TestCreateCNode(after_fg, "TupleGetItem",
                                   AnfNodePtrList{make_tuple, NewValueNode(SizeToLong(kTupleFirstItemIndex))},
                                   after_add_node->abstract());
@@ -757,7 +713,6 @@ TEST_F(TestDynamicShapePass, test_dynamic_shape_pass_sync) {
 
   // assert
   EXPECT_TRUE(CheckEqualGraph(after_fg, before_fg));
-  context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kCPUDevice);
 }
 }  // namespace opt
 }  // namespace mindspore

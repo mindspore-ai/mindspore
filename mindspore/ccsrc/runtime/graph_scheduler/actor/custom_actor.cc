@@ -41,19 +41,12 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   }
   // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
   // maybe changed.
-  if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer ||
-      AnfUtils::GetCustomActorType(kernel_.lock()) == kUpdate) {
+  if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer) {
     auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
     auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
     UpdateOutputAddrSize(kernel_info, base_node);
     // Update the shape of internal parameter.
-    for (auto &internal_parameter_iter : internal_parameters_) {
-      auto internal_parameter = internal_parameter_iter.second.lock();
-      MS_EXCEPTION_IF_NULL(internal_parameter);
-      common::AnfAlgo::SetOutputInferTypeAndShape(
-        {common::AnfAlgo::GetOutputInferDataType(base_node, internal_parameter_iter.first)},
-        {common::AnfAlgo::GetOutputInferShape(base_node, internal_parameter_iter.first)}, internal_parameter.get());
-    }
+    UpdateInternalParameterShape(internal_parameters_, base_node);
   }
 
   EraseInput(ctx);

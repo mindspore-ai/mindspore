@@ -23,6 +23,7 @@
 #include "utils/log_adapter.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace runtime {
@@ -89,19 +90,6 @@ void KernelActor::Init() {
 void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-  // Infer kernel shape and update abstract info for dynamic_shape. In pipeline & ascend condition, the
-  // UpdateDynamicShape is empty, so no limit here.
-  if (is_dynamic_shape_) {
-    try {
-      device_contexts_[0]->UpdateDynamicShape(kernel_);
-    } catch (const std::exception &e) {
-      if (strategy_ == GraphExecutionStrategy::kPipeline) {
-        MsException::Instance().SetException();
-      }
-      std::string error_info = "Update Dynamic shape exception: " + kernel_->fullname_with_scope();
-      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-    }
-  }
 
   FetchInputDeviceTensor(context);
   FetchOutputDeviceTensor(context);
@@ -460,17 +448,10 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
-  // The size of output address may be changed in dynamic shape scenario.
   if (is_dynamic_shape_) {
+    kernel::UpdateNodeShape(kernel_);
     UpdateOutputAddrSize(kernel_info_, kernel_);
-    // Update the shape of internal parameter.
-    for (auto &internal_parameter_iter : internal_parameters_) {
-      auto internal_parameter = internal_parameter_iter.second.lock();
-      MS_EXCEPTION_IF_NULL(internal_parameter);
-      common::AnfAlgo::SetOutputInferTypeAndShape(
-        {common::AnfAlgo::GetOutputInferDataType(kernel_, internal_parameter_iter.first)},
-        {common::AnfAlgo::GetOutputInferShape(kernel_, internal_parameter_iter.first)}, internal_parameter.get());
-    }
+    UpdateInternalParameterShape(internal_parameters_, kernel_);
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);

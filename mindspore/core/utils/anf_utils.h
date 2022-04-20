@@ -99,22 +99,18 @@ class MS_CORE_API AnfUtils {
 
   // Custom actor node is for dynamic shape.
   // Generate a Init custom actor node.
-  static AnfNodePtr NewInitActorNode(CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake);
-  // Generate a Infer custom actor node. If `is_fake` is set to true, this node is a fake node without any infer action.
-  static AnfNodePtr NewInferActorNode(CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake);
-  // Generate a Update custom actor node. If `is_just_sync` is set to true, this node is just for a stream-sync call.
-  static AnfNodePtr NewUpdateActorNode(CustomActorCallback f, const CNodePtr &base_cnode);
+  static AnfNodePtr NewInitActorNode(CustomActorCallback f, const CNodePtr &base_cnode);
+  // Generate a Infer custom actor node.
+  static AnfNodePtr NewInferActorNode(CustomActorCallback f, const CNodePtr &base_cnode);
   static bool IsCustomActorNode(const AnfNodePtr &node);
   static std::string GetCustomActorType(const AnfNodePtr &node);
   static std::string GetCustomActorName(const AnfNodePtr &node);
   static CNodePtr GetCustomActorBaseNode(const AnfNodePtr &node);
   static CustomActorCallback GetCustomFunc(const AnfNodePtr &node);
   static bool IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &node2);
-  // set the inferop,initop, updateop to base_node's user_data
-  static void SetCustomInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &inferop, const AnfNodePtr &initop,
-                                      const AnfNodePtr &updateop = nullptr);
-  static void ResetCustomUpdateInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &updateop);
-  static AnfNodePtr GetCustomUpdateopNode(const AnfNodePtr &base_cnode);
+  // set the inferop,initop to base_node's user_data
+  static void SetCustomInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &inferop,
+                                      const AnfNodePtr &initop);
   static AnfNodePtr GetCustomInferopNode(const AnfNodePtr &base_cnode);
   static mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &GetRealInputNodes(const CNodePtr &cnode);
 };
