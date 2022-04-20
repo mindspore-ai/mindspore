@@ -233,28 +233,6 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
 }
 
 namespace {
-bool IsValidPartialCNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = dyn_cast<CNode>(node);
-  if (cnode == nullptr) {
-    return false;
-  }
-  const auto &inputs = cnode->inputs();
-  if (inputs.size() <= kPartialFuncGraphPos) {
-    return false;
-  }
-  if (!IsPrimitive(inputs[kAnfPrimitiveIndex], prim::kPrimPartial)) {
-    return false;
-  }
-  // Ignore if the node is 'Partial(DeadNode,)'.
-  auto func_value = GetValueNode<StringImmPtr>(inputs[kPartialFuncGraphPos]);
-  if (func_value != nullptr && func_value->value() == kDeadNodeName) {
-    MS_LOG(DEBUG) << "Ignore partial dead node:" << cnode->DebugString();
-    return false;
-  }
-  return true;
-}
-
 bool CheckExitActorInvalid(const ExitActorPtr &exit_actor) {
   MS_EXCEPTION_IF_NULL(exit_actor);
 
@@ -346,7 +324,8 @@ std::vector<GatherActorPtr> ControlNodeScheduler::BuildGatherActor(const GraphCo
 
   for (const auto &control_node : control_nodes) {
     // Partial node and call node will be converted to gather actor.
-    if (IsValidPartialCNode(control_node) || common::AnfAlgo::IsCallNode(control_node)) {
+    if ((common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimPartial) && (!IsInvalidPartial(control_node))) ||
+        common::AnfAlgo::IsCallNode(control_node)) {
       const auto &actor_name = GetActorName(control_node);
       const auto &parameters = FetchInputNodeByCNode(control_node);
       const auto &gather_actor =
@@ -567,7 +546,6 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
   for (const auto &need_stack_control_node : parser->need_stack_control_nodes_) {
     MS_EXCEPTION_IF_NULL(need_stack_control_node);
     MS_LOG(DEBUG) << "Build stack actor for control node:" << need_stack_control_node->DebugString();
-
     const auto &stack_actor_name = GetActorName(need_stack_control_node) + kStackActorNameSuffix;
     std::vector<KernelWithIndex> formal_parameters;
     std::vector<const DeviceContext *> device_contexts;
@@ -596,7 +574,9 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
     size_t control_node_level = iter->second;
 
     auto actor = FetchActor(control_actor_name);
-    MS_EXCEPTION_IF_NULL(actor);
+    if (actor == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid actor name:" << control_actor_name;
+    }
     auto control_actor = dynamic_cast<ControlActor *>(actor);
     MS_EXCEPTION_IF_NULL(control_actor);
     if (control_actor->formal_parameters_.size() > control_actor->device_contexts_.size()) {
@@ -896,6 +876,13 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
     MS_EXCEPTION_IF_NULL(switch_actor);
     LinkPartialArrow(switch_actor, to_actor, from_node_with_index.second, to_node_with_index.second);
   } else if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimPartial)) {
+    // If the funcgraph of the partial node is a deadnode, in order to ensure the correspondence between formal
+    // parameters and real parameters, we need to create an empty partial for it.
+    if (IsInvalidPartial(from_node)) {
+      MS_LOG(DEBUG) << "Invalid partial node:" << from_node->DebugString();
+      to_actor->local_partials_[to_node_with_index.second] = std::make_shared<OpPartial>();
+      return;
+    }
     // Link arrow from gather actor
     const auto &actor_name = GetActorName(from_node);
     const auto &actor = FetchActor(actor_name);

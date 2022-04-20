@@ -257,7 +257,10 @@ void DumpControlActor(const ControlActor *actor, std::ofstream &ofs) {
   if (local_partials.size() > 0) {
     ofs << "\t\tlocal partial num:" << local_partials.size() << "\n ";
     for (const auto &local_partial : local_partials) {
-      MS_EXCEPTION_IF_NULL(local_partial.second->func_graph_);
+      // Skip the dead node partial.
+      if (local_partial.second->func_graph_ == nullptr) {
+        continue;
+      }
       ofs << "\t\t\tlocal partial index:" << local_partial.first
           << "\tgraph:" << local_partial.second->func_graph_->ToString()
           << "\tparameter num:" << local_partial.second->device_tensors_.size() << "\n";

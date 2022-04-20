@@ -118,6 +118,9 @@ std::vector<KernelWithIndex> FetchInputNodeByCNode(const AnfNodePtr &node);
 abstract::AbstractBasePtr FetchAbstractByIndex(const AbstractBasePtr &abstract, size_t index);
 // Fetch the real input of tuple get item node.
 KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
+// Check if the partial node is valid.
+// Invalid partial nodes are those partial cnodes whose funcgraph is deadnode.
+bool IsInvalidPartial(const AnfNodePtr &node);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:

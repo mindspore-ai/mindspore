@@ -22,9 +22,7 @@ namespace runtime {
 ControlActor::ControlActor(const std::string &name, KernelTransformType type, const AID &memory_manager_aid,
                            const std::vector<KernelWithIndex> &parameters, const AnfNodePtr &node)
     : MemoryAwareActor(name, type, nullptr, memory_manager_aid), formal_parameters_(parameters), node_(node) {
-  for (size_t i = 0; i < parameters.size(); ++i) {
-    (void)input_partials_.emplace_back(std::make_shared<OpPartial>());
-  }
+  input_partials_.resize(parameters.size());
   input_device_tensors_.resize(parameters.size());
   backend_parameters_.resize(parameters.size());
 }
@@ -74,7 +72,9 @@ void ControlActor::IncreaseDynamicRefCount(const OpData<DeviceTensor> *op_data) 
 }
 
 void ControlActor::IncreaseDynamicRefCount(const OpPartialPtr &op_partial) {
-  MS_EXCEPTION_IF_NULL(op_partial);
+  if (op_partial == nullptr) {
+    MS_LOG(EXCEPTION) << "Empty op partial for actor:" << GetAID();
+  }
   std::vector<DeviceTensor *> partial_device_tensors;
   GetAllDeviceTensors(op_partial, &partial_device_tensors);
   for (auto &partial_device_tensor : partial_device_tensors) {
@@ -239,7 +239,6 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
   const auto &partial_iter = input_op_partials_.find(context->sequential_num_);
   if (partial_iter != input_op_partials_.end()) {
     for (const auto &input_partial : partial_iter->second) {
-      MS_EXCEPTION_IF_NULL(input_partial.second->func_graph_);
       if (input_partial.first >= input_partials_.size()) {
         std::string error_info = "Invalid partial index:" + std::to_string(input_partial.first) +
                                  " vector size:" + std::to_string(input_partials_.size()) +
@@ -258,7 +257,7 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     MS_EXCEPTION_IF_NULL(local_partial.second);
-    *(input_partials_[local_partial.first]) = *(local_partial.second);
+    input_partials_[local_partial.first] = local_partial.second;
   }
   // Fetch branch id in stack.
   auto iter = input_branch_ids_.find(context->sequential_num_);
@@ -272,7 +271,9 @@ void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const conte
   // Increase dynamic ref count by the output data.
   for (size_t i = 0; i < output_data_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_data_[i]);
-    std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i);
+    std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i) +
+                             " to actor:" + output_data_[i]->op_id_.Name() +
+                             " index:" + std::to_string(output_data_[i]->index_);
     MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i]->data_ != nullptr), error_info);
     IncreaseDynamicRefCount(output_data_[i].get());
   }
@@ -432,7 +433,7 @@ void ControlActor::SendOutput(OpContext<DeviceTensor> *const context) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
     auto output_partial = input_partials_[partial_arrow->from_output_index_];
-    MS_EXCEPTION_IF_NULL(output_partial->func_graph_);
+    MS_EXCEPTION_IF_NULL(output_partial);
     ActorDispatcher::Send(partial_arrow->to_op_id_, &ControlActor::RunOpPartial, output_partial,
                           IntToSize(partial_arrow->to_input_index_), context);
   }
