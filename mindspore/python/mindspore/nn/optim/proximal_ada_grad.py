@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -188,7 +188,7 @@ class ProximalAdagrad(Optimizer):
                  use_locking=False, loss_scale=1.0, weight_decay=0.0):
         super(ProximalAdagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(accum, l1, l2, use_locking, self.cls_name)
-        self.accum = self.parameters.clone(prefix="accum", init=accum)
+        self.accum = self._parameters.clone(prefix="accum", init=accum)
         self.l1 = Tensor(l1, mstype.float32)
         self.l2 = Tensor(l2, mstype.float32)
         self.use_locking = use_locking
@@ -196,8 +196,9 @@ class ProximalAdagrad(Optimizer):
         self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
 
     def construct(self, grads):
-        params = self.parameters
+        params = self._parameters
         accum = self.accum
+        grads = self.flatten_gradients(grads)
         grads = self.decay_weight(grads)
         grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)

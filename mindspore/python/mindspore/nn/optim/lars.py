@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -122,9 +122,13 @@ class LARS(Optimizer):
         self.weight_decay = optimizer.weight_decay
         self.global_step = optimizer.global_step
         self.parameters = optimizer.parameters
-        self._user_parameters += [param.name for param in self.parameters]
+        self._parameters = optimizer._parameters  # pylint: disable=W0212
+        self._use_flattened_params = optimizer._use_flattened_params  # pylint: disable=W0212
+        if self._use_flattened_params:
+            self.opt._use_flattened_params = False  # pylint: disable=W0212
+        self._user_parameters += [param.name for param in self._parameters]
         self.use_clip = use_clip
-        self.lars_flag = tuple(lars_filter(x) for x in self.parameters)
+        self.lars_flag = tuple(lars_filter(x) for x in self._parameters)
         self.is_group = optimizer.is_group
         self.learning_rate = Parameter(Tensor(0.0, dtype=mstype.float32), name="fake_lr")
         self.decay_flags = optimizer.decay_flags
@@ -166,7 +170,8 @@ class LARS(Optimizer):
         return lr
 
     def construct(self, gradients):
-        params = self.parameters
+        params = self._parameters
+        gradients = self.flatten_gradients(gradients)
         if self.use_clip:
             lr = self._get_lr()
         else:

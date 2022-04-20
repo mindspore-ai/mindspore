@@ -372,8 +372,8 @@ class Adam(Optimizer):
         self.eps = Tensor(eps, mstype.float32)
         self.use_nesterov = use_nesterov
         self.use_locking = use_locking
-        self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
-        self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
+        self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
+        self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
 
         self._is_device = True
         self.opt = P.Adam(use_locking, use_nesterov)
@@ -384,7 +384,7 @@ class Adam(Optimizer):
         self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
 
     def construct(self, gradients):
-        params = self.parameters
+        params = self._parameters
         moment1 = self.moment1
         moment2 = self.moment2
         gradients = self.flatten_gradients(gradients)
@@ -572,24 +572,25 @@ class AdamWeightDecay(Optimizer):
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
         self.eps = Tensor(np.array([eps]).astype(np.float32))
-        self.moments1 = self.parameters.clone(prefix="adam_m", init='zeros')
-        self.moments2 = self.parameters.clone(prefix="adam_v", init='zeros')
+        self.moments1 = self._parameters.clone(prefix="adam_m", init='zeros')
+        self.moments2 = self._parameters.clone(prefix="adam_v", init='zeros')
 
     def construct(self, gradients):
+        gradients = self.flatten_gradients(gradients)
         weight_decay = self.get_weight_decay()
         lr = self.get_lr()
         if self.is_group:
             if self.is_group_lr:
                 optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
-                                              lr, weight_decay, self.parameters, self.moments1,
+                                              lr, weight_decay, self._parameters, self.moments1,
                                               self.moments2, gradients, self.decay_flags, self.optim_filter)
             else:
                 optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
-                                              weight_decay, self.parameters, self.moments1, self.moments2,
+                                              weight_decay, self._parameters, self.moments1, self.moments2,
                                               gradients, self.decay_flags, self.optim_filter)
         else:
             optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, weight_decay),
-                                          self.parameters, self.moments1, self.moments2,
+                                          self._parameters, self.moments1, self.moments2,
                                           gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
@@ -747,15 +748,16 @@ class AdamOffload(Optimizer):
         self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")
         self.beta2_power = Parameter(initializer(1, [1], mstype.float32), name="beta2_power")
         self.eps = Tensor(eps, mstype.float32)
-        self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
-        self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
+        self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
+        self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
         self.opt = P.AdamNoUpdateParam(use_locking, use_nesterov)
         self.opt.add_prim_attr("primitive_target", "CPU")
 
     def construct(self, gradients):
-        params = self.parameters
+        params = self._parameters
         moment1 = self.moment1
         moment2 = self.moment2
+        gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()

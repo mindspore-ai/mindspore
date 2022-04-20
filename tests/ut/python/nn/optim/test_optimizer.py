@@ -118,6 +118,7 @@ def test_not_flattened_params():
     assert not opt._use_flattened_params  # pylint: disable=W0212
     assert len(opt.parameters) == 3
     assert len(opt.cache_enable) == 3
+    assert id(opt.parameters) == id(opt._parameters)  # pylint: disable=W0212
 
 
 def test_with_flattened_params():
@@ -133,16 +134,18 @@ def test_with_flattened_params():
     Tensor._flatten_tensors(paras)  # pylint: disable=W0212
     opt = Optimizer(0.1, paras)
     assert opt._use_flattened_params  # pylint: disable=W0212
-    assert len(opt.parameters) == 1
+    assert len(opt.parameters) == 3
+    assert len(opt._parameters) == 1  # pylint: disable=W0212
     assert len(opt.cache_enable) == 1
-    assert opt.parameters[0].dtype == ms.float32
-    assert opt.parameters[0].shape == [3]
-    assert opt.parameters[0]._size == 3  # pylint: disable=W0212
-    assert np.allclose(opt.parameters[0].asnumpy(), np.array([1, 2, 3]))
+    flat_param = opt._parameters[0]  # pylint: disable=W0212
+    assert flat_param.dtype == ms.float32
+    assert flat_param.shape == [3]
+    assert flat_param._size == 3  # pylint: disable=W0212
+    assert np.allclose(flat_param.asnumpy(), np.array([1, 2, 3]))
     p1.asnumpy()[0] = 6
     p2.asnumpy()[0] = 6
     p3.asnumpy()[0] = 6
-    assert np.allclose(opt.parameters[0].asnumpy(), np.array([6, 6, 6]))
+    assert np.allclose(flat_param.asnumpy(), np.array([6, 6, 6]))
 
 
 def test_adam_with_flattened_params():

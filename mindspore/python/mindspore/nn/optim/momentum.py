@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ class Momentum(Optimizer):
             raise ValueError("For 'Momentum', the argument 'momentum' should be at least 0.0, "
                              "but got {}".format(momentum))
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
-        self.params = self.parameters
+        self.params = self._parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
@@ -183,6 +183,7 @@ class Momentum(Optimizer):
     def construct(self, gradients):
         params = self.params
         moments = self.moments
+        gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)

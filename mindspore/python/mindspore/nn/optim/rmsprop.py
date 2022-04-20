@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -211,18 +211,19 @@ class RMSProp(Optimizer):
         self.centered = centered
         if centered:
             self.opt = P.ApplyCenteredRMSProp(use_locking)
-            self.mg = self.parameters.clone(prefix="mean_grad", init='zeros')
+            self.mg = self._parameters.clone(prefix="mean_grad", init='zeros')
         else:
             self.opt = P.ApplyRMSProp(use_locking)
 
         self.momentum = momentum
-        self.ms = self.parameters.clone(prefix="mean_square", init='ones')
-        self.moment = self.parameters.clone(prefix="moment", init='zeros')
+        self.ms = self._parameters.clone(prefix="mean_square", init='ones')
+        self.moment = self._parameters.clone(prefix="moment", init='zeros')
         self.epsilon = epsilon
         self.decay = decay
 
     def construct(self, gradients):
-        params = self.parameters
+        params = self._parameters
+        gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
