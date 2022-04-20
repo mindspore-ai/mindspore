@@ -101,9 +101,6 @@ function Run_TensorRT() {
             if [[ ${mode} == "fp16" ]]; then
                 enableFp16="true"
             fi
-            if [[ ${mode} == "offline_resize" ]]; then
-                input_shapes=""
-            fi
 
             # different tensorrt run mode use different cuda command
             echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --cosineDistanceThreshold=${cosine_limit} --device=GPU --enableParallelPredict=true' >> "${run_benchmark_result_file}"
