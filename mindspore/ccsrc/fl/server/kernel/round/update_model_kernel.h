@@ -100,6 +100,8 @@ class UpdateModelKernel : public RoundKernel {
   // Check and transform participation time level parament
   void CheckAndTransPara(const std::string &participation_time_level);
 
+  bool VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req);
+
   // The executor is for updating the model for updateModel request.
   Executor *executor_{nullptr};
 
