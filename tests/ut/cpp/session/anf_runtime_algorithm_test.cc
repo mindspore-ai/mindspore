@@ -794,5 +794,101 @@ TEST_F(AnfRuntimeAlgorithmTest, SetStreamId) {
   EXPECT_EQ(AnfAlgo::GetStreamId(add), 0);
 }
 
+/// Feature: fix get item to tuple in tuple.
+/// Description: check the function between tuple and getitem.
+/// Expectation: As expected.
+TEST_F(AnfRuntimeAlgorithmTest, GetAllOutputWithIndex) {
+  std::vector<int64_t> shp{1};
+  auto graph = std::make_shared<FuncGraph>();
+  std::vector<KernelWithIndex> results;
+
+  auto value_node_0 = NewValueNode(static_cast<int64_t>(0));
+  auto value_node_1 = NewValueNode(static_cast<int64_t>(1));
+  auto value_node_2 = NewValueNode(static_cast<int64_t>(2));
+  auto value_node_3 = NewValueNode(static_cast<int64_t>(3));
+  auto abstract_single = std::make_shared<abstract::AbstractTensor>(kFloat32, shp);
+  AbstractBasePtrList abstruct_list_1{abstract_single, abstract_single};
+  auto abstruct_tuple = std::make_shared<abstract::AbstractTuple>(abstruct_list_1);
+  AbstractBasePtrList abstruct_list_2{abstract_single, abstruct_tuple, abstract_single};
+  auto abstract_tuple_in_tuple = std::make_shared<abstract::AbstractTuple>(abstruct_list_2);
+  value_node_1->set_abstract(abstract_single);
+
+  // Make tuple node: (1, 2)
+  std::vector<AnfNodePtr> tuple_input1{NewValueNode(prim::kPrimMakeTuple), value_node_1, value_node_2};
+  auto tuple_1 = graph->NewCNode(tuple_input1);
+  tuple_1->set_abstract(abstruct_tuple);
+  results = common::AnfAlgo::GetAllOutputWithIndex(tuple_1);
+  EXPECT_EQ(results.size(), 2);
+
+  // Make tuple node: (0, (1, 2), 3)
+  std::vector<AnfNodePtr> tuple_input2{NewValueNode(prim::kPrimMakeTuple), value_node_0, tuple_1, value_node_3};
+  auto tuple_2 = graph->NewCNode(tuple_input2);
+  tuple_2->set_abstract(abstract_tuple_in_tuple);
+  results = common::AnfAlgo::GetAllOutputWithIndex(tuple_2);
+  EXPECT_EQ(results.size(), 4);
+
+  // Get item node: (0, (1, 2), 3)[1] = (1, 2)
+  std::vector<AnfNodePtr> getitem_input1{NewValueNode(prim::kPrimTupleGetItem), tuple_2, value_node_1};
+  auto getitem_1 = graph->NewCNode(getitem_input1);
+  getitem_1->set_abstract(abstruct_tuple);
+  results = common::AnfAlgo::GetAllOutputWithIndex(getitem_1);
+  EXPECT_EQ(results.size(), 2);
+  EXPECT_EQ(GetValue<int64_t>(results[0].first->cast<ValueNodePtr>()->value()), 1);
+  EXPECT_EQ(GetValue<int64_t>(results[1].first->cast<ValueNodePtr>()->value()), 2);
+
+  // Get item node: (0, (1, 2), 3)[1][1] = (1, 2)[1] = (1)
+  std::vector<AnfNodePtr> getitem_input2{NewValueNode(prim::kPrimTupleGetItem), getitem_1, value_node_1};
+  auto getitem_2 = graph->NewCNode(getitem_input2);
+  getitem_2->set_abstract(abstract_single);
+  results = common::AnfAlgo::GetAllOutputWithIndex(getitem_2);
+  EXPECT_EQ(results.size(), 1);
+
+  // Call node with output construct: (x, (x, x), x)
+  std::vector<AnfNodePtr> call_input{NewValueNode(graph)};
+  auto call = graph->NewCNode(call_input);
+  call->set_abstract(abstract_tuple_in_tuple);
+  results = common::AnfAlgo::GetAllOutputWithIndex(call);
+  EXPECT_EQ(results.size(), 4);
+
+  // Get item node: (x, (x, x), x)[1] = (x, x)
+  std::vector<AnfNodePtr> getitem_input3{NewValueNode(prim::kPrimTupleGetItem), call, value_node_1};
+  auto getitem_3 = graph->NewCNode(getitem_input3);
+  getitem_3->set_abstract(abstruct_tuple);
+  results = common::AnfAlgo::GetAllOutputWithIndex(getitem_3);
+  EXPECT_EQ(results.size(), 2);
+  EXPECT_EQ(results[0].second, 1);
+  EXPECT_EQ(results[1].second, 2);
+
+  // Get item node: (0, (1, 2), 3)[2] = (3)
+  std::vector<AnfNodePtr> getitem_input4{NewValueNode(prim::kPrimTupleGetItem), tuple_2, value_node_2};
+  auto getitem_4 = graph->NewCNode(getitem_input4);
+  getitem_4->set_abstract(abstract_single);
+  results = common::AnfAlgo::GetAllOutputWithIndex(getitem_4);
+  EXPECT_EQ(results.size(), 1);
+  EXPECT_EQ(GetValue<int64_t>(results[0].first->cast<ValueNodePtr>()->value()), 3);
+
+  // Get item node: (x, (x, x), x)[2] = (x)
+  std::vector<AnfNodePtr> getitem_input5{NewValueNode(prim::kPrimTupleGetItem), call, value_node_2};
+  auto getitem_5 = graph->NewCNode(getitem_input5);
+  getitem_5->set_abstract(abstract_single);
+  results = common::AnfAlgo::GetAllOutputWithIndex(getitem_5);
+  EXPECT_EQ(results.size(), 1);
+  EXPECT_EQ(results[0].second, 3);
+
+  // Make tuple node: (3, (x, (x, x), x)[2], 1) = (3, x, 1)
+  std::vector<AnfNodePtr> tuple_input3{NewValueNode(prim::kPrimMakeTuple), value_node_3, getitem_5, value_node_1};
+  auto tuple_3 = graph->NewCNode(tuple_input3);
+  tuple_3->set_abstract(abstract_tuple_in_tuple);
+  results = common::AnfAlgo::GetAllOutputWithIndex(tuple_3);
+  EXPECT_EQ(results.size(), 3);
+
+  // Get item node: (3, (x, (x, x), x)[2], 1)[1] = (3, x, 1)[1] = (x)
+  std::vector<AnfNodePtr> getitem_input6{NewValueNode(prim::kPrimTupleGetItem), tuple_3, value_node_1};
+  auto getitem_6 = graph->NewCNode(getitem_input5);
+  getitem_6->set_abstract(abstract_single);
+  results = common::AnfAlgo::GetAllOutputWithIndex(getitem_6);
+  EXPECT_EQ(results.size(), 1);
+  EXPECT_EQ(results[0].second, 3);
+}
 }  // namespace session
 }  // namespace mindspore

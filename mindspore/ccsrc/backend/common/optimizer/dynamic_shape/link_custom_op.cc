@@ -167,17 +167,20 @@ void LinkCustomOp::AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList
   MS_EXCEPTION_IF_NULL(g);
   auto return_node = g->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
+  auto output_node = return_node->input(kFirstDataInputIndex);
+  MS_EXCEPTION_IF_NULL(output_node);
 
   // New MakeTuple node
-  auto mk_inputs = AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())),
-                                  return_node->input(kFirstDataInputIndex)};
+  auto mk_inputs = AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), output_node};
   (void)mk_inputs.insert(mk_inputs.end(), depend_nodes.begin(), depend_nodes.end());
   auto make_tuple_node = g->NewCNode(mk_inputs);
 
   // Get first element item form that maketuple and return.
   auto get_1st_item = g->NewCNode(AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(prim::kTupleGetItem)),
                                                  make_tuple_node, NewValueNode(SizeToLong(kTupleFirstItemIndex))});
-
+  // The getitem node always obtains the first input of the maketuple, which is the output in the original graph,
+  // so set the abstract of the output to the getitem node.
+  get_1st_item->set_abstract(output_node->abstract());
   // Attach back.
   return_node->set_input(kFirstDataInputIndex, get_1st_item);
 }

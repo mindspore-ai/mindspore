@@ -2331,7 +2331,17 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
   output_args.push_back(NewValueNode(prim::kPrimMakeTuple));
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_args),
                        [&](const AnfNodePtr &out) -> AnfNodePtr { return FindEqu(out); });
-  return graph->NewCNode(output_args);
+  auto output_node = graph->NewCNode(output_args);
+
+  // Create abstract for output maketuple node.
+  AbstractBasePtrList output_abs_list;
+  const auto &inputs = output_node->inputs();
+  (void)std::transform(inputs.begin() + 1, inputs.end(), std::back_inserter(output_abs_list),
+                       [](const AnfNodePtr &input) { return input->abstract(); });
+  auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(output_abs_list);
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  output_node->set_abstract(abstract_tuple);
+  return output_node;
 }
 
 void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr<KernelGraph> &graph) {
