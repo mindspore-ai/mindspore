@@ -6409,8 +6409,8 @@ class ReverseSequence(PrimitiveWithInfer):
         self.batch_dim_ = batch_dim
 
     def infer_shape(self, x, seq_lengths):
-        validator.check("seq_dim", self.seq_dim_, "x rank", len(x), Rel.LE, self.name)
-        validator.check("batch_dim", self.batch_dim_, "x rank", len(x), Rel.LE, self.name)
+        validator.check("seq_dim", self.seq_dim_, "x rank", len(x), Rel.LT, self.name)
+        validator.check("batch_dim", self.batch_dim_, "x rank", len(x), Rel.LT, self.name)
         validator.check("batch_dim", self.batch_dim_, "seq_dim", self.seq_dim_, Rel.NE, self.name)
         validator.check("seq_lengths rank", len(seq_lengths), "expected", 1, Rel.EQ, self.name)
         validator.check("seq_lengths vector size", seq_lengths[0],
