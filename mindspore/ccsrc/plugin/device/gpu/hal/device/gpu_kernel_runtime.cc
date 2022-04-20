@@ -806,7 +806,7 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
       LaunchKernelWithoutMock(graph, kernel, kernel_inputs, kernel_workspaces, kernel_outputs, profiling);
 
       if (gpu_kernel != nullptr && common::AnfAlgo::IsDynamicShape(kernel)) {
-        gpu_kernel->Wait();
+        kernel::UpdateNodeShape(kernel);
       }
 #ifdef ENABLE_DEBUGGER
       MS_EXCEPTION_IF_NULL(debugger_);
@@ -916,7 +916,7 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
       return false;
     }
     if (gpu_kernel != nullptr && common::AnfAlgo::IsDynamicShape(kernel)) {
-      gpu_kernel->Wait();
+      kernel::UpdateNodeShape(kernel);
     }
   }
   return true;

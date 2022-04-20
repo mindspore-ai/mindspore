@@ -1654,7 +1654,7 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
         MS_LOG(ERROR) << "SyncStream failed";
         return false;
       }
-      kernel_mod->Wait();
+      kernel::UpdateNodeShape(kernel);
     } else {
       // Skip transpose kernel with "nop_op" attr which is not hidden or removed in PyNative infer scenario. Transpose
       // kernel, which is not supposed to be executed, is generated in TransDataSplit to support specific Transdata.
