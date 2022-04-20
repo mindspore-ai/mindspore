@@ -41,6 +41,7 @@ constexpr auto kLog1p = "Log1p";
 constexpr auto kNeg = "Neg";
 constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kInv = "Inv";
+constexpr auto kInvert = "Invert";
 constexpr auto kRint = "Rint";
 constexpr auto kRound = "Round";
 constexpr auto kRsqrt = "Rsqrt";
@@ -92,6 +93,15 @@ const std::map<std::string, std::vector<std::pair<KernelAttr, UnaryPtrCreatorFun
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
+  {kInvert,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), CreateUnaryKernelPtr<char>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateUnaryKernelPtr<uchar>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateUnaryKernelPtr<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), CreateUnaryKernelPtr<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateUnaryKernelPtr<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), CreateUnaryKernelPtr<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateUnaryKernelPtr<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateUnaryKernelPtr<uint64_t>}}},
   {kSquare,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
@@ -222,6 +232,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Neg, []() { return std::mak
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Reciprocal,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kReciprocal); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Inv, []() { return std::make_shared<UnaryOpGpuKernelMod>(kInv); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Invert,
+                                 []() { return std::make_shared<UnaryOpGpuKernelMod>(kInvert); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Rint,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kRint); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Round,
