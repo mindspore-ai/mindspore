@@ -34,9 +34,11 @@ class GraphKernelCluster : public opt::Pass {
   ~GraphKernelCluster() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 
+ protected:
+  virtual std::vector<PrimitivePtr> GetClusterableOpList();
+  virtual bool IsClusterableOp(const AnfNodePtr &node);
+
  private:
-  std::vector<PrimitivePtr> GetClusterableOpList();
-  bool IsClusterableOp(const AnfNodePtr &node);
   void Init(const FuncGraphPtr &func_graph);
   bool Process(const FuncGraphPtr &func_graph);
   std::vector<size_t> FindCandidates(size_t basenode_id);

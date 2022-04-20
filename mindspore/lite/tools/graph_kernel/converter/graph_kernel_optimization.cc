@@ -22,7 +22,6 @@
 #include "ir/func_graph.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "backend/common/pass/getitem_tuple.h"
-#include "common/graph_kernel/core/graph_kernel_cluster.h"
 #include "common/graph_kernel/core/graph_kernel_splitter.h"
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
@@ -30,21 +29,28 @@
 #include "common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 #include "tools/graph_kernel/converter/akg/kernel_builder.h"
-#include "tools/graph_kernel/converter/convert_const_input_to_attr.h"
+#include "tools/graph_kernel/converter/graph_kernel_cluster_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
+#include "tools/graph_kernel/converter/insert_abstract.h"
 
 namespace mindspore::graphkernel {
 using opt::GetitemTuple;
 using opt::GraphOptimizer;
 
+PassManagerPtr GraphKernelOptimizer::PreProcess() const {
+  auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
+  // Some ops may lose abstract in converter
+  pm->Add(std::make_shared<InsertAbstract>(), OptLevel_1);
+  return pm;
+}
+
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(0, "cluster");
+  auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderLite>(), OptLevel_1);
 
   // Cluster basic kernels and composite kernels
-  pm->Add(std::make_shared<GraphKernelCluster>(), OptLevel_1);
-  pm->Add(std::make_shared<ConvertConstInputToAttr>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelClusterLite>(), OptLevel_1);
 
   // Eliminate the outputs without external user
   pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
@@ -52,7 +58,7 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 }
 
 PassManagerPtr GraphKernelOptimizer::Split() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(1, "split");
+  auto pm = std::make_shared<GraphKernelPassManager>(2, "split");
   // Make certain nodes redundant so that they are used by only one user,
   // which can avoid unnecessary input-output and get better performance.
   // preprocess for ShapeOpsSplitter
@@ -74,7 +80,7 @@ PassManagerPtr GraphKernelOptimizer::Split() const {
 }
 
 PassManagerPtr GraphKernelOptimizer::BuildKernel() const {
-  auto pm = std::make_shared<GraphKernelPassManager>(2, "buildkernel");
+  auto pm = std::make_shared<GraphKernelPassManager>(3, "buildkernel");
   // build akg and replace graph kernel nodes
   pm->Add(std::make_shared<KernelBuilder>(), OptLevel_1);
   return pm;
@@ -82,6 +88,7 @@ PassManagerPtr GraphKernelOptimizer::BuildKernel() const {
 
 void GraphKernelOptimizer::Run(const FuncGraphPtr &kernel_graph) {
   auto optimizer = std::make_shared<GraphOptimizer>("graph_kernel_optimizer");
+  optimizer->AddPassManager(PreProcess());
   optimizer->AddPassManager(Cluster());
   optimizer->AddPassManager(Split());
   optimizer->AddPassManager(BuildKernel());

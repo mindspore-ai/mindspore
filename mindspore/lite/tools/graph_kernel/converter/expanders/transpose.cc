@@ -22,21 +22,21 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class AddFusion : public OpDesc {
+class Transpose : public OpDesc {
  public:
-  AddFusion() {
-    (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>());
-    (void)validators_.emplace_back(std::make_unique<CheckActivationType>(ActivationType::NO_ACTIVATION));
+  Transpose() {
+    std::initializer_list<std::string> attrs{"perm"};
+    (void)validators_.emplace_back(std::make_unique<CheckAttr>(attrs));
   }
-  ~AddFusion() = default;
+  ~Transpose() = default;
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    const auto &input_y = inputs[1];
-    auto result = gb.Add(input_x, input_y);
+    auto perm = GetValue<ShapeVector>(attrs_["perm"]);
+    auto result = gb.Transpose(input_x, perm);
     return {result};
   }
 };
-EXPANDER_OP_DESC_REGISTER("AddFusion", AddFusion);
+EXPANDER_OP_DESC_REGISTER("Transpose", Transpose);
 }  // namespace mindspore::graphkernel::expanders

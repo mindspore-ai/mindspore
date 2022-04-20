@@ -15,6 +15,8 @@
  */
 
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "tools/graph_kernel/converter/expanders/activation.h"
@@ -22,21 +24,31 @@
 #include "ir/dtype.h"
 
 namespace mindspore::graphkernel::expanders {
-class AddFusion : public OpDesc {
+class CheckExpAttr : public Validator {
  public:
-  AddFusion() {
-    (void)validators_.emplace_back(std::make_unique<CheckAllFormatsSame>());
-    (void)validators_.emplace_back(std::make_unique<CheckActivationType>(ActivationType::NO_ACTIVATION));
+  bool Check(const OpDesc &e) override {
+    std::vector<std::string> unsupport_attr = {"base", "scale", "shift"};
+    for (auto &a : unsupport_attr) {
+      if (e.Attrs().count(a) != 0) {
+        MS_LOG(INFO) << "attr " << a << " not supported yet for exp";
+        return false;
+      }
+    }
+    return true;
   }
-  ~AddFusion() = default;
+};
+
+class ExpFusion : public OpDesc {
+ public:
+  ExpFusion() { (void)validators_.emplace_back(std::make_unique<CheckExpAttr>()); }
+  ~ExpFusion() = default;
 
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    const auto &input_y = inputs[1];
-    auto result = gb.Add(input_x, input_y);
+    auto result = gb.Exp(input_x);
     return {result};
   }
 };
-EXPANDER_OP_DESC_REGISTER("AddFusion", AddFusion);
+EXPANDER_OP_DESC_REGISTER("ExpFusion", ExpFusion);
 }  // namespace mindspore::graphkernel::expanders

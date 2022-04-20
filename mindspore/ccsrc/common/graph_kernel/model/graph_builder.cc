@@ -27,6 +27,11 @@ NodePtr GraphBuilder::BroadcastTo(const NodePtr &input, const ShapeVector &shape
   return Emit("BroadcastTo", {input}, {{"shape", shape_value}});
 }
 
+NodePtr GraphBuilder::Transpose(const NodePtr &input, const ShapeVector &perm) const {
+  auto perm_value = MakeValue(perm);
+  return Emit("Transpose", {input}, {{"perm", perm_value}});
+}
+
 NodePtr GraphBuilder::ReduceSum(const NodePtr &input, const std::vector<int64_t> &axis, const bool &keep_dims) const {
   auto reduce_axis = MakeValue(axis);
   auto keep_dims_value = MakeValue(keep_dims);

@@ -115,9 +115,9 @@ TypeId CallbackImpl::GetOutputInferType(const AnfNodePtr &node, size_t i) {
   return type_ptr->type_id();
 }
 
-std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_DEFAULT; }
+std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_NHWC; }
 
-std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_DEFAULT; }
+std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_NHWC; }
 
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return "cpu"; }
 

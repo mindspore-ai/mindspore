@@ -17,6 +17,7 @@
 #include "tools/graph_kernel/runtime/akg_kernel.h"
 #include <dlfcn.h>
 #include <algorithm>
+#include <numeric>
 #include "src/tensor.h"
 #include "src/common/utils.h"
 #include "src/kernel_registry.h"
@@ -122,8 +123,20 @@ int AkgKernel::Run() {
   AkgCallBack akg_callback;
   akg_callback.extend_data = static_cast<void *>(this);
   (void)runtimeargs.emplace_back(static_cast<void *>(&akg_callback));
+  std::vector<std::vector<float>> inputs_align;
   (void)std::transform(std::begin(in_tensors_), std::end(in_tensors_), std::back_inserter(runtimeargs),
-                       [](lite::Tensor *input) { return input->data(); });
+                       [&inputs_align](lite::Tensor *input) {
+                         if (input->IsConst() && (reinterpret_cast<size_t>(input->data()) & 0xf) != 0) {
+                           auto buffer = static_cast<float *>(input->data());
+                           auto input_shape = input->shape();
+                           int data_num =
+                             std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int>());
+                           std::vector<float> input_align(buffer, buffer + data_num);
+                           inputs_align.push_back(input_align);
+                           return reinterpret_cast<void *>(inputs_align.back().data());
+                         }
+                         return input->data();
+                       });
   (void)std::transform(std::begin(out_tensors_), std::end(out_tensors_), std::back_inserter(runtimeargs),
                        [](lite::Tensor *output) { return output->MutableData(); });
   using AkgCpuKernelFunction = void (*)(void *);

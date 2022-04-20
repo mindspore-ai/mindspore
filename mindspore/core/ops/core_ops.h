@@ -936,6 +936,7 @@ GVAR_DEF(PrimitivePtr, kPrimReduceFusion, std::make_shared<Primitive>("ReduceFus
 GVAR_DEF(PrimitivePtr, kPrimLayerNormFusion, std::make_shared<Primitive>("LayerNormFusion"));
 GVAR_DEF(PrimitivePtr, kPrimDType, std::make_shared<Primitive>("DType"));
 GVAR_DEF(PrimitivePtr, kPrimDivFusion, std::make_shared<Primitive>("DivFusion"));
+GVAR_DEF(PrimitivePtr, kPrimExpFusion, std::make_shared<Primitive>("ExpFusion"));
 GVAR_DEF(PrimitivePtr, kPrimErf, std::make_shared<Primitive>("Erf"));
 GVAR_DEF(PrimitivePtr, kPrimErfc, std::make_shared<Primitive>("Erfc"));
 GVAR_DEF(PrimitivePtr, kPrimSplice, std::make_shared<Primitive>("Splice"));
