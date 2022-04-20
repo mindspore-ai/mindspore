@@ -73,7 +73,6 @@ mindspore.dataset
     mindspore.dataset.AmazonReviewDataset
     mindspore.dataset.CLUEDataset
     mindspore.dataset.CoNLL2000Dataset
-    mindspore.dataset.CSVDataset
     mindspore.dataset.DBpediaDataset
     mindspore.dataset.EnWik9Dataset
     mindspore.dataset.IMDBDataset
