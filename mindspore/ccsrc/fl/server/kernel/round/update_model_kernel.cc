@@ -14,17 +14,26 @@
  * limitations under the License.
  */
 
+#include "fl/server/kernel/round/update_model_kernel.h"
+
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
-#include <utility>
-#include "fl/server/kernel/round/update_model_kernel.h"
 
 namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
+namespace {
+const size_t kLevelNum = 2;
+const uint64_t kMaxLevelNum = 2880;
+const uint64_t kMinLevelNum = 0;
+const int kBase = 10;
+const uint64_t kMinuteToSecond = 60;
+const uint64_t kSecondToMills = 1000;
+const uint64_t kDefaultLevel1 = 5;
+const uint64_t kDefaultLevel2 = 15;
+}  // namespace
 const char *kCountForAggregation = "count_for_aggregation";
 
 void UpdateModelKernel::InitKernel(size_t threshold_count) {
@@ -49,6 +58,8 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   auto last_cnt_handler = [this](std::shared_ptr<ps::core::MessageHandler>) { RunAggregation(); };
   DistributedCountService::GetInstance().RegisterCounter(kCountForAggregation, threshold_count,
                                                          {first_cnt_handler, last_cnt_handler});
+  std::string participation_time_level_str = ps::PSContext::instance()->participation_time_level();
+  CheckAndTransPara(participation_time_level_str);
 }
 
 bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
@@ -109,6 +120,7 @@ bool UpdateModelKernel::Launch(const uint8_t *req_data, size_t len,
   }
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   IncreaseAcceptClientNum();
+  RecordCompletePeriod(device_meta);
   SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
 
   result_code = CountForAggregation(update_model_fl_id);
@@ -131,6 +143,18 @@ bool UpdateModelKernel::Reset() {
 }
 
 void UpdateModelKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) {}
+
+const std::vector<std::pair<uint64_t, uint32_t>> &UpdateModelKernel::GetCompletePeriodRecord() {
+  std::lock_guard<std::mutex> lock(participation_time_and_num_mtx_);
+  return participation_time_and_num_;
+}
+
+void UpdateModelKernel::ResetParticipationTimeAndNum() {
+  std::lock_guard<std::mutex> lock(participation_time_and_num_mtx_);
+  for (auto &it : participation_time_and_num_) {
+    it.second = 0;
+  }
+}
 
 void UpdateModelKernel::RunAggregation() {
   auto is_last_iter_valid = Executor::GetInstance().RunAllWeightAggregation();
@@ -609,6 +633,65 @@ void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fb
   auto rsp_update_model = rsp_update_model_builder.Finish();
   fbb->Finish(rsp_update_model);
   return;
+}
+
+void UpdateModelKernel::RecordCompletePeriod(const DeviceMeta &device_meta) {
+  std::lock_guard<std::mutex> lock(participation_time_and_num_mtx_);
+  uint64_t start_fl_job_time = device_meta.now_time();
+  uint64_t update_model_complete_time = ps::core::CommUtil::GetNowTime().time_stamp;
+  if (start_fl_job_time >= update_model_complete_time) {
+    MS_LOG(WARNING) << "start_fl_job_time " << start_fl_job_time << " is larger than update_model_complete_time "
+                    << update_model_complete_time;
+    return;
+  }
+  uint64_t cost_time = update_model_complete_time - start_fl_job_time;
+  MS_LOG(DEBUG) << "start_fl_job time  is " << start_fl_job_time << " update_model time is "
+                << update_model_complete_time;
+  for (auto &it : participation_time_and_num_) {
+    if (cost_time < it.first) {
+      it.second++;
+    }
+  }
+}
+
+void UpdateModelKernel::CheckAndTransPara(const std::string &participation_time_level) {
+  std::lock_guard<std::mutex> lock(participation_time_and_num_mtx_);
+  // The default time level is 5min and 15min, trans time to millisecond
+  participation_time_and_num_.emplace_back(std::make_pair(kDefaultLevel1 * kMinuteToSecond * kSecondToMills, 0));
+  participation_time_and_num_.emplace_back(std::make_pair(kDefaultLevel2 * kMinuteToSecond * kSecondToMills, 0));
+  participation_time_and_num_.emplace_back(std::make_pair(UINT64_MAX, 0));
+  std::vector<std::string> time_levels;
+  std::istringstream iss(participation_time_level);
+  std::string output;
+  while (std::getline(iss, output, ',')) {
+    if (!output.empty()) {
+      time_levels.emplace_back(std::move(output));
+    }
+  }
+  if (time_levels.size() != kLevelNum) {
+    MS_LOG(WARNING) << "Parameter participation_time_level is not correct";
+    return;
+  }
+  uint64_t level1 = std::strtoull(time_levels[0].c_str(), nullptr, kBase);
+  if (level1 > kMaxLevelNum || level1 <= kMinLevelNum) {
+    MS_LOG(WARNING) << "Level1 partmeter " << level1 << " is not legal";
+    return;
+  }
+
+  uint64_t level2 = std::strtoull(time_levels[1].c_str(), nullptr, kBase);
+  if (level2 > kMaxLevelNum || level2 <= kMinLevelNum) {
+    MS_LOG(WARNING) << "Level2 partmeter " << level2 << "is not legal";
+    return;
+  }
+  if (level1 >= level2) {
+    MS_LOG(WARNING) << "Level1 parameter " << level1 << " is larger than level2 " << level2;
+    return;
+  }
+  // Save the the parament of user
+  participation_time_and_num_.clear();
+  participation_time_and_num_.emplace_back(std::make_pair(level1 * kMinuteToSecond * kSecondToMills, 0));
+  participation_time_and_num_.emplace_back(std::make_pair(level2 * kMinuteToSecond * kSecondToMills, 0));
+  participation_time_and_num_.emplace_back(std::make_pair(UINT64_MAX, 0));
 }
 
 REG_ROUND_KERNEL(updateModel, UpdateModelKernel)

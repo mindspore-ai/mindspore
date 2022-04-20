@@ -91,6 +91,7 @@ void Server::Run() {
   RegisterRoundKernel();
   InitMetrics();
   Recover();
+  iteration_->StartThreadToRecordDataRate();
   MS_LOG(INFO) << "Server started successfully.";
   safemode_ = false;
   is_ready_ = true;
@@ -261,6 +262,14 @@ void Server::InitIteration() {
   iteration_->InitRounds(communicators_with_worker_, time_out_cb, finish_iter_cb);
 
   iteration_->InitGlobalIterTimer(time_out_cb);
+  auto file_config_ptr = std::make_shared<ps::core::FileConfiguration>(ps::PSContext::instance()->config_file_path());
+  MS_EXCEPTION_IF_NULL(file_config_ptr);
+  if (!file_config_ptr->Initialize()) {
+    MS_LOG(WARNING) << "Initializing for Config file path failed!" << ps::PSContext::instance()->config_file_path()
+                    << " may be invalid or not exist.";
+    return;
+  }
+  iteration_->SetFileConfig(file_config_ptr);
   return;
 }
 
