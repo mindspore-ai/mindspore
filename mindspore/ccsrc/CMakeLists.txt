@@ -367,9 +367,10 @@ if(ENABLE_GPU)
             ${CUDA_PATH}/lib64/libcusolver.so
             ${CUDA_PATH}/lib64/libcufft.so
             ${CUDA_PATH}/lib64/libcusparse.so)
-    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
-    endif()
+endif()
+
+if(NOT WIN32)
+    target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
 endif()
 
 if(ENABLE_DEBUGGER)
@@ -534,10 +535,6 @@ endif()
 
 if(USE_GLOG)
     target_link_libraries(_c_expression PRIVATE mindspore::glog)
-endif()
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    target_link_libraries(mindspore PUBLIC mindspore::crypto mindspore::ssl)
 endif()
 
 if(ENABLE_GPU)
