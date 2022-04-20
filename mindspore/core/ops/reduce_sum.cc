@@ -209,5 +209,7 @@ AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const Primit
                                      primitive->name());
   return abstract::MakeAbstract(ReduceSumInferShape(primitive, input_args), ReduceSumInferType(primitive, input_args));
 }
+
+REGISTER_PRIMITIVE_C(kNameReduceSum, ReduceSum);
 }  // namespace ops
 }  // namespace mindspore

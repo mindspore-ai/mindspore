@@ -108,27 +108,29 @@ const NodePtrList &LiteGraph::GetOrderedNodes() {
   return ops_;
 }
 
+PrimOpPtr CreateOp(const std::string &op, const std::string &debug_name) {
+  auto node = OpRegistry::Instance().NewOp(op);
+  node->SetDebugName(debug_name);
+  return node;
+}
+
 NodePtr LiteGraph::GraphBuilderBase::Emit(const std::string &op, const NodePtrList &inputs, const DAttrs &attrs) const {
-  PrimOpPtr op_ptr = CreateOp(op);
+  PrimOpPtr op_ptr = CreateOp(op, graph_->NodeName());
   auto baseinfo = op_ptr->Infer(inputs, attrs);
   op_ptr->SetInputs(inputs);
   op_ptr->SetAttrs(attrs);
   op_ptr->SetBaseInfo(baseinfo);
-  return graph_->Add(op_ptr);
+  (void)graph_->ops_.emplace_back(op_ptr);
+  return op_ptr;
 }
 
 NodePtr LiteGraph::GraphBuilderBase::Op(const std::string &op, const NodeBase &baseinfo, const NodePtrList &inputs,
                                         const DAttrs &attrs) const {
-  PrimOpPtr op_ptr = CreateOp(op);
+  PrimOpPtr op_ptr = CreateOp(op, graph_->NodeName());
   op_ptr->SetInputs(inputs);
   op_ptr->SetAttrs(attrs);
-  op_ptr->SetBaseInfo(baseinfo);
-  return graph_->Add(op_ptr);
-}
-
-PrimOpPtr LiteGraph::GraphBuilderBase::CreateOp(const std::string &op) const {
-  auto node = OpRegistry::Instance().NewOp(op);
-  node->SetDebugName(graph_->NodeName());
-  return node;
+  op_ptr->SetBaseInfo({baseinfo});
+  (void)graph_->ops_.emplace_back(op_ptr);
+  return op_ptr;
 }
 }  // namespace mindspore::graphkernel::inner

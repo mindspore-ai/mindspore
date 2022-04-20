@@ -18,10 +18,10 @@
 #include <utility>
 
 namespace mindspore::graphkernel::inner {
-void Node::SetBaseInfo(NodeBase baseinfo) {
-  this->shape = std::move(baseinfo.shape);
-  this->type = std::move(baseinfo.type);
-  this->format = std::move(baseinfo.format);
+void Node::SetBaseInfo(const NodeBaseList &baseinfo) {
+  this->shape = std::move(baseinfo[0].shape);
+  this->type = std::move(baseinfo[0].type);
+  this->format = std::move(baseinfo[0].format);
 }
 
 std::string Node::ToString() const {

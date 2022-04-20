@@ -46,6 +46,7 @@ struct NodeBase {
   TypeId type;
   DFormat format;
 };
+using NodeBaseList = std::vector<NodeBase>;
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -58,7 +59,7 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
   virtual NType NodeType() { return NType::Base; }
   virtual std::string ToString() const;
 
-  void SetBaseInfo(NodeBase baseinfo);
+  void SetBaseInfo(const NodeBaseList &baseinfo);
   void AddInput(const NodePtr &new_input);
   void SetInput(size_t i, const NodePtr &new_input);
   void SetInputs(const NodePtrList &inputs);

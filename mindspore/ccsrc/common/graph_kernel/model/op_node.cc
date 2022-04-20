@@ -19,20 +19,15 @@
 #include <algorithm>
 #include <set>
 #include <sstream>
-#include <vector>
 #include <functional>
 #include <numeric>
+#include <utility>
 
+#include "abstract/ops/primitive_infer_map.h"
 #include "utils/hash_map.h"
 #include "common/graph_kernel/model/node.h"
 
 namespace mindspore::graphkernel::inner {
-namespace {
-constexpr size_t kFirstDataIndex = 0;
-constexpr size_t kSecondDataIndex = 1;
-constexpr size_t kThirdDataIndex = 2;
-}  // namespace
-
 std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   bool is_int64 = true;
   auto get_int_value = [&is_int64](const ValuePtr &value) -> int64_t {
@@ -51,46 +46,104 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   return list_int;
 }
 
-void PrimOp::Check(const NodePtrList &inputs, const DAttrs &attrs) {
-  CheckShape(inputs, attrs);
-  CheckType(inputs, attrs);
-  CheckFormat(inputs, attrs);
-}
-
-// check all type to be identical
-void PrimOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
-  TypeId tid = inputs[0]->type;
-  for (size_t i = 1; i < inputs.size(); i++) {
-    if (inputs[i]->type != tid) {
-      MS_LOG(EXCEPTION) << "Incompatible dtype between input " << 0 << " and input " << i;
-    }
+AbstractBasePtr InferWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
+  auto iter = frontend_infer_func.find(prim);
+  if (iter != frontend_infer_func.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second.infer_shape_impl_);
+    return iter->second.infer_shape_impl_(nullptr, prim, abs_list);
   }
-}
-
-// check all formats are compatible, only DefaultFormat is compatible with others
-void PrimOp::CheckFormat(const NodePtrList &inputs, const DAttrs &) {
-  DFormat res = inputs[0]->format;
-  size_t i = 0;
-  for (size_t j = 1; j < inputs.size(); j++) {
-    if (inputs[j]->format != res) {
-      if (inputs[j]->format != kOpFormat_DEFAULT && res != kOpFormat_DEFAULT) {
-        MS_LOG(EXCEPTION) << "Incompatible format between input " << i << " and input " << (j + 1);
-      }
-      if (res == kOpFormat_DEFAULT && j < (inputs.size() - 1)) {
-        res = inputs[j]->format;
-        i = j + 1;
-      }
-    }
+  auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
+  auto iter2 = backend_infer_func.find(prim);
+  if (iter2 != backend_infer_func.end()) {
+    MS_EXCEPTION_IF_NULL(iter2->second.infer_shape_impl_);
+    return iter2->second.infer_shape_impl_(nullptr, prim, abs_list);
+  } else {
+    MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
+  return nullptr;
 }
 
-NodeBase PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
+NodeBase ExtractAbstract(const AbstractBasePtr &abs) {
+  NodeBase node;
+  if (abs->isa<abstract::AbstractTensor>()) {
+    auto shape_ptr = abs->BuildShape()->cast<abstract::ShapePtr>();
+    if (shape_ptr != nullptr) {
+      node.shape = shape_ptr->shape();
+    }
+    node.type = abs->cast<abstract::AbstractTensorPtr>()->element()->BuildType()->type_id();
+  } else {  // abstract::AbstractScalar
+    // leave the node.shape empty
+    node.type = abs->BuildType()->type_id();
+  }
+  return node;
+}
+
+NodeBaseList PrimOp::InferShapeType(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+  auto iter = op_primc_fns.find(op_);
+  if (iter == op_primc_fns.end()) {
+    MS_LOG(EXCEPTION) << "The PrimitiveC of [" << op_ << "] is not defined.";
+  }
+  auto primc = iter->second();
+  primc->SetAttrs(attrs);
+  AbstractBasePtrList inputs_abstract;
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_abstract),
+                       [](const NodePtr &node) -> AbstractBasePtr {
+                         return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node->type), node->shape);
+                       });
+  RectifyAbstract(primc, &inputs_abstract);
+  AbstractBasePtr infer_result = InferWithAbstract(primc, inputs_abstract);
+  MS_EXCEPTION_IF_NULL(infer_result);
+  NodeBaseList result;
+  if (infer_result->isa<abstract::AbstractTuple>()) {
+    for (auto abs : infer_result->cast<abstract::AbstractTuplePtr>()->elements()) {
+      (void)result.emplace_back(ExtractAbstract(abs));
+    }
+  } else {
+    (void)result.emplace_back(ExtractAbstract(infer_result));
+  }
+  return result;
+}
+
+NodeBaseList PrimOp::Infer(const NodePtrList &inputs, const DAttrs &attrs) {
   Check(inputs, attrs);
-  NodeBase nodebase;
-  nodebase.shape = InferShape(inputs, attrs);
-  nodebase.type = InferType(inputs, attrs);
-  nodebase.format = InferFormat(inputs, attrs);
-  return nodebase;
+  NodeBaseList result;
+  auto format = InferFormat(inputs, attrs);
+  auto shapes = InferShape(inputs, attrs);
+  auto types = InferType(inputs, attrs);
+  // use PrimitiveC's inference function when InferShape or InferType returns empty result.
+  if (shapes.empty() || types.empty()) {
+    result = InferShapeType(inputs, attrs);
+    if (!shapes.empty()) {
+      if (shapes.size() != result.size()) {
+        MS_LOG(EXCEPTION) << "The expected shapes num is " << result.size() << " but got " << shapes.size();
+      }
+      for (size_t i = 0; i < shapes.size(); i++) {
+        result[i].shape = shapes[i];
+      }
+    }
+    if (!types.empty()) {
+      if (types.size() != result.size()) {
+        MS_LOG(EXCEPTION) << "The expected types num is " << result.size() << " but got " << types.size();
+      }
+      for (size_t i = 0; i < types.size(); i++) {
+        result[i].type = types[i];
+      }
+    }
+    for (auto &r : result) {
+      r.format = format;
+    }
+  } else {
+    if (shapes.size() != types.size()) {
+      MS_LOG(EXCEPTION) << "The num of shapes and types should be equal. (" << shapes.size() << " vs " << types.size()
+                        << ")";
+    }
+    for (size_t i = 0; i < shapes.size(); i++) {
+      (void)result.emplace_back(NodeBase{shapes[i], types[i], format});
+    }
+  }
+  return result;
 }
 
 std::string PrimOp::ToString() const {
@@ -281,17 +334,17 @@ DShape BroadcastShape(const NodePtrList &inputs, bool to_nz = false) {
   return output_shape;
 }
 
-DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &) {
+std::vector<DShape> ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   if (std::all_of(inputs.begin(), inputs.end(), [](const NodePtr &input) {
         return input->format == kOpFormat_DEFAULT || input->format == kOpFormat_NHWC || input->format == kOpFormat_NCHW;
       })) {
-    return BroadcastShape(inputs, false);
+    return PrimOp::InferShape(inputs, attrs);
   }
   if (std::all_of(inputs.begin(), inputs.end(), [](const NodePtr &input) {
         return input->format == kOpFormat_DEFAULT || input->format == kOpFormat_NHWC ||
                input->format == kOpFormat_NCHW || input->format == kOpFormat_FRAC_NZ;
       })) {
-    return BroadcastShape(inputs, true);
+    return {BroadcastShape(inputs, true)};
   }
   std::string inputs_format;
   for (const auto &input : inputs) {
@@ -303,176 +356,6 @@ DShape ElemwiseOp::InferShape(const NodePtrList &inputs, const DAttrs &) {
 DFormat ElemwiseOp::InferFormat(const NodePtrList &inputs, const DAttrs &) {
   auto it = std::find_if(inputs.begin(), inputs.end(), [](const NodePtr &i) { return i->format != kOpFormat_DEFAULT; });
   return it == inputs.end() ? kOpFormat_DEFAULT : (*it)->format;
-}
-
-TypeId CastOp::InferType(const NodePtrList &, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "dst_type");
-  auto dst_type = attrs.find("dst_type")->second;
-  if (dst_type->isa<Type>()) {
-    return dst_type->cast<TypePtr>()->type_id();
-  }
-  return StringToTypeId(GetValue<std::string>(dst_type));
-}
-
-void SelectOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
-  if (inputs[kFirstDataIndex]->type != TypeId::kNumberTypeBool) {
-    MS_LOG(EXCEPTION) << "Select's input[0] should be bool type, but got "
-                      << TypeIdToString(inputs[kFirstDataIndex]->type, true);
-  }
-  if (inputs[kSecondDataIndex]->type != inputs[kThirdDataIndex]->type) {
-    MS_LOG(EXCEPTION) << "Select's input[1] and input[2]'s type doesn't match: "
-                      << TypeIdToString(inputs[kSecondDataIndex]->type, true) << " vs "
-                      << TypeIdToString(inputs[kThirdDataIndex]->type, true);
-  }
-}
-
-DShape ReshapeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "shape");
-  auto new_shape = GetListInt(attrs.find("shape")->second);
-  auto origin_shape = inputs[0]->shape;
-  auto origin_product = std::accumulate(origin_shape.begin(), origin_shape.end(), 1, std::multiplies<int64_t>());
-  auto new_product = std::accumulate(new_shape.begin(), new_shape.end(), 1, std::multiplies<int64_t>());
-  if (new_product == 0) {
-    new_product = 1;
-  }
-  for (size_t i = 0; i < new_shape.size(); i++) {
-    if (new_shape[i] == -1) {
-      new_shape[i] = (origin_product / new_product) * (-1);
-      return new_shape;
-    }
-  }
-  if (origin_product != new_product) {
-    MS_LOG(EXCEPTION) << "The shape product before and after reshaping should be equal, but got " << origin_product
-                      << " vs " << new_product;
-  }
-  return new_shape;
-}
-
-DShape BroadcastToOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "shape");
-  return GetListInt(attrs.find("shape")->second);
-}
-
-// check reduce axis in range [-size,size)
-void ReduceOp::Check(const NodePtrList &inputs, const DAttrs &attrs) {
-  PrimOp::Check(inputs, attrs);
-  CHECK_ATTR(attrs, "axis");
-  auto axis = GetListInt(attrs.find("axis")->second);
-  int64_t size = static_cast<int64_t>(inputs[0]->shape.size());
-  auto it = std::find_if(axis.begin(), axis.end(), [&size](const int64_t &i) { return (i >= size || i < (-size)); });
-  if (it != axis.end()) {
-    MS_LOG(EXCEPTION) << "Reduce axis should be in range [" << (-size) << "," << size << ")"
-                      << ", but got " << (*it);
-  }
-}
-
-DShape ReduceOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "axis");
-  CHECK_ATTR(attrs, "keep_dims");
-  auto axis = GetListInt(attrs.find("axis")->second);
-  auto keepdims = GetValue<bool>(attrs.find("keep_dims")->second);
-  if (keepdims) {
-    DShape new_shape = inputs[0]->shape;
-    for (auto x : axis) {
-      new_shape[LongToSize(x)] = 1;
-    }
-    return new_shape;
-  }
-  DShape new_shape;
-  const auto &input_shape = inputs[0]->shape;
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    if (std::find(axis.begin(), axis.end(), i) == axis.end()) {
-      (void)new_shape.emplace_back(input_shape[i]);
-    }
-  }
-  if (new_shape.empty()) {
-    (void)new_shape.emplace_back(1);
-  }
-  return new_shape;
-}
-
-DShape Conv2dOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  auto check_nd = [](const std::vector<int64_t> &shape, size_t n) {
-    if (shape.size() != n) {
-      MS_LOG(EXCEPTION) << "input dimension should be " << n << ", but got  " << shape.size();
-    }
-  };
-  auto shape0 = inputs[0]->shape;
-  auto shape1 = inputs[1]->shape;
-  constexpr auto dim_len = 4;
-  check_nd(shape0, dim_len);
-  check_nd(shape1, dim_len);
-  CHECK_ATTR(attrs, "format");
-  if (inputs[0]->format != kOpFormat_NHWC && inputs[1]->format != kOpFormat_NHWC &&
-      GetValue<std::string>(attrs.find("format")->second) != kOpFormat_NHWC) {
-    MS_LOG(EXCEPTION) << "check NHWC format failed";
-  }
-  const auto axis_n = 0;
-  const auto axis_h = 1;
-  const auto axis_w = 2;
-  auto n = shape0[axis_n];
-  auto h = shape0[axis_h];
-  auto w = shape0[axis_w];
-  auto out_channel = shape1[axis_n];
-  CHECK_ATTR(attrs, "pad_list");
-  CHECK_ATTR(attrs, "pad_mode");
-  CHECK_ATTR(attrs, "kernel_size");
-  CHECK_ATTR(attrs, "stride");
-  CHECK_ATTR(attrs, "dilation");
-  auto pad_list = GetListInt(attrs.find("pad_list")->second);
-  auto pad_mode = GetValue<std::string>(attrs.find("pad_mode")->second);
-  auto kernel_size = GetListInt(attrs.find("kernel_size")->second);
-  auto stride = GetListInt(attrs.find("stride")->second);
-  auto dilation = GetListInt(attrs.find("dilation")->second);
-  check_nd(pad_list, dim_len);
-  constexpr auto kernel_len = 2;
-  check_nd(kernel_size, kernel_len);
-  check_nd(stride, dim_len);
-  check_nd(dilation, dim_len);
-  bool has_pad = false;
-  constexpr auto index1 = 1;
-  constexpr auto index2 = 2;
-  constexpr auto index3 = 3;
-  if (pad_list[0] != pad_list[index1] || pad_list[index2] != pad_list[index3]) {
-    has_pad = true;
-  } else {
-    if (pad_mode == "VALID" || pad_mode == "valid") {
-      if (std::any_of(pad_list.begin(), pad_list.end(), [](int i) { return i == 0; })) {
-        has_pad = true;
-      }
-    }
-  }
-  if (!has_pad) {
-    pad_list = {0, 0, 0, 0};
-  }
-  auto k_h = (kernel_size[0] - 1) * dilation[index2] + 1;
-  auto k_w = (kernel_size[index1] - 1) * dilation[index3] + 1;
-  auto out_h = (h + pad_list[0] + pad_list[index1] - k_h) / stride[index2] + 1;
-  auto out_w = (w + pad_list[index2] + pad_list[index3] - k_w) / stride[index3] + 1;
-  std::vector<int64_t> output = {n, out_h, out_w, out_channel};
-  return output;
-}
-
-TypeId Conv2dOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
-  if (attrs.find("dst_type") == attrs.end()) return inputs[0]->type;
-  auto dst_type = attrs.find("dst_type")->second;
-  if (dst_type->isa<Type>()) {
-    return dst_type->cast<TypePtr>()->type_id();
-  }
-  return StringToTypeId(GetValue<std::string>(dst_type));
-}
-
-DShape TransposeOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  CHECK_ATTR(attrs, "perm");
-  auto perm = GetListInt(attrs.find("perm")->second);
-  auto &old_shape = inputs[0]->shape;
-  DShape new_shape;
-  if (perm.size() != old_shape.size()) {
-    MS_LOG(EXCEPTION) << "perm.size() != old_shape.size(). " << perm.size() << " vs " << old_shape.size();
-  }
-  (void)std::transform(perm.begin(), perm.end(), std::back_inserter(new_shape),
-                       [&old_shape](int64_t p) { return old_shape[LongToSize(p)]; });
-  return new_shape;
 }
 
 DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
@@ -491,37 +374,7 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
   return kOpFormat_DEFAULT;
 }
 
-DShape MatMulOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
-  std::vector<int64_t> shape0 = inputs[0]->shape;
-  std::vector<int64_t> shape1 = inputs[1]->shape;
-  if (shape0.size() != 2 || shape1.size() != 2) {
-    MS_LOG(EXCEPTION) << "MatMul's input's dimension must be 2, but got " << shape0.size() << " and " << shape1.size();
-  }
-  CHECK_ATTR(attrs, "transpose_a");
-  CHECK_ATTR(attrs, "transpose_b");
-  auto transpose_a = GetValue<bool>(attrs.find("transpose_a")->second);
-  auto transpose_b = GetValue<bool>(attrs.find("transpose_b")->second);
-  int64_t m = transpose_a ? shape0[1] : shape0[0];
-  int64_t k1 = transpose_a ? shape0[0] : shape0[1];
-  int64_t k2 = transpose_b ? shape1[1] : shape1[0];
-  int64_t n = transpose_b ? shape1[0] : shape1[1];
-  if (k1 != k2) {
-    MS_LOG(EXCEPTION) << "MatMul's inputs have different k value " << k1 << " vs " << k2;
-  }
-  std::vector<int64_t> output = {m, n};
-  return output;
-}
-
-TypeId MatMulOp::InferType(const NodePtrList &inputs, const DAttrs &attrs) {
-  if (attrs.find("dst_type") == attrs.end()) return inputs[0]->type;
-  auto dst_type = attrs.find("dst_type")->second;
-  if (dst_type->isa<Type>()) {
-    return dst_type->cast<TypePtr>()->type_id();
-  }
-  return StringToTypeId(GetValue<std::string>(dst_type));
-}
-
-DShape PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+std::vector<DShape> PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   std::vector<int64_t> shape0 = inputs[0]->shape;
   size_t n = shape0.size();
   CHECK_ATTR(attrs, "head");
@@ -536,10 +389,10 @@ DShape PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   for (size_t i = 0; i < n; i++) {
     (void)output.emplace_back(shape0[i] + pad_before[i] + pad_after[i]);
   }
-  return output;
+  return {output};
 }
 
-DShape UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
+std::vector<DShape> UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   std::vector<int64_t> shape0 = inputs[0]->shape;
   size_t n = shape0.size();
   CHECK_ATTR(attrs, "tail");
@@ -551,10 +404,10 @@ DShape UnPadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   for (size_t i = 0; i < n; i++) {
     (void)output.emplace_back(shape0[i] - unpad_after[i]);
   }
-  return output;
+  return {output};
 }
 
-void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
+void ComplexOp::Check(const NodePtrList &inputs, const DAttrs &) {
   if (inputs[0]->type != TypeId::kNumberTypeFloat32) {
     MS_LOG(EXCEPTION) << "Complex's input[0] should be float32, but got " << TypeIdToString(inputs[0]->type, true);
   }
@@ -564,8 +417,16 @@ void ComplexOp::CheckType(const NodePtrList &inputs, const DAttrs &) {
   }
 }
 
-DShape StandardNormalOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
+std::vector<DShape> StandardNormalOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
   CHECK_ATTR(attrs, "shape");
-  return GetListInt(attrs.find("shape")->second);
+  return {GetListInt(attrs.find("shape")->second)};
+}
+
+void CastOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *) {
+  CHECK_ATTR(prim->attrs(), "dst_type");
+  auto dst_type = prim->GetAttr("dst_type");
+  if (dst_type->isa<StringImm>()) {
+    prim->set_attr("dst_type", StringToType(GetValue<std::string>(dst_type)));
+  }
 }
 }  // namespace mindspore::graphkernel::inner

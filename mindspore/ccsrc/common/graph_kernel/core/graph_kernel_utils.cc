@@ -28,6 +28,8 @@
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
+#include "common/graph_kernel/model/op_node.h"
+#include "common/graph_kernel/model/graph_builder.h"
 
 constexpr int MINIMUM_MAJOR_VERSION = 7;
 

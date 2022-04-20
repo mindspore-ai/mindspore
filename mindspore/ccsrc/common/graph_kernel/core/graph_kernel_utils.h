@@ -24,7 +24,6 @@
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
 #include "common/graph_kernel/model/lite_graph.h"
-#include "common/graph_kernel/model/graph_builder.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
 namespace mindspore::graphkernel {
