@@ -17,13 +17,15 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore._checkparam import Rel, Validator as validator
 from mindspore.ops.primitive import constexpr
+from mindspore.common.tensor import Tensor
 import mindspore.context as context
 from mindspore.common import dtype as mstype
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
+from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from ..cell import Cell
 
 __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d',
-           'AdaptiveMaxPool2d', 'AdaptiveAvgPool2d']
+           'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d', 'AdaptiveAvgPool2d']
 
 
 class _PoolNd(Cell):
@@ -737,3 +739,63 @@ class AdaptiveMaxPool2d(Cell):
 
     def construct(self, input_x):
         return self.adaptive_max_pool2d(input_x)
+
+
+class AdaptiveMaxPool3d(Cell):
+    r"""
+    Applies a 3D adaptive max pooling over an input signal composed of several input planes.
+
+    The output is of size :math:`(D, H, W)`, for any input size.
+    The number of output features is equal to the number of input planes.
+
+    Args:
+        output_size (Union[int, tuple]): The target output size is :math:`(D, H, W)`.
+            `ouput_size` can be a tuple with 3 elements, or a single D for :math:`(D, D, D)`. :math:`D`,
+            :math:`H` and :math:`W` can be int or None which means the output size is the same as that of
+            the input.
+
+        return_indices (bool): If `return_indices` is True, the indices of max value would be output.
+            Default: False.
+
+    Inputs:
+        - **x** (Tensor) - It is a 4D or 5D Tensor with int8, int16, int32, int64, uint8, uint16, uint32,
+          uint64, float16, float32 or float64 data type.
+
+    Outputs:
+        - **y** (Tensor) - A Tensor, with the same number of dims and data type as the `x`.
+        - **argmax** (Tensor) - The indices along with the outputs, which is a Tensor, with the same shape as the
+          `y` and int32 data type. It will output only when `return_indices` is True.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the dimensions number of `x` is not 4 or 5.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
+                   float16, float32 or float64.
+        ValueError: If the shape of `output_size` is not (3,).
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
+        >>> output_size = (1, 1, 2)
+        >>> net = nn.AdaptiveMaxPool3d(output_size, True)
+        >>> output = net(x)
+        >>> print(output[0].asnumpy())
+        [[[[33. 35.]]]]
+        >>> print(output[1].asnumpy())
+        [[[[33 35]]]]
+    """
+
+    def __init__(self, output_size, return_indices=False):
+        """Initialize AdaptiveMaxPool3d."""
+        super(AdaptiveMaxPool3d, self).__init__()
+        self.output_size = Tensor(output_size, dtype=mstype.int32)
+        self.return_indices = return_indices
+        self.adaptive_max_pool3d = AdaptiveMaxPool3D()
+
+    def construct(self, x):
+        output = self.adaptive_max_pool3d(x, self.output_size)
+        if self.return_indices:
+            return output
+        return output[0]
