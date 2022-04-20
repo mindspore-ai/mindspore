@@ -344,13 +344,6 @@ abstract::AbstractBasePtrList HyperMap::NormalizeArgs(const AbstractBasePtrList 
   return broadened;
 }
 
-REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
-                         (void)py::class_<HyperMapPy, MetaFuncGraph, std::shared_ptr<HyperMapPy>>(*m, "HyperMap_")
-                           .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"),
-                                py::arg("ops"))
-                           .def(py::init<bool>(), py::arg("reverse"));
-                       }));
-
 namespace {
 bool CheckSequenceAllTensor(const abstract::AbstractTuplePtr &tuple) {
   MS_EXCEPTION_IF_NULL(tuple);
@@ -514,11 +507,6 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
 
   MS_LOG(EXCEPTION) << "'Tail' arg0 must be AbstractTuple or AbstractList, but got " << a->ToString();
 }
-
-REGISTER_PYBIND_DEFINE(
-  Tail_, ([](const py::module *m) {
-    (void)py::class_<Tail, MetaFuncGraph, std::shared_ptr<Tail>>(*m, "Tail_").def(py::init<std::string &>());
-  }));
 
 FuncGraphPtr MakeTupleGradient::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   int64_t tuple_size = SizeToLong(args_spec_list.size());
@@ -780,14 +768,6 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   return grad_fg;
 }
 
-REGISTER_PYBIND_DEFINE(GradOperation_, ([](const py::module *m) {
-                         (void)py::class_<GradOperation, MetaFuncGraph, std::shared_ptr<GradOperation>>(
-                           *m, "GradOperation_")
-                           .def(py::init<std::string &>(), py::arg("fn"))
-                           .def(py::init<std::string &, bool, bool, bool, bool>(), py::arg("fn"), py::arg("get_all"),
-                                py::arg("get_by_list"), py::arg("sens_param"), py::arg("get_by_position"));
-                       }));
-
 // Generate the vmap_graph.
 VmapOperation::VmapOperation(const std::string &name) : MetaFuncGraph(name) {
   auto default_zero = std::make_shared<Int64Imm>(static_cast<int64_t>(0));
@@ -937,12 +917,6 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   return vmap_fg;
 }
 
-REGISTER_PYBIND_DEFINE(VmapOperation_, ([](const py::module *m) {
-                         (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(
-                           *m, "VmapOperation_")
-                           .def(py::init<const std::string &>(), py::arg("fn"));
-                       }));
-
 TaylorOperation::TaylorOperation(const std::string &name) : MetaFuncGraph(name) {
   // def Taylor(func:read):
   signatures_ = std::vector<Signature>({{"func", SignatureEnumRW::kRWRead, SignatureEnumKind::kKindDefault}});
@@ -1009,155 +983,6 @@ FuncGraphPtr TaylorOperation::GenerateFuncGraph(const AbstractBasePtrList &args_
   grad_fg->set_output(NewValueNode(k_child));
   // return Taylor(fn)(inputs)
   return grad_fg;
-}
-
-REGISTER_PYBIND_DEFINE(TaylorOperation_, ([](const py::module *m) {
-                         (void)py::class_<TaylorOperation, MetaFuncGraph, std::shared_ptr<TaylorOperation>>(
-                           *m, "TaylorOperation_")
-                           .def(py::init<const std::string &>(), py::arg("fn"));
-                       }));
-
-// Generate the ListMap func graph.
-FuncGraphPtr ListMap::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  size_t args_num = args_spec_list.size();
-  // args: fn, list1, list2, ...
-  if (args_num < 2) {
-    MS_LOG(EXCEPTION) << "The list_map operator must need at least two arguments, but the size of arguments is "
-                      << args_num << ".";
-  }
-
-  for (size_t i = 1; i < args_num; ++i) {
-    if (typeid(args_spec_list[i]) != typeid(AbstractBase)) {
-      // The function currently not be use
-      MS_LOG(EXCEPTION) << "The type of arguments of list_map operator must be lists. But got "
-                        << args_spec_list[i]->ToString();
-    }
-  }
-
-  FuncGraphPtr fg_ptr = std::make_shared<FuncGraph>();
-  fg_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  fg_ptr->debug_info()->set_name("list_map");
-  AnfNodePtr fn = fg_ptr->add_parameter();
-
-  std::vector<AnfNodePtr> lists;
-  for (size_t i = 1; i < args_num; ++i) {
-    lists.push_back(fg_ptr->add_parameter());
-  }
-
-  std::vector<AnfNodePtr> iters;
-  (void)std::transform(lists.begin(), lists.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("list_iter")), item});
-  });
-
-  std::vector<AnfNodePtr> nexts;
-  (void)std::transform(iters.begin(), iters.end(), std::back_inserter(nexts), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("next")), item});
-  });
-
-  std::vector<AnfNodePtr> values;
-  (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(values), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item});
-  });
-
-  (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
-  });
-
-  (void)values.insert(values.begin(), fn);
-  AnfNodePtr cnode_graph = fg_ptr->NewCNodeInOrder(values);
-  AnfNodePtr resl = fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimMakeList), cnode_graph});
-
-  FuncGraphPtr fgnext_ptr = std::make_shared<FuncGraph>();
-  fgnext_ptr->debug_info()->set_name("body");
-
-  FuncGraphPtr fgcond_ptr = std::make_shared<FuncGraph>();
-  fgcond_ptr->debug_info()->set_name("cond");
-
-  MakeCond(lists, fgnext_ptr, fgcond_ptr);
-  MakeNext(lists, fgcond_ptr, fgnext_ptr);
-
-  CNodePtr output_cnode = fg_ptr->NewCNodeInOrder({NewValueNode(fgcond_ptr), fn, resl});
-
-  auto inputs = output_cnode->inputs();
-  (void)inputs.insert(inputs.end(), iters.begin(), iters.end());
-  output_cnode->set_inputs(inputs);
-
-  fg_ptr->set_output(output_cnode);
-  return fg_ptr;
-}
-
-void ListMap::MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr &fgnext_ptr,
-                       const FuncGraphPtr &fg_ptr) {
-  MS_EXCEPTION_IF_NULL(fg_ptr);
-
-  AnfNodePtr fn = fg_ptr->add_parameter();
-  AnfNodePtr resl = fg_ptr->add_parameter();
-
-  std::vector<AnfNodePtr> iters;
-  (void)std::transform(lists.begin(), lists.end(), std::back_inserter(iters),
-                       [fg_ptr](AnfNodePtr) { return fg_ptr->add_parameter(); });
-
-  std::vector<AnfNodePtr> hasnexts;
-  (void)std::transform(iters.begin(), iters.end(), std::back_inserter(hasnexts), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("hasnext")), item});
-  });
-
-  // cond = reduce(lambda a, b: g.apply(P.bool_and, a, b), hasnexts)
-  FuncGraphPtr fgtrue_ptr = std::make_shared<FuncGraph>();
-  fgtrue_ptr->debug_info()->set_name("ftrue");
-  fgtrue_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-
-  CNodePtr fgtrue_output_cnode = fgtrue_ptr->NewCNodeInOrder({NewValueNode(fgnext_ptr), fn, resl});
-  auto inputs = fgtrue_output_cnode->inputs();
-  (void)inputs.insert(inputs.end(), iters.begin(), iters.end());
-  fgtrue_output_cnode->set_inputs(inputs);
-  fgtrue_ptr->set_output(fgtrue_output_cnode);
-
-  FuncGraphPtr fgfalse_ptr = std::make_shared<FuncGraph>();
-  fgfalse_ptr->debug_info()->set_name("ffalse");
-  fgfalse_ptr->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  fgfalse_ptr->set_output(resl);
-
-  AnfNodePtr output_cnode = fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), NewValueNode(std::string("cond")),
-                                                     NewValueNode(fgtrue_ptr), NewValueNode(fgfalse_ptr)});
-  fgtrue_ptr->set_output(output_cnode);
-}
-
-void ListMap::MakeNext(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr &fgcond_ptr,
-                       const FuncGraphPtr &fg_ptr) {
-  MS_EXCEPTION_IF_NULL(fg_ptr);
-  AnfNodePtr fn = fg_ptr->add_parameter();
-
-  std::vector<AnfNodePtr> iters;
-  (void)std::transform(lists.begin(), lists.end(), std::back_inserter(iters),
-                       [fg_ptr](AnfNodePtr) { return fg_ptr->add_parameter(); });
-
-  std::vector<AnfNodePtr> nexts;
-  (void)std::transform(iters.begin(), iters.end(), std::back_inserter(nexts), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder({NewValueNode(std::string("next")), item});
-  });
-
-  std::vector<AnfNodePtr> values;
-  (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(values), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimTupleGetItem), item, nullptr});
-  });
-
-  iters.clear();
-  (void)std::transform(nexts.begin(), nexts.end(), std::back_inserter(iters), [fg_ptr](AnfNodePtr item) {
-    return fg_ptr->NewCNodeInOrder(
-      {NewValueNode(prim::kPrimTupleGetItem), item, NewValueNode(static_cast<int64_t>(1))});
-  });
-
-  (void)values.insert(values.begin(), fn);
-  AnfNodePtr cnode_graph = fg_ptr->NewCNodeInOrder(values);
-  AnfNodePtr resl = fg_ptr->NewCNodeInOrder({NewValueNode(prim::kPrimListAppend), cnode_graph});
-  CNodePtr output_cnode = fg_ptr->NewCNodeInOrder({NewValueNode(fgcond_ptr), fn, resl});
-
-  auto inputs = output_cnode->inputs();
-  (void)inputs.insert(inputs.end(), iters.begin(), iters.end());
-  output_cnode->set_inputs(inputs);
-  fg_ptr->set_output(output_cnode);
 }
 
 FuncGraphPtr TupleAdd::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
@@ -1336,23 +1161,6 @@ FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &ar
   return ret_graph;
 }
 
-REGISTER_PYBIND_DEFINE(TupleAdd_, ([](const py::module *m) {
-                         (void)py::class_<TupleAdd, MetaFuncGraph, std::shared_ptr<TupleAdd>>(*m, "TupleAdd_")
-                           .def(py::init<std::string &>());
-                       }));
-
-REGISTER_PYBIND_DEFINE(TupleGetItemTensor_, ([](const py::module *m) {
-                         (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(
-                           *m, "TupleGetItemTensor_")
-                           .def(py::init<std::string &>());
-                       }));
-
-REGISTER_PYBIND_DEFINE(SequenceSliceGetItem, ([](const py::module *m) {
-                         (void)py::class_<SequenceSliceGetItem, MetaFuncGraph, std::shared_ptr<SequenceSliceGetItem>>(
-                           *m, "SequenceSliceGetItem_")
-                           .def(py::init<std::string &, std::string &, std::string &>());
-                       }));
-
 namespace {
 FuncGraphPtr GetShard(const AnfNodePtr &shard, const std::vector<AnfNodePtr> &origin_graph_params) {
   FuncGraphPtr shard_child = std::make_shared<FuncGraph>();
@@ -1418,11 +1226,6 @@ FuncGraphPtr Shard::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list)
   shard_fg->set_output(NewValueNode(shard_child));
   return shard_fg;
 }
-
-REGISTER_PYBIND_DEFINE(Shard_, ([](const py::module *m) {
-                         (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
-                           .def(py::init<const std::string &>(), py::arg("fn"));
-                       }));
 
 void ListSliceSetItem::CheckArgs(const AbstractBasePtrList &args_spec_list) {
   constexpr size_t kSliceSetItemArgsSizeargs_size = 3;
@@ -1520,12 +1323,6 @@ AnfNodePtr ListSliceSetItem::GetAssignNode(const FuncGraphPtr &func_graph, const
   }
   return func_graph->NewCNodeInOrder(elems);
 }
-
-REGISTER_PYBIND_DEFINE(ListSliceSetItem_, ([](const py::module *m) {
-                         (void)py::class_<ListSliceSetItem, MetaFuncGraph, std::shared_ptr<ListSliceSetItem>>(
-                           *m, "ListSliceSetItem_")
-                           .def(py::init<const std::string &>());
-                       }));
 
 FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
   this->CheckArgs(args_spec_list);

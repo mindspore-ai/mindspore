@@ -51,10 +51,5 @@ FuncGraphPtr ListAppend::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ret->set_output(ret->NewCNode(elems));
   return ret;
 }
-
-REGISTER_PYBIND_DEFINE(ListAppend_, ([](const py::module *m) {
-                         (void)py::class_<ListAppend, MetaFuncGraph, std::shared_ptr<ListAppend>>(*m, "ListAppend_")
-                           .def(py::init<std::string &>());
-                       }));
 }  // namespace prim
 }  // namespace mindspore

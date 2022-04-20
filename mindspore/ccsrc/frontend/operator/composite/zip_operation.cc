@@ -92,11 +92,5 @@ FuncGraphPtr ZipOperation::GenerateFuncGraph(const AbstractBasePtrList &args_spe
   ret_graph->set_output(ret_graph->NewCNode(make_tuple_nodes));
   return ret_graph;
 }
-
-REGISTER_PYBIND_DEFINE(ZipOperation_, ([](const py::module *m) {
-                         (void)py::class_<ZipOperation, MetaFuncGraph, std::shared_ptr<ZipOperation>>(*m,
-                                                                                                      "ZipOperation_")
-                           .def(py::init<std::string &>());
-                       }));
 }  // namespace prim
 }  // namespace mindspore

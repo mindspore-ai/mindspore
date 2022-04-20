@@ -15,6 +15,7 @@
  */
 
 #include <pybind11/operators.h>
+#include <stack>
 #include "kernel/oplib/oplib.h"
 #include "pipeline/jit/pipeline.h"
 #include "frontend/operator/composite/composite.h"
@@ -71,8 +72,33 @@ PYBIND11_MODULE(_c_expression, m) {
   m.doc() = "MindSpore c plugin";
 
   auto fns = mindspore::PybindDefineRegister::AllFuncs();
+  auto inheritance_map = mindspore::PybindDefineRegister::GetInheritanceMap();
+  std::set<std::string> has_inited = {""};
+
+  auto get_inherit_stack = [&inheritance_map](const string &class_name) -> std::vector<std::string> {
+    std::vector<string> parent_names;
+    for (auto parent_name = inheritance_map.find(class_name); parent_name != inheritance_map.end();
+         parent_name = inheritance_map.find(parent_name->second)) {
+      parent_names.emplace_back(parent_name->second);
+    }
+    return parent_names;
+  };
+
   for (auto &item : fns) {
+    if (has_inited.find(item.first) != has_inited.end()) {
+      continue;
+    }
+    auto parent_names = get_inherit_stack(item.first);
+    // init parent class
+    std::for_each(parent_names.rbegin(), parent_names.rend(), [&fns, &has_inited, &m](const std::string &parent_name) {
+      if (has_inited.find(parent_name) == has_inited.end()) {
+        fns[parent_name](&m);
+        has_inited.emplace(parent_name);
+      }
+    });
+    // init current class
     item.second(&m);
+    has_inited.emplace(item.first);
   }
 
   mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());

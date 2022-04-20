@@ -370,12 +370,6 @@ FuncGraphPtr VmapGeneralPreprocess::GenerateFuncGraph(const AbstractBasePtrList 
   return fg;
 }
 
-REGISTER_PYBIND_DEFINE(VmapGeneralPreprocess_, ([](const py::module *m) {
-                         (void)py::class_<VmapGeneralPreprocess, MetaFuncGraph, std::shared_ptr<VmapGeneralPreprocess>>(
-                           *m, "VmapGeneralPreprocess_")
-                           .def(py::init<std::string &>(), py::arg("fn"));
-                       }));
-
 CNodeInpusList VmapGeneralRule::ConstructMapInput(const InputsAbstractList &tuple_elements_abstract, bool wrapped_tuple,
                                                   int64_t args_size) {
   AnfNodePtr single_input = nullptr;

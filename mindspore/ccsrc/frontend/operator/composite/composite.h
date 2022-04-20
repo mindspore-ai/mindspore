@@ -178,19 +178,6 @@ class TaylorOperation : public MetaFuncGraph {
 };
 using TaylorOperationPtr = std::shared_ptr<TaylorOperation>;
 
-class ListMap {
- public:
-  explicit ListMap(const std::string &name) : name_(name) { cache_.clear(); }
-  ~ListMap() = default;
-  void MakeCond(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr &gnext_ptr, const FuncGraphPtr &graph_ptr);
-  void MakeNext(const std::vector<AnfNodePtr> &lists, const FuncGraphPtr &gcond_ptr, const FuncGraphPtr &graph_ptr);
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list);
-
- private:
-  std::string name_;
-  std::map<std::vector<AnyPtr>, FuncGraphPtr> cache_;
-};
-
 class TupleAdd : public MetaFuncGraph {
  public:
   explicit TupleAdd(const std::string &name) : MetaFuncGraph(name) {}
