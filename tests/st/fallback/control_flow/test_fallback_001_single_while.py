@@ -184,8 +184,8 @@ def test_single_while_numpy():
     assert (res.asnumpy() == [1, 1, 3, 4, 5]).all()
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_single_while_builtin_function_abs():
+@pytest.mark.skip(reason='Not support variable in graph fallback feature yet')
+def test_single_while_builtin_function_abs_tensor():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
@@ -204,8 +204,56 @@ def test_single_while_builtin_function_abs():
     assert res_y == 3
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_single_while_builtin_function_max():
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_while_builtin_function_abs_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        x = np.array(-11)
+        y = np.array(0)
+        while abs(x) > 2:
+            x += np.array(4)
+            y += np.array(1)
+        return Tensor(x), Tensor(y)
+    res_x, res_y = control_flow_while()
+    assert res_x == 1
+    assert res_y == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_while_builtin_function_abs():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        x = -11
+        y = 0
+        while abs(x) > 2:
+            x += 4
+            y += 1
+        return Tensor(x), Tensor(y)
+    res_x, res_y = control_flow_while()
+    assert res_x == 1
+    assert res_y == 3
+
+
+@pytest.mark.skip(reason='Not support variable in graph fallback feature yet')
+def test_single_while_builtin_function_max_tensor():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
@@ -219,6 +267,30 @@ def test_single_while_builtin_function_max():
             x -= Tensor(4)
             y -= Tensor(1)
         return x, y
+    res_x, res_y = control_flow_while()
+    assert res_x == -5
+    assert res_y == 3
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_while_builtin_function_max_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        x = np.array(3)
+        y = np.array(5)
+        while max(x, y) > 3:
+            x -= np.array(4)
+            y -= np.array(1)
+        return Tensor(x), Tensor(y)
     res_x, res_y = control_flow_while()
     assert res_x == -5
     assert res_y == 3

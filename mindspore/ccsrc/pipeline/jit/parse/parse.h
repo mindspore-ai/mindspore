@@ -228,6 +228,7 @@ class Parser {
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                              const py::object &value_object);
+  bool CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfNodePtr &node, const string &script_text);
   // Handle interpret for augassign expression.
   AnfNodePtr HandleInterpretForAugassign(const FunctionBlockPtr &block, const AnfNodePtr &augassign_node,
                                          const py::object &op_object, const py::object &target_object,
