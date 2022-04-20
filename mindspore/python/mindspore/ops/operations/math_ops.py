@@ -1774,7 +1774,7 @@ class InplaceAdd(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> indices = (0, 1)
@@ -1843,7 +1843,7 @@ class InplaceSub(PrimitiveWithInfer):
         ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> indices = (0, 1)
