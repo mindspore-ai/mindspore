@@ -19,6 +19,7 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops.operations import image_ops as IMG
+import mindspore.common.dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
 from .._primitive_cache import _get_cache_prim
@@ -189,6 +190,53 @@ def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'
     """
     _avg_pool = _get_cache_prim(P.AvgPool)(kernel_size, strides, pad_mode, data_format)
     return _avg_pool(x)
+
+
+def adaptive_max_pool3d(x, output_size, return_indices=False):
+    r"""
+    Applies a 3D adaptive max pooling over an input signal composed of several input planes.
+
+    The output is of size :math:`(D, H, W)`, for any input size.
+    The number of output features is equal to the number of input planes.
+
+    Args:
+        x (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
+            int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
+        output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
+            or a single D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
+            which means the output size is the same as that of the input.
+        return_indices (bool): If `return_indices` is True, the indices of max value would be output,
+            else would not be output. Default: False.
+
+    Returns:
+        - **y** (Tensor) - Tensor, with the same number of dims and data type as the `x`.
+        - **argmax** (Tensor) - Tensor, the indices of max value, which has the same shape as the
+          `y` and it's data type is int32. It will output only when `return_indices` is True.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the dimensions number of `x` is not 4 or 5.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
+                   float16, float32 or float64.
+        ValueError: If the shape of `output_size` is not (3,).
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32))
+        >>> output_size = (1, 1, 2)
+        >>> output = ops.adaptive_max_pool3d(x, output_size, True)
+        >>> print(output[0].asnumpy())
+        [[[[33. 35.]]]]
+        >>> print(output[1].asnumpy())
+        [[[[33 35]]]]
+    """
+    adaptive_max_pool3d_ = _get_cache_prim(NN.AdaptiveMaxPool3D)()
+    output_size_ = Tensor(output_size, dtype=mstype.int32)
+    out = adaptive_max_pool3d_(x, output_size_)
+    output = out if return_indices else out[0]
+    return output
 
 
 def celu(x, alpha=1.0):
@@ -1413,6 +1461,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
 
 __all__ = [
     'adaptive_avg_pool2d',
+    'adaptive_max_pool3d',
     'avg_pool2d',
     'celu',
     'deformable_conv2d',
