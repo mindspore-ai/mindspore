@@ -1299,7 +1299,8 @@ class Cdist(Primitive):
     def __init__(self, p=2.0):
         """Initialize Cdist"""
         validator.check_value_type("p", p, [float], self.name)
-        validator.check_non_negative_float(p, "p", self.name)
+        if (p < 0 or np.isnan(p)):
+            raise ValueError('Cdist p must be a non-negative value, but got `{p}`.')
         self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output'])
 
 

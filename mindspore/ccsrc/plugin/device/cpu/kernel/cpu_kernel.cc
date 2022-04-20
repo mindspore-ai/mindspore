@@ -29,6 +29,7 @@ namespace mindspore {
 namespace kernel {
 void NativeCpuKernelMod::InitInputOutputSize(const std::vector<KernelTensorPtr> &inputs,
                                              const std::vector<KernelTensorPtr> &outputs) {
+  input_size_list_.clear();
   for (auto &input : inputs) {
     size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
     auto shape = input->GetShapeVector();
@@ -37,6 +38,7 @@ void NativeCpuKernelMod::InitInputOutputSize(const std::vector<KernelTensorPtr> 
     tensor_size = std::max(tensor_size, type_size);
     input_size_list_.emplace_back(tensor_size);
   }
+  output_size_list_.clear();
   for (auto &output : outputs) {
     size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
     auto shape = output->GetShapeVector();
