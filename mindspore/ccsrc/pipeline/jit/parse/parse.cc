@@ -2335,14 +2335,14 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   }
   if (AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, value_obj))) ==
       AST_SUB_TYPE_SUBSCRIPT) {
-    HandleAssignSubscript(block, value_obj, setitem_app);
-    return;
+    if (IsSubscriptReferenceType(value_obj)) {
+      HandleAssignSubscript(block, value_obj, setitem_app);
+      return;
+    }
   }
-  if (!py::hasattr(value_obj, "id")) {
-    MS_EXCEPTION(TypeError) << "Attribute id not found in " << py::str(value_obj).cast<std::string>() << "\n\n"
-                            << trace::GetDebugInfo(value_node->debug_info());
+  if (py::hasattr(value_obj, "id")) {
+    var_name = value_obj.attr("id").cast<std::string>();
   }
-  var_name = value_obj.attr("id").cast<std::string>();
   block->WriteVariable(var_name, setitem_app);
 }
 
@@ -2954,6 +2954,13 @@ FuncGraphPtr MakeTopGraph(const py::object &cell, const ValuePtr &cell_ptr) {
     func_graph->set_output(call_fn);
   }
   return func_graph;
+}
+
+bool Parser::IsSubscriptReferenceType(const py::object &obj) {
+  py::object slice_node = python_adapter::GetPyObjAttr(obj, "slice");
+  auto node_type = ast_->GetNodeType(slice_node);
+  auto node_name = node_type->node_name();
+  return node_name != "Slice";
 }
 }  // namespace parse
 }  // namespace mindspore

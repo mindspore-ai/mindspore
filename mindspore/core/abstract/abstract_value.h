@@ -778,7 +778,10 @@ class MS_CORE_API AbstractSequence : public AbstractBase {
   ///
   /// \return A size_t.
   std::size_t size() const { return elements_.size(); }
-
+  /// \brief Get the size of the stored elements.
+  ///
+  /// \return A size_t.
+  bool empty() const { return elements_.empty(); }
   /// \brief Get the stored elements.
   ///
   /// \return A vector of elements.

@@ -88,7 +88,8 @@ class UTCompositeUtils {
 };
 
 TEST_F(TestComposite, test_TupleSlice_arg_two_numbers) {
-  MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
+  MetaFuncGraphPtr tupleSlicePtr =
+    std::make_shared<prim::SequenceSliceGetItem>("TupleSlice", "MakeTuple", "TupleGetItem");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 3);
 
   AbstractBasePtrList eles;
@@ -114,7 +115,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_two_numbers) {
 }
 
 TEST_F(TestComposite, test_TupleSlice_arg_one_number) {
-  MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
+  MetaFuncGraphPtr tupleSlicePtr =
+    std::make_shared<prim::SequenceSliceGetItem>("tuple_slice", "MakeTuple", "TupleGetItem");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 2);
 
   AbstractBasePtrList eles;
@@ -146,7 +148,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_one_number) {
 
 TEST_F(TestComposite, test_TupleSlice_arg_slice) {
   std::shared_ptr<py::scoped_interpreter> env = python_adapter::set_python_scoped();
-  MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
+  MetaFuncGraphPtr tupleSlicePtr =
+    std::make_shared<prim::SequenceSliceGetItem>("tuple_slice", "MakeTuple", "TupleGetItem");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 2);
 
   AbstractBasePtrList eles;
@@ -173,7 +176,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice) {
 }
 
 TEST_F(TestComposite, test_TupleSlice_arg_slice_step_none) {
-  MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
+  MetaFuncGraphPtr tupleSlicePtr =
+    std::make_shared<prim::SequenceSliceGetItem>("tuple_slice", "MakeTuple", "TupleGetItem");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 2);
 
   AbstractBasePtrList eles;
@@ -200,7 +204,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_none) {
 }
 
 TEST_F(TestComposite, test_TupleSlice_arg_slice_step_negative) {
-  MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
+  MetaFuncGraphPtr tupleSlicePtr =
+    std::make_shared<prim::SequenceSliceGetItem>("tuple_slice", "MakeTuple", "TupleGetItem");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 2);
 
   AbstractBasePtrList eles;
@@ -227,7 +232,8 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_negative) {
 }
 
 TEST_F(TestComposite, test_TupleSlice_arg_slice_step_positive) {
-  MetaFuncGraphPtr tupleSlicePtr = std::make_shared<prim::TupleSlice>("tuple_slice");
+  MetaFuncGraphPtr tupleSlicePtr =
+    std::make_shared<prim::SequenceSliceGetItem>("tuple_slice", "MakeTuple", "TupleGetItem");
   FuncGraphPtr tupleSliceGraphPtr = UTCompositeUtils::MakeFuncGraph(tupleSlicePtr, 2);
 
   AbstractBasePtrList eles;
@@ -257,7 +263,7 @@ TEST_F(TestComposite, test_TupleSlice_arg_slice_step_positive) {
 /// Description: The second input is a scalar
 /// Expectation: Throw type error
 TEST_F(TestComposite, test_ListSlice_arg_one_number) {
-  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice", "make_list", "list_getitem");
   FuncGraphPtr list_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 3);
 
   AbstractBasePtrList eles;
@@ -292,7 +298,7 @@ TEST_F(TestComposite, test_ListSlice_arg_one_number) {
 /// Expectation: No Expectation
 TEST_F(TestComposite, test_ListSlice_arg_slice) {
   std::shared_ptr<py::scoped_interpreter> env = python_adapter::set_python_scoped();
-  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice", "make_list", "list_getitem");
   FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
 
   AbstractBasePtrList eles;
@@ -321,7 +327,7 @@ TEST_F(TestComposite, test_ListSlice_arg_slice) {
 /// Description: Test List slice the step is none
 /// Expectation: No Expectation
 TEST_F(TestComposite, test_ListSlice_arg_slice_step_none) {
-  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice", "make_list", "list_getitem");
   FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
 
   AbstractBasePtrList eles;
@@ -350,7 +356,7 @@ TEST_F(TestComposite, test_ListSlice_arg_slice_step_none) {
 /// Description: Test List slice the step is negative
 /// Expectation: No Expectation
 TEST_F(TestComposite, test_ListSlice_arg_slice_step_negative) {
-  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice", "make_list", "list_getitem");
   FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
 
   AbstractBasePtrList eles;
@@ -379,7 +385,7 @@ TEST_F(TestComposite, test_ListSlice_arg_slice_step_negative) {
 /// Description: Test List slice the step is positive
 /// Expectation: No Expectation
 TEST_F(TestComposite, test_ListSlice_arg_slice_step_positive) {
-  MetaFuncGraphPtr list_slice = std::make_shared<prim::ListSlice>("list_slice");
+  MetaFuncGraphPtr list_slice = std::make_shared<prim::SequenceSliceGetItem>("list_slice","make_list","list_getitem");
   FuncGraphPtr list_slice_graph = UTCompositeUtils::MakeFuncGraph(list_slice, 2);
 
   AbstractBasePtrList eles;

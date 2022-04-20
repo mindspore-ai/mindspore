@@ -26,7 +26,7 @@ using ".register" decorator.
 """
 
 
-class _TupleSlice(base.TupleSlice_):
+class _TupleSlice(base.SequenceSliceGetItem_):
     """
     Slices a tuple.
 
@@ -40,7 +40,7 @@ class _TupleSlice(base.TupleSlice_):
 
     def __init__(self, name):
         """Initialize _TupleSlice."""
-        base.TupleSlice_.__init__(self, name)
+        base.SequenceSliceGetItem_.__init__(self, name, "MakeTuple", "TupleGetItem")
 
     def __call__(self, *args):
         pass
@@ -50,7 +50,7 @@ _tuple_slice = _TupleSlice('tuple_slice')
 """_tuple_slice is a metafuncgraph object which will slice a tuple."""
 
 
-class _ListSlice(base.ListSlice_):
+class _ListSlice(base.SequenceSliceGetItem_):
     """
     Slices a List.
 
@@ -64,7 +64,7 @@ class _ListSlice(base.ListSlice_):
 
     def __init__(self, name):
         """Initialize _TupleSlice."""
-        base.ListSlice_.__init__(self, name)
+        base.SequenceSliceGetItem_.__init__(self, name, "make_list", "list_getitem")
 
     def __call__(self, *args):
         pass

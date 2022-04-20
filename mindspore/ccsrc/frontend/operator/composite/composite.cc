@@ -18,7 +18,7 @@
 
 #include "frontend/operator/composite/composite.h"
 #include <algorithm>
-
+#include <tuple>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "abstract/abstract_value.h"
@@ -37,6 +37,7 @@
 namespace mindspore {
 // namespace to support composite operators definition
 namespace prim {
+constexpr auto kStepDefault = 1;
 using AbstractTensor = mindspore::abstract::AbstractTensor;
 using FuncGraphAbstractClosure = mindspore::abstract::FuncGraphAbstractClosure;
 
@@ -53,14 +54,6 @@ using mindspore::abstract::AbstractNone;
 using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractSlice;
 using mindspore::abstract::AbstractTuple;
-
-ElemwiseMap kElemwiseMap = {{"__add__", kPrimScalarAdd}, {"__sub__", kPrimScalarSub}, {"__mul__", kPrimScalarMul},
-                            {"__truediv__", nullptr},    {"__floordiv__", nullptr},   {"__mod__", kPrimScalarMod},
-                            {"__pow__", kPrimScalarPow}, {"__eq__", kPrimScalarEq},   {"__lt__", kPrimScalarLt},
-                            {"__gt__", kPrimScalarGt},   {"__ne__", kPrimScalarNe},   {"__le__", kPrimScalarLe},
-                            {"__ge__", kPrimScalarGe}};
-
-ValuePtr kCompositeHyperMap = std::make_shared<HyperMap>();
 
 void HyperMap::Init() {
   if (fn_leaf_) {
@@ -1246,101 +1239,86 @@ int64_t CheckSliceMember(const AbstractBasePtr &member, int64_t default_value, c
     << member->BuildType()->ToString();
 }
 
-void GenerateTupleSliceParameter(const abstract::AbstractSequencePtr &tuple, const AbstractSlicePtr &slice,
-                                 int64_t *start_index, int64_t *stop_index, int64_t *step_value) {
-  MS_EXCEPTION_IF_NULL(tuple);
+std::tuple<int64_t, int64_t, int64_t> GenerateTupleSliceParameter(const abstract::AbstractSequencePtr &sequence,
+                                                                  const AbstractSlicePtr &slice) {
+  MS_EXCEPTION_IF_NULL(sequence);
   MS_EXCEPTION_IF_NULL(slice);
-  MS_EXCEPTION_IF_NULL(start_index);
-  MS_EXCEPTION_IF_NULL(stop_index);
-  MS_EXCEPTION_IF_NULL(step_value);
+  int64_t start_index;
+  int64_t stop_index;
+  int64_t step_value;
 
   const std::string start_name("Slice start index");
   const std::string stop_name("Slice stop index");
   const std::string step_name("Slice step value");
 
-  int64_t tuple_size = SizeToLong(tuple->size());
+  int64_t tuple_size = SizeToLong(sequence->size());
   int64_t start_default = 0;
   int64_t stop_default = tuple_size;
-  int64_t step_default = 1;
+  int64_t step_default = kStepDefault;
 
-  *step_value = CheckSliceMember(slice->step(), step_default, step_name);
-  if (*step_value == 0) {
+  step_value = CheckSliceMember(slice->step(), step_default, step_name);
+  if (step_value == 0) {
     MS_EXCEPTION(ValueError) << "Slice step cannot be zero.";
   }
 
-  if (*step_value < 0) {
+  if (step_value < 0) {
     start_default = tuple_size - 1;
-    stop_default = -1;
+    stop_default = ((-tuple_size) - 1);
   }
 
-  *start_index = CheckSliceMember(slice->start(), start_default, start_name);
-  *stop_index = CheckSliceMember(slice->stop(), stop_default, stop_name);
+  start_index = CheckSliceMember(slice->start(), start_default, start_name);
+  stop_index = CheckSliceMember(slice->stop(), stop_default, stop_name);
 
-  if (*start_index < -tuple_size) {
-    *start_index = 0;
-  }
-  if (*stop_index > tuple_size) {
-    *stop_index = tuple_size;
-  }
-  if (*start_index > tuple_size || *stop_index < -tuple_size) {
-    *start_index = 0;
-    *stop_index = 0;
+  if (start_index < -tuple_size) {
+    start_index = 0;
   }
 
-  *start_index = GetPositiveIndex(*start_index, tuple_size);
-  if (!slice->stop()->isa<AbstractNone>()) {
-    *stop_index = GetPositiveIndex(*stop_index, tuple_size);
+  if (stop_index > tuple_size) {
+    stop_index = tuple_size;
   }
+
+  if (start_index > tuple_size) {
+    start_index = tuple_size;
+  }
+
+  if (stop_index < ((-tuple_size) - 1)) {
+    stop_index = 0;
+  }
+
+  start_index = GetPositiveIndex(start_index, tuple_size);
+
+  stop_index = GetPositiveIndex(stop_index, tuple_size);
+
+  return std::make_tuple(start_index, stop_index, step_value);
 }
 
-FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
-  // slice a tuple
-  // args: tuple, start index, end index, step
-  auto seq_pair = CheckArgs(args_spec_list);
-  auto sequence = seq_pair.first;
-  auto slice = seq_pair.second;
-  int64_t start_index;
-  int64_t stop_index;
-  int64_t step_value;
-  GenerateTupleSliceParameter(sequence, slice, &start_index, &stop_index, &step_value);
+void SequenceSliceGetItem::CheckArgs(const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t arg_size = 2;
+  abstract::CheckArgsSize(this->name(), args_spec_list, arg_size);
+  sequence_ = abstract::CheckArg<abstract::AbstractSequence>(this->name(), args_spec_list, 0);
+  slice_ = abstract::CheckArg<AbstractSlice>(this->name(), args_spec_list, 1);
+}
 
+FuncGraphPtr SequenceSliceGetItem::BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) {
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  AnfNodePtr p_tuple = ret->add_parameter();
+  AnfNodePtr p_seq = ret->add_parameter();
   (void)ret->add_parameter();
 
   std::vector<AnfNodePtr> elems;
   elems.push_back(NewValueNode(prim_));
   if (step_value > 0) {
     for (int64_t index = start_index; index < stop_index; index = index + step_value) {
-      elems.push_back(ret->NewCNodeInOrder({NewValueNode(get_item_), p_tuple, NewValueNode(index)}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(get_item_), p_seq, NewValueNode(index)}));
     }
   } else {
     for (int64_t index = start_index; index > stop_index; index = index + step_value) {
-      elems.push_back(ret->NewCNodeInOrder({NewValueNode(get_item_), p_tuple, NewValueNode(index)}));
+      elems.push_back(ret->NewCNodeInOrder({NewValueNode(get_item_), p_seq, NewValueNode(index)}));
     }
   }
 
   ret->set_output(ret->NewCNodeInOrder(elems));
   return ret;
-}
-
-std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> TupleSlice::CheckArgs(
-  const AbstractBasePtrList &args_spec_list) {
-  constexpr size_t arg_size = 2;
-  abstract::CheckArgsSize("TupleSlice", args_spec_list, arg_size);
-  auto sequence = abstract::CheckArg<abstract::AbstractSequence>("TupleSlice", args_spec_list, 0);
-  AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>("TupleSlice", args_spec_list, 1);
-  return std::make_pair(sequence, slice);
-}
-
-std::pair<abstract::AbstractSequencePtr, abstract::AbstractSlicePtr> ListSlice::CheckArgs(
-  const AbstractBasePtrList &args_spec_list) {
-  constexpr size_t arg_size = 2;
-  abstract::CheckArgsSize("ListSlice", args_spec_list, arg_size);
-  auto sequence = abstract::CheckArg<abstract::AbstractSequence>("ListSlice", args_spec_list, 0);
-  AbstractSlicePtr slice = abstract::CheckArg<AbstractSlice>("ListSlice", args_spec_list, 1);
-  return std::make_pair(sequence, slice);
 }
 
 FuncGraphPtr TupleGetItemTensor::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
@@ -1363,20 +1341,16 @@ REGISTER_PYBIND_DEFINE(TupleAdd_, ([](const py::module *m) {
                            .def(py::init<std::string &>());
                        }));
 
-REGISTER_PYBIND_DEFINE(TupleSlice_, ([](const py::module *m) {
-                         (void)py::class_<TupleSlice, MetaFuncGraph, std::shared_ptr<TupleSlice>>(*m, "TupleSlice_")
-                           .def(py::init<std::string &>());
-                       }));
-
 REGISTER_PYBIND_DEFINE(TupleGetItemTensor_, ([](const py::module *m) {
                          (void)py::class_<TupleGetItemTensor, MetaFuncGraph, std::shared_ptr<TupleGetItemTensor>>(
                            *m, "TupleGetItemTensor_")
                            .def(py::init<std::string &>());
                        }));
 
-REGISTER_PYBIND_DEFINE(ListSlice_, ([](const py::module *m) {
-                         (void)py::class_<ListSlice, MetaFuncGraph, std::shared_ptr<ListSlice>>(*m, "ListSlice_")
-                           .def(py::init<std::string &>());
+REGISTER_PYBIND_DEFINE(SequenceSliceGetItem, ([](const py::module *m) {
+                         (void)py::class_<SequenceSliceGetItem, MetaFuncGraph, std::shared_ptr<SequenceSliceGetItem>>(
+                           *m, "SequenceSliceGetItem_")
+                           .def(py::init<std::string &, std::string &, std::string &>());
                        }));
 
 namespace {
@@ -1449,5 +1423,114 @@ REGISTER_PYBIND_DEFINE(Shard_, ([](const py::module *m) {
                          (void)py::class_<Shard, MetaFuncGraph, std::shared_ptr<Shard>>(*m, "Shard_")
                            .def(py::init<const std::string &>(), py::arg("fn"));
                        }));
+
+void ListSliceSetItem::CheckArgs(const AbstractBasePtrList &args_spec_list) {
+  constexpr size_t kSliceSetItemArgsSizeargs_size = 3;
+  constexpr size_t kSliceSetItemListIndex = 0;
+  constexpr size_t kSliceSetItemSliceIndex = 1;
+  constexpr size_t kSliceSetItemValueIndex = 2;
+  abstract::CheckArgsSize("list_slice_set_item", args_spec_list, kSliceSetItemArgsSizeargs_size);
+  this->sequence_ = abstract::CheckArg<AbstractList>("list_slice_set_item", args_spec_list, kSliceSetItemListIndex);
+  this->slice_ = abstract::CheckArg<AbstractSlice>("list_slice_set_item", args_spec_list, kSliceSetItemSliceIndex);
+  this->value_list_ = abstract::CheckArg<AbstractList>("list_slice_set_item", args_spec_list, kSliceSetItemValueIndex);
+}
+
+FuncGraphPtr ListSliceSetItem::BuildFuncGraph(int64_t start_index, int64_t stop_index, int64_t step_value) {
+  // Init graph with the input list_node slice assign_node
+  CheckAssignRange(start_index, stop_index, step_value);
+  auto graph = std::make_shared<FuncGraph>();
+  graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
+  auto list_node = graph->add_parameter();
+  (void)graph->add_parameter();
+  auto assign_parameter = graph->add_parameter();
+  auto assign_node = GetAssignNode(graph, assign_parameter, step_value);
+  std::vector<AnfNodePtr> elems = {NewValueNode(prim::kPrimMakeList)};
+  int64_t list_index = 0;
+  // check the index is in the slice range
+  auto check_in_range = [start_index, stop_index, step_value](int64_t index) -> bool {
+    if (step_value > 0) {
+      return (index >= start_index && index < stop_index);
+    }
+    return (index <= start_index && index > stop_index);
+  };
+  int64_t list_size = SizeToLong(sequence_->size());
+  int64_t assign_index = 0;
+  int64_t value_size = SizeToLong(value_list_->size());
+  while (list_index < list_size || assign_index < value_size) {
+    if (!check_in_range(list_index)) {
+      // list start <= stop && step = 1 insert the assign node to target node
+      while (assign_index < value_size && list_index == start_index) {
+        (void)elems.emplace_back(
+          graph->NewCNodeInOrder({NewValueNode(kPrimListGetItem), assign_node, NewValueNode(assign_index++)}));
+      }
+      if (list_index < list_size) {
+        (void)elems.emplace_back(
+          graph->NewCNodeInOrder({NewValueNode(kPrimListGetItem), list_node, NewValueNode(list_index++)}));
+      }
+    } else {
+      if (((list_index - start_index) % step_value) == 0) {
+        ++list_index;
+        if (assign_index >= value_size) {
+          continue;
+        }
+        (void)elems.emplace_back(
+          graph->NewCNodeInOrder({NewValueNode(kPrimListGetItem), assign_node, NewValueNode(assign_index++)}));
+      } else {
+        (void)elems.emplace_back(
+          graph->NewCNodeInOrder({NewValueNode(kPrimListGetItem), list_node, NewValueNode(list_index++)}));
+      }
+      // the assign node's len is larger than the range
+      while (!check_in_range(list_index) && assign_index < value_size) {
+        (void)elems.emplace_back(
+          graph->NewCNodeInOrder({NewValueNode(kPrimListGetItem), assign_node, NewValueNode(assign_index++)}));
+      }
+    }
+  }
+
+  graph->set_output(graph->NewCNodeInOrder(elems));
+  return graph;
+}
+
+void ListSliceSetItem::CheckAssignRange(int64_t start_index, int64_t stop_index, int64_t step_value) {
+  if (step_value != kStepDefault) {
+    int64_t start_include = 0;
+    if (start_index < SizeToLong(sequence_->size()) && start_index >= -SizeToLong(sequence_->size())) {
+      start_include = 1;
+    }
+    auto assign_size = ((stop_index - start_index - 1) / step_value) + start_include;
+    if (step_value < 0) {
+      assign_size = ((start_index - stop_index) / -step_value) + start_include;
+    }
+    if (assign_size != SizeToLong(value_list_->size())) {
+      MS_EXCEPTION(ValueError) << "attempt to assign sequence of size " << value_list_->size()
+                               << " to extended slice of size " << assign_size;
+    }
+  }
+}
+
+AnfNodePtr ListSliceSetItem::GetAssignNode(const FuncGraphPtr &func_graph, const AnfNodePtr &assign_node,
+                                           int64_t step_value) {
+  if (step_value > 0) {
+    return assign_node;
+  }
+  std::vector<AnfNodePtr> elems = {NewValueNode(prim::kPrimMakeList)};
+  for (int64_t i = SizeToInt(value_list_->size()) - 1; i >= 0; --i) {
+    elems.emplace_back(
+      func_graph->NewCNodeInOrder({NewValueNode(prim::kPrimListGetItem), assign_node, NewValueNode(i)}));
+  }
+  return func_graph->NewCNodeInOrder(elems);
+}
+
+REGISTER_PYBIND_DEFINE(ListSliceSetItem_, ([](const py::module *m) {
+                         (void)py::class_<ListSliceSetItem, MetaFuncGraph, std::shared_ptr<ListSliceSetItem>>(
+                           *m, "ListSliceSetItem_")
+                           .def(py::init<const std::string &>());
+                       }));
+
+FuncGraphPtr SequenceSlice::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) {
+  this->CheckArgs(args_spec_list);
+  auto [start, stop, step] = GenerateTupleSliceParameter(sequence_, slice_);
+  return this->BuildFuncGraph(start, stop, step);
+}
 }  // namespace prim
 }  // namespace mindspore
