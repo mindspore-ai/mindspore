@@ -597,8 +597,8 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
       [[ 768.  768.  768.  768.]
        [2816. 2816. 2816. 2816.]]
   
-
-  > 目前静态图不支持在Python交互式模式下运行，并且有部分语法限制。`ms_function` 的更多信息可参考 `API ms_function <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.ms_function.html>`_ 。
+  .. note::
+      目前静态图不支持在Python交互式模式下运行，并且有部分语法限制。`ms_function` 的更多信息可参考 `API ms_function <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.ms_function.html>`_ 。
 
 - GradOperation使用示例
 
