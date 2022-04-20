@@ -171,6 +171,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
 
   static void UpdateGraphValidRefPair(const KernelGraphPtr &graph);
   static bool IsDynamicShapeSkipExecute(const CNodePtr &cnode);
+  // return true if need to update output's shape and type after launch
+  static bool IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &cnode);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

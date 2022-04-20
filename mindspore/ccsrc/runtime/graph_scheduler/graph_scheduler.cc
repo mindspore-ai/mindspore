@@ -1318,14 +1318,11 @@ void GraphScheduler::LinkDataArrowForInternalParameter(AbstractActor *const, Abs
   // Record the internal parameter of dynamic shape kernel.
   if (common::AnfAlgo::IsDynamicShape(real_from_kernel_with_output_idx.first)) {
     AbstractActor *dynamic_shape_actor = nullptr;
-    auto from_update_node = AnfUtils::GetCustomUpdateopNode(real_from_kernel_with_output_idx.first);
     auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_kernel_with_output_idx.first);
-    if (from_update_node != nullptr) {
-      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_update_node));
-    } else if (from_infer_node != nullptr) {
-      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
-    } else {
+    if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_kernel_with_output_idx.first)) {
       dynamic_shape_actor = real_from_actor;
+    } else {
+      dynamic_shape_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
     }
     MS_EXCEPTION_IF_NULL(dynamic_shape_actor);
     dynamic_shape_actor->internal_parameters_[real_from_kernel_with_output_idx.second] = internal_parameter;
@@ -1457,13 +1454,6 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
 
     // Link between from actor and copy actor.
     AddDataArrow(from_actor, copy_actor, from_kernel, from_kernel_with_output_idx.second, 0);
-    // Link control arrow between custom update actor and copy actor if the custom update actor exists.
-    auto custom_update_node = AnfUtils::GetCustomUpdateopNode(from_kernel);
-    if (custom_update_node != nullptr) {
-      auto custom_update_actor = FetchActor(AnfUtils::GetCustomActorName(custom_update_node));
-      MS_EXCEPTION_IF_NULL(custom_update_actor);
-      AddControlArrow(custom_update_actor, copy_actor);
-    }
   }
 
   // If the copy actor already exists, only need link between copy actor and to actor.
@@ -1739,14 +1729,11 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
           continue;
         }
         auto real_from_node = graph_output_to_actor_[front_output_with_index].second.first;
-        auto from_update_node = AnfUtils::GetCustomUpdateopNode(real_from_node);
         auto from_infer_node = AnfUtils::GetCustomInferopNode(real_from_node);
-        if (from_update_node != nullptr) {
-          from_actor = FetchActor(AnfUtils::GetCustomActorName(from_update_node));
-        } else if (from_infer_node != nullptr) {
-          from_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
-        } else {
+        if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(real_from_node)) {
           from_actor = graph_output_to_actor_[front_output_with_index].first;
+        } else {
+          from_actor = FetchActor(AnfUtils::GetCustomActorName(from_infer_node));
         }
         MS_EXCEPTION_IF_NULL(from_actor);
         MS_LOG(INFO) << "Custom actor link control arrow by internal parameter, front node: "

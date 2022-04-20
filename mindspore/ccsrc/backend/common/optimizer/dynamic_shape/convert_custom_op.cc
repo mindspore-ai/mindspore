@@ -44,20 +44,13 @@ void ConvertCustomOp::ConvertCustomOpForNode(const AnfNodePtr &node) const {
   bool is_dynamic_node = common::AnfAlgo::IsDynamicShape(node);
   AnfNodePtr infer_node = nullptr;
   AnfNodePtr init_node = nullptr;
-  AnfNodePtr update_node = nullptr;
   if (is_dynamic_node) {
     infer_node = GenInferNode(node);
     init_node = GenInitNode(node);
     AnfUtils::SetCustomInfoToBaseNode(node, infer_node, init_node);
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kCPUDevice) {
-    update_node = GenUpdateNode(node);
-  }
-
-  RelatedCustomActorNode custom_nodes = {infer_node, init_node, update_node};
+  RelatedCustomActorNode custom_nodes = {infer_node, init_node};
   CustomActorNodeManager::Instance().Register(node, custom_nodes);
 }
 }  // namespace opt::dynamic_shape

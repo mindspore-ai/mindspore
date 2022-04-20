@@ -63,12 +63,6 @@ bool LinkCustomOp::LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node,
     changed = true;
   }
 
-  if (IsNeedUpdateOp(node) && custom_nodes.update_node != nullptr) {
-    InsertDepend(g, node, custom_nodes.update_node, depend_nodes);  // link launch => update
-    AnfUtils::ResetCustomUpdateInfoToBaseNode(node, custom_nodes.update_node);
-    changed = true;
-  }
-
   return changed;
 }
 
@@ -107,16 +101,10 @@ bool LinkCustomOp::LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, Anf
       changed = true;
     }
 
-    if (IsNeedUpdateOp(prev_node)) {
-      if (prev_custom_nodes.update_node != nullptr) {
-        // link prev.update => curr.infer
-        InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
-      } else {
-        // for CPU, its Updateop is in Launch function, so its update_node is set to nullptr, for reduce the time cast
-        // of send messages between actors
-        // link prev.launch => curr.infer
-        InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
-      }
+    // if the shape of prev_node is set after launch, need to link prev_node's launch to cur_node's infer
+    if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(prev_node)) {
+      // link prev.launch => curr.infer
+      InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
       changed = true;
     }
   }
@@ -146,23 +134,12 @@ bool LinkCustomOp::LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, 
     }
 
     // If previous node is dynamic, so it was already link.
-    auto prev_custom_nodes = CustomActorNodeManager::Instance().GetCustomActorNodes(prev_node);
-    if (IsNeedUpdateOp(prev_node)) {
+    if (AnfAlgo::IsNeedUpdateShapeAndTypeAfterLaunch(prev_node)) {
       continue;
     }
-    if (prev_custom_nodes.update_node != nullptr) {
-      // 1. Link prev_node => prev_node.update if its update is just sync.
-      InsertDepend(g, prev_node, prev_custom_nodes.update_node, depend_nodes);
-      // 2. Link prev_node.update => cur_node.infer.
-      InsertDepend(g, prev_custom_nodes.update_node, custom_nodes.infer_node, depend_nodes);
-      AnfUtils::ResetCustomUpdateInfoToBaseNode(prev_node, prev_custom_nodes.update_node);
-    } else {
-      // for CPU, its Updateop is in Launch function, so its update_node is set to nullptr, for reduce the time cast of
-      // send messages between actors
-      // Link prev_node.launch => cur_node.infer.
-      InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
-    }
 
+    // Link prev_node.launch => cur_node.infer.
+    InsertDepend(g, prev_node, custom_nodes.infer_node, depend_nodes);
     changed = true;
   }
   return changed;

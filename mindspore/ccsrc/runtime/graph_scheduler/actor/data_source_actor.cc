@@ -22,6 +22,7 @@
 #include "runtime/graph_scheduler/actor/debug_actor.h"
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace runtime {
@@ -162,6 +163,11 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
     return;
   }
 
+  if (common::AnfAlgo::IsDynamicShape(data_kernel_)) {
+    kernel::UpdateNodeShape(data_kernel_);
+    UpdateOutputAddrSize(kernel_info_, data_kernel_);
+    UpdateInternalParameterShape(internal_parameters_, data_kernel_);
+  }
   PostRun(context);
 }
 

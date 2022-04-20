@@ -55,9 +55,8 @@ class AbstractMutexManager {
 };
 
 struct CustomActorInfo {
-  CustomActorInfo(const AnfUtils::CustomActorCallback &func, const std::string &type_name, const CNodePtr &cnode,
-                  bool is_fake = false)
-      : actor_func(func), type_name(type_name), base_cnode_ptr(cnode), is_fake(is_fake) {}
+  CustomActorInfo(const AnfUtils::CustomActorCallback &func, const std::string &type_name, const CNodePtr &cnode)
+      : actor_func(func), type_name(type_name), base_cnode_ptr(cnode) {}
   ~CustomActorInfo() = default;
 
   // Key for user data.
@@ -65,20 +64,16 @@ struct CustomActorInfo {
   AnfUtils::CustomActorCallback actor_func = {};
   std::string type_name;
   CNodeWeakPtr base_cnode_ptr;
-  bool is_fake{false};  // For infer
 };
 using CustomActorInfoPtr = std::shared_ptr<CustomActorInfo>;
 
 struct CNodeCustomInfo {
   CNodeCustomInfo(const AnfNodePtr &inferop, const AnfNodePtr &initop) : infer_node(inferop), init_node(initop) {}
-  CNodeCustomInfo(const AnfNodePtr &inferop, const AnfNodePtr &initop, const AnfNodePtr &updateop)
-      : infer_node(inferop), init_node(initop), update_node(updateop) {}
   ~CNodeCustomInfo() = default;
   // Key for user data.
   constexpr static char key[] = "CustomNodeInfo";
   AnfNodeWeakPtr infer_node;
   AnfNodeWeakPtr init_node;
-  AnfNodeWeakPtr update_node;
 };
 using CNodeCustomInfoPtr = std::shared_ptr<CNodeCustomInfo>;
 struct RealInputInfo {
@@ -477,14 +472,12 @@ bool AnfUtils::IsCutomActorNodeSame(const AnfNodePtr &node1, const AnfNodePtr &n
   auto actor_info1 = node1->user_data<CustomActorInfo>();
   MS_EXCEPTION_IF_NULL(actor_info1);
   std::string actor_type1 = actor_info1->type_name;
-  bool is_fake1 = actor_info1->is_fake;
 
   auto actor_info2 = node2->user_data<CustomActorInfo>();
   MS_EXCEPTION_IF_NULL(actor_info2);
   std::string actor_type2 = actor_info2->type_name;
-  bool is_fake2 = actor_info2->is_fake;
 
-  return (actor_type1 == actor_type2) && (is_fake1 == is_fake2);
+  return (actor_type1 == actor_type2);
 }
 
 std::string AnfUtils::GetCustomActorType(const AnfNodePtr &node) {
@@ -534,58 +527,26 @@ AnfUtils::CustomActorCallback AnfUtils::GetCustomFunc(const AnfNodePtr &node) {
   return actor_info->actor_func;
 }
 
-AnfNodePtr AnfUtils::NewInitActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake) {
+AnfNodePtr AnfUtils::NewInitActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode) {
   MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = std::make_shared<CustomActorInfo>(f, kInit, base_cnode, is_fake);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, kInit, base_cnode);
   return NewCustomActorNode(actor_info, base_cnode->func_graph());
 }
 
-AnfNodePtr AnfUtils::NewInferActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode, bool is_fake) {
+AnfNodePtr AnfUtils::NewInferActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode) {
   MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = std::make_shared<CustomActorInfo>(f, kInfer, base_cnode, is_fake);
-  return NewCustomActorNode(actor_info, base_cnode->func_graph());
-}
-
-AnfNodePtr AnfUtils::NewUpdateActorNode(AnfUtils::CustomActorCallback f, const CNodePtr &base_cnode) {
-  MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = std::make_shared<CustomActorInfo>(f, kUpdate, base_cnode, false);
+  auto actor_info = std::make_shared<CustomActorInfo>(f, kInfer, base_cnode);
   return NewCustomActorNode(actor_info, base_cnode->func_graph());
 }
 
 void AnfUtils::SetCustomInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &inferop,
-                                       const AnfNodePtr &initop, const AnfNodePtr &updateop) {
+                                       const AnfNodePtr &initop) {
   MS_EXCEPTION_IF_NULL(base_cnode);
   MS_EXCEPTION_IF_NULL(inferop);
   MS_EXCEPTION_IF_NULL(initop);
-  if (updateop == nullptr) {
-    auto actor_info = std::make_shared<CNodeCustomInfo>(inferop, initop);
-    base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
-  } else {
-    auto actor_info = std::make_shared<CNodeCustomInfo>(inferop, initop, updateop);
-    base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
-  }
-}
 
-void AnfUtils::ResetCustomUpdateInfoToBaseNode(const AnfNodePtr &base_cnode, const AnfNodePtr &updateop) {
-  MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = base_cnode->user_data<CNodeCustomInfo>();
-  if (actor_info == nullptr) {
-    MS_LOG(WARNING) << "base_cnode " << base_cnode->fullname_with_scope() << " don't have custom node info yet.";
-    auto new_actor_info = std::make_shared<CNodeCustomInfo>(nullptr, nullptr, updateop);
-    base_cnode->set_user_data<CNodeCustomInfo>(new_actor_info);
-  } else {
-    actor_info->update_node = updateop;
-    base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
-  }
-}
-
-AnfNodePtr AnfUtils::GetCustomUpdateopNode(const AnfNodePtr &base_cnode) {
-  MS_EXCEPTION_IF_NULL(base_cnode);
-  auto actor_info = base_cnode->user_data<CNodeCustomInfo>();
-  if (actor_info == nullptr) {
-    return nullptr;
-  }
-  return actor_info->update_node.lock();
+  auto actor_info = std::make_shared<CNodeCustomInfo>(inferop, initop);
+  base_cnode->set_user_data<CNodeCustomInfo>(actor_info);
 }
 
 AnfNodePtr AnfUtils::GetCustomInferopNode(const AnfNodePtr &base_cnode) {

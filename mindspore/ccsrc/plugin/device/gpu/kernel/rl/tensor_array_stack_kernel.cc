@@ -48,6 +48,7 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
   }
   if (is_dynamic_) {
     value_size_ = ele_size_ * LongToSize(max_element);
+    is_need_wait_ = true;
   } else {
     if (size <= 0) {
       MS_LOG(EXCEPTION) << "Size should larger than 0 when is_dynamic_shape = false, but get " << size;
@@ -55,7 +56,6 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
     value_size_ = ele_size_ * LongToSize(size);
   }
   InitSizeLists();
-  is_need_wait_ = true;
   return true;
 }
 
