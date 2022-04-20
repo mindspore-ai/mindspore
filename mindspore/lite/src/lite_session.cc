@@ -1328,6 +1328,11 @@ int LiteSession::RuntimeAllocatorValid() {
   return RET_ERROR;
 #endif
 
+#ifdef BFC_MEMORY
+  MS_LOG(DEBUG) << "Not support runtime allocator when BFC_MEMORY on.";
+  return RET_ERROR;
+#endif
+
   if (context_->enable_parallel_ == true) {
     MS_LOG(DEBUG) << "Not support runtime allocator in subgraph parallel.";
     return RET_ERROR;
