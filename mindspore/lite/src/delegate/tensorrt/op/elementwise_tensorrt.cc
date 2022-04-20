@@ -16,6 +16,7 @@
 
 #include "src/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/delegate/tensorrt/tensorrt_utils.h"
+#include "src/delegate/tensorrt/op/activation_tensorrt.h"
 
 namespace mindspore::lite {
 int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -219,7 +220,13 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    MS_LOG(WARNING) << "op: " << op_name_ << " has activation";
+    auto activation_layer = ActivationTensorRT::AddActivation(network, activation, 0, 0, 0, in_tensor);
+    if (activation_layer == nullptr) {
+      MS_LOG(ERROR) << "addActivation for element wise failed";
+      return nullptr;
+    }
+    activation_layer->setName((op_name_ + "_activation").c_str());
+    activation_out_tensor = activation_layer->getOutput(0);
   }
   return activation_out_tensor;
 }

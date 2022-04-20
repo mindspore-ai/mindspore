@@ -62,10 +62,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     // dynamic input batch size opt for 2d matrix
     out_tensor = AddAsOptPlugin(network);
     MS_LOG(INFO) << "use optimize matmul plugin for " << op_name_;
-  } else if (in_tensors_.size() == INPUT_SIZE3 && in_tensors_[1].Data() != nullptr &&
-             in_tensors_[kBiasIndex].Data() != nullptr && !transpose_a_ &&
-             in_tensors_[1].Shape().size() == DIMENSION_2D &&
-             (in_tensors_[0].Shape().size() == DIMENSION_2D || in_tensors_[0].Shape().size() == DIMENSION_4D)) {
+  } else if (RunFullConnect()) {
     MS_LOG(DEBUG) << "use fully connected instead of matmul for " << op_name_;
     out_tensor = AddAsFullConnect(network);
   } else {
@@ -89,7 +86,7 @@ int MatMulTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   out_tensor->setName((op_name_ + "_output").c_str());
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor);
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor, out_format_, true);
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_});
   return RET_OK;
 }
@@ -288,6 +285,14 @@ bool MatMulTensorRT::RunOptPlugin() {
       in_tensors_[1].Shape().size() == DIMENSION_2D && in_tensors_[0].Shape()[0] > 1 &&
       tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0] == -1 &&
       runtime_->GetRuntimePrecisionMode() == RuntimePrecisionMode::RuntimePrecisionMode_FP32) {
+    return true;
+  }
+  return false;
+}
+bool MatMulTensorRT::RunFullConnect() {
+  if (in_tensors_.size() == INPUT_SIZE3 && in_tensors_[1].Data() != nullptr &&
+      in_tensors_[kBiasIndex].Data() != nullptr && !transpose_a_ && in_tensors_[1].Shape().size() == DIMENSION_2D &&
+      (in_tensors_[0].Shape().size() == DIMENSION_2D || in_tensors_[0].Shape().size() == DIMENSION_4D)) {
     return true;
   }
   return false;
