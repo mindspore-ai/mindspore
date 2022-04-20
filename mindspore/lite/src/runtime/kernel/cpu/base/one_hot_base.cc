@@ -48,7 +48,6 @@ int OneHotCPUKernel::Prepare() {
     MS_LOG(ERROR) << "OneHot context nullptr";
     return RET_NULL_PTR;
   }
-  thread_num_ = op_parameter_->thread_num_;
 
   if (one_hot_param_ == nullptr) {
     MS_LOG(ERROR) << "OneHot op_parameter_ nullptr";
@@ -83,6 +82,11 @@ int OneHotCPUKernel::ReSize() {
   }
   inner_size_ = indices->ElementsNum() / outer_size_;
   MS_CHECK_GT(inner_size_, 0, RET_ERROR);
+
+  if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_OneHot), inner_size_, outer_size_,
+                          out_tensors_.at(0)->ElementsNum()) != RET_OK) {
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
