@@ -19,7 +19,6 @@
 #include <algorithm>
 #include "schema/model_generated.h"
 #include "src/common/log_adapter.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/converter/legacy_optimizer/graph/dtype_trans_pass.h"
 #include "tools/converter/legacy_optimizer/fusion/quant_cast_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
@@ -51,11 +50,11 @@ std::vector<schema::CNodeT *> GetGraphNodes(const schema::MetaGraphT &graph_defT
   return old_nodes;
 }
 
-int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) {
+int QuantTransform(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT *graph_defT) {
   MS_ASSERT(graph_defT != nullptr);
   // quantization
-  if (ctx.commonQuantParam.quant_type == schema::QuantType_QUANT_NONE ||
-      ctx.commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
+  if (param->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE ||
+      param->commonQuantParam.quant_type == schema::QuantType_QUANT_WEIGHT) {
     {
       // quantization
       // init old node indices
@@ -63,7 +62,7 @@ int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) 
       Optimizer tensor_quant_optimizer;
       tensor_quant_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
       tensor_quant_optimizer.AddPass(new (std::nothrow) InferQuantParamPass());
-      tensor_quant_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
+      tensor_quant_optimizer.AddPass(new (std::nothrow) InferShapePass(param->fmk_type));
       tensor_quant_optimizer.AddPass(new (std::nothrow) TensorQuantPass());
       tensor_quant_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
       auto status = tensor_quant_optimizer.Run(graph_defT);
@@ -78,8 +77,9 @@ int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) 
       Optimizer quant_node_optimizer;
       quant_node_optimizer.AddPass(new (std::nothrow) TopologicalSortPass());
       auto old_nodes = GetGraphNodes(*graph_defT);
-      quant_node_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-      quant_node_optimizer.AddPass(new (std::nothrow) DTypeTransPass(ctx.inputDataType, ctx.outputDataType));
+      quant_node_optimizer.AddPass(new (std::nothrow) InferShapePass(param->fmk_type));
+      quant_node_optimizer.AddPass(new (std::nothrow) DTypeTransPass(static_cast<TypeId>(param->input_data_type),
+                                                                     static_cast<TypeId>(param->output_data_type)));
       quant_node_optimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
       quant_node_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
       quant_node_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
@@ -94,12 +94,12 @@ int QuantTransform(const converter::Flags &ctx, schema::MetaGraphT *graph_defT) 
 }
 }  // namespace
 
-int GraphDefTransform::Transform(const converter::Flags &ctx) {
+int GraphDefTransform::Transform(const std::shared_ptr<ConverterPara> &param) {
   STATUS status;
   {
     auto old_nodes = GetGraphNodes(*graph_defT_);
     Optimizer unused_op_remove_optimizer;
-    if (!ctx.trainModel) {
+    if (!param->train_model) {
       unused_op_remove_optimizer.AddPass(new (std::nothrow) DropoutNodeRemovePass());
     }
     unused_op_remove_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
@@ -116,7 +116,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indices
     auto old_nodes = GetGraphNodes(*graph_defT_);
     Optimizer format_trans_optimizer;
-    if (!ctx.trainModel && ctx.fmk != converter::kFmkTypeOnnx) {
+    if (!param->train_model && param->fmk_type != converter::kFmkTypeOnnx) {
       format_trans_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
       format_trans_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     }
@@ -127,7 +127,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
-  auto ret = QuantTransform(ctx, graph_defT_);
+  auto ret = QuantTransform(param, graph_defT_);
   if (ret != RET_OK && status != RET_NO_CHANGE) {
     return status;
   }
@@ -149,10 +149,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   {
     Optimizer forming_model_optimizer;
-    forming_model_optimizer.AddPass(new (std::nothrow) InferShapePass(ctx.fmk));
-    forming_model_optimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass(ctx));
+    forming_model_optimizer.AddPass(new (std::nothrow) InferShapePass(param->fmk_type));
+    forming_model_optimizer.AddPass(new (std::nothrow) SetUnusedQuantParamToDefaultPass(param));
     forming_model_optimizer.AddPass(new (std::nothrow) TensorNamePass());
-    forming_model_optimizer.AddPass(new (std::nothrow) ConvertFP32ToFP16Pass(ctx.saveFP16));
+    forming_model_optimizer.AddPass(new (std::nothrow) ConvertFP32ToFP16Pass(param->weight_fp16));
     status = forming_model_optimizer.Run(graph_defT_);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run InferShapeOptimizer graphPasses Failed.";

@@ -158,7 +158,7 @@ TEST_F(TransMatMulFusionTest, TestTransMatMulNode1) {
   auto meta_graph = BuildGraph(trans_param_a, trans_param_b, output_dims);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph);
+  auto new_graph = anf_transform->Transform(func_graph, nullptr);
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
@@ -180,7 +180,7 @@ TEST_F(TransMatMulFusionTest, TestTransMatMulNode2) {
   auto meta_graph = BuildGraph(trans_param_a, trans_param_b, output_dims);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph);
+  auto new_graph = anf_transform->Transform(func_graph, nullptr);
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
@@ -202,7 +202,7 @@ TEST_F(TransMatMulFusionTest, TestBadCase_TransMatMul) {
   auto meta_graph = BuildGraph(trans_param_a, trans_param_b, output_dims);
   auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
-  auto new_graph = anf_transform->Transform(func_graph);
+  auto new_graph = anf_transform->Transform(func_graph, nullptr);
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 3);

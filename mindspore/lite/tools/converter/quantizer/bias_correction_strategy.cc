@@ -313,7 +313,7 @@ int BiasCorrectionStrategy::Int8Inference(const MSKernelCallBack &before_call_ba
     MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-  auto ret = BuildModelByFuncGraph(int8_model, quant_func_graph, flags_);
+  auto ret = BuildModelByFuncGraph(int8_model, quant_func_graph, param_);
   if (ret != kSuccess) {
     MS_LOG(ERROR) << "Build error.";
     return RET_ERROR;
@@ -637,7 +637,7 @@ MSKernelCallBack BiasCorrectionStrategy::GetNVGPUInt8AfterCallBack() {
 
 int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_graph) {
   int status;
-  switch (this->flags_.fullQuantParam.target_device) {
+  switch (param_->fullQuantParam.target_device) {
     case CPU:
       status = DoCPUBiasCorrection(quant_func_graph);
       break;
@@ -645,8 +645,7 @@ int BiasCorrectionStrategy::DoBiasCorrection(const FuncGraphPtr &quant_func_grap
       status = DoNVGPUBiasCorrection(quant_func_graph);
       break;
     default:
-      MS_LOG(ERROR) << "Unsupported target device " << this->flags_.fullQuantParam.target_device
-                    << " for bias correction.";
+      MS_LOG(ERROR) << "Unsupported target device " << param_->fullQuantParam.target_device << " for bias correction.";
       return RET_ERROR;
   }
   if (status != RET_OK) {

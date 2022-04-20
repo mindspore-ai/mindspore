@@ -24,9 +24,9 @@
 #include <set>
 #include "mindspore/core/ir/func_graph.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/converter_flags.h"
 #include "proto/mind_ir.pb.h"
 #include "mindspore/core/utils/system/env.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite {
 #ifndef ENABLE_CLOUD_AND_LITE
@@ -40,7 +40,7 @@ class MindIRSerializer {
       data_fs_ = nullptr;
     }
   }
-  int Save(const std::unique_ptr<converter::Flags> &flag, const FuncGraphPtr &func_graph);
+  int Save(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
 
  private:
   int ParserPath(const std::string &output_path);
@@ -74,6 +74,6 @@ class MindIRSerializer {
 };
 #endif
 // export func_graph
-int MindIRSerialize(const std::unique_ptr<converter::Flags> &flag, const FuncGraphPtr &func_graph);
+int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_MINDIR_SERIALIZER_MINDIR_SERIALIZER_H_

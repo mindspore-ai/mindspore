@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,104 +13,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
 
 #include <string>
 #include <vector>
+#include <map>
 #include "include/api/format.h"
+#include "include/api/data_type.h"
 #include "include/registry/converter_context.h"
 #include "tools/common/flag_parser.h"
-#include "ir/dtype/type_id.h"
-#include "schema/inner/model_generated.h"
-#include "tools/converter/preprocess/preprocess_param.h"
-#include "tools/converter/quantizer/quant_params.h"
-#include "tools/converter/adapter/acl/common/acl_types.h"
-#include "micro/coder/config.h"
 
 namespace mindspore {
-namespace lite {
-class ConfigFileParser;
-}  // namespace lite
 namespace converter {
-using mindspore::schema::QuantType;
-enum ParallelSplitType { SplitNo = 0, SplitByUserRatio = 1, SplitByUserAttr = 2 };
-constexpr auto kMaxSplitRatio = 10;
-constexpr auto kComputeRate = "computeRate";
-constexpr auto kSplitDevice0 = "device0";
-constexpr auto kSplitDevice1 = "device1";
-constexpr size_t kEncMaxLen = 16;
-struct ParallelSplitConfig {
-  ParallelSplitType parallel_split_type_ = SplitNo;
-  std::vector<int64_t> parallel_compute_rates_;
-  std::vector<std::string> parallel_devices_;
-};
-
 class Flags : public virtual mindspore::lite::FlagParser {
  public:
   Flags();
-
   ~Flags() = default;
-
   int InitInputOutputDataType();
-
   int InitFmk();
-
   int InitTrainModel();
-
   int InitConfigFile();
-
   int InitInTensorShape() const;
-
   int InitGraphInputFormat();
-
-  int InitExtendedIntegrationInfo(const lite::ConfigFileParser &config_file_parser);
-
   int InitEncrypt();
-
   int InitPreInference();
-
   int InitSaveFP16();
-
   int InitNoFusion();
-
-  void InitAclDefaultOption();
-
   int InitExportMindIR();
-
   int Init(int argc, const char **argv);
-
   int PreInit(int argc, const char **argv);
 
-  std::string modelFile;
-  std::string outputFile;
   std::string fmkIn;
   FmkType fmk;
+  std::string modelFile;
+  std::string outputFile;
   std::string weightFile;
-  TypeId inputDataType;
-  TypeId outputDataType;
   std::string saveFP16Str = "off";
   bool saveFP16 = false;
   std::string noFusionStr = "false";
+  bool disableFusion = false;
   std::string inputDataTypeStr;
+  DataType inputDataType;
   std::string outputDataTypeStr;
-  ParallelSplitConfig parallel_split_config_{};
+  DataType outputDataType;
   std::string configFile;
   std::string trainModelIn;
   bool trainModel = false;
-  std::vector<std::string> pluginsPath;
-  bool disableFusion = false;
   std::string inTensorShape;
+  mutable std::map<std::string, std::vector<int64_t>> graph_input_shape_map;
   std::string dec_key = "";
   std::string dec_mode = "AES-GCM";
   std::string graphInputFormatStr;
-  std::string device;
   mindspore::Format graphInputFormat = mindspore::NHWC;
   std::string encKeyStr;
   std::string encMode = "AES-GCM";
   std::string inferStr;
+  bool infer = false;
   std::string exportMindIR;
+  bool export_mindir = false;
 #ifdef ENABLE_OPENSSL
   std::string encryptionStr = "true";
   bool encryption = true;
@@ -118,22 +79,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string encryptionStr = "false";
   bool encryption = false;
 #endif
-  bool infer = false;
-  unsigned char encKey[kEncMaxLen];
-  size_t keyLen = 0;
-  bool export_mindir = false;
-
-  lite::quant::CommonQuantParam commonQuantParam;
-  lite::quant::MixedBitWeightQuantParam mixedBitWeightQuantParam;
-  lite::quant::FullQuantParam fullQuantParam;
-  lite::preprocess::DataPreProcessParam dataPreProcessParam;
-  lite::acl::AclModelOptionCfg aclModelOptionCfgParam;
-  lite::micro::MicroParam microParam;
 };
-
-bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);
-
-std::string GetStrFromConfigFile(const std::string &file, const std::string &target_key);
 }  // namespace converter
 }  // namespace mindspore
 

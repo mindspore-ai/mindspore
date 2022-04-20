@@ -21,11 +21,9 @@
 #include <vector>
 #include <map>
 #include "backend/common/optimizer/pass.h"
-#include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 
-using mindspore::converter::FmkType;
 namespace mindspore::opt {
 
 constexpr const int POS_INVALID = -1;

@@ -28,8 +28,7 @@
 namespace mindspore::lite::quant {
 class CLEStrategy {
  public:
-  explicit CLEStrategy(const FuncGraphPtr &func_graph, const converter::Flags &flags)
-      : func_graph_(func_graph), flags_(flags) {}
+  explicit CLEStrategy(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
 
   ~CLEStrategy();
 
@@ -54,7 +53,6 @@ class CLEStrategy {
 
  private:
   FuncGraphPtr func_graph_ = nullptr;
-  converter::Flags flags_;
   CLEPattern *cle_pattern_ = nullptr;
 };
 }  // namespace mindspore::lite::quant

@@ -19,7 +19,7 @@
 
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
-#include "tools/converter/converter_flags.h"
+#include "include/registry/converter_context.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {

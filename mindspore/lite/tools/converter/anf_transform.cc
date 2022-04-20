@@ -171,13 +171,12 @@ STATUS AnfTransform::MarkTrainOp(const FuncGraphPtr &func_graph) {
   return RET_OK;
 }
 
-int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto status = MarkTrainOp(old_graph);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "MarkTrainOp failed.";
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(config);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
@@ -190,8 +189,8 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(config->fmk));
-  fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(config->fmk));
+  fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(param->fmk_type));
+  fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(param->fmk_type));
   fusion_pm->AddPass(std::make_shared<opt::GroupNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
@@ -200,7 +199,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::BatchNormToScaleFusion>());
   fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ActivationFusion>());
-  if (config->fullQuantParam.target_device != quant::NVGPU) {
+  if (param->fullQuantParam.target_device != quant::NVGPU) {
     fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
   }
   fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
@@ -212,7 +211,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
   fusion_pm->AddPass(std::make_shared<opt::GLUFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk, config->trainModel));
+  fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(param->fmk_type, param->train_model));
   fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
   fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
@@ -226,7 +225,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
   fusion_pm->AddPass(std::make_shared<opt::FullconnectedAddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TensorDotFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>(*config));
+  fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>(param));
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";
@@ -235,12 +234,12 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   return RET_OK;
 }
 
-int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_LOG(DEBUG) << "Run ParallelPass start";
-  if (config->trainModel || config->parallel_split_config_.parallel_split_type_ == converter::SplitNo) {
+  if (param->train_model || param->parallel_split_config.parallel_split_type_ == SplitNo) {
     return RET_OK;
   }
-  if (config->parallel_split_config_.parallel_split_type_ == converter::SplitByUserRatio) {
+  if (param->parallel_split_config.parallel_split_type_ == SplitByUserRatio) {
     auto optimizer = std::make_shared<opt::GraphOptimizer>();
     CHECK_NULL_RETURN(optimizer);
     auto graph_inputs = old_graph->get_inputs();
@@ -261,9 +260,8 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
       }
     }
     // 1. deal with split strategy
-    std::unordered_map<std::string, opt::SplitStrategy> split_strategys =
-      opt::ParserSplitStrategy(config->parallel_split_config_.parallel_compute_rates_,
-                               config->parallel_split_config_.parallel_devices_, split_mode);
+    std::unordered_map<std::string, opt::SplitStrategy> split_strategys = opt::ParserSplitStrategy(
+      param->parallel_split_config.parallel_compute_rates_, param->parallel_split_config.parallel_devices_, split_mode);
     if (split_strategys.empty()) {
       MS_LOG(WARNING) << "No valid split_strategy. Run convert without split";
       return RET_OK;
@@ -279,7 +277,7 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
     // we do not deal with single conv node
     for (int match_number = max_match_number; match_number > opt::kDefaultBatch; --match_number) {
       // 3. multi_conv parallel pass
-      parallel_pm->AddPass(std::make_shared<opt::MultiConvSplitPass>(split_strategys, config->fmk, match_number));
+      parallel_pm->AddPass(std::make_shared<opt::MultiConvSplitPass>(split_strategys, param->fmk_type, match_number));
       parallel_pm->AddPass(std::make_shared<opt::IterNodeOutputs>());
       parallel_pm->AddPass(std::make_shared<opt::NodeOutShapes>());
     }
@@ -293,18 +291,18 @@ int AnfTransform::RunParallelPass(const FuncGraphPtr &old_graph, const converter
   return RET_OK;
 }
 
-int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   CHECK_NULL_RETURN(graph_pm);
-  if (config->fmk == converter::kFmkTypeTflite || config->fmk == converter::kFmkTypeTf ||
-      config->fmk == converter::kFmkTypeOnnx) {
+  if (param->fmk_type == converter::kFmkTypeTflite || param->fmk_type == converter::kFmkTypeTf ||
+      param->fmk_type == converter::kFmkTypeOnnx) {
     graph_pm->AddPass(std::make_shared<opt::ControlFlowPass>());
   }
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   CHECK_NULL_RETURN(slice_prepose_pass);
-  slice_prepose_pass->SetFmkType(config->fmk);
+  slice_prepose_pass->SetFmkType(param->fmk_type);
   graph_pm->AddPass(slice_prepose_pass);
   optimizer->AddPassManager(graph_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
@@ -314,8 +312,8 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const converter::F
   return RET_OK;
 }
 
-int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto acl_pass = std::make_shared<opt::AclPass>(*config);
+int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto acl_pass = std::make_shared<opt::AclPass>(param);
   CHECK_NULL_RETURN(acl_pass);
   if (!acl_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Acl pass failed.";
@@ -326,8 +324,8 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
   CHECK_NULL_RETURN(convert_pm);
-  convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel));
-  convert_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
+  convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(param->train_model));
+  convert_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
   convert_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
@@ -337,14 +335,14 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const converter:
   return RET_OK;
 }
 
-int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
   CHECK_NULL_RETURN(optimizer);
   CHECK_NULL_RETURN(const_fold_pm);
-  const_fold_pm->AddPass(std::make_shared<opt::InferShapePass>(config->fmk, config->trainModel));
-  if (!config->trainModel) {
-    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(config->fmk, config->trainModel));
+  const_fold_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+  if (!param->train_model) {
+    const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(param->fmk_type, param->train_model));
   }
   const_fold_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
   const_fold_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
@@ -356,8 +354,8 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const converte
   return RET_OK;
 }
 
-int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, converter::Flags *config) {
-  quant::QuantizationOptimizer optimizer(config);
+int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  quant::QuantizationOptimizer optimizer(param);
   auto ret = optimizer.Run(old_graph);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Post training quantization failed.";
@@ -366,8 +364,8 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, converter::Flags *co
   return RET_OK;
 }
 
-bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const converter::Flags *config) {
-  auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(config->fmk, config->trainModel);
+bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+  auto eliminate_cast_pass = std::make_shared<opt::EliminateRedundantCastPass>(param->fmk_type, param->train_model);
   MS_CHECK_TRUE_RET(eliminate_cast_pass != nullptr, false);
   if (!eliminate_cast_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Run cast elimination pass failed.";
@@ -390,11 +388,12 @@ bool RunEliminateRedundantPass(const FuncGraphPtr &old_graph, const converter::F
   return true;
 }
 
-FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
+                                              const std::shared_ptr<ConverterPara> &param) {
   MS_ASSERT(old_graph != nullptr);
-  MS_ASSERT(config != nullptr);
+  MS_ASSERT(param != nullptr);
 
-  auto status = RunConvertPass(old_graph, config);
+  auto status = RunConvertPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
     return nullptr;
@@ -405,7 +404,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     return nullptr;
   }
 
-  status = RunConstFoldPass(old_graph, config);
+  status = RunConstFoldPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run const fold pass failed.";
     return nullptr;
@@ -420,13 +419,13 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  if (!RunEliminateRedundantPass(old_graph, config)) {
+  if (!RunEliminateRedundantPass(old_graph, param)) {
     MS_LOG(ERROR) << "Run elimination of redundant pass failed.";
     return nullptr;
   }
 
-  if (!config->disableFusion) {
-    status = RunFusionPass(old_graph, config);
+  if (!param->no_fusion) {
+    status = RunFusionPass(old_graph, param);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Run fusion pass failed.";
       return nullptr;
@@ -451,23 +450,23 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
     }
   }
 
-  status = RunGraphPass(old_graph, config);
+  status = RunGraphPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
     return nullptr;
   }
 
-  status = RunParallelPass(old_graph, config);
+  status = RunParallelPass(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Run convert pass failed.";
     return nullptr;
   }
 
-  if (!config->pluginsPath.empty() && config->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE) {
+  if (!param->plugins_path.empty() && param->commonQuantParam.quant_type != schema::QuantType_QUANT_NONE) {
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
     return nullptr;
   }
-  status = DoQuantize(old_graph, const_cast<converter::Flags *>(config));
+  status = DoQuantize(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do Quantize failed.";
     return nullptr;
@@ -476,17 +475,17 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph, con
   return old_graph;
 }
 
-bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
-  if (config == nullptr) {
+bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param) {
+  if (param == nullptr) {
     MS_LOG(ERROR) << "config is nullptr";
     return false;
   }
-  auto fmk = config->fmk;
-  auto is_train = config->trainModel;
+  auto fmk = param->fmk_type;
+  auto is_train = param->train_model;
   // pass_name, pass and boolean value to indicate whether can be called by external extension,
   std::vector<std::tuple<std::string, opt::PassPtr, bool>> pass_infos = {
-    {"DumpGraph", std::make_shared<opt::DumpGraph>(config), true},
-    {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(config->trainModel), false},
+    {"DumpGraph", std::make_shared<opt::DumpGraph>(param), true},
+    {"RemoveRedundantOpPass", std::make_shared<opt::RemoveRedundantOpPass>(param->train_model), false},
     {"ToNCHWFormat", std::make_shared<opt::ToNCHWFormat>(fmk, is_train), true},
     {"ToNHWCFormat", std::make_shared<opt::ToNHWCFormat>(fmk, is_train), true},
     {"ConstFoldPass", std::make_shared<opt::ConstFoldPass>(fmk, is_train), true},
@@ -494,25 +493,25 @@ bool AnfTransform::StoreBuiltinPass(const converter::Flags *config) {
     {"DeleteRedundantTranspose", std::make_shared<opt::DeleteRedundantTranspose>(), false},
     {"SpecialNodePostProcess", std::make_shared<opt::SpecialNodePostProcess>(), false},
     {"DecreaseTransposeAlgo", std::make_shared<opt::DecreaseTransposeAlgo>(fmk, is_train), true},
-    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(config->graphInputFormat), false}};
+    {"SpecifyGraphInputFormat", std::make_shared<opt::SpecifyGraphInputFormat>(param->input_format), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
   }
-  auto dump_graph_outer = std::make_shared<opt::DumpGraph>(config);
+  auto dump_graph_outer = std::make_shared<opt::DumpGraph>(param);
   MS_CHECK_TRUE_MSG(dump_graph_outer != nullptr, false, "dumpGraph object is a nullptr.");
   registry::PassRegistry("DumpGraph", dump_graph_outer);
   return true;
 }
 
-FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
+FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const std::shared_ptr<ConverterPara> &param) {
   MS_CHECK_TRUE_MSG(main_graph != nullptr, nullptr, "Input func_graph is nullptr");
-  MS_CHECK_TRUE_MSG(config != nullptr, nullptr, "Input converter config is nullptr");
-  if (!StoreBuiltinPass(config)) {
+  MS_CHECK_TRUE_MSG(param != nullptr, nullptr, "Input converter param is nullptr");
+  if (!StoreBuiltinPass(param)) {
     MS_LOG(ERROR) << "store pass failed.";
     return nullptr;
   }
-  auto new_graph = TransformFuncGraph(main_graph, config);
+  auto new_graph = TransformFuncGraph(main_graph, param);
   if (new_graph == nullptr) {
     MS_LOG(ERROR) << "optimizer failed.";
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_NULL_PTR);

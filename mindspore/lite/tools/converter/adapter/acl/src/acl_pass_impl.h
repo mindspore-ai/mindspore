@@ -27,8 +27,8 @@
 #include "include/registry/converter_context.h"
 #include "cxx_api/model/acl/acl_model_options.h"
 #include "tools/converter/adapter/acl/common/acl_types.h"
-#include "tools/converter/converter_flags.h"
 #include "ops/custom.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
 namespace opt {
@@ -37,7 +37,7 @@ using mindspore::lite::STATUS;
 
 class AclPassImpl {
  public:
-  explicit AclPassImpl(const converter::Flags &config);
+  explicit AclPassImpl(const std::shared_ptr<ConverterPara> &param);
   ~AclPassImpl() = default;
 
   bool Run(const FuncGraphPtr &func_graph);

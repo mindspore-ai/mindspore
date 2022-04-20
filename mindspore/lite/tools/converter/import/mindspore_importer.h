@@ -20,23 +20,25 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "tools/converter/converter_flags.h"
+#include <memory>
 #include "load_mindir/load_model.h"
+#include "tools/converter/cxx_api/converter_para.h"
+#include "include/errorcode.h"
 
 namespace mindspore::lite {
 class MindsporeImporter {
  public:
   MindsporeImporter() = default;
   ~MindsporeImporter() = default;
-  FuncGraphPtr ImportMindIR(const converter::Flags &flag);
-  FuncGraphPtr ImportMindIR(const converter::Flags &flag, const void *buff, const size_t &size);
+  FuncGraphPtr ImportMindIR(const std::shared_ptr<ConverterPara> &param);
+  FuncGraphPtr ImportMindIR(const std::shared_ptr<ConverterPara> &param, const void *buff, const size_t &size);
 
  private:
   static void RemoveUnusedGraphInput(const FuncGraphPtr &func_graph);
   STATUS GetFuncGraphOutputName(const CNodePtr &cnode);
   STATUS TraceOutput(const AnfNodePtr &node);
-  FuncGraphPtr CheckAndUpdateFuncGraph(const converter::Flags &flag, FuncGraphPtr func_graph);
-  STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const converter::Flags &flag);
+  FuncGraphPtr CheckAndUpdateFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
+  STATUS Mindir2AnfAdjust(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
   std::vector<std::string> output_tensor_name_;
 };
 

@@ -180,7 +180,7 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
-  } else if (flags_.fullQuantParam.per_channel && CheckNodeInSet(cnode, per_channel_ops_)) {
+  } else if (param_->fullQuantParam.per_channel && CheckNodeInSet(cnode, per_channel_ops_)) {
     ret = DoParameterWeightQuant(cnode, input_node, primitive, input_index, true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
@@ -443,7 +443,7 @@ void FullQuantQuantizer::InitKirinConfig() {
   weight_channel_symmetric_ = true;
   weight_layer_symmetric_ = false;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
-  flags_.fullQuantParam.bias_correction = false;
+  param_->fullQuantParam.bias_correction = false;
   per_channel_ops_ = {prim::kPrimConv2DFusion};
 }
 
@@ -457,7 +457,7 @@ void FullQuantQuantizer::InitNvGpuConfig() {
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimActivation,
                        prim::kPrimConv2dTransposeFusion};
   per_channel_ops_ = {};
-  flags_.fullQuantParam.bias_correction = false;
+  param_->fullQuantParam.bias_correction = false;
 }
 
 void FullQuantQuantizer::InitQMinMax() {
@@ -509,7 +509,7 @@ int FullQuantQuantizer::MarkQuantNode(const FuncGraphPtr &func_graph) {
 }
 
 int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
-  switch (flags_.fullQuantParam.target_device) {
+  switch (param_->fullQuantParam.target_device) {
     case CPU:
       InitCpuConfig();
       break;
@@ -520,18 +520,18 @@ int FullQuantQuantizer::InitDeviceConfig(const FuncGraphPtr &func_graph) {
       InitNvGpuConfig();
       break;
     default:
-      MS_LOG(ERROR) << " Unsupported device " << flags_.fullQuantParam.target_device;
+      MS_LOG(ERROR) << " Unsupported device " << param_->fullQuantParam.target_device;
       return RET_ERROR;
       break;
   }
   InitQMinMax();
   calibrator_ = std::make_shared<Calibrator>(this->bit_num_, activation_q_max_, activation_q_min_,
-                                             this->flags_.fullQuantParam.activation_quant_method,
-                                             this->flags_.dataPreProcessParam, activation_symmetric_);
+                                             param_->fullQuantParam.activation_quant_method,
+                                             param_->dataPreProcessParam, activation_symmetric_);
   MSLITE_CHECK_PTR(calibrator_);
-  quant_strategy_ = std::make_unique<QuantStrategy>(flags_.commonQuantParam.min_quant_weight_size,
-                                                    flags_.commonQuantParam.min_quant_weight_channel,
-                                                    flags_.commonQuantParam.skip_quant_node);
+  quant_strategy_ = std::make_unique<QuantStrategy>(param_->commonQuantParam.min_quant_weight_size,
+                                                    param_->commonQuantParam.min_quant_weight_channel,
+                                                    param_->commonQuantParam.skip_quant_node);
   CHECK_NULL_RETURN(quant_strategy_);
   auto ret = MarkQuantNode(func_graph);
   if (ret != RET_OK) {
@@ -593,7 +593,7 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
 int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_ASSERT(func_graph != nullptr);
   MS_LOG(INFO) << "start to parse config file";
-  if (flags_.dataPreProcessParam.calibrate_path.empty()) {
+  if (param_->dataPreProcessParam.calibrate_path.empty()) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
@@ -611,7 +611,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "New model failed.";
     return RET_ERROR;
   }
-  auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, flags_);
+  auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, param_);
   if (ret != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Build model failed.";
     return RET_ERROR;
@@ -623,7 +623,7 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     return status;
   }
 
-  if (flags_.fullQuantParam.activation_quant_method == KL) {
+  if (param_->fullQuantParam.activation_quant_method == KL) {
     status = QuantWithKL();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Quant with KL failed.";
@@ -649,9 +649,9 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     }
   }
 
-  if (this->flags_.fullQuantParam.bias_correction) {
+  if (param_->fullQuantParam.bias_correction) {
     MS_LOG(INFO) << "do bias correction";
-    BiasCorrectionStrategy strategy(flags_, calibrator_, quant_strategy_, fp32_ms_model_, activation_q_min_,
+    BiasCorrectionStrategy strategy(param_, calibrator_, quant_strategy_, fp32_ms_model_, activation_q_min_,
                                     activation_q_max_);
     status = strategy.DoBiasCorrection(func_graph);
     if (status != RET_OK) {

@@ -4,6 +4,7 @@ set(USE_GLOG on)
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
     add_compile_definitions(ENABLE_OPENSSL)
 endif()
+
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src)
 set(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
@@ -38,7 +39,6 @@ include_directories(${TOP_DIR}/mindspore/ccsrc/plugin/device/cpu/kernel)
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/converter_flags.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/anf_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/graphdef_transform.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/optimizer.cc
@@ -71,8 +71,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${SRC_DIR}/common/primitive_t_utils.cc
         ../optimizer/*.cc
         )
-
-list(REMOVE_ITEM CONVERTER_SRC cxx_api/converter.cc)
 
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
     add_subdirectory(adapter/dpico)
@@ -297,7 +295,8 @@ set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindsp
 
 add_library(converter_runtime_mid OBJECT ${LITE_SRC})
 add_dependencies(converter_runtime_mid fbs_src fbs_inner_src)
-target_compile_options(converter_runtime_mid PRIVATE "-Wno-stringop-overflow")
+add_library(mindspore_converter SHARED $<TARGET_OBJECTS:converter_runtime_mid>)
+target_compile_options(mindspore_converter PRIVATE "-Wno-stringop-overflow")
 
 add_library(converter_src_mid OBJECT ${CONVERTER_SRC})
 add_dependencies(converter_src_mid fbs_src fbs_inner_src)
@@ -307,32 +306,27 @@ add_dependencies(ccsrc_src_mid fbs_src fbs_inner_src)
 target_compile_definitions(ccsrc_src_mid PRIVATE BACKEND_DLL)
 target_compile_definitions(converter_src_mid PRIVATE BACKEND_DLL)
 
-add_executable(converter_lite
-        main.cc
-        )
-add_dependencies(converter_lite fbs_src fbs_inner_src)
 if(NOT ENABLE_CLOUD_AND_LITE)
-    add_dependencies(converter_lite nnacl_mid)
+    add_dependencies(mindspore_converter nnacl_mid)
 endif()
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
-    add_dependencies(converter_lite dpico_atc_adapter)
+    add_dependencies(mindspore_converter dpico_atc_adapter)
 endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     include_directories(${SRC_DIR}/runtime/kernel/opencl)
-    target_link_libraries(converter_lite PRIVATE opencl_kernel_mid)
+    target_link_libraries(mindspore_converter opencl_kernel_mid)
 endif()
 
 if(MSLITE_ENABLE_FP16)
-    target_link_libraries(converter_lite PRIVATE
+    target_link_libraries(mindspore_converter
         nnacl_fp16_mid
         )
 endif()
 
-target_link_libraries(converter_lite PRIVATE
+target_link_libraries(mindspore_converter
         ccsrc_src_mid
         converter_src_mid
-        converter_runtime_mid
         cpu_ops_mid
         nnacl_mid
         cpu_kernel_mid
@@ -359,34 +353,36 @@ target_link_libraries(converter_lite PRIVATE
         )
 
 if(SUPPORT_TRAIN)
-    target_link_libraries(converter_lite PRIVATE train_cpu_kernel_mid)
+    target_link_libraries(mindspore_converter train_cpu_kernel_mid)
 endif()
 
 if(ENABLE_CONVERT_PYTORCH_MODEL)
-    target_link_libraries(converter_lite PRIVATE pytorch_parser_mid)
+    target_link_libraries(mindspore_converter pytorch_parser_mid)
 endif()
 
 if(NOT ENABLE_CLOUD_AND_LITE)
-    target_link_libraries(converter_lite PRIVATE
+    target_link_libraries(mindspore_converter
             ccsrc_debug_common_mid_
             mindir_proto_mid
             _mindspore_transform_express_ir_obj)
 endif()
 if(MSLITE_ENABLE_ACL)
-    target_link_libraries(converter_lite PRIVATE
+    target_link_libraries(mindspore_converter
             lite_acl_mid
             ascend_kernel_mid)
 endif()
 
 if(NOT MSVC)
-    target_link_libraries(converter_lite PRIVATE pthread)
+    target_link_libraries(mindspore_converter pthread)
 endif()
 
 if(NOT WIN32)
-    target_link_libraries(converter_lite PRIVATE dl)
+    target_link_libraries(mindspore_converter dl)
 endif()
 
 if(ENABLE_MODEL_OBF)
-    target_link_libraries(converter_lite PRIVATE
+    target_link_libraries(mindspore_converter
             ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()
+
+add_subdirectory(converter_lite)
