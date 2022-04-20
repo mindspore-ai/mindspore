@@ -166,6 +166,10 @@ constexpr char kVirtualNode[] = "VirtualNode";
 // Normally it is used to connect the edges for send/recv nodes.
 ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_node = nullptr);
 
+// Create a TupleGetItem node from a node with tuple output.
+CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node_with_tuple_output,
+                                size_t item_index);
+
 // Set attributes for send and recv node. These attributes is used in other stages like graph compiling, rpc route,
 // etc.
 void SetSendNodeAttr(const AnfNodePtr &send_node, const InterProcessOpEdge &inter_process_edge);
