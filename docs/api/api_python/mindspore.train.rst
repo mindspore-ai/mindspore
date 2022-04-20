@@ -42,6 +42,6 @@ mindspore.train.train_thor
 
 转换为二阶相关的类和函数。
 
-.. include:: train/mindspore.train.train_thor.ConvertModelUtils.rst
-
 .. include:: train/mindspore.train.train_thor.ConvertNetUtils.rst
+
+.. include:: train/mindspore.train.train_thor.ConvertModelUtils.rst
