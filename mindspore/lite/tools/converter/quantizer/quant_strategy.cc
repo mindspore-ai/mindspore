@@ -56,10 +56,11 @@ bool QuantStrategy::CanTensorQuantized(const CNodePtr &cnode, const AnfNodePtr &
   if (weight_shape.size() < DIMENSION_2D) {  // do not quant single dim tensors
     return false;
   }
-  int64_t total_shape_size = 1;
-  for (auto shape : weight_shape) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(total_shape_size, shape), RET_ERROR, "Int mul overflow");
-    total_shape_size *= shape;
+  int total_shape_size = 1;
+  auto ret = GetElementNumFromShape(ConvertShapeVectorToInt32(weight_shape), &total_shape_size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get element num from shape failed.";
+    return ret;
   }
   if (total_shape_size < 0 || static_cast<size_t>(total_shape_size) < min_quant_weight_size_) {
     MS_LOG(INFO) << "shape_size " << total_shape_size << " less min_quant_weight_size_ " << min_quant_weight_size_;

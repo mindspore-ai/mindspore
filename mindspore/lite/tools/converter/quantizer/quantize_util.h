@@ -70,6 +70,8 @@ constexpr float kDelta = 0.1;
 constexpr float kRatio = 10.0;
 constexpr int kPercent = 10;
 constexpr int kCpuBindMode = 1;
+constexpr int kAnfWeightIndex = 2;
+constexpr int kAnfBiasIndex = 3;
 
 struct SessionModel {
   session::LiteSession *session{nullptr};
@@ -213,6 +215,11 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::
 bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support_primitive_types);
 
 std::string BoolVectorToString(const std::vector<bool> &bool_vec);
+
+int GetElementNumFromShape(const std::vector<int> &dims, int *total_size);
+
+int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
+                      std::vector<std::vector<int>> *buckets_data_index);
 
 template <typename T>
 bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,

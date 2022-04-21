@@ -581,20 +581,20 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     MS_LOG(ERROR) << "calibrate path must pass. The format is input_name_1:input_1_dir,input_name_2:input_2_dir.";
     return RET_INPUT_PARAM_INVALID;
   }
-  int status;
+
+  auto status = InitDeviceConfig(func_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "do pre process failed!";
+    return status;
+  }
+
   if (flags_.fullQuantParam.cle) {
-    CLEStrategy cle_strategy(func_graph);
+    CLEStrategy cle_strategy(func_graph, calibrator_, flags_);
     status = cle_strategy.Run();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "do pre process failed!";
       return status;
     }
-  }
-
-  status = InitDeviceConfig(func_graph);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "do pre process failed!";
-    return status;
   }
 
   // anf -- fb

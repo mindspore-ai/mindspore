@@ -18,13 +18,19 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_CLE_STRATEGY_H
 
 #include <vector>
+#include <memory>
+#include <map>
+#include <string>
 #include "ir/func_graph.h"
 #include "tools/converter/quantizer/cle_pattern.h"
+#include "tools/converter/quantizer/calibrator.h"
 
 namespace mindspore::lite::quant {
 class CLEStrategy {
  public:
-  explicit CLEStrategy(const FuncGraphPtr &func_graph) : func_graph_(func_graph) {}
+  explicit CLEStrategy(const FuncGraphPtr &func_graph, const std::shared_ptr<Calibrator> &calibrator,
+                       const converter::Flags &flags)
+      : func_graph_(func_graph), calibrator_(calibrator), flags_(flags) {}
 
   ~CLEStrategy();
 
@@ -35,7 +41,13 @@ class CLEStrategy {
   int ReplaceCNodeRelu6ToRelu(const CNodePtr &cnode);
   int FindPattern();
   int WeightEqualization();
-  int AbsorbingHighBias();
+  int ClipHighBias();
+  int ClipBackBiasLayer(const CNodePtr &cnode, float absorb_bias);
+  int ClipFrontBiasLayer(const CNodePtr &cnode, float absorb_bias);
+  int ClipHighBiasWithTwoLayer(const CombinationLayer &layer_group, const std::map<std::string, float> &absorb_biases);
+  int ClipHighBiasWithThreeLayer(const CombinationLayer &layer_group,
+                                 const std::map<std::string, float> &absorb_biases);
+  int ReduceWeight(const CNodePtr &cnode, int weight_index, int preferred_dim, std::vector<float> *reduce_weight);
 
   int EqualizationWithTwoLayer(const CombinationLayer &layer_group, const std::vector<double> &scales);
   int EqualizationWithThreeLayer(const CombinationLayer &layer_group, const std::vector<double> &scales12,
@@ -49,10 +61,17 @@ class CLEStrategy {
   int CalcScaleWithTwoLayer(const CombinationLayer &layer_group, std::vector<double> *scales);
   int CalcScaleWithThreeLayer(const CombinationLayer &layer_group, std::vector<double> *scales12,
                               std::vector<double> *scales23);
+  int DoInference();
 
  private:
   FuncGraphPtr func_graph_ = nullptr;
+  std::shared_ptr<Calibrator> calibrator_ = nullptr;
+  converter::Flags flags_;
   CLEPattern *cle_pattern_ = nullptr;
+  std::map<std::string, float> total_min_;
+
+  bool replace_relu6_flag_ = true;
+  bool clip_bias_flag_ = false;
 };
 }  // namespace mindspore::lite::quant
 
