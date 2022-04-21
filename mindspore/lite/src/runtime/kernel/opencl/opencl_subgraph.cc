@@ -99,7 +99,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     out_tensors->emplace_back(new_tensor);
-    KernelKey desc{kGPU, kNumberTypeFloat32, PrimType_Inner_ToFormat};
+    KernelKey desc{kGPU, kNumberTypeFloat32, NHWC, PrimType_Inner_ToFormat};
     auto *parameter = static_cast<OpenCLToFormatParameter *>(malloc(sizeof(OpenCLToFormatParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {
@@ -194,7 +194,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
     }
 
     out_tensors->emplace_back(new_tensor);
-    KernelKey desc{kGPU, kNumberTypeGLUInt, PrimType::PrimType_Inner_GltextureToOpencl};
+    KernelKey desc{kGPU, kNumberTypeGLUInt, NHWC, PrimType::PrimType_Inner_GltextureToOpencl};
     auto *parameter = static_cast<OpenGLTexture2DToOpenCLParameter *>(malloc(sizeof(OpenGLTexture2DToOpenCLParameter)));
     MS_ASSERT(parameter);
     if (parameter == nullptr) {

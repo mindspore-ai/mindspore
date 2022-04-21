@@ -113,7 +113,7 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Accuracy) {
   InitConvDwCreator(&inputs, &outputs, conv_param);
 
   // register op
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Conv2DFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc);
@@ -167,7 +167,7 @@ TEST_F(TestConvolutionDwFp32, ConvDwFp32Performance) {
   InitConvDwCreator(&inputs, &outputs, conv_param);
 
   // register op
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Conv2DFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Conv2DFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), ctx, desc);

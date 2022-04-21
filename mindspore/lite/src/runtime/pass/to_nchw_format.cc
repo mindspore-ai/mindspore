@@ -107,7 +107,16 @@ int ToNCHWFormat::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *t
     if (to_trans_kernels_.find(kernel->type()) == to_trans_kernels_.end()) {
       continue;
     }
-    auto ret = InsertPreTransKernel(subgraph, kernel, tensors);
+
+    // replace kernel with specific format
+    auto kernel_key = kernel->desc();
+    kernel_key.format = dst_format_;
+    auto ret = KernelRegistry::GetInstance()->ReplaceKernelExec(kernel, kernel_key);
+    if (ret != RET_OK) {
+      continue;
+    }
+
+    ret = InsertPreTransKernel(subgraph, kernel, tensors);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert previous transpose kernel for op: " << kernel->name() << " failed.";
       return RET_ERROR;

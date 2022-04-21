@@ -66,7 +66,7 @@ TEST_F(TestFcFp32, FcTest1) {
   ASSERT_EQ(ctx->Init(), RET_OK);
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FullConnection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
@@ -117,7 +117,7 @@ TEST_F(TestFcFp32, FcTest2) {
   ASSERT_EQ(ctx->Init(), RET_OK);
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FullConnection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
@@ -172,7 +172,7 @@ TEST_F(TestFcFp32, FcTest3) {
   ASSERT_EQ(ctx->Init(), RET_OK);
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FullConnection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
@@ -237,7 +237,7 @@ TEST_F(TestFcFp32, FcTest4_Vec2Batch) {
   ASSERT_EQ(ctx->Init(), RET_OK);
   param->op_parameter_.thread_num_ = ctx->thread_num_;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FullConnection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FullConnection};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);

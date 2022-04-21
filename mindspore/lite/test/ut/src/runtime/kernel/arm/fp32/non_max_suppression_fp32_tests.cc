@@ -43,7 +43,8 @@ class TestNMSFp32 : public mindspore::CommonTest {
                                       &iou_threshold_tensor_, &score_threshold_tensor_};
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
   NMSParameter param_;
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_NonMaxSuppression};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC,
+                             schema::PrimitiveType_NonMaxSuppression};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;

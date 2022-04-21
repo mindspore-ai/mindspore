@@ -136,7 +136,7 @@ void KernelRegistry::RegKernel(const KernelKey desc, const kernel::KernelCreator
 
 void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, kernel::KernelCreator creator) {
   CreatorArraysInit();
-  KernelKey desc = {arch, data_type, op_type};
+  KernelKey desc = {arch, data_type, NHWC, op_type};
   int index = GetCreatorFuncIndex(desc);
   if (desc.type >= PrimType_MIN && desc.type < PrimType_MAX) {
     if (index >= array_size_ || index < 0) {
@@ -211,14 +211,43 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
 }
 #endif
 
-int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-                              const InnerContext *ctx, const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
-                              OpParameter *parameter, kernel::KernelExec **kernel, const void *primitive) {
-  MS_ASSERT(ctx != nullptr);
-  MS_ASSERT(kernel != nullptr);
+kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &in_tensors,
+                                                  const std::vector<Tensor *> &out_tensors, const InnerContext *ctx,
+                                                  const kernel::KernelKey &key, OpParameter *parameter) {
+  auto creator = GetCreator(key);
+  if (creator != nullptr) {
+    auto lite_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+    if (lite_kernel != nullptr) {
+      lite_kernel->set_registry_data_type(key.data_type);
+      return lite_kernel;
+    }
+    return nullptr;
+  }
+  if (key.arch != KERNEL_ARCH::kCPU) {
+    return nullptr;
+  }
 
+  auto *lite_kernel = new (std::nothrow) kernel::CPUKernel(parameter, in_tensors, out_tensors, ctx);
+  if (lite_kernel == nullptr) {
+    MS_LOG(ERROR) << "new common cpu kernel failed:  " << parameter->name_;
+    return nullptr;
+  }
+  lite_kernel->set_registry_data_type(key.data_type);
+  auto ret = lite_kernel->Registry(key);
+  if (ret != RET_OK) {
+    return nullptr;
+  }
+  return lite_kernel;
+}
+
+int KernelRegistry::GetKernelExec(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                                  const InnerContext *ctx, const mindspore::Context *ms_ctx,
+                                  const kernel::KernelKey &key, OpParameter *parameter, kernel::KernelExec **kernel,
+                                  const void *primitive) {
+  CHECK_NULL_RETURN(kernel);
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (key.provider != kBuiltin) {
+    CHECK_NULL_RETURN(ms_ctx);
     auto ret = GetCustomKernel(in_tensors, out_tensors, ms_ctx, key, kernel, primitive);
     if (ret == RET_OK) {
       (*kernel)->set_context(ctx);
@@ -227,38 +256,10 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
   }
 #endif
 
-  auto creator = GetCreator(key);
-  if (creator != nullptr) {
-    auto lite_kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
-    if (lite_kernel != nullptr) {
-      lite_kernel->set_registry_data_type(key.data_type);
-      std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
-      auto *kernel_exec = new (std::nothrow) kernel::KernelExec(shared_kernel);
-      if (kernel_exec != nullptr) {
-        kernel_exec->set_desc(key);
-        kernel_exec->set_context(ctx);
-        *kernel = kernel_exec;
-        return RET_OK;
-      }
-    }
-    return RET_ERROR;
-  }
-
-  if (key.arch != KERNEL_ARCH::kCPU) {
-    return RET_ERROR;
-  }
-
-  auto *lite_kernel = new (std::nothrow)
-    kernel::CPUKernel(parameter, in_tensors, out_tensors, static_cast<const lite::InnerContext *>(ctx));
-  if (lite_kernel == nullptr) {
-    MS_LOG(ERROR) << "new common cpu kernel failed:  " << parameter->name_;
-    return RET_NOT_SUPPORT;
-  }
-  lite_kernel->set_registry_data_type(key.data_type);
-  std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
-
-  auto ret = lite_kernel->Registry(key);
-  if (ret == RET_OK) {
+  CHECK_NULL_RETURN(ctx);
+  auto lite_kernel = GetLiteKernel(in_tensors, out_tensors, ctx, key, parameter);
+  if (lite_kernel != nullptr) {
+    std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
     auto *kernel_exec = new (std::nothrow) kernel::KernelExec(shared_kernel);
     if (kernel_exec != nullptr) {
       kernel_exec->set_desc(key);
@@ -267,8 +268,29 @@ int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std
       return RET_OK;
     }
   }
-
   MS_LOG(ERROR) << "common cpu kernel registry failed" << parameter->name_;
   return RET_ERROR;
+}
+
+int KernelRegistry::ReplaceKernelExec(kernel::KernelExec *kernel_exec, const kernel::KernelKey &key) {
+  CHECK_NULL_RETURN(kernel_exec);
+  if (key.provider != kBuiltin) {
+    MS_LOG(DEBUG) << "The replace kernel function is only used for inner kernel.";
+    return RET_NOT_SUPPORT;
+  }
+  if (kernel_exec->desc() == key) {
+    MS_LOG(DEBUG) << "The kernel " << kernel_exec->name() << " is already be the specific desc.";
+    return RET_NO_CHANGE;
+  }
+  auto op_parameter = kernel_exec->op_parameter();
+  auto lite_kernel =
+    GetLiteKernel(kernel_exec->in_tensors(), kernel_exec->out_tensors(), kernel_exec->Context(), key, op_parameter);
+  if (lite_kernel == nullptr) {
+    return RET_ERROR;
+  }
+  lite_kernel->set_name(kernel_exec->name());
+  std::shared_ptr<kernel::Kernel> shared_kernel(lite_kernel);
+  kernel_exec->RepalceKernel(shared_kernel);
+  return RET_OK;
 }
 }  // namespace mindspore::lite

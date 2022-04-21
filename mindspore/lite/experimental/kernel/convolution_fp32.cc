@@ -42,7 +42,7 @@ ConvolutionCPUFp32::~ConvolutionCPUFp32() {
 }
 
 int ConvolutionCPUFp32::Prepare() {
-  kernel = CreateKernel(op_parameter_, in, in_tensors_.size(), out, 1, kNumberTypeFloat32);
+  kernel = CreateKernel(op_parameter_, in, in_tensors_.size(), out, 1, kNumberTypeFloat32, Format_NC4HW4);
   if (kernel == nullptr) {
     return -1;
   }

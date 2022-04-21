@@ -51,7 +51,7 @@ TEST_F(TestSubInt8, SubInt8) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   OpParameter parameter = {};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SubFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SubFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -101,7 +101,7 @@ TEST_F(TestSubInt8, SubInt8T2) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   OpParameter parameter = {};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SubFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SubFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

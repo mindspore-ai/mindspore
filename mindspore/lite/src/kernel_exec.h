@@ -46,22 +46,14 @@ static const char *const kBuiltin = "Builtin";
 struct KernelKey {
   KERNEL_ARCH arch = kCPU;
   TypeId data_type = kTypeUnknown;
+  Format format = Format::NHWC;
   int type = 0;
   std::string kernel_arch;
   std::string provider{kBuiltin};
 
-  bool operator<(const KernelKey &dst) const {
-    if (provider != dst.provider) {
-      return provider < dst.provider;
-    } else if (kernel_arch != dst.kernel_arch) {
-      return kernel_arch < dst.kernel_arch;
-    } else if (arch != dst.arch) {
-      return arch < dst.arch;
-    } else if (data_type != dst.data_type) {
-      return data_type < dst.data_type;
-    } else {
-      return type < dst.type;
-    }
+  bool operator==(const KernelKey &dst) const {
+    return type == dst.type && kernel_arch == dst.kernel_arch && provider == dst.provider && arch == dst.arch &&
+           data_type == dst.data_type && format == dst.format;
   }
 };
 
@@ -368,6 +360,8 @@ class KernelExec {
   virtual std::string ToString() const;
 
   Kernel *kernel() { return kernel_.get(); }
+
+  void RepalceKernel(std::shared_ptr<Kernel> kernel);
 
   void SetOpenGLTextureEnable(bool enable) { enable_gl_texture_ = enable; }
 

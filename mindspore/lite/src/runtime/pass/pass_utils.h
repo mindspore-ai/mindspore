@@ -50,7 +50,5 @@ int InsertPostTranspose(kernel::SubGraphKernel *subgraph, kernel::KernelExec *ke
                         std::vector<Tensor *> *all_tensors, const TransInfoPair &trans_info, const int &index);
 
 int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info);
-
-void PrintfSubgraph(kernel::SubGraphKernel *subgraph);
 }  // namespace mindspore::lite::pass
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_PASS_PASS_UTILS_H_

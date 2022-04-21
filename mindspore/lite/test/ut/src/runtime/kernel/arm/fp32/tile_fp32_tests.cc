@@ -46,7 +46,7 @@ TEST_F(TestTileFp32, Tile) {
   parameter.out_strides_[0] = 6;
   parameter.out_strides_[1] = 1;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TileFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TileFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -92,7 +92,7 @@ TEST_F(TestTileFp32, SimpleTile1) {
   parameter.out_strides_[0] = 2;
   parameter.out_strides_[1] = 1;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TileFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TileFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -140,7 +140,7 @@ TEST_F(TestTileFp32, SimpleTile2) {
   parameter.out_strides_[0] = 4;
   parameter.out_strides_[1] = 1;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TileFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TileFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);

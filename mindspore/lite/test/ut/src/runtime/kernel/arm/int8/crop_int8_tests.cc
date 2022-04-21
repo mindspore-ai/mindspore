@@ -72,7 +72,7 @@ TEST_F(TestCropInt8, crop_1d_axis0_offset0_quant0_thread2) {
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -139,7 +139,7 @@ TEST_F(TestCropInt8, crop_2d_axis1_offset0_quant0_thread2) {
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -206,7 +206,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread0) {
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -274,7 +274,7 @@ TEST_F(TestCropInt8, crop_3d_axis1_offset0_quant0_thread2) {
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -341,7 +341,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread0) {
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -408,7 +408,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset0_quant0_thread0) {
   op_param.axis_ = 1;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -478,7 +478,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant0_thread0) {
   op_param.offset_[2] = 0;
   op_param.offset_[3] = 0;
   op_param.offset_size_ = 4;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -548,7 +548,7 @@ TEST_F(TestCropInt8, crop_4d_axis1_offset1_quant1_thread0) {
   op_param.offset_[2] = 0;
   op_param.offset_[3] = 0;
   op_param.offset_size_ = 4;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -617,7 +617,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread2) {
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);
@@ -686,7 +686,7 @@ TEST_F(TestCropInt8, crop_4d_axis0_offset0_quant0_thread3) {
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
   op_param.offset_size_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Crop};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Crop};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);

@@ -93,7 +93,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
@@ -201,7 +201,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
@@ -306,7 +306,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
@@ -410,7 +410,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group3Stride1FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
@@ -517,7 +517,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group2Stride2FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
@@ -627,7 +627,7 @@ TEST_F(TestDeConvolutionGradFp32, DeConvFp32Dilation2Group12Stride2FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_DeConv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_DeConv2DGradFilter};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);

@@ -119,7 +119,7 @@ TEST_F(TestActivationFp32, HSwishFp32) {
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.set_data(output.data());
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
@@ -166,7 +166,7 @@ TEST_F(TestActivationFp32, HardTanh1) {
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.set_data(output.data());
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
@@ -213,7 +213,7 @@ TEST_F(TestActivationFp32, HardTanh2) {
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.set_data(output.data());
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
@@ -258,7 +258,7 @@ TEST_F(TestActivationFp32, Softplus) {
   outputs_tensor.push_back(&output0_tensor);
   output0_tensor.set_data(output.data());
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Activation};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;

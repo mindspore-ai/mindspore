@@ -586,7 +586,7 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
   inputs_->push_back(weight_t);
 
   std::vector<int> out_dims_nhwc = {1, 9, 9, 2};
-  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_dims_nhwc, mindspore::NC4HW4, lite::Category::VAR);
+  auto *out_t = new lite::Tensor(kNumberTypeFloat, out_dims_nhwc, mindspore::NHWC, lite::Category::VAR);
   out_t->MallocData();
   outputs_->push_back(out_t);
 

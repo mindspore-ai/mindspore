@@ -40,7 +40,7 @@ class TestResizeNearestNeighborInt8 : public mindspore::CommonTest {
   lite::Tensor in_tensor;
   lite::Tensor out_tensor;
 
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Resize};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Resize};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::LiteKernel *kernel_ = nullptr;

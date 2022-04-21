@@ -98,7 +98,7 @@ TEST_F(TestBatchnormInt8, FusedTest) {
   output0_tensor.set_shape(shape);
   output0_tensor.AddQuantParam(output_quant_arg);
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_FusedBatchNorm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_FusedBatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
@@ -182,7 +182,7 @@ TEST_F(TestBatchnormInt8, BNTest) {
   output0_tensor.set_shape(shape);
   output0_tensor.AddQuantParam(output_quant_arg);
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_BatchNorm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;

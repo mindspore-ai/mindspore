@@ -48,7 +48,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test1) {
   op_param->op_parameter_.thread_num_ = ctx->thread_num_;
   op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param->validate_indices_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
@@ -86,7 +86,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test2) {
   op_param->op_parameter_.thread_num_ = ctx->thread_num_;
   op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param->validate_indices_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
@@ -124,7 +124,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test3) {
   op_param->op_parameter_.thread_num_ = ctx->thread_num_;
   op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param->validate_indices_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
@@ -161,7 +161,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test4) {
   op_param->op_parameter_.thread_num_ = ctx->thread_num_;
   op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param->validate_indices_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);
@@ -197,7 +197,7 @@ TEST_F(TestSparseToDenseFp32, SparseToDense_test5) {
   op_param->op_parameter_.thread_num_ = ctx->thread_num_;
   op_param->op_parameter_.type_ = schema::PrimitiveType_SpaceToDepth;
   op_param->validate_indices_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SparseToDense};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_SparseToDense};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(op_param), ctx.get(), desc);

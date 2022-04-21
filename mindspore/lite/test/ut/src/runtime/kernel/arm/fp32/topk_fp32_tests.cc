@@ -41,7 +41,7 @@ TEST_F(TestTopKFp32, TopK) {
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
   TopkParameter parameter = {{}, 2, true, 3, 4};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_TopKFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_TopKFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

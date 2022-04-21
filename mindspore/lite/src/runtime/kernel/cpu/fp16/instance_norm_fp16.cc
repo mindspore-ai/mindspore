@@ -46,37 +46,6 @@ void InstanceNormFp16CPUKernel::FreeTmpBuffer() {
 int InstanceNormFp16CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C3NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
-  auto gamma = in_tensors_.at(1);
-  CHECK_NULL_RETURN(gamma->data());
-  if (gamma->data_type() == kNumberTypeFloat32) {
-    gamma_data_ = reinterpret_cast<float16_t *>(malloc(gamma->ElementsNum() * sizeof(float16_t)));
-    if (gamma_data_ == nullptr) {
-      MS_LOG(ERROR) << "InstanceNorm fp16 kernel malloc gamma_data_ error.";
-      return RET_ERROR;
-    }
-    Float32ToFloat16(reinterpret_cast<float *>(gamma->data()), gamma_data_, gamma->ElementsNum());
-  } else if (gamma->data_type() == kNumberTypeFloat16) {
-    gamma_data_ = reinterpret_cast<float16_t *>(gamma->data());
-  } else {
-    MS_LOG(ERROR) << "Unsupported data type of gamma tensor for instance norm.";
-    return RET_ERROR;
-  }
-
-  auto beta = in_tensors_.at(THIRD_INPUT);
-  CHECK_NULL_RETURN(beta->data());
-  if (beta->data_type() == kNumberTypeFloat32) {
-    beta_data_ = reinterpret_cast<float16_t *>(malloc(beta->ElementsNum() * sizeof(float16_t)));
-    if (beta_data_ == nullptr) {
-      MS_LOG(ERROR) << "InstanceNorm fp16 kernel malloc beta_data_ error.";
-      return RET_ERROR;
-    }
-    Float32ToFloat16(reinterpret_cast<float *>(beta->data()), beta_data_, beta->ElementsNum());
-  } else if (beta->data_type() == kNumberTypeFloat16) {
-    beta_data_ = reinterpret_cast<float16_t *>(beta->data());
-  } else {
-    MS_LOG(ERROR) << "Unsupported data type of beta tensor for instance norm.";
-    return RET_ERROR;
-  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -95,9 +64,9 @@ int InstanceNormFp16CPUKernel::ReSize() {
 int InstanceNormFp16CPUKernel::DoInstanceNorm(int task_id) {
   int ret = RET_OK;
   if (input_pack_to_nc8hw8_) {
-    ret = InstanceNormNC8HW8Fp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+    ret = InstanceNormNC8HW8Fp16(tmp_src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
   } else {
-    ret = InstanceNormFp16(src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
+    ret = InstanceNormFp16(tmp_src_data_, dst_data_, gamma_data_, beta_data_, param_, task_id);
   }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoInstanceNorm error error_code[" << ret << "]";
@@ -121,15 +90,23 @@ int InstanceNormFp16CPUKernel::Run() {
   dst_data_ = reinterpret_cast<float16_t *>(out_tensors_.at(0)->data());
   CHECK_NULL_RETURN(src_data_);
   CHECK_NULL_RETURN(dst_data_);
+
+  CHECK_NULL_RETURN(in_tensors_.at(1));
+  gamma_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(1)->data());
+  CHECK_NULL_RETURN(gamma_data_);
+  CHECK_NULL_RETURN(in_tensors_.at(2));
+  beta_data_ = reinterpret_cast<float16_t *>(in_tensors_.at(2)->data());
+  CHECK_NULL_RETURN(beta_data_);
+
   if (in_tensors_[0]->format() == NHWC) {
     tmp_src_data_ = reinterpret_cast<float16_t *>(ms_context_->allocator->Malloc(in_tensors_[0]->Size()));
     CHECK_NULL_RETURN(tmp_src_data_);
     PackNHWCToNC8HW8NotAlignedFp16(src_data_, tmp_src_data_, param_->batch_, param_->inner_size_, param_->channel_);
     input_pack_to_nc8hw8_ = true;
+  } else if (in_tensors_[0]->format() == NC4HW4) {
+    input_pack_to_nc8hw8_ = true;
+    tmp_src_data_ = src_data_;
   } else {
-    if (in_tensors_[0]->format() == NC4HW4) {
-      input_pack_to_nc8hw8_ = true;
-    }
     tmp_src_data_ = src_data_;
   }
   auto ret = ParallelLaunch(this->ms_context_, InstanceNormFp16Run, this, op_parameter_->thread_num_);

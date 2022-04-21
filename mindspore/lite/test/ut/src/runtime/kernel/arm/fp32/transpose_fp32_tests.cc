@@ -48,7 +48,7 @@ TEST_F(TestTransposeFp32, 10D) {
   param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   std::vector<lite::Tensor *> inputs = {&in_tensor, &perm_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -89,7 +89,7 @@ TEST_F(TestTransposeFp32, 10DSingleThread) {
   param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   std::vector<lite::Tensor *> inputs = {&in_tensor, &perm_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -241,7 +241,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_test5) { /* 1x2x3x2x2 */
   lite::InnerContext ctx;
   ctx.thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Transpose};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(param), &ctx, desc);

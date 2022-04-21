@@ -67,7 +67,7 @@ void QuantNodeBase::UpdateQuantParamsNum(const schema::MetaGraphT &graph, const 
 
 bool QuantTypeDeterminer::DetermineQuantAll(const schema::MetaGraphT &graph, schema::CNodeT *node) {
   MS_ASSERT(node != nullptr);
-  kernel::KernelKey desc{kernel::kCPU, kNumberTypeInt8, node->primitive->value.type, ""};
+  kernel::KernelKey desc{kernel::kCPU, kNumberTypeInt8, NHWC, node->primitive->value.type, ""};
   if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
     return false;
   }

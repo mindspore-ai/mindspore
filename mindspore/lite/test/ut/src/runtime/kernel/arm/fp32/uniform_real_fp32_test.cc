@@ -36,7 +36,7 @@ TEST_F(TestUniformRealFp32, UniformReal) {
   parameter.op_parameter_.type_ = schema::PrimitiveType_UniformReal;
   parameter.seed_ = 42;
   parameter.seed2_ = 959;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, schema::PrimitiveType_UniformReal};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, NHWC, schema::PrimitiveType_UniformReal};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);

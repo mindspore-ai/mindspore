@@ -212,7 +212,7 @@ if(MSLITE_ENABLE_STRING_KERNEL)
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         )
 endif()
-if(RUNTIME_NCX_PASS)
+if(ENABLE_RUNTIME_NCX_PASS)
     file(GLOB RUNTIME_NCX_PASS_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/decrease_transpose_algo.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/delete_isolated_kernel.cc

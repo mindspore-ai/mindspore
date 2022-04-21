@@ -41,7 +41,8 @@ class TestNormalize : public mindspore::CommonTest {
   std::vector<Tensor *> outputs_{&output_tensor_};
   OpParameter parameter_ = {};
   lite::InnerContext ctx_ = lite::InnerContext();
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CustomNormalize};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC,
+                             schema::PrimitiveType_CustomNormalize};
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
 };

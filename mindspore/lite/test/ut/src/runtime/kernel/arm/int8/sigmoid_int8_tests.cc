@@ -48,7 +48,7 @@ TEST_F(TestSigmoidInt8, Sigmoid) {
   parameter.op_parameter_.type_ = schema::PrimitiveType_Activation;
   parameter.type_ = schema::ActivationType_SIGMOID;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Activation};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Activation};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

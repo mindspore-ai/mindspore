@@ -53,7 +53,7 @@ TEST_F(TestSliceInt8, SliceInt8) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -105,7 +105,7 @@ TEST_F(TestSliceInt8, Slice5D) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -157,7 +157,7 @@ TEST_F(TestSliceInt8, Slice6D) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -209,7 +209,7 @@ TEST_F(TestSliceInt8, Slice7D) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -262,7 +262,7 @@ TEST_F(TestSliceInt8, Slice8D) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -315,7 +315,7 @@ TEST_F(TestSliceInt8, SliceDiffQuantArgs) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -368,7 +368,7 @@ TEST_F(TestSliceInt8, SliceSingleThread) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -423,7 +423,7 @@ TEST_F(TestSliceInt8, Slice4Thread) {
 
   SliceParameter *parameter = new (std::nothrow) SliceParameter;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_SliceFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_SliceFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

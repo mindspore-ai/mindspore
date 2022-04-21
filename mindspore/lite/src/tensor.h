@@ -102,6 +102,8 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   int64_t ElementsC4Num() const;
 
+  int64_t ElementsC8Num() const;
+
   size_t Size() const override;
 
   void set_allocator(AllocatorPtr allocator) override { allocator_ = allocator; }
