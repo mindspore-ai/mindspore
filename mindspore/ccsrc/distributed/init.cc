@@ -40,11 +40,13 @@ bool Initialize() {
         std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
       MS_EXCEPTION_IF_NULL(abstract_node);
       collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
-      collective::CollectiveManager::instance()->set_global_rank_size(abstract_node->worker_num());
+      auto global_rank_size =
+        (node->role() == ps::core::NodeRole::WORKER) ? abstract_node->worker_num() : abstract_node->server_num();
+      collective::CollectiveManager::instance()->set_global_rank_size(global_rank_size);
 
       if (RecoveryContext::GetInstance()->enable_recovery()) {
         RecoveryContext::GetInstance()->set_global_rank_id(abstract_node->rank_id());
-        RecoveryContext::GetInstance()->set_global_rank_size(abstract_node->worker_num());
+        RecoveryContext::GetInstance()->set_global_rank_size(global_rank_size);
       }
 
       if (!InitializeCollective()) {

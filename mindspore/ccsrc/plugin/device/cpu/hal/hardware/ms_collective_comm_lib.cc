@@ -31,7 +31,8 @@ MsCollectiveCommLib::MsCollectiveCommLib() {
 
 bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size) {
   if (initialized_) {
-    return false;
+    MS_LOG(WARNING) << "MsCollectiveCommLib has already been initialized.";
+    return true;
   }
 
   global_rank_id_ = global_rank;
@@ -44,8 +45,8 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
 bool MsCollectiveCommLib::CreateCommunicationGroup(const std::string &group_name,
                                                    const std::vector<uint32_t> &group_ranks) {
   if (groups_.count(group_name) != 0) {
-    MS_LOG(ERROR) << "The group " << group_name << " has already existed.";
-    return false;
+    MS_LOG(WARNING) << "The group " << group_name << " has already existed.";
+    return true;
   }
 
   MsCommunicationGroupPtr group = std::make_shared<MsCommunicationGroup>(group_name, group_ranks, global_rank_id_);

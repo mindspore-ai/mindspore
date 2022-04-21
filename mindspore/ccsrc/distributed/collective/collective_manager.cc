@@ -163,9 +163,8 @@ bool CollectiveManager::Initialize() {
 
   // Step 4: Create global communication group.
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
-  if (device_type_ != kCPUDevice &&
-      !CreateCommunicationGroup(device_comm_lib_instance_->global_group_name(), global_group_ranks_)) {
-    MS_LOG(ERROR) << "Failed to initialize host communication library.";
+  if (!CreateCommunicationGroup(device_comm_lib_instance_->global_group_name(), global_group_ranks_)) {
+    MS_LOG(ERROR) << "Failed to create group " << device_comm_lib_instance_->global_group_name();
     return false;
   }
 
@@ -344,11 +343,6 @@ bool CollectiveManager::InitHostCommlib() {
 }
 
 bool CollectiveManager::InitDeviceCommLib() {
-  if (device_type_ == kCPUDevice) {
-    device_comm_lib_instance_ = host_comm_lib_instance_;
-    return true;
-  }
-
   device::DeviceContextKey device_key = {device_type_, local_rank_id_};
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
   MS_EXCEPTION_IF_NULL(device_ctx_);
