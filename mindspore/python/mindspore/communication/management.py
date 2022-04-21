@@ -21,13 +21,28 @@ from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_local_rank_helper, _get_local_size_helper, GlobalComm
 from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective
 
-
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
            "get_local_rank_size", "get_world_rank_from_group_rank",
            "get_group_rank_from_world_rank", "create_group", "destroy_group",
            "HCCL_WORLD_COMM_GROUP", "NCCL_WORLD_COMM_GROUP"]
 
 DEFAULT_WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
+
+
+def _set_rank_grom_mpi():
+    """Set environment variable according to OMPI"""
+    import os
+    ompi_rank_id = os.getenv("OMPI_COMM_WORLD_RANK")
+    ompi_device_id = os.getenv("OMPI_COMM_WORLD_LOCAL_RANK")
+    ompi_rank_size = os.getenv("OMPI_COMM_WORLD_SIZE")
+    if ompi_rank_id:
+        os.environ["RANK_ID"] = ompi_rank_id
+    if ompi_device_id:
+        os.environ["DEVICE_ID"] = ompi_device_id
+    if ompi_rank_size:
+        os.environ["RANK_SIZE"] = ompi_rank_size
+
+_set_rank_grom_mpi()
 
 
 def _get_group(group):
@@ -37,23 +52,18 @@ def _get_group(group):
     return group
 
 
-def _check_task_sink_envs():
+def _check_mpi_envs():
     """
-    Check whether task_sink environment variables have been exported or not.
+    Check whether mpi environment variables have been exported or not.
 
-    return True if task_sink environment variables have been exported, False otherwise.
+    return True if mpi environment variables have been exported, False otherwise.
     """
     import os
-    task_sink = os.getenv("GRAPH_OP_RUN")
-    if task_sink:
-        try:
-            if int(task_sink) == 1:
-                return False
-        except ValueError:
-            return True
-        finally:
-            pass
-    return True
+    ompi_command_env = os.getenv("OMPI_COMMAND")
+    pmix_rank_env = os.getenv("PMIX_RANK")
+    if ompi_command_env and pmix_rank_env:
+        return True
+    return False
 
 
 def _check_parallel_envs():
@@ -111,12 +121,8 @@ def init(backend_name=None):
     """
     if _is_role_pserver() or _is_role_sched():
         return
-    task_sink = _check_task_sink_envs()
+    mpi_init = _check_mpi_envs()
     device_target = context.get_context("device_target")
-    mode = context.get_context("mode")
-    mpi_init = False
-    if not task_sink and mode == context.GRAPH_MODE:
-        mpi_init = True
 
     if backend_name is None:
         if device_target == "Ascend":

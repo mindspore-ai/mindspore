@@ -23,9 +23,11 @@
 #include "utils/ms_context.h"
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
+#include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
+using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
@@ -136,6 +138,11 @@ bool HcclKernel::Init(const AnfNodePtr &anf_node) {
     }
   }
   HcomUtil::GetHcomGroup(NOT_NULL(anf_node), NOT_NULL(&group_));
+  if (common::UseMPI()) {
+    auto comm = HcclCollectiveGroup::instance().GetGroupComm(group_);
+    MS_EXCEPTION_IF_NULL(comm);
+    common::AnfAlgo::SetNodeAttr(kAttrComm, MakeValue<int64_t>((int64_t)comm), anf_node);
+  }
   anf_node_ = anf_node;
   return true;
 }

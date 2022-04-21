@@ -44,19 +44,6 @@ def _get_pipeline_stages():
     return auto_parallel_context().get_pipeline_stages()
 
 
-def _check_task_sink_envs():
-    """
-    Check whether task_sink environment variables have been exported or not.
-
-    return True if task_sink environment variables have been exported, False otherwise.
-    """
-    import os
-    task_sink = os.getenv("GRAPH_OP_RUN")
-    if task_sink and task_sink.isdigit() and int(task_sink) == 1:
-        return False
-    return True
-
-
 def _check_full_batch():
     """
     full_batch could only be used under semi_auto_parallel or auto_parallel, check it.

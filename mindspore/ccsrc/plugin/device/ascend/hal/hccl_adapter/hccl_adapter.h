@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <memory>
 #include <mutex>
 #include "mindspore/core/ir/anf.h"
@@ -47,7 +48,7 @@ class HcclAdapter {
 
   // common
   bool InitHccl(uint32_t device_id, std::string_view rank_id, std::string_view rank_file, HcclMode hccl_mode);
-  bool InitHccl();
+  bool InitHccl(uint32_t device_id, std::string_view rank_id);
   bool FinalizeHccl();
   const bool Inited() const { return init_flag_; }
 
@@ -89,14 +90,16 @@ class HcclAdapter {
   void FinalizePlugin();
 
   HcclComm GetHcomm(const std::string &group) const {
-    if (hccl_comm_ != nullptr) {
+    if (common::UseMPI()) {
+      return HcclCollectiveGroup::instance().GetGroupComm(group);
+    } else if (hccl_comm_ != nullptr) {
       return hccl_comm_;
     } else {
-      return HcclCollectiveGroup::instance().GetGroupComm(group);
+      MS_LOG(EXCEPTION) << "Couldn't get correct hccl hcom with group " << group;
     }
   }
 
-  bool InitKernelInfoStore(uint32_t device_id, std::string_view rank_id, std::string_view rank_file);
+  bool InitKernelInfoStore(const std::map<std::string, std::string>);
   bool FinalizeKernelInfoStore();
 
   bool InitHcclComm(std::string_view rank_id, std::string_view rank_file);

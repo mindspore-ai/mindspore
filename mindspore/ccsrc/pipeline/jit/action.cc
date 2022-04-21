@@ -862,9 +862,9 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
     backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
   };
-
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   // PYNATIVE: no need set any context.
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+  if (mode == kPynativeMode) {
     MS_LOG(INFO) << "Run graph mode with pynative.";
     set_ctx(false, false, false);
     return;
@@ -927,6 +927,11 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   // GRAPH | normal network and if/for/switch scenario etc : MultiGraph path in MindRT.
   MS_LOG(INFO) << "Run graph mode with multigraph sink.";
   set_ctx(true, true, true);
+  auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
+  if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseMPI()) {
+    MS_LOG(EXCEPTION) << "current execute mode mush launch process with OpenMPI";
+  }
   return;
 }
 

@@ -96,7 +96,7 @@ namespace {
 std::string GetRankIdStr() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (!context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+  if (common::UseMPI()) {
     MS_LOG(INFO) << "Get hccl rankid from mpi";
     auto rank = HcclCollectiveGroup::instance().GetRankId();
     return std::to_string(rank);
@@ -296,8 +296,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
   (void)ResetDevice(device_id);
   current_graph_ = nullptr;
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
-      !context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
+  if (common::UseMPI()) {
     HcclCollectiveGroup::instance().FinalizeCollective();
   }
   initialized_ = false;
@@ -1238,18 +1237,19 @@ bool AscendKernelRuntime::HcclInit() {
   if (!context::IsTsdOpened(context_ptr)) {
     MS_LOG(EXCEPTION) << "Hccl dependent tsd is not open";
   }
-  MS_LOG(INFO) << "Do hcom init";
-  bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!is_task_sink && mode == kGraphMode) {
-    (void)hccl::HcclAdapter::GetInstance().InitHccl();
+  MS_LOG(INFO) << "Do hcom init.";
+  auto device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string rank_id_str = GetRankIdStr();
+  if (common::UseMPI()) {
+    MS_LOG(INFO) << "Create hccl_world_group hcom with mpi.";
+    (void)hccl::HcclAdapter::GetInstance().InitHccl(device_id, rank_id_str);
     auto rank_size = HcclCollectiveGroup::instance().GetRankSize();
     std::vector<unsigned int> ranks(rank_size);
     std::iota(std::begin(ranks), std::end(ranks), 0);
     HcclCollectiveGroup::instance().CreateCommGroup(kHcclWorldGroup, ranks);
     return true;
   }
-
+  MS_LOG(INFO) << "Create hccl_world_group with rank table.";
   auto config_path_str = std::getenv("MINDSPORE_HCCL_CONFIG_PATH");
   if (config_path_str == nullptr) {
     config_path_str = std::getenv("RANK_TABLE_FILE");
@@ -1264,7 +1264,6 @@ bool AscendKernelRuntime::HcclInit() {
                   << " should be smaller than " << kPathMax << ", but got " << config_path_str;
     return false;
   }
-  std::string rank_id_str = GetRankIdStr();
   auto full_path = realpath(config_path_str, nullptr);
   if (full_path == nullptr) {
     MS_LOG(ERROR) << "Invalid environment variable 'MINDSPORE_HCCL_CONFIG_PATH' or 'RANK_TABLE_FILE', the path is: "
@@ -1273,9 +1272,9 @@ bool AscendKernelRuntime::HcclInit() {
     return false;
   }
   MS_LOG(INFO) << "MINDSPORE_HCCL_CONFIG_PATH : " << full_path << ", RANK_ID: " << rank_id_str;
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   bool ret = hccl::HcclAdapter::GetInstance().InitHccl(
-    context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID), rank_id_str, full_path,
-    mode == kGraphMode ? hccl::HcclMode::kGraph : hccl::HcclMode::kPynative);
+    device_id, rank_id_str, full_path, mode == kGraphMode ? hccl::HcclMode::kGraph : hccl::HcclMode::kPynative);
   free(full_path);
   if (!ret) {
     MS_LOG(ERROR) << "Hcom init failed.";

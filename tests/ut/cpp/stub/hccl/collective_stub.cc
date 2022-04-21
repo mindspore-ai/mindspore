@@ -27,6 +27,7 @@ HcclCollectiveGroup &HcclCollectiveGroup::instance() {
 int HcclCollectiveGroup::GetRankSize(const std::string &) const { return 0; }
 int HcclCollectiveGroup::GetRankId(const std::string &) const { return 0; }
 int HcclCollectiveGroup::GetDeviceId() const { return 0; }
+HcclComm HcclCollectiveGroup::GetGroupComm(const std::string &name) { return nullptr; }
 void HcclCollectiveGroup::CreateCommGroup(const std::string &, const std::vector<unsigned int> &) { return; }
 void HcclCollectiveGroup::FinalizeCollective() { return; }
 }  // namespace collective

@@ -90,7 +90,7 @@ static inline bool IsLittleByteOrder() {
   return false;
 }
 
-static inline bool CheckUseMPI() {
+static inline bool UseMPI() {
   // If these OpenMPI environment variables are set, we consider this process is launched by OpenMPI.
   std::string ompi_command_env = GetEnv("OMPI_COMMAND");
   std::string pmix_rank_env = GetEnv("PMIX_RANK");
