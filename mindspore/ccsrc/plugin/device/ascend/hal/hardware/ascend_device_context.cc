@@ -329,7 +329,7 @@ void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 }
 
 void AscendDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
-  AscendGraphOptimization::GetInstance().SetOperatorInfo(graph->execution_order());
+  AscendGraphOptimization::GetInstance().SetOperatorInfo(graph);
 }
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {

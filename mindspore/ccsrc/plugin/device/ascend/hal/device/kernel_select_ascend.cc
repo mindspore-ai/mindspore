@@ -781,26 +781,27 @@ std::string KernelInfoCandidateList(const std::vector<std::shared_ptr<kernel::Ke
   return buffer.str();
 }
 
-void PrintNotMatchMessage(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_core,
-                          const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_cpu,
-                          const std::ostringstream &aicore_info, const std::ostringstream &aicpu_info,
-                          const CNodePtr &kernel_node) {
+std::string CollectNotMatchMessage(const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_core,
+                                   const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &ai_cpu,
+                                   const std::ostringstream &aicore_info, const std::ostringstream &aicpu_info,
+                                   const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto full_name = kernel_node->fullname_with_scope();
+  auto full_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  std::stringstream ss;
   if (ai_core.empty() && ai_cpu.empty()) {
-    MS_LOG(EXCEPTION) << "Can not find any available kernel info for: " << full_name
-                      << ". Maybe the operator can not supported on Ascend platform."
-                      << trace::DumpSourceLines(kernel_node);
+    ss << "Can not find any available kernel info for: " << full_name
+       << ". Maybe the operator can not supported on Ascend platform." << trace::DumpSourceLines(kernel_node);
   } else {
     auto candidates = KernelInfoCandidateList(ai_core, ai_cpu);
-    MS_EXCEPTION(TypeError) << "Can not select a valid kernel info for [" << full_name
-                            << "] in AI CORE or AI CPU kernel info candidates list: " << candidates
-                            << "Please check the given data type or shape:"
-                            << "\nAI CORE: " << aicore_info.str() << "\nAI CPU: " << aicpu_info.str()
-                            << "\nFor more details, please refer to 'Kernel Select Failed' at "
-                               "https://www.mindspore.cn"
-                            << trace::DumpSourceLines(kernel_node);
+    ss << "Can not select a valid kernel info for [" << full_name
+       << "] in AI CORE or AI CPU kernel info candidates list: " << candidates
+       << "Please check the given data type or shape:"
+       << "\nAI CORE: " << aicore_info.str() << "\nAI CPU: " << aicpu_info.str()
+       << "\nFor more details, please refer to 'Kernel Select Failed' at "
+          "https://www.mindspore.cn"
+       << trace::DumpSourceLines(kernel_node);
   }
+  return ss.str();
 }
 
 void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status) {
@@ -811,22 +812,27 @@ void SetRaiseOrReduceFlag(const CNodePtr &kernel_node, KernelSelectStatus status
   }
 }
 
-KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+std::pair<KernelSelectStatus, std::string> SelectKernelInfoWithMsg(const CNodePtr &kernel_node,
+                                                                   KernelType kernel_type) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> aicpu_kernel_info_list;
   std::ostringstream aicore_in_out_info, aicpu_in_out_info;
+  std::pair<KernelSelectStatus, std::string> result;
+  result.second = "";
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (common::AnfAlgo::IsGraphKernel(kernel_node)) {
     auto func_graph = GetValueNode<FuncGraphPtr>(kernel_node->input(kAnfPrimitiveIndex));
     MS_EXCEPTION_IF_NULL(func_graph);
     SelectGraphKernelInfo(kernel_node, func_graph);
-    return kStatusAllMatched;
+    result.first = kStatusAllMatched;
+    return result;
   }
 
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     auto select_status = SelectCustomKernelInfo(kernel_node, &kernel_type);
     if (select_status == kStatusAllMatched) {
-      return select_status;
+      result.first = select_status;
+      return result;
     }
   }
 
@@ -857,10 +863,22 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   // The kernel info can not find in ai_cpu kernel lists and ai_core kernel lists
   if (select_status == kNoMatched) {
     GatherInputAndOutputInferType(aicpu_in_out_info, kernel_node);
-    PrintNotMatchMessage(kernel_info_list, aicpu_kernel_info_list, aicore_in_out_info, aicpu_in_out_info, kernel_node);
+    result.first = select_status;
+    result.second = CollectNotMatchMessage(kernel_info_list, aicpu_kernel_info_list, aicore_in_out_info,
+                                           aicpu_in_out_info, kernel_node);
+    return result;
   }
   SetRaiseOrReduceFlag(kernel_node, select_status);
-  return select_status;
+  result.first = select_status;
+  return result;
+}
+KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  auto result = SelectKernelInfoWithMsg(kernel_node);
+  if (result.second != "") {
+    MS_LOG(EXCEPTION) << result.second;
+  }
+  return result.first;
 }
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {

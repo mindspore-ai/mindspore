@@ -16,6 +16,8 @@
 
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_SELECT_ASCEND_ANFALGO_H_
+#include <utility>
+#include <string>
 #include "ir/anf.h"
 #include "kernel/kernel_build_info.h"
 namespace mindspore {
@@ -29,6 +31,8 @@ enum KernelSelectStatus {
 };
 KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node,
                                     KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
+std::pair<KernelSelectStatus, std::string> SelectKernelInfoWithMsg(
+  const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 void SetTensorDeviceInfo(const CNodePtr &kernel_node);
 void SelectGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_graph);
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type);

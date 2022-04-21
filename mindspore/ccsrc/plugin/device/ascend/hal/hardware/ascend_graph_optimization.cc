@@ -20,6 +20,8 @@
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "common/graph_kernel/adapter/expander.h"
+#include "common/graph_kernel/value_graph_binder.h"
 #include "backend/common/session/ascend_auto_monad.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
@@ -227,7 +229,7 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
   }
   memo_.insert(graph);
   MS_LOG(INFO) << "Status record: start select kernel info. graph id: " << graph->graph_id();
-  SetOperatorInfo(graph->execution_order());
+  SetOperatorInfo(graph);
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 
 #ifdef ENABLE_DUMP_IR
@@ -302,20 +304,42 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::SetOperatorInfo(const std::vector<CNodePtr> &nodes) {
-  for (const auto &node : nodes) {
-    auto status = device::ascend::SelectKernelInfo(node);
-    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
-    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
-    if (status == device::ascend::kStatusRaisePrecision) {
-      raise_precision_count_++;
-    } else if (status == device::ascend::kStatusReducePrecision) {
-      reduce_precision_count_++;
+void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
+  AnfNodeSet cache;
+  bool retry;
+  do {
+    retry = false;
+    auto &node_list = graph->execution_order();
+    for (auto &node : node_list) {
+      if (cache.count(node)) continue;
+      auto result = device::ascend::SelectKernelInfoWithMsg(node);
+      auto status = result.first;
+      auto msg = result.second;
+      common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
+      common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
+      if (status != device::ascend::kNoMatched) {
+        if (status == device::ascend::kStatusRaisePrecision) {
+          raise_precision_count_++;
+        } else if (status == device::ascend::kStatusReducePrecision) {
+          reduce_precision_count_++;
+        }
+        MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
+        cache.insert(node);
+      } else {
+        auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+        if (expand_fg == nullptr) {
+          MS_LOG(EXCEPTION) << msg;
+        }
+        MS_LOG(INFO) << msg << " but expand success.";
+        graphkernel::InlineExpandFuncGraph(node, expand_fg);
+        graph->SetExecOrderByDefault();
+        retry = true;
+        break;
+      }
     }
-    MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
-  }
+  } while (retry);
+  graphkernel::BindValueToGraph().Run(graph);
 }
-
 void AscendGraphOptimization::GetAllGraphs(const KernelGraphPtr &root_graph) {
   if (memo_.find(root_graph) != memo_.end()) {
     return;
