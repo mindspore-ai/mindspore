@@ -2551,6 +2551,58 @@ def logaddexp2(x1, x2):
     return log_op(add_exp) / log_op(tensor_2)
 
 
+def outer(x1, x2):
+    """
+    Return outer product of `x1` and `x2`. If `x1` is a vector of size n and `x2` is a vector of size m,
+    then output must be a matrix of size n x m.
+
+    Note:
+        This function does not broadcast.
+
+    Args:
+        x1 (Tensor): 1-D input vector.
+        x2 (Tensor): 1-D input vector.
+
+    Outputs:
+        out (Tensor, optional) : optional output matrix.
+
+    Raises:
+        TypeError: If `x1` is not a Tensor.
+        TypeError: If `x2` is not a Tensor.
+        ValueError: Expected 1-D input `x1`, but got n-D.
+        ValueError: Expected 1-D input `x2`, but got n-D.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> x1 = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> x2 = Tensor(np.array([1, 2, 3]), mindspore.int32)
+        >>> out = ops.outer(x1, x2)
+        >>> print(out)
+        [[1 2 3]
+         [2 4 6]
+         [3 6 9]]
+    """
+
+    if not isinstance(x1, (Tensor, Tensor_)):
+        raise TypeError("the input x1 must be Tensor!")
+    if not isinstance(x2, (Tensor, Tensor_)):
+        raise TypeError("the input x2 must be Tensor!")
+    if len(x1.shape) != 1:
+        raise ValueError("the input x1 must be a 1-D vector!")
+    if len(x2.shape) != 1:
+        raise ValueError("the input x2 must be a 1-D vector!")
+    x1 = x1.reshape(-1, 1)
+    mul_ops = P.Mul()
+    y = mul_ops(x1, x2)
+    return y
+
+
 def mv(mat, vec):
     """
     Multiplies matrix `mat` and vector `vec`.
@@ -3067,6 +3119,7 @@ __all__ = [
     'tensor_gt',
     'logaddexp',
     'mv',
+    'outer',
     'gt',
     'tensor_ge',
     'ge',
