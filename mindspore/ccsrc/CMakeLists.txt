@@ -370,7 +370,7 @@ if(ENABLE_GPU)
 endif()
 
 if(NOT WIN32)
-    target_link_libraries(mindspore_backend PRIVATE mindspore::crypto mindspore::ssl)
+    target_link_libraries(mindspore_backend PRIVATE mindspore::ssl mindspore::crypto)
 endif()
 
 if(ENABLE_DEBUGGER)
@@ -539,7 +539,7 @@ endif()
 
 if(ENABLE_GPU)
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-        target_link_libraries(_c_expression PRIVATE mindspore::crypto mindspore::ssl)
+        target_link_libraries(_c_expression PRIVATE mindspore::ssl mindspore::crypto)
     endif()
     if(ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
