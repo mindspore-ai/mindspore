@@ -2728,7 +2728,7 @@ class ParallelConcat(PrimitiveWithInfer):
         return out
 
 
-def _get_stack_shape(x_shape, x_type, axis, prim_name):
+def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     """for stack output shape"""
     validator.check_value_type("shape", x_shape, [tuple, list], prim_name)
     validator.check_int(len(x_shape), 1, Rel.GE, "len of input_x", prim_name)
@@ -2736,6 +2736,17 @@ def _get_stack_shape(x_shape, x_type, axis, prim_name):
     rank_base = len(x_shape[0])
     n = len(x_shape)
     out_shape = x_shape[0]
+
+    out = {}
+    if -1 in out_shape:
+        x_min_shp = value['min_shape']
+        ret_min_shp = x_min_shp[0].copy()
+        out['min_shape'] = ret_min_shp
+        x_max_shp = value['max_shape']
+        ret_max_shp = x_max_shp[0].copy()
+        out['max_shape'] = ret_max_shp
+        return out
+
     validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base + 1
@@ -2764,7 +2775,7 @@ class Pack(PrimitiveWithInfer):
         x_shape = value['shape']
         x_type = value['dtype']
         self.add_prim_attr('num', len(x_shape))
-        all_shape = _get_stack_shape(x_shape, x_type, self.axis, self.name)
+        all_shape = _get_stack_shape(value, x_shape, x_type, self.axis, self.name)
         out = {'shape': all_shape,
                'dtype': x_type[0],
                'value': None}
@@ -2820,7 +2831,8 @@ class Stack(PrimitiveWithInfer):
         x_shape = value['shape']
         x_type = value['dtype']
         self.add_prim_attr('num', len(x_shape))
-        all_shape = _get_stack_shape(x_shape, x_type, self.axis, self.name)
+        all_shape = _get_stack_shape(value, x_shape, x_type, self.axis, self.name)
+        out = {}
         tuple_value = value['value']
         input_array = []
         infered_value = None
@@ -2829,10 +2841,19 @@ class Stack(PrimitiveWithInfer):
                 npy_item = item.asnumpy()
                 input_array.append(npy_item)
             infered_value = Tensor(np.stack(input_array, axis=self.axis))
-        out = {'shape': all_shape,
-               'dtype': x_type[0],
-               'value': infered_value}
-        if ('min_value' in value and 'max_value' in value):
+
+        if 'min_shape' in all_shape and 'max_shape' in all_shape:
+            out = {'shape': x_shape[0],
+                   'min_shape': all_shape.get('min_shape'),
+                   'max_shape': all_shape.get('max_shape'),
+                   'dtype': x_type[0],
+                   'value': infered_value}
+        else:
+            out = {'shape': all_shape,
+                   'dtype': x_type[0],
+                   'value': infered_value}
+
+        if 'min_value' in value and 'max_value' in value:
             min_value_array = []
             max_value_array = []
             infered_min_value = None
@@ -2840,7 +2861,7 @@ class Stack(PrimitiveWithInfer):
             for i in range(len(value['min_value'])):
                 cur_min_value = value['min_value'][i]
                 cur_max_value = value['max_value'][i]
-                if (cur_min_value is None or cur_max_value is None):
+                if cur_min_value is None or cur_max_value is None:
                     return out
                 if isinstance(cur_min_value, Tensor_):
                     cur_min_value = cur_min_value.asnumpy()

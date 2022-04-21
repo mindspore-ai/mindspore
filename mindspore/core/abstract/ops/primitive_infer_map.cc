@@ -45,6 +45,7 @@
 #include "ops/matrix_set_diag_v3.h"
 #include "ops/grad/slice_grad.h"
 #include "ops/lstm.h"
+#include "ops/stack.h"
 
 namespace mindspore {
 namespace abstract {
@@ -301,7 +302,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimLinSpace, R{InferImplLinSpace, nullptr, true}},
 
     {prim::kPrimLess, R{InferImplLess, nullptr, true}},
-    {prim::kPrimStack, R{InferImplStack, nullptr, true}},
     {prim::kPrimPad, R{InferImplPad, nullptr, true}},
     {prim::kPrimUnsortedSegmentSum, R{InferImplUnsortedSegmentSum, nullptr, true}},
     {prim::kPrimDiv, R{InferImplDiv, nullptr, true}},
@@ -317,6 +317,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimFusedSparseAdam, R{InferImplFusedSparseAdam, nullptr, true}},
     {prim::kPrimTransData, R{InferImplTransData, nullptr, true}},
     {prim::kPrimLstm, R{ops::LstmInfer, nullptr, true}},
+    {prim::kPrimStack, R{ops::StackInfer, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }
