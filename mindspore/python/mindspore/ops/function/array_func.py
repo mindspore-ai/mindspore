@@ -935,6 +935,57 @@ def gather_nd(input_x, indices):
     return gather_nd_(input_x, indices)
 
 
+tensor_scatter_add_ = P.TensorScatterAdd()
+def tensor_scatter_add(input_x, indices, updates):
+    """
+    Creates a new tensor by adding the values from the positions in `input_x` indicated by
+    `indices`, with values from `updates`. When multiple values are given for the same
+    index, the updated result will be the sum of all values. This operation is almost
+    equivalent to using ScatterNdAdd, except that the updates are applied on output `Tensor`
+    instead of input `Parameter`.
+
+    The last axis of `indices` is the depth of each index vectors. For each index vector,
+    there must be a corresponding value in `updates`. The shape of `updates` should be
+    equal to the shape of `input_x[indices]`. For more details, see use cases.
+
+    Note:
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `updates` will not be updated to `input_x`.
+
+    Args:
+        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
+          The rank must be at least 2.
+        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and updates. Shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+    Returns:
+        Tensor, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import ops
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> output = ops.tensor_scatter_add(input_x, indices, updates)
+        >>> print(output)
+        [[ 3.1  0.3  3.6]
+         [ 0.4  0.5 -3.2]]
+    """
+
+    return tensor_scatter_add_(input_x, indices, updates)
+
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -1119,6 +1170,7 @@ __all__ = [
     'expand_dims',
     'transpose',
     'scatter_nd',
+    'tensor_scatter_add',
     'gather',
     'gather_d',
     'gather_nd',

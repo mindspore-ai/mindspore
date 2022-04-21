@@ -1560,6 +1560,15 @@ def while_cond(x):
     return x
 
 
+def tensor_scatter_add(x, indices, updates):
+    """
+    Creates a new tensor by adding the values from the positions in `x` indicated by
+    `indices`, with values from `updates`. When multiple values are given for the same
+    index, the updated result will be the sum of all values.
+    """
+    return F.tensor_scatter_add(x, indices, updates)
+
+
 def coo_to_csr(x):
     """convert coo to csr."""
     row_indices = x.indices[:, 0]
