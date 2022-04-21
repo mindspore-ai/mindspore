@@ -18,8 +18,11 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZE_UTIL_H_
 
 #ifndef _MSC_VER
+
 #include <dirent.h>
+
 #endif
+
 #include <sys/stat.h>
 #include <memory>
 #include <string>
@@ -72,11 +75,6 @@ constexpr int kPercent = 10;
 constexpr int kCpuBindMode = 1;
 constexpr int kAnfWeightIndex = 2;
 constexpr int kAnfBiasIndex = 3;
-
-struct SessionModel {
-  session::LiteSession *session{nullptr};
-  Model *model{nullptr};
-};
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
@@ -199,16 +197,15 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
 
 std::string NodePrimitiveType(const CNodePtr &cnode);
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
-
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      int *size);
-
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const converter::Flags &flags);
 
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const converter::Flags &flags, int *size);
+
+mindspore::tensor::MSTensor *MSTensorToLiteTensor(const MSTensor &tensor);
+
+std::vector<mindspore::tensor::MSTensor *> MSTensorToLiteTensors(const std::vector<MSTensor> &srcTensors);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 

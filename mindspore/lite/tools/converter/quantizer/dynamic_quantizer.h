@@ -36,7 +36,6 @@
 #include "include/model.h"
 #include "base/base.h"
 #include "abstract/dshape.h"
-#include "src/lite_session.h"
 #include "src/common/quant_utils.h"
 
 namespace mindspore::lite::quant {

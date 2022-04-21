@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #define USE_DEPRECATED_API
+
 #include "tools/converter/quantizer/parameter_tunner.h"
 #include <set>
 #include <functional>
@@ -27,6 +28,7 @@
 #include "tools/converter/export_model.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/parser/parser_utils.h"
+
 namespace mindspore::lite::quant {
 MinMax ParameterOptimizer::GetFineTuneRange(std::vector<float> *candidate_scales) {
   const int top_3 = 3;
@@ -59,14 +61,14 @@ int ParameterOptimizer::CloneFuncGraph(const FuncGraphPtr &func_graph, converter
 }
 
 int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
-                                                  session::LiteSession *origin_session, int origin_model_size,
+                                                  std::shared_ptr<mindspore::Model> origin_model, int origin_model_size,
                                                   const InferenceParam &param, double *init_scale,
                                                   std::vector<float> *candidate_scales, bool is_run_all) {
   CHECK_NULL_RETURN(flags);
-  CHECK_NULL_RETURN(origin_session);
+  CHECK_NULL_RETURN(origin_model);
   CHECK_NULL_RETURN(init_scale);
   CHECK_NULL_RETURN(candidate_scales);
-  auto origin_out_tensor = origin_session->GetOutputs();
+  auto origin_out_tensor = origin_model->GetOutputs();
   const float threshold = 0.995f;
   float best_compress_ratio = 0.0f;
   float best_compress_mean_error = 0.0f;
@@ -94,39 +96,30 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
 
     MS_LOG(INFO) << "create quant session";
     int weight_quant_size;
-    auto weight_quant_sm = CreateSessionByFuncGraph(func_graph_bak, *flags, param.thread_num, &weight_quant_size);
-    auto weight_quant_session = weight_quant_sm.session;
-    auto weight_quant_model = weight_quant_sm.model;
-    if (weight_quant_session == nullptr || weight_quant_model == nullptr) {
-      MS_LOG(WARNING) << "create session failed!";
+    auto weight_quant_model = std::make_shared<mindspore::Model>();
+    auto build_status = BuildModelByFuncGraph(weight_quant_model, func_graph_bak, *flags, &weight_quant_size);
+    if (build_status != kSuccess) {
+      MS_LOG(WARNING) << "build model failed!";
       continue;
     }
-    auto weight_quant_inputs = weight_quant_session->GetInputs();
+    auto weight_quant_inputs = weight_quant_model->GetInputs();
     for (auto input : weight_quant_inputs) {
-      auto origin_tensor = origin_session->GetInputsByTensorName(input->tensor_name());
-      auto weight_quant_tensor_data = input->MutableData();
-      if (memcpy_s(weight_quant_tensor_data, input->Size(), origin_tensor->data(), origin_tensor->Size()) != EOK) {
+      auto origin_tensor = origin_model->GetInputByTensorName(input.Name());
+      auto weight_quant_tensor_data = input.MutableData();
+      if (memcpy_s(weight_quant_tensor_data, input.DataSize(), origin_tensor.Data().get(), origin_tensor.DataSize()) !=
+          EOK) {
         MS_LOG(ERROR) << "memcpy data failed.";
-        delete weight_quant_session;
-        delete weight_quant_model;
         return RET_ERROR;
       }
     }
-    weight_quant_session->BindThread(true);
-    ret = weight_quant_session->RunGraph();
-    weight_quant_session->BindThread(false);
-    if (ret != RET_OK) {
+    auto weight_quant_outputs = weight_quant_model->GetOutputs();
+    auto model_status = weight_quant_model->Predict(weight_quant_inputs, &weight_quant_outputs);
+    if (model_status != kSuccess) {
       MS_LOG(ERROR) << "Run origin session failed.";
-      delete weight_quant_session;
-      delete weight_quant_model;
-      return ret;
+      return RET_ERROR;
     }
-    auto weight_quant_tensor = weight_quant_session->GetOutputs();
-    auto cos_sim = CompareDataByCosineDistance<float>(origin_out_tensor, weight_quant_tensor);
-    auto mean_error = CompareData<float>(origin_out_tensor, weight_quant_tensor);
-
-    delete weight_quant_session;
-    delete weight_quant_model;
+    auto cos_sim = CompareDataByCosineDistance<float>(origin_model, weight_quant_model);
+    auto mean_error = CompareData<float>(origin_model, weight_quant_model);
 
     if (!is_run_all) {
       const int tolerate_round = 3;
@@ -161,10 +154,10 @@ int ParameterOptimizer::WeightQuantModelInference(const FuncGraphPtr &func_graph
   return RET_OK;
 }
 
-int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags, SessionModel *sm,
-                                             int *origin_model_size) {
+int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, converter::Flags *flags,
+                                             std::shared_ptr<mindspore::Model> origin_model, int *origin_model_size) {
   CHECK_NULL_RETURN(flags);
-  CHECK_NULL_RETURN(sm);
+  CHECK_NULL_RETURN(origin_model);
   CHECK_NULL_RETURN(origin_model_size);
   FuncGraphPtr func_graph_bak;
   auto ret = CloneFuncGraph(func_graph, flags, &func_graph_bak);
@@ -174,32 +167,29 @@ int ParameterOptimizer::OriginModelInference(const FuncGraphPtr &func_graph, con
   }
   flags->commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   *origin_model_size = 0;
-  *sm = CreateSessionByFuncGraph(func_graph_bak, *flags, flags->commonQuantParam.thread_num, origin_model_size);
-  auto origin_session = sm->session;
-  auto origin_model = sm->model;
-  if (origin_session == nullptr || origin_model == nullptr) {
-    MS_LOG(ERROR) << "create session failed!";
+  auto status = BuildModelByFuncGraph(origin_model, func_graph_bak, *flags, origin_model_size);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "build model failed!";
     return RET_ERROR;
   }
-  auto origin_inputs = origin_session->GetInputs();
+  auto origin_inputs = origin_model->GetInputs();
   for (auto input : origin_inputs) {
     if (flags->dataPreProcessParam.calibrate_size > 0) {
-      ret = preprocess::PreProcess(flags->dataPreProcessParam, input->tensor_name(), 0, input);
+      ret = preprocess::PreProcess(flags->dataPreProcessParam, input.Name(), 0, &input);
     } else {
-      ret = GenerateRandomData(input);
+      ret = GenerateRandomData(&input);
     }
     if (ret != RET_OK) {
-      MS_LOG(ERROR) << input->tensor_name() << ":"
+      MS_LOG(ERROR) << input.Name() << ":"
                     << "Generate random data failed.";
       return ret;
     }
   }
-  origin_session->BindThread(true);
-  ret = origin_session->RunGraph();
-  origin_session->BindThread(false);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run origin session failed.";
-    return ret;
+  auto origin_outputs = origin_model->GetOutputs();
+  auto model_status = origin_model->Predict(origin_inputs, &origin_outputs);
+  if (model_status != kSuccess) {
+    MS_LOG(ERROR) << "Run origin predict failed.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -211,15 +201,13 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
 
   double default_init_scale = *init_scale;
 
-  SessionModel sm;
+  auto origin_model = std::make_shared<mindspore::Model>();
   int origin_model_size;
-  auto ret = OriginModelInference(func_graph, flags, &sm, &origin_model_size);
+  auto ret = OriginModelInference(func_graph, flags, origin_model, &origin_model_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Origin Model Inference failed.";
     return ret;
   }
-  auto origin_session = sm.session;
-  auto origin_model = sm.model;
 
   float start_scale = 0.005f;
   const int giant_rounds = 10;
@@ -233,12 +221,10 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   param.thread_num = flags->commonQuantParam.thread_num;
 
   std::cout << "==========Search with giant step==============\n";
-  ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, init_scale,
+  ret = WeightQuantModelInference(func_graph, flags, origin_model, origin_model_size, param, init_scale,
                                   &candidate_scales, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight quant graph inference failed.";
-    delete origin_session;
-    delete origin_model;
     return ret;
   }
 
@@ -248,8 +234,6 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   if (min_max.max - min_max.min <= 0) {
     MS_LOG(WARNING) << "search reach max step, init_scale return default " << *init_scale;
     *init_scale = default_init_scale;
-    delete origin_session;
-    delete origin_model;
     return RET_OK;
   }
   const int baby_step_rounds = 25;
@@ -260,16 +244,12 @@ int ParameterOptimizer::GridSearchForScale(const FuncGraphPtr &func_graph, conve
   param.step = step;
   param.thread_num = flags->commonQuantParam.thread_num;
   std::cout << "==========Search with baby step==============\n";
-  ret = WeightQuantModelInference(func_graph, flags, origin_session, origin_model_size, param, init_scale,
+  ret = WeightQuantModelInference(func_graph, flags, origin_model, origin_model_size, param, init_scale,
                                   &candidate_scales, true);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight quant graph inference failed.";
-    delete origin_session;
-    delete origin_model;
     return ret;
   }
-  delete origin_session;
-  delete origin_model;
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

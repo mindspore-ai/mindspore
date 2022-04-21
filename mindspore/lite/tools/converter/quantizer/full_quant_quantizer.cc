@@ -598,7 +598,6 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   }
 
   // anf -- fb
-  flags_.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
   fp32_ms_model_ = std::make_shared<mindspore::Model>();
   if (fp32_ms_model_ == nullptr) {
@@ -608,10 +607,6 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   auto ret = BuildModelByFuncGraph(fp32_ms_model_, func_graph, flags_);
   if (ret != mindspore::kSuccess) {
     MS_LOG(ERROR) << "Build model failed.";
-    return RET_ERROR;
-  }
-  if (fp32_ms_model_ == nullptr) {
-    MS_LOG(ERROR) << "fp32_ms_model_ nullptr.";
     return RET_ERROR;
   }
   MS_LOG(INFO) << "start to update divergence's max value";

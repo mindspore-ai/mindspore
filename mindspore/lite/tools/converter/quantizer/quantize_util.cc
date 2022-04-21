@@ -254,76 +254,6 @@ std::string NodePrimitiveType(const CNodePtr &cnode) {
   return primitive_c->name();
 }
 
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num,
-                                      int *size) {
-  SessionModel sm;
-  auto meta_graph = Export(func_graph, true, true);
-  if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "Export to meta_graph failed";
-    return sm;
-  }
-
-  // transform
-  GraphDefTransform fb_transform;
-  fb_transform.SetGraphDef(meta_graph);
-  auto status = fb_transform.Transform(flags);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "FBTransform model failed";
-    delete meta_graph;
-    return sm;
-  }
-  meta_graph->version = Version();
-
-  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
-  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
-  builder.Finish(offset);
-  schema::FinishMetaGraphBuffer(builder, offset);
-  *size = builder.GetSize();
-  auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
-  if (content == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer return null";
-    delete meta_graph;
-    return sm;
-  }
-  auto model = lite::Model::Import(content, *size);
-  if (model == nullptr) {
-    MS_LOG(ERROR) << "Import model failed";
-    delete meta_graph;
-    return sm;
-  }
-  Context ctx;
-  ctx.thread_num_ = thread_num;
-  MS_ASSERT(!ctx.device_list_.empty());
-  ctx.device_list_.front().device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
-  auto session = session::LiteSession::CreateSession(&ctx);
-  if (session == nullptr) {
-    MS_LOG(ERROR) << "create session failed.";
-    model->Free();
-    delete meta_graph;
-    delete model;
-    return sm;
-  }
-
-  status = session->CompileGraph(model);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "CompileGraph error";
-    model->Free();
-    delete meta_graph;
-    delete session;
-    delete model;
-    return sm;
-  }
-  delete meta_graph;
-  sm.session = session;
-  sm.model = model;
-  return sm;
-}
-
-SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
-  int size = 0;
-  return CreateSessionByFuncGraph(func_graph, flags, thread_num, &size);
-}
-
 Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, const FuncGraphPtr &func_graph,
                              const converter::Flags &flags) {
   int size = 0;
@@ -370,7 +300,31 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
   std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
   auto &device_list = context->MutableDeviceInfo();
   device_list.push_back(device_info);
-  return model->Build(content, *size, kMindIR, context);
+  auto ret = model->Build(content, *size, kMindIR, context);
+  delete meta_graph;
+  return ret;
+}
+
+mindspore::tensor::MSTensor *MSTensorToLiteTensor(const MSTensor &tensor) {
+  if (tensor.impl() == nullptr) {
+    MS_LOG(ERROR) << "Tensor " << tensor.Name() << " is nullptr.";
+    return static_cast<lite::Tensor *>(nullptr);
+  }
+  auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl());
+  return static_cast<tensor::MSTensor *>(lite_impl->lite_tensor());
+}
+
+std::vector<mindspore::tensor::MSTensor *> MSTensorToLiteTensors(const std::vector<MSTensor> &srcTensors) {
+  std::vector<mindspore::tensor::MSTensor *> dstTensors;
+  dstTensors.reserve(srcTensors.size());
+  for (auto inTensor : srcTensors) {
+    auto tensor = MSTensorToLiteTensor(inTensor);
+    if (tensor == nullptr) {
+      return {};
+    }
+    dstTensors.emplace_back(tensor);
+  }
+  return dstTensors;
 }
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {
