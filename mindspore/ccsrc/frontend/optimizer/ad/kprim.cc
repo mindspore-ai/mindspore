@@ -53,8 +53,9 @@ KPrim g_k_prims;
 namespace {
 constexpr char kBpropMindIRSuffix[] = "_bprop.mindir";
 constexpr char kBpropMindIRDir[] = "/../bprop_mindir/";
-constexpr char serializable_bprop_ops[] = "serializable_bprop_ops";
-constexpr char bprop_mindir_module[] = "mindspore.ops.bprop_mindir";
+constexpr char kSerializableBpropOps[] = "serializable_bprop_ops";
+constexpr char kBpropMindirModule[] = "mindspore.ops.bprop_mindir";
+constexpr char kLiftedUserDataKey[] = "lifted_from_fv";
 
 #ifndef _WIN32
 std::string GetBpropDir() {
@@ -86,8 +87,8 @@ mindspore::HashSet<std::string> GetSerializableBpropList() {
   if (!BpropMindirDirExists()) {
     return serializable_bprop_list;
   }
-  py::module mod = py::module::import(bprop_mindir_module);
-  py::object serializable_bprop_ops_attr = mod.attr(serializable_bprop_ops);
+  py::module mod = py::module::import(kBpropMindirModule);
+  py::object serializable_bprop_ops_attr = mod.attr(kSerializableBpropOps);
   if (!py::isinstance<py::list>(serializable_bprop_ops_attr)) {
     MS_LOG(WARNING) << "Can not get the the serializable bprop ops list from python, it is not a python list.";
     return serializable_bprop_list;
@@ -588,8 +589,9 @@ FuncGraphPtr KPrim::KPrimitive(const CNodePtr &cnode, const ValueNodePtr &value_
 }
 
 AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &current_primal_fg) {
-  // current_primal_fg may have extra parameters like u_monad, io_monad
-  std::vector<AnfNodePtr> extra_args;
+  // The primal fg may have extra parameters from lifted fv or u_monad and io_monad.
+  std::vector<AnfNodePtr> extra_lifted_args;
+  std::vector<AnfNodePtr> extra_monad_args;
   // caller had checked size() - 2 is greater than 0.
   auto bprop_fg_param_size = bprop_fg->parameters().size() - 2;
   if (current_primal_fg != nullptr && bprop_fg_param_size < current_primal_fg->parameters().size()) {
@@ -597,6 +599,18 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
     MS_LOG(DEBUG) << "Current Primal FuncGraph may have extra parameters(U or IO monad) which bprop don't define, so "
                      "Insert it. Extra parameters size: "
                   << current_primal_fg_param_size - bprop_fg_param_size;
+    // The lifted parameters are put in front: {lifted parameters, origin parameters, u/io monad}.
+    for (size_t i = 0; i < current_primal_fg_param_size; ++i) {
+      auto primal_parameter = dyn_cast<Parameter>(current_primal_fg->parameters()[i]);
+      MS_EXCEPTION_IF_NULL(primal_parameter);
+      auto lifted = primal_parameter->user_data<bool>(kLiftedUserDataKey);
+      if (lifted == nullptr || !*lifted) {
+        break;
+      }
+      extra_lifted_args.push_back(
+        bprop_fg->NewCNodeInOrder({NewValueNode(prim::GetPythonOps("zeros_like")), primal_parameter}));
+      ++bprop_fg_param_size;
+    }
     for (auto i = bprop_fg_param_size; i < current_primal_fg_param_size; ++i) {
       const auto &primal_node = current_primal_fg->parameters()[i];
       AnfNodePtr extra_node;
@@ -613,7 +627,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
              "as the 'out' and 'dout'.\n"
           << trace::GetDebugInfo(bprop_fg->debug_info());
       }
-      extra_args.push_back(extra_node);
+      extra_monad_args.push_back(extra_node);
       MS_LOG(DEBUG) << "Insert to bprop_fg for node: " << primal_node->DebugString();
     }
   }
@@ -626,9 +640,13 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
     std::vector<AnfNodePtr> args;
     args.push_back(NewValueNode(prim::kPrimMakeTuple));
     args.push_back(NewEnviron(bprop_fg));
+    // The lifted parameters are put in front.
+    if (!extra_lifted_args.empty()) {
+      (void)args.insert(args.end(), extra_lifted_args.cbegin(), extra_lifted_args.cend());
+    }
     (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
-    if (!extra_args.empty()) {
-      args.insert(args.end(), extra_args.cbegin(), extra_args.cend());
+    if (!extra_monad_args.empty()) {
+      (void)args.insert(args.end(), extra_monad_args.cbegin(), extra_monad_args.cend());
     }
     return NewCNode(args, bprop_fg);
   }
@@ -638,9 +656,14 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
   std::string python_ops("_tuple_add");
   auto tuple_env = NewCNode({NewValueNode(prim::kPrimMakeTuple), NewEnviron(bprop_fg)}, bprop_fg);
   auto tuple_add_ops = NewValueNode(prim::GetPythonOps(python_ops, model_name));
-  if (!extra_args.empty()) {
-    extra_args.insert(extra_args.begin(), NewValueNode(prim::kPrimMakeTuple));
-    auto extra_tuple = NewCNode(extra_args, bprop_fg);
+  if (!extra_lifted_args.empty()) {
+    (void)extra_lifted_args.insert(extra_lifted_args.begin(), NewValueNode(prim::kPrimMakeTuple));
+    auto extra_tuple = NewCNode(extra_lifted_args, bprop_fg);
+    tuple_env = NewCNode({tuple_add_ops, tuple_env, extra_tuple}, bprop_fg);
+  }
+  if (!extra_monad_args.empty()) {
+    (void)extra_monad_args.insert(extra_monad_args.begin(), NewValueNode(prim::kPrimMakeTuple));
+    auto extra_tuple = NewCNode(extra_monad_args, bprop_fg);
     auto old_output_extra = NewCNode({tuple_add_ops, bprop_fg->output(), extra_tuple}, bprop_fg);
     return NewCNode({tuple_add_ops, tuple_env, old_output_extra}, bprop_fg);
   }
@@ -650,6 +673,7 @@ AnfNodePtr KPrim::BuildOutput(const FuncGraphPtr &bprop_fg, const FuncGraphPtr &
 
 static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg, const FuncGraphPtr &outer,
                                 std::vector<AnfNodePtr> *transf_args) {
+  MS_EXCEPTION_IF_NULL(mng);
   // bprop_fg has been checked in caller
   // transform except the last 2 parameters: out, dout.
   const size_t last_parameter_sizes = 2;
@@ -668,7 +692,6 @@ static void TransformNormalArgs(const FuncGraphManagerPtr &mng, const FuncGraphP
 void KPrim::TransformArgsForPrimitive(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                       const PrimitivePtr &primitive, const FuncGraphPtr &outer,
                                       std::vector<AnfNodePtr> *transf_args) {
-  MS_EXCEPTION_IF_NULL(mng);
   TransformNormalArgs(mng, bprop_fg, outer, transf_args);
   // Fprop_fg for Primitive with side effect should append extra U or IO monad parameter.
   auto effect_info = GetPrimEffectInfo(primitive);
@@ -688,12 +711,24 @@ template <typename T>
 void KPrim::TransformArgsForFuncGraph(const FuncGraphManagerPtr &mng, const FuncGraphPtr &bprop_fg,
                                       const T &current_primal_fg, const FuncGraphPtr &outer,
                                       std::vector<AnfNodePtr> *transf_args) {
-  MS_EXCEPTION_IF_NULL(mng);
-  TransformNormalArgs(mng, bprop_fg, outer, transf_args);
   constexpr size_t need_filter_size = 2;
   auto bprop_fg_param_size = bprop_fg->parameters().size() - need_filter_size;
-  // current_primal_fg may have extra parameters after AutoMonad
   const auto &current_primal_fg_params = current_primal_fg->parameters();
+  // The lifted parameters are put in front: {lifted parameters, origin parameters, u/io monad}.
+  for (size_t i = 0; i < current_primal_fg_params.size(); ++i) {
+    auto primal_parameter = dyn_cast<Parameter>(current_primal_fg_params[i]);
+    MS_EXCEPTION_IF_NULL(primal_parameter);
+    auto lifted = primal_parameter->template user_data<bool>(kLiftedUserDataKey);
+    if (lifted == nullptr || !*lifted) {
+      break;
+    }
+    TraceGuard trace_guard(std::make_shared<TraceGradFprop>(primal_parameter->debug_info()));
+    auto transf_p = outer->add_parameter();
+    transf_args->push_back(transf_p);
+    ++bprop_fg_param_size;
+  }
+  TransformNormalArgs(mng, bprop_fg, outer, transf_args);
+  // Current primal fg may have extra parameters after AutoMonad
   if (bprop_fg_param_size < current_primal_fg_params.size()) {
     for (auto i = bprop_fg_param_size; i < current_primal_fg_params.size(); ++i) {
       auto p = current_primal_fg_params[i];

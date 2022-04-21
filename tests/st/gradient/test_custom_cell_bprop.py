@@ -26,9 +26,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-
 grad_all = C.GradOperation(get_all=True)
 
 
@@ -39,6 +36,7 @@ class MulAdd(nn.Cell):
     def bprop(self, x, y, out, dout):
         # In this test case, The user defined bprop is wrong defined purposely to distinguish from ad result
         return 2 * dout, 2 * y
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -58,6 +56,7 @@ class InlineMulADD(nn.Cell):
 
     def construct(self, x, y):
         return self.mul_add(x, y) + x + self.param * y
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -82,6 +81,7 @@ class WithParameter(nn.Cell):
         # In this test case, The user defined bprop is wrong defined purposely to distinguish from ad result
         return self.param1 * self.param2 * dout, 2 * y
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -95,6 +95,7 @@ class WithNoBprop(nn.Cell):
     def construct(self, x, y):
         return 2 * x + y
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -103,6 +104,7 @@ def test_with_no_bprop():
     x = Tensor(1, dtype=ms.int32)
     y = Tensor(2, dtype=ms.int32)
     assert grad_all(with_no_bprop)(x, y) == (2, 1)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -141,6 +143,7 @@ def test_grad_in_bprop_1():
                                     Tensor(np.ones([2, 2]).astype(np.float32)))
     assert (grads[0].asnumpy() == np.ones([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -182,6 +185,7 @@ def test_grad_in_bprop_2():
                                     Tensor(np.ones([2, 2]).astype(np.float32)))
     assert (grads[0].asnumpy() == np.ones([2, 2]).astype(np.float32)).all()
     assert (grads[1].asnumpy() == np.array([[2, 2], [2, 2]]).astype(np.float32)).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -236,6 +240,7 @@ class OneInputBprop(nn.Cell):
     def bprop(self, x, out, dout):
         return (5 * x,)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -262,6 +267,7 @@ class InlineBpropTwoInput(nn.Cell):
     def bprop(self, x, y, out, dout):
         grads = grad_all(self.f)(x, y)
         return grads[0] * 2, grads[1] * 2
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -324,6 +330,7 @@ class InlineMutilTwoInputParameterCell(nn.Cell):
         output = self.f1(x, y) + self.f2(x, y) + self.f3(x, y) + self.f4(x, y)
         return output
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -347,20 +354,24 @@ class MulAddWithParam(nn.Cell):
     def construct(self, x):
         return self.mul_add(self.param, x)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_refkey_bprop():
     grad_by_list = C.GradOperation(get_all=True, get_by_list=True)
+
     class GradWrap(nn.Cell):
         def __init__(self, network):
             super(GradWrap, self).__init__()
             self.network = network
             self.weights = ParameterTuple(filter(lambda x: x.requires_grad, network.get_parameters()))
+
         def construct(self, x):
             weights = self.weights
             grads = grad_by_list(self.network, weights)(x)
             return grads
+
     network = GradWrap(MulAddWithParam())
     input_data = Tensor(np.array([2, 2], np.float32))
     grads = network(input_data)
@@ -374,6 +385,7 @@ class MulAddWithWrongOutputNum(nn.Cell):
 
     def bprop(self, x, y, out, dout):
         return (2 * dout,)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -391,6 +403,7 @@ class MulAddWithWrongOutputType(nn.Cell):
 
     def bprop(self, x, y, out, dout):
         return 2 * dout, 2
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
@@ -413,6 +426,7 @@ class MulAddWithWrongOutputShape(nn.Cell):
     def bprop(self, x, y, out, dout):
         return 2, self.ones
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -421,3 +435,328 @@ def test_grad_mul_add_with_wrong_output_shape():
     mul_add = MulAddWithWrongOutputShape()
     with pytest.raises(TypeError):
         grad_all(mul_add)(1, Tensor(np.ones([2, 2])))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_forward_with_parameter():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the forward net using Parameter.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x + x
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    out = GradNet(Net())(x, y)
+    expect_dx = np.array([[1.0, 1.2, 0.8],
+                          [2.4, 2.6, 2.2]]).astype(np.float32)
+    expect_dy = np.array([[0.02, 0.6, 2.2],
+                          [0.2, 0.4, 2.6],
+                          [4.2, 2.4, 6.6]]).astype(np.float32)
+    assert np.allclose(out[0].asnumpy(), expect_dx)
+    assert np.allclose(out[1].asnumpy(), expect_dy)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_forward_with_parameter_in_sub_cell():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the forward net using Parameter in the sub-cell.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.net = Net1()
+
+        def construct(self, x, y):
+            return self.net(x, y)
+
+    class Net1(nn.Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x + x
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    out = GradNet(Net())(x, y)
+    expect_dx = np.array([[1.0, 1.2, 0.8],
+                          [2.4, 2.6, 2.2]]).astype(np.float32)
+    expect_dy = np.array([[0.02, 0.6, 2.2],
+                          [0.2, 0.4, 2.6],
+                          [4.2, 2.4, 6.6]]).astype(np.float32)
+    assert np.allclose(out[0].asnumpy(), expect_dx)
+    assert np.allclose(out[1].asnumpy(), expect_dy)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_forward_with_parameter_in_sub_cell_get_by_list():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs and Parameters when the forward net using Parameter in the sub-cell.
+    Expectation: Get the correct gradients.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.net = Net1()
+
+        def construct(self, x, y):
+            return self.net(x, y)
+
+    class Net1(nn.Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x + x
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.params = ParameterTuple(net.trainable_params())
+            self.grad_op = C.GradOperation(get_by_list=True, get_all=True)
+
+        def construct(self, x, y):
+            grad_f = self.grad_op(self.net, self.params)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    out = GradNet(Net())(x, y)
+    expect_dx = np.array([[1.0, 1.2, 0.8],
+                          [2.4, 2.6, 2.2]]).astype(np.float32)
+    expect_dy = np.array([[0.02, 0.6, 2.2],
+                          [0.2, 0.4, 2.6],
+                          [4.2, 2.4, 6.6]]).astype(np.float32)
+    expect_dz = np.array([0.0]).astype(np.float32)
+    assert np.allclose(out[0][0].asnumpy(), expect_dx)
+    assert np.allclose(out[0][1].asnumpy(), expect_dy)
+    assert np.allclose(out[1][0].asnumpy(), expect_dz)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_forward_with_parameter():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the forward net using Parameter.
+    Expectation: Get the correct gradients.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x + x
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    out = GradNet(Net())(x, y)
+    expect_dx = np.array([[1.0, 1.2, 0.8],
+                          [2.4, 2.6, 2.2]]).astype(np.float32)
+    expect_dy = np.array([[0.02, 0.6, 2.2],
+                          [0.2, 0.4, 2.6],
+                          [4.2, 2.4, 6.6]]).astype(np.float32)
+    assert np.allclose(out[0].asnumpy(), expect_dx)
+    assert np.allclose(out[1].asnumpy(), expect_dy)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_forward_with_parameter_in_sub_cell():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the forward net using Parameter in the sub-cell.
+    Expectation: Get the correct gradients.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.net = Net1()
+
+        def construct(self, x, y):
+            return self.net(x, y)
+
+    class Net1(nn.Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x + x
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    out = GradNet(Net())(x, y)
+    expect_dx = np.array([[1.0, 1.2, 0.8],
+                          [2.4, 2.6, 2.2]]).astype(np.float32)
+    expect_dy = np.array([[0.02, 0.6, 2.2],
+                          [0.2, 0.4, 2.6],
+                          [4.2, 2.4, 6.6]]).astype(np.float32)
+    assert np.allclose(out[0].asnumpy(), expect_dx)
+    assert np.allclose(out[1].asnumpy(), expect_dy)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs and Parameters when the forward net using Parameter in the sub-cell.
+    Expectation: Get the correct gradients.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.net = Net1()
+
+        def construct(self, x, y):
+            return self.net(x, y)
+
+    class Net1(nn.Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x + x
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.params = ParameterTuple(net.trainable_params())
+            self.grad_op = C.GradOperation(get_by_list=True, get_all=True)
+
+        def construct(self, x, y):
+            grad_f = self.grad_op(self.net, self.params)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    out = GradNet(Net())(x, y)
+    expect_dx = np.array([[1.0, 1.2, 0.8],
+                          [2.4, 2.6, 2.2]]).astype(np.float32)
+    expect_dy = np.array([[0.02, 0.6, 2.2],
+                          [0.2, 0.4, 2.6],
+                          [4.2, 2.4, 6.6]]).astype(np.float32)
+    expect_dz = np.array([0.0]).astype(np.float32)
+    assert np.allclose(out[0][0].asnumpy(), expect_dx)
+    assert np.allclose(out[0][1].asnumpy(), expect_dy)
+    assert np.allclose(out[1][0].asnumpy(), expect_dz)
