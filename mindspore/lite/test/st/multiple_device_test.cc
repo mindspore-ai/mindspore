@@ -110,7 +110,7 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor3->nodeType = mindspore::lite::NodeType_Parameter;
   tensor3->format = mindspore::schema::Format_NHWC;
   tensor3->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor3->dims = {1, 1, 1, 1};
+  tensor3->dims = {1, 2, 2, 1};
   tensor3->offset = -1;
   tensor3->name = "tensor3";
 
@@ -118,7 +118,7 @@ void CreateMultyModel1(mindspore::schema::MetaGraphT *meta_graph) {
   tensor4->nodeType = mindspore::lite::NodeType_Parameter;
   tensor4->format = mindspore::schema::Format_NHWC;
   tensor4->dataType = mindspore::TypeId::kNumberTypeFloat32;
-  tensor4->dims = {1, 1, 1, 1};
+  tensor4->dims = {1, 2, 2, 1};
   tensor4->offset = -1;
   tensor4->name = "tensor4";
 
@@ -431,7 +431,7 @@ TEST_F(MultipleDeviceTest, NewApi5) {
   /* set input data */
   std::vector<mindspore::MSTensor> inputs = model_impl->GetInputs();
   auto in = inputs[0];
-  std::vector<float> in_float = {1.0, 2.0, 3.0, 4.0};
+  std::vector<float> in_float = {1.0};
   memcpy(in.MutableData(), in_float.data(), in.DataSize());
 
   std::vector<mindspore::MSTensor> outputs = model_impl->GetOutputs();
@@ -476,7 +476,7 @@ TEST_F(MultipleDeviceTest, NewApi6) {
   /* set input data */
   std::vector<mindspore::MSTensor> inputs = model_impl->GetInputs();
   auto in = inputs[0];
-  std::vector<float> in_float = {1.0, 2.0, 3.0, 4.0};
+  std::vector<float> in_float = {1.0};
   memcpy(in.MutableData(), in_float.data(), in.DataSize());
 
   std::vector<mindspore::MSTensor> outputs = model_impl->GetOutputs();
