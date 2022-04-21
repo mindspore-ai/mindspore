@@ -27,23 +27,7 @@ class Assign(Primitive):
     """
     Assigns `Parameter` with a value.
 
-    Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`. :math:`(N,*)` where :math:`*` means,
-          any number of additional dimensions, its rank should be less than 8.
-        - **value** (Tensor) - The value to be assigned, has the same shape with `variable`.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Raises:
-        TypeError: If `variable` is not a Parameter.
-        TypeError: If `value` is not a Tensor.
-        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.assign` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -183,32 +183,7 @@ class Add(_MathBinaryOp):
     r"""
     Adds two input tensors element-wise.
 
-    .. math::
-
-        out_{i} = x_{i} + y_{i}
-
-    .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one of the input `x` , `y` after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number, bool.
+    Refer to :func:`mindspore.ops.add` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -387,32 +362,7 @@ class AssignAdd(Primitive):
     """
     Updates a `Parameter` by adding a value to it.
 
-    Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-    If `value` is a number, the number is automatically converted to Tensor,
-    and the data type is consistent with the Tensor data type involved in the operation.
-
-    Note:
-        Since `variable` is a data type Parameter, the data type cannot be changed,
-        so only the type of `value` is allowed to be promoted to the type of `variable`.
-        And the conversion type supported by different devices will be different,
-        it is recommended to use the same data type when using this operator.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **value** (Union[numbers.Number, Tensor]) - The value to be added to the `variable`.
-          It must have the same shape as `variable` if it is a Tensor.
-          it is recommended to use the same data type when using this operator.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Raises:
-        TypeError: If `value` is neither Number nor Tensor.
-        RuntimeError: If the data type of `variable` and `value` conversion of Parameter
-                      is required when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.assign_add` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -450,32 +400,7 @@ class AssignSub(Primitive):
     """
     Updates a `Parameter` by subtracting a value from it.
 
-    Inputs of `variable` and `value` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-    If `value` is a number, the number is automatically converted to Tensor,
-    and the data type is consistent with the Tensor data type involved in the operation.
-
-    Note:
-        Since `variable` is a data type Parameter, the data type cannot be changed,
-        so only the type of `value` is allowed to be promoted to the type of `variable`.
-        And the conversion type supported by different devices will be different,
-        it is recommended to use the same data type when using this operator.
-
-    Inputs:
-        - **variable** (Parameter) - The `Parameter`.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank be should be less than 8.
-        - **value** (Union[numbers.Number, Tensor]) - The value to be subtracted from the `variable`.
-          It must have the same shape as `variable` if it is a Tensor.
-          it is recommended to use the same data type when using this operator.
-
-    Outputs:
-        Tensor, has the same data type and shape as original `variable`.
-
-    Raises:
-        TypeError: If `value` is neither Number nor Tensor.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.assign_sub` for more detail.
 
     Supported Platforms:
         ``Ascend``
@@ -1609,19 +1534,7 @@ class AddN(Primitive):
     """
     Computes addition of all input tensors element-wise.
 
-    All input tensors must have the same shape.
-
-    Inputs:
-        - **x** (Union(tuple[Tensor], list[Tensor])) - A tuple or list composed of Tensor, the data type is
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-
-    Outputs:
-        Tensor, has the same shape and dtype as each Tensor of `x`.
-
-    Raises:
-        TypeError: If `x` is neither tuple nor list.
-        ValueError: If there are Tensors with different shapes in `x`.
+    Refer to :func:`mindspore.ops.addn` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1720,19 +1633,7 @@ class Neg(Primitive):
     """
     Returns a tensor with negative values of the input tensor element-wise.
 
-    .. math::
-
-        out_{i} = - x_{i}
-
-    Inputs:
-        - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape and dtype as input.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.neg` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1893,32 +1794,7 @@ class Sub(_MathBinaryOp):
     r"""
     Subtracts the second input tensor from the first input tensor element-wise.
 
-    .. math::
-
-        out_{i} = x_{i} - y_{i}
-
-    .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
+    Refer to :func:`mindspore.ops.sub` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1946,32 +1822,7 @@ class Mul(_MathBinaryOp):
     r"""
     Multiplies two tensors element-wise.
 
-    .. math::
-
-        out_{i} = x_{i} * y_{i}
-    .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
+    Refer to :func:`mindspore.ops.mul` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2245,33 +2096,7 @@ class Pow(Primitive):
     r"""
     Calculates the `y` power of each element in `x`.
 
-    .. math::
-
-        out_{i} = x_{i} ^{ y_{i}}
-
-    .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, number.Number or bool.
-        ValueError: If `x` and `y` are not the same shape.
+    Refer to :func:`mindspore.ops.pow` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2313,19 +2138,7 @@ class Exp(PrimitiveWithInfer):
     r"""
     Returns exponential of a tensor element-wise.
 
-    .. math::
-
-        out_i = e^{x_i}
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.exp` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2459,20 +2272,7 @@ class Expm1(Primitive):
     r"""
     Returns exponential then minus 1 of a tensor element-wise.
 
-    .. math::
-
-        out_i = e^{x_i} - 1
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.expm1` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2550,27 +2350,7 @@ class Log(PrimitiveWithInfer):
     """
     Returns the natural logarithm of a tensor element-wise.
 
-    .. math::
-        y_i = log_e(x_i)
-
-    .. warning::
-        If the input value of operator Log is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
-        be affacted.
-
-    Inputs:
-        - **x** (Tensor) - Input Tensor of any dimension. The value must be greater than 0.
-
-    .. note::
-        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
-        input Tensor on the CPU should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64 on GPU and CPU.
-        TypeError: If dtype of `x` is not float16 or float32 on Ascend.
+    Refer to :func:`mindspore.ops.log` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2644,20 +2424,7 @@ class Erf(Primitive):
     r"""
     Computes the Gauss error function of `x` element-wise.
 
-    .. math::
-
-        erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
-
-    Inputs:
-        - **x** (Tensor) - Input Tensor of Gaussian error function. Its dimension must be less than 8 and
-          data type must be float16 or float32.
-
-    Outputs:
-        Tensor, has the same shape and dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
+    Refer to :func:`mindspore.ops.erf` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -2716,30 +2483,7 @@ class Minimum(_MathBinaryOp):
     r"""
     Computes the minimum of input tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-    If one of the elements being compared is a NaN, then that element is returned.
-
-    .. math::
-        output_i = min(x_i, y_i)
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
+    Refer to :func:`mindspore.ops.minimum` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2774,30 +2518,7 @@ class Maximum(_MathBinaryOp):
     """
     Computes the maximum of input tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-    If one of the elements being compared is a NaN, then that element is returned.
-
-    .. math::
-        output_i = max(x_i, y_i)
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        ValueError: If `x` and `y` are not the same shape.
+    Refer to :func:`mindspore.ops.maximum` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2823,29 +2544,7 @@ class RealDiv(_MathBinaryOp):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} = x_{i} / y_{i}
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+    Refer to :func:`mindspore.ops.div` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3079,31 +2778,7 @@ class FloorDiv(Primitive):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} = \\text{floor}( \\frac{x_i}{y_i})
-
-    where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.floor_div` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3285,20 +2960,7 @@ class Floor(Primitive):
     r"""
     Rounds a tensor down to the closest integer element-wise.
 
-    .. math::
-
-        out_i = \lfloor x_i \rfloor
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. Its element data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not in [float16, float32, float64].
+    Refer to :func:`mindspore.ops.floor` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3320,40 +2982,8 @@ class Floor(Primitive):
 class FloorMod(Primitive):
     r"""
     Computes the remainder of division element-wise. It's a flooring divide.
-    E.g. :math:`floor(x / y) * y + mod(x, y) = x`.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be both bool, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\text{floor}(x_{i} // y_{i})
-
-    where the :math:`floor` indicates the Floor operator, for more details, please refer to the Floor operator.
-
-    .. warning::
-        - The input data does not support 0.
-        - When the elements of input exceeds 2048 , the accuracy of operator cannot guarantee the requirement of
-          double thousandths in the mini form.
-        - Due to different architectures, the calculation results of this operator on NPU and CPU may be inconsistent.
-        - If shape is expressed as (D1,D2... ,Dn), then D1\*D2... \*DN<=1000000,n<=8.
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision of the two inputs.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.floor_mod` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3510,23 +3140,7 @@ class Acosh(Primitive):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
 
-    .. math::
-
-        out_i = \cosh^{-1}(input_i)
-
-    .. warning::
-        Given an input tensor x, the function computes inverse hyperbolic cosine of every element.
-        Input range is [1, inf].
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape and type as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.acosh` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3552,19 +3166,7 @@ class Cosh(Primitive):
     r"""
     Computes hyperbolic cosine of input element-wise.
 
-    .. math::
-
-        out_i = \cosh(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.cosh` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -3586,19 +3188,7 @@ class Asinh(Primitive):
     r"""
     Computes inverse hyperbolic sine of the input element-wise.
 
-    .. math::
-
-        out_i = \sinh^{-1}(input_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape and type as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.asinh` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3621,19 +3211,7 @@ class Sinh(Primitive):
     r"""
     Computes hyperbolic sine of the input element-wise.
 
-    .. math::
-
-        out_i = \sinh(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.sinh` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -3671,30 +3249,7 @@ class Equal(_LogicBinaryOp):
     r"""
     Computes the equivalence between two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } x_{i} = y_{i} \\
-            & \text{False,   if } x_{i} \ne y_{i}
-            \end{cases}
-
-    Inputs:
-        - **x** (Union[Tensor, Number]) - The first input is a number or
-          a tensor whose data type is number.
-        - **y** (Union[Tensor, Number]) - The second input is a number
-          when the first input is a tensor or a tensor whose data type is number.
-          The data type is the same as the first input.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.equal` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3831,30 +3386,7 @@ class NotEqual(_LogicBinaryOp):
     r"""
     Computes the non-equivalence of two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors, the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } x_{i} \ne y_{i} \\
-            & \text{False,   if } x_{i} = y_{i}
-            \end{cases}
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.ne` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3882,37 +3414,7 @@ class Greater(_LogicBinaryOp):
     r"""
     Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
 
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}>y_{i} \\
-            & \text{False,   if } x_{i}<=y_{i}
-            \end{cases}
-
-    Note:
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors, dtypes of them cannot be bool at the same time,
-          and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-        - Broadcasting is supported.
-        - If the input Tensor can be broadcast, the low dimension will be extended to the corresponding high dimension
-          in another input by copying the value of the dimension.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.gt` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3939,31 +3441,7 @@ class GreaterEqual(_LogicBinaryOp):
     r"""
     Computes the boolean value of :math:`x >= y` element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}>=y_{i} \\
-            & \text{False,   if } x_{i}<y_{i}
-            \end{cases}
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.ge` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4038,31 +3516,7 @@ class Less(_LogicBinaryOp):
     r"""
     Computes the boolean value of :math:`x < y` element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}<y_{i} \\
-            & \text{False,   if } x_{i}>=y_{i}
-            \end{cases}
-
-    Inputs:
-        - **x** (Union[Tensor, Number, bool]) - The first input is a number or
-          a bool or a tensor whose data type is number or bool.
-        - **y** (Union[Tensor, Number, bool]) - The second input is a number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
-
-    Raises:
-        TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
+    Refer to :func:`mindspore.ops.less` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4081,34 +3535,7 @@ class LessEqual(_LogicBinaryOp):
     r"""
     Computes the boolean value of :math:`x <= y` element-wise.
 
-    .. math::
-
-        out_{i} =\begin{cases}
-            & \text{True,    if } x_{i}<=y_{i} \\
-            & \text{False,   if } x_{i}>y_{i}
-            \end{cases}
-
-    .. note::
-        - Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-        - The inputs must be two tensors or one tensor and one scalar.
-        - When the inputs are two tensors,
-          dtypes of them cannot be both bool , and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input, when the first input is a Tensor,
-          the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.le` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4127,20 +3554,7 @@ class LogicalNot(Primitive):
     """
     Computes the "logical NOT" of a tensor element-wise.
 
-    .. math::
-
-        out_{i} = \\neg x_{i}
-
-    Inputs:
-        - **x** (Tensor) - The input tensor whose dtype is bool.
-          :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-
-    Outputs:
-        Tensor, the shape is the same as the `x`, and the dtype is bool.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not a bool.
+    Refer to :func:`mindspore.ops.logical_not` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4163,30 +3577,7 @@ class LogicalAnd(_LogicBinaryOp):
     r"""
     Computes the "logical AND" of two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one bool.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them must be bool.
-    When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor must be bool.
-
-    .. math::
-
-        out_{i} = x_{i} \wedge y_{i}
-
-    Note:
-        LogicalAnd supports broadcasting.
-
-    Inputs:
-        - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
-        - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
-          a tensor whose data type is bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.logical_and` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4205,30 +3596,7 @@ class LogicalOr(_LogicBinaryOp):
     """
     Computes the "logical OR" of two tensors element-wise.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one bool.
-    When the inputs are two tensors, the shapes of them could be broadcast,
-    and the data types of them must be bool.
-    When the inputs are one tensor and one bool, the bool object could only be a constant,
-    and the data type of the tensor must be bool.
-
-    .. math::
-
-        out_{i} = x_{i} \\vee y_{i}
-
-    Note:
-        LogicalOr supports broadcasting.
-
-    Inputs:
-        - **x** (Union[Tensor, bool]) - The first input is a bool or a tensor whose data type is bool.
-        - **y** (Union[Tensor, bool]) - The second input is a bool when the first input is a tensor or
-          a tensor whose data type is bool.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting, and the data type is bool.
-
-    Raises:
-        TypeError: If neither `x` nor `y` is a Tensor.
+    Refer to :func:`mindspore.ops.logical_or` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4285,24 +3653,7 @@ class IsNan(Primitive):
     r"""
     Determines which elements are NaN for each position.
 
-    .. math::
-
-        out_i = \begin{cases}
-          & \ True,\ \text{ if } x_{i} = \text{Nan} \\
-          & \ False,\ \text{ if } x_{i} \ne  \text{Nan}
-        \end{cases}
-
-    where :math:`Nan` means not a number.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape of input, and the dtype is bool.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.isnan` for more detail.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -4365,22 +3716,7 @@ class IsFinite(PrimitiveWithInfer):
     r"""
     Determines which elements are finite for each position.
 
-    .. math::
-
-        out_i = \begin{cases}
-          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
-          & \text{ if } x_{i} \ne \text{Finite},\ \ False
-        \end{cases}
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape of input, and the dtype is bool.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.isfinite` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4632,22 +3968,7 @@ class Cos(Primitive):
     r"""
     Computes cosine of input element-wise.
 
-    .. warning::
-        Currently support Float16, Float32 data type. If use Float64, there may
-        be a problem of missing precision.
-
-    .. math::
-        out_i = cos(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.cos` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4669,21 +3990,7 @@ class ACos(Primitive):
     r"""
     Computes arccosine of input tensors element-wise.
 
-    .. math::
-
-        out_i = cos^{-1}(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type should be one of the following types: float16, float32, float64.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32 or float64.
+    Refer to :func:`mindspore.ops.acos` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4706,19 +4013,7 @@ class Sin(Primitive):
     r"""
     Computes sine of the input element-wise.
 
-    .. math::
-
-        out_i = sin(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.sin` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4740,21 +4035,7 @@ class Asin(Primitive):
     r"""
     Computes arcsine of input tensors element-wise.
 
-    .. math::
-
-        out_i = sin^{-1}(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type should be one of the following types: float16, float32, float64.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16, float32, float64.
+    Refer to :func:`mindspore.ops.asin` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4855,19 +4136,7 @@ class Abs(Primitive):
     r"""
     Returns absolute value of a tensor element-wise.
 
-    .. math::
-
-        out_i = |x_i|
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.abs` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4959,22 +4228,7 @@ class Tan(Primitive):
     r"""
     Computes tangent of `x` element-wise.
 
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    .. math::
-
-        out_i = tan(x_i)
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.tan` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -4997,21 +4251,7 @@ class Atan(Primitive):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
 
-    .. math::
-
-        out_i = tan^{-1}(x_i)
-
-    Inputs:
-        - **x** (Tensor): The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          The data type should be one of the following types: float16, float32.
-
-    Outputs:
-        A Tensor, has the same type as the input.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+    Refer to :func:`mindspore.ops.atan` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5037,19 +4277,7 @@ class Atanh(Primitive):
     .. warning::
         This is an experimental prototype that is subject to change and/or deletion.
 
-    .. math::
-
-        out_i = \tanh^{-1}(x_{i})
-
-    Inputs:
-        - **x** (Tensor): The shape of tensor is
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-
-    Outputs:
-        A Tensor, has the same type as the input.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.atanh` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5072,25 +4300,7 @@ class Atan2(_MathBinaryOp):
     r"""
     Returns arctangent of x/y element-wise.
 
-    It returns :math:`\theta\ \in\ [-\pi, \pi]`
-    such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower precision data type will be converted to
-    the relatively highest precision data type.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **y** (Tensor) - The input tensor. It has the same shape with `x`.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,and the data type is same as `x`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.atan2` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -5163,27 +4373,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     r"""
     Returns bitwise `and` of two tensors element-wise.
 
-    .. math::
-
-        out_i = x_{i} \wedge y_{i}
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to
-    make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor with int16, int32 or uint16 data type.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **y** (Tensor) - The input tensor with same type as the `x`.
-
-    Outputs:
-        Tensor, has the same type as the `x`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.bitwise_and` for more detail.
 
     Supported Platforms:
         ``Ascend``
@@ -5202,26 +4392,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     r"""
     Returns bitwise `or` of two tensors element-wise.
 
-    .. math::
-
-        out_i = x_{i} \mid y_{i}
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to
-    make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor with int16, int32 or uint16 data type.
-        - **y** (Tensor) - The input tensor with same type as the `x`.
-
-    Outputs:
-        Tensor, has the same type as the `x`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.bitwise_or` for more detail.
 
     Supported Platforms:
         ``Ascend``
@@ -5240,26 +4411,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     r"""
     Returns bitwise `xor` of two tensors element-wise.
 
-    .. math::
-
-        out_i = x_{i} \oplus y_{i}
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to
-    make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
-    Inputs:
-        - **x** (Tensor) - The input tensor with int16, int32 or uint16 data type.
-        - **y** (Tensor) - The input tensor with same type as the `x`.
-
-    Outputs:
-        Tensor, has the same type as the `x`.
-
-    Raises:
-        TypeError: If `x` or `y` is not a Tensor.
-        RuntimeError: If the data type of `x`, `y` conversion of Parameter is required
-                      when data type conversion of Parameter is not supported.
+    Refer to :func:`mindspore.ops.bitwise_xor` for more detail.
 
     Supported Platforms:
         ``Ascend``
@@ -5578,19 +4730,7 @@ class Invert(Primitive):
     r"""
     Flips all bits of input tensor element-wise.
 
-    .. math::
-
-        out_i = ~x_{i}
-
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-          The data type should be one of the following types: int16, uint16.
-
-    Outputs:
-        Tensor, has the same shape as `x`.
-
-    Raises:
-        TypeError: If dtype of `x` is neither int16 nor uint16.
+    Refer to :func:`mindspore.ops.invert` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
