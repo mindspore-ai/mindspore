@@ -163,11 +163,11 @@ __global__ void ReciprocalKernel(const T *input, T *output, const size_t count) 
     if (std::numeric_limits<T>::has_infinity) {
       // Referring to the execution result of numpy, We need to add 1 to positive infinity.
       output[i] = std::numeric_limits<T>::infinity();
-      output[i] += 1;
+      output[i] += one;
     } else {
       // Referring to the execution result of numpy, We need to add 1 to positive max.
       output[i] = std::numeric_limits<T>::max();
-      output[i] += 1;
+      output[i] += one;
     }
   }
   return;
@@ -655,11 +655,6 @@ void Invert(const T *input, T *output, const size_t count, cudaStream_t cuda_str
 template <typename T>
 void Square(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   SquareKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
-  return;
-}
-template <typename T>
-void Pow(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
-  PowKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
 }
 template <typename T>
