@@ -329,7 +329,7 @@ class CheckTensor(PrimitiveWithInfer):
         return out
 
     def __call__(self, x, name):
-        if isinstance(x, Tensor):
+        if isinstance(x, Tensor) or x is None:
             return x
         raise TypeError(
             f"For {name}, input type should be a Tensor or Parameter.")
