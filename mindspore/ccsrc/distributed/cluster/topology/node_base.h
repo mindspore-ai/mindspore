@@ -35,6 +35,9 @@ class NodeBase {
   // Prepare the resources hold in this node.
   virtual bool Initialize() = 0;
 
+  // Returns whether all the initialization work has been completed.
+  virtual bool Initialized() = 0;
+
   // Release the resources hold in this node.
   virtual bool Finalize() = 0;
 

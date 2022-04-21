@@ -34,6 +34,8 @@ class ComputeGraphNode : public NodeBase {
   ~ComputeGraphNode() override = default;
 
   bool Initialize() override;
+  bool Initialized() override;
+
   bool Finalize() override;
 
   // Send the specified message to the meta server node.
