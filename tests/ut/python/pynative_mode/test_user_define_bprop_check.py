@@ -160,7 +160,7 @@ def test_user_define_bprop_check_parameter():
             return ret
 
         def bprop(self, x, out, dout):
-            return dout + x
+            return dout + self.par
 
     class GradNet(nn.Cell):
         def __init__(self, net):
@@ -177,7 +177,7 @@ def test_user_define_bprop_check_parameter():
     grad_net = GradNet(net)
     with pytest.raises(RuntimeError) as ex:
         ret = grad_net(x, sens)
-    assert "When user defines the net bprop, the 'Parameter' data type is not supported in the net." in str(ex.value)
+    assert "The user defined 'bprop' function does not support using Parameter." in str(ex.value)
 
 
 def test_user_define_bprop_check_number():
