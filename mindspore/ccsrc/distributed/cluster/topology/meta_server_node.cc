@@ -41,6 +41,10 @@ bool MetaServerNode::Initialize() {
   return true;
 }
 
+bool MetaServerNode::Initialized() {
+  return topo_state_ == TopoState::kInitialized || topo_state_ == TopoState::kFinished;
+}
+
 bool MetaServerNode::Finalize() {
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (topo_state_ != TopoState::kFinished) {
@@ -119,6 +123,9 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   if (nodes_.find(node_id) == nodes_.end()) {
     std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
     nodes_[node_id] = node_state;
+    if (nodes_.size() == total_node_num_) {
+      topo_state_ = TopoState::kInitialized;
+    }
     MS_LOG(INFO) << "The new node: " << node_id << " is registered successfully.";
 
     auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
@@ -160,6 +167,9 @@ MessageBase *const MetaServerNode::ProcessUnregister(MessageBase *const message)
     return response.release();
   }
   nodes_.erase(node_id);
+  if (nodes_.size() == 0) {
+    topo_state_ = TopoState::kFinished;
+  }
   auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
                                 std::to_string(static_cast<int>(MessageName::kSuccess)));
   MS_EXCEPTION_IF_NULL(response);

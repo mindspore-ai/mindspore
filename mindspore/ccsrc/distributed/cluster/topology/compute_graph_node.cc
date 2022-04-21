@@ -40,6 +40,8 @@ bool ComputeGraphNode::Initialize() {
   return true;
 }
 
+bool ComputeGraphNode::Initialized() { return authenticated_; }
+
 bool ComputeGraphNode::Finalize() {
   // Exit the compute graph node from the cluster topology.
   EXECUTE_WITH_RETRY(Unregister, kExecuteRetryNum, kExecuteInterval, "Failed to unregister");
