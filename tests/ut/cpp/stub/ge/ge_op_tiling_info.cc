@@ -23,6 +23,10 @@ extern "C" ge::graphStatus OpParaCalculateV2(const ge::Operator &op, OpRunInfoV2
   return ge::GRAPH_SUCCESS;
 }
 
+extern "C" ge::graphStatus OpAtomicCalculateV2(const ge::Node &node, OpRunInfoV2 &run_info) {
+  return ge::GRAPH_SUCCESS;
+}
+
 namespace utils {
 OpRunInfo::OpRunInfo() {}
 

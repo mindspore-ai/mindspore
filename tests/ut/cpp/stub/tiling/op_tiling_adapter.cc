@@ -97,11 +97,18 @@ void OpTilingCalculateAdapter::AddEdge(const ge::NodePtr &ge_node,
 
 void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {}
 
-ge::Operator OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
+ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(
   const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
   const std::string &op_compile_info) {
   ge::Operator op;
   return op;
+}
+
+ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
+  const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+  const std::string &op_compile_info) {
+  ge::NodePtr ge_node;
+  return ge_node;
 }
 }  // namespace tiling
 }  // namespace device

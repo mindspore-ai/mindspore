@@ -1148,7 +1148,8 @@ void KernelRuntime::GenLaunchArgs(const mindspore::kernel::KernelMod &kernel_mod
   MS_EXCEPTION_IF_NULL(kernel_launch_info);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::GetCNodeName(cnode) == kAtomicAddrCleanOpName) {
+  auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (cnode_name == kAtomicAddrCleanOpName || cnode_name == kDynamicAtomicAddrCleanOpName) {
     return GenAddrCleanLaunchArgs(cnode, &(kernel_launch_info->inputs_));
   }
   auto ms_context = MsContext::GetInstance();
@@ -1283,7 +1284,12 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
         input->addr = device_address->ptr_;
         MS_EXCEPTION_IF_NULL(input->addr);
       }
+      auto real_output_size = AnfAlgo::GetOutputTensorMemSize(pre_node, index);
       input->size = device_address->size_;
+      if (device_address->size_ != real_output_size) {
+        MS_LOG(DEBUG) << "The node:" << pre_node->fullname_with_scope() << " real output size is " << real_output_size;
+        input->size = real_output_size;
+      }
       kernel_inputs->emplace_back(input);
     }
     MS_LOG(DEBUG) << "AtomicAddClean clean output size:" << clean_output_indexes.size();
@@ -1374,7 +1380,8 @@ void KernelRuntime::AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem
   MS_EXCEPTION_IF_NULL(kernel_launch_info);
   auto cnode = kernel->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (common::AnfAlgo::GetCNodeName(cnode) == kAtomicAddrCleanOpName) {
+  auto cnode_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (cnode_name == kAtomicAddrCleanOpName || cnode_name == kDynamicAtomicAddrCleanOpName) {
     return GenAddrCleanLaunchArgs(cnode, &(kernel_launch_info->inputs_), mem_scheduler);
   }
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

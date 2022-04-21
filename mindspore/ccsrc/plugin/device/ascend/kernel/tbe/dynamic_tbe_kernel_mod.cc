@@ -78,15 +78,9 @@ bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
 
-  if (!atomic_clean_nodes_.empty()) {
-    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
-      (void)AnfAlgo::GetKernelMod(atomic_clean_node.lock())->Resize(nullptr, {}, {});
-    }
-  } else {
-    // update output size after InferShape.
-    // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
-    AscendKernelMod::UpdateOutputSizeList();
-  }
+  // update output size after InferShape.
+  // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
+  AscendKernelMod::UpdateOutputSizeList();
 
   need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
@@ -114,10 +108,25 @@ bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   device::tiling::OpTilingCalculateAdapter converter;
   ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
   const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = others;
-  auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
-  auto ret = optiling::OpParaCalculateV2(ge_node, op_run_info_v2);
+  if (!atomic_clean_nodes_.empty()) {
+    atomic_compile_info_ = ParseCompileJson(atomic_clean_nodes_[0].lock());
+    optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
+    auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
+    MS_EXCEPTION_IF_NULL(ge_node);
+    auto ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
+    if (ret != ::ge::GRAPH_SUCCESS) {
+      MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute atomic tiling failed!";
+    }
+    for (const auto &atomic_clean_node : atomic_clean_nodes_) {
+      auto dynamic_kernel_mod = dynamic_cast<DynamicTbeKernelMod *>(AnfAlgo::GetKernelMod(atomic_clean_node.lock()));
+      MS_EXCEPTION_IF_NULL(dynamic_kernel_mod);
+      dynamic_kernel_mod->InitAtomicOps(atomic_op_info);
+    }
+  }
+  auto ge_op = converter.AnfNodeToGeOperatorAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
+  auto ret = optiling::OpParaCalculateV2(ge_op, op_run_info_v2);
   if (ret != ::ge::GRAPH_SUCCESS) {
-    MS_LOG(EXCEPTION) << "Compute tiling failed!";
+    MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute tiling failed!";
   }
 
   block_dim_ = op_run_info_v2.GetBlockDim();
@@ -289,6 +298,35 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   }
 
   return true;
+}
+
+void DynamicTbeKernelMod::InitAtomicOps(const optiling::utils::OpRunInfo &op_info) {
+  // gen FuncStub
+  if (func_stub_ == nullptr && handle_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(kernel_pack_);
+    auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_, &origin_key_);
+    if (kernel_pack_->kernel_json_info().has_kernel_list) {
+      if (func_stub != 1) {
+        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+      }
+    } else {
+      if (func_stub == 0) {
+        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+      }
+      func_stub_ = reinterpret_cast<void *>(func_stub);
+    }
+  }
+  AscendKernelMod::UpdateOutputSizeList();
+  block_dim_ = op_info.GetBlockDim();
+  std::vector<int64_t> workspace_size_list;
+  op_info.GetAllWorkspaces(workspace_size_list);
+  tiling_data_ = op_info.GetAllTilingData().str();
+  tiling_key_ = op_info.GetTilingKey();
+
+  workspace_size_list_.clear();
+  workspace_size_list_.resize(workspace_size_list.size());
+  std::transform(workspace_size_list.begin(), workspace_size_list.end(), std::back_inserter(workspace_size_list_),
+                 LongToSize);
 }
 }  // namespace kernel
 }  // namespace mindspore

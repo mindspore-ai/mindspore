@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <memory>
+#include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 #include "kernel/kernel.h"
 #ifndef ENABLE_SECURITY
@@ -48,6 +49,7 @@ class AscendKernelMod : public KernelMod {
   }
   bool IsNeedWait() override;
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
+  std::string GetAtomicCompileInfo() const { return atomic_compile_info_; }
 
  protected:
   void UpdateOutputSizeList();
@@ -56,6 +58,7 @@ class AscendKernelMod : public KernelMod {
   std::vector<CNodeWeakPtr> atomic_clean_nodes_;
   uint32_t block_dim_{1};
   uint32_t stream_id_{0};
+  std::string atomic_compile_info_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

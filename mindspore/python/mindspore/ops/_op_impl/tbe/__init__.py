@@ -158,6 +158,7 @@ from .reduce_mean import _reduce_mean_tbe
 from .tile import _tile_tbe
 from .tile_ds import _tile_ds_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
+from .dynamic_atomic_addr_clean import _dynamic_atomic_addr_clean_tbe
 from .gather_v2 import _gather_v2_tbe
 from .gather_v2_ds import _gather_v2_ds_tbe
 from .gather_nd import _gather_nd_tbe
