@@ -184,7 +184,7 @@ class InferenceOptPrepareLib {
  public:
   InferenceOptPrepareLib();
   ~InferenceOptPrepareLib() = default;
-  SubstitutionPtr grad_var_prepare_;
+  SubstitutionPtr meta_fg_var_prepare_;
 };
 
 // predicate functions

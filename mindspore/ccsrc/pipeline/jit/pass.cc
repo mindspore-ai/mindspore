@@ -542,8 +542,8 @@ OptPassGroupMap GetOptPynativeGradEpiloguePhases(const opt::irpass::OptimizeIRPa
 
 OptPassGroupMap GetInferenceOptPreparePhases() {
   opt::irpass::InferenceOptPrepareLib irpass;
-  auto grad_var_prepare = opt::OptPassConfig({irpass.grad_var_prepare_});
-  opt::OptPassGroupMap prepare_map({{"inference_opt_prep", grad_var_prepare}});
+  auto meta_fg_var_prepare = opt::OptPassConfig({irpass.meta_fg_var_prepare_});
+  opt::OptPassGroupMap prepare_map({{"inference_opt_prep", meta_fg_var_prepare}});
   return prepare_map;
 }
 
