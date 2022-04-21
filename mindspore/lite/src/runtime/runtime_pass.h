@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_
 
-#ifndef RUNTIME_PASS_CLIP
 #include <vector>
 #include "src/kernel_exec.h"
 #include "src/sub_graph_kernel.h"
@@ -25,9 +24,9 @@
 #include "schema/model_generated.h"
 
 namespace mindspore::lite {
-
 STATUS RuntimePass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Tensor *> *tensors);
 STATUS GraphOptimizePass(std::vector<kernel::KernelExec *> *sub_graphs);
+#ifndef RUNTIME_PASS_CLIP
 /* Nc4hw4 PASS
  * before  : --(nhwc)-- CONV --(nhwc)-- TRANSPOSE --(nchw)-- IN --(nchw)-- TRANSPOSE --(nhwc)--
  * after   : --(nhwc)-- CONV --(nc4hw4)-- IN --(nhwc)--
@@ -47,7 +46,6 @@ static const std::vector<schema::PrimitiveType> Nc4hw4FormatInOpList = {schema::
 static const schema::PrimitiveType ConvNormC4OpConv2DFusion = schema::PrimitiveType_Conv2DFusion;
 static const schema::PrimitiveType ConvNormC4OpActivation = schema::PrimitiveType_Activation;
 static const schema::PrimitiveType ConvNormC4OpInstanceNorm = schema::PrimitiveType_InstanceNorm;
-
-}  // namespace mindspore::lite
 #endif
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_PASS_H_

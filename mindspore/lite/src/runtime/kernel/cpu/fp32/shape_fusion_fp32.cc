@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/shape_fusion_fp32.h"
+#include <algorithm>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
@@ -34,11 +35,12 @@ int ShapeFusionCPUKernel::Prepare() {
 int ShapeFusionCPUKernel::ReSize() { return KernelInferShape(in_tensors_, out_tensors_, op_parameter_); }
 
 int ShapeFusionCPUKernel::Run() {
-#ifndef DELEGATE_CLIP
+  bool is_const =
+    std::all_of(out_tensors_.begin(), out_tensors_.end(), [](lite::Tensor *tensor) { return tensor->IsConst(); });
+  if (is_const) {
+    return RET_OK;
+  }
   return KernelInferShape(in_tensors_, out_tensors_, op_parameter_);
-#else
-  return RET_OK;
-#endif
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimType_Inner_ShapeFusion, LiteKernelCreator<ShapeFusionCPUKernel>)

@@ -114,6 +114,8 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_shape_fusion_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/schema_tensor_wrapper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor_category.cc
@@ -204,13 +206,6 @@ if(MSLITE_ENABLE_STRING_KERNEL)
         ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         )
-endif()
-if(MSLITE_ENABLE_RUNTIME_PASS)
-    set(LITE_SRC
-            ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_shape_fusion_pass.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
-            )
 endif()
 
 if(MSLITE_ENABLE_CONTROLFLOW)

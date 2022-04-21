@@ -17,15 +17,16 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_SHAPE_FUSION_PASS_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_SHAPE_FUSION_PASS_H_
 
-#ifndef RUNTIME_PASS_CLIP
 #include <map>
 #include <vector>
+#include <algorithm>
 #include "src/lite_model.h"
 #include "src/common/tensor_util.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::lite {
+#ifndef RUNTIME_PASS_CLIP
 struct ShapeFusionMatrix {
   ShapeFusionMatrix() {}
   explicit ShapeFusionMatrix(size_t dim) {
@@ -78,6 +79,7 @@ struct ShapeFusionMatrix {
   std::vector<std::vector<float>> shape_matrix;
   bool scalar = false;
 };
+#endif
 
 class ShapeFusionPass {
  public:
@@ -92,10 +94,31 @@ class ShapeFusionPass {
   }
   ~ShapeFusionPass() = default;
 
-  int ConvertToShapeFusion(Model::Node *node);
-  int FusePostNodes(Model::Node *node, size_t subgraph_index);
+  void Run(Model::Node *node, size_t subgraph_index) {
+#ifndef RUNTIME_PASS_CLIP
+    if (ConvertToShapeFusion(node) != RET_OK) {
+      MS_LOG(WARNING) << "Convert to built-in shape failed: " << node->name_;
+    } else if (FusePostNodes(node, subgraph_index) != RET_OK) {
+      MS_LOG(WARNING) << "Fused to built-in shape failed: " << node->name_;
+    }
+    std::transform(node->output_indices_.begin(), node->output_indices_.end(),
+                   std::back_inserter(shape_fusion_outputs_),
+                   [&](uint32_t idx) { return this->src_tensors_->at(idx); });
+#endif
+  }
+  void FreeOutputTensorDataOfFusedShape() {
+#if !defined(RUNTIME_PASS_CLIP)
+    for (auto tensor : shape_fusion_outputs_) {
+      tensor->FreeData();
+      tensor->set_category(VAR);
+    }
+#endif
+  }
 
  private:
+#ifndef RUNTIME_PASS_CLIP
+  int ConvertToShapeFusion(Model::Node *node);
+  int FusePostNodes(Model::Node *node, size_t subgraph_index);
   Tensor *BuildTensorFromShapeFusionMatrix(const ShapeFusionMatrix &shape_fusion_matrix);
   bool CheckCanFused(const Model::Node *shape_fusion, const Model::Node *post_node, uint32_t input_idx,
                      size_t subgraph_index);
@@ -108,12 +131,13 @@ class ShapeFusionPass {
                                         ShapeFusionMatrix *constant_matrix);
 
  private:
+  std::map<uint32_t, ShapeFusionMatrix> shape_fusion_matrices_;
+  std::vector<lite::Tensor *> shape_fusion_outputs_;
+#endif
   LiteModel *lite_model_ = nullptr;
   const std::vector<Model::Node *> *all_nodes_ = nullptr;
   std::vector<lite::Tensor *> *src_tensors_ = nullptr;
   std::map<uint32_t, std::vector<Model::Node *>> used_nodes_;
-  std::map<uint32_t, ShapeFusionMatrix> shape_fusion_matrices_;
 };
 }  // namespace mindspore::lite
-#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_RUNTIME_SHAPE_FUSION_PASS_H_
