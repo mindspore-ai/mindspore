@@ -4133,7 +4133,9 @@ class ROIAlign(PrimitiveWithInfer):
             feature map coordinates. Suppose the height of a RoI is `ori_h` in the raw image and `fea_h` in the
             input feature map, the `spatial_scale` must be `fea_h / ori_h`.
         sample_num (int): Number of sampling points. Default: 2.
-        roi_end_mode (int): Number must be 0 or 1. Default: 1.
+        roi_end_mode (int): Number must be 0 or 1. If roi_end_mode=0, use the legacy implementation.
+            If roi_end_mode=1, end pixel of the roi_box will be shifted by +1*spatial_scale. Default: 1.
+
 
     Inputs:
         - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`.
