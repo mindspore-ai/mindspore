@@ -112,7 +112,7 @@ build_lite_x86_64_jni_and_jar() {
     if [[ "X$is_train" = "Xon" ]]; then
         ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
         ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client
+        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client -x test
         ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
         ${gradle_command} flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
         cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
@@ -210,7 +210,7 @@ build_lite_aarch64_jni_and_jar() {
     if [[ "X$is_train" = "Xon" ]]; then
       ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
       ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-      ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client
+      ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client -x test
       ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
       ${gradle_command} flReleaseJarX86 --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
       cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarX86/mindspore-lite-java-flclient.jar ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
@@ -613,7 +613,7 @@ build_aar() {
     if [[ "X$is_train" = "Xon" ]]; then
         ${gradle_command} clean -p ${LITE_JAVA_PATH}/java/fl_client
         ${gradle_command} createFlatBuffers -p ${LITE_JAVA_PATH}/java/fl_client
-        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client
+        ${gradle_command} build -p ${LITE_JAVA_PATH}/java/fl_client -x test
         ${gradle_command} clearJar -p ${LITE_JAVA_PATH}/java/fl_client
         ${gradle_command} flReleaseJarAAR --rerun-tasks -p ${LITE_JAVA_PATH}/java/fl_client
         cp ${LITE_JAVA_PATH}/java/fl_client/build/libs/jarAAR/mindspore-lite-java-flclient.jar ${LITE_JAVA_PATH}/java/app/libs

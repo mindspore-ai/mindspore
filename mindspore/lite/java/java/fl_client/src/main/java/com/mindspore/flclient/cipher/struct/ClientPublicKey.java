@@ -17,6 +17,7 @@
 package com.mindspore.flclient.cipher.struct;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.util.logging.Logger;
 
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
  * @since 2021-8-27
  */
 public class ClientPublicKey {
-    private static final Logger LOGGER = Logger.getLogger(ClientPublicKey.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(ClientPublicKey.class.toString());
     private String flID;
     private NewArray<byte[]> cPK;
     private NewArray<byte[]> sPk;
@@ -40,8 +41,7 @@ public class ClientPublicKey {
      */
     public String getFlID() {
         if (flID == null || flID.isEmpty()) {
-            LOGGER.severe(Common.addTag("[ClientPublicKey] the parameter of <flID> is null, please set it before " +
-                    "using"));
+            LOGGER.severe("The parameter of <flID> is null, please set it before using");
             throw new IllegalArgumentException();
         }
         return flID;

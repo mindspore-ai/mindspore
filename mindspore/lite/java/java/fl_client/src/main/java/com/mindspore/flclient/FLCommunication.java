@@ -20,6 +20,7 @@ import static com.mindspore.flclient.FLParameter.TIME_OUT;
 import static com.mindspore.flclient.LocalFLParameter.ANDROID;
 import static com.mindspore.flclient.LocalFLParameter.X86;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -28,7 +29,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import java.io.IOException;
+import java.io.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
@@ -56,8 +57,11 @@ public class FLCommunication implements IFLCommunication {
     private static SSLSocketFactory sslSocketFactory;
     private static X509TrustManager x509TrustManager;
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("applicatiom/json;charset=utf-8");
-    private static final Logger LOGGER = Logger.getLogger(FLCommunication.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(FLCommunication.class.toString());
     private static volatile FLCommunication communication;
+    private static boolean msgDumpFlg = false;
+    private static String msgDumpPath;
+    private int msgDumpIdx = 0;
 
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
@@ -80,6 +84,13 @@ public class FLCommunication implements IFLCommunication {
         client = getOkHttpClient();
     }
 
+    public static void setMsgDumpFlg(boolean msgDumpFlg) {
+        FLCommunication.msgDumpFlg = msgDumpFlg;
+    }
+    public static void setMsgDumpPath(String msgDumpPath) {
+        FLCommunication.msgDumpPath = msgDumpPath;
+    }
+
     private static OkHttpClient getOkHttpClient() {
         X509TrustManager trustManager = new X509TrustManager() {
             @Override
@@ -98,7 +109,7 @@ public class FLCommunication implements IFLCommunication {
             }
         };
         final TrustManager[] trustAllCerts = new TrustManager[]{trustManager};
-        LOGGER.info(Common.addTag("the set timeOut in OkHttpClient: " + timeOut));
+        LOGGER.info("the set timeOut in OkHttpClient: " + timeOut);
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(timeOut, TimeUnit.SECONDS);
         builder.writeTimeout(timeOut, TimeUnit.SECONDS);
@@ -118,7 +129,7 @@ public class FLCommunication implements IFLCommunication {
                 builder.hostnameVerifier(SSLSocketFactoryTools.getInstance().getHostnameVerifier());
             }
         } else {
-            LOGGER.info(Common.addTag("conducting http communication, do not need SSLSocketFactoryTools"));
+            LOGGER.info("conducting http communication, do not need SSLSocketFactoryTools");
         }
         return builder.build();
     }
@@ -145,6 +156,30 @@ public class FLCommunication implements IFLCommunication {
     public void setTimeOut(int timeout) throws TimeoutException {
     }
 
+    private void dumpMsgBodyToFile(String url, byte[] reqBody, byte[] resBody) {
+        String urlPath[] = url.split("/");
+        String realPath = msgDumpPath + '/' + urlPath[urlPath.length - 1];
+        String reqFileName = realPath + "/Req_" + Integer.toString(msgDumpIdx);
+        String resFileName = realPath + "/Res_" + Integer.toString(msgDumpIdx);
+        try {
+            File dir = new File(realPath);
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            ObjectOutputStream oosReq = new ObjectOutputStream(new FileOutputStream(reqFileName));
+            ObjectOutputStream oosRes = new ObjectOutputStream(new FileOutputStream(resFileName));
+            oosReq.writeObject(reqBody);
+            oosRes.writeObject(resBody);
+            oosReq.close();
+            oosRes.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        msgDumpIdx++;
+    }
+
     @Override
     public byte[] syncRequest(String url, byte[] msg) throws IOException {
         Request request = new Request.Builder()
@@ -157,7 +192,11 @@ public class FLCommunication implements IFLCommunication {
         if (response.body() == null) {
             throw new IOException("the returned response is null");
         }
-        return response.body().bytes();
+        byte[] responseBody = response.body().bytes();
+        if (msgDumpFlg) {
+            dumpMsgBodyToFile(url, msg, responseBody);
+        }
+        return responseBody;
     }
 
     @Override

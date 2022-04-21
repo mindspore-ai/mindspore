@@ -31,6 +31,7 @@ import com.mindspore.flclient.cipher.struct.DecryptShareSecrets;
 import com.mindspore.flclient.cipher.struct.EncryptShare;
 import com.mindspore.flclient.cipher.struct.NewArray;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import mindspore.schema.GetClientList;
 import mindspore.schema.ResponseCode;
 import mindspore.schema.ReturnClientList;
@@ -49,7 +50,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class ClientListReq {
-    private static final Logger LOGGER = Logger.getLogger(ClientListReq.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(ClientListReq.class.toString());
 
     private FLCommunication flCommunication;
     private String nextRequestTime;
@@ -95,7 +96,7 @@ public class ClientListReq {
         int clientListRoot;
         byte[] signature = CipherClient.signTimeAndIter(dateTime, iteration);
         if (signature == null) {
-            LOGGER.severe(Common.addTag("[getClientList] get signature is null!"));
+            LOGGER.severe("[getClientList] get signature is null!");
             return FLClientStatus.FAILED;
         }
         if (signature.length > 0) {
@@ -120,24 +121,24 @@ public class ClientListReq {
         try {
             byte[] responseData = flCommunication.syncRequest(url + "/getClientList", msg);
             if (!Common.isSeverReady(responseData)) {
-                LOGGER.info(Common.addTag("[getClientList] the server is not ready now, need wait some time and " +
-                        "request again"));
+                LOGGER.info("[getClientList] the server is not ready now, need wait some time and " +
+                        "request again");
                 nextRequestTime = Common.getNextReqTime();
                 retCode = ResponseCode.OutOfTime;
                 return FLClientStatus.RESTART;
             }
             if (Common.isSeverJobFinished(responseData)) {
-                LOGGER.info(Common.addTag("[getClientList] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+                LOGGER.info("[getClientList] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist.");
                 retCode = ResponseCode.SystemError;
                 return FLClientStatus.FAILED;
             }
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
-            LOGGER.info(Common.addTag("getClientList responseData size: " + responseData.length));
+            LOGGER.info("getClientList responseData size: " + responseData.length);
             ReturnClientList clientListRsp = ReturnClientList.getRootAsReturnClientList(buffer);
             return judgeGetClientList(clientListRsp, u3ClientList, decryptSecretsList, returnShareList, cuvKeys);
         } catch (IOException ex) {
-            LOGGER.severe(Common.addTag("[getClientList] unsolved error code in getClientList: catch IOException: " +
-                    ex.getMessage()));
+            LOGGER.severe("[getClientList] unsolved error code in getClientList: catch IOException: " +
+                    ex.getMessage());
             retCode = ResponseCode.RequestError;
             return FLClientStatus.FAILED;
         }
@@ -157,16 +158,16 @@ public class ClientListReq {
                                               List<DecryptShareSecrets> decryptSecretsList,
                                               List<EncryptShare> returnShareList, Map<String, byte[]> cuvKeys) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] ************** the response of GetClientList **************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
-        LOGGER.info(Common.addTag("[PairWiseMask] the size of clients: " + bufData.clientsLength()));
+        LOGGER.info("[PairWiseMask] ************** the response of GetClientList **************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] reason: " + bufData.reason());
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
+        LOGGER.info("[PairWiseMask] the size of clients: " + bufData.clientsLength());
         FLClientStatus status;
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetClientList success"));
+                LOGGER.info("[PairWiseMask] GetClientList success");
                 u3ClientList.clear();
                 int clientSize = bufData.clientsLength();
                 for (int i = 0; i < clientSize; i++) {
@@ -176,21 +177,21 @@ public class ClientListReq {
                 status = decryptSecretShares(decryptSecretsList, returnShareList, cuvKeys);
                 return status;
             case (ResponseCode.SucNotReady):
-                LOGGER.info(Common.addTag("[PairWiseMask] server is not ready now, need wait and request " +
-                        "GetClientList again!"));
+                LOGGER.info("[PairWiseMask] server is not ready now, need wait and request " +
+                        "GetClientList again!");
                 return FLClientStatus.WAIT;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetClientList out of time: need wait and request startFLJob" +
-                        " again"));
+                LOGGER.info("[PairWiseMask] GetClientList out of time: need wait and request startFLJob" +
+                        " again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetClientList"));
+                LOGGER.info("[PairWiseMask] catch SucNotMatch or SystemError in GetClientList");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnClientList is " +
-                        "invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ReturnClientList is " +
+                        "invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -200,11 +201,11 @@ public class ClientListReq {
         decryptSecretsList.clear();
         int size = returnShareList.size();
         if (size <= 0) {
-            LOGGER.severe(Common.addTag("[PairWiseMask] the input argument <returnShareList> is null"));
+            LOGGER.severe("[PairWiseMask] the input argument <returnShareList> is null");
             return FLClientStatus.FAILED;
         }
         if (cuvKeys.isEmpty()) {
-            LOGGER.severe(Common.addTag("[PairWiseMask] the input argument <cuvKeys> is null"));
+            LOGGER.severe("[PairWiseMask] the input argument <cuvKeys> is null");
             return FLClientStatus.FAILED;
         }
         for (int i = 0; i < size; i++) {
@@ -212,18 +213,18 @@ public class ClientListReq {
             String vFlID = encryptShare.getFlID();
             byte[] share = encryptShare.getShare().getArray();
             if (!cuvKeys.containsKey(vFlID)) {
-                LOGGER.severe(Common.addTag("[PairWiseMask] the key <vFlID> is not in map <cuvKeys> "));
+                LOGGER.severe("[PairWiseMask] the key <vFlID> is not in map <cuvKeys> ");
                 return FLClientStatus.FAILED;
             }
             AESEncrypt aesEncrypt = new AESEncrypt(cuvKeys.get(vFlID), "CBC");
             byte[] decryptShare = aesEncrypt.decrypt(cuvKeys.get(vFlID), share);
             if (decryptShare == null || decryptShare.length == 0) {
-                LOGGER.severe(Common.addTag("[decryptSecretShares] the return byte[] is null, please check!"));
+                LOGGER.severe("[decryptSecretShares] the return byte[] is null, please check!");
                 return FLClientStatus.FAILED;
             }
             if (decryptShare.length < 4) {
-                LOGGER.severe(Common.addTag("[decryptSecretShares] the returned decryptShare is not valid: length is " +
-                        "not right, please check!"));
+                LOGGER.severe("[decryptSecretShares] the returned decryptShare is not valid: length is " +
+                        "not right, please check!");
                 return FLClientStatus.FAILED;
             }
             int sSize = (int) decryptShare[0];
@@ -231,8 +232,8 @@ public class ClientListReq {
             int sIndexLen = (int) decryptShare[2];
             int bIndexLen = (int) decryptShare[3];
             if (decryptShare.length < (4 + sIndexLen + bIndexLen + sSize + bSize)) {
-                LOGGER.severe(Common.addTag("[decryptSecretShares] the returned decryptShare is not valid: length is " +
-                        "not right, please check!"));
+                LOGGER.severe("[decryptSecretShares] the returned decryptShare is not valid: length is " +
+                        "not right, please check!");
                 return FLClientStatus.FAILED;
             }
             byte[] sSkUv = Arrays.copyOfRange(decryptShare, 4 + sIndexLen + bIndexLen,
@@ -242,7 +243,7 @@ public class ClientListReq {
             NewArray<byte[]> sSkVu = new NewArray<>();
             sSkVu.setSize(sSize);
             sSkVu.setArray(sSkUv);
-            NewArray bVu = new NewArray();
+            NewArray<byte[]> bVu = new NewArray<>();
             bVu.setSize(bSize);
             bVu.setArray(bUv);
             int sIndex = BaseUtil.byteArray2Integer(Arrays.copyOfRange(decryptShare, 4, 4 + sIndexLen));
