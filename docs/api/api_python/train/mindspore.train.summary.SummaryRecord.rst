@@ -54,13 +54,13 @@
         - **name** (str) - 数据名称。
         - **value** (Union[Tensor, GraphProto, TrainLineage, EvaluationLineage, DatasetGraph, UserDefinedInfo，LossLandscape])：待存储的值。
 
-          - 当plugin为"graph"时，参数值的数据类型应为"GraphProto"对象。具体详情，请参见 mindspore/ccsrc/anf_ir.proto。
+          - 当plugin为"graph"时，参数值的数据类型应为"GraphProto"对象。具体详情，请参见 `mindspore/ccsrc/anf_ir.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/anf_ir.proto>`_ 。
           - 当plugin为"scalar"、"image"、"tensor"或"histogram"时，参数值的数据类型应为"Tensor"对象。
-          - 当plugin为"train_lineage"时，参数值的数据类型应为"TrainLineage"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-          - 当plugin为"eval_lineage"时，参数值的数据类型应为"EvaluationLineage"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-          - 当plugin为"dataset_graph"时，参数值的数据类型应为"DatasetGraph"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-          - 当plugin为"custom_lineage_data"时，参数值的数据类型应为"UserDefinedInfo"对象。具体详情，请参见 mindspore/ccsrc/lineage.proto。
-          - 当plugin为"LANDSCAPE"时，参数值的数据类型应为"LossLandscape"对象。具体详情，请参见 mindspore/ccsrc/summary.proto。
+          - 当plugin为"train_lineage"时，参数值的数据类型应为"TrainLineage"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
+          - 当plugin为"eval_lineage"时，参数值的数据类型应为"EvaluationLineage"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
+          - 当plugin为"dataset_graph"时，参数值的数据类型应为"DatasetGraph"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
+          - 当plugin为"custom_lineage_data"时，参数值的数据类型应为"UserDefinedInfo"对象。具体详情，请参见 `mindspore/ccsrc/lineage.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/lineage.proto>`_ 。
+          - 当plugin为"LANDSCAPE"时，参数值的数据类型应为"LossLandscape"对象。具体详情，请参见 `mindspore/ccsrc/summary.proto <https://gitee.com/mindspore/mindspore/blob/master/mindspore/ccsrc/utils/summary.proto>`_ 。
 
         **异常：**
 
