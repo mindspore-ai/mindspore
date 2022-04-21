@@ -490,8 +490,9 @@ enum PrimType {
   PrimType_RandomNormal = 206,
   PrimType_NLLLoss = 207,
   PrimType_NLLLossGrad = 208,
+  PrimType_FormatTranspose = 209,
   PrimType_MIN = PrimType_NONE,
-  PrimType_MAX = PrimType_NLLLossGrad + 1,
+  PrimType_MAX = PrimType_FormatTranspose + 1,
 
   // inner operators.
   PrimType_Inner_ToFormat = 10000,
@@ -504,6 +505,7 @@ enum PrimType {
 };
 
 typedef enum FormatC {
+  DEFAULT_FORMAT = -1,
   Format_NCHW = 0,
   Format_NHWC = 1,
   Format_NHWC4 = 2,
@@ -518,12 +520,13 @@ typedef enum FormatC {
   Format_NC = 11,
   Format_NC4 = 12,
   Format_NC4HW4 = 13,
-  Format_NUM_OF_FORMAT = 14,  // compatibility with schema ops_type::Format
-  Format_NCDHW,
-  Format_NWC,
-  Format_NCW,
-  Format_NC8HW8,
-  Format_NC16HW16,
+  Format_NONE = 14,  // The origin Format_NUM_OF_FORMAT can't be used.
+  Format_NCDHW = 15,
+  Format_NWC = 16,
+  Format_NCW = 17,
+  Format_NDHWC = 18,
+  Format_NC8HW8 = 19,
+  Format_NC16HW16 = 20,
   Format_MAX,
   Format_MIN = Format_NCHW
 } FormatC;

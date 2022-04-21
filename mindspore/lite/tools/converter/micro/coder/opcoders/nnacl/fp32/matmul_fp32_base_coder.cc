@@ -131,10 +131,12 @@ int MatMulFP32BaseCoder::Prepare(CoderContext *const context) { return RET_OK; }
 int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
   Collect(context,
           {
+            "nnacl/fp32/pack_fp32.h",
             "nnacl/fp32/matmul_fp32.h",
             "wrapper/fp32/matmul_fp32_wrapper.h",
           },
           {
+            "pack_fp32.c",
             "matmul_fp32.c",
             "matmul_fp32_wrapper.c",
           });

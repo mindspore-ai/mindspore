@@ -1431,7 +1431,12 @@ kernel::KernelExec *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
     return nullptr;
   }
   op_parameters_[src_node->output_indices_.at(0)] = nullptr;
-  SetKernelTensorDataType(kernel);
+  auto ret = kernel::KernelExecUtil::SetKernelTensorDataType(kernel);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Set tensor data type for kernel " << kernel->name() << std::endl;
+    delete kernel;
+    return nullptr;
+  }
   kernel->set_name(src_node->name_);
   if (kernel->kernel() != nullptr) {
     kernel->kernel()->SetConfig(config_info_);
@@ -1679,31 +1684,6 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
   }
   MS_ASSERT(!in_tensors.empty());
   return in_tensors[0]->data_type() == kObjectTypeTensorType ? kNumberTypeFloat32 : in_tensors[0]->data_type();
-}
-
-void Scheduler::SetKernelTensorDataType(kernel::KernelExec *kernel) {
-  MS_ASSERT(kernel != nullptr);
-  if (kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
-    return;
-  }
-  if (kernel->desc().data_type == kNumberTypeFloat16) {
-    for (auto tensor : kernel->out_tensors()) {
-      if (tensor->data_type() == kNumberTypeFloat32) {
-        tensor->set_data_type(kNumberTypeFloat16);
-      }
-    }
-  } else if (kernel->desc().data_type == kNumberTypeFloat32) {
-    for (auto tensor : kernel->in_tensors()) {
-      if (!tensor->IsConst() && tensor->data_type() == kNumberTypeFloat16) {
-        tensor->set_data_type(kNumberTypeFloat32);
-      }
-    }
-    for (auto tensor : kernel->out_tensors()) {
-      if (tensor->data_type() == kNumberTypeFloat16 && kernel->type() != schema::PrimitiveType_Cast) {
-        tensor->set_data_type(kNumberTypeFloat32);
-      }
-    }
-  }
 }
 
 kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::KernelExec *> &kernels) {

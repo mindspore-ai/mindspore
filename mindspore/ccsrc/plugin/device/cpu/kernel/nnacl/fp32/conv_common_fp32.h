@@ -31,6 +31,9 @@ typedef void (*MatmulFloatOptFuncPtr)(const float *a, const float *b, float *c, 
                                       int depth, int row, int col, size_t stride, size_t write_mode);
 #endif
 
+void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input, int real_cal_num,
+                        int block_index);
+
 // fp32 convolution common (im2col+gemm)
 void ConvFp32(const float *input_data, float *packed_input, const float *packed_weight, const float *bias_data,
               float *col_major_input, float *output_data, int task_id, const ConvParameter *conv_param);

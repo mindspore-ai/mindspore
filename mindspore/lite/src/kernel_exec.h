@@ -317,6 +317,32 @@ class KernelExec {
     }
   }
 
+  size_t FindInTensorIndex(lite::Tensor *tensor) {
+    int index = 0;
+    for (size_t i = 0; i < in_tensors().size(); i++) {
+      if (tensor == in_tensors().at(i)) {
+        index = i;
+        break;
+      }
+    }
+    return index;
+  }
+
+  size_t FindOutTensorIndex(lite::Tensor *tensor) {
+    int index = 0;
+    for (size_t i = 0; i < out_tensors().size(); i++) {
+      if (tensor == out_tensors().at(i)) {
+        index = i;
+        break;
+      }
+    }
+    return index;
+  }
+
+  void RemoveInKernel(KernelExec *kernel) { lite::VectorErase(&(this->in_kernels_), kernel); }
+
+  void RemoveOutKernel(KernelExec *kernel) { lite::VectorErase(&(this->out_kernels_), kernel); }
+
   void set_in_kernels(const std::vector<KernelExec *> &kernel) { this->in_kernels_ = kernel; }
 
   void set_out_kernels(const std::vector<KernelExec *> &kernel) { this->out_kernels_ = kernel; }

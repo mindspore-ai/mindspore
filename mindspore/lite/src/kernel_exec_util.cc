@@ -427,6 +427,51 @@ void KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<Kerne
   KernelExecUtil::FindAllInoutKernels(all_kernels);
 }
 
+KernelExec *KernelExecUtil::FindInKernelForInTensor(KernelExec *kernel, lite::Tensor *tensor) {
+  for (auto in_kernel : kernel->in_kernels()) {
+    if (lite::IsContain(in_kernel->out_tensors(), tensor)) {
+      return in_kernel;
+    }
+  }
+  return nullptr;
+}
+
+std::vector<KernelExec *> KernelExecUtil::FindOutKernelsForOutTensor(KernelExec *kernel, lite::Tensor *tensor) {
+  std::vector<KernelExec *> out_kernels;
+  for (auto out_kernel : kernel->out_kernels()) {
+    if (lite::IsContain(out_kernel->in_tensors(), tensor)) {
+      out_kernels.push_back(out_kernel);
+    }
+  }
+  return out_kernels;
+}
+
+int KernelExecUtil::SetKernelTensorDataType(kernel::KernelExec *kernel) {
+  CHECK_NULL_RETURN(kernel);
+  if (kernel->desc().arch != kernel::KERNEL_ARCH::kCPU) {
+    return RET_OK;
+  }
+  if (kernel->desc().data_type == kNumberTypeFloat16) {
+    for (auto tensor : kernel->out_tensors()) {
+      if (tensor->data_type() == kNumberTypeFloat32) {
+        tensor->set_data_type(kNumberTypeFloat16);
+      }
+    }
+  } else if (kernel->desc().data_type == kNumberTypeFloat32) {
+    for (auto tensor : kernel->in_tensors()) {
+      if (!tensor->IsConst() && tensor->data_type() == kNumberTypeFloat16) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
+    }
+    for (auto tensor : kernel->out_tensors()) {
+      if (tensor->data_type() == kNumberTypeFloat16 && kernel->type() != schema::PrimitiveType_Cast) {
+        tensor->set_data_type(kNumberTypeFloat32);
+      }
+    }
+  }
+  return RET_OK;
+}
+
 bool KernelExecUtil::IsOutputSubGraph(KernelExec *subgraph_kernel) {
   return !subgraph_kernel->out_tensors().empty() &&
          std::all_of(subgraph_kernel->out_tensors().begin(), subgraph_kernel->out_tensors().end(),

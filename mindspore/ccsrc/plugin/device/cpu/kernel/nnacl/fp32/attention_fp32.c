@@ -17,6 +17,7 @@
 #include "nnacl/fp32/attention_fp32.h"
 #include <string.h>
 #include <math.h>
+#include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/add_fp32.h"
 #include "nnacl/fp32/transpose_fp32.h"

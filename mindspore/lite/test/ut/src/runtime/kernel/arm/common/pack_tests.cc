@@ -20,8 +20,10 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "nnacl/pack.h"
+#include "nnacl/fp32/conv_common_fp32.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/pack_fp16.h"
+#include "nnacl/fp16/conv_fp16.h"
 #endif
 
 namespace mindspore {

@@ -40,7 +40,8 @@ enum Format : int64_t {
   NCDHW = 15,
   NWC = 16,
   NCW = 17,
-  NDHWC = 18
+  NDHWC = 18,
+  NC8HW8 = 19
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_FORMAT_H_

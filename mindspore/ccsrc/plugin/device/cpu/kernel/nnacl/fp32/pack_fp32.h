@@ -16,10 +16,11 @@
 #ifndef MINDSPORE_NNACL_FP32_PACK_H_
 #define MINDSPORE_NNACL_FP32_PACK_H_
 
+#include <stdint.h>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif
-#include "nnacl/conv_parameter.h"
+#include "nnacl/op_base.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,11 +46,26 @@ void PackNHWCToCXHWNXFp32(const float *src, float *dst, int batch, int plane, in
 void PackNHWCToNC4HW4NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel);
 void PackNHWCToNC8HW8NotAlignedFp32(const float *src, float *dst, const int batch, const int plane, const int channel);
 
+void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2RowMajor(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row32Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row64Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col32Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Col64Major(const float *src_ptr, float *dst_ptr, int row, int col);
+
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel);
 void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, int width, int channel);
 void PackDepthwiseIndirectWeightC8Fp32(const void *src, void *dst, int height, int width, int channel);
-void Im2ColPackUnitFp32(const float *input_data, const ConvParameter *conv_param, float *packed_input, int real_cal_num,
-                        int block_index);
 
 #if defined(ENABLE_ARM) || (defined(ENABLE_SSE) && !defined(ENABLE_AVX))
 void PackWeightConvDw3x3Fp32(const void *src, void *dst, int channel);

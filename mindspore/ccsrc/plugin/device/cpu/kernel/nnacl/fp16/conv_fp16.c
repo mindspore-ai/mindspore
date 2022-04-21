@@ -19,6 +19,53 @@
 #include "nnacl/fp16/winograd_transform_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
 
+void Im2ColPackUnitFp16(const float16_t *input_data, const ConvParameter *conv_param, float16_t *packed_input,
+                        int real_cal_num, int block_index) {
+  // input format : nhwc
+  int kernel_h = conv_param->kernel_h_;
+  int kernel_w = conv_param->kernel_w_;
+  int kernel_plane = kernel_h * kernel_w;
+  int stride_h = conv_param->stride_h_;
+  int stride_w = conv_param->stride_w_;
+  int pad_h = conv_param->pad_u_;
+  int pad_w = conv_param->pad_l_;
+  int dilation_h = conv_param->dilation_h_;
+  int dilation_w = conv_param->dilation_w_;
+  int in_channel = conv_param->input_channel_;
+  int in_h = conv_param->input_h_;
+  int in_w = conv_param->input_w_;
+  int out_w = conv_param->output_w_;
+
+  for (int i = 0; i < real_cal_num; i++) {
+    int block_start = block_index + i;
+    int input_h = block_start / out_w * stride_h - pad_h;
+    int input_w = block_start % out_w * stride_w - pad_w;
+    int input_stride = (input_h * in_w + input_w) * in_channel;
+    int kh_s = MSMAX(0, UP_DIV(-input_h, dilation_h));
+    int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
+    int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
+    int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
+    if (dilation_h == 1 && dilation_w == 1) {
+      for (int j = kh_s; j < kh_e; j++) {
+        int input_y_stride = j * in_w * in_channel + input_stride;
+        int input_x_stride = input_y_stride + kw_s * in_channel;
+        int input_plane_offset = (j * kernel_w + kw_s) * in_channel + i * in_channel * kernel_plane;
+        memcpy(packed_input + input_plane_offset, input_data + input_x_stride,
+               (kw_e - kw_s) * in_channel * sizeof(float16_t));
+      }  // kernel_h loop
+    } else {
+      for (int j = kh_s; j < kh_e; j++) {
+        int input_y_stride = j * dilation_h * in_w * in_channel + input_stride;
+        for (int n = kw_s; n < kw_e; n++) {
+          int input_x_stride = input_y_stride + n * dilation_w * in_channel;
+          int input_plane_offset = (j * kernel_w + n) * in_channel + i * in_channel * kernel_plane;
+          memcpy(packed_input + input_plane_offset, input_data + input_x_stride, in_channel * sizeof(float16_t));
+        }  // kernel_w loop
+      }    // kernel_h loop
+    }
+  }  // tile num loop
+}
+
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float16_t *packed_weight,
               const float16_t *bias_data, float16_t *col_major_input, float16_t *output_data, int task_id,

@@ -207,6 +207,12 @@ if(MSLITE_ENABLE_STRING_KERNEL)
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         )
 endif()
+if(MSLITE_ENABLE_RUNTIME_PASS)
+    file(GLOB RUNTIME_PASS_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/*.cc
+            )
+    set(LITE_SRC ${LITE_SRC} ${RUNTIME_PASS_SRC})
+endif()
 
 if(MSLITE_ENABLE_CONTROLFLOW)
     set(LITE_SRC

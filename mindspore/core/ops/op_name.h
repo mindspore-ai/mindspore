@@ -261,6 +261,8 @@ constexpr auto kDstType = "dst_type";
 constexpr auto kMean = "mean";
 constexpr auto kIndices = "indices";
 constexpr auto kBegin = "begin";
+constexpr auto kSrcFormat = "src_format";
+constexpr auto kDstFormat = "dst_format";
 
 enum Index : size_t {
   kInputIndex0 = 0,

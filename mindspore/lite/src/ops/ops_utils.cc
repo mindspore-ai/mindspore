@@ -858,6 +858,11 @@ std::unique_ptr<schema::PrimitiveT> NLLLossGradPrimitiveCreator(const AnfNodePtr
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
 
+std::unique_ptr<schema::PrimitiveT> FormatTransposePrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetOperator<mindspore::ops::FormatTranspose>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetOperator<mindspore::ops::Custom>(node);
   auto schema_op = std::make_unique<schema::CustomT>();
@@ -1131,6 +1136,7 @@ RegistryMSOps g_NLLLossCreatorRegistry("NLLLoss", NLLLossPrimitiveCreator);
 RegistryMSOps g_NLLLossGradCreatorRegistry("NLLLossGrad", NLLLossGradPrimitiveCreator);
 RegistryMSOps g_CustomPrimitiveCreatorRegistry("Custom", CustomPrimitiveCreator);
 RegistryMSOps g_UniformRealPrimitiveCreatorRegistry("UniformReal", UniformRealPrimitiveCreator);
+RegistryMSOps g_FormatTransposePrimitiveCreatorRegistry("FormatTranspose", FormatTransposePrimitiveCreator);
 }  // namespace lite
 }  // namespace mindspore
 

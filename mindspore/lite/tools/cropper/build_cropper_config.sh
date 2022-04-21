@@ -153,6 +153,7 @@ getCommonFile() {
   while IFS='' read -r line; do common_files_h+=("$line"); done < <(ls mindspore/lite/src/common/*.h)
   runtime_files_h=()
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/*.h)
+  while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls mindspore/lite/src/runtime/pass/*.h)
   train_files_h=()
   while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/include/train/*.h)
   while IFS='' read -r line; do train_files_h+=("$line"); done < <(ls mindspore/lite/src/train/*.h)
@@ -170,6 +171,10 @@ getCommonFile() {
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/errorcode.h
+    mindspore/lite/src/runtime/kernel/cpu/base/format_transpose.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/base/format_transpose.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/pack_fp32.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/pack_fp16.h
   )
   all_files_h=("${include_h[@]}" "${regist_include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}"
                "${runtime_files_h[@]}" "${others_files_h[@]}"
@@ -200,6 +205,7 @@ getCommonFile() {
   while IFS='' read -r line; do common_files+=("$line"); done < <(ls mindspore/lite/src/common/*.cc)
   runtime_files_cc=()
   while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls mindspore/lite/src/runtime/*.cc)
+  while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls mindspore/lite/src/runtime/pass/*.cc)
   # sava all assembly files
   assembly_files=()
   while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/assembly/*/*.S)
@@ -212,6 +218,10 @@ getCommonFile() {
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/shape_fusion_infer.c
     mindspore/lite/src/runtime/kernel/cpu/fp32/shape_fusion_fp32.cc
     mindspore/core/utils/status.cc
+    mindspore/lite/src/runtime/kernel/cpu/base/format_transpose.cc
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/base/format_transpose.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/pack_fp32.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/pack_fp16.c
   )
   # save train files
   train_files=()

@@ -120,7 +120,6 @@ class Scheduler {
 
   // other methods
   static TypeId GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_tensors);
-  static void SetKernelTensorDataType(kernel::KernelExec *kernel);
   int CopyPartialShapeToSubGraph(const lite::Model::Node *partial_node);
   int RestoreSubGraphInput(const lite::Model::Node *partial_node);
 

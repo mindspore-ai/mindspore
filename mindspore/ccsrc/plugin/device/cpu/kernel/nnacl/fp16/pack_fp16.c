@@ -37,108 +37,10 @@ void PackWeightConvDw3x3Fp16(const void *src, void *dst, int channel) {
 }
 #endif
 
-void Im2ColPackUnitFp16(const float16_t *input_data, const ConvParameter *conv_param, float16_t *packed_input,
-                        int real_cal_num, int block_index) {
-  // input format : nhwc
-  int kernel_h = conv_param->kernel_h_;
-  int kernel_w = conv_param->kernel_w_;
-  int kernel_plane = kernel_h * kernel_w;
-  int stride_h = conv_param->stride_h_;
-  int stride_w = conv_param->stride_w_;
-  int pad_h = conv_param->pad_u_;
-  int pad_w = conv_param->pad_l_;
-  int dilation_h = conv_param->dilation_h_;
-  int dilation_w = conv_param->dilation_w_;
-  int in_channel = conv_param->input_channel_;
-  int in_h = conv_param->input_h_;
-  int in_w = conv_param->input_w_;
-  int out_w = conv_param->output_w_;
-
-  for (int i = 0; i < real_cal_num; i++) {
-    int block_start = block_index + i;
-    int input_h = block_start / out_w * stride_h - pad_h;
-    int input_w = block_start % out_w * stride_w - pad_w;
-    int input_stride = (input_h * in_w + input_w) * in_channel;
-    int kh_s = MSMAX(0, UP_DIV(-input_h, dilation_h));
-    int kh_e = MSMIN(kernel_h, UP_DIV(in_h - input_h, dilation_h));
-    int kw_s = MSMAX(0, UP_DIV(-input_w, dilation_w));
-    int kw_e = MSMIN(kernel_w, UP_DIV(in_w - input_w, dilation_w));
-    if (dilation_h == 1 && dilation_w == 1) {
-      for (int j = kh_s; j < kh_e; j++) {
-        int input_y_stride = j * in_w * in_channel + input_stride;
-        int input_x_stride = input_y_stride + kw_s * in_channel;
-        int input_plane_offset = (j * kernel_w + kw_s) * in_channel + i * in_channel * kernel_plane;
-        memcpy(packed_input + input_plane_offset, input_data + input_x_stride,
-               (kw_e - kw_s) * in_channel * sizeof(float16_t));
-      }  // kernel_h loop
-    } else {
-      for (int j = kh_s; j < kh_e; j++) {
-        int input_y_stride = j * dilation_h * in_w * in_channel + input_stride;
-        for (int n = kw_s; n < kw_e; n++) {
-          int input_x_stride = input_y_stride + n * dilation_w * in_channel;
-          int input_plane_offset = (j * kernel_w + n) * in_channel + i * in_channel * kernel_plane;
-          memcpy(packed_input + input_plane_offset, input_data + input_x_stride, in_channel * sizeof(float16_t));
-        }  // kernel_w loop
-      }    // kernel_h loop
-    }
-  }  // tile num loop
-}
-
 void PackHWCToWHCFp16(const float16_t *src, float16_t *dst, int height, int width, int channel) {
   for (int i = 0; i < height; ++i) {
     for (int j = 0; j < width; ++j) {
       memcpy(dst + (j * height + i) * channel, src + (i * width + j) * channel, channel * sizeof(float16_t));
-    }
-  }
-}
-
-void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data,
-                        const ConvParameter *conv_param) {
-  // origin weight format : ohwi
-  int input_channel = conv_param->input_channel_;
-  int ic8 = UP_DIV(input_channel, C8NUM);
-  int output_channel = conv_param->output_channel_;
-  int kernel_plane = conv_param->kernel_h_ * conv_param->kernel_w_;
-
-  for (int k = 0; k < kernel_plane; k++) {
-    int src_kernel_offset = k * input_channel;
-    int dst_kernel_offset = k * C8NUM;
-    for (int o = 0; o < output_channel; o++) {
-      int src_oc_offset = src_kernel_offset + o * kernel_plane * input_channel;
-      int dst_oc_offset = dst_kernel_offset + o * ic8 * kernel_plane * C8NUM;
-      for (int i = 0; i < input_channel; i++) {
-        int c8_block_num = i / C8NUM;
-        int c8_block_rem = i % C8NUM;
-        int src_ic_offset = src_oc_offset + i;
-        int dst_ic_offset = dst_oc_offset + c8_block_num * kernel_plane * C8NUM + c8_block_rem;
-        (packed_weight_data + dst_ic_offset)[0] = (origin_weight_data + src_ic_offset)[0];
-      }
-    }
-  }
-}
-
-void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data,
-                        const ConvParameter *conv_param) {
-  // origin weight format : ohwi
-  int input_channel = conv_param->input_channel_;
-  int ic8 = UP_DIV(input_channel, C8NUM);
-  int ic4 = ic8 * 2;
-  int output_channel = conv_param->output_channel_;
-  int kernel_plane = conv_param->kernel_h_ * conv_param->kernel_w_;
-
-  for (int k = 0; k < kernel_plane; k++) {
-    int src_kernel_offset = k * input_channel;
-    int dst_kernel_offset = k * C4NUM;
-    for (int o = 0; o < output_channel; o++) {
-      int src_oc_offset = src_kernel_offset + o * kernel_plane * input_channel;
-      int dst_oc_offset = dst_kernel_offset + o * ic4 * kernel_plane * C4NUM;
-      for (int i = 0; i < input_channel; i++) {
-        int c4_block_num = i / C4NUM;
-        int c4_block_rem = i % C4NUM;
-        int src_ic_offset = src_oc_offset + i;
-        int dst_ic_offset = dst_oc_offset + c4_block_num * kernel_plane * C4NUM + c4_block_rem;
-        (packed_weight_data + dst_ic_offset)[0] = (origin_weight_data + src_ic_offset)[0];
-      }
     }
   }
 }
