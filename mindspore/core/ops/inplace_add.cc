@@ -29,11 +29,10 @@ namespace ops {
 namespace {
 abstract::ShapePtr InplaceAddInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  auto indices = GetValue<std::vector<int64_t>>(primitive->GetAttr(kIndices));
+  auto indices = CheckAndConvertUtils::CheckIntOrTupleInt("indices", primitive->GetAttr(kIndices), primitive->name());
 
   constexpr auto inputs_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, op_name);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, primitive->name());
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack());
   auto v_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack());
 
@@ -89,7 +88,11 @@ void InplaceAdd::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, a
 
 std::vector<int64_t> InplaceAdd::get_indices() {
   auto value_ptr = GetAttr(kIndices);
-  return GetValue<std::vector<int64_t>>(value_ptr);
+  if (value_ptr->isa<mindspore::api::ValueSequence>()) {
+    return GetValue<std::vector<int64_t>>(value_ptr);
+  } else {
+    return {GetValue<int64_t>(value_ptr)};
+  }
 }
 
 MIND_API_OPERATOR_IMPL(InplaceAdd, BaseOperator);
