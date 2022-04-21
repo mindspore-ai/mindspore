@@ -344,6 +344,7 @@ int BiasCorrectionStrategy::Fp32Inference(const MSKernelCallBack &before_call_ba
   std::vector<mindspore::MSTensor> inputs = fp32_ms_model_->GetInputs();
   // fp32 inference
   for (size_t i = 0; i < calibrator_->GetBatchNum(); i++) {
+    MS_LOG(INFO) << "BC inference round: " << i;
     for (auto tensor : inputs) {
       int status = calibrator_->GenerateInputData(tensor.Name(), i, &tensor);
       if (status != RET_OK) {

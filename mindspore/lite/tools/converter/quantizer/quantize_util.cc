@@ -788,4 +788,42 @@ int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input) {
   }
   return RET_OK;
 }
+
+int GetElementNumFromShape(const std::vector<int> &dims, int *total_size) {
+  CHECK_NULL_RETURN(total_size);
+  *total_size = 1;
+  for (auto dim : dims) {
+    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(*total_size, dim), RET_ERROR, "Int mul overflow.");
+    *total_size *= dim;
+  }
+  return RET_OK;
+}
+
+int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
+                      std::vector<std::vector<int>> *buckets_data_index) {
+  int outer = 1;
+  for (int i = 0; i < preferred_dim; i++) {
+    outer *= dims[i];
+  }
+  int bucket_count = dims[preferred_dim];
+  int inner = 1;
+  for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
+    inner *= dims[i];
+  }
+  if (inner <= 0 || outer <= 0 || bucket_count <= 0) {
+    return RET_ERROR;
+  }
+  for (int i = 0; i < bucket_count; i++) {
+    auto index = i * inner;
+    std::vector<int> bucket_index(inner * outer);
+    for (int j = 0; j < outer; j++) {
+      index += j * bucket_count * inner;
+      for (int k = 0; k < inner; k++) {
+        bucket_index[j * inner + k] = index + k;
+      }
+    }
+    buckets_data_index->push_back(bucket_index);
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite::quant

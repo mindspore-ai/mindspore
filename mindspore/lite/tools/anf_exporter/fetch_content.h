@@ -50,6 +50,9 @@ int FetchDataFromValueNode(const CNodePtr &cnode, size_t index, converter::FmkTy
 
 int FetchDataFromCNode(const CNodePtr &cnode, size_t index, DataInfo *data_info);
 
+int FetchConstData(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info,
+                   bool copy_data);
+
 int RemoveIfDepend(const CNodePtr &cnode);
 
 int RemoveIfMakeTuple(const CNodePtr &cnode);

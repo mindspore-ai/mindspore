@@ -18,6 +18,9 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <set>
+#include <algorithm>
+#include <string>
 #include "tools/converter/quantizer/cle_pattern.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -30,7 +33,13 @@
 namespace mindspore::lite::quant {
 using lite::RET_ERROR;
 using lite::RET_OK;
+static const std::set<std::string> kSupportCLENode = {
+  schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion)};
+
 int CLEStrategy::ReplaceGraphRelu6ToRelu() {
+  if (!replace_relu6_flag_) {
+    return RET_OK;
+  }
   // Optimize with pattern.
   auto cnodes = func_graph_->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
@@ -44,6 +53,9 @@ int CLEStrategy::ReplaceGraphRelu6ToRelu() {
 }
 
 int CLEStrategy::ReplaceCNodeRelu6ToRelu(const CNodePtr &cnode) {
+  if (!replace_relu6_flag_) {
+    return RET_OK;
+  }
   // Optimize with pattern.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -57,16 +69,88 @@ int CLEStrategy::ReplaceCNodeRelu6ToRelu(const CNodePtr &cnode) {
   return RET_OK;
 }
 
+int CLEStrategy::DoInference() {
+  CHECK_NULL_RETURN(func_graph_);
+  CHECK_NULL_RETURN(calibrator_);
+  // get input tensor
+  auto fp32_ms_model = std::make_shared<mindspore::Model>();
+  if (fp32_ms_model == nullptr) {
+    MS_LOG(ERROR) << "New model failed.";
+    return RET_ERROR;
+  }
+  auto ret = BuildModelByFuncGraph(fp32_ms_model, func_graph_, flags_);
+  if (ret != mindspore::kSuccess) {
+    MS_LOG(ERROR) << "Build model failed.";
+    return RET_ERROR;
+  }
+  std::vector<mindspore::MSTensor> inputs = fp32_ms_model->GetInputs();
+  if (inputs.size() != calibrator_->GetInputNum()) {
+    MS_LOG(ERROR) << "model's input tensor count: " << inputs.size() << " != "
+                  << " calibrator count:" << calibrator_->GetInputNum();
+    return RET_ERROR;
+  }
+
+  for (size_t calib_index = 0; calib_index < calibrator_->GetBatchNum(); calib_index++) {
+    MS_LOG(INFO) << "CLE do inference round:" << calib_index;
+    // set multi-input data
+    for (auto tensor : inputs) {
+      int status = calibrator_->GenerateInputData(tensor.Name(), calib_index, &tensor);
+      MS_CHECK_TRUE_MSG(status == RET_OK, RET_ERROR, "generate input data from images failed!");
+    }
+    // func
+    MSKernelCallBack after = [&](const std::vector<mindspore::MSTensor> &inputs,
+                                 const std::vector<mindspore::MSTensor> &outputs,
+                                 const MSCallBackParam &op_info) -> bool {
+      if (kSupportCLENode.find(op_info.node_type) != kSupportCLENode.end()) {
+        auto tensor = outputs.front();
+        float min_value = *std::min_element(static_cast<const float *>(tensor.Data().get()),
+                                            static_cast<const float *>(tensor.Data().get()) + tensor.ElementNum());
+        MS_LOG(INFO) << tensor.Name() << ":" << min_value;
+        auto iter = total_min_.find(tensor.Name());
+        if (iter == total_min_.end()) {
+          total_min_.insert({tensor.Name(), min_value});
+        } else {
+          iter->second += min_value;
+        }
+      }
+      return true;
+    };
+    auto outputs = fp32_ms_model->GetOutputs();
+    auto status = fp32_ms_model->Predict(inputs, &outputs, nullptr, after);
+    if (status != mindspore::kSuccess) {
+      MS_LOG(ERROR) << "run model failed!";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int CLEStrategy::Run() {
+  MS_LOG(INFO) << "CLE start to find pattern.";
   auto ret = FindPattern();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Find pattern failed.";
     return ret;
   }
+  MS_LOG(INFO) << "CLE start to adjust weight.";
   ret = WeightEqualization();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Weight equalization failed.";
     return ret;
+  }
+  if (clip_bias_flag_) {
+    MS_LOG(INFO) << "CLE start to pre inference.";
+    ret = DoInference();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Find pattern failed.";
+      return ret;
+    }
+    MS_LOG(INFO) << "CLE start to clip high bias.";
+    ret = ClipHighBias();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Absorbing high bias failed.";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -97,33 +181,30 @@ int CLEStrategy::CalcDataRange(const float *data, size_t element_cnt, const std:
 int CLEStrategy::CalcRange(const CNodePtr &cnode, std::vector<float> *ranges, int preferred_dim) {
   CHECK_NULL_RETURN(ranges);
   CHECK_NULL_RETURN(cnode);
+  auto node_name = cnode->fullname_with_scope();
   size_t weight_index = 2;
-  auto weight = cnode->input(weight_index);
-  int status;
   DataInfo data_info;
-  if (weight->isa<Parameter>()) {
-    status = FetchDataFromParameterNode(cnode, weight_index, converter::kFmkTypeMs, &data_info, true);
-  } else if (weight->isa<ValueNode>()) {
-    status = FetchDataFromValueNode(cnode, weight_index, converter::kFmkTypeMs, false, &data_info, true);
-  } else {
-    return RET_NO_CHANGE;
+  auto ret = FetchConstData(cnode, weight_index, converter::kFmkTypeMs, &data_info, false);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " fetch data failed";
+    return ret;
   }
 
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << cnode->fullname_with_scope() << " fetch data failed";
-    return status;
-  }
-
-  auto data = reinterpret_cast<float *>(data_info.data_.data());
+  auto data = static_cast<float *>(data_info.data_ptr_);
   if (data == nullptr) {
-    MS_LOG(ERROR) << "data is nullptr. " << cnode->fullname_with_scope();
+    MS_LOG(ERROR) << node_name << " data is nullptr. ";
     return RET_ERROR;
   }
-  size_t element_cnt = data_info.data_.size() / sizeof(float);
-  status = CalcDataRange(data, element_cnt, data_info.shape_, preferred_dim, ranges);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "Calc data range failed.";
-    return status;
+  int element_cnt = 1;
+  ret = GetElementNumFromShape(data_info.shape_, &element_cnt);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " get element num from shape failed.";
+    return ret;
+  }
+  ret = CalcDataRange(data, element_cnt, data_info.shape_, preferred_dim, ranges);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Calc data range failed.";
+    return ret;
   }
   return RET_OK;
 }
@@ -161,6 +242,8 @@ int CLEStrategy::CalcScaleWithTwoLayer(const CombinationLayer &layer_group, std:
     MS_CHECK_GT(range1.at(i), 0, RET_ERROR);
     MS_CHECK_GT(range2.at(i), 0, RET_ERROR);
     auto scale = range1.at(i) * (1.0f / sqrt(range1.at(i) * range2.at(i)));
+    MS_LOG(INFO) << layer_group.layer1->fullname_with_scope() << " " << 1 / scale << " "
+                 << layer_group.layer2->fullname_with_scope() << " " << scale;
     scales->push_back(scale);
   }
   return RET_OK;
@@ -212,6 +295,9 @@ int CLEStrategy::CalcScaleWithThreeLayer(const CombinationLayer &layer_group, st
     scales12->push_back(scale1);
     auto scale2 = cube_root / range3.at(i);
     scales23->push_back(scale2);
+    MS_LOG(INFO) << layer_group.layer1->fullname_with_scope() << " " << 1 / scale1 << " "
+                 << layer_group.layer2->fullname_with_scope() << " " << scale1 / scale2 << " "
+                 << layer_group.layer3->fullname_with_scope() << " " << 1 / scale2;
   }
   return RET_OK;
 }
@@ -273,14 +359,7 @@ int CLEStrategy::EqualizationAdjust(const CNodePtr &cnode, const std::vector<dou
   MS_ASSERT(scales != nullptr);
   auto weight = cnode->input(input_index);
   DataInfo layer1_data_info;
-  int status;
-  if (weight->isa<Parameter>()) {
-    status = FetchDataFromParameterNode(cnode, input_index, converter::kFmkTypeMs, &layer1_data_info, false);
-  } else if (weight->isa<ValueNode>()) {
-    status = FetchDataFromValueNode(cnode, input_index, converter::kFmkTypeMs, false, &layer1_data_info, false);
-  } else {
-    return RET_NO_CHANGE;
-  }
+  int status = FetchConstData(cnode, input_index, converter::kFmkTypeMs, &layer1_data_info, false);
   if (status != RET_OK) {
     MS_LOG(ERROR) << weight->fullname_with_scope() << " fetch data failed";
     return status;
@@ -289,9 +368,10 @@ int CLEStrategy::EqualizationAdjust(const CNodePtr &cnode, const std::vector<dou
   auto raw_datas = static_cast<float *>(layer1_data_info.data_ptr_);
   auto dims = layer1_data_info.shape_;
   int elem_count = 1;
-  for (size_t i = 0; i < dims.size(); ++i) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(elem_count, dims.at(i)), RET_ERROR, "Int mul overflow.");
-    elem_count *= dims.at(i);
+  auto ret = GetElementNumFromShape(layer1_data_info.shape_, &elem_count);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get element num from shape failed.";
+    return ret;
   }
 
   for (int i = 0; i < elem_count; i++) {
@@ -386,5 +466,194 @@ int CLEStrategy::EqualizationWithThreeLayer(const CombinationLayer &layer_group,
   return RET_OK;
 }
 
-int CLEStrategy::AbsorbingHighBias() { return RET_OK; }
+int CLEStrategy::ReduceWeight(const CNodePtr &cnode, int weight_index, int preferred_dim,
+                              std::vector<float> *reduce_weight) {
+  DataInfo data_info;
+  auto node_name = cnode->fullname_with_scope();
+  int status = FetchConstData(cnode, weight_index, converter::kFmkTypeMs, &data_info, false);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << node_name << " fetch data failed";
+    return status;
+  }
+  auto bucket_count = data_info.shape_[preferred_dim];
+  std::vector<std::vector<int>> buckets_data_index;
+  auto ret = GetBucketAllIndex(data_info.shape_, preferred_dim, &buckets_data_index);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Get buckets data failed.";
+    return ret;
+  }
+  reduce_weight->resize(bucket_count);
+  for (int i = 0; i < bucket_count; i++) {
+    auto bucket = buckets_data_index.at(i);
+    float sum = 0.0f;
+    for (size_t j = 0; j < bucket.size(); ++j) {
+      auto index = bucket[j];
+      sum += static_cast<float *>(data_info.data_ptr_)[index];
+    }
+    reduce_weight->at(i) = sum;
+  }
+  return RET_OK;
+}
+
+int EqualizeBias(const CNodePtr &cnode, const std::vector<float> &clip_bias) {
+  DataInfo bias_data_info;
+  auto node_name = cnode->fullname_with_scope();
+  int status = FetchConstData(cnode, kAnfBiasIndex, converter::kFmkTypeMs, &bias_data_info, false);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << node_name << " fetch data failed";
+    return status;
+  }
+  int elem_count = 1;
+  auto ret = GetElementNumFromShape(bias_data_info.shape_, &elem_count);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Get element num from shape failed.";
+    return ret;
+  }
+  if (clip_bias.size() != static_cast<size_t>(elem_count)) {
+    MS_LOG(ERROR) << node_name << " Bias size is valid. bias is " << clip_bias.size() << " and elem count is "
+                  << elem_count;
+    return RET_ERROR;
+  }
+  for (int i = 0; i < elem_count; i++) {
+    static_cast<float *>(bias_data_info.data_ptr_)[i] -= clip_bias.at(i);
+  }
+  return RET_OK;
+}
+
+int CLEStrategy::ClipFrontBiasLayer(const CNodePtr &cnode, float absorb_bias) {
+  auto node_name = cnode->fullname_with_scope();
+  auto abstract = opt::GetCNodeInputAbstract(cnode, kAnfBiasIndex);
+  MS_CHECK_TRUE_MSG(abstract != nullptr, RET_ERROR, "input's abstract is nullptr.");
+  ShapeVector input_shape;
+  auto ret = opt::FetchShapeFromAbstract(abstract, &input_shape);
+  MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "obtain input shape failed.");
+
+  int elem_count = 1;
+  ret = GetElementNumFromShape(ConvertShapeVectorToInt32(input_shape), &elem_count);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Get element num from shape failed.";
+    return ret;
+  }
+  std::vector<float> clip_bias(elem_count);
+  for (int i = 0; i < elem_count; i++) {
+    clip_bias[i] = absorb_bias;
+  }
+  ret = EqualizeBias(cnode, clip_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Equalize bias failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int CLEStrategy::ClipBackBiasLayer(const CNodePtr &cnode, float absorb_bias) {
+  // ReduceWeight
+  std::vector<float> reduce_weight;
+  auto node_name = cnode->fullname_with_scope();
+  auto ret = ReduceWeight(cnode, kAnfWeightIndex, kNHWC_N, &reduce_weight);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Reduce weight failed.";
+    return ret;
+  }
+  std::vector<float> clip_bias(reduce_weight.size());
+  for (size_t i = 0; i < reduce_weight.size(); i++) {
+    clip_bias[i] = -(reduce_weight.at(i) * absorb_bias);
+  }
+  ret = EqualizeBias(cnode, clip_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << node_name << " Equalize bias failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int CLEStrategy::ClipHighBiasWithTwoLayer(const CombinationLayer &layer_group,
+                                          const std::map<std::string, float> &absorb_biases) {
+  auto iter = absorb_biases.find(layer_group.layer1->fullname_with_scope());
+  if (iter == absorb_biases.end()) {
+    MS_LOG(ERROR) << "Cant find absorb_biases " << layer_group.layer1->fullname_with_scope();
+    return RET_ERROR;
+  }
+  float absorb_bias = iter->second;
+  auto ret = ClipFrontBiasLayer(layer_group.layer1, absorb_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Clip front bias layer failed.";
+    return ret;
+  }
+  ret = ClipBackBiasLayer(layer_group.layer2, absorb_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Clip back bias layer failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int CLEStrategy::ClipHighBiasWithThreeLayer(const CombinationLayer &layer_group,
+                                            const std::map<std::string, float> &absorb_biases) {
+  // Group1
+  auto iter = absorb_biases.find(layer_group.layer1->fullname_with_scope());
+  if (iter == absorb_biases.end()) {
+    MS_LOG(ERROR) << "Cant find absorb_biases " << layer_group.layer1->fullname_with_scope();
+    return RET_ERROR;
+  }
+  float absorb_bias = iter->second;
+  auto ret = ClipFrontBiasLayer(layer_group.layer1, absorb_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Clip front bias layer failed.";
+    return ret;
+  }
+  ret = ClipBackBiasLayer(layer_group.layer2, absorb_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Clip back bias layer failed.";
+    return ret;
+  }
+  // Group2
+  iter = absorb_biases.find(layer_group.layer2->fullname_with_scope());
+  if (iter == absorb_biases.end()) {
+    MS_LOG(ERROR) << "Cant find absorb_biases " << layer_group.layer2->fullname_with_scope();
+    return RET_ERROR;
+  }
+  absorb_bias = iter->second;
+  ret = ClipFrontBiasLayer(layer_group.layer2, absorb_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Clip front bias layer failed.";
+    return ret;
+  }
+  ret = ClipBackBiasLayer(layer_group.layer3, absorb_bias);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Clip back bias layer failed.";
+    return ret;
+  }
+  return RET_OK;
+}
+
+int CLEStrategy::ClipHighBias() {
+  // Average min value for b
+  std::map<std::string, float> absorb_biases;
+  for (const auto &mins : total_min_) {
+    auto min_value = mins.second / calibrator_->GetBatchNum() > 0 ? mins.second / calibrator_->GetBatchNum() : 0;
+    absorb_biases.insert({mins.first, min_value});
+  }
+  auto combination_layer_groups = cle_pattern_->GetCombinationLayer();
+  for (auto it = combination_layer_groups.rbegin(); it != combination_layer_groups.rend(); ++it) {
+    auto group = *it;
+    if (it->layer_num == kInputsNum2) {
+      auto ret = ClipHighBiasWithTwoLayer(group, absorb_biases);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Clip high bias with two layer failed";
+        return ret;
+      }
+    } else if (it->layer_num == kInputsNum3) {
+      auto ret = ClipHighBiasWithThreeLayer(group, absorb_biases);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Clip high bias with three layer failed";
+        return ret;
+      }
+    } else {
+      MS_LOG(ERROR) << "Dont support layer_num:" << it->layer_num;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 }  // namespace mindspore::lite::quant

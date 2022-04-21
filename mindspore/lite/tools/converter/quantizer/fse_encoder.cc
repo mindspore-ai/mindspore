@@ -23,6 +23,7 @@
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
 #include "include/errorcode.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -412,11 +413,13 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs
   tensor_input->weightQunatCompressType = schema::WeightQunatCompressType_FSE;
   tensor_input->dataType = TypeId::kNumberTypeFloat32;
   free(out8);
-  int total_size = sizeof(float);
-  for (auto dim : tensor_input->dims) {
-    MS_CHECK_FALSE_MSG(INT_MUL_OVERFLOW(total_size, dim), RET_ERROR, "Int mul overflow.");
-    total_size *= dim;
+  int total_size = 1;
+  ret = GetElementNumFromShape(tensor_input->dims, &total_size);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get element num from shape failed.";
+    return ret;
   }
+  total_size *= sizeof(float);
   MS_ASSERT(out_size > 0);
   MS_LOG(INFO) << tensor_input->name << " Origin size:" << total_size << " Compressed size:" << out_size
                << " Compression ratio:" << 1.0 * total_size / out_size;

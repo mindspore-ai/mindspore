@@ -415,6 +415,30 @@ int FetchDataFromCNode(const CNodePtr &cnode, size_t index, DataInfo *data_info)
   return RET_OK;
 }
 
+int FetchConstData(const CNodePtr &cnode, size_t index, converter::FmkType fmk_type, DataInfo *data_info,
+                   bool copy_data) {
+  auto node_name = cnode->fullname_with_scope();
+  if (index > cnode->size()) {
+    MS_LOG(ERROR) << node_name << index << " > " << cnode->size();
+    return RET_ERROR;
+  }
+  int status;
+  auto input = cnode->input(index);
+  if (input->isa<Parameter>()) {
+    status = FetchDataFromParameterNode(cnode, index, fmk_type, data_info, copy_data);
+  } else if (input->isa<ValueNode>()) {
+    status = FetchDataFromValueNode(cnode, index, fmk_type, false, data_info, copy_data);
+  } else {
+    MS_LOG(ERROR) << node_name << " index " << index << " is not Parameter or ValueNode";
+    return RET_ERROR;
+  }
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << node_name << " fetch data failed";
+    return status;
+  }
+  return RET_OK;
+}
+
 int RemoveIfDepend(const CNodePtr &cnode) {
   MS_CHECK_TRUE_MSG(cnode != nullptr, RET_ERROR, "cnode is nullptr");
   bool has_depend = false;

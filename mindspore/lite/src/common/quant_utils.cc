@@ -118,22 +118,14 @@ void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vect
   MS_ASSERT(raw_datas != nullptr);
   MS_ASSERT(per_channel_min_max != nullptr);
   // the key is bucket_index
-  std::map<int, std::vector<float>> sorted_data;
+  for (int i = 0; i < dims[preferred_dim]; ++i) {
+    per_channel_min_max->insert({i, {FLT_MAX, FLT_MIN}});
+  }
   for (int i = 0; i < elem_count; ++i) {
     auto bucket_index = GetBucketIndex(dims, preferred_dim, i);
-    auto iter = sorted_data.find(bucket_index);
-    if (iter == sorted_data.end()) {
-      sorted_data.insert({bucket_index, {raw_datas[i]}});
-    } else {
-      iter->second.push_back(raw_datas[i]);
-    }
-  }
-  for (size_t i = 0; i < sorted_data.size(); ++i) {
-    auto data = sorted_data.at(i);
-    MinMax min_max;
-    min_max.max = *max_element(data.begin(), data.end());
-    min_max.min = *min_element(data.begin(), data.end());
-    per_channel_min_max->insert({i, min_max});
+    auto iter = per_channel_min_max->find(bucket_index);
+    iter->second.min = std::min(iter->second.min, raw_datas[i]);
+    iter->second.max = std::max(iter->second.max, raw_datas[i]);
   }
 }
 
