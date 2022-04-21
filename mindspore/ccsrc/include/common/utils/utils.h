@@ -551,6 +551,7 @@ constexpr auto kAttrRecvDstNodeName = "recv_dst_node_name";
 constexpr auto kAttrRecvSrcRanks = "recv_src_ranks";
 constexpr auto kAttrRecvSrcRoles = "recv_src_roles";
 constexpr auto kAttrInterProcessEdgeName = "inter_process_edge_name";
+constexpr auto kAttrInterProcessEdgeLabel = "inter_process_edge_label";
 constexpr auto kAttrForwardOpOutputId = "forward_op_output_id";
 constexpr auto kAttrGroupRankIds = "group_rank_ids";
 constexpr auto kAttrReuseCommunication = "reuse_communication_node";

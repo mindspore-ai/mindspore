@@ -57,6 +57,12 @@ struct OperatorLabel {
   std::string to_string() const;
 };
 
+// The label for inter-process edges. This is used for classify the edges.
+// For example, only edges with same label should be fused.
+struct InterProcessEdgeLabel {
+  std::string label_name;
+};
+
 // The map of all nodes in the graph to their distributed split label.
 using NodeLabels = std::map<AnfNodePtr, OperatorLabel>;
 
@@ -83,10 +89,14 @@ struct SplitGraphSegment {
 
 // The inter-process edge with nodes. This represents the edge between two nodes on two processes.
 struct InterProcessOpEdge {
+  // The peers of this edge with nodes and their labels.
   AnfNodePtr src_node;
   OperatorLabel src_label;
   AnfNodePtr dst_node;
   OperatorLabel dst_label;
+
+  // The label of this inter-process edge.
+  InterProcessEdgeLabel edge_label;
 
   bool operator==(const InterProcessOpEdge &e) const { return to_string() == e.to_string(); }
 
@@ -134,6 +144,8 @@ using FusedInterProcessOpPairMap = std::map<InterProcessEdgeWithIndex, std::vect
 
 // The list of in and out degrees of one segment.
 using InOutDegreeList = std::vector<std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>>>;
+
+constexpr char kPSOptimizerEdgeLabel[] = "ps_optimizer_edge_label";
 
 constexpr char kAttrUpdateParameter[] = "update_parameter";
 constexpr char kAttrParameterInputIndex[] = "parameter_input_index";
@@ -334,6 +346,8 @@ class GraphSplitter {
   // Node-In-->Send-->Recv-->Node-X-->Send-->Recv-->Node-Out.
   // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X.
   InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeInputs(const AnfNodePtr &node);
+
+  InterProcessEdgeLabel GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node);
 
   // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
   // should be connected with control edges in case that the nodes are optimized out.
