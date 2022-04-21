@@ -394,9 +394,11 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
       auto kernel_attrs = cpu_kernel_mod->GetOpSupport();
       SetCpuRefMapToKernelInfo(kernel_node, kernel_attrs);
       auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(kernel_node);
-      auto ret = cpu_kernel_mod->Init(base_operator, input_tensors, output_tensors);
-      if (!ret) {
+      if (!cpu_kernel_mod->Init(base_operator, input_tensors, output_tensors)) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(kernel_node);
+      }
+      if (!cpu_kernel_mod->Reinit(input_tensors, output_tensors, kernel::GetReinitArgs(kernel_node))) {
+        MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Reinit failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
       MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";

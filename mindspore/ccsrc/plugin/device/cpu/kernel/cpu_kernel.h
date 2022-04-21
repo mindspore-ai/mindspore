@@ -143,6 +143,9 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) = 0;
 
+  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+              const std::shared_ptr<ReinitArgs> &args) override;
+
   // Should be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }
 
@@ -161,9 +164,6 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   ParallelSearchInfo parallel_search_info_;
 
  protected:
-  virtual void InitInputOutputSize(const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs);
-
   ThreadPool *pool_{nullptr};
 
  private:

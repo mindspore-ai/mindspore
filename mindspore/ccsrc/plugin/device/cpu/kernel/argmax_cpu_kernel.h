@@ -32,7 +32,8 @@ class ArgmaxCpuKernelMod : public NativeCpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-
+  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+              const std::shared_ptr<ReinitArgs> &args) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
@@ -51,6 +52,7 @@ class ArgmaxCpuKernelMod : public NativeCpuKernelMod {
   int64_t num_before_axis_{0};
   int64_t num_after_axis_{0};
   int64_t dim_axis_{0};
+  int64_t axis_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

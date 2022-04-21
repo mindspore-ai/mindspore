@@ -93,34 +93,9 @@ bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     MS_LOG(ERROR) << "Argmax input size should not less than 1!";
     return false;
   }
-  workspace_size_list_.clear();
-  InitInputOutputSize(inputs, outputs);
-  kernel_name_ = kernel_ptr->name();
-  shape_ = inputs[0]->GetShapeVector();
-  size_t shape_len = shape_.size();
-  if (shape_len == 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
-    return false;
-  }
-  int64_t axis = kernel_ptr->get_axis();
-  axis += SizeToLong(shape_len);
-  if (axis < 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
-                  << "], but got " << axis;
-    return false;
-  }
-  axis = axis % SizeToLong(shape_len);
-  num_before_axis_ = 1;
-  num_after_axis_ = 1;
-  for (size_t i = 0; i < shape_len; i++) {
-    if (SizeToLong(i) < axis) {
-      num_before_axis_ *= shape_[i];
-    } else if (SizeToLong(i) > axis) {
-      num_after_axis_ *= shape_[i];
-    }
-  }
-  dim_axis_ = shape_[LongToSize(axis)];
 
+  kernel_name_ = kernel_ptr->name();
+  axis_ = kernel_ptr->get_axis();
   auto input_type_id = inputs[0]->GetDtype();
   switch (input_type_id) {
     case kNumberTypeFloat32:
@@ -133,6 +108,38 @@ bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
       MS_LOG(ERROR) << "Argmax kernel does not support " << TypeIdToString(input_type_id);
       return false;
   }
+  return true;
+}
+
+bool ArgmaxCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                                const std::shared_ptr<ReinitArgs> &args) {
+  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
+    return false;
+  }
+  shape_ = inputs[0]->GetShapeVector();
+  size_t shape_len = shape_.size();
+  if (shape_len == 0) {
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
+    return false;
+  }
+  axis_ += SizeToLong(shape_len);
+  if (axis_ < 0) {
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
+                    << "], but got " << axis_;
+    return false;
+  }
+  axis_ = axis_ % SizeToLong(shape_len);
+  num_before_axis_ = 1;
+  num_after_axis_ = 1;
+  for (size_t i = 0; i < shape_len; i++) {
+    if (SizeToLong(i) < axis_) {
+      num_before_axis_ *= shape_[i];
+    } else if (SizeToLong(i) > axis_) {
+      num_after_axis_ *= shape_[i];
+    }
+  }
+  dim_axis_ = shape_[LongToSize(axis_)];
   return true;
 }
 

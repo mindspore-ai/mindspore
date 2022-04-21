@@ -135,6 +135,10 @@ bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
 
 bool CdistCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
                                const std::shared_ptr<ReinitArgs> &args) {
+  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+    MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
+    return false;
+  }
   std::vector<int64_t> in_shape0 = inputs[0]->GetShapeVector();
   std::vector<int64_t> in_shape1 = inputs[1]->GetShapeVector();
   auto in_shape_size = in_shape0.size();
@@ -155,7 +159,6 @@ bool CdistCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const
 
   thread_num_ = std::min(static_cast<size_t>(batch_), pool_->GetKernelThreadNum());
 
-  InitInputOutputSize(inputs, outputs);
   return true;
 }
 
