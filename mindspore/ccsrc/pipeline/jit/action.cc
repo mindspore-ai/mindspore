@@ -885,7 +885,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 
   // GRAPH | Dynamic Shape : KernelByKernel path in MindRT.
   if (IsDynamicShapeGraph(func_graph)) {
-    MS_LOG(INFO) << "Run Graph mode with kernelbykernel(Dynamic Shape).";
+    MS_LOG(INFO) << "Run graph mode with kernelbykernel(Dynamic Shape).";
     set_ctx(false, false, false);
     return;
   }

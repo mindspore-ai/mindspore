@@ -362,7 +362,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   std::list<EvaluatorArgs> eval_trace_;
   std::map<EvaluatorPtr, EvaluatorPtr> multi_poss_;
   std::unordered_set<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> continued_evals_;
-  // root or top func_graph for static analysis;
+  // Root or top func_graph for static analysis;
   FuncGraphPtr root_func_graph_{nullptr};
   AnalysisContextPtr root_context_{nullptr};
 

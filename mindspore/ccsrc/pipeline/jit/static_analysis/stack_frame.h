@@ -94,6 +94,8 @@ class StackFrame final : public Base {
   const AbstractBasePtrList &args_abs_list() const { return args_abs_list_; }
   void set_args_abs_list(const AbstractBasePtrList &&args_abs_list) { args_abs_list_ = args_abs_list; }
 
+  std::vector<AnfNodePtr> &side_effect_nodes() { return side_effect_nodes_; }
+
   std::string ToString() const override {
     MS_EXCEPTION_IF_NULL(func_graph_);
     std::ostringstream buffer;
@@ -136,6 +138,7 @@ class StackFrame final : public Base {
   std::vector<AnfNodePtr> node_slots_;
   size_t slot_index_;
   bool done_;
+  std::vector<AnfNodePtr> side_effect_nodes_;
 };
 }  // namespace abstract
 }  // namespace mindspore

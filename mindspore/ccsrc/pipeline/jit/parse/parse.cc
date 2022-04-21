@@ -2510,7 +2510,7 @@ AnfNodePtr Parser::MakeInterpretNode(const FunctionBlockPtr &block, const AnfNod
 
   // Print a hint for user.
   auto line_info = trace::GetDebugInfo(value_node->debug_info());
-  MS_LOG(INFO) << "Found unsupported syntax in Graph mode, those codes would be fallen back to Python interpreter:"
+  MS_LOG(INFO) << "Found unsupported syntax in graph mode, those codes would be fallen back to Python interpreter:"
                << "\n\n"
                << line_info;
   InterpretNodeRecorder::GetInstance().PushLineInfo(line_info);

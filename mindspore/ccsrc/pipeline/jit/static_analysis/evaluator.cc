@@ -26,6 +26,7 @@
 #include "utils/ms_context.h"
 #include "pipeline/jit/static_analysis/stack_frame.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace abstract {
@@ -57,6 +58,17 @@ void EvalFailLogging(const EvaluatorPtr &evaluator, const AbstractBasePtrList &,
     }
   }
 }
+
+PrimitivePtr GetRealPrimitive(const AnfNodePtr &node) {
+  const auto &primitive = GetCNodePrimitive(node);
+  if (primitive != nullptr) {
+    auto do_signature_prim = dyn_cast<prim::DoSignaturePrimitive>(primitive);
+    if (do_signature_prim != nullptr) {
+      return dyn_cast<Primitive>(do_signature_prim->function());
+    }
+  }
+  return primitive;
+}
 }  // namespace
 
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg) {
@@ -76,6 +88,45 @@ bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg)
     }
   }
   return false;
+}
+
+void BaseFuncGraphEvaluator::CollectSideEffectNodes(const AnfNodePtr &node,
+                                                    std::vector<AnfNodePtr> *side_effect_nodes) {
+  const auto &primitive = GetRealPrimitive(node);
+  if (primitive != nullptr) {
+    auto effect_info = GetPrimEffectInfo(primitive);
+    if (effect_info.memory || effect_info.io) {
+      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
+      side_effect_nodes->emplace_back(node);
+    }
+  }
+}
+
+void BaseFuncGraphEvaluator::CheckSideEffectNodes(const AbstractBasePtr &abstract,
+                                                  const std::vector<AnfNodePtr> &side_effect_nodes) {
+  if (!side_effect_nodes.empty()) {
+    ValuePtr val = abstract->BuildValue();
+    if (!val->isa<AnyValue>()) {
+      std::stringstream ss;
+      ss << "Side Effect Invalid: Found unsupported syntax in graph mode, those side effect codes would be ignored:\n";
+      ss << "-----\n";
+      size_t num = 1;
+      for (auto &side_effect_node : side_effect_nodes) {
+        ss << "# No. " << num << ":\n" << trace::GetDebugInfo(side_effect_node->debug_info()) << "\n";
+        ++num;
+      }
+      ss << "-----\n";
+      // All nodes in side_effect_nodes are CNode, so its func_graph() must not be null.
+      auto fg = side_effect_nodes[0]->func_graph();
+      MS_EXCEPTION_IF_NULL(fg);
+      ss << "\nIf a function return a const value or inferred const value, the side effect node would be ignored.\n"
+         << "So the codes may not run as the user's expectation, please fix it.\n\n"
+         << "In this case, the const value '" << val->ToString() << "' returns: \n"
+         << trace::GetDebugInfo(fg->debug_info()) << "\nFor more information about this issue, please refer to "
+         << "https://www.mindspore.cn/search?inputValue=Side%20Effect%20Invalid\n";
+      MS_LOG(EXCEPTION) << ss.str();
+    }
+  }
 }
 
 void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
@@ -131,7 +182,7 @@ void BaseFuncGraphEvaluator::LeaveStackFrame(const AnalysisEnginePtr &, const St
 AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
                                                          const AnalysisContextPtr &context) {
   EvalResultPtr eval_result = nullptr;
-  AbstractBasePtr res_base = nullptr;
+  AbstractBasePtr abstract = nullptr;
   std::stack<StackFramePtr> stack_frames;
   auto current_stack_frame = std::make_shared<StackFrame>(shared_from_base<Evaluator>(), fg, context, parent_context_);
   MS_LOG(DEBUG) << "[" << this << "/StackFrame] Start at func graph, " << current_stack_frame;
@@ -139,12 +190,12 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
   while (true) {
     current_stack_frame = stack_frames.top();
     if (current_stack_frame->Done()) {
-      MS_EXCEPTION_IF_NULL(res_base);
+      MS_EXCEPTION_IF_NULL(abstract);
       MS_LOG(DEBUG) << "[" << this << "/StackFrame] Leave from func graph, " << current_stack_frame;
       stack_frames.pop();
       if (stack_frames.empty()) {
         MS_LOG(DEBUG) << "[" << this << "/StackFrame] Finish at func graph, " << current_stack_frame
-                      << ", res_base: " << res_base->ToString();
+                      << ", abstract: " << abstract->ToString();
         break;
       }
       // Leave current func graph.
@@ -169,9 +220,9 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchStackFrame(const AnalysisEnginePtr
 
     eval_result = current_stack_frame->Step(engine);
     MS_EXCEPTION_IF_NULL(eval_result);
-    res_base = eval_result->abstract();
+    abstract = eval_result->abstract();
   }
-  return res_base;
+  return abstract;
 }
 
 AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEnginePtr &engine, const FuncGraphPtr &fg,
@@ -186,7 +237,8 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     }
     return FOLLOW;
   });
-  AbstractBasePtr res_base = nullptr;
+  std::vector<AnfNodePtr> side_effect_nodes;
+  AbstractBasePtr abstract = nullptr;
   for (const auto &node : all_nodes) {
     AnfNodeConfigPtr node_conf = engine->MakeConfig(node, context, fg);
     MS_LOG(DEBUG) << "Analysis node begin, func graph: " << fg << "/" << fg->ToString()
@@ -199,12 +251,16 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
       node_eval_result = engine->ObtainEvalResultWithCache(node_conf);
     }
     MS_EXCEPTION_IF_NULL(node_eval_result);
-    res_base = node_eval_result->abstract();
-    MS_EXCEPTION_IF_NULL(res_base);
-    MS_LOG(DEBUG) << GetInferThread() << "Eval ( " << node_conf->ToString() << ") = " << res_base->ToString();
+    abstract = node_eval_result->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    MS_LOG(DEBUG) << GetInferThread() << "Eval ( " << node_conf->ToString() << ") = " << abstract->ToString();
+
+    // Check if contains side effect operations.
+    CollectSideEffectNodes(node, &side_effect_nodes);
   }
-  MS_EXCEPTION_IF_NULL(res_base);
-  return res_base;
+  MS_EXCEPTION_IF_NULL(abstract);
+  CheckSideEffectNodes(abstract, side_effect_nodes);
+  return abstract;
 }
 
 EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list,
@@ -276,28 +332,28 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
                 << ", context: " << context->ToString() << ", return node: " << fg->get_return()->DebugString()
                 << ", parent: " << (parent_context_->func_graph() ? parent_context_->func_graph()->ToString() : "NULL")
                 << ", current function call depth: " << FunctionCallDepth();
-  AbstractBasePtr res_base = nullptr;
+  AbstractBasePtr abstract = nullptr;
   if (engine->enable_recursive_eval()) {
-    res_base = LaunchRecursiveEval(engine, fg, context);
+    abstract = LaunchRecursiveEval(engine, fg, context);
   } else {
-    res_base = LaunchStackFrame(engine, fg, context);
+    abstract = LaunchStackFrame(engine, fg, context);
   }
   PopAlwaysEvalFlag();
 
-  MS_EXCEPTION_IF_NULL(res_base);
+  MS_EXCEPTION_IF_NULL(abstract);
   MS_LOG(DEBUG) << "Analysis FuncGraph end, " << fg << "/" << fg->ToString()
-                << ", evaluated abstract: " << res_base->ToString() << ", is stub: " << fg->stub();
+                << ", evaluated abstract: " << abstract->ToString() << ", is stub: " << fg->stub();
   if (fg->stub()) {
-    res_base = std::make_shared<AbstractUndetermined>();
+    abstract = std::make_shared<AbstractUndetermined>();
   }
-  MS_LOG(DEBUG) << GetInferThread() << "} //" << fg->ToString() << " = " << res_base->ToString();
+  MS_LOG(DEBUG) << GetInferThread() << "} //" << fg->ToString() << " = " << abstract->ToString();
 
   trace::TraceGraphEvalLeave(context);
   // Decrease the func graph call depth.
   DecreaseFunctionCallDepth();
   MS_LOG(DEBUG) << this << "(" << type_name() << "/" << ToString()
                 << "), leave, function call depth: " << FunctionCallDepth() << " - " << StackFrameDepth();
-  auto res = std::make_shared<EvalResult>(res_base, nullptr);
+  auto res = std::make_shared<EvalResult>(abstract, nullptr);
   return res;
 }
 

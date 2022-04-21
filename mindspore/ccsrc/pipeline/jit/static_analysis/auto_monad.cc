@@ -750,7 +750,7 @@ class SideEffectFinder {
 
     // For func graph calls, we trace effect info from graph output.
     auto called_graph = GetFuncGraph(cnode);
-    if (called_graph) {
+    if (called_graph != nullptr) {
       // Save the caller of the graph, so that we can update
       // monad parameters for it when requires.
       (void)graph_callers_[called_graph].emplace(cnode);
@@ -767,7 +767,7 @@ class SideEffectFinder {
     //     setpara(x)
     //
     auto class_type = GetClassType(cnode);
-    if (class_type) {
+    if (class_type != nullptr) {
       int index = GetSideEffectPropagate(class_type);
       if (index > 0 && index < static_cast<int>(cnode->size())) {
         return TraceEffectInfo(cnode->input(static_cast<size_t>(index)));
@@ -780,30 +780,30 @@ class SideEffectFinder {
 
   // Trace an ANFNode for effect info.
   EffectInfo TraceEffectInfo(const AnfNodePtr &node) {
-    if (node) {
+    if (node != nullptr) {
       // Trace cnode.
       auto cnode = node->cast<CNodePtr>();
-      if (cnode) {
+      if (cnode != nullptr) {
         return TraceEffectInfo(cnode);
       }
 
       // Trace parameter.
       auto para = node->cast<ParameterPtr>();
-      if (para) {
+      if (para != nullptr) {
         return TraceEffectInfo(para);
       }
 
       // Trace primitive.
       auto prim = GetPrimitive(node);
-      if (prim) {
+      if (prim != nullptr) {
         return GetPrimEffectInfo(prim);
       }
 
       // Trace func graph.
       auto value_node = node->cast<ValueNodePtr>();
-      if (value_node && value_node->value()) {
+      if (value_node != nullptr && value_node->value()) {
         auto graph = value_node->value()->cast<FuncGraphPtr>();
-        if (graph) {
+        if (graph != nullptr) {
           return GetEffectInfo(graph);
         }
       }
@@ -858,7 +858,7 @@ class SideEffectFinder {
       // Caller cnode.
       auto cnode = dyn_cast<CNode>(user.first->first);
       MS_EXCEPTION_IF_NULL(cnode);
-      if (cnode && input_index < cnode->size()) {
+      if (cnode != nullptr && input_index < cnode->size()) {
         auto &input = cnode->input(input_index);
         if (formal_param_stack_.contains(input)) {
           // Skip if the input is a parameter that we are finding its real argument.
@@ -887,7 +887,7 @@ class SideEffectFinder {
   EffectInfo DetectEffectInfo(const CNodePtr &cnode) {
     // For primitive, get effect info from its attributes and inputs.
     auto prim = GetPrimitive(cnode);
-    if (prim) {
+    if (prim != nullptr) {
       // Skip 'return' cnode.
       if (IsPrimitiveEquals(prim, prim::kPrimReturn)) {
         return {EffectInfo::kDetected, false, false, false};
@@ -909,7 +909,7 @@ class SideEffectFinder {
 
     // For func graph, detect effect info by its children cnodes.
     auto func_graph = GetFuncGraph(cnode);
-    if (func_graph) {
+    if (func_graph != nullptr) {
       // Save the caller of the graph, so that we can update
       // monad parameters for it when requires.
       (void)graph_callers_[func_graph].emplace(cnode);
@@ -919,7 +919,7 @@ class SideEffectFinder {
     // When input[0] is a cnode, it is a function returned from
     // a high-order function call, we trace it by return value.
     auto func_cnode = GetFuncCNode(cnode);
-    if (func_cnode) {
+    if (func_cnode != nullptr) {
       caller_ = cnode;
       return TraceEffectInfo(func_cnode);
     }
@@ -927,7 +927,7 @@ class SideEffectFinder {
     // When input[0] is a parameter, it is a function parameter for
     // the high-order function, we trace it by caller.
     auto func_para = GetFuncParameter(cnode);
-    if (func_para) {
+    if (func_para != nullptr) {
       return TraceEffectInfo(func_para);
     }
 
@@ -938,7 +938,7 @@ class SideEffectFinder {
     // otherwise order will be lost in next Renormalize.
     // So assume it has memory side effect conservatively.
     auto func_multitype = GetFuncMultitypeFuncGraph(cnode);
-    if (func_multitype) {
+    if (func_multitype != nullptr) {
       MS_LOG(DEBUG) << "Assume memory side effect for: " << cnode->DebugString();
       return {EffectInfo::kDetected, true, false, false};
     }

@@ -369,3 +369,24 @@ def test_partial_parameter():
 
     net = PartialNet(z)
     print(net())
+
+
+def test_return_const_value_with_side_effect_op():
+    """
+    Feature: Side effect
+    Description: Test side effect with returned const value.
+    Expectation: Throw exception.
+    """
+    class Demo(nn.Cell):
+        def construct(self, x):
+            print('print here...')
+            y = x[1]
+            y[1] = 9
+            return y
+
+    x = [[1, 2, 3, 4], [5, 6, 7, 8]]
+    net = Demo()
+    with pytest.raises(RuntimeError) as info:
+        output = net(x)
+        print(output)
+    assert "Side Effect Invalid" in str(info.value)

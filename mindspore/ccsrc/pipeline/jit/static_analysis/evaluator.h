@@ -230,6 +230,9 @@ class BaseFuncGraphEvaluator : public Evaluator {
     return always_eval_flags_.back();
   }
 
+  void CollectSideEffectNodes(const AnfNodePtr &node, std::vector<AnfNodePtr> *side_effect_nodes);
+  void CheckSideEffectNodes(const AbstractBasePtr &abstract, const std::vector<AnfNodePtr> &side_effect_nodes);
+
  protected:
   AnalysisContextPtr parent_context_;
 

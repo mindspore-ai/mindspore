@@ -175,6 +175,9 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   }
   MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString() << ") = "
                 << (node_eval_result->abstract() ? node_eval_result->abstract()->ToString() : "Abstract null");
+
+  // Check if contains side effect operations.
+  fg_evaluator->CollectSideEffectNodes(current_node, &side_effect_nodes_);
   return node_eval_result;
 }
 
@@ -207,6 +210,9 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
                 << ", Save result, NodeConfig: " << node_conf->ToString() << ", result: " << result->abstract().get()
                 << "/" << result->abstract()->ToString();
   engine->SaveEvalResultInCache(node_conf, result);
+
+  fg_evaluator->CheckSideEffectNodes(result->abstract(), last_stack_frame->side_effect_nodes());
+  last_stack_frame->side_effect_nodes().clear();
 
   // Leave the call CNode.
   trace::TraceEvalCNodeLeave();
