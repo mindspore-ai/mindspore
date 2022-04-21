@@ -242,11 +242,9 @@ bool IsPrimitiveCNode(const AnfNodePtr &node, const PrimitivePtr &value) {
 
 PrimitivePtr GetCNodePrimitive(const AnfNodePtr &node) {
   auto cnode = dyn_cast<CNode>(node);
-  if (cnode != nullptr) {
-    if (cnode->size() > 0) {
-      auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-      return prim;
-    }
+  if (cnode != nullptr && cnode->size() > 0) {
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    return prim;
   }
   return nullptr;
 }

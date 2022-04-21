@@ -972,13 +972,14 @@ void CheckInterpretNodeLineInfos() {
     return;
   }
   std::stringstream ss;
-  ss << "Found unsupported syntax in Graph mode, those codes would be fallen back to Python interpreter:\n";
+  ss << "Found unsupported syntax in graph mode, those codes would be fallen back to Python interpreter:\n";
+  ss << "-----\n";
   size_t num = 1;
   for (auto &line : line_infos) {
-    ss << "\t#" << num << ": " << line << "\n";
+    ss << "# No. " << num << ":\n" << line << "\n";
     ++num;
   }
-  ss << "\n";
+  ss << "-----\n";
   // Print the codes run in JIT Fallback.
   MS_LOG(INFO) << ss.str();
   InterpretNodeRecorder::GetInstance().Clear();

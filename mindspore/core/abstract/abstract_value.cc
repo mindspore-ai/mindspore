@@ -50,7 +50,7 @@ std::string JoinSupplementaryInfo(const AbstractBasePtr &abstract1, const Abstra
 
 inline void AbstractTypeJoinLogging(const AbstractBasePtr &abstract1, const AbstractBasePtr &abstract2) {
   std::ostringstream oss;
-  oss << "Type Join Failed: abstract type " << abstract1->type_name() << " cannot join with " << abstract2->type_name()
+  oss << "Type Join Failed: Abstract type " << abstract1->type_name() << " cannot join with " << abstract2->type_name()
       << ".";
   oss << JoinSupplementaryInfo(abstract1, abstract2);
   MS_EXCEPTION(TypeError) << oss.str();
