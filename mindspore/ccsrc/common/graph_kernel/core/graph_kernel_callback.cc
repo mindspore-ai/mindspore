@@ -18,5 +18,5 @@
 #include <memory>
 
 namespace mindspore::graphkernel {
-std::unique_ptr<Callback> Callback::instance_{nullptr};
+CallbackPtr Callback::instance_{nullptr};
 }  // namespace mindspore::graphkernel

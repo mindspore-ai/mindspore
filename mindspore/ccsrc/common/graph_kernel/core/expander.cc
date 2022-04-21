@@ -64,24 +64,23 @@ FuncGraphPtr DefaultExpander::ExpandToGraph(const CNodePtr &node) {
   }
   expanders::BaseInfoList inputs(node->size() - 1);
   expanders::BaseInfoList outputs(AnfUtils::GetOutputTensorNum(node));
-  auto cb = Callback::Instance();
-  MS_EXCEPTION_IF_NULL(cb);
+  MS_EXCEPTION_IF_NULL(cb_);
   for (size_t i = 0; i < inputs.size(); i++) {
-    inputs[i].shape = cb->GetInputShape(node, i);
-    inputs[i].type = cb->GetInputType(node, i);
-    inputs[i].format = cb->GetInputFormat(node, i);
+    inputs[i].shape = cb_->GetInputShape(node, i);
+    inputs[i].type = cb_->GetInputType(node, i);
+    inputs[i].format = cb_->GetInputFormat(node, i);
   }
   for (size_t i = 0; i < outputs.size(); i++) {
-    outputs[i].shape = cb->GetOutputShape(node, i);
-    outputs[i].type = cb->GetOutputType(node, i);
-    outputs[i].format = cb->GetOutputFormat(node, i);
+    outputs[i].shape = cb_->GetOutputShape(node, i);
+    outputs[i].type = cb_->GetOutputType(node, i);
+    outputs[i].format = cb_->GetOutputFormat(node, i);
   }
   auto &attrs = GetCNodePrimitive(node)->attrs();
-  auto litegraph = op_desc->Run(inputs, outputs, attrs, cb->GetProcessor(node));
+  auto litegraph = op_desc->Run(inputs, outputs, attrs, cb_->GetProcessor(node));
   if (litegraph == nullptr) {
     MS_LOG(INFO) << "undo expanding " << node->fullname_with_scope();
     return nullptr;
   }
-  return GkUtils::LiteGraph2AnfGraph(litegraph);
+  return GkUtils::LiteGraph2AnfGraph(litegraph, cb_);
 }
 }  // namespace mindspore::graphkernel

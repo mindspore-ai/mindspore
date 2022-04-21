@@ -27,10 +27,12 @@
 #include "include/common/visible.h"
 
 namespace mindspore::graphkernel {
+class Callback;
+using CallbackPtr = std::shared_ptr<Callback>;
 class COMMON_EXPORT Callback {
  public:
   virtual ~Callback() = default;
-  static Callback *Instance() { return instance_.get(); }
+  static CallbackPtr Instance() { return instance_; }
 
   /**
    * @brief Get the real input shape of the `node`.
@@ -155,14 +157,14 @@ class COMMON_EXPORT Callback {
 
  private:
   friend class CallbackImplRegister;
-  static void RegImpl(Callback *cb) { instance_.reset(cb); }
+  static void RegImpl(const CallbackPtr &cb) { instance_ = cb; }
 
-  static std::unique_ptr<Callback> instance_;
+  static CallbackPtr instance_;
 };
 
 class CallbackImplRegister {
  public:
-  explicit CallbackImplRegister(const std::function<Callback *()> &fn) { Callback::RegImpl(fn()); }
+  explicit CallbackImplRegister(const std::function<CallbackPtr()> &fn) { Callback::RegImpl(fn()); }
   ~CallbackImplRegister() = default;
 
  protected:
@@ -170,8 +172,7 @@ class CallbackImplRegister {
   bool rev_{false};
 };
 
-#define GRAPH_KERNEL_CALLBACK_REGISTER(cls)         \
-  const graphkernel::CallbackImplRegister callback( \
-    []() { return static_cast<graphkernel::Callback *>(new graphkernel::cls()); })
+#define GRAPH_KERNEL_CALLBACK_REGISTER(cls) \
+  const CallbackImplRegister callback([]() { return std::static_pointer_cast<Callback>(std::make_shared<cls>()); })
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_CALLBACK_H_
