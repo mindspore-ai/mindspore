@@ -27,6 +27,7 @@
 #include "runtime/pynative/op_runtime_info.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::runtime {
 namespace {
@@ -407,6 +408,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
     }
 
     if (is_dynamic_shape) {
+      kernel::UpdateNodeShape(node);
       UpdateOutputAddrSize(node, runtime_info);
     }
   }

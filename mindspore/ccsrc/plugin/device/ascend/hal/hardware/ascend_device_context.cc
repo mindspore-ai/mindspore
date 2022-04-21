@@ -865,29 +865,21 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
     MemoryCopyAsync(kernel, real_inputs, outputs);
   } else {
     MS_LOG(DEBUG) << "Launch kernel " << kernel->fullname_with_scope();
-    if (is_dynamic_shape && !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
-      ret = kernel_mod->Launch(real_inputs, workspace, outputs, GetKernelStream(kernel));
-      if (!ret) {
-        MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
-        return false;
-      }
-      kernel_mod->Wait();
-    } else {
-      auto stream = GetKernelStream(kernel);
+
+    auto stream = GetKernelStream(kernel);
 #ifndef ENABLE_SECURITY
-      auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
-      MS_EXCEPTION_IF_NULL(profiler_inst);
-      std::thread::id t_id = std::this_thread::get_id();
-      (void)profiler_inst->OpDataProducerBegin(runtime_instance_, stream, t_id, kernel->fullname_with_scope());
+    auto profiler_inst = profiler::ascend::PynativeProfiler::GetInstance();
+    MS_EXCEPTION_IF_NULL(profiler_inst);
+    std::thread::id t_id = std::this_thread::get_id();
+    (void)profiler_inst->OpDataProducerBegin(runtime_instance_, stream, t_id, kernel->fullname_with_scope());
 #endif
-      ret = kernel_mod->Launch(real_inputs, workspace, outputs, stream);
+    ret = kernel_mod->Launch(real_inputs, workspace, outputs, stream);
 #ifndef ENABLE_SECURITY
-      (void)profiler_inst->OpDataProducerEnd(t_id);
+    (void)profiler_inst->OpDataProducerEnd(t_id);
 #endif
-      if (!ret) {
-        MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
-        return false;
-      }
+    if (!ret) {
+      MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
+      return false;
     }
   }
 

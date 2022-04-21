@@ -1247,9 +1247,7 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
 
 bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto kernel_mod = GetKernelMod(cnode);
+  auto kernel_mod = GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->IsNeedWait();
 }

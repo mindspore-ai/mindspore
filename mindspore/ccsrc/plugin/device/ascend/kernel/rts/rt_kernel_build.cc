@@ -35,7 +35,7 @@ KernelModPtr RtOpBuild(const AnfNodePtr &anf_node) {
     MS_LOG(ERROR) << "Rt Op initialize failed!";
     return nullptr;
   }
-
+  ker_ptr->SetNode(anf_node);
   return ker_ptr;
 }
 }  // namespace kernel

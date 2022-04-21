@@ -40,15 +40,6 @@ void AscendKernelMod::UpdateOutputSizeList() {
   }
 }
 
-void AscendKernelMod::Wait() {
-  MS_EXCEPTION_IF_NULL(stream_);
-  // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime();
-  if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
-    MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed.";
-  }
-}
-
 bool AscendKernelMod::IsNeedWait() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);

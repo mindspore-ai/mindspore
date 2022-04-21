@@ -34,7 +34,6 @@ class HostKernelMod : public AscendKernelMod {
   bool Init(const AnfNodePtr &anf_node);
   bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
               const std::shared_ptr<ReinitArgs> &args) override;
-  void Wait() override {}
 
  protected:
   std::string op_name_;
