@@ -244,6 +244,15 @@ class BACKEND_EXPORT PSContext {
   std::string checkpoint_dir() const;
   void set_checkpoint_dir(const std::string &checkpoint_dir);
 
+  void set_instance_name(const std::string &instance_name);
+  const std::string &instance_name() const;
+
+  void set_participation_time_level(const std::string &participation_time_level);
+  const std::string &participation_time_level();
+
+  void set_continuous_failure_times(uint32_t continuous_failure_times);
+  uint32_t continuous_failure_times();
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -300,7 +309,10 @@ class BACKEND_EXPORT PSContext {
         upload_compress_type_(kNoCompressType),
         upload_sparse_rate_(0.4f),
         download_compress_type_(kNoCompressType),
-        checkpoint_dir_("") {}
+        checkpoint_dir_(""),
+        instance_name_(""),
+        participation_time_level_("5,15"),
+        continuous_failure_times_(10) {}
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -442,6 +454,15 @@ class BACKEND_EXPORT PSContext {
 
   // directory of server checkpoint
   std::string checkpoint_dir_;
+
+  // The name of instance
+  std::string instance_name_;
+
+  // The participation time level
+  std::string participation_time_level_;
+
+  // The times of iteration continuous failure
+  uint32_t continuous_failure_times_;
 };
 }  // namespace ps
 }  // namespace mindspore

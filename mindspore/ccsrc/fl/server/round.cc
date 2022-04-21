@@ -15,10 +15,13 @@
  */
 
 #include "fl/server/round.h"
+
 #include <memory>
 #include <string>
-#include "fl/server/server.h"
+
 #include "fl/server/iteration.h"
+#include "fl/server/kernel/round/update_model_kernel.h"
+#include "fl/server/server.h"
 
 namespace mindspore {
 namespace fl {
@@ -143,6 +146,8 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     MS_LOG(DEBUG) << "Launching round kernel of round " + name_ + " failed.";
   }
   (void)(Iteration::GetInstance().running_round_num_--);
+  auto time = ps::core::CommUtil::GetNowTime().time_stamp;
+  kernel_->RecordReceiveData(std::make_pair(time, message->len()));
   return;
 }
 
@@ -245,6 +250,32 @@ void Round::InitkernelClientVisitedNum() { kernel_->InitClientVisitedNum(); }
 void Round::InitkernelClientUploadLoss() { kernel_->InitClientUploadLoss(); }
 
 float Round::kernel_upload_loss() const { return kernel_->upload_loss(); }
+
+std::vector<std::pair<uint64_t, uint32_t>> Round::GetUpdateModelCompleteInfo() const {
+  if (name_ == "updateModel") {
+    auto update_model_model_ptr = std::dynamic_pointer_cast<fl::server::kernel::UpdateModelKernel>(kernel_);
+    MS_EXCEPTION_IF_NULL(update_model_model_ptr);
+    return update_model_model_ptr->GetCompletePeriodRecord();
+  } else {
+    MS_LOG(EXCEPTION) << "The kernel is not updateModel";
+    return {};
+  }
+}
+
+void Round::ResetParticipationTimeAndNum() {
+  if (name_ == "updateModel") {
+    auto update_model_kernel_ptr = std::dynamic_pointer_cast<fl::server::kernel::UpdateModelKernel>(kernel_);
+    MS_ERROR_IF_NULL_WO_RET_VAL(update_model_kernel_ptr);
+    update_model_kernel_ptr->ResetParticipationTimeAndNum();
+  }
+  return;
+}
+
+std::multimap<uint64_t, size_t> Round::GetSendData() const { return kernel_->GetSendData(); }
+
+std::multimap<uint64_t, size_t> Round::GetReceiveData() const { return kernel_->GetReceiveData(); }
+
+void Round::ClearData() { return kernel_->ClearData(); }
 }  // namespace server
 }  // namespace fl
 }  // namespace mindspore
