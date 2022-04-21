@@ -652,11 +652,11 @@ class MS_CORE_API CSRTensor : public MetaSparseTensor {
   /// \return [TensorPtr] The values.
   TensorPtr GetValues() { return values_; }
 
-  /// \brief Compare two tensor objects to see if they have same data type, shape and data address.
+  /// \brief Compare two csrtensor objects to see if they have same data address.
   ///
-  /// \param[in] tensor The Tensor object to be compared.
-  /// \return True if having same type, shape and data address, otherwise false.
-  bool operator==(const CSRTensor &csr_tensor) const;
+  /// \param[in] csr_tensor The csrtensor object to be compared.
+  /// \return True if having same data address, otherwise false.
+  bool operator==(const CSRTensor &csr_tensor) const { return &csr_tensor == this; }
 
   bool operator==(const Value &other) const override {
     if (other.isa<CSRTensor>()) {
@@ -710,11 +710,11 @@ class MS_CORE_API COOTensor : public MetaSparseTensor {
   /// \return [TensorPtr] The values.
   TensorPtr GetValues() { return values_; }
 
-  /// \brief Compare two tensor objects to see if they have same data type, shape and data address.
+  /// \brief Compare two cootensor objects to see if they have same address.
   ///
-  /// \param[in] tensor The Tensor object to be compared.
-  /// \return True if having same type, shape and data address, otherwise false.
-  bool operator==(const COOTensor &sparse_tensor) const { return &sparse_tensor == this; }
+  /// \param[in] coo_tensor The cootensor object to be compared.
+  /// \return True if having same data address, otherwise false.
+  bool operator==(const COOTensor &coo_tensor) const { return &coo_tensor == this; }
 
   bool operator==(const Value &other) const override {
     if (other.isa<COOTensor>()) {
@@ -734,6 +734,57 @@ class MS_CORE_API COOTensor : public MetaSparseTensor {
   TensorPtr values_;
 };
 using COOTensorPtr = std::shared_ptr<COOTensor>;
+
+// RowTensor entity class
+class MS_CORE_API RowTensor : public MetaSparseTensor {
+ public:
+  abstract::AbstractBasePtr ToAbstract() override;
+
+  /// \brief Create RowTensor with given data type from another tensor.
+  ///
+  /// \param[in] indices [Tensor] The indices.
+  /// \param[in] values [Tensor] The values.
+  /// \param[in] shape The shape represented by ShapeVector of the RowTensor.
+  RowTensor(const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
+      : MetaSparseTensor(values->data_type(), shape), indices_(indices), values_(values) {}
+
+  /// Destructor of RowTensor.
+  ~RowTensor() override = default;
+
+  /// \brief Gets RowTensor's indices.
+  ///
+  /// \return [TensorPtr] The indices.
+  TensorPtr GetIndices() { return indices_; }
+
+  /// \brief Gets RowTensor's values.
+  ///
+  /// \return [TensorPtr] The values.
+  TensorPtr GetValues() { return values_; }
+
+  /// \brief Compare two rowtensor objects to see if they have same address.
+  ///
+  /// \param[in] coo_tensor The rowtensor object to be compared.
+  /// \return True if having same data address, otherwise false.
+  bool operator==(const RowTensor &row_tensor) const { return &row_tensor == this; }
+
+  bool operator==(const Value &other) const override {
+    if (other.isa<RowTensor>()) {
+      auto &other_ = static_cast<const RowTensor &>(other);
+      return *this == other_;
+    }
+    return false;
+  }
+
+  /// \brief Get display information of this Tensor.
+  ///
+  /// \return The display information of this Tensor.
+  std::string ToString() const override;
+
+ private:
+  TensorPtr indices_;
+  TensorPtr values_;
+};
+using RowTensorPtr = std::shared_ptr<RowTensor>;
 }  // namespace tensor
 }  // namespace mindspore
 

@@ -110,10 +110,6 @@ MetaSparseTensor::MetaSparseTensor(TypeId data_type, const ShapeVector &shape) :
 MetaSparseTensor::MetaSparseTensor(const MetaSparseTensor &meta_sparse_tensor)
     : Value(meta_sparse_tensor), data_type_(meta_sparse_tensor.data_type()), shape_(meta_sparse_tensor.shape()) {}
 
-bool MetaSparseTensor::operator==(const MetaSparseTensor &meta_sparse_tensor) const {
-  return data_type_ == meta_sparse_tensor.data_type() && shape_ == meta_sparse_tensor.shape();
-}
-
 TypePtr MetaSparseTensor::Dtype() const { return TypeIdToType(data_type_); }
 }  // namespace tensor
 }  // namespace mindspore

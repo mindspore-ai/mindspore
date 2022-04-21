@@ -652,6 +652,7 @@ GVAR_DEF(PrimitivePtr, kPrimFakeQuantWithMinMaxVarsPerChannel,
          std::make_shared<Primitive>("FakeQuantWithMinMaxVarsPerChannel"));
 // Control ops
 GVAR_DEF(PrimitivePtr, kPrimMerge, std::make_shared<Primitive>("Merge"));
+
 // RowTensor
 GVAR_DEF(PrimitivePtr, kPrimMakeRowTensor, std::make_shared<Primitive>("MakeRowTensor"));
 GVAR_DEF(PrimitivePtr, kPrimRowTensorGetValues, std::make_shared<Primitive>("RowTensorGetValues"));
@@ -671,7 +672,6 @@ GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetValues, std::make_shared<Primitive>(kCSR
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndptr, std::make_shared<Primitive>(kCSRTensorGetIndptr));
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetIndices, std::make_shared<Primitive>(kCSRTensorGetIndices));
 GVAR_DEF(PrimitivePtr, kPrimCSRTensorGetDenseShape, std::make_shared<Primitive>(kCSRTensorGetDenseShape));
-GVAR_DEF(PrimitivePtr, kPrimIsCSRFunc, std::make_shared<Primitive>(kIsCSRFunc));
 
 // Sparse ops
 GVAR_DEF(PrimitivePtr, kPrimSparseTensorDenseMatmul, std::make_shared<Primitive>(kSparseTensorDenseMatmul));

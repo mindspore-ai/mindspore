@@ -23,6 +23,7 @@ from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
 from .._c_expression import COOTensor as COOTensor_
 from .._c_expression import CSRTensor as CSRTensor_
+from .._c_expression import RowTensor as RowTensor_
 from .._c_expression import Tensor as Tensor_
 from .._checkparam import Rel
 from .._checkparam import Validator as validator
@@ -2494,7 +2495,7 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
 
-class RowTensor:
+class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.
 
@@ -2516,10 +2517,8 @@ class RowTensor:
          [0, 0],
          [0, 0]]
 
-    RowTensor can only be used in the `Cell`'s construct method.
-
     Note:
-        RowTensor is not supported in pynative mode.
+        This is an experimental feature and is subjected to change.
 
     Args:
         indices (Tensor): A 1-D integer Tensor of shape [D0].
@@ -2534,42 +2533,54 @@ class RowTensor:
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor, RowTensor
-        >>> class Net(nn.Cell):
-        ...     def __init__(self, dense_shape):
-        ...         super(Net, self).__init__()
-        ...         self.dense_shape = dense_shape
-        ...     def construct(self, indices, values):
-        ...         x = RowTensor(indices, values, self.dense_shape)
-        ...         return x.values, x.indices, x.dense_shape
-        >>>
         >>> indices = Tensor([0])
         >>> values = Tensor([[1, 2]], dtype=ms.float32)
         >>> out = Net((3, 2))(indices, values)
-        >>> print(out[0])
+        >>> shape = (3, 2)
+        >>> x = RowTensor(indices, values, shape)
+        >>> print(x.values)
         [[1. 2.]]
-        >>> print(out[1])
+        >>> print(x.indices)
         [0]
-        >>> print(out[2])
+        >>> print(x.shape)
         (3, 2)
     """
 
-    def __init__(self, indices, values, dense_shape):
-        "Init RowTensor"
-        self.__indices = indices
-        self.__values = values
-        self.__dense_shape = dense_shape
+    def __init__(self, indices=None, values=None, shape=None, row_tensor=None):
+        """Init RowTensor"""
+        self.init_finished = False
+        # Directly init a RowTensor from another RowTensor
+        if row_tensor is not None:
+            if not isinstance(row_tensor, (RowTensor, RowTensor)):
+                raise TypeError(f"Expect input `row_tensor` to be a RowTensor, but got {type(row_tensor)}")
+            if not (indices is None and values is None and shape is None):
+                raise TypeError("If input `row_tensor` is provided, `indices`, `values`, `shapes` should all be `None`")
+            RowTensor_.__init__(self, row_tensor)
+        # Init a RowTensor from indices, values and shape
+        else:
+            RowTensor_.__init__(self, indices, values, shape)
+        self.init_finished = True
+
+    def __repr__(self):
+        """Avoid PyTest Segfault when RowTensor is not initialized."""
+        if self.init_finished:
+            return RowTensor_.__repr__(self)
+        return ''
 
     @property
     def indices(self):
-        return self.__indices
+        """Return RowTensor's indices."""
+        return Tensor(self._indices)
 
     @property
     def values(self):
-        return self.__values
+        """Return RowTensor's non-zero values."""
+        return Tensor(self._values)
 
     @property
     def dense_shape(self):
-        return self.__dense_shape
+        """Return RowTensor's shape."""
+        return self._shape
 
 
 class SparseTensor(COOTensor_):
