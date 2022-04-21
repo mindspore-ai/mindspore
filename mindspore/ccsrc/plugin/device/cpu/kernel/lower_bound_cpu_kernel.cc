@@ -85,11 +85,11 @@ bool LowerBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
     const size_t kTwo = 2;
     for (size_t i = 0; i < this->values_num_; i++) {
       size_t seq_row = i / values_data_column;
-      size_t low = seq_row * sorted_x_data_column;
-      size_t up = (seq_row + 1) * sorted_x_data_column - 1;
+      int64_t low = seq_row * sorted_x_data_column;
+      int64_t up = (seq_row + 1) * sorted_x_data_column - 1;
       while (low <= up) {
-        size_t mid = (low + up) / kTwo;
-        if (values_data_addr[i] <= sorted_x_data_addr[mid]) {
+        int64_t mid = (low + up) / kTwo;
+        if (values_data_addr[i] <= sorted_x_data_addr[static_cast<size_t>(mid)]) {
           up = mid - 1;
         } else {
           low = mid + 1;
