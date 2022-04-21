@@ -104,15 +104,10 @@ function Run_cropping() {
     echo "calib_size size:${calib_size}." >> "${run_cropper_result}";
 
     if [[ ${so_size} -gt ${calib_size} ]];then
-      echo ${so_size}
-      add_size=$(((so_size-calib_size)/2))
-      add_per=`awk 'BEGIN{printf "%.3f\n",'${add_size}'/'${calib_size}'}'`
-      if [[ `echo ${add_per}|awk '{if($1 > 0.05) {printf "1"} else {printf "0"}}'` -eq 1 ]];then
-        echo "calib_size failed." >> "${run_cropper_result}";
-        run_result="Error: The increased basic framework code size has exceeded the threshold since the last review. Please check the code or review again.";
-        echo ${run_result} >> "${run_cropper_result}";
-        return 1
-      fi
+      echo "calib_size failed." >> "${run_cropper_result}";
+      run_result="Error: The increased basic framework code size has exceeded the threshold since the last review. Please check the code or review again.";
+      echo ${run_result} >> "${run_cropper_result}";
+      return 1
     fi
     echo "calib_size success." >> "${run_cropper_result}";
     return 0

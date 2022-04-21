@@ -15,6 +15,7 @@
  */
 
 #include "wrapper/fp32/matmul_fp32_wrapper.h"
+#include "nnacl/fp32/pack_fp32.h"
 void InitMatrixA(const float *src_ptr, float *dst_ptr, const MatMulParameter *params_, bool is_vector_a) {
   if (is_vector_a) {
     memcpy(dst_ptr, src_ptr, (size_t)(params_->batch * params_->deep_) * sizeof(float));

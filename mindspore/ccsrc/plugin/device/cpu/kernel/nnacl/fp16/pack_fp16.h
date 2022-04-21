@@ -17,23 +17,14 @@
 #ifndef MINDSPORE_NNACL_FP16_PACK_FP16_H_
 #define MINDSPORE_NNACL_FP16_PACK_FP16_H_
 
-#include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Im2ColPackUnitFp16(const float16_t *input_data, const ConvParameter *conv_param, float16_t *packed_input,
-                        int real_cal_num, int block_index);
-
-void PackWeightToC8Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data,
-                        const ConvParameter *conv_param);
 
 void PackHWCToWHCFp16(const float16_t *src, float16_t *dst, int height, int width, int channel);
-
-void PackWeightToC4Fp16(const float16_t *origin_weight_data, float16_t *packed_weight_data,
-                        const ConvParameter *conv_param);
 
 void PackNHWCToNC4HW4Fp16(const void *src, void *dst, int batch, int plane, int channel);
 

@@ -105,8 +105,12 @@ file(GLOB CXX_API_SRCS
         ${SRC_DIR}/cxx_api/graph/*.cc
         ${SRC_DIR}/cxx_api/tensor/*.cc)
 
+file(GLOB RUNTIME_PASS_SRCS
+        ${SRC_DIR}/runtime/pass/*.cc)
+
 set(LITE_SRC ${API_SRC}
         ${CXX_API_SRCS}
+        ${RUNTIME_PASS_SRCS}
         ${SRC_DIR}/ops/ops_def.cc
         ${SRC_DIR}/ops/ops_utils.cc
         ${SRC_DIR}/common/utils.cc

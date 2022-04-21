@@ -28,6 +28,8 @@ typedef float16_t *MatricesFp16;
 #ifdef __cplusplus
 extern "C" {
 #endif
+void Im2ColPackUnitFp16(const float16_t *input_data, const ConvParameter *conv_param, float16_t *packed_input,
+                        int real_cal_num, int block_index);
 
 // fp16 convolution common (im2col+gemm)
 void ConvFp16(const float16_t *input_data, float16_t *packed_input, const float16_t *packed_weight,

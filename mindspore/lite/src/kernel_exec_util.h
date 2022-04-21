@@ -47,6 +47,9 @@ class KernelExecUtil {
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
   static void FindAllInoutKernels(const std::vector<KernelExec *> &kernels);
   static void FindAllInoutKernelsInSubgraphKernel(const std::vector<KernelExec *> &kernels);
+  static KernelExec *FindInKernelForInTensor(KernelExec *kernel, lite::Tensor *tensor);
+  static std::vector<KernelExec *> FindOutKernelsForOutTensor(KernelExec *kernel, lite::Tensor *tensor);
+  static int SetKernelTensorDataType(kernel::KernelExec *kernel);
   static SubGraphKernel *CreateSubGraphKernel(const std::vector<KernelExec *> &kernels,
                                               const std::vector<lite::Tensor *> *in_tensors,
                                               const std::vector<lite::Tensor *> *out_tensors, SubGraphType type,

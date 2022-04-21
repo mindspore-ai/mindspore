@@ -16,6 +16,7 @@
 
 #include "src/sub_graph_kernel.h"
 #include <algorithm>
+#include <queue>
 #include "src/tensor.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
@@ -28,6 +29,7 @@
 #include "src/common/tensor_util.h"
 #include "src/common/utils.h"
 #include "src/common/prim_inner.h"
+#include "src/kernel_exec_util.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -155,6 +157,187 @@ void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<KernelExec *> *
   for (auto *node : nodes_) {
     node->InitOutTensorInitRefCount(mask_kernels);
   }
+}
+
+int SubGraphKernel::TopologicalSortNodes() {
+  in_nodes_ = kernel::KernelExecUtil::SubgraphInputNodes(nodes_);
+  auto old_nodes = nodes_;
+  nodes_.clear();
+  std::queue<KernelExec *> kernel_queue;
+  for (auto kernel : in_nodes_) {
+    if (std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(),
+                    [&](KernelExec *in_kernel) { return (!lite::IsContain(old_nodes, in_kernel)); })) {
+      kernel_queue.push(kernel);
+    }
+  }
+
+  while (!kernel_queue.empty()) {
+    auto cur_kernel = kernel_queue.front();
+    nodes_.emplace_back(cur_kernel);
+    kernel_queue.pop();
+    CHECK_NULL_RETURN(cur_kernel);
+    auto next_kernels = cur_kernel->out_kernels();
+    for (auto next_kernel : next_kernels) {
+      if (!lite::IsContain(old_nodes, next_kernel)) {
+        continue;
+      }
+      if (lite::IsContain(nodes_, const_cast<KernelExec *>(next_kernel))) {
+        MS_LOG(ERROR) << "TopologicalSortKernels failed, loop exist";
+        return RET_ERROR;
+      }
+      auto in_kernels = next_kernel->in_kernels();
+      if (std::all_of(in_kernels.begin(), in_kernels.end(), [&](KernelExec *in_kernel) {
+            return lite::IsContain(nodes_, in_kernel) || (!lite::IsContain(old_nodes, in_kernel));
+          })) {
+        kernel_queue.push(next_kernel);
+      }
+    }
+  }
+  if (nodes_.size() != old_nodes.size()) {
+    MS_LOG(ERROR) << "TopologicalSortKernels failed, kernels size before sort: " << old_nodes.size()
+                  << ", kernels size after sort: " << nodes_.size();
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+void SubGraphKernel::InsertInEdge(KernelExec *kernel, KernelExec *replace_kernel, const int &tensor_index) {
+  // replace_kernel is a kernel with ont input tensor and output tensor
+  auto in_kernel = KernelExecUtil::FindInKernelForInTensor(kernel, kernel->in_tensors().at(tensor_index));
+  if (in_kernel != nullptr) {
+    in_kernel->RemoveOutKernel(kernel);  // Assume there is only one tensor between in_kernel and kernel.
+    in_kernel->AddOutKernel(replace_kernel);
+    kernel->RemoveInKernel(in_kernel);
+    replace_kernel->AddInKernel(in_kernel);
+  }
+  replace_kernel->AddOutKernel(kernel);
+  kernel->AddInKernel(replace_kernel);
+  kernel->set_in_tensor(replace_kernel->out_tensors().at(0), tensor_index);
+
+  nodes_.push_back(replace_kernel);
+}
+
+void SubGraphKernel::InsertOutEdge(KernelExec *kernel, KernelExec *replace_kernel, const int &tensor_index) {
+  // replace_kernel is a kernel with ont input tensor and output tensor
+  auto out_kernels = KernelExecUtil::FindOutKernelsForOutTensor(kernel, kernel->out_tensors().at(tensor_index));
+  for (const auto &post_kernel : out_kernels) {
+    post_kernel->RemoveInKernel(kernel);  // Assume there is only one tensor between kernel and post_kernel.
+    post_kernel->AddInKernel(replace_kernel);
+    kernel->RemoveOutKernel(post_kernel);
+    replace_kernel->AddOutKernel(post_kernel);
+  }
+  replace_kernel->AddInKernel(kernel);
+  kernel->AddOutKernel(replace_kernel);
+  kernel->set_out_tensor(replace_kernel->in_tensors().at(0), tensor_index);
+
+  nodes_.push_back(replace_kernel);
+}
+
+// in_kernel -> in_post_kernel -> out_pre_kernel -> out_kernels.
+// remove in_post_kernel and out_pre_kernel, link in_kernel and out_kernels.
+// in_post_kernel and out_pre_kernel can be the same kernel sometimes.
+int SubGraphKernel::UpdateInOutKernels(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels,
+                                       KernelExec *in_post_kernel, KernelExec *out_pre_kernel) {
+  for (const auto &out_kernel : out_kernels) {
+    out_kernel->RemoveInKernel(out_pre_kernel);
+    out_pre_kernel->RemoveOutKernel(out_kernel);
+    if (in_kernel != nullptr) {
+      out_kernel->AddInKernel(in_kernel);
+      in_kernel->AddOutKernel(out_kernel);
+    }
+  }
+
+  if (in_post_kernel != out_pre_kernel) {
+    in_post_kernel->RemoveOutKernel(out_pre_kernel);
+    out_pre_kernel->RemoveInKernel(in_post_kernel);
+  }
+
+  if (in_post_kernel->out_kernels().empty() && in_kernel != nullptr && !lite::IsContain(out_nodes_, in_post_kernel)) {
+    in_kernel->RemoveOutKernel(in_post_kernel);
+    in_post_kernel->RemoveInKernel(in_kernel);
+  }
+
+  // update subgraph input node
+  if (lite::IsContain(in_nodes_, in_post_kernel)) {
+    for (const auto &out_kernel : out_kernels) {
+      in_nodes_.push_back(out_kernel);
+    }
+    if (in_post_kernel->out_kernels().empty() && !lite::IsContain(out_nodes_, in_post_kernel)) {
+      lite::VectorErase(&in_nodes_, in_post_kernel);
+    }
+  }
+
+  // update subgraph output node
+  if (lite::IsContain(out_nodes_, out_pre_kernel) && in_kernel != nullptr) {
+    out_nodes_.push_back(in_kernel);
+    if (out_pre_kernel->in_kernels().empty() && !lite::IsContain(in_nodes_, out_pre_kernel)) {
+      lite::VectorErase(&out_nodes_, out_pre_kernel);
+    }
+  }
+  return RET_OK;
+}
+
+// Update tensor according to the subgraph.
+// Because the model input must be subgraph input, and the model output must be subgraph output.
+int SubGraphKernel::UpdateInOutTensors(KernelExec *in_kernel, std::vector<KernelExec *> out_kernels,
+                                       lite::Tensor *in_tensor, lite::Tensor *out_tensor, bool keep_input) {
+  auto reserve_input = (keep_input && !lite::IsContain(out_tensors(), out_tensor)) ||
+                       (!keep_input && lite::IsContain(in_tensors(), in_tensor));
+  if (reserve_input) {
+    for (const auto &post_kernel : out_kernels) {
+      CHECK_NULL_RETURN(post_kernel);
+      auto index = post_kernel->FindInTensorIndex(out_tensor);
+      post_kernel->set_in_tensor(in_tensor, index);
+    }
+  } else {
+    CHECK_NULL_RETURN(in_kernel);
+    auto index = in_kernel->FindOutTensorIndex(in_tensor);
+    in_kernel->set_out_tensor(out_tensor, index);
+
+    for (const auto &out_kernel : in_kernel->out_kernels()) {
+      if (lite::IsContain(out_kernel->in_tensors(), in_tensor)) {
+        auto input_index = out_kernel->FindInTensorIndex(in_tensor);
+        out_kernel->set_in_tensor(out_tensor, input_index);
+      }
+    }
+  }
+  return RET_OK;
+}
+
+// Remove a single way kernel.
+// Before removing, pre_kernel -> in_tensor -> kernel -> out_tensor -> post_kernel.
+// Keep_input is true, reserve the input tensor: pre_kernel -> in_tensor -> post_kernel.
+// Keep_input is false, reserve the output tensor: pre_kernel -> out_tensor -> post_kernel.
+int SubGraphKernel::DeleteSingleWayNode(KernelExec *kernel, bool keep_input) {
+  if (lite::IsContain(in_nodes_, kernel) && lite::IsContain(out_nodes_, kernel)) {
+    MS_LOG(DEBUG) << "A single kernel subgraph can't delete this kernel.";
+    return RET_OK;
+  }
+  auto in_tensor = kernel->in_tensors().at(0);
+  auto out_tensor = kernel->out_tensors().at(0);
+  auto in_kernel = KernelExecUtil::FindInKernelForInTensor(kernel, in_tensor);
+  auto out_kernels = KernelExecUtil::FindOutKernelsForOutTensor(kernel, out_tensor);
+  if (in_kernel == nullptr && out_kernels.empty()) {
+    MS_LOG(DEBUG) << "A single kernel model can't delete this kernel.";
+    return RET_OK;
+  }
+
+  // update kernel link
+  auto ret = UpdateInOutKernels(in_kernel, out_kernels, kernel, kernel);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "Update kernel link failed when removing kernel " << kernel->name();
+    return RET_ERROR;
+  }
+
+  // update tensor link
+  ret = UpdateInOutTensors(in_kernel, out_kernels, in_tensor, out_tensor, keep_input);
+  if (ret != RET_OK) {
+    MS_LOG(DEBUG) << "Update tensor failed when removing kernel " << kernel->name();
+    return RET_ERROR;
+  }
+  DropNode(kernel);
+  delete kernel;
+  return RET_OK;
 }
 
 void SubGraphKernel::DropNode(KernelExec *node) {

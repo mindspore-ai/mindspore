@@ -226,6 +226,7 @@ union PrimitiveType {
     RandomNormal,
     NLLLoss,
     NLLLossGrad,
+    FormatTranspose,
 }
 
 table Abs {
@@ -1265,4 +1266,9 @@ table NLLLoss {
 
 table NLLLossGrad {
     reduction: Reduction;
+}
+
+table FormatTranspose {
+    src_format: Format = 1;
+    dst_format: Format = 1;
 }
