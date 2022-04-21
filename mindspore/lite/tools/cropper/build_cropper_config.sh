@@ -20,7 +20,7 @@ CPU_TRAIN_MAPPING_OUTPUT_FILE=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_train.cf
 [ -n "${CPU_TRAIN_MAPPING_OUTPUT_FILE}" ] && rm -f ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
 
 ops_list=()
-DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DMSLITE_ENABLE_EXPERIMENTAL_KERNEL"
+DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID -DENABLE_FP16 -DMSLITE_ENABLE_EXPERIMENTAL_KERNEL -DENABLE_MINDRT"
 # get the flatbuffers path
 if [ ${MSLIBS_CACHE_PATH} ]; then
   FLATBUFFERS_LIST=()
@@ -192,6 +192,7 @@ getCommonFile() {
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/*.cc)
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/async/*.cc)
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/actor/*.cc)
+  while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/thread/*.cc)
   src_files=()
   while IFS='' read -r line; do src_files+=("$line"); done < <(ls mindspore/lite/src/*.cc)
   regist_files=()
