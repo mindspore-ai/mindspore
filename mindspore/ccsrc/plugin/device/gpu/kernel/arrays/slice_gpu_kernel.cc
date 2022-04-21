@@ -15,37 +15,255 @@
  */
 
 #include "plugin/device/gpu/kernel/arrays/slice_gpu_kernel.h"
-
 namespace mindspore {
 namespace kernel {
-#define REG_SLICE_GPU(MS_DTYPE, DTYPE) \
-  MS_REG_GPU_KERNEL_ONE(Slice, KernelAttr().AddInputAttr(MS_DTYPE).AddOutputAttr(MS_DTYPE), SliceFwdGpuKernelMod, DTYPE)
+namespace {
+template <typename T, typename S = int64_t>
+std::unique_ptr<cukernel::GpuKernelHelperBase> CreateSliceKernelPtr(const std::string &kernel_name,
+                                                                    const uint32_t &device_id) {
+  return std::make_unique<cukernel::SliceHelperGpuKernel<T, S>>(kernel_name, device_id);
+}
+using SlicePtrCreatorFunc =
+  std::function<std::unique_ptr<cukernel::GpuKernelHelperBase>(const std::string &, const uint32_t &)>;
 
-#define REG_SLICE_GPU_DTYPES(F) \
-  F(kNumberTypeFloat64, double) \
-  F(kNumberTypeFloat32, float)  \
-  F(kNumberTypeFloat16, half)   \
-  F(kNumberTypeInt64, int64_t)  \
-  F(kNumberTypeInt32, int32_t)  \
-  F(kNumberTypeInt16, int16_t)  \
-  F(kNumberTypeUInt8, uchar)    \
-  F(kNumberTypeBool, bool)
+const std::vector<std::pair<KernelAttr, SlicePtrCreatorFunc>> kernel_attr = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateSliceKernelPtr<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateSliceKernelPtr<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateSliceKernelPtr<half>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateSliceKernelPtr<int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), CreateSliceKernelPtr<int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), CreateSliceKernelPtr<int16_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), CreateSliceKernelPtr<uchar>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateSliceKernelPtr<bool>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateSliceKernelPtr<double, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateSliceKernelPtr<int64_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int32_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool, int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateSliceKernelPtr<double, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat32),
+   CreateSliceKernelPtr<float, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeFloat16),
+   CreateSliceKernelPtr<half, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt64),
+   CreateSliceKernelPtr<int64_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt32),
+   CreateSliceKernelPtr<int32_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeInt16),
+   CreateSliceKernelPtr<int16_t, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeUInt8),
+   CreateSliceKernelPtr<uchar, int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddInputAttr(kNumberTypeInt32)
+     .AddOutputAttr(kNumberTypeBool),
+   CreateSliceKernelPtr<bool, int32_t>}};
+}  // namespace
 
-REG_SLICE_GPU_DTYPES(REG_SLICE_GPU)
+bool SliceGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                               const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  std::vector<void *> input_ptrs = ConvertPtrs(inputs);
+  std::vector<void *> work_ptrs = ConvertPtrs(workspace);
+  std::vector<void *> output_ptrs = ConvertPtrs(outputs);
+  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the dynamic attr!";
+  }
+  if (helper_ptr_->Process(input_ptrs, output_ptrs, work_ptrs, stream_ptr) != 0) {
+    return false;
+  }
+  return true;
+}
 
-#define REG_DYNAMIC_SLICE_GPU_ATTR(T0_MS_DTYPE, T0_DTYPE, T1_MS_DTYPE, T1_DTYPE) \
-  MS_REG_GPU_KERNEL_TWO(Slice,                                                   \
-                        KernelAttr()                                             \
-                          .AddInputAttr(T0_MS_DTYPE)                             \
-                          .AddInputAttr(T1_MS_DTYPE)                             \
-                          .AddInputAttr(T1_MS_DTYPE)                             \
-                          .AddOutputAttr(T0_MS_DTYPE),                           \
-                        SliceFwdGpuKernelMod, T0_DTYPE, T1_DTYPE)
+bool SliceGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Slice>(base_operator);
+  kernel_name_ = kernel_ptr->name();
+  auto tensor_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(tensor_attr, GetOpSupport());
+  if (!is_match) {
+    return false;
+  }
+  helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
+  (void)CheckParam(inputs, outputs);
+  if (!is_dynamic_attr_) {
+    size_ = kernel_ptr->get_size();
+    begin_ = kernel_ptr->get_begin();
+    ProccessAttr(inputs);
+  }
+  return true;
+}
 
-#define REG_DYNAMIC_SLICE_GPU(MS_DTYPE, DTYPE)                           \
-  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt32, int32_t) \
-  REG_DYNAMIC_SLICE_GPU_ATTR(MS_DTYPE, DTYPE, kNumberTypeInt64, int64_t)
+bool SliceGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
+                               const std::shared_ptr<ReinitArgs> &args) {
+  if (is_dynamic_attr_) {
+    if (GetDynamicAttrIntValue(inputs, kBeginIndex_, args, kernel_name_, &begin_) &&
+        GetDynamicAttrIntValue(inputs, kSizeIndex_, args, kernel_name_, &size_)) {
+      get_dynamic_attr_value_ = true;
+      ProccessAttr(inputs);
+    }
+  }
+  helper_ptr_->SetKernelParam(attr_ptr_);
+  std::vector<std::vector<int64_t>> input_shapes;
+  std::vector<std::vector<int64_t>> output_shapes;
+  std::transform(inputs.begin(), inputs.end(), std::back_inserter(input_shapes),
+                 [](const KernelTensorPtr &input) { return input->GetDeviceShapeAdaptively(); });
+  std::vector<int64_t> out_shape = outputs[0]->GetDeviceShapeAdaptively();
+  output_shapes.emplace_back(out_shape);
+  if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
+    return false;
+  }
+  input_size_list_ = helper_ptr_->GetInputSizeList();
+  output_size_list_ = helper_ptr_->GetOutputSizeList();
+  workspace_size_list_ = helper_ptr_->GetWorkSizeList();
+  return true;
+}
 
-REG_SLICE_GPU_DTYPES(REG_DYNAMIC_SLICE_GPU)
+std::vector<KernelAttr> SliceGpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(kernel_attr.begin(), kernel_attr.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, SlicePtrCreatorFunc> &item) { return item.first; });
+  return support_list;
+}
+
+void SliceGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  size_t input_num = inputs.size();
+  constexpr size_t kDynamicSliceInputNum = 3;
+  if (input_num != 1 && input_num != kDynamicSliceInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1 or " << kDynamicSliceInputNum
+                      << ", but got " << input_num;
+  }
+  if (input_num == kDynamicSliceInputNum) {
+    is_dynamic_attr_ = true;
+  }
+  size_t output_num = outputs.size();
+  if (output_num != 1) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+  }
+  auto input_shape = inputs[0]->GetShapeVector();
+  const size_t kInputNumUpperLimit = 7;
+  if (input_shape.size() > kInputNumUpperLimit) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "
+                      << input_shape.size();
+  }
+  if (input_shape.size() == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to 0, but got "
+                      << input_shape.size();
+  }
+}
+
+void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs) {
+  auto input_shape = inputs[0]->GetShapeVector();
+  if (size_.size() != input_shape.size() || begin_.size() != input_shape.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of size, begin and input_x should be the same, but got the dimension "
+                      << "of size: " << size_.size() << ", the dimension of begin: " << begin_.size()
+                      << ", the dimension of input_x: " << input_shape.size();
+  }
+  for (size_t i = 0; i < input_shape.size(); i++) {
+    if (size_[i] == -1) {
+      size_[i] = input_shape[i] - begin_[i];
+    }
+    if (input_shape[i] > 0 && size_[i] <= 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element of 'size' should be greater than 0, but got "
+                        << "size[" << i << "]: " << size_[i];
+    }
+  }
+  // transpose begin and size for NHWC data
+  constexpr auto kIdx2 = 2;
+  constexpr auto kIdx3 = 3;
+  constexpr auto kIdx4 = 4;
+  auto data_format = inputs[0]->GetFormat();
+  if (data_format == mindspore::Format::NHWC) {
+    std::swap(begin_[1], begin_[kIdx3]);
+    std::swap(begin_[1], begin_[kIdx2]);
+    std::swap(size_[1], size_[kIdx3]);
+    std::swap(size_[1], size_[kIdx2]);
+  } else if (data_format == mindspore::Format::NDHWC) {
+    std::swap(begin_[1], begin_[kIdx4]);
+    std::swap(begin_[1], begin_[kIdx3]);
+    std::swap(begin_[1], begin_[kIdx2]);
+    std::swap(size_[1], size_[kIdx4]);
+    std::swap(size_[1], size_[kIdx3]);
+    std::swap(size_[1], size_[kIdx2]);
+  }
+  attr_ptr_->size = size_;
+  attr_ptr_->begin = begin_;
+}
+
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Slice, SliceGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

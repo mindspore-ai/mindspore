@@ -260,6 +260,7 @@ constexpr auto kSymmetric = "symmetric";
 constexpr auto kDstType = "dst_type";
 constexpr auto kMean = "mean";
 constexpr auto kIndices = "indices";
+constexpr auto kBegin = "begin";
 
 enum Index : size_t {
   kInputIndex0 = 0,
