@@ -47,5 +47,5 @@ def test_allreduce_small_scale_data():
     """
     if sys.platform != 'linux':
         return
-    return_code = os.system("bash build_allreduce_net_cluster.sh run_allreduce_small_scale_data.py 8118")
+    return_code = os.system("bash build_allreduce_net_cluster.sh run_allreduce_small_scale_data.py 8081")
     assert return_code == 0

@@ -37,17 +37,21 @@
 #include "ps/core/ps_server_node.h"
 #include "ps/core/ps_scheduler_node.h"
 #include "distributed/cluster/actor_route_table_proxy.h"
+#include "distributed/cluster/topology/node_base.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
 namespace distributed {
 namespace cluster {
+// The environment variable name represents the node id of a certain process(compute graph node).
+constexpr char kNodeId[] = "MS_NODE_ID";
+
 // The detailed reason of failing to run 'mindspore.communication.init()' with ClusterContext.
 constexpr char kDetailedFailureReason[] =
   "Maybe you are trying to call 'mindspore.communication.init()' without using 'mpirun', which will make MindSpore "
   "load several environment variables and check their validation. Please use 'mpirun' to launch this process to fix "
   "this issue, or refer to this link if you want to run distributed training without using 'mpirun': "
-  "https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#openmpi.";
+  "https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/distributed_training_gpu.html#openmpi.";
 
 // Node role based cluster built by MindSpore communication framework.
 class BACKEND_EXPORT ClusterContext {
@@ -127,6 +131,9 @@ class BACKEND_EXPORT ClusterContext {
 
   // abstract_node_ is nullptr only when this is node is scheduler.
   ps::core::AbstractNodePtr abstract_node_;
+
+  // The compute graph node or meta server node according to the configuration of this process.
+  std::shared_ptr<topology::NodeBase> node_base_;
 
   // The role of this process in the cluster.
   std::string node_role_;
