@@ -227,6 +227,7 @@ union PrimitiveType {
     NLLLoss,
     NLLLossGrad,
     FormatTranspose,
+    GatherD,
 }
 
 table Abs {
@@ -1271,4 +1272,7 @@ table NLLLossGrad {
 table FormatTranspose {
     src_format: Format = 1;
     dst_format: Format = 1;
+}
+
+table GatherD {
 }

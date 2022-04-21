@@ -15,7 +15,21 @@
  */
 
 #include "nnacl/infer/where_infer.h"
+#include <stdio.h>
 #include "nnacl/infer/infer_register.h"
+
+static size_t GetAxisout(const TensorC *input0, const TensorC *input1, const TensorC *input2, size_t index) {
+  if (input0->shape_[index] == input1->shape_[index] && input0->shape_[index] != input2->shape_[index]) {
+    return index;
+  }
+  if (input0->shape_[index] == input2->shape_[index] && input0->shape_[index] != input1->shape_[index]) {
+    return index;
+  }
+  if (input1->shape_[index] == input2->shape_[index] && input0->shape_[index] != input1->shape_[index]) {
+    return index;
+  }
+  return MAX_SHAPE_SIZE + 1;
+}
 
 int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                     OpParameter *parameter) {
@@ -50,23 +64,18 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
   int num1 = GetElementNum(input1);
   int num2 = GetElementNum(input2);
   int nummax = num > num1 ? num : (num1 > num2 ? num1 : num2);
-  size_t axisout = 0;
+  size_t min_input_shape_size = input1->shape_size_ < input2->shape_size_ ? input1->shape_size_ : input2->shape_size_;
+  size_t axisout = MAX_SHAPE_SIZE + 1;
   size_t temp = 0;
   for (size_t j = 0; j < input0->shape_size_; j++) {
     if (j >= MAX_SHAPE_SIZE) {
       return NNACL_ERR;
     }
-    if (input0->shape_[j] == input1->shape_[j] && input0->shape_[j] != input2->shape_[j]) {
-      axisout = j;
-      break;
-    }
-    if (input0->shape_[j] == input2->shape_[j] && input0->shape_[j] != input1->shape_[j]) {
-      axisout = j;
-      break;
-    }
-    if (input1->shape_[j] == input2->shape_[j] && input0->shape_[j] != input1->shape_[j]) {
-      axisout = j;
-      break;
+    if (j < min_input_shape_size) {
+      axisout = GetAxisout(input0, input1, input2, j);
+      if (axisout != MAX_SHAPE_SIZE + 1) {
+        break;
+      }
     }
     temp += 1;
     if (temp == input0->shape_size_) {
@@ -74,8 +83,11 @@ int WhereInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
       return NNACL_OK;
     }
   }
+
   ShapeSet(output->shape_, &output->shape_size_, input0->shape_, input0->shape_size_);
-  output->shape_[axisout] = nummax;
+  if (axisout != MAX_SHAPE_SIZE + 1) {
+    output->shape_[axisout] = nummax;
+  }
   return NNACL_OK;
 }
 

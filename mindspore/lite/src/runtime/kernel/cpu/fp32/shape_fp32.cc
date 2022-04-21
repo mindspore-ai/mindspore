@@ -54,6 +54,7 @@ int ShapeCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Shape, LiteKernelCreator<ShapeCPUKernel>)

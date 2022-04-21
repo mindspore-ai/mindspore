@@ -268,6 +268,7 @@ REG_MINDSPORE_OPERATOR(RandomNormal)
 REG_MINDSPORE_OPERATOR(NLLLoss)
 REG_MINDSPORE_OPERATOR(NLLLossGrad)
 REG_MINDSPORE_OPERATOR(FormatTranspose)
+REG_MINDSPORE_OPERATOR(GatherD)
 }  // namespace lite
 }  // namespace mindspore
 

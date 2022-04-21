@@ -25,7 +25,16 @@ bool OnnxNonZeroAdjust::Adjust(const FuncGraphPtr &func_graph) {
     if (!opt::CheckPrimitiveType(cnode, prim::kPrimWhere)) {
       continue;
     }
-    auto transpose = opt::GenTransposeNode(func_graph, cnode, {1, 0}, cnode->fullname_with_scope());
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_CHECK_TRUE_RET(prim != nullptr, false);
+    if (prim->GetAttr("is_nonzero") == nullptr) {  // where operator does not have this attribute
+      continue;
+    }
+    bool is_nonzero = GetValue<bool>(prim->GetAttr("is_nonzero"));
+    if (!is_nonzero) {
+      continue;
+    }
+    auto transpose = opt::GenTransposeNode(func_graph, cnode, {1, 0}, cnode->fullname_with_scope() + "_post");
     if (transpose == nullptr) {
       MS_LOG(ERROR) << "create transpose failed.";
       return false;
