@@ -49,6 +49,7 @@ constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kInv = "Inv";
 constexpr auto kInvert = "Invert";
 constexpr auto kGeLU = "GeLU";
+constexpr auto kFastGeLU = "FastGeLU";
 constexpr auto kLogicalNot = "LogicalNot";
 constexpr auto kAsin = "Asin";
 constexpr auto kACos = "ACos";
@@ -80,6 +81,9 @@ class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   void LaunchLogicalNot(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
+  template <typename T>
+  void LaunchFastGeLU(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   template <typename T>
   void LaunchKernelComplex(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
@@ -205,6 +209,25 @@ void Gelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
       auto double_x = static_cast<T>(x);
       T tanh_res = static_cast<T>(std::tanh(factor_a * (double_x + factor_b * double_x * double_x * double_x)));
       out[i] = x * (static_cast<T>(1.0) + tanh_res) / static_cast<T>(2.0);
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void FastGelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  if constexpr (!std::is_same_v<T, float16> && !std::is_same_v<T, float>) {
+    MS_LOG(EXCEPTION) << "For 'FastGelu', the dtype of 'input_x' should be float16, float, but got "
+                      << typeid(T).name();
+    return;
+  }
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      T x = in[i];
+      double double_x = static_cast<double>(x);
+      T res_one = static_cast<T>(1.0) + static_cast<T>(std::exp(-1.702 * std::abs(double_x)));
+      T res_two = static_cast<T>(std::exp(0.851 * (double_x - std::abs(double_x))));
+      out[i] = x * res_two / res_one;
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
@@ -480,7 +503,7 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
                                           const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16) {
+  if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat64) {
     LaunchKernel<double>(inputs, outputs);
@@ -502,6 +525,8 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
     LaunchKernel<uint64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeBool) {
     LaunchLogicalNot(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat16 && kernel_name_ == kFastGeLU) {
+    LaunchFastGeLU<float16>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the type of 'x' should be float16, float32, float64, complex64, complex128, int8, int16, "
@@ -520,6 +545,15 @@ void ArithmeticSelfCpuKernelFunc::LaunchLogicalNot(const std::vector<AddressPtr>
 }
 
 template <typename T>
+void ArithmeticSelfCpuKernelFunc::LaunchFastGeLU(const std::vector<AddressPtr> &inputs,
+                                                 const std::vector<AddressPtr> &outputs) {
+  const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  const size_t lens = outputs[0]->size / sizeof(T);
+  FastGelu<T>(this, input, output, lens);
+}
+
+template <typename T>
 void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                                const std::vector<AddressPtr> &outputs) {
   const auto *input = reinterpret_cast<T *>(inputs[0]->addr);
@@ -527,29 +561,18 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
   const size_t lens = outputs[0]->size / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
-                          {prim::kPrimSign->name(), Sign<T>},
-                          {prim::kPrimNeg->name(), Neg<T>},
-                          {prim::kPrimAtanh->name(), Atanh<T>},
-                          {prim::kPrimAcosh->name(), Acosh<T>},
-                          {prim::kPrimFloor->name(), Floor<T>},
-                          {prim::kPrimSin->name(), Sin<T>},
-                          {prim::kPrimGeLU->name(), Gelu<T>},
-                          {prim::kPrimCos->name(), Cos<T>},
-                          {prim::kPrimTan->name(), Tan<T>},
-                          {prim::kPrimAsin->name(), Asin<T>},
-                          {prim::kPrimACos->name(), ACos<T>},
-                          {prim::kPrimAtan->name(), Atan<T>},
-                          {prim::kPrimSinh->name(), Sinh<T>},
-                          {prim::kPrimCosh->name(), Cosh<T>},
-                          {prim::kPrimAsinh->name(), Asinh<T>},
-                          {prim::kPrimReciprocal->name(), Reciprocal<T>},
-                          {prim::kPrimInv->name(), Inv<T>},
-                          {prim::kPrimInvert->name(), Invert<T>},
-                          {prim::kPrimRint->name(), Rint<T>},
-                          {prim::kPrimRound->name(), Round<T>},
-                          {prim::kPrimAbs->name(), Abs<T>},
-                          {prim::kPrimSqrt->name(), Sqrt<T>},
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},     {prim::kPrimSign->name(), Sign<T>},
+                          {prim::kPrimNeg->name(), Neg<T>},           {prim::kPrimAtanh->name(), Atanh<T>},
+                          {prim::kPrimAcosh->name(), Acosh<T>},       {prim::kPrimFloor->name(), Floor<T>},
+                          {prim::kPrimSin->name(), Sin<T>},           {prim::kPrimGeLU->name(), Gelu<T>},
+                          {prim::kPrimFastGeLU->name(), FastGelu<T>}, {prim::kPrimCos->name(), Cos<T>},
+                          {prim::kPrimTan->name(), Tan<T>},           {prim::kPrimAsin->name(), Asin<T>},
+                          {prim::kPrimACos->name(), ACos<T>},         {prim::kPrimAtan->name(), Atan<T>},
+                          {prim::kPrimSinh->name(), Sinh<T>},         {prim::kPrimCosh->name(), Cosh<T>},
+                          {prim::kPrimAsinh->name(), Asinh<T>},       {prim::kPrimReciprocal->name(), Reciprocal<T>},
+                          {prim::kPrimInv->name(), Inv<T>},           {prim::kPrimInvert->name(), Invert<T>},
+                          {prim::kPrimRint->name(), Rint<T>},         {prim::kPrimRound->name(), Round<T>},
+                          {prim::kPrimAbs->name(), Abs<T>},           {prim::kPrimSqrt->name(), Sqrt<T>},
                           {prim::kPrimRsqrt->name(), Rsqrt<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
@@ -659,6 +682,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), CreateArithSelfFunc}}},
   {kGeLU, {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
+  {kFastGeLU,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}},
   {kLogicalNot, {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), CreateArithSelfFunc}}},
   {kAsin,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
@@ -791,6 +817,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Invert,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kInvert); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, GeLU,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kGeLU); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FastGeLU,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kFastGeLU); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, LogicalNot,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLogicalNot); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Asin,
