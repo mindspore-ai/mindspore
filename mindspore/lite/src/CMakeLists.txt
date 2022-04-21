@@ -389,6 +389,11 @@ endif()
 target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
 target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
 
+if(SUPPORT_TRAIN)
+    target_link_libraries(mindspore-lite train_cpu_kernel_mid)
+    target_link_libraries(mindspore-lite_static train_cpu_kernel_mid)
+endif()
+
 if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(mindspore-lite mindrt_mid)
     target_link_libraries(mindspore-lite_static mindrt_mid)

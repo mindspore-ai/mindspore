@@ -305,6 +305,11 @@ target_link_libraries(converter_lite PRIVATE
         coder_mid
         mindir_serializer_mid
         )
+
+if(SUPPORT_TRAIN)
+    target_link_libraries(converter_lite PRIVATE train_cpu_kernel_mid)
+endif()
+
 if(NOT ENABLE_CLOUD_AND_LITE)
     target_link_libraries(converter_lite PRIVATE
             ccsrc_debug_common_mid_
