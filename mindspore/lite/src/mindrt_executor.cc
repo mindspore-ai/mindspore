@@ -203,6 +203,9 @@ void MindrtExecutor::TransferGraphOutput() {
   for (auto tensor_map : *isolate_output_map_) {
     auto dst_tensor = tensor_map.second;
     auto src_tensor = tensor_map.first;
+    if (dst_tensor->data_type() == kNumberTypeGLUInt && src_tensor->data_type() == kNumberTypeGLUInt) {
+      continue;
+    }
     dst_tensor->set_shape(src_tensor->shape());
     /* dst tensor free in FreeOutputTensor */
 #ifdef ENABLE_FP16
@@ -231,6 +234,9 @@ void MindrtExecutor::FreeOutputTensor() {
   for (auto tensor_map : *isolate_output_map_) {
     auto src_tensor = tensor_map.first;
     auto dst_tensor = tensor_map.second;
+    if (dst_tensor->data_type() == kNumberTypeGLUInt && src_tensor->data_type() == kNumberTypeGLUInt) {
+      continue;
+    }
     if (dst_tensor->allocator() != nullptr) {
       dst_tensor->FreeData();
     } else {

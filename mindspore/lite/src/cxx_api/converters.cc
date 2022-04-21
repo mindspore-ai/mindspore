@@ -99,15 +99,9 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
                          cpu_context->GetProvider(), cpu_context->GetProviderDevice(), inner_context.get());
     } else if (device->GetDeviceType() == kGPU) {
       auto gpu_context = device->Cast<GPUDeviceInfo>();
-#ifdef ENABLE_OPENGL_TEXTURE
       bool enable_gl_texture = gpu_context->GetEnableGLTexture();
       void *gl_context = gpu_context->GetGLContext();
       void *gl_display = gpu_context->GetGLDisplay();
-#else
-      bool enable_gl_texture = false;
-      void *gl_context = nullptr;
-      void *gl_display = nullptr;
-#endif
       ret =
         AddGpuDevice(gpu_context->GetEnableFP16(), gpu_context->GetDeviceID(), gpu_context->GetRankID(),
                      gpu_context->GetGroupSize(), enable_gl_texture, gl_context, gl_display, gpu_context->GetProvider(),

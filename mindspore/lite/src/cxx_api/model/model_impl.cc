@@ -605,9 +605,8 @@ std::vector<MSTensor> ModelImpl::GetOutputsByNodeName(const std::string &name) {
   return res;
 }
 
-#ifdef ENABLE_OPENGL_TEXTURE
-Status ModelImpl::BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
-                                        std::map<std::string, GLuint> *outputGLTexture) {
+Status ModelImpl::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
+                                        std::map<std::string, unsigned int> *outputGLTexture) {
   MS_LOG(INFO) << "Bind GLTexture2D to Input MsTensors and Output MsTensors";
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "Session is null.";
@@ -620,7 +619,6 @@ Status ModelImpl::BindGLTexture2DMemory(const std::map<std::string, GLuint> &inp
   }
   return kSuccess;
 }
-#endif
 
 Status ModelImpl::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   if (session_ == nullptr) {
