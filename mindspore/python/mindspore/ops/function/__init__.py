@@ -19,7 +19,7 @@ Function operator.
 A collection of function to build neural networks or to compute functions.
 """
 
-from . import array_func, parameter_func, math_func, nn_func
+from . import array_func, parameter_func, math_func, nn_func, clip_func
 from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size, ones, ones_like, shape, shape_, ger,
                          dyn_shape, rank, reshape, reshape_, tensor_slice, slice, scalar_to_array, scalar_to_tensor,
                          tuple_to_array, expand_dims, transpose, scatter_nd, scatter_nd_add, scatter_nd_sub, gather,
@@ -39,6 +39,7 @@ from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, t
                         bessel_k0e, bessel_y0, bessel_y1, bessel_i1, bessel_i1e, bessel_k1, bessel_k1e, exp2)
 from .nn_func import (fast_gelu, hardshrink)
 from .linalg_func import svd
+from .clip_func import (clip_by_norm)
 
 
 __all__ = []
@@ -47,4 +48,5 @@ __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
+__all__.extend(clip_func.__all__)
 __all__.sort()
