@@ -1256,13 +1256,21 @@ KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
   return kernel_attr;
 }
 
-void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &kernel_attrs) {
+void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs) {
+  auto kernel_attrs = apply_kernel_attrs;
   if (kernel_attrs.empty()) {
     return;
   }
 
   auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
+  if (kernel_attrs[0].GetSkipCheck()) {
+    // If kernel skips attr check, we need to synchronize the ref map in case it's discarded.
+    SyncOutInRef(kernel_attrs[0], &kernel_attr);
+    kernel_attrs[0] = kernel_attr;
+    is_match = true;
+    index = 0;
+  }
   if (!is_match) {
     MS_LOG(EXCEPTION) << common::AnfAlgo::GetCNodeName(apply_kernel)
                       << " does not support this kernel data type: " << kernel_attr;
@@ -1338,6 +1346,15 @@ void UpdateNodeShape(const CNodePtr &cnode) {
     type_ids.emplace_back(output_tensor[i]->GetDtype());
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
+}
+
+void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr) {
+  const auto &out_in_ref = from_kernel_attr.GetOutInRefMap();
+  bool all_out_in_ref = from_kernel_attr.GetAllOutInRef();
+  for (const auto &ref : out_in_ref) {
+    to_kernel_attr->AddOutInRef(ref.first, ref.second);
+  }
+  to_kernel_attr->AddAllOutInRef(all_out_in_ref);
 }
 }  // namespace kernel
 }  // namespace mindspore

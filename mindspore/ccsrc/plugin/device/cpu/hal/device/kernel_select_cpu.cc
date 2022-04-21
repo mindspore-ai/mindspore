@@ -90,6 +90,9 @@ void GetOutputFormatsAndDtypes(const CNodePtr &kernel_node, const kernel::Kernel
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     output_formats->emplace_back(kernel_attr.GetOutputAttr(output_index).second);
     auto dtype = kernel_attr.GetOutputAttr(output_index).first;
+    if (dtype == TypeId::kObjectTypeUMonad) {
+      dtype = TypeId::kNumberTypeInt32;
+    }
     output_types->emplace_back(dtype);
   }
 }
@@ -370,8 +373,9 @@ bool SelectKernel(const CNodePtr &kernel_node, kernel::KernelAttr *selected_kern
   return false;
 }
 
-kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs) {
-  kernel::KernelAttr attr;
+kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const std::vector<TypeId> &outputs,
+                                        const kernel::KernelAttr &origin_attr) {
+  kernel::KernelAttr attr = origin_attr;
   for (auto in_dtype : inputs) {
     (void)attr.AddInputAttr(in_dtype);
   }
@@ -434,7 +438,7 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   // If GetSkipCheck is true, that means we do not check the build info between input and registered.
   // Take the input attrs to build the kernel.
   if (!kernel_attrs.empty() && kernel_attrs[0].GetSkipCheck()) {
-    kernel_attrs[0] = BuildKernelFromInput(input_types, output_types);
+    kernel_attrs[0] = BuildKernelFromInput(input_types, output_types, kernel_attrs[0]);
     MS_LOG(DEBUG) << "Build kernel form input for " << op_name;
   }
   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,

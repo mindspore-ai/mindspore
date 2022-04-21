@@ -198,6 +198,8 @@ void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &appl
   auto kernel_attr = GetKernelAttrFromNode(apply_kernel);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, kernel_attrs);
   if (kernel_attrs[0].GetSkipCheck()) {
+    // If kernel skips attr check, we need to synchronize the ref map in case it's discarded.
+    SyncOutInRef(kernel_attrs[0], &kernel_attr);
     kernel_attrs[0] = kernel_attr;
     is_match = true;
     index = 0;

@@ -285,7 +285,7 @@ KernelArgs GetArgsFromCNode(const CNodePtr &cnode);
 KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs);
 
-void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &kernel_attrs);
+void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<KernelAttr> &apply_kernel_attrs);
 Format GetFormatFromStrToEnum(const std::string &format_str);
 std::string GetFormatFromEnumToStr(Format format);
 void SetInitOpArgs(const CNodePtr &cnode, const std::vector<KernelTensorPtr> &inputs,
@@ -294,6 +294,9 @@ std::vector<KernelTensorPtr> GetReinitInputs(const CNodePtr &cnode);
 std::vector<KernelTensorPtr> GetReinitOutputs(const CNodePtr &cnode);
 std::shared_ptr<ReinitArgs> GetReinitArgs(const CNodePtr &cnode);
 void UpdateNodeShape(const CNodePtr &cnode);
+
+// Synchronize the output and input reference map between two kernel attrs.
+void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr);
 
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \

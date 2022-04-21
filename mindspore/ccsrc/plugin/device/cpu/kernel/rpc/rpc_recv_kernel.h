@@ -31,35 +31,7 @@ class RpcRecvKernelMod : public RpcKernelMod {
   ~RpcRecvKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override {
-    if (!kernel_func_) {
-      MS_LOG(EXCEPTION) << "Kernel func pointer is not initialized!";
-    }
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
-
-  void InitKernel(const CNodePtr &kernel_node) override {
-    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
-    // If the input is a monad, no need to launch recv kernel.
-    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
-      recv_monad_ = true;
-    }
-
-    auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-    if (!is_match) {
-      MS_LOG(EXCEPTION) << "RpcRecv does not support this kernel data type: " << kernel_attr;
-    }
-    kernel_func_ = func_list_[index].second;
-  }
-
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
-
- private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<AddressPtr> &outputs) {
+              const std::vector<AddressPtr> &) override {
     if (recv_monad_) {
       MS_LOG(DEBUG) << "RpcRecv has a monad as input, no need to launch it.";
       return true;
@@ -68,8 +40,8 @@ class RpcRecvKernelMod : public RpcKernelMod {
     MS_EXCEPTION_IF_NULL(remote_input_);
     size_t offset = 0;
     for (size_t i = 0; i < inputs.size(); i++) {
-      T *recv_data = GetDeviceAddress<T>(inputs, i);
-      int ret = memcpy_s(recv_data, inputs[i]->size, remote_input_->Body().data() + offset, inputs[i]->size);
+      MS_EXCEPTION_IF_NULL(inputs[i]->addr);
+      int ret = memcpy_s(inputs[i]->addr, inputs[i]->size, remote_input_->Body().data() + offset, inputs[i]->size);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "memcpy_s for recv output failed, ret code: " << ret;
       }
@@ -81,12 +53,19 @@ class RpcRecvKernelMod : public RpcKernelMod {
     delete remote_input_;
     return true;
   }
-  using RpcRecvFunc =
-    std::function<bool(RpcRecvKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, RpcRecvFunc>> func_list_;
-  RpcRecvFunc kernel_func_;
 
+  void InitKernel(const CNodePtr &kernel_node) override {
+    auto input0 = common::AnfAlgo::GetInputNode(kernel_node, 0);
+    // If the input is a monad, no need to launch recv kernel.
+    if (HasAbstractUMonad(input0) || HasAbstractIOMonad(input0)) {
+      recv_monad_ = true;
+    }
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
+
+ private:
   // Whether this RpcRecv node receives a monda data.
   bool recv_monad_;
 };
