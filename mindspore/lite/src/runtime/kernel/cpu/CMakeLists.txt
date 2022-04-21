@@ -63,7 +63,7 @@ if(SUPPORT_TRAIN)
     file(GLOB TRAIN_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32_grad/*.cc)
     add_library(train_cpu_kernel_mid OBJECT ${TRAIN_KERNEL_SRC})
     add_dependencies(train_cpu_kernel_mid fbs_src)
-    if("CMAKE_CXX_FLAGS" MATCHES "-ffast-math")
+    if("${CMAKE_CXX_FLAGS}" MATCHES "-ffast-math")
         # using -fno-finite-math-only to avoid unexpected errors may occur due to compile optimization
         target_compile_options(train_cpu_kernel_mid PRIVATE -fno-finite-math-only)
     endif()

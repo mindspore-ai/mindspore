@@ -144,7 +144,7 @@ int MatmulInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
     ShapeInsert(in->shape_, &in->shape_size_, 0, 1);
   }
   SetDataTypeFormat(output, input0);
-  if (parameter->quant_type_ == QuantType_QUANT_DYNAMIC) {
+  if (parameter->quant_type_ == QuantType_QUANT_DYNAMIC || parameter->quant_type_ == QuantType_QUANT_WEIGHT) {
     output->data_type_ = kNumberTypeFloat32;
   }
   if (!InferFlag(inputs, inputs_size)) {
