@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -157,13 +157,13 @@ class ASGD(Optimizer):
         self.alpha = alpha
         self.t0 = Tensor([t0], dtype=mstype.float32)
         mu, eta = [], []
-        for param in self.parameters:
+        for param in self._parameters:
             mu.append(Parameter(Tensor(1., dtype=mstype.float32), name='%s%s' % ("mu_", param.name)))
             eta.append(Parameter(Tensor(0., dtype=mstype.float32), name='%s%s' % ("eta_", param.name)))
-        self.lens = len(self.parameters)
+        self.lens = len(self._parameters)
         self.mu = mindspore.ParameterTuple(mu)
         self.eta = mindspore.ParameterTuple(eta)
-        self.ax = self.parameters.clone(prefix="ax_", init='zeros')
+        self.ax = self._parameters.clone(prefix="ax_", init='zeros')
         self.pow = P.Pow()
         self.maximum = P.Maximum()
         self.assign = P.Assign()
@@ -173,6 +173,7 @@ class ASGD(Optimizer):
         self.squeeze = P.Squeeze()
 
     def construct(self, gradients):
+        gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
@@ -180,8 +181,8 @@ class ASGD(Optimizer):
         if not self.is_dynamic_lr_or_weight_decay():
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         success = True
-
-        for index, (grad, param, mu, eta, ax) in enumerate(zip(gradients, self.parameters, self.mu, self.eta, self.ax)):
+        params = self._parameters
+        for index, (grad, param, mu, eta, ax) in enumerate(zip(gradients, params, self.mu, self.eta, self.ax)):
             lr = lrs[index] if self.is_group_lr else lrs
             lr = self.squeeze(lr)
 

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -176,8 +176,8 @@ class Rprop(Optimizer):
 
         self.etaminus, self.etaplus = etas
         self.step_size_min, self.step_size_max = step_sizes
-        self.prev = self.parameters.clone(prefix="prev", init='zeros')
-        self.step_size = self.parameters.clone(prefix="step_size", init='zeros')
+        self.prev = self._parameters.clone(prefix="prev", init='zeros')
+        self.step_size = self._parameters.clone(prefix="step_size", init='zeros')
 
         self.fill = P.Fill()
         self.sign = P.Sign()
@@ -188,6 +188,7 @@ class Rprop(Optimizer):
         self.ones_like = P.OnesLike()
 
     def construct(self, gradients):
+        gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
@@ -196,7 +197,7 @@ class Rprop(Optimizer):
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         success = True
 
-        for index, (grad, param, prev, step_size) in enumerate(zip(gradients, self.parameters,
+        for index, (grad, param, prev, step_size) in enumerate(zip(gradients, self._parameters,
                                                                    self.prev, self.step_size)):
             lr = lrs[index] if self.is_group_lr else lrs
 

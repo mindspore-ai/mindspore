@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -181,12 +181,13 @@ class Adagrad(Optimizer):
                  update_slots=True, loss_scale=1.0, weight_decay=0.0):
         super(Adagrad, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(accum, update_slots, self.cls_name)
-        self.accum = self.parameters.clone(prefix="accum", init=accum)
+        self.accum = self._parameters.clone(prefix="accum", init=accum)
         self.opt = P.ApplyAdagrad(update_slots=update_slots)
 
     def construct(self, grads):
-        params = self.parameters
+        params = self._parameters
         accum = self.accum
+        grads = self.flatten_gradients(grads)
         grads = self.decay_weight(grads)
         grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)

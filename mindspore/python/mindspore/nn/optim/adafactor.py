@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -345,15 +345,15 @@ class AdaFactor(Optimizer):
         """init adafactor variables"""
         if beta1 > 0:
             self.use_first_moment = True
-            self.exp_avg = self.parameters.clone(prefix="exp_avg", init='zeros')
+            self.exp_avg = self._parameters.clone(prefix="exp_avg", init='zeros')
         else:
             self.use_first_moment = False
-            self.exp_avg = ParameterTuple([Parameter(Tensor(0.0))] * len(self.parameters))
+            self.exp_avg = ParameterTuple([Parameter(Tensor(0.0))] * len(self._parameters))
 
         self.exp_avg_sq = []
         self.exp_avg_sq_col = []
         self.exp_avg_sq_row = []
-        for param in self.parameters:
+        for param in self._parameters:
             param_dtype = param.dtype
             param_shape = param.shape
             param_name = param.name
@@ -398,6 +398,7 @@ class AdaFactor(Optimizer):
         return False
 
     def construct(self, gradients):
+        gradients = self.flatten_gradients(gradients)
         lr = self.get_lr()
         step = F.assign_add(self.step, 1)
         if self.scale_lr and self.relative_step:
@@ -411,13 +412,13 @@ class AdaFactor(Optimizer):
         if self.use_fused_ada_factor:
             success = self.hyper_map(F.partial(_adafactor_opt, self.fused_ada_factor, self.eps, self.clip_threshold,
                                                self.beta1, beta2t, self.weight_decay, lr),
-                                     gradients, self.parameters, self.exp_avg, self.exp_avg_sq_row,
+                                     gradients, self._parameters, self.exp_avg, self.exp_avg_sq_row,
                                      self.exp_avg_sq_col, self.exp_avg_sq)
         else:
             success = self.hyper_map(F.partial(_adafactor_opt, self.eps, self.clip_threshold, self.beta1, beta2t,
                                                self.weight_decay, self.scale_parameter, self.compression,
                                                self.use_first_moment, self.weight_decay_flag, lr),
-                                     gradients, self.parameters, self.exp_avg, self.exp_avg_sq_row,
+                                     gradients, self._parameters, self.exp_avg, self.exp_avg_sq_row,
                                      self.exp_avg_sq_col, self.exp_avg_sq)
 
         return success

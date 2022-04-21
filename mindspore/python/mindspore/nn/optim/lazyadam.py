@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -267,8 +267,8 @@ class LazyAdam(Optimizer):
         self.use_nesterov = use_nesterov
         self.use_locking = use_locking
         self._is_device = True
-        self.moment1 = self.parameters.clone(prefix="moment1", init='zeros')
-        self.moment2 = self.parameters.clone(prefix="moment2", init='zeros')
+        self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
+        self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
         self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseLazyAdam(use_locking, use_nesterov)
         self.sparse_opt.add_prim_attr("primitive_target", "CPU")
@@ -277,6 +277,7 @@ class LazyAdam(Optimizer):
         self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
 
     def construct(self, gradients):
+        gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
@@ -292,14 +293,14 @@ class LazyAdam(Optimizer):
             success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
                                                  self._ps_pull, self.use_locking, self.use_nesterov, self._is_device,
                                                  beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
-                                       lr, gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters,
+                                       lr, gradients, self._parameters, self.moment1, self.moment2, self.ps_parameters,
                                        self.cache_enable)
         else:
             success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
                                                  self._ps_pull, self.use_locking, self.use_nesterov, self._is_device,
                                                  beta1_power, beta2_power, self.beta1, self.beta2, self.eps,
                                                  lr),
-                                       gradients, self.parameters, self.moment1, self.moment2, self.ps_parameters,
+                                       gradients, self._parameters, self.moment1, self.moment2, self.ps_parameters,
                                        self.cache_enable)
         return success
 

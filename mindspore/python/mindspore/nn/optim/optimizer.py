@@ -188,6 +188,7 @@ class Optimizer(Cell):
 
         if self.is_group:
             self.parameters = ParameterTuple(self.group_params)
+            self._parameters = self.parameters
             decay_filter = lambda x: isinstance(x, Cell) or x > 0
             dynamic_decay_filter = lambda x: isinstance(x, Cell)
             self.decay_flags = tuple(decay_filter(x) for x in self.group_weight_decay)
@@ -197,29 +198,33 @@ class Optimizer(Cell):
             self.exec_weight_decay = any(self.decay_flags)
             self.grad_centralization_flags = tuple(self.group_grad_centralization)
         else:
-            parameters = self._get_flattened_params(parameters)
             self.parameters = ParameterTuple(parameters)
+            flat_params = self._get_flattened_params(parameters)
+            if self._use_flattened_params:
+                self._parameters = ParameterTuple(flat_params)
+            else:
+                self._parameters = self.parameters
             decay_filter = lambda x: 'beta' not in x.name and 'gamma' not in x.name
-            self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
+            self.decay_flags = tuple(decay_filter(x) for x in self._parameters)
             self.dynamic_decay_flags = isinstance(weight_decay, Cell)
             self.exec_weight_decay = isinstance(weight_decay, Cell) or weight_decay > 0
             self.weight_decay = Tensor(weight_decay, mstype.float32) if not self.dynamic_decay_flags else weight_decay
         # when a parameter has been unique, there is no need do another unique in optimizer.
-        for param in self.parameters:
+        for param in self._parameters:
             if param.unique:
                 self._unique = False
                 break
         # set user's parameters as local parameters
-        for param in self.parameters:
+        for param in self._parameters:
             self._user_parameters.append(param.name)
         ps_filter = lambda x: x.is_param_ps
-        self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
+        self.ps_parameters = tuple(ps_filter(x) for x in self._parameters)
         cache_filter = lambda x: x.cache_enable
-        self.cache_enable = tuple(cache_filter(x) for x in self.parameters)
+        self.cache_enable = tuple(cache_filter(x) for x in self._parameters)
         self.reciprocal_scale = Tensor(1.0 / self.loss_scale, mstype.float32)
         self.need_scale = self.loss_scale != 1.0
         self.global_step_increase_tensor = Tensor(1, mstype.int32)
-        self.param_length = len(self.parameters)
+        self.param_length = len(self._parameters)
         self.map_ = C.Map()
         self.map_reverse = C.Map(None, True)
         self.hyper_map = C.HyperMap()
@@ -273,7 +278,7 @@ class Optimizer(Cell):
             self.param_rank = self._get_parameter_group_id()
             self.optim_filter = tuple(map(lambda x: x == _get_global_rank(), self.param_rank))
             self.param_names = []
-            for param in self.parameters:
+            for param in self._parameters:
                 self.param_names.append(param.name)
         else:
             self.optim_filter = (True,) * self.param_length
@@ -366,7 +371,7 @@ class Optimizer(Cell):
             tuple[Tensor], The gradients after weight decay.
         """
         if self.exec_weight_decay:
-            params = self.parameters
+            params = self._parameters
             weight_decay = self.get_weight_decay()
             if self.is_group:
                 gradients = self.map_(F.partial(_apply_decay), weight_decay, self.decay_flags, params, gradients)
@@ -722,7 +727,7 @@ class Optimizer(Cell):
                             f"but got {type(param)}.")
 
         lr = []
-        ids = [id(p) for p in self.parameters]
+        ids = [id(p) for p in self._parameters]
         for p in param_list:
             validator.check_value_type("parameter", p, [Parameter], self.cls_name)
             if id(p) not in ids:
@@ -777,7 +782,7 @@ class Optimizer(Cell):
         for _ in range(self.dev_num):
             param_group.append(F.make_tuple())
         for i in range(self.param_length):
-            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (self.parameters[i],)
+            param_group[self.param_rank[i]] = param_group[self.param_rank[i]] + (self._parameters[i],)
         new_param_group = []
         for root in range(self.dev_num):
             if root > 0:

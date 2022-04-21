@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -379,7 +379,7 @@ class ThorGpu(Optimizer):
         super(ThorGpu, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param(momentum, frequency, learning_rate, self.__class__.__name__)
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
-        self.params = self.parameters
+        self.params = self._parameters
         self.use_nesterov = Validator.check_bool(use_nesterov)
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
@@ -408,7 +408,7 @@ class ThorGpu(Optimizer):
         self.matrix_a = ParameterTuple(self.matrix_a)
         self.matrix_g = ParameterTuple(self.matrix_g)
         self.weight_decay = weight_decay
-        self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
+        self.decay_flags = tuple(decay_filter(x) for x in self._parameters)
         self.update_gradient = P.UpdateThorGradient(split_dim=self.split_dim)
         self.enable_clip_grad = enable_clip_grad
         self.frequency = frequency
@@ -586,6 +586,7 @@ class ThorGpu(Optimizer):
     def construct(self, gradients):
         params = self.params
         moments = self.moments
+        gradients = self.flatten_gradients(gradients)
         gradients = self.scale_grad(gradients)
         damping_step = self.gather(self.damping, self.cov_step, self.axis)
         damping_step = self.cast(damping_step, mstype.float32)
@@ -667,7 +668,7 @@ class ThorAscend(Optimizer):
         super(ThorAscend, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param(momentum, frequency, learning_rate, self.__class__.__name__)
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
-        self.params = self.parameters
+        self.params = self._parameters
         self.moments = self.params.clone(prefix="moments", init='zeros')
         self.hyper_map = C.HyperMap()
         self.opt = P.ApplyMomentum()
@@ -704,7 +705,7 @@ class ThorAscend(Optimizer):
         self.matrix_max_inv = ParameterTuple(self.matrix_max_inv)
         self.thor = True
         self.weight_decay = weight_decay
-        self.decay_flags = tuple(decay_filter(x) for x in self.parameters)
+        self.decay_flags = tuple(decay_filter(x) for x in self._parameters)
         self.damping = damping
         self.batch_size = Tensor(batch_size, mstype.float32)
         self.loss_scale = Tensor(1 / (loss_scale * loss_scale), mstype.float32)
@@ -1246,6 +1247,7 @@ class ThorAscend(Optimizer):
     def construct(self, gradients):
         params = self.params
         moments = self.moments
+        gradients = self.flatten_gradients(gradients)
         gradients = self.scale_grad(gradients)
         damping_step = self.gather(self.damping, self.cov_step, self.axis)
         damping_step = self.cast(damping_step, mstype.float32)

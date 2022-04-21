@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -347,7 +347,7 @@ class Lamb(Optimizer):
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
         self.eps = Tensor(np.array([eps]).astype(np.float32))
-        self.params = self.parameters
+        self.params = self._parameters
         self.moments1 = self.params.clone(prefix="lamb_m", init='zeros')
         self.moments2 = self.params.clone(prefix="lamb_v", init='zeros')
         self.device_ascend = context.get_context("device_target") == "Ascend"
@@ -358,6 +358,7 @@ class Lamb(Optimizer):
         if not self.is_dynamic_lr_or_weight_decay():
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         lamb_opt = _lamb_opt_ascend if self.device_ascend else _lamb_opt
+        gradients = self.flatten_gradients(gradients)
         gradients = self.gradients_centralization(gradients)
         if self.is_group:
             if self.is_group_lr:

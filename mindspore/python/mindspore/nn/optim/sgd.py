@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -180,13 +180,14 @@ class SGD(Optimizer):
         self.opt = P.SGD(dampening, weight_decay, nesterov)
 
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
-        self.accum = self.parameters.clone(prefix="accum", init='zeros')
-        self.stat = self.parameters.clone(prefix="stat", init='ones')
+        self.accum = self._parameters.clone(prefix="accum", init='zeros')
+        self.stat = self._parameters.clone(prefix="stat", init='ones')
 
     def construct(self, gradients):
-        params = self.parameters
+        params = self._parameters
         accum = self.accum
         stat = self.stat
+        gradients = self.flatten_gradients(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lr = self.get_lr()

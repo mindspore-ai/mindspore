@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -212,14 +212,14 @@ class FTRL(Optimizer):
                              f"in FTRL, they should all be false, but got dynamic learning rate {self.dynamic_lr} and"
                              f" group learning rate {self.is_group_lr}.")
         _check_param(initial_accum, lr_power, l1, l2, use_locking, self.cls_name)
-        self.moments = self.parameters.clone(prefix="moments", init=initial_accum)
-        self.linear = self.parameters.clone(prefix="linear", init='zeros')
+        self.moments = self._parameters.clone(prefix="moments", init=initial_accum)
+        self.linear = self._parameters.clone(prefix="linear", init='zeros')
         self.l1 = l1
         self.l2 = l2
         self.lr = learning_rate
         self.lr_power = lr_power
         if not self.is_group:
-            self.decay_flags = tuple((lambda: True)() for x in self.parameters)
+            self.decay_flags = tuple((lambda: True)() for x in self._parameters)
         self.opt = P.ApplyFtrl(use_locking=use_locking)
         self.use_locking = use_locking
         self.sparse_opt = P.SparseApplyFtrl(learning_rate, l1, l2, lr_power, use_locking=use_locking)
@@ -232,9 +232,10 @@ class FTRL(Optimizer):
         self._ps_push.add_prim_attr("lr_power", lr_power)
 
     def construct(self, grads):
-        params = self.parameters
+        params = self._parameters
         moments = self.moments
         linear = self.linear
+        grads = self.flatten_gradients(grads)
         grads = self.decay_weight(grads)
         grads = self.gradients_centralization(grads)
         grads = self.scale_grad(grads)
