@@ -163,23 +163,14 @@ class ClassType final : public PyObjectWrapper {
 };
 using ClassTypePtr = std::shared_ptr<ClassType>;
 
-// Get python object with index from a list or the whole list if the index is not fixed.
-py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node,
-                                 const AnfNodePtr &index_node);
-std::pair<parse::NameSpacePtr, parse::SymbolPtr> GetNamespaceAndSymbol(const AnfNodePtr &node);
-
-// Get resolved python object by namespace and symbol.
-py::object GetSymbolObject(const NameSpacePtr &name_space, const SymbolPtr &symbol, const AnfNodePtr &node);
 // Resolve symbol in namespace.
 AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
                          const AnfNodePtr &node);
-// Resolve Cell with attr name.
-AnfNodePtr ResolveCellWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj, const AnfNodePtr &node,
-                               const AnfNodePtr &attr);
-AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py::object &obj,
-                                   const AnfNodePtr &resolve_node, const AnfNodePtr &attr,
-                                   const CNodePtr &operand_cnode);
-AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const MsClassObjectPtr &ms_class,
+AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &object_node,
+                                 const AnfNodePtr &attr_node, const AnfNodePtr &node);
+AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &getitem_node,
+                                  const AnfNodePtr &attr_node, const AnfNodePtr &node);
+AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::object &ms_class,
                                   const std::string &attr, const AnfNodePtr &node);
 
 // Check if node is cnode with getitem.

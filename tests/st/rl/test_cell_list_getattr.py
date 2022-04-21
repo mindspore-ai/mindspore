@@ -15,11 +15,17 @@
 """ test a list of cell, and getattr by its item """
 import pytest
 import numpy as np
-from mindspore import context, nn, dtype, Tensor, ms_function
+from mindspore import context, nn, dtype, Tensor, ms_function, ms_class
 from mindspore.ops import operations as P
 
 
 class Actor(nn.Cell):
+    def act(self, x, y):
+        return x + y
+
+
+@ms_class
+class Actor2:
     def act(self, x, y):
         return x + y
 
@@ -33,6 +39,20 @@ class Trainer(nn.Cell):
         return self.net_list[0].act(x, y)
 
 
+def verify_list_item_getattr(trainer, expect_res):
+    x = Tensor([3], dtype=dtype.float32)
+    y = Tensor([6], dtype=dtype.float32)
+    res = trainer(x, y)
+    print(f'res: {res}')
+    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_list_item_getattr():
     """
     Feature: getattr by the item from list of cell.
@@ -42,15 +62,16 @@ def test_list_item_getattr():
     context.set_context(mode=context.GRAPH_MODE)
     actor_list = [Actor()]
     trainer = Trainer(actor_list)
-    x = Tensor([3], dtype=dtype.float32)
-    y = Tensor([6], dtype=dtype.float32)
-    res = trainer(x, y)
-    print(f'res: {res}')
     expect_res = Tensor([9], dtype=dtype.float32)
-    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+    verify_list_item_getattr(trainer, expect_res)
 
 
-@pytest.mark.skip(reason='Not support in graph mode yet')
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cell_list_getattr():
     """
     Feature: getattr by the item from nn.CellList.
@@ -62,12 +83,27 @@ def test_cell_list_getattr():
     for _ in range(3):
         actor_list.append(Actor())
     trainer = Trainer(actor_list)
-    x = Tensor([3], dtype=dtype.float32)
-    y = Tensor([6], dtype=dtype.float32)
-    res = trainer(x, y)
-    print(f'res: {res}')
     expect_res = Tensor([9], dtype=dtype.float32)
-    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+    verify_list_item_getattr(trainer, expect_res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_msclass_list_getattr():
+    """
+    Feature: getattr by the item from list of ms_class.
+    Description: Support RL use method in graph mode.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    actor_list = [Actor2()]
+    trainer = Trainer(actor_list)
+    expect_res = Tensor([9], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res)
 
 
 class Trainer2(nn.Cell):
@@ -86,6 +122,12 @@ class Trainer2(nn.Cell):
         return sum_value
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_list_item_getattr2():
     """
     Feature: getattr by the item from list of cell with a Tensor variable.
@@ -95,15 +137,16 @@ def test_list_item_getattr2():
     context.set_context(mode=context.GRAPH_MODE)
     actor_list = [Actor(), Actor(), Actor()]
     trainer = Trainer2(actor_list)
-    x = Tensor([3], dtype=dtype.float32)
-    y = Tensor([6], dtype=dtype.float32)
-    res = trainer(x, y)
-    print(f'res: {res}')
     expect_res = Tensor([27], dtype=dtype.float32)
-    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+    verify_list_item_getattr(trainer, expect_res)
 
 
-@pytest.mark.skip(reason='Not support in graph mode yet')
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cell_list_getattr2():
     """
     Feature: getattr by the item from nn.CellList.
@@ -115,12 +158,27 @@ def test_cell_list_getattr2():
     for _ in range(3):
         actor_list.append(Actor())
     trainer = Trainer2(actor_list)
-    x = Tensor([3], dtype=dtype.float32)
-    y = Tensor([6], dtype=dtype.float32)
-    res = trainer(x, y)
-    print(f'res: {res}')
     expect_res = Tensor([27], dtype=dtype.float32)
-    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+    verify_list_item_getattr(trainer, expect_res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_msclass_list_getattr2():
+    """
+    Feature: getattr by the item from list of ms_class with a Tensor variable.
+    Description: Support RL use method in graph mode.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    actor_list = [Actor2(), Actor2(), Actor2()]
+    trainer = Trainer2(actor_list)
+    expect_res = Tensor([27], dtype=dtype.float32)
+    verify_list_item_getattr(trainer, expect_res)
 
 
 class MSRL(nn.Cell):
@@ -154,7 +212,20 @@ class Trainer3(nn.Cell):
         return output
 
 
-@pytest.mark.skip(reason='Not support in graph mode yet')
+def verify_list_item_getattr2(trainer, expect_res):
+    x = Tensor([2], dtype=dtype.int32)
+    y = Tensor([3], dtype=dtype.int32)
+    res = trainer.test(x, y)
+    print(f'res: {res}')
+    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_list_item_getattr3():
     """
     Feature: getattr by the item from list of cell.
@@ -168,15 +239,16 @@ def test_list_item_getattr3():
         agent_list.append(Agent(actor))
     msrl = MSRL(agent_list)
     trainer = Trainer3(msrl)
-    x = Tensor([2], dtype=dtype.int32)
-    y = Tensor([3], dtype=dtype.int32)
-    res = trainer.test(x, y)
-    print(f'res: {res}')
     expect_res = Tensor([15], dtype=dtype.int32)
-    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+    verify_list_item_getattr2(trainer, expect_res)
 
 
-@pytest.mark.skip(reason='Not support in graph mode yet')
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_cell_list_getattr3():
     """
     Feature: getattr by the item from list of cell.
@@ -190,9 +262,28 @@ def test_cell_list_getattr3():
         agent_list.append(Agent(actor))
     msrl = MSRL(agent_list)
     trainer = Trainer3(msrl)
-    x = Tensor([2], dtype=dtype.float32)
-    y = Tensor([3], dtype=dtype.float32)
-    res = trainer.test(x, y)
-    print(f'res: {res}')
-    expect_res = Tensor([15], dtype=dtype.float32)
-    assert np.array_equal(res.asnumpy(), expect_res.asnumpy())
+    expect_res = Tensor([15], dtype=dtype.int32)
+    verify_list_item_getattr2(trainer, expect_res)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_msclass_list_getattr3():
+    """
+    Feature: getattr by the item from list of ms_class.
+    Description: Support RL use method in graph mode.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    agent_list = []
+    for _ in range(3):
+        actor = Actor2()
+        agent_list.append(Agent(actor))
+    msrl = MSRL(agent_list)
+    trainer = Trainer3(msrl)
+    expect_res = Tensor([15], dtype=dtype.int32)
+    verify_list_item_getattr2(trainer, expect_res)

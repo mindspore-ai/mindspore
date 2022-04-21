@@ -44,6 +44,7 @@ ResolveTypeDef GetObjType(const py::object &obj);
 ClassInstanceTypeDef GetClassInstanceType(const py::object &obj);
 
 bool IsCellInstance(const py::object &obj);
+bool IsMsClassInstance(const py::object &obj);
 bool IsClassType(const py::object &obj);
 py::object CreatePythonObject(const py::object &type, const py::tuple &args_kwargs);
 py::object CallPythonScript(const py::object &script, const py::tuple &args_kwargs);
