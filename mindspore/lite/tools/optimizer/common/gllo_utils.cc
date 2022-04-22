@@ -728,9 +728,9 @@ STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_for
   return iter->second(tensor, src_format, dst_format);
 }
 
-ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                const tensor::TensorPtr &tensor_info) {
-  if (func_graph == nullptr || node == nullptr || tensor_info == nullptr) {
+ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::TensorPtr &tensor_info,
+                                const std::string &node_name) {
+  if (func_graph == nullptr || tensor_info == nullptr) {
     MS_LOG(ERROR) << "input parameter is nullptr.";
     return nullptr;
   }
@@ -746,7 +746,7 @@ ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr
   } else if (tensor_info->data_type() == kNumberTypeFloat64) {
     data_type = kNumberTypeFloat32;
   }
-  param_node->set_name(node->fullname_with_scope());
+  param_node->set_name(node_name);
   auto tensor_info_new = std::make_shared<tensor::Tensor>(data_type, shape_vector);
   if (tensor_info_new == nullptr) {
     MS_LOG(ERROR) << "new tensor::Tensor failed.";

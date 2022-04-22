@@ -55,6 +55,7 @@ option(MSLITE_ENABLE_PARALLEL_INFERENCE "enable parallel inference interface" of
 option(MSLITE_ENABLE_SHARING_MODEL_WEIGHT "enable sharing model weight" off)
 option(MSLITE_ENABLE_EXPERIMENTAL_KERNEL "enable experimental kernel" on)
 option(MSLITE_ENABLE_GRAPH_KERNEL "enable graph kernel" off)
+option(MSLITE_ENABLE_CONVERT_PYTORCH_MODEL "enable to convert pytorch model" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -173,6 +174,11 @@ endif()
 
 if(DEFINED ENV{MSLITE_ENABLE_SERVING})
     set(MSLITE_ENABLE_SERVING $ENV{MSLITE_ENABLE_SERVING})
+endif()
+
+if(DEFINED ENV{MSLITE_ENABLE_CONVERT_PYTORCH_MODEL} AND DEFINED ENV{LIB_TORCH_PATH})
+    set(ENABLE_CONVERT_PYTORCH_MODEL $ENV{MSLITE_ENABLE_CONVERT_PYTORCH_MODEL})
+    set(LIB_TORCH_PATH $ENV{LIB_TORCH_PATH})
 endif()
 
 if(MACHINE_LINUX_ARM64)

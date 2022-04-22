@@ -525,7 +525,16 @@ if(PLATFORM_ARM64)
             install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
                     DESTINATION ${CONVERTER_ROOT_DIR}/lib RENAME libopencv_imgproc.so.4.5
                     COMPONENT ${RUNTIME_COMPONENT_NAME})
-
+            if(ENABLE_CONVERT_PYTORCH_MODEL AND NOT WIN32)
+                install(FILES ${LIB_TORCH_PATH}/lib/libtorch.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${LIB_TORCH_PATH}/lib/libtorch_cpu.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${LIB_TORCH_PATH}/lib/libc10.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+                install(FILES ${LIB_TORCH_PATH}/lib/libgomp.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
+            endif()
             if(MSLITE_ENABLE_ACL)
                 set(LITE_ACL_DIR ${TOP_DIR}/mindspore/lite/build/tools/converter/adapter/acl)
                 install(FILES ${LITE_ACL_DIR}/mindspore_shared_lib/libmindspore_shared_lib.so

@@ -105,7 +105,7 @@ STATUS ReplaceTypeParameterNode(const FuncGraphPtr &func_graph, const ParameterP
       MS_LOG(ERROR) << "default data is not tensor::Tensor.";
       return lite::RET_NULL_PTR;
     }
-    auto param_node_new = opt::BuildParameterNode(func_graph, param_node, tensor_info);
+    auto param_node_new = opt::BuildParameterNode(func_graph, tensor_info, param_node->fullname_with_scope());
     if (param_node_new == nullptr) {
       MS_LOG(ERROR) << "BuildParameterNode failed.";
       return lite::RET_NULL_PTR;
@@ -166,7 +166,7 @@ STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
     MS_LOG(ERROR) << "valueptr is not tensor::Tensorptr.";
     return lite::RET_ERROR;
   }
-  auto param_node = opt::BuildParameterNode(func_graph, cnode, tensor_info_ptr);
+  auto param_node = opt::BuildParameterNode(func_graph, tensor_info_ptr, cnode->fullname_with_scope());
   if (param_node == nullptr) {
     MS_LOG(ERROR) << "convert constant to param node failed.";
     return lite::RET_ERROR;
@@ -413,7 +413,7 @@ STATUS AdjustRandomNormal(const FuncGraphPtr &func_graph, const CNodePtr &cnode)
   auto tensor_info = CreateTensorInfo(data, data_size, shape, data_type);
   free(data);
   MS_CHECK_TRUE_RET(tensor_info != nullptr, RET_ERROR);
-  auto parameter = opt::BuildParameterNode(func_graph, cnode, tensor_info);
+  auto parameter = opt::BuildParameterNode(func_graph, tensor_info, cnode->fullname_with_scope());
   if (parameter == nullptr) {
     MS_LOG(ERROR) << "BuildParameterNode failed.";
     return RET_ERROR;

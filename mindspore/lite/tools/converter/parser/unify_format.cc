@@ -208,7 +208,8 @@ STATUS UnifyFormatToNHWC::DecideConvWeightSrcAndDstFormat(const CNodePtr &cnode,
     {converter::kFmkTypeTf, DecideTFConvWeightSrcFormat},
     {converter::kFmkTypeTflite, DecideTFLITEConvWeightSrcFormat},
     {converter::kFmkTypeCaffe, DecideCAFFEConvWeightSrcFormat},
-    {converter::kFmkTypeOnnx, DecideONNXConvWeightSrcFormat}};
+    {converter::kFmkTypeOnnx, DecideONNXConvWeightSrcFormat},
+    {converter::kFmkTypePytorch, DecideONNXConvWeightSrcFormat}};
   auto iter = decide_functions.find(fmk_type_);
   if (iter == decide_functions.end()) {
     MS_LOG(ERROR) << "current fmk don't support, please check.";

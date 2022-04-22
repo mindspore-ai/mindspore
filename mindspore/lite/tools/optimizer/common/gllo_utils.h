@@ -98,8 +98,8 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index);
 
 STATUS TransFilterFormat(const tensor::TensorPtr &tensor, schema::Format src_format, schema::Format dst_format);
 
-ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                const tensor::TensorPtr &tensor_info);
+ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const tensor::TensorPtr &tensor_info,
+                                const std::string &node_name);
 
 ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
                                         const std::string &node_name);
