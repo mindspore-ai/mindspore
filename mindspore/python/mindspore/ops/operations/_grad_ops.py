@@ -2409,3 +2409,15 @@ class FractionalMaxPool3DGradWithFixedKsize(Primitive):
     def __init__(self, data_format="NCDHW"):
         self.init_prim_io_names(inputs=["origin_input", "out_backprop", "argmax"], outputs=["y"])
         self.data_format = validator.check_string(data_format, ['NCDHW', "NDHWC"], 'data_format', self.name)
+
+
+class FractionalAvgPoolGrad(Primitive):
+    """Computes gradients for FractionalAvgPool operation."""
+
+    @prim_attr_register
+    def  __init__(self, overlapping=False):
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=["orig_input_tensor_shape", "out_backprop", "row_pooling_sequence",
+                                        "col_pooling_sequence"],
+                                outputs=["y"])
+        validator.check_value_type("overlapping", overlapping, [bool], self.name)

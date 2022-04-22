@@ -146,6 +146,8 @@ constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixe
 constexpr auto kFractionalMaxPool3DGradWithFixedKsize = "FractionalMaxPool3DGradWithFixedKsize";
 constexpr auto kFractionalMaxPool = "FractionalMaxPool";
 constexpr auto kFractionalMaxPoolGrad = "FractionalMaxPoolGrad";
+constexpr auto kFractionalAvgPool = "FractionalAvgPool";
+constexpr auto kFractionalAvgPoolGrad = "FractionalAvgPoolGrad";
 constexpr auto kCTCLoss = "CTCLoss";
 constexpr auto kLayerNorm = "LayerNorm";
 constexpr auto kLayerNormGrad = "LayerNormGrad";
@@ -596,6 +598,8 @@ GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool3DWithFixedKsize,
          std::make_shared<Primitive>("FractionalMaxPool3DWithFixedKsize"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool3DGradWithFixedKsize,
          std::make_shared<Primitive>("FractionalMaxPool3DGradWithFixedKsize"));
+GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPool, std::make_shared<Primitive>("FractionalAvgPool"));
+GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPoolGrad, std::make_shared<Primitive>("FractionalAvgPoolGrad"));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

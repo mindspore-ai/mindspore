@@ -42,6 +42,8 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
+from mindspore.ops.operations.nn_ops import FractionalAvgPool
+from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -1133,20 +1135,6 @@ class ApplyKerasMomentumNet(nn.Cell):
 
 
 test_case_math_ops = [
-    ('FractionalMaxPool', {
-        'block': FractionalMaxPool(pooling_ratio=[1.0, 1.4, 1.4, 1.0]),
-        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],
-        'desc_bprop': [([1, 8, 8, 4], {'dtype': np.int64}),
-                       ([9], {'dtype': np.int64}),
-                       ([9], {'dtype': np.int64})]}),
-    ('FractionalMaxPoolGrad', {
-        'block': FractionalMaxPoolGrad(),
-        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64}),
-                        ([1, 8, 8, 4], {'dtype': np.int64}),
-                        ([1, 8, 8, 4], {'dtype': np.int64}),
-                        ([9], {'dtype': np.int64}),
-                        ([9], {'dtype': np.int64})],
-        'skip': ['backward']}),
     ('Cross', {
         'block': P.Cross(dim=1),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
@@ -1944,6 +1932,33 @@ test_case_math_ops = [
 ]
 
 test_case_nn_ops = [
+    ('FractionalMaxPool', {
+        'block': FractionalMaxPool(pooling_ratio=[1.0, 1.4, 1.4, 1.0]),
+        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],
+        'desc_bprop': [([1, 8, 8, 4], {'dtype': np.int64}),
+                       ([9], {'dtype': np.int64}),
+                       ([9], {'dtype': np.int64})]}),
+    ('FractionalMaxPoolGrad', {
+        'block': FractionalMaxPoolGrad(),
+        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64}),
+                        ([1, 8, 8, 4], {'dtype': np.int64}),
+                        ([1, 8, 8, 4], {'dtype': np.int64}),
+                        ([9], {'dtype': np.int64}),
+                        ([9], {'dtype': np.int64})],
+        'skip': ['backward']}),
+    ('FractionalAvgPool', {
+        'block': FractionalAvgPool(pooling_ratio=[1.0, 1.4, 1.4, 1.0]),
+        'desc_inputs': [([1, 12, 12, 4], {'dtype': np.int64})],
+        'desc_bprop': [([1, 8, 8, 4], {'dtype': np.int64}),
+                       ([9], {'dtype': np.int64}),
+                       ([9], {'dtype': np.int64})]}),
+    ('FractionalAvgPoolGrad', {
+        'block': FractionalAvgPoolGrad(),
+        'desc_inputs': [Tensor(np.array([1, 12, 12, 4]), mstype.int64),
+                        ([1, 8, 8, 4], {'dtype': np.int64}),
+                        ([9], {'dtype': np.int64}),
+                        ([9], {'dtype': np.int64})],
+        'skip': ['backward']}),
     ('FractionalMaxPool3DWithFixedKsize', {
         'block': FractionalMaxPool3DWithFixedKsize(ksize=(1.0, 1.0, 2.0), output_shape=(2, 2, 3)),
         'desc_inputs': [([1, 1, 4, 4, 7], {'dtype': np.int64}),
