@@ -49,7 +49,12 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     auto x_shape = inputs.at(0)->GetShapeVector();
     auto v_shape = inputs.at(1)->GetShapeVector();
 
-    indices_ = GetValue<std::vector<int64_t>>(base_operator->GetAttr(kIndices));
+    auto value_ptr = base_operator->GetAttr(kIndices);
+    if (value_ptr->isa<mindspore::api::ValueSequence>()) {
+      indices_ = GetValue<std::vector<int64_t>>(value_ptr);
+    } else {
+      indices_ = {GetValue<int64_t>(value_ptr)};
+    }
 
     // x_shape_.size() == v_shape.size() is checked at front end
     // x_shape_[1:] == v_shape[1:] is checked at front end

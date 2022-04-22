@@ -21,6 +21,8 @@ from mindspore.ops import operations as P
 
 def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
     result = x.copy()
+    if v.shape[0] == 1:
+        v = np.squeeze(v, axis=0)
     if op == 'add':
         result[indices, :] += v
     elif op == 'sub':
@@ -53,6 +55,26 @@ def test_inplace_add(shape, indice_len, dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+def test_inplace_add_1d(shape, indice, dtype):
+    """
+    Feature: test InplaceAdd
+    Description: test InplaceAdd
+    Expectation: result is the same as expected
+    """
+    context.set_context(device_target='CPU')
+    x = np.random.random(shape).astype(dtype)
+    v = np.random.random((1,) + shape[1:]).astype(dtype)
+
+    result = P.InplaceAdd(indice)(Tensor(x), Tensor(v))
+    expected = inplace_op_np('add', x, v, indice)
+    np.allclose(result.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
 def test_inplace_sub(shape, indice_len, dtype):
@@ -69,4 +91,24 @@ def test_inplace_sub(shape, indice_len, dtype):
 
     result = P.InplaceSub(indices)(Tensor(x), Tensor(v))
     expected = inplace_op_np('sub', x, v, indices)
+    np.allclose(result.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+def test_inplace_sub_1d(shape, indice, dtype):
+    """
+    Feature: test InplaceAdd
+    Description: test InplaceAdd
+    Expectation: result is the same as expected
+    """
+    context.set_context(device_target='CPU')
+    x = np.random.random(shape).astype(dtype)
+    v = np.random.random((1,) + shape[1:]).astype(dtype)
+
+    result = P.InplaceSub(indice)(Tensor(x), Tensor(v))
+    expected = inplace_op_np('sub', x, v, indice)
     np.allclose(result.asnumpy(), expected)
