@@ -25,15 +25,21 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+constexpr char kMSRootInfo[] = "MS_CLUSTER_ROOT";
+
 class MsCommunicationGroup : public CommunicationGroup {
  public:
   explicit MsCommunicationGroup(const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank)
-      : CommunicationGroup(name, group_ranks, global_rank) {}
+      : CommunicationGroup(name, group_ranks, global_rank), root_info_(kMSRootInfo + name_) {}
 
   ~MsCommunicationGroup() override = default;
 
   bool Initialize(void *root_info) override { return true; }
   bool Finalize() override { return true; }
+  void *GenerateRootInfo(size_t *root_info_size) override;
+
+ private:
+  std::string root_info_;
 };
 using MsCommunicationGroupPtr = std::shared_ptr<MsCommunicationGroup>;
 }  // namespace cpu

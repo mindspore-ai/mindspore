@@ -1198,6 +1198,10 @@ bool StartPSSchedulerAction(const ResourcePtr &) {
 }
 
 bool DistributedSplitAction(const ResourcePtr &res) {
+  // Only run this action when the cluster is initialized.
+  if (!distributed::cluster::ClusterContext::instance()->initialized()) {
+    return true;
+  }
   MS_EXCEPTION_IF_NULL(res);
   FuncGraphPtr func_graph = res->func_graph();
   auto node = distributed::cluster::ClusterContext::instance()->node();
@@ -1453,6 +1457,7 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
   }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
+  (void)actions.emplace_back(std::make_pair("distribtued_split", DistributedSplitAction));
   if (ps::PSContext::instance()->is_worker()) {
     if (distributed::cluster::ClusterContext::instance()->initialized()) {
       MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";

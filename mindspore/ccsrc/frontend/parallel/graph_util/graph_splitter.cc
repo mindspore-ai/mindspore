@@ -795,6 +795,7 @@ void GraphSplitter::Run() {
   // Step 4: Create inter-process operators for segments with different labels.
   InterProcessOpEdgesInfo comm_edges = GenerateInterProcessOperators();
 
+  need_fuse_rpc_nodes_ = common::GetEnv(kEnvNeedFusion).empty() ? false : true;
   if (need_fuse_rpc_nodes_) {
     // Step 5: Fuse the rpc nodes to improve performance.
     const FusedInterProcessOpPairMap &fused_inter_process_op_pairs = exec_mode_->DoRpcNodeFusion(&comm_edges);

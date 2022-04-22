@@ -39,6 +39,8 @@ namespace mindspore {
 namespace parallel {
 using distributed::cluster::ClusterContext;
 
+constexpr char kEnvNeedFusion[] = "fusion";
+
 // The distributed label of the operators(kernel) used to split graph with send/recv nodes.
 struct OperatorLabel {
   uint32_t rank_id;
