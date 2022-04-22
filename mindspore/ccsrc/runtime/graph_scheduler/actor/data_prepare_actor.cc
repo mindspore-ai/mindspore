@@ -864,17 +864,9 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
     }
     (*host_tensors)[tensor_position] = input_tensor;
-
-    const AnfNodePtr &backend_node = host_data_source_actor_->FetchNode(tensor_position);
-    MS_EXCEPTION_IF_NULL(input_tensor);
-    auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
-    auto device_address = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
-    MS_EXCEPTION_IF_NULL(device_address);
-    if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType()) &&
-        !device_address->is_ptr_persisted()) {
-      AnfAlgo::SetOutputAddr(tensor_address, 0, backend_node.get());
-      tensor_address->SetNodeIndex(backend_node, 0);
-    }
+    // Avoid the device `ptr_` being hold by the input tensor and the output tensor, the input tensor address cannot be
+    // directly set to the input control node, which may be a passthrough node. The device 'ptr_' is re-malloced and
+    // device to device copy by input tensor address in data source process.
   }
 }
 }  // namespace runtime
