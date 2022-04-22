@@ -23,6 +23,7 @@
 #include <climits>
 #include <memory>
 #include <functional>
+#include <iomanip>
 #include "proto/ps.pb.h"
 #include "proto/fl.pb.h"
 #include "ir/anf.h"
@@ -149,11 +150,15 @@ constexpr auto kUpdateModelRejectClientNum = "updateModelRejectClientNum";
 constexpr auto kGetModelTotalClientNum = "getModelTotalClientNum";
 constexpr auto kGetModelAcceptClientNum = "getModelAcceptClientNum";
 constexpr auto kGetModelRejectClientNum = "getModelRejectClientNum";
+constexpr auto kParticipationTimeLevel1 = "participationTimeLevel1";
+constexpr auto kParticipationTimeLevel2 = "participationTimeLevel2";
+constexpr auto kParticipationTimeLevel3 = "participationTimeLevel3";
 constexpr auto kMinVal = "min_val";
 constexpr auto kMaxVal = "max_val";
 constexpr auto kQuant = "QUANT";
 constexpr auto kDiffSparseQuant = "DIFF_SPARSE_QUANT";
 constexpr auto kNoCompress = "NO_COMPRESS";
+constexpr auto kUpdateModel = "updateModel";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.

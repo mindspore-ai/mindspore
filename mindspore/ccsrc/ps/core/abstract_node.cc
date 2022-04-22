@@ -15,9 +15,11 @@
  */
 
 #include "ps/core/abstract_node.h"
-#include "ps/core/node_recovery.h"
-#include "ps/core/communicator/tcp_communicator.h"
+
+#include "include/common/debug/common.h"
 #include "ps/core/communicator/http_communicator.h"
+#include "ps/core/communicator/tcp_communicator.h"
+#include "ps/core/node_recovery.h"
 
 namespace mindspore {
 namespace ps {
@@ -65,6 +67,32 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   } else {
     MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                  << " the node id:" << node_info_.node_id_ << " send register success!";
+  }
+}
+
+void AbstractNode::SendFailMessageToScheduler(const std::string &node_role, const std::string &event_info) {
+  auto message_meta = std::make_shared<MessageMeta>();
+  MS_EXCEPTION_IF_NULL(message_meta);
+  message_meta->set_cmd(NodeCommand::FAILURE_EVENT_INFO);
+
+  std::string now_time = ps::core::CommUtil::GetNowTime().time_str_mill;
+  FailureEventMessage failure_event_message;
+  failure_event_message.set_node_role(node_role);
+  failure_event_message.set_ip(node_info_.ip_);
+  failure_event_message.set_port(node_info_.port_);
+  failure_event_message.set_time(now_time);
+  failure_event_message.set_event(event_info);
+
+  MS_LOG(INFO) << "The node role:" << node_role << "The node id:" << node_info_.node_id_
+               << "begin to send failure message to scheduler!";
+
+  if (!SendMessageAsync(client_to_scheduler_, message_meta, Protos::PROTOBUF,
+                        failure_event_message.SerializeAsString().data(), failure_event_message.ByteSizeLong())) {
+    MS_LOG(ERROR) << "The node role:" << node_role << " the node id:" << node_info_.node_id_
+                  << " send failure message timeout!";
+  } else {
+    MS_LOG(INFO) << "The node role:" << node_role << " the node id:" << node_info_.node_id_ << " send failure message "
+                 << event_info << "success!";
   }
 }
 

@@ -17,25 +17,25 @@
 #ifndef MINDSPORE_CCSRC_PS_CORE_ABSTRACT_NODE_H_
 #define MINDSPORE_CCSRC_PS_CORE_ABSTRACT_NODE_H_
 
-#include <utility>
-#include <string>
-#include <memory>
+#include <functional>
 #include <map>
-#include <vector>
 #include <queue>
 #include <unordered_map>
-#include <functional>
+#include <utility>
+#include <vector>
+#include <memory>
+#include <string>
 
-#include "ps/core/node.h"
-#include "ps/core/communicator/message.h"
-#include "ps/core/follower_scaler.h"
-#include "utils/ms_exception.h"
+#include "include/backend/visible.h"
 #include "ps/constants.h"
+#include "ps/core/communicator/communicator_base.h"
+#include "ps/core/communicator/message.h"
+#include "ps/core/communicator/task_executor.h"
+#include "ps/core/follower_scaler.h"
+#include "ps/core/node.h"
 #include "ps/core/node_info.h"
 #include "ps/core/recovery_base.h"
-#include "ps/core/communicator/task_executor.h"
-#include "ps/core/communicator/communicator_base.h"
-#include "include/backend/visible.h"
+#include "utils/ms_exception.h"
 
 namespace mindspore {
 namespace ps {
@@ -162,6 +162,9 @@ class BACKEND_EXPORT AbstractNode : public Node {
   bool HasIterationFailed(uint32_t iteration_num) const;
   // register cancel SafeMode function to node
   void SetCancelSafeModeCallBack(const CancelSafeModeFn &fn) { cancelSafeModeFn_ = fn; }
+
+  // server node and worker node send exception message to scheduler
+  void SendFailMessageToScheduler(const std::string &node_role, const std::string &event_info);
 
  protected:
   virtual void Register(const std::shared_ptr<TcpClient> &client);

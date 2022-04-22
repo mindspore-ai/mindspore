@@ -42,6 +42,7 @@ void ServerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   InitNodeNum();
+  bool is_recover = false;
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
@@ -62,6 +63,10 @@ void ServerNode::Initialize() {
   }
   InitClientToServer();
   is_already_stopped_ = false;
+  if (is_recover) {
+    std::string node_role = CommUtil::NodeRoleToString(node_info_.node_role_);
+    SendFailMessageToScheduler(node_role, "Node restart");
+  }
   MS_LOG(INFO) << "[Server start]: 3. Server node crete tcp client to scheduler successful!";
 }
 

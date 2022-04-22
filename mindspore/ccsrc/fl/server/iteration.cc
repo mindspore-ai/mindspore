@@ -15,27 +15,40 @@
  */
 
 #include "fl/server/iteration.h"
+
 #include <memory>
-#include <vector>
-#include <string>
 #include <numeric>
+#include <string>
 #include <unordered_map>
+#include <vector>
+
 #include "fl/server/model_store.h"
 #include "fl/server/server.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace fl {
 namespace server {
+namespace {
+const size_t kParticipationTimeLevelNum = 3;
+const size_t kIndexZero = 0;
+const size_t kIndexOne = 1;
+const size_t kIndexTwo = 2;
+const size_t kLastSecond = 59;
+}  // namespace
 class Server;
 
 Iteration::~Iteration() {
   move_to_next_thread_running_ = false;
+  is_date_rate_thread_running_ = false;
   next_iteration_cv_.notify_all();
   if (move_to_next_thread_.joinable()) {
     move_to_next_thread_.join();
   }
+  if (data_rate_thread_.joinable()) {
+    data_rate_thread_.join();
+  }
 }
-
 void Iteration::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunicator> &communicator) {
   MS_EXCEPTION_IF_NULL(communicator);
   communicator_ = communicator;
@@ -160,8 +173,13 @@ void Iteration::SetIterationRunning() {
 
   std::unique_lock<std::mutex> lock(iteration_state_mtx_);
   iteration_state_ = IterationState::kRunning;
-  start_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count());
+  start_time_ = ps::core::CommUtil::GetNowTime();
   MS_LOG(INFO) << "Iteratoin " << iteration_num_ << " start global timer.";
+  instance_name_ = ps::PSContext::instance()->instance_name();
+  if (instance_name_.empty()) {
+    MS_LOG(WARNING) << "instance name is empty";
+    instance_name_ = "instance_" + start_time_.time_str_mill;
+  }
   global_iter_timer_->Start(std::chrono::milliseconds(global_iteration_time_window_));
 }
 
@@ -175,7 +193,7 @@ void Iteration::SetIterationEnd() {
 
   std::unique_lock<std::mutex> lock(iteration_state_mtx_);
   iteration_state_ = IterationState::kCompleted;
-  complete_timestamp_ = LongToUlong(CURRENT_TIME_MILLI.count());
+  complete_time_ = ps::core::CommUtil::GetNowTime();
 }
 
 void Iteration::ScalingBarrier() {
@@ -631,6 +649,13 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
       round_client_num_map_[kUpdateModelAcceptClientNum] += round->kernel_accept_client_num();
       round_client_num_map_[kUpdateModelRejectClientNum] += round->kernel_reject_client_num();
       set_loss(loss_ + round->kernel_upload_loss());
+      auto update_model_complete_info = round->GetUpdateModelCompleteInfo();
+      if (update_model_complete_info.size() != kParticipationTimeLevelNum) {
+        continue;
+      }
+      round_client_num_map_[kParticipationTimeLevel1] += update_model_complete_info[kIndexZero].second;
+      round_client_num_map_[kParticipationTimeLevel2] += update_model_complete_info[kIndexOne].second;
+      round_client_num_map_[kParticipationTimeLevel3] += update_model_complete_info[kIndexTwo].second;
     } else if (round->name() == "getModel") {
       round_client_num_map_[kGetModelTotalClientNum] += round->kernel_total_client_num();
       round_client_num_map_[kGetModelAcceptClientNum] += round->kernel_accept_client_num();
@@ -656,6 +681,13 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
   }
 
   EndLastIter();
+  if (iteration_fail_num_ == ps::PSContext::instance()->continuous_failure_times()) {
+    std::string node_role = "SERVER";
+    std::string event = "Iteration failed " + std::to_string(iteration_fail_num_) + " times continuously";
+    server_node_->SendFailMessageToScheduler(node_role, event);
+    // Finish sending one message, reset cout num to 0
+    iteration_fail_num_ = 0;
+  }
   return true;
 }
 
@@ -695,6 +727,13 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
       end_last_iter_rsp.set_updatemodel_accept_client_num(round->kernel_accept_client_num());
       end_last_iter_rsp.set_updatemodel_reject_client_num(round->kernel_reject_client_num());
       end_last_iter_rsp.set_upload_loss(round->kernel_upload_loss());
+      auto update_model_complete_info = round->GetUpdateModelCompleteInfo();
+      if (update_model_complete_info.size() != kParticipationTimeLevelNum) {
+        MS_LOG(EXCEPTION) << "update_model_complete_info size is not equal 3";
+      }
+      end_last_iter_rsp.set_participation_time_level1_num(update_model_complete_info[kIndexZero].second);
+      end_last_iter_rsp.set_participation_time_level2_num(update_model_complete_info[kIndexOne].second);
+      end_last_iter_rsp.set_participation_time_level3_num(update_model_complete_info[kIndexTwo].second);
     } else if (round->name() == "getModel") {
       end_last_iter_rsp.set_getmodel_total_client_num(round->kernel_total_client_num());
       end_last_iter_rsp.set_getmodel_accept_client_num(round->kernel_accept_client_num());
@@ -744,6 +783,7 @@ void Iteration::EndLastIter() {
     MS_ERROR_IF_NULL_WO_RET_VAL(round);
     round->InitkernelClientVisitedNum();
     round->InitkernelClientUploadLoss();
+    round->ResetParticipationTimeAndNum();
   }
   round_client_num_map_.clear();
   set_loss(0.0f);
@@ -753,6 +793,11 @@ void Iteration::EndLastIter() {
     MS_LOG(WARNING) << "The server's training job is finished.";
   } else {
     MS_LOG(INFO) << "Move to next iteration:" << iteration_num_ << "\n";
+  }
+  if (iteration_result_.load() == IterationResult::kFail) {
+    iteration_fail_num_++;
+  } else {
+    iteration_fail_num_ = 0;
   }
 }
 
@@ -768,6 +813,9 @@ bool Iteration::SummarizeIteration() {
     return true;
   }
 
+  metrics_->set_instance_name(instance_name_);
+  metrics_->set_start_time(start_time_);
+  metrics_->set_end_time(complete_time_);
   metrics_->set_fl_name(ps::PSContext::instance()->fl_name());
   metrics_->set_fl_iteration_num(ps::PSContext::instance()->fl_iteration_num());
   metrics_->set_cur_iteration_num(iteration_num_);
@@ -781,12 +829,12 @@ bool Iteration::SummarizeIteration() {
   metrics_->set_round_client_num_map(round_client_num_map_);
   metrics_->set_iteration_result(iteration_result_.load());
 
-  if (complete_timestamp_ < start_timestamp_) {
-    MS_LOG(ERROR) << "The complete_timestamp_: " << complete_timestamp_ << ", start_timestamp_: " << start_timestamp_
-                  << ". One of them is invalid.";
+  if (complete_time_.time_stamp < start_time_.time_stamp) {
+    MS_LOG(ERROR) << "The complete_timestamp_: " << complete_time_.time_stamp
+                  << ", start_timestamp_: " << start_time_.time_stamp << ". One of them is invalid.";
     metrics_->set_iteration_time_cost(UINT64_MAX);
   } else {
-    metrics_->set_iteration_time_cost(complete_timestamp_ - start_timestamp_);
+    metrics_->set_iteration_time_cost(complete_time_.time_stamp - start_time_.time_stamp);
   }
 
   if (!metrics_->Summarize()) {
@@ -910,6 +958,10 @@ void Iteration::UpdateRoundClientNumMap(const std::shared_ptr<std::vector<unsign
   round_client_num_map_[kGetModelTotalClientNum] += end_last_iter_rsp.getmodel_total_client_num();
   round_client_num_map_[kGetModelAcceptClientNum] += end_last_iter_rsp.getmodel_accept_client_num();
   round_client_num_map_[kGetModelRejectClientNum] += end_last_iter_rsp.getmodel_reject_client_num();
+
+  round_client_num_map_[kParticipationTimeLevel1] += end_last_iter_rsp.participation_time_level1_num();
+  round_client_num_map_[kParticipationTimeLevel2] += end_last_iter_rsp.participation_time_level2_num();
+  round_client_num_map_[kParticipationTimeLevel3] += end_last_iter_rsp.participation_time_level3_num();
 }
 
 void Iteration::UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg) {
@@ -923,6 +975,103 @@ void Iteration::UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<un
 void Iteration::set_instance_state(InstanceState state) {
   instance_state_ = state;
   MS_LOG(INFO) << "Server instance state is " << GetInstanceStateStr(instance_state_);
+}
+
+void Iteration::SetFileConfig(const std::shared_ptr<ps::core::FileConfiguration> &file_configuration) {
+  file_configuration_ = file_configuration;
+}
+
+string Iteration::GetDataRateFilePath() {
+  ps::core::FileConfig data_rate_config;
+  if (!ps::core::CommUtil::ParseAndCheckConfigJson(file_configuration_.get(), kDataRate, &data_rate_config)) {
+    MS_LOG(EXCEPTION) << "Data rate parament in config is not correct";
+  }
+  return data_rate_config.storage_file_path;
+}
+
+void Iteration::StartThreadToRecordDataRate() {
+  MS_LOG(INFO) << "Start to create a thread to record data rate";
+  data_rate_thread_ = std::thread([&]() {
+    std::fstream file_stream;
+    std::string data_rate_path = GetDataRateFilePath();
+    MS_LOG(DEBUG) << "The data rate file path is " << data_rate_path;
+    uint32_t rank_id = server_node_->rank_id();
+    while (is_date_rate_thread_running_) {
+      // record data every 60 seconds
+      std::this_thread::sleep_for(std::chrono::seconds(60));
+      auto time_now = std::chrono::system_clock::now();
+      std::time_t tt = std::chrono::system_clock::to_time_t(time_now);
+      struct tm ptm;
+      (void)localtime_r(&tt, &ptm);
+      std::ostringstream time_day_oss;
+      time_day_oss << std::put_time(&ptm, "%Y-%m-%d");
+      std::string time_day = time_day_oss.str();
+      std::string data_rate_file = data_rate_path + "/" + time_day + "_flow_server" + std::to_string(rank_id) + ".json";
+      file_stream.open(data_rate_file, std::ios::out | std::ios::app);
+      if (!file_stream.is_open()) {
+        MS_LOG(WARNING) << data_rate_file << "is not open! Please check config file!";
+        return;
+      }
+      std::map<uint64_t, size_t> send_datas;
+      std::map<uint64_t, size_t> receive_datas;
+      for (const auto &round : rounds_) {
+        if (round == nullptr) {
+          MS_LOG(WARNING) << "round is nullptr";
+          continue;
+        }
+        auto send_data = round->GetSendData();
+        for (const auto &it : send_data) {
+          if (send_datas.find(it.first) != send_datas.end()) {
+            send_datas[it.first] = send_datas[it.first] + it.second;
+          } else {
+            send_datas.emplace(it);
+          }
+        }
+        auto receive_data = round->GetReceiveData();
+        for (const auto &it : receive_data) {
+          if (receive_datas.find(it.first) != receive_datas.end()) {
+            receive_datas[it.first] = receive_datas[it.first] + it.second;
+          } else {
+            receive_datas.emplace(it);
+          }
+        }
+        round->ClearData();
+      }
+
+      std::map<uint64_t, std::vector<size_t>> all_datas;
+      for (auto &it : send_datas) {
+        std::vector<size_t> send_and_receive_data;
+        send_and_receive_data.emplace_back(it.second);
+        send_and_receive_data.emplace_back(0);
+        all_datas.emplace(it.first, send_and_receive_data);
+      }
+      for (auto &it : receive_datas) {
+        if (all_datas.find(it.first) != all_datas.end()) {
+          std::vector<size_t> &temp = all_datas.at(it.first);
+          temp[1] = it.second;
+        } else {
+          std::vector<size_t> send_and_receive_data;
+          send_and_receive_data.emplace_back(0);
+          send_and_receive_data.emplace_back(it.second);
+          all_datas.emplace(it.first, send_and_receive_data);
+        }
+      }
+      for (auto &it : all_datas) {
+        nlohmann::json js;
+        auto data_time = static_cast<time_t>(it.first);
+        struct tm data_tm;
+        (void)localtime_r(&data_time, &data_tm);
+        std::ostringstream oss_second;
+        oss_second << std::put_time(&data_tm, "%Y-%m-%d %H:%M:%S");
+        js["time"] = oss_second.str();
+        js["send"] = it.second[0];
+        js["receive"] = it.second[1];
+        file_stream << js << "\n";
+      }
+      (void)file_stream.close();
+    }
+  });
+  return;
 }
 }  // namespace server
 }  // namespace fl

@@ -17,22 +17,23 @@
 #ifndef MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
 #define MINDSPORE_CCSRC_FL_SERVER_KERNEL_ROUND_ROUND_KERNEL_H_
 
+#include <chrono>
 #include <map>
 #include <memory>
-#include <string>
-#include <vector>
 #include <mutex>
 #include <queue>
-#include <utility>
-#include <chrono>
+#include <string>
 #include <thread>
 #include <unordered_map>
-#include "kernel/common_utils.h"
-#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include <utility>
+#include <vector>
+
 #include "fl/server/common.h"
-#include "fl/server/local_meta_store.h"
 #include "fl/server/distributed_count_service.h"
 #include "fl/server/distributed_metadata_store.h"
+#include "fl/server/local_meta_store.h"
+#include "kernel/common_utils.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
 
 namespace mindspore {
 namespace fl {
@@ -102,6 +103,24 @@ class RoundKernel {
 
   bool verifyResponse(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
 
+  void CalculateSendData(size_t send_len);
+
+  void CalculateReceiveData(size_t receive_len);
+  // Record the size of send data and the time stamp
+  void RecordSendData(uint64_t time_stamp_second, size_t send_data);
+
+  // Record the size of receive data and the time stamp
+  void RecordReceiveData(uint64_t time_stamp_second, size_t receive_data);
+
+  // Get the info of send data
+  std::map<uint64_t, size_t> GetSendData();
+
+  // Get the info of receive data
+  std::map<uint64_t, size_t> GetReceiveData();
+
+  // Clear the send data info
+  void ClearData();
+
  protected:
   // Send response to client, and the data can be released after the call.
   void SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
@@ -127,6 +146,26 @@ class RoundKernel {
   std::atomic<size_t> accept_client_num_;
 
   std::atomic<float> upload_loss_;
+
+  // The mutex for send_data_and_time_
+  std::mutex send_data_rate_mutex_;
+
+  // The size of send data ant time
+  std::map<uint64_t, size_t> send_data_and_time_;
+
+  // The mutex for receive_data_and_time_
+  std::mutex receive_data_rate_mutex_;
+
+  // The size of receive data and time
+  std::map<uint64_t, size_t> receive_data_and_time_;
+
+  std::atomic_size_t send_data_ = 0;
+
+  std::atomic_uint64_t send_data_time_ = 0;
+
+  std::atomic_size_t receive_data_ = 0;
+
+  std::atomic_uint64_t receive_data_time_ = 0;
 };
 }  // namespace kernel
 }  // namespace server

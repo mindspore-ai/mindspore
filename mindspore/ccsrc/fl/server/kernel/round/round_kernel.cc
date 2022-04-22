@@ -15,13 +15,15 @@
  */
 
 #include "fl/server/kernel/round/round_kernel.h"
+
+#include <chrono>
 #include <mutex>
 #include <queue>
-#include <chrono>
+#include <string>
 #include <thread>
 #include <utility>
-#include <string>
 #include <vector>
+
 #include "fl/server/iteration.h"
 
 namespace mindspore {
@@ -65,6 +67,7 @@ void RoundKernel::SendResponseMsg(const std::shared_ptr<ps::core::MessageHandler
     MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
+  CalculateSendData(len);
 }
 
 void RoundKernel::SendResponseMsgInference(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
@@ -77,6 +80,7 @@ void RoundKernel::SendResponseMsgInference(const std::shared_ptr<ps::core::Messa
     MS_LOG(WARNING) << "Sending response failed.";
     return;
   }
+  CalculateSendData(len);
 }
 
 bool RoundKernel::verifyResponse(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data,
@@ -128,6 +132,67 @@ void RoundKernel::InitClientUploadLoss() { upload_loss_ = 0.0f; }
 void RoundKernel::UpdateClientUploadLoss(const float upload_loss) { upload_loss_ = upload_loss_ + upload_loss; }
 
 float RoundKernel::upload_loss() const { return upload_loss_; }
+
+void RoundKernel::CalculateSendData(size_t send_len) {
+  uint64_t second_time_stamp =
+    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  if (send_data_time_ == 0) {
+    send_data_ = send_len;
+    send_data_time_ = second_time_stamp;
+    return;
+  }
+  if (second_time_stamp == send_data_time_) {
+    send_data_ += send_len;
+  } else {
+    RecordSendData(send_data_time_, send_data_);
+    send_data_time_ = second_time_stamp;
+    send_data_ = send_len;
+  }
+}
+
+void RoundKernel::CalculateReceiveData(size_t receive_len) {
+  uint64_t second_time_stamp =
+    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  if (receive_data_time_ == 0) {
+    receive_data_time_ = second_time_stamp;
+    receive_data_ = receive_len;
+    return;
+  }
+  if (second_time_stamp == receive_data_time_) {
+    receive_data_ += receive_len;
+  } else {
+    RecordReceiveData(receive_data_time_, receive_data_);
+    receive_data_time_ = second_time_stamp;
+    receive_data_ = receive_len;
+  }
+}
+
+void RoundKernel::RecordSendData(uint64_t time_stamp_second, size_t send_data) {
+  std::lock_guard<std::mutex> lock(send_data_rate_mutex_);
+  send_data_and_time_.emplace(time_stamp_second, send_data);
+}
+
+void RoundKernel::RecordReceiveData(uint64_t time_stamp_second, size_t receive_data) {
+  std::lock_guard<std::mutex> lock(receive_data_rate_mutex_);
+  receive_data_and_time_.emplace(time_stamp_second, receive_data);
+}
+
+std::map<uint64_t, size_t> RoundKernel::GetSendData() {
+  std::lock_guard<std::mutex> lock(send_data_rate_mutex_);
+  return send_data_and_time_;
+}
+
+std::map<uint64_t, size_t> RoundKernel::GetReceiveData() {
+  std::lock_guard<std::mutex> lock(receive_data_rate_mutex_);
+  return receive_data_and_time_;
+}
+
+void RoundKernel::ClearData() {
+  std::lock_guard<std::mutex> lock(send_data_rate_mutex_);
+  std::lock_guard<std::mutex> lock2(receive_data_rate_mutex_);
+  send_data_and_time_.clear();
+  receive_data_and_time_.clear();
+}
 }  // namespace kernel
 }  // namespace server
 }  // namespace fl

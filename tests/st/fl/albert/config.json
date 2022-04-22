@@ -15,6 +15,14 @@
         "storage_type": 1,
         "storage_file_path": "metrics.json"
     },
+    "dataRate": {
+        "storage_type": 1,
+        "storage_file_path": ".."
+    },
+    "failureEvent": {
+        "storage_type": 1,
+        "storage_file_path": "event.txt"
+    },
     "server_recovery": {
         "storage_type": 1,
         "storage_file_path": "../server_recovery.json"
