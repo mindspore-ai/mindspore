@@ -41,7 +41,7 @@ static constexpr const auto kHcclAlgoOption = "HCCL_algorithm";
   }
 
 static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std::string_view rank_id,
-                                                         std::string_view rank_file) {
+                                                         std::string_view rank_file = "") {
   auto env_deploy_mode = mindspore::common::GetEnv(kHcclDeployModeEnv);
   if (env_deploy_mode.empty()) {
     MS_LOG(WARNING) << "The environment variable " << kHcclDeployModeEnv << " is not set. Now set to default value 0";
@@ -54,7 +54,6 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
                                                             {ge::OPTION_EXEC_DEVICE_ID, std::to_string(device_id)},
                                                             {ge::OPTION_EXEC_RANK_ID, rank_id.data()},
                                                             {ge::OPTION_EXEC_POD_NAME, rank_id.data()},
-                                                            {ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data()},
                                                             {ge::OPTION_GRAPH_RUN_MODE, "1"},
                                                             {ge::OPTION_EXEC_HCCL_FLAG, "1"},
                                                             {ge::OPTION_EXEC_DEPLOY_MODE, env_deploy_mode}};
@@ -63,7 +62,9 @@ static std::map<std::string, std::string> GenHcclOptions(uint32_t device_id, std
   if (!env_hccl_algo.empty()) {
     default_options_map.emplace(kHcclAlgoOption, env_hccl_algo);
   }
-
+  if (!rank_file.empty()) {
+    default_options_map.emplace(ge::OPTION_EXEC_RANK_TABLE_FILE, rank_file.data());
+  }
   return default_options_map;
 }
 
@@ -150,7 +151,7 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
 
 void HcclAdapter::CheckExcutionMode() const {
   auto hccl_mode = GetCurrentHcclMode();
-  if (hccl_mode != hccl_mode_) {
+  if (hccl_mode != hccl_mode_ && !common::UseMPI()) {
     MS_LOG(EXCEPTION) << "HCCL is initialized in " << GetHcclModeString(hccl_mode_) << " but current execution mode is "
                       << GetHcclModeString(hccl_mode)
                       << ". Please set the execution mode before HCCL init(), and then do not change it in the "
@@ -166,16 +167,25 @@ std::string HcclAdapter::GetHcclModeString(HcclMode hccl_mode) {
   return kHcclModeString.at(hccl_mode);
 }
 
-bool HcclAdapter::InitHccl() {
+bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id) {
   MS_LOG(INFO) << "Start init hccl adapter.";
+  common::SetEnv("HCCL_WHITELIST_DISABLE", "1");
   std::lock_guard<std::mutex> lock(init_mutex_);
   if (init_flag_) {
     MS_LOG(INFO) << "Hccl has been inited, skip.";
     return true;
   }
   InitPlugin();
+  auto options = GenHcclOptions(device_id, rank_id);
+  bool ret = InitKernelInfoStore(options);
+  if (!ret) {
+    return false;
+  }
+  ret = InitHcclExec();
+  if (!ret) {
+    return false;
+  }
   init_flag_ = true;
-  hccl_mode_ = HcclMode::kKernelByKernel;
   MS_LOG(INFO) << "Init hccl adapter success.";
   return true;
 }
@@ -192,7 +202,8 @@ bool HcclAdapter::InitHccl(uint32_t device_id, std::string_view rank_id, std::st
   hccl_mode_ = hccl_mode;
   InitPlugin();
   if (hccl_mode_ == HcclMode::kGraph) {
-    bool ret = InitKernelInfoStore(device_id, rank_id, rank_file);
+    auto options = GenHcclOptions(device_id, rank_id, rank_file);
+    bool ret = InitKernelInfoStore(options);
     if (!ret) {
       return false;
     }
@@ -220,8 +231,11 @@ bool HcclAdapter::FinalizeHccl() {
     MS_LOG(INFO) << "Hccl has never been inited, skip.";
     return true;
   }
-
-  if (hccl_mode_ == HcclMode::kGraph) {
+  if (common::UseMPI()) {
+    (void)HcclCollectiveGroup::instance().DestroyCommGroup();
+    (void)FinalizeHcclExec();
+    (void)FinalizeKernelInfoStore();
+  } else if (hccl_mode_ == HcclMode::kGraph) {
     (void)FinalizeHcclExec();
     (void)FinalizeKernelInfoStore();
   } else {
@@ -356,7 +370,7 @@ HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType da
   return launch_hccl_recv_(recv_buf, count, dataType, srcRank, hccl_comm, stream);
 }
 
-bool HcclAdapter::InitKernelInfoStore(uint32_t device_id, std::string_view rank_id, std::string_view rank_file) {
+bool HcclAdapter::InitKernelInfoStore(const std::map<std::string, std::string> options) {
   MS_LOG(INFO) << "Start init hccl kernel info store.";
   MS_EXCEPTION_IF_NULL(init_hcom_graph_adapter_);
   MS_EXCEPTION_IF_NULL(get_hccl_kernel_info_store_);
@@ -378,7 +392,6 @@ bool HcclAdapter::InitKernelInfoStore(uint32_t device_id, std::string_view rank_
   ops_kernel_builder_ = iter->second;
   MS_EXCEPTION_IF_NULL(ops_kernel_builder_);
   // init ops_kernel_builder
-  auto options = GenHcclOptions(device_id, rank_id, rank_file);
   auto ret = ops_kernel_builder_->Initialize(options);
   if (ret != ge::SUCCESS) {
     MS_LOG(EXCEPTION) << "Init hccl kernel builder failed.";
@@ -450,13 +463,6 @@ bool HcclAdapter::InitHcclComm(std::string_view rank_id, std::string_view rank_f
 
 bool HcclAdapter::FinalizeHcclComm() {
   MS_LOG(INFO) << "Start finalize hccl comm.";
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  auto execution_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!task_sink && execution_mode == kGraphMode) {
-    HcclCollectiveGroup::instance().DestroyCommGroup();
-  }
   if (hccl_comm_ == nullptr) {
     return true;
   }

@@ -436,6 +436,7 @@ constexpr auto kAttrDestRank = "dest_rank";
 constexpr auto kAttrSrcRank = "src_rank";
 constexpr auto kAttrSrTag = "sr_tag";
 constexpr auto kAttrRootRank = "root_rank";
+constexpr auto kAttrComm = "comm";
 constexpr auto kAttrIsTraining = "is_training";
 constexpr auto kAttrFusionId = "fusion_id";
 constexpr auto kAttrDuplicated = "duplicated";

@@ -22,7 +22,7 @@ HcclAdapter &HcclAdapter::GetInstance() {
   static HcclAdapter instance;
   return instance;
 }
-bool HcclAdapter::InitHccl() { return true; }
+bool HcclAdapter::InitHccl(uint32_t, std::string_view) { return true; }
 bool HcclAdapter::InitHccl(uint32_t, std::string_view, std::string_view, HcclMode) { return true; }
 bool HcclAdapter::FinalizeHccl() { return true; }
 HcclResult HcclAdapter::HcclCreateGroup(const std::string &, uint32_t, uint32_t *) const { return HCCL_SUCCESS; }

@@ -111,9 +111,9 @@ void AscendBucket::LaunchAllReduce() {
   }
   MS_EXCEPTION_IF_NULL(ar_input_address_list_[0]);
   MS_EXCEPTION_IF_NULL(ar_output_address_list_[0]);
-  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(ar_input_address_list_[0]->GetMutablePtr(),
-                                                                    ar_output_address_list_[0]->GetMutablePtr(),
-                                                                    hccl_count, iter->second, op_type, stream_);
+  auto hccl_result = hccl::HcclAdapter::GetInstance().HcclAllReduce(
+    ar_input_address_list_[0]->GetMutablePtr(), ar_output_address_list_[0]->GetMutablePtr(), hccl_count, iter->second,
+    op_type, stream_, kHcclWorldGroup);
   if (hccl_result != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "HCCL AllReduce failed, ret:" << hccl_result;
   }

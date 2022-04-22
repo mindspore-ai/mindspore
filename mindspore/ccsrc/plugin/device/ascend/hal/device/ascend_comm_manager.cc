@@ -58,11 +58,7 @@ class AscendCommManager : public CommManager {
     auto rank_size = rank_id_list.size();
     HCCL_GROUP_CHECK_EMPTY(group);
     HCCL_GROUP_CHECK_IS_WORLD(group);
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    bool is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-    auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
-    if (!is_task_sink && mode == kGraphMode) {
+    if (common::UseMPI()) {
       HcclCollectiveGroup::instance().CreateCommGroup(group, rank_id_list);
     } else {
       HCCL_RUN_CHECK(string("create communicate group"), group,
@@ -75,13 +71,12 @@ class AscendCommManager : public CommManager {
   bool GetRankID(const string &group, unsigned int *rank_id) const override {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    if (common::UseMPI()) {
       HCCL_GROUP_CHECK_EMPTY(group);
-      if (!context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
-        *rank_id = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankId(group));
-      } else {
-        HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
-      }
+      *rank_id = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankId(group));
+    } else if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      HCCL_GROUP_CHECK_EMPTY(group);
+      HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(group, rank_id));
     } else {
       HCCL_RUN_CHECK(string("get rank_id"), group, hccl::HcclAdapter::GetInstance().HcclGetRankId(rank_id));
     }
@@ -91,14 +86,13 @@ class AscendCommManager : public CommManager {
   bool GetRankSize(const string &group, unsigned int *rank_size) const override {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    if (common::UseMPI()) {
       HCCL_GROUP_CHECK_EMPTY(group);
-      if (!context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK)) {
-        *rank_size = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankSize(group));
-      } else {
-        HCCL_RUN_CHECK(string("get rank size"), group,
-                       hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
-      }
+      *rank_size = static_cast<unsigned int>(HcclCollectiveGroup::instance().GetRankSize(group));
+    } else if (context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+      HCCL_GROUP_CHECK_EMPTY(group);
+      HCCL_RUN_CHECK(string("get rank size"), group,
+                     hccl::HcclAdapter::GetInstance().HcclGetRankSize(group, rank_size));
     } else {
       HCCL_RUN_CHECK(string("get rank size"), group, hccl::HcclAdapter::GetInstance().HcclGetRankSize(rank_size));
     }

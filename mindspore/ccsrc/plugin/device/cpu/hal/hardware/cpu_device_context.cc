@@ -363,7 +363,7 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 }
 
 bool CPUDeviceContext::LoadCollectiveCommLib() {
-  bool using_mpi = common::CheckUseMPI();
+  bool using_mpi = common::UseMPI();
   if (using_mpi) {
     std::string mpi_comm_lib_name = "libmpi_collective.so";
     auto loader = std::make_shared<CollectiveCommLibLoader>(mpi_comm_lib_name);

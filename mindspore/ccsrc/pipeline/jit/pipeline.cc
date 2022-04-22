@@ -1437,13 +1437,9 @@ void InitHccl() {
   mindspore::python_adapter::set_python_env_flag(true);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 #if ENABLE_D
-  bool task_sink = true;
-  auto single_op = common::GetEnv(kGraphOpRun);
-  if (single_op == "1") {
-    task_sink = false;
-  }
-  auto mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE);
-  if (!task_sink && mode == kGraphMode) {
+  if (common::UseMPI()) {
+    MS_LOG(INFO) << "The process are launched with OpenMPI, the environment variable for rank table will be ignored "
+                    "even if set by users.";
     MS_LOG(INFO) << "mpi collective init.";
     if (!HcclCollectiveGroup::instance().InitCollective()) {
       MS_LOG(EXCEPTION) << "Mpi init failed, please check if mpirun is used correctly.";
@@ -1451,8 +1447,8 @@ void InitHccl() {
     auto rank_id = HcclCollectiveGroup::instance().GetRankId(kHcclWorldGroup);
     common::SetEnv(kRankID, std::to_string(rank_id).c_str());
     device_id = IntToUint(HcclCollectiveGroup::instance().GetDeviceId());
+    common::SetEnv("DEVICE_ID", std::to_string(device_id).c_str());
     ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
-    ms_context->set_param<bool>(MS_CTX_ENABLE_TASK_SINK, false);
   }
 #endif
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);

@@ -32,7 +32,7 @@ bool CollectiveInitializer::collective_inited() const { return collective_inited
 const void *CollectiveInitializer::collective_handle() { return collective_handle_; }
 
 void CollectiveInitializer::InitCollective() {
-  if (common::CheckUseMPI()) {
+  if (common::UseMPI()) {
     void *handle = dlopen("libgpu_collective.so", RTLD_LAZY);
     if (handle == nullptr) {
       MS_LOG(EXCEPTION)
@@ -78,7 +78,7 @@ uint32_t CollectiveInitializer::GetRankSize(const std::string &group_name) {
 
 uint32_t CollectiveInitializer::local_rank_id() {
   uint32_t local_rank_id;
-  if (common::CheckUseMPI()) {
+  if (common::UseMPI()) {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_local_rank_funcptr =
       reinterpret_cast<GetLocalRankId>(dlsym(const_cast<void *>(collective_handle_), "local_rank_id"));
@@ -92,7 +92,7 @@ uint32_t CollectiveInitializer::local_rank_id() {
 
 bool CollectiveInitializer::CreateCommunicationGroup(const std::string &group_name,
                                                      const std::vector<uint32_t> &group_ranks) {
-  if (common::CheckUseMPI()) {
+  if (common::UseMPI()) {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto create_comm_group_funcptr =
       reinterpret_cast<CreateCommGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "CreateCommGroup"));
@@ -108,7 +108,7 @@ bool CollectiveInitializer::CreateCommunicationGroup(const std::string &group_na
 }
 
 bool CollectiveInitializer::DestroyCommunicationGroup(const std::string &group_name) {
-  if (common::CheckUseMPI()) {
+  if (common::UseMPI()) {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto destroy_group_funcptr =
       reinterpret_cast<DestroyGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "DestroyGroup"));
@@ -124,7 +124,7 @@ bool CollectiveInitializer::DestroyCommunicationGroup(const std::string &group_n
 }
 
 uint32_t CollectiveInitializer::GetRankIDByGroup(const std::string &group_name) {
-  if (common::CheckUseMPI()) {
+  if (common::UseMPI()) {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_rank_id_funcptr =
       reinterpret_cast<GetRankIDByGroupFunc>(dlsym(const_cast<void *>(collective_handle_), "GetRankIDByGroup"));
@@ -140,7 +140,7 @@ uint32_t CollectiveInitializer::GetRankIDByGroup(const std::string &group_name) 
 }
 
 uint32_t CollectiveInitializer::GetGroupSize(const std::string &group_name) {
-  if (common::CheckUseMPI()) {
+  if (common::UseMPI()) {
     MS_EXCEPTION_IF_NULL(collective_handle_);
     auto get_group_size_funcptr =
       reinterpret_cast<GetGroupSizeFunc>(dlsym(const_cast<void *>(collective_handle_), "GetGroupSize"));
