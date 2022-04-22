@@ -62,6 +62,7 @@ if(BUILD_LITE)
     add_library(mindspore::crypto ALIAS openssl::crypto)
 else()
     if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
+        set(openssl_CFLAGS -fvisibility=hidden)
         mindspore_add_pkg(openssl
                 VER 1.1.1k
                 LIBS ssl crypto

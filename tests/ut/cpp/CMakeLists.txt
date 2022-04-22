@@ -276,7 +276,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
-                          mindspore::event_openssl ${PYTHON_LIBRARIES} pthread util dl)
+                          mindspore::event_openssl mindspore::ssl mindspore::crypto ${PYTHON_LIBRARIES} pthread util dl)
     if(ENABLE_MINDDATA)
         target_link_libraries(ut_tests PRIVATE mindspore::sqlite mindspore::jpeg_turbo mindspore::turbojpeg
                 mindspore::opencv_core mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
