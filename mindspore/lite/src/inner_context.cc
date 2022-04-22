@@ -21,6 +21,7 @@
 #include "src/common/log_util.h"
 #ifdef ENABLE_MINDRT
 #include "thread/actor_threadpool.h"
+#include "thread/parallel_threadpool.h"
 #endif
 #ifdef SUPPORT_NPU
 #include "include/HiAiModelManagerType.h"
@@ -116,17 +117,14 @@ int InnerContext::CreateThreadPool() {
     }
 
 #ifdef ENABLE_MINDRT
-#ifdef OPERATOR_PARALLELISM
-    int actor_parallel_thread = this->enable_parallel_ ? (this->thread_num_ > 2 ? (this->thread_num_ / 2) : 1) : 1;
-#else
-    int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
-#endif
-    if (this->affinity_core_list_.empty()) {
-      thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, bind_mode);
+    if (!this->enable_parallel_ && this->inter_op_parallel_num_ > 1) {
+      thread_pool_ = ParallelThreadPool::CreateThreadPool(this->inter_op_parallel_num_, this->thread_num_,
+                                                          this->affinity_core_list_, bind_mode);
       MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
     } else {
-      thread_pool_ =
-        ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_, this->affinity_core_list_);
+      int actor_parallel_thread = this->enable_parallel_ ? kDefaultParallelNum : 1;
+      thread_pool_ = ActorThreadPool::CreateThreadPool(actor_parallel_thread, this->thread_num_,
+                                                       this->affinity_core_list_, bind_mode);
       MS_CHECK_TRUE_MSG(thread_pool_ != nullptr, RET_NULL_PTR, "Create Allocator failed");
     }
 #else

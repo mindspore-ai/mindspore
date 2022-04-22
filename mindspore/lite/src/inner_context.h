@@ -33,9 +33,7 @@
 
 namespace mindspore::lite {
 #ifdef ENABLE_MINDRT
-#ifndef OPERATOR_PARALLELISM
 constexpr int kDefaultParallelNum = 2;
-#endif
 #endif
 struct InnerContext : public Context {
  public:

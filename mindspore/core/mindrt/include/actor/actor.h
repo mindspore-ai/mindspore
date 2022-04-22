@@ -152,6 +152,7 @@ class MS_CORE_API ActorBase {
  private:
   friend class ActorMgr;
   friend class ActorWorker;
+  friend class ParallelWorker;
 
   // KMSG Msg Handler
   virtual void HandlekMsg(const std::unique_ptr<MessageBase> &msg);
