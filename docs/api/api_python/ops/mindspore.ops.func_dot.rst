@@ -10,7 +10,7 @@ mindspore.ops.dot
     - **x1** (Tensor) - 第一个输入的Tensor，数据类型为float16或float32，秩必须大于或等于2。
     - **x2** (Tensor) - 第二个输入的Tensor，数据类型为float16或float32，秩必须大于或等于2。
 
-    **输出：**
+    **返回：**
 
     Tensor， `x1` 和 `x2` 的点积。
 

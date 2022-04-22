@@ -17,7 +17,7 @@
     - **x2** (Tensor) - tensor_dot的第二个输入Tensor，其数据类型为float16或float32。
     - **axes** (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]) - 指定 `a` 和 `b` 计算轴，可为单个值，也可为长度为2的tuple或list。如果传递了单个值 `N` ，则自动从输入 `a` 的shape中获取最后N个维度，从输入 `b` 的shape中获取前N个维度，分别作为每个维度的轴。
 
-    **输出：**
+    **返回：**
 
     Tensor，输出Tensor的shape为 :math:`(N + M)` 。其中 :math:`N` 和 :math:`M` 在两个输入中没有计算，是自由轴。
 
