@@ -19,41 +19,39 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-class NetReLUGradV2(nn.Cell):
-    def __init__(self):
-        super(NetReLUGradV2, self).__init__()
-        self.relu_grad_v2 = G.ReluGradV2()
-        self.dy = Parameter(initializer(Tensor(np.array([[[[1, 0, 1],
-                                                           [0, 1, 0],
-                                                           [1, 1, 1]]]]).astype(np.float32)), [1, 1, 3, 3]), name='dy')
-        self.mask = Parameter(initializer(Tensor(np.array([[[[0, 1, 1],
-                                                             [1, 0, 1],
-                                                             [1, 1, 0]]]])
-                                                 .astype(np.uint8)), [1, 1, 3, 3]), name='mask')
-
-    def construct(self):
-        return self.relu_grad_v2(self.dy, self.mask)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_relu_grad_v2():
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.int32])
+def test_relu_grad_v2(dtype):
     """
     Feature: ReLUGradV2 cpu kernel.
     Description: test the rightness of ReLUGradV2 cpu kernel.
     Expectation: the output is almost same as numpy output.
     """
+    class NetReLUGradV2(nn.Cell):
+        def __init__(self):
+            super(NetReLUGradV2, self).__init__()
+            self.relu_grad_v2 = G.ReluGradV2()
+            self.dy = Parameter(Tensor(np.array([[[[1, 0, 1],
+                                                   [0, 1, 0],
+                                                   [1, 1, 1]]]], dtype=dtype)), name='dy')
+            self.mask = Parameter(Tensor(np.array([[[[0, 1, 1],
+                                                     [1, 0, 1],
+                                                     [1, 1, 0]]]], dtype=np.uint8)), name='mask')
+
+        def construct(self):
+            return self.relu_grad_v2(self.dy, self.mask)
+
     relu_grad_v2 = NetReLUGradV2()
     output = relu_grad_v2()
-    expect = np.array([[[[0, 0, 1], [0, 0, 0], [1, 1, 0]]]]).astype(np.float32)
-    error = np.ones(shape=[3, 3]) * 1.0e-6
-    diff = np.abs(output.asnumpy() - expect)
-    assert np.all(diff < error)
+    expect = np.array([[[[0, 0, 1],
+                         [0, 0, 0],
+                         [1, 1, 0]]]], dtype=dtype)
+    assert np.allclose(output.asnumpy(), expect)

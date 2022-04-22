@@ -254,7 +254,7 @@ class KernelMod {
                     const std::vector<KernelTensorPtr> &outputs) {
     return true;
   }
-  // Resize is for updating shape related information and performing shape related operation(e.g., calculat output
+  // Resize is for updating shape related information and performing shape related operation(e.g., calculate output
   // tensor size and allocate output tensor memory).
   virtual bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                       const std::vector<KernelTensorPtr> &outputs,
