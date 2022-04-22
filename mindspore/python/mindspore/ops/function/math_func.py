@@ -1844,6 +1844,27 @@ def minimum(x, y):
     return minimum_(x, y)
 
 
+def cdist(x, y, p=2.0):
+    """
+    Computes batched the p-norm distance between each pair of the two collections of row vectors.
+
+    Refer to :func:'mindspore.ops.cdist' for more detal
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
+        >>> input_y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
+        >>> output = ops.cdist(input_x, input_y, 2.0)
+        >>> print(output)
+        [[[2.8284273 2.8284273]
+          [1.4142137 1.4142137]]]
+    """
+
+    cdist_ = P.Cdist(p)
+    return cdist_(x, y)
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -1915,6 +1936,7 @@ __all__ = [
     'bitwise_xor',
     'invert',
     'erf',
-    'erfc'
+    'erfc',
+    'cdist'
 ]
 __all__.sort()

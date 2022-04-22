@@ -60,6 +60,12 @@ TypePtr CdistGradInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }
 }  // namespace
 
+float CdistGrad::get_p() const {
+  auto value_ptr = this->GetAttr(kP);
+  return GetValue<float>(value_ptr);
+}
+void CdistGrad::set_p(const float p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
+
 MIND_API_OPERATOR_IMPL(CdistGrad, BaseOperator);
 AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {

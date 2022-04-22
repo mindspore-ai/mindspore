@@ -32,6 +32,14 @@ class MIND_API CdistGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CdistGrad);
   CdistGrad() : BaseOperator(kNameCdistGrad) { InitIOName({"grad", "input_x", "input_y", "cdist"}, {"output"}); }
+
+  /// \brief Set p, An optional float >= 0 or inf. Defaults to 2.0.
+  void set_p(const float p);
+
+  /// \brief Get p.
+  ///
+  /// \return p.
+  float get_p() const;
 };
 
 abstract::AbstractBasePtr CdistGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

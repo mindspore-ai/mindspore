@@ -1208,7 +1208,7 @@ class Cdist(Primitive):
         ValueError: If dimension of `input_x` or `input_y` is neither 2 nor 3.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))

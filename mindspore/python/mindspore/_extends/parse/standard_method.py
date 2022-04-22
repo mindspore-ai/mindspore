@@ -1776,6 +1776,12 @@ def float_floordiv(x, y):
     return floor(x / y)
 
 
+def cdist(x, y, p=2.0):
+    """
+    Computes batched the p-norm distance between each pair of the two collections of row vectors.
+    """
+    return F.cdist(x, y, p)
+
 #############
 # Iteration #
 #############

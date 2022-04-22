@@ -172,7 +172,7 @@ bool CdistCpuKernelMod::LaunchKernel(int64_t start, int64_t end) {
     for (int64_t p_i = 0; p_i < r0_; p_i++) {
       auto in_data_tmp1 = in_data1;
       for (int64_t r_i = 0; r_i < r1_; r_i++) {
-        dist_func_(in_data0, in_data1, &(out_data[r_i]), m_, p_);
+        dist_func_(in_data0, in_data_tmp1, &(out_data[r_i]), m_, p_);
         in_data_tmp1 = in_data_tmp1 + m_;
       }
       in_data0 = in_data0 + m_;
