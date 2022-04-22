@@ -422,7 +422,7 @@ void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
       if (expand_fg == nullptr) {
         MS_LOG(EXCEPTION) << msg;
       }
-      MS_LOG(WARNING) << msg << " but expand success.";
+      MS_LOG(INFO) << msg << " but expand success.";
       graphkernel::InlineExpandFuncGraph(node, expand_fg);
       graph->SetExecOrderByDefault();
       retry = true;

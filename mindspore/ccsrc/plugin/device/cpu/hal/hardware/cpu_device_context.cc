@@ -35,6 +35,8 @@
 #include "backend/common/pass/replace_node_by_proxy.h"
 #include "backend/common/pass/erase_visit_attr.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
+#include "common/graph_kernel/adapter/expander.h"
+#include "common/graph_kernel/value_graph_binder.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "profiler/device/cpu/cpu_profiling.h"
@@ -201,17 +203,41 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
 }  // namespace
 
 void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
-  auto &nodes = graph->execution_order();
-  for (const auto &node : nodes) {
-    MS_EXCEPTION_IF_NULL(node);
-    if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
-      SetKernelInfo(node);
-    } else {
-      SetControlOpInfo(node);
+  AnfNodeSet cache;
+  bool retry;
+  do {
+    retry = false;
+    auto &node_list = graph->execution_order();
+    for (auto &node : node_list) {
+      if (cache.count(node)) continue;
+      if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
+        auto result = SetKernelInfoWithMsg(node);
+        auto success = result.first;
+        auto msg = result.second;
+        if (success) {
+          cache.insert(node);
+          continue;
+        }
+#ifdef ENABLE_AKG
+        auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+        if (expand_fg == nullptr) {
+          MS_LOG(EXCEPTION) << msg;
+        }
+        MS_LOG(INFO) << msg << " but expand success.";
+        graphkernel::InlineExpandFuncGraph(node, expand_fg);
+        graph->SetExecOrderByDefault();
+#endif
+        retry = true;
+        break;
+      } else {
+        SetControlOpInfo(node);
+      }
     }
-  }
+  } while (retry);
+#ifdef ENABLE_AKG
+  graphkernel::BindValueToGraph().Run(graph);
+#endif
 }
-
 void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);

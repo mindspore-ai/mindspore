@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 using DataType = std::pair<TypeId, std::string>;
-
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
+std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &apply_kernel_ptr);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

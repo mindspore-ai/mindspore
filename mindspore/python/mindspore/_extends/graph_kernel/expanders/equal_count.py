@@ -43,7 +43,7 @@ class EqualCount(Expander):
         eql_val = graph_builder.emit('Equal', [input_x, input_y])
         cast_val = graph_builder.emit('Cast', [eql_val], attrs={'dst_type': 'float32'})
         axis = list(range(len(input_x.shape)))
-        result = graph_builder.emit('ReduceSum', [cast_val], attrs={'reduce_axis': axis, 'keep_dims': True})
+        result = graph_builder.emit('ReduceSum', [cast_val], attrs={'reduce_axis': axis, 'keep_dims': False})
 
         if result.dtype != input_x.dtype:
             result = graph_builder.emit('Cast', [result], attrs={'dst_type': input_x.dtype})
