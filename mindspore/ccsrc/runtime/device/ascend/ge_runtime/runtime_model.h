@@ -47,7 +47,7 @@ class RuntimeModel {
   void InitResource(const std::shared_ptr<DavinciModel> &davinci_model);
   void GenerateTask(uint32_t device_id, uint64_t session_id, const std::shared_ptr<DavinciModel> &davinci_model);
   void InitStream(const std::shared_ptr<DavinciModel> &davinci_model);
-  void InitEvent(uint32_t event_num);
+  void InitEvent(uint32_t event_num, rtStream_t model_stream);
   void InitLabel(const std::shared_ptr<DavinciModel> &davinci_model);
   void RtModelUnbindStream() noexcept;
   void RtStreamDestory() noexcept;
