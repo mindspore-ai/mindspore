@@ -16,23 +16,14 @@
 
 #ifndef MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
 #define MINDSPORE_LITE_SRC_PACK_WEIGHT_MANAGER_H_
-#include <map>
-#include <string>
-#include <algorithm>
-#include <utility>
-#include <vector>
-#include <set>
-#include <mutex>
-#include <unordered_map>
 #include <memory>
-#include "src/tensor.h"
 #include "include/model.h"
+#include "include/errorcode.h"
+#include "src/tensor.h"
 #ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight.h"
 #endif
 namespace mindspore::lite {
-enum PackStatus : int8_t { NOTPACK = 1, PACKED = 2, MALLOC = 3 };
-
 class PackWeightManager {
  public:
   static PackWeightManager *GetInstance();
@@ -44,6 +35,8 @@ class PackWeightManager {
   void Free(void *tensor_data);
 
  private:
+  void *MallocData(size_t size);
+  void FreeData(void *tensor_data);
   PackWeightManager() = default;
 #ifdef SHARING_MODEL_WEIGHT
   std::shared_ptr<PackWeight> pack_weight_ = nullptr;
