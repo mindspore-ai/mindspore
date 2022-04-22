@@ -55,7 +55,7 @@ OP_REGISTER("Sqrt", ElemwiseOp);
 OP_REGISTER("Rsqrt", ElemwiseOp);
 OP_REGISTER("Neg", ElemwiseOp);
 OP_REGISTER("Reciprocal", ElemwiseOp);
-OP_REGISTER("Cast", CastOp);
+OP_REGISTER("Cast", ElemwiseOp);
 OP_REGISTER("Round", ElemwiseOp);
 OP_REGISTER("Maximum", ElemwiseOp);
 OP_REGISTER("Minimum", ElemwiseOp);

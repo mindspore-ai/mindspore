@@ -421,12 +421,4 @@ std::vector<DShape> StandardNormalOp::InferShape(const NodePtrList &, const DAtt
   CHECK_ATTR(attrs, "shape");
   return {GetListInt(attrs.find("shape")->second)};
 }
-
-void CastOp::RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *) {
-  CHECK_ATTR(prim->attrs(), "dst_type");
-  auto dst_type = prim->GetAttr("dst_type");
-  if (dst_type->isa<StringImm>()) {
-    prim->set_attr("dst_type", StringToType(GetValue<std::string>(dst_type)));
-  }
-}
 }  // namespace mindspore::graphkernel::inner

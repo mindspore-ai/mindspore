@@ -199,14 +199,5 @@ class StandardNormalOp : public OpaqueOp {
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; }
 };
-
-class CastOp : public ElemwiseOp {
- public:
-  explicit CastOp(const std::string &op) : ElemwiseOp(op) {}
-  ~CastOp() = default;
-
- protected:
-  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *) override;
-};
 }  // namespace mindspore::graphkernel::inner
 #endif

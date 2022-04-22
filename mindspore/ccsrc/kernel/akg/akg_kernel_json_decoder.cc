@@ -59,18 +59,19 @@ class CNodeDecoder {
   explicit CNodeDecoder(std::map<std::string, AnfNodePtr> *nodes_map) : nodes_map_(*nodes_map) {}
   ~CNodeDecoder() = default;
   CNodePtr DecodeCNode(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph, kernel::Processor processor) {
-    MS_LOG(DEBUG) << "start decode cnode, " << cnode_json;
+    op_name_ = cnode_json[kJsonKeyName];
+    MS_LOG(DEBUG) << "Start decode cnode " << op_name_ << ", json: " << cnode_json;
     // decode attrs.
     if (!DecodeAttrs(cnode_json)) {
-      MS_LOG(ERROR) << "Decode attrs failed.";
+      MS_LOG(ERROR) << "Decode attrs failed. op: " << op_name_ << ", json: " << cnode_json;
       return nullptr;
     }
     if (!DecodeInputDesc(cnode_json, func_graph) || cnode_ == nullptr) {
-      MS_LOG(ERROR) << "Decode inputs failed.";
+      MS_LOG(ERROR) << "Decode inputs failed. op: " << op_name_ << ", json: " << cnode_json;
       return nullptr;
     }
     if (!DecodeOutputDesc(cnode_json, func_graph)) {
-      MS_LOG(ERROR) << "Decode outputs failed.";
+      MS_LOG(ERROR) << "Decode outputs failed. op: " << op_name_ << ", json: " << cnode_json;
       return nullptr;
     }
     CreateKernelInfo(processor);
@@ -82,6 +83,9 @@ class CNodeDecoder {
   ValuePtr ParseValue(const nlohmann::json &attr_json, const std::string &type) const {
     if (type == "str") {
       std::string value = attr_json[kJsonKeyValue];
+      if (op_name_ == "Cast" && attr_json[kJsonKeyName] == kAttrDstType) {
+        return StringToType(value);
+      }
       return MakeValue(value);
     } else if (type == "int") {
       int64_t value = attr_json[kJsonKeyValue];
@@ -126,8 +130,7 @@ class CNodeDecoder {
   }
 
   bool DecodeInputDesc(const nlohmann::json &cnode_json, const FuncGraphPtr &func_graph) {
-    std::string op_name = cnode_json[kJsonKeyName];
-    auto primitive = CreatePrimitiveWithAttrs(op_name);
+    auto primitive = CreatePrimitiveWithAttrs();
     MS_EXCEPTION_IF_NULL(primitive);
 
     // collect inputs.
@@ -141,7 +144,7 @@ class CNodeDecoder {
       if (input_desc.find(kJsonKeyValue) != input_desc.end()) {
         inputs.push_back(DecodeValueNode(input_desc, func_graph));
       } else if (nodes_map_.count(name) == 0) {
-        MS_LOG(ERROR) << "Input: " << name << " of: " << op_name << " not found.";
+        MS_LOG(ERROR) << "Input: " << name << " of: " << op_name_ << " not found.";
         return false;
       } else {
         inputs.push_back(nodes_map_[name]);
@@ -233,8 +236,8 @@ class CNodeDecoder {
     cnode_->set_abstract(abstract);
   }
 
-  PrimitivePtr CreatePrimitiveWithAttrs(const std::string &op_name) const {
-    auto primitive = std::make_shared<Primitive>(op_name);
+  PrimitivePtr CreatePrimitiveWithAttrs() const {
+    auto primitive = std::make_shared<Primitive>(op_name_);
     for (const auto &attr : cnode_attrs_) {
       (void)primitive->AddAttr(attr.first, attr.second);
     }
@@ -285,6 +288,7 @@ class CNodeDecoder {
   std::vector<ShapeVector> input_shapes_;
   std::vector<ShapeVector> output_shapes_;
   CNodePtr cnode_{nullptr};
+  std::string op_name_;
 };
 }  // namespace
 
