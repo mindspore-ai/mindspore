@@ -92,13 +92,13 @@ static bool ResizeBilinear3C(const unsigned char *src, int src_width, int src_he
   if (dst_height >= (INT_MAX / 3 / dst_width)) {
     return false;
   }
-  int *data_buf = new int[2 * dst_width + 2 * dst_height];
+  int *data_buf = new int[2 * sizeof(int) * (2 * dst_width + dst_height)];
 
   int *x_offset = data_buf;
-  int *y_offset = data_buf + dst_width;
+  int *y_offset = data_buf + dst_width + dst_width;
 
-  int16_t *x_weight = reinterpret_cast<int16_t *>(data_buf + dst_width + dst_height);
-  int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width);
+  int16_t *x_weight = reinterpret_cast<int16_t *>(data_buf + dst_width);
+  int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width + dst_width + dst_height);
 
   if (!InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 3)) {
     delete[] data_buf;
@@ -185,13 +185,13 @@ static bool ResizeBilinear1C(const unsigned char *src, int src_width, int src_he
     return false;
   }
 
-  int *data_buf = new int[2 * dst_width + 2 * dst_height];
+  int *data_buf = new int[2 * sizeof(int) * (2 * dst_width + dst_height)];
 
   int *x_offset = data_buf;
-  int *y_offset = data_buf + dst_width;
+  int *y_offset = data_buf + dst_width + dst_width;
 
-  int16_t *x_weight = reinterpret_cast<int16_t *>(data_buf + dst_width + dst_height);
-  int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width);
+  int16_t *x_weight = reinterpret_cast<int16_t *>(data_buf + dst_width);
+  int16_t *y_weight = reinterpret_cast<int16_t *>(x_weight + dst_width + dst_width + dst_height);
 
   if (!InitBilinearWeight(x_offset, x_weight, scale_width, dst_width, src_width, 1)) {
     delete[] data_buf;
