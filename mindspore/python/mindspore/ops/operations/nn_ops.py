@@ -585,7 +585,7 @@ class Mish(PrimitiveWithInfer):
         Tensor, with the same type and shape as the `x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU`` 
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If dtype of `x` is neither float16 nor float32.
@@ -2207,6 +2207,56 @@ class Conv2DBackpropInput(Primitive):
             for x in pad_list:
                 validator.check_non_negative_int(x, 'element of pad_list', self.name)
             self.pad_list = pad_list
+
+
+class MaxPool3DWithArgmax(Primitive):
+    r"""
+    Performs a 3D max pooling on the input Tensor and returns both max values and indices.
+
+    Refer to :func:`mindspore.ops.max_pool3d` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.arange(2 * 1 * 2 * 2 * 2).reshape((2, 1, 2, 2, 2)), mindspore.float32)
+        >>> max_pool3d_with_arg_op = ops.MaxPool3DWithArgmax(ksize=2, strides=1, pads=1)
+        >>> output_tensor, argmax = max_pool3d_with_arg_op(x)
+        >>> print(output_tensor.shape)
+        [2, 1, 3, 3, 3]
+        >>> print(argmax.shape)
+        [2, 1, 3, 3, 3]
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False,
+                 data_format="NCDHW", argmax_type=mstype.int64):
+        """Initialize MaxPool3DWithArgmax."""
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.init_prim_io_names(inputs=['x'], outputs=['y', 'argmax'])
+        validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
+        validator.check_value_type('data_format', data_format, str, self.name)
+        validator.check_value_type("argmax_type", argmax_type, [mstype.Type], self.name)
+        argmax_type_valid_values = (mstype.int32, mstype.int64)
+        validator.check_type_name(
+            "argmax_type", argmax_type, argmax_type_valid_values, self.name)
+        self.data_format = validator.check_string(
+            data_format, ['NCDHW'], 'data_format', self.name)
+        if argmax_type == mstype.int32:
+            self.add_prim_attr('argmax_type', 'int32')
+        elif argmax_type == mstype.int64:
+            self.add_prim_attr('argmax_type', 'int64')
+        else:
+            raise ValueError(f"For '{self.name}', the 'argmax_type' must be mstype.int32 or mstype.int64, "
+                             f"but got {self.argmax_type}.")
+        self.ksize = _check_3d_int_or_tuple("ksize", ksize, self.name, ret_five=False)
+        self.add_prim_attr('ksize', self.ksize)
+        self.strides = _check_3d_int_or_tuple("strides", strides, self.name, ret_five=False)
+        self.add_prim_attr('strides', self.strides)
+        self.pads = _check_3d_int_or_tuple("pads", pads, self.name, greater_zero=False, ret_five=False)
+        self.add_prim_attr('pads', self.pads)
+        self.dilation = _check_3d_int_or_tuple("dilation", dilation, self.name, allow_five=True, ret_five=False)
+        self.add_prim_attr('dilation', self.dilation)
 
 
 class Conv2DTranspose(Conv2DBackpropInput):

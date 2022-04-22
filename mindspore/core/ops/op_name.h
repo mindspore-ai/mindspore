@@ -311,6 +311,7 @@ constexpr auto kLr = "lr";
 constexpr auto kL1 = "l1";
 constexpr auto kL2 = "l2";
 constexpr auto kLrPower = "lr_power";
+constexpr auto kArgmaxType = "argmax_type";
 constexpr auto kNumSample = "num_samples";
 
 enum Index : size_t {
