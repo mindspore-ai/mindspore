@@ -205,6 +205,9 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
 void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
   AnfNodeSet cache;
   bool retry;
+#ifdef ENABLE_AKG
+  bool do_expand = false;
+#endif
   do {
     retry = false;
     auto &node_list = graph->execution_order();
@@ -223,19 +226,24 @@ void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
         if (expand_fg == nullptr) {
           MS_LOG(EXCEPTION) << msg;
         }
+        do_expand = true;
         MS_LOG(INFO) << msg << " but expand success.";
         graphkernel::InlineExpandFuncGraph(node, expand_fg);
         graph->SetExecOrderByDefault();
-#endif
         retry = true;
         break;
+#else
+        MS_LOG(EXCEPTION) << msg;
+#endif
       } else {
         SetControlOpInfo(node);
       }
     }
   } while (retry);
 #ifdef ENABLE_AKG
-  graphkernel::BindValueToGraph().Run(graph);
+  if (do_expand) {
+    graphkernel::BindValueToGraph().Run(graph);
+  }
 #endif
 }
 void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {

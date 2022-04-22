@@ -408,6 +408,7 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
   AnfNodeSet cache;
   bool retry;
+  bool do_expand = false;
   do {
     retry = false;
     auto &node_list = graph->execution_order();
@@ -422,6 +423,7 @@ void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
       if (expand_fg == nullptr) {
         MS_LOG(EXCEPTION) << msg;
       }
+      do_expand = true;
       MS_LOG(INFO) << msg << " but expand success.";
       graphkernel::InlineExpandFuncGraph(node, expand_fg);
       graph->SetExecOrderByDefault();
@@ -429,7 +431,9 @@ void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
       break;
     }
   } while (retry);
-  graphkernel::BindValueToGraph().Run(graph);
+  if (do_expand) {
+    graphkernel::BindValueToGraph().Run(graph);
+  }
 }
 
 void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }
