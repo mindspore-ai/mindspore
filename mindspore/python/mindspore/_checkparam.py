@@ -120,7 +120,7 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
         elif len(arg_value) == 5:
             if not allow_five:
                 _raise_message()
-            ret = arg_value if ret_five else (arg_value[1], arg_value[2], arg_value[3])
+            ret = arg_value if ret_five else (arg_value[2], arg_value[3], arg_value[4])
         else:
             _raise_message()
         return ret

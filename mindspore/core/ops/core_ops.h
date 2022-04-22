@@ -213,6 +213,7 @@ constexpr auto kUpsampleNearest3D = "UpsampleNearest3D";
 constexpr auto kHSwish = "HSwish";
 constexpr auto kHSwishGrad = "HSwishGrad";
 constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
+constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -540,6 +541,8 @@ GVAR_DEF(PrimitivePtr, kPrimMaxPoolGradV1, std::make_shared<Primitive>("MaxPoolG
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolGradGrad, std::make_shared<Primitive>("MaxPoolGradGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolWithArgmax, std::make_shared<Primitive>("MaxPoolWithArgmax"));
 GVAR_DEF(PrimitivePtr, kPrimMaxPoolGradWithArgmax, std::make_shared<Primitive>("MaxPoolGradWithArgmax"));
+GVAR_DEF(PrimitivePtr, kPrimMaxPool3DWithArgmax, std::make_shared<Primitive>("MaxPool3DWithArgmax"));
+GVAR_DEF(PrimitivePtr, kPrimMaxPool3DGradWithArgmax, std::make_shared<Primitive>("MaxPool3DGradWithArgmax"));
 GVAR_DEF(PrimitivePtr, kPrimApplyCenteredRMSProp, std::make_shared<Primitive>("ApplyCenteredRMSProp"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool, std::make_shared<Primitive>("AvgPool"));
 GVAR_DEF(PrimitivePtr, kPrimAvgPool3D, std::make_shared<Primitive>("AvgPool3D"));
