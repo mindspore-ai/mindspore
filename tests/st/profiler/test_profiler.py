@@ -30,7 +30,7 @@ from mindspore.dataset.vision import Inter
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train import Model
-from mindspore.profiler import Profiler
+from mindspore import Profiler
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):

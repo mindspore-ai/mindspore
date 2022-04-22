@@ -27,6 +27,7 @@ from .context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_au
                      get_ps_context, reset_ps_context, set_fl_context, get_fl_context
 from .version import __version__
 from .rewrite import *
+from .profiler import Profiler
 
 
 __all__ = ["run_check"]
@@ -36,3 +37,4 @@ __all__.extend(train.__all__)
 __all__.extend(log.__all__)
 __all__.extend(context.__all__)
 __all__.extend(rewrite.__all__)
+__all__.append("Profiler")

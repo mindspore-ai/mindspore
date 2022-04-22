@@ -24,7 +24,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.profiler import Profiler
+from mindspore import Profiler
 from tests.security_utils import security_off_wrap
 
 
