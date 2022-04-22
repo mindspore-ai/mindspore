@@ -224,6 +224,7 @@ from .reduce_max import _reduce_max_tbe
 from .reduce_min import _reduce_min_tbe
 from .reduce_sum import _reduce_sum_tbe
 from .reduce_sum_ds import _reduce_sum_ds_tbe
+from .reduce_std import _reduce_std_tbe
 from .round import _round_tbe
 from .tanh import _tanh_tbe
 from .tanh_ds import _tanh_ds_tbe

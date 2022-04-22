@@ -27,6 +27,7 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import math_ops as math
 from ..primitive import constexpr
+from ..operations.math_ops import ReduceStd
 
 
 transpose = P.Transpose()
@@ -92,6 +93,58 @@ def get_bprop_index_lerp(self):
         dstart = F.cast(dstart, F.dtype(start))
         dend = F.cast(dend, F.dtype(end))
         return dstart, dend, dweight
+
+    return bprop
+
+
+@bprop_getters.register(ReduceStd)
+def get_bprop_reduce_std(self):
+    """Grad definition for `ReduceStd` operation."""
+    axis = list(self.axis)
+    keep_dims = self.keep_dims
+    unbiased = self.unbiased
+    expand_dims_op = P.ExpandDims()
+    size_op = P.Size()
+    mul_op = P.Mul()
+    sub_op = P.Sub()
+    div_op = P.Div()
+    add_op = P.Add()
+
+    def bprop(x, out, dout):
+        std_d = dout[0]
+        std = out[0]
+        mean_d = dout[1]
+        mean = out[1]
+        if axis == [] and x.shape != ():
+            for i, _ in enumerate(x.shape):
+                axis.append(i)
+        for i, _ in enumerate(axis):
+            if axis[i] < 0:
+                axis[i] = axis[i] + len(x.shape)
+        for i in range(1, len(axis)):
+            for j in range(0, len(axis) - i):
+                if axis[j] > axis[j + 1]:
+                    axis[j], axis[j + 1] = axis[j + 1], axis[j]
+        if not keep_dims and x.shape != ():
+            for i in axis:
+                std_d = expand_dims_op(std_d, i)
+                std = expand_dims_op(std, i)
+                mean_d = expand_dims_op(mean_d, i)
+                mean = expand_dims_op(mean, i)
+        dx = sub_op(x, mean)
+        dx = mul_op(dx, std_d)
+        dx = div_op(dx, std)
+        num = size_op(x)
+        for i, _ in enumerate(x.shape):
+            if i not in axis:
+                num = num / x.shape[i]
+        if unbiased:
+            dx = div_op(dx, num - 1)
+        else:
+            dx = div_op(dx, num)
+        temp = div_op(mean_d, num)
+        dx = add_op(dx, temp)
+        return (dx,)
 
     return bprop
 

@@ -31,6 +31,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselK0, BesselK1, BesselK0e, BesselK1e, Bucketize
+from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.random_ops import NonDeterministicInts
@@ -1803,6 +1804,11 @@ test_case_math_ops = [
         'block': P.Cos(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('ReduceStd', {
+        'block': ReduceStd(axis=0, unbiased=True, keep_dims=True),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]).astype(np.float32))],
+        'desc_bprop': [(Tensor(np.array([1]).astype(np.float32)),
+                        Tensor(np.array([1]).astype(np.float32)))]}),
     ('ReduceAll', {
         'block': P.ReduceAll(),
         'desc_const': [1],

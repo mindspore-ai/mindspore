@@ -65,6 +65,7 @@ constexpr auto kACosGrad = "ACosGrad";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kReciprocal = "Reciprocal";
 constexpr auto kInv = "Inv";
+constexpr auto kReduceStd = "ReduceStd";
 constexpr auto kLog = "Log";
 constexpr auto kLogicalXor = "LogicalXor";
 constexpr auto kSelect = "Select";
@@ -704,6 +705,7 @@ GVAR_DEF(PrimitivePtr, kPrimReduceAll, std::make_shared<Primitive>("ReduceAll"))
 GVAR_DEF(PrimitivePtr, kPrimReduceAny, std::make_shared<Primitive>("ReduceAny"));
 GVAR_DEF(PrimitivePtr, kPrimReduceMax, std::make_shared<Primitive>("ReduceMax"));
 GVAR_DEF(PrimitivePtr, kPrimReduceMin, std::make_shared<Primitive>("ReduceMin"));
+GVAR_DEF(PrimitivePtr, kPrimReduceStd, std::make_shared<Primitive>(kReduceStd));
 GVAR_DEF(PrimitivePtr, kPrimCentralization, std::make_shared<Primitive>("Centralization"));
 GVAR_DEF(PrimitivePtr, kPrimNeg, std::make_shared<Primitive>(kNeg));
 GVAR_DEF(PrimitivePtr, kPrimSin, std::make_shared<Primitive>("Sin"));
