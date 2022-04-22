@@ -68,10 +68,5 @@ FuncGraphPtr ListInsert::GenerateFuncGraph(const abstract::AbstractBasePtrList &
   ret->set_output(out);
   return ret;
 }
-
-REGISTER_PYBIND_DEFINE(ListInsert_, ([](const py::module *m) {
-                         (void)py::class_<ListInsert, MetaFuncGraph, std::shared_ptr<ListInsert>>(*m, "ListInsert_")
-                           .def(py::init<const std::string &>());
-                       }));
 }  // namespace prim
 }  // namespace mindspore

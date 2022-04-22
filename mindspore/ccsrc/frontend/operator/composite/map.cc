@@ -319,12 +319,5 @@ abstract::AbstractBasePtrList Map::NormalizeArgs(const AbstractBasePtrList &args
                        });
   return broadened;
 }
-
-REGISTER_PYBIND_DEFINE(Map_, ([](const py::module *m) {
-                         (void)py::class_<MapPy, MetaFuncGraph, std::shared_ptr<MapPy>>(*m, "Map_")
-                           .def(py::init<bool, std::shared_ptr<MultitypeFuncGraph>>(), py::arg("reverse"),
-                                py::arg("ops"))
-                           .def(py::init<bool>(), py::arg("reverse"));
-                       }));
 }  // namespace prim
 }  // namespace mindspore

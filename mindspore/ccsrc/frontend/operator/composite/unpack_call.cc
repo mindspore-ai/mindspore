@@ -92,10 +92,5 @@ FuncGraphPtr UnpackCall::GenerateFuncGraph(const AbstractBasePtrList &args_spec_
   ret_graph->set_output(ret_graph->NewCNodeInOrder(elems));
   return ret_graph;
 }
-
-REGISTER_PYBIND_DEFINE(UnpackCall_, ([](const py::module *m) {
-                         (void)py::class_<UnpackCall, MetaFuncGraph, std::shared_ptr<UnpackCall>>(*m, "UnpackCall_")
-                           .def(py::init<std::string &>());
-                       }));
 }  // namespace prim
 }  // namespace mindspore

@@ -145,32 +145,6 @@ TEST_F(TestPrim, test_typeof) {
   ASSERT_TRUE(*res_value == Int(64));
 }
 
-TEST_F(TestPrim, test_list_map) {
-  AbstractBasePtrList args_spec_list;
-
-  AbstractBasePtr abstract_v1 = FromValue(static_cast<int64_t>(1), false);
-  AbstractBasePtr abstract_u1 = FromValue(static_cast<int64_t>(1), false);
-  auto abstract_list1 = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v1, abstract_u1}));
-  AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(2), false);
-  AbstractBasePtr abstract_u2 = FromValue(static_cast<int64_t>(2), false);
-  auto abstract_list2 = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v2, abstract_u2}));
-  auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
-  AbstractBasePtr abstract_func = ToAbstract(prim_scalar_add);
-
-  args_spec_list.push_back(abstract_func);
-  args_spec_list.push_back(abstract_list1);
-  args_spec_list.push_back(abstract_list2);
-
-  auto prim_list_map = std::make_shared<Primitive>("list_map");
-  FuncGraphPtr func_graph = MakeFuncGraph(prim_list_map, 3);
-  AbstractBasePtr res = engine_->Run(func_graph, args_spec_list).eval_result->abstract();
-  auto expected = std::make_shared<AbstractList>(
-    AbstractBasePtrList({FromValue(static_cast<int64_t>(3), false), FromValue(static_cast<int64_t>(3), false)}));
-  res->dump();
-  MS_LOG(INFO) << "result res: " << res->ToString();
-  MS_LOG(INFO) << "result expected: " << expected->ToString();
-  ASSERT_TRUE(*res == *expected);
-}
 
 TEST_F(TestPrim, test_list_reduce) {
   AbstractBasePtrList args_spec_list;

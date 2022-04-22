@@ -491,37 +491,6 @@ AbstractBasePtr InferImplBroadcastGradientArgs(const AnalysisEnginePtr &, const 
   return BroadcastGradientArgsDiff(x_shape, y_shape);
 }
 
-AbstractBasePtr InferImplListMap(const AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  // Inputs: fn, list1, list2, ...
-  MS_EXCEPTION_IF_NULL(engine);
-  MS_EXCEPTION_IF_NULL(primitive);
-  if (args_spec_list.size() <= 1) {
-    MS_LOG(EXCEPTION) << "The ListMap operator requires at least 1 list. But the input size is "
-                      << args_spec_list.size() << ".";
-  }
-  AbstractFunctionPtr fn = CheckArg<AbstractFunction>(primitive->name(), args_spec_list, 0);
-  // check args from 1.
-  CheckArgsSpec<AbstractList>(AbstractBasePtrList(args_spec_list.begin() + 1, args_spec_list.end()));
-
-  AbstractBasePtrList subargs;
-  for (std::size_t i = 1; i < args_spec_list.size(); i++) {
-    AbstractListPtr l_ptr = dyn_cast<AbstractList>(args_spec_list[i]);
-    if (l_ptr == nullptr) {
-      MS_LOG(EXCEPTION) << "The " << i << "th argument of ListMap should be a list, but got "
-                        << args_spec_list[i]->ToString() << ".";
-    }
-    subargs.push_back(AbstractJoin(l_ptr->elements()));
-  }
-  EvalResultPtr engin_exc = engine->Execute(fn, subargs);
-  MS_EXCEPTION_IF_NULL(engin_exc);
-  AbstractBasePtrList result;
-  for (std::size_t i = 1; i < args_spec_list.size(); i++) {
-    result.push_back(engin_exc->abstract());
-  }
-  return std::make_shared<AbstractList>(result);
-}
-
 AbstractBasePtr InferImplListReduce(const AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // Inputs: a fn, a list and an object of a subclass of a AbstractBase.
@@ -1050,7 +1019,6 @@ REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TypeOf, prim::kPrimTypeOf, InferImplTypeof, n
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(HasType, prim::kPrimHasType, InferImplHasType, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(IsInstance, prim::kPrimIsInstance, InferImplIsInstance, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(MakeRecord, prim::kPrimMakeRecord, InferImplMakeRecord, nullptr);
-REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListMap, prim::kPrimListMap, InferImplListMap, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ListReduce, prim::kPrimListReduce, InferImplListReduce, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(TupleReversed, prim::kPrimTupleReversed, InferImplTupleReversed, nullptr);
 REGISTER_PRIMITIVE_FRONT_EVAL_IMPL(ReducedShape, prim::kPrimReducedShape, InferImplReduceShape, nullptr);

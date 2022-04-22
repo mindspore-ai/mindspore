@@ -21,6 +21,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include <vector>
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -34,8 +35,8 @@ using PybindDefineFunc = std::function<void(py::module *)>;
 
 class COMMON_EXPORT PybindDefineRegister {
  public:
-  static void Register(const std::string &name, const PybindDefineFunc &fn) {
-    return GetSingleton().RegisterFn(name, fn);
+  static void Register(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) {
+    return GetSingleton().RegisterFn(name, parent_name, fn);
   }
 
   PybindDefineRegister(const PybindDefineRegister &) = delete;
@@ -43,6 +44,8 @@ class COMMON_EXPORT PybindDefineRegister {
   PybindDefineRegister &operator=(const PybindDefineRegister &) = delete;
 
   static std::map<std::string, PybindDefineFunc> &AllFuncs() { return GetSingleton().fns_; }
+
+  static std::map<std::string, std::string> &GetInheritanceMap() { return GetSingleton().parent_name_; }
 
   std::map<std::string, PybindDefineFunc> fns_;
 
@@ -53,19 +56,26 @@ class COMMON_EXPORT PybindDefineRegister {
 
   static PybindDefineRegister &GetSingleton();
 
-  void RegisterFn(const std::string &name, const PybindDefineFunc &fn) { fns_[name] = fn; }
+  void RegisterFn(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) {
+    parent_name_[name] = parent_name;
+    fns_[name] = fn;
+  }
+
+  std::map<std::string, std::string> parent_name_;
 };
 
 class PybindDefineRegisterer {
  public:
-  PybindDefineRegisterer(const std::string &name, const PybindDefineFunc &fn) {
-    PybindDefineRegister::Register(name, fn);
+  PybindDefineRegisterer(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) {
+    PybindDefineRegister::Register(name, parent_name, fn);
   }
   ~PybindDefineRegisterer() = default;
 };
 
-#define REGISTER_PYBIND_DEFINE(name, define) PybindDefineRegisterer g_pybind_define_f_##name(#name, define)
+#define REGISTER_PYBIND_DEFINE(name, define) PybindDefineRegisterer g_pybind_define_f_##name(#name, "", define)
 
+#define REGISTER_PYBIND_WITH_PARENT_NAME(name, parent_name, define) \
+  PybindDefineRegisterer g_pybind_define_f_##name(#name, #parent_name, define)
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_PYBIND_API_API_REGISTER_H_

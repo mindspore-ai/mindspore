@@ -968,7 +968,6 @@ GVAR_DEF(PrimitivePtr, kPrimMixedPrecisionCast, std::make_shared<Primitive>("mix
 GVAR_DEF(PrimitivePtr, kPrimMakeRecord, std::make_shared<Primitive>("make_record"));
 
 // Structures
-GVAR_DEF(PrimitivePtr, kPrimListMap, std::make_shared<Primitive>("list_map"));
 GVAR_DEF(PrimitivePtr, kPrimListReduce, std::make_shared<Primitive>("list_reduce"));
 GVAR_DEF(PrimitivePtr, kPrimTupleReversed, std::make_shared<Primitive>("tuple_reversed"));
 GVAR_DEF(PrimitivePtr, kPrimReducedShape, std::make_shared<Primitive>("reduced_shape"));

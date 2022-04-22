@@ -243,11 +243,6 @@ TEST_F(TestOps, ArrayLenTest) {
   ASSERT_EQ(prim->name(), kPrimArrayLen->name());
 }
 
-TEST_F(TestOps, ListMapTest) {
-  auto prim = std::make_shared<Primitive>("list_map");
-  ASSERT_EQ(prim->name(), kPrimListMap->name());
-}
-
 TEST_F(TestOps, ListReduceTest) {
   auto prim = std::make_shared<Primitive>("list_reduce");
   ASSERT_EQ(prim->name(), kPrimListReduce->name());

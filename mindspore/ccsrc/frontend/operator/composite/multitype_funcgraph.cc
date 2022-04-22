@@ -160,12 +160,5 @@ FuncGraphPtr MultitypeFuncGraph::GenerateFromTypes(const TypePtrList &types) {
   MS_LOG(EXCEPTION) << "The '" << name_ << "' operation does not support the type " << buffer.str() << ".\n"
                     << oss.str();
 }
-
-REGISTER_PYBIND_DEFINE(MultitypeFuncGraph_, ([](const py::module *m) {
-                         (void)py::class_<MultitypeFuncGraph, MetaFuncGraph, std::shared_ptr<MultitypeFuncGraph>>(
-                           *m, "MultitypeFuncGraph_")
-                           .def(py::init<std::string &>())
-                           .def("register_fn", &MultitypeFuncGraph::PyRegister);
-                       }));
 }  // namespace prim
 }  // namespace mindspore
