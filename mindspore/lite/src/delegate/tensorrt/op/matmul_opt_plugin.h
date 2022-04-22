@@ -57,12 +57,20 @@ class MatmulOptPlugin : public TensorRTPlugin {
   void serialize(void *buffer) const noexcept override;
 
  private:
+  int RunBatchedMatmul(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
+                       const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream);
+
   bool a_trans_{false};
   bool b_trans_{false};
-  int bias_index_{-1};  // -1 means no bias, otherwise should be 2
   cublasHandle_t cublas_handle_{nullptr};
   cublasOperation_t operations_[2]{CUBLAS_OP_N, CUBLAS_OP_N};
   cudaDataType data_types_[4]{CUDA_R_32F, CUDA_R_32F, CUDA_R_32F, CUDA_R_32F};
+  std::vector<const void *> a_addrs_;
+  std::vector<const void *> b_addrs_;
+  std::vector<void *> c_addrs_;
+  void **a_device_addrs_{nullptr};
+  void **b_device_addrs_{nullptr};
+  void **c_device_addrs_{nullptr};
 };
 class MatmulOptPluginCreater : public TensorRTPluginCreater<MatmulOptPlugin> {
  public:

@@ -251,8 +251,7 @@ int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
       return RET_ERROR;
     }
     this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC, true});
-  } else if (this->in_tensors_[const_tensor_index].Shape().size() == 1 &&
-             this->in_tensors_[const_tensor_index].ElementNum() >= 1) {
+  } else if (this->in_tensors_[const_tensor_index].ElementNum() >= 1) {
     constant_input = ConvertTensorWithExpandDims(network, in_tensors_[const_tensor_index],
                                                  in_tensors_[1 - const_tensor_index].Shape().size(), op_name_);
     if (constant_input == nullptr) {
