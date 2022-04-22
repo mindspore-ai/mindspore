@@ -101,11 +101,9 @@ std::set<kernel::KernelExec *> ControlFlowScheduler::GetNonTailCallSubGraphs(
 
   // found non-tail call subgraph
   for (auto &kernel : *dst_kernels) {
-#ifndef DELEGATE_CLIP
     if (kernel->desc().arch == kernel::kDelegate) {
       continue;
     }
-#endif
     auto subgraph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
     if (subgraph_kernel == nullptr) {
       continue;

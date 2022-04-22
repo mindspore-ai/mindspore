@@ -253,12 +253,10 @@ void KernelExecUtil::FindAllInoutKernels(const std::vector<KernelExec *> &kernel
 void KernelExecUtil::FindAllInoutKernelsInSubgraphKernel(const std::vector<KernelExec *> &kernels) {
   std::vector<KernelExec *> all_kernels;
   for (auto kernel : kernels) {
-#ifndef DELEGATE_CLIP
     if (kernel->desc().arch == kDelegate) {
       all_kernels.push_back(kernel);
       continue;
     }
-#endif
     auto sub_graph = reinterpret_cast<SubGraphKernel *>(kernel);
     MS_ASSERT(sub_graph != nullptr);
     auto kernel_in_subgraph = sub_graph->nodes();
@@ -401,12 +399,10 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
 int KernelExecUtil::ReplaceSubGraphNodesInTensor(KernelExec *kernel, const lite::Tensor *old_tensor,
                                                  lite::Tensor *new_tensor) {
   int ref_count = 0;
-#ifndef DELEGATE_CLIP
   /* set op input for calculate */
   if (kernel->desc().arch == kDelegate) {
     ref_count++;
   } else {
-#endif
     auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
     if (subgraph_kernel == nullptr) {
       MS_LOG(ERROR) << "cast to subgraph kernel failed.";
@@ -420,9 +416,7 @@ int KernelExecUtil::ReplaceSubGraphNodesInTensor(KernelExec *kernel, const lite:
         }
       }
     }
-#ifndef DELEGATE_CLIP
   }
-#endif
   new_tensor->set_init_ref_count(ref_count);
   return RET_OK;
 }
@@ -430,12 +424,10 @@ int KernelExecUtil::ReplaceSubGraphNodesInTensor(KernelExec *kernel, const lite:
 int KernelExecUtil::ReplaceSubGraphNodesOutTensor(KernelExec *kernel, const lite::Tensor *old_tensor,
                                                   lite::Tensor *new_tensor) {
   int ref_count = 0;
-#ifndef DELEGATE_CLIP
   /* set op output for calculate */
   if (kernel->desc().arch == kDelegate) {
     ref_count++;
   } else {
-#endif
     auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
     if (subgraph_kernel == nullptr) {
       MS_LOG(ERROR) << "cast to subgraph kernel failed.";
@@ -449,9 +441,7 @@ int KernelExecUtil::ReplaceSubGraphNodesOutTensor(KernelExec *kernel, const lite
         }
       }
     }
-#ifndef DELEGATE_CLIP
   }
-#endif
   new_tensor->set_init_ref_count(ref_count);
   return RET_OK;
 }
@@ -475,11 +465,9 @@ SubGraphKernel *KernelExecUtil::BelongToWhichSubGraph(const std::vector<KernelEx
 
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) {
-#ifndef DELEGATE_CLIP
   if (kernel->desc().arch == kDelegate) {
     return false;
   }
-#endif
   auto *subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
   if (subgraph_kernel == nullptr) {
     return false;

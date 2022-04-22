@@ -205,12 +205,10 @@ int Scheduler::InitKernels(std::vector<kernel::KernelExec *> &&dst_kernels) {
     return RET_OK;
   }
   for (auto kernel : dst_kernels) {
-#ifndef DELEGATE_CLIP
     // delegate graph kernel
     if (kernel->desc().arch == kernel::kDelegate) {
       continue;
     }
-#endif
     auto subgraph_type = kernel->subgraph_type();
     if (subgraph_type == kernel::kNotSubGraph) {
       MS_LOG(ERROR) << "construct subgraph failed.";
@@ -415,13 +413,11 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   }
   shape_fusion_pass_->FreeOutputTensorDataOfFusedShape();
 
-#ifndef DELEGATE_CLIP
   ret = InitDelegateKernels(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Repalce delegate kernels failed.";
     return ret;
   }
-#endif
 
   ret = CheckCpuValid(dst_kernels);
   if (ret != RET_OK) {
@@ -1551,12 +1547,10 @@ kernel::KernelExec *FindAllSubGraphKernels(const std::vector<kernel::KernelExec 
     auto cur_kernel = sorted_kernels[*cur_index];
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, context) != kernel::kApuSubGraph);
     // already a subgraph or a delegate
-#ifndef DELEGATE_CLIP
     if (cur_kernel->desc().arch == kernel::kDelegate) {
       --(*cur_index);
       break;
     }
-#endif
     if (cur_kernel->subgraph_type() != kernel::kNotSubGraph ||
         !KernelFitCurrentSubGraph(cur_sub_graph_type, *cur_kernel)) {
       --(*cur_index);
@@ -1582,12 +1576,10 @@ int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::KernelExec *> 
     MS_ASSERT(cur_kernel != nullptr);
     // Not support APU now
     MS_ASSERT(GetKernelSubGraphType(cur_kernel, *context_) != kernel::kApuSubGraph);
-#ifndef DELEGATE_CLIP
     if (cur_kernel->desc().arch == kernel::kDelegate) {
       dst_kernel->emplace_back(cur_kernel);
       continue;
     }
-#endif
     // already a subgraph or a delegate
     if (cur_kernel->subgraph_type() != kernel::kNotSubGraph) {
       dst_kernel->emplace_back(cur_kernel);
@@ -1601,9 +1593,7 @@ int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::KernelExec *> 
     dst_kernel->emplace_back(subgraph);
   }
   for (auto *subgraph : *dst_kernel) {
-#ifndef DELEGATE_CLIP
     if (subgraph->desc().arch != kernel::kDelegate) {
-#endif
       auto subgraph_kernel = static_cast<kernel::SubGraphKernel *>(subgraph);
       if (subgraph_kernel == nullptr) {
         MS_LOG(ERROR) << "kernel: " << subgraph->name() << " not is subgraph kernel.";
@@ -1615,9 +1605,7 @@ int Scheduler::ConstructNormalSubGraphs(const std::vector<kernel::KernelExec *> 
         MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
         return ret;
       }
-#ifndef DELEGATE_CLIP
     }
-#endif
   }
   return RET_OK;
 }

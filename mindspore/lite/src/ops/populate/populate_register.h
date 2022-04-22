@@ -56,13 +56,11 @@ class PopulateRegistry {
 #ifdef STRING_KERNEL_CLIP
       if (lite::IsContain(string_op, static_cast<schema::PrimitiveType>(type))) {
         MS_LOG(ERROR) << unsupport_string_tensor_log;
-      } else {
-#endif
-        MS_LOG(ERROR) << "Unsupported parameter type in Create : "
-                      << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
-#ifdef STRING_KERNEL_CLIP
+        return nullptr;
       }
 #endif
+      MS_LOG(ERROR) << "Unsupported parameter type in Create : "
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(type));
       return nullptr;
     }
     param_creator = iter->second;

@@ -462,11 +462,9 @@ int LiteSession::IsolateOutputTensor() {
           subgraph->set_out_tensor(new_tensor, i);
         }
       }
-#ifndef DELEGATE_CLIP
       if (subgraph->desc().arch == kernel::kDelegate) {
         continue;
       }
-#endif
       /* node input and output */
       auto nodes = reinterpret_cast<kernel::SubGraphKernel *>(subgraph)->nodes();
       auto nodes_size = nodes.size();
@@ -675,11 +673,9 @@ int LiteSession::PrepareKernels(const Model *model) {
 int LiteSession::SetTensorInitRefCount(const Model *model) {
   for (auto *kernel : this->kernels_) {
     kernel->InitOutTensorInitRefCount();
-#ifndef DELEGATE_CLIP
     if (kernel->desc().arch == kernel::kDelegate) {
       continue;
     }
-#endif
     if (IsIsolatedSubGraph(kernel)) {
       static_cast<kernel::SubGraphKernel *>(kernel)->InitInputOutputTensorInitRefCount();
     }
@@ -866,11 +862,6 @@ int LiteSession::DelegateInit() {
       MS_LOG(ERROR) << "Delegate init failed";
       return RET_ERROR;
     }
-  }
-#else
-  if (context_->delegate != nullptr) {
-    MS_LOG(ERROR) << unsupport_delegate_log;
-    return RET_NOT_SUPPORT;
   }
 #endif
   return RET_OK;
@@ -1069,11 +1060,9 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
       return RET_ERROR;
     }
     auto ret = RET_OK;
-#ifndef DELEGATE_CLIP
     if (kernel->desc().arch == kernel::kDelegate) {
       ret = kernel->ReSize();
     } else {
-#endif
       // resize subgraph inputs
       auto sub_graph_kernel = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
       for (auto input : sub_graph_kernel->in_tensors()) {
@@ -1090,9 +1079,7 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
         auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
         ret = sub_graph->ReSize();
       }
-#ifndef DELEGATE_CLIP
     }
-#endif
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
       continue;

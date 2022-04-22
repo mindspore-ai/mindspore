@@ -35,9 +35,7 @@
 #include "include/api/kernel.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
 #include "src/lite_kernel.h"
-#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
-#endif
 
 namespace mindspore::kernel {
 enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kCustom, kDelegate, kKernelArch_MIN = kCPU, kKernelArch_MAX = kAPU };

@@ -228,6 +228,12 @@ int InnerContext::IsValid() const {
     return RET_NOT_SUPPORT;
   }
 #endif
+#ifdef DELEGATE_CLIP
+  if (this->delegate != nullptr) {
+    MS_LOG(ERROR) << unsupport_delegate_log;
+    return RET_NOT_SUPPORT;
+  }
+#endif
   return RET_OK;
 }
 
