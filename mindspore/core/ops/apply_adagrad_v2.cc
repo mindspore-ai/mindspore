@@ -79,6 +79,20 @@ TuplePtr ApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
+float ApplyAdagradV2::get_epsilon() const {
+  auto value_ptr = this->GetAttr(kEpsilon);
+  return GetValue<float>(value_ptr);
+}
+void ApplyAdagradV2::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
+
+bool ApplyAdagradV2::get_update_slots() const {
+  auto value_ptr = this->GetAttr(kUpdateSlots);
+  return GetValue<bool>(value_ptr);
+}
+void ApplyAdagradV2::set_update_slots(const bool update_slots) {
+  (void)this->AddAttr(kUpdateSlots, api::MakeValue(update_slots));
+}
+
 MIND_API_OPERATOR_IMPL(ApplyAdagradV2, BaseOperator);
 AbstractBasePtr ApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) {

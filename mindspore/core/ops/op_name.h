@@ -196,6 +196,7 @@ constexpr auto kTransposeA = "transpose_a";
 constexpr auto kTransposeB = "transpose_b";
 constexpr auto kNegativeSlope = "negative_slope";
 constexpr auto kType = "type";
+constexpr auto kUpdateSlots = "update_slots";
 constexpr auto kUseAxis = "use_axis";
 constexpr auto kUseLocking = "use_locking";
 constexpr auto kUseNesterov = "use_nesterov";
