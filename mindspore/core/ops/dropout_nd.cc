@@ -18,7 +18,6 @@
 #include <string>
 #include <algorithm>
 #include <set>
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -26,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr DropoutNDInferShape(const PrimitivePtr &primitive,
+abstract::TupleShapePtr Dropout2DInferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
@@ -35,8 +34,33 @@ abstract::TupleShapePtr DropoutNDInferShape(const PrimitivePtr &primitive,
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto input_shape = input_args[kInputIndex0]->BuildShape();
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape, input_shape});
+  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_shape = input_shape_map[kShape];
+  // Check Dropout2d input shape whether equal to 4D.
+  const int64_t input_rank = 4;
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
+                                           primitive->name());
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, input_shape_ptr});
+}
+
+abstract::TupleShapePtr Dropout3DInferShape(const PrimitivePtr &primitive,
+                                            const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto input_shape = input_shape_map[kShape];
+  // Check Dropout3d input shape whether equal to 5D.
+  const int64_t input_rank = 5;
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
+                                           primitive->name());
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, input_shape_ptr});
 }
 
 TypePtr DropoutNDInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
@@ -57,14 +81,14 @@ MIND_API_OPERATOR_IMPL(Dropout2D, BaseOperator);
 MIND_API_OPERATOR_IMPL(Dropout3D, BaseOperator);
 AbstractBasePtr Dropout2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  abstract::TupleShapePtr output_shape = DropoutNDInferShape(primitive, input_args);
+  abstract::TupleShapePtr output_shape = Dropout2DInferShape(primitive, input_args);
   TypePtr output_type = DropoutNDInferType(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }
 
 AbstractBasePtr Dropout3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  abstract::TupleShapePtr output_shape = DropoutNDInferShape(primitive, input_args);
+  abstract::TupleShapePtr output_shape = Dropout3DInferShape(primitive, input_args);
   TypePtr output_type = DropoutNDInferType(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }
