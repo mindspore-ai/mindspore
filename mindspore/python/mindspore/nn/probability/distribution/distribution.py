@@ -16,6 +16,7 @@
 from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
+from mindspore.ops.primitive import constexpr
 from mindspore._checkparam import Validator as validator
 from ._utils.utils import raise_none_error, cast_to_tensor, set_param_type, cast_type_for_device,\
     raise_not_implemented_util
@@ -97,7 +98,12 @@ class Distribution(Cell):
         self.context_mode = context.get_context('mode')
         self.device_target = context.get_context('device_target')
         self.checktuple = CheckTuple()
-        self.checktensor = CheckTensor()
+
+        @constexpr
+        def _check_tensor(x, name):
+            CheckTensor()(x, name)
+            return x
+        self.checktensor = _check_tensor
         self.broadcast = broadcast_to
 
         # ops needed for the base class
@@ -209,10 +215,8 @@ class Distribution(Cell):
         """
         Check availability of `value` as a Tensor.
         """
-        if self.context_mode == 0:
-            self.checktensor(value, name)
-            return value
-        return self.checktensor(value, name)
+        self.checktensor(value, name)
+        return value
 
     def _check_is_scalar_batch(self):
         """
