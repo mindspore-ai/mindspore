@@ -365,6 +365,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
     model_worker_vec_.push_back(std::thread(&ModelWorker::Run, model_worker, task_queue_id, predict_task_queue_));
+    all_model_worker_.push_back(model_worker);
   }
   // init model pool input and output
   if (model_worker != nullptr) {
@@ -545,7 +546,7 @@ Status ModelPool::FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs
   return kSuccess;
 }
 
-void ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num) {
+std::shared_ptr<ModelWorker> ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num) {
   *max_wait_worker_node_id = 0;
   *max_wait_worker_num = predict_task_queue_->GetWaitModelNum(0);
   for (int i = 1; i < used_numa_node_num_; i++) {
@@ -555,59 +556,89 @@ void ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_
       *max_wait_worker_node_id = i;
     }
   }
+  if (*max_wait_worker_num > 0 && !use_split_batch_) {
+    for (auto &worker : all_model_worker_) {
+      if (worker->IsAvailable()) {
+        return worker;
+      }
+    }
+  }
+  return nullptr;
+}
+
+Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                      const MSKernelCallBack &before, const MSKernelCallBack &after,
+                                      int max_wait_worker_node_id) {
+  size_t batch_split_num = predict_task_queue_->GetWaitModelNum(max_wait_worker_node_id);
+  predict_task_queue_->DecreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
+  std::vector<std::vector<MSTensor>> new_inputs;
+  std::vector<std::vector<MSTensor>> new_outputs;
+  auto status = SplitInputTensorByBatch(inputs, &new_inputs, batch_split_num);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "model pool split input tensor by batch failed.";
+    return kLiteError;
+  }
+  status = SplitOutputTensorByBatch(&new_outputs, outputs, batch_split_num);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "model pool split output tensor by batch failed.";
+    return kLiteError;
+  }
+
+  std::vector<std::shared_ptr<PredictTask>> tasks;
+  for (size_t i = 0; i < batch_split_num; i++) {
+    auto predict_task = std::make_shared<PredictTask>(&new_inputs[i], &new_outputs.at(i), before, after);
+    if (predict_task == nullptr) {
+      MS_LOG(ERROR) << "predict task is nullptr.";
+      return kLiteNullptr;
+    }
+    predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
+    tasks.push_back(predict_task);
+  }
+  predict_task_mutex_.unlock();
+  for (size_t i = 0; i < batch_split_num; i++) {
+    predict_task_queue_->WaitUntilPredictActive(tasks[i]);
+  }
+  status = ConcatPredictOutput(&new_outputs, outputs, max_wait_worker_node_id);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "ConcatPredictOutput failed.";
+    return kLiteError;
+  }
+  status = FreeSplitTensor(&new_inputs, &new_outputs);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "free split tensor failed.";
+    return kLiteError;
+  }
+  predict_task_queue_->IncreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
+  return kSuccess;
 }
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                           const MSKernelCallBack &before, const MSKernelCallBack &after) {
-  mtx_split_task_.lock();
+  predict_task_mutex_.lock();
   int max_wait_worker_node_id = 0;
   int max_wait_worker_num = 0;
-  GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
-
+  auto available_worker = GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
   auto batch = inputs[0].Shape()[0];
   if (use_split_batch_ && predict_task_queue_->GetTaskNum(max_wait_worker_node_id) == 0 && max_wait_worker_num > 1 &&
       batch >= max_wait_worker_num) {
-    size_t batch_split_num = predict_task_queue_->GetWaitModelNum(max_wait_worker_node_id);
-    predict_task_queue_->DecreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
-    std::vector<std::vector<MSTensor>> new_inputs;
-    std::vector<std::vector<MSTensor>> new_outputs;
-    auto status = SplitInputTensorByBatch(inputs, &new_inputs, batch_split_num);
+    // split batch
+    auto status = PredictBySplitBatch(inputs, outputs, before, after, max_wait_worker_node_id);
     if (status != kSuccess) {
-      MS_LOG(ERROR) << "model pool split input tensor by batch failed.";
+      MS_LOG(ERROR) << "do split batch failed. ret=" << status;
       return kLiteError;
     }
-    status = SplitOutputTensorByBatch(&new_outputs, outputs, batch_split_num);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "model pool split output tensor by batch failed.";
+    return kSuccess;
+  } else if (available_worker != nullptr) {
+    // dispatch tasks directly to workers
+    predict_task_mutex_.unlock();
+    auto ret = available_worker->Predict(inputs, outputs, before, after);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "direct predict failed.";
       return kLiteError;
     }
-
-    std::vector<std::shared_ptr<PredictTask>> tasks;
-    for (size_t i = 0; i < batch_split_num; i++) {
-      auto predict_task = std::make_shared<PredictTask>(&new_inputs[i], &new_outputs.at(i), before, after);
-      if (predict_task == nullptr) {
-        MS_LOG(ERROR) << "predict task is nullptr.";
-        return kLiteNullptr;
-      }
-      predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
-      tasks.push_back(predict_task);
-    }
-    mtx_split_task_.unlock();
-    for (size_t i = 0; i < batch_split_num; i++) {
-      predict_task_queue_->WaitUntilPredictActive(tasks[i]);
-    }
-    status = ConcatPredictOutput(&new_outputs, outputs, max_wait_worker_node_id);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "ConcatPredictOutput failed.";
-      return kLiteError;
-    }
-    status = FreeSplitTensor(&new_inputs, &new_outputs);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "free split tensor failed.";
-      return kLiteError;
-    }
-    predict_task_queue_->IncreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
+    return kSuccess;
   } else {
+    // do predict
     predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
     if (predict_task == nullptr) {
@@ -615,7 +646,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       return kLiteNullptr;
     }
     predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
-    mtx_split_task_.unlock();
+    predict_task_mutex_.unlock();
     predict_task_queue_->WaitUntilPredictActive(predict_task);
     predict_task_queue_->IncreaseWaitModelNum(1, max_wait_worker_node_id);
   }
