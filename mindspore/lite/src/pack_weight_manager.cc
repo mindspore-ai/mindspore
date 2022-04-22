@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 #include "src/pack_weight_manager.h"
-#include "src/common/graph_util.h"
 namespace mindspore::lite {
+namespace {
+#ifndef __ANDROID__
+constexpr size_t kMemAlignSize = 64;
+#endif
+}  // namespace
 PackWeightManager *PackWeightManager::GetInstance() {
   static PackWeightManager instance;
   return &instance;
@@ -75,31 +79,60 @@ STATUS PackWeightManager::StoreOriginTensorData(Model *model) {
   return RET_OK;
 }
 
-void *PackWeightManager::GetPackData(const void *tensor_data, const size_t size, bool *is_packed) {
+void *PackWeightManager::MallocData(size_t size) {
   if (size > MAX_MALLOC_SIZE || size == 0) {
     MS_LOG(ERROR) << "malloc size is wrong.";
     return nullptr;
   }
+  void *data = nullptr;
+#ifdef _WIN32
+  size_t round_size = (size + kMemAlignSize - 1) & (~(kMemAlignSize - 1));
+  data = _aligned_malloc(round_size, kMemAlignSize);
+#elif defined(__ANDROID__)
+  data = malloc(size);
+#else
+  size_t round_size = (size + kMemAlignSize - 1) & (~(kMemAlignSize - 1));
+  auto ret = posix_memalign(&data, kMemAlignSize, round_size);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "posix_memalign failed.";
+    return nullptr;
+  }
+#endif
+  return data;
+}
+
+void *PackWeightManager::GetPackData(const void *tensor_data, const size_t size, bool *is_packed) {
 #ifdef SHARING_MODEL_WEIGHT
   if (pack_weight_ == nullptr) {
-    void *data = malloc(size);
+    void *data = MallocData(size);
     *is_packed = false;
     return data;
   }
   return pack_weight_->GetPackData(tensor_data, size, is_packed);
 #endif
-  void *data = malloc(size);
+  void *data = MallocData(size);
   *is_packed = false;
   return data;
 }
 
-void PackWeightManager::Free(void *tensor_data) {
-#ifdef SHARING_MODEL_WEIGHT
-  return;
-#endif
+void PackWeightManager::FreeData(void *tensor_data) {
   if (tensor_data != nullptr) {
+#ifdef _WIN32
+    _aligned_free(tensor_data);
+#else
     free(tensor_data);
+#endif
     tensor_data = nullptr;
   }
+}
+
+void PackWeightManager::Free(void *tensor_data) {
+#ifdef SHARING_MODEL_WEIGHT
+  if (pack_weight_ == nullptr) {
+    FreeData(tensor_data);
+  }
+  return;
+#endif
+  FreeData(tensor_data);
 }
 }  // namespace mindspore::lite
