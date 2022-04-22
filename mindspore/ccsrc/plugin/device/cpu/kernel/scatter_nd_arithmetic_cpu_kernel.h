@@ -30,6 +30,7 @@ constexpr auto kScatterNdAdd = "ScatterNdAdd";
 constexpr auto kScatterNdSub = "ScatterNdSub";
 constexpr auto kTensorScatterAdd = "TensorScatterAdd";
 constexpr auto kTensorScatterSub = "TensorScatterSub";
+constexpr auto kTensorScatterDiv = "TensorScatterDiv";
 constexpr auto kTensorScatterMax = "TensorScatterMax";
 constexpr auto kTensorScatterMin = "TensorScatterMin";
 constexpr auto kUnKnown = "UnKnown";

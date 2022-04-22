@@ -197,6 +197,7 @@ __global__ void TensorScatterDivKernel(T *input, S *indices, T *update, T *outpu
       (void)MsAtomicDiv(&output[write_index], update[read_index]);
     }
   }
+  return;
 }
 
 template <typename T, typename S>
