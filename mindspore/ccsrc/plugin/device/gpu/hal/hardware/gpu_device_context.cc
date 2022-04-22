@@ -516,15 +516,6 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
     return false;
   }
 
-  // Processing after execution of dynamic kernel to update output shape.
-  auto func_graph = kernel->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (is_dynamic_shape &&
-      !(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
-    kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(gpu_kernel);
-    kernel::UpdateNodeShape(kernel);
-  }
   return ret;
 }
 #ifndef ENABLE_SECURITY

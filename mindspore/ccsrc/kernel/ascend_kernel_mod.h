@@ -36,6 +36,7 @@ class AscendKernelMod : public KernelMod {
                                            const std::vector<AddressPtr> &, uint32_t) = 0;
   uint32_t block_dim() const { return block_dim_; }
   uint32_t stream_id() const { return stream_id_; }
+  void SetNode(const AnfNodePtr &anf_node_ptr) { anf_node_ = anf_node_ptr; }
   virtual bool NeedDump() {
 #ifndef ENABLE_SECURITY
     const auto &dump_json = DumpJsonParser::GetInstance();
@@ -45,7 +46,6 @@ class AscendKernelMod : public KernelMod {
     return false;
 #endif
   }
-  void Wait() override;
   bool IsNeedWait() override;
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
 
