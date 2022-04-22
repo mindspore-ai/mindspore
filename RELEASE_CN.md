@@ -48,6 +48,7 @@
 
 - [BETA] [数据并行训练容灾](https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/parallel/train_gpu.html#%E5%AE%B9%E7%81%BE%E6%81%A2%E5%A4%8D) 支持多卡数据并行训练容灾恢复。
 - [BETA] 支持在cpu下的线程数搜索，获取最优线程数进行执行。整个搜索过程需要耗时50个steps，整体的性能会在50个steps后达到稳定的状态。在测试性能的时候，需要以50个steps之后的数据作为标准。
+- [STABLE] 在linux版本中支持oneDNN的并行执行。部分CPU模型性能可能会有比较大的变化。
 
 #### DataSet
 
