@@ -270,6 +270,10 @@ target_link_libraries(converter_lite PRIVATE
         coder_mid
         )
 
+if(SUPPORT_TRAIN)
+    target_link_libraries(converter_lite PRIVATE train_cpu_kernel_mid)
+endif()
+
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(converter_lite PRIVATE
             lite_acl_mid
