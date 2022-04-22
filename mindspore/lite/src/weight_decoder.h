@@ -172,7 +172,7 @@ class WeightDecoder {
     }
   }
 
-  static int DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
+  static int DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
  private:
   static int DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
@@ -267,6 +267,7 @@ class WeightDecoder {
   }
 
   static int GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index, const std::vector<int> &dims);
+
   static int GetDeConvPreferredDim(const OpParameter *op_parameter, const std::vector<int> &dims);
 
   template <typename T>

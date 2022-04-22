@@ -15,6 +15,7 @@
  */
 
 #define USE_DEPRECATED_API
+
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include <memory>
 #include <string>
@@ -30,6 +31,7 @@
 #include "tools/converter/quantizer/debug_info_manager.h"
 #include "tools/converter/quantizer/parameter_tunner.h"
 #include "tools/converter/quantizer/dynamic_quantizer.h"
+#include "tools/anf_exporter/anf_exporter.h"
 
 namespace mindspore::lite::quant {
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
@@ -119,22 +121,59 @@ int DoDynamicQuant(const FuncGraphPtr &old_graph, const converter::Flags *config
   return RET_OK;
 }
 
-int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config, const SessionModel &origin) {
-  auto quant = CreateSessionByFuncGraph(old_graph, *config, config->commonQuantParam.thread_num);
+lite::Model *ParseLiteModel(const FuncGraphPtr &func_graph, const converter::Flags &flags) {
+  auto meta_graph = Export(func_graph, true, true);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "Export to meta_graph failed";
+    return static_cast<Model *>(nullptr);
+  }
+
+  // transform
+  GraphDefTransform fb_transform;
+  fb_transform.SetGraphDef(meta_graph);
+  auto status = fb_transform.Transform(flags);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "FBTransform model failed";
+    delete meta_graph;
+    return static_cast<Model *>(nullptr);
+  }
+  meta_graph->version = Version();
+
+  flatbuffers::FlatBufferBuilder builder(kMaxNum1024);
+  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
+  builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
+  int size = builder.GetSize();
+  auto content = builder.GetBufferPointer();
+  if (content == nullptr) {
+    MS_LOG(ERROR) << "GetBufferPointer nullptr";
+    return static_cast<Model *>(nullptr);
+  }
+  return lite::Model::Import((const char *)content, size);
+}
+
+int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config,
+                 const std::shared_ptr<mindspore::Model> &origin_model, mindspore::lite::Model *origin_lite_model) {
+  auto quant_model = std::make_shared<mindspore::Model>();
+  CHECK_NULL_RETURN(quant_model);
+  auto ret = BuildModelByFuncGraph(quant_model, old_graph, *config);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Build model failed";
+    return RET_ERROR;
+  }
   std::map<std::string, OpParameter *> op_parameters;
   FetchOpParameterFromFuncGraph(old_graph, &op_parameters);
   DebugInfoManager manager;
-  CHECK_NULL_RETURN(origin.model);
-  CHECK_NULL_RETURN(origin.session);
-  CHECK_NULL_RETURN(quant.model);
-  CHECK_NULL_RETURN(quant.session);
-  auto status = manager.CompareOriginWithQuant(
-    origin, quant, op_parameters, config->commonQuantParam.debug_info_save_path, config->dataPreProcessParam);
+
+  auto quant_lite_model = ParseLiteModel(old_graph, *config);
+  if (quant_lite_model == nullptr) {
+    MS_LOG(ERROR) << "Parse lite model failed";
+    return RET_ERROR;
+  }
+  auto status = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters,
+                                               config->commonQuantParam.debug_info_save_path,
+                                               config->dataPreProcessParam, origin_lite_model, quant_lite_model);
   auto free_buffer = [&] {
-    delete origin.session;
-    delete origin.model;
-    delete quant.session;
-    delete quant.model;
     for (auto parameter : op_parameters) {
       if (parameter.second != nullptr) {
         free(parameter.second);
@@ -158,11 +197,23 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags 
   }
   int status;
 
-  SessionModel origin;
+  std::shared_ptr<mindspore::Model> origin;
+  lite::Model *origin_lite_model = nullptr;
   if (config->commonQuantParam.is_debug) {  // Bak fp32 model for debug
     converter::Flags new_flag = *config;
     new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;
-    origin = CreateSessionByFuncGraph(old_graph, new_flag, config->commonQuantParam.thread_num);
+    origin = std::make_shared<mindspore::Model>();
+    CHECK_NULL_RETURN(origin);
+    auto ret = BuildModelByFuncGraph(origin, old_graph, new_flag);
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Build model failed";
+      return RET_ERROR;
+    }
+    origin_lite_model = ParseLiteModel(old_graph, *config);
+    if (origin_lite_model == nullptr) {
+      MS_LOG(ERROR) << "Parse lite model failed.";
+      return RET_ERROR;
+    }
   }
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL) {  // Full Quantization
     status = DoFullQuant(old_graph, config);
@@ -184,7 +235,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags 
     }
   }
   if (config->commonQuantParam.is_debug) {
-    status = DoQuantDebug(old_graph, config, origin);
+    status = DoQuantDebug(old_graph, config, origin, origin_lite_model);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Do quant debug failed.";
       return status;

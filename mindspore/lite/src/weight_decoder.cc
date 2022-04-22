@@ -466,7 +466,7 @@ bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
   return need_bit_unpack;
 }
 
-int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
   if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {

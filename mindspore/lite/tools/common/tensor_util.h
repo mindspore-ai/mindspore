@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,13 @@
 #include <cfloat>
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
+#include "src/common/log_util.h"
 #include "ir/dtype/type_id.h"
 #include "ir/tensor.h"
 #include "src/common/utils.h"
 #include "tools/common/statistic_utils.h"
 #include "src/tensor.h"
+#include "include/api/model.h"
 
 namespace mindspore {
 namespace lite {
@@ -107,54 +109,56 @@ struct CheckTensor {
 
 // tensorData need to be converter first
 template <typename T>
-float CompareDataByCosineDistance(const std::unordered_map<String, mindspore::tensor::MSTensor *> &calib_tensors,
-                                  const std::unordered_map<String, mindspore::tensor::MSTensor *> &out_tensors) {
-  if (calib_tensors.empty() || out_tensors.empty()) {
+float CompareDataByCosineDistance(const std::shared_ptr<mindspore::Model> &origin_model,
+                                  const std::shared_ptr<mindspore::Model> &quant_model) {
+  CHECK_NULL_RETURN(origin_model);
+  CHECK_NULL_RETURN(quant_model);
+  if (origin_model->GetOutputs().empty() || quant_model->GetOutputs().empty()) {
     MS_LOG(ERROR) << "calib or out tenor is empty.";
     return RET_ERROR;
   }
   float total_cos = 0;
-  for (const auto &calib : calib_tensors) {
+  auto calib_tensors = origin_model->GetOutputs();
+  for (const auto &calib_tensor : calib_tensors) {
     size_t error_count = 0;
     float mean_error = 0;
-    auto calib_tensor = calib.second;
-    auto calib_data = static_cast<const T *>(calib_tensor->data());
-    auto out_tensor_iter = out_tensors.find(calib_tensor->tensor_name());
-    if (out_tensor_iter == out_tensors.end()) {
-      MS_LOG(ERROR) << "Cant find " << calib_tensor->tensor_name() << " in out_tensors";
+    auto calib_data = reinterpret_cast<const T *>(calib_tensor.Data().get());
+    auto out_tensor = quant_model->GetOutputByTensorName(calib_tensor.Name());
+    if (out_tensor == nullptr) {
+      MS_LOG(ERROR) << "Cant find " << calib_tensor.Name() << " in out_tensors";
       return RET_ERROR;
     }
-    auto out_tensor = out_tensor_iter->second;
-    auto out_data = static_cast<const T *>(out_tensor->data());
-    auto cos = mindspore::lite::GetCosSimilarity<T>(calib_data, out_data, out_tensor->ElementsNum());
+    auto out_data = reinterpret_cast<const T *>(out_tensor.Data().get());
+    auto cos = mindspore::lite::GetCosSimilarity<T>(calib_data, out_data, out_tensor.ElementNum());
     total_cos += cos;
-    MS_LOG(INFO) << "tensor_name:" << calib_tensor->tensor_name() << " cos_sim: " << mean_error
+    MS_LOG(INFO) << "tensor_name:" << calib_tensor.Name() << " cos_sim: " << mean_error
                  << " error_count:" << error_count;
   }
   return total_cos / calib_tensors.size();
 }
 
 template <typename T>
-float CompareData(const std::unordered_map<String, mindspore::tensor::MSTensor *> &calib_tensors,
-                  const std::unordered_map<String, mindspore::tensor::MSTensor *> &out_tensors) {
-  if (calib_tensors.empty() || out_tensors.empty()) {
+float CompareData(const std::shared_ptr<mindspore::Model> &origin_model,
+                  const std::shared_ptr<mindspore::Model> &quant_model) {
+  CHECK_NULL_RETURN(origin_model);
+  CHECK_NULL_RETURN(quant_model);
+  if (origin_model->GetOutputs().empty() || quant_model->GetOutputs().empty()) {
     MS_LOG(ERROR) << "calib or out tenor is empty.";
     return RET_ERROR;
   }
   float total_meam_error = 0;
-  for (const auto &calib : calib_tensors) {
+  auto calib_tensors = origin_model->GetOutputs();
+  for (const auto &calib_tensor : calib_tensors) {
     size_t error_count = 0;
     float mean_error = 0;
-    auto calib_tensor = calib.second;
-    auto calib_data = static_cast<const T *>(calib_tensor->data());
-    auto out_tensor_iter = out_tensors.find(calib_tensor->tensor_name());
-    if (out_tensor_iter == out_tensors.end()) {
-      MS_LOG(ERROR) << "Cant find " << calib_tensor->tensor_name() << " in out_tensors";
+    auto calib_data = reinterpret_cast<const T *>(calib_tensor.Data().get());
+    auto out_tensor = quant_model->GetOutputByTensorName(calib_tensor.Name());
+    if (out_tensor == nullptr) {
+      MS_LOG(ERROR) << "Cant find " << calib_tensor.Name() << " in out_tensors";
       return RET_ERROR;
     }
-    auto out_tensor = out_tensor_iter->second;
-    auto out_data = static_cast<const T *>(out_tensor->data());
-    for (int j = 0; j < calib_tensor->ElementsNum(); j++) {
+    auto out_data = reinterpret_cast<const T *>(out_tensor.Data().get());
+    for (int j = 0; j < calib_tensor.ElementNum(); j++) {
       if (std::is_same<T, float>::value && (std::isnan(out_data[j]) || std::isinf(out_data[j]))) {
         MS_LOG(ERROR) << "Output tensor has nan or inf data, compare fail";
         return RET_ERROR;
@@ -182,7 +186,7 @@ float CompareData(const std::unordered_map<String, mindspore::tensor::MSTensor *
       mean_error /= error_count;
     }
     total_meam_error += std::abs(mean_error);
-    MS_LOG(INFO) << "tensor_name:" << calib_tensor->tensor_name() << " mean_error: " << mean_error
+    MS_LOG(INFO) << "tensor_name:" << calib_tensor.Name() << " mean_error: " << mean_error
                  << " error_count:" << error_count;
   }
   return total_meam_error / calib_tensors.size();

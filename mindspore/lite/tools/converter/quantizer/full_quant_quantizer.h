@@ -27,7 +27,6 @@
 #include <set>
 #include "ops/primitive_c.h"
 #include "schema/inner/model_generated.h"
-#include "src/lite_session.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "include/ms_tensor.h"
 #include "tools/converter/quantizer/quantize_util.h"

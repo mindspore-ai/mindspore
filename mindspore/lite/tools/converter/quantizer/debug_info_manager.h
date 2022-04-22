@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <vector>
 #include <cstdio>
 #include <map>
+#include <memory>
 #include "tools/converter/quantizer/quantize_util.h"
 #include "nnacl/op_base.h"
 #include "tools/common/statistic_utils.h"
@@ -35,10 +36,12 @@ struct PrimaryKey {
   std::string node_name;
   InOutFlag in_out_flag;
   size_t index;
+
   friend bool operator<(const struct PrimaryKey &p1, const struct PrimaryKey &p2) {
     return p1.node_name < p2.node_name || (p1.node_name == p2.node_name && p1.in_out_flag < p2.in_out_flag) ||
            (p1.node_name == p2.node_name && p1.in_out_flag == p2.in_out_flag && p1.index < p2.index);
   }
+
   friend std::ostream &operator<<(std::ostream &os, const PrimaryKey &p) {  // for struct output
     os << "[" << p.node_name << "," << p.in_out_flag << "," << p.index << "]";
     return os;
@@ -82,16 +85,19 @@ struct QuantParamExtend {
 
 class DebugInfoManager {
  public:
-  int CompareOriginWithQuant(const quant::SessionModel &origin, const quant::SessionModel &quant,
+  int CompareOriginWithQuant(const std::shared_ptr<mindspore::Model> &origin,
+                             const std::shared_ptr<mindspore::Model> &quant,
                              const std::map<std::string, OpParameter *> &op_parameters,
                              const std::string &debug_info_save_path,
-                             const preprocess::DataPreProcessParam &data_preprocess);
+                             const preprocess::DataPreProcessParam &data_preprocess,
+                             const mindspore::lite::Model *origin_lite_model,
+                             const mindspore::lite::Model *quant_lite_model);
 
  private:
-  int AddOriginInfo(const mindspore::CallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
+  int AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
                     int tensor_index, mindspore::lite::Tensor *origin_tensor);
 
-  int AddComparedInfo(const mindspore::CallBackParam &call_back_param,
+  int AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                       const std::vector<mindspore::tensor::MSTensor *> &inputs, OpParameter *op_parameter,
                       bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor);
 
@@ -114,22 +120,22 @@ class DebugInfoManager {
 
   void SaveInfo(std::ofstream &out_file, const QuantDebugInfo &info);
 
-  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensorFromModel(const Model &model);
+  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const mindspore::lite::Model &model);
 
   std::map<std::string, mindspore::schema::Tensor *> ParseOutputTensorFromModel(const Model &model);
 
   int GetDataFromTensorMap(const mindspore::schema::Tensor &schema_tensor, mindspore::lite::Tensor *dst_tensor);
 
-  KernelCallBack GetBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                   const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
+  MSKernelCallBack GetBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
+                                     const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
 
-  KernelCallBack GetOriginBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                         const std::map<std::string, OpParameter *> &op_parameters);
+  MSKernelCallBack GetOriginBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
+                                           const std::map<std::string, OpParameter *> &op_parameters);
 
-  KernelCallBack GetQuantBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                        const std::map<std::string, OpParameter *> &op_parameters);
+  MSKernelCallBack GetQuantBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
+                                          const std::map<std::string, OpParameter *> &op_parameters);
 
-  KernelCallBack GetAfterCallBack(const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
+  MSKernelCallBack GetAfterCallBack(const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
 
   int GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
                      mindspore::tensor::MSTensor *tensor, mindspore::lite::Tensor *new_tensor);
