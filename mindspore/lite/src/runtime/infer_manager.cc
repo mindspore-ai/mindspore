@@ -32,6 +32,9 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+static const size_t kNumMaxMallocSize = GetMaxMallocSize();
+}
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers, int schema_version,
@@ -100,7 +103,7 @@ int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
   }
 
   for (auto output : outputs) {
-    if (static_cast<size_t>(output->ElementsNum()) >= GetMaxMallocSize() / sizeof(int64_t)) {
+    if (static_cast<size_t>(output->ElementsNum()) >= kNumMaxMallocSize / sizeof(int64_t)) {
       MS_LOG(ERROR) << "The size of output tensor is too big, output size: " << output->ElementsNum();
       return RET_INFER_ERR;
     }

@@ -120,6 +120,7 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/weight_decoder.cc
         ${SRC_DIR}/huffman_decode.cc
         ${SRC_DIR}/delegate/tensorrt/distribution/distribution_base.cc
+        ${SRC_DIR}/pack_weight_manager.cc
         )
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
@@ -133,7 +134,7 @@ endif()
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/pack_weight_manager.cc
+        ${SRC_DIR}/pack_weight.cc
         )
 endif()
 
