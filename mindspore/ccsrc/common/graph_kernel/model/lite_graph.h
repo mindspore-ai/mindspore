@@ -19,7 +19,6 @@
 #include <memory>
 #include <string>
 #include "common/graph_kernel/model/node.h"
-#include "common/graph_kernel/model/op_node.h"
 
 namespace mindspore::graphkernel::inner {
 class LiteGraph {
@@ -27,13 +26,7 @@ class LiteGraph {
   class GraphBuilderBase;
   explicit LiteGraph(const std::string &name = "") : name_(name), output_(new OutputNode()) {}
 
-  NodePtr &Add(PrimOpPtr op) {
-    (void)ops_.emplace_back(op);
-    return ops_.back();
-  }
-
   const NodePtrList &GetOrderedNodes();
-
   std::string ToString(bool reset_node_name = false) const;
   const std::string &name() const { return name_; }
   const NodePtrList &ops() const { return ops_; }
@@ -84,7 +77,6 @@ class LiteGraph::GraphBuilderBase {
   LiteGraphPtr Get() const { return graph_; }
 
  private:
-  PrimOpPtr CreateOp(const std::string &op) const;
   LiteGraphPtr graph_;
 };
 }  // namespace mindspore::graphkernel::inner

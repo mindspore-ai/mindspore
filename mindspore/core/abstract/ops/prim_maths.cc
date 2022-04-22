@@ -86,23 +86,23 @@ void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape,
     if (!axis_ptr_list.size()) {
       if (keep_dims_value) (void)shape->insert(shape->end(), x_shape.size(), 1);
     } else {
-      (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
-      ValuePtrList axis_items = axis_ptr_list;
-      ValuePtrList::iterator it;
-      ValuePtrList::reverse_iterator it_re;
-      int64_t axis_value;
       if (keep_dims_value) {
-        for (it = axis_items.begin(); it != axis_items.end(); ++it) {
-          axis_value = GetValue<int64_t>(*it);
+        *shape = x_shape;
+        for (auto it = axis_ptr_list.begin(); it != axis_ptr_list.end(); ++it) {
+          int64_t axis_value = GetValue<int64_t>(*it);
           axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
           shape->at(LongToSize(axis_value)) = 1;
         }
       } else {
-        std::sort(axis_items.begin(), axis_items.end());
-        for (it_re = axis_items.rbegin(); it_re != axis_items.rend(); ++it_re) {
-          axis_value = GetValue<int64_t>(*it_re);
-          axis_value = InferImplReduceFuncCheckAxis(axis_value, x_shape.size());
-          (void)shape->erase(shape->begin() + axis_value);
+        std::set<size_t> axis_items;
+        for (auto &axis_ptr : axis_ptr_list) {
+          auto positive_axis = InferImplReduceFuncCheckAxis(GetValue<int64_t>(axis_ptr), x_shape.size());
+          (void)axis_items.insert(LongToSize(positive_axis));
+        }
+        for (size_t i = 0; i < x_shape.size(); ++i) {
+          if (axis_items.count(i) == 0) {
+            (void)shape->emplace_back(x_shape[i]);
+          }
         }
       }
     }

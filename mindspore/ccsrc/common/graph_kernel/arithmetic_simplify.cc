@@ -31,6 +31,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "ir/anf.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
+#include "common/graph_kernel/model/op_node.h"
+#include "common/graph_kernel/model/graph_builder.h"
 
 namespace mindspore::graphkernel {
 // operator which follows commutative rules

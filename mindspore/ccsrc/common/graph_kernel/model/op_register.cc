@@ -59,15 +59,15 @@ OP_REGISTER("Cast", CastOp);
 OP_REGISTER("Round", ElemwiseOp);
 OP_REGISTER("Maximum", ElemwiseOp);
 OP_REGISTER("Minimum", ElemwiseOp);
-OP_REGISTER("Select", SelectOp);
-OP_REGISTER("Less", CompareOp);
-OP_REGISTER("Equal", CompareOp);
-OP_REGISTER("NotEqual", CompareOp);
-OP_REGISTER("LessEqual", CompareOp);
-OP_REGISTER("GreaterEqual", CompareOp);
-OP_REGISTER("Greater", CompareOp);
-OP_REGISTER("CReal", CRealOp);
-OP_REGISTER("CImag", CImagOp);
+OP_REGISTER("Select", ElemwiseOp);
+OP_REGISTER("Less", ElemwiseOp);
+OP_REGISTER("Equal", ElemwiseOp);
+OP_REGISTER("NotEqual", ElemwiseOp);
+OP_REGISTER("LessEqual", ElemwiseOp);
+OP_REGISTER("GreaterEqual", ElemwiseOp);
+OP_REGISTER("Greater", ElemwiseOp);
+OP_REGISTER("CReal", CImagRealOp);
+OP_REGISTER("CImag", CImagRealOp);
 OP_REGISTER("Complex", ComplexOp);
 OP_REGISTER("StandardNormal", StandardNormalOp);
 OP_REGISTER("IsNan", ElemwiseOp);
@@ -94,7 +94,7 @@ OP_REGISTER("Atan", ElemwiseOp);
 OP_REGISTER("Atan2", ElemwiseOp);
 OP_REGISTER("Expm1", ElemwiseOp);
 // broadcast ops
-OP_REGISTER("BroadcastTo", BroadcastToOp);
+OP_REGISTER("BroadcastTo", BroadcastOp);
 OP_REGISTER("Tile", BroadcastOp);
 // reduce ops
 OP_REGISTER("ReduceSum", ReduceOp);
@@ -105,7 +105,7 @@ OP_REGISTER("Argmin", ReduceOp);
 // opaque ops
 OP_REGISTER("_opaque", OpaqueOp);  // default opaque node
 OP_REGISTER("Transpose", TransposeOp);
-OP_REGISTER("MatMul", MatMulOp);
+OP_REGISTER("MatMul", OpaqueOp);
 OP_REGISTER("PadAkg", PadAkgOp);
 OP_REGISTER("UnPadAkg", UnPadAkgOp);
 OP_REGISTER("BatchMatMul", OpaqueOp);
@@ -116,7 +116,7 @@ OP_REGISTER("TensorScatterAdd", OpaqueOp);
 OP_REGISTER("Gather", OpaqueOp);
 OP_REGISTER("GatherNd", OpaqueOp);
 OP_REGISTER("UnsortedSegmentSum", OpaqueOp);
-OP_REGISTER("Conv2D", Conv2dOp);
+OP_REGISTER("Conv2D", OpaqueOp);
 OP_REGISTER("TransData", OpaqueOp);
 // virtual ops
 OP_REGISTER("Assign", VirtualOp);

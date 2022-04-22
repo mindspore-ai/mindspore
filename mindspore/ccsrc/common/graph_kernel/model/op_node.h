@@ -18,7 +18,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "ops/primitive_c.h"
 #include "common/graph_kernel/model/node.h"
 #include "ir/dtype/type.h"
 
@@ -45,7 +47,7 @@ class PrimOp : public Node {
       : Node({{}, TypeId::kNumberTypeBegin, kOpFormat_DEFAULT}), op_(op), compute_type_(compute) {}
   ~PrimOp() = default;
 
-  virtual NodeBase Infer(const NodePtrList &inputs, const DAttrs &attrs);
+  NodeBaseList Infer(const NodePtrList &inputs, const DAttrs &attrs);
   virtual NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs, const std::string &op);
 
   std::string ToString() const override;
@@ -55,14 +57,23 @@ class PrimOp : public Node {
   ComputeType compute_type() const { return compute_type_; }
 
  protected:
-  virtual void Check(const NodePtrList &inputs, const DAttrs &attrs);
-  virtual void CheckShape(const NodePtrList &, const DAttrs &) {}
-  virtual void CheckType(const NodePtrList &inputs, const DAttrs &attrs);
-  virtual void CheckFormat(const NodePtrList &inputs, const DAttrs &attrs);
+  // Check node info before inference the shape/type/format.
+  virtual void Check(const NodePtrList &, const DAttrs &) {}
 
-  virtual DShape InferShape(const NodePtrList &inputs, const DAttrs &) { return inputs[0]->shape; }
-  virtual TypeId InferType(const NodePtrList &inputs, const DAttrs &) { return inputs[0]->type; }
+  // Infer format. assume all outputs have the same format.
   virtual DFormat InferFormat(const NodePtrList &inputs, const DAttrs &) { return inputs[0]->format; }
+
+  // Infer shape. returning an empty vector means using PrimitiveC's infer_shape function.
+  virtual std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &) { return {}; }
+
+  // Infer type. returning an empty vector means using PrimitiveC's infer_type function.
+  virtual std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) { return {}; }
+
+  // Infer shape and type with PrimitiveC's inference function.
+  NodeBaseList InferShapeType(const NodePtrList &inputs, const DAttrs &attrs);
+
+  // rectify abstract before calling PrimitiveC's inference function.
+  virtual void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *) {}
 
   std::string op_;
   ComputeType compute_type_;
@@ -75,7 +86,6 @@ class ReshapeOp : public PrimOp {
   ~ReshapeOp() = default;
 
  protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   DFormat InferFormat(const NodePtrList &, const DAttrs &attrs) override {
     return attrs.find("format") == attrs.end() ? kOpFormat_DEFAULT
                                                : GetValue<std::string>(attrs.find("format")->second);
@@ -88,7 +98,7 @@ class ElemwiseOp : public PrimOp {
   ~ElemwiseOp() = default;
 
  protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
@@ -96,19 +106,6 @@ class BroadcastOp : public PrimOp {
  public:
   explicit BroadcastOp(const std::string &op) : PrimOp(op, ComputeType::BROADCAST) {}
   ~BroadcastOp() = default;
-
- protected:
-  // for pclint warning: 1790 public base symbol of symbol has no non-destructor virtual functions
-  virtual void Nothing() {}
-};
-
-class BroadcastToOp : public BroadcastOp {
- public:
-  explicit BroadcastToOp(const std::string &op) : BroadcastOp(op) {}
-  ~BroadcastToOp() = default;
-
- protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
 class ReduceOp : public PrimOp {
@@ -117,8 +114,6 @@ class ReduceOp : public PrimOp {
   ~ReduceOp() = default;
 
  protected:
-  void Check(const NodePtrList &inputs, const DAttrs &attrs) override;
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; };
 };
 
@@ -129,7 +124,7 @@ class OpaqueOp : public PrimOp {
 
  protected:
   // for pclint warning: 1790 public base symbol of symbol has no non-destructor virtual functions
-  virtual void Nothing() {}
+  virtual void DoNothing() {}
 };
 
 class VirtualOp : public PrimOp {
@@ -138,131 +133,80 @@ class VirtualOp : public PrimOp {
   ~VirtualOp() = default;
 };
 
-class CastOp : public ElemwiseOp {
- public:
-  explicit CastOp(const std::string &) : ElemwiseOp("Cast") {}
-  ~CastOp() = default;
-
- protected:
-  TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
-};
-
-class SelectOp : public ElemwiseOp {
- public:
-  explicit SelectOp(const std::string &) : ElemwiseOp("Select") {}
-  ~SelectOp() = default;
-
- protected:
-  void CheckType(const NodePtrList &inputs, const DAttrs &attrs) override;
-  TypeId InferType(const NodePtrList &inputs, const DAttrs &) override { return inputs[1]->type; }
-};
-
-class CompareOp : public ElemwiseOp {
- public:
-  explicit CompareOp(const std::string &op) : ElemwiseOp(op) {}
-  ~CompareOp() = default;
-
- protected:
-  TypeId InferType(const NodePtrList &, const DAttrs &) override { return TypeId::kNumberTypeBool; }
-};
-
-class Conv2dOp : public OpaqueOp {
- public:
-  explicit Conv2dOp(const std::string &) : OpaqueOp("Conv2D") {}
-  ~Conv2dOp() = default;
-
- protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
-  TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
-};
-
 class TransposeOp : public OpaqueOp {
  public:
-  explicit TransposeOp(const std::string &) : OpaqueOp("Transpose") {}
+  explicit TransposeOp(const std::string &op) : OpaqueOp(op) {}
   ~TransposeOp() = default;
 
  protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
-};
-
-class MatMulOp : public OpaqueOp {
- public:
-  explicit MatMulOp(const std::string &) : OpaqueOp("MatMul") {}
-  ~MatMulOp() = default;
-
- protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
-  TypeId InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
 class PadAkgOp : public OpaqueOp {
  public:
-  explicit PadAkgOp(const std::string &) : OpaqueOp("PadAkg") {}
+  explicit PadAkgOp(const std::string &op) : OpaqueOp(op) {}
   ~PadAkgOp() = default;
 
  protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->type}; }
 };
 
 class UnPadAkgOp : public OpaqueOp {
  public:
-  explicit UnPadAkgOp(const std::string &) : OpaqueOp("UnPadAkg") {}
+  explicit UnPadAkgOp(const std::string &op) : OpaqueOp(op) {}
   ~UnPadAkgOp() = default;
 
  protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->type}; }
 };
 
-class CImagOp : public ElemwiseOp {
+class CImagRealOp : public ElemwiseOp {
  public:
-  explicit CImagOp(const std::string &) : ElemwiseOp("CImag") {}
-  ~CImagOp() = default;
+  explicit CImagRealOp(const std::string &op) : ElemwiseOp(op) {}
+  ~CImagRealOp() = default;
 
  protected:
-  void CheckType(const NodePtrList &inputs, const DAttrs &) override {
+  void Check(const NodePtrList &inputs, const DAttrs &) override {
     if (inputs[0]->type != TypeId::kNumberTypeComplex64) {
-      MS_LOG(EXCEPTION) << "CImag's input[0] should be complex64, but got " << TypeIdToString(inputs[0]->type, true);
+      MS_LOG(EXCEPTION) << op_ << "'s input[0] should be complex64, but got " << TypeIdToString(inputs[0]->type, true);
     }
   };
 
-  TypeId InferType(const NodePtrList &, const DAttrs &) override { return TypeId::kNumberTypeFloat32; }
-};
-
-class CRealOp : public ElemwiseOp {
- public:
-  explicit CRealOp(const std::string &) : ElemwiseOp("CReal") {}
-  ~CRealOp() = default;
-
- protected:
-  void CheckType(const NodePtrList &inputs, const DAttrs &) override {
-    if (inputs[0]->type != TypeId::kNumberTypeComplex64) {
-      MS_LOG(EXCEPTION) << "CReal's input[0] should be complex64, but got " << TypeIdToString(inputs[0]->type, true);
-    }
-  };
-
-  TypeId InferType(const NodePtrList &, const DAttrs &) override { return TypeId::kNumberTypeFloat32; }
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->shape}; }
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
 };
 
 class ComplexOp : public ElemwiseOp {
  public:
-  explicit ComplexOp(const std::string &) : ElemwiseOp("Complex") {}
+  explicit ComplexOp(const std::string &op) : ElemwiseOp(op) {}
   ~ComplexOp() = default;
 
  protected:
-  void CheckType(const NodePtrList &inputs, const DAttrs &attrs) override;
-  TypeId InferType(const NodePtrList &, const DAttrs &) override { return TypeId::kNumberTypeComplex64; }
+  void Check(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &) override { return {inputs[0]->shape}; }
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeComplex64}; }
 };
 
 class StandardNormalOp : public OpaqueOp {
  public:
-  explicit StandardNormalOp(const std::string &) : OpaqueOp("StandardNormal") {}
+  explicit StandardNormalOp(const std::string &op) : OpaqueOp(op) {}
   ~StandardNormalOp() = default;
 
  protected:
-  DShape InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
-  TypeId InferType(const NodePtrList &, const DAttrs &) override { return TypeId::kNumberTypeFloat32; }
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; }
+};
+
+class CastOp : public ElemwiseOp {
+ public:
+  explicit CastOp(const std::string &op) : ElemwiseOp(op) {}
+  ~CastOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &prim, AbstractBasePtrList *) override;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif
