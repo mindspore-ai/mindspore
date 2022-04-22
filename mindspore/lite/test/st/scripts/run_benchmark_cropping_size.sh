@@ -99,7 +99,7 @@ function Run_cropping() {
     ls -l libmindspore-lite.so  || exit 1
     ls -l -h libmindspore-lite.so  || exit 1
     so_size=`ls libmindspore-lite.so  -l|awk -F ' ' '{print $5}'`
-    calib_size=`cat ${cropped_size_config}`
+    calib_size=`tail -1 ${cropped_size_config}`
     echo "now size:${so_size}." >> "${run_cropper_result}";
     echo "calib_size size:${calib_size}." >> "${run_cropper_result}";
 
