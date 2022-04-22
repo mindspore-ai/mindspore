@@ -1,12 +1,12 @@
 #!/bin/bash
 
 function Print_Cropper_Result() {
-    MS_PRINT_TESTCASE_START_MSG
+    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
     while read line; do
         arr=("${line}")
         printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
     done < "${run_cropper_result}"
-    MS_PRINT_TESTCASE_END_MSG
+    echo -e "-----------------------------------------------------------------------------------------------------------------------------------"
 }
 
 function Run_cropper() {

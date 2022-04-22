@@ -17,9 +17,9 @@ function Run_Converter() {
     # Prepare the config file list
     backend=${backend:-"all"}
     if [[ $backend == "gpu_gl_texture" ]]; then
-        local cfg_file_list=("$models_gpu_gl_texture_fp32_config" "$models_mindrt_parallel_config" "$models_gpu_weightquant_config" "$cropper_config")
+        local cfg_file_list=("$models_gpu_gl_texture_fp32_config" "$models_mindrt_parallel_config" "$models_gpu_weightquant_config")
     elif [[ $backend == "gpu_onnx_mindir" ]]; then
-        local cfg_file_list=("$models_onnx_gpu_fp32_config" "$models_mindspore_gpu_fp32_config")
+        local cfg_file_list=("$models_onnx_gpu_fp32_config" "$models_mindspore_gpu_fp32_config" "$cropper_config")
     elif [[ $backend == "gpu_tf_caffe" ]]; then
         local cfg_file_list=("$models_tf_gpu_fp32_config" "$models_caffe_gpu_fp32_config")
     elif [[ $backend == "gpu_tflite" ]]; then
@@ -251,7 +251,7 @@ if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "mindrt_p
     # sleep 1
 fi
 # guard cropper
-if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "cropper" ]]; then
+if [[ $backend == "all" || $backend == "gpu_onnx_mindir" || $backend == "cropper" ]]; then
     echo "start Run Cropper ... "
     cd ${basepath} || exit 1
     bash ${basepath}/scripts/run_cropper.sh -r ${release_path} -d ${device_id} -l ${level}
@@ -279,7 +279,7 @@ if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "mindrt_p
         isFailed=1
     fi
 fi
-if [[ $backend == "all" || $backend == "gpu_gl_texture" || $backend == "cropper" ]]; then
+if [[ $backend == "all" || $backend == "gpu_onnx_mindir" || $backend == "cropper" ]]; then
     # wait ${Run_cropper_PID}
     # Run_cropper_status=$?
     if [[ ${Run_cropper_status} != 0 ]];then
