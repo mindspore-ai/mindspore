@@ -20,11 +20,8 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #include "nnacl/partial_fusion_parameter.h"
-#endif
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
@@ -297,11 +294,9 @@ int Scheduler::CheckCpuValid(const std::vector<kernel::KernelExec *> *dst_kernel
 }
 
 int Scheduler::ConstructSubGraphs(std::vector<kernel::KernelExec *> *dst_kernels) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     return ConstructControlFlowMainGraph(dst_kernels);
   }
-#endif
 
   auto src_kernel = *dst_kernels;
   dst_kernels->clear();
@@ -402,12 +397,10 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
     return ret;
   }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     control_flow_scheduler_ = std::make_shared<ControlFlowScheduler>(context_, ms_context_, src_tensors_);
     MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "new control scheduler failed.");
   }
-#endif
 
   ret = ScheduleGraphToKernels(dst_kernels);
   FreeOpParameters();
@@ -448,14 +441,12 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
     return ret;
   }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     control_flow_scheduler_->SetSubgraphForPartialNode(&partial_kernel_subgraph_index_map_,
                                                        &subgraph_index_subgraph_kernel_map_);
     ret = control_flow_scheduler_->Schedule(dst_kernels);
     MS_CHECK_TRUE_MSG(ret == RET_OK, ret, "control flow schedule failed.");
   }
-#endif
 
   auto status = RuntimePass(dst_kernels, src_tensors_);
   if (status != RET_OK) {
@@ -713,14 +704,12 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   }
   ret = KernelInferShape(inputs, outputs, parameter, context_->allocator);
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     for (auto &output : outputs) {
       output->set_shape({-1});
     }
     return RET_INFER_INVALID;
   }
-#endif
 
   if (ret == RET_OK) {
     for (auto &output : outputs) {
@@ -834,13 +823,11 @@ int Scheduler::InferCallShape(const lite::Model::Node *node) {
   if (partial_input) {
     return InferPartialShape(partial_input);
   }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   auto switch_input = NodeInputIsSwitchType(node);
   if (switch_input) {
     *is_control_flow_ = true;
     return InferSwitchShape(switch_input);
   }
-#endif
 
   MS_LOG(ERROR) << "call input is not partial and also not switch.";
   return RET_ERROR;
@@ -1494,7 +1481,6 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
 
     if (IsPartialNode(primitive, schema_version_)) {
       if (IsControlFlowPattern(*node)) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
         control_flow_scheduler_->RecordSubgraphCaller(partial_subgraph_index, kernel);
@@ -1507,10 +1493,6 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
           partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
           subgraphs_to_schedule_.push_back(partial_subgraph_index);
         }
-#else
-        MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-        return RET_ERROR;
-#endif
       } else {
         kernel = SchedulePartialToKernel(node);
       }
@@ -1666,17 +1648,9 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
     if (dtype == kObjectTypeString) {
       return kNumberTypeFloat32;
     }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
     if (dtype == kObjectTypeTensorType) {
-      auto tensor_list = reinterpret_cast<TensorList *>(tensor);
-      auto tensor_list_dtype = tensor_list->tensors_data_type();
-      if (tensor_list_dtype == kNumberTypeFloat32 || tensor_list_dtype == kNumberTypeFloat16 ||
-          tensor_list_dtype == kNumberTypeInt8 || tensor_list_dtype == kNumberTypeInt32 ||
-          tensor_list_dtype == kNumberTypeBool) {
-        return tensor_list_dtype;
-      }
+      return TensorListDataType(tensor);
     }
-#endif
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
         dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {
       return dtype;
@@ -1694,7 +1668,6 @@ kernel::SubGraphType Scheduler::PartialSubGraphType(const std::vector<kernel::Ke
   return kernel::kCpuFP32SubGraph;
 }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int Scheduler::InferSwitchShape(const lite::Model::Node *switch_node) {
   MS_ASSERT(src_model_ != nullptr);
   MS_ASSERT(switch_node != nullptr);
@@ -1743,19 +1716,6 @@ bool Scheduler::SubGraphHasScheduled(const int &index) {
 
 void Scheduler::SubGraphMarkScheduled(const int &index) { scheduled_subgraph_index_.insert(index); }
 
-void CopyTensorList(TensorList *dst_tensor, TensorList *src_tensor) {
-  dst_tensor->set_data_type(src_tensor->data_type());
-  dst_tensor->set_format(src_tensor->format());
-  dst_tensor->set_element_shape(src_tensor->element_shape());
-  dst_tensor->set_shape(src_tensor->shape());
-  std::vector<Tensor *> cpy_tensors{};
-  for (auto &tensor : src_tensor->tensors()) {
-    auto new_tensor = Tensor::CopyTensor(*tensor, false);
-    cpy_tensors.push_back(new_tensor);
-  }
-  dst_tensor->set_tensors(cpy_tensors);
-}
-
 int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::KernelExec *> *kernels) {
   auto back_kernels = *kernels;
   kernels->clear();
@@ -1777,15 +1737,12 @@ int Scheduler::ConstructControlFlowMainGraph(std::vector<kernel::KernelExec *> *
   kernels->insert(kernels->begin(), subgraph_kernel);
   return RET_OK;
 }
-#endif
 
 std::vector<kernel::KernelExec *> Scheduler::NonTailCallNodes() {
   std::vector<kernel::KernelExec *> ret{};
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   if (*is_control_flow_) {
     ret = control_flow_scheduler_->GetNonTailCalls();
   }
-#endif
   return ret;
 }
 }  // namespace mindspore::lite

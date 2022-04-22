@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-#include "src/control_flow/entrance_subgraph_kernel.h"
+#include "src/control_flow/kernel/exit_subgraph_kernel.h"
 #include "src/tensor.h"
 
 namespace mindspore::kernel {
-int EntranceSubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &after) { return lite::RET_OK; }
+int ExitSubGraphKernel::Execute(const KernelCallBack &before, const KernelCallBack &after) { return lite::RET_OK; }
 
-SubGraphKernel *EntranceSubGraphKernel::Create(Kernel *kernel) {
-  auto sub_kernel = new kernel::EntranceSubGraphKernel(kernel);
+SubGraphKernel *ExitSubGraphKernel::Create(Kernel *kernel) {
+  auto sub_kernel = new kernel::ExitSubGraphKernel(kernel);
   if (sub_kernel == nullptr) {
     MS_LOG(ERROR) << "create entrance subgraph failed!";
     return nullptr;
   }
   return sub_kernel;
 }
+
+void ExitSubGraphKernel::SetPartial(kernel::KernelExec *partial_node) { partials_.insert(partial_node); }
 }  // namespace mindspore::kernel

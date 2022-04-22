@@ -118,6 +118,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/schema_tensor_wrapper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor_category.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/ms_tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
@@ -133,6 +134,8 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_flow_scheduler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         )
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
@@ -167,10 +170,10 @@ if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
 endif()
 
 if(MSLITE_ENABLE_CONTROLFLOW)
-    file(GLOB CONTROL_FLOW_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/*.cc
+    file(GLOB CONTROL_FLOW_KERNEL_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/kernel/*.cc
             )
-    set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_SRC})
+    set(LITE_SRC ${LITE_SRC} ${CONTROL_FLOW_KERNEL_SRC})
 endif()
 
 if(MSLITE_ENABLE_EXPERIMENTAL_KERNEL)
@@ -212,13 +215,6 @@ if(MSLITE_ENABLE_RUNTIME_PASS)
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/*.cc
             )
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_PASS_SRC})
-endif()
-
-if(MSLITE_ENABLE_CONTROLFLOW)
-    set(LITE_SRC
-        ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
-        )
 endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
@@ -313,6 +309,7 @@ if(MSLITE_ENABLE_MINDRT)
     set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_actor_creator.cc
         )
     if(MSLITE_ENABLE_CONTROLFLOW)
         file(GLOB CONTROL_FLOW_ACTOR_SRC

@@ -25,11 +25,8 @@
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-#include "src/control_flow/entrance_subgraph_kernel.h"
-#include "src/control_flow/exit_subgraph_kernel.h"
+#include "src/control_flow/control_subgraph_creator.h"
 #include "src/runtime/kernel/cpu/base/partial_fusion.h"
-#endif
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -200,162 +197,6 @@ void KernelExecUtil::InitTensorInitRefCount(const std::vector<KernelExec *> &ker
     kernel->InitOutTensorInitRefCount(&kernels);
   }
 }
-
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) {
-#ifndef DELEGATE_CLIP
-  if (kernel->desc().arch == kDelegate) {
-    return false;
-  }
-#endif
-  auto *subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
-  if (subgraph_kernel == nullptr) {
-    return false;
-  }
-  for (auto &node : subgraph_kernel->nodes()) {
-    if ((node->type() == schema::PrimitiveType_Switch || node->type() == schema::PrimitiveType_SwitchLayer) &&
-        InputsContainsSpecificNode(node, schema::PrimitiveType_PartialFusion) && node->out_kernels().size() == 1 &&
-        node->out_kernels().front()->type() == schema::PrimitiveType_Call) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool KernelExecUtil::IsNonTailCall(KernelExec *node) {
-  return node->type() == schema::PrimitiveType_Call &&
-         !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
-}
-
-bool KernelExecUtil::IsTailCall(KernelExec *node) {
-  return node->type() == schema::PrimitiveType_Call &&
-         (reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
-}
-
-bool KernelExecUtil::IsNonTailCallSubGraph(KernelExec *kernel) {
-  auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
-  if (subgraph_kernel == nullptr) {
-    return false;
-  }
-  auto nodes = subgraph_kernel->nodes();
-  return std::any_of(nodes.begin(), nodes.end(), [](KernelExec *node) { return KernelExecUtil::IsNonTailCall(node); });
-}
-
-bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) {
-  auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
-  if (subgraph_kernel == nullptr) {
-    return false;
-  }
-  if (IsNonTailCallSubGraph(subgraph_kernel)) {
-    return false;
-  }
-  auto output_nodes = subgraph_kernel->out_nodes();
-  if (std::any_of(output_nodes.begin(), output_nodes.end(), [](KernelExec *node) { return IsTailCall(node); })) {
-    return true;
-  }
-  return false;
-}
-
-std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(KernelExec *call_node) {
-  if (call_node->type() != schema::PrimitiveType_Call) {
-    MS_LOG(ERROR) << "input node is not call node.";
-    return {};
-  }
-  auto call_inputs = call_node->in_kernels();
-  if (call_inputs.size() != 1) {
-    MS_LOG(ERROR) << "call inputs size is: " << call_inputs.size() << ", not is 1.";
-    return {};
-  }
-
-  std::vector<KernelExec *> partial_nodes{};
-  auto call_input_node = call_inputs.front();
-  switch (call_input_node->type()) {
-    case schema::PrimitiveType_PartialFusion: {
-      partial_nodes.push_back(call_input_node);
-      break;
-    }
-    case schema::PrimitiveType_Switch:
-    case schema::PrimitiveType_SwitchLayer: {
-      auto switch_type_node = call_input_node;
-      for (auto item : switch_type_node->in_kernels()) {
-        if (item->type() == schema::PrimitiveType_PartialFusion) {
-          partial_nodes.push_back(item);
-        }
-      }
-      break;
-    }
-    default: {
-      MS_LOG(ERROR) << "not support call input type is: " << call_input_node->type();
-      return {};
-    }
-  }
-  return partial_nodes;
-}
-
-std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutputSubgraph(KernelExec *call_node) {
-  auto partial_nodes = GetCallInputPartials(call_node);
-  std::vector<KernelExec *> all_subgraphs{};
-  for (auto partial_node : partial_nodes) {
-    auto partial_kernel = reinterpret_cast<PartialFusionKernel *>(partial_node->kernel());
-    if (partial_kernel == nullptr) {
-      MS_LOG(ERROR) << "cast to partial kernel failed.";
-      return all_subgraphs;
-    }
-    // only get the output subgraph, the last subgraph is the output subgraph.
-    auto partial_subgraphs = partial_kernel->subgraph_kernels();
-    all_subgraphs.push_back(partial_subgraphs.back());
-    // exit graph's input graph also need set same output tensor init refcount.
-    if (partial_subgraphs.size() > 1 && partial_subgraphs.back()->subgraph_type() == kExitSubGraph) {
-      auto last_index = partial_subgraphs.size() - 1;
-      all_subgraphs.push_back(partial_subgraphs[last_index - 1]);
-    }
-  }
-  return all_subgraphs;
-}
-
-KernelExec *KernelExecUtil::GetPartialOutputCall(KernelExec *partial_node) {
-  if (partial_node->type() != schema::PrimitiveType_PartialFusion) {
-    MS_LOG(ERROR) << "input node is not partial node.";
-    return nullptr;
-  }
-  auto partial_outputs = partial_node->out_kernels();
-  if (partial_outputs.size() != 1) {
-    MS_LOG(ERROR) << "partial outputs size is: " << partial_outputs.size() << ", not is 1.";
-    return nullptr;
-  }
-
-  KernelExec *call_node = nullptr;
-  auto partial_output_node = partial_outputs.front();
-  switch (partial_output_node->type()) {
-    case schema::PrimitiveType_Call: {
-      call_node = partial_output_node;
-      break;
-    }
-    case schema::PrimitiveType_Switch:
-    case schema::PrimitiveType_SwitchLayer: {
-      auto switch_type_node = partial_output_node;
-      auto switch_outputs = switch_type_node->out_kernels();
-      if (switch_outputs.size() != 1) {
-        MS_LOG(ERROR) << "switch outputs size is: " << switch_outputs.size() << ", not is 1.";
-        return nullptr;
-      }
-      if (switch_outputs.front()->type() == schema::PrimitiveType_Call) {
-        call_node = switch_outputs.front();
-      } else {
-        MS_LOG(ERROR) << "graph is not right, switch output is not call node.";
-        return nullptr;
-      }
-      break;
-    }
-    default: {
-      MS_LOG(ERROR) << "not support partial output type is: " << partial_output_node->type();
-      return nullptr;
-    }
-  }
-  return call_node;
-}
-#endif
 
 KernelExec *KernelExecUtil::GetInputsSpecificNode(const KernelExec *kernel,
                                                   const schema::PrimitiveType &primitive_type) {
@@ -537,14 +378,10 @@ SubGraphKernel *KernelExecUtil::CreateSubGraphKernel(const std::vector<KernelExe
     case kCustomSubGraph: {
       sub_graph = CreateCustomSubGraph(std::move(input_kernels), std::move(output_kernels), kernels, lite_kernel);
     } break;
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-    case kEntranceSubGraph: {
-      sub_graph = EntranceSubGraphKernel::Create(lite_kernel);
-    } break;
+    case kEntranceSubGraph:
     case kExitSubGraph: {
-      sub_graph = ExitSubGraphKernel::Create(lite_kernel);
+      sub_graph = lite::CreateControlSubgraph(type, lite_kernel);
     } break;
-#endif
     default: {
       MS_LOG(ERROR) << "not support subgraph type: " << type;
       delete lite_kernel;
@@ -635,4 +472,181 @@ SubGraphKernel *KernelExecUtil::BelongToWhichSubGraph(const std::vector<KernelEx
   }
   return nullptr;
 }
+
+#ifndef CONTROLFLOW_TENSORLIST_CLIP
+bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) {
+#ifndef DELEGATE_CLIP
+  if (kernel->desc().arch == kDelegate) {
+    return false;
+  }
+#endif
+  auto *subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
+  for (auto &node : subgraph_kernel->nodes()) {
+    if ((node->type() == schema::PrimitiveType_Switch || node->type() == schema::PrimitiveType_SwitchLayer) &&
+        InputsContainsSpecificNode(node, schema::PrimitiveType_PartialFusion) && node->out_kernels().size() == 1 &&
+        node->out_kernels().front()->type() == schema::PrimitiveType_Call) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool KernelExecUtil::IsNonTailCall(KernelExec *node) {
+  return node->type() == schema::PrimitiveType_Call &&
+         !(reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
+}
+
+bool KernelExecUtil::IsTailCall(KernelExec *node) {
+  return node->type() == schema::PrimitiveType_Call &&
+         (reinterpret_cast<CallParameter *>(node->op_parameter())->is_tail_call);
+}
+
+bool KernelExecUtil::IsNonTailCallSubGraph(KernelExec *kernel) {
+  auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
+  auto nodes = subgraph_kernel->nodes();
+  return std::any_of(nodes.begin(), nodes.end(), [](KernelExec *node) { return KernelExecUtil::IsNonTailCall(node); });
+}
+
+bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) {
+  auto subgraph_kernel = reinterpret_cast<SubGraphKernel *>(kernel);
+  if (subgraph_kernel == nullptr) {
+    return false;
+  }
+  if (IsNonTailCallSubGraph(subgraph_kernel)) {
+    return false;
+  }
+  auto output_nodes = subgraph_kernel->out_nodes();
+  if (std::any_of(output_nodes.begin(), output_nodes.end(), [](KernelExec *node) { return IsTailCall(node); })) {
+    return true;
+  }
+  return false;
+}
+
+std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(KernelExec *call_node) {
+  if (call_node->type() != schema::PrimitiveType_Call) {
+    MS_LOG(ERROR) << "input node is not call node.";
+    return {};
+  }
+  auto call_inputs = call_node->in_kernels();
+  if (call_inputs.size() != 1) {
+    MS_LOG(ERROR) << "call inputs size is: " << call_inputs.size() << ", not is 1.";
+    return {};
+  }
+
+  std::vector<KernelExec *> partial_nodes{};
+  auto call_input_node = call_inputs.front();
+  switch (call_input_node->type()) {
+    case schema::PrimitiveType_PartialFusion: {
+      partial_nodes.push_back(call_input_node);
+      break;
+    }
+    case schema::PrimitiveType_Switch:
+    case schema::PrimitiveType_SwitchLayer: {
+      auto switch_type_node = call_input_node;
+      for (auto item : switch_type_node->in_kernels()) {
+        if (item->type() == schema::PrimitiveType_PartialFusion) {
+          partial_nodes.push_back(item);
+        }
+      }
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << "not support call input type is: " << call_input_node->type();
+      return {};
+    }
+  }
+  return partial_nodes;
+}
+
+std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutputSubgraph(KernelExec *call_node) {
+  auto partial_nodes = GetCallInputPartials(call_node);
+  std::vector<KernelExec *> all_subgraphs{};
+  for (auto partial_node : partial_nodes) {
+    auto partial_kernel = reinterpret_cast<PartialFusionKernel *>(partial_node->kernel());
+    if (partial_kernel == nullptr) {
+      MS_LOG(ERROR) << "cast to partial kernel failed.";
+      return all_subgraphs;
+    }
+    // only get the output subgraph, the last subgraph is the output subgraph.
+    auto partial_subgraphs = partial_kernel->subgraph_kernels();
+    all_subgraphs.push_back(partial_subgraphs.back());
+    // exit graph's input graph also need set same output tensor init refcount.
+    if (partial_subgraphs.size() > 1 && partial_subgraphs.back()->subgraph_type() == kExitSubGraph) {
+      auto last_index = partial_subgraphs.size() - 1;
+      all_subgraphs.push_back(partial_subgraphs[last_index - 1]);
+    }
+  }
+  return all_subgraphs;
+}
+
+KernelExec *KernelExecUtil::GetPartialOutputCall(KernelExec *partial_node) {
+  if (partial_node->type() != schema::PrimitiveType_PartialFusion) {
+    MS_LOG(ERROR) << "input node is not partial node.";
+    return nullptr;
+  }
+  auto partial_outputs = partial_node->out_kernels();
+  if (partial_outputs.size() != 1) {
+    MS_LOG(ERROR) << "partial outputs size is: " << partial_outputs.size() << ", not is 1.";
+    return nullptr;
+  }
+
+  KernelExec *call_node = nullptr;
+  auto partial_output_node = partial_outputs.front();
+  switch (partial_output_node->type()) {
+    case schema::PrimitiveType_Call: {
+      call_node = partial_output_node;
+      break;
+    }
+    case schema::PrimitiveType_Switch:
+    case schema::PrimitiveType_SwitchLayer: {
+      auto switch_type_node = partial_output_node;
+      auto switch_outputs = switch_type_node->out_kernels();
+      if (switch_outputs.size() != 1) {
+        MS_LOG(ERROR) << "switch outputs size is: " << switch_outputs.size() << ", not is 1.";
+        return nullptr;
+      }
+      if (switch_outputs.front()->type() == schema::PrimitiveType_Call) {
+        call_node = switch_outputs.front();
+      } else {
+        MS_LOG(ERROR) << "graph is not right, switch output is not call node.";
+        return nullptr;
+      }
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << "not support partial output type is: " << partial_output_node->type();
+      return nullptr;
+    }
+  }
+  return call_node;
+}
+
+#else
+
+bool KernelExecUtil::IsSwitchTypeCall(KernelExec *kernel) { return false; }
+
+bool KernelExecUtil::IsNonTailCall(KernelExec *node) { return false; }
+
+bool KernelExecUtil::IsTailCall(KernelExec *node) { return false; }
+
+bool KernelExecUtil::IsNonTailCallSubGraph(KernelExec *kernel) { return false; }
+
+bool KernelExecUtil::IsTailCallSubGraph(KernelExec *kernel) { return false; }
+
+std::vector<KernelExec *> KernelExecUtil::GetCallInputPartials(KernelExec *call_node) { return {}; }
+
+std::vector<KernelExec *> KernelExecUtil::GetCallInputPartialsCorrespondingOutputSubgraph(KernelExec *call_node) {
+  return {};
+}
+
+KernelExec *KernelExecUtil::GetPartialOutputCall(KernelExec *partial_node) { return nullptr; }
+
+#endif
 }  // namespace mindspore::kernel

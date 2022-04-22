@@ -18,9 +18,6 @@
 #include <random>
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-#include "src/tensorlist.h"
-#endif
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

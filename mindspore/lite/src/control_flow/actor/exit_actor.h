@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_EXIT_ACTOR_H_
-#define MINDSPORE_LITE_SRC_CONTROLFLOW_EXIT_ACTOR_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_ACTOR_EXIT_ACTOR_H_
+#define MINDSPORE_LITE_SRC_CONTROLFLOW_ACTOR_EXIT_ACTOR_H_
 #include <vector>
 #include <memory>
 #include <string>
@@ -57,4 +57,4 @@ class LiteExitOpActor : public LiteOpActor {
   AID entrance_input_aid_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_EXIT_ACTOR_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_ACTOR_EXIT_ACTOR_H_

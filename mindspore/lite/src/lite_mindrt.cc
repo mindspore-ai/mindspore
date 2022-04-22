@@ -23,11 +23,7 @@
 #include "src/common/common.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/runtime/kernel/cpu/base/partial_fusion.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-#include "src/control_flow/actor/switch_actor.h"
-#include "src/control_flow/actor/entrance_actor.h"
-#include "src/control_flow/actor/exit_actor.h"
-#endif
+#include "src/control_flow/control_actor_creator.h"
 
 namespace mindspore::lite {
 void LiteOpActor::RunOpData(OpData<lite::Tensor> *inputs, OpContext<lite::Tensor> *context) {
@@ -104,15 +100,7 @@ int LiteOpActor::IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *act
       if (old_tensor->data_type() == kNumberTypeFloat16 || old_tensor->data_type() == kNumberTypeFloat32) {
         old_tensor->set_data_type(kernel_->desc().data_type);
       }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-      if (old_tensor->data_type() == kObjectTypeTensorType) {
-        auto old_tensorlist = reinterpret_cast<TensorList *>(old_tensor);
-        if (old_tensorlist->tensors_data_type() == kNumberTypeFloat16 ||
-            old_tensorlist->tensors_data_type() == kNumberTypeFloat32) {
-          old_tensorlist->set_tensors_data_type(kernel_->desc().data_type);
-        }
-      }
-#endif
+      SetTensorListTensorDataType(kernel_->desc().data_type, old_tensor);
       old_tensor->set_allocator(kernel_->Context()->allocator);
       continue;
     }
@@ -174,18 +162,15 @@ int LiteOpActor::ResizeGraphInput(const std::vector<mindspore::tensor::MSTensor 
 }
 
 int LiteOpActor::CompileArrow(const std::unordered_map<void *, std::set<std::pair<AID, size_t>>> &receivers_map) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   auto ret = UpdateActorOutput();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "update actor output failed.";
     return ret;
   }
-#endif
 
   return CompileArrowThroughOutputTensors(receivers_map);
 }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int LiteOpActor::UpdateActorOutput() {
   if (kernel_->desc().arch == kernel::kDelegate) {
     MS_LOG(DEBUG) << "no need for delegate kernel.";
@@ -240,7 +225,6 @@ int LiteOpActor::UpdateActorOutput() {
   subgraph_kernel->DropNode(call_node_);
   return RET_OK;
 }
-#endif
 
 bool LiteOpActor::ArrowHasCompiled(const AID &actor_name, size_t to_index,
                                    const std::unordered_map<AID, std::set<size_t>> &receiver_index_set) {
@@ -327,9 +311,7 @@ void LiteOpActor::SetInputShape() {
     }
 
     if (input_tensor->data_type() == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
       SetTensorListShape(input_tensor, inputs_data_[i]);
-#endif
     } else {
       SetTensorShape(input_tensor, inputs_data_[i]);
     }
@@ -404,20 +386,7 @@ std::vector<std::shared_ptr<LiteOpActor>> CreateOpActor(const std::vector<kernel
   for (auto &kernel : kernels) {
     /* make subgraph name (actor name) unique */
     kernel->set_name(kernel->name() + "_" + to_string(actor_count++));
-    std::shared_ptr<LiteOpActor> actor = nullptr;
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-    if ((kernel::KernelExecUtil::IsSwitchTypeCall(kernel))) {
-      actor = std::make_shared<LiteSwitchOpActor>(kernel, ctx);
-    } else if (kernel->subgraph_type() == kernel::kEntranceSubGraph) {
-      actor = std::make_shared<LiteEntranceOpActor>(kernel, ctx);
-    } else if (kernel->subgraph_type() == kernel::kExitSubGraph) {
-      actor = std::make_shared<LiteExitOpActor>(kernel, ctx);
-    } else {
-#endif
-      actor = std::make_shared<LiteOpActor>(kernel, ctx);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
-    }
-#endif
+    std::shared_ptr<LiteOpActor> actor = CreateActor(kernel, ctx);
     if (actor == nullptr) {
       MS_LOG(ERROR) << "create LiteOpActor failed: " << kernel->name();
       actors.clear();

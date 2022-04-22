@@ -29,9 +29,7 @@
 #include "async/future.h"
 #include "src/sub_graph_kernel.h"
 #include "src/cpu_info.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
 
 namespace mindspore::lite {
 
@@ -69,7 +67,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
  public:
   void AddResultIndex(size_t index);
   const kernel::KernelExec *GetKernel() { return kernel_; }
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   // call this function after CompileArrow
   virtual std::set<kernel::KernelExec *> GetPartialKernels() const {
     if (partial_node_ == nullptr) {
@@ -78,7 +75,6 @@ class LiteOpActor : public OpActor<lite::Tensor> {
     std::set<kernel::KernelExec *> ret{partial_node_};
     return ret;
   }
-#endif
 
  protected:
   virtual void SetInputShape();
@@ -91,9 +87,7 @@ class LiteOpActor : public OpActor<lite::Tensor> {
   int IsolateInputData(std::vector<std::shared_ptr<LiteOpActor>> *actors,
                        std::unordered_map<Tensor *, Tensor *> *input_map);
   virtual int PrepareOutputData();
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   virtual int UpdateActorOutput();
-#endif
 
   kernel::KernelExec *kernel_;
   std::vector<size_t> results_index_{};

@@ -16,9 +16,8 @@
 #include "src/runtime/kernel/cpu/base/select.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/tensorlist.h"
-#endif
+#include "src/common/tensor_util.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -35,7 +34,7 @@ int SelectCPUKernel::Prepare() { return RET_OK; }
 
 int SelectCPUKernel::ReSize() { return RET_OK; }
 
-int MoveTensorData(lite::Tensor *dst_tensor, const lite::Tensor *src_tensor) {
+int CopyTensorData(lite::Tensor *dst_tensor, const lite::Tensor *src_tensor) {
   if (dst_tensor->data_type() != src_tensor->data_type() || dst_tensor->format() != src_tensor->format() ||
       !(dst_tensor->shape() == src_tensor->shape() || (dst_tensor->shape().empty() && src_tensor->shape().empty()))) {
     MS_LOG(ERROR) << "input tensor and output tensor is incompatible.";
@@ -60,52 +59,15 @@ int MoveTensorData(lite::Tensor *dst_tensor, const lite::Tensor *src_tensor) {
   return RET_OK;
 }
 
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 int MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_tensorlist) {
-  // shape may change, because tensors.size() can be change in RunGraph
-  if (dst_tensorlist->data_type() != src_tensorlist->data_type() ||
-      dst_tensorlist->format() != src_tensorlist->format()) {
-    MS_LOG(ERROR) << "input tensorlist and output tensorlist data_type or format is incompatible";
-    MS_LOG(ERROR) << "input tensor data_type: " << src_tensorlist->data_type() << " vs "
-                  << "output tensor data_type: " << dst_tensorlist->data_type()
-                  << "input tensor format: " << src_tensorlist->format() << " vs "
-                  << "output tensor format: " << dst_tensorlist->format();
-    return RET_ERROR;
+  int ret = lite::CopyTensorListTensorDataType(dst_tensorlist, src_tensorlist);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "CopyTensorListTensorDataType failed.";
+    return ret;
   }
-  // when tensorlist malloc is done. this need to check element_shape compatibility
-  dst_tensorlist->set_element_shape(src_tensorlist->element_shape());
-
-  auto update_data_type = kTypeUnknown;
-  auto dst_tensor_data_type = dst_tensorlist->tensors_data_type();
-  auto src_tensor_data_type = src_tensorlist->tensors_data_type();
-  if (dst_tensor_data_type != src_tensor_data_type) {
-    if (src_tensor_data_type != kTypeUnknown && dst_tensor_data_type != kTypeUnknown) {
-      MS_LOG(ERROR) << "input tensorlist and output tensorlist is incompatible";
-      return RET_ERROR;
-    }
-    update_data_type = dst_tensor_data_type != kTypeUnknown ? dst_tensor_data_type : src_tensor_data_type;
-  }
-  if (update_data_type != kTypeUnknown) {
-    src_tensorlist->set_tensors_data_type(update_data_type);
-    dst_tensorlist->set_tensors_data_type(update_data_type);
-  }
-  size_t src_tensorlist_tensors_size = src_tensorlist->tensors().size();
-  for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
-    auto &src_tensor = src_tensorlist->tensors()[i];
-    auto &dst_tensor = dst_tensorlist->tensors()[i];
-
-    if (src_tensor->allocator() != nullptr) {
-      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-    }
-    dst_tensor->set_own_data(src_tensor->own_data());
-    if (src_tensor->data() != nullptr) {
-      dst_tensor->set_data(src_tensor->data());
-    }
-    dst_tensor->set_shape(src_tensor->shape());
-  }
+  lite::MoveTensorListTensorData(dst_tensorlist, src_tensorlist);
   return RET_OK;
 }
-#endif
 
 int MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,
              const std::vector<lite::Tensor *>::iterator &dst_end,
@@ -129,17 +91,12 @@ int MoveData(const std::vector<lite::Tensor *>::iterator &dst_begin,
       dst_tensor->set_own_data(false);
     } else {
       if (src_tensor->data_type() == kObjectTypeTensorType && dst_tensor->data_type() == kObjectTypeTensorType) {
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
         MS_LOG(DEBUG) << "Carry MoveTensorListData";
         ret = MoveTensorListData(reinterpret_cast<lite::TensorList *>(dst_tensor),
                                  reinterpret_cast<lite::TensorList *>(src_tensor));
-#else
-        MS_LOG(ERROR) << unsupport_controlflow_tensorlist_log;
-        return RET_NOT_SUPPORT;
-#endif
       } else {
-        MS_LOG(DEBUG) << "Carry MoveTensorData";
-        ret = MoveTensorData(dst_tensor, src_tensor);
+        MS_LOG(DEBUG) << "Carry CopyTensorData";
+        ret = CopyTensorData(dst_tensor, src_tensor);
       }
     }
     if (ret != RET_OK) {

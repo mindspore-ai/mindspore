@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_
-#define MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_IDENTITY_KERNEL_H_
+#define MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_IDENTITY_KERNEL_H_
 #include <atomic>
 #include <utility>
 #include <string>
@@ -55,4 +55,4 @@ class IdentityKernel : public LiteKernel {
   bool support_fp16_ = false;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_IDENTITY_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_CONTROLFLOW_KERNEL_IDENTITY_KERNEL_H_

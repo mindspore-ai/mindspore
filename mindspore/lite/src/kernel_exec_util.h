@@ -32,7 +32,6 @@ class KernelExecUtil {
   static std::vector<lite::Tensor *> SubgraphOutputTensors(const std::vector<KernelExec *> &kernels);
   static int TopologicalSortKernels(std::vector<KernelExec *> *kernels);
   static void InitTensorInitRefCount(const std::vector<KernelExec *> &kernels);
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   static bool IsSwitchTypeCall(KernelExec *kernel);
   static bool IsNonTailCall(KernelExec *node);
   static bool IsTailCall(KernelExec *node);
@@ -41,7 +40,6 @@ class KernelExecUtil {
   static bool IsNonTailCallSubGraph(KernelExec *kernel);
   static bool IsTailCallSubGraph(KernelExec *kernel);
   static std::vector<KernelExec *> GetCallInputPartialsCorrespondingOutputSubgraph(KernelExec *call_node);
-#endif
   static KernelExec *GetInputsSpecificNode(const KernelExec *kernel, const schema::PrimitiveType &primitive_type);
   static bool InputsContainsSpecificNode(const KernelExec *kernel, const schema::PrimitiveType &primitive_type);
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph

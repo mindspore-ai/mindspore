@@ -32,9 +32,7 @@
 #ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
 #endif
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/control_flow_scheduler.h"
-#endif
 #include "src/runtime/runtime_shape_fusion_pass.h"
 
 namespace mindspore::lite {
@@ -128,13 +126,11 @@ class Scheduler {
 #ifdef ENABLE_FP16
   int SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_data_type);
 #endif
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   int InferSwitchShape(const Model::Node *node);
   Model::Node *NodeInputIsSwitchType(const Model::Node *node);
   bool SubGraphHasScheduled(const int &index);
   void SubGraphMarkScheduled(const int &index);
   int ConstructControlFlowMainGraph(std::vector<kernel::KernelExec *> *kernels);
-#endif
 
 #ifndef DELEGATE_CLIP
   /* delegate related */
@@ -168,12 +164,10 @@ class Scheduler {
   int delegate_device_type_ = -1;
   std::deque<int> subgraphs_to_schedule_{};
   std::unordered_map<size_t, kernel::KernelExec *> subgraph_index_subgraph_kernel_map_{};
-#ifndef CONTROLFLOW_TENSORLIST_CLIP
   std::set<int> scheduled_subgraph_index_{};
   std::unordered_map<kernel::KernelExec *, size_t> partial_kernel_subgraph_index_map_{};
   std::set<lite::Model::Node *> partial_cnode_inferred_{};
   ControlFlowSchedulerPtr control_flow_scheduler_ = nullptr;
-#endif
   int schema_version_ = SCHEMA_VERSION::SCHEMA_CUR;
   std::map<std::string, TypeId> *execution_plan_ = nullptr;
   const std::map<std::string, std::map<std::string, std::string>> *config_info_ = nullptr;
