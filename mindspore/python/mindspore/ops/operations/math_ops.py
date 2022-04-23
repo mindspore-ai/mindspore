@@ -4342,7 +4342,7 @@ class SquareSumAll(PrimitiveWithInfer):
         ValueError: If `x` and `y` are not the same shape.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
