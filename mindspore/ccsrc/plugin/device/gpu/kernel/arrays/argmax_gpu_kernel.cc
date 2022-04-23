@@ -55,11 +55,14 @@ bool ArgmaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   attr_ptr_->axis = kernel_ptr->get_axis();
   helper_ptr_ = std::move(kernel_attr[index].second(kernel_name_, device_id_));
   helper_ptr_->SetKernelParam(attr_ptr_);
+
+  Resize(base_operator, inputs, outputs);
   return true;
 }
 
-bool ArgmaxGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                                const std::shared_ptr<ReinitArgs> &args) {
+bool ArgmaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &others) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();

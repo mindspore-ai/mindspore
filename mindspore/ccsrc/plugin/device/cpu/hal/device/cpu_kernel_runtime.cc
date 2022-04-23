@@ -473,10 +473,10 @@ bool CPUKernelRuntime::Run(const session::KernelGraph &kernel_graph, bool) {
     }
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       AnfAlgo::InferShape(kernel);
+      auto args = kernel::GetArgsFromCNode(kernel);
       if (cpu_kernel != nullptr &&
-          !cpu_kernel->Reinit(kernel::GetReinitInputs(kernel), kernel::GetReinitOutputs(kernel),
-                              kernel::GetReinitArgs(kernel))) {
-        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Reinit failed!";
+          !cpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+        MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed!";
       }
     }
     std::vector<kernel::AddressPtr> kernel_inputs;

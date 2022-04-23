@@ -111,9 +111,10 @@ bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool ArgmaxCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                                const std::shared_ptr<ReinitArgs> &args) {
-  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+bool ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &others) {
+  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return false;
   }

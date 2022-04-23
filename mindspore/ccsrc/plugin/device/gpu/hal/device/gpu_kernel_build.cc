@@ -112,13 +112,12 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         MS_EXCEPTION_IF_NULL(ms_context);
         auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
         gpu_kernel_mod->SetDevicedId(device_id);
-        auto [base_operator, input_tensors, output_tensors] = kernel::GetArgsFromCNode(kernel);
-        if (!gpu_kernel_mod->Init(base_operator, input_tensors, output_tensors)) {
+        auto args = kernel::AbstractArgsFromCNode(kernel);
+        if (!gpu_kernel_mod->Init(args.op, args.inputs, args.outputs)) {
           MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
         }
-        auto reinit_args = std::make_shared<kernel::ReinitArgs>();
-        if (!gpu_kernel_mod->Reinit(input_tensors, output_tensors, reinit_args)) {
-          MS_LOG(EXCEPTION) << "gpu kernel op[" << kernel->fullname_with_scope() << "] ReInit failed.";
+        if (!gpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel))) {
+          MS_LOG(EXCEPTION) << "gpu kernel op[" << kernel->fullname_with_scope() << "] Resize failed.";
         }
         session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());
       }

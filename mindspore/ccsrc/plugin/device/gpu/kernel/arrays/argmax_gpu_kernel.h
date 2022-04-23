@@ -22,6 +22,7 @@
 #include <memory>
 #include <algorithm>
 #include <functional>
+#include <map>
 #include "mindspore/core/ops/arg_max.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
@@ -38,8 +39,9 @@ class ArgmaxGpuKernelMod : public NativeGpuKernelMod {
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
-  bool Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-              const std::shared_ptr<ReinitArgs> &args) override;
+  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+              const std::vector<KernelTensorPtr> &outputs,
+              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:

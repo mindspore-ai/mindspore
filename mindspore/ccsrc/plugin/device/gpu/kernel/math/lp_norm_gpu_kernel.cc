@@ -123,14 +123,15 @@ bool LpNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool LpNormGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                                const std::shared_ptr<ReinitArgs> &args) {
+bool LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &others) {
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
-    return Init(args->base_operator, inputs, outputs);
+    return Init(base_operator, inputs, outputs);
   } else {
-    kernel_ptr_ = args->base_operator;
+    kernel_ptr_ = base_operator;
     outputs_ = outputs;
     return true;
   }

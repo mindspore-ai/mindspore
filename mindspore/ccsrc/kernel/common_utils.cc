@@ -104,14 +104,6 @@ const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
   {FusionType::CONFUSION_TRANSPOSE, "confusiontranspose"},
   {FusionType::DROPOUT_DOMASKV3D, "DropOutDoMaskV3D"},
   {FusionType::UNKNOWN_FUSION_TYPE, ""}};
-
-struct InitOpArgs {
-  std::vector<KernelTensorPtr> inputs;
-  std::vector<KernelTensorPtr> outputs;
-  std::shared_ptr<ReinitArgs> args;
-  // cppcheck-suppress unusedStructMember
-  constexpr static char key[] = "InitOpArgs";
-};
 }  // namespace
 std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment) {
   auto alignment_iter = MatrixDiag::AlignmentMap.find(alignment);
@@ -1162,7 +1154,7 @@ std::string GetFormatFromEnumToStr(Format format) {
   return format_str;
 }
 
-KernelArgs GetArgsFromCNode(const CNodePtr &cnode) {
+KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);
@@ -1241,7 +1233,8 @@ KernelArgs GetArgsFromCNode(const CNodePtr &cnode) {
     output_tensors.push_back(output_tensor);
   }
 
-  return std::make_tuple(base_operator, input_tensors, output_tensors);
+  KernelArgs args = {base_operator, input_tensors, output_tensors};
+  return args;
 }
 
 KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensorPtr> &inputs,
@@ -1285,44 +1278,23 @@ void SetCpuRefMapToKernelInfo(const CNodePtr &apply_kernel, const std::vector<Ke
   }
 }
 
-void SetInitOpArgs(const CNodePtr &cnode, const std::vector<KernelTensorPtr> &inputs,
-                   const std::vector<KernelTensorPtr> &outputs, const std::shared_ptr<ReinitArgs> &reinit_args) {
+std::shared_ptr<KernelArgs> GetArgsFromCNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto init_op_args = cnode->user_data<InitOpArgs>();
-  if (init_op_args == nullptr) {
-    init_op_args = std::make_shared<InitOpArgs>();
-    cnode->set_user_data<InitOpArgs>(init_op_args);
-  }
-  init_op_args->inputs = inputs;
-  init_op_args->outputs = outputs;
-  init_op_args->args = reinit_args;
+  auto args = cnode->user_data<KernelArgs>();
+  return args;
 }
 
-std::vector<KernelTensorPtr> GetReinitInputs(const CNodePtr &cnode) {
+void SetArgsToCNode(const CNodePtr &cnode, const KernelArgs &args) {
   MS_EXCEPTION_IF_NULL(cnode);
-  auto init_op_args = cnode->user_data<InitOpArgs>();
-  if (init_op_args == nullptr) {
-    return {};
+  auto dst = cnode->user_data<KernelArgs>();
+  if (dst == nullptr) {
+    dst = std::make_shared<KernelArgs>();
+    cnode->set_user_data<KernelArgs>(dst);
   }
-  return init_op_args->inputs;
-}
-
-std::vector<KernelTensorPtr> GetReinitOutputs(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto init_op_args = cnode->user_data<InitOpArgs>();
-  if (init_op_args == nullptr) {
-    return {};
-  }
-  return init_op_args->outputs;
-}
-
-std::shared_ptr<ReinitArgs> GetReinitArgs(const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto init_op_args = cnode->user_data<InitOpArgs>();
-  if (init_op_args == nullptr) {
-    return nullptr;
-  }
-  return init_op_args->args;
+  dst->inputs = args.inputs;
+  dst->outputs = args.outputs;
+  dst->op = args.op;
+  dst->depend_tensor_map = args.depend_tensor_map;
 }
 
 void UpdateNodeShape(const CNodePtr &cnode) {

@@ -129,13 +129,13 @@ bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
       MS_LOG(ERROR) << "cdist kernel does not support " << TypeIdToString(input_type_id);
       return false;
   }
-  Reinit(inputs, outputs, nullptr);
   return true;
 }
 
-bool CdistCpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                               const std::shared_ptr<ReinitArgs> &args) {
-  if (!NativeCpuKernelMod::Reinit(inputs, outputs, args)) {
+bool CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &others) {
+  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
     MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return false;
   }

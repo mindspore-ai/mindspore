@@ -45,9 +45,10 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
 }
 }  // namespace
 
-bool DeprecatedNativeGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs,
+bool DeprecatedNativeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
-                                          const std::shared_ptr<ReinitArgs> &args) {
+                                          const std::map<uint32_t, tensor::TensorPtr> &others) {
   auto cnode = kernel_node_.lock();
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "kernel_node_ is not a cnode.";
@@ -369,17 +370,16 @@ bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2) {
   return std::equal(s1.begin(), s1.end(), s2_trans.begin(), s2_trans.end());
 }
 
-std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs,
-                                                           const size_t input_index,
-                                                           const std::shared_ptr<ReinitArgs> &args,
-                                                           const std::string &kernel_name) {
+std::optional<std::vector<int64_t>> GetDynamicAttrIntValue(
+  const std::vector<KernelTensorPtr> &inputs, const size_t input_index,
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, const std::string &kernel_name) {
   // The value of dynamic attr can only be obtained after the InferOp() is executed
-  if (args == nullptr || args->depend_tensor_map.empty()) {
+  if (depend_tensor_map.empty()) {
     MS_LOG(DEBUG) << "For '" << kernel_name << "', the depend_tensor_map is currently empty";
     return std::nullopt;
   }
-  auto depend_iter = args->depend_tensor_map.find(input_index);
-  if (depend_iter == args->depend_tensor_map.end()) {
+  auto depend_iter = depend_tensor_map.find(input_index);
+  if (depend_iter == depend_tensor_map.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', fail to find the " << input_index
                       << "th input in the depend_tensor_map";
   }

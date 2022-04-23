@@ -86,14 +86,15 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool UniqueGpuKernelMod::Reinit(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs,
-                                const std::shared_ptr<ReinitArgs> &args) {
+bool UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &others) {
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
-    return Init(args->base_operator, inputs, outputs);
+    return Init(base_operator, inputs, outputs);
   } else {
-    base_operator_ = args->base_operator;
+    base_operator_ = base_operator;
     inputs_ = inputs;
     outputs_ = outputs;
     return true;
