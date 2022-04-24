@@ -6088,6 +6088,7 @@ class ReverseSequence(PrimitiveWithInfer):
 
     Raises:
         TypeError: If `seq_dim` or `batch_dim` is not an int.
+        ValueError: If value of `batch_dim` is equal to or greater than length of shape of `x` .
 
     Supported Platforms:
         ``Ascend`` ``GPU``
