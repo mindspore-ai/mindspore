@@ -35,11 +35,9 @@ using lite::RET_ERROR;
 using lite::RET_OK;
 static const std::set<std::string> kSupportCLENode = {
   schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion)};
+static const float kDefaultScale = 1;
 
 int CLEStrategy::ReplaceGraphRelu6ToRelu() {
-  if (!replace_relu6_flag_) {
-    return RET_OK;
-  }
   // Optimize with pattern.
   auto cnodes = func_graph_->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
@@ -53,9 +51,6 @@ int CLEStrategy::ReplaceGraphRelu6ToRelu() {
 }
 
 int CLEStrategy::ReplaceCNodeRelu6ToRelu(const CNodePtr &cnode) {
-  if (!replace_relu6_flag_) {
-    return RET_OK;
-  }
   // Optimize with pattern.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -166,14 +161,23 @@ int CLEStrategy::CalcDataRange(const float *data, size_t element_cnt, const std:
                                std::vector<float> *ranges) {
   CHECK_NULL_RETURN(data);
   CHECK_NULL_RETURN(ranges);
-  std::map<int, MinMax> per_channel_min_max;
-  GetAllChannelMinMax(data, element_cnt, dims, preferred_dim, &per_channel_min_max);
-
-  for (auto min_max_map : per_channel_min_max) {
-    float min = min_max_map.second.min;
-    float max = min_max_map.second.max;
-    auto range = std::abs(min) > std::abs(max) ? std::abs(min) : std::abs(max);
-    ranges->push_back(range);
+  std::vector<std::vector<int>> buckets_data_index;
+  auto ret = GetBucketAllIndex(dims, preferred_dim, &buckets_data_index);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Get bucket all index failed.";
+    return ret;
+  }
+  auto bucket_count = dims[preferred_dim];
+  ranges->resize(bucket_count);
+  // ABS MAX
+  for (int i = 0; i < bucket_count; i++) {
+    auto bucket = buckets_data_index.at(i);
+    float range = 0;
+    for (size_t j = 0; j < bucket.size(); ++j) {
+      auto index = bucket[j];
+      range = std::max(range, std::abs(data[index]));
+    }
+    ranges->at(i) = range;
   }
   return RET_OK;
 }
@@ -239,9 +243,16 @@ int CLEStrategy::CalcScaleWithTwoLayer(const CombinationLayer &layer_group, std:
   }
   for (size_t i = 0; i < range1.size(); i++) {
     // scale = range1 / sqrt(range1 * range2)
-    MS_CHECK_GT(range1.at(i), 0, RET_ERROR);
-    MS_CHECK_GT(range2.at(i), 0, RET_ERROR);
-    auto scale = range1.at(i) * (1.0f / sqrt(range1.at(i) * range2.at(i)));
+    auto sqrt_range = sqrt(range1.at(i) * range2.at(i));
+    if (sqrt_range <= 0 || isnan(sqrt_range) || isinf(sqrt_range)) {
+      MS_LOG(WARNING) << "sqrt_range <= 0, and set scale factor to default." << kDefaultScale;
+      scales->push_back(kDefaultScale);
+      MS_LOG(INFO) << layer_group.layer1->fullname_with_scope() << " " << 1 << " "
+                   << layer_group.layer2->fullname_with_scope() << " " << 1;
+      continue;
+    }
+    auto scale = range1.at(i) / sqrt_range;
+    scale = scale <= 0 ? kDefaultScale : scale;
     MS_LOG(INFO) << layer_group.layer1->fullname_with_scope() << " " << 1 / scale << " "
                  << layer_group.layer2->fullname_with_scope() << " " << scale;
     scales->push_back(scale);
@@ -283,17 +294,21 @@ int CLEStrategy::CalcScaleWithThreeLayer(const CombinationLayer &layer_group, st
   // scale1 = range1/cubeRoot(range1 * range2 * range3)
   // scale2 = cubeRoot(range1 * range2 * range3)/range3
   for (size_t i = 0; i < range1.size(); i++) {
-    MS_CHECK_GT(range1.at(i), 0, RET_ERROR);
-    MS_CHECK_GT(range2.at(i), 0, RET_ERROR);
-    MS_CHECK_GT(range3.at(i), 0, RET_ERROR);
     auto cube_root = std::pow(range1.at(i) * range2.at(i) * range3.at(i), 1.0f / 3);
-    if (cube_root <= 0) {
-      MS_LOG(ERROR) << "cube_root <= 0";
-      return RET_ERROR;
+    if (cube_root <= 0 || isnan(cube_root) || isinf(cube_root)) {
+      MS_LOG(WARNING) << "cube_root <= 0, and set scale factor to default." << kDefaultScale;
+      scales12->push_back(kDefaultScale);
+      scales23->push_back(kDefaultScale);
+      MS_LOG(INFO) << layer_group.layer1->fullname_with_scope() << " " << 1 << " "
+                   << layer_group.layer2->fullname_with_scope() << " " << 1 << " "
+                   << layer_group.layer3->fullname_with_scope() << " " << 1;
+      continue;
     }
     auto scale1 = range1.at(i) / cube_root;
+    scale1 = scale1 <= 0 ? kDefaultScale : scale1;
     scales12->push_back(scale1);
     auto scale2 = cube_root / range3.at(i);
+    scale2 = scale2 <= 0 ? kDefaultScale : scale2;
     scales23->push_back(scale2);
     MS_LOG(INFO) << layer_group.layer1->fullname_with_scope() << " " << 1 / scale1 << " "
                  << layer_group.layer2->fullname_with_scope() << " " << scale1 / scale2 << " "
@@ -331,10 +346,12 @@ int CLEStrategy::WeightEqualization() {
         MS_LOG(ERROR) << "Replace Relu6 to Relu failed.";
         return ret;
       }
-      ret = ReplaceCNodeRelu6ToRelu(group.layer2);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Replace Relu6 to Relu failed.";
-        return ret;
+      if (depthwise_replace_relu6_flag_) {
+        ret = ReplaceCNodeRelu6ToRelu(group.layer2);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "Replace Relu6 to Relu failed.";
+          return ret;
+        }
       }
       ret = CalcScaleWithThreeLayer(group, &scales12, &scales23);
       if (ret != RET_OK) {

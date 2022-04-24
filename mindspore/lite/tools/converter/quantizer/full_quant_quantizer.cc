@@ -535,7 +535,7 @@ int FullQuantQuantizer::DoInference(CollectType collect_type) {
   }
 
   for (size_t calib_index = 0; calib_index < calibrator_->GetBatchNum(); calib_index++) {
-    MS_LOG(INFO) << "Do inference round:" << calib_index;
+    MS_LOG(INFO) << "Do inference round: " << calib_index;
     // set multi-input data
     for (auto tensor : inputs) {
       int status = calibrator_->GenerateInputData(tensor.Name(), calib_index, &tensor);
