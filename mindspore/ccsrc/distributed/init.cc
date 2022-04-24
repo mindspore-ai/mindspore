@@ -34,14 +34,16 @@ bool Initialize() {
     // Server and Scheduler don't use collective communication library.
     auto node = cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
-    if (node->role() != ps::core::NodeRole::SCHEDULER && node->role() != ps::core::NodeRole::SERVER) {
+    const auto &cluster_ctx = cluster::ClusterContext::instance();
+    MS_EXCEPTION_IF_NULL(cluster_ctx);
+    if (cluster_ctx->node_role() != kEnvRoleOfScheduler && cluster_ctx->node_role() != kEnvRoleOfServer) {
       // Global rank id and size should be manually set if cluster is initialized by MindSpore communication framework.
       auto abstract_node =
         std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
       MS_EXCEPTION_IF_NULL(abstract_node);
       collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
       auto global_rank_size =
-        (node->role() == ps::core::NodeRole::WORKER) ? abstract_node->worker_num() : abstract_node->server_num();
+        (cluster_ctx->node_role() == kEnvRoleOfWorker) ? abstract_node->worker_num() : abstract_node->server_num();
       collective::CollectiveManager::instance()->set_global_rank_size(global_rank_size);
 
       if (RecoveryContext::GetInstance()->enable_recovery()) {

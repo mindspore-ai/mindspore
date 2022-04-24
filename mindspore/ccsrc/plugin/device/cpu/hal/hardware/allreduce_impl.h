@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_ALLREDUCE_IMPL_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_ALLREDUCE_IMPL_H_
 
+#include <string>
 #include "distributed/cluster/cluster_context.h"
 
 namespace mindspore {
@@ -37,7 +38,7 @@ class AllReduceLauncher {
  private:
   size_t rank_id_{0};
   size_t rank_size_{0};
-  ps::core::NodeRole node_role_{ps::core::WORKER};
+  std::string node_role_{distributed::kEnvRoleOfWorker};
   ps::core::AbstractNodePtr abs_node_{nullptr};
 
   AllReduceLauncher();
