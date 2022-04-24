@@ -15,7 +15,9 @@
 """ test graph fallback control flow."""
 import pytest
 import numpy as np
-from mindspore import Tensor, ms_function, context
+from mindspore import Tensor, ms_function, context, nn
+from mindspore.common.parameter import Parameter
+from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -49,6 +51,30 @@ def test_for_in_if_tensor():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
+def test_for_in_if_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if():
+        x = Tensor(1)
+        y = Tensor(0)
+        if y <= x + 1 and x <= Tensor(3):
+            for _ in range(5):
+                y += Tensor(-1)
+        y = x * y
+        return y
+    res = control_flow_for_in_if()
+    assert res == -5
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_in_if_numpy():
     """
     Feature: JIT Fallback
@@ -65,3 +91,171 @@ def test_for_in_if_numpy():
         return Tensor(y)
     res = control_flow_for_in_if()
     assert np.all(res.asnumpy() == np.array([3, 6, 9, 12, 15]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_for_in_if_param():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    class ForInIfNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
+            self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+
+        def construct(self):
+            x = np.array(10)
+            if self.param_a > self.param_b:
+                x = x * 2
+                self.param_a += 1
+                for _ in range(0, 2):
+                    x = x + x
+                    self.param_b += 1
+            self.param_b = self.param_a + self.param_b
+            return Tensor(x), self.param_b
+
+    for_in_if_net = ForInIfNet()
+    res1, res2 = for_in_if_net()
+    assert res1 == 80
+    assert res2 == 12
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_for_in_if_list():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if():
+        x = list((1, 2, 3, 4, 5))
+        if len(x) == 5:
+            for _ in range(2):
+                x.append(10)
+        return Tensor(x)
+    res = control_flow_for_in_if()
+    assert np.all(res.asnumpy() == np.array([1, 2, 3, 4, 5, 10, 10]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_for_in_if_tuple_list():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if():
+        x = tuple([1, 2, 3, 4, 5])
+        y = list((0, 1))
+        if x[4] == 5 and len(y) < 3:
+            for _ in range(2):
+                y.append(x[1])
+        return Tensor(y)
+    res = control_flow_for_in_if()
+    assert np.all(res.asnumpy() == np.array([0, 1, 2, 2]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_for_in_if_numpy_list_len_max():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if():
+        x = np.array([1, 2, 3, 1, 1])
+        y = list((4, 6, -2))
+        if len(y) <= max(x):
+            for i in range(2, 4):
+                y += x[i]
+        return Tensor(y)
+    out = control_flow_for_in_if()
+    np.all(out.asnumpy() == np.array([9, 11, 3]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_for_in_if_numpy_print():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if():
+        x = np.array([1, 1, 1])
+        y = list((4, 6, -2))
+        if len(y) != min(x):
+            print("before add:", y)
+            for i in range(3):
+                y += x[i]
+                print("after add {}, res is {}.".format(x[i], y))
+        return Tensor(y)
+    out = control_flow_for_in_if()
+    np.all(out.asnumpy() == np.array([7, 9, 1]))
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_for_in_if_isinstance_raise():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if(x):
+        if isinstance(x, Tensor):
+            print("before add:", x)
+            for i in range(3):
+                x += Tensor(i)
+                print("after add ", x)
+        else:
+            raise ValueError("The input is not Tensor.")
+        return Tensor(x)
+    input_x = Tensor(1)
+    out = control_flow_for_in_if(input_x)
+    assert out == 4
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_for_in_if_dict_isinstance():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_if():
+        dict_x = {'a': 1, 'b': 2}
+        res = 0
+        if isinstance(dict_x, dict):
+            for key in dict_x:
+                res += dict_x.get(key)
+        return Tensor(res)
+    out = control_flow_for_in_if()
+    assert out == 3
