@@ -476,14 +476,7 @@ def _get_stack_info(frame):
 
 
 def _get_rank_id():
-    """
-    get rank id
-    ascend, CPU: RANK_ID
-    GPU: OMPI_COMM_WORLD_RANK
-    Both RANK_ID and OMPI_COMM_WORLD_RANK exist, Report to the police, default: RANK_ID
-    Returns:
-        rank.
-    """
+    """Get rank id."""
     rank_id = os.getenv('RANK_ID')
     gpu_rank_id = os.getenv('OMPI_COMM_WORLD_RANK')
     rank = '0'

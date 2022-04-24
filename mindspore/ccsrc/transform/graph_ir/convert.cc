@@ -682,6 +682,8 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   restore_checkpoint_sout_ << "digraph {" << endl;
   // Convert ResizeBilinear attr size to input
   ConvertResizeBilinear(anf_graph_);
+  // Convert Tile input1 to int32
+  ConvertTile(anf_graph_);
   // Convert all anf node to Operator
   MS_LOG(DEBUG) << "convert all node";
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_, while_cond_node_);
@@ -2406,6 +2408,7 @@ void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) {
   for (auto &it : nodes) {
     if (it->isa<CNode>()) {
       auto node = it->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(node);
       std::string name = GetCNodeTargetFuncName(node);
       if (name == prim::kPrimResizeBilinear->name()) {
         AnfNodePtr op = node->input(0);
@@ -2418,6 +2421,38 @@ void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) {
           auto valuend = NewValueNode(int32_value);
           valuend->set_abstract(size_value->ToAbstract());
           node->add_input(valuend);
+        }
+      }
+    }
+  }
+}
+
+AnfNodePtr DfGraphConvertor::CreateCast(const AnfNodePtr &input, const TypePtr &dst_type) const {
+  auto func_graph = input->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimCast), input, NewValueNode(dst_type)};
+  auto cnode = func_graph->NewCNode(inputs);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto abs_tensor = std::make_shared<abstract::AbstractTensor>(dst_type, input->Shape());
+  cnode->set_abstract(abs_tensor);
+  return cnode;
+}
+
+void DfGraphConvertor::ConvertTile(const FuncGraphPtr anf_graph) {
+  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
+  for (auto &it : nodes) {
+    if (it->isa<CNode>()) {
+      auto node = it->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(node);
+      std::string name = GetCNodeTargetFuncName(node);
+      if (name == prim::kPrimTile->name()) {
+        auto type_ptr = node->input(1)->Type();
+        MS_EXCEPTION_IF_NULL(type_ptr);
+        auto tensor_type = type_ptr->cast<TensorTypePtr>();
+        MS_EXCEPTION_IF_NULL(tensor_type);
+        if (tensor_type->element()->number_type() == kNumberTypeInt64) {
+          auto new_cast = CreateCast(node->input(1), kInt32);
+          node->set_input(1, new_cast);
         }
       }
     }
