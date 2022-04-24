@@ -74,7 +74,7 @@ class MeshgridGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     } else if (indexing == "ij") {
       swap_indexing_ = false;
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'indexing' should be \"xy\" or \"ij\", but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'indexing' must be \"xy\" or \"ij\", but got "
                         << indexing;
     }
 
@@ -104,7 +104,7 @@ class MeshgridGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     if (output_count_ != input_count_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the number of inputs and outputs should be the same, but got the number of inputs: "
+                        << "', the number of inputs and outputs must be the same, but got the number of inputs: "
                         << input_count_ << ", the number of outputs: " << output_count_;
     }
 

@@ -60,12 +60,12 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     }
 
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
     input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -106,7 +106,7 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     size_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<size_t>());
     if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'begin', 'strides' and 'end' should be the same "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'begin', 'strides' and 'end' must be the same "
                         << "but got the size of 'begin': " << begin_.size()
                         << ", the size of 'strides':" << strides_.size() << ", the size of 'end':" << end_.size();
     }

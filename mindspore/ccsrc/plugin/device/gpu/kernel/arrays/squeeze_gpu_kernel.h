@@ -61,7 +61,7 @@ class SqueezeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int64_t dims = SizeToLong(input_shape.size());
     for (const auto i : axis) {
       if (dims != 0 && (i < -dims || i >= dims)) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be in the range [-" << dims << "," << dims
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' must be in the range [-" << dims << "," << dims
                           << "), but got " << i;
       }
     }

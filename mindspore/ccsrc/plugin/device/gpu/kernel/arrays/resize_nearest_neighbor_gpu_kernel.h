@@ -57,11 +57,11 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     shape_size_ = input_shape.size();
@@ -73,12 +73,12 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     if (shape_size_ != RESIZENEARESTNEIGHBOR_DIMENSION) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input must be "
                         << RESIZENEARESTNEIGHBOR_DIMENSION << ", but got " << shape_size_;
     }
     if (shape_size_ != output_shape.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the dimension of input and output should be the same, but got the dimension of input: "
+                        << "', the dimension of input and output must be the same, but got the dimension of input: "
                         << shape_size_ << ", the dimension of output: " << output_shape.size();
     }
     input_size_ = 1;

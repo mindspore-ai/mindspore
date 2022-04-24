@@ -63,7 +63,7 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int64_t>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis_;
     }
     if (axis_ < 0) {
@@ -138,17 +138,17 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int dims = SizeToInt(input_shape.size());
     int output_num = SizeToInt(common::AnfAlgo::GetOutputTensorNum(kernel_node));
     if (output_num <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be greater than 0, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be greater than 0, but got "
                         << output_num;
     }
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
     if (dims == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be 0, but got " << dims;
     }
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis_;
     }
     if (output_num_ > SizeToInt(input_shape[axis_])) {
@@ -156,8 +156,8 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << SizeToInt(input_shape[axis_]) << ", but got " << output_num_;
     }
     if (output_num_ != output_num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << output_num_
-                        << ", but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << output_num_ << ", but got "
+                        << output_num;
     }
   }
   int axis_;

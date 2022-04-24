@@ -71,7 +71,7 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     } else if (input_num == 2) {
       MS_LOG(INFO) << " GatherGpuV2FwdKernel running in Normal Mode.";
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2 or 3, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2 or 3, but got " << input_num;
     }
     input_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     indices_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
@@ -87,7 +87,7 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       int dims = SizeToInt(input_shapes_.size());
       axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
       if (axis_ < -dims || axis_ >= dims) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                           << "), but got " << axis_;
       }
       Reshape();

@@ -102,22 +102,22 @@ class BatchToSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
     // check input_shape
     auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     if (input_shape.size() != SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 4, but got "
                         << input_shape.size();
     }
     if ((input_shape[0] % (block_size_ * block_size_)) != 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', input_shape[0] should be divisible by product of block_shape, but got input_shape[0]: "
+                        << "', input_shape[0] must be divisible by product of block_shape, but got input_shape[0]: "
                         << input_shape[0] << ", block_shape: " << block_size_;
     }
     for (size_t idx = 0; idx < SHAPE_SIZE; ++idx) {
@@ -133,11 +133,11 @@ class BatchToSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     crops_ = (GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "crops"));
 
     if (crops_.size() != CROPS_SHAPE_0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'crops' should be " << CROPS_SHAPE_0
-                        << ", but got " << crops_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'crops' must be " << CROPS_SHAPE_0 << ", but got "
+                        << crops_.size();
     }
     if (crops_[0].size() != CROPS_SHAPE_1 || crops_[1].size() != CROPS_SHAPE_1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of element of 'crops' should be " << CROPS_SHAPE_1
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of element of 'crops' must be " << CROPS_SHAPE_1
                         << ", but got the size of crops[0]: " << crops_[0].size()
                         << ", the size of crops[1]: " << crops_[1].size();
     } else {
@@ -145,14 +145,14 @@ class BatchToSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         for (size_t idx_j = 0; idx_j < CROPS_SHAPE_1; ++idx_j) {
           if (crops_[idx_i][idx_j] < 0) {
             MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                              << "', the element of 'crops' should be greater than or equal to 0, but got crops["
-                              << idx_i << "][" << idx_j << "]: " << crops_[idx_i][idx_j];
+                              << "', the element of 'crops' must be greater than or equal to 0, but got crops[" << idx_i
+                              << "][" << idx_j << "]: " << crops_[idx_i][idx_j];
           }
         }
         auto tmp_shape = input_shape[idx_i + CROPS_SHAPE_1] * block_size_ - crops_[idx_i][0] - crops_[idx_i][1];
         if (tmp_shape <= 0) {
           MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                            << "', the element of shape of output should be greater than 0, but got " << tmp_shape;
+                            << "', the element of shape of output must be greater than 0, but got " << tmp_shape;
         }
       }
     }

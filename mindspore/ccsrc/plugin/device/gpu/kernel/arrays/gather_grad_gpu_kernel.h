@@ -50,7 +50,7 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitResource();
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
     }
     index_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     grad_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -64,14 +64,14 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     if (grad_shapes_.size() != index_shapes_.size() || grad_shapes_.size() != output_shapes_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the dimension of grad, index and output should be the same, but got the dimension of "
+                        << "', the dimension of grad, index and output must be the same, but got the dimension of "
                         << "grad: " << grad_shapes_.size() << ", the dimension of index: " << index_shapes_.size()
                         << ", the dimension of output: " << output_shapes_.size();
     }
     int dims = SizeToInt(grad_shapes_.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "dim"));
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis_;
     }
     if (axis_ < 0) {

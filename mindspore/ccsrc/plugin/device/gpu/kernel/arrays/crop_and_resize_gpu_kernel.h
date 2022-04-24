@@ -82,11 +82,11 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
     if (input_num != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 4, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 4, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
     // input image
     auto input_image_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -105,7 +105,7 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     size_t input_image_shape_len = input_image_shape.size();
     if (input_image_shape_len != kImgDimSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x must be 4, but got "
                         << input_image_shape_len;
     }
     input_image_size_ = 1;
@@ -118,7 +118,7 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // input boxes
     size_t input_boxes_shape_len = input_boxes_shape.size();
     if (input_boxes_shape_len != kBoxDimSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of boxes should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of boxes must be 2, but got "
                         << input_boxes_shape_len;
     }
     input_boxes_size_ = 1;
@@ -129,7 +129,7 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // input box_index
     size_t input_box_index_shape_len = input_box_index_shape.size();
     if (input_box_index_shape_len != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of box_index should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of box_index must be 1, but got "
                         << input_box_index_shape_len;
     }
     input_box_ind_size_ = 1;
@@ -138,11 +138,11 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // input crop_size
     size_t input_crop_size_shape_len = input_crop_size_shape.size();
     if (input_crop_size_shape_len != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of crop_size should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of crop_size must be 1, but got "
                         << input_crop_size_shape_len;
     }
     if (input_crop_size_shape[0] != kCropLengthSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of crop_size should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the length of crop_size must be 2, but got "
                         << input_crop_size_shape[0];
     }
     input_crop_size_ = 1;
@@ -151,7 +151,7 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // output
     auto output_shape_len = output_shape.size();
     if (output_shape_len != kOutputDimSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output must be 4, but got "
                         << output_shape_len;
     }
     output_size_ = 1;

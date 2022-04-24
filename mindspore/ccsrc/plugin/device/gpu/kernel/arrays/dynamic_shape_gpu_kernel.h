@@ -53,7 +53,7 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_count;
     }
 
     std::vector<size_t> prev_node_output_shape_tmp = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

@@ -43,29 +43,29 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // Check the number of inputs and outputs.
     auto inputs_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (inputs_num != kIndexFillInputsNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kIndexFillInputsNum
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kIndexFillInputsNum
                         << ", but got " << inputs_num;
     }
     auto outputs_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (outputs_num != kIndexFillOutputsNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kIndexFillOutputsNum
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << kIndexFillOutputsNum
                         << ", but got " << outputs_num;
     }
     // 'dim' and 'value' must be tensor with empty shape.
     auto dim_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex1);
     if (!(dim_shape.empty() || (dim_shape.size() == 1 && dim_shape.front() == 1))) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'dim' should be empty or (1,), but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'dim' must be empty or (1,), but got "
                         << dim_shape;
     }
     auto value_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex3);
     if (!(value_shape.empty() || (value_shape.size() == 1 && value_shape.front() == 1))) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'value' should be empty or (1,), but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'value' must be empty or (1,), but got "
                         << value_shape;
     }
     // 'index' must be vector/scalar.
     auto index_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kIndex2);
     if (index_shape.size() > 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'index' should not be greater than 1D, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'index' can not be greater than 1D, but got "
                         << index_shape;
     }
     // The shape of 'x' and 'y' is equal.
@@ -111,7 +111,7 @@ class IndexFillGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemcpy(&dim, dim_ptr, sizeof(kIndexType), cudaMemcpyDeviceToHost),
                                "cudaMemcpy input 'dim' to host failed");
     if (dim < -rank || dim >= rank) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'dim' should be in the range [-" << rank << "," << rank
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'dim' must be in the range [-" << rank << "," << rank
                         << "), but got " << dim;
     }
     // Prepare index_num, dim_size, outer_size, inner_size

@@ -117,12 +117,12 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
     if (input_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_count;
     }
 
     size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_count;
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -151,7 +151,7 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       axis_ += input_rank_;
     }
     if ((size_t)axis_ >= input_rank_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' should be less than the dimension of input"
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'axis' must be less than the dimension of input"
                         << ", but got the dimension of input: " << input_rank_
                         << ", got the value of 'axis': " << (size_t)axis_;
     }

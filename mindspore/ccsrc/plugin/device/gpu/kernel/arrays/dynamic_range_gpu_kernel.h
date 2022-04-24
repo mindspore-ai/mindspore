@@ -115,7 +115,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_count;
     }
 
     max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");

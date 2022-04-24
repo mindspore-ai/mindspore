@@ -91,11 +91,11 @@ class ScatterNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     memcpy_flag_ = false;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
 
     input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -118,7 +118,7 @@ class ScatterNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     void *indices_stride_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
     if (indices_stride_work == nullptr) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the memory alloc of indices_stride_work should be successful, but failed, got size: "
+                        << "', the memory alloc of indices_stride_work must be successful, but failed, got size: "
                         << indices_len;
     }
     indices_stride_ = static_cast<S *>(indices_stride_work);
@@ -127,7 +127,7 @@ class ScatterNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     void *work_shape_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(vec_work_len);
     if (work_shape_work == nullptr) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the memory alloc of indices_stride_work should be successful, but failed, got size: "
+                        << "', the memory alloc of indices_stride_work must be successful, but failed, got size: "
                         << vec_work_len;
     }
     work_shape_ = static_cast<S *>(work_shape_work);

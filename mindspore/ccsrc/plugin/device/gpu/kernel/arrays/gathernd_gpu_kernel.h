@@ -74,7 +74,7 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     memcpy_flag_ = false;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
     }
     input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -105,7 +105,7 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     void *dev_batch_strides_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(strides_len);
     if (dev_batch_strides_work == nullptr) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the memory alloc of dev_batch_strides_work should be successful, but failed, got size: "
+                        << "', the memory alloc of dev_batch_strides_work must be successful, but failed, got size: "
                         << strides_len;
     }
     dev_batch_strides_ = static_cast<S *>(dev_batch_strides_work);
@@ -114,7 +114,7 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     void *dev_batch_indices_work = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);
     if (dev_batch_indices_work == nullptr) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the memory alloc of dev_batch_indices_work should be successful, but failed, got size: "
+                        << "', the memory alloc of dev_batch_indices_work must be successful, but failed, got size: "
                         << indices_len;
     }
     dev_batch_indices_ = static_cast<S *>(dev_batch_indices_work);
