@@ -31,6 +31,7 @@ FuncGraphLoopBreaker &FuncGraphLoopBreaker::Inst() {
   static FuncGraphLoopBreaker mgr;
   return mgr;
 }
+
 void FuncGraphLoopBreaker::BreakLoop() {
   MS_LOG(INFO) << "Size of not recycled graph before break loop is:" << func_set_.size();
   std::list<FuncGraphBasePtr> func_list;
