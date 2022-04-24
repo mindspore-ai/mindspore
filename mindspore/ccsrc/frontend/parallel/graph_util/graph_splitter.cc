@@ -387,6 +387,9 @@ void ParameterServerMode::PostBuildDistributedGraph(const FusedInterProcessOpPai
 }
 
 void ParameterServerMode::ProcessForSplitOptimizer() {
+  MS_EXCEPTION_IF_NULL(func_graph_);
+  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList();
+
   // Judge the node role number validation.
   uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
   if (worker_num == 0) {
@@ -401,11 +404,8 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
     return;
   }
 
-  MS_EXCEPTION_IF_NULL(func_graph_);
-  std::vector<CNodePtr> ps_optimizer_node_list = FilterServerAwareOptimizerList();
   for (const auto &ps_optimizer : ps_optimizer_node_list) {
     MS_EXCEPTION_IF_NULL(ps_optimizer);
-
     // Load attributes for this optimizer.
     size_t gradient_index = common::AnfAlgo::HasNodeAttr(kAttrGradientInputIndex, ps_optimizer)
                               ? common::AnfAlgo::GetNodeAttr<int64_t>(ps_optimizer, kAttrGradientInputIndex)
@@ -440,6 +440,8 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
         node_labels_->insert(std::make_pair(real_div_node, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), accum_node);
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), real_div_node);
+        common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), accum_node);
+        common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), real_div_node);
       } else if (i == indices_index) {
         // Create the node to replace origin indices.
         AnfNodePtr new_indices_input = CreateNodeWithInterProcessEdgeOnPServer(
@@ -448,6 +450,7 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
         func_graph_->manager()->SetEdge(ps_optimizer, i + 1, new_indices_input);
         node_labels_->insert(std::make_pair(new_indices_input, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), new_indices_input);
+        common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), new_indices_input);
       } else {
         std::pair<CNodePtr, CNodePtr> make_tuple_get_item_nodes =
           CreateNodesForMakeTuple(input, (role_ == distributed::kEnvRoleOfWorker) ? rank_id_ : 0, worker_num);
@@ -459,6 +462,8 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
         node_labels_->insert(std::make_pair(tuple_get_item_node, node_labels_->at(ps_optimizer)));
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), make_tuple_node);
         common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(opt_device_target), tuple_get_item_node);
+        common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), make_tuple_node);
+        common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), tuple_get_item_node);
       }
     }
   }
@@ -478,6 +483,7 @@ std::vector<CNodePtr> ParameterServerMode::FilterServerAwareOptimizerList() {
     const auto &cnode = node->cast<CNodePtr>();
     if (common::AnfAlgo::HasNodeAttr(kAttrUpdateParameter, cnode)) {
       ps_optim_list.emplace_back(cnode);
+      common::AnfAlgo::SetNodeAttr(kAttrInterProcessEdgeLabel, MakeValue(kPSOptimizerEdgeLabel), cnode);
     }
   }
   return ps_optim_list;
@@ -670,15 +676,8 @@ FusedInterProcessOpPairMap ParameterServerMode::FuseRpcNodesForSplitOptimizer(
 InterProcessOpEdgesInfo ParameterServerMode::FilterCommEdgesOfServerOptimizer(
   const InterProcessOpEdgesInfo &comm_edges) {
   InterProcessOpEdgesInfo comm_edges_of_server_optimizer;
-  std::vector<CNodePtr> ps_optimizer_list = FilterServerAwareOptimizerList();
   for (const auto &edge_info : comm_edges) {
-    AnfNodePtr src_node = edge_info.first.src_node;
-    MS_EXCEPTION_IF_NULL(src_node);
-    AnfNodePtr dst_node = edge_info.first.dst_node;
-    MS_EXCEPTION_IF_NULL(dst_node);
-    if (std::find_if(ps_optimizer_list.begin(), ps_optimizer_list.end(), [&](const auto &optimizer) {
-          return (optimizer.get() == src_node.get()) || (optimizer.get() == dst_node.get());
-        }) != ps_optimizer_list.end()) {
+    if (edge_info.first.edge_label.label_name == kPSOptimizerEdgeLabel) {
       comm_edges_of_server_optimizer.insert(edge_info);
     }
   }
@@ -984,7 +983,8 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
       continue;
     }
 
-    InterProcessOpEdge edge = {input_i, node_labels_[input_i], cnode, node_labels_[cnode]};
+    InterProcessEdgeLabel edge_label = GenerateEdgeLabel(input_i, cnode);
+    InterProcessOpEdge edge = {input_i, node_labels_[input_i], cnode, node_labels_[cnode], edge_label};
 
     auto send_node = CreateSendNode(func_graph_, edge);
     MS_EXCEPTION_IF_NULL(send_node);
@@ -1000,6 +1000,33 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
     (void)comm_edges.insert(std::make_pair(edge, comm_node_pair));
   }
   return comm_edges;
+}
+
+InterProcessEdgeLabel GraphSplitter::GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) {
+  MS_EXCEPTION_IF_NULL(src_node);
+  MS_EXCEPTION_IF_NULL(dst_node);
+  std::string src_node_edge_label = common::AnfAlgo::HasNodeAttr(kAttrInterProcessEdgeLabel, src_node->cast<CNodePtr>())
+                                      ? common::AnfAlgo::GetNodeAttr<std::string>(src_node, kAttrInterProcessEdgeLabel)
+                                      : "";
+  std::string dst_node_edge_label = common::AnfAlgo::HasNodeAttr(kAttrInterProcessEdgeLabel, dst_node->cast<CNodePtr>())
+                                      ? common::AnfAlgo::GetNodeAttr<std::string>(dst_node, kAttrInterProcessEdgeLabel)
+                                      : "";
+  if (!src_node_edge_label.empty() && !dst_node_edge_label.empty()) {
+    if (src_node_edge_label != dst_node_edge_label) {
+      MS_LOG(EXCEPTION) << "The edge label name of src node and dst node should be same."
+                        << src_node->fullname_with_scope() << "->" << dst_node->fullname_with_scope();
+    }
+  }
+  InterProcessEdgeLabel edge_label;
+  if (!src_node_edge_label.empty()) {
+    edge_label.label_name = src_node_edge_label;
+  } else if (!dst_node_edge_label.empty()) {
+    edge_label.label_name = dst_node_edge_label;
+  } else {
+    MS_LOG(DEBUG) << "Edge label is empty for " << src_node->fullname_with_scope() << "->"
+                  << dst_node->fullname_with_scope();
+  }
+  return edge_label;
 }
 
 std::vector<AnfNodePtr> GraphSplitter::FindInterProcessInDegree(const std::vector<AnfNodePtr> &nodes,
