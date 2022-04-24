@@ -22,7 +22,6 @@
 #include <iostream>
 #include "include/api/types.h"
 #include "include/errorcode.h"
-#include "include/ms_tensor.h"
 #include "include/api/data_type.h"
 #include "include/registry/opencl_runtime_wrapper.h"
 
@@ -30,7 +29,6 @@
 #define C4NUM 4
 namespace mindspore {
 namespace custom_common {
-
 template <typename SrcT, typename DstT>
 void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num) {
   if (src == nullptr || src_num <= 0) {

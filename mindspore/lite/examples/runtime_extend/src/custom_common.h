@@ -20,7 +20,6 @@
 #include <vector>
 #include "include/api/types.h"
 #include "include/api/status.h"
-#include "include/ms_tensor.h"
 
 namespace mindspore {
 namespace common {
