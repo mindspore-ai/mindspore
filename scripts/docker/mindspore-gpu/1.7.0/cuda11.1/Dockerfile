@@ -49,6 +49,7 @@ RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 # Install python (v3.7.5)
 RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/* \
     && cd /tmp \
     && wget https://github.com/python/cpython/archive/v3.7.5.tar.gz \
     && tar -xvf v3.7.5.tar.gz \
@@ -88,4 +89,5 @@ RUN cd /tmp \
 # Install MindSpore cuda-11.1, MindInsight, Serving whl package
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindSpore/gpu/x86_64/cuda-11.1/mindspore_gpu-1.7.0-cp37-cp37m-linux_x86_64.whl \
     && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindInsight/any/mindinsight-1.7.0-py3-none-any.whl \
-    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/Serving/x86_64/mindspore_serving-1.7.0-cp37-cp37m-linux_x86_64.whl
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/Serving/x86_64/mindspore_serving-1.7.0-cp37-cp37m-linux_x86_64.whl \
+    && pip cache purge
