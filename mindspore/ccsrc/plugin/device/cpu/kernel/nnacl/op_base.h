@@ -110,6 +110,9 @@
 #define kNCHW_C 1
 #define kNCHW_H 2
 #define kNCHW_W 3
+#define kHWCN_C 2
+#define kHWNC_N 2
+#define kHWCN_N 3
 #define kNDHWC_N 0
 #define kNDHWC_D 1
 #define kNDHWC_H 2
