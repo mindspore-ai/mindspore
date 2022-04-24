@@ -54,7 +54,7 @@
 - [STABLE] 增加了数据处理API的差异文档，比较TensorFlow.data与MindSpore.dataset部分算子的差异，详见 [对比文档](https://www.mindspore.cn/docs/zh-CN/master/note/api_mapping/tensorflow_api_mapping.html#tf-data).
 - [STABLE] Python多进程逻辑优化，保证不同异常场景的正常退出。
 - [STABLE] 支持[自动数据加速](https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/dataset_autotune.html)，可以自适应调节数据处理管道的执行速度。
-- [BETA] [数据处理异构加速](https://www.mindspore.cn/docs/zh-CN/master/design/dataset_offload.html) 支持了新的数据增强操作: RandomColorAdjust, RandomSharpness, TypeCast.
+- [BETA] [数据处理异构加速](https://www.mindspore.cn/docs/zh-CN/master/design/dataset_offload.html) 支持了新的数据增强操作: RandomColorAdjust, RandomSharpness, TypeCast。
 - GeneratorDataset加载自定义数据集时，当__getitem__/__next__方法返回单个NumPy对象，对应会输出单个数据列。
 - 用户在数据预处理中使用过多的进程数/线程数情况下，会出现错误RuntimeError: can't start new thread，可以通过 ulimit -u 10240 增加当前用户可用的线程/进程数解决。
 
