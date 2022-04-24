@@ -32,21 +32,22 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
       std::string error_info = "Launch custom kernel failed: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
     }
+
+    // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
+    // maybe changed.
+    if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer) {
+      auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
+      auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
+      UpdateOutputAddrSize(kernel_info, base_node);
+      // Update the shape of internal parameter.
+      UpdateInternalParameterShape(internal_parameters_, base_node);
+    }
   } catch (const std::exception &e) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {
       MsException::Instance().SetException();
     }
     std::string error_info = "Launch custom kernel exception: " + node->fullname_with_scope();
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
-  }
-  // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
-  // maybe changed.
-  if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer) {
-    auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
-    auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
-    UpdateOutputAddrSize(kernel_info, base_node);
-    // Update the shape of internal parameter.
-    UpdateInternalParameterShape(internal_parameters_, base_node);
   }
 
   EraseInput(ctx);
