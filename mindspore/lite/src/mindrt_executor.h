@@ -47,7 +47,7 @@ class MindrtExecutor : public Executor {
              const std::vector<std::vector<int>> &dims) override;
 
  private:
-  void TransferGraphOutput();
+  int TransferGraphOutput();
   void FreeOutputTensor();
   std::unordered_map<void *, std::set<std::pair<AID, size_t>>> BuildReceiverMap();
 
