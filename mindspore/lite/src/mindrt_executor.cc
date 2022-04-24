@@ -215,8 +215,12 @@ void MindrtExecutor::TransferGraphOutput() {
       if (dst_tensor->allocator() != src_tensor->allocator()) {
         dst_tensor->set_allocator(src_tensor->allocator());
       }
-      dst_tensor->set_data(src_tensor->data());
-      if (IS_RUNTIME_ALLOCATOR(src_tensor->allocator()) == false) {
+      if (src_tensor->allocator() != nullptr) {
+        src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+        dst_tensor->set_data(src_tensor->data());
+        dst_tensor->set_own_data(src_tensor->own_data());
+      } else {
+        dst_tensor->set_data(src_tensor->data());
         src_tensor->set_data(nullptr);
       }
 #ifdef ENABLE_FP16
