@@ -305,43 +305,46 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
 }
 
 void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
-  AnfNodeSet cache;
-  bool retry;
   bool do_expand = false;
-  do {
-    retry = false;
-    auto &node_list = graph->execution_order();
-    for (auto &node : node_list) {
-      if (cache.count(node)) continue;
-      auto result = device::ascend::SelectKernelInfoWithMsg(node);
-      auto status = result.first;
-      auto msg = result.second;
-      common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
-      common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
-      if (status != device::ascend::kNoMatched) {
-        if (status == device::ascend::kStatusRaisePrecision) {
-          raise_precision_count_++;
-        } else if (status == device::ascend::kStatusReducePrecision) {
-          reduce_precision_count_++;
-        }
-        MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
-        cache.insert(node);
-      } else {
-        auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
-        if (expand_fg == nullptr) {
-          MS_LOG(EXCEPTION) << msg;
-        }
-        do_expand = true;
-        MS_LOG(INFO) << msg << " but expand success.";
-        graphkernel::InlineExpandFuncGraph(node, expand_fg);
-        graph->SetExecOrderByDefault();
-        retry = true;
-        break;
+  auto &node_list = graph->execution_order();
+  for (auto &node : node_list) {
+    auto [status, msg, etype] = device::ascend::SelectKernelInfoWithMsg(node);
+    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, node);
+    common::AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, node);
+    if (status != device::ascend::kNoMatched) {
+      if (status == device::ascend::kStatusRaisePrecision) {
+        raise_precision_count_++;
+      } else if (status == device::ascend::kStatusReducePrecision) {
+        reduce_precision_count_++;
       }
+      MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
+    } else {
+      auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+      bool try_expand = true;
+      if (expand_fg != nullptr) {
+        auto todos = TopoSort(expand_fg->get_return());
+        for (const auto &n : todos) {
+          auto cnode = n->cast<CNodePtr>();
+          if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
+          auto res = device::ascend::SelectKernelInfoWithMsg(cnode);
+          constexpr int one = 1;
+          if (!std::get<one>(res).empty()) {
+            try_expand = false;
+            break;
+          }
+        }
+      }
+      if (expand_fg == nullptr || !try_expand) {
+        MS_EXCEPTION(etype) << msg;
+      }
+      do_expand = true;
+      MS_LOG(INFO) << msg << " but expand success.";
+      graphkernel::InlineExpandFuncGraph(node, expand_fg);
     }
-  } while (retry);
+  }
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);
+    graph->SetExecOrderByDefault();
   }
 }
 void AscendGraphOptimization::GetAllGraphs(const KernelGraphPtr &root_graph) {

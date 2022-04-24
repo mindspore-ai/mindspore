@@ -189,16 +189,17 @@ void SetKernelBuildInfo(const std::vector<std::string> &input_formats, const std
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node);
 }
 
-std::string KernelNotSupportWarning(const AnfNodePtr &kernel_node, const std::vector<TypeId> &input_types,
-                                    const std::vector<TypeId> &infer_output_types, bool is_kernel_exist) {
+std::pair<std::string, ExceptionType> KernelNotSupportWarning(const AnfNodePtr &kernel_node,
+                                                              const std::vector<TypeId> &input_types,
+                                                              const std::vector<TypeId> &infer_output_types,
+                                                              bool is_kernel_exist) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (!is_kernel_exist) {
     std::stringstream ss;
-    ss << "Unsupported op [" << kernel_name
-       << "] on CPU, Please confirm whether the device target setting is correct, or refer to the "
-          "official website to query the operator support list."
+    ss << "Unsupported op [" << kernel_name << "] on CPU, Please confirm whether the device target setting is correct, "
+       << "or refer to 'mindspore.ops' at https://www.mindspore.cn to query the operator support list."
        << trace::DumpSourceLines(kernel_node);
-    return ss.str();
+    return {ss.str(), NotSupportError};
   }
 
   std::stringstream operator_info;
@@ -229,7 +230,7 @@ std::string KernelNotSupportWarning(const AnfNodePtr &kernel_node, const std::ve
     << "is not supported. This error means the current input type is not supported, please refer to the MindSpore "
        "doc for supported types.";
   operator_info << trace::DumpSourceLines(kernel_node);
-  return operator_info.str();
+  return {operator_info.str(), TypeError};
 }
 
 void UpdateDynamicKernelBuildInfo(const CNodePtr &kernel_node) {
@@ -453,15 +454,14 @@ kernel::KernelAttr BuildKernelFromInput(const std::vector<TypeId> &inputs, const
   return attr;
 }
 
-std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
+std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::pair<bool, std::string> result = std::make_pair(true, "");
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     auto tp = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
     if (kCustomTypeAkg.find(tp) != kCustomTypeAkg.end()) {
       UpdateCustomKernelBuildInfo(kernel_node, true);
-      return result;
+      return {};
     }
     if (!kernel::Factory<kernel::NativeCpuKernelMod>::Instance().IsRegistered(op_name)) {
       if (tp == kCustomTypePyfunc) {
@@ -485,15 +485,15 @@ std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
                       << "Infer operator information from inputs. For more details, "
                       << "please refer to 'mindspore.ops.Custom' at https://www.mindspore.cn.";
       UpdateCustomKernelBuildInfo(kernel_node, false);
-      return result;
+      return {};
     }
   } else if (IsDynamicParamKernel(op_name)) {
     // Select for dynamic kernel(both the number and data type are undetermined).
     UpdateDynamicKernelBuildInfo(kernel_node);
-    return result;
+    return {};
   } else if (IsAKGSparseOP(kernel_node)) {
     UpdateCustomKernelBuildInfo(kernel_node, true);
-    return result;
+    return {};
   }
 
   std::vector<std::string> input_formats;
@@ -517,17 +517,13 @@ std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
   if (!SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
                     output_types, &matched, true)) {
     if (op_name == "Cast") {
-      result.first = false;
-      result.second = KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
-      return result;
+      return KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
     }
     matched = std::make_pair(false, false);
     (void)SelectKernel(kernel_node, &selected_kernel_attr, kernel_attrs, input_types, input_not_cnode_indexes,
                        output_types, &matched, false);
     if (!matched.first) {
-      result.first = false;
-      result.second = KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
-      return result;
+      return KernelNotSupportWarning(kernel_node, input_types, output_types, !kernel_attrs.empty());
     }
   }
 
@@ -540,15 +536,14 @@ std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &kernel_node) {
     }
   }
   SetKernelBuildInfo(input_formats, input_types, selected_output_formats, selected_output_types, kernel_node.get());
-  return result;
+  return {};
 }
+
 void SetKernelInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  auto result = SetKernelInfoWithMsg(kernel_node);
-  if (result.second != "") {
-    MS_LOG(EXCEPTION) << result.second;
-  }
-  return;
+  auto [msg, etype] = SetKernelInfoWithMsg(kernel_node);
+  if (msg.empty()) return;
+  MS_EXCEPTION(etype) << msg;
 }
 }  // namespace cpu
 }  // namespace device

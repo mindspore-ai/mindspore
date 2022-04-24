@@ -203,46 +203,48 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
 }  // namespace
 
 void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
-  AnfNodeSet cache;
-  bool retry;
 #ifdef ENABLE_AKG
   bool do_expand = false;
 #endif
-  do {
-    retry = false;
-    auto &node_list = graph->execution_order();
-    for (auto &node : node_list) {
-      if (cache.count(node)) continue;
-      if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
-        auto result = SetKernelInfoWithMsg(node);
-        auto success = result.first;
-        auto msg = result.second;
-        if (success) {
-          cache.insert(node);
-          continue;
-        }
-#ifdef ENABLE_AKG
-        auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
-        if (expand_fg == nullptr) {
-          MS_LOG(EXCEPTION) << msg;
-        }
-        do_expand = true;
-        MS_LOG(INFO) << msg << " but expand success.";
-        graphkernel::InlineExpandFuncGraph(node, expand_fg);
-        graph->SetExecOrderByDefault();
-        retry = true;
-        break;
-#else
-        MS_LOG(EXCEPTION) << msg;
-#endif
-      } else {
-        SetControlOpInfo(node);
+  auto &node_list = graph->execution_order();
+  for (auto &node : node_list) {
+    if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
+      auto [msg, etype] = SetKernelInfoWithMsg(node);
+      if (msg.empty()) {
+        continue;
       }
+#ifdef ENABLE_AKG
+      auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+      bool try_expand = true;
+      if (expand_fg != nullptr) {
+        auto todos = TopoSort(expand_fg->get_return());
+        for (const auto &n : todos) {
+          auto cnode = n->cast<CNodePtr>();
+          if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
+          auto res = SetKernelInfoWithMsg(cnode);
+          if (!res.first.empty()) {
+            try_expand = false;
+            break;
+          }
+        }
+      }
+      if (expand_fg == nullptr || !try_expand) {
+        MS_EXCEPTION(etype) << msg;
+      }
+      do_expand = true;
+      MS_LOG(INFO) << msg << " but expand success.";
+      graphkernel::InlineExpandFuncGraph(node, expand_fg);
+#else
+      MS_EXCEPTION(etype) << msg;
+#endif
+    } else {
+      SetControlOpInfo(node);
     }
-  } while (retry);
+  }
 #ifdef ENABLE_AKG
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);
+    graph->SetExecOrderByDefault();
   }
 #endif
 }

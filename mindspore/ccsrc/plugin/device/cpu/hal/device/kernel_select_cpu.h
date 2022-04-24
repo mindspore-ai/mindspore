@@ -30,7 +30,7 @@ namespace device {
 namespace cpu {
 using DataType = std::pair<TypeId, std::string>;
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
-std::pair<bool, std::string> SetKernelInfoWithMsg(const CNodePtr &apply_kernel_ptr);
+std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &apply_kernel_ptr);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

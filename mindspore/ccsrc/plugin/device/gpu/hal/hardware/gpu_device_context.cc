@@ -406,33 +406,37 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 }
 
 void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
-  AnfNodeSet cache;
-  bool retry;
   bool do_expand = false;
-  do {
-    retry = false;
-    auto &node_list = graph->execution_order();
-    for (auto &node : node_list) {
-      if (cache.count(node)) continue;
-      auto msg = SetKernelInfo(node, false);
-      if (msg.empty()) {
-        cache.insert(node);
-        continue;
-      }
-      auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
-      if (expand_fg == nullptr) {
-        MS_LOG(EXCEPTION) << msg;
-      }
-      do_expand = true;
-      MS_LOG(INFO) << msg << " but expand success.";
-      graphkernel::InlineExpandFuncGraph(node, expand_fg);
-      graph->SetExecOrderByDefault();
-      retry = true;
-      break;
+  auto &node_list = graph->execution_order();
+  for (auto &node : node_list) {
+    auto [msg, etype] = SetKernelInfoWithMsg(node);
+    if (msg.empty()) {
+      continue;
     }
-  } while (retry);
+    auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+    bool try_expand = true;
+    if (expand_fg != nullptr) {
+      auto todos = TopoSort(expand_fg->get_return());
+      for (const auto &n : todos) {
+        auto cnode = n->cast<CNodePtr>();
+        if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
+        auto res = SetKernelInfoWithMsg(cnode);
+        if (!res.first.empty()) {
+          try_expand = false;
+          break;
+        }
+      }
+    }
+    if (expand_fg == nullptr || !try_expand) {
+      MS_EXCEPTION(etype) << msg;
+    }
+    do_expand = true;
+    MS_LOG(INFO) << msg << " but expand success.";
+    graphkernel::InlineExpandFuncGraph(node, expand_fg);
+  }
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);
+    graph->SetExecOrderByDefault();
   }
 }
 
