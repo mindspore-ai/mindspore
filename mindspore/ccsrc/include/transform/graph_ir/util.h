@@ -234,6 +234,14 @@ class COMMON_EXPORT TransformUtil {
     }
     return dest;
   }
+
+  /*
+   * Parameters:
+   *     anf_name: [string] the anf node name
+   * Return：
+   *     [string] operator name
+   * */
+  static std::string NormOpName(const std::string &anf_name);
 };
 }  // namespace transform
 }  // namespace mindspore

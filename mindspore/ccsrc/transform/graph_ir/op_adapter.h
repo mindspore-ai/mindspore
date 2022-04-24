@@ -33,6 +33,7 @@ class OpAdapterImpl {
                 const mindspore::HashMap<int, DynInputDesc> &dyn_input_map,
                 const mindspore::HashMap<int, OutputDesc> &output_map,
                 const mindspore::HashMap<int, DynOutputDesc> &dyn_output_map,
+                const mindspore::HashMap<int, SubGraphDesc> &subgraph_map,
                 const mindspore::HashMap<int, DynSubGraphDesc> &dyn_subgraph_map,
                 const mindspore::HashMap<std::string, AttrDesc> &attr_map,
                 const mindspore::HashMap<std::string, int> &enum_map,
@@ -45,6 +46,7 @@ class OpAdapterImpl {
         dyn_input_map_(dyn_input_map),
         output_map_(output_map),
         dyn_output_map_(dyn_output_map),
+        subgraph_map_(subgraph_map),
         dyn_subgraph_map_(dyn_subgraph_map),
         attr_map_(attr_map),
         enum_map_(enum_map),
@@ -65,6 +67,7 @@ class OpAdapterImpl {
   Status GenerateCustomOpInputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
   Status GenerateCustomOpOutputMap(const CusOperatorPtr &op, const PrimitivePtr &prim);
   OperatorPtr GenerateCustomOp(const AnfNodePtr anf);
+  Status SetOpSubgraphFunc(const OperatorPtr &op, const std::shared_ptr<std::vector<DfGraph>> &subgraphs);
   Status SetOpSubgraphFunc(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches);
   Status SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input);
   Status SetNormalOpInput(const OperatorPtr &op, int index, const OperatorPtr &input);
@@ -100,6 +103,7 @@ class OpAdapterImpl {
   const mindspore::HashMap<int, DynInputDesc> &dyn_input_map_;
   const mindspore::HashMap<int, OutputDesc> &output_map_;
   const mindspore::HashMap<int, DynOutputDesc> &dyn_output_map_;
+  const mindspore::HashMap<int, SubGraphDesc> &subgraph_map_;
   const mindspore::HashMap<int, DynSubGraphDesc> &dyn_subgraph_map_;
   const mindspore::HashMap<std::string, AttrDesc> &attr_map_;
   const mindspore::HashMap<std::string, int> &enum_map_;
@@ -116,14 +120,14 @@ class OpAdapter : public BaseOpAdapter {
  public:
   using OpType = T;
   OpAdapter()
-      : impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_,
+      : impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
                                               dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, &cus_input_map_,
                                               &cus_output_map_, &extra_attr_, &name_counts_, this)) {
     MS_EXCEPTION_IF_NULL(impl_);
   }
   explicit OpAdapter(const ExtraAttr &extra_attr)
       : extra_attr_(extra_attr),
-        impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_,
+        impl_(std::make_shared<OpAdapterImpl>(input_map_, dyn_input_map_, output_map_, dyn_output_map_, subgraph_map_,
                                               dyn_subgraph_map_, attr_map_, enum_map_, input_attr_map_, &cus_input_map_,
                                               &cus_output_map_, &extra_attr_, &name_counts_, this)) {
     MS_EXCEPTION_IF_NULL(impl_);
@@ -148,8 +152,17 @@ class OpAdapter : public BaseOpAdapter {
     // There are duplicate names in ANF graph, do not assign ANF node name to GE
     // GE will generate unique name automatically
     if (anf != nullptr && anf->fullname_with_scope() != "") {
-      MS_LOG(DEBUG) << anf->fullname_with_scope();
-      op = std::make_shared<OpType>(anf->fullname_with_scope());
+      auto name = anf->fullname_with_scope();
+      MS_LOG(DEBUG) << name;
+      string user_data_key = "subgraph_node";
+      if (anf->has_user_data(user_data_key) && *(anf->user_data<bool>(user_data_key))) {
+        auto norm_name = TransformUtil::NormOpName(name);
+        if (norm_name != name) {
+          MS_LOG(DEBUG) << "normalize anf name : " << name << " to operator name : " << norm_name;
+        }
+        name = norm_name;
+      }
+      op = std::make_shared<OpType>(name);
     } else {
       MS_LOG(DEBUG) << "no fullname_with_scope";
       op = std::make_shared<OpType>();
@@ -169,6 +182,28 @@ class OpAdapter : public BaseOpAdapter {
     return op;
   }
 
+  OperatorPtr GenerateDynamicOutputOp(const AnfNodePtr &anf) {
+    OperatorPtr op = nullptr;
+    // There are duplicate names in ANF graph, do not assign ANF node name to GE
+    // GE will generate unique name automatically
+    if (anf != nullptr && anf->fullname_with_scope() != "") {
+      MS_LOG(DEBUG) << anf->fullname_with_scope();
+      op = std::make_shared<OpType>(anf->fullname_with_scope());
+    } else {
+      MS_LOG(DEBUG) << "no fullname_with_scope";
+      op = std::make_shared<OpType>();
+    }
+    return op;
+  }
+
+  void setDynamicOutputNum(const OperatorPtr &op, size_t dyn_output_size) override {
+    // set dynamic output num if op use DYNAMIC_OUTPUT
+    if ((op != nullptr) && (!dyn_output_map_.empty())) {
+      MS_LOG(DEBUG) << "create_dyn_output for node:" << op->GetName() << ", num:" << dyn_output_size;
+      dyn_output_map_.begin()->second.create_dyn_output(op, static_cast<unsigned int>(dyn_output_size));
+    }
+  }
+
   OperatorPtr generate(const AnfNodePtr &anf) override {
     OperatorPtr op = nullptr;
     if (IsCustomCNode(anf)) {
@@ -184,11 +219,29 @@ class OpAdapter : public BaseOpAdapter {
 
   OperatorPtr generate(const std::string &op_name) override { return std::make_shared<OpType>(op_name); }
 
+  OperatorPtr generateDynOutputOp(const AnfNodePtr &anf) override {
+    OperatorPtr op = nullptr;
+    op = GenerateDynamicOutputOp(anf);
+    if (op == nullptr) {
+      MS_LOG(EXCEPTION) << "Can not generate op for " << anf->fullname_with_scope();
+    }
+    return op;
+  }
+
   const mindspore::HashMap<int, InputDesc> &getInputMap() override { return input_map_; }
   const mindspore::HashMap<unsigned int, AttrDesc> &getInputAttrMap() override { return input_attr_map_; }
   const mindspore::HashMap<int, DynInputDesc> &getDynInputMap() override { return dyn_input_map_; }
+  const mindspore::HashMap<int, SubGraphDesc> &getSubgraphMap() override { return subgraph_map_; }
   const mindspore::HashMap<int, OutputDesc> &getOutputMap() override { return output_map_; }
   const mindspore::HashMap<int, DynSubGraphDesc> &getDynSubgraphMap() override { return dyn_subgraph_map_; }
+
+  Status SetOpSubgraphFunc(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) {
+    return impl_->SetOpSubgraphFunc(op, subgraphs);
+  }
+
+  int setSubgraph(const OperatorPtr &op, std::shared_ptr<std::vector<DfGraph>> subgraphs) override {
+    return static_cast<int>(SetOpSubgraphFunc(op, subgraphs));
+  }
 
   Status SetOpSubgraphFunc(const OperatorPtr &op, int index, const std::shared_ptr<std::vector<DfGraph>> &branches) {
     return impl_->SetOpSubgraphFunc(op, index, branches);
@@ -428,6 +481,7 @@ class OpAdapter : public BaseOpAdapter {
   static const mindspore::HashMap<int, DynInputDesc> dyn_input_map_;
   static const mindspore::HashMap<int, OutputDesc> output_map_;
   static const mindspore::HashMap<int, DynOutputDesc> dyn_output_map_;
+  static const mindspore::HashMap<int, SubGraphDesc> subgraph_map_;
   static const mindspore::HashMap<int, DynSubGraphDesc> dyn_subgraph_map_;
   static const mindspore::HashMap<std::string, AttrDesc> attr_map_;
   static const mindspore::HashMap<std::string, int> enum_map_;
@@ -449,6 +503,8 @@ const mindspore::HashMap<int, OutputDesc> OpAdapter<T>::output_map_;
 template <typename T>
 const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
 template <typename T>
+const mindspore::HashMap<int, SubGraphDesc> OpAdapter<T>::subgraph_map_;
+template <typename T>
 const mindspore::HashMap<int, DynSubGraphDesc> OpAdapter<T>::dyn_subgraph_map_;
 template <typename T>
 const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_;
@@ -464,5 +520,4 @@ mindspore::HashMap<std::string, mindspore::HashMap<int, std::string>> OpAdapter<
 // specialization for method
 }  // namespace transform
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_ADAPTER_H_

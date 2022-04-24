@@ -33,11 +33,13 @@
 #include "include/common/utils/config_manager.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
+#include "ops/core_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "include/transform/graph_ir/util.h"
 #include "ir/tensor.h"
 #include "include/transform/graph_ir/df_graph_manager.h"
+#include "transform/graph_ir/op_adapter.h"
 #include "graph/operator_reg.h"
 #include "external/ge/ge_api.h"
 #include "graph/tensor.h"
@@ -51,6 +53,8 @@ using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 using HcomBroadcast = ge::op::HcomBroadcast;
 using OpAdapterPtr = std::shared_ptr<BaseOpAdapter>;
 
+using ParamIndexMap = std::map<std::size_t, std::size_t>;
+enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
 class COMMON_EXPORT DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
@@ -101,6 +105,7 @@ class COMMON_EXPORT DfGraphConvertor {
     fout.close();
 #endif
   }
+
   void DrawSaveCheckpointGraph(const std::string &name) {
     std::ofstream fout(name);
     if (!fout.is_open()) {
@@ -112,11 +117,13 @@ class COMMON_EXPORT DfGraphConvertor {
   }
 
   DfGraphConvertor &ConvertAllNode();
+  bool SetGraphInputs(const std::vector<Operator> &inputs);
   DfGraphConvertor &BuildGraph();
   DfGraphConvertor &InitParam(const TensorOrderMap &tensors);
   DfGraphConvertor &GenerateCheckpointGraph();
   DfGraphConvertor &GenerateBroadcastGraph(const TensorOrderMap &tensors);
   void InitParamWithData(const TensorOrderMap &tensors);
+  OutHandler GetNormalOpInput(const AnfNodePtr &pred);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<ge::Operator> broadcast_input);
@@ -150,6 +157,7 @@ class COMMON_EXPORT DfGraphConvertor {
   AnfNodePtr TraceMakeTuple(const CNodePtr &node, uint64_t index);
   AnfNodePtr TraceDepend(const CNodePtr &node);
   OutHandler TraceRealOp(AnfNodePtr node);
+  OutHandler GetHandler(const AnfNodePtr &node);
   OutHandler GetHandler(const AnfNodePtr &node, const std::stack<uint64_t> &index_stack, AnfNode *const draw_index);
   OperatorPtr Convert(AnfNodePtr node);
   OperatorPtr ConvertCNode(CNodePtr node);
@@ -194,7 +202,26 @@ class COMMON_EXPORT DfGraphConvertor {
   void SetTupleOpInput(const OpAdapterPtr &adpt, const CNodePtr &node, const AnfNodePtr &pred, const OperatorPtr &src,
                        int index);
   void UpdateTupleOutCache(void);
+  AnfNodePtr TransformConstOp(const CNodePtr &node, AnfNodePtr pred);
   AnfNodePtr GetRealInputNode(const CNodePtr &node, const AnfNodePtr &input);
+
+  void ConvertWhileNode(const CNodePtr &node);
+  void CacheWhileGraph(const CNodePtr &cnode);
+  void ConvertWhileBody(const AnfNodePtr &node);
+  std::shared_ptr<std::vector<Operator>> GetWhileSubGraphInput();
+  void BuildWhileSubGraph();
+  void ConvertWhileCond(const AnfNodePtr &node);
+  void ConvertWhileAfter(const AnfNodePtr &node);
+  void BuildWhileAfterSubGraph();
+  void GetCallNodeInputs(const CNodePtr &node);
+  std::vector<Operator> GetWhileBodyOutputs();
+  bool IsSubGraph() const { return graph_type_ == GraphType::kCond || graph_type_ == GraphType::kBody; }
+  bool IsAfterGraph() const { return graph_type_ == GraphType::kAfter; }
+  bool IsNormalGraph() const { return graph_type_ == GraphType::kNormal; }
+  bool IsBranchGraph() const { return graph_type_ == GraphType::kBranch; }
+  void SetParamIndexMap(const std::vector<AnfNodePtr> &graphs);
+  void SetWhileOutputHandle(const OperatorPtr &prev_while_op);
+  void GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &graphs);
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};
@@ -214,6 +241,7 @@ class COMMON_EXPORT DfGraphConvertor {
   mindspore::HashMap<std::string, AnfNodePtr> params_;
   mindspore::HashMap<std::string, OperatorPtr> vars_;
   std::vector<std::pair<ge::Operator, std::string>> graph_outputs_;
+  std::vector<AnfNodePtr> graph_anf_outputs_;
   std::vector<OperatorPtr> graph_const_inputs_;
   std::vector<OperatorPtr> init_ops_;
   std::vector<OperatorPtr> broadcast_ops_;
@@ -223,6 +251,36 @@ class COMMON_EXPORT DfGraphConvertor {
   bool training_ = false;
   bool distribute_ = false;
   bool use_inputs_ = false;
+
+  AnfNodePtr while_cond_node_ = nullptr;
+  mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<DfGraph>>> while_dfgraph_cache_;
+
+  CNodePtr cur_while_node_ = nullptr;
+  size_t cur_while_node_out_size_ = 0;
+  mindspore::HashMap<size_t, OutHandler> while_const_input_index_;
+  mindspore::HashMap<size_t, OutHandler> prev_while_const_input_index_;
+  mindspore::HashMap<size_t, size_t> prev_cond_to_while_out_index_;
+  mindspore::HashMap<OperatorPtr, std::shared_ptr<tensor::Tensor>> const_op_to_value_;
+  AnfNodePtr prev_while_node_ = nullptr;
+  size_t prev_while_node_out_size_ = 0;
+
+  mindspore::HashMap<AnfNodePtr, std::vector<AnfNodePtr>> while_graph_cache_;
+  mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<OutHandler>>> call_input_handle_cache_;
+  mindspore::HashMap<AnfNodePtr, std::shared_ptr<std::vector<OutHandler>>> while_output_handle_cache_;
+  AnfNodePtr call_node_in_while_body_ = nullptr;
+  GraphType graph_type_ = GraphType::kNormal;
+
+  ParamIndexMap body_cond_map_;
+  ParamIndexMap after_cond_map_;
+  ParamIndexMap prev_after_cond_map_;
+  mindspore::HashMap<size_t, OperatorPtr> subgraph_input_cache_;
+
+  std::set<size_t> while_used_input_index_;
+  std::set<size_t> prev_while_used_input_index_;
+
+  mindspore::HashMap<size_t, OutHandler> bypass_node_prev_handle_cache_;
+  mindspore::HashMap<size_t, OutHandler> bypass_node_handle_cache_;
+  size_t case_call_input_size_;
 };
 }  // namespace transform
 }  // namespace mindspore

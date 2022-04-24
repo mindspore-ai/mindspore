@@ -33,9 +33,19 @@ namespace mindspore::transform {
   template <>                                                        \
   const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_;
 
+#define DECLARE_OP_TYPE(T) using T = ge::op::T;
+
+#define DECLARE_OP_ATTR(T) \
+  template <>              \
+  const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_;
+
 #define DECLARE_OP_USE_OUTPUT(T) \
   template <>                    \
   const mindspore::HashMap<int, OutputDesc> OpAdapter<T>::output_map_;
+
+#define DECLARE_OP_USE_SUBGRAPH(T) \
+  template <>                      \
+  const mindspore::HashMap<int, SubGraphDesc> OpAdapter<T>::subgraph_map_;
 
 #define DECLARE_OP_USE_ENUM(T) \
   template <>                  \
@@ -56,6 +66,18 @@ namespace mindspore::transform {
 #define DECLARE_OP_USE_DYN_OUTPUT(T) \
   template <>                        \
   const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_;
+
+#define SUBGRAPH_MAP(T) \
+  template <>           \
+  const mindspore::HashMap<int, SubGraphDesc> OpAdapter<T>::subgraph_map_
+#define SUBGRAPH_DESC(name) \
+  {                         \
+#name, \
+    [](const OperatorPtr op, const DfGraphPtr graph) { \
+        auto p = std::static_pointer_cast<OpType>(op); \
+        (void)p->set_subgraph_builder_##name([graph](){return *graph;}); \
+    }                    \
+  }
 
 #define INPUT_MAP(T) \
   template <>        \
@@ -147,13 +169,17 @@ namespace mindspore::transform {
   template <>             \
   const mindspore::HashMap<int, DynOutputDesc> OpAdapter<T>::dyn_output_map_
 
-#define DYN_OUTPUT_DESC(name) \
-  {                           \
-#name, \
-    [](const OperatorPtr op, unsigned int num) { \
-        auto p = std::static_pointer_cast<OpType>(op); \
-        (void)p->create_dynamic_output_##name(num); \
-    }                      \
+#define DYN_OUTPUT_DESC(name)      \
+  {                                \
+#name,                           \
+    [](const OperatorPtr op, unsigned int num) {            \
+        auto p = std::static_pointer_cast<OpType>(op);      \
+        (void)p->create_dynamic_output_##name(num);         \
+    },                                                      \
+    [](const OperatorPtr op, uint32_t index, const GeTensorDesc tensor_desc) {   \
+       auto p = std::static_pointer_cast<OpType>(op);                            \
+       (void)p->UpdateDynamicOutputDesc(#name, index, tensor_desc);              \
+    } \
   }
 
 #define ADPT_DESC_ONE(T) std::make_shared<OpAdapterDesc>(std::make_shared<OpAdapter<T>>())

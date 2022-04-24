@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_ascend_control_sink """
+import os
 import pytest
 import numpy as np
 import mindspore.context as context
@@ -191,6 +192,45 @@ class NotOperation(nn.Cell):
         return not x_sum
 
 
+class SimpleCell(nn.Cell):
+    def __init__(self, i):
+        super().__init__()
+        self.i = i
+
+    def construct(self, x):
+        return self.i * x
+
+
+class CellListInWhileByWhile(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.cell_list = nn.CellList()
+        self.cell_list.append(SimpleCell(4))
+        self.cell_list.append(SimpleCell(5))
+        self.cell_list.append(SimpleCell(6))
+
+    def construct(self, t, x):
+        out = t
+        while x < 3:
+            out += 4
+            x += 1
+        x = 0
+        while x < 3:
+            add = self.cell_list[x](t)
+            out = out + add
+            x += 1
+        return out
+
+
+def cell_list_in_while_by_while():
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    net = CellListInWhileByWhile()
+    t = Tensor(10, mstype.int32)
+    x = Tensor(0, mstype.int32)
+    out = net(t, x)
+    return out
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -347,3 +387,19 @@ def test_control_flow_ref():
     input_x = Tensor(6, ms.float32)
     out = net(input_x)
     assert out == 4
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_cell_list_in_while_by_while_ge():
+    """
+    Feature: Control flow(while and case) implement in ge
+    Description: run the whole graph sink in ascend in ge backend
+    Expectation: success
+    """
+    os.environ['MS_ENABLE_GE'] = "1"
+    out = cell_list_in_while_by_while()
+    assert out == Tensor(172, mstype.int32)
+    del os.environ['MS_ENABLE_GE']

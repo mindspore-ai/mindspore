@@ -452,5 +452,16 @@ std::string TransformUtil::PrintGeTensor(const GeTensorPtr ge_tensor) {
   }
   return ret;
 }
+
+std::string TransformUtil::NormOpName(const std::string &anf_name) {
+  std::string str = anf_name.substr(anf_name.rfind("/") + 1);
+  std::string ret;
+  for (const auto &c : str) {
+    if (std::isalnum(c) || c == '_' || c == '-') {
+      ret += c;
+    }
+  }
+  return ret;
+}
 }  // namespace transform
 }  // namespace mindspore

@@ -120,6 +120,17 @@ Status OpAdapterImpl::SetOpSubgraphFunc(const OperatorPtr &op, int index,
   return NOT_FOUND;
 }
 
+Status OpAdapterImpl::SetOpSubgraphFunc(const OperatorPtr &op, const std::shared_ptr<std::vector<DfGraph>> &subgraphs) {
+  MS_EXCEPTION_IF_NULL(op);
+  if (subgraph_map_.size() != subgraphs->size()) {
+    return INVALID_ARGUMENT;
+  }
+  for (size_t i = 0; i < subgraphs->size(); i++) {
+    subgraph_map_.at(i).set_subgraph(op, std::make_shared<DfGraph>((*subgraphs)[i]));
+  }
+  return SUCCESS;
+}
+
 Status OpAdapterImpl::SetCustomOpInput(const CusOperatorPtr &op, int index, const OperatorPtr &input) {
   MS_EXCEPTION_IF_NULL(op);
   MS_EXCEPTION_IF_NULL(input);
@@ -349,7 +360,7 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
   }
 
   if (output_size != tuple_shp->shape().size()) {
-    MS_LOG(ERROR) << "output_map is not equal tuple_shape size";
+    MS_LOG(ERROR) << "output_map is not equal to tuple_shape size";
     return FAILED;
   }
 
