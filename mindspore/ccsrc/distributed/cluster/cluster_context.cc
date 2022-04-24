@@ -39,7 +39,6 @@ ClusterContext::ClusterContext()
       scheduler_host_(kLocalHost),
       scheduler_port_(kDefaultSchedPort),
       node_(nullptr),
-      abstract_node_(nullptr),
       node_role_(""),
       cluster_config_(nullptr) {}
 
@@ -126,7 +125,7 @@ bool ClusterContext::Finalize(uint32_t timeout) {
   return true;
 }
 
-bool ClusterContext::IsScheduler() { return (abstract_node_ == nullptr) ? true : false; }
+bool ClusterContext::IsScheduler() { return node_role_ == kEnvRoleOfScheduler; }
 
 const std::shared_ptr<ps::core::Node> &ClusterContext::node() const { return node_; }
 
@@ -180,7 +179,6 @@ bool ClusterContext::BuildCluster() {
     MS_LOG(ERROR) << "Building network failed.";
     return false;
   }
-  abstract_node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(node_);
 
   // Get node_id from environment configuration or uuid generator.
   std::string node_id = common::GetEnv(kNodeId);
