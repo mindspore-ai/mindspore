@@ -187,7 +187,9 @@ class DenseThor(Cell):
             x = self.bias_add(x, self.bias)
         if self.activation_flag:
             x = self.activation(x)
-        return x
+        # We use Depend to make 'self.matrix_g' as primal graph's weight parameter,
+        # for it's used in 'save_gradient' gradient procedure.
+        return F.depend(x, self.matrix_g)
 
     def extend_repr(self):
         s = 'input_channels={}, output_channels={}'.format(self.in_channels, self.out_channels)
@@ -644,7 +646,9 @@ class EmbeddingThor(Cell):
                 output_for_reshape = self.gather(self.embedding_table, flat_ids, 0)
 
         output = self.reshape(output_for_reshape, out_shape)
-        return output
+        # We use Depend to make 'self.matrix_g' as primal graph's weight parameter,
+        # for it's used in 'save_gradient' gradient procedure.
+        return F.depend(output, self.matrix_g)
 
     def extend_repr(self):
         s = 'vocab_size={}, embedding_size={}, use_one_hot={}, embedding_table={}, dtype={}, padding_idx={}'.format(
@@ -949,4 +953,6 @@ class EmbeddingLookupThor(Cell):
             axis = _make_axis_range(F.rank(indices), F.rank(out))
             clip_by_norm = ClipByNorm(axis)
             out = clip_by_norm(out, self.max_norm)
-        return out
+        # We use Depend to make 'self.matrix_g' as primal graph's weight parameter,
+        # for it's used in 'save_gradient' gradient procedure.
+        return F.depend(out, self.matrix_g)
