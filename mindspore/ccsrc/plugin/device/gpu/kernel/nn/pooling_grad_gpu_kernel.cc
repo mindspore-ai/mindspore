@@ -60,5 +60,9 @@ MS_REG_GPU_KERNEL_ONE(AvgPoolGrad,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       PoolingGradGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(AvgPool3DGrad, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                      PoolingGradGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(AvgPool3DGrad, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                      PoolingGradGpuKernelMod, half)
 }  // namespace kernel
 }  // namespace mindspore
