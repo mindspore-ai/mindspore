@@ -54,7 +54,7 @@ static bool FillMetaServerAddress(struct MetaServerAddress *address) {
 
   // Fill the meta server address.
   address->ip = ip;
-  address->port = port;
+  address->port = port + 1;
   return true;
 }
 

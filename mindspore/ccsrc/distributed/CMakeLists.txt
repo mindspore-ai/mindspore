@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _DISTRIBUTED_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-if(NOT ENABLE_CPU OR WIN32)
+if(NOT ENABLE_CPU OR WIN32 OR APPLE)
     list(REMOVE_ITEM _DISTRIBUTED_SRC_FILES "cluster/cluster_context.cc")
     list(REMOVE_ITEM _DISTRIBUTED_SRC_FILES "cluster/actor_route_table_proxy.cc")
 else()

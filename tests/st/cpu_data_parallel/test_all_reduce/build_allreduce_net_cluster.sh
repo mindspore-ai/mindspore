@@ -21,6 +21,7 @@ export MS_SCHED_PORT=$2
 # Launch 1 scheduler.
 export MS_ROLE=MS_SCHED
 python3 $1 >scheduler.txt 2>&1 &
+sched_pid=${!}
 echo "scheduler start success!"
 
 # Launch 8 workers.
@@ -32,6 +33,8 @@ do
     echo "worker ${i} start success with pid ${!}"
     process_pid[${i}]=${!}
 done
+
+wait ${sched_pid}
 
 # Check the execution result of each node.
 for((i=0; i<${MS_WORKER_NUM}; i++));

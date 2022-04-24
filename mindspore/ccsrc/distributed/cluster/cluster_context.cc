@@ -19,9 +19,13 @@
 #include <string>
 #include <memory>
 #include "distributed/cluster/cluster_context.h"
+#include "distributed/cluster/topology/common.h"
+#include "distributed/cluster/topology/compute_graph_node.h"
+#include "distributed/cluster/topology/meta_server_node.h"
 #include "distributed/collective/collective_manager.h"
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
+#include "ps/core/comm_util.h"
 #include "include/common/debug/common.h"
 
 namespace mindspore {
@@ -111,6 +115,13 @@ bool ClusterContext::Finalize(uint32_t timeout) {
     MS_LOG(ERROR) << "Failed to stop node " << node_role_;
     return false;
   }
+
+  MS_EXCEPTION_IF_NULL(node_base_);
+  size_t interval = 5;
+  while (!node_base_->Finalize()) {
+    MS_LOG(WARNING) << "Retry to finalize the node...";
+    sleep(interval);
+  }
   finalized_ = true;
   return true;
 }
@@ -170,6 +181,26 @@ bool ClusterContext::BuildCluster() {
     return false;
   }
   abstract_node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(node_);
+
+  // Get node_id from environment configuration or uuid generator.
+  std::string node_id = common::GetEnv(kNodeId);
+  if (node_id.length() == 0) {
+    node_id = ps::core::CommUtil::GenerateUUID();
+  }
+  // Init the node according to the process role.
+  if (node_role_ == kEnvRoleOfScheduler) {
+    auto node_num = node_num_each_role_[kEnvRoleOfWorker] + node_num_each_role_[kEnvRoleOfServer];
+    node_base_ = std::make_shared<topology::MetaServerNode>(node_id, node_num);
+  } else {
+    node_base_ = std::make_shared<topology::ComputeGraphNode>(node_id);
+  }
+  MS_EXCEPTION_IF_NULL(node_base_);
+  RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
+
+  // Check the state of topology construction.
+  auto check_func = [this]() -> bool { return this->node_base_->Initialized(); };
+  EXECUTE_WITH_RETRY(check_func, topology::kExecuteRetryNum, topology::kExecuteInterval, "Topology build timed out.");
+
   MS_LOG(INFO) << "Cluster is successfully initialized.";
   return true;
 }
