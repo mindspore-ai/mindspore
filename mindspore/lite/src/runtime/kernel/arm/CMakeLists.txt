@@ -28,7 +28,12 @@ list(REMOVE_ITEM KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/int8/opt_op_handler.cc)
 if(SUPPORT_TRAIN)
     file(GLOB TRAIN_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16_grad/*.cc)
     file(GLOB TRAIN_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp32_grad/*.cc)
-    set(KERNEL_SRC ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
+    add_library(train_cpu_kernel_mid OBJECT ${TRAIN_KERNEL_SRC})
+    add_dependencies(train_cpu_kernel_mid fbs_src)
+    if("${CMAKE_CXX_FLAGS}" MATCHES "-ffast-math")
+        # using -fno-finite-math-only to avoid unexpected errors may occur due to compile optimization
+        target_compile_options(train_cpu_kernel_mid PRIVATE -fno-finite-math-only)
+    endif()
 endif()
 
 add_library(cpu_kernel_mid OBJECT ${KERNEL_SRC})

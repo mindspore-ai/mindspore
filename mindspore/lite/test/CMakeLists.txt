@@ -158,6 +158,9 @@ if(MSLITE_ENABLE_CONVERTER)
             preprocess_mid
             config_parser_mid
             )
+    if(SUPPORT_TRAIN)
+        target_link_libraries(lite-test train_cpu_kernel_mid)
+    endif()
 endif()
 
 if(ENABLE_MODEL_OBF)
