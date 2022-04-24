@@ -65,6 +65,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kRaggedRange = prim::kPrimRaggedRange->name();
   static const auto &kDynamicBroadcastTo = prim::kPrimDynamicBroadcastTo->name();
   static const auto &kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
+  static const auto &kUnsortedSegmentProd = prim::kPrimUnsortedSegmentProd->name();
   static const auto &kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
   static const auto &kUnsortedSegmentMax = prim::kPrimUnsortedSegmentMax->name();
   static const auto &kGather = prim::kPrimGather->name();
@@ -87,6 +88,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kFractionalAvgPoolGrad, ShapeSet{0}},
                                                         {kUnsortedSegmentMin, ShapeSet{2}},
                                                         {kUnsortedSegmentMax, ShapeSet{2}},
+                                                        {kUnsortedSegmentProd, ShapeSet{2}},
                                                         {kMatrixDiagV3, ShapeSet{1, 2, 3, 4}},
                                                         {kMatrixDiagPartV3, ShapeSet{1, 2}},
                                                         {kMatrixSetDiagV3, ShapeSet{2}},
