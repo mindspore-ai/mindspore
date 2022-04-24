@@ -28,6 +28,7 @@ func_map = {
     "update": P.ScatterUpdate,
     "add": P.ScatterAdd,
     "sub": P.ScatterSub,
+    "max": P.ScatterMax,
 }
 
 
@@ -124,6 +125,11 @@ def test_scatter_func_small_float32():
     expected = np.array([[-6.0, -8.0, -10.0], [-12.0, -14.0, -16.0]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -150,6 +156,12 @@ def test_scatter_func_input_updated():
     net = TestScatterFuncNet("sub", lock, inputx, indices, updates)
     net()
     expected = np.array([[-6.0, -8.0, -10.0], [-12.0, -14.0, -16.0]])
+    np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
+
+    # max
+    net = TestScatterFuncNet("max", lock, inputx, indices, updates)
+    net()
+    expected = np.array([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
@@ -261,6 +273,62 @@ def test_scatter_func_large_shape_float32():
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array(
+        [
+            [
+                [
+                    [1.0, 1.0, 2.0, 3.0],
+                    [4.0, 5.0, 6.0, 7.0],
+                    [8.0, 9.0, 10.0, 11.0],
+                ],
+                [
+                    [12.0, 13.0, 14.0, 15.0],
+                    [16.0, 17.0, 18.0, 19.0],
+                    [20.0, 21.0, 22.0, 23.0],
+                ],
+            ],
+            [
+                [
+                    [72.0, 73.0, 74.0, 75.0],
+                    [76.0, 77.0, 78.0, 79.0],
+                    [80.0, 81.0, 82.0, 83.0],
+                ],
+                [
+                    [84.0, 85.0, 86.0, 87.0],
+                    [88.0, 89.0, 90.0, 91.0],
+                    [92.0, 93.0, 94.0, 95.0],
+                ],
+            ],
+            [
+                [
+                    [24.0, 25.0, 26.0, 27.0],
+                    [28.0, 29.0, 30.0, 31.0],
+                    [32.0, 33.0, 34.0, 35.0],
+                ],
+                [
+                    [36.0, 37.0, 38.0, 39.0],
+                    [40.0, 41.0, 42.0, 43.0],
+                    [44.0, 45.0, 46.0, 47.0],
+                ],
+            ],
+            [
+                [
+                    [48.0, 49.0, 50.0, 51.0],
+                    [52.0, 53.0, 54.0, 55.0],
+                    [56.0, 57.0, 58.0, 59.0],
+                ],
+                [
+                    [60.0, 61.0, 62.0, 63.0],
+                    [64.0, 65.0, 66.0, 67.0],
+                    [68.0, 69.0, 70.0, 71.0],
+                ],
+            ],
+        ]
+    )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -283,6 +351,11 @@ def test_scatter_func_small_float32_use_locking_false():
     # sub
     output = scatter_func_use_locking_false_net("sub", inputx, indices, updates)
     expected = np.array([[-3.0, -4.0, -5.0], [0.0, -1.0, -2.0]])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # max
+    output = scatter_func_use_locking_false_net("max", inputx, indices, updates)
+    expected = np.array([[3.0, 4.0, 5.0], [0.0, 1.0, 2.0]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -333,6 +406,18 @@ def test_scatter_func_input_less_than_1_float32():
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array(
+        [
+            [37.0, 38.0, 39.0],
+            [34.0, 35.0, 66.0],
+            [67.0, 68.0, 69.0],
+        ],
+        dtype=np.float32,
+    )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -357,6 +442,11 @@ def test_scatter_func_float16():
     expected = np.array([[-6.0, -8.0, -10.0], [-12.0, -14.0, -16.0]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array([[6.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -368,48 +458,42 @@ def test_scatter_func_large_float16():
 
     # update
     output = scatter_func_net("update", inputx, indices, updates)
-    expected = np.array(
-        [
-            [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0],],
-            [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0],],
-        ]
-    )
+    expected = np.array([
+        [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0]],
+        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0]],
+    ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # add
     output = scatter_func_net("add", inputx, indices, updates)
-    expected = np.array(
-        [
-            [
-                [138.0, 140.0, 142.0, 144.0],
-                [146.0, 148.0, 150.0, 152.0],
-                [154.0, 156.0, 158.0, 160.0],
-            ],
-            [
-                [186.0, 188.0, 190.0, 192.0],
-                [194.0, 196.0, 198.0, 200.0],
-                [202.0, 204.0, 206.0, 208.0],
-            ],
-        ]
-    )
+    expected = np.array([
+        [[138.0, 140.0, 142.0, 144.0], [146.0, 148.0, 150.0, 152.0], [154.0, 156.0, 158.0, 160.0]],
+        [[186.0, 188.0, 190.0, 192.0], [194.0, 196.0, 198.0, 200.0], [202.0, 204.0, 206.0, 208.0]],
+    ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # sub
     output = scatter_func_net("sub", inputx, indices, updates)
-    expected = np.array(
+    expected = np.array([
         [
-            [
-                [-138.0, -140.0, -142.0, -144.0],
-                [-146.0, -148.0, -150.0, -152.0],
-                [-154.0, -156.0, -158.0, -160.0],
-            ],
-            [
-                [-186.0, -188.0, -190.0, -192.0],
-                [-194.0, -196.0, -198.0, -200.0],
-                [-202.0, -204.0, -206.0, -208.0],
-            ],
-        ]
-    )
+            [-138.0, -140.0, -142.0, -144.0],
+            [-146.0, -148.0, -150.0, -152.0],
+            [-154.0, -156.0, -158.0, -160.0],
+        ],
+        [
+            [-186.0, -188.0, -190.0, -192.0],
+            [-194.0, -196.0, -198.0, -200.0],
+            [-202.0, -204.0, -206.0, -208.0],
+        ],
+    ])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array([
+        [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0]],
+        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0]],
+    ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -446,6 +530,17 @@ def test_scatter_func_disordered_float16():
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array(
+        [
+            [95.0, 96.0, 97.0, 98.0],
+            [67.0, 68.0, 69.0, 70.0],
+            [99.0, 100.0, 101.0, 102.0],
+        ]
+    )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -457,48 +552,42 @@ def test_scatter_func_large_int32():
 
     # update
     output = scatter_func_net("update", inputx, indices, updates)
-    expected = np.array(
-        [
-            [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0],],
-            [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0],],
-        ]
-    ).astype(np.int32)
+    expected = np.array([
+        [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0]],
+        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0]],
+    ]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # add
     output = scatter_func_net("add", inputx, indices, updates)
-    expected = np.array(
-        [
-            [
-                [138.0, 140.0, 142.0, 144.0],
-                [146.0, 148.0, 150.0, 152.0],
-                [154.0, 156.0, 158.0, 160.0],
-            ],
-            [
-                [186.0, 188.0, 190.0, 192.0],
-                [194.0, 196.0, 198.0, 200.0],
-                [202.0, 204.0, 206.0, 208.0],
-            ],
-        ]
-    ).astype(np.int32)
+    expected = np.array([
+        [[138.0, 140.0, 142.0, 144.0], [146.0, 148.0, 150.0, 152.0], [154.0, 156.0, 158.0, 160.0]],
+        [[186.0, 188.0, 190.0, 192.0], [194.0, 196.0, 198.0, 200.0], [202.0, 204.0, 206.0, 208.0]],
+    ]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
     # sub
     output = scatter_func_net("sub", inputx, indices, updates)
-    expected = np.array(
+    expected = np.array([
         [
-            [
-                [-138.0, -140.0, -142.0, -144.0],
-                [-146.0, -148.0, -150.0, -152.0],
-                [-154.0, -156.0, -158.0, -160.0],
-            ],
-            [
-                [-186.0, -188.0, -190.0, -192.0],
-                [-194.0, -196.0, -198.0, -200.0],
-                [-202.0, -204.0, -206.0, -208.0],
-            ],
-        ]
-    ).astype(np.int32)
+            [-138.0, -140.0, -142.0, -144.0],
+            [-146.0, -148.0, -150.0, -152.0],
+            [-154.0, -156.0, -158.0, -160.0],
+        ],
+        [
+            [-186.0, -188.0, -190.0, -192.0],
+            [-194.0, -196.0, -198.0, -200.0],
+            [-202.0, -204.0, -206.0, -208.0],
+        ],
+    ]).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array([
+        [[63.0, 64.0, 65.0, 66.0], [67.0, 68.0, 69.0, 70.0], [71.0, 72.0, 73.0, 74.0]],
+        [[99.0, 100.0, 101.0, 102.0], [103.0, 104.0, 105.0, 106.0], [95.0, 96.0, 97.0, 98.0]],
+    ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -533,6 +622,17 @@ def test_scatter_func_disordered_int32():
             [-418.0, -424.0, -430.0, -436.0],
         ]
     ).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # max
+    output = scatter_func_net("max", inputx, indices, updates)
+    expected = np.array(
+        [
+            [95.0, 96.0, 97.0, 98.0],
+            [67.0, 68.0, 69.0, 70.0],
+            [99.0, 100.0, 101.0, 102.0],
+        ]
+    )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -718,3 +818,15 @@ def test_scatter_func_dynamic_two_inputs():
     expected_2 = np.array([[-39.0, -38.0, -37.0], [-36.0, -35.0, -34.0]])
     np.testing.assert_array_almost_equal(output_1.asnumpy(), expected_1)
     np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
+
+if __name__ == "__main__":
+    test_scatter_func_small_float32()
+    test_scatter_func_input_updated()
+    test_scatter_func_large_shape_float32()
+    test_scatter_func_small_float32_use_locking_false()
+    test_scatter_func_input_less_than_1_float32()
+    test_scatter_func_float16()
+    test_scatter_func_large_float16()
+    test_scatter_func_disordered_float16()
+    test_scatter_func_large_int32()
+    test_scatter_func_disordered_int32()
