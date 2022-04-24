@@ -65,6 +65,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/diag_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/diag_part_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/max_pool3d_grad_grad_fission.h"
+#include "plugin/device/ascend/optimizer/ir_fission/adam_weight_decay_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/avgpool_3d_grad_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/momentum_lossscale_fusion.h"
@@ -190,6 +191,7 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond3>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond4>());
   ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond5>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamApplyOneWithDecayRuleCond6>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByNormNoDivSquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SquareSumFusion>());
   ir_fusion_pm->AddPass(std::make_shared<ClipByValueFusion>());
@@ -334,6 +336,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
@@ -398,6 +401,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());
+  ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<MaxPool3DGradGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DFusion>());
   ir_fusion_pm->AddPass(std::make_shared<AvgPool3DGradFusion>());
@@ -416,6 +420,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BCEWithLogitsLossFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTensorMoveForHcclOp>());
   ir_fusion_pm->AddPass(std::make_shared<InsertTransposeForSort>());
+  AddAscendIRFusionRulesPass(ir_fusion_pm.get());
 
   optimizer->AddPassManager(ir_fusion_pm);
   (void)optimizer->Optimize(kernel_graph);
