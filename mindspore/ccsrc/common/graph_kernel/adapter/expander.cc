@@ -77,6 +77,12 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
     return nullptr;
   }
   auto node_desc_str = kernel_json.dump();
+  // Acquire Python GIL
+  py::gil_scoped_acquire gil;
+  if (Py_IsInitialized() == 0) {
+    MS_LOG(ERROR) << "Python Interpreter is finalized";
+    return nullptr;
+  }
 
   // call graph kernel ops generator.
   MS_LOG(DEBUG) << "CallPyFn: [" << kGetGraphKernelOpExpander << "] with input json:\n" << node_desc_str;

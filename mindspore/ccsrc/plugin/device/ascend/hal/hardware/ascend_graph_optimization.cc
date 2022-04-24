@@ -307,6 +307,7 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
 void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
   AnfNodeSet cache;
   bool retry;
+  bool do_expand = false;
   do {
     retry = false;
     auto &node_list = graph->execution_order();
@@ -330,6 +331,7 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
         if (expand_fg == nullptr) {
           MS_LOG(EXCEPTION) << msg;
         }
+        do_expand = true;
         MS_LOG(INFO) << msg << " but expand success.";
         graphkernel::InlineExpandFuncGraph(node, expand_fg);
         graph->SetExecOrderByDefault();
@@ -338,7 +340,9 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       }
     }
   } while (retry);
-  graphkernel::BindValueToGraph().Run(graph);
+  if (do_expand) {
+    graphkernel::BindValueToGraph().Run(graph);
+  }
 }
 void AscendGraphOptimization::GetAllGraphs(const KernelGraphPtr &root_graph) {
   if (memo_.find(root_graph) != memo_.end()) {

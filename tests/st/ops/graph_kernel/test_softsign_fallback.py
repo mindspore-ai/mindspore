@@ -52,7 +52,7 @@ def softsign_compare(shape, dtype):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sofsign_cpu_pynative_mode():
     """
@@ -65,7 +65,7 @@ def test_sofsign_cpu_pynative_mode():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sofsign_cpu_graph_mode():
     """
