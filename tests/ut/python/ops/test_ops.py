@@ -1266,6 +1266,10 @@ test_case_math_ops = [
         'block': P.Expm1(),
         'desc_inputs': [[2, 3]],
         'desc_bprop': [[2, 3]]}),
+    ('Log1p', {
+        'block': P.Log1p(),
+        'desc_inputs': [[1, 2, 3]],
+        'desc_bprop': [[1, 2, 3]]}),
     ('Erf', {
         'block': P.Erf(),
         'desc_inputs': [Tensor(np.array([-2, -1, 0, 1, 2]).astype(np.float16))],

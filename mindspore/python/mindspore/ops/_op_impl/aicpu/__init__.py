@@ -41,6 +41,7 @@ from .get_next import _get_next_aicpu
 from .print_tensor import _print_aicpu
 from .topk import _top_k_aicpu
 from .logical_xor import _logical_xor_aicpu
+from .log1p import _log1p_aicpu
 from .asin import _asin_aicpu
 from .asin_grad import _asin_grad_aicpu
 from .is_finite import _is_finite_aicpu
