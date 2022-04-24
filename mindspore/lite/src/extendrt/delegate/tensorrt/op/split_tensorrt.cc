@@ -15,6 +15,7 @@
  */
 
 #include <numeric>
+#include <algorithm>
 #include "src/extendrt/delegate/tensorrt/op/split_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 
@@ -36,10 +37,19 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     return RET_ERROR;
   }
   if (axis_ < 0 || axis_ >= in_tensors_[0].Shape().size()) {
-    MS_LOG(ERROR) << "invalid axis: " << op_name_;
+    MS_LOG(ERROR) << "invalid axis : " << primitive->value_as_Split()->axis();
     return RET_ERROR;
   }
 
+  if (size_splits_.empty()) {
+    if (in_tensors_[0].Shape().at(axis_) % output_num_ != 0) {
+      MS_LOG(ERROR) << "axis dim can not be split into same subdim";
+      return RET_ERROR;
+    }
+    int split_width = in_tensors_[0].Shape().at(axis_) / output_num_;
+    size_splits_.resize(output_num_);
+    std::fill(size_splits_.begin(), size_splits_.end(), split_width);
+  }
   int split_sum = std::accumulate(size_splits_.begin(), size_splits_.end(), 0);
   int split_sum_expect = in_tensors_[0].Shape()[axis_];
 

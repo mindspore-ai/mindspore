@@ -38,9 +38,6 @@ class ActivationTensorRT : public TensorRTOp {
                                          float alpha, float min_value, float max_value,
                                          nvinfer1::ITensor *trt_in_tensor,
                                          schema::QuantType quant_type = schema::QuantType_QUANT_NONE);
-
- private:
-  nvinfer1::ActivationType action_code_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_

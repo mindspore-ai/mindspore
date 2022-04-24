@@ -22,6 +22,14 @@
 #include "src/extendrt/delegate/tensorrt/op/activation_opt_plugin.h"
 
 namespace mindspore::lite {
+namespace {
+bool HasCustomActivationPlugin(schema::ActivationType type) {
+  std::unordered_set<schema::ActivationType> plugin_activation = {schema::ActivationType::ActivationType_SIGMOID,
+                                                                  schema::ActivationType::ActivationType_GELU};
+  return plugin_activation.find(type) != plugin_activation.end();
+}
+}  // namespace
+
 int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
                                   const std::vector<mindspore::MSTensor> &in_tensors,
                                   const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -42,9 +50,9 @@ int ActivationTensorRT::IsSupport(const schema::Primitive *primitive,
     MS_LOG(ERROR) << "op convert failed";
     return RET_ERROR;
   }
-  this->action_code_ = ConvertActivationType(activation_op->activation_type()).activation_type;
-  if (this->action_code_ == nvinfer1::ActivationType::kRELU &&
-      activation_op->activation_type() != schema::ActivationType_RELU) {
+  auto activation_params_opt = TryConvertActivationType(activation_op->activation_type());
+  bool has_custom_plugin = HasCustomActivationPlugin(activation_op->activation_type());
+  if (!activation_params_opt && !has_custom_plugin) {
     MS_LOG(ERROR) << "Unsupported op action type for TensorRT: " << activation_op->activation_type();
     return RET_ERROR;
   }
@@ -109,14 +117,9 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition
                                                     schema::ActivationType activation_type, float alpha,
                                                     float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
                                                     schema::QuantType quant_type) {
-  std::unordered_set<schema::ActivationType> plugin_activation = {schema::ActivationType::ActivationType_SIGMOID,
-                                                                  schema::ActivationType::ActivationType_GELU};
-  bool use_plugin = false;
-  if (plugin_activation.find(activation_type) != plugin_activation.end()) {
-    use_plugin = true;
-  }
+  bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
   // sigmoid precision is wrong for trt
-  if (quant_type == schema::QuantType_QUANT_NONE && use_plugin) {
+  if (quant_type == schema::QuantType_QUANT_NONE && has_custom_plugin) {
     auto plugin = std::make_shared<ActivationOptPlugin>(trt_in_tensor->getName(), activation_type);
     MS_LOG(INFO) << "using opt plugin for " << trt_in_tensor->getName();
     if (plugin == nullptr) {
@@ -129,12 +132,12 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition
   }
 
   // Just some action_code correct, unfind code is set to default relu. need double check.
-  lite::ActivationParams action_param = ConvertActivationType(activation_type);
-  if (action_param.activation_type == nvinfer1::ActivationType::kRELU &&
-      activation_type != schema::ActivationType_RELU) {
+  auto action_param_opt = TryConvertActivationType(activation_type);
+  if (!action_param_opt) {
     MS_LOG(ERROR) << "Unsupported op action type for TensorRT: " << activation_type;
     return nullptr;
   }
+  auto action_param = action_param_opt.value();
   nvinfer1::IActivationLayer *activation_layer = network->addActivation(*trt_in_tensor, action_param.activation_type);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";

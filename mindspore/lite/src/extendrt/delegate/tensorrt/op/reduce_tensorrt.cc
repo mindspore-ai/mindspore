@@ -78,8 +78,13 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, true);
 
   uint32_t reduceAxis = GetAxis();
+  auto reduce_operation_opt = TryConvertTRTReduceMode(reduce_op->mode());
+  if (!reduce_operation_opt) {
+    MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(reduce_op->mode());
+    return RET_ERROR;
+  }
   nvinfer1::IReduceLayer *layer =
-    network->addReduce(*reduce_input, ConvertTRTReduceMode(reduce_op->mode()), reduceAxis, keep_dims);
+    network->addReduce(*reduce_input, reduce_operation_opt.value(), reduceAxis, keep_dims);
   if (layer == nullptr) {
     MS_LOG(ERROR) << "addReduce failed for TensorRT.";
     return RET_ERROR;

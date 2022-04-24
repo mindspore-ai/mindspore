@@ -17,6 +17,7 @@
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include <cuda_runtime_api.h>
 #include <map>
+#include <unordered_set>
 #include <numeric>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
@@ -192,7 +193,7 @@ nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network,
   return constant_tensor->getOutput(0);
 }
 
-ActivationParams ConvertActivationType(schema::ActivationType activation_type) {
+std::experimental::optional<ActivationParams> TryConvertActivationType(schema::ActivationType activation_type) {
   std::map<schema::ActivationType, ActivationParams> action_map = {
     {schema::ActivationType_RELU, ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0}},
     {schema::ActivationType_SIGMOID, ActivationParams{nvinfer1::ActivationType::kSIGMOID, false, 0, false, 0}},
@@ -206,17 +207,12 @@ ActivationParams ConvertActivationType(schema::ActivationType activation_type) {
      ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, true, 0, false, 0}},
     {schema::ActivationType_RELU6, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 6}},
     {schema::ActivationType_RELU1, ActivationParams{nvinfer1::ActivationType::kCLIP, true, 0, true, 1}},
+    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}},
     {schema::ActivationType_HARD_TANH, ActivationParams{nvinfer1::ActivationType::kCLIP, true, -1, true, 1}},
-    // using plugin
-    {schema::ActivationType_GELU, ActivationParams{nvinfer1::ActivationType::kTHRESHOLDED_RELU, false, 0, false, 0}}};
-  auto iter = action_map.find(activation_type);
-  ActivationParams action_param = ActivationParams{nvinfer1::ActivationType::kRELU, false, 0, false, 0};
-  if (iter != action_map.end()) {
-    action_param = iter->second;
-  } else {
-    MS_LOG(WARNING) << "Unsupported op action type for TensorRT: " << activation_type;
-  }
-  return action_param;
+  };
+  return action_map.find(activation_type) != action_map.end()
+           ? std::experimental::optional<ActivationParams>(action_map[activation_type])
+           : std::experimental::nullopt;
 }
 
 nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
@@ -406,11 +402,13 @@ int SetCudaDevice(int device_id) {
 
 Format GetOutputFormat(Format input_format, nvinfer1::Permutation perm) {
   if (input_format == Format::NHWC) {
-    if (perm.order[0] == 0 && perm.order[1] == 3 && perm.order[2] == 2 && perm.order[3] == 1) {
+    if (perm.order[kNHWC_N] == kNHWC_N && perm.order[kNHWC_H] == kNHWC_C && perm.order[kNHWC_W] == kNHWC_W &&
+        perm.order[kNHWC_C] == kNHWC_H) {
       return Format::NCHW;
     }
   } else if (input_format == Format::NCHW) {
-    if (perm.order[0] == 0 && perm.order[1] == 2 && perm.order[2] == 3 && perm.order[3] == 1) {
+    if (perm.order[kNCHW_N] == kNCHW_N && perm.order[kNCHW_C] == kNCHW_H && perm.order[kNCHW_H] == kNCHW_W &&
+        perm.order[kNCHW_W] == kNCHW_C) {
       return Format::NHWC;
     }
   }
@@ -511,7 +509,7 @@ std::string GetTensorFormat(ITensorHelper tensor_helper) {
 
 std::string GetTensorFormat(nvinfer1::ITensor *trt_tensor) { return GetTensorFormat(trt_tensor, Format::NHWC, true); }
 
-nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode) {
+std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(schema::ReduceMode mode) {
   std::map<schema::ReduceMode, nvinfer1::ReduceOperation> reduce_ops_ = {
     {schema::ReduceMode::ReduceMode_ReduceMean, nvinfer1::ReduceOperation::kAVG},
     {schema::ReduceMode::ReduceMode_ReduceMax, nvinfer1::ReduceOperation::kMAX},
@@ -519,15 +517,9 @@ nvinfer1::ReduceOperation ConvertTRTReduceMode(schema::ReduceMode mode) {
     {schema::ReduceMode::ReduceMode_ReduceProd, nvinfer1::ReduceOperation::kPROD},
     {schema::ReduceMode::ReduceMode_ReduceSum, nvinfer1::ReduceOperation::kSUM},
   };
-  auto iter = reduce_ops_.find(mode);
-  nvinfer1::ReduceOperation trt_mode;
-  if (iter != reduce_ops_.end()) {
-    trt_mode = iter->second;
-  } else {
-    trt_mode = nvinfer1::ReduceOperation::kAVG;
-    MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(mode);
-  }
-  return trt_mode;
+  return reduce_ops_.find(mode) != reduce_ops_.end()
+           ? std::experimental::optional<nvinfer1::ReduceOperation>(reduce_ops_[mode])
+           : std::experimental::nullopt;
 }
 int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITensorHelper &input_tensor_helper,
                              ITensorHelper *out_tensor_helper) {
@@ -574,6 +566,24 @@ int GetDimsVolume(const std::vector<int64_t> &shape) {
     return 0;
   }
   return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+}
+
+std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &in_dims, int pos, int val) {
+  if (in_dims.nbDims >= static_cast<size_t>(in_dims.MAX_DIMS)) {
+    MS_LOG(ERROR) << "invalid shape size: " << in_dims.nbDims << "for unsqueeze.";
+    return {};
+  }
+  nvinfer1::Dims out_dims;
+  int i = 0;
+  for (int j = 0; j <= in_dims.nbDims; ++j) {
+    if (j == pos) {
+      out_dims.d[j] = val;
+    } else {
+      out_dims.d[j] = in_dims.d[i++];
+    }
+  }
+  out_dims.nbDims = in_dims.nbDims + 1;
+  return std::experimental::optional<nvinfer1::Dims>(out_dims);
 }
 
 void SerializeValue(void **buffer, const void *value, size_t cpy_size) {
