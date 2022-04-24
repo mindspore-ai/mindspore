@@ -17,7 +17,7 @@
 
 - [STABLE] Support dynamic weight decay for optimizers, that is weight decay value will change according to the increasing step during training.
 - [STABLE] Add four methods to create Tensor, which are `mindspore.numpy.rand()`, `mindspore.numpy.randn()`, `mindspore.numpy.randint()`, and `mindspore.ops.arange()`.
-- [STABLE] Add `mindspore.callback.History` in Callback.
+- [STABLE] Add `mindspore.train.callback.History` in Callback.
 - [BETA] Support custom operator implemented by Julia operator.
 - [STABLE] Support accessing attributes and methods of user-defined classes  through `mindspore.ms_class` class decorator.
 - [STABLE] Support training when a network has side effect operations and control flow statements at the same time.
@@ -46,7 +46,7 @@
 
 #### Executor
 
-- [BETA] [Failure Recovery Under Data Parallel Training](https://www.mindspore.cn/tutorials/experts/en/master/parallel/train_gpu.html#%E5%AE%B9%E7%81%BE%E6%81%A2%E5%A4%8D) Support auto failure recovery under data parallel training mode.
+- [BETA] [Failure Recovery Under Data Parallel Training](https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#%E5%AE%B9%E7%81%BE%E6%81%A2%E5%A4%8D) Support auto failure recovery under data parallel training mode.
 - [BETA] Support searching for the number of threads under the CPU to obtain the optimal number of threads for execution. The entire search process takes 50 steps, and the overall performance will reach a stable state after 50 steps. When testing performance, data after 50 steps need to be used as a standard.
 
 #### DataSet
@@ -55,8 +55,8 @@
 - [STABLE] Python multiprocessing optimization and make processes exit normally.
 - [STABLE] Support [Dataset Autotune](https://www.mindspore.cn/tutorials/experts/en/master/debug/dataset_autotune.html) for tuning the speed of dataset pipeline automatically.
 - [BETA]  [Dataset Offload](https://www.mindspore.cn/docs/en/master/design/dataset_offload.html) support new data augmentation operations: RandomColorAdjust, RandomSharpness, TypeCast.
-- Output a single data column when __getitem__/__next__ methods of GeneratorDataset return a single NumPy object.
-- Use ulimit -u 10240 to increase the number of threads/processes available to the current user when specify too many processes or threads for loading dataset may cause RuntimeError: can't start new thread.
+- Output a single data column when `__getitem__/__next__` methods of GeneratorDataset return a single NumPy object.
+- Use `ulimit -u 10240` to increase the number of threads/processes available to the current user when specify too many processes or threads for loading dataset may cause RuntimeError: can't start new thread.
 
 ### API Change
 
@@ -65,9 +65,9 @@
 ##### Python API
 
 - Modify the gradient return value type of the hook corresponding to the register_backward_hook function, and change the gradient return value to the tuple type uniformly.([!31876](https://gitee.com/mindspore/mindspore/pulls/31876))
-- Deprecated usage: `import mindspore.dataset.engine.datasets as ds`. Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.dataset.html).
+- Deprecated usage: `import mindspore.dataset.engine.datasets as ds`. Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.html).
 - Add `mindspore.ms_class` interface, as class decorator for user-defined classes. It allows MindSpore to identify user-defined classes and access their attributes and methods([!30855](https://gitee.com/mindspore/mindspore/pulls/30855))
-- Deprecate `mindspore.SparseTensor` and use `mindspore.COOTensor` instead. ([!28505]())
+- Deprecate `mindspore.SparseTensor` and use `mindspore.COOTensor` instead. ([!28505](https://gitee.com/mindspore/mindspore/pulls/28505))
 
 ## MindSpore Lite
 
@@ -175,7 +175,7 @@ Contributions of any kind are welcome!
 
 ###### The `set_auto_parallel_context()` interface of context is changed from
 
-###### `set_auto_parallel_context(parallel_mode=AUTO_PARALLEL, auto_parallel_search_mode="dynamic_programming")` to ` set_auto_parallel_context(parallel_mode=AUTO_PARALLEL, search_mode="dynamic_programming")`
+###### `set_auto_parallel_context(parallel_mode=AUTO_PARALLEL, auto_parallel_search_mode="dynamic_programming")` to `set_auto_parallel_context(parallel_mode=AUTO_PARALLEL, search_mode="dynamic_programming")`
 
 #### Collect Data and Create Landscape
 
