@@ -164,7 +164,6 @@ Reduction算子
     mindspore.ops.ge
     mindspore.ops.gt
     mindspore.ops.isfinite
-    mindspore.ops.isinstance
     mindspore.ops.isnan
     mindspore.ops.le
     mindspore.ops.less
@@ -181,7 +180,7 @@ Reduction算子
    * - mindspore.ops.check_bprop
      - Refer to :class:`mindspore.ops.CheckBprop`.
    * - mindspore.ops.isinstance\_
-     - `isinstance_` will be deprecated in the future. Please use `mindspore.ops.isinstance` instead.
+     - Refer to :class:`mindspore.ops.IsInstance`.
    * - mindspore.ops.issubclass\_
      - Refer to :class:`mindspore.ops.IsSubClass`.
    * - mindspore.ops.not_equal
