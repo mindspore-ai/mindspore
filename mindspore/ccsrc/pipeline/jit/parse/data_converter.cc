@@ -362,6 +362,18 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
   return func_graph;
 }
 
+ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_type) {
+  if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER) {
+    MS_LOG(INFO) << "Convert constant numpy int64_t number:" << (std::string)py::str(obj);
+    return MakeValue(py::cast<int64_t>(obj));
+  } else if (obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
+    MS_LOG(INFO) << "Convert constant numpy float number::" << (std::string)py::str(obj);
+    return MakeValue(py::cast<float>(obj));
+  }
+  MS_LOG(ERROR) << "Convert numpy number type is invalid, obj: " << py::str(obj);
+  return nullptr;
+}
+
 ValuePtr ConvertOtherObj(const py::object &obj) {
   auto obj_type = data_converter::GetObjType(obj);
   MS_LOG(DEBUG) << "Converting the object(" << ((std::string)py::str(obj)) << ") detail type: " << obj_type << " ";
@@ -395,6 +407,9 @@ ValuePtr ConvertOtherObj(const py::object &obj) {
   static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
   static const auto use_fallback = (support_fallback != "0");
   if (use_fallback) {
+    if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER || obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
+      return ConvertConstantNumpyNumber(obj, obj_type);
+    }
     auto res = std::make_shared<InterpretedObject>(obj, py::str(obj));
     MS_LOG(DEBUG) << "Get interpreted object: " << res->ToString();
     return res;

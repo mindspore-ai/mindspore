@@ -1750,6 +1750,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_LOG(ERROR) << "'args_spec_list' should not be empty";
     }
 
+    auto current_interpret_node = out_conf->node();
+    MS_EXCEPTION_IF_NULL(current_interpret_node);
+    MS_LOG(DEBUG) << "The current interpret node: " << current_interpret_node->DebugString();
     // Get the type parameter.
     MS_EXCEPTION_IF_NULL(args_spec_list[0]);
     ValuePtr value_track = args_spec_list[0]->GetValueTrack();

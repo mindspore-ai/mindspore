@@ -24,6 +24,7 @@ import inspect
 import types
 import importlib
 from textwrap import dedent
+import numpy
 
 import asttokens
 
@@ -48,6 +49,8 @@ RESOLVE_TYPE_FUNCTION = 1               # resolve function
 RESOLVE_TYPE_METHOD = 2                 # resolve class method
 RESOLVE_TYPE_CLASS_TYPE = 3             # resolve class type
 RESOLVE_TYPE_CLASS_INSTANCE = 4         # resolve the class instance of common class
+RESOLVE_TYPE_NUMPY_INT_NUMBER = 5       # resolve numpy int number
+RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 6     # resolve numpy float number
 RESOLVE_TYPE_INVALID = 0xFF
 
 # define the class instance detail type
@@ -306,6 +309,10 @@ def get_obj_type(obj):
         obj_type = RESOLVE_TYPE_CLASS_TYPE
     elif _is_class_instance(obj):
         obj_type = RESOLVE_TYPE_CLASS_INSTANCE
+    elif _is_numpy_int_number(obj):
+        obj_type = RESOLVE_TYPE_NUMPY_INT_NUMBER
+    elif _is_numpy_float_number(obj):
+        obj_type = RESOLVE_TYPE_NUMPY_FLOAT_NUMBER
     else:
         # Raise a proper error if not using Fallback feature.
         if support_fallback_ != '0':
@@ -343,6 +350,16 @@ def _is_ms_class(obj):
 def _is_class_instance(obj):
     """Confirm the obj is class instance."""
     return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_ms_class(obj)
+
+
+def _is_numpy_int_number(obj):
+    """Confirm the obj is numpy int number."""
+    return isinstance(obj, (numpy.int8, numpy.int16, numpy.int64, numpy.uint8, numpy.uint16, numpy.uint64))
+
+
+def _is_numpy_float_number(obj):
+    """Confirm the obj is numpy float number."""
+    return isinstance(obj, (numpy.float16, numpy.float32, numpy.float64))
 
 
 def _convert_tuple_to_args_kwargs(params):
