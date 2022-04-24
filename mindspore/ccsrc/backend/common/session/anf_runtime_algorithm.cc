@@ -1069,6 +1069,8 @@ void AnfRuntimeAlgorithm::InsertMakeTupleForOutput(const NotNull<KernelGraphPtr>
   }
   auto make_tuple = root_graph->NewCNode(
     {NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), root_graph->output()});
+  MS_EXCEPTION_IF_NULL(root_graph->output());
+  make_tuple->set_abstract({root_graph->output()->abstract()});
   root_graph->set_output(make_tuple);
 }
 

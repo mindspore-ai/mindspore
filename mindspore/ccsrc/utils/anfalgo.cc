@@ -150,18 +150,20 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
     return ret;
   }
 
+  // Output num must be exactly equal to the number of outputs of the node.
   size_t outputs_num = 1;
   if (AnfUtils::IsRealCNodeKernel(node)) {
     outputs_num = AnfAlgo::GetOutputTensorNum(node);
   }
-
-  // If the node is a call, the outputs num should get from the abstract.
-  if (AnfAlgo::IsCallNode(node) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimTupleGetItem) ||
-      AnfAlgo::CheckAbsCSRTensor(node) || AnfAlgo::CheckAbsCOOTensor(node)) {
+  // Call node maybe a real cnode and the last interface cannot get output num exactly, so we should get
+  // output num from abstract again.
+  if (common::AnfAlgo::IsCallNode(node) || (!AnfUtils::IsRealCNodeKernel(node))) {
+    MS_EXCEPTION_IF_NULL(node->abstract());
     outputs_num = AnfAlgo::GetOutputNumByAbstract(node->abstract());
   }
 
   // The output may be the tuple of node, so need visit all the outputs of node.
+  // Since output num represents the number of all outputs of node, only one output is obtained per loop.
   for (size_t i = 0; i < outputs_num; ++i) {
     // Maybe this scene: tupleGetItem + depend + makeTuple, can be done correctly in VisitKernelWithReturnType.
     // The output may be updataState node for connecting dependencies between subgraphs.
@@ -172,7 +174,11 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
     // The MakeTuple/MakeSparse node need recurse.
     if (IsOneOfPrimitiveCNode(output_with_index.first, expand_prims)) {
       auto output_vector = GetAllOutputWithIndexInner(output_with_index.first);
-      (void)std::copy(output_vector.begin(), output_vector.end(), std::back_inserter(ret));
+      if (output_vector.size() <= output_with_index.second) {
+        MS_LOG(EXCEPTION) << "Invalid index:" << output_with_index.second
+                          << " for outputs of node:" << output_with_index.first->DebugString();
+      }
+      ret.emplace_back(output_vector[output_with_index.second]);
       continue;
     }
 
