@@ -709,7 +709,11 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     }
 
     // Save the nop_op that needs to be memcpy
-    if (op_name == prim::kPrimTranspose->name() && common::AnfAlgo::HasNodeAttr(kAttrNopOp, node)) {
+    static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), prim::kPrimExpandDims->name(),
+                                                        prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
+                                                        prim::kPrimFlattenGrad->name()};
+    if ((op_name == prim::kPrimTranspose->name() && common::AnfAlgo::HasNodeAttr(kAttrNopOp, node)) ||
+        nop_nodes.find(op_name) != nop_nodes.end()) {
       nop_op_to_memcpy_.insert(node);
     }
   }
