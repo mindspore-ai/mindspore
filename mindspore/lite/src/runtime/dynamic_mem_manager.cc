@@ -28,9 +28,12 @@ namespace {
 // Alloc memory aligned according to 64 bytes.
 static constexpr size_t kMemAlginSize = 64;
 
-// The minimum unit size (512M) of memory block used for dynamic extend.
-static constexpr auto kAllocUnitSize = 512 * 1024 * 1024;
-
+// The default unit size (512M) of memory block used for dynamic extend.
+static constexpr size_t kAllocUnitSize = 512 * 1024 * 1024;
+// The minimum unit size (64M) of memory block used for dynamic extend.
+static constexpr size_t kMinimumAllocUnitSize = 64 * 1024 * 1024;
+// 16G
+static constexpr size_t kMinimumSysMemory = 17179869184;
 static constexpr auto kBlockSize = 2048;
 // invalid block index
 static constexpr int kInvalidIndex = -1;
@@ -41,26 +44,14 @@ size_t Rounded(size_t size) { return (size + kMemAlginSize - 1) & (~(kMemAlginSi
 }  // namespace
 
 void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_size) {
-  int64_t allocate_tmp_size = static_cast<int64_t>(rounded_size < kAllocUnitSize ? kAllocUnitSize : rounded_size);
-  static const auto kMaxMallocSize = static_cast<int64_t>(lite::GetMaxMallocSize());
+  static const auto kMaxMallocSize = lite::GetMaxMallocSize();
+  static const auto unit_size = kMaxMallocSize < kMinimumSysMemory ? kMinimumAllocUnitSize : kAllocUnitSize;
+  auto allocate_tmp_size = rounded_size < unit_size ? unit_size : rounded_size;
   if (allocate_tmp_size > kMaxMallocSize) {
     MS_LOG(ERROR) << "request invalid memory size " << allocate_tmp_size << ", total: " << kMaxMallocSize;
     return nullptr;
   }
 
-  int64_t free_count = 0;
-  if (node_id >= 0) {
-    // allocate memory from numa node
-    MemoryInfo mem_info = numa_instance_->GetNodeSize(node_id);
-    free_count = mem_info.free;
-  } else {
-    free_count = lite::GetFreeMemory();
-  }
-  MS_LOG(DEBUG) << "node_id " << node_id << ", request " << allocate_tmp_size << ", free memory " << free_count;
-  if (MS_UNLIKELY(allocate_tmp_size >= free_count)) {
-    MS_LOG(WARNING) << "No enough memory left!node_id: " << node_id << ", request: " << allocate_tmp_size
-                    << ", free: " << free_count;
-  }
   *allocate_size = allocate_tmp_size;
   void *data = nullptr;
 #ifdef _WIN32
@@ -68,18 +59,31 @@ void *MemOperator::Allocate(size_t rounded_size, int node_id, size_t *allocate_s
 #else
   if (node_id >= 0) {
     data = numa_instance_->Malloc(node_id, static_cast<size_t>(allocate_tmp_size));
+    if (MS_UNLIKELY((data == nullptr && allocate_tmp_size > rounded_size))) {
+      MS_LOG(WARNING) << "Malloc memory(" << allocate_tmp_size << ") failed! malloc rounded_size(" << rounded_size
+                      << ") memory again. node_id: " << node_id;
+      allocate_tmp_size = rounded_size;
+      *allocate_size = rounded_size;
+      data = numa_instance_->Malloc(node_id, rounded_size);
+    }
   } else {
     auto ret = posix_memalign(&data, kMemAlginSize, static_cast<size_t>(allocate_tmp_size));
+    if (MS_UNLIKELY(ret == ENOMEM && allocate_tmp_size > rounded_size)) {
+      MS_LOG(WARNING) << "Malloc memory(" << allocate_tmp_size << ") failed! malloc rounded_size(" << rounded_size
+                      << ") memory again.";
+      allocate_tmp_size = rounded_size;
+      *allocate_size = rounded_size;
+      ret = posix_memalign(&data, kMemAlginSize, rounded_size);
+    }
     if (MS_UNLIKELY(ret != 0)) {
       MS_LOG(ERROR) << "posix_memalign failed!ret: " << ret << ", node_id: " << node_id
-                    << ", request: " << allocate_tmp_size << ", free: " << free_count;
+                    << ", request: " << allocate_tmp_size;
       return nullptr;
     }
   }
 #endif
   if (MS_UNLIKELY(data == nullptr)) {
-    MS_LOG(ERROR) << "malloc data failed!node_id: " << node_id << ", request: " << allocate_tmp_size
-                  << ", free: " << free_count;
+    MS_LOG(ERROR) << "malloc data failed!node_id: " << node_id << ", request: " << allocate_tmp_size;
     return nullptr;
   }
 
