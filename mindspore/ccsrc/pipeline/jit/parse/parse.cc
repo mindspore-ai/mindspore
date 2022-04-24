@@ -1329,7 +1329,9 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     b1->func_graph()->set_output(rest_node);
     b2->func_graph()->set_output(test_node);
 
-    auto cond_node = block->ForceToBoolNode(test_node);
+    // Interpret node will be converted to scalar, no need to convert to boolean.
+    auto cond_node =
+      IsPrimitiveCNode(test_node, prim::kPrimPyInterpret) ? test_node : block->ForceToBoolNode(test_node);
     auto switch_app =
       block_fg->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, NewValueNode(true_block->func_graph()),
                                  NewValueNode(false_block->func_graph())});

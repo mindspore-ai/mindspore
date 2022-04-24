@@ -144,8 +144,7 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
                       << ",\nCurrent: " << py::str(const_cast<py::dict &>(global_py_params()))
                       << "\nInsert: " << py::str(const_cast<py::dict &>(block->global_py_params()));
         UpdateGlobalPyParam(block->global_py_params());
-        const auto &[keys, values] = block->local_py_params();
-        UpdateLocalPyParam(keys, values);
+        UpdateLocalPyParam(var_name, res);
       }
       return res;
     } else if (prev_blocks_.empty()) {
