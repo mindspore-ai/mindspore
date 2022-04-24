@@ -47,6 +47,7 @@ RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 # Install python (v3.7.5)
 RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/* \
     && cd /tmp \
     && wget https://github.com/python/cpython/archive/v3.7.5.tar.gz \
     && tar -xvf v3.7.5.tar.gz \
@@ -71,8 +72,7 @@ RUN mkdir -pv /root/.pip \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
 
-# Install MindSpore cpu whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindSpore/cpu/x86_64/mindspore-1.7.0-cp37-cp37m-linux_x86_64.whl
-
-# Install MindInsight cpu whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindInsight/any/mindinsight-1.7.0-py3-none-any.whl
+# Install MindSpore cpu and MindInsight packages
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindSpore/cpu/x86_64/mindspore-1.7.0-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindInsight/any/mindinsight-1.7.0-py3-none-any.whl \
+    && pip cache purge

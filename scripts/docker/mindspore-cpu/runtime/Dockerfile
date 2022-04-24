@@ -47,6 +47,7 @@ RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 # Install python (v3.7.5)
 RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/* \
     && cd /tmp \
     && wget https://github.com/python/cpython/archive/v3.7.5.tar.gz \
     && tar -xvf v3.7.5.tar.gz \

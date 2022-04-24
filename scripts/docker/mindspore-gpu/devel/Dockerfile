@@ -53,6 +53,7 @@ RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
 # Install python (v3.7.5)
 RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
     libgdbm-dev libgdbm-compat-dev liblzma-dev libreadline-dev libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/* \
     && cd /tmp \
     && wget https://github.com/python/cpython/archive/v3.7.5.tar.gz \
     && tar -xvf v3.7.5.tar.gz \
@@ -76,7 +77,8 @@ RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
-    && pip install --no-cache-dir wheel
+    && pip install --no-cache-dir wheel \
+    && pip cache purge
 
 # Install cmake (v3.14.1)
 RUN cd /tmp \
