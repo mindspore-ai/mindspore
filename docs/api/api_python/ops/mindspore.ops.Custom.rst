@@ -13,8 +13,8 @@ mindspore.ops.Custom
     .. note::
         不同自定义算子的函数类型（func_type)支持的平台类型不同。每种类型支持的平台如下：
 
-        - "hybrid": ["Ascend", "GPU"].
-        - "akg": ["Ascend", "GPU"].
+        - "hybrid": ["Ascend", "GPU", "CPU"].
+        - "akg": ["Ascend", "GPU", "CPU"].
         - "tbe": ["Ascend"].
         - "aot": ["GPU", "CPU"].
         - "pyfunc": ["CPU"].
