@@ -375,8 +375,10 @@ void Tensor::FreeData() {
   }
   if (this->data_ != nullptr && this->own_data_) {
     if (this->allocator_ != nullptr) {
-      this->allocator_->Free(this->data_);
-      if (!IS_STATIC_ALLOCATOR(allocator_) || (allocator_->RefCount(this->data_) != 0)) {
+      if (allocator_->DecRefCount(this->data_, 1) <= 0) {
+        allocator_->Free(this->data_);  // Due to existing various allocator, here do not set data to nullptr.
+      }
+      if (!IS_STATIC_ALLOCATOR(allocator_) || allocator_->RefCount(this->data_) != 0) {
         this->data_ = nullptr;
       }
     } else {
@@ -416,17 +418,10 @@ void Tensor::DecRefCount() {
     return;
   }
   int tensor_ref_count = --ref_count_;
-  int data_ref_count = tensor_ref_count;
-
-  if (allocator_ != nullptr) {
-    data_ref_count = allocator_->DecRefCount(this->data_, 1);
-  }
   if (tensor_ref_count <= 0) {
-    if (data_ref_count <= 0) {
-      FreeData();
-    } else {
-      data_ = nullptr;
-    }
+    FreeData();
+  } else if (allocator_ != nullptr) {
+    (void)allocator_->DecRefCount(this->data_, 1);
   }
 }
 
