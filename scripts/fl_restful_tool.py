@@ -178,10 +178,6 @@ def call_get_instance_detail():
         return process_self_define_json(Status.FAILED.value, "error. metrics file is not existed.")
 
     ans_json_obj = {}
-    metrics_auc_list = []
-    metrics_loss_list = []
-    iteration_execution_time_list = []
-    client_visited_info_list = []
 
     with open(metrics_file_path, 'r') as f:
         metrics_list = f.readlines()
@@ -189,28 +185,12 @@ def call_get_instance_detail():
     if not metrics_list:
         return process_self_define_json(Status.FAILED.value, "error. metrics file has no content")
 
-    for metrics in metrics_list:
-        json_obj = json.loads(metrics)
-        iteration_execution_time_list.append(json_obj['iterationExecutionTime'])
-        client_visited_info_list.append(json_obj['clientVisitedInfo'])
-        metrics_auc_list.append(json_obj['metricsAuc'])
-        metrics_loss_list.append(json_obj['metricsLoss'])
-
     last_metrics = metrics_list[len(metrics_list) - 1]
     last_metrics_obj = json.loads(last_metrics)
 
     ans_json_obj["code"] = Status.SUCCESS.value
     ans_json_obj["describe"] = "get instance metrics detail successful."
-    ans_json_obj["result"] = {}
-    ans_json_result = ans_json_obj.get("result")
-    ans_json_result['currentIteration'] = last_metrics_obj['currentIteration']
-    ans_json_result['flIterationNum'] = last_metrics_obj['flIterationNum']
-    ans_json_result['flName'] = last_metrics_obj['flName']
-    ans_json_result['instanceStatus'] = last_metrics_obj['instanceStatus']
-    ans_json_result['iterationExecutionTime'] = iteration_execution_time_list
-    ans_json_result['clientVisitedInfo'] = client_visited_info_list
-    ans_json_result['metricsAuc'] = metrics_auc_list
-    ans_json_result['metricsLoss'] = metrics_loss_list
+    ans_json_obj["result"] = last_metrics_obj
 
     return json.dumps(ans_json_obj)
 
