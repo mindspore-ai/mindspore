@@ -152,6 +152,15 @@ int QuantParamParser::ParseFullQuant(const FullQuantString &full_quant_string, q
       return ret;
     }
   }
+  if (!full_quant_string.per_channel.empty() && !ConvertBool(full_quant_string.per_channel, &full_quant->per_channel)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: per_channel should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  if (!full_quant_string.cle.empty() && !ConvertBool(full_quant_string.cle, &full_quant->cle)) {
+    MS_LOG(ERROR) << "INPUT ILLEGAL: cle should be true or false.";
+    return RET_INPUT_PARAM_INVALID;
+  }
   return RET_OK;
 }
 
