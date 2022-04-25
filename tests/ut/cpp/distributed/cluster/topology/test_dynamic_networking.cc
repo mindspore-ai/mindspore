@@ -61,6 +61,11 @@ TEST_F(TestDynamicNetworking, NodeRegister) {
   ASSERT_EQ(total_node_num, msn.GetAliveNodeNum());
   ASSERT_EQ(TopoState::kInitialized, msn.TopologyState());
 
+  for (int i = 0; i < total_node_num; ++i) {
+    ASSERT_EQ(i, cgns[i]->rank_id());
+  }
+  ASSERT_EQ(-1, msn.rank_id());
+
   for (auto &cgn : cgns) {
     cgn->Finalize();
   }

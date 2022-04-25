@@ -21,6 +21,12 @@ message RegistrationMessage {
   string node_id = 1;
 }
 
+message RegistrationRespMessage {
+  bool success = 1;
+  uint32 rank_id = 2;
+  uint32 node_num = 3;
+}
+
 message UnregistrationMessage {
   string node_id = 1;
 }
