@@ -175,16 +175,6 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
     MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
     return RET_ERROR;
   }
-
-#ifdef HUFFMAN_ENCODE
-  auto huffman_encode = std::make_unique<lite::HuffmanEncode>();
-  ret = huffman_encode->DoHuffmanEncode(weight, primitive, quant_datas.data(), bit_num);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Do huffman encode failed.";
-    return ret;
-  }
-#endif
-
   if (quant_params.empty()) {
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;

@@ -70,7 +70,7 @@ class CLEStrategy {
   CLEPattern *cle_pattern_ = nullptr;
   std::map<std::string, float> total_min_;
 
-  bool replace_relu6_flag_ = true;
+  bool depthwise_replace_relu6_flag_ = false;
   bool clip_bias_flag_ = false;
 };
 }  // namespace mindspore::lite::quant

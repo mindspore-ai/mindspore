@@ -771,10 +771,10 @@ int GetBucketAllIndex(const std::vector<int> &dims, int preferred_dim,
     auto index = i * inner;
     std::vector<int> bucket_index(inner * outer);
     for (int j = 0; j < outer; j++) {
-      index += j * bucket_count * inner;
       for (int k = 0; k < inner; k++) {
         bucket_index[j * inner + k] = index + k;
       }
+      index += bucket_count * inner;
     }
     buckets_data_index->push_back(bucket_index);
   }
