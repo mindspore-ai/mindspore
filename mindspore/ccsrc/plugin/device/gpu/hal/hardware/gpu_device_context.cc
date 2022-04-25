@@ -413,26 +413,17 @@ void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
     if (msg.empty()) {
       continue;
     }
-    auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
-    bool try_expand = true;
-    if (expand_fg != nullptr) {
-      auto todos = TopoSort(expand_fg->get_return());
-      for (const auto &n : todos) {
-        auto cnode = n->cast<CNodePtr>();
-        if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
-        auto res = SetKernelInfoWithMsg(cnode);
-        if (!res.first.empty()) {
-          try_expand = false;
-          break;
-        }
-      }
-    }
-    if (expand_fg == nullptr || !try_expand) {
+    auto f = [](const CNodePtr &n) {
+      auto res = SetKernelInfoWithMsg(n);
+      return res.first.empty();
+    };
+    auto expand_fg = graphkernel::TryExpandCNode(node, f);
+    if (expand_fg == nullptr) {
       MS_EXCEPTION(etype) << msg;
     }
-    do_expand = true;
     MS_LOG(INFO) << msg << " but expand success.";
     graphkernel::InlineExpandFuncGraph(node, expand_fg);
+    do_expand = true;
   }
   if (do_expand) {
     graphkernel::BindValueToGraph().Run(graph);

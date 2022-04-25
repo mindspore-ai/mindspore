@@ -319,27 +319,18 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
       }
       MS_LOG(DEBUG) << "Select ApplyKernel: " << node->DebugString();
     } else {
-      auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
-      bool try_expand = true;
-      if (expand_fg != nullptr) {
-        auto todos = TopoSort(expand_fg->get_return());
-        for (const auto &n : todos) {
-          auto cnode = n->cast<CNodePtr>();
-          if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
-          auto res = device::ascend::SelectKernelInfoWithMsg(cnode);
-          constexpr int one = 1;
-          if (!std::get<one>(res).empty()) {
-            try_expand = false;
-            break;
-          }
-        }
-      }
-      if (expand_fg == nullptr || !try_expand) {
+      auto f = [](const CNodePtr &n) {
+        auto res = device::ascend::SelectKernelInfoWithMsg(n);
+        constexpr int one = 1;
+        return std::get<one>(res).empty();
+      };
+      auto expand_fg = graphkernel::TryExpandCNode(node, f);
+      if (expand_fg == nullptr) {
         MS_EXCEPTION(etype) << msg;
       }
-      do_expand = true;
       MS_LOG(INFO) << msg << " but expand success.";
       graphkernel::InlineExpandFuncGraph(node, expand_fg);
+      do_expand = true;
     }
   }
   if (do_expand) {
