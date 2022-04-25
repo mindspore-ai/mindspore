@@ -86,7 +86,7 @@ __global__ void Swap3DTensorLast2DimKernel_shared(const T *input, int NumThreads
                                                   int input_dims_0, int input_dims_1, int input_dims_2, T *output) {
   extern __shared__ unsigned char sdata_uchar[];
   // shm_tile[TileHeight][TileWidth + 1]: to avoid bank conflict in write-to-output period
-  T *shm_tile = reinterpret_cast<T*>(sdata_uchar);
+  T *shm_tile = reinterpret_cast<T *>(sdata_uchar);
   int NumRowsPerLoadLoop = NumThreads / TileWidth;  // the number of shm rows that all threads can load into shm once
   int NumColsPerWriteLoop =
     NumThreads / TileHeight;  // the number of shm cols that all threads can write into output once
@@ -255,6 +255,11 @@ void CalNCHW2NHWCInterface(const size_t size, const size_t shape_size, const T *
                        d_output, cuda_stream);
 }
 
+template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<bool>(const size_t size, const size_t shape_size,
+                                                          const bool *d_input, const size_t *input_shape,
+                                                          const size_t *input_axis, const size_t *d_input_shape,
+                                                          const size_t *d_input_axis, bool *d_output,
+                                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<double>(const size_t size, const size_t shape_size,
                                                             const double *d_input, const size_t *input_shape,
                                                             const size_t *input_axis, const size_t *d_input_shape,
@@ -280,6 +285,11 @@ template CUDA_LIB_EXPORT void CalNHWC2NCHWInterface<int64_t>(const size_t size, 
                                                              const size_t *d_input_axis, int64_t *d_output,
                                                              cudaStream_t cuda_stream);
 
+template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<bool>(const size_t size, const size_t shape_size,
+                                                          const bool *d_input, const size_t *input_shape,
+                                                          const size_t *input_axis, const size_t *d_input_shape,
+                                                          const size_t *d_input_axis, bool *d_output,
+                                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalNCHW2NHWCInterface<double>(const size_t size, const size_t shape_size,
                                                             const double *d_input, const size_t *input_shape,
                                                             const size_t *input_axis, const size_t *d_input_shape,
