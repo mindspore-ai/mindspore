@@ -57,7 +57,7 @@ public class MsgAnonymous {
 
     protected class PathAnonymous implements Anonymous {
         public Boolean doAnonymous(String msg) {
-            Pattern pathPattern = Pattern.compile("([Pp][Aa][Tt][Hh][ ]?:[ ]?)(/[a-zA-Z0-9._]*)+");
+            Pattern pathPattern = Pattern.compile("([Pp][Aa][Tt][Hh][ ]?:[ ]?)(/[a-zA-Z0-9._-]*)+");
             Matcher pathMatcher = pathPattern.matcher(msg);
             if (!pathMatcher.find()) {
                 return false;
@@ -69,7 +69,7 @@ public class MsgAnonymous {
 
     protected class PathArrayAnonymous implements Anonymous {
         public Boolean doAnonymous(String msg) {
-            Pattern pathArrayPattern = Pattern.compile("([Pp][Aa][Tt][Hh][ ]?:[ ]?)\\[(/[a-zA-Z0-9\\._]+[, ]*)+\\]");
+            Pattern pathArrayPattern = Pattern.compile("([Pp][Aa][Tt][Hh][ ]?:[ ]?)\\[(/[a-zA-Z0-9\\._-]+[, ]*)+\\]");
             Matcher pathArrayMatcher = pathArrayPattern.matcher(msg);
             if (!pathArrayMatcher.find()) {
                 return false;
