@@ -46,6 +46,7 @@
 #include "ops/grad/slice_grad.h"
 #include "ops/lstm.h"
 #include "ops/stack.h"
+#include "ops/ragged_range.h"
 
 namespace mindspore {
 namespace abstract {
@@ -61,6 +62,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
   static const auto &kMatrixDiagPartV3 = prim::kPrimMatrixDiagPartV3->name();
   static const auto &kMatrixSetDiagV3 = prim::kPrimMatrixSetDiagV3->name();
+  static const auto &kRaggedRange = prim::kPrimRaggedRange->name();
   static const auto &kDynamicBroadcastTo = prim::kPrimDynamicBroadcastTo->name();
   static const auto &kUnsortedSegmentSum = prim::kPrimUnsortedSegmentSum->name();
   static const auto &kUnsortedSegmentMin = prim::kPrimUnsortedSegmentMin->name();
@@ -103,8 +105,8 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kFillV2, ShapeSet{0}},
                                                         {kDynamicBroadcastTo, ShapeSet{1}},
                                                         {kNonDeterministicInts, ShapeSet{0}},
-                                                        {kReduceSum, ShapeSet{1}}};
-
+                                                        {kReduceSum, ShapeSet{1}},
+                                                        {kRaggedRange, ShapeSet{0, 1, 2}}};
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);

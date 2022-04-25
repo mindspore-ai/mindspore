@@ -121,6 +121,10 @@ void ParseAttrValue(const std::string &type, const std::string &attr_name, const
   } else if (type == "float") {
     auto attr_value = GetValue<float>(value);
     (*node_attr)[attr_name].set_f(attr_value);
+  } else if (type == "Type") {
+    auto attr_value = GetValue<TypePtr>(value);
+    auto type_value = static_cast<mindspore::DataType>(kernel::AicpuOpUtil::MsTypeToProtoType(attr_value->type_id()));
+    (*node_attr)[attr_name].set_type(type_value);
   } else if (type == "listInt") {
     std::vector<int64_t> attr_value;
     auto value_type = value->type();

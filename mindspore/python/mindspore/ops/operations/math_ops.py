@@ -5444,3 +5444,63 @@ class Cross(Primitive):
     def __init__(self, dim=-65530):
         validator.check_value_type('dim', dim, [int], self.name)
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+
+
+class RaggedRange(Primitive):
+    """
+    Returns a `RaggedTensor` containing the specified sequences of numbers.
+
+     Args:
+        Tsplits (mindspore.dtype): An mindspore.dtype from: mindspore.int32, mindspore.int64.
+
+    Inputs:
+        - **starts** (Tensor) - The starts of each range, whose type is int32, int64, float32 or float64,
+                                and shape is 0D or 1D.
+        - **limits** (Tensor) - The limits of each range, whose type and shape should be same as input `starts`.
+        - **deltas** (Tensor) - The deltas of each range, whose type and shape should be same as input `starts`,
+                                and each element in the tensor should not be equal to 0.
+    Outputs:
+        - **rt_nested_splits** (Tensor) - The nested splits of the return `RaggedTensor`,
+                                          and type of the tensor is `Tsplits`,
+                                          shape of the tensor is equal to shape of input `starts` plus 1.
+        - **rt_dense_values**  (Tensor) - The dense values of the return `RaggedTensor`,
+                                          and type of the tensor should be same as input `starts`.
+                                          Let size of input `starts`, input `limits` and input `deltas` are i,
+                                          if type of the input `starts`, input `limits` and input `deltas`
+                                          are int32 or int64, shape of the output `rt_dense_values` is equal to
+                                          sum(abs(limits[i] - starts[i]) + abs(deltas[i]) - 1) / abs(deltas[i])),
+                                          if type of the input `starts`, input `limits` and input `deltas`
+                                          are float32 or float64, shape of the output `rt_dense_values` is equal to
+                                          sum(ceil(abs((limits[i] - starts[i]) / deltas[i]))).
+    Raises:
+        TypeError: If any input is not Tensor.
+        TypeError: If the type of `starts` is not one of the following dtype: int32, int64, float32, float64.
+        TypeError: If the type of `starts`, `limits` and `deltas` are not same.
+        TypeError: If the type of `Tsplits` is not one of the following dtype: mstype.int32, mstype.int64.
+        ValueError: If the inputs `starts`, `limits`, and `deltas` are not 0D or 1D.
+        ValueError: If the input `deltas` is equal to 0.
+        ValueError: If the shape of `starts`, `limits` and `deltas` are not same.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> raggedrange = ops.RaggedRange(Tsplits=mstype.int64)
+        >>> starts = Tensor(np.array([2, 5, 8]).astype(np.int32))
+        >>> limits = Tensor(np.array([3, 5, 12]).astype(np.int32))
+        >>> deltas = Tensor(np.array([1, 1, 1]).astype(np.int32))
+        >>> (rt_nested_splits, rt_dense_values) = raggedrange(starts, limits, deltas)
+        >>> print(rt_nested_splits)
+        [0 1 1 5]
+        >>> print(rt_dense_values)
+        [ 2  8  9 10 11]
+    """
+
+    @prim_attr_register
+    def __init__(self, Tsplits):
+        """Initialize RaggedRange."""
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['starts', 'limits', 'deltas'], outputs=['rt_nested_splits', 'rt_dense_values'])
+        validator.check_value_type("Tsplits", Tsplits, [mstype.Type], self.name)
+        valid_values = (mstype.int64, mstype.int32)
+        validator.check_type_name("Tsplits", Tsplits, valid_values, self.name)

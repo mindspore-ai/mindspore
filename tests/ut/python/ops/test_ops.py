@@ -38,6 +38,7 @@ from mindspore.ops.operations.array_ops import Triu
 from mindspore.ops.operations.array_ops import MatrixDiagV3
 from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
+from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.nn_ops import FractionalMaxPool
 from mindspore.ops.operations._grad_ops import FractionalMaxPoolGrad
 from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
@@ -2661,6 +2662,12 @@ test_case_array_ops = [
         'block': RightShift(),
         'desc_inputs': [Tensor(np.array([1, 2, 3]), mstype.int32),
                         Tensor(np.array([5, 2, 3]), mstype.int32)],
+        'skip': ['backward']}),
+    ('RaggedRange', {
+        'block': RaggedRange(Tsplits=mstype.int32),
+        'desc_inputs': [Tensor(np.array([2, 5, 8]), mstype.int32),
+                        Tensor(np.array([3, 5, 12]), mstype.int32),
+                        Tensor(np.array([1, 1, 1]), mstype.int32)],
         'skip': ['backward']}),
     ('BitwiseAnd', {
         'block': P.BitwiseAnd(),
