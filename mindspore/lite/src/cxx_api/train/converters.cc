@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 #include "src/cxx_api/converters.h"
-#include <cstddef>
-#include <string>
-#include <vector>
-#include <memory>
 #include "include/train/train_cfg.h"
 #include "include/api/cfg.h"
-#include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -31,7 +26,7 @@ Status A2L_ConvertConfig(const TrainCfg *a_train_cfg, lite::TrainCfg *l_train_cf
   }
 
   l_train_cfg->loss_name_.clear();
-  l_train_cfg->loss_name_.emplace_back(a_train_cfg->loss_name_);
+  l_train_cfg->loss_name_.assign(a_train_cfg->loss_name_.begin(), a_train_cfg->loss_name_.end());
   l_train_cfg->mix_precision_cfg_.dynamic_loss_scale_ = a_train_cfg->mix_precision_cfg_.loss_scale_;
   l_train_cfg->mix_precision_cfg_.loss_scale_ = a_train_cfg->mix_precision_cfg_.loss_scale_;
   l_train_cfg->mix_precision_cfg_.keep_batchnorm_fp32_ = (a_train_cfg->optimization_level_ != kO3);
