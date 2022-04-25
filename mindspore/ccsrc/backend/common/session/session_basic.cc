@@ -2336,8 +2336,10 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
   // Create abstract for output maketuple node.
   AbstractBasePtrList output_abs_list;
   const auto &inputs = output_node->inputs();
-  (void)std::transform(inputs.begin() + 1, inputs.end(), std::back_inserter(output_abs_list),
-                       [](const AnfNodePtr &input) { return input->abstract(); });
+  (void)std::transform(
+    inputs.begin() + 1, inputs.end(), std::back_inserter(output_abs_list), [](const AnfNodePtr &input) {
+      return input->abstract() == nullptr ? std::make_shared<abstract::AbstractNone>() : input->abstract();
+    });
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(output_abs_list);
   MS_EXCEPTION_IF_NULL(abstract_tuple);
   output_node->set_abstract(abstract_tuple);
