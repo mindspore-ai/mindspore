@@ -24,3 +24,9 @@ files:
     - jjfeing
     - guoqi1024
     - baochong
+
+  ".*\\.md$":
+    approvers:
+    - gemini524
+    - Hanshize
+    - rudy_tan
