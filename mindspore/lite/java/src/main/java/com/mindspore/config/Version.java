@@ -26,7 +26,9 @@ import com.mindspore.lite.NativeLibrary;
 public class Version {
     static {
         try {
-            NativeLibrary.loadLibs();
+            if (!NativeLibrary.loadLibrary()) {
+                NativeLibrary.loadLibs();
+            }
         } catch (Exception e) {
             System.err.println("Failed to load MindSporLite native library.");
             e.printStackTrace();
