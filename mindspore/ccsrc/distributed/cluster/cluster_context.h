@@ -129,9 +129,6 @@ class BACKEND_EXPORT ClusterContext {
   // The node could be Worker, Server or Scheduler, etc.
   std::shared_ptr<ps::core::Node> node_;
 
-  // abstract_node_ is nullptr only when this is node is scheduler.
-  ps::core::AbstractNodePtr abstract_node_;
-
   // The compute graph node or meta server node according to the configuration of this process.
   std::shared_ptr<topology::NodeBase> node_base_;
 
