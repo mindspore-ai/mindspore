@@ -750,14 +750,13 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
-    MS_LOG(INFO) << "Cluster is initialized. This node role is " << node->role();
-    switch (node->role()) {
-      case ps::core::NodeRole::SERVER:
-        return PServerPipeline(resource);
-      case ps::core::NodeRole::SCHEDULER:
-        return PSchedulerPipeline(resource);
-      default:
-        break;
+    const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
+    MS_EXCEPTION_IF_NULL(cluster_ctx);
+    MS_LOG(INFO) << "Cluster is initialized. This node role is " << cluster_ctx->node_role();
+    if (cluster_ctx->node_role() == distributed::kEnvRoleOfServer) {
+      return PServerPipeline(resource);
+    } else if (cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
+      return PSchedulerPipeline(resource);
     }
   }
 #endif

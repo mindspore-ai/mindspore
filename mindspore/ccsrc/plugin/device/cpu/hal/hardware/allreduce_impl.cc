@@ -34,15 +34,18 @@ AllReduceLauncher::AllReduceLauncher() {
     MS_LOG(EXCEPTION) << "The abstract node is nullptr when init AllReduceLauncher.";
   }
   rank_id_ = abs_node_->rank_id();
-  node_role_ = abs_node_->role();
   rank_size_ = IntToSize(abs_node_->worker_num());
+
+  const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
+  MS_EXCEPTION_IF_NULL(cluster_ctx);
+  node_role_ = cluster_ctx->node_role();
 }
 
 bool AllReduceLauncher::Execute(const void *input_data, void *const output_data, size_t data_size) const {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(output_data);
   // If node is scheduler, don't need to participate in the reduction.
-  if (node_role_ == ps::core::SCHEDULER) {
+  if (node_role_ == distributed::kEnvRoleOfScheduler) {
     return true;
   }
   size_t data_num = data_size / sizeof(float);
