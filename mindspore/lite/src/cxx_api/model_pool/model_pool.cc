@@ -304,19 +304,35 @@ ModelPoolContextVec ModelPool::CreateModelContext(const std::shared_ptr<RunnerCo
 }
 
 std::vector<MSTensor> ModelPool::GetInputs() {
-  if (model_inputs_.empty()) {
+  std::vector<MSTensor> inputs;
+  if (model_pool_inputs_.empty()) {
     MS_LOG(ERROR) << "model input is empty.";
     return {};
   }
-  return model_inputs_;
+  for (size_t i = 0; i < model_pool_inputs_.size(); i++) {
+    auto tensor =
+      mindspore::MSTensor::CreateTensor(model_pool_inputs_.at(i).Name(), model_pool_inputs_.at(i).DataType(),
+                                        model_pool_inputs_.at(i).Shape(), nullptr, 0);
+    inputs.push_back(*tensor);
+    delete tensor;
+  }
+  return inputs;
 }
 
 std::vector<MSTensor> ModelPool::GetOutputs() {
-  if (model_outputs_.empty()) {
+  std::vector<MSTensor> outputs;
+  if (model_pool_outputs_.empty()) {
     MS_LOG(ERROR) << "model output is empty.";
     return {};
   }
-  return model_outputs_;
+  for (size_t i = 0; i < model_pool_outputs_.size(); i++) {
+    auto tensor =
+      mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(), model_pool_outputs_.at(i).DataType(),
+                                        model_pool_outputs_.at(i).Shape(), nullptr, 0);
+    outputs.push_back(*tensor);
+    delete tensor;
+  }
+  return outputs;
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
@@ -369,8 +385,8 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   // init model pool input and output
   if (model_worker != nullptr) {
-    model_inputs_ = model_worker->GetInputs();
-    model_outputs_ = model_worker->GetOutputs();
+    model_pool_inputs_ = model_worker->GetInputs();
+    model_pool_outputs_ = model_worker->GetOutputs();
   }
   if (graph_buf != nullptr) {
     delete[] graph_buf;

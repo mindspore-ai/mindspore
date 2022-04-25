@@ -96,6 +96,12 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
   }
+  origin_worker_inputs_ = model_->GetInputs();
+  origin_worker_outputs_ = model_->GetOutputs();
+  if (origin_worker_outputs_.empty() || origin_worker_outputs_.empty()) {
+    MS_LOG(ERROR) << "model worker get empty input/output.";
+    return kLiteError;
+  }
   if (need_init_resize_) {
     status = ResizeInit();
     if (status != kSuccess) {
@@ -106,23 +112,9 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
   return kSuccess;
 }
 
-std::vector<MSTensor> ModelWorker::GetInputs() {
-  if (model_ == nullptr) {
-    MS_LOG(ERROR) << "model is nullptr in model worker.";
-    return {};
-  }
-  auto inputs = model_->GetInputs();
-  return inputs;
-}
+std::vector<MSTensor> ModelWorker::GetInputs() { return origin_worker_inputs_; }
 
-std::vector<MSTensor> ModelWorker::GetOutputs() {
-  if (model_ == nullptr) {
-    MS_LOG(ERROR) << "model is nullptr in model worker.";
-    return {};
-  }
-  auto outputs = model_->GetOutputs();
-  return outputs;
-}
+std::vector<MSTensor> ModelWorker::GetOutputs() { return origin_worker_outputs_; }
 
 std::pair<std::vector<std::vector<int64_t>>, bool> ModelWorker::GetModelResize(
   const std::vector<MSTensor> &model_inputs, const std::vector<MSTensor> &inputs) {
@@ -139,6 +131,27 @@ std::pair<std::vector<std::vector<int64_t>>, bool> ModelWorker::GetModelResize(
   return std::make_pair(dims, need_resize);
 }
 
+Status ModelWorker::CopyOutputTensor(std::vector<MSTensor> model_outputs, std::vector<MSTensor> *user_outputs) {
+  user_outputs->clear();
+  user_outputs->insert(user_outputs->end(), model_outputs.begin(), model_outputs.end());
+  std::vector<MSTensor> new_outputs;
+  auto output_size = user_outputs->size();
+  for (size_t i = 0; i < output_size; i++) {
+    auto copy_tensor = mindspore::MSTensor::CreateTensor(user_outputs->at(i).Name(), user_outputs->at(i).DataType(),
+                                                         user_outputs->at(i).Shape(), user_outputs->at(i).MutableData(),
+                                                         user_outputs->at(i).DataSize());
+    if (copy_tensor == nullptr) {
+      MS_LOG(ERROR) << "model thread copy output tensor failed.";
+      return kLiteError;
+    }
+    new_outputs.push_back(*copy_tensor);
+    delete copy_tensor;
+  }
+  user_outputs->clear();
+  user_outputs->insert(user_outputs->end(), new_outputs.begin(), new_outputs.end());
+  return kSuccess;
+}
+
 Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                             const MSKernelCallBack &before, const MSKernelCallBack &after) {
   std::lock_guard<std::mutex> worker_lock(mtx_worker_);
@@ -150,6 +163,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   }
   auto resize_pair = GetModelResize(model_input, inputs);
   if (resize_pair.second) {
+    // model need resize
     auto dims = resize_pair.first;
     auto status = model_->Resize(model_->GetInputs(), dims);
     if (status != kSuccess) {
@@ -166,14 +180,23 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       need_copy_output_ = false;
     }
   }
-  auto status = model_->Predict(inputs, &model_output, before, after);
+  for (size_t i = 0; i < inputs.size(); i++) {
+    model_input[i].SetData(const_cast<MSTensor &>(inputs[i]).MutableData());
+    model_input[i].SetShape(inputs[i].Shape());
+  }
+  auto status = model_->Predict(model_input, &model_output, before, after);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model predict failed.";
     return status;
   }
+  for (size_t i = 0; i < model_input.size(); i++) {
+    model_input[i].SetData(nullptr);
+  }
   if (need_copy_output_) {
-    outputs->clear();
-    outputs->insert(outputs->end(), model_output.begin(), model_output.end());
+    status = CopyOutputTensor(model_output, outputs);
+    if (status != kSuccess) {
+      return kLiteError;
+    }
   } else {
     model_output = model_->GetOutputs();
     for (size_t i = 0; i < outputs->size(); i++) {
@@ -181,23 +204,6 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       model_output[i].SetData(nullptr);
       model_output[i].SetAllocator(nullptr);
     }
-  }
-  if (need_copy_output_) {
-    std::vector<MSTensor> new_outputs;
-    auto output_size = outputs->size();
-    for (size_t i = 0; i < output_size; i++) {
-      auto copy_tensor =
-        mindspore::MSTensor::CreateTensor(outputs->at(i).Name(), outputs->at(i).DataType(), outputs->at(i).Shape(),
-                                          outputs->at(i).MutableData(), outputs->at(i).DataSize());
-      if (copy_tensor == nullptr) {
-        MS_LOG(ERROR) << "model thread copy output tensor failed.";
-        return kLiteError;
-      }
-      new_outputs.push_back(*copy_tensor);
-      delete copy_tensor;
-    }
-    outputs->clear();
-    outputs->insert(outputs->end(), new_outputs.begin(), new_outputs.end());
   }
   available_ = true;
   predict_task_queue_->ActiveTaskQueue();

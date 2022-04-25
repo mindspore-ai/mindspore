@@ -223,7 +223,7 @@ int BenchmarkUnifiedApi::LoadInput() {
 int BenchmarkUnifiedApi::GenerateInputData() {
 #ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
-    std::vector<MSTensor> inputs;
+    std::vector<void *> inputs;
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
       auto tensor_name = ms_inputs_for_api_[i].Name();
       size_t size;
@@ -235,10 +235,8 @@ int BenchmarkUnifiedApi::GenerateInputData() {
         MS_LOG(ERROR) << "not support in model pool.";
         return RET_ERROR;
       }
-      std::vector<int64_t> shape;
       for (size_t j = 0; j < flags_->resize_dims_[i].size(); j++) {
         size *= flags_->resize_dims_[i][j];
-        shape.push_back(flags_->resize_dims_[i][j]);
       }
       void *input_data = malloc(size);
       int status = GenerateRandomData(size, input_data, static_cast<int>(ms_inputs_for_api_[i].DataType()));
@@ -246,12 +244,9 @@ int BenchmarkUnifiedApi::GenerateInputData() {
         MS_LOG(ERROR) << "GenerateRandomData for inTensor failed:" << status;
         return status;
       }
-      auto new_tensor =
-        mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
-      inputs.push_back(*new_tensor);
-      delete new_tensor;
+      inputs.push_back(input_data);
     }
-    all_inputs_.push_back(inputs);
+    all_inputs_data_.push_back(inputs);
     return RET_OK;
   }
 #endif
@@ -300,7 +295,7 @@ void BenchmarkUnifiedApi::UpdateConfigInfo() {
 int BenchmarkUnifiedApi::ReadInputFile() {
 #ifdef PARALLEL_INFERENCE
   if (flags_->enable_parallel_predict_) {
-    std::vector<MSTensor> inputs;
+    std::vector<void *> inputs;
     for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
       size_t size;
       char *bin_buf = ReadFile(flags_->input_data_list_[i].c_str(), &size);
@@ -308,28 +303,9 @@ int BenchmarkUnifiedApi::ReadInputFile() {
         MS_LOG(ERROR) << "ReadFile return nullptr";
         return RET_ERROR;
       }
-      auto tensor_name = ms_inputs_for_api_[i].Name();
-      std::vector<int64_t> shape;
-      for (size_t j = 0; j < flags_->resize_dims_[i].size(); j++) {
-        shape.push_back(flags_->resize_dims_[i][j]);
-      }
-      if (size > MAX_MALLOC_SIZE) {
-        MS_LOG(ERROR) << "malloc size is wrong.";
-        return RET_ERROR;
-      }
-      void *input_data = malloc(size);
-      if (input_data == nullptr) {
-        MS_LOG(ERROR) << "malloc failed.";
-        return RET_ERROR;
-      }
-      memcpy(input_data, bin_buf, size);
-      delete[] bin_buf;
-      auto new_tensor =
-        mindspore::MSTensor::CreateTensor(tensor_name, ms_inputs_for_api_[i].DataType(), shape, input_data, size);
-      inputs.push_back(*new_tensor);
-      delete new_tensor;
+      inputs.push_back(bin_buf);
     }
-    all_inputs_.push_back(inputs);
+    all_inputs_data_.push_back(inputs);
     return RET_OK;
   }
 #endif
@@ -898,16 +874,7 @@ int BenchmarkUnifiedApi::MarkAccuracy() {
 
 int BenchmarkUnifiedApi::PrintInputData() {
   for (size_t i = 0; i < ms_inputs_for_api_.size(); i++) {
-    mindspore::MSTensor input;
-#ifdef PARALLEL_INFERENCE
-    if (flags_->enable_parallel_predict_) {
-      input = all_inputs_[0][i];
-    } else {
-      input = ms_inputs_for_api_[i];
-    }
-#else
-    input = ms_inputs_for_api_[i];
-#endif
+    mindspore::MSTensor input = ms_inputs_for_api_[i];
     MS_ASSERT(input != nullptr);
     auto tensor_data_type = static_cast<int>(input.DataType());
 
@@ -951,16 +918,23 @@ int BenchmarkUnifiedApi::PrintInputData() {
 }
 #ifdef PARALLEL_INFERENCE
 void BenchmarkUnifiedApi::ModelParallelRunnerWarmUp(int index) {
-  auto input = all_inputs_[index];
+  auto in = model_runner_.GetInputs();
   auto output = all_outputs_[index];
+  for (size_t i = 0; i < in.size(); i++) {
+    in[i].SetData(all_inputs_data_[index][i]);
+    in[i].SetShape(resize_dims_[i]);
+  }
   auto warm_up_start = GetTimeUs();
-  auto ret = model_runner_.Predict(input, &output);
+  auto ret = model_runner_.Predict(in, &output);
   if (ret != kSuccess) {
     model_parallel_runner_ret_failed_ = true;
     MS_LOG(ERROR) << "model pool predict failed.";
     return;
   }
   auto warm_up_end = GetTimeUs();
+  for (size_t j = 0; j < in.size(); j++) {
+    in[j].SetData(nullptr);
+  }
   std::cout << "warm up index: " << index << " | time: " << (warm_up_end - warm_up_start) / kFloatMSEC << " ms\n";
 }
 
@@ -969,11 +943,16 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
     while (!runner_run_start_) {
       continue;
     }
-    int idx = parallel_idx * task_num + i + flags_->warm_up_loop_count_;
-    auto input = all_inputs_[idx];
+    int idx = parallel_idx + flags_->warm_up_loop_count_;
+    auto in = model_runner_.GetInputs();
+    auto in_data = all_inputs_data_[idx];
     auto output = all_outputs_[idx];
+    for (size_t tensor_index = 0; tensor_index < in.size(); tensor_index++) {
+      in.at(tensor_index).SetData(all_inputs_data_.at(idx)[tensor_index]);
+      in.at(tensor_index).SetShape(resize_dims_.at(tensor_index));
+    }
     auto predict_start = GetTimeUs();
-    auto ret = model_runner_.Predict(input, &output);
+    auto ret = model_runner_.Predict(in, &output);
     if (ret != kSuccess) {
       model_parallel_runner_ret_failed_ = true;
       MS_LOG(ERROR) << "model pool predict failed.";
@@ -990,6 +969,9 @@ void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx)
         return;
       }
     }
+    for (size_t j = 0; j < in.size(); j++) {
+      in[j].SetData(nullptr);
+    }
   }
 }
 
@@ -997,6 +979,10 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
   if (flags_->warm_up_loop_count_ > kMaxRequestNum || flags_->parallel_num_ > kMaxRequestNum) {
     MS_LOG(WARNING) << "in parallel predict warm up loop count should less than" << kMaxRequestNum;
   }
+
+  (void)std::transform(flags_->resize_dims_.begin(), flags_->resize_dims_.end(), std::back_inserter(resize_dims_),
+                       [&](auto &shapes) { return this->ConverterToInt64Vector<int>(shapes); });
+
   // model runner init
   auto runner_config = std::make_shared<RunnerConfig>();
   runner_config->context = context;
@@ -1009,7 +995,7 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
   // load data
   ms_inputs_for_api_ = model_runner_.GetInputs();
   MS_CHECK_FALSE_MSG(ms_inputs_for_api_.empty(), RET_ERROR, "model pool input is empty.");
-  for (int i = 0; i < flags_->parallel_task_num_ * flags_->parallel_num_ + flags_->warm_up_loop_count_; i++) {
+  for (int i = 0; i < flags_->parallel_num_ + flags_->warm_up_loop_count_; i++) {
     auto status = LoadInput();
     MS_CHECK_FALSE_MSG(status != RET_OK, status, "Generate input data error");
     std::vector<MSTensor> output;
@@ -1485,6 +1471,17 @@ int BenchmarkUnifiedApi::InitDumpTensorDataCallbackParameter() {
   return RET_OK;
 }
 
-BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {}
+BenchmarkUnifiedApi::~BenchmarkUnifiedApi() {
+#ifdef PARALLEL_INFERENCE
+  for (auto &input : all_inputs_data_) {
+    for (auto &data : input) {
+      if (data != nullptr) {
+        free(data);
+        data = nullptr;
+      }
+    }
+  }
+#endif
+}
 }  // namespace lite
 }  // namespace mindspore

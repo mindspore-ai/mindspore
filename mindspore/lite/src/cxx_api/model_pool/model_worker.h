@@ -51,6 +51,8 @@ class ModelWorker {
                                                                     const std::vector<MSTensor> &inputs);
   Status ResizeInit();
 
+  Status CopyOutputTensor(std::vector<MSTensor> model_outputs, std::vector<MSTensor> *user_outputs);
+
  private:
   bool need_init_resize_ = true;
   std::shared_ptr<mindspore::Model> model_ = nullptr;
@@ -58,6 +60,8 @@ class ModelWorker {
   bool need_copy_output_ = true;
   std::atomic_bool available_ = true;
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
+  std::vector<MSTensor> origin_worker_inputs_;
+  std::vector<MSTensor> origin_worker_outputs_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_
