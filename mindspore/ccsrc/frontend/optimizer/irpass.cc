@@ -53,6 +53,7 @@
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
 #include "frontend/optimizer/irpass/ge_tensor_array.h"
+#include "frontend/optimizer/irpass/sparse_softmax_cross_entropy_with_logits_split.h"
 
 namespace mindspore {
 namespace opt {
@@ -289,6 +290,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // ge_tensor_array_cast_index
   ge_tensor_array_cast_index_ = MakeSubstitution(std::make_shared<GeTensorArrayCastIndex>(),
                                                  "ge_tensor_array_cast_index", prim::kPrimTensorArrayWrite);
+  // sparse_softmax_cross_entropy_with_logits split for ge
+  sparse_softmax_cross_entropy_with_logits_ = MakeSubstitution(
+    std::make_shared<SparseSoftmaxCrossEntropyWithLogitsSplit>(), "sparse_softmax_cross_entropy_with_logits_", IsCNode);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {

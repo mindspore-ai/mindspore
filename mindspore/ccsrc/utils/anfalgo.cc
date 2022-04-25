@@ -776,6 +776,7 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
       abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]),
                                                   std::make_shared<abstract::Shape>(shape_int, min_shape0, max_shape0));
     } else {
+      std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
       abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shape_int);
     }
     node->set_abstract(abstract);
@@ -792,6 +793,7 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
         abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]),
                                                     std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
       } else {
+        std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
         abstract =
           std::make_shared<AbstractTensor>(TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shape_int));
       }

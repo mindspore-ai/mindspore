@@ -155,6 +155,7 @@ class COMMON_EXPORT DfGraphConvertor {
   OperatorPtr ConvertCNode(CNodePtr node);
   std::vector<OperatorPtr> ConvertDependNode(AnfNodePtr node);
   AnfNodePtr GetRealOpNode(AnfNodePtr node);
+  AnfNodePtr GetRealOpForMakeTuple(const AnfNodePtr &node, const AnfNodePtr &make_tuple, int64_t index);
   OperatorPtr ConvertParameter(AnfNodePtr node);
   Status TryConvertValueNodeToMultiConst(const ValueNodePtr node);
   OperatorPtr ConvertValueNode(ValueNodePtr node);
