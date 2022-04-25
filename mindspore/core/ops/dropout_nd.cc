@@ -88,8 +88,8 @@ AbstractBasePtr Dropout2DInfer(const abstract::AnalysisEnginePtr &, const Primit
 
 AbstractBasePtr Dropout3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  abstract::TupleShapePtr output_shape = Dropout3DInferShape(primitive, input_args);
   TypePtr output_type = DropoutNDInferType(primitive, input_args);
+  abstract::TupleShapePtr output_shape = Dropout3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }
 
