@@ -26,9 +26,11 @@
 namespace mindspore {
 constexpr auto kModelOptionCpuEnableFP16 = "mindspore.option.cpu.enable_fp16";
 constexpr auto kModelOptionGPUEnableFP16 = "mindspore.option.gpu.enable_fp16";
+#ifdef ENABLE_OPENGL_TEXTURE
 constexpr auto kModelOptionGPUEnableGLTexture = "mindspore.option.gpu.enable_gl_texture_";
 constexpr auto kModelOptionGPUGLContext = "mindspore.option.gpu.gl_context_";
 constexpr auto kModelOptionGPUGLDisplay = "mindspore.option.gpu.gl_display_";
+#endif
 constexpr auto kModelOptionGPUDeviceID = "mindspore.option.gpu.device_id";
 constexpr auto kModelOptionGPURankID = "mindspore.option.gpu.rank_id";
 constexpr auto kModelOptionGPUGroupSize = "mindspore.option.gpu.group_size";
@@ -283,6 +285,7 @@ bool GPUDeviceInfo::GetEnableFP16() const {
   return GetValue<bool>(data_, kModelOptionGPUEnableFP16);
 }
 
+#ifdef ENABLE_OPENGL_TEXTURE
 void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";
@@ -330,6 +333,25 @@ void *GPUDeviceInfo::GetGLDisplay() const {
   }
   return GetValue<void *>(data_, kModelOptionGPUGLDisplay);
 }
+#else
+void GPUDeviceInfo::SetEnableGLTexture(bool is_enable_gl_texture) { MS_LOG(ERROR) << "Unsupported Feature."; }
+bool GPUDeviceInfo::GetEnableGLTexture() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return false;
+}
+
+void GPUDeviceInfo::SetGLContext(void *gl_context) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void *GPUDeviceInfo::GetGLContext() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
+}
+
+void GPUDeviceInfo::SetGLDisplay(void *gl_display) { MS_LOG(ERROR) << "Unsupported Feature."; }
+void *GPUDeviceInfo::GetGLDisplay() const {
+  MS_LOG(ERROR) << "Unsupported Feature.";
+  return nullptr;
+}
+#endif
 
 void KirinNPUDeviceInfo::SetFrequency(int frequency) {
   if (data_ == nullptr) {

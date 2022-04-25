@@ -68,11 +68,13 @@ class OpenCLSubGraph : public SubGraphKernel {
                     const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                     std::vector<lite::Tensor *> *out_tensors, std::vector<OpenCLToFormatParameter *> *out_parameters,
                     std::vector<KernelExec *> *out_convert_ops, lite::opencl::MemType mem_type);
+#ifdef ENABLE_OPENGL_TEXTURE
   int GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
                   const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                   std::vector<lite::Tensor *> *out_tensors,
                   std::vector<OpenGLTexture2DToOpenCLParameter *> *out_parameters,
                   std::vector<KernelExec *> *out_convert_ops, lite::opencl::MemType mem_type);
+#endif
   void GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,
                              const std::vector<kernel::KernelExec *> &in_kernels,
                              std::vector<std::vector<kernel::KernelExec *>> *out_kernels, bool is_from);
@@ -89,8 +91,10 @@ class OpenCLSubGraph : public SubGraphKernel {
   std::vector<lite::Tensor *> out_convert_tensors_;
   std::vector<OpenCLToFormatParameter *> in_parameters_;
   std::vector<OpenCLToFormatParameter *> out_parameters_;
+#ifdef ENABLE_OPENGL_TEXTURE
   std::vector<OpenGLTexture2DToOpenCLParameter *> gl_in_parameters_;
   std::vector<OpenGLTexture2DToOpenCLParameter *> gl_out_parameters_;
+#endif
   std::vector<KernelExec *> in_convert_ops_;
   std::vector<KernelExec *> out_convert_ops_;
   std::set<KernelExec *> nodes_set_;

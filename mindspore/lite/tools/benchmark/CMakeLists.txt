@@ -48,17 +48,19 @@ include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../common/opengl_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_common.c
         )
 
+if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)
+    set(COMMON_SRC ${COMMON_SRC} ../common/opengl_util.cc)
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../lite)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../core)
 
-if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
-    AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
+if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)
     list(APPEND opengl_lib EGL GLESv3)
     set(BENCHMARK_LINK_LIB  ${BENCHMARK_LINK_LIB} ${opengl_lib})
 endif()

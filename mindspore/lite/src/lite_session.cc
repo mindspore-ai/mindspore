@@ -1152,25 +1152,9 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::KernelExec *> &kernels,
   return RET_OK;
 }
 
-void LiteSession::SynIsolateInOutputDataType() {
-  for (auto tensor_map : isolate_input_map_) {
-    auto dst_tensor = tensor_map.second;
-    auto src_tensor = tensor_map.first;
-
-    src_tensor->set_data_type(dst_tensor->data_type());
-  }
-
-  for (auto tensor_map : isolate_graph_output_map_) {
-    auto dst_tensor = tensor_map.second;
-    auto src_tensor = tensor_map.first;
-
-    src_tensor->set_data_type(dst_tensor->data_type());
-  }
-}
-
-int LiteSession::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
-                                       std::map<std::string, unsigned int> *outputGLTexture) {
-#if GPU_OPENCL
+#ifdef ENABLE_OPENGL_TEXTURE
+int LiteSession::BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
+                                       std::map<std::string, GLuint> *outputGLTexture) {
   if (!this->context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_) {
     MS_LOG(ERROR) << "the context isn't set to support OpenGL texture";
     return RET_ERROR;
@@ -1203,11 +1187,6 @@ int LiteSession::BindGLTexture2DMemory(const std::map<std::string, unsigned int>
     memcpy(out_data, &GLTexture_id, sizeof(GLuint));
     iter->second->set_data_type(kNumberTypeGLUInt);
   }
-
-#ifdef ENABLE_MINDRT
-  SynIsolateInOutputDataType();  // Synchronized input/output with isolate input/output data types
-#endif
-
   if (this->kernels_.size() != 1) {
     MS_LOG(ERROR) << "Now only support one opencl subgraph if you want to input opengl texture";
     return RET_ERROR;
@@ -1219,9 +1198,10 @@ int LiteSession::BindGLTexture2DMemory(const std::map<std::string, unsigned int>
   for (auto node : opencl_subgraph->out_nodes()) {
     node->set_out_tensors(opencl_subgraph->out_tensors());
   }
-#endif
+
   return RET_OK;
 }
+#endif
 
 int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                         const std::vector<std::vector<int>> &dims) {
@@ -1311,7 +1291,16 @@ int LiteSession::InitExecutor() {
     MS_LOG(ERROR) << "Isolate output tensor failed.";
     return ret;
   }
+#ifdef ENABLE_OPENGL_TEXTURE
+  if (this->context_->IsGLTextureEnabled()) {
+    executor_ = new (std::nothrow) Executor();
+  } else {
+    executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
+  }
+  // if you want to input opengl Texture, we only support normal executor, ot do:support MindrtExecutor
+#else
   executor_ = new (std::nothrow) MindrtExecutor(&isolate_graph_output_map_, &isolate_input_map_);
+#endif
 #else
   executor_ = new (std::nothrow) Executor();
 #endif
@@ -1540,17 +1529,30 @@ int LiteSession::InitGPURuntime() {
     }
     const auto &gpu_device_info = this->context_->GetDeviceInfo(DT_GPU).gpu_device_info_;
     auto opencl_runtime = opencl_runtime_wrapper_->GetInstance();
+    opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
+#ifdef ENABLE_OPENGL_TEXTURE
+    MS_LOG(INFO) << " InitGLQueue";
     opencl_runtime->SetGLTextureEnable(gpu_device_info.enable_gl_texture_);
     opencl_runtime->SetGLContext(gpu_device_info.gl_context_);
     opencl_runtime->SetGLDisplay(gpu_device_info.gl_display_);
+    if (opencl_runtime->InitGLQueue() != RET_OK) {
+      MS_LOG(ERROR)
+        << "Init OpenCL Runtime failed, the device unspport OpenGL sharing context or OpenGL Context is not Init";
+      return RET_ERROR;
+    }
+#else
+    if (gpu_device_info.enable_gl_texture_ == true) {
+      MS_LOG(ERROR) << "this lib doesn't support OpenGLTexture, Please trun MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL on "
+                       "in the CmakeLists";
+      return RET_ERROR;
+    }
+#endif
     if (opencl_runtime->Init() != RET_OK) {
       this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
     } else {
       MS_LOG(INFO) << "Init OpenCL runtime success.";
     }
-
-    opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
 
     /* check chip support shared memory */
     auto enable_arm_import_memory = opencl_runtime->isExtensionEnable(EXT_ARM_IMPORT_MEMORY_HOST);

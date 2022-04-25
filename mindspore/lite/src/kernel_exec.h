@@ -369,9 +369,11 @@ class KernelExec {
 
   Kernel *kernel() { return kernel_.get(); }
 
+#ifdef ENABLE_OPENGL_TEXTURE
   void SetOpenGLTextureEnable(bool enable) { enable_gl_texture_ = enable; }
 
   bool GetOpenGLTextureEnable() { return enable_gl_texture_; }
+#endif
 
  protected:
   std::shared_ptr<Kernel> kernel_ = nullptr;
@@ -384,7 +386,9 @@ class KernelExec {
   bool is_model_output_ = false;
   SubGraphType subgraph_type_ = kNotSubGraph;
   const lite::InnerContext *context_ = nullptr;
+#ifdef ENABLE_OPENGL_TEXTURE
   bool enable_gl_texture_ = false;
+#endif
 };
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
