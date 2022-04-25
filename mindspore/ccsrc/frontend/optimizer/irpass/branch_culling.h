@@ -26,6 +26,7 @@
 #include "ir/pattern_matcher.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
+#include "pipeline/jit/parse/resolve.h"
 
 namespace mindspore {
 namespace opt {
@@ -35,6 +36,8 @@ namespace irpass {
 class SwitchSimplify : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
+    static const auto use_fallback = (support_fallback != "0");
     PatternNode<AnfNodePtr> cond, true_br, false_br;
     auto SwitchSimplLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
       auto value_ptr = GetValueNode(cond.GetNode(node));
@@ -49,6 +52,15 @@ class SwitchSimplify : public OptimizerCaller {
         }
         auto *bool_value = static_cast<bool *>(tensor->data_c());
         cond_value = *bool_value;
+      } else if (use_fallback && value_ptr->isa<parse::InterpretedObject>()) {
+        // {prim::kPrimSwitch, InterpretObject: 'True', X, Y}
+        // {prim::kPrimSwitch, InterpretObject: 'False', X, Y}
+        auto interpreted_obj = value_ptr->cast<parse::InterpretedObjectPtr>();
+        py::object obj = interpreted_obj->obj();
+        constexpr char PYTHON_MOD_PARSE_MODULE[] = "mindspore._extends.parse";
+        constexpr char PYTHON_MOD_CHECK_OBJ_BOOL[] = "check_obj_bool";
+        py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
+        cond_value = python_adapter::CallPyModFn(mod, PYTHON_MOD_CHECK_OBJ_BOOL, obj).cast<bool>();
       } else {
         MS_LOG(EXCEPTION) << "The condition of branch must be a bool tensor value or a bool scalar value,"
                           << " not support this condition value: " << value_ptr->ToString();
@@ -62,7 +74,16 @@ class SwitchSimplify : public OptimizerCaller {
     };
 
     auto IsDeterminateCondition = [](const AnfNodePtr &node) -> bool {
-      return IsValueNode<BoolImm>(node) || IsValueNode<tensor::Tensor>(node);
+      static const auto support_fallback = common::GetEnv("MS_DEV_ENABLE_FALLBACK");
+      static const auto use_fallback = (support_fallback != "0");
+      auto &abs = node->abstract();
+      bool is_interpret_object = false;
+      if (use_fallback && abs != nullptr) {
+        ValuePtr value = abs->BuildValue();
+        MS_EXCEPTION_IF_NULL(value);
+        is_interpret_object = value->isa<parse::InterpretedObject>();
+      }
+      return IsValueNode<BoolImm>(node) || IsValueNode<tensor::Tensor>(node) || is_interpret_object;
     };
     MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), SwitchSimplLambda,
                             cond.CheckFunc(IsDeterminateCondition, node));

@@ -25,24 +25,28 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_for_in_for_tensor():
+def test_if_after_if_in_while_tensor():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_for_in_for():
+    def control_flow_if_after_if_in_while():
         x = Tensor(1)
-        y = Tensor(0)
-        for _ in range(3):
+        y = Tensor(10)
+        z = x - y
+        while x < Tensor(3):
             x += 1
-            for j in range(4):
-                y += x + j
-        y = y * x
+            if y > x:
+                y += x
+            else:
+                z = x * 2 - y
+        if x + y >= z:
+            y = y * x - z
         return y
-    res = control_flow_for_in_for()
-    assert res == 216
+    res = control_flow_if_after_if_in_while()
+    assert res == 54
 
 
 @pytest.mark.level0
@@ -50,72 +54,52 @@ def test_for_in_for_tensor():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_for_in_for_tensor_2():
+def test_if_after_if_in_while_tensor_2():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_for_in_for():
-        x = Tensor(1)
-        z = Tensor(0)
-        for _ in range(2):
-            x += 1
-            y = x * 2
-            for j in range(1, 4):
-                y += x + j
-            z = x + y
-        return z
-    res = control_flow_for_in_for()
-    assert res == 24
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_in_for_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_in_for():
-        x = np.array([0, 0, 3, 3])
-        y = np.array([0, 2, 0, 2])
-        res = 0
-        for _ in range(3):
-            res += sum(x) + max(y)
-            for j in range(2):
-                y = y + j
-        return Tensor(res)
-    out = control_flow_for_in_for()
-    assert out == 27
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_for_in_for_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_in_for():
-        x = np.array([3, 3])
-        y = Tensor(0)
-        for _ in range(2):
-            z = sum(x, 1)
-            x = x * 2
-            for j in range(1, 4):
-                y += Tensor(z * j)
+    def control_flow_if_after_if_in_while():
+        x = Tensor(5)
+        y = Tensor(2)
+        z = x - y
+        while x >= Tensor(3):
+            if y > x:
+                y += x
+            z = x * 2 + y
+            x -= 2
+        if x + y >= z:
+            return y * x - z
         return y
-    res = control_flow_for_in_for()
-    assert res == 120
+    res = control_flow_if_after_if_in_while()
+    assert res == 2
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_if_after_if_in_while_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if_after_if_in_while():
+        x = np.array([1, 2])
+        y = np.array([3, 2])
+        index = Tensor(1)
+        while index < Tensor(3):
+            index += 1
+            if (y > x).all():
+                y += x
+        z = np.array([2, 4])
+        if (x + y >= z).any():
+            y = y * x - z
+        return Tensor(y)
+    res = control_flow_if_after_if_in_while()
+    assert (res.asnumpy() == [1, 0]).all()
