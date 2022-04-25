@@ -27,7 +27,7 @@ files:
     - guoqi1024
     - baochong
   
-  ".*\.md$":
+  ".*\\.md$":
     approvers:
     - gemini524
     - Hanshize
