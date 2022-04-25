@@ -1,0 +1,187 @@
+.. py:method:: rate
+    :property:
+
+    Return rate.
+
+    **Returns**
+
+    Tensor, the rate of the distribution.
+
+.. py:method:: cdf(value, rate)
+
+    Compute the cumulatuve distribution function(CDF) of the given value.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the cumulatuve distribution function for the given input.
+
+.. py:method:: cross_entropy(dist, rate_b, rate)
+
+    Compute the cross entropy of two distribution 
+
+    **Parameters**
+
+    - **dist** (str) - the type of the other distribution.
+    - **rate_b** (Tensor) - the rate of the other distribution.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the cross entropy.
+
+.. py:method:: entropy(rate)
+
+    Compute the value of the entropy.
+
+    **Parameters**
+
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the entropy.
+
+.. py:method:: kl_loss(dist, rate_b, rate)
+
+    Compute the value of the K-L loss between two distribution, namely KL(a||b).
+
+    **Parameters**
+
+    - **dist** (str) - the type of the other distribution.
+    - **rate_b** (Tensor) - the rate of the other distribution.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the K-L loss.
+
+.. py:method:: log_cdf(value, rate)
+
+    Compute the log value of the cumulatuve distribution function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the log value of the cumulatuve distribution function.
+
+.. py:method:: log_prob(value, rate)
+
+    the log value of the probability.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the log value of the probability.
+
+.. py:method:: log_survival(value, rate)
+
+    Compute the log value of the survival function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the K-L loss.
+
+.. py:method:: mean(rate)
+
+    Compute the mean value of the distribution.
+
+    **Parameters**
+
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the mean of the distribution.
+
+.. py:method:: mode(rate)
+
+    Compute the mode value of the distribution.
+
+    **Parameters**
+
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the mode of the distribution.
+
+.. py:method:: prob(value, rate)
+
+    The probability of the given value. For the continuous distribution, it is the probability density function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the probability.
+
+.. py:method:: sample(shape, rate)
+
+    Generate samples.
+
+    **Parameters**
+
+    - **shape** (tuple) - the shape of the sample.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the sample following the distribution.
+
+.. py:method:: sd(rate)
+
+    The standard deviation.
+
+    **Parameters**
+    
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the standard deviation of the distribution.
+
+.. py:method:: survival_function(value, rate)
+
+    Compute the value of the survival function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the survival function.
+
+.. py:method:: var(rate)
+
+    Compute the variance of the distribution.
+
+    **Parameters**
+
+    - **rate** (Tensor) - the rate of the distribution. Default value: None.
+
+    **Returns**
+
+    Tensor, the variance of the distribution.

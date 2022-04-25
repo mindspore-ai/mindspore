@@ -1,0 +1,53 @@
+.. py:method:: bijector
+    :property:
+
+    Return base bijector. 
+
+.. py:method:: forward(x)
+
+    Compute the inverse mapping of underlying Bijector, namely :math:`Y = h(X) = g^{-1}(X)` .
+
+    **Parameters**
+
+    - **x** (Tensor) - the value of output after mapping by the underlying bijector.
+
+    **Returns**
+
+    Tensor, the inverse mapping of underlying Bijector.
+
+.. py:method:: forward_log_jacobian(x)
+
+    Compute the log value of the inverse mapping of underlying Bijector :math:`\log dg^{-1}(x) / dx`.
+
+    **Parameters**
+
+    - **x** (Tensor) - the value of output after mapping by the underlying bijector.
+
+    **Returns**
+
+    Tensor, the log value of the inverse mapping of underlying Bijector.
+
+.. py:method:: inverse(y)
+
+    Compute the forward mapping of underlying Bijector, namely :math:`Y = g(X)`.
+
+    **Parameters**
+
+    - **y** (Tensor) - the value to compute by the underlying bijector.
+
+    **Returns**
+
+    Tensor,  the forward mapping of underlying Bijector.
+
+.. py:method:: inverse_log_jacobian(y)
+
+    Compute the log value of the forward mapping of underlying Bijector, namely :math:`Y = \log dg(x) / dx`.
+
+    **Parameters**
+
+    - **y** (Tensor) - the value to compute by the underlying bijector.
+
+    **Returns**
+
+    Tensor, the log value of forward mapping of underlying Bijector.
+

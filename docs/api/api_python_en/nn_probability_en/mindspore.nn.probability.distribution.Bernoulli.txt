@@ -1,0 +1,187 @@
+.. py:method:: probs
+    :property:
+
+    Return the probability of success, namely the output is 1.
+
+    **Returns**
+
+    Tensor, the probability of success.
+
+.. py:method:: cdf(value, probs1)
+
+    Compute the cumulatuve distribution function(CDF) of the given value.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the cumulatuve distribution function for the given input.
+
+.. py:method:: cross_entropy(dist, probs1_b, probs1_a)
+
+    Compute the cross entropy of two distribution 
+
+    **Parameters**
+
+    - **dist** (str) - the type of the other distribution.
+    - **probs1_b** (Tensor) - the probability of success of the other distribution.
+    - **probs1_a** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the cross entropy.
+
+.. py:method:: entropy(probs1)
+
+    Compute the value of the entropy.
+
+    **Parameters**
+
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the entropy.
+
+.. py:method:: kl_loss(dist, probs1_b, probs1_a)
+
+    Compute the value of the K-L loss between two distribution, namely KL(a||b).
+
+    **Parameters**
+
+    - **dist** (str) - the type of the other distribution.
+    - **probs1_b** (Tensor) - the probability of success of the other distribution.
+    - **probs1_a** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the K-L loss.
+
+.. py:method:: log_cdf(value, probs1)
+
+    Compute the log value of the cumulatuve distribution function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the log value of the cumulatuve distribution function.
+
+.. py:method:: log_prob(value, probs1)
+
+    the log value of the probability.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the log value of the probability.
+
+.. py:method:: log_survival(value, probs1)
+
+    Compute the log value of the survival function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the K-L loss.
+
+.. py:method:: mean(probs1)
+
+    Compute the mean value of the distribution.
+
+    **Parameters**
+
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the mean of the distribution.
+
+.. py:method:: mode(probs1)
+
+    Compute the mode value of the distribution.
+
+    **Parameters**
+
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the mode of the distribution.
+
+.. py:method:: prob(value, probs1)
+
+    The probability of the given value. For the discrete distribution, it is the probability mass function(pmf).
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the probability.
+
+.. py:method:: sample(shape, probs1)
+
+    Generate samples.
+
+    **Parameters**
+
+    - **shape** (tuple) - the shape of the sample.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the sample following the distribution.
+
+.. py:method:: sd(probs1)
+
+    The standard deviation.
+
+    **Parameters**
+    
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the standard deviation of the distribution.
+
+.. py:method:: survival_function(value, probs1)
+
+    Compute the value of the survival function.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the value of the survival function.
+
+.. py:method:: var(probs1)
+
+    Compute the variance of the distribution.
+
+    **Parameters**
+
+    - **probs1** (Tensor) - the probability of success. Default value: None.
+
+    **Returns**
+
+    Tensor, the variance of the distribution.
