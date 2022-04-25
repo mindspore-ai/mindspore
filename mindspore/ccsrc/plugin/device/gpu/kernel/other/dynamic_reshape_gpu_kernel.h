@@ -68,7 +68,7 @@ class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t output_size =
       std::accumulate(output_shape.begin(), output_shape.end(), data_type_size_, std::multiplies<size_t>());
     output_size_list_.push_back(output_size);
-    is_need_wait_ = true;
+    is_need_retrieve_output_shape = true;
     return true;
   }
   void ResetResource() noexcept override {
@@ -77,7 +77,9 @@ class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
     output_size_list_.clear();
     workspace_size_list_.clear();
   }
-  void Wait() override {
+
+ protected:
+  void SyncData() override {
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
     std::vector<size_t> output_shape;
     std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape),
@@ -85,8 +87,6 @@ class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
     common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
     MS_LOG(DEBUG) << "Run PostExecute for DynamicReshape, real output shape is " << output_shape;
   }
-
- protected:
   void InitSizeLists() override { return; }
 
  private:

@@ -348,7 +348,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
 
 bool HcclKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                         const std::vector<KernelTensorPtr> &outputs,
-                        const std::map<uint32_t, tensor::TensorPtr> &others) {
+                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();

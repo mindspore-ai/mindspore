@@ -48,15 +48,6 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
     return true;
   }
 
-  void Wait() override {
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
-                               "cudaStreamSynchronized failed");
-
-    std::vector<TypeId> output_types = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
-    std::vector<std::vector<size_t>> output_shapes = {input_shape_};
-    common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node_.lock().get());
-  }
-
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     MS_EXCEPTION_IF_NULL(kernel_node);
@@ -77,7 +68,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
     }
 
     InitSizeLists();
-    is_need_wait_ = true;
+    is_need_retrieve_output_shape = true;
     return true;
   }
 
@@ -89,6 +80,14 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
   }
 
  protected:
+  void SyncData() override {
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
+                               "cudaStreamSynchronized failed");
+
+    std::vector<TypeId> output_types = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
+    std::vector<std::vector<size_t>> output_shapes = {input_shape_};
+    common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node_.lock().get());
+  }
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
     output_size_list_.push_back(input_size_ * sizeof(T));

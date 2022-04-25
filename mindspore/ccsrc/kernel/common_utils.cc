@@ -1301,8 +1301,7 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  kernel_mod->Wait();
-  auto output_tensor = kernel_mod->GetOutputs();
+  auto output_tensor = kernel_mod->RetrieveOutputShape();
   if (output_tensor.empty()) {
     return;
   }

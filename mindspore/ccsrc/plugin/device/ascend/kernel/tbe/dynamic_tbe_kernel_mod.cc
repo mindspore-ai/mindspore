@@ -60,15 +60,15 @@ DynamicTbeKernelMod::~DynamicTbeKernelMod() {
   }
 }
 
-void DynamicTbeKernelMod::Wait() {
+void DynamicTbeKernelMod::SyncData() {
   if (need_skip_execute_) {
-    AscendKernelMod::Wait();
+    AscendKernelMod::SyncData();
   }
 }
 
 bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
+                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -107,7 +107,8 @@ bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   device::tiling::OpTilingCalculateAdapter converter;
   ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
-  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = others;
+
+  const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = inputsOnHost;
   if (!atomic_clean_nodes_.empty()) {
     atomic_compile_info_ = ParseCompileJson(atomic_clean_nodes_[0].lock());
     optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);

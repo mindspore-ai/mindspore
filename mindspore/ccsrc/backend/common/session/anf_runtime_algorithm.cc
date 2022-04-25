@@ -1251,7 +1251,7 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_mod = GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->IsNeedWait();
+  return kernel_mod->IsNeedRetrieveOutputShape();
 }
 }  // namespace session
 }  // namespace mindspore

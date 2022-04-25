@@ -143,9 +143,10 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                       const std::vector<AddressPtr> &outputs) = 0;
 
-  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-              const std::vector<KernelTensorPtr> &outputs,
-              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
+  bool Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   // Should be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }
@@ -179,9 +180,10 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   DeprecatedNativeCpuKernelMod() = default;
   ~DeprecatedNativeCpuKernelMod() override = default;
 
-  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-              const std::vector<KernelTensorPtr> &outputs,
-              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
+  bool Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   virtual void Init(const CNodePtr &kernel_node);
   virtual void InitKernel(const CNodePtr &kernel_node) = 0;
 

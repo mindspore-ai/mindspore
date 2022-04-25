@@ -1055,7 +1055,7 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
       return false;
     }
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
-      kernel_mod->Wait();
+      kernel::UpdateNodeShape(kernel);
     }
   }
 

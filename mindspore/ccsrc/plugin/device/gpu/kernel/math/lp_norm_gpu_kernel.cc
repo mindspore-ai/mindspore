@@ -125,7 +125,7 @@ bool LpNormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 
 bool LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &others) {
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
