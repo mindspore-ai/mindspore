@@ -26,19 +26,20 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr char AXIS[] = "axis";
 abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = input_args[0]->BuildShape();
   auto x_shape_value = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
-  auto dim = GetValue<int64_t>(primitive->GetAttr("dim"));
+  auto axis = GetValue<int64_t>(primitive->GetAttr(AXIS));
   if (x_shape_value.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs dim should be greater than 0, but got "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs 'axis' should be greater than 0, but got "
                              << x_shape_value.size() << ".";
   }
-  if (dim >= static_cast<int64_t>(x_shape_value.size()) || dim < -static_cast<int64_t>(x_shape_value.size())) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',The value of 'dim' should be in the range of ["
+  if (axis >= static_cast<int64_t>(x_shape_value.size()) || axis < -static_cast<int64_t>(x_shape_value.size())) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',The value of 'axis' should be in the range of ["
                              << -static_cast<int64_t>(x_shape_value.size()) << ","
-                             << static_cast<int64_t>(x_shape_value.size()) << "], but got dim:" << dim << ".";
+                             << static_cast<int64_t>(x_shape_value.size()) << "], but got axis:" << axis << ".";
   }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape, x_shape});
 }

@@ -20,7 +20,7 @@ cummax_op_info = AiCPURegOp("Cummax") \
     .input(0, "x", "required") \
     .output(0, "y", "required") \
     .output(1, "indices", "required") \
-    .attr("dim", "int") \
+    .attr("axis", "int") \
     .dtype_format(DataType.I8_Default, DataType.I8_Default, DataType.I64_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I64_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I64_Default) \

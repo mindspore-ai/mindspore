@@ -7530,8 +7530,7 @@ class Cummax(Primitive):
         y_i = max(x_1 , x_2 , x_3 ,... ,x_i)
 
     Args:
-        dim (int): The dim to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-                    The default value is -1.
+        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
 
     Inputs:
         - **input** (Tensor) - The input tensor whose dtype is int8, int32, int64, uint8, uint32, float16, float32.
@@ -7542,18 +7541,18 @@ class Cummax(Primitive):
 
     Raises:
         TypeError: If `input` is not a Tensor.
-        TypeError: If `dim` is not an int.
-        ValueError: If `dim` is out of range, `dim` should be [-len(input.shape), len(input.shape)-1].
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is out of range, `axis` should be [-len(input.shape), len(input.shape)-1].
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
         >>> import mindspore.ops as ops
-        >>> cummax = ops.Cummax(dim=0)
+        >>> cummax = ops.Cummax(axis=0)
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> output = cummax(x)
         >>> print(output)
@@ -7570,9 +7569,9 @@ class Cummax(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, dim=-1):
+    def __init__(self, axis):
         """Initialize Cummax"""
-        validator.check_value_type("dim", dim, [int], self.name)
+        validator.check_value_type("axis", axis, [int], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
 
 
