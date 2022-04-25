@@ -32,6 +32,7 @@ bool ServerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start server node timeout!";
     return false;
   }
+  is_recover = false;
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Server start]: 5. Successfully start server node!";
   return true;
@@ -41,12 +42,11 @@ void ServerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   InitNodeNum();
-  bool is_recover = false;
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
     is_recover = Recover();
-    if (is_recover) {
+    if (!is_recover) {
       MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }

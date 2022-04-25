@@ -35,7 +35,7 @@ bool GetKeysKernel::CountForGetKeys(const std::shared_ptr<FBBuilder> &fbb, const
                                     const size_t iter_num) {
   MS_ERROR_IF_NULL_W_RET_VAL(get_keys_req, false);
   auto fbs_fl_id = get_keys_req->fl_id();
-  MS_EXCEPTION_IF_NULL(fbs_fl_id);
+  MS_ERROR_IF_NULL_W_RET_VAL(fbs_fl_id, false);
   if (!DistributedCountService::GetInstance().Count(name_, fbs_fl_id->str())) {
     std::string reason = "Counting for getkeys kernel request failed. Please retry later.";
     cipher_key_->BuildGetKeysRsp(

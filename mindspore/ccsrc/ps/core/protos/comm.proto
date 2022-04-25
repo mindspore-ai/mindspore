@@ -126,6 +126,8 @@ message RegisterMessage {
   NodeRole role = 4;
   // the number of the fl job iteration
   uint64 fl_iteration_num = 5;
+  // if node start with recovery
+  bool is_recover = 6;
 }
 
 message RegisterRespMessage {

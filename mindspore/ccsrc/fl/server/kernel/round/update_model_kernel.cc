@@ -65,7 +65,12 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
 bool UpdateModelKernel::VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req) {
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, false);
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->fl_id(), false);
-  MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->feature_map(), false);
+  schema::CompressType upload_compress_type = update_model_req->upload_compress_type();
+  if (upload_compress_type == schema::CompressType_NO_COMPRESS) {
+    MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->feature_map(), false);
+  } else {
+    MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->compress_feature_map(), false);
+  }
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->timestamp(), false);
 
   return true;
