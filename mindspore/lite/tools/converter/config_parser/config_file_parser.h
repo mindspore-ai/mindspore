@@ -54,6 +54,8 @@ struct FullQuantString {
   std::string activation_quant_method;
   std::string bias_correction;
   std::string target_device;
+  std::string per_channel;
+  std::string cle;
 };
 
 struct RegistryInfoString {
