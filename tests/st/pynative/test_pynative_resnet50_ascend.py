@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -439,6 +439,22 @@ def test_pynative_resnet50():
                 sink_size=data_set.get_dataset_size(), dataset_sink_mode=True)
 
     return time_cb.good_step()
+
+
+def test_pynative_resnet50_with_mpi():
+    """
+    Feature: PyNative ResNet50 8P
+    Description: test PyNative ResNet50 8p with mpirun
+    Expectation: success
+    """
+    os.environ['HCCL_WHITELIST_DISABLE'] = str(1)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend", runtime_num_threads=20)
+    D.init()
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=False, device_num=8)
+
+    good_steps = test_pynative_resnet50()
+    assert good_steps > 10
 
 
 def test_pynative_resnet50_with_env(queue, device_id, device_num):
