@@ -68,17 +68,6 @@ struct AnfDumpHandlerRegister {
 } callback_register;
 }  // namespace
 
-abstract::AbstractBasePtr ClassObject::ToAbstract() {
-  ClassPtr cls_ptr = ParseDataClass(obj());
-  auto abs_scalar = std::make_shared<abstract::AbstractScalar>();
-  abs_scalar->set_type(std::make_shared<TypeType>());
-  abs_scalar->set_value(cls_ptr);
-
-  AbstractBasePtrList args_spec_list = {abs_scalar};
-  auto func_ptr = std::make_shared<abstract::PrimitiveAbstractClosure>(prim::kPrimMakeRecord);
-  return std::make_shared<abstract::PartialAbstractClosure>(func_ptr, args_spec_list);
-}
-
 abstract::AbstractBasePtr MsClassObject::ToAbstract() {
   auto abs_scalar =
     std::make_shared<abstract::AbstractScalar>(shared_from_base<MsClassObject>(), std::make_shared<MsClassType>());

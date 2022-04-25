@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -518,7 +518,6 @@ constexpr char MAKE_TUPLE[] = "MakeTuple";
 constexpr char MAKE_LIST[] = "make_list";
 constexpr char MAKE_DICT[] = "make_dict";
 constexpr char MAKE_SLICE[] = "make_slice";
-constexpr char MAKE_RECORD[] = "make_record";
 constexpr char LIST_GETITEM[] = "list_getitem";
 constexpr char ARRAY_GETITEM[] = "array_getitem";
 constexpr char TUPLE_SETITEM[] = "tuple_setitem";

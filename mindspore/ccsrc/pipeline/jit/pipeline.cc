@@ -896,7 +896,6 @@ void GraphExecutorPy::ReleaseResource(const py::object &phase) {
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
   // Reclaim all resource used by optimizer;
   ReclaimOptimizer();
@@ -1569,7 +1568,6 @@ void MemoryRecycle() {
   // Python threads is released.
   parse::data_converter::ClearObjectCache();
   parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
   trace::ClearTraceStack();
   FuncGraphLoopBreaker::Inst().BreakLoop();
 }
@@ -1657,9 +1655,6 @@ void ClearResAtexit() {
 #endif
 
   ReleaseGeTsd();
-  MS_LOG(INFO) << "Start clear python_adapter...";
-  python_adapter::ResetPythonScope();
-  MS_LOG(INFO) << "End clear python_adapter.";
 
   MS_LOG(INFO) << "Start clear AnalysisResultCacheMgr...";
   abstract::AnalysisResultCacheMgr::GetInstance().Clear();
@@ -1672,6 +1667,11 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear AnalysisSchedule...";
   abstract::AnalysisSchedule::GetInstance().Stop();
   MS_LOG(INFO) << "End clear AnalysisSchedule...";
+
+  // Python object needs to be freed after AnalysisResultCacheMgr and AnalysisContext.
+  MS_LOG(INFO) << "Start clear python_adapter...";
+  python_adapter::ResetPythonScope();
+  MS_LOG(INFO) << "End clear python_adapter.";
 #ifdef ENABLE_DEBUGGER
   Debugger::GetInstance()->Reset();
 #endif
@@ -1685,10 +1685,6 @@ void ClearResAtexit() {
   MS_LOG(INFO) << "Start clear Parser...";
   parse::Parser::CleanParserResource();
   MS_LOG(INFO) << "End clear Parser...";
-
-  MS_LOG(INFO) << "Start CleanDataClassToClassMap...";
-  parse::CleanDataClassToClassMap();
-  MS_LOG(INFO) << "End CleanDataClassToClassMap...";
 
   MS_LOG(INFO) << "Start ClearTraceStack...";
   trace::ClearTraceStack();

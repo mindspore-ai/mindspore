@@ -183,11 +183,6 @@ TEST_F(TestOps, MakeListTest) {
   ASSERT_EQ(prim->name(), kPrimMakeList->name());
 }
 
-TEST_F(TestOps, MakeRecordTest) {
-  auto prim = std::make_shared<Primitive>("make_record");
-  ASSERT_EQ(prim->name(), kPrimMakeRecord->name());
-}
-
 TEST_F(TestOps, TupleGetItemTest) {
   auto prim = std::make_shared<Primitive>(kTupleGetItem);
   ASSERT_EQ(prim->name(), kPrimTupleGetItem->name());

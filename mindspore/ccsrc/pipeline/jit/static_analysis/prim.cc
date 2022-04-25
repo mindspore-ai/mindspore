@@ -1191,24 +1191,6 @@ EvaluatorPtr InitUniformPrimEvaluator(const PrimitivePtr &primitive, PrimitiveIm
   return uniform_primitive_evaluator;
 }
 
-FuncGraphPtr PyObjToGraph(const AnalysisEnginePtr &engine, const ValuePtr &method) {
-  MS_EXCEPTION_IF_NULL(engine);
-  MS_EXCEPTION_IF_NULL(method);
-  if (!method->isa<parse::PyObjectWrapper>()) {
-    MS_LOG(EXCEPTION) << "Method type error: " << method->ToString();
-  }
-
-  std::shared_ptr<PyObjectWrapper> obj = method->cast<std::shared_ptr<PyObjectWrapper>>();
-  FuncGraphPtr func_graph = mindspore::parse::ConvertToFuncGraph(obj->obj());
-  if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "Parse python object: " << method->ToString() << " failed";
-  }
-
-  FuncGraphManagerPtr manager = engine->func_graph_manager();
-  manager->AddFuncGraph(func_graph);
-  return func_graph;
-}
-
 inline void AddToManager(const AnalysisEnginePtr &engine, const FuncGraphPtr func_graph) {
   MS_EXCEPTION_IF_NULL(engine);
   FuncGraphManagerPtr manager = engine->func_graph_manager();
@@ -1300,41 +1282,6 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForClassAttrOrMethod(const AnalysisEnginePtr &engine,
-                                                    const AbstractBasePtrList &args_spec_list,
-                                                    const ValuePtr &item_value, const ConfigPtr &data_conf,
-                                                    const AnfNodeConfigPtr &out_conf) {
-  if (args_spec_list.empty()) {
-    MS_LOG(EXCEPTION) << "args_spec_list is empty";
-  }
-  AbstractClassPtr cls = CheckArg<AbstractClass>("__FUNC__", args_spec_list, 0);
-
-  // If item_value is an attribute, get abstract value from AbstractClass
-  MS_EXCEPTION_IF_NULL(item_value);
-  if (!item_value->isa<StringImm>()) {
-    MS_LOG(EXCEPTION) << "Attribute type error";
-  }
-  std::string item_name = item_value->cast<StringImmPtr>()->value();
-  MS_LOG(DEBUG) << "Resolve name: " << cls->tag().name();
-  MS_LOG(DEBUG) << "Resolve item: " << item_name;
-  AbstractBasePtr attr = cls->GetAttribute(item_name);
-  if (attr != nullptr) {
-    return std::make_shared<EvalResult>(attr, nullptr);
-  }
-
-  ValuePtr method = cls->GetMethod(item_name);
-  if (method->isa<AnyValue>()) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-    MS_EXCEPTION_IF_NULL(args_spec_list[0]->BuildType());
-    MS_EXCEPTION(AttributeError) << "Unknown field, data type: " << args_spec_list[0]->BuildType()->ToString()
-                                 << ", item value: " << item_value->ToString();
-  }
-
-  // Infer class method
-  ValuePtr converted_value = PyObjToGraph(engine, method);
-  return StaticGetterInferred(converted_value, data_conf, out_conf);
-}
-
 EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
                                                       const ValuePtr &data_value, const ConfigPtr &data_conf,
                                                       const AnfNodeConfigPtr &out_conf) {
@@ -1405,24 +1352,6 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
 }
 
-enum ResolveType : int64_t {
-  kResolveTypeUserDefineClass = 1,
-  kResolveTypeBuiltInType,
-  kResolveTypeFunction,
-};
-
-int64_t GetResolveType(const TypePtr &data_type) {
-  MS_EXCEPTION_IF_NULL(data_type);
-  if (data_type->type_id() == kObjectTypeClass) {
-    return kResolveTypeUserDefineClass;
-  }
-  // Try to search method map, if not found, the data_type should be External type.
-  if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
-    return kResolveTypeBuiltInType;
-  }
-  return kResolveTypeFunction;
-}
-
 ValuePtr GetMsClassObject(const AbstractBasePtr &abs) {
   if (!abs->isa<abstract::PartialAbstractClosure>()) {
     return nullptr;
@@ -1476,14 +1405,11 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   if (class_value != nullptr) {
     return GetEvaluatedValueForMsClassAttrOrMethod(engine, item_value, class_value, data_conf, out_conf);
   }
-  int64_t resolve_type = GetResolveType(data_type);
-  if (resolve_type == kResolveTypeUserDefineClass) {
-    return GetEvaluatedValueForClassAttrOrMethod(engine, args_spec_list, item_value, data_conf, out_conf);
-  } else if (resolve_type == kResolveTypeBuiltInType) {
+  // Try to search method map, if not found, the data_type should be External type.
+  if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
     return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, item_value, data_type, data_conf, out_conf);
-  } else {
-    return GetEvaluatedValueForNameSpaceString(engine, args_spec_list, out_conf);
   }
+  return GetEvaluatedValueForNameSpaceString(engine, args_spec_list, out_conf);
 }
 }  // namespace
 
@@ -2315,36 +2241,6 @@ bool IsSubtypeList(const AbstractBasePtr x, const TypePtr model) {
   return is_subtype;
 }
 
-bool IsSubtypeClass(const AbstractBasePtr x, const TypePtr model) {
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(model);
-  auto x_class = dyn_cast<AbstractClass>(x);
-  auto model_class = dyn_cast<Class>(model);
-  if (x_class == nullptr) {
-    return false;
-  }
-  if (model->IsGeneric()) {
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(model_class);
-  if (x_class->tag() == model_class->tag()) {
-    auto m_attributes = model_class->GetAttributes();
-    auto x_attributes = x_class->attributes();
-    if (m_attributes.size() != x_attributes.size()) {
-      return false;
-    }
-
-    for (size_t i = 0; i < m_attributes.size(); i++) {
-      if (!IsSubtype(x_attributes[i].second, m_attributes[i].second)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  return false;
-}
-
 inline bool IsSubtypeScalar(const AbstractBasePtr x, const TypePtr model) {
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(model);
@@ -2369,8 +2265,6 @@ bool IsSubtype(const AbstractBasePtr x, const TypePtr model) {
       return IsSubtypeArray(x, model);
     case kObjectTypeList:
       return IsSubtypeList(x, model);
-    case kObjectTypeClass:
-      return IsSubtypeClass(x, model);
     default:
       if (IsSubType(model, std::make_shared<Number>())) {
         return IsSubtypeScalar(x, model);

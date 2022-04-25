@@ -138,32 +138,6 @@ TEST_F(TestData, test_build_shape) {
   ASSERT_EQ(weight2_dims, shape2->shape());
 }
 
-TEST_F(TestData, test_clone) {
-  AbstractBasePtr s1 = FromValue(static_cast<int64_t>(1), false);
-  AbstractBasePtr s2 = s1->Clone();
-  ASSERT_TRUE(*s1->GetTypeTrack() == *s2->GetTypeTrack());
-  ASSERT_TRUE(s1->GetValueTrack() == s2->GetValueTrack());
-  ASSERT_TRUE(*s1->GetShapeTrack() == *s2->GetShapeTrack());
-
-  AbstractFunctionPtr f1 =
-    std::make_shared<FuncGraphAbstractClosure>(std::make_shared<FuncGraph>(), AnalysisContext::DummyContext());
-  AbstractBasePtr f2 = f1->Clone();
-  ASSERT_TRUE(*f2 == *f1);
-
-  AbstractList l1 = AbstractList({s1, s2});
-  AbstractBasePtr l2 = l1.Clone();
-  AbstractList *l2_cast = dynamic_cast<AbstractList *>(l2.get());
-  ASSERT_TRUE(l2_cast != nullptr);
-  ASSERT_TRUE(l2_cast->GetValueTrack() == l1.GetValueTrack());
-
-  std::vector<AbstractAttribute> attr = {{"x", std::make_shared<AbstractScalar>(kAnyValue, kInt64)},
-                                         {"y", std::make_shared<AbstractScalar>(kAnyValue, kInt64)}};
-  mindspore::HashMap<std::string, ValuePtr> methods;
-  AbstractBasePtr c1 = std::make_shared<AbstractClass>(Named("Point"), attr, methods);
-  AbstractBasePtr c2 = c1->Clone();
-  ASSERT_EQ(*c1, *c2);
-}
-
 TEST_F(TestData, test_join) {
   int64_t int1 = 1;
   AbstractBasePtr s1 = FromValue(int1, false);

@@ -93,8 +93,6 @@ TEST_F(TestParserAbnormal, TestParseExprStatement) {
   // check the 'append' node
   bool is_append_node = false;
   int count = 0;
-  py::object dataclass_obj;
-  // check the dataclass
   for (auto node : manager->all_nodes()) {
     if (node != nullptr && node->isa<ValueNode>() && node->cast<ValueNodePtr>()->value()->isa<StringImm>()) {
       if (GetValue<std::string>(node->cast<ValueNodePtr>()->value()) == "append") {

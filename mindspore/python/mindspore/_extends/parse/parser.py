@@ -32,7 +32,6 @@ from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
 from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_data
-from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
@@ -207,8 +206,6 @@ def resolve_symbol(namespace, symbol):
         # list and dict is not hashable ,it can not be key for the map, just return the result
         if isinstance(resolve_, (tuple, list, dict)):
             return resolve_
-
-        # dataclass may not be hashable
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
@@ -343,14 +340,9 @@ def _is_ms_class(obj):
     return hasattr(obj, '__ms_class__')
 
 
-def _is_dataclass_instance(obj):
-    """Check whether a class is an instance of a dataclass (and not a dataclass itself)"""
-    return hasattr(obj, "__dataclass_fields__") and not isinstance(obj, type)
-
-
 def _is_class_instance(obj):
     """Confirm the obj is class instance."""
-    return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_dataclass_instance(obj) or _is_ms_class(obj)
+    return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_ms_class(obj)
 
 
 def _convert_tuple_to_args_kwargs(params):
@@ -474,22 +466,6 @@ def get_class_member_namespace_symbol(obj):
     class_namespace = ClassMemberNamespace(obj)
     logger.debug("class namespace: %r", class_namespace)
     return class_namespace
-
-
-def get_dataclass_attributes(cls):
-    """Get attributes of dataclass."""
-    fields = cls.__dataclass_fields__
-    attributes = {name: pytype_to_dtype(field.type)
-                  for name, field in fields.items()}
-    return attributes
-
-
-def get_dataclass_methods(cls):
-    """Get functions of dataclass."""
-    methods = {name: getattr(cls, name)
-               for name in dir(cls)
-               if isinstance(getattr(cls, name), (types.FunctionType,))}
-    return methods
 
 
 def is_class_type(cls):

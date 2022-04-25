@@ -19,7 +19,7 @@
 @Desc  : parser test function.
 """
 import logging
-from dataclasses import dataclass
+from mindspore import ms_class
 
 log = logging.getLogger("test")
 log.setLevel(level=logging.ERROR)
@@ -222,10 +222,11 @@ def testDoNamedConstFalse():
 
 
 # Test_Class_type
-@dataclass
+@ms_class
 class TestFoo:
-    x: float
-    y: int
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
     def inf(self):
         return self.x

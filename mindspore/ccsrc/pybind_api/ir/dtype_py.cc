@@ -166,7 +166,6 @@ REGISTER_PYBIND_DEFINE(
     (void)py::class_<Function, Type, std::shared_ptr<Function>>(m_sub, "Function")
       .def(py::init())
       .def(py::init<std::vector<TypePtr>, TypePtr>(), py::arg("args"), py::arg("retval"));
-    (void)py::class_<Class, Type, std::shared_ptr<Class>>(m_sub, "Class").def(py::init());
     (void)py::class_<SymbolicKeyType, Type, std::shared_ptr<SymbolicKeyType>>(m_sub, "SymbolicKeyType").def(py::init());
     (void)py::class_<EnvType, Type, std::shared_ptr<EnvType>>(m_sub, "EnvType").def(py::init());
     (void)py::class_<TypeNone, Type, std::shared_ptr<TypeNone>>(m_sub, "TypeNone").def(py::init());

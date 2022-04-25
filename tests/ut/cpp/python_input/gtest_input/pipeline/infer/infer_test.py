@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from dataclasses import dataclass
-
 import mindspore.nn as nn
 from mindspore.ops import Primitive
 from mindspore.ops import functional as F
@@ -23,46 +21,7 @@ from mindspore.ops import _constants as Constants
 scala_add = Primitive(Constants.kScalarAdd)
 
 
-@dataclass
-class InferFoo:
-    x: int
-    y: int
-
-    def inf_add(self):
-        return scala_add(self.x, self.y)
-
-
-def test_dataclass_fun_add(x):
-    foo = InferFoo(x, 1.2)
-    return foo.inf_add()
-
-
-@dataclass
-class ResolveFoo:
-    x: float
-    y: float
-
-    def inf_sub(self):
-        return self.x - self.y
-
-
-def test_dataclass_fun_sub(x):
-    foo = ResolveFoo(x, 0.1)
-    return foo.inf_sub()
-
-
-def test_fun_sub(x, y):
-    return x - y
-
-
-def test_fun_add(x, y):
-    return scala_add(x, y)
-
-
 class AddNet(nn.Cell):
-    def __init__(self):
-        super(AddNet, self).__init__()
-
     def construct(self, x, y):
         return F.scalar_add(x, y)
 
@@ -76,9 +35,6 @@ def test_net_construct_add():
 
 
 class SubNet(nn.Cell):
-    def __init__(self):
-        super(SubNet, self).__init__()
-
     def construct(self, x, y):
         return F.scalar_sub(x, y)
 
