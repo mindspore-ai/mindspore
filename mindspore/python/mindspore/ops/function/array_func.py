@@ -977,6 +977,42 @@ def tuple_to_array(input_x):
     return tuple_to_array_(input_x)
 
 
+masked_fill_ = P.MaskedFill()
+def masked_fill(x, mask, value):
+    """
+    Fills elements of self tensor with value where mask is True.
+
+    The shapes of `input` and `mask` need to be the same or broadcast.
+
+    Args:
+        input (Tensor): The source tensor whose data type is one of float16, float32, int8, int32.
+        mask (Tensor[bool]): The boolean mask.
+        value (Union[float, Tensor]): The value to fill in with, which only supports
+          a 0-dimensional tensor or a float number.
+
+    Returns:
+        Tensor, has the same type and shape as `input`.
+
+    Raises:
+        TypeError: If `input` or `mask` is not a tensor.
+        TypeError: If `value` is neither float number nor tensor.
+        TypeError: If dtype of `input` or `value` is not one of float16, float32, int8, int32.
+        TypeError: If dtype of `value` is different from that of `input`.
+        TypeError: If dtype of `mask` is not bool.
+        ValueError: If the shapes of `input` and `mask` could not be broadcast.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> mask = Tensor(np.array([True, True, False, True]), mindspore.bool_)
+        >>> output = ops.masked_fill(input, mask, 0.5)
+        >>> print(output)
+        [0.5 0.5 3.  0.5]
+    """
+    return masked_fill_(x, mask, value)
+
 __all__ = [
     'unique',
     'eye',
@@ -1003,6 +1039,7 @@ __all__ = [
     'scatter_nd',
     'gather',
     'gather_d',
-    'gather_nd'
+    'gather_nd',
+    'masked_fill'
 ]
 __all__.sort()

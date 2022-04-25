@@ -28,16 +28,14 @@ constexpr size_t kMaskedFillOutputsNum = 1;
 void MaskedFillCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto mask_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (input_shape != mask_shape) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the input shape should equal to mask shape, but got input shape: " << input_shape
-                      << ", mask shape: " << mask_shape;
-  }
+  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  mask_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  need_broadcast_ = (input_shape_ == mask_shape_) ? false : true;
+
   shape_size_ = 1;
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    shape_size_ *= input_shape[i];
+  for (size_t i = 0; i < input_shape_.size(); i++) {
+    shape_size_ *= input_shape_[i];
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
@@ -58,6 +56,20 @@ bool MaskedFillCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   auto mask = reinterpret_cast<bool *>(inputs[1]->addr);
   auto value = reinterpret_cast<T *>(inputs[2]->addr)[0];
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
+
+  if (need_broadcast_) {
+    BroadcastIterator base_iter(input_shape_, mask_shape_, output_shape_);
+    auto task = [&base_iter, input, mask, output, value](size_t start, size_t end) {
+      auto iter = base_iter;
+      iter.SetPos(start);
+      for (size_t i = start; i < end; i++) {
+        output[i] = mask[iter.GetInputPosB()] ? value : input[iter.GetInputPosA()];
+        iter.GenNextPos();
+      }
+    };
+    ParallelLaunchAutoSearch(task, shape_size_, this, &parallel_search_info_);
+    return true;
+  }
 
   auto task = [input, mask, output, value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

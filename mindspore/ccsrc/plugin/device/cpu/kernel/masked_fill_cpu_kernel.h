@@ -48,6 +48,10 @@ class MaskedFillCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, MaskedFillFunc>> func_list_;
   MaskedFillFunc kernel_func_;
   size_t shape_size_{1};
+  std::vector<size_t> input_shape_;
+  std::vector<size_t> mask_shape_;
+  std::vector<size_t> output_shape_;
+  bool need_broadcast_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
