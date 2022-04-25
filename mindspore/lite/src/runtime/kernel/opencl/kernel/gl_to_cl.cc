@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifdef ENABLE_OPENGL_TEXTURE
 #include "src/runtime/kernel/opencl/kernel/gl_to_cl.h"
 #include <map>
 #include <string>
@@ -148,3 +149,4 @@ int GLToCLOpenCLKernel::InferShape() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
+#endif

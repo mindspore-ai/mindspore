@@ -256,16 +256,9 @@ bool InnerContext::IsGpuFloat16Enabled() const {
 #endif
 }
 
-bool InnerContext::IsGLTextureEnabled() const {
-#ifdef GPU_OPENCL
-  if (!IsDeviceTypeEnabled(DT_GPU)) {
-    return false;
-  }
-  return GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_;
-#else
-  return false;
+#ifdef ENABLE_OPENGL_TEXTURE
+bool InnerContext::IsGLTextureEnabled() const { return GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_; }
 #endif
-}
 
 bool InnerContext::IsDeviceTypeEnabled(DeviceType type) const {
   return device_list_.end() !=

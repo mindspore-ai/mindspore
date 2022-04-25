@@ -164,6 +164,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
   return RET_OK;
 }
 
+#ifdef ENABLE_OPENGL_TEXTURE
 int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
                                 const std::vector<std::vector<kernel::KernelExec *>> &in_kernels,
                                 std::vector<lite::Tensor *> *out_tensors,
@@ -256,6 +257,7 @@ int OpenCLSubGraph::GenGLToCLOp(const std::vector<lite::Tensor *> &in_tensors,
   }
   return RET_OK;
 }
+#endif
 
 int OpenCLSubGraph::InsertOpsPass() {
   GetInOutNodes();
@@ -263,7 +265,7 @@ int OpenCLSubGraph::InsertOpsPass() {
   std::vector<std::vector<kernel::KernelExec *>> from_kernels_;
   GetKernelFromToTensor(in_tensors(), in_nodes_, &from_kernels_, true);
   int ret = 0;
-
+#ifdef ENABLE_OPENGL_TEXTURE
   if (this->GetOpenGLTextureEnable() == true) {
     ret = GenGLToCLOp(in_tensors(), from_kernels_, &in_convert_tensors_, &gl_in_parameters_, &in_convert_ops_,
                       MemType::IMG);
@@ -271,7 +273,10 @@ int OpenCLSubGraph::InsertOpsPass() {
     ret =
       GenToFormatOp(in_tensors(), from_kernels_, &in_convert_tensors_, &in_parameters_, &in_convert_ops_, MemType::IMG);
   }
-
+#else
+  ret =
+    GenToFormatOp(in_tensors(), from_kernels_, &in_convert_tensors_, &in_parameters_, &in_convert_ops_, MemType::IMG);
+#endif
   if (ret != RET_OK) {
     return ret;
   }
@@ -279,7 +284,7 @@ int OpenCLSubGraph::InsertOpsPass() {
 
   std::vector<std::vector<kernel::KernelExec *>> to_kernels_;
   GetKernelFromToTensor(out_tensors(), out_nodes_, &to_kernels_, false);
-
+#if defined(ENABLE_OPENGL_TEXTURE)
   if (this->GetOpenGLTextureEnable()) {
     ret = GenGLToCLOp(out_tensors(), to_kernels_, &out_convert_tensors_, &gl_out_parameters_, &out_convert_ops_,
                       MemType::GLTexture);
@@ -287,7 +292,10 @@ int OpenCLSubGraph::InsertOpsPass() {
     ret = GenToFormatOp(out_tensors(), to_kernels_, &out_convert_tensors_, &out_parameters_, &out_convert_ops_,
                         MemType::BUF);
   }
-
+#else
+  ret =
+    GenToFormatOp(out_tensors(), to_kernels_, &out_convert_tensors_, &out_parameters_, &out_convert_ops_, MemType::BUF);
+#endif
   if (ret != RET_OK) {
     return ret;
   }

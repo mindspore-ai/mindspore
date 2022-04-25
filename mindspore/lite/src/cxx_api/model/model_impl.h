@@ -85,8 +85,10 @@ class ModelImpl {
   std::vector<std::string> GetOutputTensorNames();
   MSTensor GetOutputByTensorName(const std::string &name);
   std::vector<MSTensor> GetOutputsByNodeName(const std::string &name);
-  Status BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
-                               std::map<std::string, unsigned int> *outputGLTexture);
+#ifdef ENABLE_OPENGL_TEXTURE
+  Status BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
+                               std::map<std::string, GLuint> *outputGLTexture);
+#endif
 
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
   bool IsTrainModel();

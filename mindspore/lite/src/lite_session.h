@@ -73,8 +73,10 @@ class LiteSession : public session::LiteSession {
   std::vector<std::string> GetOutputTensorNames() const override;
   mindspore::tensor::MSTensor *GetOutputByTensorName(const std::string &tensor_name) const override;
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetOutputs() const override;
-  int BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
-                            std::map<std::string, unsigned int> *outputGLTexture) override;
+#ifdef ENABLE_OPENGL_TEXTURE
+  int BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
+                            std::map<std::string, GLuint> *outputGLTexture) override;
+#endif
   int Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
              const std::vector<std::vector<int>> &dims) override;
   void InitExecutionConfig(std::map<std::string, TypeId> *config) { execution_plan_ = config; }
@@ -126,7 +128,6 @@ class LiteSession : public session::LiteSession {
   bool IsIsolatedSubGraph(const kernel::KernelExec *kernel);
   void UpdateGraphOutputMap(const std::vector<kernel::KernelExec *> &kernel);
   void UpdateLinkInfoForIsolateOutput();
-  void SynIsolateInOutputDataType();
   std::unordered_map<Tensor *, Tensor *> isolate_graph_output_map_; /* <calculate-tensor,  graph-output-tensor> */
   std::unordered_map<Tensor *, Tensor *> isolate_input_map_;        /* <calculate-tensor,  src-subgraph-input-tensor> */
 

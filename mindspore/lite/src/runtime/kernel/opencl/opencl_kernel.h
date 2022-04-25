@@ -50,10 +50,12 @@ struct OpenCLToFormatParameter {
   lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};
 };
 
+#ifdef ENABLE_OPENGL_TEXTURE
 struct OpenGLTexture2DToOpenCLParameter {
   OpParameter op_parameter{};
   lite::opencl::MemType out_mem_type{lite::opencl::MemType::IMG};
 };
+#endif
 
 template <typename SrcT, typename DstT>
 int Broadcast2GpuShape(const SrcT *src, int src_num, DstT *dst, int dsc_num) {

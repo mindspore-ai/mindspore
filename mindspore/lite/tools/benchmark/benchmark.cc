@@ -50,6 +50,7 @@ constexpr auto kBenchmarkInputNames = "MSLITE_BENCH_INPUT_NAMES";
 }  // namespace
 
 int Benchmark::LoadInput() {
+#ifdef ENABLE_OPENGL_TEXTURE
   if (flags_->enable_gl_texture_ == true) {
     if (lite::Benchmark::LoadGLTexture() != RET_OK) {
       MS_LOG(ERROR) << "Generate input GLTexture error";
@@ -57,6 +58,7 @@ int Benchmark::LoadInput() {
     }
     return RET_OK;
   }
+#endif
 
   if (flags_->in_data_file_.empty()) {
     auto status = GenerateInputData();
@@ -99,6 +101,7 @@ int Benchmark::GenerateInputData() {
   return RET_OK;
 }
 
+#ifdef ENABLE_OPENGL_TEXTURE
 int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture,
                                  std::map<std::string, GLuint> *output_gl_texture) {
   for (auto tensor : ms_inputs_) {
@@ -121,9 +124,9 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
       return status;
     }
   }
-  for (const auto &output : ms_outputs_) {
+  for (const auto &[name, tensor] : ms_outputs_) {
     MS_ASSERT(tensor != nullptr);
-    auto status = FillGLTextureToTensor(output_gl_texture, output.second, output.first);
+    auto status = FillGLTextureToTensor(output_gl_texture, tensor, name);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
       return status;
@@ -159,7 +162,7 @@ int Benchmark::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, 
     image_id = gl_runtime_.CopyHostToDeviceTexture(data, width, height, channel);
   }
 
-  if (image_id) {
+  if (image_id != GL_NONE) {
     gl_texture->insert(std::pair<std::string, GLuint>(name, image_id));
   } else {
     MS_LOG(ERROR) << "glMemPool CopyHostToDeviceTexture failed";
@@ -228,9 +231,9 @@ int Benchmark::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture
       }
     }
   }
-  for (const auto &output : ms_outputs_) {
+  for (const auto &[name, tensor] : ms_outputs_) {
     MS_ASSERT(tensor != nullptr);
-    auto status = FillGLTextureToTensor(output_gl_texture, output.second, output.first);
+    auto status = FillGLTextureToTensor(output_gl_texture, tensor, name);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
       return status;
@@ -238,6 +241,7 @@ int Benchmark::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture
   }
   return RET_OK;
 }
+#endif
 
 int Benchmark::ReadInputFile() {
   if (ms_inputs_.empty()) {
@@ -308,7 +312,7 @@ int Benchmark::InitContext(const std::shared_ptr<Context> &context) {
   if (flags_->device_ == "GPU") {
     DeviceContext gpu_device_ctx{DT_GPU, {false}};
     gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = flags_->enable_fp16_;
-
+#ifdef ENABLE_OPENGL_TEXTURE
     if (flags_->enable_gl_texture_) {
       gpu_device_ctx.device_info_.gpu_device_info_.enable_gl_texture_ = true;
 
@@ -330,6 +334,7 @@ int Benchmark::InitContext(const std::shared_ptr<Context> &context) {
       }
       gpu_device_ctx.device_info_.gpu_device_info_.gl_display_ = gl_display;
     }
+#endif
     context->device_list_.push_back(gpu_device_ctx);
   }
 
@@ -396,6 +401,7 @@ int Benchmark::CompareOutput() {
       std::vector<std::string> output_strings = MSTensorToStrings(tensor);
       ret = CompareStringData(tensor_name, calib_tensor.second->strings_data, output_strings);
     } else {
+#ifdef ENABLE_OPENGL_TEXTURE
       if (flags_->enable_gl_texture_) {
         auto *gltexture_id = reinterpret_cast<GLuint *>(tensor->data());
         float *hostptr = reinterpret_cast<float *>(gl_runtime_.CopyDeviceTextureToHost(*gltexture_id));
@@ -403,13 +409,20 @@ int Benchmark::CompareOutput() {
           MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
           return RET_ERROR;
         }
-
-        tensor::MSTensor *new_tensor = tensor::MSTensor::CreateTensor(
-          "opengl_output", kNumberTypeFloat, tensor->shape(), hostptr, sizeof(float) * tensor->ElementsNum());
+        auto *new_tensor = new (std::nothrow) lite::Tensor(kNumberTypeFloat, tensor->shape());
+        MS_CHECK_TRUE_MSG(new_tensor != nullptr, RET_ERROR, "new tensor failed");
+        new_tensor->set_data(hostptr);
+        if (new_tensor->MutableData() == nullptr) {
+          MS_LOG(ERROR) << "CopyDeviceTextureToHost failed";
+          return RET_ERROR;
+        }
         ret = CompareDataGetTotalBiasAndSize(tensor_name, new_tensor, &total_bias, &total_size);
       } else {
         ret = CompareDataGetTotalBiasAndSize(tensor_name, tensor, &total_bias, &total_size);
       }
+#else
+      ret = CompareDataGetTotalBiasAndSize(tensor_name, tensor, &total_bias, &total_size);
+#endif
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Error in CompareData";
@@ -567,7 +580,7 @@ int Benchmark::MarkAccuracy() {
   MS_LOG(INFO) << "MarkAccuracy";
   std::cout << "MarkAccuracy" << std::endl;
   int status = 0;
-
+#ifdef ENABLE_OPENGL_TEXTURE
   if (flags_->enable_gl_texture_) {
     for (auto in_tensor : ms_inputs_) {
       auto *input = reinterpret_cast<GLuint *>(in_tensor->data());
@@ -578,6 +591,9 @@ int Benchmark::MarkAccuracy() {
   } else {
     status = PrintInputData();
   }
+#else
+  status = PrintInputData();
+#endif
   if (status != RET_OK) {
     MS_LOG(ERROR) << "PrintInputData error " << status;
     std::cerr << "PrintInputData error " << status << std::endl;
@@ -669,10 +685,11 @@ int Benchmark::RunBenchmark() {
   auto start_prepare_time = GetTimeUs();
   // Load graph
   std::string model_name = flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1);
+#ifdef ENABLE_OPENGL_TEXTURE
   if (flags_->enable_gl_texture_) {
     gl_runtime_.Init();
   }
-
+#endif
   MS_LOG(INFO) << "start reading model file";
   std::cout << "start reading model file" << std::endl;
   size_t size = 0;
