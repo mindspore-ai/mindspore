@@ -110,8 +110,8 @@ void LRN::Init(const int64_t depth_radius, const float bias, const float alpha, 
 MIND_API_OPERATOR_IMPL(LRN, BaseOperator);
 AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                          const std::vector<AbstractBasePtr> &input_args) {
-  abstract::ShapePtr output_shape = LrnInferShape(primitive, input_args);
   TypePtr output_type = LrnInferType(primitive, input_args);
+  abstract::ShapePtr output_shape = LrnInferShape(primitive, input_args);
   return std::make_shared<abstract::AbstractTensor>(output_type, output_shape->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LRN, prim::kPrimLrn, LrnInfer, nullptr, true);
