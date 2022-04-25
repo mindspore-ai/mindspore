@@ -112,7 +112,7 @@ bool AscendMemAdapter::Initialize() {
 
 bool AscendMemAdapter::DeInitialize() {
   if (!initialized_) {
-    MS_LOG(ERROR) << "DeInitialize Ascend Memory Adapter when it is not initialize";
+    MS_LOG(INFO) << "DeInitialize Ascend Memory Adapter when it is not initialize";
     return false;
   }
 
