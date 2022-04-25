@@ -254,7 +254,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     } else {
       verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(feature_map, update_model_req);
     }
-  } else if (ps::PSContext::instance()->upload_compress_type() == kDiffSparseQuant) {
+  } else if (IsCompress(update_model_req)) {
     verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req);
   } else {
     verifyFeatureMapIsSuccess = LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
@@ -294,6 +294,14 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     }
   }
   return ResultCode::kSuccess;
+}
+
+bool UpdateModelKernel::IsCompress(const schema::RequestUpdateModel *update_model_req) {
+  if (ps::PSContext::instance()->upload_compress_type() != kNoCompress &&
+      update_model_req->upload_compress_type() != schema::CompressType_NO_COMPRESS) {
+    return true;
+  }
+  return false;
 }
 
 bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
@@ -476,13 +484,13 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseUploadCompressFeatureM
   schema::CompressType upload_compress_type = update_model_req->upload_compress_type();
   upload_compress_type =
     mindspore::fl::compression::DecodeExecutor::GetInstance().GetCompressType(upload_compress_type);
-  MS_LOG(INFO) << "This schema upload compress type is: " << upload_compress_type;
+  MS_LOG(DEBUG) << "This schema upload compress type is: " << upload_compress_type;
   if (upload_compress_type != schema::CompressType_NO_COMPRESS) {
-    MS_LOG(INFO) << "This upload compress type is DIFF_SPARSE_QUANT.";
+    MS_LOG(DEBUG) << "This upload compress type is DIFF_SPARSE_QUANT.";
     feature_map = DecodeFeatureMap(weight_map, update_model_req, upload_compress_type, data_size);
     return feature_map;
   }
-  MS_LOG(INFO) << "This upload compress type is NO_COMPRESS.";
+  MS_LOG(DEBUG) << "This upload compress type is NO_COMPRESS.";
   // Some clients upload origin weights.
   auto fbs_feature_map = update_model_req->feature_map();
   for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
@@ -504,9 +512,9 @@ std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
 
   // Get and set decode hyper parameters.
   auto seed = update_model_req->iteration();
-  MS_LOG(INFO) << "The seed for compression is: " << seed;
+  MS_LOG(DEBUG) << "The seed for compression is: " << seed;
   auto upload_sparse_rate = update_model_req->upload_sparse_rate();
-  MS_LOG(INFO) << "The upload_sparse_rate for compression is: " << upload_sparse_rate;
+  MS_LOG(DEBUG) << "The upload_sparse_rate for compression is: " << upload_sparse_rate;
   // Get name vector.
   auto fbs_name_vec = update_model_req->name_vec();
   std::vector<std::string> name_vec;
@@ -521,14 +529,14 @@ std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
     mindspore::fl::compression::CompressFeatureMap compress_feature_map;
     int8_t *compress_weight_data = const_cast<int8_t *>(fbs_compress_feature_map->Get(i)->compress_data()->data());
     size_t compress_weight_size = fbs_compress_feature_map->Get(i)->compress_data()->size();
-    MS_LOG(INFO) << "The compress weight size: " << compress_weight_size;
+    MS_LOG(DEBUG) << "The compress weight size: " << compress_weight_size;
     for (size_t j = 0; j < compress_weight_size; ++j) {
       compress_feature_map.compress_data.emplace_back(compress_weight_data[j]);
     }
     compress_feature_map.min_val = fbs_compress_feature_map->Get(i)->min_val();
     compress_feature_map.max_val = fbs_compress_feature_map->Get(i)->max_val();
-    MS_LOG(INFO) << "Min value: " << compress_feature_map.min_val;
-    MS_LOG(INFO) << "Max value: " << compress_feature_map.max_val;
+    MS_LOG(DEBUG) << "Min value: " << compress_feature_map.min_val;
+    MS_LOG(DEBUG) << "Max value: " << compress_feature_map.max_val;
     compress_feature_maps.emplace_back(compress_feature_map);
   }
 

@@ -113,6 +113,9 @@ class UpdateModelKernel : public RoundKernel {
 
   // The mutex for participation_time_and_num_
   std::mutex participation_time_and_num_mtx_;
+
+  // Check upload mode
+  bool IsCompress(const schema::RequestUpdateModel *update_model_req);
 };
 }  // namespace kernel
 }  // namespace server
