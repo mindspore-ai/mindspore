@@ -74,11 +74,11 @@ class ScatterNdFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
 
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -86,7 +86,7 @@ class ScatterNdFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto index_depth = indices_shape.back();
     if (index_depth > input_shape.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the last dimension value of indices should be greater than "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the last dimension value of indices must be greater than "
                         << "the dimension of input , but got the dimension of input " << input_shape.size()
                         << ", got the last dimension value of indices " << index_depth;
     }
@@ -95,8 +95,7 @@ class ScatterNdFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
                         << indices_shape.size();
     }
     if (updates_shape.size() != indices_shape.size() - 1 + input_shape.size() - index_depth) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the dimension of updates, indices, shape should be consistent.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of updates, indices, shape must be consistent.";
     }
     for (size_t i = 0; i < indices_shape.size() - 1; ++i) {
       if (updates_shape[i] != indices_shape[i]) {

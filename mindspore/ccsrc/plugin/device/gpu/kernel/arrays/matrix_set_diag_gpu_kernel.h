@@ -75,11 +75,11 @@ class MatrixSetDiagGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         input_shape != output_shape) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimension of input is invalid for input shape greater than 2D, diag shape "
-                           "greater than 1D, input shape should equal to output shape.";
+                           "greater than 1D, input shape must be equal to output shape.";
     }
     if (SizeToInt(diag_k_shape.size()) != temporary_1d_dim) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of diag_region's dim should be limited to range (k[0],k[1]).";
+                        << "', the dimension of diag_region's dim must be limited to range (k[0],k[1]).";
     }
     int input_rank = SizeToInt(input_shape.size());
     for (int i = 0; i < input_rank - temporary_2d_dim; ++i) {

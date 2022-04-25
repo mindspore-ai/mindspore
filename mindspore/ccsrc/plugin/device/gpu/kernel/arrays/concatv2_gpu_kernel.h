@@ -79,7 +79,7 @@ class ConcatV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int dims = SizeToInt(input_shape.size());
     axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
     if (axis_ < -dims || axis_ >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << "," << dims
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis_;
     }
     if (axis_ < 0) {
@@ -147,7 +147,7 @@ class ConcatV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool CheckParam(const CNodePtr &kernel_node) {
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     return true;
   }

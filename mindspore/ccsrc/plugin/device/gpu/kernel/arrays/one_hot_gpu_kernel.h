@@ -72,7 +72,7 @@ class OneHotFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int64_t output_dims = static_cast<int64_t>(output_shape.size());
     if (axis >= input_dims || axis >= output_dims) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'axis' should be less than the dimension of input and output"
+                        << "', the 'axis' must be less than the dimension of input and output"
                         << ", but got 'axis': " << axis << ", the dimension of input: " << input_dims
                         << ", the dimension of output: " << output_dims;
     }

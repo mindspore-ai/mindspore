@@ -86,11 +86,11 @@ class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
@@ -115,7 +115,7 @@ class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t j = 0; j < perm.size(); j++) {
       auto p = (perm[j] >= 0) ? perm[j] : (perm.size() + perm[j]);
       if (p < 0) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the perm value should in [-" << perm.size() << ", "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the perm value must be in [-" << perm.size() << ", "
                           << (perm.size() - 1) << "], but got " << perm;
       }
       input_axis_.push_back(p);

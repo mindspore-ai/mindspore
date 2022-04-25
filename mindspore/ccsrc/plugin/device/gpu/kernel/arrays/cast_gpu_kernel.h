@@ -45,7 +45,7 @@ class CastGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       Cast(input_size_, input_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the input and output device addresses should be both null or both not null";
+                        << "', the input and output device addresses must be both null or both not null";
     }
 
     return true;
@@ -74,7 +74,7 @@ class CastGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     if (input_size_ != output_size_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the size of input and output should be the same, but got the size of input: "
+                        << "', the size of input and output must be the same, but got the size of input: "
                         << input_size_ << ", the size of output: " << output_size_;
     }
     InitSizeLists();

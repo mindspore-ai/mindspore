@@ -95,12 +95,12 @@ class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_count;
     }
 
     size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_count != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of output should be 1, but got " << output_count;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of output must be 1, but got " << output_count;
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);

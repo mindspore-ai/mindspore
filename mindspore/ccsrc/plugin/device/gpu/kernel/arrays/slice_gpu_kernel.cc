@@ -204,7 +204,7 @@ void SliceGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
   size_t input_num = inputs.size();
   constexpr size_t kDynamicSliceInputNum = 3;
   if (input_num != 1 && input_num != kDynamicSliceInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1 or " << kDynamicSliceInputNum
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kDynamicSliceInputNum
                       << ", but got " << input_num;
   }
   if (input_num == kDynamicSliceInputNum) {
@@ -212,7 +212,7 @@ void SliceGpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
   }
   size_t output_num = outputs.size();
   if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
   }
   auto input_shape = inputs[0]->GetShapeVector();
   const size_t kInputNumUpperLimit = 7;
@@ -230,7 +230,7 @@ void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs)
   auto input_shape = inputs[0]->GetShapeVector();
   if (size_.size() != input_shape.size() || begin_.size() != input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of size, begin and input_x should be the same, but got the dimension "
+                      << "', the dimension of size, begin and input_x must be the same, but got the dimension "
                       << "of size: " << size_.size() << ", the dimension of begin: " << begin_.size()
                       << ", the dimension of input_x: " << input_shape.size();
   }
@@ -239,7 +239,7 @@ void SliceGpuKernelMod::ProccessAttr(const std::vector<KernelTensorPtr> &inputs)
       size_[i] = input_shape[i] - begin_[i];
     }
     if (input_shape[i] > 0 && size_[i] <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element of 'size' should be greater than 0, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the element of 'size' must be greater than 0, but got "
                         << "size[" << i << "]: " << size_[i];
     }
   }

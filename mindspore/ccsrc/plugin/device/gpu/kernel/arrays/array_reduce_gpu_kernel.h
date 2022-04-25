@@ -87,13 +87,13 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto type_name = TypeIdLabel(type_id);
     auto node_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if ((node_name == kReduceAnyOpName || node_name == kReduceAllOpName) && type_id != kNumberTypeBool) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input data type should be bool, but got " << type_name;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input data type must be bool, but got " << type_name;
     }
     data_type_ = GetCudnnDataType(type_name);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     constexpr size_t kDynamicAxisInputNum = 2;
     if (input_num != 1 && input_num != kDynamicAxisInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1 or " << kDynamicAxisInputNum
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1 or " << kDynamicAxisInputNum
                         << ", but got " << input_num;
     }
     if (input_num == kDynamicAxisInputNum) {
@@ -101,7 +101,7 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     auto inputA_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     if (is_dynamic_axis_ && AnfAlgo::IsDynamicShapeSkipExecute(kernel_node)) {

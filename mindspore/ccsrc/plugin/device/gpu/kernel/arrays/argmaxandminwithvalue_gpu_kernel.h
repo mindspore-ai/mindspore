@@ -59,7 +59,7 @@ class ArgMaxAndMinWithValueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int64_t dims = SizeToLong(shape.size());
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < -dims || axis >= dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be in the range [-" << dims << "," << dims
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis;
     }
     if (axis < 0) {
@@ -75,7 +75,7 @@ class ArgMaxAndMinWithValueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     bound_ = static_cast<S>(shape[axis]);
     if (shape[axis] != static_cast<size_t>(bound_)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of shape[axis] should be "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of shape[axis] must be "
                         << static_cast<size_t>(bound_) << ", but got " << shape[axis];
     }
     outerSize_ = 1;

@@ -60,12 +60,12 @@ class SpaceToDepthFwdKernelMod : public DeprecatedNativeGpuKernelMod {
     // check input num and output num
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
     }
 
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_num;
     }
     // check input_shape
     auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);

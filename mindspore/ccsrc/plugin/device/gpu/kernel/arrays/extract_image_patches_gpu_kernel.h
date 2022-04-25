@@ -86,11 +86,11 @@ class ExtractImagePatchesKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -112,7 +112,7 @@ class ExtractImagePatchesKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     if (input_shape.size() != 4 || output_shape.size() != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the dimension of input and output should be 4, but got the dimension of input: "
+                        << "', the dimension of input and output must be 4, but got the dimension of input: "
                         << input_shape.size() << ", the dimension of output: " << output_shape.size();
     }
     // transposed NHWC shape
@@ -124,7 +124,7 @@ class ExtractImagePatchesKernelMod : public DeprecatedNativeGpuKernelMod {
     auto rates = GetAttr<std::vector<int64_t>>(kernel_node, "rates");
     if (ksizes.size() != 4 || strides.size() != 4 || rates.size() != 4) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name
-                        << "', the size of 'ksizes', 'strides' and 'rates' should be 4, but got the size of 'ksizes': "
+                        << "', the size of 'ksizes', 'strides' and 'rates' must be 4, but got the size of 'ksizes': "
                         << ksizes.size() << ", the size of 'strides': " << strides.size()
                         << ", the size of 'rates': " << rates.size();
     }
@@ -162,8 +162,7 @@ class ExtractImagePatchesKernelMod : public DeprecatedNativeGpuKernelMod {
       row_padding_top_ = ((output_rows_ - 1) * stride_row_ + patch_rows_eff - input_row_size_) / kMidDividend;
       col_padding_left_ = ((output_cols_ - 1) * stride_col_ + patch_cols_eff - input_col_size_) / kMidDividend;
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'padding' should be 'VALID' or 'SAME', but got "
-                        << padding;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'padding' must be 'VALID' or 'SAME', but got " << padding;
     }
 
     row_stride_ = ksize_col_;

@@ -100,11 +100,11 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
     // check input_shape
@@ -134,8 +134,8 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         auto tmp_shape = input_shape[idx_i + PADDING_SHAPE_1] + paddings_[idx_i][0] + paddings_[idx_i][1];
         if ((tmp_shape % block_size_) != 0) {
           MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                            << "', padded shape should be divisible by block_size, , but got padded shape: "
-                            << tmp_shape << ", block_size: " << block_size_;
+                            << "', padded shape must be divisible by block_size, , but got padded shape: " << tmp_shape
+                            << ", block_size: " << block_size_;
         }
         if ((tmp_shape / block_size_) == 0) {
           MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', padded shape cannot be less than block_size"
