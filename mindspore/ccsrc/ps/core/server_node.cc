@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 #include "ps/core/server_node.h"
-#include "ps/core/communicator/tcp_communicator.h"
+
 #include "ps/core/communicator/http_communicator.h"
+#include "ps/core/communicator/tcp_communicator.h"
 
 namespace mindspore {
 namespace ps {
@@ -31,6 +32,7 @@ bool ServerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start server node timeout!";
     return false;
   }
+  is_recover = false;
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Server start]: 5. Successfully start server node!";
   return true;
@@ -43,7 +45,8 @@ void ServerNode::Initialize() {
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
-    if (!Recover()) {
+    is_recover = Recover();
+    if (!is_recover) {
       MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }

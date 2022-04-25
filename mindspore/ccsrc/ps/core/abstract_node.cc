@@ -39,6 +39,7 @@ AbstractNode::~AbstractNode() {
     server_thread_->join();
   }
 }
+
 void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
@@ -51,6 +52,7 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   register_message.set_role(node_info_.node_role_);
   register_message.set_ip(node_info_.ip_);
   register_message.set_port(node_info_.port_);
+  register_message.set_is_recover(is_recover.load());
   register_message.set_fl_iteration_num(PSContext::instance()->fl_iteration_num());
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -758,7 +760,6 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
     MS_LOG(DEBUG) << "The node id:" << info.node_id_ << ", the rank id:" << info.rank_id_
                   << ", the node role:" << CommUtil::NodeRoleToString(info.node_role_) << " is alive:" << info.is_alive;
   }
-
   bool is_worker = heartbeat_resp_message.is_worker();
   bool is_ps_mode = PSContext::instance()->server_mode() == ps::kServerModePS;
   bool not_enable_recover_node_timeout = (is_worker && is_ps_mode);
