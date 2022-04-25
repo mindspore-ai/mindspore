@@ -88,7 +88,7 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   // Register and initialize the actor route table service.
   void RegisterActorRouteTableServiceHandler();
   void InitializeActorRouteTableService();
-  void InitEventTxtFile();
+  virtual void InitEventTxtFile();
 
   // Register collective communication initialization service.
   virtual void RegisterInitCollectCommServiceHandler() {}
@@ -207,7 +207,7 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   bool RecoverScheduler();
 
   // Write scheduler restart error message
-  void RecordSchedulerRestartInfo();
+  virtual void RecordSchedulerRestartInfo();
 
   void PersistMetaData();
 
