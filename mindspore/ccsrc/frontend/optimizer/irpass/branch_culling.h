@@ -37,15 +37,33 @@ class SwitchSimplify : public OptimizerCaller {
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> cond, true_br, false_br;
     auto SwitchSimplLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
-      auto cond_value_ = GetValue<bool>(GetValueNode(cond.GetNode(node)));
-      if (cond_value_) {
+      auto value_ptr = GetValueNode(cond.GetNode(node));
+      bool cond_value;
+      if (value_ptr->isa<BoolImm>()) {
+        cond_value = GetValue<bool>(value_ptr);
+      } else if (value_ptr->isa<tensor::Tensor>()) {
+        auto tensor = GetValue<tensor::TensorPtr>(value_ptr);
+        if (tensor == nullptr || tensor->isa<AnyValue>() || !tensor->Dtype()->isa<Bool>()) {
+          MS_LOG(EXCEPTION) << "Not support this condition value: " << value_ptr->ToString();
+        }
+        auto *bool_value = static_cast<bool *>(tensor->data_c());
+        cond_value = *bool_value;
+      } else {
+        MS_LOG(EXCEPTION) << "Not support this condition value: " << value_ptr->ToString();
+      }
+
+      MS_LOG(DEBUG) << "condition value: " << value_ptr->ToString() << " bool:" << cond_value;
+      if (cond_value) {
         return true_br.GetNode(node);
       }
       return false_br.GetNode(node);
     };
 
+    auto IsDeterminateCondition = [](const AnfNodePtr &node) -> bool {
+      return IsValueNode<BoolImm>(node) || IsValueNode<tensor::Tensor>(node);
+    };
     MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), SwitchSimplLambda,
-                            cond.CheckFunc(IsValueNode<BoolImm>, node));
+                            cond.CheckFunc(IsDeterminateCondition, node));
 
     return nullptr;
   }
