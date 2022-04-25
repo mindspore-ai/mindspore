@@ -40,9 +40,7 @@
 #include "src/common/utils.h"
 #include "include/api/types.h"
 #include "include/api/model.h"
-#ifdef ENABLE_OPENGL_TEXTURE
 #include "tools/common/opengl_util.h"
-#endif
 #ifdef PARALLEL_INFERENCE
 #include "include/api/model_parallel_runner.h"
 #endif
@@ -65,7 +63,6 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int CompileGraph(ModelType model_type, const std::shared_ptr<Context> &context, const std::string &model_name);
 
-#ifdef ENABLE_OPENGL_TEXTURE
   int GenerateGLTexture(std::map<std::string, GLuint> *inputGlTexture);
 
   int LoadAndBindGLTexture();
@@ -74,7 +71,6 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
 
   int FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::MSTensor *tensor, std::string name,
                             void *data = nullptr);
-#endif
 
   // call GenerateRandomData to fill inputTensors
   int LoadInput() override;
@@ -125,9 +121,7 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   void UpdateConfigInfo();
 
  private:
-#ifdef ENABLE_OPENGL_TEXTURE
   mindspore::OpenGL::OpenGLRuntime gl_runtime_;
-#endif
   mindspore::Model ms_model_;
   std::vector<mindspore::MSTensor> ms_inputs_for_api_;
   std::vector<mindspore::MSTensor> ms_outputs_for_api_;

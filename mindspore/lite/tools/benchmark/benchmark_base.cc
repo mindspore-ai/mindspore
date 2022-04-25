@@ -399,9 +399,8 @@ int BenchmarkBase::Init() {
   MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
   MS_LOG(INFO) << "EnableParallel = " << this->flags_->enable_parallel_;
   MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
-#ifdef ENABLE_OPENGL_TEXTURE
   MS_LOG(INFO) << "EnableGLTexture = " << this->flags_->enable_gl_texture_;
-#endif
+
   std::cout << "ModelPath = " << this->flags_->model_file_ << std::endl;
   std::cout << "ModelType = " << this->flags_->model_type_ << std::endl;
   std::cout << "InDataPath = " << this->flags_->in_data_file_ << std::endl;
@@ -416,21 +415,18 @@ int BenchmarkBase::Init() {
   std::cout << "Fp16Priority = " << this->flags_->enable_fp16_ << std::endl;
   std::cout << "EnableParallel = " << this->flags_->enable_parallel_ << std::endl;
   std::cout << "calibDataPath = " << this->flags_->benchmark_data_file_ << std::endl;
-#ifdef ENABLE_OPENGL_TEXTURE
   std::cout << "EnableGLTexture = " << this->flags_->enable_gl_texture_ << std::endl;
-#endif
   if (this->flags_->loop_count_ < 1) {
     MS_LOG(ERROR) << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0";
     std::cerr << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0" << std::endl;
     return RET_ERROR;
   }
-#ifdef ENABLE_OPENGL_TEXTURE
+
   if (this->flags_->enable_gl_texture_ == true && this->flags_->device_ != "GPU") {
     MS_LOG(ERROR) << "device must be GPU if you want to enable GLTexture";
     std::cerr << "ERROR: device must be GPU if you want to enable GLTexture" << std::endl;
     return RET_ERROR;
   }
-#endif
 
   auto thread_ret = CheckThreadNumValid();
   if (thread_ret != RET_OK) {
