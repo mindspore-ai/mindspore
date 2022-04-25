@@ -38,7 +38,22 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     }
   }
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    MATCH_REPLACE(node, x + zero_, x);                                                           // Add by zero
+    auto IsSameShape = [node](const AnfNodePtr &real_x) {
+      if (real_x->abstract() != nullptr && real_x->abstract()->GetShapeTrack() != nullptr &&
+          node->abstract() != nullptr && node->abstract()->GetShapeTrack() != nullptr &&
+          *real_x->abstract()->GetShapeTrack() == *node->abstract()->GetShapeTrack()) {
+        MS_LOG(DEBUG) << "Can simplify when their shapes are same: real_x shape:"
+                      << real_x->abstract()->GetShapeTrack()->ToString()
+                      << ", node shape: " << node->abstract()->GetShapeTrack()->ToString();
+        return true;
+      }
+      MS_LOG(DEBUG) << "Cannot simplify when their shapes are not same: real_x shape:"
+                    << real_x->abstract()->GetShapeTrack()->ToString()
+                    << ", node shape: " << node->abstract()->GetShapeTrack()->ToString();
+      return false;
+    };
+    MATCH_REPLACE_IF(node, x + zero_, x, x.CheckFunc(IsSameShape, node));  // Add by zero
+
     MATCH_REPLACE(node, x + zero_scalar_, x);                                                    // Add by zero
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarAdd, x, zero_scalar_, true), x);          // Scalar Add by zero
     MATCH_REPLACE_IF(node, x * one_, any_const.WithValueOf(x), !one_.CheckFunc(IsParam, node));  // Multiply by one
