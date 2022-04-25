@@ -1,4 +1,4 @@
-.. py:class:: mindspore.train.callback.History(has_trained_epoch=0)
+.. py:class:: mindspore.train.callback.History
 
     将网络输出的相关信息记录到 `History` 对象中。
 
