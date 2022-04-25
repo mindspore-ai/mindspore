@@ -150,8 +150,6 @@ void ReshapeKernelMod::Execute() {
       MS_LOG(EXCEPTION) << "Execute ReshapeKernel memcpy_s failed";
     }
   } else {
-    // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime();
     if (!output_addr->AsyncDeviceToDevice(output_shapes, input_size_byte, address_x->type_id(), address_x->GetPtr(),
                                           address_x->format())) {
       MS_LOG(EXCEPTION) << "Host Reshape sync device to device failed.";
@@ -179,7 +177,7 @@ void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std:
 
   size_t input_size_byte = LongToSize(GetArrProd(cnode)) * abstract::TypeIdSize(type_x);
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime(stream_);
   auto status =
     rtMemcpyAsync(output_addr, outputs[0]->size, address_x, input_size_byte, RT_MEMCPY_DEVICE_TO_DEVICE, stream_);
   if (status != RT_ERROR_NONE) {

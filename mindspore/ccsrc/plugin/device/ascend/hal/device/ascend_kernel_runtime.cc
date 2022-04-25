@@ -1114,6 +1114,8 @@ bool AscendKernelRuntime::SyncStream() {
   SetCurrentContext();
   session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &iter : stream_id_map_) {
+    // cppcheck-suppress unreadVariable
+    auto lock = device::KernelRuntime::LockRuntime(iter.second);
     if (rtStreamSynchronize(iter.second) != RT_ERROR_NONE) {  // o for switch stream
       MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
       return false;
@@ -1145,6 +1147,8 @@ bool AscendKernelRuntime::MemcpyAsync(void *dst, const void *src, uint64_t size,
     MS_LOG(ERROR) << "rtMemcpyAsync size is 0, copy kind:" << kind;
     return false;
   }
+  // cppcheck-suppress unreadVariable
+  auto lock = device::KernelRuntime::LockRuntime(stream_);
   if (RT_ERROR_NONE != rtMemcpyAsync(dst, size, src, size, static_cast<rtMemcpyKind_t>(kind), stream_)) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error.";
     return false;

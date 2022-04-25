@@ -77,9 +77,11 @@ KernelRuntime::~KernelRuntime() {
   communication_stream_ = nullptr;
 }
 
-std::lock_guard<std::mutex> KernelRuntime::LockRuntime() {
-  static std::mutex mutex;
-  return std::lock_guard<std::mutex>(mutex);
+std::lock_guard<std::mutex> KernelRuntime::LockRuntime(const void *stream) {
+  static std::mutex mu_;
+  static mindspore::HashMap<const void *, std::mutex> mu_for_streams_;
+  std::lock_guard<std::mutex> lock(mu_);
+  return std::lock_guard<std::mutex>(mu_for_streams_[stream]);
 }
 
 bool KernelRuntime::Load(const session::KernelGraph &, bool) {

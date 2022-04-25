@@ -139,7 +139,7 @@ class KernelRuntime {
   void AssignDynamicMemory(const session::KernelGraph &graph);
 
   // lock runtime
-  static std::lock_guard<std::mutex> LockRuntime();
+  static std::lock_guard<std::mutex> LockRuntime(const void *stream);
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
