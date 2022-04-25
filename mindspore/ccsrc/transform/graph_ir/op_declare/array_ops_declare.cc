@@ -104,11 +104,17 @@ ATTR_MAP(EditDistance) = {{"normalize", ATTR_DESC(normalize, AnyTraits<bool>())}
 OUTPUT_MAP(EditDistance) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(EditDistance, kNameEditDistance, ADPT_DESC(EditDistance))
 
-// NonZero
-INPUT_MAP(NonZero) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(NonZero) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
-OUTPUT_MAP(NonZero) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(NonZero, kNameNonZero, ADPT_DESC(NonZero))
+// NonZeroWithValue
+INPUT_MAP(NonZeroWithValue) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(NonZeroWithValue) = {{"transpose", ATTR_DESC(transpose, AnyTraits<bool>())}};
+OUTPUT_MAP(NonZeroWithValue) = {{0, OUTPUT_DESC(value)}, {1, OUTPUT_DESC(index)}, {2, OUTPUT_DESC(count)}};
+REG_ADPT_DESC(NonZeroWithValue, kNameNonZeroWithValue, ADPT_DESC(NonZeroWithValue))
+
+// NonZeroWithValueShape
+INPUT_MAP(NonZeroWithValueShape) = {{1, INPUT_DESC(value)}, {2, INPUT_DESC(index)}, {3, INPUT_DESC(count)}};
+ATTR_MAP(NonZeroWithValueShape) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(NonZeroWithValueShape) = {{0, OUTPUT_DESC(out_value)}, {1, OUTPUT_DESC(out_index)}};
+REG_ADPT_DESC(NonZeroWithValueShape, kNameNonZeroWithValueShape, ADPT_DESC(NonZeroWithValueShape))
 
 // Unsqueeze
 INPUT_MAP(Unsqueeze) = {{1, INPUT_DESC(x)}};

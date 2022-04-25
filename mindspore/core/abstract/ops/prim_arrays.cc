@@ -244,30 +244,6 @@ AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitiveP
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
 }
 
-AbstractBasePtr InferImplNonZero(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  const size_t size_expected = 1;
-  CheckArgsSize(op_name, args_spec_list, size_expected);
-  AbstractTensorPtr x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  auto x_shape = x->shape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  ShapeVector y_shape;
-
-  int64_t rank_base = SizeToLong(x_shape->shape().size());
-  int64_t max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
-
-  (void)y_shape.emplace_back(rank_base);
-  // Indices of elements that are non-zero
-  (void)y_shape.emplace_back(Shape::SHP_ANY);
-
-  ShapeVector min_shape = {rank_base, 1};
-  ShapeVector max_shape = {rank_base, max_size};
-
-  return std::make_shared<AbstractTensor>(kInt64, std::make_shared<Shape>(y_shape, min_shape, max_shape));
-}
-
 AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // inputs: a 1-d Tensor
