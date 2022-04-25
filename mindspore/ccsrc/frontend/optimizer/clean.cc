@@ -53,7 +53,7 @@ using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
 
 namespace {
-static constexpr size_t kMaxSeqRecursiveDepth = 5;
+static constexpr size_t kMaxSeqRecursiveDepth = 6;
 void CheckInputsSize(const CNodePtr &cnode, size_t expect_size) {
   if (cnode->size() != expect_size) {
     std::string op_name = GetCNodeFuncName(cnode);
