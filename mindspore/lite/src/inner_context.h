@@ -47,9 +47,7 @@ struct InnerContext : public Context {
 
   bool IsGpuFloat16Enabled() const;
 
-#ifdef ENABLE_OPENGL_TEXTURE
   bool IsGLTextureEnabled() const;
-#endif
 
   bool IsDeviceTypeEnabled(DeviceType type) const;
 

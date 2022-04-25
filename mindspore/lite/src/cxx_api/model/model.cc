@@ -312,16 +312,14 @@ std::vector<MSTensor> Model::GetOutputs() {
   return impl_->GetOutputs();
 }
 
-#ifdef ENABLE_OPENGL_TEXTURE
-Status Model::BindGLTexture2DMemory(const std::map<std::string, GLuint> &inputGLTexture,
-                                    std::map<std::string, GLuint> *outputGLTexture) {
+Status Model::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
+                                    std::map<std::string, unsigned int> *outputGLTexture) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model implement is null.";
     return kLiteError;
   }
   return impl_->BindGLTexture2DMemory(inputGLTexture, outputGLTexture);
 }
-#endif
 
 MSTensor Model::GetInputByTensorName(const std::vector<char> &name) {
   if (impl_ == nullptr) {
