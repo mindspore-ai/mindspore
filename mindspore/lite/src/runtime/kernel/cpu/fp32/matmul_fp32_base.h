@@ -67,6 +67,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int PackMatrixB();
   int PackMatrixAImpl();
   int PackMatrixBImpl();
+  int PackMatrixAImplOpt();
   int PackBiasMatrix();
   void FreePackedMatrixA();
   void FreePackedMatrixB();
@@ -99,6 +100,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   MatrixInfo matrix_a_;
   MatrixInfo matrix_b_;
   MatrixInfo matrix_c_;
+  bool pack_opt_{false};  // indicate whether packing can be multi-threads, currently, only support in ARM64 && packA.
   MatrixPackFun matrix_a_pack_fun_ = nullptr;
   MatrixPackFun matrix_b_pack_fun_ = nullptr;
 };
