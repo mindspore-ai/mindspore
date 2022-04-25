@@ -220,7 +220,11 @@ def test_for_in_if_numpy_print():
     np.all(out.asnumpy() == np.array([7, 9, 1]))
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_in_if_isinstance_raise():
     """
     Feature: JIT Fallback
@@ -236,7 +240,7 @@ def test_for_in_if_isinstance_raise():
                 print("after add ", x)
         else:
             raise ValueError("The input is not Tensor.")
-        return Tensor(x)
+        return x
     input_x = Tensor(1)
     out = control_flow_for_in_if(input_x)
     assert out == 4
