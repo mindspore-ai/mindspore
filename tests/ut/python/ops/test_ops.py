@@ -3010,7 +3010,7 @@ test_case_array_ops = [
         'skip': ['backward'],
     }),
     ('Cummax', {
-        'block': P.Cummax(dim=-1),
+        'block': P.Cummax(axis=0),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])],
         'skip': ['backward'],
     }),
