@@ -135,7 +135,8 @@ class MS_API BenchmarkUnifiedApi : public BenchmarkBase {
   MSKernelCallBack ms_before_call_back_ = nullptr;
   MSKernelCallBack ms_after_call_back_ = nullptr;
 #ifdef PARALLEL_INFERENCE
-  std::vector<std::vector<mindspore::MSTensor>> all_inputs_;
+  std::vector<std::vector<int64_t>> resize_dims_;
+  std::vector<std::vector<void *>> all_inputs_data_;
   std::vector<std::vector<mindspore::MSTensor>> all_outputs_;
   std::atomic<bool> model_parallel_runner_ret_failed_{false};
   std::atomic<bool> runner_run_start_ = false;
