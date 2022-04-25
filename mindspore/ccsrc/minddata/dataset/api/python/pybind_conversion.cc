@@ -49,6 +49,16 @@ std::map<std::string, int32_t> toStringMap(const py::dict dict) {
   return map;
 }
 
+std::map<std::string, float> toStringFloatMap(const py::dict dict) {
+  std::map<std::string, float> map;
+  if (!dict.empty()) {
+    for (auto p : dict) {
+      (void)map.emplace(toString(p.first), toFloat(p.second));
+    }
+  }
+  return map;
+}
+
 std::vector<std::string> toStringVector(const py::list list) {
   std::vector<std::string> vector;
   if (!list.empty()) {

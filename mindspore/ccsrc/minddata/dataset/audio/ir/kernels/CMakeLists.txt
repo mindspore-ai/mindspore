@@ -25,6 +25,7 @@ add_library(audio-ir-kernels OBJECT
         gain_ir.cc
         griffin_lim_ir.cc
         highpass_biquad_ir.cc
+        inverse_mel_scale_ir.cc
         lfilter_ir.cc
         lowpass_biquad_ir.cc
         magphase_ir.cc

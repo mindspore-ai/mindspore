@@ -286,6 +286,87 @@ def check_gain(method):
     return new_method
 
 
+def check_mel_scale_n_mels(n_mels):
+    """Wrapper method to check the parameters of n_mels."""
+    type_check(n_mels, (int,), "n_mels")
+    check_pos_int32(n_mels, "n_mels")
+
+
+def check_mel_scale_sample_rate(sample_rate):
+    """Wrapper method to check the parameters of sample_rate."""
+    type_check(sample_rate, (int,), "sample_rate")
+    check_pos_int32(sample_rate, "sample_rate")
+
+
+def check_mel_scale_freq(f_min, f_max, sample_rate):
+    """Wrapper method to check the parameters of f_min and f_max."""
+    type_check(f_min, (int, float), "f_min")
+    check_float32(f_min, "f_min")
+
+    if f_max is not None:
+        type_check(f_max, (int, float), "f_max")
+        check_pos_float32(f_max, "f_max")
+        if f_min >= f_max:
+            raise ValueError("MelScale: f_max should be greater than f_min.")
+    else:
+        if f_min >= sample_rate // 2:
+            raise ValueError("MelScale: sample_rate // 2 should be greater than f_min when f_max is set to None.")
+
+
+def check_mel_scale_n_stft(n_stft):
+    """Wrapper method to check the parameters of n_stft."""
+    type_check(n_stft, (int,), "n_stft")
+    check_pos_int32(n_stft, "n_stft")
+
+
+def check_mel_scale_norm(norm):
+    """Wrapper method to check the parameters of norm."""
+    type_check(norm, (NormType,), "norm")
+
+
+def check_mel_scale_mel_type(mel_type):
+    """Wrapper method to check the parameters of mel_type."""
+    type_check(mel_type, (MelType,), "mel_type")
+
+
+def check_inverse_mel_scale(method):
+    """Wrapper method to check the parameters of InverseMelScale."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [n_stft, n_mels, sample_rate, f_min, f_max, max_iter, tolerance_loss, tolerance_change, sgdargs, norm,
+         mel_type], _ = parse_user_args(method, *args, **kwargs)
+        check_mel_scale_n_mels(n_mels)
+        check_mel_scale_sample_rate(sample_rate)
+        check_mel_scale_freq(f_min, f_max, sample_rate)
+        check_mel_scale_n_stft(n_stft)
+        check_mel_scale_norm(norm)
+        check_mel_scale_mel_type(mel_type)
+
+        type_check(max_iter, (int,), "max_iter")
+        check_pos_int32(max_iter, "max_iter")
+
+        type_check(tolerance_loss, (int, float), "tolerance_loss")
+        check_pos_float32(tolerance_loss, "tolerance_loss")
+
+        type_check(tolerance_change, (int, float), "tolerance_change")
+        check_pos_float32(tolerance_change, "tolerance_change")
+
+        if sgdargs is not None:
+            sgd_lr = sgdargs["sgd_lr"]
+            sgd_momentum = sgdargs["sgd_momentum"]
+
+            type_check(sgd_lr, (int, float), "sgd_lr")
+            check_non_negative_float32(sgd_lr, "sgd_lr")
+
+            type_check(sgd_momentum, (int, float), "sgd_momentum")
+            check_non_negative_float32(sgd_momentum, "sgd_momentum")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_lfilter(method):
     """Wrapper method to check the parameters of LFilter."""
 
@@ -519,31 +600,12 @@ def check_mel_scale(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [n_mels, sample_rate, f_min, f_max, n_stft, norm, mel_type], _ = parse_user_args(method, *args, **kwargs)
-
-        type_check(n_mels, (int,), "n_mels")
-        check_pos_int32(n_mels, "n_mels")
-
-        type_check(sample_rate, (int,), "sample_rate")
-        check_pos_int32(sample_rate, "sample_rate")
-
-        type_check(f_min, (int, float), "f_min")
-        check_float32(f_min, "f_min")
-
-        if f_max is not None:
-            type_check(f_max, (int, float), "f_max")
-            check_pos_float32(f_max, "f_max")
-            if f_min >= f_max:
-                raise ValueError("MelScale: f_max should be greater than f_min.")
-        else:
-            if f_min >= sample_rate // 2:
-                raise ValueError("MelScale: sample_rate // 2 should be greater than f_min when f_max is set to None.")
-
-        type_check(n_stft, (int,), "n_stft")
-        check_pos_int32(n_stft, "n_stft")
-
-        type_check(norm, (NormType,), "norm")
-
-        type_check(mel_type, (MelType,), "mel_type")
+        check_mel_scale_n_mels(n_mels)
+        check_mel_scale_sample_rate(sample_rate)
+        check_mel_scale_freq(f_min, f_max, sample_rate)
+        check_mel_scale_n_stft(n_stft)
+        check_mel_scale_norm(norm)
+        check_mel_scale_mel_type(mel_type)
 
         return method(self, *args, **kwargs)
 

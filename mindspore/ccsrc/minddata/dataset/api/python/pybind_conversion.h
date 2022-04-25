@@ -55,6 +55,8 @@ std::set<std::string> toStringSet(const py::list list);
 
 std::map<std::string, int32_t> toStringMap(const py::dict dict);
 
+std::map<std::string, float> toStringFloatMap(const py::dict dict);
+
 std::vector<std::string> toStringVector(const py::list list);
 
 std::vector<pid_t> toIntVector(const py::list input_list);

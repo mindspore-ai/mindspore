@@ -2050,5 +2050,106 @@ Status GriffinLim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> 
                                   momentum, length, rand_init, rnd);
   }
 }
+
+template <typename T>
+Status InverseMelScaleImpl(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
+                           int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
+                           float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum,
+                           NormType norm, MelType mel_type, std::mt19937 rnd) {
+  f_max = f_max == 0 ? static_cast<T>(std::floor(sample_rate / 2)) : f_max;
+  // create fb mat <freq, n_mels>
+  std::shared_ptr<Tensor> freq_bin_mat;
+  RETURN_IF_NOT_OK(CreateFbanks(&freq_bin_mat, n_stft, f_min, f_max, n_mels, sample_rate, norm, mel_type));
+
+  auto fb_ptr = &*freq_bin_mat->begin<float>();
+  Eigen::Map<Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>> matrix_fb(fb_ptr, n_mels, n_stft);
+  // pack melspec <n, n_mels, time>
+  TensorShape input_shape = input->shape();
+  TensorShape input_reshape({input->Size() / input_shape[-1] / input_shape[-2], input_shape[-2], input_shape[-1]});
+  RETURN_IF_NOT_OK(input->Reshape(input_reshape));
+  CHECK_FAIL_RETURN_UNEXPECTED(n_mels == input_shape[-1 * TWO],
+                               "InverseMelScale: n_mels must be equal to the penultimate dimension of input.");
+
+  int time = input_shape[-1];
+  int freq = matrix_fb.cols();
+  // input matrix 3d
+  std::vector<T> specgram;
+  // engine for random matrix
+  std::uniform_real_distribution<T> dist(0, 1);
+  for (int channel = 0; channel < input_reshape[0]; channel++) {
+    // slice by first dimension
+    auto data_ptr = &*input->begin<T>();
+    Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>> input_channel(data_ptr + time * n_mels * channel, time,
+                                                                               n_mels);
+    // init specgram at n=channel
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_channel =
+      Eigen::MatrixXd::Zero(time, freq).unaryExpr([&rnd, &dist](double dummy) { return dist(rnd); });
+    std::vector<T> vec_channel(mat_channel.data(), mat_channel.data() + mat_channel.size());
+    std::shared_ptr<Tensor> param_channel;
+    TensorShape output_shape = TensorShape({freq, time});
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(vec_channel, TensorShape({freq * time}), &param_channel));
+    // sgd
+    T loss = std::numeric_limits<T>::max();
+    for (int epoch = 0; epoch < max_iter; epoch++) {
+      auto pred = mat_channel * (matrix_fb.transpose().template cast<T>());
+      // cal loss with pred and gt
+      auto diff = input_channel - pred;
+      T new_loss = diff.array().square().mean();
+      // cal grad
+      auto grad = diff * (matrix_fb.template cast<T>()) * (-1) / time;
+      Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_grad = grad;
+      std::vector<T> vec_grad(mat_grad.data(), mat_grad.data() + mat_grad.size());
+      std::shared_ptr<Tensor> tensor_grad;
+      RETURN_IF_NOT_OK(Tensor::CreateFromVector(vec_grad, TensorShape({grad.size()}), &tensor_grad));
+
+      std::shared_ptr<Tensor> nspec;
+      RETURN_IF_NOT_OK(SGD<T>(param_channel, &nspec, tensor_grad, sgd_lr, sgd_momentum));
+
+      T diff_loss = std::abs(loss - new_loss);
+      if ((new_loss < tolerance_loss) || (diff_loss < tolerance_change)) {
+        break;
+      }
+      loss = new_loss;
+      data_ptr = &*nspec->begin<T>();
+      mat_channel = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>>(data_ptr, time, freq);
+      // use new mat_channel to update param_channel
+      RETURN_IF_NOT_OK(Tensor::CreateFromTensor(nspec, &param_channel));
+    }
+    // clamp and transpose
+    auto res = mat_channel.cwiseMax(0);
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> mat_res = res;
+    std::vector<T> spec_channel(mat_res.data(), mat_res.data() + mat_res.size());
+    specgram.insert(specgram.end(), spec_channel.begin(), spec_channel.end());
+  }
+  std::shared_ptr<Tensor> final_out;
+  if (input_shape.Size() > TWO) {
+    std::vector<int64_t> out_shape_vec = input_shape.AsVector();
+    out_shape_vec[input_shape.Size() - 1] = time;
+    out_shape_vec[input_shape.Size() - TWO] = freq;
+    TensorShape output_shape(out_shape_vec);
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(specgram, output_shape, &final_out));
+  } else {
+    TensorShape output_shape = TensorShape({input_reshape[0], freq, time});
+    RETURN_IF_NOT_OK(Tensor::CreateFromVector(specgram, output_shape, &final_out));
+  }
+  *output = final_out;
+  return Status::OK();
+}
+
+Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
+                       int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
+                       float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
+                       MelType mel_type, std::mt19937 rnd) {
+  std::shared_ptr<Tensor> input_tensor;
+  if (input->type() != DataType::DE_FLOAT64) {
+    RETURN_IF_NOT_OK(TypeCast(input, &input_tensor, DataType(DataType::DE_FLOAT32)));
+    return InverseMelScaleImpl<float>(input_tensor, output, n_stft, n_mels, sample_rate, f_min, f_max, max_iter,
+                                      tolerance_loss, tolerance_change, sgd_lr, sgd_momentum, norm, mel_type, rnd);
+  } else {
+    input_tensor = input;
+    return InverseMelScaleImpl<double>(input_tensor, output, n_stft, n_mels, sample_rate, f_min, f_max, max_iter,
+                                       tolerance_loss, tolerance_change, sgd_lr, sgd_momentum, norm, mel_type, rnd);
+  }
+}
 }  // namespace dataset
 }  // namespace mindspore

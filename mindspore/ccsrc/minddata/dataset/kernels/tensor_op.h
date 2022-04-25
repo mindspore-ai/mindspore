@@ -170,6 +170,7 @@ constexpr char kFrequencyMaskingOp[] = "FrequencyMaskingOp";
 constexpr char kGainOp[] = "GainOp";
 constexpr char kGriffinLimOp[] = "GriffinLimOp";
 constexpr char kHighpassBiquadOp[] = "HighpassBiquadOp";
+constexpr char kInverseMelScaleOp[] = "InverseMelScaleOp";
 constexpr char kLFilterOp[] = "LFilterOp";
 constexpr char kLowpassBiquadOp[] = "LowpassBiquadOp";
 constexpr char kMagphaseOp[] = "MagphaseOp";
