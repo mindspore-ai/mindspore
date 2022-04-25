@@ -1,0 +1,65 @@
+.. py:method:: shift
+    :property:
+
+    Return the shift parameter of the bijector.
+
+    **Returns**
+
+    Tensor, the shift parameter of the bijector.
+
+.. py:method:: scale
+    :property:
+
+    Return the scale parameter of the bijector.
+
+    **Returns**
+
+    Tensor, the scale parameter of the bijector.
+
+.. py:method:: forward(value)
+
+    forward mapping, compute the value after mapping as :math:`Y = g(X)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+
+    **Returns**
+
+    Tensor, the value to compute.
+
+.. py:method:: forward_log_jacobian(value)
+
+    compute the log value after mapping, namely :math:`\log(dg(x) / dx)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+
+    **Returns**
+
+    Tensor, the log value of forward mapping.
+
+.. py:method:: inverse(value)
+
+    Inverse mapping, compute the value after inverse mapping as :math:`X = g(value)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value of output after mapping.
+
+    **Returns**
+
+    Tensor, the value of output after mapping.
+
+.. py:method:: inverse_log_jacobian(value)
+
+    Compute the log value of the inverse mapping, namely :math:`\log(dg^{-1}(x) / dx)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value of output after mapping.
+
+    **Returns**
+
+    Tensor, the log value of the inverse mapping.

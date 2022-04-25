@@ -1,0 +1,47 @@
+.. py:method:: forward(value)
+
+    forward mapping, compute the value after mapping as :math:`Y = \exp(X)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+
+    **Returns**
+
+    Tensor, the value of output after mapping.
+
+.. py:method:: forward_log_jacobian(value)
+
+    compute the log value after mapping, namely :math:`\log(d\exp(x) / dx)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value to compute.
+
+    **Returns**
+
+    Tensor, the log value of forward mapping.
+
+.. py:method:: inverse(value)
+
+    Inverse mapping, compute the value after inverse mapping as :math:`X = \log(Y)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value of output after mapping.
+
+    **Returns**
+
+    Tensor, the value to compute.
+
+.. py:method:: inverse_log_jacobian(value)
+
+    Compute the log value of the inverse mapping, namely :math:`\log(d\log(x) / dx)`.
+
+    **Parameters**
+
+    - **value** (Tensor) - the value of output after mapping.
+
+    **Returns**
+
+    Tensor, the log value of the inverse mapping.
