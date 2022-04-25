@@ -27,8 +27,32 @@ bool ModelWorker::IsAvailable() {
   return available_.compare_exchange_strong(expected, false);
 }
 
+void ModelWorker::WaitCreateWorkerDone() {
+  std::unique_lock<std::mutex> create_work_lock(create_work_done_mutex_);
+  while (!create_work_done_) {
+    create_work_done_condition_.wait(create_work_lock);
+  }
+  return;
+}
+
+void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size, int node_id,
+                                     const std::shared_ptr<Context> &model_context,
+                                     const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
+                                     bool *create_success) {
+  auto status = Init(model_buf, size, model_context);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "init failed in model worker.";
+    *create_success = false;
+    create_work_done_ = true;
+    create_work_done_condition_.notify_one();
+  }
+  Run(node_id, predict_task_queue);
+}
+
 void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue) {
   predict_task_queue_ = predict_task_queue;
+  create_work_done_ = true;
+  create_work_done_condition_.notify_one();
   while (!predict_task_queue->IsPredictTaskDone()) {
     auto task = predict_task_queue->GetPredictTask(node_id, this);
     if (task == nullptr) {
