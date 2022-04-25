@@ -1301,7 +1301,7 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
     js["code"] = kSuccessCode;
     js["result"] = true;
   } else {
-    js["message"] = "Start new instance failed.";
+    js["error_message"] = "Start new instance failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1432,7 +1432,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     PersistMetaData();
   } else {
-    js["message"] = "start enabling FL-Server failed.";
+    js["error_message"] = "start enabling FL-Server failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1503,7 +1503,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
     PersistMetaData();
   } else {
-    js["message"] = "start disabling FL-Server failed.";
+    js["error_message"] = "start disabling FL-Server failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
