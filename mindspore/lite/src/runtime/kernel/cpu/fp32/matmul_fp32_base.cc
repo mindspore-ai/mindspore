@@ -18,9 +18,12 @@
 #include <algorithm>
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/fp32/matmul_avx512_fp32.h"
-#endif
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_arm32.h"
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_arm64.h"
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_sse.h"
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_avx.h"
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_avx512.h"
+#include "src/runtime/kernel/cpu/fp32/matmul_fp32_common.h"
 
 using mindspore::lite::RET_NULL_PTR;
 
@@ -92,10 +95,15 @@ int MatmulFp32BaseCPUKernel::PackMatrixA() {
       return RET_OK;
     }
   }
+  return PackMatrixAImpl();
+}
+
+int MatmulFp32BaseCPUKernel::PackMatrixAImpl() {
   auto src_ptr =
     matrix_a_.has_origin ? matrix_a_.origin_ptr : reinterpret_cast<float *>(in_tensors_[FIRST_INPUT]->data());
   MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix-a source ptr is a nullptr.");
   MS_CHECK_TRUE_MSG(matrix_a_.pack_ptr != nullptr, RET_ERROR, "matrix-a pack ptr is a nullptr.");
+  MS_CHECK_TRUE_MSG(matrix_a_pack_fun_ != nullptr, RET_ERROR, "matrix-a func is a nullptr.");
   for (int i = 0; i < a_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
     float *dst = matrix_a_.pack_ptr + i * params_->deep_ * params_->row_align_;
@@ -140,10 +148,15 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
       return RET_OK;
     }
   }
+  return PackMatrixBImpl();
+}
+
+int MatmulFp32BaseCPUKernel::PackMatrixBImpl() {
   auto src_ptr =
     matrix_b_.has_origin ? matrix_b_.origin_ptr : reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data());
   MS_CHECK_TRUE_MSG(src_ptr != nullptr, RET_ERROR, "matrix-b source ptr is a nullptr.");
   MS_CHECK_TRUE_MSG(matrix_b_.pack_ptr != nullptr, RET_ERROR, "matrix-b pack ptr is a nullptr.");
+  MS_CHECK_TRUE_MSG(matrix_b_pack_fun_ != nullptr, RET_ERROR, "matrix-b func is a nullptr.");
   for (int i = 0; i < b_batch_; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
     float *dst = matrix_b_.pack_ptr + i * params_->deep_ * params_->col_align_;
@@ -202,67 +215,6 @@ int MatmulFp32BaseCPUKernel::PackBiasMatrix() {
   return RET_OK;
 }
 
-int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
-  int start_batch = task_id * batch_stride_;
-  int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
-
-  for (int index = start_batch; index < end_batch; ++index) {
-    const float *a = matrix_a_.pack_ptr + a_offset_[index] * params_->row_align_ * params_->deep_;
-    const float *b = matrix_b_.pack_ptr + b_offset_[index] * params_->deep_ * params_->col_align_;
-    float *c = output_data_ + index * params_->row_ * col_step_;
-
-    auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr;
-    if (params_->row_ == 1) {
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-      gemvCalFun(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_);
-#elif defined(ENABLE_ARM64)
-      MatVecMulFp32Neon64(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_);
-#elif defined(ENABLE_ARM32)
-      MatVecMulFp32Block4(a, b, c, bias, params_->act_type_, params_->deep_, col_step_);
-#else
-      MatVecMulFp32Block8(a, b, c, bias, params_->act_type_, params_->deep_, col_step_);
-#endif
-    } else {
-#if defined(ENABLE_AVX512) || defined(ENABLE_AVX)
-      gemmCalFun(a, b, c, bias, params_->act_type_, params_->deep_, col_step_, params_->col_align_, params_->row_);
-#else
-      MatMulOpt(a, b, c, bias, params_->act_type_, params_->deep_, params_->row_, col_step_, params_->col_,
-                OutType_Nhwc);
-#endif
-    }
-  }
-  return RET_OK;
-}
-
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512) || defined(ENABLE_ARM64)
-int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
-  int start_row = row_split_points_[task_id];
-  int end_row = row_num_;
-  if (task_id < (thread_count_ - 1)) {
-    end_row = row_split_points_[task_id + 1];
-  }
-  int row_num = end_row - start_row;
-  if (row_num <= 0) {
-    return RET_OK;
-  }
-#if defined(ENABLE_AVX512)
-  const float *input = matrix_a_.pack_ptr + start_row * params_->deep_;
-  float *output = output_data_ + start_row * params_->col_align_;
-  MatMulAvx512Fp32(input, matrix_b_.pack_ptr, output, matrix_c_.pack_ptr, params_->act_type_, params_->deep_,
-                   params_->col_align_, params_->col_align_, row_num);
-#elif defined(ENABLE_AVX)
-  const float *input = matrix_a_.pack_ptr + start_row * params_->deep_;
-  float *output = output_data_ + start_row * params_->col_align_;
-  MatMulAvxFp32(input, matrix_b_.pack_ptr, output, matrix_c_.pack_ptr, params_->act_type_, params_->deep_,
-                params_->col_align_, params_->col_align_, row_num);
-#elif defined(ENABLE_ARM64)
-  GemmIsNotPackByRow(matrix_a_.pack_ptr, matrix_b_.pack_ptr, output_data_, matrix_c_.pack_ptr, start_row, end_row,
-                     params_->deep_);
-#endif
-  return RET_OK;
-}
-#endif
-
 int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
@@ -277,84 +229,6 @@ int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
     gemmIsNotPackFun(a, b, c, &bias, params_->row_, params_->deep_);
   }
   return RET_OK;
-}
-
-int MatmulFp32BaseCPUKernel::ParallelRunByOC(int task_id) const {
-  int current_start_oc = task_id * oc_stride_ * col_tile_;
-  int current_rest_oc = col_step_ - current_start_oc;
-  int cur_oc = MSMIN(oc_stride_ * col_tile_, current_rest_oc);
-  if (cur_oc <= 0) {
-    return RET_OK;
-  }
-  for (int i = 0; i < params_->batch; ++i) {
-    auto a = matrix_a_.pack_ptr + a_offset_[i] * params_->row_align_ * params_->deep_;
-    auto b =
-      matrix_b_.pack_ptr + b_offset_[i] * params_->deep_ * params_->col_align_ + current_start_oc * params_->deep_;
-    auto c = output_data_ + i * params_->row_ * col_step_ + current_start_oc;
-    auto bias = (matrix_c_.pack_ptr == nullptr) ? nullptr : matrix_c_.pack_ptr + current_start_oc;
-    if (params_->row_ == 1) {
-#ifdef ENABLE_AVX512
-      MatVecMulAvx512Fp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
-#elif defined(ENABLE_AVX)
-      MatVecMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_);
-#elif defined(ENABLE_ARM64)
-      int rest_align_col = MSMIN(params_->col_align_ - current_start_oc, oc_stride_ * col_tile_);
-      MatVecMulFp32Neon64(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, rest_align_col);
-#elif defined(ENABLE_ARM32)
-      MatVecMulFp32Block4(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
-#else
-      MatVecMulFp32Block8(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc);
-#endif
-    } else {
-#ifdef ENABLE_AVX512
-      MatMulAvx512Fp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_, params_->row_);
-#elif defined(ENABLE_AVX)
-      MatMulAvxFp32(a, b, c, bias, params_->act_type_, params_->deep_, cur_oc, params_->col_align_, params_->row_);
-#else
-      MatMulOpt(a, b, c, bias, params_->act_type_, params_->deep_, params_->row_, cur_oc, params_->col_, OutType_Nhwc);
-#endif
-    }
-  }
-  return RET_OK;
-}
-
-void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
-  matrix_a_.need_pack = true;
-  matrix_b_.need_pack = true;
-#ifdef ENABLE_AVX512
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col64Major : RowMajor2Row64Major;
-  matrix_a_.need_pack = params_->a_transpose_;
-  row_tile_ = C1NUM;
-  col_tile_ = C16NUM;
-  gemmCalFun = MatMulAvx512Fp32;
-  gemvCalFun = MatVecMulAvx512Fp32;
-  out_need_aligned_ = true;
-#elif defined(ENABLE_AVX)
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col32Major : RowMajor2Row32Major;
-  matrix_a_.need_pack = params_->a_transpose_;
-  row_tile_ = C1NUM;
-  col_tile_ = C8NUM;
-  gemmCalFun = MatMulAvxFp32;
-  gemvCalFun = MatVecMulAvxFp32;
-  out_need_aligned_ = true;
-#elif defined(ENABLE_ARM32)
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col4Major : RowMajor2Row4Major;
-  row_tile_ = C12NUM;
-  col_tile_ = C4NUM;
-#elif defined(ENABLE_SSE)
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row4Major : RowMajor2Col4Major;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major : RowMajor2Row8Major;
-  row_tile_ = C4NUM;
-  col_tile_ = C8NUM;
-#else  // ARM64
-  matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2Row12Major : RowMajor2Col12Major;
-  matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2Col8Major : RowMajor2Row8Major;
-  row_tile_ = C12NUM;
-  col_tile_ = C8NUM;
-#endif
 }
 
 int MatmulFp32BaseCPUKernel::Prepare() {
@@ -446,14 +320,9 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
   }
   matrix_a_.pack_size = a_pack_size;
   matrix_b_.pack_size = b_pack_size;
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-  col_step_ = params_->col_align_;
-#else
-  // need not aligned
-  col_step_ = params_->col_;
-#endif
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
   out_need_aligned_ = (out_need_aligned_ && ((params_->col_ % col_tile_) != 0));
+  col_step_ = out_need_aligned_ ? params_->col_align_ : params_->col_;
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(a_batch_, params_->row_), RET_ERROR);
   row_num_ = a_batch_ * params_->row_;
   return RET_OK;
@@ -483,87 +352,53 @@ int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;
-  } else if (CheckThreadCuttingByRow()) {
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
-    GetThreadCuttingInfoByRow();
-#else
-    MS_LOG(ERROR) << "current branch only support avx.";
-    return RET_ERROR;
-#endif
-  } else {
-    thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_align_, col_tile_));
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)  // thread tile by col_tile * C4NUM
-    oc_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_ * C4NUM), thread_count_) * C4NUM;
-#else
-    oc_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
-#endif
-    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
-  }
-  if (params_->col_ == 1 && !params_->a_const_) {
+    if (params_->col_ != 1 || params_->a_const_) {
+      return RET_OK;
+    }
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch;
     if (params_->deep_ == 1) {
       gemmIsNotPackFun = GemmIsNotPack;
     } else {
       gemmIsNotPackFun = GemmIsNotPackOptimize;
-#ifdef ENABLE_ARM64
-      if (b_batch_ == 1) {
+      if (CheckThreadCuttingByRow()) {
         parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
         GetThreadCuttingInfoByRow();
       }
-#endif
     }
+    return RET_OK;
+  }
+  if (CheckThreadCuttingByRow()) {
+    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
+    GetThreadCuttingInfoByRow();
+  } else {
+    int total_col_unit = UP_DIV(params_->col_align_, col_min_unit_);
+    thread_count_ = MSMIN(op_parameter_->thread_num_, total_col_unit);
+    int block_col_unit = UP_DIV(total_col_unit, thread_count_);
+    split_points_.clear();
+    int split_point = 0;
+    while (split_point < total_col_unit) {
+      split_points_.push_back(split_point * col_min_unit_);
+      split_point += block_col_unit;
+    }
+    parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
   }
   return RET_OK;
 }
 
-bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() {
-  if (b_batch_ != C1NUM) {
-    return false;
-  }
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-  if (row_num_ >= op_parameter_->thread_num_) {
-    return true;
-  }
-#endif
-  return false;
-}
-
 void MatmulFp32BaseCPUKernel::GetThreadCuttingInfoByRow() {
-#if defined(ENABLE_ARM64)
-  int row_threshold = C4NUM;
-#elif defined(ENABLE_AVX512)
-  int row_threshold = C6NUM;
-  if (col_step_ < C48NUM) {
-    row_threshold = C12NUM;
-  } else if (col_step_ < C64NUM) {
-    row_threshold = C8NUM;
-  }
-#elif defined(ENABLE_AVX)
-  int row_threshold = C3NUM;
-  if (col_step_ < C16NUM) {
-    row_threshold = C8NUM;
-  } else if (col_step_ < C24NUM) {
-    row_threshold = C6NUM;
-  } else if (col_step_ < C32NUM) {
-    row_threshold = C4NUM;
-  }
-#else
-  int row_threshold = 1;
-#endif
-  int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, row_threshold);
-  int row_remaining = MSMAX(row_num_ - row_step * op_parameter_->thread_num_, 0);
-  row_split_points_.resize(op_parameter_->thread_num_);
-  for (size_t i = 0; i < row_split_points_.size(); ++i) {
-    if (i == 0) {
-      row_split_points_[i] = 0;
-      continue;
+  int row_step = MSMAX(row_num_ / op_parameter_->thread_num_, row_min_unit_);
+  int row_remaining = row_num_ - row_step * op_parameter_->thread_num_;
+  split_points_.clear();
+  int split_point = 0;
+  while (split_point < row_num_) {
+    split_points_.push_back(split_point);
+    split_point += row_step;
+    if (row_remaining > 0) {
+      ++split_point;
+      --row_remaining;
     }
-    row_split_points_[i] =
-      MSMIN(row_split_points_[i - 1] + row_step + (static_cast<int>(i) < row_remaining ? 1 : 0), row_num_);
   }
-  int unused_thread_num = std::count(row_split_points_.begin(), row_split_points_.end(), row_num_);
-  thread_count_ = op_parameter_->thread_num_ - unused_thread_num;
+  thread_count_ = split_points_.size();
 }
 
 int MatmulFp32BaseCPUKernel::Run() {

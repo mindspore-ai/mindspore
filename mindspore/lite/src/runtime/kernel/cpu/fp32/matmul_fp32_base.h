@@ -30,10 +30,6 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col);
-using GemmFun = void (*)(const float *a, const float *b, float *c, const float *bias, const int act_type,
-                         const int depth, const int cur_col, const int col_align, const int row);
-using GemvFun = void (*)(const float *a, const float *b, float *c, const float *bias, const int act_type,
-                         const int depth, const int cur_col, const int col_align);
 using GemmIsNotPackFun = void (*)(const float *a, const float *b, float *c, const float *bias, int m, int k);
 
 class MatmulFp32BaseCPUKernel : public LiteKernel {
@@ -53,24 +49,15 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
 
  private:
   struct MatrixInfo {
-    bool need_pack;
-    bool has_packed;  // only valid for constant, only do once throughout the process.
-    bool has_origin;  // only valid for constant, only true when failing to infer shape, then false after packing.
-    int pack_size;
-    float *origin_ptr;  // only valid for constant, which is synchronized with the 'has_origin'.
-    float *pack_ptr;
-    MatrixInfo()
-        : need_pack(false),
-          has_packed(false),
-          has_origin(false),
-          pack_size(-1),
-          origin_ptr(nullptr),
-          pack_ptr(nullptr) {}
+    bool need_pack{false};
+    bool has_packed{false};  // only valid for constant, only do once throughout the process.
+    bool has_origin{false};  // only valid for constant, only true when failing to infer shape, then false after packed.
+    int pack_size{-1};
+    float *origin_ptr{nullptr};  // only valid for constant, which is synchronized with the 'has_origin'.
+    float *pack_ptr{nullptr};
   };
 
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512) || defined(ENABLE_ARM64)
   int ParallelRunByRow(int task_id) const;
-#endif
   int ParallelRunByOC(int task_id) const;
   int ParallelRunByBatch(int task_id) const;
   int ParallelRunIsNotPackByBatch(int task_id) const;
@@ -78,6 +65,8 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   void InitGlobalVariable();
   int PackMatrixA();
   int PackMatrixB();
+  int PackMatrixAImpl();
+  int PackMatrixBImpl();
   int PackBiasMatrix();
   void FreePackedMatrixA();
   void FreePackedMatrixB();
@@ -98,18 +87,15 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int col_tile_ = 0;
   int row_tile_ = 0;
   int batch_stride_ = 0;
-  int oc_stride_ = 0;
+  int row_num_;
+  int row_min_unit_{1};
+  int col_min_unit_{1};
   int thread_count_ = 0;
   float *output_data_ = nullptr;
   bool out_need_aligned_ = false;
   int col_step_ = 0;
-#if defined(ENABLE_AVX) || defined(ENABLE_AVX512)
-  GemmFun gemmCalFun = nullptr;
-  GemvFun gemvCalFun = nullptr;
-#endif
   GemmIsNotPackFun gemmIsNotPackFun = nullptr;
-  int row_num_;
-  std::vector<int> row_split_points_;
+  std::vector<int> split_points_;
   MatrixInfo matrix_a_;
   MatrixInfo matrix_b_;
   MatrixInfo matrix_c_;
