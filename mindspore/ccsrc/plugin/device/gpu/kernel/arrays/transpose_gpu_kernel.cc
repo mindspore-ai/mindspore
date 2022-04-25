@@ -17,6 +17,8 @@
 #include "plugin/device/gpu/kernel/arrays/transpose_gpu_kernel.h"
 namespace mindspore {
 namespace kernel {
+MS_REG_GPU_KERNEL_ONE(Transpose, KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                      TransposeFwdGpuKernelMod, bool)
 MS_REG_GPU_KERNEL_ONE(Transpose, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                       TransposeFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(Transpose, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
