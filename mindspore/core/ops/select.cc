@@ -46,42 +46,42 @@ void SelectImpl(const bool *conds, void *x, void *y, void *result, size_t size) 
     result_data[i] = cond ? x_data[i] : y_data[i];
   }
 }
+
+bool CheckScalarOrTensor(ShapeVector input) {
+  // check 1D tensor with one element or scalar.
+  auto size = input.size();
+  bool flag = true;
+  if (size != 0 && (size != 1 || (input[0] > 0 && input[0] != 1))) {
+    flag = false;
+  }
+  return flag;
+}
+
 abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape());
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape());
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape());
-  bool error_flag = false;
-  if (x_shape[kShape] != cond_shape[kShape] || x_shape[kShape] != y_shape[kShape]) {
-    error_flag = true;
-  }
-  if (CheckAndConvertUtils::HasDynamicShapeInput(input_args)) {
-    if (x_shape[kMaxShape] != cond_shape[kMaxShape] || x_shape[kMaxShape] != y_shape[kMaxShape]) {
-      error_flag = true;
+  auto cond_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectCondIndex]->BuildShape())[kShape];
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectXIndex]->BuildShape())[kShape];
+  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSelectYIndex]->BuildShape())[kShape];
+  auto cond_shape_size = cond_shape.size();
+  auto x_shape_size = x_shape.size();
+  auto y_shape_size = y_shape.size();
+  if (cond_shape_size != 0 && x_shape_size != 0 && y_shape_size != 0) {
+    if (cond_shape_size != x_shape_size || y_shape_size != x_shape_size) {
+      MS_EXCEPTION(ValueError) << "Dim of tensor condition, x and y must be equal!";
+    } else {
+      for (size_t i = 0; i < x_shape_size; i++) {
+        if ((x_shape[i] > 0 && cond_shape[i] > 0 && x_shape[i] != cond_shape[i]) ||
+            (x_shape[i] > 0 && y_shape[i] > 0 && x_shape[i] != y_shape[i])) {
+          MS_EXCEPTION(ValueError) << "Shape of tensor condition, x and y must be equal!";
+        }
+      }
     }
-    if (x_shape[kMinShape] != cond_shape[kMinShape] || x_shape[kMinShape] != y_shape[kMinShape]) {
-      error_flag = true;
+  } else {
+    if (!(CheckScalarOrTensor(cond_shape) && CheckScalarOrTensor(x_shape) && CheckScalarOrTensor(y_shape))) {
+      MS_EXCEPTION(ValueError) << "When any of cond, x, y is of scalar type, "
+                                  "the rest must be 1D tensor with one element or scalar!";
     }
   }
-  if (error_flag) {
-    auto input_cond_index = input_args[kSelectCondIndex]->BuildShape();
-    auto input_x_index = input_args[kSelectXIndex]->BuildShape();
-    auto input_y_index = input_args[kSelectYIndex]->BuildShape();
-    MS_EXCEPTION_IF_NULL(input_cond_index);
-    MS_EXCEPTION_IF_NULL(input_x_index);
-    MS_EXCEPTION_IF_NULL(input_y_index);
-    MS_LOG(ERROR) << "For '" << primitive->name() << "', cond shape :" << input_cond_index->ToString();
-    MS_LOG(ERROR) << "For '" << primitive->name() << "', x shape :" << input_x_index->ToString();
-    MS_LOG(ERROR) << "For '" << primitive->name() << "', y shape :" << input_y_index->ToString();
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', The shape of cond, x and y should be the same, cond shape :"
-                             << input_cond_index->ToString() << ", x shape :" << input_x_index->ToString()
-                             << ", y shape :" << input_y_index->ToString();
-  }
-  return input_args[1]->BuildShape();
+  return input_args[kSelectXIndex]->BuildShape();
 }
 
 TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -107,8 +107,12 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 
 AbstractBasePtr SelectInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, "ops [select]");
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, "ops [select]");
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto type = SelectInferType(primitive, input_args);
   auto shape = SelectInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
