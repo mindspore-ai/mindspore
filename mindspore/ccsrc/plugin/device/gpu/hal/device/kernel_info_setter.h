@@ -70,8 +70,8 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
 };
 
 void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
-std::string SetKernelInfo(const CNodePtr &kernel_node, bool exception,
-                          KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
+std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node,
+                                                           KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 
 class FormatTransformChecker {
  public:

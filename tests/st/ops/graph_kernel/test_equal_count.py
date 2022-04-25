@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,10 +29,12 @@ class EqualCount(nn.Cell):
     def construct(self, *inp):
         return self.op(*inp)
 
+
 def get_output(*inp, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     output = EqualCount()(*inp)
     return output
+
 
 def basic_test(datatype):
     x = Tensor(np.array([[1, 1, 1, 1], [3, 3, 3, 3]]).astype(datatype))
@@ -43,16 +45,54 @@ def basic_test(datatype):
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_fp16():
+    """
+    /// Feature: equalcount op open graphkernel on gpu
+    /// Description: equalcount op on gpu set graph mode test open graph kernel flag
+    /// Expectation: open graph kernel result equal to close graph kernel
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     basic_test(np.float16)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_gpu_fp32():
+    """
+    /// Feature: equalcount op open graphkernel on gpu
+    /// Description: equalcount op on gpu set graph mode test open graph kernel flag
+    /// Expectation: open graph kernel result equal to close graph kernel
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    basic_test(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_graph_mode_fp32():
+    """
+    /// Feature: equalcount op expand fallback on ascend
+    /// Description: equalcount op on ascend set graph mode test expand fallback
+    /// Expectation: open graph kernel result equal to close graph kernel
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    basic_test(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_ascend_pynative_mode_fp32():
+    """
+    /// Feature: equalcount op expand fallback on ascend
+    /// Description: equalcount op on ascend set pynative mode test expand fallback
+    /// Expectation: open graph kernel result equal to close graph kernel
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     basic_test(np.float32)
