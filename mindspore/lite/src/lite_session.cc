@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,6 @@
 #if GPU_TENSORRT
 #include "src/delegate/tensorrt/tensorrt_delegate.h"
 #endif
-#ifndef WEIGHT_DECODE_CLIP
-#include "tools/converter/quantizer/fse_decoder.h"
-#endif
 #include "src/runtime/runtime_convert.h"
 namespace mindspore {
 #ifdef USE_GLOG
@@ -67,51 +64,7 @@ namespace {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 constexpr auto kArchCPU = "CPU";
 #endif
-bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
-  MS_ASSERT(src_tensor.handler() != nullptr);
-  MS_ASSERT(src_tensor.data() != nullptr);
-  if (src_tensor.handler()->enableHuffmanCode()) {
-    return true;
-  }
-  bool need_bit_unpack = src_tensor.handler()->quantParams() != nullptr &&
-                         src_tensor.handler()->quantParams()->size() > 0 &&
-                         src_tensor.handler()->quantParams()->Get(0) != nullptr;
-  if (need_bit_unpack) {
-    auto num_bits = src_tensor.handler()->quantParams()->Get(0)->numBits();
-    need_bit_unpack = ((num_bits >= kBitNum1 && num_bits < kBitNum8) || (num_bits > kBitNum8 && num_bits < kBitNum16));
-  }
 
-  return need_bit_unpack;
-}
-
-int DecompressTensor(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
-  MS_ASSERT(src_tensor.handler() != nullptr);
-  MS_ASSERT(dst_tensor != nullptr);
-#ifndef WEIGHT_DECODE_CLIP
-  if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
-    return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
-  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
-    return IndexingDecompress(src_tensor, dst_tensor);
-  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
-    return SparseDecompress(src_tensor, dst_tensor);
-  }
-#else
-  if (src_tensor.handler()->weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
-    MS_LOG(ERROR) << unsupport_weight_decode_log;
-    return RET_ERROR;
-  }
-#endif
-  if (!NeedBitUppackCheck(src_tensor)) {
-    return RET_NO_CHANGE;
-  } else {
-#ifndef WEIGHT_DECODE_CLIP
-    return WeightDecoder::UnPack(src_tensor, dst_tensor);
-#else
-    MS_LOG(ERROR) << unsupport_weight_decode_log;
-    return RET_ERROR;
-#endif
-  }
-}
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 bool ExistCustomCpuKernel() {
   auto custom_kernel_creators = registry::RegistryKernelImpl::GetInstance()->GetCustomKernelCreators();
@@ -218,7 +171,7 @@ int LiteSession::ConvertTensorsData(const lite::LiteModel *model, size_t tensor_
     return RET_ERROR;
   }
 
-  auto ret = DecompressTensor(*src_tensor, dst_tensor);
+  auto ret = WeightDecoder::DecompressTensor(*src_tensor, dst_tensor);
   if (ret == RET_NO_CHANGE) {
     if (dst_tensor->Size() == 0 || src_tensor->length() < dst_tensor->Size()) {
       MS_LOG(ERROR) << "Tensor data shape invalid";
