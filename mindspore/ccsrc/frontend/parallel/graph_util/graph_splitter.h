@@ -121,7 +121,9 @@ struct InterProcessEdgeWithIndex {
 
   bool operator<(const InterProcessEdgeWithIndex &e) const { return to_string() < e.to_string(); }
 
-  std::string to_string() const { return src_label.to_string() + "->" + "_" + dst_label.to_string(); }
+  std::string to_string() const {
+    return src_label.to_string() + "->" + dst_label.to_string() + "_" + std::to_string(index);
+  }
 };
 
 // The connection relationship for Send and Recv nodes.
@@ -183,6 +185,13 @@ ValueNodePtr CreateFakeValueNode(bool use_origin_node, const AnfNodePtr &origin_
 // Create a TupleGetItem node from a node with tuple output.
 CNodePtr CreateTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node_with_tuple_output,
                                 size_t item_index);
+
+// Create a MakeTuple node from multiple inputs.
+CNodePtr CreateMakeTupleNode(const FuncGraphPtr &func_graph, const AnfNodePtrList &tuple_inputs);
+
+// For some processes, the original output should be replaced with a node with the same abstract so error won't be
+// raised in Python layer.
+AnfNodePtr CreateReplacedOutputNode(const FuncGraphPtr &func_graph, const AnfNodePtr &origin_output);
 
 // Set attributes for send and recv node. These attributes is used in other stages like graph compiling, rpc route,
 // etc.
@@ -289,6 +298,10 @@ class ParameterServerMode : public DistributedExecutionMode {
 
   // Filter out all communication edges related to optimizers on Parameter Server.
   InterProcessOpEdgesInfo FilterCommEdgesOfServerOptimizer(const InterProcessOpEdgesInfo &comm_edges);
+
+  // Filter out all communication edges which are not related to any Parameter Server optimizers and convert them to
+  // FusedInterProcessOpPairMap.
+  FusedInterProcessOpPairMap FilterNotServerOptimizerEdges(const InterProcessOpEdgesInfo &comm_edges);
 
   // Fuse the given rpc send nodes list. Only nodes which send data to the same peer can be fused.
   CNodePtr FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes);

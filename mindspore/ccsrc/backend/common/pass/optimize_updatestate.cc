@@ -53,7 +53,8 @@ const AnfNodePtr OptimizeUpdateState::Process(const FuncGraphPtr &func_graph, co
     auto &attach = update_state->input(i);
     auto &users = node_users[attach];
     // In heterogeneous, parameters in subgraphs may only be used by UpdateState and should not be eliminated.
-    if ((users.size() == 1) && (users.front().first == update_state) && !attach->isa<Parameter>()) {
+    if ((users.size() == 1) && (users.front().first == update_state) && !attach->isa<Parameter>() &&
+        !IsPrimitiveCNode(attach, prim::kPrimRpcRecv)) {
       // If the only user of attach is the UpdateState node, drop the attach node.
       continue;
     }
