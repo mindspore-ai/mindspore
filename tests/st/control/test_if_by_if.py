@@ -5,6 +5,7 @@ from mindspore import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
+import mindspore.ops.functional as F
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -101,3 +102,43 @@ def test_tensor_condition():
     net = Net()
     out = net(Tensor(x), Tensor(y))
     assert np.allclose(out.asnumpy(), np.array([4.], np.float32))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_branch_same_shape():
+    """
+    Feature: control flow function.
+    Description: Two branch must return the same shape.
+    Expectation: Null.
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.a = 1
+
+        def construct(self, x, y):
+            for k in range(1):
+                if x != 1:
+                    for _ in range(1):
+                        y = k * x
+                        y = self.a + y
+                        if x > 5:
+                            break
+                if x == 5:
+                    for _ in range(1):
+                        y = self.a - y
+                        if x == y:
+                            continue
+            return x + y
+
+    x = np.array([-1], np.float32)
+    y = np.array([2], np.float32)
+    net = Net()
+    grad_net = F.grad(net, grad_position=(1, 1))
+    context.set_context(mode=context.GRAPH_MODE)
+    fgrad = grad_net(Tensor(x), Tensor(y))
+    print(fgrad)

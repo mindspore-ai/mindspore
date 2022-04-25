@@ -44,12 +44,14 @@ class SwitchSimplify : public OptimizerCaller {
       } else if (value_ptr->isa<tensor::Tensor>()) {
         auto tensor = GetValue<tensor::TensorPtr>(value_ptr);
         if (tensor == nullptr || tensor->isa<AnyValue>() || !tensor->Dtype()->isa<Bool>()) {
-          MS_LOG(EXCEPTION) << "Not support this condition value: " << value_ptr->ToString();
+          MS_LOG(EXCEPTION) << "The condition of branch must be a bool tensor value, not support this condition value: "
+                            << value_ptr->ToString();
         }
         auto *bool_value = static_cast<bool *>(tensor->data_c());
         cond_value = *bool_value;
       } else {
-        MS_LOG(EXCEPTION) << "Not support this condition value: " << value_ptr->ToString();
+        MS_LOG(EXCEPTION) << "The condition of branch must be a bool tensor value or a bool scalar value,"
+                          << " not support this condition value: " << value_ptr->ToString();
       }
 
       MS_LOG(DEBUG) << "condition value: " << value_ptr->ToString() << " bool:" << cond_value;
