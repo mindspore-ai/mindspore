@@ -262,6 +262,27 @@ def test_invert(shape, dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-5)])
+def test_softsign(shape, dtype, tol):
+    """
+    Feature: ALL To ALL
+    Description: test cases for Softsign
+    Expectation: the result match to numpy
+    """
+    softsign = P.Softsign()
+    prop = 100 if np.random.random() > 0.5 else -100
+    x = np.random.randn(*shape).astype(dtype) * prop
+    output = softsign(Tensor(x))
+    expect_output = x / (1.0 + np.abs(x))
+    diff = output.asnumpy() - expect_output
+    error = np.ones(shape=expect_output.shape) * tol
+    assert np.all(np.abs(diff) < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_identity_pynative():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     net = IdentityNet()
