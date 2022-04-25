@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/reluv2.h"
+#include "ops/relu_v2.h"
 #include <string>
 #include <algorithm>
 #include <map>
@@ -28,10 +28,15 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kInputDims = 4;
+constexpr int64_t kFill31 = 31;
+constexpr int64_t kRound32 = 32;
+constexpr int64_t kFill15 = 15;
+constexpr int64_t kRound16 = 16;
 std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const std::vector<int64_t> &input_shape,
                                               const std::shared_ptr<Type> &x_dtype) {
   std::vector<int64_t> mask_shape;
-  if (input_shape.size() != 4) {
+  if (input_shape.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << prim->name()
                              << "', The 'input_x' should be a 4-D tensor,but got a " +
                                   std::to_string(input_shape.size()) + "-D tensor whose shape is " +
@@ -40,9 +45,9 @@ std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const st
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i == 1) {
       if (x_dtype == kUInt8 || x_dtype == kInt8) {
-        mask_shape.push_back(UlongToLong(ceil((input_shape[1] + 31) / 32)));
+        mask_shape.push_back(UlongToLong(ceil((input_shape[1] + kFill31) / kRound32)));
       } else {
-        mask_shape.push_back(UlongToLong(ceil((input_shape[1] + 15) / 16)));
+        mask_shape.push_back(UlongToLong(ceil((input_shape[1] + kFill15) / kRound16)));
       }
     } else {
       mask_shape.push_back(input_shape[i]);
@@ -60,8 +65,6 @@ std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const st
 abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", int64_t(input_args.size()), kEqual, 1, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -92,7 +95,6 @@ abstract::TupleShapePtr ReLUV2InferShape(const PrimitivePtr &primitive,
 TypePtr ReLUV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("ReLUV2 infer", int64_t(input_args.size()), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
@@ -109,6 +111,7 @@ MIND_API_OPERATOR_IMPL(ReLUV2, BaseOperator);
 AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  (void)CheckAndConvertUtils::CheckInteger("ReLUV2 infer", int64_t(input_args.size()), kEqual, 1, primitive->name());
   auto types = ReLUV2InferType(primitive, input_args);
   auto shapes = ReLUV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

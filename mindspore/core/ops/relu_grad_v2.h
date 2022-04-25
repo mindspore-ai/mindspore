@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_ReLUV2_H_
-#define MINDSPORE_CORE_OPS_ReLUV2_H_
+#ifndef MINDSPORE_CORE_OPS_RELU_GRAD_V2_H_
+#define MINDSPORE_CORE_OPS_RELU_GRAD_V2_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -25,22 +25,23 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameReLUV2 = "ReLUV2";
-/// \brief Rectified Linear Unit activation function.
-/// Refer to Python API @ref mindspore.ops.ReLUV2 for more details.
-class MIND_API ReLUV2 : public BaseOperator {
+constexpr auto kReluGradV2 = "ReluGradV2";
+/// \brief Grad op of ReLUV2.
+class MIND_API ReluGradV2 : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(ReLUV2);
+  MIND_API_BASE_MEMBER(ReluGradV2);
   /// \brief Constructor.
-  ReLUV2() : BaseOperator(kNameReLUV2) { InitIOName({"x"}, {"output", "mask"}); }
+  ReluGradV2() : BaseOperator(kReluGradV2) { InitIOName({"gradients", "mask"}, {"output"}); }
   /// \brief Constructor.
-  explicit ReLUV2(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x"}, {"output", "mask"}); }
+  explicit ReluGradV2(const std::string k_name) : BaseOperator(k_name) {
+    InitIOName({"gradients", "mask"}, {"output"});
+  }
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr ReLUV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr ReluGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ReLUV2_H_
+#endif  // MINDSPORE_CORE_OPS_RELU_GRAD_V2_H_
