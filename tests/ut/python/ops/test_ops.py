@@ -45,6 +45,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
+from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -1132,6 +1133,17 @@ class ApplyKerasMomentumNet(nn.Cell):
 
     def construct(self, lr, grad, momentum):
         out = self.apply_keras_momentum(self.var, self.accum, lr, grad, momentum)
+        return out
+
+
+class NthElementNet(nn.Cell):
+    def __init__(self):
+        super(NthElementNet, self).__init__()
+        self.nth_element = NthElement()
+        self.n = Tensor(1, mstype.int32)
+
+    def construct(self, input_x):
+        out = self.nth_element(input_x, self.n)
         return out
 
 
@@ -2596,6 +2608,10 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32)),
                         Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(np.float32))],
         'desc_bprop': [Tensor(np.arange(-1, 1, 0.25).reshape((2, 2, 2, 1, 1)).astype(np.float32))]}),
+    ('NthElement', {
+        'block': NthElementNet(),
+        'desc_inputs': [Tensor(np.ones([2, 3, 4], np.float32))],
+        'desc_bprop': [Tensor(np.ones([2, 3], np.float32))]}),
 ]
 
 test_case_array_ops = [

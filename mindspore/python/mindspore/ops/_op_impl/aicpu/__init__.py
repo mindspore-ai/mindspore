@@ -156,3 +156,4 @@ from .bucketize import _bucketize_aicpu
 from .triu import _triu_aicpu
 from .fractional_max_pool3d_with_fixed_ksize import _fractional_max_pool3d_with_fixed_ksize_aicpu
 from .fractional_max_pool3d_grad_with_fixed_ksize import _fractional_max_pool3d_grad_with_fixed_ksize_aicpu
+from .nth_element import _nth_element_aicpu

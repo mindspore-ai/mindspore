@@ -28,6 +28,7 @@ from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from ..operations.nn_ops import FractionalAvgPool
 from ..operations._grad_ops import FractionalAvgPoolGrad
+from ..operations.nn_ops import NthElement
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -103,6 +104,22 @@ def get_bprop_grid_sampler_3d(self):
     def bprop(input_x, grid, out, dout):
         dx, dgrid = grad(dout, input_x, grid)
         return dx, dgrid
+    return bprop
+
+
+@bprop_getters.register(NthElement)
+def get_bprop_nth_element(self):
+    """Grad definition for `NthElement` operation."""
+    expand_dims = P.ExpandDims()
+    cast = P.Cast()
+    equal = P.Equal()
+    reduce_sum = P.ReduceSum()
+    divide = P.Div()
+    def bprop(input_x, n, out, dout):
+        indicators = cast(equal(expand_dims(out, -1), input_x), input_x.dtype)
+        dout = expand_dims(dout, -1)
+        num_select = expand_dims(reduce_sum(indicators, -1), -1)
+        return divide(indicators, num_select) * dout, None
 
     return bprop
 
