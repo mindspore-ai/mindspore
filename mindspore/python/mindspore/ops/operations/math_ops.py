@@ -5036,7 +5036,7 @@ class LogMatrixDeterminant(Primitive):
 class IndexAdd(Primitive):
     """
     Adds tensor `y` to specified axis and indices of tensor `x`. The axis should be in [0,  len(x.dim) - 1],
-    and indices should be in [0, the size of `x`] at the axis dimension.
+    and indices should be in [0, the size of `x` - 1] at the axis dimension.
 
     Args:
         axis (int): The dimension along which to index.
@@ -5060,11 +5060,11 @@ class IndexAdd(Primitive):
         TypeError: If neither `indices` nor `y` is a Tensor.
         ValueError: If axis is out of `x` rank's range.
         ValueError: If `x` rank is not the same as `y` rank.
-        ValueError: If size of `indices` is not equal to dimension of y[axis].
+        ValueError: If shape of `indices` is not 1D or size of `indices` is not equal to dimension of y[axis].
         ValueError: If `y`'s shape is not the same as `x` except the `axis` th dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):

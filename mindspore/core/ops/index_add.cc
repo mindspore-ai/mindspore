@@ -33,27 +33,44 @@ abstract::ShapePtr IndexAddInferShape(const PrimitivePtr &primitive, const std::
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex0);
+  auto idx_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex1);
+  auto y_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kInputIndex2);
+  auto x_is_dynamic = x_shape_ptr->IsDynamic();
+  auto idx_is_dynamic = idx_shape_ptr->IsDynamic();
+  auto y_is_dynamic = y_shape_ptr->IsDynamic();
+  if (x_is_dynamic) {
+    return x_shape_ptr;
+  }
+
+  auto x_shape = x_shape_ptr->shape();
+  auto y_shape = y_shape_ptr->shape();
   auto x_rank = SizeToLong(x_shape.size());
   auto y_rank = SizeToLong(y_shape.size());
-  CheckAndConvertUtils::Check("x rank", x_rank, kEqual, y_rank, prim_name);
+  if (!y_is_dynamic) {
+    CheckAndConvertUtils::Check("x rank", x_rank, kEqual, y_rank, prim_name);
+  }
   auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
   CheckAndConvertUtils::CheckInRange("axis", axis, kIncludeNeither, {-x_rank - 1, x_rank}, prim_name);
-  auto idx_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto idx_shape = idx_shape_ptr->shape();
   auto idx_rank = SizeToLong(idx_shape.size());
   (void)CheckAndConvertUtils::CheckInteger("idx size", idx_rank, kEqual, 1, prim_name);
   auto axis_rank = axis;
   if (axis < 0) {
     axis_rank = axis + x_rank;
   }
-  (void)CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, y_shape[axis_rank], prim_name);
+  if (y_is_dynamic) {
+    return x_shape_ptr;
+  }
+  if (!idx_is_dynamic) {
+    (void)CheckAndConvertUtils::Check("size of indices", idx_shape[0], kEqual, y_shape[axis_rank], prim_name);
+  }
   for (int dim = 0; dim < x_rank; dim = dim + 1) {
     if (dim != axis_rank) {
       (void)CheckAndConvertUtils::Check("x dim", x_shape[dim], kEqual, y_shape[dim], prim_name);
     }
   }
-  return std::make_shared<abstract::Shape>(x_shape);
+  return x_shape_ptr;
 }
 
 TypePtr IndexAddInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

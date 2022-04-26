@@ -979,6 +979,7 @@ tensor_operator_registry.register('tile', P.Tile)
 tensor_operator_registry.register('logical_not', P.LogicalNot)
 tensor_operator_registry.register('sum', P.ReduceSum)
 tensor_operator_registry.register('split', P.Split)
+tensor_operator_registry.register('index_add', P.IndexAdd)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
