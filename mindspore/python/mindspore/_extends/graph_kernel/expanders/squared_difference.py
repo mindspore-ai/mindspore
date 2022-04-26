@@ -13,12 +13,25 @@
 # limitations under the License.
 # ===========================================================================
 """generate json desc for squared_difference"""
+from mindspore._extends.graph_kernel.model.model import GraphKernelUnsupportedException as GKException
 from ._utils import Expander, ExpanderInfoValidator as VLD
 
 
 @VLD.check_all_formats_same
 class SquaredDifference(Expander):
     """SquaredDifference expander"""
+
+    def __init__(self, expand_info):
+        super().__init__(expand_info)
+        self.dtype_x = self.inputs[0]['data_type']
+        self.dtype_y = self.inputs[1]['data_type']
+
+    def _check(self):
+        if self.dtype_x == "float64" or self.dtype_y == "float64":
+            raise GKException("For 'SquaredDifference', the inputs data type must not be float64")
+        if self.dtype_x != self.dtype_y:
+            raise GKException("For 'SquaredDifference', the inputs data type should be same, but got {} and {}"
+                              .format(self.dtype_x, self.dtype_y))
 
     def _expand(self, graph_builder):
         input_x = self.inputs[0]

@@ -25,6 +25,7 @@
 #include "common/graph_kernel/substitute_dropout.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/adapter/callback_impl.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
@@ -55,6 +56,13 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
 }
 
 FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
+  auto processor = kernel::GetStrProcessorFromContext();
+  if (processor == kernel::kProcessorAiCore) {
+    auto use_expand_fallback = common::GetEnv("EXPANDERFALLBACK");
+    if (use_expand_fallback.empty()) {
+      return nullptr;
+    }
+  }
   auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());

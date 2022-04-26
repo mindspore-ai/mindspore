@@ -36,6 +36,17 @@ class BiasAdd : public OpDesc {
   ~BiasAdd() = default;
 
  protected:
+  bool CheckInputs() override {
+    auto it = std::find_if(std::begin(inputs_info_), std::end(inputs_info_), [](const inner::NodeBase &input) {
+      return input.type != kNumberTypeFloat32 && input.type != kNumberTypeFloat16;
+    });
+    if (it != std::end(inputs_info_)) {
+      MS_LOG(INFO) << "In BiasAdd, input's dtype must be float16 or float32, But input's type is " << it->type;
+      return false;
+    }
+    return true;
+  }
+
   NodePtrList Expand(const NodePtrList &inputs) override {
     auto input_x = inputs[0];
     auto input_y = inputs[1];
