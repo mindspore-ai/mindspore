@@ -35,7 +35,7 @@ function Run_TensorRT() {
 
     local line_info model_info spec_acc_limit model_name input_num input_shapes \
             mode model_file input_files output_file data_path acc_limit enableFp16 \
-            run_result spec_cosine_limit
+            run_result
     # Prepare the config file list
     for cfg_file in ${models_server_inference_cfg_file_list[*]}; do
         cfg_file_name=${cfg_file##*/}
@@ -49,7 +49,6 @@ function Run_TensorRT() {
             model_info=`echo ${line_info} | awk -F ' ' '{print $1}'`
             accuracy_info=`echo ${line_info} | awk -F ' ' '{print $2}'`
             spec_acc_limit=`echo ${accuracy_info} | awk -F ';' '{print $1}'`
-            spec_cosine_limit=`echo ${accuracy_info} | awk -F ';' '{print $2}'`
 
             # model_info detail
             model_name=`echo ${model_info} | awk -F ';' '{print $1}'`
@@ -91,11 +90,6 @@ function Run_TensorRT() {
             elif [[ ${mode} == "fp16" ]]; then
                 acc_limit="5"
             fi
-            # set cosind distance limit
-            cosine_limit="-1.1"
-            if [[ ${spec_cosine_limit} != "" ]]; then
-                cosine_limit="${spec_cosine_limit}"
-            fi
             # whether enable fp16
             enableFp16="false"
             if [[ ${mode} == "fp16" ]]; then
@@ -103,8 +97,8 @@ function Run_TensorRT() {
             fi
 
             # different tensorrt run mode use different cuda command
-            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --cosineDistanceThreshold=${cosine_limit} --device=GPU --enableParallelPredict=true' >> "${run_benchmark_result_file}"
-            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --cosineDistanceThreshold=${cosine_limit} --device=GPU --enableParallelPredict=true >> ${run_benchmark_result_file}
+            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU --enableParallelPredict=true' >> "${run_benchmark_result_file}"
+            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU --enableParallelPredict=true >> ${run_benchmark_result_file}
 
             if [ $? = 0 ]; then
                 run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -222,8 +216,6 @@ if [[ $backend == "all" || $backend == "server_inference_x86_gpu" ]]; then
     Run_TensorRT
     Run_x86_status=$?
 fi
-
-
 
 if [[ $backend == "all" || $backend == "server_inference_x86_gpu" ]]; then
     if [[ ${Run_x86_status} != 0 ]];then

@@ -316,10 +316,6 @@ int TensorRTSubGraph::MarkOutputs() {
   // Mark NetWork Output Tensor.
   for (const auto &out_tensor : outputs_) {
     for (auto out_op : this->out_ops_) {
-      if (out_op->GetInnerOutTensor().size() != out_op->outputs().size()) {
-        MS_LOG(WARNING) << "ms tensor is unused for " << out_op->GetOpName();
-        continue;
-      }
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
           MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
@@ -341,7 +337,6 @@ int TensorRTSubGraph::MarkOutputs() {
 
           out_trt_tensor->setName(out_tensor.Name().c_str());
           this->network_->markOutput(*out_trt_tensor);
-          trt_out_tensor_name_.push_back(out_tensor.Name());
           for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
             if (out_trt_tensor->getDimensions().d[n] == -1) {
               output_batchsize_index_ = n;
@@ -422,10 +417,6 @@ int TensorRTSubGraph::Prepare() {
     }
   }
   for (auto tensor : outputs_) {
-    if (std::find(trt_out_tensor_name_.begin(), trt_out_tensor_name_.end(), tensor.Name()) ==
-        trt_out_tensor_name_.end()) {
-      continue;
-    }
     tensor.MutableData();
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
     if (device_ptr == nullptr) {
@@ -434,6 +425,7 @@ int TensorRTSubGraph::Prepare() {
     }
     int index = this->engine_->getBindingIndex(tensor.Name().c_str());
     tensor_bindings_[index] = device_ptr;
+    trt_out_tensor_name_.push_back(tensor.Name());
   }
   return RET_OK;
 }
