@@ -36,23 +36,29 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
   (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
   auto pooling_ratio = GetValue<std::vector<float>>(primitive->GetAttr(kPoolingRatio));
   if (pooling_ratio.size() != kPoolingRatioDim) {
-    MS_EXCEPTION(ValueError) << "pooling_ratio_size of FractionalAvgPool must be 4, but got "
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the size of parameter 'pooling_ratio' must be 4, but got "
                              << std::to_string(pooling_ratio.size()) << ".";
   }
   if (pooling_ratio[kInputIndex0] != 1) {
-    MS_EXCEPTION(ValueError) << "The first elements of pooling ratio must be 1.0, but got "
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the first element of parameter 'pooling_ratio' must be 1.0, but got "
                              << std::to_string(pooling_ratio[0]) << ".";
   }
   if (pooling_ratio[kInputIndex1] < 1.0) {
-    MS_EXCEPTION(ValueError) << "The elements of pooling ratio must be larger than 1.0, but pooling_ratio[1] = "
-                             << std::to_string(pooling_ratio[kInputIndex1]) << ".";
+    MS_EXCEPTION(ValueError)
+      << "For '" << op_name
+      << "', the element of parameter 'pooling_ratio' must be larger than 1.0, but pooling_ratio[1] = "
+      << std::to_string(pooling_ratio[kInputIndex1]) << ".";
   }
   if (pooling_ratio[kInputIndex2] < 1.0) {
-    MS_EXCEPTION(ValueError) << "The elements of pooling ratio must be larger than 1.0, but pooling_ratio[2] = "
-                             << std::to_string(pooling_ratio[kInputIndex2]) << ".";
+    MS_EXCEPTION(ValueError)
+      << "For '" << op_name
+      << "', the element of parameter 'pooling_ratio' must be larger than 1.0, but pooling_ratio[2] = "
+      << std::to_string(pooling_ratio[kInputIndex2]) << ".";
   }
   if (pooling_ratio[kInputIndex3] != 1) {
-    MS_EXCEPTION(ValueError) << "The last elements of pooling ratio must be 1.0, but got "
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the last element of parameter 'pooling_ratio' must be 1.0, but got "
                              << std::to_string(pooling_ratio[kInputIndex3]) << ".";
   }
   std::vector<int64_t> out_shape(x_rank);
@@ -60,7 +66,8 @@ abstract::TupleShapePtr FractionalAvgPoolInferShape(const PrimitivePtr &primitiv
     out_shape[i] = static_cast<int64_t>(std::floor(in_shape[i] / pooling_ratio[i]));
   }
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-    MS_EXCEPTION(ValueError) << "output shape <=0, pooling_ratio is not valid.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', output shape <=0, the value of parameter 'pooling_ratio' is not valid.";
   }
   int64_t row = out_shape[kInputIndex1] + 1;
   int64_t col = out_shape[kInputIndex2] + 1;

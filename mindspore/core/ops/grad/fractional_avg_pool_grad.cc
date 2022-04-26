@@ -39,7 +39,7 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "The input of " + op_name + " must be a tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << op_name << "', the input 'orig_input_tensor_shape' must be a tensor.";
   }
   auto input_shape = input_args[kInputIndex0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_shape);
@@ -56,10 +56,11 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape]);
   auto shape_v = shape_ptr->shape();
   if (shape_v[kInputIndex0] != kInpuSizes) {
-    MS_EXCEPTION(ValueError) << "The input tensor shape must = 4.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the input 'orig_input_tensor_shape' tensor shape must = 4.";
   }
   if (shape_v.size() > kInpuDims) {
-    MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the input 'orig_input_tensor_shape' tensor must be a 1-D tensor.";
   }
 
   if (!input_args[kInputIndex0]->BuildValue()->isa<AnyValue>() &&
@@ -74,7 +75,8 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
       }
     }
     if (shape_m > max_length) {
-      MS_EXCEPTION(ValueError) << "The number of elements of output must be less than max length: " << max_length
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', the number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
                                << "! The shape of  output should be reduced or max_length should be increased";
     }
