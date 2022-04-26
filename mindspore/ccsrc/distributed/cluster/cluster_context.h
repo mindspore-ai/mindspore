@@ -79,6 +79,9 @@ class BACKEND_EXPORT ClusterContext {
   // Returns total number of the specified node role. This is used as the group size of this node role.
   uint32_t node_num(const std::string &node_role);
 
+  // Returns the total number of various role nodes.
+  uint32_t node_num() const;
+
   // Return cluster is initialized.
   bool initialized() const;
 

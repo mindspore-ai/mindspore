@@ -42,8 +42,7 @@ bool Initialize() {
         std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
       MS_EXCEPTION_IF_NULL(abstract_node);
       collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
-      auto global_rank_size =
-        (cluster_ctx->node_role() == kEnvRoleOfWorker) ? abstract_node->worker_num() : abstract_node->server_num();
+      auto global_rank_size = cluster::ClusterContext::instance()->node_num();
       collective::CollectiveManager::instance()->set_global_rank_size(global_rank_size);
 
       if (RecoveryContext::GetInstance()->enable_recovery()) {
