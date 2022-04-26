@@ -40,9 +40,7 @@
 #ifndef AUTO_PARALLEL_CLIP
 #include "src/sub_graph_split.h"
 #endif
-#ifndef WEIGHT_DECODE_CLIP
 #include "src/weight_decoder.h"
-#endif
 #include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #include "nnacl/nnacl_common.h"
 #if GPU_OPENCL
@@ -1000,15 +998,12 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     }
     cpu_desc.data_type = kNumberTypeFloat16;
   }
-  int ret;
-#ifndef WEIGHT_DECODE_CLIP
-  ret =
+  auto ret =
     WeightDecoder::DequantNode(op_parameter, in_tensors, kernel_data_type, src_model_->version_, context_->float_mode);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
   }
-#endif
   std::map<Tensor *, Tensor *> restored_origin_tensors;
 
   if (is_train_session_) {
@@ -1050,16 +1045,13 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   if (prefer_data_type == kNumberTypeFloat16 || prefer_data_type == kNumberTypeFloat32) {
     gpu_desc.data_type = prefer_data_type;
   }
-  int ret;
-#ifndef WEIGHT_DECODE_CLIP
   // weight dequant
-  ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32, src_model_->version_,
-                                   context_->float_mode);
+  auto ret = WeightDecoder::DequantNode(op_parameter, in_tensors, kNumberTypeFloat32, src_model_->version_,
+                                        context_->float_mode);
   if (ret != RET_OK) {
     MS_LOG(DEBUG) << "Dequant input tensors failed: " << ret;
     return RET_NOT_SUPPORT;
   }
-#endif
   // we don't need to restore tensor for copy data
   ret = CopyConstTensorData(in_tensors, op_parameter->type_);
   if (ret != RET_OK) {
@@ -1164,14 +1156,6 @@ kernel::KernelExec *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(ERROR) << "Can not find OpParameter!type: " << GetPrimitiveTypeName(node->primitive_, schema_version_);
     return nullptr;
   }
-
-#ifdef WEIGHT_DECODE_CLIP
-  if ((op_parameter->quant_type_ == schema::QuantType_QUANT_WEIGHT) ||
-      (node->quant_type_ == schema::QuantType_QUANT_WEIGHT)) {
-    MS_LOG(ERROR) << unsupport_weight_decode_log;
-    return nullptr;
-  }
-#endif
 
 #if (defined GPU_OPENCL) || (defined ENABLE_FP16)
   int kernel_thread_count = op_parameter->thread_num_;
@@ -1325,12 +1309,10 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
     std::vector<Tensor *> inputs;
     std::vector<Tensor *> outputs;
     FindNodeInoutTensors(*node, &inputs, &outputs);
-#ifndef WEIGHT_DECODE_CLIP
     if (node->quant_type_ == schema::QuantType_QUANT_WEIGHT) {
       *prefer_data_type = kNumberTypeFloat32;
       return RET_OK;
     }
-#endif
     TypeId data_type = GetFirstFp32Fp16OrInt8Type(inputs);
     if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
       *prefer_data_type = kNumberTypeFloat32;

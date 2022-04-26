@@ -219,8 +219,7 @@ endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
     set(LITE_SRC ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc)
     if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
         set(LITE_SRC ${LITE_SRC}
             ${TOOLS_DIR}/converter/quantizer/fse_decoder.cc
@@ -247,6 +246,7 @@ endif()
 set(LITE_SRC
     ${LITE_SRC}
     ${KERNEL_REG_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
     )
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)

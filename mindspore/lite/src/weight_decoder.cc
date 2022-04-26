@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,200 +21,14 @@
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::lite {
+#ifndef WEIGHT_DECODE_CLIP
 namespace {
 constexpr int kBit8 = 8;
 constexpr int kBit32 = 32;
 }  // namespace
-std::vector<bool> StringToBitVector(const std::string &str) {
-  std::vector<bool> vec(str.size() * kBit8);
-  size_t index = 0;
-  for (auto ch : str) {
-    for (size_t shift = kBit8; shift > 0; shift--) {
-      vec[index++] = (static_cast<unsigned char>(ch) >> static_cast<size_t>(shift - 1)) & 0x1;
-    }
-  }
-  return vec;
-}
+#endif
 
-STATUS IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
-  MS_ASSERT(src_tensor.handler() != nullptr);
-  MS_ASSERT(src_tensor.data() != nullptr);
-  MS_LOG(DEBUG) << "un-index weight";
-  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
-  MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
-                    "quant params size need bigger than 0");
-  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
-  auto bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
-
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
-  auto bit_vec = StringToBitVector(str);
-  size_t index = 0;
-  // parse unique_value_cnt
-  size_t unique_value_cnt = 0;
-  for (int i = 0; i < bit_num; i++) {
-    bool bit = bit_vec[index++];
-    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
-  }
-  if (unique_value_cnt == 0) {
-    unique_value_cnt = 1 << bit_num;
-  }
-  // parse unique_value_set
-  std::vector<int> unique_values;
-  for (size_t i = 0; i < unique_value_cnt; i++) {
-    int unique_value = 0;
-    for (int j = 0; j < bit_num; j++) {
-      bool bit = bit_vec[index++];
-      unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
-    }
-    // unsigned to signed
-    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
-  }
-  // parse index
-  std::vector<size_t> unique_value_index_vec;
-  auto elem_cnt = dst_tensor->ElementsNum();
-  size_t unique_value_bit = ceil(log2(unique_value_cnt));
-  for (int i = 0; i < elem_cnt; i++) {
-    size_t unique_value_index = 0;
-    for (size_t j = 0; j < unique_value_bit; j++) {
-      bool bit = bit_vec[index++];
-      unique_value_index |= bit << (static_cast<size_t>(unique_value_bit - j - 1));
-    }
-    unique_value_index_vec.push_back(unique_value_index);
-  }
-
-  if (dst_tensor->data() != nullptr) {
-    MS_LOG(ERROR) << "data_c not null";
-    return RET_ERROR;
-  }
-  auto ret = dst_tensor->MallocData();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Malloc tensor data failed";
-    return RET_NULL_PTR;
-  }
-  auto dst_data = dst_tensor->data();
-  if (bit_num <= kBit8) {
-    ret = UnIndexTensorData<int8_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
-  } else {
-    ret = UnIndexTensorData<int16_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UnIndexTensorData error";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-STATUS SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
-  MS_ASSERT(src_tensor.handler() != nullptr);
-  MS_ASSERT(src_tensor.data() != nullptr);
-  MS_LOG(DEBUG) << "un-sparse weight";
-  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
-  MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
-                    "quant params size need bigger than 0");
-  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
-  size_t bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
-
-  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
-  auto bit_vec = StringToBitVector(str);
-  size_t index = 0;
-  // parse coor_best_bit
-  size_t coor_best_bit = 0;
-  for (size_t i = 0; i < kBit8; i++) {
-    bool bit = bit_vec[index++];
-    coor_best_bit |= bit << static_cast<size_t>((kBit8 - i - 1));
-  }
-  // parse nz_cnt
-  size_t nz_cnt = 0;
-  for (size_t i = 0; i < kBit32; i++) {
-    bool bit = bit_vec[index++];
-    nz_cnt |= bit << static_cast<size_t>((kBit32 - i - 1));
-  }
-  // parse unique_value cnt
-  size_t unique_value_cnt = 0;
-  for (size_t i = 0; i < bit_num; i++) {
-    bool bit = bit_vec[index++];
-    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
-  }
-  if (unique_value_cnt == 0) {
-    unique_value_cnt = 1 << bit_num;
-  }
-  // parse unique_values
-  std::vector<int> unique_values;
-  for (size_t i = 0; i < unique_value_cnt; i++) {
-    int unique_value = 0;
-    for (size_t j = 0; j < bit_num; j++) {
-      bool bit = bit_vec[index++];
-      unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
-    }
-    // unsigned to signed
-    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
-  }
-  // parse index
-  std::vector<size_t> unique_value_index_vec;
-  auto elem_cnt = dst_tensor->ElementsNum();
-  size_t unique_value_bit = static_cast<size_t>(ceil(log2(unique_value_cnt)));
-  for (size_t i = 0; i < nz_cnt; i++) {
-    size_t unique_value_index = 0;
-    for (size_t j = 0; j < unique_value_bit; j++) {
-      bool bit = bit_vec[index++];
-      unique_value_index |= bit << (unique_value_bit - j - 1);
-    }
-    unique_value_index_vec.push_back(unique_value_index);
-  }
-
-  // parse coors
-  std::vector<size_t> coor_vec;
-  for (size_t i = 0; i < nz_cnt; i++) {
-    size_t coor = 0;
-    for (size_t j = 0; j < coor_best_bit; j++) {
-      bool bit = bit_vec[index++];
-      coor |= bit << static_cast<size_t>((coor_best_bit - j - 1));
-    }
-    coor_vec.push_back(coor);
-  }
-
-  if (dst_tensor->data() != nullptr) {
-    MS_LOG(ERROR) << "data_c not null";
-    return RET_ERROR;
-  }
-  auto ret = dst_tensor->MallocData();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Malloc tensor data failed";
-    return RET_NULL_PTR;
-  }
-  auto dst_data = dst_tensor->data();
-
-  if (bit_num <= kBit8) {
-    ret =
-      UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
-                                 elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
-  } else {
-    ret =
-      UnSparseTensorData<int16_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
-                                  elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "UnSparseTensorData error";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-// A * stride_a + bucket_index * stride_b + C
-int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index, int bucket_in_index) {
-  int stride_a = 1;
-  for (size_t i = preferred_dim; i < dims.size(); i++) {
-    stride_a *= dims[i];
-  }
-  int stride_b = 1;
-  for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
-    stride_b *= dims[i];
-  }
-  MS_ASSERT(stride_b > 0);
-  int A = bucket_in_index / stride_b;
-  int C = bucket_in_index % stride_b;
-  return A * stride_a + bucket_index * stride_b + C;
-}
+#ifndef WEIGHT_DECODE_CLIP
 
 int WeightDecoder::DequantWeight(lite::Tensor *input_tensor, int preferred_dim, TypeId dst_data_type) {
   MS_ASSERT(input_tensor != nullptr);
@@ -360,21 +174,177 @@ int WeightDecoder::UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *d
   return ret;
 }
 
-int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
-                               const std::string &model_version, bool float_mode) {
-  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT &&
-      !(op_parameter->quant_type_ == schema::QuantType_QUANT_ALL && float_mode)) {
-    return RET_OK;
+STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
+  MS_LOG(DEBUG) << "un-sparse weight";
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
+  MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
+                    "quant params size need bigger than 0");
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
+  size_t bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
+
+  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
+  auto bit_vec = StringToBitVector(str);
+  size_t index = 0;
+  // parse coor_best_bit
+  size_t coor_best_bit = 0;
+  for (size_t i = 0; i < kBit8; i++) {
+    bool bit = bit_vec[index++];
+    coor_best_bit |= bit << static_cast<size_t>((kBit8 - i - 1));
   }
-  int index = 0;
-  for (auto &tensor : in_tensors) {
-    MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
-    auto preferred_dim = GetPreferredDim(in_tensors, op_parameter, index++, tensor->shape(), model_version);
-    auto ret = WeightDecoder::DequantTensor(tensor, preferred_dim, dst_data_type);
-    if (ret != RET_OK && ret != RET_NO_CHANGE) {
-      MS_LOG(DEBUG) << "Dequant tensor failed";
-      return RET_ERROR;
+  // parse nz_cnt
+  size_t nz_cnt = 0;
+  for (size_t i = 0; i < kBit32; i++) {
+    bool bit = bit_vec[index++];
+    nz_cnt |= bit << static_cast<size_t>((kBit32 - i - 1));
+  }
+  // parse unique_value cnt
+  size_t unique_value_cnt = 0;
+  for (size_t i = 0; i < bit_num; i++) {
+    bool bit = bit_vec[index++];
+    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
+  }
+  if (unique_value_cnt == 0) {
+    unique_value_cnt = 1 << bit_num;
+  }
+  // parse unique_values
+  std::vector<int> unique_values;
+  for (size_t i = 0; i < unique_value_cnt; i++) {
+    int unique_value = 0;
+    for (size_t j = 0; j < bit_num; j++) {
+      bool bit = bit_vec[index++];
+      unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
     }
+    // unsigned to signed
+    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
+  }
+  // parse index
+  std::vector<size_t> unique_value_index_vec;
+  auto elem_cnt = dst_tensor->ElementsNum();
+  size_t unique_value_bit = static_cast<size_t>(ceil(log2(unique_value_cnt)));
+  for (size_t i = 0; i < nz_cnt; i++) {
+    size_t unique_value_index = 0;
+    for (size_t j = 0; j < unique_value_bit; j++) {
+      bool bit = bit_vec[index++];
+      unique_value_index |= bit << (unique_value_bit - j - 1);
+    }
+    unique_value_index_vec.push_back(unique_value_index);
+  }
+
+  // parse coors
+  std::vector<size_t> coor_vec;
+  for (size_t i = 0; i < nz_cnt; i++) {
+    size_t coor = 0;
+    for (size_t j = 0; j < coor_best_bit; j++) {
+      bool bit = bit_vec[index++];
+      coor |= bit << static_cast<size_t>((coor_best_bit - j - 1));
+    }
+    coor_vec.push_back(coor);
+  }
+
+  if (dst_tensor->data() != nullptr) {
+    MS_LOG(ERROR) << "data_c not null";
+    return RET_ERROR;
+  }
+  auto ret = dst_tensor->MallocData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Malloc tensor data failed";
+    return RET_NULL_PTR;
+  }
+  auto dst_data = dst_tensor->data();
+
+  if (bit_num <= kBit8) {
+    ret =
+      UnSparseTensorData<int8_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
+                                 elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
+  } else {
+    ret =
+      UnSparseTensorData<int16_t>(unique_values, unique_value_index_vec, coor_vec, src_tensor.handler()->quantParams(),
+                                  elem_cnt, coor_best_bit, dst_data, dst_tensor->Size());
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UnSparseTensorData error";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+std::vector<bool> WeightDecoder::StringToBitVector(const std::string &str) {
+  std::vector<bool> vec(str.size() * kBit8);
+  size_t index = 0;
+  for (auto ch : str) {
+    for (size_t shift = kBit8; shift > 0; shift--) {
+      vec[index++] = (static_cast<unsigned char>(ch) >> static_cast<size_t>(shift - 1)) & 0x1;
+    }
+  }
+  return vec;
+}
+
+STATUS WeightDecoder::IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor) {
+  MS_ASSERT(src_tensor.handler() != nullptr);
+  MS_ASSERT(src_tensor.data() != nullptr);
+  MS_LOG(DEBUG) << "un-index weight";
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams() != nullptr, RET_ERROR, "quant params is nullptr");
+  MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
+                    "quant params size need bigger than 0");
+  MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
+  auto bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
+
+  std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
+  auto bit_vec = StringToBitVector(str);
+  size_t index = 0;
+  // parse unique_value_cnt
+  size_t unique_value_cnt = 0;
+  for (int i = 0; i < bit_num; i++) {
+    bool bit = bit_vec[index++];
+    unique_value_cnt |= bit << static_cast<size_t>((bit_num - i - 1));
+  }
+  if (unique_value_cnt == 0) {
+    unique_value_cnt = 1 << bit_num;
+  }
+  // parse unique_value_set
+  std::vector<int> unique_values;
+  for (size_t i = 0; i < unique_value_cnt; i++) {
+    int unique_value = 0;
+    for (int j = 0; j < bit_num; j++) {
+      bool bit = bit_vec[index++];
+      unique_value |= bit << static_cast<size_t>((bit_num - j - 1));
+    }
+    // unsigned to signed
+    unique_values.push_back(unique_value - (1 << static_cast<size_t>((bit_num - 1))));
+  }
+  // parse index
+  std::vector<size_t> unique_value_index_vec;
+  auto elem_cnt = dst_tensor->ElementsNum();
+  size_t unique_value_bit = ceil(log2(unique_value_cnt));
+  for (int i = 0; i < elem_cnt; i++) {
+    size_t unique_value_index = 0;
+    for (size_t j = 0; j < unique_value_bit; j++) {
+      bool bit = bit_vec[index++];
+      unique_value_index |= bit << (static_cast<size_t>(unique_value_bit - j - 1));
+    }
+    unique_value_index_vec.push_back(unique_value_index);
+  }
+
+  if (dst_tensor->data() != nullptr) {
+    MS_LOG(ERROR) << "data_c not null";
+    return RET_ERROR;
+  }
+  auto ret = dst_tensor->MallocData();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Malloc tensor data failed";
+    return RET_NULL_PTR;
+  }
+  auto dst_data = dst_tensor->data();
+  if (bit_num <= kBit8) {
+    ret = UnIndexTensorData<int8_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
+  } else {
+    ret = UnIndexTensorData<int16_t>(unique_values, unique_value_index_vec, dst_data, dst_tensor->Size());
+  }
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UnIndexTensorData error";
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -449,6 +419,25 @@ bool WeightDecoder::IsChannelFirst(int index, const OpParameter *op_parameter) {
   return true;
 }
 
+// A * stride_a + bucket_index * stride_b + C
+int WeightDecoder::GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index,
+                                int bucket_in_index) {
+  int stride_a = 1;
+  for (size_t i = preferred_dim; i < dims.size(); i++) {
+    stride_a *= dims[i];
+  }
+  int stride_b = 1;
+  for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
+    stride_b *= dims[i];
+  }
+  MS_ASSERT(stride_b > 0);
+  int A = bucket_in_index / stride_b;
+  int C = bucket_in_index % stride_b;
+  return A * stride_a + bucket_index * stride_b + C;
+}
+
+#endif
+
 bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(src_tensor.data() != nullptr);
@@ -466,9 +455,39 @@ bool NeedBitUppackCheck(const SchemaTensorWrapper &src_tensor) {
   return need_bit_unpack;
 }
 
+int WeightDecoder::DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
+                               const std::string &model_version, bool float_mode) {
+#ifndef WEIGHT_DECODE_CLIP
+  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT &&
+      !(op_parameter->quant_type_ == schema::QuantType_QUANT_ALL && float_mode)) {
+    return RET_OK;
+  }
+  int index = 0;
+  for (auto &tensor : in_tensors) {
+    MS_CHECK_TRUE_RET(tensor != nullptr, RET_ERROR);
+    auto preferred_dim = GetPreferredDim(in_tensors, op_parameter, index++, tensor->shape(), model_version);
+    auto ret = WeightDecoder::DequantTensor(tensor, preferred_dim, dst_data_type);
+    if (ret != RET_OK && ret != RET_NO_CHANGE) {
+      MS_LOG(DEBUG) << "Dequant tensor failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+#else
+  if (op_parameter->quant_type_ != schema::QuantType_QUANT_WEIGHT &&
+      !(op_parameter->quant_type_ == schema::QuantType_QUANT_ALL && float_mode)) {
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << "Do not support dequant node.";
+    return RET_NOT_SUPPORT;
+  }
+#endif
+}
+
 int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
+#ifndef WEIGHT_DECODE_CLIP
   if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
     return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
   } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
@@ -481,5 +500,16 @@ int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, lite:
   } else {
     return WeightDecoder::UnPack(src_tensor, dst_tensor);
   }
+#else
+  if (src_tensor.handler()->weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
+    MS_LOG(ERROR) << unsupport_weight_decode_log;
+    return RET_ERROR;
+  }
+  if (NeedBitUppackCheck(src_tensor)) {
+    MS_LOG(ERROR) << unsupport_weight_decode_log;
+    return RET_ERROR;
+  }
+  return RET_NO_CHANGE;
+#endif
 }
 }  // namespace mindspore::lite

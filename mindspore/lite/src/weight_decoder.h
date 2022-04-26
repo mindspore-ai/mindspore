@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,111 +36,18 @@ static constexpr int kBitNum1 = 1;
 static constexpr int kBitNum8 = 8;
 static constexpr int kBitNum16 = 16;
 
-#ifndef WEIGHT_DECODE_CLIP
 namespace mindspore::lite {
-
-template <typename T>
-STATUS UnIndexTensorData(const std::vector<int> &unique_values, const std::vector<size_t> &indices, void *dst_data,
-                         size_t dst_data_size) {
-  std::vector<T> un_indexed_data;
-  for (auto index : indices) {
-    if (index >= unique_values.size()) {
-      MS_LOG(ERROR) << "index: " << index << " size: " << unique_values.size();
-      return RET_ERROR;
-    }
-    if (unique_values[index] > std::numeric_limits<T>::max() || unique_values[index] < std::numeric_limits<T>::min()) {
-      MS_LOG(ERROR) << "data: " << unique_values[index] << " max: " << std::numeric_limits<T>::max()
-                    << " min: " << std::numeric_limits<T>::min();
-      return RET_ERROR;
-    }
-    un_indexed_data.push_back(static_cast<T>(unique_values[index]));
-  }
-  if (un_indexed_data.size() * sizeof(T) != dst_data_size) {
-    MS_LOG(ERROR) << "un idnexed data size: " << un_indexed_data.size() * sizeof(T)
-                  << " expected by tensor: " << dst_data_size;
-    return RET_ERROR;
-  }
-  memcpy(dst_data, un_indexed_data.data(), un_indexed_data.size() * sizeof(T));
-
-  return RET_OK;
-}
-
-template <typename T>
-STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vector<size_t> &indices,
-                          const std::vector<size_t> &coors,
-                          const flatbuffers::Vector<flatbuffers::Offset<schema::QuantParam>> *quant_params,
-                          size_t elem_cnt, size_t coor_best_bit, void *dst_data, size_t dst_data_size) {
-  std::vector<T> un_sparsed_data;
-  size_t data_index = 0;
-  auto nz_cnt = indices.size();
-  MS_ASSERT(nz_cnt == coors.size());
-  auto channel_cnt = quant_params->size();
-  MS_CHECK_GT(channel_cnt, 0, RET_ERROR);
-  auto elem_perchannel = elem_cnt / channel_cnt;
-  MS_CHECK_GT(elem_perchannel, 0, RET_ERROR);
-  for (size_t i = 0; i < nz_cnt; i++) {
-    auto index = indices[i];
-    if (index >= unique_values.size()) {
-      MS_LOG(ERROR) << "index: " << index << " size: " << unique_values.size();
-      return RET_ERROR;
-    }
-    auto nz = unique_values[index];
-    if (nz > std::numeric_limits<T>::max() || nz < std::numeric_limits<T>::min()) {
-      MS_LOG(ERROR) << "data: " << nz << " max: " << std::numeric_limits<T>::max()
-                    << " min: " << std::numeric_limits<T>::min();
-      return RET_ERROR;
-    }
-    auto coor = coors[i];
-    for (size_t j = 0; j < coor; j++) {
-      auto cur_channel = data_index / elem_perchannel;
-      auto zp = quant_params->Get(cur_channel)->zeroPoint();
-      un_sparsed_data.push_back(zp);
-      data_index++;
-    }
-    un_sparsed_data.push_back(static_cast<T>(unique_values[index]));
-    data_index++;
-  }
-  if (un_sparsed_data.size() * sizeof(T) > dst_data_size) {
-    MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T)
-                  << " tensor size: " << dst_data_size;
-    return RET_ERROR;
-  } else if (un_sparsed_data.size() * sizeof(T) < dst_data_size &&
-             (un_sparsed_data.size() + (1 << coor_best_bit) - 1) * sizeof(T) < dst_data_size) {
-    MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T) << " tensor size: " << dst_data_size
-                  << " coor_best_bit: " << coor_best_bit;
-    return RET_ERROR;
-  }
-
-  for (; data_index < dst_data_size / sizeof(T); data_index++) {
-    auto cur_channel = data_index / elem_perchannel;
-    auto zp = quant_params->Get(cur_channel)->zeroPoint();
-    un_sparsed_data.push_back(static_cast<T>(zp));
-  }
-
-  memcpy(dst_data, un_sparsed_data.data(), un_sparsed_data.size() * sizeof(T));
-
-  return RET_OK;
-}
-
-std::vector<bool> StringToBitVector(const std::string &str);
-
-STATUS SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
-
-STATUS IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
-
-// A * stride_a + bucket_index * stride_b + C
-int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index, int bucket_in_index);
 
 class WeightDecoder {
  public:
   static int DequantNode(OpParameter *op_parameter, const std::vector<Tensor *> &in_tensors, TypeId dst_data_type,
                          const std::string &model_version, bool float_mode);
-
-  static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
+  static int DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
   template <typename T>
   static int GetPreferredDim(const std::vector<T *> &in_tensors, const OpParameter *op_parameter, int index,
                              const std::vector<int> &dims, const std::string &model_version) {
+#ifndef WEIGHT_DECODE_CLIP
     const int first_version_offset = 5;
     if (model_version.empty() ||
         model_version.substr(model_version.size() - first_version_offset, model_version.size()) < "1.6.0") {
@@ -155,10 +62,15 @@ class WeightDecoder {
     }
     // The first index.
     return 0;
+#else
+    MS_LOG(ERROR) << "Do not support preferred dim.";
+    return RET_NOT_SUPPORT;
+#endif
   }
 
   template <typename ST, typename DT = float>
   static DT *DequantData(const lite::Tensor *input_tensor, int preferred_dim) {
+#ifndef WEIGHT_DECODE_CLIP
     const auto *quant_datas = static_cast<const ST *>(input_tensor->data());
     if (quant_datas == nullptr) {
       MS_LOG(ERROR) << "Get quant tensor failed.";
@@ -170,9 +82,13 @@ class WeightDecoder {
     } else {
       return DequantPerLayerData<ST, DT>(input_tensor, quant_datas);
     }
+#else
+    MS_LOG(ERROR) << "Do not support dequant data.";
+    return RET_NOT_SUPPORT;
+#endif
   }
 
-  static int DecompressTensor(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
+#ifndef WEIGHT_DECODE_CLIP
 
  private:
   static int DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_data_type = kNumberTypeFloat32);
@@ -181,7 +97,18 @@ class WeightDecoder {
 
   static int DecodeHuffmanCode(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
 
+  static int UnPack(const SchemaTensorWrapper &src_tensor, lite::Tensor *dst_tensor);
+
+  static STATUS SparseDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
+
+  static std::vector<bool> StringToBitVector(const std::string &str);
+
+  static STATUS IndexingDecompress(const SchemaTensorWrapper &src_tensor, Tensor *dst_tensor);
+
   static bool IsChannelFirst(int index, const OpParameter *op_parameter);
+
+  // A * stride_a + bucket_index * stride_b + C
+  static int GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index, int bucket_in_index);
 
   template <typename ST, typename DT = float>
   static DT *DequantPerLayerData(const lite::Tensor *input_tensor, const ST *quant_datas) {
@@ -355,7 +282,91 @@ class WeightDecoder {
       unpack_bit_data->push(a);
     }
   }
+
+  template <typename T>
+  static STATUS UnIndexTensorData(const std::vector<int> &unique_values, const std::vector<size_t> &indices,
+                                  void *dst_data, size_t dst_data_size) {
+    std::vector<T> un_indexed_data;
+    for (auto index : indices) {
+      if (index >= unique_values.size()) {
+        MS_LOG(ERROR) << "index: " << index << " size: " << unique_values.size();
+        return RET_ERROR;
+      }
+      if (unique_values[index] > std::numeric_limits<T>::max() ||
+          unique_values[index] < std::numeric_limits<T>::min()) {
+        MS_LOG(ERROR) << "data: " << unique_values[index] << " max: " << std::numeric_limits<T>::max()
+                      << " min: " << std::numeric_limits<T>::min();
+        return RET_ERROR;
+      }
+      un_indexed_data.push_back(static_cast<T>(unique_values[index]));
+    }
+    if (un_indexed_data.size() * sizeof(T) != dst_data_size) {
+      MS_LOG(ERROR) << "un idnexed data size: " << un_indexed_data.size() * sizeof(T)
+                    << " expected by tensor: " << dst_data_size;
+      return RET_ERROR;
+    }
+    memcpy(dst_data, un_indexed_data.data(), un_indexed_data.size() * sizeof(T));
+
+    return RET_OK;
+  }
+
+  template <typename T>
+  static STATUS UnSparseTensorData(const std::vector<int> &unique_values, const std::vector<size_t> &indices,
+                                   const std::vector<size_t> &coors,
+                                   const flatbuffers::Vector<flatbuffers::Offset<schema::QuantParam>> *quant_params,
+                                   size_t elem_cnt, size_t coor_best_bit, void *dst_data, size_t dst_data_size) {
+    std::vector<T> un_sparsed_data;
+    size_t data_index = 0;
+    auto nz_cnt = indices.size();
+    MS_ASSERT(nz_cnt == coors.size());
+    auto channel_cnt = quant_params->size();
+    MS_CHECK_GT(channel_cnt, 0, RET_ERROR);
+    auto elem_perchannel = elem_cnt / channel_cnt;
+    MS_CHECK_GT(elem_perchannel, 0, RET_ERROR);
+    for (size_t i = 0; i < nz_cnt; i++) {
+      auto index = indices[i];
+      if (index >= unique_values.size()) {
+        MS_LOG(ERROR) << "index: " << index << " size: " << unique_values.size();
+        return RET_ERROR;
+      }
+      auto nz = unique_values[index];
+      if (nz > std::numeric_limits<T>::max() || nz < std::numeric_limits<T>::min()) {
+        MS_LOG(ERROR) << "data: " << nz << " max: " << std::numeric_limits<T>::max()
+                      << " min: " << std::numeric_limits<T>::min();
+        return RET_ERROR;
+      }
+      auto coor = coors[i];
+      for (size_t j = 0; j < coor; j++) {
+        auto cur_channel = data_index / elem_perchannel;
+        auto zp = quant_params->Get(cur_channel)->zeroPoint();
+        un_sparsed_data.push_back(zp);
+        data_index++;
+      }
+      un_sparsed_data.push_back(static_cast<T>(unique_values[index]));
+      data_index++;
+    }
+    if (un_sparsed_data.size() * sizeof(T) > dst_data_size) {
+      MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T)
+                    << " tensor size: " << dst_data_size;
+      return RET_ERROR;
+    } else if (un_sparsed_data.size() * sizeof(T) < dst_data_size &&
+               (un_sparsed_data.size() + (1 << coor_best_bit) - 1) * sizeof(T) < dst_data_size) {
+      MS_LOG(ERROR) << "un-sparsed data size: " << un_sparsed_data.size() * sizeof(T)
+                    << " tensor size: " << dst_data_size << " coor_best_bit: " << coor_best_bit;
+      return RET_ERROR;
+    }
+
+    for (; data_index < dst_data_size / sizeof(T); data_index++) {
+      auto cur_channel = data_index / elem_perchannel;
+      auto zp = quant_params->Get(cur_channel)->zeroPoint();
+      un_sparsed_data.push_back(static_cast<T>(zp));
+    }
+
+    memcpy(dst_data, un_sparsed_data.data(), un_sparsed_data.size() * sizeof(T));
+
+    return RET_OK;
+  }
+#endif
 };
 }  // namespace mindspore::lite
-#endif
 #endif  // MINDSPORE_LITE_SRC_WEIGHT_DECODER_H_
