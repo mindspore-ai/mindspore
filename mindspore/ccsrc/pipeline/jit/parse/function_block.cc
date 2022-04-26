@@ -185,8 +185,6 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
         }
       }
     }
-    // If information transform by phi, need remove the var in interpret dict in fallback feature.
-    EraseLocalPyParam(var_name);
   }
 
   func_graph()->add_parameter(phi_param);
