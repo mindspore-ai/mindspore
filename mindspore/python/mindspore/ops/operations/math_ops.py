@@ -4980,7 +4980,7 @@ class MatrixDeterminant(Primitive):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -4993,6 +4993,7 @@ class MatrixDeterminant(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize MatrixDeterminant."""
+        super().__init__("MatrixDeterminant")
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
@@ -5015,7 +5016,7 @@ class LogMatrixDeterminant(Primitive):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -5029,6 +5030,7 @@ class LogMatrixDeterminant(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize LogMatrixDeterminant."""
+        super().__init__("LogMatrixDeterminant")
         self.init_prim_io_names(inputs=['x'], outputs=['sign', 'y'])
 
 
