@@ -406,7 +406,7 @@ bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   profiler_inst->OpDataProducerBeginParallel(kernel->fullname_with_scope(), pid);
   bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
   profiler_inst->OpDataProducerEndParallel(kernel->fullname_with_scope());
-
+  profiler_inst->RecordFrameWorkInfo(kernel);
   return ret;
 }
 

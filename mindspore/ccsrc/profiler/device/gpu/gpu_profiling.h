@@ -48,7 +48,15 @@ enum class ActivityType {
   kMemset = 10,
   kMemcpyUnknown = 11
 };
-
+struct CurKernelInputInfo {
+  uint32_t input_id;
+  std::string shape;
+};
+struct CurKernelInfo {
+  std::string op_type;
+  std::string op_name;
+  std::vector<CurKernelInputInfo> cur_kernel_all_inputs_info;
+};
 struct MemcpyInfo {
   size_t bytes;
   unsigned char src_kind;
@@ -134,6 +142,10 @@ class MS_CORE_API GPUProfiler : public Profiler {
   void SetStepTraceOpName(ProfilingTraceInfo trace_op_name);
   std::string ProfileDataPath() const { return profile_data_path_; }
   bool IsInitialized() { return is_init_; }
+  void RecordFrameWorkInfo(const CNodePtr &kernel);
+  CurKernelInputInfo cur_kernel_input_info_;
+  CurKernelInfo cur_kernel_info_;
+  std::vector<CurKernelInfo> all_kernel_info_;
 
  private:
   void SingleOpLaunchTimeProcess(float op_time_elapsed);
