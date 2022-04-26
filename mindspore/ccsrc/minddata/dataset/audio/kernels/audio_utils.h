@@ -501,6 +501,80 @@ Status Dct(std::shared_ptr<Tensor> *output, int32_t n_mfcc, int32_t n_mels, Norm
 /// \return Status code.
 Status ComplexNorm(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, float power);
 
+/// \brief Stochastic gradient descent.
+/// \param[in] input Input tensor.
+/// \param[out] output Output tensor.
+/// \param[in] grad Input grad for params.
+/// \param[in] lr Learning rate.
+/// \param[in] momentum Momentum factor.
+/// \param[in] dampening Dampening for momentum.
+/// \param[in] weight_decay Weight decay.
+/// \param[in] nesterov Whether enable nesterov momentum.
+/// \param[in] stat Stat.
+/// \return Status code.
+template <typename T>
+Status SGD(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &grad,
+           float lr, float momentum = 0.0, float dampening = 0.0, float weight_decay = 0.0, bool nesterov = false,
+           float stat = 0.0) {
+  size_t elem_num = input->Size();
+  std::vector<T> accum(elem_num);
+  std::shared_ptr<Tensor> output_param;
+  std::vector<T> out_param(elem_num);
+  int ind = 0;
+  auto itr_inp = input->begin<T>();
+  auto itr_grad = grad->begin<T>();
+  while (itr_inp != input->end<T>() && itr_grad != grad->end<T>()) {
+    T grad_new = (*itr_grad);
+    if (weight_decay > static_cast<float>(0.0)) {
+      grad_new += (*itr_inp) * static_cast<T>(weight_decay);
+    }
+    if (momentum > 0) {
+      if (stat > 0) {
+        accum[ind] = grad_new;
+        stat = 0;
+      } else {
+        accum[ind] = accum[ind] * momentum + (1 - static_cast<T>(dampening)) * grad_new;
+      }
+      if (nesterov) {
+        grad_new += accum[ind] * momentum;
+      } else {
+        grad_new = accum[ind];
+      }
+    }
+    out_param[ind] = (*itr_inp) - lr * grad_new;
+    itr_inp++;
+    itr_grad++;
+    ind++;
+  }
+
+  RETURN_IF_NOT_OK(Tensor::CreateFromVector(out_param, TensorShape({input->Size()}), &output_param));
+  *output = output_param;
+  return Status::OK();
+}
+
+/// \brief Use conversion matrix to solve normal STFT from mel frequency STFT.
+/// \param input Tensor of shape <..., n_mels, time>.
+/// \param output Tensor of shape <..., freq, time>.
+/// \param n_stft Number of bins in STFT, the value must be greater than 0.
+/// \param n_mels Number of mel filter, the value must be greater than 0.
+/// \param sample_rate Sample rate of the signal, the value can't be zero.
+/// \param f_min Minimum frequency, the value must be greater than or equal to 0.
+/// \param f_max Maximum frequency, the value must be greater than 0.
+/// \param max_iter Maximum number of optimization iterations, the value must be greater than 0.
+/// \param tolerance_loss Value of loss to stop optimization at, the value must be greater than or equal to 0.
+/// \param tolerance_change Difference in losses to stop optimization at, the value must be greater than or equal to 0.
+/// \param sgd_lr Learning rate for SGD optimizer, the value must be greater than or equal to 0.
+/// \param sgd_momentum Momentum factor for SGD optimizer, the value must be greater than or equal to 0.
+/// \param norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
+///     divide the triangle mel weight by the width of the mel band.
+/// \param mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney.
+/// \param rnd Random generator.
+/// \return Status code.
+Status InverseMelScale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t n_stft,
+                       int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
+                       float tolerance_loss, float tolerance_change, float sgd_lr, float sgd_momentum, NormType norm,
+                       MelType mel_type, std::mt19937 rnd);
+
 /// \brief Decode mu-law encoded signal.
 /// \param input Tensor of shape <..., time>.
 /// \param output Tensor of shape <..., time>.

@@ -43,6 +43,7 @@
 #include "minddata/dataset/audio/ir/kernels/gain_ir.h"
 #include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/inverse_mel_scale_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
@@ -358,6 +359,20 @@ PYBIND_REGISTER(
         return highpass_biquad;
       }));
   }));
+
+PYBIND_REGISTER(InverseMelScaleOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<audio::InverseMelScaleOperation, TensorOperation,
+                                   std::shared_ptr<audio::InverseMelScaleOperation>>(*m, "InverseMelScaleOperation")
+                    .def(py::init([](int32_t n_stft, int32_t n_mels, int32_t sample_rate, float f_min, float f_max,
+                                     int32_t max_iter, float tolerance_loss, float tolerance_change,
+                                     const py::dict &sgdargs, NormType norm, MelType mel_type) {
+                      auto inverse_mel_scale = std::make_shared<audio::InverseMelScaleOperation>(
+                        n_stft, n_mels, sample_rate, f_min, f_max, max_iter, tolerance_loss, tolerance_change,
+                        toStringFloatMap(sgdargs), norm, mel_type);
+                      THROW_IF_ERROR(inverse_mel_scale->ValidateParams());
+                      return inverse_mel_scale;
+                    }));
+                }));
 
 PYBIND_REGISTER(LFilterOperation, 1, ([](const py::module *m) {
                   (void)py::class_<audio::LFilterOperation, TensorOperation, std::shared_ptr<audio::LFilterOperation>>(

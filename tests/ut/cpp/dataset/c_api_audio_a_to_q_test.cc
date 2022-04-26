@@ -936,6 +936,164 @@ TEST_F(MindDataTestPipeline, TestHighpassBiquadWrongArgs) {
   EXPECT_EQ(iter02, nullptr);
 }
 
+/// Feature: InverseMelScale
+/// Description: test basic usage of InverseMelScale
+/// Expectation: get correct number of data
+TEST_F(MindDataTestPipeline, TestInverseMelScalePipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInverseMelScalePipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {4, 3, 7}));
+  std::shared_ptr<Dataset> ds = RandomData(10, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  auto inverse_mel_scale_op1 = audio::InverseMelScale(20, 3, 16000, 0, 8000, 10);
+  ds = ds->Map({inverse_mel_scale_op1});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+  std::vector<int64_t> expected = {4, 20, 7};
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 3);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+
+  std::shared_ptr<SchemaObj> schema2 = Schema();
+  ASSERT_OK(schema2->add_column("waveform", mindspore::DataType::kNumberTypeFloat64, {10, 20, 30}));
+  ds = RandomData(10, schema2);
+  EXPECT_NE(ds, nullptr);
+  auto inverse_mel_scale_op2 = audio::InverseMelScale(128, 20, 16000, 0, 8000, 100);
+  ds = ds->Map({inverse_mel_scale_op2});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  ASSERT_OK(iter->GetNextRow(&row));
+  expected = {10, 128, 30};
+  i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 3);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat64);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+
+  std::shared_ptr<SchemaObj> schema3 = Schema();
+  ASSERT_OK(schema3->add_column("waveform", mindspore::DataType::kNumberTypeInt16, {3, 4, 5}));
+  ds = RandomData(10, schema3);
+  EXPECT_NE(ds, nullptr);
+  auto inverse_mel_scale_op3 = audio::InverseMelScale(128, 4, 16000, 0, 8000, 100);
+  ds = ds->Map({inverse_mel_scale_op3});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  ASSERT_OK(iter->GetNextRow(&row));
+  expected = {3, 128, 5};
+  i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 3);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+
+  std::shared_ptr<SchemaObj> schema4 = Schema();
+  ASSERT_OK(schema4->add_column("waveform", mindspore::DataType::kNumberTypeInt16, {4, 20}));
+  ds = RandomData(10, schema4);
+  EXPECT_NE(ds, nullptr);
+  auto inverse_mel_scale_op4 = audio::InverseMelScale(20, 4, 16000, 0, 8000, 100);
+  ds = ds->Map({inverse_mel_scale_op4});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+  ASSERT_OK(iter->GetNextRow(&row));
+  expected = {1, 20, 20};
+  i = 0;
+  while (row.size() != 0) {
+    auto col = row["waveform"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 3);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 10);
+  iter->Stop();
+}
+
+/// Feature: InverseMelScale
+/// Description: test WrongArg of InverseMelScale
+/// Expectation: return error
+TEST_F(MindDataTestPipeline, TestInverseMelScaleWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestInverseMelScaleWrongArgs.";
+  // MelScale: f_max must be greater than f_min.
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("waveform", mindspore::DataType::kNumberTypeFloat32, {3, 4, 5}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+  auto inverse_mel_scale_op = audio::InverseMelScale(128, 4, 1000, -100, -100);
+  ds = ds->Map({inverse_mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: n_mels must be greater than 0.
+  inverse_mel_scale_op = audio::InverseMelScale(-128, 16000, 1000, 10, 100);
+  ds = ds->Map({inverse_mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: sample_rate must be greater than f_min.
+  inverse_mel_scale_op = audio::InverseMelScale(128, -16000, 1000, 10, 100);
+  ds = ds->Map({inverse_mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: max_iter must be greater than 0.
+  inverse_mel_scale_op = audio::InverseMelScale(128, 16000, 1000, 10, 100, -10);
+  ds = ds->Map({inverse_mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: tolerance_loss must be greater than 0.
+  inverse_mel_scale_op = audio::InverseMelScale(128, 16000, 1000, 10, 100, 10, -10);
+  ds = ds->Map({inverse_mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+
+  // MelScale: tolerance_change must be greater than 0.
+  inverse_mel_scale_op = audio::InverseMelScale(128, 16000, 1000, 10, 100, 10, 10, -10);
+  ds = ds->Map({inverse_mel_scale_op});
+  EXPECT_NE(ds, nullptr);
+  iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: MelscaleFbanks.
 /// Description: Test normal operation.
 /// Expectation: As expected.

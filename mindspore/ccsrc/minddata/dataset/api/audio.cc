@@ -39,6 +39,7 @@
 #include "minddata/dataset/audio/ir/kernels/gain_ir.h"
 #include "minddata/dataset/audio/ir/kernels/griffin_lim_ir.h"
 #include "minddata/dataset/audio/ir/kernels/highpass_biquad_ir.h"
+#include "minddata/dataset/audio/ir/kernels/inverse_mel_scale_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lfilter_ir.h"
 #include "minddata/dataset/audio/ir/kernels/lowpass_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/magphase_ir.h"
@@ -462,6 +463,47 @@ HighpassBiquad::HighpassBiquad(int32_t sample_rate, float cutoff_freq, float Q)
 
 std::shared_ptr<TensorOperation> HighpassBiquad::Parse() {
   return std::make_shared<HighpassBiquadOperation>(data_->sample_rate_, data_->cutoff_freq_, data_->Q_);
+}
+
+// InverseMelScale Transform Operation.
+struct InverseMelScale::Data {
+  Data(int32_t n_stft, int32_t n_mels, int32_t sample_rate, float f_min, float f_max, int32_t max_iter,
+       float tolerance_loss, float tolerance_change, const std::map<std::string, float> &sgdargs, NormType norm,
+       MelType mel_type)
+      : n_stft_(n_stft),
+        n_mels_(n_mels),
+        sample_rate_(sample_rate),
+        f_min_(f_min),
+        f_max_(f_max),
+        max_iter_(max_iter),
+        tolerance_loss_(tolerance_loss),
+        tolerance_change_(tolerance_change),
+        sgdargs_(sgdargs),
+        norm_(norm),
+        mel_type_(mel_type) {}
+  int32_t n_stft_;
+  int32_t n_mels_;
+  int32_t sample_rate_;
+  float f_min_;
+  float f_max_;
+  int32_t max_iter_;
+  float tolerance_loss_;
+  float tolerance_change_;
+  std::map<std::string, float> sgdargs_;
+  NormType norm_;
+  MelType mel_type_;
+};
+
+InverseMelScale::InverseMelScale(int32_t n_stft, int32_t n_mels, int32_t sample_rate, float f_min, float f_max,
+                                 int32_t max_iter, float tolerance_loss, float tolerance_change,
+                                 const std::map<std::string, float> &sgdargs, NormType norm, MelType mel_type)
+    : data_(std::make_shared<Data>(n_stft, n_mels, sample_rate, f_min, f_max, max_iter, tolerance_loss,
+                                   tolerance_change, sgdargs, norm, mel_type)) {}
+
+std::shared_ptr<TensorOperation> InverseMelScale::Parse() {
+  return std::make_shared<InverseMelScaleOperation>(
+    data_->n_stft_, data_->n_mels_, data_->sample_rate_, data_->f_min_, data_->f_max_, data_->max_iter_,
+    data_->tolerance_loss_, data_->tolerance_change_, data_->sgdargs_, data_->norm_, data_->mel_type_);
 }
 
 // LFilter Transform Operation.

@@ -29,10 +29,10 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_bandreject_biquad, check_bass_biquad, check_biquad, check_complex_norm, check_compute_deltas, \
     check_contrast, check_db_to_amplitude, check_dc_shift, check_deemph_biquad, check_detect_pitch_frequency, \
     check_dither, check_equalizer_biquad, check_fade, check_flanger, check_gain, check_griffin_lim, \
-    check_highpass_biquad, check_lfilter, check_lowpass_biquad, check_magphase, check_mask_along_axis, \
-    check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, check_overdrive, \
-    check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, check_spectral_centroid, \
-    check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
+    check_highpass_biquad, check_inverse_mel_scale, check_lfilter, check_lowpass_biquad, check_magphase, \
+    check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, \
+    check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
+    check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
 
 
 class AudioTensorOperation(TensorOperation):
@@ -1008,6 +1008,58 @@ class HighpassBiquad(AudioTensorOperation):
 
     def parse(self):
         return cde.HighpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
+
+
+class InverseMelScale(AudioTensorOperation):
+    """
+    Solve for a normal STFT form a mel frequency STFT, using a conversion matrix.
+
+    Args:
+        n_stft (int): Number of bins in STFT.
+        n_mels (int, optional): Number of mel filterbanks (default=128).
+        sample_rate (int, optional): Sample rate of audio signal (default=16000).
+        f_min (float, optional): Minimum frequency (default=0.0).
+        f_max (float, optional): Maximum frequency (default=None, will be set to sample_rate // 2).
+        max_iter (int, optional): Maximum number of optimization iterations (default=100000).
+        tolerance_loss (float, optional): Value of loss to stop optimization at (default=1e-5).
+        tolerance_change (float, optional): Difference in losses to stop optimization at (default=1e-8).
+        sgdargs (dict, optional): Arguments for the SGD optimizer (default=None, will be set to
+            {'sgd_lr': 0.1, 'sgd_momentum': 0.9}).
+        norm (NormType, optional): Normalization method, can be NormType.SLANEY or NormType.NONE
+            (default=NormType.NONE).
+        mel_type (MelType, optional): Mel scale to use, can be MelType.SLANEY or MelType.HTK (default=MelType.HTK).
+
+    Examples:
+        >>> import numpy as np
+        >>>
+        >>> waveform = np.random.randn(2, 2, 3, 2)
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
+        >>> transforms = [audio.InverseMelScale(20, 3, 16000, 0, 8000, 10)]
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
+    """
+
+    @check_inverse_mel_scale
+    def __init__(self, n_stft, n_mels=128, sample_rate=16000, f_min=0.0, f_max=None, max_iter=100000,
+                 tolerance_loss=1e-5, tolerance_change=1e-8, sgdargs=None, norm=NormType.NONE, mel_type=MelType.HTK):
+        self.n_stft = n_stft
+        self.n_mels = n_mels
+        self.sample_rate = sample_rate
+        self.f_min = f_min
+        self.f_max = f_max if f_max is not None else sample_rate // 2
+        self.max_iter = max_iter
+        self.tolerance_loss = tolerance_loss
+        self.tolerance_change = tolerance_change
+        if sgdargs is None:
+            self.sgdargs = {'sgd_lr': 0.1, 'sgd_momentum': 0.9}
+        else:
+            self.sgdargs = sgdargs
+        self.norm = norm
+        self.mel_type = mel_type
+
+    def parse(self):
+        return cde.InverseMelScaleOperation(self.n_stft, self.n_mels, self.sample_rate, self.f_min, self.f_max,
+                                            self.max_iter, self.tolerance_loss, self.tolerance_change, self.sgdargs,
+                                            DE_C_NORM_TYPE[self.norm], DE_C_MEL_TYPE[self.mel_type])
 
 
 class LFilter(AudioTensorOperation):

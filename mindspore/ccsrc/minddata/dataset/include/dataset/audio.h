@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_AUDIO_H_
 
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -574,6 +575,43 @@ class MS_API HighpassBiquad final : public TensorTransform {
 
   /// \brief Destructor.
   ~HighpassBiquad() override = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
+/// \brief InverseMelScale TensorTransform
+/// \notes Solve for a normal STFT from a mel frequency STFT, using a conversion matrix.
+class MS_API InverseMelScale final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] n_stft Number of bins in STFT, must be positive.
+  /// \param[in] n_mels Number of mel filter, must be positive (Default: 128).
+  /// \param[in] sample_rate Sample rate of the signal, the value can't be zero (Default: 16000).
+  /// \param[in] f_min Minimum frequency, must be non-negative (Default: 0.0).
+  /// \param[in] f_max Maximum frequency, must be non-negative (Default: 0.0, will be set to sample_rate / 2).
+  /// \param[in] max_iter Maximum number of optimization iterations, must be positive (Default: 100000).
+  /// \param[in] tolerance_loss Value of loss to stop optimization at, must be non-negative (Default: 1e-5).
+  /// \param[in] tolerance_change Difference in losses to stop optimization at, must be non-negative (Default: 1e-8).
+  /// \param[in] sgdargs Parameters of SGD optimizer, including lr, momentum
+  ///     (Default: {{"sgd_lr", 0.1}, {"sgd_momentum", 0.0}}).
+  /// \param[in] norm Type of norm, value should be NormType::kSlaney or NormType::kNone. If norm is NormType::kSlaney,
+  ///     divide the triangle mel weight by the width of the mel band (Default: NormType::kNone).
+  /// \param[in] mel_type Type of mel, value should be MelType::kHtk or MelType::kSlaney (Default: MelType::kHtk).
+  explicit InverseMelScale(int32_t n_stft, int32_t n_mels = 128, int32_t sample_rate = 16000, float f_min = 0.0,
+                           float f_max = 0.0, int32_t max_iter = 100000, float tolerance_loss = 1e-5,
+                           float tolerance_change = 1e-8,
+                           const std::map<std::string, float> &sgdargs = {{"sgd_lr", 0.1}, {"sgd_momentum", 0.0}},
+                           NormType norm = NormType::kNone, MelType mel_type = MelType::kHtk);
+
+  /// \brief Destructor.
+  ~InverseMelScale() = default;
 
  protected:
   /// \brief Function to convert TensorTransform object into a TensorOperation object.
