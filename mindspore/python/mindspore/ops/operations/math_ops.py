@@ -4489,16 +4489,16 @@ class BesselI0(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16 or float32.
+          Data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> bessel_i0 = ops.BesselI0()
@@ -4558,17 +4558,17 @@ class BesselI0e(Primitive):
     Inputs:
         - **x** (Tensor) - The shape of tensor is
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-          Data type must be float16 or float32.
+          Data type must be float16, float32 or float64.
 
     Outputs:
         Tensor, has the same shape as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> bessel_i0e = ops.BesselI0e()
