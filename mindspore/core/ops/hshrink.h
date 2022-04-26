@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,12 @@ class MIND_API HShrink : public BaseOperator {
   MIND_API_BASE_MEMBER(HShrink);
   /// \brief Constructor.
   HShrink() : BaseOperator(kNameHShrink) { InitIOName({"input_x"}, {"output"}); }
+
+  /// \brief Method to set lambd. The Default value is 0.5.
+  void set_lambd(const float &lambd);
+
+  /// \brief Method to get lambd.
+  float get_lambd() const;
 };
 
 abstract::AbstractBasePtr HShrinkInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

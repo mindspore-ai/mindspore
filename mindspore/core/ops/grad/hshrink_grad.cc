@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,13 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(HShrinkGrad, BaseOperator);
+void HShrinkGrad::set_lambd(const float &lambd) { (void)this->AddAttr(kLambd, api::MakeValue(lambd)); }
+
+float HShrinkGrad::get_lambd() const {
+  auto value_ptr = GetAttr(kLambd);
+  return GetValue<float>(value_ptr);
+}
+
 abstract::ShapePtr HShrinkGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
