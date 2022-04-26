@@ -50,7 +50,7 @@ class FusedPushWeightKernelMod : public DeprecatedNativeCpuKernelMod {
     total_iteration_++;
     uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     if (step_num_per_iteration == 0) {
-      MS_LOG(EXCEPTION) << "step number per iterationb should not be 0";
+      MS_LOG(EXCEPTION) << "step number per iterationb can not be 0";
     }
     MS_LOG(INFO) << "Try to push weights. Local step number: " << total_iteration_
                  << ", step number needs to run per iteration: " << step_num_per_iteration;

@@ -35,11 +35,11 @@ void ResizeBilinearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (shape_.size() != kResizeBilinearInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be "
-                      << kResizeBilinearInputsShapeSize << ", but got " << shape_.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be " << kResizeBilinearInputsShapeSize
+                      << ", but got " << shape_.size();
   }
   if (size_.size() != kResizeBilinearAttrSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'size' should have " << kResizeBilinearAttrSize
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'size' must have " << kResizeBilinearAttrSize
                       << " elements, but got " << size_.size();
   }
   size_t in_height = shape_[2];
@@ -60,7 +60,7 @@ bool ResizeBilinearCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float, float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
                       << TypeIdLabel(dtype_);
   }
 }
@@ -94,7 +94,7 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
     float_input_addr = reinterpret_cast<float *>(inputs[0]->addr);
     float_output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
                       << TypeIdLabel(dtype_);
   }
   MS_EXCEPTION_IF_NULL(output_addr_T2);

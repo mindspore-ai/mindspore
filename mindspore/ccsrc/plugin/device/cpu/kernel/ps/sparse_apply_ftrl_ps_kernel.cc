@@ -42,7 +42,7 @@ void SparseApplyFtrlPSKernelMod::InitKernel(
   Shard(&linear_shape, 0);
 
   if (var_shape.size() != grad_shape.size()) {
-    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
+    MS_LOG(EXCEPTION) << "var and grad must have the same shape size";
   }
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "var must be at least 1D";
@@ -52,7 +52,7 @@ void SparseApplyFtrlPSKernelMod::InitKernel(
 
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      MS_LOG(EXCEPTION) << "The shape of var and grad must equal in dimension " << i;
+      MS_LOG(EXCEPTION) << "The shape of var and grad must be equal in dimension " << i;
     }
     var_outer_dim_size_ *= var_shape[i];
   }
@@ -65,23 +65,23 @@ void SparseApplyFtrlPSKernelMod::InitKernel(
   }
   init_accum_ = common::AnfAlgo::GetNodeAttr<float>(cnode, "init_accum");
   if (init_accum_ < 0) {
-    MS_LOG(EXCEPTION) << "init_accum should be a non-negative scalar";
+    MS_LOG(EXCEPTION) << "init_accum must be a non-negative scalar";
   }
   lr_ = common::AnfAlgo::GetNodeAttr<float>(cnode, "lr");
   if (lr_ <= 0) {
-    MS_LOG(EXCEPTION) << "lr should be a positive scalar";
+    MS_LOG(EXCEPTION) << "lr must be a positive scalar";
   }
   l1_ = common::AnfAlgo::GetNodeAttr<float>(cnode, "l1");
   if (l1_ < 0) {
-    MS_LOG(EXCEPTION) << "l1 should be a non-negative scalar";
+    MS_LOG(EXCEPTION) << "l1 must be a non-negative scalar";
   }
   l2_ = common::AnfAlgo::GetNodeAttr<float>(cnode, "l2");
   if (l2_ < 0) {
-    MS_LOG(EXCEPTION) << "l2 should be a non-negative scalar";
+    MS_LOG(EXCEPTION) << "l2 must be a non-negative scalar";
   }
   lr_power_ = common::AnfAlgo::GetNodeAttr<float>(cnode, "lr_power");
   if (lr_power_ > 0) {
-    MS_LOG(EXCEPTION) << "lr_power should be a non-positive scalar";
+    MS_LOG(EXCEPTION) << "lr_power must be a non-positive scalar";
   }
   (void)workspace_size_list_.emplace_back(indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(int) * worker_num_);
@@ -91,7 +91,7 @@ void SparseApplyFtrlPSKernelMod::InitKernel(
 
 void SparseApplyFtrlPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
-    MS_LOG(EXCEPTION) << "Shape should not empty";
+    MS_LOG(EXCEPTION) << "Shape can not empty";
   }
   const std::vector<size_t> &indices_shape = shapes[0];
   indices_size_ = indices_shape[0];
@@ -101,7 +101,7 @@ void SparseApplyFtrlPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &
 
 void SparseApplyFtrlPSKernelMod::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyFtrlPSInputSize) {
-    MS_LOG(EXCEPTION) << "Input numbers should not be less than " << kSparseApplyFtrlPSInputSize << ", but got "
+    MS_LOG(EXCEPTION) << "Input numbers can not be less than " << kSparseApplyFtrlPSInputSize << ", but got "
                       << inputs.size();
   }
   const auto &indices_addr = inputs[indices_index_];

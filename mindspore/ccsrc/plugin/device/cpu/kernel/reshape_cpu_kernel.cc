@@ -37,7 +37,7 @@ void ReshapeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 bool ReshapeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                                  const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs should be not empty.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the inputs can not be empty.";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kReshapeOutputsNum, kernel_name_);
   if (inputs[0]->size != outputs[0]->size) {

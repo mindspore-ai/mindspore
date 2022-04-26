@@ -75,7 +75,7 @@ void MatrixDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t k_dim_size = k_shape_.size();
   const size_t k_dim_size_max = 1;
   if (k_dim_size > k_dim_size_max) {
-    MS_LOG(EXCEPTION) << "For MatrixDiagV3, k_dim_size must not be greater than 1, received " << k_dim_size << ".";
+    MS_LOG(EXCEPTION) << "For MatrixDiagV3, k_dim_size can not be greater than 1, received " << k_dim_size << ".";
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);

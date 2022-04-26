@@ -73,7 +73,7 @@ bool UnpackCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnpackInputsNum, kernel_name_);
   if (outputs.size() < kUnpackOutputsMinNum || workspace.size() < kUnpackWorkspaceMinNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of outputs and workspaces should be at least 1, but got the number of outputs: "
+                      << "', the number of outputs and workspaces must be at least 1, but got the number of outputs: "
                       << outputs.size() << " and the number of workspaces: " << workspace.size();
   }
   return kernel_func_(this, inputs, workspace, outputs);

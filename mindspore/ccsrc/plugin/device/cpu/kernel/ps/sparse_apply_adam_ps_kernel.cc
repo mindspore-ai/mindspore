@@ -46,18 +46,18 @@ void SparseApplyAdamPSKernelMod::InitKernel(
     MS_LOG(EXCEPTION) << "var must be at least 1D";
   }
   if (!IsSameShape(var_shape, m_shape)) {
-    MS_LOG(EXCEPTION) << "var and m should have the same shape";
+    MS_LOG(EXCEPTION) << "var and m must have the same shape";
   }
   if (!IsSameShape(var_shape, v_shape)) {
-    MS_LOG(EXCEPTION) << "var and v should have the same shape";
+    MS_LOG(EXCEPTION) << "var and v must have the same shape";
   }
   if (var_shape.size() != grad_shape.size()) {
-    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
+    MS_LOG(EXCEPTION) << "var and grad must have the same shape size";
   }
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      MS_LOG(EXCEPTION) << "The shape of var and grad must equal in dimension " << i;
+      MS_LOG(EXCEPTION) << "The shape of var and grad must be equal in dimension " << i;
     }
     var_outer_dim_size_ *= var_shape[i];
   }
@@ -90,7 +90,7 @@ void SparseApplyAdamPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &
 
 void SparseApplyAdamPSKernelMod::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyAdamPSInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "Input numbers should not less to " << kSparseApplyAdamPSInputsShapeSize << ", but got "
+    MS_LOG(EXCEPTION) << "Input numbers can not less to " << kSparseApplyAdamPSInputsShapeSize << ", but got "
                       << inputs.size();
   }
   const auto &indices_addr = inputs[indices_index_];

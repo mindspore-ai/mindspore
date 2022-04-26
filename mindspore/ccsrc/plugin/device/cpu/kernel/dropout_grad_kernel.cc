@@ -35,7 +35,7 @@ void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto input_mask_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_shape.size() != input_mask_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dimension of 'input' and 'input_mask' should be the same, "
+                      << ", the dimension of 'input' and 'input_mask' must be the same, "
                          "but got the dimension of 'input': "
                       << input_shape.size() << ", and the dimension of 'input_mask': " << input_mask_shape.size();
   }
@@ -46,7 +46,7 @@ void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' should be in (0.0, 1.0], but got " << keep_prob_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
 }
 
@@ -69,7 +69,7 @@ bool DropoutGradBwdCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, c
     DropoutBackwardKernel<float>(inputs, workspace, outputs, keep_prob_);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input 'x' should be float16 or float32 on CPU, but got "
+                      << ", the dtype of input 'x' must be float16 or float32 on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
 

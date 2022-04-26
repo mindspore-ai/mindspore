@@ -40,7 +40,7 @@ void UpdateCacheCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     input_x_dtype_size_ = 8;
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dtype of 'input_x' should be float32, float64, int32, int64, but got: " << input_x_dtype_;
+                  << "', the dtype of 'input_x' must be float32, float64, int32, int64, but got: " << input_x_dtype_;
   }
 }
 
@@ -54,7 +54,7 @@ bool UpdateCacheCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'indices' should be int32 or int64, but got: " << indices_dtype_;
+                      << "', the dtype of 'indices' must be int32 or int64, but got: " << indices_dtype_;
   }
   return true;
 }
@@ -67,7 +67,7 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 2);
   if (update_shape.size() < kMinUpdateShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'update' should be at least "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'update' must be at least "
                       << kMinUpdateShapeSize << "D, but got: " << update_shape.size() << "D";
   }
   batch_size_ = 1;

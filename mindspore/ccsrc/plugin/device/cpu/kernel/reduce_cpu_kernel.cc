@@ -69,10 +69,10 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
                 std::vector<int64_t> *axis) {
   auto axis_addr = prim->GetAttr(AXIS);
   if (axis == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be not null.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' can not be null.";
   }
   if (axis_addr == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' should be not null, but got empty value.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' can not be null, but got empty value.";
   }
   if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
     *axis = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
@@ -80,7 +80,7 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
     (void)axis->emplace_back(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name
-                      << "', the type of 'axis' should be tuple, list, or int, but got invalid type.";
+                      << "', the type of 'axis' must be tuple, list, or int, but got invalid type.";
   }
 }
 

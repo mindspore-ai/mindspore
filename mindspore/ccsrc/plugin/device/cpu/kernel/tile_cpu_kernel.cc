@@ -35,7 +35,7 @@ void TileCpuKernelMod::TileMultipleCompute() {
   }
   if (x_shape_.size() > MAX_TILE_DIM_SIZE || x_shape_.size() > y_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', input shape should not be greater than default max size: " << MAX_TILE_DIM_SIZE
+                      << "', input shape can not be greater than default max size: " << MAX_TILE_DIM_SIZE
                       << " and output shape: " << y_shape_.size() << ", but got input shape " << x_shape_.size();
   }
   input_size_ = 1;
@@ -72,7 +72,7 @@ void TileCpuKernelMod::TileMultipleCompute() {
     tile_parameter_.fast_multiple_ = static_cast<size_t>(multiple);
     tile_parameter_.fast_stride_ = static_cast<size_t>(x_shape_[mul_index] * tile_parameter_.in_strides_[mul_index]);
     if (tile_parameter_.fast_stride_ == 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fast stride should be not equal to 0";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fast stride can not be equal to 0";
     }
     tile_parameter_.fast_outer_size_ = static_cast<size_t>(input_size_ / tile_parameter_.fast_stride_);
   }
@@ -113,7 +113,7 @@ void TileCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (iter != launch_map_.end()) {
     launch_func_ = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be bool, int, float or uint, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be bool, int, float or uint, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
 }
@@ -121,7 +121,7 @@ void TileCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 bool TileCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                               const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kTileInputsNum && inputs.size() != kTileDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be " << kTileInputsNum << " or "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input must be " << kTileInputsNum << " or "
                       << kTileDynamicInputsNum << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kTileOutputsNum, kernel_name_);

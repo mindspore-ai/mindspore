@@ -36,7 +36,7 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_rank_ = input_shape_.size();
   if (paddings_.size() != input_rank_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'paddings' should be equal to the rank of the input, but got the "
+                      << "', the dimension of 'paddings' must be equal to the rank of the input, but got the "
                          "dimension of 'paddings': "
                       << paddings_.size() << ", and the rank of the input: " << input_rank_;
   }
@@ -44,7 +44,7 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < paddings_.size(); i++) {
     if (paddings_[i].size() != kPadElemSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', each element in 'paddings' should have size 2, but got: " << paddings_[i].size();
+                        << "', each element in 'paddings' must have size 2, but got: " << paddings_[i].size();
     }
     flattened_paddings_.push_back(paddings_[i][0]);
     flattened_paddings_.push_back(paddings_[i][1]);
@@ -58,12 +58,12 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   if (input_rank_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the rank of input should be greater than or equal to 1, but got the rank of input: "
+                      << "', the rank of input must be greater than or equal to 1, but got the rank of input: "
                       << input_rank_;
   }
   if (output_shape.size() != input_rank_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the rank of input should be equal to the rank of output, but got the rank of input: "
+                      << "', the rank of input must be equal to the rank of output, but got the rank of input: "
                       << input_rank_ << ", and the rank of output: " << output_shape.size();
   }
   strides_.resize(input_rank_);
@@ -88,7 +88,7 @@ bool PadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, cons
     LaunchKernel<int>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, float64, or int32, but got "
+                      << "', the dtype of 'input_x' must be float16, float32, float64, or int32, but got "
                       << TypeIdLabel(dtype_);
   }
   return true;

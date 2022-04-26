@@ -54,7 +54,7 @@ bool PrintCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   auto data_type = CheckType<T>();
   if (data_type == kTypeUnknown) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be bool, float, int, or uint, but got unsupported type.";
+                      << "', the dtype of 'input_x' must be bool, float, int, or uint, but got unsupported type.";
   }
   for (size_t i = 0; i < inputs.size(); ++i) {
     if (input_sizes_[i] == 0) {

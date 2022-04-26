@@ -37,12 +37,12 @@ void NthElementCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_n_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_n_shape_.size() != 0) {
-    MS_LOG(EXCEPTION) << "For NthElement, the input n should be a scalar or a 0-D tensor but got a "
+    MS_LOG(EXCEPTION) << "For NthElement, the input n must be a scalar or a 0-D tensor but got a "
                       << input_n_shape_.size() << "-D tensor.";
   }
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (input_shape_.size() < 1) {
-    MS_LOG(EXCEPTION) << "For NthElement, input size should be equal or greater than 1, "
+    MS_LOG(EXCEPTION) << "For NthElement, input size must be equal or greater than 1, "
                       << "but got " << input_shape_.size() << ".";
   }
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -99,7 +99,7 @@ void NthElementCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto *n_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
   input_n_val_ = *n_data;
   if (input_n_val_ < 0 || input_n_val_ >= static_cast<int>(input_shape_.back())) {
-    MS_LOG(EXCEPTION) << "For NthElement, the value of input n should be in [0, input.shape[-1]), "
+    MS_LOG(EXCEPTION) << "For NthElement, the value of input n must be in [0, input.shape[-1]), "
                       << "but got " << input_n_val_ << ".";
   }
   auto last_dim = input_shape_.back();

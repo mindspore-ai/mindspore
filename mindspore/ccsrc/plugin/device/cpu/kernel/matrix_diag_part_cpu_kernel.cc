@@ -25,7 +25,7 @@ void MatrixDiagPartCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   out_shapes_ = shapes_;
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be a matrix max than 2.";
+    MS_LOG(EXCEPTION) << "Wrong array shape, A must be a matrix max than 2.";
   }
   m_ = shapes_[dim_size_ - kDim2];
   n_ = shapes_[dim_size_ - kDim1];
@@ -58,7 +58,7 @@ bool MatrixDiagPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   int64_t u = k_range[1];
   // New diagonal matrix m*n matrix, m dimension ;
   if (l > u) {
-    MS_LOG(EXCEPTION) << "The k[1] must not less than k[0].";
+    MS_LOG(EXCEPTION) << "The k[1] can not be less than k[0].";
   }
   u = std::min(u, n_ - 1);
   l = std::max(-(m_ - 1), l);

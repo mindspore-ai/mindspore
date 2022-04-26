@@ -51,7 +51,7 @@ void LogMatrixDeterminantCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "Input x last dimension must be at least 1.";
   }
   if (shape_x[shape_size_x - kNumber2] != shape_x[shape_size_x - kNumber1]) {
-    MS_LOG(EXCEPTION) << "The last two dimensions of Input x should be equal.";
+    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
   }
   if (shape_size_sign != shape_size_x - kNumber2) {
     MS_LOG(EXCEPTION) << "Output sign must be rank [" << shape_size_x - kNumber2 << "], got [" << shape_size_sign

@@ -35,13 +35,13 @@ bool ApplyMomentumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyMomentumInputsNum, kernel_name_);
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of input 'accumulation' and 'variable' should be "
+                      << "', the type of input 'accumulation' and 'variable' must be "
                          "same, but got the memory size of 'accumulation': "
                       << inputs[1]->size << " and 'variable': " << inputs[0]->size;
   }
   if (inputs[0]->size != inputs[3]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of input 'gradient' and 'variable' should be "
+                      << "', the type of input 'gradient' and 'variable' must be "
                          "same, but got the memory size of 'gradient': "
                       << inputs[3]->size << " and 'variable': " << inputs[0]->size;
   }

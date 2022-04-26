@@ -81,7 +81,7 @@ void MatrixTriangularSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
     } else if (trans == "C") {
       trans_ = true;
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'trans' should be in ['N', 'T', 'C'], but got [" << trans
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'trans' must be in ['N', 'T', 'C'], but got [" << trans
                         << "].";
     }
   }

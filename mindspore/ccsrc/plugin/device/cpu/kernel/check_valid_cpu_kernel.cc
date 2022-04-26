@@ -88,18 +88,18 @@ void CheckValidCpuKernelMod::CheckParams(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   //  inputs: anchor_box, img_metas
   if (inputs.size() != kInputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputSize << ", but got "
                       << inputs.size();
   }
 
   //  outputs: valid
   if (outputs.size() != kOutputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputSize << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << kOutputSize << ", but got "
                       << outputs.size();
   }
   if (outputs[0]->size / sizeof(bool) != inputs[0]->size / sizeof(T) / COORDINATE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be the same as 'img_metas', but got the shape of output: "
+                      << "', the dimension of output must be the same as 'img_metas', but got the shape of output: "
                       << Vector2Str(output_shape_) << ", the shape of 'img_metas': " << Vector2Str(img_metas_shape_);
   }
 }

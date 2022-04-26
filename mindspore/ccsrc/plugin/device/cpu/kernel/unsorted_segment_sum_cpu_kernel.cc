@@ -35,7 +35,7 @@ void UnsortedSegmentSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (output_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be at least 1, but got shape: " << output_shape;
+                      << "', the dimension of output must be at least 1, but got shape: " << output_shape;
   }
   for (size_t i = 0; i < input_shape.size(); ++i) {
     unit_num_ *= input_shape[i];
@@ -81,8 +81,8 @@ bool UnsortedSegmentSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
                              static_cast<float *>(output_addr), SizeToInt(output_dim0_), SizeToInt(output_dim1_));
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dtype of 'input_x' should be int32 or float32, "
-                     "the dtype of 'segment_ids' should be int32 or int64, but got the dtype of 'input_x': "
+                  << "', the dtype of 'input_x' must be int32 or float32, "
+                     "the dtype of 'segment_ids' must be int32 or int64, but got the dtype of 'input_x': "
                   << dtype_ << ", and the dtype of 'segment_ids': " << segment_ids_dtype_;
     return false;
   }

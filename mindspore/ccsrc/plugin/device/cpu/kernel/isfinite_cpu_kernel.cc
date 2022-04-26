@@ -32,7 +32,7 @@ void IsFiniteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'x' should be bool, int, float, or uint, but got: " << input_dtype_;
+                      << "', the dtype of 'x' must be bool, int, float, or uint, but got: " << input_dtype_;
   }
 }
 

@@ -70,7 +70,7 @@ void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   if (axis != -1 && LongToSize(axis) >= output_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'axis' should be -1, or an int which is less than the dimension of output, but got "
+                      << "', the 'axis' must be -1, or an int which is less than the dimension of output, but got "
                       << axis << ", got the dimension of output " << output_shape.size();
   }
   if (axis == -1) {

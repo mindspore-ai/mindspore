@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-// RpcRecvKernel receives data from another process across network communication. It should not be launched until remote
+// RpcRecvKernel receives data from another process across network communication. It can not be launched until remote
 // data is received and inputs are ready.
 class RpcRecvKernelMod : public RpcKernelMod {
  public:

@@ -132,7 +132,7 @@ void BCEWithLogitsLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (reduction == SUM) {
     reduction_ = kSum;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'reduction' should be 'none', 'mean', or 'sum', but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'reduction' must be 'none', 'mean', or 'sum', but got "
                       << reduction;
   }
 

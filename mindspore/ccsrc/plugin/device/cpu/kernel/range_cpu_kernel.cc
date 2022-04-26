@@ -39,7 +39,7 @@ bool RangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int or float, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int or float, but got "
                       << TypeIdLabel(dtype_);
   }
 }

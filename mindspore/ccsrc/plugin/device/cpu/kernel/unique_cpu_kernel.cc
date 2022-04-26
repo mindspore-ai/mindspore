@@ -32,7 +32,7 @@ void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 1D, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1D, but got "
                       << input_shape.size() << "D";
   }
   input_size_ = input_shape[0];
@@ -61,7 +61,7 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<float, int>(inputs, workspace, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input should be float16, float32, int32, or int64, but got "
+                      << "', the dtype of input must be float16, float32, int32, or int64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
 
@@ -91,14 +91,14 @@ void UniqueCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   }
   if (inputs.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the number of inputs should be greater than 0, but got: " << inputs.size();
+                      << "', the number of inputs must be greater than 0, but got: " << inputs.size();
   }
   if (workspace.size() < kWorkSpaceNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should not be less than "
-                      << kWorkSpaceNum << ", but got: " << workspace.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces can not be less than " << kWorkSpaceNum
+                      << ", but got: " << workspace.size();
   }
   if (outputs.size() < kOutputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should not be less than " << kOutputNum
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs can not be less than " << kOutputNum
                       << ", but got: " << outputs.size();
   }
   auto params = std::make_shared<UniqueParam<DataType, IndexType>>();

@@ -31,11 +31,11 @@ void LinSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_num;
   }
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kOutputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
   }
 
   auto start = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -44,12 +44,12 @@ void LinSpaceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   // error checking input data
   if ((start.size() != 0) || (end.size() != 0)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', both start and end should be 0-D Tensors, but got dimension "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', both start and end must be 0-D Tensors, but got dimension "
                       << "of start: " << start.size() << " and dimension of end: " << end.size();
   }
 
   if (value_count.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 1, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output must be 1, but got "
                       << value_count.size();
   }
   value_count_ = value_count[0];

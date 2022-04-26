@@ -148,7 +148,7 @@ class SparseOptimizerCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     MS_EXCEPTION_IF_NULL(each_bucket_size);
     size_t bucket_num = each_bucket_size->size();
     if (bucket_num < 1) {
-      MS_LOG(EXCEPTION) << "For 'SparseOptimizer', the 'bucket_num' should be at least 1, but got " << bucket_num;
+      MS_LOG(EXCEPTION) << "For 'SparseOptimizer', the 'bucket_num' must be at least 1, but got " << bucket_num;
     }
     for (size_t i = 0; i < sparse_grad->indices_size_; ++i) {
       T index = sparse_grad->indices_[i];

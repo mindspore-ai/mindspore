@@ -37,8 +37,8 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
     MS_LOG(INFO) << "Launching client UpdateModelKernelMod";
     if (inputs.size() != weight_full_names_.size()) {
-      MS_LOG(EXCEPTION) << "Input number of UpdateModelKernelMod should be " << weight_full_names_.size()
-                        << ", but got " << inputs.size();
+      MS_LOG(EXCEPTION) << "Input number of UpdateModelKernelMod must be " << weight_full_names_.size() << ", but got "
+                        << inputs.size();
       return false;
     }
 

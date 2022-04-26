@@ -35,13 +35,13 @@ void ResizeNearestNeighborCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_shape.size() != kResizeNearestNeighborInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be "
                       << kResizeNearestNeighborInputsShapeSize << ", but got " << input_shape.size();
   }
 
   if (output_size.size() != kResizeNearestNeighborAttrSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'size' should be "
-                      << kResizeNearestNeighborAttrSize << ", but got " << output_size.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'size' must be " << kResizeNearestNeighborAttrSize
+                      << ", but got " << output_size.size();
   }
 
   batch_size_ = input_shape[0];
@@ -72,7 +72,7 @@ bool ResizeNearestNeighborCpuKernelMod::Launch(const std::vector<kernel::Address
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, float64, int32, or int64, but got "
+                      << "', the dtype of 'input_x' must be float16, float32, float64, int32, or int64, but got "
                       << TypeIdLabel(dtype_);
   }
   return true;

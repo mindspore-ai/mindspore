@@ -71,7 +71,7 @@ void GatherNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t dim_indices_last = indices_shapes_[indices_shapes_.size() - IntToSize(1)];
   if (dim_indices_last == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices_shapes_[" << indices_shapes_.size()
-                      << " - 1] should not be 0.";
+                      << " - 1] can not be 0.";
   }
   for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
     dim_after_indices *= input_shapes_[i];

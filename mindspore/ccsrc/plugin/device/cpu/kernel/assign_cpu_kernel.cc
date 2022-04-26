@@ -42,13 +42,13 @@ void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (input_x_shape.size() != input_y_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'x' and 'y' should have the same dimension, but got the dimension of 'x': "
+                      << "', the 'x' and 'y' must have the same dimension, but got the dimension of 'x': "
                       << input_x_shape.size() << " and the dimension of 'y': " << input_y_shape.size();
   }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'x' and 'y' should have the same shape, but got the shape of 'x': "
+                        << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
                         << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
     }
     batch_size_ *= input_x_shape[i];
@@ -57,7 +57,7 @@ void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto type_len = input_x_dtype_size_map.find(input_x_dtype_);
   if (type_len == input_x_dtype_size_map.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be bool, int, uint, or float, but got " << input_x_dtype_;
+                      << "', the dtype of 'input_x' must be bool, int, uint, or float, but got " << input_x_dtype_;
   }
   input_x_dtype_size_ = type_len->second;
 }

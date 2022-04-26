@@ -28,7 +28,7 @@ constexpr size_t kOutputsNum = 1;
 bool LowerBoundCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
   if (inputs.size() != kInputsNum || outputs.size() != kOutputsNum) {
-    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kInputsNum << " and " << kOutputsNum
+    MS_LOG(ERROR) << kernel_name_ << ": input and output size must be " << kInputsNum << " and " << kOutputsNum
                   << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }

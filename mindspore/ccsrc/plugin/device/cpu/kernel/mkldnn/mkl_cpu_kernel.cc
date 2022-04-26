@@ -32,7 +32,7 @@ void GeneratePaddingForPadMode(const PaddingInfo &padding_info, std::vector<int6
   const size_t multiple = 2;
   const size_t dim = shape_exclude_nc.size();
   if (pad.size() != dim * multiple) {
-    MS_LOG(EXCEPTION) << "pad list should be " << (dim * multiple) << "D, but got " << pad.size() << "D!";
+    MS_LOG(EXCEPTION) << "pad list must be " << (dim * multiple) << "D, but got " << pad.size() << "D!";
   }
   for (size_t i = 0; i < dim; ++i) {
     size_t l_index = multiple * i;

@@ -82,7 +82,7 @@ bool ReluGradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
 
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kReluGradV2InputsNum || outputs.size() != kReluGradV2OutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kReluGradV2InputsNum << " and "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kReluGradV2InputsNum << " and "
                   << kReluGradV2OutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
@@ -107,8 +107,7 @@ bool ReluGradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   if (input_shape.size() != kDim4) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape should be 4, but got "
-                  << input_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be 4, but got " << input_shape.size();
     return false;
   }
   auto mask_shape = inputs[kIndex1]->GetShapeVector();

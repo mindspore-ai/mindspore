@@ -24,19 +24,19 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number should be 4, but got " << input_num;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number must be 4, but got " << input_num;
   }
 
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output number should be 1, but got " << output_num;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output number must be 1, but got " << output_num;
   }
 
   //  input image
   auto input_image_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, IMAGE);
   size_t input_image_shape_len = input_image_shape.size();
   if (input_image_shape_len != IMAGE_DIM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'image' should be " << IMAGE_DIM << "-D, but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'image' must be " << IMAGE_DIM << "-D, but got "
                   << input_image_shape_len << "-D.";
   }
 
@@ -47,7 +47,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto input_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
   size_t input_boxes_shape_len = input_boxes_shape.size();
   if (input_boxes_shape_len != BOX_RANK) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'boxes' should be " << BOX_RANK << ", but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'boxes' must be " << BOX_RANK << ", but got "
                   << input_boxes_shape_len;
   }
 
@@ -55,7 +55,7 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto input_box_index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOX_INDEX);
   size_t input_box_index_shape_len = input_box_index_shape.size();
   if (input_box_index_shape_len != 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'box_index' should be 1, but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'box_index' must be 1, but got "
                   << input_box_index_shape_len << ".";
   }
 
@@ -63,12 +63,12 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto input_crop_size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, CROP_SIZE);
   size_t input_crop_size_shape_len = input_crop_size_shape.size();
   if (input_crop_size_shape_len != 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'crop_size' should be 1, but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'crop_size' must be 1, but got "
                   << input_crop_size_shape_len << ".";
   }
   if (input_crop_size_shape[0] != CROP_SIZE_LEN) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the first dimension value of 'crop_size' should be "
-                  << CROP_SIZE_LEN << ", but got " << input_crop_size_shape[0];
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the first dimension value of 'crop_size' must be " << CROP_SIZE_LEN
+                  << ", but got " << input_crop_size_shape[0];
   }
 
   //  output

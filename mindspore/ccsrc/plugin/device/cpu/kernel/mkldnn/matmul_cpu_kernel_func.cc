@@ -40,7 +40,7 @@ void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin) {
-    MS_LOG(EXCEPTION) << "The tensor rank of MatMul should be greater than or equal to " << kRankMin;
+    MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be greater than or equal to " << kRankMin;
   }
   bool trans_a = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
   bool trans_b = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);

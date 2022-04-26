@@ -110,7 +110,7 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
     if (!handle_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
-                        << "' should be successful, but error occurs! Error message is: " << dlerror();
+                        << "' must be successful, but error occurs! Error message is: " << dlerror();
     }
   }
 

@@ -28,7 +28,7 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace kernel {
-// Indicate Python object type. The input/output of PyFun should be either Scalar or Numpy Array.
+// Indicate Python object type. The input/output of PyFun must be either Scalar or Numpy Array.
 enum class PythonOjectType : char { kScalar, kNumpyArray };
 // Indicate PyFunc input/output information
 struct PyFuncArgumentInfo {

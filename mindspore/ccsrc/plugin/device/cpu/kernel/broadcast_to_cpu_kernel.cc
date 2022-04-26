@@ -92,8 +92,8 @@ void BroadcastToCpuKernelMod::CheckArgs() {
   }
   if (output_shape_size > MAX_SHAPE_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', input tensor 'input_x' and target shape 'shape' should be "
-                         "broadcast, and the dimension of target shape 'shape' should be at most 8. "
+                      << "', input tensor 'input_x' and target shape 'shape' must be "
+                         "broadcast, and the dimension of target shape 'shape' must be at most 8. "
                          "But got the dimension of 'input_x': "
                       << input_shape_size << ", and the dimension of target shape 'shape': " << output_shape_size;
   }
@@ -102,7 +102,7 @@ void BroadcastToCpuKernelMod::CheckArgs() {
     if (input_shape_[i] != output_shape_[i + offset] && input_shape_[i] != 1) {
       MS_LOG(EXCEPTION)
         << "For '" << kernel_name_ << "', when the " << i
-        << "'th, the shape of input should be 1 and equal to the shape of output, but got the shape of input: "
+        << "'th, the shape of input must be 1 and equal to the shape of output, but got the shape of input: "
         << Vector2Str(input_shape_) << ", and the shape of output: " << Vector2Str(output_shape_);
     }
   }
@@ -124,13 +124,13 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     status = BROADCAST_TO(float, input_addr, &shape_info_, output_addr);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', not supported data type, the dtype of input should be bool, int, or float.";
+                      << "', not supported data type, the dtype of input must be bool, int, or float.";
   }
 
   if (status != static_cast<int>(NNACL_OK)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', each dimension pair, 'input_x' shape and target shape, "
-                         "should be either equal or input is one or the target dimension is -1. "
+                         "must be either equal or input is one or the target dimension is -1. "
                          "But got 'input_x' shape: "
                       << Vector2Str(input_shape_) << " and target shape: " << Vector2Str(output_shape_)
                       << ". Error code: " << status;

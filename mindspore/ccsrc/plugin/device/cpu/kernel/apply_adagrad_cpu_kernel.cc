@@ -43,7 +43,7 @@ bool ApplyAdagradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, con
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be Float16 or Float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be Float16 or Float32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -56,19 +56,19 @@ void ApplyAdagradCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradOutputsNum, kernel_name_);
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape and dtype of 'accum' and 'var' should be same, "
+                      << "', the shape and dtype of 'accum' and 'var' must be the same, "
                          "but got the memory size of 'accum': "
                       << inputs[1]->size << " and 'var': " << inputs[0]->size;
   }
   if (inputs[0]->size != inputs[3]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape and dtype of 'grad' and 'var' should be same, "
+                      << "', the shape and dtype of 'grad' and 'var' must be the same, "
                          "but got the memory size of 'grad': "
                       << inputs[3]->size << " and 'var': " << inputs[0]->size;
   }
   if (inputs[2]->size != kSizeFloat16 && inputs[2]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'lr' should be float16(memory size: 2) or float32(memory size:4), but got 'lr': "
+                      << "', the 'lr' must be float16(memory size: 2) or float32(memory size:4), but got 'lr': "
                       << inputs[2] << ", with memory size: " << inputs[2]->size << " bytes.";
   }
 }

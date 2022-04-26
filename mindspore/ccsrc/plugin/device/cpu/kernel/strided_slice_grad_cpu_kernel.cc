@@ -37,7 +37,7 @@ void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
       param_->data_type = ::kNumberTypeFloat32;
       break;
     default:
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input should be float32, but got " << dtype_;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input must be float32, but got " << dtype_;
   }
   std::vector<size_t> input_shape_me = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   (void)std::transform(input_shape_me.begin(), input_shape_me.end(), std::back_inserter(input_shape_),
@@ -58,7 +58,7 @@ void StridedSliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return static_cast<int>(value); });
   if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the length of 'stride' and 'end' should be equal "
+                      << "', the length of 'stride' and 'end' must be equal "
                          "to the dimension of output, but got the length of 'stride': "
                       << strides_.size() << ", the length of 'end': " << end_.size()
                       << ", the dimension of output: " << output_shape_.size();
@@ -106,7 +106,7 @@ bool StridedSliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> 
   if (dtype_ == kNumberTypeFloat32) {
     ret = LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input should be float32, but got " << dtype_;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of input must be float32, but got " << dtype_;
     return false;
   }
   return ret;

@@ -68,7 +68,7 @@ bool RightShiftCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     return UIntCompute<uint64_t>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'x' should be int8, int16, int32, int64, uint8, uint16, uint32, uint64, "
+                      << "', the type of 'x' must be int8, int16, int32, int64, uint8, uint16, uint32, uint64, "
                          "but got "
                       << TypeIdLabel(input_type_1_);
   }

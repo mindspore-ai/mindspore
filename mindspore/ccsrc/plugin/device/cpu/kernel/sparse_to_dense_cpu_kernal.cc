@@ -32,14 +32,14 @@ void SparseToDenseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (indices_shape.size() != kIndicesShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' should be a " << kIndicesShapeSize
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it requires 'indices' must be a " << kIndicesShapeSize
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
   auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
-                         "should be equal to the first dimension length of 'indices', but got 'values' shape: "
+                      << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
+                         "must be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
   values_size_ = values_shape[0];
@@ -60,7 +60,7 @@ bool SparseToDenseCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseToDenseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseToDenseOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return true;
   }
   auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);

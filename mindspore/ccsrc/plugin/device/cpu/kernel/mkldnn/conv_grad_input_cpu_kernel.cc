@@ -57,7 +57,7 @@ void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
-      MS_LOG(EXCEPTION) << "Conv grad channels should be divided by group!";
+      MS_LOG(EXCEPTION) << "Conv grad channels must be divided by group!";
     }
     (void)weight_shape.insert(weight_shape.begin(), group);
     weight_shape[1] = weight_shape[1] / group;
@@ -72,11 +72,11 @@ void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, stride_attr);
   const auto dilation_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, dilation_attr);
   if (strides_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << "requires strides should be " << src_dim << "D, but got "
+    MS_LOG(EXCEPTION) << kernel_name_ << "requires strides must be " << src_dim << "D, but got "
                       << strides_include_nc.size() << "D!";
   }
   if (dilation_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires dilation should be " << src_dim << "D, but got "
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires dilation must be " << src_dim << "D, but got "
                       << dilation_include_nc.size() << "D!";
   }
   const dnnl::memory::dims strides(strides_include_nc.begin() + NC_LEN, strides_include_nc.end());

@@ -79,15 +79,15 @@ void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   if (probs_shape_.size() != 3) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'probs' should be 3-D, but got " << probs_shape_.size()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'probs' must be 3-D, but got " << probs_shape_.size()
                       << "-D.";
   }
   if (labels_dims_.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'labels' should be 1-D, but got " << labels_dims_.size()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'labels' must be 1-D, but got " << labels_dims_.size()
                       << "-D.";
   }
   if (indices_dims_.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'labels_indices' should be 2-D, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'labels_indices' must be 2-D, but got "
                       << indices_dims_.size() << "-D.";
   }
 
@@ -110,7 +110,7 @@ bool CTCLossCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
     LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input 'x' should be float16 or float32 on CPU, but got "
+                      << "', the dtype of input 'x' must be float16 or float32 on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -240,7 +240,7 @@ void CTCLossCpuKernelMod::GenLabelWithBlank(const uint32_t *seq_len,
         } else {
           if (has_blank) {
             MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of labels_values[" << i
-                              << "] should be in the range of [0, num_classes), but got " << label[i];
+                              << "] must be in the range of [0, num_classes), but got " << label[i];
           }
           l.push_back(label[i]);
         }
@@ -248,7 +248,7 @@ void CTCLossCpuKernelMod::GenLabelWithBlank(const uint32_t *seq_len,
     }
     if (!ignore_longer_outputs_than_inputs_ && l.size() > seq_len[b]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << ", input time(sequence length) should be greater than "
+                        << ", input time(sequence length) must be greater than "
                            "output size(label length), but got sequence length: "
                         << seq_len[b] << " and label length: " << l.size();
     }
@@ -284,12 +284,12 @@ void CTCLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // check validation of sequence length
   for (size_t b = 0; b < batch_size_; ++b) {
     if (sequence_length_addr[b] == static_cast<uint32_t>(0)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'sequence_length' should be greater than 0, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'sequence_length' must be greater than 0, but got "
                         << sequence_length_addr[b] << ".";
     }
     if (sequence_length_addr[b] > max_time_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << ", the 'max_time'(the 1st dimension value of 'probs') should be "
+                        << ", the 'max_time'(the 1st dimension value of 'probs') must be "
                            "greater than or equal to 'sequence_length', but got 'max_time': "
                         << max_time_ << " and 'sequence_length': " << sequence_length_addr[b];
     }
@@ -299,7 +299,7 @@ void CTCLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     auto index = labels_indices_addr[i * factor];
     if (index >= SizeToUlong(each_label_length.size())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << ", 'index' should be less than the length of 'label', but got 'index': " << index
+                        << ", 'index' must be less than the length of 'label', but got 'index': " << index
                         << " and the length of 'label': " << SizeToUlong(each_label_length.size());
     }
     each_label_length[index]++;

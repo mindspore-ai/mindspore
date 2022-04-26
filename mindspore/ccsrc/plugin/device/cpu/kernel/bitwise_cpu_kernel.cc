@@ -119,7 +119,7 @@ void BitwiseCpuTypeFunc<T>::BitwiseCompute(const T *input1, const T *input2, T *
       } else if (this->kernel_name_.compare(prim::kPrimBitwiseXor->name()) == 0) {
         output[i] = static_cast<T>(input1[iter.GetInputPosA()] ^ y_val);
       } else {
-        MS_LOG(EXCEPTION) << "For '" << this->kernel_name_ << "', kernel name should be '" << this->kernel_name_
+        MS_LOG(EXCEPTION) << "For '" << this->kernel_name_ << "', kernel name must be '" << this->kernel_name_
                           << "', but got " << this->kernel_name_;
       }
       iter.GenNextPos();
@@ -192,7 +192,7 @@ void BitwiseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', kernel type should be '" << kernel_name_ << "', but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', kernel type must be '" << kernel_name_ << "', but got "
                       << kernel_type_;
   }
 
@@ -209,7 +209,7 @@ void BitwiseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 std::vector<KernelAttr> BitwiseCpuKernelMod::GetOpSupport() {
   auto iter = kernel_attr_lists.find(kernel_type_);
   if (iter == kernel_attr_lists.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', kernel type should be '" << kernel_name_ << "', but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', kernel type must be '" << kernel_name_ << "', but got "
                       << kernel_type_;
   }
 

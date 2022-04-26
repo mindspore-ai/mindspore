@@ -129,16 +129,16 @@ void FractionalMaxPool3DWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &k
                              << "too large relative to input width" << inputD_;
   }
   if (!(input_num_dims == kDimSize4 || input_num_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "Input data dimensions should be equal to 4 or 5, but got " << input_num_dims;
+    MS_EXCEPTION(TypeError) << "Input data dimensions must be equal to 4 or 5, but got " << input_num_dims;
   }
   if (random_samples_dims != kDimSize3) {
-    MS_EXCEPTION(TypeError) << "random_samples dimensions should be equal to 3, but got " << random_samples_dims;
+    MS_EXCEPTION(TypeError) << "random_samples dimensions must be equal to 3, but got " << random_samples_dims;
   }
   if (output_shape_dims != kDimSize3) {
-    MS_EXCEPTION(TypeError) << "output_shape dimensions should be equal to 3, but got " << output_shape_dims;
+    MS_EXCEPTION(TypeError) << "output_shape dimensions must be equal to 3, but got " << output_shape_dims;
   }
   if (ksize_dims != kDimSize3) {
-    MS_EXCEPTION(TypeError) << "ksize dimensions should be equal to 3, but got " << ksize_dims;
+    MS_EXCEPTION(TypeError) << "ksize dimensions must be equal to 3, but got " << ksize_dims;
   }
   for (size_t i = 0; i < input_num_dims; i++) {
     if (input_shape_[i] <= 0) {

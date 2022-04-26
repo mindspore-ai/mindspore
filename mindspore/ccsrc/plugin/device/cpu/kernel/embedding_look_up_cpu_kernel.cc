@@ -59,7 +59,7 @@ void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.empty() || input_shape.size() > kEmbeddingLookupInputParamsMaxDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 1-"
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1-"
                       << kEmbeddingLookupInputParamsMaxDim << "D, but got " << input_shape.size() << "D.";
   }
   first_dim_size_ = input_shape[0];
@@ -89,7 +89,7 @@ void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
     if (input_shape.empty()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of input should be at least 1D, but got empty input.";
+                        << "', the dimension of input must be at least 1D, but got empty input.";
     }
     first_dim_size_ = input_shape[0];
     outer_dim_size_ = 1;

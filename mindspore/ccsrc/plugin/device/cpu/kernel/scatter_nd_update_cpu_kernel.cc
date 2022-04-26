@@ -47,7 +47,7 @@ bool Compute(const ComputeParams<T> *params, const size_t start, const size_t en
       (void)local_indices.emplace_back(index);
       if (index < 0) {
         MS_LOG(ERROR) << "For '" << kKernelName
-                      << "', each element in 'indices' should be greater than or equal to 0, but got " << index;
+                      << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
         return false;
       }
       offset += index * out_strides->at(j) * params->unit_size_;
@@ -77,12 +77,12 @@ void ScatterUpdateCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the value of last dimension of 'indices' should be less than "
+                      << "', the value of last dimension of 'indices' must be less than "
                          "or equal to the dimension of 'shape', but got the value of last dimension of 'indices': "
                       << indices_unit_rank << " and the dimension of 'shape': " << shape.size();
   }
   if (indices_shape.size() < kMinIndiceRank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' should be at least 2, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
                       << indices_shape.size();
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
@@ -142,7 +142,7 @@ bool ScatterUpdateCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
       break;
     default:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dtype of 'input_x' should be float16, float32, float64, int32 or int64, but got "
+                        << "', the dtype of 'input_x' must be float16, float32, float64, int32 or int64, but got "
                         << TypeIdLabel(dtype_);
   }
   return true;

@@ -71,7 +71,7 @@ void GetKeysKernelMod::Init(const CNodePtr &kernel_node) {
     return;
   }
   if (server_num_ <= 0) {
-    MS_LOG(EXCEPTION) << "Server number should be larger than 0, but got: " << server_num_;
+    MS_LOG(EXCEPTION) << "Server number must be larger than 0, but got: " << server_num_;
     return;
   }
   target_server_rank_ = rank_id_ % server_num_;

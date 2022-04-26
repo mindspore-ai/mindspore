@@ -101,45 +101,42 @@ bool AdamWeightDecayCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kAdamWeightDecayOutputsNum, kernel_name_);
   if (inputs[VAR]->size != inputs[M]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype and shape of 'm' and 'var' should be same, but got the memory size of 'm': "
+                      << "', the dtype and shape of 'm' and 'var' must be the same, but got the memory size of 'm': "
                       << inputs[M]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[VAR]->size != inputs[V]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype and shape of 'v' and 'var' should be same, but got the memory size of 'v': "
+                      << "', the dtype and shape of 'v' and 'var' must be the same, but got the memory size of 'v': "
                       << inputs[V]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[VAR]->size != inputs[GRAD]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype and shape of 'grad' and 'var' should be same, "
+                      << "', the dtype and shape of 'grad' and 'var' must be the same, "
                          "but got the memory size of 'grad': "
                       << inputs[GRAD]->size << " and 'var': " << inputs[VAR]->size;
   }
   if (inputs[LR]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float, but got 'lr': " << inputs[LR];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' must be float, but got 'lr': " << inputs[LR];
   }
   if (inputs[BETA1]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta1' should be float, but got 'beta1': " << inputs[BETA1];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1' must be float, but got 'beta1': " << inputs[BETA1];
   }
   if (inputs[BETA2]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta2' should be float, but got 'beta2': " << inputs[BETA2];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta2' must be float, but got 'beta2': " << inputs[BETA2];
   }
   if (inputs[EPSILON]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'epsilon' should be float, but got 'epsilon': " << inputs[EPSILON];
+                      << "', the 'epsilon' must be float, but got 'epsilon': " << inputs[EPSILON];
   }
   if (inputs[DECAY]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'decay' should be float, but got 'decay': " << inputs[DECAY];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'decay' must be float, but got 'decay': " << inputs[DECAY];
   }
   if (dtype_ == kNumberTypeFloat32) {
     LaunchAdamWeightDecayNnacl(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchAdamWeightDecay<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be Float16 or Float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be Float16 or Float32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

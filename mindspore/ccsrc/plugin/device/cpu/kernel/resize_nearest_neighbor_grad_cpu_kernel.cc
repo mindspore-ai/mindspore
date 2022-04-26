@@ -36,12 +36,12 @@ void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_no
   dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 
   if (input_shape.size() != kResizeNearestNeighborGradInputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be "
                       << kResizeNearestNeighborGradInputsShapeSize << ", but got " << input_shape.size();
   }
 
   if (output_size.size() != kResizeNearestNeighborGradOutputsShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
                       << kResizeNearestNeighborGradOutputsShapeSize << ", but got " << output_size.size();
   }
 
@@ -72,7 +72,7 @@ bool ResizeNearestNeighborGradCpuKernelMod::Launch(const std::vector<kernel::Add
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, float64, int32, or int64, but got "
+                      << "', the dtype of 'input_x' must be float16, float32, float64, int32, or int64, but got "
                       << TypeIdLabel(dtype_);
   }
   return true;

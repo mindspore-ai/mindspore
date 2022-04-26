@@ -49,7 +49,7 @@ void GatherV2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   indices_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > kGatherInputParamsMaxDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_params' must be "
                       << kGatherInputParamsMaxDim << "D or lower, but got " << input_shape_.size() << ".";
   }
   if (!is_dynamic_shape_) {
@@ -78,7 +78,7 @@ bool GatherV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' should be in the range [-" << dims << ", " << dims
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << ", " << dims
                   << "), but got " << axis_ << ".";
     return false;
   } else if (axis_ < 0) {

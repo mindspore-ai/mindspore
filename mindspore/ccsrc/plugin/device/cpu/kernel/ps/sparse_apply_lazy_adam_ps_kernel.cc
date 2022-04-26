@@ -48,18 +48,18 @@ void SparseApplyLazyAdamPSKernelMod::InitKernel(
     MS_LOG(EXCEPTION) << "var must be at least 1D";
   }
   if (var_shape.size() != grad_shape.size()) {
-    MS_LOG(EXCEPTION) << "var and grad should have the same shape size";
+    MS_LOG(EXCEPTION) << "var and grad must have the same shape size";
   }
   if (!IsSameShape(var_shape, m_shape)) {
-    MS_LOG(EXCEPTION) << "var and m should have the same shape";
+    MS_LOG(EXCEPTION) << "var and m must have the same shape";
   }
   if (!IsSameShape(var_shape, v_shape)) {
-    MS_LOG(EXCEPTION) << "var and v should have the same shape";
+    MS_LOG(EXCEPTION) << "var and v must have the same shape";
   }
   var_first_dim_size_ = var_shape[0];
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
-      MS_LOG(EXCEPTION) << "The shape of var and grad must equal in dimension " << i;
+      MS_LOG(EXCEPTION) << "The shape of var and grad must be equal in dimension " << i;
     }
     var_outer_dim_size_ *= var_shape[i];
   }
@@ -81,7 +81,7 @@ void SparseApplyLazyAdamPSKernelMod::InitKernel(
 
 void SparseApplyLazyAdamPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
-    MS_LOG(EXCEPTION) << "Shape should not empty";
+    MS_LOG(EXCEPTION) << "Shape can not empty";
   }
   const std::vector<size_t> &indices_shape = shapes[0];
   indices_size_ = indices_shape[0];
@@ -91,7 +91,7 @@ void SparseApplyLazyAdamPSKernelMod::ReInit(const std::vector<std::vector<size_t
 
 void SparseApplyLazyAdamPSKernelMod::ReInit(const std::vector<AddressPtr> &inputs) {
   if (inputs.size() < kSparseApplyLazyAdamPSInputsSize) {
-    MS_LOG(EXCEPTION) << "Input shape size should not be less than " << kSparseApplyLazyAdamPSInputsSize << ", but got "
+    MS_LOG(EXCEPTION) << "Input shape size can not be less than " << kSparseApplyLazyAdamPSInputsSize << ", but got "
                       << inputs.size();
   }
   const auto &indices_addr = inputs[indices_index_];

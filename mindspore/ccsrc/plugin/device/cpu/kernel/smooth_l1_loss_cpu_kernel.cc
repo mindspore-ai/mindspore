@@ -30,7 +30,7 @@ void SmoothL1LossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   beta_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
   if (beta_ == 0.0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'beta' should not be 0.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
   }
   std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (const uint64_t &d : x_shape) {

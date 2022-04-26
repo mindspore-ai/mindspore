@@ -87,7 +87,7 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   auto inputs_ptr = op_info->inputs_ptr();
   auto outputs_ptr = op_info->outputs_ptr();
   if (outputs_ptr.empty()) {
-    MS_LOG(WARNING) << "The output dimension of operator '" << kernel_name << "' should not be zero.";
+    MS_LOG(WARNING) << "The output dimension of operator '" << kernel_name << "' can not be zero.";
     return support_kernel_attrs;
   }
 

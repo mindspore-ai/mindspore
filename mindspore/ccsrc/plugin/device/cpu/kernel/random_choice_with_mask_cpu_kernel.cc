@@ -56,7 +56,7 @@ void GetOutputLength(bool *padding_flag_, int32_t *output_length_, int32_t *outp
     *output_length_ = count_;
     *output_non_zero_length_ = non_zero_num_;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the 'count' should be greater than or equal to 0, but got "
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the 'count' must be greater than or equal to 0, but got "
                       << count_;
   }
 }
@@ -86,20 +86,20 @@ void RandomChoiceWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num
                   << "input(s).";
   }
 
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 2, but got " << output_num
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 2, but got " << output_num
                   << "output(s).";
   }
 
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   input_shape_size = input_shape.size();
   if (input_shape_size < 1 || input_shape_size > MAX_DIMENSION) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x ' should be in range [1-D, 5-D], but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'input_x ' must be in range [1-D, 5-D], but got "
                   << input_shape_size << "-D.";
   }
 
@@ -118,7 +118,7 @@ void RandomChoiceWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_dim_size = SizeToInt(dims.size());
   if (input_dim_size < 1 || input_dim_size > MAX_INPUT_DIMS) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' should be in range [1-D, 5-D], but got " << input_dim_size
+                      << "', the dimension of 'input_x' must be in range [1-D, 5-D], but got " << input_dim_size
                       << "-D.";
   }
 }

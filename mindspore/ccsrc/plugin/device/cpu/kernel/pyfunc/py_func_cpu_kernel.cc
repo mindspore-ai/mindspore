@@ -327,7 +327,7 @@ bool PyFuncCpuKernelMod::ExecuteKernel(const std::vector<AddressPtr> &inputs, co
     if (result.is_none()) {
       return true;
     } else {
-      MS_LOG(ERROR) << "This CustomPyfunc should have no outputs, but got 1";
+      MS_LOG(ERROR) << "This CustomPyfunc must have no outputs, but got 1";
       return false;
     }
   }

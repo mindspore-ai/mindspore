@@ -37,7 +37,7 @@ void TrilCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   input_dims_ = input_shape_.size();
   if (input_dims_ < kDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be at least 1-D, but got "
                       << input_dims_ << "-D.";
   }
   if (common::AnfAlgo::HasNodeAttr("diagonal", kernel_node)) {

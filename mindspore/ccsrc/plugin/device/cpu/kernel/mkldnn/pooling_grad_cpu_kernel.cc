@@ -87,11 +87,11 @@ void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const auto kernel_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
   const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   if (kernel_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size should be " << src_dim << "D, but got "
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
                       << kernel_include_nc.size() << "D!";
   }
   if (strides_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides should be " << src_dim << "D, but got "
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
                       << strides_include_nc.size() << "D!";
   }
   const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());

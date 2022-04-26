@@ -76,7 +76,7 @@ class ArithLogicCpuTypeFunc : public CpuKernelFunc {
     auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
     if (dtype_ != dtype_1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'input1' and 'input2' should have the same data type, but got type of 'input1': "
+                        << "', the 'input1' and 'input2' must have the same data type, but got type of 'input1': "
                         << dtype_ << ", and the type of 'input2': " << dtype_1;
     }
     static const std::unordered_map<std::string, TypeComputeFunc> arithmetic_logic_func_map{

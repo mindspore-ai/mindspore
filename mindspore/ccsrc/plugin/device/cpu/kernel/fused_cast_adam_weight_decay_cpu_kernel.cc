@@ -129,12 +129,12 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
   gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kGradIndex);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kFusedCastAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << input_num;
   }
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kFusedCastAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be "
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;
   }
   elem_num_ = 1;
@@ -142,14 +142,14 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
     elem_num_ *= i;
   }
   if (elem_num_ < 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'var' should not be zero.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'var' can not be zero.";
   }
   if (gradient_dtype_ != kNumberTypeFloat16) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'gradient' should be float16, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'gradient' must be float16, but got "
                       << TypeIdToType(gradient_dtype_)->ToString();
   }
   if (var_dtype_ != kNumberTypeFloat32 && var_dtype_ != kNumberTypeFloat16) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be float16 or float32, but got "
                       << TypeIdToType(var_dtype_)->ToString();
   }
 }
@@ -157,51 +157,51 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
 void FusedCastAdamWeightDecayCpuKernelMod::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
                                                       const std::vector<kernel::AddressPtr> &outputs) const {
   if (inputs.size() != kFusedCastAdamWeightDecayInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                       << kFusedCastAdamWeightDecayInputNum << ", but got: " << inputs.size();
   }
   if (outputs.size() != kFusedCastAdamWeightDecayOutputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be "
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << outputs.size();
   }
   size_t elem_size_fp32 = elem_num_ * kSizeFloat32;
   size_t elem_size_fp16 = elem_num_ * kSizeFloat16;
   size_t var_size = var_dtype_ == kNumberTypeFloat16 ? elem_size_fp16 : elem_size_fp32;
   if (inputs[kVarIndex]->size != var_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'var' should be " << var_size
-                      << ", but got " << inputs[kVarIndex]->size;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'var' must be " << var_size << ", but got "
+                      << inputs[kVarIndex]->size;
   }
   if (inputs[kMIndex]->size != elem_size_fp32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'm' should be " << elem_size_fp32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'm' must be " << elem_size_fp32
                       << ", but got " << inputs[kMIndex]->size;
   }
   if (inputs[kVIndex]->size != elem_size_fp32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'v' should be " << elem_size_fp32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'v' must be " << elem_size_fp32
                       << ", but got " << inputs[kVIndex]->size;
   }
   if (inputs[kGradIndex]->size != elem_size_fp16) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' should be " << elem_size_fp16
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' must be " << elem_size_fp16
                       << ", but got " << inputs[kGradIndex]->size;
   }
   if (inputs[kLRIndex]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'lr' should be float32, but got 'lr': " << inputs[kLRIndex];
+                      << "', the type of 'lr' must be float32, but got 'lr': " << inputs[kLRIndex];
   }
   if (inputs[kBeta1Index]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'beta1' should be float32, but got 'beta1': " << inputs[kBeta1Index];
+                      << "', the type of 'beta1' must be float32, but got 'beta1': " << inputs[kBeta1Index];
   }
   if (inputs[kBeta2Index]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'beta2' should be float32, but got 'beta2': " << inputs[kBeta2Index];
+                      << "', the type of 'beta2' must be float32, but got 'beta2': " << inputs[kBeta2Index];
   }
   if (inputs[kEpsIndex]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'epsilon' should be float32, but got 'epsilon': " << inputs[kEpsIndex];
+                      << "', the type of 'epsilon' must be float32, but got 'epsilon': " << inputs[kEpsIndex];
   }
   if (inputs[kDecayIndex]->size != kSizeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'decay' should be float32, but got 'decay': " << inputs[kDecayIndex];
+                      << "', the type of 'decay' must be float32, but got 'decay': " << inputs[kDecayIndex];
   }
 }
 

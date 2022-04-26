@@ -36,7 +36,7 @@ void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   };
   auto method = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, METHOD);
   if (kValidMethods.find(method) == kValidMethods.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the method should be in " << Map2Str(kValidMethods)
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the method must be in " << Map2Str(kValidMethods)
                       << ", but got " << method;
   }
   method_ = kValidMethods.at(method);
@@ -48,7 +48,7 @@ void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   };
   auto option = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, NA_OPTION);
   if (kValidOptions.find(option) == kValidOptions.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the option should be in " << Map2Str(kValidOptions)
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the option must be in " << Map2Str(kValidOptions)
                       << ", but got " << option;
   }
   option_ = kValidOptions.at(option);
@@ -59,7 +59,7 @@ void RankCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   axis_ = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_ >= input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the evaluated axis should be smaller than the dimension of input tensor "
+                      << "', the evaluated axis must be smaller than the dimension of input tensor "
                       << input_shape.size() << "D, but got " << axis_;
   }
 
@@ -141,7 +141,7 @@ void RankCpuKernelMod::SetFunc() {
     case Method::MethodNotDefined:
     default:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', method not init. The method should be 'max', 'min', 'average', 'first', or 'dense', "
+                        << "', method not init. The method must be 'max', 'min', 'average', 'first', or 'dense', "
                         << ", but got " << method_;
   }
 }
@@ -261,19 +261,19 @@ template <typename T>
 bool RankCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                     const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << inputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << inputs.size();
   }
   if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size();
   }
   if constexpr (std::is_integral_v<T>) {
     if (workspace.size() != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces must be 2, but got "
                         << workspace.size();
     }
   } else {
     if (workspace.size() != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be 3, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces must be 3, but got "
                         << workspace.size();
     }
   }

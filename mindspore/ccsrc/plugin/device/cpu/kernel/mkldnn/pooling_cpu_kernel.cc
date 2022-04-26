@@ -70,11 +70,11 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   const auto kernel_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
   const auto strides_include_nc = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   if (kernel_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size should be " << src_dim << "D, but got "
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires kernel_size must be " << src_dim << "D, but got "
                       << kernel_include_nc.size() << "D!";
   }
   if (strides_include_nc.size() != src_dim) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides should be " << src_dim << "D, but got "
+    MS_LOG(EXCEPTION) << kernel_name_ << " requires strides must be " << src_dim << "D, but got "
                       << strides_include_nc.size() << "D!";
   }
   const dnnl::memory::dims kernel(kernel_include_nc.begin() + NC_LEN, kernel_include_nc.end());
@@ -97,7 +97,7 @@ void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
   if (dst_shape_.size() < SHAPE_5D || kernel_.size() + NC_LEN < SHAPE_5D ||
       padding_invalid_.size() + NC_LEN < SHAPE_5D) {
-    MS_LOG(ERROR) << "The dst_shape should be 5D, the kernel and the padding_invalid should be 3D!";
+    MS_LOG(ERROR) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
   }
   const size_t d_max = dst_shape_[D_INDEX] - 1;
   const size_t h_max = dst_shape_[H_INDEX] - 1;

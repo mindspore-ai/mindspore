@@ -41,7 +41,7 @@ bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kIndexAddInputsNum || outputs.size() != kIndexAddOutputsNum) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number should be " << kIndexAddInputsNum
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output tensor number must be " << kIndexAddInputsNum
                   << " and " << kIndexAddOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
     return false;
   }
@@ -76,18 +76,18 @@ bool IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 void IndexAddCpuKernelMod::CheckParams() {
   // Check dimension(x) = dimension(y)
   if (x_shape_.size() != y_shape_.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'x' and 'y' should have the same dimension, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'x' and 'y' must have the same dimension, but got "
                       << x_shape_.size() << " vs " << y_shape_.size();
   }
   // Check dimension(indices) = 1
   if (indices_shape_.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'indices' should has one dimension, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'indices' must have one dimension, but got "
                       << indices_shape_.size();
   }
   // Check axis's value is valid
   auto x_rank = SizeToLong(x_shape_.size());
   if (axis_ < -x_rank || axis_ >= x_rank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", 'axis' should be in range [" << -x_rank << ", " << x_rank
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", 'axis' must be in range [" << -x_rank << ", " << x_rank
                       << "), but got " << axis_;
   }
   if (axis_ < 0) {
@@ -97,7 +97,7 @@ void IndexAddCpuKernelMod::CheckParams() {
   // Check indices's size = y.shape[axis]
   if (indices_shape_[0] != y_shape_[axis]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", size of 'indices' should be same as size of 'y' in 'axis'th dimension, but got "
+                      << ", size of 'indices' must be the same as size of 'y' in 'axis'th dimension, but got "
                       << indices_shape_[0] << " vs " << y_shape_[axis];
   }
   // Check x.shape[i] = y.shape[i], except i = axis

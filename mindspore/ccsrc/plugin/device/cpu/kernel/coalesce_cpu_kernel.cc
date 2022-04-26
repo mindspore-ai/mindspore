@@ -78,13 +78,13 @@ void CoalesceCpuKernelMod::Check(const std::vector<kernel::AddressPtr> &inputs) 
   for (size_t i = 0; i < values_size_; i++) {
     for (size_t j = 0; j < shape_size_; j++) {
       if (x_indices_addr[j * values_size_ + i] < 0) {
-        MS_EXCEPTION(ValueError) << "For Coalesce, values of elements of x_indices should be non-negative"
+        MS_EXCEPTION(ValueError) << "For Coalesce, values of elements of x_indices must be non-negative"
                                  << ", but got x_indices[" << j << "][" << i
                                  << "] = " << x_indices_addr[j * values_size_ + i];
       }
       if (x_indices_addr[j * values_size_ + i] >= x_shape_addr[j]) {
         MS_EXCEPTION(ValueError)
-          << "For Coalesce, values of elements of x_indices should not exceed the limit set by x_shape"
+          << "For Coalesce, values of elements of x_indices can not exceed the limit set by x_shape"
           << ", but got x_indices[" << j << "][" << i << "] = " << x_indices_addr[j * values_size_ + i]
           << ", got x_shape[" << j << "] = " << x_shape_addr[j];
       }

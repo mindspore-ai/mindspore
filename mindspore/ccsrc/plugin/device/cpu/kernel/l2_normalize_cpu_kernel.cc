@@ -64,7 +64,7 @@ void L2NormalizeCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
 
   int dims = SizeToInt(input_shape_.size());
   if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in [" << -dims << ", " << dims
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in [" << -dims << ", " << dims
                       << "), but got: " << axis_;
   }
   if (epsilon_ == static_cast<T>(0.0)) {

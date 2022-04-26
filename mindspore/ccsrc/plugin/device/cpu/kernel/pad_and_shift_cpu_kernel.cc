@@ -37,7 +37,7 @@ void PadAndShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_LOG(INFO) << "PadAndShift batch_size:" << batch_size_;
   auto cum_sum_arr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (cum_sum_arr_shape.size() != 1) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'cum_sum_arr' should be 1, but got "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'cum_sum_arr' must be 1, but got "
                   << cum_sum_arr_shape.size() << ".";
   }
   cum_sum_size_ = cum_sum_arr_shape[0];
@@ -54,7 +54,7 @@ bool PadAndShiftCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   } else if (input_x_dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'input_x' should be int32 or int64, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'input_x' must be int32 or int64, but got "
                       << input_x_dtype_;
   }
   return true;
@@ -70,7 +70,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   if (shift_idx >= static_cast<T>(cum_sum_size_)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', shift index should be less than cumsum size, but got shift index: " << shift_idx
+                      << "', shift index must be less than cumsum size, but got shift index: " << shift_idx
                       << " and cumsum size: " << cum_sum_size_;
   }
   size_t output_size = static_cast<size_t>(cum_sum_arr[cum_sum_size_ - 1]);

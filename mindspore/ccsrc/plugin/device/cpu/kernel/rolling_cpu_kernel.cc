@@ -94,17 +94,17 @@ void RollingCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_node) {
   auto method = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, METHOD);
   if (kValidMethods.find(method) == kValidMethods.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'method' should be in (max, min, sum, mean, std, var), but got " << method;
+                      << "', the 'method' must be in (max, min, sum, mean, std, var), but got " << method;
   }
   method_ = kValidMethods.at(method);
   auto window = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, WINDOW);
   if (window <= 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'window' should be greater than 0, but got " << window;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'window' must be greater than 0, but got " << window;
   }
   window_ = LongToInt(window);
   min_periods_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, MIN_PERIODS);
   if (min_periods_ <= 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'min_periods' should be greater than 0, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'min_periods' must be greater than 0, but got "
                       << min_periods_;
   }
   center_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CENTER);
@@ -112,7 +112,7 @@ void RollingCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_node) {
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   closed_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, CLOSED);
   if (axis_t >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be less than the dimension of input tensor "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "
                       << input_shape.size() << "D, but got " << axis_t;
   }
   axisIterator_.Init(input_shape, axis_t);
@@ -203,7 +203,7 @@ void RollingCpuKernelFunc<T, S>::MethodSwitch() {
       break;
     default:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'method' should be in (max, min, sum, mean, std, var), but got " << method_;
+                        << "', the 'method' must be in (max, min, sum, mean, std, var), but got " << method_;
   }
 }
 

@@ -54,7 +54,7 @@ void LrnCpuKernelMod::GetLrnAttr(const CNodePtr &kernel_node) {
   if (norm_region_ == "ACROSS_CHANNELS") {
     dnnl_algorithm_ = dnnl::algorithm::lrn_across_channels;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "''s attribute 'norm_region' should be ACROSS_CHANNELS but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "''s attribute 'norm_region' must be ACROSS_CHANNELS but got "
                       << norm_region;
   }
 }

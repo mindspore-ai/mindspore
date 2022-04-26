@@ -37,7 +37,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   ClearVectors();
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be 4D or lower, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be 4D or lower, but got "
                       << input_shape.size() << "D.";
   }
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
@@ -62,7 +62,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          [](const int64_t &value) { return LongToInt(value); });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'strides|end|output' should be equal, but got the dimension of "
+                        << "', the dimension of 'strides|end|output' must be equal, but got the dimension of "
                         << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
                         << ", and the dimension of output: " << output_shape_.size();
     }
@@ -73,7 +73,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                          [](const int64_t &value) { return LongToInt(value); });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', 'begin|size|input' size should be equal, but got 'begin' size: " << begin_.size()
+                        << "', 'begin|size|input' size must be equal, but got 'begin' size: " << begin_.size()
                         << ", 'size' size: " << size_.size() << " and 'input' size: " << output_shape_.size();
     }
     FormatArgs(false);
@@ -132,7 +132,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
     auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimensions of 'begin', 'end', 'strides' should be 1, "
+                        << "', the dimensions of 'begin', 'end', 'strides' must be 1, "
                            "but got the dimension of 'begin': "
                         << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
                         << ", and the dimension of 'strides': " << stride_shape.size();
@@ -148,7 +148,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
     (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const int32_t &value) { return value; });
     if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'strides|end|output' should be equal, but got the dimension of "
+                        << "', the dimension of 'strides|end|output' must be equal, but got the dimension of "
                         << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
                         << ", and the dimension of output: " << output_shape_.size();
     }
@@ -157,7 +157,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
     auto size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || size_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimensions of 'begin', 'end' should be 1, but got the dimension of 'begin': "
+                        << "', the dimensions of 'begin', 'end' must be 1, but got the dimension of 'begin': "
                         << begin_shape.size() << ", and the dimension of 'end': " << size_shape.size();
     }
     auto size_ptr = reinterpret_cast<int32_t *>(inputs[3]->addr);
@@ -166,7 +166,7 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
                          [](const int32_t &value) { return value; });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', 'begin|size|input' size should be equal, but got 'begin' size: " << begin_.size()
+                        << "', 'begin|size|input' size must be equal, but got 'begin' size: " << begin_.size()
                         << ", 'size' size: " << size_.size() << " and 'input' size: " << output_shape_.size();
     }
     FormatArgs(false);
@@ -180,7 +180,7 @@ bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input should be not empty.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input can not be empty.";
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputsNum, kernel_name_);
 
@@ -195,7 +195,7 @@ bool SliceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     ret = LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input should be bool, int32, float32 or float64, but got "
+                      << "', the dtype of input must be bool, int32, float32 or float64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return ret;
@@ -303,8 +303,8 @@ void SliceGradCpuKernelMod::FormatArgs(bool stride) {
   if (stride) {
     for (size_t i = 0; i < strides_.size(); ++i) {
       if (strides_[i] == 0) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                          << ", elements in 'stride' should not be 0, but got 0 in dimension " << i;
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", elements in 'stride' can not be 0, but got 0 in dimension "
+                          << i;
       }
       if (end_[i] == 0 && begin_[i] < 0) {
         end_[i] = end_[i] + SizeToInt(output_shape_[i]);

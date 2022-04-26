@@ -74,7 +74,7 @@ void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<Ad
     MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
   }
   if (dims[dims.size() - kNumber1] != dims[dims.size() - kNumber2]) {
-    MS_LOG(EXCEPTION) << "The last two dimensions of Input x should be equal.";
+    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
   }
   size_t m = dims[dims.size() - 1];
   size_t n = 1;

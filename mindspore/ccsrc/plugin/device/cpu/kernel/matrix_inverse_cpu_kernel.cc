@@ -73,7 +73,7 @@ void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr
     MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
   }
   if (shape[shape.size() - kNumber1] != shape[shape.size() - kNumber2]) {
-    MS_LOG(EXCEPTION) << "The last two dimensions of Input x should be equal.";
+    MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
   }
   auto last_dimsize = shape[shape.size() - 1];
   // Output length

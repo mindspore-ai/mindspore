@@ -45,11 +45,11 @@ void FractionalMaxPoolGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) 
   overlapping_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "overlapping");
   tensor_in_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (tensor_in_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_input' should be a tensor of rank 4.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_input' must be a tensor of rank 4.";
   }
   tensor_out_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (tensor_out_shape_.size() != tensor_in_and_out_dims) {
-    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_output' should be a tensor of rank 4.";
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input 'orig_output' must be a tensor of rank 4.";
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);

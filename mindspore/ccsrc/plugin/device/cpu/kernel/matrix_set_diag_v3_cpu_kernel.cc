@@ -69,7 +69,7 @@ void MatrixSetDiagV3CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t k_dim_size = k_shape_.size();
   const size_t k_dim_size_max = 1;
   if (k_dim_size > k_dim_size_max) {
-    MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k_dim_size must not be greater than 1, received " << k_dim_size << ".";
+    MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k_dim_size can not be greater than 1, received " << k_dim_size << ".";
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
@@ -118,7 +118,7 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     k_upper_ = k_Data[1];
   }
   if (!(k_lower_ <= k_upper_)) {
-    MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k[0] must not be larger than k[1] ,received " << k_lower_
+    MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, k[0] can not be larger than k[1] ,received " << k_lower_
                       << " is larger than " << k_upper_;
   }
   max_diag_len_ = std::min(input_rows_ + std::min(k_upper_, ZERO), input_columns_ + std::min(-k_lower_, ZERO));

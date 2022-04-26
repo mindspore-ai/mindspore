@@ -90,7 +90,7 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
                CheckPermTransFormat(perm, nhwc2nchw, perms_num)) {
       output->format_ = Format_NCHW;
     }
-    // though the perm is 4d in default, the input can be a 3d tensor. The op implementation should be adapted to this.
+    // though the perm is 4d in default, the input can be a 3d tensor. The op implementation must be adapted to this.
     if (input->shape_size_ == 3) {
       ShapeSet(perm, &perm_size, trans3d, 3);
     }
