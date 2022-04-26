@@ -53,6 +53,12 @@ COMMON_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &, bool abstract = true);
  */
 COMMON_EXPORT void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph);
 
+/**
+ * Try Expand cnode with check func.
+ */
+COMMON_EXPORT FuncGraphPtr TryExpandCNode(const AnfNodePtr &node,
+                                          const std::function<bool(const CNodePtr &kernel_node)> &func);
+
 bool IsComplexOp(const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_EXPANDER_H_

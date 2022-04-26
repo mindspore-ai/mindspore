@@ -54,6 +54,23 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
   return expander;
 }
 
+FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
+  auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
+  if (expand_fg != nullptr) {
+    auto todos = TopoSort(expand_fg->get_return());
+    for (const auto &n : todos) {
+      auto cnode = n->cast<CNodePtr>();
+      if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
+      auto suc = func(cnode);
+      if (!suc) {
+        expand_fg = nullptr;
+        break;
+      }
+    }
+  }
+  return expand_fg;
+}
+
 bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json) {
   DumpOption dump_option;
   dump_option.extract_opinfo_from_anfnode = true;
