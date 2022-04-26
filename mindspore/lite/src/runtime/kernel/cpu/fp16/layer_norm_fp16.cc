@@ -42,9 +42,9 @@ int LayerNormFp16CPUKernel::ReSize() {
   CHECK_NULL_RETURN(input);
   auto shape = input->shape();
   param_->begin_norm_axis_ =
-    param_->begin_norm_axis_ > 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();
+    param_->begin_norm_axis_ >= 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();
   param_->begin_params_axis_ =
-    param_->begin_params_axis_ > 0 ? param_->begin_params_axis_ : param_->begin_params_axis_ + shape.size();
+    param_->begin_params_axis_ >= 0 ? param_->begin_params_axis_ : param_->begin_params_axis_ + shape.size();
 
   param_->norm_outer_size_ = 1;
   for (int i = 0; i < param_->begin_norm_axis_; ++i) {
