@@ -97,7 +97,9 @@ class AbstractActor : public OpActor<DeviceTensor> {
 
   // The output_data_nodes_ and output_data_ corresponds to the output_data_arrows_ one by one.
   std::vector<AnfNodePtr> output_data_nodes_;
-  std::vector<OpDataUniquePtr<DeviceTensor>> output_data_;
+  // Bool which is the second of pair, indicating whether the output data destination is stack actor, and the output
+  // data cannot be reused.
+  std::vector<std::pair<OpDataUniquePtr<DeviceTensor>, bool>> output_data_;
   // When there is recursion in the graph, the actor will send data to the same stack actor multiple times. Since
   // messages are sent asynchronously between actors, there will be multiple messages that remain unprocessed in
   // the channel. In order to prevent old data from being overwritten, it is necessary to allocate a new op data,

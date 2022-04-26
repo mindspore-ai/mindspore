@@ -36,7 +36,8 @@ void DataSourceActor::Init() {
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    (void)output_data_.emplace_back(std::move(data));
+    bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
+    (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
   }
 }
 
@@ -89,7 +90,8 @@ void DeviceQueueDataSourceActor::Init() {
   for (auto &data_arrow : output_data_arrows_) {
     MS_EXCEPTION_IF_NULL(data_arrow);
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
-    (void)output_data_.emplace_back(std::move(data));
+    bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
+    (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
   }
 
   // Init kernel launch info.

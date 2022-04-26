@@ -114,17 +114,17 @@ void AbstractActor::SendOutput(OpContext<DeviceTensor> *const context) {
   }
   size_t output_data_arrow_index = 0;
   for (auto &output_data : output_data_) {
-    MS_EXCEPTION_IF_NULL(output_data);
-    UpdateOutputData(output_data.get(), output_data_arrows_[output_data_arrow_index],
+    MS_EXCEPTION_IF_NULL(output_data.first);
+    UpdateOutputData(output_data.first.get(), output_data_arrows_[output_data_arrow_index],
                      output_data_nodes_[output_data_arrow_index], context);
-    if (output_data->op_id_.Name().find(kStackActorNameSuffix) != std::string::npos) {
+    if (output_data.second) {
       // Create a new op data for stack actor.
-      auto to_stack_data =
-        std::make_unique<OpData<DeviceTensor>>(output_data->op_id_, output_data->data_, output_data->index_);
+      auto to_stack_data = std::make_unique<OpData<DeviceTensor>>(output_data.first->op_id_, output_data.first->data_,
+                                                                  output_data.first->index_);
       (void)to_stack_data_.emplace_back(std::move(to_stack_data));
-      ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, to_stack_data_.back().get(), context);
+      ActorDispatcher::Send(output_data.first->op_id_, &OpActor::RunOpData, to_stack_data_.back().get(), context);
     } else {
-      ActorDispatcher::Send(output_data->op_id_, &OpActor::RunOpData, output_data.get(), context);
+      ActorDispatcher::Send(output_data.first->op_id_, &OpActor::RunOpData, output_data.first.get(), context);
     }
     ++output_data_arrow_index;
   }

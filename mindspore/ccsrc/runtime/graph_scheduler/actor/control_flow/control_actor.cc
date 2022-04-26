@@ -37,7 +37,8 @@ void ControlActor::Init() {
 
     auto data = std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, nullptr, data_arrow->to_input_index_);
     (void)output_data_by_output_index_[data_arrow->from_output_index_].emplace_back(data.get());
-    (void)output_data_.emplace_back(std::move(data));
+    bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
+    (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
   }
 }
 
@@ -270,12 +271,12 @@ void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const conte
   MS_EXCEPTION_IF_NULL(context);
   // Increase dynamic ref count by the output data.
   for (size_t i = 0; i < output_data_.size(); ++i) {
-    MS_EXCEPTION_IF_NULL(output_data_[i]);
+    MS_EXCEPTION_IF_NULL(output_data_[i].first);
     std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i) +
-                             " to actor:" + output_data_[i]->op_id_.Name() +
-                             " index:" + std::to_string(output_data_[i]->index_);
-    MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i]->data_ != nullptr), error_info);
-    IncreaseDynamicRefCount(output_data_[i].get());
+                             " to actor:" + output_data_[i].first->op_id_.Name() +
+                             " index:" + std::to_string(output_data_[i].first->index_);
+    MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i].first->data_ != nullptr), error_info);
+    IncreaseDynamicRefCount(output_data_[i].first.get());
   }
 
   // Increase dynamic ref count by the output partial.
