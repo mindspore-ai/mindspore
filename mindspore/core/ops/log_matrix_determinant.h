@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_LOG_MATRIX_DETERMINANT_H_
 #include <memory>
 #include <vector>
-
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 

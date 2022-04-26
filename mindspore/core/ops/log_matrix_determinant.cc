@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ abstract::TupleShapePtr LogMatrixDeterminantInferShape(const PrimitivePtr &primi
 }
 
 TuplePtr LogMatrixDeterminantInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   auto x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});
@@ -56,9 +56,9 @@ AbstractBasePtr LogMatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, c
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infertype = LogMatrixDeterminantInferType(primitive, input_args);
-  auto infershape = LogMatrixDeterminantInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infershape, infertype);
+  auto infer_type = LogMatrixDeterminantInferType(primitive, input_args);
+  auto infer_shape = LogMatrixDeterminantInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(LogMatrixDeterminant, prim::kPrimLogMatrixDeterminant, LogMatrixDeterminantInfer, nullptr,
                              true);
