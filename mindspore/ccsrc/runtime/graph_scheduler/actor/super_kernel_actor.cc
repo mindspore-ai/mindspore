@@ -46,7 +46,8 @@ void SuperKernelActor::Init() {
     auto device_address = AnfAlgo::GetMutableOutputAddr(output_node, data_arrow->from_output_index_, false);
     auto data =
       std::make_unique<OpData<DeviceTensor>>(data_arrow->to_op_id_, device_address.get(), data_arrow->to_input_index_);
-    (void)output_data_.emplace_back(std::move(data));
+    bool is_to_stack = (data_arrow->to_op_id_.Name().find(kStackActorNameSuffix) != std::string::npos);
+    (void)output_data_.emplace_back(std::make_pair(std::move(data), is_to_stack));
   }
 }
 
