@@ -82,7 +82,14 @@ class ReduceOp:
     PROD = "prod"
 
 
-target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
+def check_collective_target_dtype(data_name, data_dtype, prim_name):
+    """Check if data type is valid."""
+    default_target_dtypes = (mstype.int8, mstype.int32, mstype.float16, mstype.float32)
+    gpu_target_dtypes = (mstype.bool_, mstype.int8, mstype.int32, mstype.int64, mstype.uint32, mstype.uint64,
+                         mstype.float16, mstype.float32, mstype.float64)
+
+    valid_dtype = gpu_target_dtypes if context.get_context("device_target") == "GPU" else default_target_dtypes
+    validator.check_tensor_dtype_valid(data_name, data_dtype, valid_dtype, prim_name)
 
 
 def check_hcom_group_valid(group, prim_name=None):
@@ -171,7 +178,7 @@ class AllReduce(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
 
@@ -251,7 +258,7 @@ class AllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -289,7 +296,7 @@ class _MiniStepAllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, z_shape):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
 
@@ -322,7 +329,7 @@ class _MicroStepAllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, z_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
 
@@ -373,7 +380,7 @@ class _HostAllGather(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -454,7 +461,7 @@ class ReduceScatter(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -508,7 +515,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
     def __call__(self, tensor):
@@ -590,7 +597,7 @@ class Broadcast(PrimitiveWithInfer):
         if not isinstance(x_dtype, tuple):
             raise TypeError(f"For '{self.name}', the 'input_x' should be a tuple, but got {type(x_dtype).__name__}!")
         for _ele in x_dtype:
-            validator.check_tensor_dtype_valid('x', _ele, target_dtypes, self.name)
+            check_collective_target_dtype('x', _ele, self.name)
         return x_dtype
 
 
@@ -809,7 +816,7 @@ class AlltoAll(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, target_dtypes, self.name)
+        check_collective_target_dtype('x', x_dtype, self.name)
         return x_dtype
 
     def __call__(self, tensor):

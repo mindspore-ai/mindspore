@@ -18,44 +18,24 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
-  AllReduce, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  NcclCollectiveGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
-  AllReduce, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  NcclCollectiveGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(AllReduce,
-                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      NcclCollectiveGpuKernel, int)
+#define MS_REG_GPU_COLLECTIVE_OPS(OPNAME, MS_TYPE, T)                                                           \
+  MS_REG_GPU_KERNEL_ONE(OPNAME, KernelAttr().AddAllSameAttr(true).AddInputAttr(MS_TYPE).AddOutputAttr(MS_TYPE), \
+                        NcclCollectiveGpuKernel, T)
 
-MS_REG_GPU_KERNEL_ONE(
-  AllGather, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  NcclCollectiveGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
-  AllGather, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  NcclCollectiveGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(AllGather,
-                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      NcclCollectiveGpuKernel, int)
+#define MS_REG_GPU_COLLECTIVE_OPS_DATA_GENERALIZE(OPNAME)        \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeBool, bool)       \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeInt8, int8_t)     \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeInt32, int32_t)   \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeInt64, int64_t)   \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeUInt8, uint8_t)   \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeUInt32, uint32_t) \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeUInt64, uint64_t) \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeFloat16, half)    \
+  MS_REG_GPU_COLLECTIVE_OPS(OPNAME, kNumberTypeFloat32, float)
 
-MS_REG_GPU_KERNEL_ONE(
-  ReduceScatter, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  NcclCollectiveGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
-  ReduceScatter, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  NcclCollectiveGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(ReduceScatter,
-                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      NcclCollectiveGpuKernel, int)
-
-MS_REG_GPU_KERNEL_ONE(
-  Broadcast, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-  NcclCollectiveGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
-  Broadcast, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-  NcclCollectiveGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(Broadcast,
-                      KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-                      NcclCollectiveGpuKernel, int)
+MS_REG_GPU_COLLECTIVE_OPS_DATA_GENERALIZE(AllReduce)
+MS_REG_GPU_COLLECTIVE_OPS_DATA_GENERALIZE(AllGather)
+MS_REG_GPU_COLLECTIVE_OPS_DATA_GENERALIZE(ReduceScatter)
+MS_REG_GPU_COLLECTIVE_OPS_DATA_GENERALIZE(Broadcast)
 }  // namespace kernel
 }  // namespace mindspore

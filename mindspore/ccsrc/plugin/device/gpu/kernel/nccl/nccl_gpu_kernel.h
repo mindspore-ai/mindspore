@@ -32,7 +32,10 @@ namespace mindspore {
 namespace kernel {
 using NvidiaCollectiveCommLib = device::gpu::NvidiaCollectiveCommLib;
 static std::map<std::string, ncclDataType_t> kNcclDtypeMap = {
-  {"kNumberTypeFloat32", ncclFloat}, {"kNumberTypeFloat16", ncclHalf}, {"kNumberTypeInt32", ncclInt}};
+  {"kNumberTypeBool", ncclUint8},     {"kNumberTypeInt8", ncclInt8},       {"kNumberTypeInt32", ncclInt32},
+  {"kNumberTypeInt64", ncclInt64},    {"kNumberTypeUInt8", ncclUint8},     {"kNumberTypeUInt32", ncclUint32},
+  {"kNumberTypeUInt64", ncclUint64},  {"kNumberTypeFloat16", ncclFloat16}, {"kNumberTypeFloat32", ncclFloat32},
+  {"kNumberTypeFloat64", ncclFloat64}};
 
 typedef ncclResult_t (*AllReduce)(const void *, void *, size_t, ncclDataType_t, ncclRedOp_t, cudaStream_t,
                                   const std::string &);
