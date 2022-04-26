@@ -380,6 +380,7 @@ int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
       split_points_.push_back(split_point * col_min_unit_);
       split_point += block_col_unit;
     }
+    thread_count_ = split_points_.size();
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByOC;
   }
   return RET_OK;
