@@ -159,7 +159,7 @@ bool SelectAkgKernel(const CNodePtr &kernel_node, const std::shared_ptr<KernelBu
 
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kAKG);
   if (op_info_ptr == nullptr) {
-    MS_LOG(WARNING) << "Not find op[" << op_name << "] in akg";
+    MS_LOG(DEBUG) << "Not find op[" << op_name << "] in akg";
     return false;
   }
   if (!ParseMetadata(kernel_node, op_info_ptr, kernel::Processor::CUDA, &kernel_info_list)) {

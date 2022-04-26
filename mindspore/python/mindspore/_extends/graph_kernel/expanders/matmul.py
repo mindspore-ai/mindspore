@@ -26,12 +26,12 @@ class MatMul(Expander):
 
     def __init__(self, expand_info):
         super(MatMul, self).__init__(expand_info)
-        self.transpose_a = self.attrs['transpose_a']
-        self.transpose_b = self.attrs['transpose_b']
-        self.left_format = self.attrs['left_format']
-        self.right_format = self.attrs['right_format']
         self.shape_a = self.inputs[0]['shape']
         self.shape_b = self.inputs[1]['shape']
+        self.transpose_a = False
+        self.transpose_b = False
+        self.left_format = ""
+        self.right_format = ""
 
     def _optimize_to_mul(self):
         """check if matmul can be replace by mul"""
@@ -49,6 +49,10 @@ class MatMul(Expander):
             raise GKException("For 'MatMul', inputs number should bigger than 1, but got {}.".format(input_num))
 
     def _expand(self, graph_builder):
+        self.transpose_a = self.attrs['transpose_a']
+        self.transpose_b = self.attrs['transpose_b']
+        self.left_format = self.attrs['left_format']
+        self.right_format = self.attrs['right_format']
         def transpose(shape):
             trans_shape = list(shape)
             trans_shape[-2] = shape[-1]

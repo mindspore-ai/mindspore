@@ -57,12 +57,10 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
 
 FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
   auto processor = kernel::GetStrProcessorFromContext();
-  if (processor == kernel::kProcessorAiCore) {
-    auto use_expand_fallback = common::GetEnv("EXPANDERFALLBACK");
-    if (use_expand_fallback.empty()) {
-      return nullptr;
-    }
-  }
+  bool fallback = processor != kernel::kProcessorAiCore;
+  if (common::GetEnv("EXPANDERFALLBACK") == "on") fallback = true;
+  if (common::GetEnv("EXPANDERFALLBACK") == "off") fallback = false;
+  if (!fallback) return nullptr;
   auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());
@@ -71,6 +69,7 @@ FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(con
       if (cnode == nullptr || !AnfUtils::IsRealKernel(cnode)) continue;
       auto suc = func(cnode);
       if (!suc) {
+        MS_LOG(DEBUG) << "Expanding core ops [" << cnode->fullname_with_scope() << "] failed.";
         expand_fg = nullptr;
         break;
       }
