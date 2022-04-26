@@ -1660,7 +1660,6 @@ bool SchedulerNode::RecoverScheduler() {
 void SchedulerNode::RecordSchedulerRestartInfo() {
   MS_LOG(DEBUG) << "Start to record scheduler restart error message";
   std::lock_guard<std::mutex> lock(event_txt_file_mtx_);
-  MS_LOG(INFO) << "========" << event_file_path_;
   event_txt_file_.open(event_file_path_, std::ios::out | std::ios::app);
   if (!event_txt_file_.is_open()) {
     MS_LOG(EXCEPTION) << "The event txt file is not open";
