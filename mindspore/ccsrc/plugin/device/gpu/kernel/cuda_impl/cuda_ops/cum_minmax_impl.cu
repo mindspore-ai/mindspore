@@ -38,7 +38,7 @@ struct binary_op {
   size_t inner_size_;
   OP op;
 
-  __thrust_exec_check_disable__ __device__ size_t operator()(const size_t &lhs, const size_t &rhs) const {
+  __device__ size_t operator()(const size_t &lhs, const size_t &rhs) const {
     if (rhs % axis_size_) {
       size_t batch_idx = rhs / axis_size_;
       size_t axis_idx = rhs - batch_idx * axis_size_;
