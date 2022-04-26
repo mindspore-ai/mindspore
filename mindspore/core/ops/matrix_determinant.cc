@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ abstract::ShapePtr MatrixDeterminantInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr MatrixDeterminantInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat32};
   auto infer_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", infer_type, valid_types, prim->name());
   return infer_type;
@@ -55,9 +55,9 @@ AbstractBasePtr MatrixDeterminantInfer(const abstract::AnalysisEnginePtr &, cons
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = MatrixDeterminantInferType(primitive, input_args);
-  auto infer_shape = MatrixDeterminantInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+  auto infertype = MatrixDeterminantInferType(primitive, input_args);
+  auto infershape = MatrixDeterminantInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infershape, infertype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDeterminant, prim::kPrimMatrixDeterminant, MatrixDeterminantInfer, nullptr, true);
 }  // namespace ops
