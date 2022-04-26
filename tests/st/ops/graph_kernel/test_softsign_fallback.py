@@ -51,7 +51,7 @@ def softsign_compare(shape, dtype):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sofsign_cpu_pynative_mode():
@@ -64,7 +64,7 @@ def test_sofsign_cpu_pynative_mode():
     softsign_compare([2, 3, 2], np.float32)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sofsign_cpu_graph_mode():
