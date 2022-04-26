@@ -1133,45 +1133,6 @@ class Rank(PrimitiveWithInfer):
         return out
 
 
-class TruncatedNormal(PrimitiveWithInfer):
-    """
-    Returns a tensor of the specified shape filled with truncated normal values.
-
-    The generated values follow a normal distribution.
-
-    Args:
-        seed (int): A integer number used to create random seed. Default: 0.
-        dtype (:class:`mindspore.dtype`): Data type. Default: mindspore.float32.
-
-    Inputs:
-        - **shape** (tuple[int]) - The shape of the output tensor, is a tuple of positive integer.
-
-    Outputs:
-        Tensor, the data type of output tensor is the same as attribute `dtype`.
-
-    Examples:
-        >>> shape = (1, 2, 3)
-        >>> truncated_normal = ops.TruncatedNormal()
-        >>> output = truncated_normal(shape)
-    """
-
-    @prim_attr_register
-    def __init__(self, seed=0, dtype=mstype.float32):
-        """Initialize TruncatedNormal"""
-        validator.check_value_type('seed', seed, [int], self.name)
-        validator.check_types_same_and_valid({'dtype': dtype}, mstype.number_type, self.name)
-
-    def __infer__(self, shape):
-        shape_value = shape['value']
-        validator.check_value_type("shape", shape_value, [tuple], self.name)
-        for i, value in enumerate(shape_value):
-            validator.check_positive_int(value, f'{i}th value of shape', self.name)
-        out = {'shape': shape_value,
-               'dtype': mstype.tensor_type(self.dtype),
-               'value': None}
-        return out
-
-
 class Size(PrimitiveWithInfer):
     r"""
     Returns a Scalar of type int that represents the size of the input Tensor and the total number of elements in the
