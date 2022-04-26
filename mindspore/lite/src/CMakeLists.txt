@@ -187,7 +187,7 @@ if(MSLITE_ENABLE_RUNTIME_GLOG)
     add_definitions(-DUSE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
+    if(NOT MSLITE_ENABLE_RUNTIME_CONVERT AND NOT MSLITE_ENABLE_KERNEL_EXECUTOR)
         set(LITE_SRC ${LITE_SRC}
             ${CORE_DIR}/utils/log_adapter.cc)
     endif()
@@ -199,6 +199,7 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     file(GLOB RUNTIME_CONVERT_SRC
             ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_def.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/ops/anf_utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_convert.cc)
 
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
@@ -464,6 +465,10 @@ if(SUPPORT_TRAIN)
   else()
       target_link_libraries(mindspore-lite-train_static mindspore-lite)
   endif()
+endif()
+
+if(MSLITE_ENABLE_KERNEL_EXECUTOR)
+    add_subdirectory(cxx_api/kernel_executor)
 endif()
 
 ########################## build optimize and float16 library #################################

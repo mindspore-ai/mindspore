@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_
 #define MINDSPORE_LITE_SRC_COMMON_LOG_ADAPTER_H_
 
-#ifdef USE_GLOG
+#if defined(USE_GLOG) || defined(BUILD_CORE_RUNTIME)
 #include "utils/log_adapter.h"
 #else
 #include "src/common/log.h"

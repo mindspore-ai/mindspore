@@ -19,11 +19,12 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include "src/common/primitive_t_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/utils.h"
 #include "src/ops/populate/populate_register.h"
-#include "src/ops/ops_utils.h"
+#include "src/ops/anf_utils.h"
 #include "src/runtime/infer_manager.h"
 #include "src/tensorlist.h"
 #include "src/registry/kernel_interface_registry.h"

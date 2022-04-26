@@ -20,14 +20,14 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <algorithm>
 #include "src/ops/ops_func_declare.h"
-
 #ifdef PRIMITIVE_WRITEABLE
-#include "abstract/ops/primitive_infer_map.h"
+#include "src/common/log_adapter.h"
 
 namespace mindspore {
 namespace lite {
-typedef std::unique_ptr<schema::PrimitiveT> (*PrimitiveTCreator)(const AnfNodePtr &node);
+typedef std::unique_ptr<schema::PrimitiveT> (*PrimitiveTCreator)(const PrimitivePtr &primitive);
 
 class MSOpsRegistry {
  public:
@@ -35,12 +35,19 @@ class MSOpsRegistry {
     static MSOpsRegistry registry;
     return &registry;
   }
-  void InsertPrimitiveTMap(const std::string &name, PrimitiveTCreator creator) { primitive_creators[name] = creator; }
+  void InsertPrimitiveTMap(const std::string &name, PrimitiveTCreator creator) {
+    std::string lower_name = name;
+    std::transform(name.begin(), name.end(), lower_name.begin(), ::tolower);
+    primitive_creators[lower_name] = creator;
+  }
   PrimitiveTCreator GetPrimitiveCreator(const std::string &name) {
-    if (primitive_creators.find(name) != primitive_creators.end()) {
-      return primitive_creators[name];
+    std::string lower_name = name;
+    std::transform(name.begin(), name.end(), lower_name.begin(), ::tolower);
+    lower_name.erase(std::remove(lower_name.begin(), lower_name.end(), '_'), lower_name.end());
+    if (primitive_creators.find(lower_name) != primitive_creators.end()) {
+      return primitive_creators[lower_name];
     } else {
-      MS_LOG(WARNING) << "Unsupported primitive type in Create: " << name;
+      MS_LOG(ERROR) << "Unsupported primitive type in Create: " << name;
       return nullptr;
     }
   }
@@ -57,7 +64,8 @@ class RegistryMSOps {
   ~RegistryMSOps() = default;
 };
 
-std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const mindspore::AnfNodePtr &node);
+#define REG_MINDSPORE_OPERATOR(OP) \
+  static RegistryMSOps g_##OP##PrimitiveCreatorRegistry(#OP, PrimitiveCreator<mindspore::ops::OP>);
 }  // namespace lite
 }  // namespace mindspore
 #endif

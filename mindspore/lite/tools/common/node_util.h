@@ -81,8 +81,6 @@ std::vector<schema::PrimitiveType> Getfp32FullOpList();
 
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList();
 
-const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb);
-
 size_t GetTensorInputIndexInCNode(const uint32_t &tensor_index, const schema::CNodeT &cnode);
 
 class NodeUtils {

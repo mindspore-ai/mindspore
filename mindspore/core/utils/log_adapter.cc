@@ -25,10 +25,18 @@
 #include <thread>
 #include <vector>
 #include "utils/convert_utils_base.h"
+#ifdef ENABLE_ARM
+#if defined(__ANDROID__) || defined(ANDROID)
+#include <android/log.h>
+#endif
+#endif
 
 // namespace to support utils module definition
 namespace mindspore {
 constexpr int kNameMaxLength = 18;
+#if defined(__ANDROID__) || defined(ANDROID)
+constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
+#endif
 std::map<void **, std::thread *> acl_handle_map;
 // set default log level to WARNING for all sub modules
 int g_ms_submodule_log_levels[NUM_SUBMODUES] = {WARNING};
@@ -100,6 +108,38 @@ static int GetThresholdLevel(const std::string &threshold) {
   }
 }
 #undef google
+#elif defined(BUILD_CORE_RUNTIME)
+const char *EnumStrForMsLogLevel(MsLogLevel level) {
+  if (level == MsLogLevel::DEBUG) {
+    return "DEBUG";
+  } else if (level == MsLogLevel::INFO) {
+    return "INFO";
+  } else if (level == MsLogLevel::WARNING) {
+    return "WARNING";
+  } else if (level == MsLogLevel::ERROR) {
+    return "ERROR";
+  } else {
+    return "NO_LEVEL";
+  }
+}
+#ifdef ENABLE_ARM
+#if defined(__ANDROID__) || defined(ANDROID)
+static int GetAndroidLogLevel(MsLogLevel level) {
+  switch (level) {
+    case MsLogLevel::DEBUG:
+      return ANDROID_LOG_DEBUG;
+    case MsLogLevel::INFO:
+      return ANDROID_LOG_INFO;
+    case MsLogLevel::WARNING:
+      return ANDROID_LOG_WARN;
+    case MsLogLevel::ERROR:
+    default:
+      return ANDROID_LOG_ERROR;
+  }
+}
+#endif
+#endif
+
 #else
 
 #undef Dlog
@@ -153,6 +193,14 @@ void LogWriter::OutputLog(const std::ostringstream &msg) const {
     << std::this_thread::get_id() << std::dec << "," << GetProcName() << "):" << GetTimeString() << " "
     << "[" << location_.file_ << ":" << location_.line_ << "] " << location_.func_ << "] " << msg.str() << std::endl;
 #undef google
+#elif defined(BUILD_CORE_RUNTIME)
+#if defined(ENABLE_ARM) && (defined(__ANDROID__) || defined(ANDROID))
+  __android_log_print(GetAndroidLogLevel(log_level_), ANDROID_LOG_TAG, "[%s:%d] %s] %s", location_.file_,
+                      location_.line_, location_.func_, msg.str().c_str());
+#else
+  printf("%s [%s:%d] %s] %s\n", EnumStrForMsLogLevel(log_level_), location_.file_, location_.line_, location_.func_,
+         msg.str().c_str());
+#endif
 #else
   auto str_msg = msg.str();
   auto slog_module_id = (submodule_ == SM_MD ? MD : ME);
@@ -166,7 +214,7 @@ void LogWriter::operator<(const LogStream &stream) const noexcept {
   msg << stream.sstream_->rdbuf();
   OutputLog(msg);
 }
-#ifndef BUILD_LITE_INFERENCE
+#if !defined(BUILD_LITE_INFERENCE) || defined(BUILD_CORE_RUNTIME)
 void LogWriter::operator^(const LogStream &stream) const {
   std::ostringstream msg;
   msg << stream.sstream_->rdbuf();

@@ -35,9 +35,9 @@ struct alignas(sizeof(T) * 2) ComplexStorage {
   ComplexStorage &operator=(ComplexStorage<T> &&other) noexcept = default;
 
   inline constexpr ComplexStorage(const T &real, const T &imag = T()) : real_(real), imag_(imag) {}
-
+#ifndef ENABLE_ARM
   inline explicit constexpr ComplexStorage(const float16 &real) : real_(static_cast<T>(real)), imag_(T()) {}
-
+#endif
   template <typename U = T>
   explicit ComplexStorage(const std::enable_if_t<std::is_same<U, float>::value, ComplexStorage<double>> &other)
       : real_(other.real_), imag_(other.imag_) {}

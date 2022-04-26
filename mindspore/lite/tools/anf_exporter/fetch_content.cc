@@ -29,8 +29,9 @@
 #include "tools/optimizer/common/format_utils.h"
 #include "nnacl/op_base.h"
 #include "tools/common/node_util.h"
-#include "src/ops/ops_utils.h"
+#include "src/ops/anf_utils.h"
 #include "src/ops/populate/populate_register.h"
+#include "src/common/primitive_t_utils.h"
 #include "mindapi/base/format.h"
 #include "ops/op_utils.h"
 
