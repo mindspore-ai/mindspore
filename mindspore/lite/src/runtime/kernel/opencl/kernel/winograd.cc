@@ -44,46 +44,54 @@ const int F43_IW = 3;
 const int F43_OH = 6;
 const int F43_OW = 6;
 
-std::vector<float> GenerateWinogradF43Filter(void *src, TypeId dtype, size_t CO, size_t CI) {
-#ifdef ENABLE_FP16
-  auto src_fp32 = reinterpret_cast<float *>(src);
-  auto src_fp16 = reinterpret_cast<float16_t *>(src);
-  std::function<float(int)> access_func;
-  if (dtype == kNumberTypeFloat32) {
-    access_func = [=](int idx) { return src_fp32[idx]; };
-  } else {
-    access_func = [=](int idx) { return static_cast<float>(src_fp16[idx]); };
-  }
-#else
-  auto src_fp32 = reinterpret_cast<float *>(src);
-  std::function<float(int)> access_func;
-  access_func = [=](int idx) { return src_fp32[idx]; };
-#endif
+int GenerateWinogradF43Filter(void *src, TypeId dtype, size_t CO, size_t CI, void *dst) {
   // OHWI -> O66I
-  std::vector<float> dst(CO * F43_OH * F43_OW * CI);
   if (src == nullptr) {
-    return dst;
+    MS_LOG(ERROR) << "GenerateWinogradF43Filter src is nullptr.";
+    return RET_ERROR;
   }
-  for (size_t co = 0; co < CO; ++co) {
-    for (size_t ci = 0; ci < CI; ++ci) {
-      float in_vals[F43_IH * F43_IW];
-      for (int kh = 0; kh < F43_IH; ++kh) {
-        for (int kw = 0; kw < F43_IW; ++kw) {
-          const int f_index = ((co * F43_IH + kh) * F43_IW + kw) * CI + ci;
-          in_vals[kh * F43_IW + kw] = access_func(f_index);
+  if (dtype == kNumberTypeFloat32) {
+    int trans_ret = WinogradWeightTransform(reinterpret_cast<const float *>(src), reinterpret_cast<float *>(dst),
+                                            nullptr, Gt, 1, F43_OH, F43_IH, CI, CO, false);
+    if (trans_ret != NNACL_OK) {
+      MS_LOG(ERROR) << "WinogradWeightTransform failed.";
+      return RET_ERROR;
+    }
+    return RET_OK;
+  } else if (dtype == kNumberTypeFloat16) {
+#ifdef ENABLE_FP16
+    auto src_fp16 = reinterpret_cast<float16_t *>(src);
+    auto dst_fp32 = reinterpret_cast<float *>(dst);
+    std::function<float(int)> access_func = [=](int idx) { return static_cast<float>(src_fp16[idx]); };
+
+    for (size_t co = 0; co < CO; ++co) {
+      for (size_t ci = 0; ci < CI; ++ci) {
+        float in_vals[F43_IH * F43_IW];
+        for (int kh = 0; kh < F43_IH; ++kh) {
+          for (int kw = 0; kw < F43_IW; ++kw) {
+            const int f_index = ((co * F43_IH + kh) * F43_IW + kw) * CI + ci;
+            in_vals[kh * F43_IW + kw] = access_func(f_index);
+          }
         }
-      }
-      auto temp_vals = MatrixMultiply(G, in_vals, F43_OH, F43_IH, F43_IW);
-      auto out_vals = MatrixMultiply(temp_vals.data(), Gt, F43_OH, F43_IH, F43_OW);
-      for (int kh = 0; kh < F43_OH; ++kh) {
-        for (int kw = 0; kw < F43_OW; ++kw) {
-          const int f_index = ((co * F43_OH + kh) * F43_OW + kw) * CI + ci;
-          dst[f_index] = out_vals[kh * F43_OW + kw];
+        auto temp_vals = MatrixMultiply(G, in_vals, F43_OH, F43_IH, F43_IW);
+        auto out_vals = MatrixMultiply(temp_vals.data(), Gt, F43_OH, F43_IH, F43_OW);
+        for (int kh = 0; kh < F43_OH; ++kh) {
+          for (int kw = 0; kw < F43_OW; ++kw) {
+            const int f_index = ((co * F43_OH + kh) * F43_OW + kw) * CI + ci;
+            dst_fp32[f_index] = out_vals[kh * F43_OW + kw];
+          }
         }
       }
     }
+#else
+    MS_LOG(ERROR) << "filter data type is fp16 but fp16 not enable.";
+    return RET_ERROR;
+#endif
+  } else {
+    MS_LOG(ERROR) << "filter dytpe = " << dtype << " is no support.";
+    return RET_ERROR;
   }
-  return dst;
+  return RET_OK;
 }
 }  // namespace
 
@@ -143,7 +151,11 @@ int WinogradOpenCLKernel::InitFilter() {
   void *src_filter_data = stored_filter_ == nullptr ? filter_tensor->data() : stored_filter_;
   MS_ASSERT(src_filter_data);
 
-  auto winograd_filter = GenerateWinogradF43Filter(src_filter_data, filter_tensor->data_type(), CO_, CI_);
+  std::vector<float> winograd_filter(CO_ * F43_OH * F43_OW * CI_);
+  auto ret = GenerateWinogradF43Filter(src_filter_data, filter_tensor->data_type(), CO_, CI_, winograd_filter.data());
+  if (ret != RET_OK) {
+    return ret;
+  }
   void *src_data = winograd_filter.data();
 
   auto src_dtype = kNumberTypeFloat32;
