@@ -87,5 +87,4 @@ RUN cd /tmp \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
 # Install frequently used python packages
-RUN pip install --no-cache-dir decorator pandas sklearn pyyaml \
-    && pip cache purge
+RUN pip install --no-cache-dir decorator pandas sklearn pyyaml
