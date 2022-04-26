@@ -152,9 +152,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::workers_num_, "workersNum", "works num of parallel predict", 2);
     AddFlag(&BenchmarkFlags::inter_op_parallel_num_, "interOpParallelNum", "parallel number of operators in predict",
             1);
-#ifdef ENABLE_OPENGL_TEXTURE
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
-#endif
   }
 
   ~BenchmarkFlags() override = default;
@@ -182,9 +180,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   int loop_count_ = 10;
   int num_threads_ = 2;
   bool enable_fp16_ = false;
-#ifdef ENABLE_OPENGL_TEXTURE
   bool enable_gl_texture_ = false;
-#endif
   bool enable_parallel_ = false;
   int warm_up_loop_count_ = 3;
   // MarkAccuracy

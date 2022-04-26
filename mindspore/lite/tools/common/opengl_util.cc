@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_OPENGL_TEXTURE
-
 #include "tools/common/opengl_util.h"
-#include <dlfcn.h>
 #include <cstdlib>
 #include <algorithm>
 
+namespace mindspore {
+namespace OpenGL {
+#if defined(GPU_OPENCL) && defined(__ANDROID__)
 const char *g_glsl_host_to_device_2d =
   "#version 320 es\n"
   "#define PRECISION highp\n"
@@ -132,10 +132,6 @@ const char *g_glsl_device_to_host_3d =
   "    }\n"
   "}\n";
 
-namespace mindspore {
-namespace OpenGL {
-OpenGLRuntime::OpenGLRuntime() {}
-OpenGLRuntime::~OpenGLRuntime() {}
 constexpr int kC4Align = 4;
 constexpr int kWidthIndex = 0;
 constexpr int kHeightIndex = 1;
@@ -446,7 +442,9 @@ bool OpenGLRuntime::CopyDeviceSSBOToTexture(GLuint ssboBufferID, GLuint textureI
 GLuint OpenGLRuntime::CopyHostToDeviceTexture(void *hostData, int width, int height, int channel) {
   auto ssboBufferID = GLCreateSSBO(sizeof(float) * width * height * channel, hostData);
   auto textureID = GLCreateTexture(width, height, channel, GL_RGBA32F, GL_TEXTURE_2D);
-  if (textureID == 0) MS_LOG(ERROR) << "generate GlTexture failed";
+  if (textureID == 0) {
+    MS_LOG(ERROR) << "generate GlTexture failed";
+  }
   CopyDeviceSSBOToTexture(ssboBufferID, textureID);
   return textureID;
 }
@@ -478,6 +476,17 @@ void OpenGLRuntime::PrintImage2DData(float *data, int w, int h, int c) {
   }
   std::cout << "data print finish!" << std::endl;
 }
+#else
+bool OpenGLRuntime::Init() {
+  MS_LOG(ERROR) << "Init error, server benchmark don't support opengl";
+  return false;
+}
+
+GLuint OpenGLRuntime::GLCreateTexture(int w, int h, int c, GLenum TextrueFormat, GLenum target) { return 0; }
+void *OpenGLRuntime::CopyDeviceTextureToHost(GLuint textureID) { return nullptr; }
+GLuint OpenGLRuntime::CopyHostToDeviceTexture(void *hostData, int width, int height, int channel) { return 0; }
+
+void OpenGLRuntime::PrintImage2DData(float *data, int w, int h, int c) {}
+#endif
 }  // namespace OpenGL
 }  // namespace mindspore
-#endif  // ENABLE_OPENGL_TEXTURE

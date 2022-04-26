@@ -48,21 +48,20 @@ include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
 set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../common/string_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/opengl_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../../ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_common.c
         )
 
-if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)
-    set(COMMON_SRC ${COMMON_SRC} ../common/opengl_util.cc)
-endif()
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../lite)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../core)
 
-if(MSLITE_ENABLE_SHARING_MEM_WITH_OPENGL)
-    list(APPEND opengl_lib EGL GLESv3)
-    set(BENCHMARK_LINK_LIB  ${BENCHMARK_LINK_LIB} ${opengl_lib})
+if(MSLITE_GPU_BACKEND STREQUAL opencl)
+    if(ANDROID_NDK_TOOLCHAIN_INCLUDED)
+        list(APPEND opengl_lib EGL GLESv3)
+        set(BENCHMARK_LINK_LIB  ${BENCHMARK_LINK_LIB} ${opengl_lib})
+    endif()
 endif()
 
 add_executable(benchmark

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_OPENGL_TEXTURE
 #include "src/runtime/kernel/opencl/kernel/gl_to_cl.h"
 #include <map>
 #include <string>
@@ -22,6 +21,8 @@
 #include "src/runtime/kernel/opencl/cl/gl_to_cl.cl.inc"
 
 namespace mindspore::kernel {
+const cl_GLenum kGlTexture2D = 0x0DE1;
+
 int GLToCLOpenCLKernel::CheckSpecs() { return RET_OK; }
 
 int GLToCLOpenCLKernel::PreProcess() {
@@ -99,7 +100,7 @@ int GLToCLOpenCLKernel::Run() {
       return RET_ERROR;
     }
     cl_GLuint *gl_texture_id = reinterpret_cast<cl_GLuint *>(in_tensor->data());
-    auto img_gl = cl::ImageGL(*context, CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, *gl_texture_id, &status);
+    auto img_gl = cl::ImageGL(*context, CL_MEM_READ_ONLY, kGlTexture2D, 0, *gl_texture_id, &status);
     if (status != CL_SUCCESS) {
       MS_LOG(ERROR) << "Create ImageGL failed : " << status << std::endl;
       return RET_ERROR;
@@ -120,7 +121,7 @@ int GLToCLOpenCLKernel::Run() {
   } else {
     auto out_tensor = out_tensors_.front();
     cl_GLuint *gl_texture_id = reinterpret_cast<cl_GLuint *>(out_tensor->data());
-    auto img_gl = cl::ImageGL(*context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, *gl_texture_id, &status);
+    auto img_gl = cl::ImageGL(*context, CL_MEM_WRITE_ONLY, kGlTexture2D, 0, *gl_texture_id, &status);
     if (status != CL_SUCCESS) {
       MS_LOG(ERROR) << "Create ImageGL failed : " << status << std::endl;
       return RET_ERROR;
@@ -149,4 +150,3 @@ int GLToCLOpenCLKernel::InferShape() {
   return RET_OK;
 }
 }  // namespace mindspore::kernel
-#endif

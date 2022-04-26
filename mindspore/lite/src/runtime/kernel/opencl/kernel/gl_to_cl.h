@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_GL_TO_CL_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_GL_TO_CL_H_
 
-#ifdef ENABLE_OPENGL_TEXTURE
 #include <vector>
-#include "EGL/egl.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 
@@ -44,7 +42,6 @@ class GLToCLOpenCLKernel : public OpenCLKernel {
 
  private:
   cl_mem_flags flags_{CL_MEM_READ_ONLY};
-  cl_GLenum target_{GL_TEXTURE_2D};
   cl_GLint mip_level_{0};
   size_t N_{1};
   size_t H_{1};
@@ -53,5 +50,4 @@ class GLToCLOpenCLKernel : public OpenCLKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_GL_TO_CL_H_
