@@ -242,7 +242,8 @@ mindspore.Tensor
         沿指定轴扩展Tensor维度。
 
         **参数：**
-            - **axis** (int) - 扩展维度指定的轴。
+
+        - **axis** (int) - 扩展维度指定的轴。
 
         **返回：**
 
