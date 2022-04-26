@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,10 +26,14 @@ from .validators import check_num_classes, check_ms_type, check_fill_value, chec
 from ..core.datatypes import mstype_to_detype
 
 
+# pylint: disable=super-init-not-called
 class TensorOperation:
     """
     Base class Tensor Ops
     """
+
+    def __init__(self):
+        self.callable_op_ = None
 
     def __call__(self, *input_tensor_list):
         tensor_row = []
@@ -39,8 +43,9 @@ class TensorOperation:
             except RuntimeError:
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
                                 .format(type(tensor), tensor))
-        callable_op = cde.Execute(self.parse())
-        output_tensor_list = callable_op(tensor_row)
+        if not hasattr(self, 'callable_op_') or self.callable_op_ is None:
+            self.callable_op_ = cde.Execute(self.parse())
+        output_tensor_list = self.callable_op_(tensor_row)
         for i, element in enumerate(output_tensor_list):
             arr = element.as_array()
             if arr.dtype.char == 'S':

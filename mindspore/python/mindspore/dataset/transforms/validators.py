@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -327,6 +327,18 @@ def check_plugin(method):
         if user_args is not None:
             type_check(user_args, (str,), "user_args")
 
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def invalidate_callable(method):
+    """Wrapper method to invalidate cached callable_op_ used in eager mode. \
+    This decorator must be added to any method which modifies the state of transform."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        self.callable_op_ = None
         return method(self, *args, **kwargs)
 
     return new_method

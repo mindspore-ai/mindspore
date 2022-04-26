@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace dataset {
 class DeviceResource;
+class TensorOp;
 // class to run tensor operations in eager mode
 class MS_API Execute {
  public:
@@ -140,6 +141,9 @@ class MS_API Execute {
   std::string AippCfgGenerator();
 
  private:
+  /// \brief The function to convert TensorTransforms into TensorOperations and then build TensorOps.
+  Status BuildTransforms();
+
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   Status ParseTransforms();
 
@@ -155,6 +159,8 @@ class MS_API Execute {
   std::shared_ptr<DeviceResource> device_resource_;
   struct ExtraInfo;
   std::shared_ptr<ExtraInfo> info_;
+  std::vector<std::shared_ptr<TensorOp>> transforms_rt_;
+  bool ops_created{false};
 };
 
 }  // namespace dataset
