@@ -233,5 +233,77 @@ MS_REG_GPU_KERNEL_TWO(ScatterSub,
                         .AddInputAttr(kNumberTypeUInt8)
                         .AddOutputAttr(kNumberTypeUInt8),
                       ScatterFunctorKernelMod, uint8_t, int64_t)
+
+// ScatterMax
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      ScatterFunctorKernelMod, float, int)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      ScatterFunctorKernelMod, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      ScatterFunctorKernelMod, half, int)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      ScatterFunctorKernelMod, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      ScatterFunctorKernelMod, int, int)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      ScatterFunctorKernelMod, int, int64_t)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt8)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt8)
+                        .AddOutputAttr(kNumberTypeInt8),
+                      ScatterFunctorKernelMod, int8_t, int)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt8)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt8)
+                        .AddOutputAttr(kNumberTypeInt8),
+                      ScatterFunctorKernelMod, int8_t, int64_t)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddOutputAttr(kNumberTypeUInt8),
+                      ScatterFunctorKernelMod, uint8_t, int)
+MS_REG_GPU_KERNEL_TWO(ScatterMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeUInt8)
+                        .AddOutputAttr(kNumberTypeUInt8),
+                      ScatterFunctorKernelMod, uint8_t, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
