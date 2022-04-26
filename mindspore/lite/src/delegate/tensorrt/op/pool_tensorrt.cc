@@ -46,12 +46,12 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "invalid input tensor size: " << tensorrt_in_tensors_.size();
     return RET_ERROR;
   }
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
   int ret = ParseParams();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseParams failed for : " << op_name_;
     return RET_ERROR;
   }
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
   nvinfer1::ITensor *pool_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
@@ -103,6 +103,12 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 }
 
 int PoolTensorRT::ParseParams() {
+  int in_h = in_tensors_[0].Shape()[kNHWC_H];
+  int in_w = in_tensors_[0].Shape()[kNHWC_W];
+  int out_h = out_tensors_[0].Shape()[kNHWC_H];
+  int out_w = out_tensors_[0].Shape()[kNHWC_W];
+  int kernel_h;
+  int kernel_w;
   switch (type_) {
     case (schema::PrimitiveType_AvgPoolFusion): {
       const schema::AvgPoolFusion *pool_primitive = this->GetPrimitive()->value_as_AvgPoolFusion();
@@ -118,15 +124,10 @@ int PoolTensorRT::ParseParams() {
         return RET_ERROR;
       }
       stride_ = std::vector<int64_t>(stride->begin(), stride->end());
-
+      kernel_h = in_h - (out_h - 1) * stride_[0];
+      kernel_w = in_w - (out_w - 1) * stride_[1];
       auto kernel_size = pool_primitive->kernel_size();
       if (kernel_size == nullptr) {
-        int in_h = in_tensors_[0].Shape()[kNHWC_H];
-        int in_w = in_tensors_[0].Shape()[kNHWC_W];
-        int out_h = out_tensors_[0].Shape()[kNHWC_H];
-        int out_w = out_tensors_[0].Shape()[kNHWC_W];
-        int kernel_h = in_h - (out_h - 1) * stride_[0];
-        int kernel_w = in_w - (out_w - 1) * stride_[1];
         kernel_size_.push_back(kernel_h);
         kernel_size_.push_back(kernel_w);
         MS_LOG(WARNING) << op_name_ << "don't has kernel size, calculate kernel size on ms tensor, kernel_h is "
@@ -134,13 +135,15 @@ int PoolTensorRT::ParseParams() {
       } else {
         kernel_size_ = std::vector<int64_t>(kernel_size->begin(), kernel_size->end());
       }
-
       auto padding = pool_primitive->pad();
-      if (padding == nullptr || padding->size() != DIMENSION_4D) {
-        MS_LOG(ERROR) << "get padding failed: " << op_name_;
+      if (padding != nullptr && padding->size() != DIMENSION_4D) {
+        MS_LOG(ERROR) << op_name_ << "has invalid pad dims: " << padding->size();
         return RET_ERROR;
+      } else if (padding == nullptr || padding->size() == 0) {
+        padding_ = std::vector<int64_t>(DIMENSION_4D, 0);
+      } else {
+        padding_ = std::vector<int64_t>(padding->begin(), padding->end());
       }
-      padding_ = std::vector<int64_t>(padding->begin(), padding->end());
 
       pad_mode_ = pool_primitive->pad_mode();
       activation_type_ = pool_primitive->activation_type();
@@ -167,7 +170,8 @@ int PoolTensorRT::ParseParams() {
         return RET_ERROR;
       }
       stride_ = std::vector<int64_t>(stride->begin(), stride->end());
-
+      kernel_h = in_h - (out_h - 1) * stride_[0];
+      kernel_w = in_w - (out_w - 1) * stride_[1];
       auto padding = pool_primitive->pad();
       if (padding == nullptr) {
         MS_LOG(INFO) << "get padding is null, set to default 0: " << op_name_;
@@ -184,6 +188,12 @@ int PoolTensorRT::ParseParams() {
       MS_LOG(ERROR) << "unsupported primitive type of " << type_ << " for node: " << op_name_;
       return RET_ERROR;
     }
+  }
+  // some model kernel size is large than hw, correct it
+  if (kernel_size_[0] > in_h || kernel_size_[1] > in_w) {
+    MS_LOG(WARNING) << op_name_ << " kernel size is larger than input size";
+    kernel_size_[0] = kernel_size_[0] > kernel_h ? kernel_h : kernel_size_[0];
+    kernel_size_[1] = kernel_size_[1] > kernel_w ? kernel_w : kernel_size_[1];
   }
   return RET_OK;
 }

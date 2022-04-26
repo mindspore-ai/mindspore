@@ -108,6 +108,8 @@ class LSTMTensorRT : public TensorRTOp {
   nvinfer1::ITensor *op_hidden_out_{nullptr};
   nvinfer1::ITensor *op_cell_out_{nullptr};
   LSTMParams params_;
+  std::string hidden_init_name_;
+  std::string cell_init_name_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_LSTM_TENSORRT_H_
