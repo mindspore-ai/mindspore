@@ -128,15 +128,23 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     }
     MS_LOG(INFO) << "The new node: " << node_id << " is registered successfully.";
 
-    auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
-                                 std::to_string(static_cast<int>(MessageName::kSuccess)));
+    RegistrationRespMessage reg_resp_msg;
+    reg_resp_msg.set_success(true);
+    reg_resp_msg.set_rank_id(++next_rank_id_);
+    reg_resp_msg.set_node_num(total_node_num_);
+    std::string content = reg_resp_msg.SerializeAsString();
+
+    auto message = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
     MS_EXCEPTION_IF_NULL(message);
     return message.release();
   } else {
     MS_LOG(ERROR) << "The node: " << node_id << " have been registered before.";
 
-    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode,
-                                  std::to_string(static_cast<int>(MessageName::kInvalidNode)));
+    RegistrationRespMessage reg_resp_msg;
+    reg_resp_msg.set_success(false);
+    std::string content = reg_resp_msg.SerializeAsString();
+
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kInvalidNode, content);
     MS_EXCEPTION_IF_NULL(response);
     return response.release();
   }

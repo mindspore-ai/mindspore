@@ -62,7 +62,11 @@ enum class TopoState {
 class MetaServerNode : public NodeBase {
  public:
   explicit MetaServerNode(const std::string &node_id, const size_t &node_num)
-      : NodeBase(node_id), total_node_num_(node_num), topo_state_(TopoState::kInitializing), enable_monitor_(true) {}
+      : NodeBase(node_id),
+        total_node_num_(node_num),
+        topo_state_(TopoState::kInitializing),
+        enable_monitor_(true),
+        next_rank_id_(-1) {}
   ~MetaServerNode() override = default;
 
   bool Initialize() override;
@@ -132,6 +136,9 @@ class MetaServerNode : public NodeBase {
 
   // The start time of this meta server node.
   std::chrono::high_resolution_clock::time_point start_time_;
+
+  // The next assignable rank id for new registered compute graph node.
+  std::atomic<size_t> next_rank_id_;
 };
 }  // namespace topology
 }  // namespace cluster

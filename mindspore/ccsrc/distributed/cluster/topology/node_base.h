@@ -29,7 +29,7 @@ namespace topology {
 // processes.
 class NodeBase {
  public:
-  explicit NodeBase(const std::string &node_id) : node_id_(node_id) {}
+  explicit NodeBase(const std::string &node_id) : node_id_(node_id), rank_id_(-1) {}
   virtual ~NodeBase() = default;
 
   // Prepare the resources hold in this node.
@@ -41,10 +41,16 @@ class NodeBase {
   // Release the resources hold in this node.
   virtual bool Finalize() = 0;
 
+  size_t rank_id() { return rank_id_; }
+
  protected:
   // Each node process has a unique node id which is immutable during the life cycle of this node.
   // The node id is used for identify authentication during networking and process recovery.
   std::string node_id_;
+
+  // The rank id of this compute graph node process in the cluster.
+  // The rank id is assigned by meta server node and starts from 0 to (node_num - 1).
+  size_t rank_id_;
 };
 }  // namespace topology
 }  // namespace cluster

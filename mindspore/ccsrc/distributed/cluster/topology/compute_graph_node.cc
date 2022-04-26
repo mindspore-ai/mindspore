@@ -74,12 +74,16 @@ bool ComputeGraphNode::Register() {
   if (response == nullptr) {
     return false;
   }
-  auto reg_rt = response->body;
+  auto body = response->body;
   delete response;
   response = nullptr;
 
-  if (std::to_string(static_cast<int>(MessageName::kSuccess)) == reg_rt) {
+  RegistrationRespMessage reg_resp_msg;
+  reg_resp_msg.ParseFromArray(body.c_str(), body.length());
+
+  if (reg_resp_msg.success()) {
     authenticated_ = true;
+    rank_id_ = reg_resp_msg.rank_id();
     return true;
   } else {
     return false;
