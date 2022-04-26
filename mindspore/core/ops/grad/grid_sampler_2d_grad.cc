@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ abstract::TupleShapePtr GridSampler2DGradInferShape(const PrimitivePtr &primitiv
 
 TuplePtr GridSampler2DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
-  std::set<TypePtr> valid_types = {kFloat32};
+  std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   TypePtr grad_type = input_args[KZero]->BuildType();
   TypePtr input_x_type = input_args[KOne]->BuildType();
   TypePtr grid_type = input_args[KTwo]->BuildType();
@@ -87,7 +87,7 @@ TuplePtr GridSampler2DGradInferType(const PrimitivePtr &primitive, const std::ve
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(GridSampler2DGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GridSampler2DGrad, BaseOperator);
 AbstractBasePtr GridSampler2DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -96,6 +96,21 @@ AbstractBasePtr GridSampler2DGradInfer(const abstract::AnalysisEnginePtr &, cons
   auto infer_types = GridSampler2DGradInferType(primitive, input_args);
   auto infer_shapes = GridSampler2DGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shapes, infer_types);
+}
+
+std::string GridSampler2DGrad::get_interpolation_mode() const {
+  auto value_ptr = this->GetAttr("interpolation_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+std::string GridSampler2DGrad::get_padding_mode() const {
+  auto value_ptr = this->GetAttr("padding_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+bool GridSampler2DGrad::get_align_corners() const {
+  auto value_ptr = this->GetAttr("align_corners");
+  return GetValue<bool>(value_ptr);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(GridSampler2DGrad, prim::kPrimGridSampler2DGrad, GridSampler2DGradInfer, nullptr, true);

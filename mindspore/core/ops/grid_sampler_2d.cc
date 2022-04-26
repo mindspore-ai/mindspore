@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ TypePtr GridSampler2DInferType(const PrimitivePtr &primitive, const std::vector<
     MS_LOG(EXCEPTION) << "nullptr";
   }
   std::map<std::string, TypePtr> types;
-  std::set<TypePtr> valid_types = {kFloat32};
+  std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   TypePtr input_x_type = input_args[0]->BuildType();
   TypePtr grid_type = input_args[1]->BuildType();
   (void)types.emplace("input_x", input_x_type);
@@ -68,7 +68,7 @@ TypePtr GridSampler2DInferType(const PrimitivePtr &primitive, const std::vector<
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(GridSampler2D, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(GridSampler2D, BaseOperator);
 AbstractBasePtr GridSampler2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -77,6 +77,21 @@ AbstractBasePtr GridSampler2DInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infer_type = GridSampler2DInferType(primitive, input_args);
   auto infer_shape = GridSampler2DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+std::string GridSampler2D::get_interpolation_mode() const {
+  auto value_ptr = this->GetAttr("interpolation_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+std::string GridSampler2D::get_padding_mode() const {
+  auto value_ptr = this->GetAttr("padding_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+bool GridSampler2D::get_align_corners() const {
+  auto value_ptr = this->GetAttr("align_corners");
+  return GetValue<bool>(value_ptr);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(GridSampler2D, prim::kPrimGridSampler2D, GridSampler2DInfer, nullptr, true);

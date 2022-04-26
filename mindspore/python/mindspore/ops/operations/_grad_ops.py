@@ -2491,7 +2491,7 @@ class GridSampler3DGrad(Primitive):
         ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU````GPU``
     """
 
     @prim_attr_register
@@ -2501,6 +2501,9 @@ class GridSampler3DGrad(Primitive):
         validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
         validator.check_bool(align_corners, 'align_corners', self.name)
         self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])
+        self.add_prim_attr('interpolation_mode', interpolation_mode)
+        self.add_prim_attr('padding_mode', padding_mode)
+        self.add_prim_attr('align_corners', align_corners)
 
 
 class FractionalMaxPoolGrad(Primitive):
@@ -2724,7 +2727,7 @@ class GridSampler2DGrad(Primitive):
         ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
 
     Supported Platforms:
-        ``CPU``
+        ``CPU````GPU``
     """
 
     @prim_attr_register
@@ -2734,3 +2737,6 @@ class GridSampler2DGrad(Primitive):
         validator.check_string(padding_mode, ['zeros', 'border', 'reflection'], 'padding_mode', self.name)
         validator.check_bool(align_corners, 'align_corners', self.name)
         self.init_prim_io_names(inputs=['grad', 'input_x', 'grid'], outputs=['dx', 'dgrid'])
+        self.add_prim_attr('interpolation_mode', interpolation_mode)
+        self.add_prim_attr('padding_mode', padding_mode)
+        self.add_prim_attr('align_corners', align_corners)

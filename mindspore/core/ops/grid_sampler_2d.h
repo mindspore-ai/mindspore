@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,9 @@ class MIND_API GridSampler2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GridSampler2D);
   GridSampler2D() : BaseOperator(kNameGridSampler2D) { InitIOName({"input_x", "grid"}, {"output"}); }
+  std::string get_interpolation_mode() const;
+  std::string get_padding_mode() const;
+  bool get_align_corners() const;
 };
 abstract::AbstractBasePtr GridSampler2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args);

@@ -105,6 +105,21 @@ AbstractBasePtr GridSampler3DGradInfer(const abstract::AnalysisEnginePtr &, cons
   return abstract::MakeAbstract(infer_shapes, infer_types);
 }
 
+std::string GridSampler3DGrad::get_interpolation_mode() const {
+  auto value_ptr = this->GetAttr("interpolation_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+std::string GridSampler3DGrad::get_padding_mode() const {
+  auto value_ptr = this->GetAttr("padding_mode");
+  return GetValue<std::string>(value_ptr);
+}
+
+bool GridSampler3DGrad::get_align_corners() const {
+  auto value_ptr = this->GetAttr("align_corners");
+  return GetValue<bool>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(GridSampler3DGrad, prim::kPrimGridSampler3DGrad, GridSampler3DGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

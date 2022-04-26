@@ -33,6 +33,9 @@ class MIND_API GridSampler3DGrad : public BaseOperator {
   GridSampler3DGrad() : BaseOperator(kNameGridSampler3DGrad) {
     InitIOName({"grad", "input_x", "grid"}, {"dx", "dgrid"});
   }
+  std::string get_interpolation_mode() const;
+  std::string get_padding_mode() const;
+  bool get_align_corners() const;
 };
 abstract::AbstractBasePtr GridSampler3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                  const std::vector<abstract::AbstractBasePtr> &input_args);

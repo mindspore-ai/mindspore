@@ -188,12 +188,12 @@ constexpr auto kConv2DTranspose = "Conv2DTranspose";
 constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
-constexpr auto kGridSampler3D = "GridSampler3D";
-constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 constexpr auto kMish = "Mish";
 constexpr auto kLRN = "LRN";
 constexpr auto kGridSampler2D = "GridSampler2D";
 constexpr auto kGridSampler2DGrad = "GridSampler2DGrad";
+constexpr auto kGridSampler3D = "GridSampler3D";
+constexpr auto kGridSampler3DGrad = "GridSampler3DGrad";
 constexpr auto kAdaptiveMaxPool2D = "AdaptiveMaxPool2D";
 
 // CSRTensor
@@ -659,8 +659,6 @@ GVAR_DEF(PrimitivePtr, kPrimApplyAddSign, std::make_shared<Primitive>("ApplyAddS
 GVAR_DEF(PrimitivePtr, kPrimApplyAdagrad, std::make_shared<Primitive>("ApplyAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdadelta, std::make_shared<Primitive>("ApplyAdadelta"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdamWithAmsgrad, std::make_shared<Primitive>("ApplyAdamWithAmsgrad"));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSampler3D));
-GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGrad));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdate, std::make_shared<Primitive>("BNTrainingUpdate"));
 GVAR_DEF(PrimitivePtr, kPrimBNTrainingUpdateGrad, std::make_shared<Primitive>("BNTrainingUpdateGrad"));
 GVAR_DEF(PrimitivePtr, kPrimFractionalMaxPool, std::make_shared<Primitive>("FractionalMaxPool"));
@@ -675,6 +673,8 @@ GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPoolGrad, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"));
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2D));
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGrad));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSampler3D));
+GVAR_DEF(PrimitivePtr, kPrimGridSampler3DGrad, std::make_shared<Primitive>(kGridSampler3DGrad));
 GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));
 GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenorm));
 
