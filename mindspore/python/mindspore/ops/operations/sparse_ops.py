@@ -20,7 +20,7 @@
 
 from ..._checkparam import Validator as validator
 from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, Primitive, prim_attr_register
+from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
 class SparseToDense(PrimitiveWithInfer):
@@ -749,3 +749,91 @@ class CSRSparseMatrixToDense(Primitive):
         self.init_prim_io_names(
             inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'],
             outputs=['y'])
+
+
+class SparseMatrixTranspose(Primitive):
+    r"""
+    Return the transpose of sparse matrix or sparse matrixs.
+    If the sparse matrix input contains batch dimension, then output dimension will be same with the batch dimension.
+    The rank of sparse matrix input must be equal to `2` or `3`.
+
+    Note:
+        It is assumed that all the inputs can form a legal CSR sparse matrix, otherwise this operator is not defined.
+
+    Args:
+        conjugate (bool): If True, the output sparse tensor is conjugated . Default: False.
+
+    Inputs:
+        - **dense_shape** (Tensor) - A 1-D Tensor, represents the shape of input sparse matrix under dense status.
+          Support int32, int64. The shape is :math:`(2,)` or :math:`(3,)`.
+        - **batch_pointers** (Tensor) - A 1-D Tensor, represents the non-zero elements number in each batch.
+          Support int32, int64, takes on values: :math:`(0, nnz[0], nnz[0] + nnz[1], ..., total\_nnz)`.
+          If there are `n` batch within input sparse matrix, the shape is :math:`(n+1)`.
+        - **row_pointers** (Tensor) - A 1-D Tensor, represents the non-zero elements of each row.
+          Support int32, int64, takes on values:
+          :math:`(0, num\_rows\{b\}[0], num\_rows\{b\}[0] + num\_rows\{b\}[1], ..., nnz[b])`,
+          for :math:`b = 0, ..., n - 1`.
+          If there are `n` batch within input sparse matrix and dense shape is :math:`(rows,cols)`,
+          the shape is :math:`((rows + 1) * n)`.
+          Note: num_rows{0}[0] means the non-zero elements number in the first row of first sparse matrix.
+        - **col_indices** (Tensor) - A 1-D Tensor, represents the column values for the given row and column index.
+          Support int32, int64. The shape is :math:`(M)`,
+          where `M` is the number of non-zero elements in all input sparse matrix.
+        - **values** (Tensor) - A 1-D Tensor, represents the actual values for the given row and column index.
+          Support BasicType. The shape is :math:`(M)`, where `M` is the number of non-zero elements in all
+          input sparse matrix.
+
+    Outputs:
+        - **dense_shape** (Tensor) - A 1-D Tensor, represents the shape of output sparse matrix under dense status.
+          Support int32, int64. The shape is the same as the input sparse matrix.
+        - **batch_pointers** (Tensor) - A 1-D Tensor, which is the same as the input sparse matrix's batch_pointers.
+        - **row_pointers** (Tensor) - A 1-D Tensor, represents the non-zero elements of each row of output sparse
+          matrix. Support int32, int64, takes on values:
+          :math:`(0, num\_rows\{b\}[0], num\_rows\{b\}[0] + num\_rows\{b\}[1], ..., nnz[b])`,
+          for :math:`b = 0, ..., n - 1`.
+          If there are `n` batch within output sparse matrix and dense shape is :math:`(rows,cols)`,
+          the shape is :math:`((rows + 1) * n)`.
+          Note: num_rows{0}[0] means the non-zero elements number in the first row of first sparse matrix.
+        - **col_indices** (Tensor) - A 1-D Tensor, represents the column values for the given row and column index.
+          Support int32, int64. The shape is :math:`(M)`,
+          where `M` is the number of non-zero elements in all input sparse matrix.
+        - **values** (Tensor) - A 1-D Tensor, which is the same as the input sparse matrix's values.
+
+    Raises:
+        TypeError: If dtype of `values` doesn't meet the parameter description.
+        TypeError: The data type of `dense_shape, batch_pointers, row_pointers, col_indices` is not int32 or int64.
+        ValueError: If rank of `dense_shape` is not 2 or 3.
+        TypeError: The input data should have the correct CSR form.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import operations as ops
+        >>> dense_shape = Tensor([2,3], dtype=ms.int32)
+        >>> batch_pointers = Tensor([0,1], dtype=ms.int32)
+        >>> row_pointers = Tensor([0,1,1], dtype=ms.int32)
+        >>> col_indices = Tensor([0], dtype=ms.int32)
+        >>> values = Tensor([99], dtype=ms.float32)
+        >>> sparse_matrix_transpose = ops.SparseMatrixTranspose()
+        >>> output = sparse_matrix_transpose(dense_shape, batch_pointers, row_pointers, col_indices, values)
+        >>> print(output[0])
+        [3 2]
+        >>> print(output[1])
+        [0 1]
+        >>> print(output[2])
+        [0 1 1 1]
+        >>> print(output[3])
+        [0]
+        >>> print(output[4])
+        [99.]
+    """
+    @prim_attr_register
+    def __init__(self, conjugate=False):
+        """Initialize SparseMatrixTranspose"""
+        validator.check_value_type("conjugate", conjugate, [bool], self.name)
+        self.add_prim_attr("max_length", 100000000)
+        self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
+                                        'x_col_indices', 'x_values'],
+                                outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers',
+                                         'y_col_indices', 'y_values'])
