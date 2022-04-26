@@ -37,9 +37,13 @@ class OpTilingCalculateAdapter {
   OpTilingCalculateAdapter() = default;
   ~OpTilingCalculateAdapter() = default;
 
-  ::ge::Operator AnfNodeToGeNodeAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
-                                        const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                        const std::string &op_compile_info);
+  ::ge::Operator AnfNodeToGeOperatorAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
+                                            const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                            const std::string &op_compile_info);
+
+  ::ge::NodePtr AnfNodeToGeNodeAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
+                                       const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                       const std::string &op_compile_info);
 
  private:
   void ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
@@ -49,6 +53,7 @@ class OpTilingCalculateAdapter {
   std::vector<std::tuple<std::size_t, ::ge::NodePtr>> ConvertDepends(
     const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
     ::ge::ComputeGraphPtr *ge_graph);
+  void ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
   ::ge::NodePtr NewConstantOp(const CNodePtr &node, const std::string &name, const tensor::TensorPtr &tensor_data,
                               ::ge::ComputeGraphPtr *ge_graph, size_t index);
   void AddEdge(const ::ge::NodePtr &ge_node, const std::vector<std::tuple<std::size_t, ::ge::NodePtr>> &constant_ops);
@@ -56,6 +61,9 @@ class OpTilingCalculateAdapter {
   std::string GetInputName(const CNodePtr &node, size_t index);
   std::string GetOutputName(const CNodePtr &node, size_t index);
   void InitOpIoName(const CNodePtr &node);
+  ::ge::NodePtr CreateGeNode(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
+                             const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                             const std::string &op_compile_info);
   std::string op_name_;
   std::string op_compile_info_;
   std::vector<std::string> input_names_;

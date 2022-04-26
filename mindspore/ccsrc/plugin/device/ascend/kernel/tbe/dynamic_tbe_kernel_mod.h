@@ -26,7 +26,7 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "runtime/device/device_address.h"
 #include "ir/tensor.h"
-
+#include "register/op_tiling.h"
 namespace mindspore {
 namespace kernel {
 class DynamicTbeKernelMod : public TbeKernelMod {
@@ -42,6 +42,9 @@ class DynamicTbeKernelMod : public TbeKernelMod {
               const std::vector<KernelTensorPtr> &outputs,
               const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
   void Wait() override;
+
+  // Called only by atomic clean ops
+  void InitAtomicOps(const optiling::utils::OpRunInfo &op_info);
 
  private:
   void InferShapeRecursive();

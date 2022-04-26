@@ -63,6 +63,7 @@ constexpr auto kBatchNormGradWithActivation = "BatchNormGradWithActivation";
 constexpr auto kBatchNormGradWithAddAndActivation = "BatchNormGradWithAddAndActivation";
 constexpr auto kClearZeroOpName = "ClearZero";
 constexpr auto kAtomicAddrCleanOpName = "AtomicAddrClean";
+constexpr auto kDynamicAtomicAddrCleanOpName = "DynamicAtomicAddrClean";
 constexpr auto kGetNextOpName = "GetNext";
 constexpr auto kInitDatasetQueueOpName = "InitDataSetQueue";
 constexpr auto kEndOfSequence = "EndOfSequence";

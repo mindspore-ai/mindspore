@@ -15,6 +15,7 @@
  */
 
 #include <algorithm>
+#include <utility>
 #include "plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
@@ -27,6 +28,7 @@
 #include "graph/utils/graph_utils.h"
 #include "common/ge_inner_error_codes.h"
 #include "graph/utils/op_desc_utils.h"
+#include "kernel/ascend_kernel_mod.h"
 
 namespace mindspore {
 namespace device {
@@ -39,6 +41,7 @@ constexpr auto ATTR_NAME_OP_INFER_DEPENDS = "_op_infer_depends";
 constexpr auto CONSTANTOP = "Constant";
 constexpr auto ATTR_NAME_WEIGHTS = "value";
 constexpr auto PARAM_DYNAMIC = "dynamic";
+constexpr auto EXT_ATTR_ATOMIC_WORKSPACE_INFO = "sub_node_workspace_info";
 
 std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) {
   static const std::map<std::string, std::string> kOpTypeMap = {
@@ -80,7 +83,7 @@ std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t 
   return input_names_[index];
 }
 
-void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge::OpDescPtr *op_desc) {
+void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto input_size = common::AnfAlgo::GetInputTensorNum(node);
@@ -98,25 +101,25 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge
     // ge info
     std::vector<int64_t> ge_shape;
     std::vector<int64_t> ge_ori_shape;
-    ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
-    ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
+    ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
+    ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
     std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
                    [](size_t s) { return static_cast<int64_t>(s); });
     std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
                    [](size_t s) { return static_cast<int64_t>(s); });
 
     auto input_name = GetInputName(node, real_index);
-    ge::GeTensorDesc ge_tensor_desc;
+    ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetDataType(ge_dtype);
-    ge_tensor_desc.SetShape(ge::GeShape(ge_shape));
-    ge_tensor_desc.SetOriginShape(ge::GeShape(ge_ori_shape));
+    ge_tensor_desc.SetShape(::ge::GeShape(ge_shape));
+    ge_tensor_desc.SetOriginShape(::ge::GeShape(ge_ori_shape));
     ge_tensor_desc.SetName(input_name);
     (void)(*op_desc)->AddInputDesc(input_name, ge_tensor_desc);
   }
 }
 
-void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, ge::OpDescPtr *op_desc) {
+void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto output_size = common::AnfAlgo::GetOutputTensorNum(node);
@@ -128,39 +131,76 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, g
 
     std::vector<int64_t> ge_shape;
     std::vector<int64_t> ge_ori_shape;
-    ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
-    ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
+    ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
+    ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
     std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
                    [](size_t s) { return static_cast<int64_t>(s); });
     std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
                    [](size_t s) { return static_cast<int64_t>(s); });
     auto output_name = GetOutputName(node, i);
-    ge::GeTensorDesc ge_tensor_desc;
+    ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetDataType(ge_dtype);
-    ge_tensor_desc.SetShape(ge::GeShape(ge_shape));
-    ge_tensor_desc.SetOriginShape(ge::GeShape(ge_ori_shape));
+    ge_tensor_desc.SetShape(::ge::GeShape(ge_shape));
+    ge_tensor_desc.SetOriginShape(::ge::GeShape(ge_ori_shape));
     ge_tensor_desc.SetName(output_name);
     (void)(*op_desc)->AddOutputDesc(output_name, ge_tensor_desc);
   }
 }
 
-void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ge::OpDescPtr *op_desc) {
+void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   MS_LOG(INFO) << "For op " << op_name_ << ", get compile_info: " << op_compile_info_;
   std::string compile_info_key = std::to_string(std::hash<std::string>()(op_compile_info_));
-  (void)ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_KEY, compile_info_key);
-  (void)ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_JSON, op_compile_info_);
+  (void)::ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_KEY, compile_info_key);
+  (void)::ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_JSON, op_compile_info_);
 }
 
-ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const std::string &name,
-                                                    const tensor::TensorPtr &tensor_data, ge::ComputeGraphPtr *ge_graph,
-                                                    size_t index) {
+void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(*op_desc);
+  auto kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(AnfAlgo::GetKernelMod(node));
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  // clean output
+  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node)) {
+    vector<int64_t> output_indexs;
+    auto help = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
+    std::transform(help.begin(), help.end(), std::back_inserter(output_indexs), SizeToLong);
+    ::ge::AttrUtils::SetListInt(*(*op_desc), ::ge::ATOMIC_ATTR_OUTPUT_INDEX, output_indexs);
+    std::string atomic_compile_info = kernel_mod->GetAtomicCompileInfo();
+    std::string atomic_info_key = std::to_string(std::hash<std::string>()(atomic_compile_info));
+    (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_KEY, atomic_info_key);
+    (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_JSON, atomic_compile_info);
+  }
+  // clean workspace
+  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node)) {
+    auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
+    std::vector<int64_t> workspace_list;
+    std::transform(workspace_men_sizes.begin(), workspace_men_sizes.end(), std::back_inserter(workspace_list),
+                   SizeToLong);
+    (void)(*op_desc)->SetWorkspaceBytes(workspace_list);
+    constexpr size_t kAlignBytes = 32 - 1;
+    std::map<std::string, std::map<int64_t, int64_t>> workspace_info;
+    std::map<int64_t, int64_t> clean_size_list;
+    auto workspace_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicWorkspaceIndexs);
+    for (const auto &index : workspace_indexes) {
+      auto clean_item =
+        static_cast<int64_t>((workspace_list.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
+      clean_size_list.insert(std::make_pair(static_cast<int64_t>(index), clean_item));
+    }
+    workspace_info.insert(std::make_pair((*op_desc)->GetName(), clean_size_list));
+    (void)(*op_desc)->SetExtAttr(EXT_ATTR_ATOMIC_WORKSPACE_INFO, workspace_info);
+  }
+}
+
+::ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const std::string &name,
+                                                      const tensor::TensorPtr &tensor_data,
+                                                      ::ge::ComputeGraphPtr *ge_graph, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   MS_EXCEPTION_IF_NULL(tensor_data);
-  ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(name, CONSTANTOP);
+  ::ge::OpDescPtr op_desc = std::make_shared<::ge::OpDesc>(name, CONSTANTOP);
   auto ms_format = AnfAlgo::GetPrevNodeOutputFormat(node, index);
   auto ms_ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
   auto ms_dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(node, index);
@@ -172,26 +212,26 @@ ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const 
                  [](size_t s) { return static_cast<int64_t>(s); });
   std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
                  [](size_t s) { return static_cast<int64_t>(s); });
-  ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
-  ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
-  ge::GeTensorDesc ge_tensor_desc;
+  ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
+  ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
+  ::ge::GeTensorDesc ge_tensor_desc;
   ge_tensor_desc.SetFormat(ge_format);
   ge_tensor_desc.SetDataType(ge_dtype);
-  ge_tensor_desc.SetShape(ge::GeShape(ge_shape));
-  ge_tensor_desc.SetOriginShape(ge::GeShape(ge_ori_shape));
+  ge_tensor_desc.SetShape(::ge::GeShape(ge_shape));
+  ge_tensor_desc.SetOriginShape(::ge::GeShape(ge_ori_shape));
   ge_tensor_desc.SetName(name);
-  ge::GeTensorPtr ge_tensor = std::make_shared<ge::GeTensor>(
+  ::ge::GeTensorPtr ge_tensor = std::make_shared<::ge::GeTensor>(
     ge_tensor_desc, static_cast<uint8_t *>(tensor_data->data_c()), IntToSize(tensor_data->Size()));
   (void)op_desc->AddOutputDesc(name, ge_tensor_desc);
-  ge::NodePtr constant_op = (*ge_graph)->AddNode(op_desc);
-  ge::OpDescUtils::SetWeights(constant_op, {ge_tensor});
-  (void)ge::AttrUtils::SetTensor(op_desc, ATTR_NAME_WEIGHTS, ge_tensor);
+  ::ge::NodePtr constant_op = (*ge_graph)->AddNode(op_desc);
+  ::ge::OpDescUtils::SetWeights(constant_op, {ge_tensor});
+  (void)::ge::AttrUtils::SetTensor(op_desc, ATTR_NAME_WEIGHTS, ge_tensor);
   return constant_op;
 }
 
-std::vector<std::tuple<std::size_t, ge::NodePtr>> OpTilingCalculateAdapter::ConvertDepends(
-  const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ge::OpDescPtr *op_desc,
-  ge::ComputeGraphPtr *ge_graph) {
+std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::ConvertDepends(
+  const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
+  ::ge::ComputeGraphPtr *ge_graph) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto depends_list_me = abstract::GetDependsFormMap(node);
@@ -206,7 +246,7 @@ std::vector<std::tuple<std::size_t, ge::NodePtr>> OpTilingCalculateAdapter::Conv
 
   auto input_names_attr = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(node, "input_names");
   std::vector<std::string> op_infer_depends;
-  std::vector<std::tuple<std::size_t, ge::NodePtr>> constant_ops;
+  std::vector<std::tuple<std::size_t, ::ge::NodePtr>> constant_ops;
   for (auto index : depends_list_me) {
     if (LongToSize(index) > input_names_attr.size()) {
       MS_LOG(EXCEPTION) << "Input index " << index << " should not be greater than input_names' size "
@@ -219,17 +259,17 @@ std::vector<std::tuple<std::size_t, ge::NodePtr>> OpTilingCalculateAdapter::Conv
     }
     auto depend_name = input_names_attr[index];
     auto const_tensor = iter->second;
-    ge::NodePtr ge_constant_op = NewConstantOp(node, depend_name, const_tensor, ge_graph, index);
+    ::ge::NodePtr ge_constant_op = NewConstantOp(node, depend_name, const_tensor, ge_graph, index);
     auto original_index = AnfAlgo::GetOriginalInputIndex(node, index);
-    constant_ops.emplace_back(std::tuple<std::size_t, ge::NodePtr>(original_index, ge_constant_op));
+    constant_ops.emplace_back(std::tuple<std::size_t, ::ge::NodePtr>(original_index, ge_constant_op));
     op_infer_depends.emplace_back(depend_name);
   }
   (void)(*op_desc)->SetOpInferDepends(op_infer_depends);
   return constant_ops;
 }
 
-void OpTilingCalculateAdapter::AddEdge(const ge::NodePtr &ge_node,
-                                       const std::vector<std::tuple<std::size_t, ge::NodePtr>> &constant_ops) {
+void OpTilingCalculateAdapter::AddEdge(const ::ge::NodePtr &ge_node,
+                                       const std::vector<std::tuple<std::size_t, ::ge::NodePtr>> &constant_ops) {
   MS_EXCEPTION_IF_NULL(ge_node);
   MS_LOG(INFO) << "Add edge for op " << op_name_;
   for (const auto &item : constant_ops) {
@@ -277,28 +317,45 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   }
 }
 
-ge::Operator OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
-  const CNodePtr &node, ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-  const std::string &op_compile_info) {
+::ge::NodePtr OpTilingCalculateAdapter::CreateGeNode(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
+                                                     const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                                     const std::string &op_compile_info) {
   MS_EXCEPTION_IF_NULL(node);
   op_name_ = common::AnfAlgo::GetCNodeName(node);
   MS_LOG(INFO) << "Convert anf node :" << op_name_ << " to ge node.";
   op_compile_info_ = op_compile_info;
   auto op_type = GetRealOpType(op_name_);
   (void)InitOpIoName(node);
-  ge::OpDescPtr op_desc = std::make_shared<ge::OpDesc>(op_name_, op_type);
+  ::ge::OpDescPtr op_desc = std::make_shared<::ge::OpDesc>(op_name_, op_type);
   MS_EXCEPTION_IF_NULL(op_desc);
   ConvertInputShapeAndType(node, &op_desc);
   ConvertOutputShapeAndType(node, &op_desc);
   ConvertCompileInfo(node, &op_desc);
-  std::vector<std::tuple<std::size_t, ge::NodePtr>> constant_ops =
+  ConvertAtomicCompileInfo(node, &op_desc);
+  std::vector<std::tuple<std::size_t, ::ge::NodePtr>> constant_ops =
     ConvertDepends(node, depend_tensor_map, &op_desc, ge_graph);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   auto ge_node = (*ge_graph)->AddNode(op_desc);
-  MS_EXCEPTION_IF_NULL(ge_node);
   AddEdge(ge_node, constant_ops);
-  auto op = ge::OpDescUtils::CreateOperatorFromNode(ge_node);
-  return op;
+  return ge_node;
+}
+
+::ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(
+  const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+  const std::string &op_compile_info) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(*ge_graph);
+  auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
+  MS_EXCEPTION_IF_NULL(ge_node);
+  return ::ge::OpDescUtils::CreateOperatorFromNode(ge_node);
+}
+
+::ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
+  const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+  const std::string &op_compile_info) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(*ge_graph);
+  return CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
 }
 }  // namespace tiling
 }  // namespace device

@@ -230,7 +230,14 @@ std::vector<size_t> GetClearSize(const CNodePtr &pre_node) {
 
 CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fusion_clear_inputs) {
   MS_EXCEPTION_IF_NULL(pre_node);
-  auto clear_zero_prim = std::make_shared<Primitive>(kAtomicAddrCleanOpName);
+  PrimitivePtr clear_zero_prim = nullptr;
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(pre_node);
+  MS_LOG(DEBUG) << "Create AtomicClean node with dynamic shape or not: " << is_dynamic;
+  if (is_dynamic) {
+    clear_zero_prim = std::make_shared<Primitive>(kDynamicAtomicAddrCleanOpName);
+  } else {
+    clear_zero_prim = std::make_shared<Primitive>(kAtomicAddrCleanOpName);
+  }
   MS_EXCEPTION_IF_NULL(clear_zero_prim);
   auto new_value_node = NewValueNode(clear_zero_prim);
   MS_EXCEPTION_IF_NULL(new_value_node);
@@ -249,6 +256,8 @@ CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fu
   MS_EXCEPTION_IF_NULL(builder);
   builder->SetKernelType(KernelType::TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), clear_zero.get());
+  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(is_dynamic), clear_zero);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(is_dynamic), clear_zero);
   return clear_zero;
 }
 
@@ -259,9 +268,6 @@ void InsertFusionAtomicOp(const CNodePtr &first_clear_node, const std::vector<An
   auto clear_zero = NewAtomicOp(first_clear_node, fusion_clear_inputs);
   common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size_list), clear_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(first_clear_node.get()), clear_zero.get());
-  MS_LOG(DEBUG) << "The AtomicClean currently does not support dynamic shape.";
-  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), clear_zero);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), clear_zero);
   (void)(*clean_ops)[first_clear_node].emplace_back(clear_zero);
 }
 
@@ -272,9 +278,6 @@ void InsertAtomicOpForNormalOp(const mindspore::CNodePtr &pre_node, CleanOpsMap 
   auto clean_size = GetClearSize(pre_node);
   common::AnfAlgo::SetNodeAttr(kAttrAtomicAddMemSize, MakeValue(clean_size), clear_zero);
   AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(pre_node.get()), clear_zero.get());
-  MS_LOG(DEBUG) << "The AtomicClean currently does not support dynamic shape.";
-  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), clear_zero);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), clear_zero);
   (void)(*clean_ops)[pre_node].emplace_back(clear_zero);
 }
 
@@ -302,9 +305,9 @@ void SpecialAkgOps(const std::string &op_name, const CNodePtr &node, CleanOpsMap
     (void)SelectKernelInfo(clear_zero);
     // set the distinction label of clear same with anf
     AnfAlgo::SetStreamDistinctionLabel(AnfAlgo::GetStreamDistinctionLabel(node.get()), clear_zero.get());
-    MS_LOG(DEBUG) << "The AtomicClean currently does not support dynamic shape.";
-    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(false), clear_zero);
-    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(false), clear_zero);
+    auto is_dynamic = common::AnfAlgo::IsDynamicShape(node);
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(is_dynamic), clear_zero);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(is_dynamic), clear_zero);
     (void)(*clean_ops)[node].emplace_back(clear_zero);
   }
 }
