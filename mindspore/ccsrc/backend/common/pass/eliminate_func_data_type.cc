@@ -64,6 +64,7 @@ abstract::AbstractBasePtrList EliminateFuncDataTypeForAbstractTuple(const abstra
   AbstractBasePtrList new_abs;
   const auto &elements = abs_tuple->elements();
   for (const auto &abs : elements) {
+    MS_EXCEPTION_IF_NULL(abs);
     if (abs->isa<abstract::AbstractTuple>()) {
       new_abs.emplace_back(std::make_shared<abstract::AbstractTuple>(
         EliminateFuncDataTypeForAbstractTuple(dyn_cast<abstract::AbstractTuple>(abs))));
