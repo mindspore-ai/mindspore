@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "ops/dropout_nd.h"
-#include <map>
 #include <string>
 #include <algorithm>
 #include <set>
@@ -81,8 +80,8 @@ MIND_API_OPERATOR_IMPL(Dropout2D, BaseOperator);
 MIND_API_OPERATOR_IMPL(Dropout3D, BaseOperator);
 AbstractBasePtr Dropout2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
-  abstract::TupleShapePtr output_shape = Dropout2DInferShape(primitive, input_args);
   TypePtr output_type = DropoutNDInferType(primitive, input_args);
+  abstract::TupleShapePtr output_shape = Dropout2DInferShape(primitive, input_args);
   return abstract::MakeAbstract(output_shape, output_type);
 }
 
