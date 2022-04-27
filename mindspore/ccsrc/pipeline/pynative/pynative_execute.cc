@@ -2703,11 +2703,20 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
     return;
   }
   MS_LOG(DEBUG) << "Do grad for custom bprop";
-  size_t par_number = py::tuple(python_adapter::CallPyObjMethod(cell, "get_parameters")).size();
-  if (par_number > 0) {
-    MS_LOG(EXCEPTION) << "When user defines the net bprop, the 'Parameter' data type is not supported in the net.";
-  }
   py::function bprop_func = py::getattr(cell, parse::CUSTOM_BPROP_NAME);
+  py::object code_obj = py::getattr(bprop_func, "__code__");
+  // When the co_names is empty, we will still get a tuple which is empty.
+  auto co_names = py::getattr(code_obj, "co_names").cast<py::tuple>();
+  for (auto name : co_names) {
+    if (!py::hasattr(cell, name)) {
+      continue;
+    }
+    auto var = py::getattr(cell, name);
+    if (py::hasattr(var, "__parameter__") && py::isinstance<tensor::MetaTensor>(var)) {
+      MS_LOG(EXCEPTION) << "The user defined 'bprop' function does not support using Parameter.";
+    }
+  }
+
   auto bprop_func_cellid = GetId(bprop_func);
   bprop_cell_list_.emplace_back(bprop_func_cellid);
   auto fake_prim = std::make_shared<PrimitivePy>(prim::kPrimHookBackward->name());
@@ -2721,7 +2730,6 @@ void GradExecutor::DoGradForCustomBprop(const py::object &cell, const py::object
   (void)fake_prim->AddAttr("cell_id", MakeValue(cell_id));
   (void)fake_prim->AddAttr(parse::CUSTOM_BPROP_NAME, MakeValue(true));
 
-  py::object code_obj = py::getattr(bprop_func, "__code__");
   py::object co_name = py::getattr(code_obj, "co_name");
   if (std::string(py::str(co_name)) == "staging_specialize") {
     MS_LOG(EXCEPTION) << "Decorating bprop with '@ms_function' is not supported.";

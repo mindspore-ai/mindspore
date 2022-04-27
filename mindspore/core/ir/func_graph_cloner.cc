@@ -300,7 +300,9 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
     }
     MS_LOG(DEBUG) << "Gen param: " << free_var_node->ToString() << " for func_graph: " << func_graph->ToString();
     auto &fg_params = repl_func_graph_params_[func_graph];
-    (void)fg_params.emplace_back(AddParameter(func_graph, utils::cast<AnfNodePtr>(free_var)));
+    auto fv_parameter = AddParameter(func_graph, utils::cast<AnfNodePtr>(free_var));
+    fv_parameter->set_user_data<bool>("lifted_from_fv", std::make_shared<bool>(true));
+    (void)fg_params.emplace_back(fv_parameter);
   }
 }
 
@@ -313,6 +315,11 @@ void Cloner::CloneParameter(const ParameterPtr &param, const AnfNodePtr &node) {
       param->set_default_param(old_param->default_param());
     }
     param->set_name(old_param->name());
+    constexpr char lifted_user_data_key[] = "lifted_from_fv";
+    auto lifted = param->user_data<bool>(lifted_user_data_key);
+    if (lifted != nullptr && *lifted) {
+      param->set_user_data<bool>(lifted_user_data_key, std::make_shared<bool>(true));
+    }
   }
 }
 
