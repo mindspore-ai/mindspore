@@ -174,6 +174,9 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       auto iter = pred->local_py_params_values_.find(var_name);
       if (iter != pred->local_py_params_values_.end()) {
         auto pred_node = iter->second;
+        if (pred_node->interpret_special_type()) {
+          phi_param->set_interpret_special_type(true);
+        }
         bool interpret_without_internal =
           IsPrimitiveCNode(pred_node, prim::kPrimPyInterpret) && !pred_node->interpret_internal_type();
         if (pred_node->interpret() || interpret_without_internal) {
