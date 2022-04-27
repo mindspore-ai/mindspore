@@ -38,13 +38,13 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceVocabSuccess1 plus sentencepiece tokenizer.";
 
   // Create a TextFile dataset
-  std::string vocab_file = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
+  std::string vocab_file = datasets_root_path_ + "/test_sentencepiece/vocab.txt";
   std::shared_ptr<Dataset> ds_vocab = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds_vocab, nullptr);
 
   // Create vocab from dataset
   std::shared_ptr<SentencePieceVocab> vocab =
-    ds_vocab->BuildSentencePieceVocab({}, 5000, 0.9995, SentencePieceModel::kUnigram, {});
+    ds_vocab->BuildSentencePieceVocab({}, 100, 0.9995, SentencePieceModel::kUnigram, {});
   EXPECT_NE(vocab, nullptr);
 
   // Create a TextFile dataset
@@ -70,13 +70,13 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess1) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   // Expected result after tokenization
-  std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe", "."};
+  std::vector<std::string> expected = {"▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁",      "t", "r",
+                                       "a", "i", "n",    "▁",          "m", "y",  "▁model", "."};
   std::shared_ptr<Tensor> de_expected_tensor;
   ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
-  mindspore::MSTensor expected_tensor =
-    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+  auto expected_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
 
-  uint64_t i = 0;
+  uint32_t i = 0;
   while (row.size() != 0) {
     auto txt = row["text"];
     TEST_MS_LOG_MSTENSOR(INFO, "txt: ", txt);
@@ -97,13 +97,13 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceVocabSuccess2 plus sentencepiece tokenizer.";
 
   // Create a TextFile dataset
-  std::string vocab_file = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
+  std::string vocab_file = datasets_root_path_ + "/test_sentencepiece/vocab.txt";
   std::shared_ptr<Dataset> ds_vocab = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds_vocab, nullptr);
 
   // Create vocab from dataset
   std::shared_ptr<SentencePieceVocab> vocab =
-    ds_vocab->BuildSentencePieceVocab({}, 5000, 0.9995, SentencePieceModel::kUnigram, {});
+    ds_vocab->BuildSentencePieceVocab({}, 100, 0.9995, SentencePieceModel::kUnigram, {});
   EXPECT_NE(vocab, nullptr);
 
   // Save vocab model to local
@@ -133,13 +133,13 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabSuccess2) {
   ASSERT_OK(iter->GetNextRow(&row));
 
   // Expected result after tokenization
-  std::vector<std::string> expected = {"▁I", "▁sa", "w", "▁a", "▁girl", "▁with", "▁a", "▁te", "les", "co", "pe", "."};
+  std::vector<std::string> expected = {"▁", "I", "▁use", "▁MindSpore", "▁", "to", "▁",      "t", "r",
+                                       "a", "i", "n",    "▁",          "m", "y",  "▁model", "."};
   std::shared_ptr<Tensor> de_expected_tensor;
   ASSERT_OK(Tensor::CreateFromVector(expected, &de_expected_tensor));
-  mindspore::MSTensor expected_tensor =
-    mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
+  auto expected_tensor = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_expected_tensor));
 
-  uint64_t i = 0;
+  uint32_t i = 0;
   while (row.size() != 0) {
     auto txt = row["text"];
     TEST_MS_LOG_MSTENSOR(INFO, "txt: ", txt);
@@ -160,7 +160,7 @@ TEST_F(MindDataTestPipeline, TestSentencePieceVocabFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSentencePieceVocabFail1 with incorrect parameter.";
 
   // Create a TextFile dataset
-  std::string vocab_file = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
+  std::string vocab_file = datasets_root_path_ + "/test_sentencepiece/vocab.txt";
   std::shared_ptr<Dataset> ds_vocab = TextFile({vocab_file}, 0, ShuffleMode::kFalse);
   EXPECT_NE(ds_vocab, nullptr);
 

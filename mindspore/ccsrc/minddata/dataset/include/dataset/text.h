@@ -192,7 +192,7 @@ class SentencePieceVocab {
   /// \par Example
   /// \code
   ///     std::string dataset_path;
-  ///     dataset_path = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
+  ///     dataset_path = datasets_root_path_ + "/test_sentencepiece/vocab.txt";
   ///     std::vector<std::string> path_list;
   ///     path_list.emplace_back(dataset_path);
   ///     std::unordered_map<std::string, std::string> param_map;

@@ -1,1 +1,1 @@
-I saw a girl with a telescope.
+I use MindSpore to train my model.
