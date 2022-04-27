@@ -214,6 +214,12 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       }
     }
 
+    // The boolean is not supported by NCCL. Convert boolean + reducesum to uint8_t + reducemax will get same result.
+    if ((nccl_reduce_type_ == ncclSum && std::is_same<T, bool>::value)) {
+      nccl_reduce_type_ = ncclMax;
+      nccl_data_type_ = ncclUint8;
+    }
+
     auto root_rank = prim->GetAttr(kAttrRootRank);
     if (root_rank) {
       root_ = static_cast<int>(GetValue<int64_t>(root_rank));
