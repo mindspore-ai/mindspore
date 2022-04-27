@@ -3,7 +3,7 @@
     SummaryCollector可以收集一些常用信息。
 
     它可以帮助收集loss、学习率、计算图等。
-    SummaryCollector还可以允许通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.7/summary_record.html#summarysummarycollector>`_ 将数据收集到summary文件中。
+    SummaryCollector还可以允许通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.7/summary_record.html#方式二-结合summary算子和summarycollector自定义收集网络中的数据>`_ 将数据收集到summary文件中。
 
     .. note::
         - 使用SummaryCollector时，需要将代码放置到 `if __name__ == "__main__"` 中运行。

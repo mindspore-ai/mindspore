@@ -3,7 +3,7 @@
 
 并行相关功能的接口。
 
-.. py:function:: set_algo_parameters(**kwargs)
+.. py:function:: mindspore.parallel.set_algo_parameters(**kwargs)
 
     设置并行策略搜索算法中的参数。有关典型用法，请参见mindspore/tests/ut/python/parallel/test_auto_parallel_resnet.py。
 
@@ -24,7 +24,7 @@
     - **ValueError** - 无法识别传入的关键字。
 
 
-.. py:function:: reset_algo_parameters()
+.. py:function:: mindspore.parallel.reset_algo_parameters()
 
     重置算法参数属性。
 
@@ -41,7 +41,7 @@
     - tensor_slice_align_size：16
 
 
-.. py:function:: get_algo_parameters(attr_key)
+.. py:function:: mindspore.parallel.get_algo_parameters(attr_key)
 
     获取算法参数配置属性。
 

@@ -438,7 +438,7 @@ Parameter操作算子
    * - mindspore.ops.shape_mul
      - The input of shape_mul must be shape multiply elements in tuple(shape).
    * - mindspore.ops.stop_gradient
-     - Disable update during back propagation. (`stop_gradient <https://www.mindspore.cn/tutorials/en/r1.7/beginner/autograd.html#stopping-gradient>`_)
+     - Disable update during back propagation. (`stop_gradient <https://www.mindspore.cn/tutorials/en/r1.7/beginner/autograd.html#stopping-gradient-calculation>`_)
    * - mindspore.ops.string_concat
      - Concatenate two strings.
    * - mindspore.ops.string_eq
