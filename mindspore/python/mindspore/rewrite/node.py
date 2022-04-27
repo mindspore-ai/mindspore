@@ -120,7 +120,8 @@ class Node:
                 Name of node also used as field name in network class.
         """
 
-        assert isinstance(op, (Cell, Primitive))
+        if not isinstance(op, (Cell, Primitive)):
+            raise ValueError("Input op is not a buildin op(Cell or Primitive): ", type(op))
         if args is None:
             args = []
         if kwargs is None:

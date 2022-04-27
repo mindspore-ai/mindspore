@@ -15,6 +15,7 @@
 """Base class, observable of observer design pattern."""
 
 from .observer import Observer
+from .event import Event
 
 
 class Observable:
@@ -23,14 +24,14 @@ class Observable:
     def __init__(self):
         self._observers: [Observer] = []
 
-    def changed(self):
+    def changed(self, event: Event):
         """
         Called when current observable is changed.
         `Observable` declares a change and all registered observers observe a change and do something for this change.
         """
 
         for observer in self._observers:
-            observer.on_change()
+            observer.on_change(event)
 
     def reg_observer(self, observer: Observer):
         """

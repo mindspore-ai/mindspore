@@ -18,6 +18,7 @@ from typing import Tuple
 from .api.scoped_value import ScopedValue
 from .node import Node
 from .common.observable import Observable
+from .common.event import Event
 
 
 class TopoManager(Observable):
@@ -57,6 +58,9 @@ class TopoManager(Observable):
             if result not in unique_results:
                 unique_results.append(result)
         return unique_results
+
+    def topo_changed(self):
+        self.changed(Event.TopologicalChangeEvent)
 
     def _add_consumer(self, product: ScopedValue, consumer: Node, index):
         """
@@ -139,7 +143,7 @@ class TopoManager(Observable):
             for index, arg in enumerate(node.get_normalized_args().values()):
                 self._add_consumer(arg, node, index)
         self._update_node_inputs(node)
-        self.changed()
+        self.topo_changed()
 
     def on_erase_node(self, node: Node):
         """
@@ -159,7 +163,7 @@ class TopoManager(Observable):
                 self._erase_consumer(arg, node)
         # clear inputs of node rather than call _update_node_inputs because node is already erase from consumer dict
         node.set_inputs([])
-        self.changed()
+        self.topo_changed()
 
     def on_update_arg(self, node: Node, arg_idx: int, old_arg: ScopedValue, new_arg: ScopedValue):
         """
@@ -175,7 +179,7 @@ class TopoManager(Observable):
         self._erase_consumer(old_arg, node)
         self._add_consumer(new_arg, node, arg_idx)
         self._update_node_inputs(node)
-        self.changed()
+        self.topo_changed()
 
     def dump(self, title=""):
         """

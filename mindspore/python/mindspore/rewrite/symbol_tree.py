@@ -30,6 +30,8 @@ from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
 from .namer import TargetNamer, NodeNamer, ClassNamer
 from .common.observer import Observer
+from .common.observable import Observable
+from .common.event import Event
 
 
 class Position:
@@ -67,7 +69,7 @@ class Position:
         return Position(symbol_tree, node, before_node)
 
 
-class SymbolTree(Observer):
+class SymbolTree(Observer, Observable):
     """
     A symbol-tree usually corresponding to forward method of a network.
 
@@ -81,6 +83,7 @@ class SymbolTree(Observer):
 
     def __init__(self, origin_network: Cell, module_ast: ast.Module):
         super().__init__()
+        Observable.__init__(self)
         origin_network_key = "handler"
         # init unique-namers
         self._target_namer = TargetNamer()
@@ -111,8 +114,12 @@ class SymbolTree(Observer):
 
         self._modified = False
 
-    def _on_change(self):
+    def finish_build(self):
+        self.add_event(Event.TopologicalChangeEvent)
+
+    def _on_change(self, event: Event):
         self._modified = True
+        self.changed(event)
 
     def get_ori_cls_name(self) -> str:
         """
@@ -265,7 +272,7 @@ class SymbolTree(Observer):
             nodes = []
             for _, v in self._nodes.items():
                 if isinstance(v, TreeNode):
-                    nodes.extend(v.symbol_tree.nodes())
+                    nodes.extend(v.symbol_tree.nodes(unfold_subtree))
                 else:
                     nodes.append(v)
             return nodes
@@ -796,23 +803,16 @@ class SymbolTree(Observer):
         dump_st = SymbolTreeDumper(self)
         dump_st.dump()
 
-    def get_code(self) -> str:
-        """
-        Get source code of modified network.
-
-        Returns:
-            A str represents source code of modified network.
-        """
-        ast.fix_missing_locations(self._module_ast)
-        # Find all ast.ClassDef which can be export to code
-        # Replace duplicated ast.ClassDef reference in main-ClassDef
-        seen_class: {type, str} = {}
-        allow_class_name = []
-        replacer = AstReplacer(self._class_ast)
-        for node in self.nodes():
+    @staticmethod
+    def _find_all_class_in_symboltree(stree: 'SymbolTree', seen_class: {type, str}, allow_class_name: [], replacers):
+        """Find all non-duplicated class name of SymbolTree recursively."""
+        replacer = AstReplacer(stree._class_ast)
+        replacers.append(replacer)
+        for node in stree.nodes():
             if not isinstance(node, TreeNode):
                 continue
             sub_stree: SymbolTree = node.symbol_tree
+            SymbolTree._find_all_class_in_symboltree(sub_stree, seen_class, allow_class_name, replacers)
             # all modified ast.ClassDef should export to code
             if sub_stree._modified:
                 allow_class_name.append(sub_stree._class_ast.name)
@@ -824,7 +824,21 @@ class SymbolTree(Observer):
             else:
                 seen_class[type(sub_stree.get_origin_network())] = sub_stree._class_ast.name
                 allow_class_name.append(sub_stree._class_ast.name)
-        allow_class_name.append(self._class_ast.name)
+
+    def get_code(self) -> str:
+        """
+        Get source code of modified network.
+
+        Returns:
+            A str represents source code of modified network.
+        """
+        ast.fix_missing_locations(self._module_ast)
+        # Find all ast.ClassDef which can be export to code
+        # Replace duplicated ast.ClassDef reference in main-ClassDef
+        seen_class: {type, str} = {}
+        allow_class_name = [self._class_ast.name]
+        replacers = []
+        SymbolTree._find_all_class_in_symboltree(self, seen_class, allow_class_name, replacers)
         # Add all non-ClassDef body to gencode_module
         # Add all ClassDef in allow_class_name to gencode_module
         # Use gencode_module to generate code
@@ -838,7 +852,8 @@ class SymbolTree(Observer):
         gencode_module = ast.Module(body=bodies)
         code = astunparse.unparse(gencode_module)
         # Restore main-ClassDef
-        replacer.undo_all()
+        for replacer in replacers:
+            replacer.undo_all()
         return code
 
     def get_network(self):

@@ -39,7 +39,7 @@ class SymbolTree:
     @classmethod
     def create(cls, network):
         if not isinstance(network, Cell):
-            raise RuntimeError("Only support Cell-type-network now.")
+            raise RuntimeError("Only support Cell-type-network now, ", network)
         return cls(SymbolTreeBuilder(network).build())
 
     def get_handler(self) -> SymbolTreeImpl:
