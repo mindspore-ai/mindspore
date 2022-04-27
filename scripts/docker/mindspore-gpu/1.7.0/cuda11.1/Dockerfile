@@ -5,8 +5,9 @@ MAINTAINER MindSpore Authors
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
-ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:$LD_LIBRARY_PATH
+ENV CUDA_PATH /usr/local/cuda
+ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 
 # Install base tools
 RUN apt update \
