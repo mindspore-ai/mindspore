@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import platform
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -51,7 +52,7 @@ def softsign_compare(shape, dtype):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sofsign_cpu_pynative_mode():
@@ -60,11 +61,13 @@ def test_sofsign_cpu_pynative_mode():
     /// Description: softsign op on cpu set pynative mode test expand fallback
     /// Expectation: open graph kernel result equal to close graph kernel
     """
+    if platform.system().lower() != 'linux':
+        return
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     softsign_compare([2, 3, 2], np.float32)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_sofsign_cpu_graph_mode():
@@ -73,6 +76,8 @@ def test_sofsign_cpu_graph_mode():
     /// Description: softsign op on cpu set graph mode test expand fallback
     /// Expectation: open graph kernel result equal to close graph kernel
     """
+    if platform.system().lower() != 'linux':
+        return
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     softsign_compare([2, 3, 2], np.float32)
 
