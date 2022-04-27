@@ -13,13 +13,17 @@
 # limitations under the License.
 # ============================================================================
 
+import time
 import numpy as np
 import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore.ops.functional import vmap
+from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -50,150 +54,69 @@ def np_all_close_with_loss(out, expect):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_fast_gelu_1d_float32():
+@pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+def test_fast_gelu_cpu(shape, dtype):
     """
     Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is 1d float32.
+    Description: test the rightness of FastGeLU cpu kernel.
     Expectation: Success.
     """
-    x_np = np.random.random((50,)).astype(np.float32)
-    y_np = fast_gelu_compute(x_np)
+    prop_cpu = 100 if np.random.random() > 0.5 else -100
+    x_np = (np.random.randn(*shape) * prop_cpu).astype(dtype)
+    y_np_cpu = fast_gelu_compute(x_np)
 
-    x_ms = Tensor(x_np)
+    x_ms_cpu = Tensor(x_np)
     net = FastGeluNet()
-    y_ms = net(x_ms)
+    y_ms = net(x_ms_cpu)
+    assert np_all_close_with_loss(y_np_cpu, y_ms.asnumpy())
 
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
+    x_ms_cpu = Tensor(x_np)
+    y_fun = F.fast_gelu(x_ms_cpu)
+    assert np_all_close_with_loss(y_np_cpu, y_fun.asnumpy())
+
+    x_ms_cpu = Tensor(x_np)
+    fast_gelu_nn = nn.FastGelu()
+    y_nn = fast_gelu_nn(x_ms_cpu)
+    assert np_all_close_with_loss(y_np_cpu, y_nn.asnumpy())
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_fast_gelu_2d_float32():
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+def test_fast_gelu_vmap(dtype, shape=(100, 2)):
     """
     Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is 2d float32.
+    Description: test the rightness of FastGeLU cpu kernel vmap feature.
     Expectation: Success.
     """
-    x_np = np.random.random((50, 40)).astype(np.float32)
-    y_np = fast_gelu_compute(x_np)
 
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
+    def fast_gelu_fun(x):
+        """fast_gelu_fun"""
+        return P.FastGeLU()(x)
 
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
+    prop = 100 if np.random.random() > 0.5 else -100
+    x_np = (np.random.randn(*shape) * prop).astype(dtype)
+    x = Tensor(x_np)
+    x = F.sub(x, 0)
 
+    start_time = time.perf_counter()
+    output_vmap = vmap(fast_gelu_fun, in_axes=(0,))(x)
+    vmap_time = time.perf_counter() - start_time
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_fast_gelu_4d_float32():
-    """
-    Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is 4d float32.
-    Expectation: Success.
-    """
-    x_np = np.random.random((32, 3, 224, 224)).astype(np.float32)
-    y_np = fast_gelu_compute(x_np)
+    start_time_manually = time.perf_counter()
 
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
+    @ms_function
+    def manually_batched(xs):
+        """manually_batched"""
+        output = []
+        for i in range(xs.shape[0]):
+            output.append(fast_gelu_fun(xs[i]))
+        return F.stack(output)
 
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
+    output_manually = manually_batched(x)
+    manually_time = time.perf_counter() - start_time_manually
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_fast_gelu_neg_float32():
-    """
-    Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is neg float32.
-    Expectation: Success.
-    """
-    x_np = np.random.random((32, 3, 224, 224)).astype(np.float32) * -1
-    y_np = fast_gelu_compute(x_np)
-
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
-
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_fast_gelu_1d_float16():
-    """
-    Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is 1d float16.
-    Expectation: Success.
-    """
-    x_np = np.random.random((50,)).astype(np.float16)
-    y_np = fast_gelu_compute(x_np)
-
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
-
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_fast_gelu_2d_float16():
-    """
-    Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is 2d float16.
-    Expectation: Success.
-    """
-    x_np = np.random.random((50, 40)).astype(np.float16)
-    y_np = fast_gelu_compute(x_np)
-
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
-
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_fast_gelu_4d_float16():
-    """
-    Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is 4d float16.
-    Expectation: Success.
-    """
-    x_np = np.random.random((32, 3, 224, 224)).astype(np.float16)
-    y_np = fast_gelu_compute(x_np)
-
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
-
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_fast_gelu_neg_float16():
-    """
-    Feature: FastGeLU cpu kernel
-    Description: test the rightness of FastGeLU cpu kernel, type of input data is neg float16.
-    Expectation: Success.
-    """
-    x_np = np.random.random((32, 3, 224, 224)).astype(np.float16) * -1
-    y_np = fast_gelu_compute(x_np)
-
-    x_ms = Tensor(x_np)
-    net = FastGeluNet()
-    y_ms = net(x_ms)
-
-    assert np_all_close_with_loss(y_np, y_ms.asnumpy())
+    assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
+    assert vmap_time < manually_time

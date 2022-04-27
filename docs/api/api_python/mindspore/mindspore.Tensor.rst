@@ -146,7 +146,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入张量，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
+        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
 
         **返回：**
 
@@ -160,7 +160,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入张量，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
+        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
 
         **返回：**
 
@@ -174,7 +174,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入张量，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
+        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
 
         **返回：**
 
@@ -361,6 +361,26 @@ mindspore.Tensor
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
+
+    .. py:method:: ger(x)
+
+        计算两个Tensor的外积，即计算此Tensor 和 `x` 的外积。如果此Tensor shape为 :math:`(m,)` ，`x` shape为 :math:`(n,)` ，
+        那么输出就是一个shape为 :math:`(m, n)` 的Tensor。如果此Tensor shape为 :math:`(*B, m)` ，`x` shape为
+        :math:`(*B, n)` ，那么输出就是一个shape为 :math:`(*B, m, n)` 的Tensor。
+
+        .. note::
+            Ascend 平台暂不支持batch维度输入。即， `x` 必须为一维输入Tensor。
+
+        更多参考详见 :func:`mindspore.ops.ger`。
+
+        **参数：**
+
+        - **x** (Tensor) - 输入Tensor，数据类型为float16或float32。
+
+        **返回：**
+
+        Tensor，是一个与此Tensor相同数据类型的输出矩阵。当此Tensor shape为 :math:`(*B, m)` ， `x` shape为 :math:`(*B, n)` ，
+        那么输出shape为 :math:`(*B, m, n)` 。
 
     .. py:method:: has_init
         :property:

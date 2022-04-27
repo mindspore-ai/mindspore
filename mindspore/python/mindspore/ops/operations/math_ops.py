@@ -140,9 +140,14 @@ class _BitwiseBinaryOp(_MathBinaryOp):
 
 class Ger(Primitive):
     r"""
-    Ger product of `x1` and `x2`. Calculate the outer product of two one-dimensional arrays.If `x1` is a 1D Tensor of
-    shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`,then `output` must be a Tensor of shape
-    :math:`(m * n)`.
+    Ger product of `x1` and `x2`. Calculate the outer product of two arrays. If `x1` is a 1D Tensor of
+    shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
+    :math:`(m, n)`. If `x1` is a Tensor of shape :math:`(*B, m)` and `x2` is a Tensor of shape :math:`(*B, n)`, then
+    `output` must be a Tensor of shape :math:`(*B, m, n)`.
+
+    Notes:
+        In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D input
+        Tensors.
 
     Refer to :func:`mindspore.ops.ger` for more detail
 

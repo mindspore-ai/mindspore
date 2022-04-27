@@ -44,6 +44,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.fast_gelu
     mindspore.ops.tanh
 
 数学运算算子
@@ -213,6 +214,7 @@ Reduction算子
 
     mindspore.ops.matmul
     mindspore.ops.cdist
+    mindspore.ops.ger
 
 Tensor操作算子
 ----------------
