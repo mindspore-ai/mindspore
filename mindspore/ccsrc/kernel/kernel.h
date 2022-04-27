@@ -256,15 +256,20 @@ class KernelMod {
   }
   // Resize is for updating shape related information and performing shape related operation(e.g., calculate output
   // tensor size and allocate output tensor memory).
-  virtual bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                      const std::vector<KernelTensorPtr> &outputs,
-                      const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) {
+  // sometimes resize need the input tensor data, framework will sync and retain these tensor data from device to host
+  // and pass them by the param inputsOnHost
+  virtual bool Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
     return true;
   }
-  // Some kernels, e.g., Unique, should provide Wait() operation as its output shape can only be gotten until its
-  // computing.
-  virtual void Wait() {}
-  virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
+  // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
+  virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape; }
+  virtual std::vector<KernelTensorPtr> RetrieveOutputShape() {
+    SyncData();
+    return GetOutputs();
+  }
   void set_unique_name(const std::string &unique_name) { unique_name_ = unique_name; }
   void set_fullname(const std::string &fullname) { fullname_ = fullname; }
   void set_is_monad(bool is_monad) { is_monad_ = is_monad; }
@@ -276,13 +281,15 @@ class KernelMod {
   const std::vector<AddressPtr> &GetOutputsAddr() const { return outputs_addr_; }
   void set_stream(StreamType stream) { stream_ = stream; }
   StreamType stream() const { return stream_; }
-  // set true if need to wait launch for output's shape, like Unique
-  virtual bool IsNeedWait() { return is_need_wait_; }
   virtual enum KernelModType GetKernelModType() const { return KernelModType::KernelMod; }
   bool Launch(const KernelLaunchInfo &kernel_launch_address, void *stream_ptr) {
     return Launch(kernel_launch_address.inputs_, kernel_launch_address.workspaces_, kernel_launch_address.outputs_,
                   stream_ptr);
   }
+
+ protected:
+  virtual void SyncData() {}
+  virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
 
  protected:
   std::string kernel_name_;
@@ -293,7 +300,7 @@ class KernelMod {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  bool is_need_wait_ = false;
+  bool is_need_retrieve_output_shape = false;
 
  private:
   std::vector<AddressPtr> inputs_addr_;

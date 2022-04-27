@@ -40,7 +40,7 @@ void AscendKernelMod::UpdateOutputSizeList() {
   }
 }
 
-bool AscendKernelMod::IsNeedWait() {
+bool AscendKernelMod::IsNeedRetrieveOutputShape() {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -48,9 +48,9 @@ bool AscendKernelMod::IsNeedWait() {
 
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
-    is_need_wait_ = true;
+    is_need_retrieve_output_shape = true;
   }
-  return is_need_wait_;
+  return is_need_retrieve_output_shape;
 }
 }  // namespace kernel
 }  // namespace mindspore

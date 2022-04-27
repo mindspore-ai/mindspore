@@ -56,11 +56,11 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   workspace_size_list_.push_back(index_type_size);
   // One output
   output_size_list_.push_back(output_size);
-  is_need_wait_ = true;
+  is_need_retrieve_output_shape = true;
   return true;
 }
 
-void DynamicStitchKernelMod::Wait() {
+void DynamicStitchKernelMod::SyncData() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "DynamicStitch cudaStreamSynchronized failed");
   auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);

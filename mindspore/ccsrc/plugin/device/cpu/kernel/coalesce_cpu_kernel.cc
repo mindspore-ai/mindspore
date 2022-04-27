@@ -69,7 +69,7 @@ void CoalesceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   values_size_ = indices_shape[1];
   shape_size_ = indices_shape[0];
-  is_need_wait_ = true;
+  is_need_retrieve_output_shape = true;
 }
 
 void CoalesceCpuKernelMod::Check(const std::vector<kernel::AddressPtr> &inputs) {

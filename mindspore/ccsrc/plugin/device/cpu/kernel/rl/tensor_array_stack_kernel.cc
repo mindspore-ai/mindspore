@@ -52,7 +52,7 @@ void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   output_size_list_.push_back(value_size_);
   input_size_list_.push_back(sizeof(int64_t));
-  is_need_wait_ = true;
+  is_need_retrieve_output_shape = true;
 }
 
 void TensorArrayStackCpuKernelMod::PostExecute() {

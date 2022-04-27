@@ -62,7 +62,7 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
     output_size_list_.push_back(bytes);
   }
 
-  is_need_wait_ = true;
+  is_need_retrieve_output_shape = true;
 
 #ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
@@ -161,7 +161,7 @@ bool DatasetIteratorKernelMod::Launch(const std::vector<AddressPtr> &, const std
   return true;
 }
 
-void DatasetIteratorKernelMod::Wait() {
+void DatasetIteratorKernelMod::SyncData() {
   std::vector<std::vector<size_t>> shapes;
   for (const auto &item : output_data_) {
     std::vector<size_t> shape;

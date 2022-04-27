@@ -71,7 +71,7 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
-  is_need_wait_ = true;
+  is_need_retrieve_output_shape = true;
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
     for (const auto &input : inputs) {
@@ -88,7 +88,7 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
 
 bool UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &others) {
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
@@ -101,7 +101,7 @@ bool UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
 }
 
-void UniqueGpuKernelMod::Wait() {
+void UniqueGpuKernelMod::SyncData() {
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                                      "cudaStreamSynchronized failed");
   size_t output_num = outputs_.size();

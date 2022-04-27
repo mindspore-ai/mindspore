@@ -92,16 +92,6 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void Wait() override {
-    // required synchronize for UpdateOp
-    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
-                               "cudaStreamSynchronize failed");
-
-    std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
-    std::vector<std::vector<size_t>> output_shape = {{static_cast<size_t>(output_shape_)}};
-    common::AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
-  }
-
   void ResetResource() noexcept override {
     stream_ptr_ = nullptr;
     output_shape_ = 0;
@@ -121,7 +111,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");
     kernel_node_ = kernel_node;
     InitSizeLists();
-    is_need_wait_ = true;
+    is_need_retrieve_output_shape = true;
     return true;
   }
 
@@ -136,6 +126,15 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.push_back(sizeof(int64_t));
     workspace_size_list_.push_back(sizeof(DynamicRangeErrorCode));
     return;
+  }
+  void SyncData() override {
+    // required synchronize for UpdateOp
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
+                               "cudaStreamSynchronize failed");
+
+    std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
+    std::vector<std::vector<size_t>> output_shape = {{static_cast<size_t>(output_shape_)}};
+    common::AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
   }
 
  private:

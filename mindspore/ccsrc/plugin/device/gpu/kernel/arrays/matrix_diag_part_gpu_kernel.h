@@ -66,20 +66,8 @@ class MatrixDiagPartGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitSizeLists();
     alignment_ = GetAlignments(common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
     kernel_node_ = kernel_node;
-    is_need_wait_ = true;
+    is_need_retrieve_output_shape = true;
     return true;
-  }
-
-  void Wait() override {
-    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
-    output_shape[shapes_.size() - kDim1] = max_diag_len_;
-    // If the out shape m' * n', the m' dimension is 1, then remove this dimension
-    output_shape[shapes_.size() - kDim2] = num_diags_;
-    if (num_diags_ == 1) {
-      output_shape.erase(output_shape.begin() + shapes_.size() - kDim2);
-    }
-    auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
-    common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
   }
 
   void ResetResource() noexcept override {
@@ -126,6 +114,17 @@ class MatrixDiagPartGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_size_list_.push_back(kDim2 * sizeof(int64_t));    // k_range
     input_size_list_.push_back(sizeof(T));                  // padding_value
     output_size_list_.push_back(matrix_size_ * sizeof(T));  // Output
+  }
+  void SyncData() override {
+    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
+    output_shape[shapes_.size() - kDim1] = max_diag_len_;
+    // If the out shape m' * n', the m' dimension is 1, then remove this dimension
+    output_shape[shapes_.size() - kDim2] = num_diags_;
+    if (num_diags_ == 1) {
+      output_shape.erase(output_shape.begin() + shapes_.size() - kDim2);
+    }
+    auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
+    common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
   }
 
  private:

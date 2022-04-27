@@ -34,10 +34,10 @@ class DynamicStitchKernelMod : public DeprecatedNativeGpuKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
   bool Init(const CNodePtr &kernel_node) override;
   void ResetResource() noexcept override;
-  void Wait() override;
   constexpr static size_t kDivNum2 = 2;
 
  protected:
+  void SyncData() override;
   void InitSizeLists() override;
 
  private:

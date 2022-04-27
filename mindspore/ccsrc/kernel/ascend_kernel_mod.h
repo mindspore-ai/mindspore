@@ -47,7 +47,7 @@ class AscendKernelMod : public KernelMod {
     return false;
 #endif
   }
-  bool IsNeedWait() override;
+  bool IsNeedRetrieveOutputShape() override;
   void SetAtomicCleanNodes(const std::vector<CNodePtr> &atomic_clean_node);
   std::string GetAtomicCompileInfo() const { return atomic_compile_info_; }
 

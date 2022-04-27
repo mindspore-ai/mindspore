@@ -112,7 +112,7 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
                                    "Set descriptor base index failed.");
 
     InitSizeLists();
-    is_need_wait_ = true;
+    is_need_retrieve_output_shape = true;
     return true;
   }
 
@@ -162,7 +162,8 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  void Wait() override {
+ protected:
+  void SyncData() override {
     std::vector<TypeId> types;
     types.push_back(kNumberTypeInt32);
     types.push_back(kNumberTypeInt32);
@@ -181,8 +182,6 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
 
     common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, kernel_node_.lock().get());
   }
-
- protected:
   void InitSizeLists() override {
     // x1
     input_size_list_.push_back((row_ + 1) * sizeof(int));
