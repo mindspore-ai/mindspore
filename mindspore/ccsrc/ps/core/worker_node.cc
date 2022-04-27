@@ -40,12 +40,10 @@ void WorkerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   InitNodeNum();
-  bool is_recover = false;
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
-    is_recover = Recover();
-    if (!is_recover) {
+    if (!Recover()) {
       MS_LOG(DEBUG) << "Recover the worker node is failed.";
     }
   }
@@ -61,10 +59,6 @@ void WorkerNode::Initialize() {
   }
   InitClientToServer();
   is_already_stopped_ = false;
-  if (is_recover) {
-    std::string node_role = CommUtil::NodeRoleToString(node_info_.node_role_);
-    SendFailMessageToScheduler(node_role, "Node restart");
-  }
   MS_LOG(INFO) << "[Worker start]: 3. Worker node crete tcp client to scheduler successful!";
 }
 

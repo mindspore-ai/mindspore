@@ -17,7 +17,6 @@
 #include "ps/util.h"
 #include <vector>
 #include <memory>
-#include <sstream>
 #include "utils/hash_map.h"
 #include "ps/constants.h"
 #include "ps/ps_context.h"

@@ -162,7 +162,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_pred
     auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
     c_inputs.push_back(ms_tensor);
   }
-  env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
   std::vector<mindspore::MSTensor> outputs;
   pointer->Predict(c_inputs, &outputs);
   for (auto &tensor : outputs) {

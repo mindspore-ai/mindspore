@@ -23,7 +23,6 @@ import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.ANDROID;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.model.AlInferBert;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
@@ -36,8 +35,6 @@ import com.mindspore.flclient.pki.PkiUtil;
 import com.mindspore.lite.config.CpuBindMode;
 import mindspore.schema.ResponseGetModel;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -45,7 +42,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.*;
+import java.util.logging.Logger;
 
 /**
  * SyncFLJob defines the APIs for federated learning task.
@@ -55,7 +52,8 @@ import java.util.logging.*;
  * @since 2021-06-30
  */
 public class SyncFLJob {
-    private static Logger LOGGER = FLLoggerGenerater.getModelLogger(SyncFLJob.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(SyncFLJob.class.toString());
+
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
     private IFLJobResultCallback flJobResultCallback;
@@ -66,17 +64,17 @@ public class SyncFLJob {
 
     private void initFlIDForPkiVerify() {
         if (flParameter.isPkiVerify()) {
-            LOGGER.info("pkiVerify mode is open!");
+            LOGGER.info(Common.addTag("pkiVerify mode is open!"));
             String equipCertHash = PkiUtil.genEquipCertHash(flParameter.getClientID());
             if (equipCertHash == null || equipCertHash.isEmpty()) {
-                LOGGER.severe("equipCertHash is empty, please check your mobile phone, only Huawei " +
-                        "phones are supported now.");
+                LOGGER.severe(Common.addTag("equipCertHash is empty, please check your mobile phone, only Huawei " +
+                        "phones are supported now."));
                 throw new IllegalArgumentException();
             }
-            LOGGER.info("flID for pki verify is: " + equipCertHash);
+            LOGGER.info(Common.addTag("flID for pki verify is: " + equipCertHash));
             localFLParameter.setFlID(equipCertHash);
         } else {
-            LOGGER.info("pkiVerify mode is not open!");
+            LOGGER.info(Common.addTag("pkiVerify mode is not open!"));
             localFLParameter.setFlID(flParameter.getClientID());
         }
     }
@@ -84,12 +82,12 @@ public class SyncFLJob {
     public SyncFLJob() {
         if (!Common.checkFLName(flParameter.getFlName())) {
             try {
-                LOGGER.info("the flName: " + flParameter.getFlName());
+                LOGGER.info(Common.addTag("the flName: " + flParameter.getFlName()));
                 Class.forName(flParameter.getFlName());
             } catch (ClassNotFoundException e) {
-                LOGGER.severe("catch ClassNotFoundException error, the set flName does not exist, " +
+                LOGGER.severe(Common.addTag("catch ClassNotFoundException error, the set flName does not exist, " +
                         "please " +
-                        "check: " + e.getMessage());
+                        "check: " + e.getMessage()));
                 throw new IllegalArgumentException();
             }
         }
@@ -110,12 +108,12 @@ public class SyncFLJob {
         initFlIDForPkiVerify();
         localFLParameter.setMsConfig(0, flParameter.getThreadNum(), flParameter.getCpuBindMode(), false);
         FLLiteClient flLiteClient = new FLLiteClient();
-        LOGGER.info("recovery StopJobFlag to false in the start of fl job");
+        LOGGER.info(Common.addTag("recovery StopJobFlag to false in the start of fl job"));
         localFLParameter.setStopJobFlag(false);
         InitialParameters();
-        LOGGER.info("flJobRun start");
+        LOGGER.info(Common.addTag("flJobRun start"));
         flRunLoop(flLiteClient);
-        LOGGER.info("flJobRun finish");
+        LOGGER.info(Common.addTag("flJobRun finish"));
         flJobResultCallback.onFlJobFinished(flParameter.getFlName(), flLiteClient.getIterations(),
                 flLiteClient.getRetCode());
         return curStatus;
@@ -126,7 +124,7 @@ public class SyncFLJob {
             if (tryTimeExceedsLimit() || checkStopJobFlag()) {
                 break;
             }
-            LOGGER.info("flName: " + flParameter.getFlName());
+            LOGGER.info(Common.addTag("flName: " + flParameter.getFlName()));
             int trainDataSize = flLiteClient.setInput();
             if (trainDataSize <= 0) {
                 curStatus = FLClientStatus.FAILED;
@@ -146,7 +144,7 @@ public class SyncFLJob {
                 failed("[startFLJob]", flLiteClient);
                 break;
             }
-            LOGGER.info("[startFLJob] startFLJob succeed, curIteration: " + flLiteClient.getIteration());
+            LOGGER.info(Common.addTag("[startFLJob] startFLJob succeed, curIteration: " + flLiteClient.getIteration()));
             updateTryTimePerIter(flLiteClient);
 
             // Copy weights before training.
@@ -169,7 +167,7 @@ public class SyncFLJob {
                 failed("[train] train", flLiteClient);
                 break;
             }
-            LOGGER.info("[train] train succeed");
+            LOGGER.info(Common.addTag("[train] train succeed"));
 
             // updateModel
             curStatus = flLiteClient.updateModel();
@@ -206,19 +204,19 @@ public class SyncFLJob {
 
             // evaluate model after getting model from server
             if (!checkEvalPath()) {
-                LOGGER.info("[evaluate] the data map set by user do not contain evaluation dataset, " +
-                        "don't evaluate the model after getting model from server");
+                LOGGER.info(Common.addTag("[evaluate] the data map set by user do not contain evaluation dataset, " +
+                        "don't evaluate the model after getting model from server"));
             } else {
                 curStatus = flLiteClient.evaluateModel();
                 if (curStatus != FLClientStatus.SUCCESS) {
                     failed("[evaluate] evaluate", flLiteClient);
                     break;
                 }
-                LOGGER.info("[evaluate] evaluate succeed");
+                LOGGER.info(Common.addTag("[evaluate] evaluate succeed"));
             }
-            LOGGER.info("========================================================the total response of "
+            LOGGER.info(Common.addTag("========================================================the total response of "
                     + flLiteClient.getIteration() + ": " + curStatus +
-                    "======================================================================");
+                    "======================================================================"));
             flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
                     flLiteClient.getRetCode());
             Common.freeSession();
@@ -235,9 +233,9 @@ public class SyncFLJob {
 
     private Boolean tryTimeExceedsLimit() {
         if (tryTimePerIter > RESTART_TIME_PER_ITER) {
-            LOGGER.severe("[tryTimeExceedsLimit] the repeated request time exceeds the limit, current" +
+            LOGGER.severe(Common.addTag("[tryTimeExceedsLimit] the repeated request time exceeds the limit, current" +
                     " repeated" +
-                    " request time is: " + tryTimePerIter + " the limited time is: " + RESTART_TIME_PER_ITER);
+                    " request time is: " + tryTimePerIter + " the limited time is: " + RESTART_TIME_PER_ITER));
             curStatus = FLClientStatus.FAILED;
             return true;
         }
@@ -255,8 +253,8 @@ public class SyncFLJob {
 
     private Boolean waitTryTimeExceedsLimit() {
         if (waitTryTime > MAX_WAIT_TRY_TIME) {
-            LOGGER.severe("[waitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
-                    "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME);
+            LOGGER.severe(Common.addTag("[waitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
+                    "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME));
             curStatus = FLClientStatus.FAILED;
             return true;
         }
@@ -291,8 +289,8 @@ public class SyncFLJob {
             return tag;
         }
         if (!flParameter.getDataMap().containsKey(RunType.EVALMODE)) {
-            LOGGER.info("[evaluate] the data map set by user do not contain evaluation dataset, " +
-                    "don't evaluate the model after getting model from server");
+            LOGGER.info(Common.addTag("[evaluate] the data map set by user do not contain evaluation dataset, " +
+                    "don't evaluate the model after getting model from server"));
             tag = false;
             return tag;
         }
@@ -301,7 +299,7 @@ public class SyncFLJob {
 
     private boolean checkStopJobFlag() {
         if (localFLParameter.isStopJobFlag()) {
-            LOGGER.info("the stopJObFlag is set to true, the job will be stop");
+            LOGGER.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
             curStatus = FLClientStatus.FAILED;
             return true;
         } else {
@@ -317,7 +315,7 @@ public class SyncFLJob {
      */
     public int[] modelInference() {
         if (Common.checkFLName(flParameter.getFlName())) {
-            LOGGER.warning(Common.LOG_DEPRECATED);
+            LOGGER.warning(Common.addTag(Common.LOG_DEPRECATED));
             return deprecatedModelInference();
         }
         return new int[0];
@@ -344,13 +342,13 @@ public class SyncFLJob {
         Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(),
                 flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
-            LOGGER.severe("[model inference] unsolved error code in <initSessionAndInputs>: the return " +
-                    " status is: " + tag);
+            LOGGER.severe(Common.addTag("[model inference] unsolved error code in <initSessionAndInputs>: the return " +
+                    " status is: " + tag));
             client.free();
             return null;
         }
         client.setBatchSize(flParameter.getBatchSize());
-        LOGGER.info("===========model inference=============");
+        LOGGER.info(Common.addTag("===========model inference============="));
         List<Object> labels = client.inferModel();
         if (labels == null || labels.size() == 0) {
             LOGGER.severe("[model inference] the returned label from client.inferModel() is null, please " +
@@ -358,9 +356,9 @@ public class SyncFLJob {
             client.free();
             return null;
         }
-        LOGGER.fine("[model inference] the predicted outputs: " + Arrays.deepToString(labels.toArray()));
+        LOGGER.info(Common.addTag("[model inference] the predicted outputs: " + Arrays.deepToString(labels.toArray())));
         client.free();
-        LOGGER.info("[model inference] inference finish");
+        LOGGER.info(Common.addTag("[model inference] inference finish"));
         return labels;
     }
 
@@ -391,7 +389,7 @@ public class SyncFLJob {
      * use to stop FL job.
      */
     public void stopFLJob() {
-        LOGGER.info("will stop the flJob");
+        LOGGER.info(Common.addTag("will stop the flJob"));
         localFLParameter.setStopJobFlag(true);
         Common.notifyObject();
     }
@@ -410,7 +408,7 @@ public class SyncFLJob {
     }
 
     private void resetContext(String tag, String nextReqTime, FLLiteClient flLiteClient) {
-        LOGGER.info(tag + " out of time: need wait and request startFLJob again");
+        LOGGER.info(Common.addTag(tag + " out of time: need wait and request startFLJob again"));
         waitNextReqTime(nextReqTime);
         Common.freeSession();
         flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
@@ -418,9 +416,9 @@ public class SyncFLJob {
     }
 
     private void failed(String tag, FLLiteClient flLiteClient) {
-        LOGGER.info(tag + " failed");
-        LOGGER.info("=========================================the total response of " +
-                flLiteClient.getIteration() + ": " + curStatus + "=========================================");
+        LOGGER.info(Common.addTag(tag + " failed"));
+        LOGGER.info(Common.addTag("=========================================the total response of " +
+                flLiteClient.getIteration() + ": " + curStatus + "========================================="));
         Common.freeSession();
         flJobResultCallback.onFlJobIterationFinished(flParameter.getFlName(), flLiteClient.getIteration(),
                 flLiteClient.getRetCode());
@@ -430,27 +428,27 @@ public class SyncFLJob {
                                                                String inferDataPath, String pathRegex) {
         Map<RunType, List<String>> dataMap = new HashMap<>();
         if ((trainDataPath == null) || ("null".equals(trainDataPath)) || (trainDataPath.isEmpty())) {
-            LOGGER.info("the trainDataPath is null or empty, please check if you are in the case of " +
-                    "only inference");
+            LOGGER.info(Common.addTag("the trainDataPath is null or empty, please check if you are in the case of " +
+                    "noly inference"));
         } else {
             dataMap.put(RunType.TRAINMODE, Arrays.asList(trainDataPath.split(pathRegex)));
-            LOGGER.info("the trainDataPath: " + Arrays.toString(trainDataPath.split(pathRegex)));
+            LOGGER.info(Common.addTag("the trainDataPath: " + Arrays.toString(trainDataPath.split(pathRegex))));
         }
 
         if ((evalDataPath == null) || ("null".equals(evalDataPath)) || (evalDataPath.isEmpty())) {
-            LOGGER.info("the evalDataPath is null or empty, please check if you are in the case of only" +
-                    " training without evaluation");
+            LOGGER.info(Common.addTag("the evalDataPath is null or empty, please check if you are in the case of only" +
+                    " trainning without evaluation"));
         } else {
             dataMap.put(RunType.EVALMODE, Arrays.asList(evalDataPath.split(pathRegex)));
-            LOGGER.info("the evalDataPath: " + Arrays.toString(evalDataPath.split(pathRegex)));
+            LOGGER.info(Common.addTag("the evalDataPath: " + Arrays.toString(evalDataPath.split(pathRegex))));
         }
 
         if ((inferDataPath == null) || ("null".equals(inferDataPath)) || (inferDataPath.isEmpty())) {
-            LOGGER.info("the inferDataPath is null or empty, please check if you are in the case of " +
-                    "training without inference");
+            LOGGER.info(Common.addTag("the inferDataPath is null or empty, please check if you are in the case of " +
+                    "trainning without inference"));
         } else {
             dataMap.put(RunType.INFERMODE, Arrays.asList(inferDataPath.split(pathRegex)));
-            LOGGER.info("the inferDataPath: " + Arrays.toString(inferDataPath.split(pathRegex)));
+            LOGGER.info(Common.addTag("the inferDataPath: " + Arrays.toString(inferDataPath.split(pathRegex))));
         }
         return dataMap;
     }
@@ -458,17 +456,17 @@ public class SyncFLJob {
     private static void createWeightNameList(String trainWeightName, String inferWeightName, String nameRegex,
                                              FLParameter flParameter) {
         if ((trainWeightName == null) || ("null".equals(trainWeightName)) || (trainWeightName.isEmpty())) {
-            LOGGER.info("the trainWeightName is null or empty, only need in " + ServerMod.HYBRID_TRAINING);
+            LOGGER.info(Common.addTag("the trainWeightName is null or empty, only need in " + ServerMod.HYBRID_TRAINING));
         } else {
             flParameter.setHybridWeightName(Arrays.asList(trainWeightName.split(nameRegex)), RunType.TRAINMODE);
-            LOGGER.info("the trainWeightName: " + Arrays.toString(trainWeightName.split(nameRegex)));
+            LOGGER.info(Common.addTag("the trainWeightName: " + Arrays.toString(trainWeightName.split(nameRegex))));
         }
 
         if ((inferWeightName == null) || ("null".equals(inferWeightName)) || (inferWeightName.isEmpty())) {
-            LOGGER.info("the inferWeightName is null or empty, only need in " + ServerMod.HYBRID_TRAINING);
+            LOGGER.info(Common.addTag("the inferWeightName is null or empty, only need in " + ServerMod.HYBRID_TRAINING));
         } else {
             flParameter.setHybridWeightName(Arrays.asList(inferWeightName.split(nameRegex)), RunType.INFERMODE);
-            LOGGER.info("the trainWeightName: " + Arrays.toString(inferWeightName.split(nameRegex)));
+            LOGGER.info(Common.addTag("the trainWeightName: " + Arrays.toString(inferWeightName.split(nameRegex))));
         }
     }
 
@@ -524,7 +522,7 @@ public class SyncFLJob {
         SyncFLJob syncFLJob = new SyncFLJob();
         switch (task) {
             case "train":
-                LOGGER.info("start syncFLJob.flJobRun()");
+                LOGGER.info(Common.addTag("start syncFLJob.flJobRun()"));
                 flParameter.setDataMap(dataMap);
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setInferModelPath(inferModelPath);
@@ -542,7 +540,7 @@ public class SyncFLJob {
                 syncFLJob.flJobRun();
                 break;
             case "inference":
-                LOGGER.info("start syncFLJob.modelInference()");
+                LOGGER.info(Common.addTag("start syncFLJob.modelInference()"));
                 flParameter.setDataMap(dataMap);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setThreadNum(threadNum);
@@ -551,7 +549,7 @@ public class SyncFLJob {
                 syncFLJob.modelInfer();
                 break;
             case "getModel":
-                LOGGER.info("start syncFLJob.getModel()");
+                LOGGER.info(Common.addTag("start syncFLJob.getModel()"));
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setSslProtocol(sslProtocol);
@@ -566,7 +564,7 @@ public class SyncFLJob {
                 syncFLJob.getModel();
                 break;
             default:
-                LOGGER.info("do not do any thing!");
+                LOGGER.info(Common.addTag("do not do any thing!"));
         }
     }
 
@@ -591,7 +589,7 @@ public class SyncFLJob {
         SyncFLJob syncFLJob = new SyncFLJob();
         switch (task) {
             case "train":
-                LOGGER.info("start syncFLJob.flJobRun()");
+                LOGGER.info(Common.addTag("start syncFLJob.flJobRun()"));
                 flParameter.setTrainDataset(trainDataset);
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setTestDataset(testDataset);
@@ -609,7 +607,7 @@ public class SyncFLJob {
                 syncFLJob.flJobRun();
                 break;
             case "inference":
-                LOGGER.info("start syncFLJob.modelInference()");
+                LOGGER.info(Common.addTag("start syncFLJob.modelInference()"));
                 flParameter.setTestDataset(testDataset);
                 flParameter.setInferModelPath(inferModelPath);
                 if (ALBERT.equals(flName)) {
@@ -619,7 +617,7 @@ public class SyncFLJob {
                 syncFLJob.modelInference();
                 break;
             case "getModel":
-                LOGGER.info("start syncFLJob.getModel()");
+                LOGGER.info(Common.addTag("start syncFLJob.getModel()"));
                 flParameter.setTrainModelPath(trainModelPath);
                 flParameter.setInferModelPath(inferModelPath);
                 flParameter.setDomainName(domainName);
@@ -631,7 +629,7 @@ public class SyncFLJob {
                 syncFLJob.getModel();
                 break;
             default:
-                LOGGER.info("do not do any thing!");
+                LOGGER.info(Common.addTag("do not do any thing!"));
         }
     }
 
@@ -639,26 +637,26 @@ public class SyncFLJob {
         int[] labels = new int[0];
         if (flParameter.getFlName().equals(ALBERT)) {
             AlInferBert alInferBert = AlInferBert.getInstance();
-            LOGGER.info("===========model inference=============");
+            LOGGER.info(Common.addTag("===========model inference============="));
             labels = alInferBert.inferModel(flParameter.getInferModelPath(), flParameter.getTestDataset(),
                     flParameter.getVocabFile(), flParameter.getIdsFile());
             if (labels == null || labels.length == 0) {
                 LOGGER.severe("[model inference] the returned label from adInferBert.inferModel() is null, please " +
                         "check");
             }
-            LOGGER.info("[model inference] the predicted labels: " + Arrays.toString(labels));
+            LOGGER.info(Common.addTag("[model inference] the predicted labels: " + Arrays.toString(labels)));
             SessionUtil.free(alInferBert.getTrainSession());
-            LOGGER.info("[model inference] inference finish");
+            LOGGER.info(Common.addTag("[model inference] inference finish"));
         } else if (flParameter.getFlName().equals(LENET)) {
             TrainLenet trainLenet = TrainLenet.getInstance();
-            LOGGER.info("===========model inference=============");
+            LOGGER.info(Common.addTag("===========model inference============="));
             labels = trainLenet.inferModel(flParameter.getInferModelPath(), flParameter.getTestDataset().split(",")[0]);
             if (labels == null || labels.length == 0) {
-                LOGGER.severe("[model inference] the return labels is null.");
+                LOGGER.severe(Common.addTag("[model inference] the return labels is null."));
             }
-            LOGGER.info("[model inference] the predicted labels: " + Arrays.toString(labels));
+            LOGGER.info(Common.addTag("[model inference] the predicted labels: " + Arrays.toString(labels)));
             SessionUtil.free(trainLenet.getTrainSession());
-            LOGGER.info("[model inference] inference finish");
+            LOGGER.info(Common.addTag("[model inference] inference finish"));
         }
         return labels;
 
@@ -674,7 +672,7 @@ public class SyncFLJob {
 
     public static void main(String[] args) {
         if (args[4] == null || args[4].isEmpty()) {
-            LOGGER.severe("the parameter of <args[4]> is null, please check");
+            LOGGER.severe(Common.addTag("the parameter of <args[4]> is null, please check"));
             throw new IllegalArgumentException();
         }
         if (Common.checkFLName(args[4])) {

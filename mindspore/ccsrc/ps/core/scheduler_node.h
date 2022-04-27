@@ -88,7 +88,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   // Register and initialize the actor route table service.
   void RegisterActorRouteTableServiceHandler();
   void InitializeActorRouteTableService();
-  virtual void InitEventTxtFile();
 
   // Register collective communication initialization service.
   virtual void RegisterInitCollectCommServiceHandler() {}
@@ -138,10 +137,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   // Process lookup actor route messages from other nodes.
   void ProcessLookupActorRoute(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
                                const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
-
-  // Process failure event message from other nodes.
-  void ProcessFailureEvent(const std::shared_ptr<TcpServer> &server, const std::shared_ptr<TcpConnection> &conn,
-                           const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size);
 
   // Determine whether the registration request of the node should be rejected, the registration of the
   // alive node should be rejected.
@@ -206,9 +201,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
 
   bool RecoverScheduler();
 
-  // Write scheduler restart error message
-  virtual void RecordSchedulerRestartInfo();
-
   void PersistMetaData();
 
   bool CheckIfNodeDisconnected() const;
@@ -253,7 +245,7 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   std::unordered_map<std::string, OnRequestReceive> callbacks_;
 
   // Used to persist and obtain metadata information for scheduler.
-  std::shared_ptr<RecoveryBase> scheduler_recovery_;
+  std::unique_ptr<RecoveryBase> scheduler_recovery_;
   // persistent command need to be sent.
   std::atomic<PersistentCommand> persistent_cmd_;
 
@@ -267,15 +259,6 @@ class BACKEND_EXPORT SchedulerNode : public Node {
   std::unordered_map<int, std::string> register_connection_fd_;
 
   std::unique_ptr<ActorRouteTableService> actor_route_table_service_;
-
-  // The event txt file path
-  std::string event_file_path_;
-
-  // The mutex for event txt event_file_path_
-  std::mutex event_txt_file_mtx_;
-
-  // The fstream for event_file_path_
-  std::fstream event_txt_file_;
 };
 }  // namespace core
 }  // namespace ps

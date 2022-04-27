@@ -73,8 +73,6 @@ class StartFLJobKernel : public RoundKernel {
                           const schema::CompressType &compressType = schema::CompressType_NO_COMPRESS,
                           const std::map<std::string, AddressPtr> &compress_feature_maps = {});
 
-  bool VerifyFLJobRequest(const schema::RequestFLJob *start_fl_job_req);
-
   // The executor is for getting the initial model for startFLJob request.
   Executor *executor_;
 

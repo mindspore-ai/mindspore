@@ -19,7 +19,9 @@
 
 #include <vector>
 #include "src/inner_kernel.h"
+#ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight_manager.h"
+#endif
 #include "nnacl/matmul_parameter.h"
 #include "include/errorcode.h"
 #include "src/common/common.h"

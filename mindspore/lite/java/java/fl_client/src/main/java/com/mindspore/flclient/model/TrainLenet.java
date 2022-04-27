@@ -17,7 +17,6 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 
@@ -35,7 +34,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class TrainLenet extends TrainModel {
-    private static final Logger logger = FLLoggerGenerater.getModelLogger(TrainLenet.class.toString());
+    private static final Logger logger = Logger.getLogger(TrainLenet.class.toString());
 
     private static final int NUM_OF_CLASS = 62;
 
@@ -85,31 +84,31 @@ public class TrainLenet extends TrainModel {
      */
     public int[] inferModel(String modelPath, String imageFile) {
         if (modelPath == null || imageFile == null || modelPath.isEmpty() || imageFile.isEmpty()) {
-            logger.severe("model path or image file cannot be empty");
+            logger.severe(Common.addTag("model path or image file cannot be empty"));
             return new int[0];
         }
         // cur dont care return value,train sample size need sure after pad sample
         initDataSet(imageFile, "");
         int status = initSessionAndInputs(modelPath, false);
         if (status == -1) {
-            logger.severe("init session and inputs failed");
+            logger.severe(Common.addTag("init session and inputs failed"));
             return new int[0];
         }
         status = padSamples();
         if (status == -1) {
-            logger.severe("infer model failed");
+            logger.severe(Common.addTag("infer model failed"));
             return new int[0];
         }
         int[] predictLabels = new int[trainSampleSize];
         for (int j = 0; j < batchNum; j++) {
             List<Integer> modelInput = fillModelInput(j, false);
             if (!modelInput.isEmpty()) {
-                logger.severe("infer mode model input need empty");
+                logger.severe(Common.addTag("infer mode model input need empty"));
                 return new int[0];
             }
             boolean isSuccess = trainSession.runGraph();
             if (!isSuccess) {
-                logger.severe("run graph failed");
+                logger.severe(Common.addTag("run graph failed"));
                 return new int[0];
             }
             int[] batchLabels = getBatchLabel();
@@ -155,7 +154,7 @@ public class TrainLenet extends TrainModel {
     @Override
     public int padSamples() {
         if (batchSize <= 0) {
-            logger.severe("pad samples failed");
+            logger.severe(Common.addTag("pad samples failed"));
             return -1;
         }
         if (labelArray == null) // infer model
@@ -184,32 +183,32 @@ public class TrainLenet extends TrainModel {
         }
         trainSampleSize = curSize + padSize;
         batchNum = trainSampleSize / batchSize;
-        logger.info("total samples:" + trainSampleSize);
-        logger.info("total batchNum:" + batchNum);
+        logger.info(Common.addTag("total samples:" + trainSampleSize));
+        logger.info(Common.addTag("total batchNum:" + batchNum));
         return 0;
     }
 
     @Override
     public int initSessionAndInputs(String modelPath, boolean isTrainMode) {
         if (modelPath == null) {
-            logger.severe("modelPath cannot be empty");
+            logger.severe(Common.addTag("modelPath cannot be empty"));
             return -1;
         }
         Optional<LiteSession> optTrainSession = SessionUtil.initSession(modelPath);
         if (!optTrainSession.isPresent()) {
-            logger.severe("session init failed");
+            logger.severe(Common.addTag("session init failed"));
             return -1;
         }
         trainSession = optTrainSession.get();
         List<MSTensor> inputs = trainSession.getInputs();
         numOfClass = NUM_OF_CLASS;
         if (inputs.size() != LENET_INPUT_SIZE) {
-            logger.severe("lenet input size error");
+            logger.severe(Common.addTag("lenet input size error"));
             return -1;
         }
         MSTensor imageTensor = inputs.get(0);
         if (imageTensor == null || imageTensor.getShape().length == 0) {
-            logger.severe("image tensor cannot be empty");
+            logger.severe(Common.addTag("image tensor cannot be empty"));
             return -1;
         }
         batchSize = imageTensor.getShape()[0];
@@ -218,13 +217,13 @@ public class TrainLenet extends TrainModel {
         imageBuffer.order(ByteOrder.nativeOrder());
         MSTensor labelTensor = inputs.get(1);
         if (labelTensor == null) {
-            logger.severe("labelTensor tensor cannot be empty");
+            logger.severe(Common.addTag("labelTensor tensor cannot be empty"));
             return -1;
         }
         labelSize = labelTensor.elementsNum();
         labelIdBuffer = ByteBuffer.allocateDirect(labelSize * Integer.BYTES);
         labelIdBuffer.order(ByteOrder.nativeOrder());
-        logger.info("init session and inputs success");
+        logger.info(Common.addTag("init session and inputs success"));
         return 0;
     }
 
@@ -233,7 +232,7 @@ public class TrainLenet extends TrainModel {
         imageBuffer.clear();
         labelIdBuffer.clear();
         if ((batchIdx + 1) * imageSize * Float.BYTES - 1 >= imageArray.length) {
-            logger.severe("fill model image input failed");
+            logger.severe(Common.addTag("fill model image input failed"));
             return new ArrayList<>();
         }
         List<Integer> predictLabels = new ArrayList<>(batchSize);
@@ -241,7 +240,7 @@ public class TrainLenet extends TrainModel {
             imageBuffer.put(imageArray[batchIdx * imageSize * Float.BYTES + i]);
         }
         if (labelArray == null || (batchIdx + 1) * labelSize - 1 >= labelArray.length) {
-            logger.severe("fill model label input failed");
+            logger.severe(Common.addTag("fill model label input failed"));
             return new ArrayList<>();
         }
         for (int i = 0; i < labelSize; i++) {
@@ -253,7 +252,7 @@ public class TrainLenet extends TrainModel {
 
         List<MSTensor> inputs = trainSession.getInputs();
         if (inputs.size() != LENET_INPUT_SIZE) {
-            logger.severe("input size error");
+            logger.severe(Common.addTag("input size error"));
             return new ArrayList<>();
         }
         MSTensor imageTensor = inputs.get(0);

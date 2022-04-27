@@ -276,10 +276,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_createTensorByNat
     c_shape[i] = static_cast<int64_t>(shape_pointer[i]);
   }
   env->ReleaseIntArrayElements(tensor_shape, shape_pointer, JNI_ABORT);
-  const char *c_tensor_name = env->GetStringUTFChars(tensor_name, nullptr);
-  std::string str_tensor_name(c_tensor_name, env->GetStringLength(tensor_name));
-  auto tensor = mindspore::MSTensor::CreateTensor(str_tensor_name, static_cast<mindspore::DataType>(data_type), c_shape,
-                                                  p_data, data_len);
-  env->ReleaseStringUTFChars(tensor_name, c_tensor_name);
+  auto tensor =
+    mindspore::MSTensor::CreateTensor(env->GetStringUTFChars(tensor_name, JNI_FALSE),
+                                      static_cast<mindspore::DataType>(data_type), c_shape, p_data, data_len);
   return jlong(tensor);
 }

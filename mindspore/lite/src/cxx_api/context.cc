@@ -80,22 +80,6 @@ void Context::SetThreadNum(int32_t thread_num) {
   data_->thread_num = thread_num;
 }
 
-void Context::SetInterOpParallelNum(int32_t parallel_num) {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return;
-  }
-  data_->inter_op_parallel_num_ = parallel_num;
-}
-
-int32_t Context::GetInterOpParallelNum() const {
-  if (data_ == nullptr) {
-    MS_LOG(ERROR) << "Invalid context.";
-    return 0;
-  }
-  return data_->inter_op_parallel_num_;
-}
-
 int32_t Context::GetThreadNum() const {
   if (data_ == nullptr) {
     MS_LOG(ERROR) << "Invalid context.";

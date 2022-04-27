@@ -19,15 +19,11 @@
 
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
-#include <map>
-
-#include "fl/server/common.h"
-#include "fl/server/distributed_count_service.h"
-#include "fl/server/iteration_timer.h"
-#include "fl/server/kernel/round/round_kernel.h"
 #include "ps/core/communicator/communicator_base.h"
+#include "fl/server/common.h"
+#include "fl/server/iteration_timer.h"
+#include "fl/server/distributed_count_service.h"
+#include "fl/server/kernel/round/round_kernel.h"
 
 namespace mindspore {
 namespace fl {
@@ -81,16 +77,6 @@ class Round {
   void InitkernelClientUploadLoss();
 
   float kernel_upload_loss() const;
-
-  std::multimap<uint64_t, size_t> GetSendData() const;
-
-  std::multimap<uint64_t, size_t> GetReceiveData() const;
-
-  std::vector<std::pair<uint64_t, uint32_t>> GetUpdateModelCompleteInfo() const;
-
-  void ResetParticipationTimeAndNum();
-
-  void ClearData();
 
  private:
   // The callbacks which will be set to DistributedCounterService.

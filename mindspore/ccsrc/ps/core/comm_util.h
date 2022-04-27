@@ -19,46 +19,47 @@
 
 #include <unistd.h>
 #ifdef _MSC_VER
-#include <iphlpapi.h>
 #include <tchar.h>
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
+#include <iphlpapi.h>
 #else
+#include <net/if.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
-#include <net/if.h>
 #include <netinet/in.h>
 #endif
 
-#include <assert.h>
 #include <event2/buffer.h>
 #include <event2/event.h>
 #include <event2/http.h>
 #include <event2/keyvalq_struct.h>
 #include <event2/listener.h>
 #include <event2/util.h>
-#include <openssl/bio.h>
+
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <assert.h>
 #include <openssl/pkcs12.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
+#include <openssl/bio.h>
 #include <openssl/x509v3.h>
 
-#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <functional>
-#include <iostream>
-#include <map>
 #include <random>
 #include <sstream>
 #include <string>
-#include <thread>
 #include <utility>
+#include <thread>
+#include <fstream>
+#include <iostream>
 #include <vector>
+#include <map>
+#include <algorithm>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -77,14 +78,12 @@ constexpr int kGroup2RandomLength = 4;
 constexpr int kGroup3RandomLength = 4;
 constexpr int kGroup4RandomLength = 4;
 constexpr int kGroup5RandomLength = 12;
-constexpr int kMillSecondLength = 3;
 
 // The size of the buffer for sending and receiving data is 4096 bytes.
 constexpr int kMessageChunkLength = 4096;
 // The timeout period for the http client to connect to the http server is 120 seconds.
 constexpr int kConnectionTimeout = 120;
 constexpr char kLibeventLogPrefix[] = "[libevent log]:";
-constexpr char kFailureEvent[] = "failureEvent";
 
 // Find the corresponding string style of cluster state through the subscript of the enum:ClusterState
 const std::vector<std::string> kClusterState = {
@@ -113,18 +112,6 @@ const std::map<std::string, ClusterState> kClusterStateMap = {
   {"CLUSTER_DISABLE_FLS", ClusterState::CLUSTER_DISABLE_FLS},
   {"CLUSTER_SCHEDULER_RECOVERY", ClusterState::CLUSTER_SCHEDULER_RECOVERY},
   {"CLUSTER_SCALE_OUT_ROLLBACK", ClusterState::CLUSTER_SCALE_OUT_ROLLBACK}};
-
-struct Time {
-  uint64_t time_stamp;
-  std::string time_str_second;
-  std::string time_str_mill;
-  std::string time_str_day;
-};
-
-struct FileConfig {
-  uint32_t storage_type;
-  std::string storage_file_path;
-};
 
 class CommUtil {
  public:
@@ -169,16 +156,6 @@ class CommUtil {
   static bool CreateDirectory(const std::string &directoryPath);
   static bool CheckHttpUrl(const std::string &http_url);
   static bool IsFileReadable(const std::string &file);
-  template <typename T>
-  static T JsonGetKeyWithException(const nlohmann::json &json, const std::string &key) {
-    if (!json.contains(key)) {
-      MS_LOG(EXCEPTION) << "The key " << key << "does not exist in json " << json.dump();
-    }
-    return json[key].get<T>();
-  }
-  static Time GetNowTime();
-  static bool ParseAndCheckConfigJson(Configuration *file_configuration, const std::string &key,
-                                      FileConfig *file_config);
 
  private:
   static std::random_device rd;

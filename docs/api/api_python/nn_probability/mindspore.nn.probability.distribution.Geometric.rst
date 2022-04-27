@@ -65,13 +65,13 @@ mindspore.nn.probability.distribution.Geometric
 
         **参数：**
 
-        - **probs** (Tensor) - 伯努利实验成功的概率。默认值：None。
+        - **probs_b** (Tensor) - 对比分布的伯努利实验成功的概率。默认值：None。
 
         **返回：**
 
         Tensor，熵的值。
 
-    .. py:method:: kl_loss(dist, probs_b, probs)
+    .. py:method:: kl_loss(dist, probs)
 
         计算KL散度，即KL(a||b)。
 

@@ -46,12 +46,6 @@ MatmulFp32BaseCPUKernel::~MatmulFp32BaseCPUKernel() {
     free(matrix_c_.pack_ptr);
     matrix_c_.pack_ptr = nullptr;
   }
-  if (params_->a_const_) {
-    lite::PackWeightManager::GetInstance()->Free(matrix_a_.pack_ptr);
-  }
-  if (params_->b_const_) {
-    lite::PackWeightManager::GetInstance()->Free(matrix_b_.pack_ptr);
-  }
 }
 
 int MatmulFp32BaseCPUKernel::BackupConstMatrix(MatrixInfo *matrix_info, int index) {
@@ -80,17 +74,20 @@ int MatmulFp32BaseCPUKernel::PackMatrixA() {
         reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_.pack_size * sizeof(float)));
     }
   } else {
-    bool is_packed = false;
-    void *data = lite::PackWeightManager::GetInstance()->GetPackData(
-      in_tensors()[FIRST_INPUT]->data(), static_cast<size_t>(matrix_a_.pack_size) * sizeof(float), &is_packed);
-    matrix_a_.pack_ptr = reinterpret_cast<float *>(data);
-    if (matrix_a_.pack_ptr == nullptr) {
-      MS_LOG(ERROR) << "matrix a pack ptr is nullptr.";
-      return RET_ERROR;
-    }
-    if (is_packed) {
+#ifdef SHARING_MODEL_WEIGHT
+    auto a_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors()[FIRST_INPUT], static_cast<size_t>(matrix_a_.pack_size) * sizeof(float));
+    matrix_a_.pack_ptr = reinterpret_cast<float *>(a_packed.second);
+    if (a_packed.first == lite::PACKED) {
       return RET_OK;
     }
+    if (a_packed.first == lite::MALLOC && matrix_a_.pack_ptr == nullptr) {
+      matrix_a_.pack_ptr = reinterpret_cast<float *>(
+        ms_context_->allocator->Malloc(static_cast<size_t>(matrix_a_.pack_size) * sizeof(float)));
+    }
+#else
+    matrix_a_.pack_ptr = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_a_.pack_size * sizeof(float)));
+#endif
   }
   auto src_ptr =
     matrix_a_.has_origin ? matrix_a_.origin_ptr : reinterpret_cast<float *>(in_tensors_[FIRST_INPUT]->data());
@@ -128,17 +125,20 @@ int MatmulFp32BaseCPUKernel::PackMatrixB() {
         reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_.pack_size * sizeof(float)));
     }
   } else {
-    bool is_packed = false;
-    void *data = lite::PackWeightManager::GetInstance()->GetPackData(
-      in_tensors()[SECOND_INPUT]->data(), static_cast<size_t>(matrix_b_.pack_size) * sizeof(float), &is_packed);
-    matrix_b_.pack_ptr = reinterpret_cast<float *>(data);
-    if (matrix_b_.pack_ptr == nullptr) {
-      MS_LOG(ERROR) << "matrix b pack ptr is nullptr.";
-      return RET_ERROR;
-    }
-    if (is_packed) {
+#ifdef SHARING_MODEL_WEIGHT
+    auto b_packed = lite::PackWeightManager::GetInstance()->GetPackedTensor(
+      in_tensors()[SECOND_INPUT], static_cast<size_t>(matrix_b_.pack_size) * sizeof(float));
+    matrix_b_.pack_ptr = reinterpret_cast<float *>(b_packed.second);
+    if (b_packed.first == lite::PACKED) {
       return RET_OK;
     }
+    if (b_packed.first == lite::MALLOC && matrix_b_.pack_ptr == nullptr) {
+      matrix_b_.pack_ptr = reinterpret_cast<float *>(
+        ms_context_->allocator->Malloc(static_cast<size_t>(matrix_b_.pack_size) * sizeof(float)));
+    }
+#else
+    matrix_b_.pack_ptr = reinterpret_cast<float *>(ms_context_->allocator->Malloc(matrix_b_.pack_size * sizeof(float)));
+#endif
   }
   auto src_ptr =
     matrix_b_.has_origin ? matrix_b_.origin_ptr : reinterpret_cast<float *>(in_tensors_[SECOND_INPUT]->data());

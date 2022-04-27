@@ -33,7 +33,9 @@
 
 namespace mindspore::lite {
 #ifdef ENABLE_MINDRT
+#ifndef OPERATOR_PARALLELISM
 constexpr int kDefaultParallelNum = 2;
+#endif
 #endif
 struct InnerContext : public Context {
  public:
@@ -88,6 +90,13 @@ struct InnerContext : public Context {
   void ReplaceLinkInfoReceiverWithNewOne(void *new_receiver, void *old_receiver);
 
   void ReplaceLinkInfoSenderWithNewOne(void *new_sender, void *old_sender);
+
+#ifdef BFC_MEMORY
+  /// \brief Set NUMA node id.
+  ///
+  /// \param[in] node Define the NUMA node id.
+  inline void SetNodeId(int node_id) { node_id_ = node_id; }
+#endif
 
  private:
   bool IsAllDeviceTypeValid() const;

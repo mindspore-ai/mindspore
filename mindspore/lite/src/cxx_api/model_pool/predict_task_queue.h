@@ -23,9 +23,7 @@
 #include <condition_variable>
 #include "include/api/types.h"
 #include "include/api/status.h"
-#include "src/cxx_api/model_pool/model_worker.h"
 namespace mindspore {
-class ModelWorker;
 struct PredictTask {
   PredictTask(const std::vector<MSTensor> *in, std::vector<MSTensor> *out, MSKernelCallBack before,
               MSKernelCallBack after, bool ready = false)
@@ -35,8 +33,6 @@ struct PredictTask {
   MSKernelCallBack before;
   MSKernelCallBack after;
   bool ready;
-  std::condition_variable task_done_condition;
-  std::mutex task_done_mutex;
 };
 
 class PredictTaskQueue {
@@ -46,9 +42,8 @@ class PredictTaskQueue {
 
   void PushPredictTask(std::shared_ptr<PredictTask> task, int node_id);
   void WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task);
-  std::shared_ptr<PredictTask> GetPredictTask(int node_id, ModelWorker *worker);
-  void ActiveTask(const std::shared_ptr<PredictTask> &task);
-  void ActiveTaskQueue() { task_push_cond_.notify_all(); }
+  std::shared_ptr<PredictTask> GetPredictTask(int node_id);
+  void ActiveTask();
   int GetTaskNum(int node_id);
   void SetTaskQueueNum(int num);
 

@@ -18,7 +18,6 @@ package com.mindspore.lite;
 
 import com.mindspore.lite.config.MSConfig;
 
-import java.io.File;
 import java.nio.MappedByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -254,15 +253,7 @@ public class LiteSession {
      * @return Whether the export is successful.
      */
     public boolean export(String modelFileName, int modelType, int quantizationType) {
-        File dstFile = new File(modelFileName);
-        // the file name must with postfix .ms, so we add tmp_ as prefix
-        String tmpFileName = dstFile.getParent() + "tmp_" + dstFile.getName();
-        boolean ret = this.export(this.sessionPtr, tmpFileName, modelType, quantizationType);
-        if (ret) {
-            File tmpFile = new File(tmpFileName);
-            ret = tmpFile.renameTo(dstFile);
-        }
-        return ret;
+        return this.export(this.sessionPtr, modelFileName, modelType, quantizationType);
     }
 
     /**

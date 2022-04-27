@@ -17,7 +17,6 @@
 package com.mindspore.flclient.cipher;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -42,7 +41,7 @@ import java.util.logging.Logger;
  * @since 2021-8-27
  */
 public class SignAndVerify {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(SignAndVerify.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(SignAndVerify.class.toString());
 
     /**
      * sign data
@@ -53,11 +52,11 @@ public class SignAndVerify {
      */
     public static byte[] signData(String clientID, byte[] data) {
         if (clientID == null || clientID.isEmpty()) {
-            LOGGER.severe("[SignAndVerify] the parameter clientID is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[SignAndVerify] the parameter clientID is null or empty, please check!"));
             return null;
         }
         if (data == null || data.length == 0) {
-            LOGGER.severe("[SignAndVerify] the parameter data is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[SignAndVerify] the parameter data is null or empty, please check!"));
             return null;
         }
         byte[] signData = null;
@@ -76,7 +75,7 @@ public class SignAndVerify {
         } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException
                 | UnrecoverableKeyException | NoSuchProviderException | InvalidKeyException
                 | SignatureException e) {
-            LOGGER.severe("[SignAndVerify] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[SignAndVerify] catch Exception: " + e.getMessage()));
         }
         return signData;
     }
@@ -93,32 +92,32 @@ public class SignAndVerify {
     public static boolean verifySignatureByCert(String clientID, X509Certificate[] x509Certificates, byte[] data,
                                                 byte[] signed) {
         if (clientID == null || clientID.isEmpty()) {
-            LOGGER.severe("[SignAndVerify] the parameter clientID is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[SignAndVerify] the parameter clientID is null or empty, please check!"));
             return false;
         }
         if (x509Certificates == null || x509Certificates.length < 1) {
-            LOGGER.severe("[SignAndVerify] the parameter x509Certificates is null or the length is not " +
-                    "valid: < 1, please check!");
+            LOGGER.severe(Common.addTag("[SignAndVerify] the parameter x509Certificates is null or the length is not " +
+                    "valid: < 1, please check!"));
             return false;
         }
         if (data == null || data.length == 0) {
-            LOGGER.severe("[SignAndVerify] the parameter data is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[SignAndVerify] the parameter data is null or empty, please check!"));
             return false;
         }
         if (signed == null || signed.length == 0) {
-            LOGGER.severe("[SignAndVerify] the parameter signed is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[SignAndVerify] the parameter signed is null or empty, please check!"));
             return false;
         }
         if (!CertVerify.verifyCertificateChain(clientID, x509Certificates)) {
-            LOGGER.info("Verify chain failed!");
+            LOGGER.info(Common.addTag("Verify chain failed!"));
             return false;
         }
-        LOGGER.info("Verify chain success!");
+        LOGGER.info(Common.addTag("Verify chain success!"));
 
         boolean isValid;
         try {
             if (x509Certificates[0].getPublicKey() == null) {
-                LOGGER.severe("[SignAndVerify] get public key failed!");
+                LOGGER.severe(Common.addTag("[SignAndVerify] get public key failed!"));
                 return false;
             }
             PublicKey publicKey = x509Certificates[0].getPublicKey();  // get public key
@@ -127,7 +126,7 @@ public class SignAndVerify {
             signature.update(data);  // set data
             isValid = signature.verify(signed); // verify the consistence between signature and data
         } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
-            LOGGER.severe("[SignAndVerify] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[SignAndVerify] catch Exception: " + e.getMessage()));
             return false;
         }
         return isValid;
@@ -146,7 +145,7 @@ public class SignAndVerify {
             messageDigest = MessageDigest.getInstance("SHA-256");
             hash = messageDigest.digest(bytes);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.severe("[PkiUtil] catch NoSuchAlgorithmException: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[PkiUtil] catch NoSuchAlgorithmException: " + e.getMessage()));
         }
         return hash;
     }

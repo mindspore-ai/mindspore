@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_DROPOUT_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_DROPOUT_H_
 
-#include <random>
 #include <vector>
 #include "src/inner_kernel.h"
 
@@ -37,8 +36,6 @@ class DropoutCPUKernel : public InnerKernel {
  private:
   float scale_ = 1.0;
   int thread_count_ = 1;
-  std::default_random_engine generator_;
-  std::bernoulli_distribution distribution_;
 };
 
 }  // namespace mindspore::kernel

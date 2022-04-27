@@ -17,7 +17,6 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 
@@ -34,7 +33,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class AlBert extends TrainModel {
-    private static final Logger logger = FLLoggerGenerater.getModelLogger(AlBert.class.toString());
+    private static final Logger logger = Logger.getLogger(AlBert.class.toString());
 
     private static final int NUM_OF_CLASS = 4;
 
@@ -75,30 +74,30 @@ public class AlBert extends TrainModel {
     @Override
     public int initSessionAndInputs(String modelPath, boolean isTrainMode) {
         if (modelPath == null) {
-            logger.severe("session init failed");
+            logger.severe(Common.addTag("session init failed"));
             return -1;
         }
         int ret = -1;
         Optional<LiteSession> optTrainSession = SessionUtil.initSession(modelPath);
         if (!optTrainSession.isPresent()) {
-            logger.severe("session init failed");
+            logger.severe(Common.addTag("session init failed"));
             return -1;
         }
         trainSession = optTrainSession.get();
         List<MSTensor> inputs = trainSession.getInputs();
         if (inputs.size() < 1) {
-            logger.severe("inputs size error");
+            logger.severe(Common.addTag("inputs size error"));
             return ret;
         }
        MSTensor inputIdTensor = trainSession.getInputsByTensorName("input_ids");
         if (inputIdTensor == null) {
-            logger.severe("labelId tensor is null");
+            logger.severe(Common.addTag("labelId tensor is null"));
             return ret;
         }
         int inputSize = inputIdTensor.elementsNum();
         batchSize = inputIdTensor.getShape()[0];
         if (batchSize <= 0) {
-            logger.severe("batch size should bigger than 0");
+            logger.severe(Common.addTag("batch size should bigger than 0"));
             return ret;
         }
         dataSize = inputSize / batchSize;
@@ -115,7 +114,7 @@ public class AlBert extends TrainModel {
             labelIdBufffer.order(ByteOrder.nativeOrder());
         }
         numOfClass = NUM_OF_CLASS;
-        logger.info("init session and input success");
+        logger.info(Common.addTag("init session and input success"));
         return 0;
     }
 
@@ -129,13 +128,13 @@ public class AlBert extends TrainModel {
         }
         List<Integer> labels = new ArrayList<>();
         if ((batchIdx + 1) * batchSize - 1 >= features.size()) {
-            logger.severe("fill model input failed");
+            logger.severe(Common.addTag("fill model input failed"));
             return new ArrayList<>();
         }
         fillInputBuffer(batchIdx, isTrainMode, labels);
         List<MSTensor> inputs = trainSession.getInputs();
         if (inputs.size() != TRAIN_BERT_INPUTS && inputs.size() != EVAL_BERT_INPUTS) {
-            logger.severe("bert input size error");
+            logger.severe(Common.addTag("bert input size error"));
             return new ArrayList<>();
         }
         MSTensor labelIdTensor;
@@ -144,7 +143,7 @@ public class AlBert extends TrainModel {
         MSTensor maskIdTensor;
         if (isTrainMode) {
             if (inputs.size() != TRAIN_BERT_INPUTS) {
-                logger.severe("train bert input size error");
+                logger.severe(Common.addTag("train bert input size error"));
                 return new ArrayList<>();
             }
             labelIdTensor = trainSession.getInputsByTensorName("label_ids");
@@ -154,7 +153,7 @@ public class AlBert extends TrainModel {
             labelIdTensor.setData(labelIdBufffer);
         } else {
             if (inputs.size() < EVAL_BERT_INPUTS) {
-                logger.severe("eval bert input size error");
+                logger.severe(Common.addTag("eval bert input size error"));
                 return new ArrayList<>();
             }
             tokenIdTensor = trainSession.getInputsByTensorName("token_type_id");
@@ -170,10 +169,10 @@ public class AlBert extends TrainModel {
     @Override
     public int padSamples() {
         if (batchSize <= 0) {
-            logger.severe("batch size should bigger than 0");
+            logger.severe(Common.addTag("batch size should bigger than 0"));
             return -1;
         }
-        logger.info("before pad samples size:" + features.size());
+        logger.info(Common.addTag("before pad samples size:" + features.size()));
         int curSize = features.size();
         int modSize = curSize - curSize / batchSize * batchSize;
         padSize = modSize != 0 ? batchSize - modSize : 0;
@@ -183,8 +182,8 @@ public class AlBert extends TrainModel {
         }
         trainSampleSize = features.size();
         batchNum = features.size() / batchSize;
-        logger.info("after pad samples size:" + features.size());
-        logger.info("after pad batch num:" + batchNum);
+        logger.info(Common.addTag("after pad samples size:" + features.size()));
+        logger.info(Common.addTag("after pad batch num:" + batchNum));
         return 0;
     }
 }

@@ -34,30 +34,17 @@ public class NativeLibrary {
         return true;
     }
 
-    public static boolean loadLibrary() {
-        boolean loadSuccess = false;
+    private static boolean loadLibrary() {
         try {
             System.loadLibrary(GLOG_LIBNAME);
-            LOGGER.info("loadLibrary " + GLOG_LIBNAME + ": success");
-            loadSuccess = true;
-        } catch (UnsatisfiedLinkError e) {
-            LOGGER.info("tryLoadLibrary " + GLOG_LIBNAME + " failed: " + e.getMessage());
-        }
-        try {
             System.loadLibrary(MINDSPORE_LITE_LIBNAME);
-            LOGGER.info("loadLibrary " + MINDSPORE_LITE_LIBNAME + ": success");
-            loadSuccess = true;
-        } catch (UnsatisfiedLinkError e) {
-            LOGGER.info("tryLoadLibrary " + MINDSPORE_LITE_LIBNAME + " failed: " + e.getMessage());
-        }
-        try {
             System.loadLibrary(MINDSPORE_LITE_JNI_LIBNAME);
-            LOGGER.info("loadLibrary " + MINDSPORE_LITE_JNI_LIBNAME + ": success");
-            loadSuccess = true;
+            LOGGER.info("loadLibrary: success");
+            return true;
         } catch (UnsatisfiedLinkError e) {
-            LOGGER.info("tryLoadLibrary " + MINDSPORE_LITE_JNI_LIBNAME + " failed: " + e.getMessage());
+            LOGGER.warning("tryLoadLibraryFailed: " + e.getMessage());
+            return false;
         }
-        return loadSuccess;
     }
 
     private static void loadLib(String libResourceName) {

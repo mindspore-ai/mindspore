@@ -80,6 +80,18 @@ STATUS MatMulBiasAddFusionPass::DoFusion(MetaGraphT *graph, const std::string &p
   // make it an isolated node to be removed in IsolatedNodeRemovePass
   bias_node->inputIndex.clear();
   bias_node->outputIndex.clear();
+  auto it = find(graph->subGraph.at(0)->nodeIndices.begin(), graph->subGraph.at(0)->nodeIndices.end(),
+                 static_cast<uint32_t>(bias_index));
+  if (it == graph->subGraph.at(0)->nodeIndices.end()) {
+    MS_LOG(ERROR) << "can not find node in subgraph.";
+    return RET_ERROR;
+  }
+  graph->subGraph.at(0)->nodeIndices.erase(it);
+  for (size_t i = 0; i < graph->subGraph.at(0)->nodeIndices.size(); i++) {
+    if (graph->subGraph.at(0)->nodeIndices.at(i) > static_cast<uint32_t>(bias_index)) {
+      graph->subGraph.at(0)->nodeIndices.at(i)--;
+    }
+  }
   return RET_OK;
 }
 

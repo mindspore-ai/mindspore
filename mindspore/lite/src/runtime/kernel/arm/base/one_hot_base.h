@@ -41,6 +41,7 @@ class OneHotCPUKernel : public InnerKernel {
   int InitOnOffValueForThreeInputs();
   int InitOnOffValueForFourInputs();
 
+  int thread_num_ = 1;
   int axis_ = 0;
   int outer_size_ = 0;
   int inner_size_ = 0;

@@ -17,7 +17,6 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.util.logging.Logger;
 
@@ -27,7 +26,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class AlTrainBert extends AlBert {
-    private static final Logger logger = FLLoggerGenerater.getModelLogger(AlTrainBert.class.toString());
+    private static final Logger logger = Logger.getLogger(AlTrainBert.class.toString());
 
     private static volatile AlTrainBert alTrainBert;
 
@@ -62,7 +61,7 @@ public class AlTrainBert extends AlBert {
      */
     public int initDataSet(String dataFile, String vocabFile, String idsFile) {
         if (dataFile == null || vocabFile == null || idsFile == null) {
-            logger.severe("dataFile,idsFile,vocabFile cannot be empty");
+            logger.severe(Common.addTag("dataFile,idsFile,vocabFile cannot be empty"));
             return -1;
         }
         features = FileUtil.init(dataFile, vocabFile, idsFile, true, maxSeqLen);

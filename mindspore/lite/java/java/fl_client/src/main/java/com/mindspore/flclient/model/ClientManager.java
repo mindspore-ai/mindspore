@@ -17,7 +17,6 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.util.HashMap;
 import java.util.logging.Logger;
@@ -25,7 +24,7 @@ import java.util.logging.Logger;
 public class ClientManager {
     private static final HashMap<String, Client> clientMaps = new HashMap<>();
 
-    private static final Logger logger = FLLoggerGenerater.getModelLogger(ClientManager.class.toString());
+    private static final Logger logger = Logger.getLogger(ClientManager.class.toString());
 
     /**
      * Register client.
@@ -34,7 +33,7 @@ public class ClientManager {
      */
     public static void registerClient(Client client) {
         if(client == null) {
-            logger.severe("client cannot be null");
+            logger.severe(Common.addTag("client cannot be null"));
         }
         clientMaps.put(client.getClass().getName(), client);
     }
