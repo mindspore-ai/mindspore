@@ -75,13 +75,15 @@ def test_matrix_determinant(data_shape, data_type):
     context.set_context(mode=context.GRAPH_MODE)
     input_x = np.random.random(data_shape).astype(data_type)
     error = 1e-6
+    if data_type == np.float32:
+        error = 1e-4
     benchmark_output = matrix_determinant_scipy_benchmark(input_x)
     matrix_determinant = MatrixDeterminantNet()
     output = matrix_determinant(Tensor(input_x))
-    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
     context.set_context(mode=context.PYNATIVE_MODE)
     output = matrix_determinant(Tensor(input_x))
-    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
 @pytest.mark.level0
