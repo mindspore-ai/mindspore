@@ -129,6 +129,8 @@ class KernelActor : public DebugAwareActor {
   // The received input device type and format may be different from the formal parameter in the control flow scenarios,
   // so it needs to be copied from the input data to real data that kernel launch needs.
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
+  // Real data info <format, host_shape> that kernel launch needs, used to check the consistency of received input data.
+  std::vector<std::pair<std::string, ShapeVector>> real_input_data_infos_;
 
   // The device tensors for memory alloc and free.
   // output + workspace

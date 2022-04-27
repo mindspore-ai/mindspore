@@ -44,6 +44,13 @@ void KernelActor::Init() {
   kernel_info_ = dynamic_cast<KernelInfo *>(kernel_->kernel_info());
   is_dynamic_shape_ = common::AnfAlgo::IsDynamicShape(kernel_);
 
+  for (size_t i = 0; i < real_input_num_; ++i) {
+    const auto &input_device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel_, i, false);
+    MS_EXCEPTION_IF_NULL(input_device_tensor);
+    (void)real_input_data_infos_.emplace_back(
+      std::make_pair(input_device_tensor->format(), input_device_tensor->host_shape()));
+  }
+
   // Init the device tensors and kernel launch info.
   copy_input_device_tensors_.resize(real_input_num_);
   input_device_tensors_.resize(real_input_num_);
@@ -298,22 +305,24 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                         OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_data);
   MS_EXCEPTION_IF_NULL(input_data->data_);
-  const auto &device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel_, input_data->index_, false);
-  MS_EXCEPTION_IF_NULL(device_tensor);
-  if ((input_data->data_->DeviceType() == device_tensor->DeviceType()) &&
-      (input_data->data_->format() == device_tensor->format())) {
+  MS_EXCEPTION_IF_NULL(context);
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  if (IntToSize(input_data->index_) >= real_input_data_infos_.size()) {
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
+  }
+  auto &real_input_info = real_input_data_infos_[input_data->index_];
+  if ((input_data->data_->DeviceType() == device_contexts_[0]->GetDeviceAddressType()) &&
+      (input_data->data_->format() == real_input_info.first)) {
     return;
   }
 
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   if (IntToSize(input_data->index_) >= copy_input_device_tensors_.size()) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
   if (copy_input_device_tensors_[input_data->index_] == nullptr) {
     copy_input_device_tensors_[input_data->index_] =
-      device_contexts_[0]->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
-                                               device_tensor->type_id(), device_tensor->host_shape());
+      device_contexts_[0]->CreateDeviceAddress(nullptr, input_data->data_->GetSize(), real_input_info.first,
+                                               input_data->data_->type_id(), real_input_info.second);
   }
   auto &new_device_tensor = copy_input_device_tensors_[input_data->index_];
   MS_EXCEPTION_IF_NULL(new_device_tensor);
