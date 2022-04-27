@@ -184,15 +184,8 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   AnfUtils::CustomActorCallback actor_func = [kernel_mod, cnode](void *) {
     auto args = cnode->user_data<kernel::KernelArgs>();
-    if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
-        kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
-      auto update = kernel::AbstractArgsFromCNode(cnode);
-      if (args == nullptr) {
-        args = std::make_shared<kernel::KernelArgs>();
-      }
-      args->op = update.op;
-      update.depend_tensor_map = args->depend_tensor_map;
-      kernel::SetArgsToCNode(cnode, update);
+    if (args == nullptr) {
+      args = std::make_shared<kernel::KernelArgs>();
     }
     if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
       MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Resize failed.";
@@ -212,12 +205,20 @@ void InferOp(const CNodePtr &cnode) {
     MS_LOG(WARNING) << "The node " << cnode->fullname_with_scope() << " is not dynamic shape.";
     return;
   }
+  kernel::KernelArgs args;
   if (AnfAlgo::IsDynamicShapeSkipExecute(cnode)) {
     std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
   } else {
-    kernel::KernelArgs args;
     InferShape(cnode, &args.depend_tensor_map);
+  }
+
+  if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
+      kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
+    auto update = kernel::AbstractArgsFromCNode(cnode);
+    update.depend_tensor_map = std::move(args.depend_tensor_map);
+    kernel::SetArgsToCNode(cnode, update);
+  } else {
     kernel::SetArgsToCNode(cnode, args);
   }
 }
