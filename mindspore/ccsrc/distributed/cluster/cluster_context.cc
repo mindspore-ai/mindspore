@@ -140,6 +140,16 @@ uint32_t ClusterContext::node_num(const std::string &node_role) {
   return node_num_each_role_[node_role];
 }
 
+uint32_t ClusterContext::node_num() const {
+  uint32_t node_num = 0;
+  for (auto iter = node_num_each_role_.begin(); iter != node_num_each_role_.end(); iter++) {
+    if (iter->first != kEnvRoleOfScheduler) {
+      node_num += iter->second;
+    }
+  }
+  return node_num;
+}
+
 bool ClusterContext::initialized() const { return inited_; }
 
 const ActorRouteTableProxyPtr &ClusterContext::actor_route_table_proxy() const { return actor_route_table_proxy_; }
