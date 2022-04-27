@@ -40,6 +40,7 @@ from ..operations._grad_ops import MaxPoolGradV1
 from ..operations.nn_ops import ReLUV3
 from ..operations._grad_ops import ReluGrad
 from ..operations.image_ops import ResizeLinear1D
+from ..operations.nn_ops import MaxPool3DWithArgmax
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -258,5 +259,23 @@ def get_bprop_resize_bilinear(self):
     def bprop(input_x, size, out, dout):
         dx = resize_grad(dout, input_x)
         return (dx, zeros_like(size))
+
+    return bprop
+
+
+@bprop_getters.register(MaxPool3DWithArgmax)
+def get_bprop_maxpool3dwithargmax(self):
+    """Grad definition for `MaxPool3DWithArgmax` operation."""
+    maxpool3dwithargmax_grad = G.MaxPool3DGradWithArgmax(
+        ksize=self.ksize,
+        strides=self.strides,
+        pads=self.pads,
+        dilation=self.dilation,
+        ceil_mode=self.ceil_mode,
+        data_format=self.data_format)
+
+    def bprop(x, out, dout):
+        dx = maxpool3dwithargmax_grad(x, dout[0], out[1])
+        return (dx,)
 
     return bprop

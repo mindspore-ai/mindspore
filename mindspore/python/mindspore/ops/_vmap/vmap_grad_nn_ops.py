@@ -158,6 +158,38 @@ def get_avg_pool3d_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.MaxPool3DGradWithArgmax)
+def get_max_pool3d_grad_with_argmax_vmap_rule(prim, axis_size):
+    """VmapRule for `MaxPool3DGradWithArgmax`."""
+    cdhw_reverse_index = -4
+
+    def vmap_rule(x_bdim, dy_bdim, mask_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dy_bdim, mask_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        dy, dy_dim = dy_bdim
+        mask, mask_dim = mask_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        mask = _bdim_at_front(mask, mask_dim, axis_size)
+        x_shape = F.shape(x)
+        dy_shape = F.shape(dy)
+        mask_shape = F.shape(mask)
+        x_in_shape = (-1,) + x_shape[cdhw_reverse_index:]
+        dy_in_shape = (-1,) + dy_shape[cdhw_reverse_index:]
+        mask_in_shape = (-1,) + mask_shape[cdhw_reverse_index:]
+        input_x = F.reshape(x, x_in_shape)
+        input_dy = F.reshape(dy, dy_in_shape)
+        input_mask = F.reshape(mask, mask_in_shape)
+        out = prim(input_x, input_dy, input_mask)
+        out = F.reshape(out, x_shape)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(G.CdistGrad)
 def get_cdist_grad_vmap_rule(prim, axis_size):
     """VmapRule for `cdist grad` operation."""

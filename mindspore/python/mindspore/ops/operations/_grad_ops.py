@@ -1218,6 +1218,26 @@ class MaxPoolGradWithArgmax(_PoolGrad):
         return grad_dtype
 
 
+class MaxPool3DGradWithArgmax(Primitive):
+    """Gradients of the maxpool3Dwithargmax operation."""
+
+    @prim_attr_register
+    def __init__(self, ksize, strides, pads, dilation=(1, 1, 1), ceil_mode=False, data_format="NCDHW"):
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.init_prim_io_names(inputs=['x', 'grads', 'argmax'], outputs=['y'])
+        validator.check_value_type('ceil_mode', ceil_mode, bool, self.name)
+        validator.check_value_type('data_format', data_format, str, self.name)
+        self.data_format = validator.check_string(data_format, ['NCDHW'], 'data_format', self.name)
+        self.ksize = _check_3d_int_or_tuple("ksize", ksize, self.name, ret_five=False)
+        self.add_prim_attr('ksize', self.ksize)
+        self.strides = _check_3d_int_or_tuple("strides", strides, self.name, ret_five=False)
+        self.add_prim_attr('strides', self.strides)
+        self.pads = _check_3d_int_or_tuple("pads", pads, self.name, greater_zero=False, ret_five=False)
+        self.add_prim_attr('pads', self.pads)
+        self.dilation = _check_3d_int_or_tuple("dilation", dilation, self.name, allow_five=True, ret_five=False)
+        self.add_prim_attr('dilation', self.dilation)
+
+
 class MaxPoolGradGradWithArgmax(_PoolGrad):
     r"""
     Computes the gradients of MaxPoolGradWithArgmax.
