@@ -61,11 +61,7 @@ int LayerNormCPUKernel::ReSize() {
   for (size_t i = param_->begin_params_axis_; i < shape.size(); ++i) {
     param_->params_inner_size_ *= shape.at(i);
   }
-  if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_LayerNormFusion), param_->norm_inner_size_, param_->norm_inner_size_,
-                          out_tensors_.at(0)->ElementsNum()) != RET_OK) {
-    return RET_ERROR;
-  }
-  thread_num_ = MSMIN(param_->norm_outer_size_, thread_num_);
+  param_->op_parameter_.thread_num_ = MSMIN(param_->norm_outer_size_, op_parameter_->thread_num_);
   return RET_OK;
 }
 
@@ -108,7 +104,7 @@ int LayerNormCPUKernel::Run() {
     MS_LOG(ERROR) << "LayerNorm should have 1 or 3 output tensors";
     return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->ms_context_, LayerNormRun, this, thread_num_);
+  auto ret = ParallelLaunch(this->ms_context_, LayerNormRun, this, op_parameter_->thread_num_);
   return ret;
 }
 

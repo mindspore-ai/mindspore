@@ -150,8 +150,6 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::parallel_num_, "parallelNum", "parallel num of parallel predict", 2);
     AddFlag(&BenchmarkFlags::parallel_task_num_, "parallelTaskNum", "parallel task num of parallel predict", 2);
     AddFlag(&BenchmarkFlags::workers_num_, "workersNum", "works num of parallel predict", 2);
-    AddFlag(&BenchmarkFlags::inter_op_parallel_num_, "interOpParallelNum", "parallel number of operators in predict",
-            1);
 #ifdef ENABLE_OPENGL_TEXTURE
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
 #endif
@@ -168,7 +166,6 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   bool enable_parallel_predict_ = false;
   int parallel_num_ = 2;
   int parallel_task_num_ = 2;
-  int inter_op_parallel_num_ = 1;
   int workers_num_ = 2;
   std::string model_file_;
   std::string in_data_file_;

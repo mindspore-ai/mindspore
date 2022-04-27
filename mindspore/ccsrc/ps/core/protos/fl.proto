@@ -87,7 +87,6 @@ message DeviceMeta {
   string fl_name = 1;
   string fl_id = 2;
   uint64 data_size = 3;
-  uint64 now_time = 4;
 }
 
 message FLIdToDeviceMeta {
@@ -258,9 +257,6 @@ message EndLastIterResponse {
   uint64 getModel_accept_client_num = 9;
   uint64 getModel_reject_client_num = 10;
   float upload_loss = 11;
-  uint64 participation_time_level1_num = 12;
-  uint64 participation_time_level2_num = 13;
-  uint64 participation_time_level3_num = 14;
 }
 
 message SyncAfterRecover {

@@ -266,18 +266,19 @@ int Scheduler::SchedulePreProcess() {
     return *is_infershape_;
   }
 
-  if (context_->enable_parallel_ || context_->inter_op_parallel_num_ > 1) {
+  if (context_->enable_parallel_) {
 #ifndef AUTO_PARALLEL_CLIP
+#ifdef OPERATOR_PARALLELISM
     auto search_sub_graph =
       SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
-
-    if (context_->enable_parallel_) {
-      if (*is_infershape_ != RET_INFER_INVALID) {
-        search_sub_graph.SubGraphSplit();
-      }
-    } else {
-      search_sub_graph.SubGraphSplitByOperator();
+    search_sub_graph.SubGraphSplitByOperator();
+#else
+    if (*is_infershape_ != RET_INFER_INVALID) {
+      auto search_sub_graph =
+        SearchSubGraph(context_, src_model_, src_tensors_, &op_parameters_, &graph_output_node_indexes_);
+      search_sub_graph.SubGraphSplit();
     }
+#endif
 #else
     MS_LOG(ERROR) << unsupport_auto_parallel_log;
     return RET_NOT_SUPPORT;

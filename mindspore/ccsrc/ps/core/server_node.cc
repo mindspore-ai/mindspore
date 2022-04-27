@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 #include "ps/core/server_node.h"
-
-#include "ps/core/communicator/http_communicator.h"
 #include "ps/core/communicator/tcp_communicator.h"
+#include "ps/core/communicator/http_communicator.h"
 
 namespace mindspore {
 namespace ps {
@@ -41,12 +40,10 @@ void ServerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   InitNodeNum();
-  bool is_recover = false;
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
-    is_recover = Recover();
-    if (is_recover) {
+    if (!Recover()) {
       MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }
@@ -62,10 +59,6 @@ void ServerNode::Initialize() {
   }
   InitClientToServer();
   is_already_stopped_ = false;
-  if (is_recover) {
-    std::string node_role = CommUtil::NodeRoleToString(node_info_.node_role_);
-    SendFailMessageToScheduler(node_role, "Node restart");
-  }
   MS_LOG(INFO) << "[Server start]: 3. Server node crete tcp client to scheduler successful!";
 }
 

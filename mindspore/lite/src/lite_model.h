@@ -90,14 +90,9 @@ class LiteModel : public Model {
       SetNodeDeviceType(node, *c_node);
     }
 #endif
-    std::string version = meta_graph.version() == NULL ? "" : meta_graph.version()->str();
-    const int min_version_length = 5;
-    if (version.length() > min_version_length) {
-      version = version.substr(version.length() - min_version_length, version.length());
-    }
     bool old_version_weight_quant =
-      ((meta_graph.version() == nullptr || version < "1.3.0") && node->quant_type_ == schema::QuantType_QUANT_NONE &&
-       CheckNeedWeightQuant(meta_graph, c_node->inputIndex()));
+      ((meta_graph.version() == nullptr || meta_graph.version()->str() < "1.3.0") &&
+       node->quant_type_ == schema::QuantType_QUANT_NONE && CheckNeedWeightQuant(meta_graph, c_node->inputIndex()));
     if (node->quant_type_ == schema::QuantType_PostTraining || node->quant_type_ == schema::QuantType_AwareTraining) {
       node->quant_type_ = schema::QuantType_QUANT_ALL;
     } else if (node->quant_type_ == schema::QuantType_WeightQuant || old_version_weight_quant) {
@@ -119,7 +114,7 @@ class LiteModel : public Model {
       bool cur_tensor_init_flag = CheckQuantAllInit(tensor->quantParams());
       global_init_flag = global_init_flag || cur_tensor_init_flag;
       if (tensor->data() == nullptr && cur_tensor_init_flag) {
-        MS_LOG(DEBUG) << tensor->name()
+        MS_LOG(DEBUG) << tensor->name()->c_str()
                       << " is a non-const tensor, but there are quantization parameters, which may belong to full "
                          "quantization.";
         return false;
@@ -204,11 +199,11 @@ class LiteModel : public Model {
     auto tensor_count = meta_graph.allTensors()->size();
     for (uint32_t i = 0; i < tensor_count; ++i) {
       auto *tensor = meta_graph.allTensors()->template GetAs<schema::Tensor>(i);
+      MS_CHECK_TRUE_RET(tensor->format() >= schema::Format_MIN && tensor->format() <= schema::Format_MAX, false);
       if (tensor == nullptr) {
         MS_LOG(ERROR) << i << "the tensor in metagraph is nullptr";
         return false;
       }
-      MS_CHECK_TRUE_RET(tensor->format() >= schema::Format_MIN && tensor->format() <= schema::Format_MAX, false);
       this->all_tensors_.push_back(const_cast<mindspore::schema::Tensor *>(tensor));
     }
     return true;

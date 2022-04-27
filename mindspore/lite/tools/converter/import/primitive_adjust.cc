@@ -156,6 +156,8 @@ constexpr auto kNameResizeBilinearGrad = "ResizeBilinearGrad";
 constexpr auto kNameResizeNearestNeighborGrad = "ResizeNearestNeighborGrad";
 constexpr auto kNameStandardNormal = "StandardNormal";
 constexpr auto kNameDynamicShape = "DynamicShape";
+constexpr int kNCHW_H = 2;
+constexpr int kNCHW_W = 3;
 
 std::map<std::string, mindspore::ActivationType> activation_map = {{ops::kNameElu, mindspore::ELU},
                                                                    {ops::kNameGeLU, mindspore::GELU},

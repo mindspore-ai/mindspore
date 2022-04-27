@@ -16,8 +16,6 @@
 
 package com.mindspore.flclient;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -46,7 +44,7 @@ import javax.net.ssl.X509TrustManager;
  * @since 2021-06-30
  */
 public class SSLSocketFactoryTools {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(SSLSocketFactory.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(SSLSocketFactory.class.toString());
     private static volatile SSLSocketFactoryTools sslSocketFactoryTools;
 
     private FLParameter flParameter = FLParameter.getInstance();
@@ -58,24 +56,24 @@ public class SSLSocketFactoryTools {
         @Override
         public boolean verify(String hostname, SSLSession session) {
             if (hostname == null || hostname.isEmpty()) {
-                LOGGER.severe("[SSLSocketFactoryTools] the parameter of <hostname> is null or empty, " +
-                        "please check!");
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the parameter of <hostname> is null or empty, " +
+                        "please check!"));
                 throw new IllegalArgumentException();
             }
             if (session == null) {
-                LOGGER.severe("[SSLSocketFactoryTools] the parameter of <session> is null, please " +
-                        "check!");
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the parameter of <session> is null, please " +
+                        "check!"));
                 throw new IllegalArgumentException();
             }
             String domainName = flParameter.getDomainName();
             if ((domainName == null || domainName.isEmpty() || domainName.split("//").length < 2)) {
-                LOGGER.severe("[SSLSocketFactoryTools] the <domainName> is null or not valid, it should" +
-                        " be like https://...... , please check!");
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the <domainName> is null or not valid, it should" +
+                        " be like https://...... , please check!"));
                 throw new IllegalArgumentException();
             }
             if (domainName.split("//")[1].split(":").length < 2) {
-                LOGGER.severe("[SSLSocketFactoryTools] the format of <domainName> is not valid, it " +
-                        "should be like as https://127.0.0.1:6666 when setting <useSSL> to true, please check!");
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the format of <domainName> is not valid, it " +
+                        "should be like as https://127.0.0.1:6666 when setting <useSSL> to true, please check!"));
                 throw new IllegalArgumentException();
             }
             String ip = domainName.split("//")[1].split(":")[0];
@@ -97,8 +95,8 @@ public class SSLSocketFactoryTools {
             }, Common.getSecureRandom());
             sslSocketFactory = sslContext.getSocketFactory();
         } catch (NoSuchAlgorithmException | KeyManagementException ex) {
-            LOGGER.severe("[SSLSocketFactoryTools]catch Exception in initSslSocketFactory: " +
-                    ex.getMessage());
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools]catch Exception in initSslSocketFactory: " +
+                    ex.getMessage()));
         }
     }
 
@@ -122,8 +120,8 @@ public class SSLSocketFactoryTools {
 
     private X509Certificate readCert(String assetName) {
         if (assetName == null || assetName.isEmpty()) {
-            LOGGER.severe("[SSLSocketFactoryTools] the parameter of <assetName> is null or empty, " +
-                    "please check!");
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] the parameter of <assetName> is null or empty, " +
+                    "please check!"));
             return null;
         }
         InputStream inputStream = null;
@@ -135,19 +133,19 @@ public class SSLSocketFactoryTools {
             if (certificate instanceof X509Certificate) {
                 cert = (X509Certificate) certificate;
             } else {
-                LOGGER.severe("[SSLSocketFactoryTools] cf.generateCertificate(inputStream) can not " +
-                        "convert to X509Certificate");
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] cf.generateCertificate(inputStream) can not " +
+                        "convert to X509Certificate"));
             }
         } catch (FileNotFoundException | CertificateException ex) {
-            LOGGER.severe("[SSLSocketFactoryTools] catch exception when creating CertificateFactory in " +
-                    "readCert: invalid file or CertificateException");
+            LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch exception when creating CertificateFactory in " +
+                    "readCert: invalid file or CertificateException"));
         } finally {
             try {
                 if (inputStream != null) {
                     inputStream.close();
                 }
             } catch (IOException ex) {
-                LOGGER.severe("[SSLSocketFactoryTools] catch IOException: " + ex.getMessage());
+                LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] catch IOException: " + ex.getMessage()));
             }
         }
         return cert;
@@ -185,19 +183,19 @@ public class SSLSocketFactoryTools {
                 try {
                     cert.verify(this.cert.getPublicKey());
                 } catch (NoSuchAlgorithmException e) {
-                    LOGGER.severe("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
-                            "NoSuchAlgorithmException in checkServerTrusted: " + e.getMessage());
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "NoSuchAlgorithmException in checkServerTrusted: " + e.getMessage()));
                 } catch (InvalidKeyException e) {
-                    LOGGER.severe("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
-                            "InvalidKeyException in checkServerTrusted: " + e.getMessage());
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "InvalidKeyException in checkServerTrusted: " + e.getMessage()));
                 } catch (NoSuchProviderException e) {
-                    LOGGER.severe("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
-                            "NoSuchProviderException in checkServerTrusted: " + e.getMessage());
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "NoSuchProviderException in checkServerTrusted: " + e.getMessage()));
                 } catch (SignatureException e) {
-                    LOGGER.severe("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
-                            "SignatureException in checkServerTrusted: " + e.getMessage());
+                    LOGGER.severe(Common.addTag("[SSLSocketFactoryTools] checkServerTrusted failed, catch " +
+                            "SignatureException in checkServerTrusted: " + e.getMessage()));
                 }
-                LOGGER.info("**********************checkServerTrusted success!**********************");
+                LOGGER.info(Common.addTag("**********************checkServerTrusted success!**********************"));
             }
         }
 

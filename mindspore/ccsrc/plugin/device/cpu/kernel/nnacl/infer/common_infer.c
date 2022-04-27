@@ -174,7 +174,7 @@ void SetDataTypeFormat(TensorC *dst, const TensorC *src) {
 }
 
 int GetBatch(const TensorC *tensor) {
-  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+  if (tensor->shape_size_ != 4 && tensor->shape_size_ != 2) {
     return -1;
   }
   switch (tensor->format_) {
@@ -186,18 +186,12 @@ int GetBatch(const TensorC *tensor) {
     case Format_KHWC:
     case Format_NC:
     case Format_NC4:
-      return tensor->shape_[kNHWC_N];
+      return tensor->shape_[0];
     case Format_HWCK:
     case Format_CHWK:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kHWCN_N];
+      return tensor->shape_[3];
     case Format_HWKC:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kHWNC_N];
+      return tensor->shape_[2];
     case Format_CKHW:
       return tensor->shape_[1];
     default:
@@ -205,23 +199,20 @@ int GetBatch(const TensorC *tensor) {
   }
 }
 int GetHeight(const TensorC *tensor) {
-  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+  if (tensor->shape_size_ != 4 && tensor->shape_size_ != 2) {
     return -1;
   }
   switch (tensor->format_) {
     case Format_NCHW:
     case Format_KCHW:
     case Format_CKHW:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kNCHW_H];
+      return tensor->shape_[2];
     case Format_NHWC:
     case Format_NHWC4:
     case Format_NC4HW4:
     case Format_KHWC:
     case Format_CHWK:
-      return tensor->shape_[kNHWC_H];
+      return tensor->shape_[1];
     case Format_HWCK:
     case Format_HWKC:
     case Format_HW:
@@ -232,26 +223,20 @@ int GetHeight(const TensorC *tensor) {
   }
 }
 int GetWidth(const TensorC *tensor) {
-  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+  if (tensor->shape_size_ != 4 && tensor->shape_size_ != 2) {
     return -1;
   }
   switch (tensor->format_) {
     case Format_NCHW:
     case Format_KCHW:
     case Format_CKHW:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kNCHW_W];
+      return tensor->shape_[3];
     case Format_KHWC:
     case Format_NHWC:
     case Format_NHWC4:
     case Format_NC4HW4:
     case Format_CHWK:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kNHWC_W];
+      return tensor->shape_[2];
     case Format_HWCK:
     case Format_HWKC:
     case Format_HW:
@@ -262,7 +247,7 @@ int GetWidth(const TensorC *tensor) {
   }
 }
 int GetChannel(const TensorC *tensor) {
-  if (tensor->shape_size_ != DIMENSION_4D && tensor->shape_size_ != DIMENSION_2D) {
+  if (tensor->shape_size_ != 4 && tensor->shape_size_ != 2) {
     return -1;
   }
   switch (tensor->format_) {
@@ -270,21 +255,15 @@ int GetChannel(const TensorC *tensor) {
     case Format_KCHW:
     case Format_NC:
     case Format_NC4:
-      return tensor->shape_[kNCHW_C];
+      return tensor->shape_[1];
     case Format_HWCK:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kHWCN_C];
+      return tensor->shape_[2];
     case Format_HWKC:
     case Format_NHWC:
     case Format_NHWC4:
     case Format_NC4HW4:
     case Format_KHWC:
-      if (tensor->shape_size_ != DIMENSION_4D) {
-        return -1;
-      }
-      return tensor->shape_[kNHWC_C];
+      return tensor->shape_[3];
     case Format_CKHW:
     case Format_CHWK:
       return tensor->shape_[0];

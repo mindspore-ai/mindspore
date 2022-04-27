@@ -62,13 +62,13 @@ mindspore.nn.probability.distribution.Categorical
 
         **参数：**
 
-        - **probs** (Tensor) - 事件发生的概率。默认值：None。
+        - **probs_b** (Tensor) - 对比分布的事件发生的概率。默认值：None。
 
         **返回：**
 
         Tensor，熵的值。
 
-    .. py:method:: kl_loss(dist, probs_b, probs)
+    .. py:method:: kl_loss(dist, probs)
 
         计算KL散度，即KL(a||b)。
 

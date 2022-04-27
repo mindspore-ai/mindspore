@@ -27,14 +27,14 @@ void PredictTaskQueue::SetTaskQueueNum(int num) {
 }
 
 void PredictTaskQueue::WaitUntilPredictActive(const std::shared_ptr<PredictTask> &task) {
-  std::unique_lock<std::mutex> result_lock(task->task_done_mutex);
+  std::unique_lock<std::mutex> result_lock(mtx_predict_task_);
   while (!task->ready) {
-    task->task_done_condition.wait(result_lock);
+    task_pop_cond_.wait(result_lock);
   }
   return;
 }
 
-void PredictTaskQueue::ActiveTask(const std::shared_ptr<PredictTask> &task) { task->task_done_condition.notify_one(); }
+void PredictTaskQueue::ActiveTask() { task_pop_cond_.notify_all(); }
 
 void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task, int node_id) {
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
@@ -42,9 +42,9 @@ void PredictTaskQueue::PushPredictTask(std::shared_ptr<PredictTask> task, int no
   task_push_cond_.notify_all();
 }
 
-std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask(int node_id, ModelWorker *worker) {
+std::shared_ptr<PredictTask> PredictTaskQueue::GetPredictTask(int node_id) {
   std::unique_lock<std::mutex> task_lock(mtx_predict_task_);
-  while ((predict_task_.at(node_id).empty() && !predict_task_done_) || (!worker->IsAvailable())) {
+  while (predict_task_.at(node_id).empty() && !predict_task_done_) {
     task_push_cond_.wait(task_lock);
   }
   if (predict_task_done_) {

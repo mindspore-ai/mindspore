@@ -33,8 +33,7 @@
 
 namespace {
 constexpr const int kMaxDepth = 2048;
-constexpr int kOperatorMaxThreadNum = 16;
-}  // namespace
+}
 
 namespace mindspore::lite {
 size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
@@ -218,6 +217,11 @@ const schema::Primitive *SearchSubGraph::CreatePartialPrimitive(int64_t subgraph
 }
 
 void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
+#ifndef OPERATOR_PARALLELISM
+  if (sub_graphs->size() != kDefaultSubGraphSize) {
+    return;
+  }
+#endif
   Model::SubGraph *main_graphs = model_->sub_graphs_.front();
 
   for (Subgraph &subgraph : *sub_graphs) {
@@ -1069,6 +1073,7 @@ void SearchSubGraph::SubGraphSplit() {
   return;
 }
 
+#ifdef OPERATOR_PARALLELISM
 void SearchSubGraph::InsertNodeBegin(uint32_t index, Subgraph *subgraph, std::vector<size_t> *outputs) {
   size_t last_index = index;
 
@@ -1145,7 +1150,7 @@ void SearchSubGraph::SubGraphSplitByOperator() {
     Subgraph subgraph;
     subgraph.ends_.push_back(out);
     subgraph.device_ = DT_CPU;
-    subgraph.thread_ = context_->thread_num_ > kOperatorMaxThreadNum ? kOperatorMaxThreadNum : context_->thread_num_;
+    subgraph.thread_ = context_->thread_num_ > 2 ? (context_->thread_num_ / 2) : 1;
 
     InsertNodeBegin(static_cast<uint32_t>(out), &subgraph, &outputs_vec);
     for (auto new_out : outputs_vec) {
@@ -1158,4 +1163,5 @@ void SearchSubGraph::SubGraphSplitByOperator() {
   }
   ConvertSubGraphToModel(&sub_graphs_);
 }
+#endif
 }  // namespace mindspore::lite

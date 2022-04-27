@@ -27,6 +27,9 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #endif
+#ifdef BFC_MEMORY
+#include <sys/sysinfo.h>
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -178,5 +181,17 @@ size_t GetMaxMallocSize() {
 #endif
   return max_malloc_size;
 }
+
+#ifdef BFC_MEMORY
+int64_t GetFreeMemory() {
+  struct sysinfo info;
+  auto ret = sysinfo(&info);
+  if (ret != 0) {
+    MS_LOG(ERROR) << "sysinfo failed!ret = " << ret;
+    return 0;
+  }
+  return static_cast<int64_t>(info.freeram);
+}
+#endif
 }  // namespace lite
 }  // namespace mindspore

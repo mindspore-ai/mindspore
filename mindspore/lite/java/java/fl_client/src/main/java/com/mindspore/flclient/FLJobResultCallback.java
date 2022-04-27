@@ -16,8 +16,6 @@
 
 package com.mindspore.flclient;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
-
 import java.util.logging.Logger;
 
 /**
@@ -26,7 +24,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class FLJobResultCallback implements IFLJobResultCallback {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(FLJobResultCallback.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(FLJobResultCallback.class.toString());
 
     /**
      * Called at the end of an iteration for Fl job
@@ -37,8 +35,8 @@ public class FLJobResultCallback implements IFLJobResultCallback {
      */
     @Override
     public void onFlJobIterationFinished(String modelName, int iterationSeq, int resultCode) {
-        LOGGER.info("[onFlJobIterationFinished] modelName: " + modelName + " iterationSeq: " +
-                iterationSeq + " resultCode: " + resultCode);
+        LOGGER.info(Common.addTag("[onFlJobIterationFinished] modelName: " + modelName + " iterationSeq: " +
+                iterationSeq + " resultCode: " + resultCode));
     }
 
     /**
@@ -50,7 +48,7 @@ public class FLJobResultCallback implements IFLJobResultCallback {
      */
     @Override
     public void onFlJobFinished(String modelName, int iterationCount, int resultCode) {
-        LOGGER.info("[onFlJobFinished] modelName: " + modelName + " iterationCount: " +
-                iterationCount + " resultCode: " + resultCode);
+        LOGGER.info(Common.addTag("[onFlJobFinished] modelName: " + modelName + " iterationCount: " +
+                iterationCount + " resultCode: " + resultCode));
     }
 }

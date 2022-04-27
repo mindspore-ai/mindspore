@@ -32,8 +32,7 @@ enum class Command {
   SEND_DATA = 3,
   FETCH_METADATA = 4,
   FINISH = 5,
-  COLLECTIVE_SEND_DATA = 6,
-  FAILURE_EVENT = 7
+  COLLECTIVE_SEND_DATA = 6
 };
 
 enum class Role { SERVER = 0, WORKER = 1, SCHEDULER = 2 };

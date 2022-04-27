@@ -16,7 +16,6 @@
 
 package com.mindspore.flclient;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.config.MSConfig;
 
 import org.bouncycastle.math.ec.rfc7748.X25519;
@@ -32,7 +31,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class LocalFLParameter {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(LocalFLParameter.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(LocalFLParameter.class.toString());
 
     /**
      * Seed length used to generate random perturbations
@@ -117,8 +116,8 @@ public class LocalFLParameter {
 
     public List<String> getClassifierWeightName() {
         if (classifierWeightName.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <classifierWeightName> is null, please " +
-                    "set it before use");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <classifierWeightName> is null, please " +
+                    "set it before use"));
             throw new IllegalArgumentException();
         }
         return classifierWeightName;
@@ -130,8 +129,8 @@ public class LocalFLParameter {
 
     public List<String> getAlbertWeightName() {
         if (albertWeightName.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <classifierWeightName> is null, please " +
-                    "set it before use");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <classifierWeightName> is null, please " +
+                    "set it before use"));
             throw new IllegalArgumentException();
         }
         return albertWeightName;
@@ -143,8 +142,8 @@ public class LocalFLParameter {
 
     public String getFlID() {
         if (flID == null || flID.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <flID> is null, please set it before " +
-                    "use");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <flID> is null, please set it before " +
+                    "use"));
             throw new IllegalArgumentException();
         }
         return flID;
@@ -152,8 +151,8 @@ public class LocalFLParameter {
 
     public void setFlID(String flID) {
         if (flID == null || flID.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <flID> is null, please check it before " +
-                    "set");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <flID> is null, please check it before " +
+                    "set"));
             throw new IllegalArgumentException();
         }
         this.flID = flID;
@@ -165,16 +164,16 @@ public class LocalFLParameter {
 
     public void setEncryptLevel(String encryptLevel) {
         if (encryptLevel == null || encryptLevel.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <encryptLevel> is null, please check it " +
-                    "before setting");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <encryptLevel> is null, please check it " +
+                    "before setting"));
             throw new IllegalArgumentException();
         }
         if ((!EncryptLevel.DP_ENCRYPT.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.NOT_ENCRYPT.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.SIGNDS.toString().equals(encryptLevel)) &&
                 (!EncryptLevel.PW_ENCRYPT.toString().equals(encryptLevel))) {
-            LOGGER.severe("[localFLParameter] the parameter of <encryptLevel> is " + encryptLevel + " ," +
-                    " it must be DP_ENCRYPT or NOT_ENCRYPT or PW_ENCRYPT or SIGNDS, please check it before setting");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <encryptLevel> is " + encryptLevel + " ," +
+                    " it must be DP_ENCRYPT or NOT_ENCRYPT or PW_ENCRYPT or SIGNDS, please check it before setting"));
             throw new IllegalArgumentException();
         }
         this.encryptLevel = encryptLevel;
@@ -186,17 +185,17 @@ public class LocalFLParameter {
 
     public void setEarlyStopMod(String earlyStopMod) {
         if (earlyStopMod == null || earlyStopMod.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <earlyStopMod> is null, please check it " +
-                    "before setting");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <earlyStopMod> is null, please check it " +
+                    "before setting"));
             throw new IllegalArgumentException();
         }
         if ((!EarlyStopMod.NOT_EARLY_STOP.toString().equals(earlyStopMod)) &&
                 (!EarlyStopMod.LOSS_ABS.toString().equals(earlyStopMod)) &&
                 (!EarlyStopMod.LOSS_DIFF.toString().equals(earlyStopMod)) &&
                 (!EarlyStopMod.WEIGHT_DIFF.toString().equals(earlyStopMod))) {
-            LOGGER.severe("[localFLParameter] the parameter of <earlyStopMod> is " + earlyStopMod + " ," +
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <earlyStopMod> is " + earlyStopMod + " ," +
                     " it must be NOT_EARLY_STOP or LOSS_ABS or LOSS_DIFF or WEIGHT_DIFF, please check it before " +
-                    "setting");
+                    "setting"));
             throw new IllegalArgumentException();
         }
         this.earlyStopMod = earlyStopMod;
@@ -208,14 +207,14 @@ public class LocalFLParameter {
 
     public void setServerMod(String serverMod) {
         if (serverMod == null || serverMod.isEmpty()) {
-            LOGGER.severe("[localFLParameter] the parameter of <serverMod> is null, please check it " +
-                    "before setting");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <serverMod> is null, please check it " +
+                    "before setting"));
             throw new IllegalArgumentException();
         }
         if ((!ServerMod.HYBRID_TRAINING.toString().equals(serverMod)) &&
                 (!ServerMod.FEDERATED_LEARNING.toString().equals(serverMod))) {
-            LOGGER.severe("[localFLParameter] the parameter of <serverMod> is " + serverMod + " , it " +
-                    "must be HYBRID_TRAINING or FEDERATED_LEARNING, please check it before setting");
+            LOGGER.severe(Common.addTag("[localFLParameter] the parameter of <serverMod> is " + serverMod + " , it " +
+                    "must be HYBRID_TRAINING or FEDERATED_LEARNING, please check it before setting"));
             throw new IllegalArgumentException();
         }
         this.serverMod = serverMod;

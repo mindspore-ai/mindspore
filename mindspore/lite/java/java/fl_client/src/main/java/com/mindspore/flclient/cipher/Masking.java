@@ -17,7 +17,6 @@
 package com.mindspore.flclient.cipher;
 
 import com.mindspore.flclient.Common;
-import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.security.SecureRandom;
 import java.util.List;
@@ -29,7 +28,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class Masking {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(Masking.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(Masking.class.toString());
 
     /**
      * Random generate RNG algorithm name.
@@ -44,7 +43,7 @@ public class Masking {
      */
     public int getRandomBytes(byte[] secret) {
         if (secret == null || secret.length == 0) {
-            LOGGER.severe("[Masking] the input argument <secret> is null, please check!");
+            LOGGER.severe(Common.addTag("[Masking] the input argument <secret> is null, please check!"));
             return -1;
         }
         SecureRandom secureRandom = Common.getSecureRandom();
@@ -63,7 +62,7 @@ public class Masking {
      */
     public int getMasking(List<Float> noise, int length, byte[] seed, byte[] iVec) {
         if (length <= 0) {
-            LOGGER.severe("[Masking] the input argument <length> is not valid: <= 0, please check!");
+            LOGGER.severe(Common.addTag("[Masking] the input argument <length> is not valid: <= 0, please check!"));
             return -1;
         }
         int intV = Integer.SIZE / 8;
@@ -75,7 +74,7 @@ public class Masking {
         AESEncrypt aesEncrypt = new AESEncrypt(seed, "CTR");
         byte[] encryptCtr = aesEncrypt.encryptCTR(seed, data, iVec);
         if (encryptCtr == null || encryptCtr.length == 0) {
-            LOGGER.severe("[Masking] the return byte[] is null, please check!");
+            LOGGER.severe(Common.addTag("[Masking] the return byte[] is null, please check!"));
             return -1;
         }
         for (int i = 0; i < length; i++) {
@@ -85,7 +84,7 @@ public class Masking {
             }
             int subI = byte2int(sub, 4);
             if (subI == -1) {
-                LOGGER.severe("[Masking] the the returned <subI> is not valid: -1, please check!");
+                LOGGER.severe(Common.addTag("[Masking] the the returned <subI> is not valid: -1, please check!"));
                 return -1;
             }
             Float fNoise = Float.valueOf(Float.valueOf(subI) / Integer.MAX_VALUE);
@@ -96,7 +95,7 @@ public class Masking {
 
     private static int byte2int(int[] data, int number) {
         if (data.length < 4) {
-            LOGGER.severe("[Masking] the input argument <data> is not valid: length < 4, please check!");
+            LOGGER.severe(Common.addTag("[Masking] the input argument <data> is not valid: length < 4, please check!"));
             return -1;
         }
         switch (number) {

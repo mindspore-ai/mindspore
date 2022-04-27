@@ -70,7 +70,7 @@ bool IsIntelX86Platform(void) {
   memcpy(vid_info + 4, &edx_data, 4);  // Copy the middle 4 characters to the array[4:8]
   memcpy(vid_info + 8, &ecx_data, 4);  // Copy the last 4 characters to the array[8:12]
 
-  int x86_intel_flag = (strcmp(vid_info, "GenuineIntel") == 0 || strcmp(vid_info, "AuthenticAMD") == 0) ? 1 : 0;
+  int x86_intel_flag = (strcmp(vid_info, "GenuineIntel") == 0) ? 1 : 0;
 
   free(vid_info);
   return x86_intel_flag;

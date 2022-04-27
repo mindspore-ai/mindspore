@@ -18,7 +18,6 @@ package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
@@ -54,7 +53,7 @@ import static com.mindspore.flclient.LocalFLParameter.LENET;
  * @since 2021-06-30
  */
 public class UpdateModel {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(UpdateModel.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(UpdateModel.class.toString());
     private static volatile UpdateModel updateModel;
 
     static {
@@ -107,7 +106,7 @@ public class UpdateModel {
         RequestUpdateModelBuilder builder = new RequestUpdateModelBuilder(localFLParameter.getEncryptLevel());
         boolean isPkiVerify = flParameter.isPkiVerify();
         Client client = ClientManager.getClient(flParameter.getFlName());
-        float uploadLoss = client == null ? 0.0f : client.getUploadLoss();
+        float uploadLoss = client.getUploadLoss();
         if (isPkiVerify) {
             Date date = new Date();
             long timestamp = date.getTime();
@@ -129,23 +128,23 @@ public class UpdateModel {
      */
     public FLClientStatus doResponse(ResponseUpdateModel response) {
         retCode = response.retcode();
-        LOGGER.info("[updateModel] ==========the response message of updateModel is================");
-        LOGGER.info("[updateModel] ==========retCode: " + retCode);
-        LOGGER.info("[updateModel] ==========reason: " + response.reason());
-        LOGGER.info("[updateModel] ==========next request time: " + response.nextReqTime());
+        LOGGER.info(Common.addTag("[updateModel] ==========the response message of updateModel is================"));
+        LOGGER.info(Common.addTag("[updateModel] ==========retCode: " + retCode));
+        LOGGER.info(Common.addTag("[updateModel] ==========reason: " + response.reason()));
+        LOGGER.info(Common.addTag("[updateModel] ==========next request time: " + response.nextReqTime()));
         switch (response.retcode()) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info("[updateModel] updateModel success");
+                LOGGER.info(Common.addTag("[updateModel] updateModel success"));
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.OutOfTime):
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.warning("[updateModel] catch RequestError or SystemError");
+                LOGGER.warning(Common.addTag("[updateModel] catch RequestError or SystemError"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe("[updateModel]the return <retCode> from server is invalid: " +
-                        response.retcode());
+                LOGGER.severe(Common.addTag("[updateModel]the return <retCode> from server is invalid: " +
+                        response.retcode()));
                 return FLClientStatus.FAILED;
         }
     }
@@ -159,11 +158,11 @@ public class UpdateModel {
         }
         List<MSTensor> features = client.getFeatures();
         Map<String, float[]> trainedMap = CommonUtils.convertTensorToFeatures(features);
-        LOGGER.info("[updateModel] ===========free session=============");
+        LOGGER.info(Common.addTag("[updateModel] ===========free session============="));
         Common.freeSession();
         if (trainedMap.isEmpty()) {
-            LOGGER.severe("[updateModel] the return trainedMap is empty in <CommonUtils" +
-                    ".convertTensorToFeatures>");
+            LOGGER.severe(Common.addTag("[updateModel] the return trainedMap is empty in <CommonUtils" +
+                    ".convertTensorToFeatures>"));
             retCode = ResponseCode.RequestError;
             status = FLClientStatus.FAILED;
             throw new IllegalArgumentException();
@@ -179,29 +178,29 @@ public class UpdateModel {
         }
         Map<String, float[]> map = new HashMap<String, float[]>();
         if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info("[updateModel] serialize feature map for " +
-                    flParameter.getFlName());
+            LOGGER.info(Common.addTag("[updateModel] serialize feature map for " +
+                    flParameter.getFlName()));
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
             if (map.isEmpty()) {
-                LOGGER.severe("[updateModel] the return map is empty in <SessionUtil" +
-                        ".convertTensorToFeatures>");
+                LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil" +
+                        ".convertTensorToFeatures>"));
                 status = FLClientStatus.FAILED;
                 throw new IllegalArgumentException();
             }
         } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info("[updateModel] serialize feature map for " +
-                    flParameter.getFlName());
+            LOGGER.info(Common.addTag("[updateModel] serialize feature map for " +
+                    flParameter.getFlName()));
             TrainLenet trainLenet = TrainLenet.getInstance();
             map = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
             if (map.isEmpty()) {
-                LOGGER.severe("[updateModel] the return map is empty in <SessionUtil" +
-                        ".convertTensorToFeatures>");
+                LOGGER.severe(Common.addTag("[updateModel] the return map is empty in <SessionUtil" +
+                        ".convertTensorToFeatures>"));
                 status = FLClientStatus.FAILED;
                 throw new IllegalArgumentException();
             }
         } else {
-            LOGGER.severe("[updateModel] the flName is not valid");
+            LOGGER.severe(Common.addTag("[updateModel] the flName is not valid"));
             status = FLClientStatus.FAILED;
             throw new IllegalArgumentException();
         }
@@ -240,7 +239,7 @@ public class UpdateModel {
          */
         private RequestUpdateModelBuilder flName(String name) {
             if (name == null || name.isEmpty()) {
-                LOGGER.severe("[updateModel] the parameter of <name> is null or empty, please check!");
+                LOGGER.severe(Common.addTag("[updateModel] the parameter of <name> is null or empty, please check!"));
                 throw new IllegalArgumentException();
             }
             this.nameOffset = this.builder.createString(name);
@@ -255,8 +254,8 @@ public class UpdateModel {
          */
         private RequestUpdateModelBuilder time(String setTime) {
             if (setTime == null || setTime.isEmpty()) {
-                LOGGER.severe("[updateModel] the parameter of <setTime> is null or empty, please " +
-                        "check!");
+                LOGGER.severe(Common.addTag("[updateModel] the parameter of <setTime> is null or empty, please " +
+                        "check!"));
                 throw new IllegalArgumentException();
             }
             if (setTime.equals("null")) {
@@ -288,7 +287,7 @@ public class UpdateModel {
          */
         private RequestUpdateModelBuilder id(String id) {
             if (id == null || id.isEmpty()) {
-                LOGGER.severe("[updateModel] the parameter of <id> is null or empty, please check!");
+                LOGGER.severe(Common.addTag("[updateModel] the parameter of <id> is null or empty, please check!"));
                 throw new IllegalArgumentException();
             }
             this.idOffset = this.builder.createString(id);
@@ -314,7 +313,7 @@ public class UpdateModel {
                                 "null, please check");
                         throw new IllegalArgumentException();
                     }
-                    LOGGER.info("[Encrypt] pairwise mask model ok!");
+                    LOGGER.info(Common.addTag("[Encrypt] pairwise mask model ok!"));
                     break;
                 case DP_ENCRYPT:
                     startTime = System.currentTimeMillis();
@@ -326,9 +325,9 @@ public class UpdateModel {
                         status = FLClientStatus.FAILED;
                         throw new IllegalArgumentException();
                     }
-                    LOGGER.info("[Encrypt] DP mask model ok!");
+                    LOGGER.info(Common.addTag("[Encrypt] DP mask model ok!"));
                     endTime = System.currentTimeMillis();
-                    LOGGER.info("dp time is " + (endTime - startTime) + "ms");
+                    LOGGER.info(Common.addTag("dp time is " + (endTime - startTime) + "ms"));
                     break;
                 case SIGNDS:
                     startTime = System.currentTimeMillis();
@@ -358,9 +357,9 @@ public class UpdateModel {
                         fmOffsetsSignds[i] = featureMap;
                     }
                     this.fmOffset = RequestUpdateModel.createFeatureMapVector(builder, fmOffsetsSignds);
-                    LOGGER.info("[Encrypt] SignDS mask model ok!");
+                    LOGGER.info(Common.addTag("[Encrypt] SignDS mask model ok!"));
                     endTime = System.currentTimeMillis();
-                    LOGGER.info("signds time is " + (endTime - startTime) + "ms");
+                    LOGGER.info(Common.addTag("signds time is " + (endTime - startTime) + "ms"));
                     return this;
                 case NOT_ENCRYPT:
                 default:
@@ -374,7 +373,7 @@ public class UpdateModel {
                         featureMaps.put(name, featureMap);
                     }
                     endTime = System.currentTimeMillis();
-                    LOGGER.info("not encrypt time is " + (endTime - startTime) + "ms");
+                    LOGGER.info(Common.addTag("not encrypt time is " + (endTime - startTime) + "ms"));
                     break;
             }
             byte uploadCompressType = localFLParameter.getUploadCompressType();
@@ -385,7 +384,7 @@ public class UpdateModel {
                 this.uploadSparseRate = localFLParameter.getUploadSparseRatio();
                 this.nameVecOffset = buildNameVecOffset(updateFeatureName);
                 endTime = System.currentTimeMillis();
-                LOGGER.info("compression time is " + (endTime - startTime) + "ms");
+                LOGGER.info(Common.addTag("compression time is " + (endTime - startTime) + "ms"));
                 return this;
             }
             this.fmOffset = buildFmOffset(featureMaps, updateFeatureName);
@@ -410,8 +409,8 @@ public class UpdateModel {
                 float minVal = compressWeight.getMinValue();
                 float maxVal = compressWeight.getMaxValue();
                 byte[] data = new byte[compressData.size()];
-                LOGGER.info("[updateModel build compressWeight] feature name: "
-                        + weightFullname + ", feature size: " + data.length);
+                LOGGER.info(Common.addTag("[updateModel build compressWeight] feature name: "
+                        + weightFullname + ", feature size: " + data.length));
                 for (int j = 0; j < data.length; j++) {
                     data[j] = compressData.get(j);
                 }
@@ -419,10 +418,10 @@ public class UpdateModel {
                 int weight = CompressFeatureMap.createCompressDataVector(builder, data);
                 int featureMap = CompressFeatureMap.createCompressFeatureMap(builder, featureName, weight,
                         minVal, maxVal);
-                LOGGER.info("[Compression]" +
+                LOGGER.info(Common.addTag("[Compression]" +
                         " featureName: " + weightFullname +
                         ", min_val: " + minVal +
-                        ", max_val: " + maxVal);
+                        ", max_val: " + maxVal));
                 compFmOffsets[index] = featureMap;
                 index += 1;
             }
@@ -447,8 +446,8 @@ public class UpdateModel {
                 String key = updateFeatureName.get(i);
                 List<Float> featureMap = featureMaps.get(key);
                 float[] data = new float[featureMap.size()];
-                LOGGER.fine("[updateModel build featuresMap] feature name: " + key + " feature " +
-                        "size: " + data.length);
+                LOGGER.info(Common.addTag("[updateModel build featuresMap] feature name: " + key + " feature " +
+                        "size: " + data.length));
                 for (int j = 0; j < data.length; j++) {
                     data[j] = featureMap.get(j);
                 }
@@ -468,8 +467,8 @@ public class UpdateModel {
          */
         private RequestUpdateModelBuilder signData(byte[] signData) {
             if (signData == null || signData.length == 0) {
-                LOGGER.severe("[updateModel] the parameter of <signData> is null or empty, please " +
-                        "check!");
+                LOGGER.severe(Common.addTag("[updateModel] the parameter of <signData> is null or empty, please " +
+                        "check!"));
                 throw new IllegalArgumentException();
             }
             this.signDataOffset = RequestUpdateModel.createSignatureVector(builder, signData);

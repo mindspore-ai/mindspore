@@ -15,14 +15,13 @@
  */
 
 #include "ps/ps_context.h"
-
-#include "kernel/kernel.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
+#include "kernel/kernel.h"
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
-#include "distributed/cluster/cluster_context.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
 #endif
@@ -567,21 +566,5 @@ std::string PSContext::download_compress_type() const { return download_compress
 std::string PSContext::checkpoint_dir() const { return checkpoint_dir_; }
 
 void PSContext::set_checkpoint_dir(const std::string &checkpoint_dir) { checkpoint_dir_ = checkpoint_dir; }
-
-void PSContext::set_instance_name(const std::string &instance_name) { instance_name_ = instance_name; }
-
-const std::string &PSContext::instance_name() const { return instance_name_; }
-
-void PSContext::set_participation_time_level(const std::string &participation_time_level) {
-  participation_time_level_ = participation_time_level;
-}
-
-const std::string &PSContext::participation_time_level() { return participation_time_level_; }
-
-void PSContext::set_continuous_failure_times(uint32_t continuous_failure_times) {
-  continuous_failure_times_ = continuous_failure_times;
-}
-
-uint32_t PSContext::continuous_failure_times() { return continuous_failure_times_; }
 }  // namespace ps
 }  // namespace mindspore

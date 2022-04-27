@@ -132,7 +132,6 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 
 if(MSLITE_ENABLE_MODEL_ENCRYPTION)
@@ -155,7 +154,7 @@ endif()
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
         )
 endif()
 
@@ -392,11 +391,6 @@ endif()
 
 target_link_libraries(mindspore-lite cpu_kernel_mid nnacl_mid cpu_ops_mid)
 target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
-
-if(SUPPORT_TRAIN)
-    target_link_libraries(mindspore-lite train_cpu_kernel_mid)
-    target_link_libraries(mindspore-lite_static train_cpu_kernel_mid)
-endif()
 
 if(MSLITE_ENABLE_MINDRT)
     target_link_libraries(mindspore-lite mindrt_mid)

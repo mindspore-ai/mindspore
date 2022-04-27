@@ -73,18 +73,15 @@ class ModelPool {
                              int numa_id);
   Status FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs,
                          std::vector<std::vector<MSTensor>> *new_outputs);
-  std::shared_ptr<ModelWorker> GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num);
-
-  Status PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                             const MSKernelCallBack &before, const MSKernelCallBack &after,
-                             int max_wait_worker_node_id);
+  void GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num);
 
   std::vector<std::thread> model_worker_vec_;
   std::vector<std::shared_ptr<ModelWorker>> model_workers_;
   std::vector<MSTensor> model_inputs_;
   std::vector<MSTensor> model_outputs_;
+  char *graph_buf_ = nullptr;
   size_t workers_num_ = 1;
-  std::mutex predict_task_mutex_;
+  std::mutex mtx_split_task_;
   bool is_user_data_ = false;
   int numa_node_num_ = 1;
   int used_numa_node_num_ = 0;
@@ -93,7 +90,6 @@ class ModelPool {
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
   bool use_split_batch_ = false;
-  std::vector<std::shared_ptr<ModelWorker>> all_model_worker_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_

@@ -18,7 +18,6 @@ package com.mindspore.flclient;
 
 import com.google.flatbuffers.FlatBufferBuilder;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.compression.DecodeExecutor;
 import com.mindspore.flclient.model.AlInferBert;
 import com.mindspore.flclient.model.AlTrainBert;
@@ -45,7 +44,7 @@ import static com.mindspore.flclient.LocalFLParameter.LENET;
  * @since 2021-06-30
  */
 public class GetModel {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(GetModel.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(GetModel.class.toString());
     private static volatile GetModel getModel;
 
     static {
@@ -90,7 +89,7 @@ public class GetModel {
      */
     public byte[] getRequestGetModel(String name, int iteration) {
         if (name == null || name.isEmpty()) {
-            LOGGER.severe("[GetModel] the input parameter of <name> is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[GetModel] the input parameter of <name> is null or empty, please check!"));
             throw new IllegalArgumentException();
         }
         RequestGetModelBuilder builder = new RequestGetModelBuilder();
@@ -102,13 +101,13 @@ public class GetModel {
         FLClientStatus status;
         int fmCount = responseDataBuf.featureMapLength();
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-            LOGGER.info("[getModel] into <parseResponseAlbert>");
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseAlbert>"));
             ArrayList<FeatureMap> albertFeatureMaps = new ArrayList<FeatureMap>();
             ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
             for (int i = 0; i < fmCount; i++) {
                 FeatureMap feature = responseDataBuf.featureMap(i);
                 if (feature == null) {
-                    LOGGER.severe("[getModel] the feature returned from server is null");
+                    LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                     return FLClientStatus.FAILED;
                 }
                 String featureName = feature.weightFullname();
@@ -120,8 +119,8 @@ public class GetModel {
                 } else {
                     continue;
                 }
-                LOGGER.fine("[getModel] weightFullname: " + feature.weightFullname() + ", weightLength:" +
-                        " " + feature.dataLength());
+                LOGGER.info(Common.addTag("[getModel] weightFullname: " + feature.weightFullname() + ", weightLength:" +
+                        " " + feature.dataLength()));
             }
             status = Common.initSession(flParameter.getInferModelPath());
             if (status == FLClientStatus.FAILED) {
@@ -129,37 +128,37 @@ public class GetModel {
                 return status;
             }
             int tag = 0;
-            LOGGER.info("[getModel] ----------------loading weight into inference " +
-                    "model-----------------");
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into inference " +
+                    "model-----------------"));
             AlInferBert alInferBert = AlInferBert.getInstance();
             tag = SessionUtil.updateFeatures(alInferBert.getTrainSession(), flParameter.getInferModelPath(),
                     inferFeatureMaps);
             if (tag == -1) {
-                LOGGER.severe("[getModel] unsolved error code in <SessionUtil.updateFeatures>");
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
                 return FLClientStatus.FAILED;
             }
-            LOGGER.info("[getModel] ----------------loading weight into train model-----------------");
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into train model-----------------"));
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(),
                     albertFeatureMaps);
             if (tag == -1) {
-                LOGGER.severe("[getModel] unsolved error code in <SessionUtil.updateFeatures>");
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
                 return FLClientStatus.FAILED;
             }
             Common.freeSession();
         } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
-            LOGGER.info("[getModel] into <parseResponseAlbert>");
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseAlbert>"));
             ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
             for (int i = 0; i < fmCount; i++) {
                 FeatureMap feature = responseDataBuf.featureMap(i);
                 if (feature == null) {
-                    LOGGER.severe("[getModel] the feature returned from server is null");
+                    LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                     return FLClientStatus.FAILED;
                 }
                 String featureName = feature.weightFullname();
                 featureMaps.add(feature);
-                LOGGER.fine("[getModel] weightFullname: " + featureName + ", weightLength: " +
-                        feature.dataLength());
+                LOGGER.info(Common.addTag("[getModel] weightFullname: " + featureName + ", weightLength: " +
+                        feature.dataLength()));
             }
             status = Common.initSession(flParameter.getInferModelPath());
             if (status == FLClientStatus.FAILED) {
@@ -167,12 +166,12 @@ public class GetModel {
                 return status;
             }
             int tag = 0;
-            LOGGER.info("[getModel] ----------------loading weight into model-----------------");
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into model-----------------"));
             AlTrainBert alTrainBert = AlTrainBert.getInstance();
             tag = SessionUtil.updateFeatures(alTrainBert.getTrainSession(), flParameter.getTrainModelPath(),
                     featureMaps);
             if (tag == -1) {
-                LOGGER.severe("[getModel] unsolved error code in <SessionUtil.updateFeatures>");
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
                 return FLClientStatus.FAILED;
             }
             Common.freeSession();
@@ -187,13 +186,13 @@ public class GetModel {
         for (int i = 0; i < fmCount; i++) {
             FeatureMap feature = responseDataBuf.featureMap(i);
             if (feature == null) {
-                LOGGER.severe("[getModel] the feature returned from server is null");
+                LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                 return FLClientStatus.FAILED;
             }
             String featureName = feature.weightFullname();
             featureMaps.add(feature);
-            LOGGER.fine("[getModel] weightFullname: " + featureName + ", weightLength: " +
-                    feature.dataLength());
+            LOGGER.info(Common.addTag("[getModel] weightFullname: " + featureName + ", weightLength: " +
+                    feature.dataLength()));
         }
         status = Common.initSession(flParameter.getInferModelPath());
         if (status == FLClientStatus.FAILED) {
@@ -201,11 +200,11 @@ public class GetModel {
             return status;
         }
         int tag = 0;
-        LOGGER.info("[getModel] ----------------loading weight into model-----------------");
+        LOGGER.info(Common.addTag("[getModel] ----------------loading weight into model-----------------"));
         TrainLenet trainLenet = TrainLenet.getInstance();
         tag = SessionUtil.updateFeatures(trainLenet.getTrainSession(), flParameter.getTrainModelPath(), featureMaps);
         if (tag == -1) {
-            LOGGER.severe("[getModel] unsolved error code in <SessionUtil.updateFeatures>");
+            LOGGER.severe(Common.addTag("[getModel] unsolved error code in <SessionUtil.updateFeatures>"));
             return FLClientStatus.FAILED;
         }
         Common.freeSession();
@@ -215,13 +214,13 @@ public class GetModel {
     private FLClientStatus deprecatedParseFeatures(ResponseGetModel responseDataBuf) {
         FLClientStatus status = FLClientStatus.SUCCESS;
         if (ALBERT.equals(flParameter.getFlName())) {
-            LOGGER.info("[getModel] into <parseResponseAlbert>");
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseAlbert>"));
             status = deprecatedParseResponseAlbert(responseDataBuf);
         } else if (LENET.equals(flParameter.getFlName())) {
-            LOGGER.info("[getModel] into <parseResponseLenet>");
+            LOGGER.info(Common.addTag("[getModel] into <parseResponseLenet>"));
             status = deprecatedParseResponseLenet(responseDataBuf);
         } else {
-            LOGGER.severe("[getModel] the flName is not valid, only support: lenet, albert");
+            LOGGER.severe(Common.addTag("[getModel] the flName is not valid, only support: lenet, albert"));
             status = FLClientStatus.FAILED;
         }
         return status;
@@ -250,36 +249,36 @@ public class GetModel {
         Client client = ClientManager.getClient(flParameter.getFlName());
         List<FeatureMap> featureMapList = parseFeatureMapList(responseDataBuf);
         if (featureMapList.size() <= 0) {
-            LOGGER.severe("[getModel] the feature size get from server is zero");
+            LOGGER.severe(Common.addTag("[getModel] the feature size get from server is zero"));
             retCode = ResponseCode.SystemError;
             return FLClientStatus.FAILED;
         }
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-            LOGGER.info("[getModel] parseResponseFeatures by " + localFLParameter.getServerMod());
+            LOGGER.info(Common.addTag("[getModel] parseResponseFeatures by " + localFLParameter.getServerMod()));
             ArrayList<FeatureMap> trainFeatureMaps = new ArrayList<FeatureMap>();
             ArrayList<FeatureMap> inferFeatureMaps = new ArrayList<FeatureMap>();
             for (int i = 0; i < featureMapList.size(); i++) {
                 FeatureMap feature = featureMapList.get(i);
                 if (feature == null) {
-                    LOGGER.severe("[getModel] the feature returned from server is null");
+                    LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                     retCode = ResponseCode.SystemError;
                     return FLClientStatus.FAILED;
                 }
                 String featureName = feature.weightFullname();
                 if (flParameter.getHybridWeightName(RunType.TRAINMODE).contains(featureName)) {
                     trainFeatureMaps.add(feature);
-                    LOGGER.fine("[getModel] trainWeightFullname: " + feature.weightFullname() + ", " +
-                            "trainWeightLength: " + feature.dataLength());
+                    LOGGER.info(Common.addTag("[getModel] trainWeightFullname: " + feature.weightFullname() + ", " +
+                            "trainWeightLength: " + feature.dataLength()));
                 }
                 if (flParameter.getHybridWeightName(RunType.INFERMODE).contains(featureName)) {
                     inferFeatureMaps.add(feature);
-                    LOGGER.fine("[getModel] inferWeightFullname: " + feature.weightFullname() + ", " +
-                            "inferWeightLength: " + feature.dataLength());
+                    LOGGER.info(Common.addTag("[getModel] inferWeightFullname: " + feature.weightFullname() + ", " +
+                            "inferWeightLength: " + feature.dataLength()));
                 }
             }
             Status tag;
-            LOGGER.info("[getModel] ----------------loading weight into inference " +
-                    "model-----------------");
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into inference " +
+                    "model-----------------"));
             status = Common.initSession(flParameter.getInferModelPath());
             if (status == FLClientStatus.FAILED) {
                 retCode = ResponseCode.RequestError;
@@ -288,11 +287,11 @@ public class GetModel {
             tag = client.updateFeatures(flParameter.getInferModelPath(), inferFeatureMaps);
             Common.freeSession();
             if (!Status.SUCCESS.equals(tag)) {
-                LOGGER.severe("[getModel] unsolved error code in <Client.updateFeatures>");
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <Client.updateFeatures>"));
                 retCode = ResponseCode.RequestError;
                 return FLClientStatus.FAILED;
             }
-            LOGGER.info("[getModel] ----------------loading weight into train model-----------------");
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into train model-----------------"));
             status = Common.initSession(flParameter.getTrainModelPath());
             if (status == FLClientStatus.FAILED) {
                 retCode = ResponseCode.RequestError;
@@ -301,37 +300,37 @@ public class GetModel {
             tag = client.updateFeatures(flParameter.getTrainModelPath(), trainFeatureMaps);
             Common.freeSession();
             if (!Status.SUCCESS.equals(tag)) {
-                LOGGER.severe("[getModel] unsolved error code in <Client.updateFeatures>");
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <Client.updateFeatures>"));
                 retCode = ResponseCode.RequestError;
                 return FLClientStatus.FAILED;
             }
         } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
-            LOGGER.info("[getModel] parseResponseFeatures by " + localFLParameter.getServerMod());
+            LOGGER.info(Common.addTag("[getModel] parseResponseFeatures by " + localFLParameter.getServerMod()));
             ArrayList<FeatureMap> featureMaps = new ArrayList<FeatureMap>();
             for (int i = 0; i < featureMapList.size(); i++) {
                 FeatureMap feature = featureMapList.get(i);
                 if (feature == null) {
-                    LOGGER.severe("[getModel] the feature returned from server is null");
+                    LOGGER.severe(Common.addTag("[getModel] the feature returned from server is null"));
                     retCode = ResponseCode.SystemError;
                     return FLClientStatus.FAILED;
                 }
                 String featureName = feature.weightFullname();
                 featureMaps.add(feature);
-                LOGGER.fine("[getModel] weightFullname: " + featureName + ", " +
-                        "weightLength: " + feature.dataLength());
+                LOGGER.info(Common.addTag("[getModel] weightFullname: " + featureName + ", " +
+                        "weightLength: " + feature.dataLength()));
             }
             Status tag;
-            LOGGER.info("[getModel] ----------------loading weight into model-----------------");
+            LOGGER.info(Common.addTag("[getModel] ----------------loading weight into model-----------------"));
             status = Common.initSession(flParameter.getTrainModelPath());
             if (status == FLClientStatus.FAILED) {
                 retCode = ResponseCode.RequestError;
                 return status;
             }
             tag = client.updateFeatures(flParameter.getTrainModelPath(), featureMaps);
-            LOGGER.info("[getModel] ===========free session=============");
+            LOGGER.info(Common.addTag("[getModel] ===========free session============="));
             Common.freeSession();
             if (!Status.SUCCESS.equals(tag)) {
-                LOGGER.severe("[getModel] unsolved error code in <Client.updateFeatures>");
+                LOGGER.severe(Common.addTag("[getModel] unsolved error code in <Client.updateFeatures>"));
                 retCode = ResponseCode.RequestError;
                 return FLClientStatus.FAILED;
             }
@@ -347,34 +346,34 @@ public class GetModel {
      */
     public FLClientStatus doResponse(ResponseGetModel responseDataBuf) {
         retCode = responseDataBuf.retcode();
-        LOGGER.info("[getModel] ==========the response message of getModel is:================");
-        LOGGER.info("[getModel] ==========retCode: " + retCode);
-        LOGGER.info("[getModel] ==========reason: " + responseDataBuf.reason());
-        LOGGER.info("[getModel] ==========iteration: " + responseDataBuf.iteration());
-        LOGGER.info("[getModel] ==========time: " + responseDataBuf.timestamp());
+        LOGGER.info(Common.addTag("[getModel] ==========the response message of getModel is:================"));
+        LOGGER.info(Common.addTag("[getModel] ==========retCode: " + retCode));
+        LOGGER.info(Common.addTag("[getModel] ==========reason: " + responseDataBuf.reason()));
+        LOGGER.info(Common.addTag("[getModel] ==========iteration: " + responseDataBuf.iteration()));
+        LOGGER.info(Common.addTag("[getModel] ==========time: " + responseDataBuf.timestamp()));
         FLClientStatus status = FLClientStatus.SUCCESS;
         switch (responseDataBuf.retcode()) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info("[getModel] getModel response success");
+                LOGGER.info(Common.addTag("[getModel] getModel response success"));
                 if (Common.checkFLName(flParameter.getFlName())) {
                     status = deprecatedParseFeatures(responseDataBuf);
                 } else {
-                    LOGGER.info("[getModel] into <parseResponseFeatures>");
+                    LOGGER.info(Common.addTag("[getModel] into <parseResponseFeatures>"));
                     status = parseResponseFeatures(responseDataBuf);
                 }
                 return status;
             case (ResponseCode.SucNotReady):
-                LOGGER.info("[getModel] server is not ready now: need wait and request getModel again");
+                LOGGER.info(Common.addTag("[getModel] server is not ready now: need wait and request getModel again"));
                 return FLClientStatus.WAIT;
             case (ResponseCode.OutOfTime):
-                LOGGER.info("[getModel] out of time: need wait and request startFLJob again");
+                LOGGER.info(Common.addTag("[getModel] out of time: need wait and request startFLJob again"));
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.warning("[getModel] catch RequestError or SystemError");
+                LOGGER.warning(Common.addTag("[getModel] catch RequestError or SystemError"));
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe("[getModel] the return <retCode> from server is invalid: " + retCode);
+                LOGGER.severe(Common.addTag("[getModel] the return <retCode> from server is invalid: " + retCode));
                 return FLClientStatus.FAILED;
         }
     }
@@ -392,8 +391,8 @@ public class GetModel {
 
         private RequestGetModelBuilder flName(String name) {
             if (name == null || name.isEmpty()) {
-                LOGGER.severe("[GetModel] the input parameter of <name> is null or empty, please " +
-                        "check!");
+                LOGGER.severe(Common.addTag("[GetModel] the input parameter of <name> is null or empty, please " +
+                        "check!"));
                 throw new IllegalArgumentException();
             }
             this.nameOffset = this.builder.createString(name);
@@ -414,8 +413,8 @@ public class GetModel {
 
         private RequestGetModelBuilder downloadCompressTypesBuilder(byte[] downloadCompressTypes) {
             if (downloadCompressTypes == null || downloadCompressTypes.length == 0) {
-                LOGGER.severe("[GetModel] the parameter of <downloadCompressTypes> is null or empty," +
-                        " please check!");
+                LOGGER.severe(Common.addTag("[GetModel] the parameter of <downloadCompressTypes> is null or empty," +
+                        " please check!"));
                 throw new IllegalArgumentException();
             }
             this.downloadCompressTypesOffset = RequestGetModel.createDownloadCompressTypesVector(builder,

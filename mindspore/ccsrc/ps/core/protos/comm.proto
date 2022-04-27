@@ -65,8 +65,6 @@ enum NodeCommand {
   QUERY_FINISH_TRANSFORM = 23;
   // This command is used to start scale out rollback
   SCALE_OUT_ROLLBACK = 24;
-  // Record the failure information, such as node restart
-  FAILURE_EVENT_INFO = 25;
 }
 
 enum NodeRole {
@@ -140,14 +138,6 @@ message HeartbeatMessage {
   bool has_address = 3;
   string ip = 4;
   uint32 port = 5;
-}
-
-message FailureEventMessage {
-  string node_role = 1;
-  string ip = 2;
-  uint32 port = 3;
-  string time = 4;
-  string event = 5;
 }
 
 enum NodeState {

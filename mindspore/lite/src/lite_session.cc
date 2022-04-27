@@ -16,7 +16,9 @@
 
 #include "src/lite_session.h"
 #include <set>
+#ifdef SHARING_MODEL_WEIGHT
 #include "src/pack_weight_manager.h"
+#endif
 #ifndef RUNTIME_PASS_CLIP
 #include "src/runtime/runtime_pass.h"
 #endif
@@ -635,6 +637,34 @@ void LiteSession::FreePackOpWeight(const std::vector<kernel::LiteKernel *> &kern
     }
   }
 }
+#ifdef SHARING_MODEL_WEIGHT
+int LiteSession::IniPackWeightData(Model *model) {
+  auto lite_model = reinterpret_cast<LiteModel *>(model);
+  auto kernel_num = model->all_nodes_.size();
+  for (size_t i = 0; i < kernel_num; i++) {
+    auto node = model->all_nodes_[i];
+    auto node_type = node->node_type_;
+    if (IsPackedOp(node_type) || IsShareConstOp(node_type)) {
+      for (size_t j = 0; j < node->input_indices_.size(); j++) {
+        auto tensor_index = node->input_indices_[j];
+        auto src_tensor = lite_model->GetSchemaTensor(tensor_index);
+        if (src_tensor == nullptr || src_tensor->handler() == nullptr || src_tensor->data() == nullptr ||
+            src_tensor->length() == 0) {
+          continue;
+        }
+        auto data = lite::PackWeightManager::GetInstance()->GetTensorData(lite_model, src_tensor, tensor_index);
+        if (data == nullptr) {
+          MS_LOG(DEBUG) << "data not packed.";
+          continue;
+        }
+        this->tensors_[tensor_index]->set_data(data);
+        this->tensors_[tensor_index]->set_own_data(false);
+      }
+    }
+  }
+  return RET_OK;
+}
+#endif
 
 int LiteSession::CompileGraph(Model *model) {
   auto ret = PreCheck(model);
@@ -650,11 +680,13 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  ret = lite::PackWeightManager::GetInstance()->StoreOriginTensorData(model);
+#ifdef SHARING_MODEL_WEIGHT
+  ret = IniPackWeightData(model);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "StoreOriginTensorData failed.";
+    MS_LOG(ERROR) << "IniPackWeightData failed.";
     return RET_ERROR;
   }
+#endif
   InitGraphInputTensors(model);
   InitGraphOutputTensors(model);
 
@@ -1398,11 +1430,6 @@ int LiteSession::RuntimeAllocatorValid() {
   return RET_ERROR;
 #endif
 
-#ifdef BFC_MEMORY
-  MS_LOG(DEBUG) << "Not support runtime allocator when BFC_MEMORY on.";
-  return RET_ERROR;
-#endif
-
   if (context_->enable_parallel_ == true) {
     MS_LOG(DEBUG) << "Not support runtime allocator in subgraph parallel.";
     return RET_ERROR;
@@ -1771,6 +1798,9 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
+#ifdef SHARING_MODEL_WEIGHT
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
+#endif
   return lite_buf;
 }
 
@@ -1792,6 +1822,9 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
     delete[] model_buf;
     model_buf = nullptr;
   }
+#ifdef SHARING_MODEL_WEIGHT
+  lite::PackWeightManager::GetInstance()->InitWeightManagerByPath(file, model_buf);
+#endif
   return lite_buf;
 }
 

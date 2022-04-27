@@ -83,9 +83,6 @@ _set_ps_context_func_map = {
     "upload_compress_type": ps_context().set_upload_compress_type,
     "upload_sparse_rate": ps_context().set_upload_sparse_rate,
     "download_compress_type": ps_context().set_download_compress_type,
-    "instance_name": ps_context().set_instance_name,
-    "participation_time_level": ps_context().set_participation_time_level,
-    "continuous_failure_times": ps_context().set_continuous_failure_times,
 }
 
 _get_ps_context_func_map = {
@@ -137,9 +134,6 @@ _get_ps_context_func_map = {
     "upload_compress_type": ps_context().upload_compress_type,
     "upload_sparse_rate": ps_context().upload_sparse_rate,
     "download_compress_type": ps_context().download_compress_type,
-    "instance_name": ps_context().instance_name,
-    "participation_time_level": ps_context().participation_time_level,
-    "continuous_failure_times": ps_context().continuous_failure_times,
 }
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",

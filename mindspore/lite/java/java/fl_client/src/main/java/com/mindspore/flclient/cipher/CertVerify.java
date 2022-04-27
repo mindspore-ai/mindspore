@@ -18,7 +18,6 @@ package com.mindspore.flclient.cipher;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.FLParameter;
 
-import com.mindspore.flclient.common.FLLoggerGenerater;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
@@ -54,7 +53,7 @@ import java.util.logging.Logger;
  * @since 2021-8-27
  */
 public class CertVerify {
-    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(CertVerify.class.toString());
+    private static final Logger LOGGER = Logger.getLogger(CertVerify.class.toString());
 
     /**
      * Verify the legitimacy of certificate chain
@@ -65,38 +64,38 @@ public class CertVerify {
      */
     public static boolean verifyCertificateChain(String clientID, X509Certificate[] x509Certificates) {
         if (clientID == null || clientID.isEmpty()) {
-            LOGGER.severe("[CertVerify] the parameter clientID is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] the parameter clientID is null or empty, please check!"));
             return false;
         }
         if (x509Certificates == null || x509Certificates.length < 2) {
-            LOGGER.severe("[CertVerify] the parameter x509Certificates is null or the length is not " +
-                    "valid: < 2, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] the parameter x509Certificates is null or the length is not " +
+                    "valid: < 2, please check!"));
             return false;
         }
         if (verifyChain(clientID, x509Certificates) && verifyCommonName(clientID, x509Certificates)
                 && verifyCrl(clientID, x509Certificates) && verifyValidDate(x509Certificates) &&
                 verifyKeyIdentifier(clientID, x509Certificates)) {
-            LOGGER.info("[CertVerify] verifyCertificateChain success!");
+            LOGGER.info(Common.addTag("[CertVerify] verifyCertificateChain success!"));
             return true;
         }
-        LOGGER.severe("[CertVerify] verifyCertificateChain failed!");
+        LOGGER.severe(Common.addTag("[CertVerify] verifyCertificateChain failed!"));
         return false;
     }
 
     private static boolean verifyCommonName(String clientID, X509Certificate[] x509Certificate) {
         if (clientID == null || clientID.isEmpty()) {
-            LOGGER.severe("[CertVerify] the parameter clientID is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] the parameter clientID is null or empty, please check!"));
             return false;
         }
         if (x509Certificate == null || x509Certificate.length < 2) {
-            LOGGER.severe("[CertVerify] x509Certificate chains is null or the length is not valid: < 2," +
-                    " please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] x509Certificate chains is null or the length is not valid: < 2," +
+                    " please check!"));
             return false;
         }
         X509Certificate[] certificateChains = getX509CertificateChain(clientID);
         if (certificateChains == null || certificateChains.length < 4) {
-            LOGGER.severe("[CertVerify] certificateChains is null or the length is not valid: < 4, " +
-                    "please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or the length is not valid: < 4, " +
+                    "please check!"));
             return false;
         }
         X509Certificate localEquipCACert = certificateChains[2];
@@ -111,8 +110,8 @@ public class CertVerify {
     // check whether the former certificate owner is the publisher of next one.
     private static boolean verifyChain(String clientID, X509Certificate[] x509Certificates) {
         if (x509Certificates == null || x509Certificates.length < 2) {
-            LOGGER.severe("[CertVerify] certificateChains is null or the length is not valid: < 2, " +
-                    "please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or the length is not valid: < 2, " +
+                    "please check!"));
             return false;
         }
 
@@ -120,8 +119,8 @@ public class CertVerify {
         try {
             X509Certificate[] certificateChains = getX509CertificateChain(clientID);
             if (certificateChains == null || certificateChains.length < 3) {
-                LOGGER.severe("[CertVerify] certificateChains is null or the length is not valid: < 3, " +
-                        "please check!");
+                LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or the length is not valid: < 3, " +
+                        "please check!"));
                 return false;
             }
             X509Certificate localEquipCA = certificateChains[2];
@@ -129,7 +128,7 @@ public class CertVerify {
             x509Certificates[1].verify(publicKey);
         } catch (NoSuchProviderException | CertificateException | NoSuchAlgorithmException |
                 InvalidKeyException | SignatureException e) {
-            LOGGER.severe("[CertVerify] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[CertVerify] catch Exception: " + e.getMessage()));
             return false;
         }
 
@@ -151,11 +150,11 @@ public class CertVerify {
             remoteServiceCert.verify(publicKey);
         } catch (CertificateException | NoSuchAlgorithmException | InvalidKeyException |
                 NoSuchProviderException | SignatureException e) {
-            LOGGER.severe("verifyChain failed!");
-            LOGGER.severe("[verifyChain] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("verifyChain failed!"));
+            LOGGER.severe(Common.addTag("[verifyChain] catch Exception: " + e.getMessage()));
             return false;
         }
-        LOGGER.info("verifyChain success!");
+        LOGGER.info(Common.addTag("verifyChain success!"));
         return true;
     }
 
@@ -167,7 +166,7 @@ public class CertVerify {
      */
     public static X509Certificate[] getX509CertificateChain(String clientID) {
         if (clientID == null || clientID.isEmpty()) {
-            LOGGER.severe("[CertVerify] the parameter clientID is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] the parameter clientID is null or empty, please check!"));
             return null;
         }
         X509Certificate[] x509Certificates = null;
@@ -186,7 +185,7 @@ public class CertVerify {
             x509Certificates = (X509Certificate[]) certificates;
         } catch (IOException | NoSuchAlgorithmException | UnrecoverableEntryException | KeyStoreException |
                 CertificateException e) {
-            LOGGER.severe("[CertVerify] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[CertVerify] catch Exception: " + e.getMessage()));
         }
         return x509Certificates;
     }
@@ -199,7 +198,7 @@ public class CertVerify {
      */
     public static X509Certificate[] transformPemArrayToX509Array(String[] pemCerts) {
         if (pemCerts == null || pemCerts.length == 0) {
-            LOGGER.severe("[CertVerify] pemCerts is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] pemCerts is null or empty, please check!"));
             throw new IllegalArgumentException();
         }
         int nSize = pemCerts.length;
@@ -220,7 +219,7 @@ public class CertVerify {
                 x509Certificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(certificateData));
             }
         } catch (CertificateException e) {
-            LOGGER.severe("[CertVerify] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[CertVerify] catch Exception: " + e.getMessage()));
             return null;
         }
         return x509Certificate;
@@ -228,34 +227,34 @@ public class CertVerify {
 
     private static boolean verifyCrl(String clientID, X509Certificate[] x509Certificates) {
         if (x509Certificates == null || x509Certificates.length < 2) {
-            LOGGER.severe("[verifyCrl] the number of certificate in x509Certificates is less than 2, " +
-                    "please check!");
+            LOGGER.severe(Common.addTag("[verifyCrl] the number of certificate in x509Certificates is less than 2, " +
+                    "please check!"));
             throw new IllegalArgumentException();
         }
         FLParameter flParameter = FLParameter.getInstance();
         X509Certificate equipCert = x509Certificates[1];
         if (equipCert == null) {
-            LOGGER.severe("[verifyCrl] equipCert is null, please check it!");
+            LOGGER.severe(Common.addTag("[verifyCrl] equipCert is null, please check it!"));
             return false;
         }
         String equipCertSerialNum = equipCert.getSerialNumber().toString();
         if (verifySingleCrl(clientID, equipCertSerialNum, flParameter.getEquipCrlPath())) {
-            LOGGER.info("[verifyCrl] verify crl certificate success!");
+            LOGGER.info(Common.addTag("[verifyCrl] verify crl certificate success!"));
             return true;
         }
-        LOGGER.info("[verifyCrl] verify crl certificate failed!");
+        LOGGER.info(Common.addTag("[verifyCrl] verify crl certificate failed!"));
         return false;
     }
 
     private static boolean verifySingleCrl(String clientID, String caSerialNumber, String crlPath) {
         if (caSerialNumber == null || caSerialNumber.isEmpty()) {
-            LOGGER.severe("[CertVerify] caSerialNumber is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] caSerialNumber is null or empty, please check!"));
             throw new IllegalArgumentException();
         }
         // crlPath does not exist
         if (crlPath.equals("null")) {
-            LOGGER.severe("[CertVerify] crlPath is null, please set crlPath with setEquipCrlPath " +
-                    "method!");
+            LOGGER.severe(Common.addTag("[CertVerify] crlPath is null, please set crlPath with setEquipCrlPath " +
+                    "method!"));
             return false;
         }
         boolean notInFlag = true;
@@ -265,8 +264,8 @@ public class CertVerify {
                 // check CRL cert with local equipment CA publicKey
                 X509Certificate[] certificateChains = getX509CertificateChain(clientID);
                 if (certificateChains == null || certificateChains.length < 3) {
-                    LOGGER.severe("[CertVerify] certificateChains is null or the length is not" +
-                            " valid: < 3, please check!");
+                    LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or the length is not" +
+                            " valid: < 3, please check!"));
                     return false;
                 }
                 X509Certificate localEquipCA = certificateChains[2];
@@ -276,13 +275,13 @@ public class CertVerify {
                 // check whether remote equipmentCert in CRL
                 Set<?> set = crl.getRevokedCertificates();
                 if (set == null) {
-                    LOGGER.info("[verifySingleCrl] verifyCrl Revoked Cert list is null");
+                    LOGGER.info(Common.addTag("[verifySingleCrl] verifyCrl Revoked Cert list is null"));
                     return true;
                 }
                 for (Object obj : set) {
                     X509CRLEntry crlEntity = (X509CRLEntry) obj;
                     if (crlEntity.getSerialNumber().toString().equals(caSerialNumber)) {
-                        LOGGER.info("[verifySingleCrl] Find same SerialNumber during the crl!");
+                        LOGGER.info(Common.addTag("[verifySingleCrl] Find same SerialNumber during the crl!"));
                         notInFlag = false;
                         break;
                     }
@@ -291,7 +290,7 @@ public class CertVerify {
         } catch (java.security.cert.CRLException | java.security.NoSuchAlgorithmException |
                 java.security.InvalidKeyException | java.security.NoSuchProviderException |
                 java.security.SignatureException e) {
-            LOGGER.severe("[verifySingleCrl] judgeCAInCRL error: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[verifySingleCrl] judgeCAInCRL error: " + e.getMessage()));
             notInFlag = false;
         }
         return notInFlag;
@@ -299,15 +298,15 @@ public class CertVerify {
 
     private static Object readCrl(String assetName) {
         if (assetName == null || assetName.isEmpty()) {
-            LOGGER.severe("[readCrl] the parameter of <assetName> is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[readCrl] the parameter of <assetName> is null or empty, please check!"));
             return null;
         }
         InputStream inputStream = null;
         try {
             inputStream = new FileInputStream(assetName);
         } catch (IOException e) {
-            LOGGER.severe("[readCrl] catch Exception of read inputStream in readCert: " +
-                    e.getMessage());
+            LOGGER.severe(Common.addTag("[readCrl] catch Exception of read inputStream in readCert: " +
+                    e.getMessage()));
             return null;
         }
         Object crlCert = null;
@@ -315,14 +314,14 @@ public class CertVerify {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             crlCert = cf.generateCRL(inputStream);
         } catch (CertificateException | CRLException e) {
-            LOGGER.severe("[readCrl] catch Exception of creating CertificateFactory in readCert: "
-                    + e.getMessage());
+            LOGGER.severe(Common.addTag("[readCrl] catch Exception of creating CertificateFactory in readCert: "
+                    + e.getMessage()));
         } finally {
             try {
                 inputStream.close();
             } catch (IOException e) {
-                LOGGER.severe("[readCrl] catch Exception of close inputStream: "
-                        + e.getMessage());
+                LOGGER.severe(Common.addTag("[readCrl] catch Exception of close inputStream: "
+                        + e.getMessage()));
             }
         }
 
@@ -331,7 +330,7 @@ public class CertVerify {
 
     private static boolean verifyValidDate(X509Certificate[] x509Certificates) {
         if (x509Certificates == null) {
-            LOGGER.severe("[CertVerify] x509Certificates is null, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] x509Certificates is null, please check!"));
             throw new IllegalArgumentException();
         }
         Date date = new Date();
@@ -342,7 +341,7 @@ public class CertVerify {
             }
         } catch (java.security.cert.CertificateExpiredException |
                 java.security.cert.CertificateNotYetValidException e) {
-            LOGGER.severe("[verifyValidDate] catch Exception: " + e.getMessage());
+            LOGGER.severe(Common.addTag("[verifyValidDate] catch Exception: " + e.getMessage()));
             return false;
         }
         return true;
@@ -350,19 +349,19 @@ public class CertVerify {
 
     private static boolean verifyKeyIdentifier(String clientID, X509Certificate[] x509Certificates) {
         if (clientID == null || clientID.isEmpty()) {
-            LOGGER.severe("[CertVerify] the parameter clientID is null or empty, please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] the parameter clientID is null or empty, please check!"));
             return false;
         }
         if (x509Certificates == null || x509Certificates.length < 2) {
-            LOGGER.severe("[CertVerify] x509Certificate chains is null or the length is not valid: < 2," +
-                    " please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] x509Certificate chains is null or the length is not valid: < 2," +
+                    " please check!"));
             return false;
         }
 
         X509Certificate[] certificateChains = getX509CertificateChain(clientID);
         if (certificateChains == null || certificateChains.length < 3) {
-            LOGGER.severe("[CertVerify] certificateChains is null or the length is not valid: < 3, " +
-                    "please check!");
+            LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or the length is not valid: < 3, " +
+                    "please check!"));
             return false;
         }
 
@@ -387,7 +386,7 @@ public class CertVerify {
         String authorityIdentifier = "null";
         try {
             if (remoteEquipCert == null) {
-                LOGGER.severe("[CertVerify] remoteEquipCert is null, please check it!");
+                LOGGER.severe(Common.addTag("[CertVerify] remoteEquipCert is null, please check it!"));
                 return false;
             }
             String authorityIdentifierOid = "2.5.29.35";
@@ -402,8 +401,8 @@ public class CertVerify {
         }
 
         if (authorityIdentifier.equals("null") || subjectIdentifier.equals("null")) {
-            LOGGER.severe("[CertVerify] authorityKeyIdentifier or subjectKeyIdentifier is null, check " +
-                    "failed!");
+            LOGGER.severe(Common.addTag("[CertVerify] authorityKeyIdentifier or subjectKeyIdentifier is null, check " +
+                    "failed!"));
             return false;
         } else {
             return authorityIdentifier.equals(subjectIdentifier);

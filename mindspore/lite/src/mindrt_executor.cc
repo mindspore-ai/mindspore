@@ -199,7 +199,7 @@ int MindrtExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels, co
   return RET_OK;
 }
 
-int MindrtExecutor::TransferGraphOutput() {
+void MindrtExecutor::TransferGraphOutput() {
   for (auto tensor_map : *isolate_output_map_) {
     auto dst_tensor = tensor_map.second;
     auto src_tensor = tensor_map.first;
@@ -207,11 +207,7 @@ int MindrtExecutor::TransferGraphOutput() {
     /* dst tensor free in FreeOutputTensor */
 #ifdef ENABLE_FP16
     if (src_tensor->data_type() == kNumberTypeFloat16) {
-      auto ret = dst_tensor->MallocData();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "MallocData failed";
-        return ret;
-      }
+      dst_tensor->MallocData();
       Fp16ToFloat32(reinterpret_cast<float16_t *>(src_tensor->MutableData()),
                     reinterpret_cast<float *>(dst_tensor->data()), dst_tensor->ElementsNum());
     } else {
@@ -219,12 +215,8 @@ int MindrtExecutor::TransferGraphOutput() {
       if (dst_tensor->allocator() != src_tensor->allocator()) {
         dst_tensor->set_allocator(src_tensor->allocator());
       }
-      if (src_tensor->allocator() != nullptr) {
-        src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-        dst_tensor->set_data(src_tensor->data());
-        dst_tensor->set_own_data(src_tensor->own_data());
-      } else {
-        dst_tensor->set_data(src_tensor->data());
+      dst_tensor->set_data(src_tensor->data());
+      if (IS_RUNTIME_ALLOCATOR(src_tensor->allocator()) == false) {
         src_tensor->set_data(nullptr);
       }
 #ifdef ENABLE_FP16
@@ -232,7 +224,7 @@ int MindrtExecutor::TransferGraphOutput() {
 #endif
     src_tensor->DecRefCount();
   }
-  return RET_OK;
+  return;
 }
 
 void MindrtExecutor::FreeOutputTensor() {
@@ -271,11 +263,8 @@ int MindrtExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vect
     return ret;
   }
 
-  ret = TransferGraphOutput();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "TransferGraphOutput failed";
-    return ret;
-  }
+  TransferGraphOutput();
+
   thread_pool->SetSpinCountMinValue();
   return RET_OK;
 }

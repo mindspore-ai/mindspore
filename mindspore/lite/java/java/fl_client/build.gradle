@@ -41,44 +41,30 @@ repositories {
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-    compile('com.squareup.okhttp3:okhttp:3.14.9')
-    // https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java
-    compile('com.google.flatbuffers:flatbuffers-java:2.0.0')
-    compile('org.bouncycastle:bcprov-jdk15on:1.68')
-    compile project(':common')
-    compile project(':linux_x86')
-
     // Use JUnit test framework
-    // Using compile to replace Implementation, because we need resolve the path.
-    testCompile('com.squareup.okhttp3:mockwebserver:3.14.9')
-    testCompile('org.jmockit:jmockit:1.49')
-    testCompile('junit:junit:4.12')
-    testCompile('org.hamcrest:hamcrest-all:1.3')
-    testCompile('com.alibaba:fastjson:1.2.58')
-    testCompile('commons-io:commons-io:2.0.1')
-    // the module jar for test, need change to your local path while UTTest
-    testCompile(files('ut_data/test_data/jar/quick_start_flclient.jar'))
-}
+    testImplementation 'junit:junit:4.12'
 
-test {
-    // need add the frame lib path to LD_LIBRARY_PATH
-    // ref to https://www.mindspore.cn/federated/docs/zh-CN/r1.6/deploy_federated_client.html#id7
-    environment "LD_LIBRARY_PATH", "../linux_x86/libs/"
-    // need set MS_FL_UT_BASE_PATH the path of ut_data
-    // now ut data on the private repository https://gitee.com/zhangzhaoju/mindspore_fl_test_data
-    environment "MS_FL_UT_BASE_PATH", "/home/zhangzhaoju/ms_dev/mindspore_fl_test_data/ut_data"
-    jvmArgs "-javaagent:${project.configurations.testCompile.find { it.name.startsWith("jmockit") }}"
-    reports {junitXml.outputLocation.set(layout.buildDirectory.dir("ut_test_result"))}
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
+    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: '3.14.9'
+    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: '3.14.9'
+
+    // https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java
+    compile group: 'com.google.flatbuffers', name: 'flatbuffers-java', version: '2.0.0'
+
+    compile(group: 'org.bouncycastle',name: 'bcprov-jdk15on', version: '1.68')
+    implementation project(':common')
+    implementation project(':linux_x86')
+
 }
 
 def getFlatVersion(path) {
     def version = new ByteArrayOutputStream()
     def cmd = path + ' --version'
-    exec { ExecSpec execSpec ->
-        executable 'bash'
-        args '-c', cmd
-        standardOutput = version
+    exec {
+        ExecSpec execSpec ->
+            executable 'bash'
+            args '-c', cmd
+            standardOutput = version
     }
     return version.toString().split()[2]
 }
@@ -90,7 +76,7 @@ flatbuffers {
     FileTree msLibTree = fileTree(dir: msLib, include: ["flatbuffers_*/bin/flatc"])
     String msLibPath = ''
     String libPath = ''
-    msLibTree.find { File file ->
+    msLibTree.find {File file ->
         libPath = file.toString()
         String version = getFlatVersion(libPath)
         if ('2.0.0' == version) {
@@ -106,7 +92,7 @@ flatbuffers {
         } else {
             println('the version of build flatc is not valid, will find the other flatc')
         }
-    } else if (msLibPath != '' && file(msLibPath).exists()) {
+    } else if (msLibPath != '' && file(msLibPath).exists()){
         flatcPath = msLibPath
     } else {
         println("the needed flatc of version 2.0.0 is not exist, please check")
@@ -118,7 +104,6 @@ task createFlatBuffers(type: FlatBuffers) {
     inputDir = file("../../../../schema")
     outputDir = file("src/main/java/")
     language = 'java'
-    extraArgs = "--gen-mutable"
 }
 
 
@@ -127,67 +112,30 @@ task clearJar(type: Delete) {
     delete 'build/libs/jarX86/mindspore-lite-java-flclient.jar'
 }
 
-archivesBaseName = 'mindspore-lite-java-flclient'
+archivesBaseName ='mindspore-lite-java-flclient'
 
-task flReleaseJarAAR(type: Jar, dependsOn: ['compileJava', 'createFlatBuffers']) {
+task flReleaseJarAAR(type: Jar){
     manifest {
         attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
     from('build/classes/java/main')
-//    from(zipTree(project.configurations.testCompile.find { it.name.startsWith("bcprov-jdk15on") }))
-//    from(zipTree(project.configurations.testCompile.find { it.name.startsWith("flatbuffers-java") }))
     destinationDirectory = file('build/libs/jarAAR')
 }
 
-task packFLJarX86(type: Jar, dependsOn: ['compileJava', 'createFlatBuffers']) {
+task packFLJarX86(type: Jar){
     manifest {
         attributes "Main-Class": "com.mindspore.flclient.SyncFLJob"
     }
-    from('build/classes/java/main')
-    from('../common/build/classes/java/main')
-    from('../linux_x86/build/classes/java/main')
+    from ('build/classes/java/main')
+    from ('../common/build/classes/java/main')
+    from ('../linux_x86/build/classes/java/main')
     from {
         configurations.compile.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
+            it.isDirectory() ? it : zipTree(it) }
     }
     destinationDirectory = file('build/libs/jarX86')
 }
 
-task packFLJarX86UT(type: Jar, dependsOn: ['compileTestJava', 'createFlatBuffers']) {
-    manifest {
-        attributes "Main-Class": "com.mindspore.flclient.SyncFLJobTest"
-    }
-    from('build/classes/java/main')
-    from('build/classes/java/test')
-    from('../common/build/classes/java/main')
-    from('../linux_x86/build/classes/java/main')
-    from {
-        configurations.testCompile.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-    from {
-        configurations.compile.collect {
-            it.isDirectory() ? it : zipTree(it)
-        }
-    }
-    destinationDirectory = file('build/libs/jarX86UT')
-}
-
-task flUTJarX86(dependsOn: ['packFLJarX86UT']) {
-    doLast {
-        exec {
-            commandLine "zip", "-d", "./build/libs/jarX86UT/mindspore-lite-java-flclient.jar", 'META-INF/.SF', 'META-INF/.RSA', 'META-INF/*SF'
-        }
-        exec {
-            // Need do -javaagent so we copy the jmockit jar to the release path
-            String jmock_jar = project.configurations.testCompile.find { it.name.startsWith("jmockit") }.toString()
-            commandLine "cp", jmock_jar, './build/libs/jarX86UT/'
-        }
-    }
-}
-
-task flReleaseJarX86(type: Exec, dependsOn: ['packFLJarX86']) {
-    commandLine "zip", "-d", "./build/libs/jarX86/mindspore-lite-java-flclient.jar", 'META-INF/.SF', 'META-INF/.RSA', 'META-INF/*SF'
+task flReleaseJarX86 (type:Exec, dependsOn: ['packFLJarX86']){
+    commandLine "zip", "-d", "./build/libs/jarX86/mindspore-lite-java-flclient.jar",'META-INF/.SF',  'META-INF/.RSA',  'META-INF/*SF'
 }

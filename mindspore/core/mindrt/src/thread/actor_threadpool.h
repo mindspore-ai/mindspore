@@ -30,11 +30,10 @@
 #define USE_HQUEUE
 #endif
 namespace mindspore {
-constexpr size_t MAX_READY_ACTOR_NR = 8192;
 class ActorThreadPool;
 class ActorWorker : public Worker {
  public:
-  explicit ActorWorker(ThreadPool *pool, size_t index) : Worker(pool, index) {}
+  explicit ActorWorker(ThreadPool *pool) : Worker(pool) {}
   void CreateThread() override;
   bool ActorActive();
   ~ActorWorker() override{};
@@ -47,23 +46,20 @@ class ActorWorker : public Worker {
 class ActorThreadPool : public ThreadPool {
  public:
   // create ThreadPool that contains actor thread and kernel thread
-  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num, BindMode bind_mode) {
-    std::vector<int> core_list;
-    return ActorThreadPool::CreateThreadPool(actor_thread_num, all_thread_num, core_list, bind_mode);
-  }
+  static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num, BindMode bind_mode);
 
   static ActorThreadPool *CreateThreadPool(size_t actor_thread_num, size_t all_thread_num,
-                                           const std::vector<int> &core_list, BindMode bind_mode);
+                                           const std::vector<int> &core_list);
   // create ThreadPool that contains only actor thread
   static ActorThreadPool *CreateThreadPool(size_t thread_num);
   ~ActorThreadPool() override;
 
-  virtual int ActorQueueInit();
-  virtual void PushActorToQueue(ActorBase *actor);
-  virtual ActorBase *PopActorFromQueue();
+  void PushActorToQueue(ActorBase *actor);
+  ActorBase *PopActorFromQueue();
 
- protected:
-  ActorThreadPool() = default;
+ private:
+  ActorThreadPool() {}
+  int CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list);
 
   std::mutex actor_mutex_;
   std::condition_variable actor_cond_;
@@ -72,9 +68,6 @@ class ActorThreadPool : public ThreadPool {
 #else
   std::queue<ActorBase *> actor_queue_;
 #endif
-
- private:
-  int CreateThreads(size_t actor_thread_num, size_t all_thread_num, const std::vector<int> &core_list);
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_ACTOR_THREADPOOL_H_

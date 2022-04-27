@@ -628,7 +628,7 @@ class VocabEmbedding(Cell):
                 is specified. Default: 'normal'.
 
         Inputs:
-            - **input_ids** (Tensor) - The tokenized inputs with datatype int32 with shape (batch_size, seq_length)
+            **input_ids** (Tensor) - The tokenized inputs with datatype int32 with shape (batch_size, seq_length)
 
         Outputs:
             Tuple, a tuple contains (`output`, `embedding_table`)

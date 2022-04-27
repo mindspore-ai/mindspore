@@ -31,6 +31,12 @@ Worker::~Worker() {
     thread_.join();
   }
   pool_ = nullptr;
+#ifdef OPERATOR_PARALLELISM
+  if (task_messages_ != nullptr) {
+    free(task_messages_);
+    task_messages_ = nullptr;
+  }
+#endif
 }
 
 void Worker::CreateThread() { thread_ = std::thread(&Worker::Run, this); }
@@ -94,6 +100,13 @@ void Worker::Run() {
     } else {
       YieldAndDeactive();
     }
+#ifdef OPERATOR_PARALLELISM
+    if (RunQueueWorkTask()) {
+      if (spin_count_ > 0) {
+        spin_count_ = 1;
+      }
+    }
+#endif
     if (spin_count_ > max_spin_count_) {
       WaitUntilActive();
       spin_count_ = 1;
@@ -178,13 +191,52 @@ ThreadPool::~ThreadPool() {
     delete affinity_;
     affinity_ = nullptr;
   }
+#ifdef OPERATOR_PARALLELISM
+#ifdef USE_HQUEUE
+  task_queue_.Clean();
+#endif
+#endif
   THREAD_INFO("destruct success");
 }
 
-int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) {
+int ThreadPool::CreateThreads(size_t thread_num, const std::vector<int> &core_list) {
+#ifdef OPERATOR_PARALLELISM
+#ifdef USE_HQUEUE
+  if ((!task_queue_.IsInit()) && task_queue_.Init(MAX_READY_TASK_NR) != true) {
+    THREAD_ERROR("Init task queue failed");
+    return THREAD_ERROR;
+  }
+#endif
+#endif
+  size_t core_num = std::thread::hardware_concurrency();
+  thread_num = thread_num < core_num ? thread_num : core_num;
+  THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
+  if (thread_num == 0) {
+    THREAD_INFO("Current thread as working thread.");
+    return THREAD_OK;
+  }
+  std::lock_guard<std::mutex> _l(pool_mutex_);
+  for (size_t i = 0; i < thread_num; ++i) {
+    auto worker = new (std::nothrow) Worker(this);
+    THREAD_ERROR_IF_NULL(worker);
+    worker->InitWorkerMask(core_list, workers_.size());
+    worker->CreateThread();
+    workers_.push_back(worker);
+    THREAD_INFO("create kernel thread[%zu]", i);
+  }
+  return THREAD_OK;
+}
+
+int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) const {
   // if single thread, run master thread
   if (task_num <= 1) {
-    return SyncRunFunc(func, content, 0, task_num);
+    for (int i = 0; i < task_num; ++i) {
+      int ret = func(content, i, 0, 1);
+      if (ret != 0) {
+        return ret;
+      }
+    }
+    return THREAD_OK;
   }
 
   // distribute task to the KernelThread and the idle ActorThread,
@@ -201,7 +253,13 @@ int ThreadPool::ParallelLaunch(const Func &func, Content content, int task_num) 
     }
   }
   while (task.finished != task_num) {
+#ifdef OPERATOR_PARALLELISM
+    if (RunQueueWorkTask() == false && (curr && curr->RunLocalKernelTask() == false)) {
+      std::this_thread::yield();
+    }
+#else
     std::this_thread::yield();
+#endif
   }
   // check the return value of task
   if (task.status != THREAD_OK) {
@@ -223,27 +281,27 @@ void ThreadPool::SyncRunTask(Task *task, int start_num, int task_num) const {
   }
 }
 
-int ThreadPool::SyncRunFunc(const Func &func, Content content, int start, int end) const {
-  for (int i = start; i < end; ++i) {
-    int ret = func(content, i, 0, 1);
-    if (ret != 0) {
-      return ret;
-    }
-  }
-  return THREAD_OK;
-}
-
 void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
   int num = static_cast<int>(workers_.size()) - 1;
-  int offset = 0;
-  bool use_curr = (curr != nullptr) ? curr->get_task_free() : false;
   // if the current thread isn't nullptr, that is the curr is a ActorThread,
   // then assign (task_num - 1) tasks to workers, and run the last one by itself
-  int num_assigned = use_curr ? task_num - 1 : task_num;
+#ifdef OPERATOR_PARALLELISM
+  int num_assigned = task_num;
+  bool use_curr = curr != nullptr;
+  int count = use_curr ? 1 : 0;
+  int offset = static_cast<int>(actor_thread_num_);
+#else
+  int num_assigned = curr != nullptr ? task_num - 1 : task_num;
   int count = 0;
+  int offset = 0;
+  bool use_curr = false;
 
+  if (curr != nullptr) {
+    use_curr = curr->get_task_free();
+  }
+#endif
   if (!occupied_actor_thread_) {
     offset = static_cast<int>(actor_thread_num_);
   }
@@ -259,10 +317,23 @@ void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
   // when there are not enough free threads,
   // distribute other tasks to the master thread
   if (use_curr) {
+#ifdef OPERATOR_PARALLELISM
+    assigned.push_back(curr);
+    if (count < task_num) {
+      auto task_messeages = curr->GetTaskMessages();
+      if (task_messeages != nullptr) {
+        for (; count < task_num; ++count) {
+          task_messeages[count].task = task;
+          PushTaskToQueue(&task_messeages[count]);
+        }
+      }
+    }
+#else
     for (; count < task_num; ++count) {
       assigned.push_back(curr);
       sum_frequency += curr->frequency();
     }
+#endif
   } else if (assigned.size() != static_cast<size_t>(task_num)) {
     CalculateScales(assigned, sum_frequency);
     ActiveWorkers(assigned, task, assigned.size(), curr);
@@ -302,19 +373,10 @@ void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task,
   }
 }
 
-void ThreadPool::ActiveWorkers() {
+void ThreadPool::ActiveWorkers() const {
   for (auto &worker : workers_) {
     worker->Active();
   }
-}
-
-Worker *ThreadPool::CurrentWorker(size_t *index) const {
-  for (*index = 0; *index < workers_.size(); (*index)++) {
-    if (workers_[*index]->thread_id() == std::this_thread::get_id()) {
-      return workers_[*index];
-    }
-  }
-  return nullptr;
 }
 
 Worker *ThreadPool::CurrentWorker() const {
@@ -415,7 +477,7 @@ ThreadPool *ThreadPool::CreateThreadPool(size_t thread_num, const std::vector<in
   if (pool == nullptr) {
     return nullptr;
   }
-  int ret = pool->CreateThreads<Worker>(thread_num, core_list);
+  int ret = pool->CreateThreads(thread_num, core_list);
   if (ret != THREAD_OK) {
     delete pool;
     return nullptr;
