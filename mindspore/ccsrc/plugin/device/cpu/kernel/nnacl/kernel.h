@@ -35,7 +35,7 @@ typedef struct KernelBase {
   int (*inferShape)(struct KernelBase *self);
   int (*resize)(struct KernelBase *self, TensorC *in[], size_t insize, TensorC *out[], size_t outsize);
   OpParameter *param;
-  // by design, kernelBase's methods are not responsible for input/output tensors' management, user should invokes
+  // by design, kernelBase's methods are not responsible for input/output tensors' management, user must be invokes
   // KernelBase's infer shape and allocate/free input/output tensor at necessary time.
   TensorC **in;
   size_t insize;

@@ -73,7 +73,7 @@ void GatherDCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   index_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   if (input_shape_.size() != index_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', shape size of 'x' should be equal to 'index', but got shape size of 'x': "
+                      << "', shape size of 'x' must be equal to 'index', but got shape size of 'x': "
                       << input_shape_.size() << ", and shape size of 'index': " << index_shape_.size();
   }
   output_shape_ = index_shape_;
@@ -100,19 +100,19 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   size_t dim_size = sizeof(int);
   size_t output_size = get_element_num(output_shape_) * sizeof(T);
   if (inputs[0]->size != input_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' should be " << input_size
-                      << ", but got " << inputs[0]->size << ".";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' must be " << input_size << ", but got "
+                      << inputs[0]->size << ".";
   }
   if (inputs[1]->size != dim_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' should be " << dim_size
-                      << ", but got " << inputs[1]->size << ".";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' must be " << dim_size << ", but got "
+                      << inputs[1]->size << ".";
   }
   if (inputs[2]->size != index_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'index' should be " << index_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'index' must be " << index_size
                       << ", but got " << inputs[2]->size << ".";
   }
   if (outputs[0]->size != output_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output should be " << output_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output must be " << output_size
                       << ", but got " << outputs[0]->size << ".";
   }
   auto *input = reinterpret_cast<T *>(inputs[0]->addr);
@@ -121,7 +121,7 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   int32_t input_rank = SizeToInt(input_shape_.size());
   if (dim[0] >= input_rank || dim[0] < -input_rank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' should be in [" << -input_rank << ", "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' must be in [" << -input_rank << ", "
                       << input_rank << "), but got: " << dim[0];
   }
   if (dim[0] < 0) {
@@ -132,7 +132,7 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   index_size = get_element_num(index_shape_);
   for (size_t i = 0; i < index_size; ++i) {
     if (index[i] >= max_index || index[i] < -max_index) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'index' should be in [" << -max_index << ", "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'index' must be in [" << -max_index << ", "
                         << max_index << "), but got: " << index[i];
     }
     if (index[i] < 0) {

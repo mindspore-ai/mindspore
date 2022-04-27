@@ -39,7 +39,7 @@ void ConcatOffsetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (axis_ >= input_1_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'axis' should be less than the dimension of 'input_x', but got 'axis': " << axis_
+                      << "', the 'axis' must be less than the dimension of 'input_x', but got 'axis': " << axis_
                       << ", and the dimension of 'input_x': " << input_1_shape.size();
   }
 
@@ -69,7 +69,7 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     auto input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
     if (axis_ >= input_shape_i.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the 'axis' should be less than the dimension of input, but got 'axis': " << axis_
+                        << "', the 'axis' must be less than the dimension of input, but got 'axis': " << axis_
                         << ", and the dimension of the " << i << "'th input: " << input_shape_i.size();
     }
     offset.emplace_back(all_shape);
@@ -77,12 +77,12 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != kConcatOffsetOutputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
                       << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();
   }
   if (output_shape[0] != input_num) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension value of output should be equal to "
+                      << "', the first dimension value of output must be equal to "
                          "the number of input, but got the first dimension value of output: "
                       << output_shape[0] << ", and the number of input: " << input_num;
   }

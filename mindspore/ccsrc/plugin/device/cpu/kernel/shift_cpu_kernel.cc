@@ -25,13 +25,13 @@ void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_count != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_count
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_count
                       << " input(s).";
   }
 
   size_t output_count = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_count != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_count
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_count
                       << " output(s).";
   }
 
@@ -41,7 +41,7 @@ void ShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   size_t axis_t = axis < 0 ? LongToSize(axis + SizeToLong(input_shape.size())) : LongToSize(axis);
   if (axis_t >= input_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be less than the dimension of input tensor "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be less than the dimension of input tensor "
                       << input_shape.size() << "D, but got " << axis_t;
   }
 
@@ -76,11 +76,11 @@ template <typename T>
 bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                      const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << inputs.size()
                       << " input(s).";
   }
   if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
                       << " output(s).";
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
@@ -89,7 +89,7 @@ bool ShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
 
   if (outputs[0]->size != inputs[0]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the memory size of output should be equal to the memory size "
+                      << "', the memory size of output must be equal to the memory size "
                          "of the first input, but got the memory size of output: "
                       << outputs[0]->size << " and the memory size of the first input: " << inputs[0]->size;
   }

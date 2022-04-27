@@ -35,11 +35,11 @@ void ResizeBilinearGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   if (shape_.size() < kResizeBilinearGradInputsDoutShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input 'dout' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input 'dout' must be "
                       << kResizeBilinearGradInputsDoutShapeSize << ", but got " << shape_.size();
   }
   if (size_.size() != kResizeBilinearGradInputsXShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be "
                       << kResizeBilinearGradInputsXShapeSize << ", but got " << size_.size();
   }
 
@@ -61,7 +61,7 @@ bool ResizeBilinearGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr
   } else if (dtype_ == kNumberTypeFloat32) {
     return LaunchKernel<float>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
                       << TypeIdLabel(dtype_);
   }
 }
@@ -104,7 +104,7 @@ bool ResizeBilinearGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
     float_dloss_addr = reinterpret_cast<float *>(inputs[0]->addr);
     float_output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
                       << TypeIdLabel(dtype_);
   }
 

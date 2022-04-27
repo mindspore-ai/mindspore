@@ -52,11 +52,11 @@ void MatrixSetDiagCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (input_shape.size() < temporary_2d_dim || diag_shape.size() < temporary_1d_dim || input_shape != output_shape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of input is invalid for input shape greater than 2D, diag shape "
-                         "greater than 1D, input shape should equal to output shape.";
+                         "greater than 1D, input shape must be equal to output shape.";
   }
   if (diag_k_shape.size() != temporary_1d_dim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of diag_region's dim should be limited to range (k[0],k[1]).";
+                      << "', the dimension of diag_region's dim must be limited to range (k[0],k[1]).";
   }
   size_t input_rank = input_shape.size();
   for (size_t i = 0; i < input_rank - temporary_2d_dim; ++i) {
@@ -84,7 +84,7 @@ bool MatrixSetDiagCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
     LaunchKernel<int>(inputs, workspaces, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the data_type of input should be float16, float32, float64, int, int32."
+                      << "', the data_type of input must be float16, float32, float64, int, int32."
                          " but got "
                       << TypeIdToType(data_type_)->ToString();
   }

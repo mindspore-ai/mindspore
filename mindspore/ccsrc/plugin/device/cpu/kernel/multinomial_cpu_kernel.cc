@@ -50,15 +50,15 @@ bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &workspace,
                                   const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << inputs.size()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << inputs.size()
                       << "input(s).";
   }
   if (workspace.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspace should be 1, but got "
-                      << workspace.size() << "workspace(s).";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspace must be 1, but got " << workspace.size()
+                      << "workspace(s).";
   }
   if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << outputs.size()
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
                       << "output(s).";
   }
   MS_EXCEPTION_IF_NULL(inputs[0]);

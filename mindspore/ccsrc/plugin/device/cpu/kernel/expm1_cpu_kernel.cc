@@ -31,7 +31,7 @@ void Expm1CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_dtype_ != kNumberTypeFloat16 && input_dtype_ != kNumberTypeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input should be Float16 or Float32, but got: " << input_dtype_;
+                      << "', the dtype of input must be Float16 or Float32, but got: " << input_dtype_;
   }
 }
 
@@ -45,7 +45,7 @@ bool Expm1CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input should be Float16 or Float32, but got: " << TypeIdLabel(input_dtype_);
+                      << "', the dtype of input must be Float16 or Float32, but got: " << TypeIdLabel(input_dtype_);
   }
   return true;
 }

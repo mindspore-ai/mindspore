@@ -87,14 +87,14 @@ void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' should be greater than or equal to 1, but got "
+                      << "', the dimension of 'input_x' must be greater than or equal to 1, but got "
                       << input_shape.size() << ".";
   }
   input_shape_0 = SizeToInt(input_shape[0]);
   input_size_ = 1;
   inner_size_ = 1;
   if (input_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'input_x' should be not empty.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'input_x' can not be empty.";
   }
 
   for (size_t i = 1; i < input_shape.size(); i++) {

@@ -39,7 +39,7 @@ void CumSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   int input_dim_length = SizeToInt(shape_.size());
   if (axis_ >= input_dim_length) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", 'axis' should be less than the length of 'input' dimension, but got 'axis': " << axis_
+                      << ", 'axis' must be less than the length of 'input' dimension, but got 'axis': " << axis_
                       << " and the length of 'input' dimension: " << input_dim_length;
   }
   while (axis_ < 0) {
@@ -70,7 +70,7 @@ void CumSumCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
     InitWorkspaceSize<uint8_t>();
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input should be in (float16, float32, uint8, int8, int32) on CPU, but got "
+                      << ", the dtype of input must be in (float16, float32, uint8, int8, int32) on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
 }
@@ -93,7 +93,7 @@ bool CumSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     LaunchKernel<uint8_t>(inputs, workspace, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input should be in (float16, float32, uint8, int8, int32) on CPU, but got "
+                      << ", the dtype of input must be in (float16, float32, uint8, int8, int32) on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

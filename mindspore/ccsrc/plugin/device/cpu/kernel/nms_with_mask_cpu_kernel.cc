@@ -209,13 +209,13 @@ void NMSWithMaskCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   iou_value_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "iou_threshold");
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num
                   << "input(s).";
   }
 
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 3, but got " << output_num
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs must be 3, but got " << output_num
                   << "output(s).";
   }
 

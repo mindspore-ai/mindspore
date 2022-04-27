@@ -34,7 +34,7 @@ void EluGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto dtype_1 = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   if (dtype_ != dtype_1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'input0' and 'input1' should have the same data type, but got the dtype of 'input0': "
+                      << "', 'input0' and 'input1' must have the same data type, but got the dtype of 'input0': "
                       << dtype_ << " and the dtype of 'input1': " << dtype_1;
   }
 }
@@ -48,7 +48,7 @@ bool EluGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float, but got "
                       << TypeIdLabel(dtype_) << ".";
   }
   return true;

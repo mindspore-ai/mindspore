@@ -28,7 +28,7 @@ void TensorShapeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   cnode_ptr_ = kernel_node;
   size_t input_count = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_count != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_count;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_count;
   }
 }
 
@@ -45,11 +45,11 @@ bool TensorShapeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be 1-D, but got: " << output_shape.size();
+                      << "', the dimension of output must be 1-D, but got: " << output_shape.size();
   }
   if (output_shape[0] != input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'output_shape[0]' should be equal to the dimension of input, but got 'output_shape[0]': "
+                      << "', 'output_shape[0]' must be equal to the dimension of input, but got 'output_shape[0]': "
                       << output_shape[0] << " and the dimension of input: " << input_shape.size();
   }
   for (size_t i = 0; i < output_shape[0]; ++i) {

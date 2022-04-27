@@ -34,10 +34,10 @@ template <typename T>
 bool check_validation(const std::vector<size_t> &shape, const size_t num_before_axis, const size_t num_after_axis,
                       const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of inputs should be 1, but got " << inputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of inputs must be 1, but got " << inputs.size();
   }
   if (outputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of outputs should be 2, but got " << outputs.size();
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the number of outputs must be 2, but got " << outputs.size();
   }
   size_t data_size = sizeof(T);
   size_t input_size = get_element_num(shape) * data_size;
@@ -45,15 +45,15 @@ bool check_validation(const std::vector<size_t> &shape, const size_t num_before_
   size_t out0_size = output_num * sizeof(int);
   size_t out1_size = output_num * data_size;
   if (inputs[0]->size != input_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' should be " << input_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' must be " << input_size
                       << ", but got the memory size is " << inputs[0]->size;
   }
   if (outputs[0]->size != out0_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 1st output should be " << out0_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 1st output must be " << out0_size
                       << ", but got the memory size is " << outputs[0]->size;
   }
   if (outputs[1]->size != out1_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 2nd output should be " << out1_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of the 2nd output must be " << out1_size
                       << ", but got the memory size is " << outputs[1]->size;
   }
   return true;
@@ -98,7 +98,7 @@ void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);
   if (axis < 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in range [-1, " << (shape_len - 1)
                       << "], but got " << axis;
   }
   axis = axis % SizeToLong(shape_len);
@@ -115,7 +115,7 @@ void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   if (build_info->GetInputNum() < 1) {
-    MS_LOG(EXCEPTION) << "Argmax input size should not less than 1!";
+    MS_LOG(EXCEPTION) << "Argmax input size can not less than 1!";
   }
   auto input_type_id = build_info->GetInputDeviceType(0);
   switch (input_type_id) {

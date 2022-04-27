@@ -49,8 +49,7 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (mode == "SYMMETRIC") {
     mode_ = 1;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'REFLECT' or 'SYMMETRIC', but got "
-                      << mode;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
   }
 
   std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -122,8 +121,8 @@ bool MirrorPadCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     LaunchKernel<int, int64_t>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, float64, or int32, and the dtype of "
-                         "'paddings' should be int32 or int64, but got "
+                      << "', the dtype of 'input_x' must be float16, float32, float64, or int32, and the dtype of "
+                         "'paddings' must be int32 or int64, but got "
                       << TypeIdLabel(dtype_) << " and " << TypeIdLabel(pad_dtype_);
   }
   return true;

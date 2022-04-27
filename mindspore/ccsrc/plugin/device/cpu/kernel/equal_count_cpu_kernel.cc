@@ -36,7 +36,7 @@ bool EqualCountCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kEqualCountOutputsNum, kernel_name_);
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the address size of inputs should be same, but got the address size of 'inputs[0]': "
+                      << "', the address size of inputs must be the same, but got the address size of 'inputs[0]': "
                       << inputs[0]->size << " and the address size of 'inputs[1]': " << inputs[1]->size;
   }
   int count = 0;

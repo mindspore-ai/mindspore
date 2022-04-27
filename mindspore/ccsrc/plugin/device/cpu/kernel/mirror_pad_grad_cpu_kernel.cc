@@ -65,8 +65,7 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (mode == "SYMMETRIC") {
     mode_ = 1;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'REFLECT' or 'SYMMETRIC', but got "
-                      << mode;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
   }
 
   std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -114,7 +113,7 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (output_shape_[(output_shape_.size() - 2)] > max_height ||
       output_shape_[(output_shape_.size() - 2) + 1] > max_width) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the 'paddings' should be not too high for input Tensor on 1 or more dimensions";
+                  << "', the 'paddings' can not be too high for input Tensor on 1 or more dimensions";
   }
 }
 
@@ -141,8 +140,8 @@ bool MirrorPadGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
     LaunchKernel<int, int64_t>(inputs, workspace, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, float64, or int32, and the dtype of "
-                         "'paddings' should be int32 or int64, but got "
+                      << "', the dtype of 'input_x' must be float16, float32, float64, or int32, and the dtype of "
+                         "'paddings' must be int32 or int64, but got "
                       << TypeIdLabel(dtype_) << " and " << TypeIdLabel(pad_dtype_);
   }
   return true;
@@ -184,7 +183,7 @@ void MirrorPadGradCpuKernelMod::MirrorPadGrad_Width_Height(const size_t size, co
   int64_t ap2_y = paddings[HEIGHT] + dx_height - 1;
   if (dx_width == 0 || dx_height == 0) {
     MS_LOG(EXCEPTION)
-      << "For  MirrorPadGrad_Width_Height, the input argument 'dx_height' and 'dx_width' should not be 0, but got "
+      << "For  MirrorPadGrad_Width_Height, the input argument 'dx_height' and 'dx_width' can not be 0, but got "
       << "dy_height: " << dx_height << " dy_width: " << dx_width;
   }
   for (size_t pos = 0; pos < size; ++pos) {
@@ -243,7 +242,7 @@ void MirrorPadGradCpuKernelMod::MirrorPadGradBatchChannel(const size_t size, T1 
                                                           int64_t mode) const {
   if (dy_height == 0 || dy_width == 0 || dx_channels == 0) {
     MS_LOG(EXCEPTION) << "For  MirrorPadGradBatchChannel, the input argument 'dy_height', 'dy_width' and 'dx_channels' "
-                         "should not be 0, but got "
+                         "can not be 0, but got "
                       << "dy_height: " << dy_height << " dy_width: " << dy_width << " dx_channels: " << dx_channels;
   }
   int64_t paddings[MAX_PADDINGS * PADDING_SIZE];  // local and fixed size to keep in registers

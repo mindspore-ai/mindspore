@@ -36,7 +36,7 @@ void DropoutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   mask_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
   keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' should be in (0.0, 1.0], but got " << keep_prob_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   for (const uint64_t &d : input_shape_) {
@@ -54,7 +54,7 @@ bool DropoutCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, 
     LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of input 'x' should be float16 or float32 on CPU, but got "
+                      << ", the dtype of input 'x' must be float16 or float32 on CPU, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

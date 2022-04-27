@@ -45,8 +45,7 @@ bool SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Launch(const std::vector<ker
     LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of input should be float16, float32, or float64, but got "
-                      << TypeIdLabel(dtype_);
+                      << "', the dtype of input must be float16, float32, or float64, but got " << TypeIdLabel(dtype_);
   }
   return true;
 }

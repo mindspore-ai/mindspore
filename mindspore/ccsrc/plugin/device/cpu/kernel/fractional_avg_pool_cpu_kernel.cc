@@ -185,7 +185,7 @@ bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<Ad
   } else {
     if ((seed != 0) || (seed2 != 0)) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_
-                               << "', both 'seed' and 'seed2' should be 0 if 'deterministic' is false.";
+                               << "', both 'seed' and 'seed2' must be 0 if 'deterministic' is false.";
     }
   }
   if (seed == 0 && seed2 != 0) {

@@ -65,14 +65,14 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, kParamIndex);
   elem_num_ = std::accumulate(shape.begin(), shape.end(), 1UL, std::multiplies<size_t>());
   if (elem_num_ < 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the elem num of 'param' should not be zero.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the elem num of 'param' can not be zero.";
   }
   if (shape.size() >= kLastColIndex) {
     need_factor_ = true;
     last_row_dim_size_ = shape[shape.size() - kLastRowIndex];
     last_col_dim_size_ = shape[shape.size() - kLastColIndex];
     if (last_row_dim_size_ < 1 || last_col_dim_size_ < 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'param' should not be zero.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'param' can not be zero.";
     }
   }
 
@@ -305,86 +305,86 @@ bool FusedAdaFactorCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
 
 void FusedAdaFactorCpuKernelMod::CheckInputAddresses(const std::vector<kernel::AddressPtr> &inputs) const {
   if (inputs.size() < kStandardInputNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be at least " << kStandardInputNum
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be at least " << kStandardInputNum
                       << ", but got: " << inputs.size();
   }
 
   if (inputs[kEpsIndex]->size != kSizeFloat32 << 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'epsilon' should be " << (kSizeFloat32 << 1)
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'epsilon' must be " << (kSizeFloat32 << 1)
                       << ", but got " << inputs[kEpsIndex]->size;
   }
   if (inputs[kClipThresholdIndex]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'clip_threshold' should be " << kSizeFloat32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'clip_threshold' must be " << kSizeFloat32
                       << ", but got " << inputs[kClipThresholdIndex]->size;
   }
   if (inputs[kBeta1Index]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' should be " << kSizeFloat32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta1' must be " << kSizeFloat32
                       << ", but got " << inputs[kBeta1Index]->size;
   }
   if (inputs[kBeta2tIndex]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta2t' should be " << kSizeFloat32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'beta2t' must be " << kSizeFloat32
                       << ", but got " << inputs[kBeta2tIndex]->size;
   }
   if (inputs[kWeightDecayIndex]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'weight_decay' should be " << kSizeFloat32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'weight_decay' must be " << kSizeFloat32
                       << ", but got " << inputs[kWeightDecayIndex]->size;
   }
   if (inputs[kLearningRateIndex]->size != kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'lr' should be " << kSizeFloat32
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'lr' must be " << kSizeFloat32
                       << ", but got " << inputs[kLearningRateIndex]->size;
   }
 
   size_t param_size = param_dtype_ == kNumberTypeFloat16 ? elem_num_ * kSizeFloat16 : elem_num_ * kSizeFloat32;
   if (inputs[kParamIndex]->size != param_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'param' should be " << param_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'param' must be " << param_size
                       << ", but got " << inputs[kParamIndex]->size;
   }
   if (inputs[kGradIndex]->size != param_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' should be " << param_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'gradient' must be " << param_size
                       << ", but got " << inputs[kGradIndex]->size;
   }
 
   if (enable_first_moment_ && inputs[kExpAvgIndex]->size != param_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg' should be " << param_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg' must be " << param_size
                       << ", but got " << inputs[kExpAvgIndex]->size;
   }
 
   if (!need_factor_) {
     if (inputs[kExpAvgSQIndex]->size != param_size) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq' should be " << param_size
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq' must be " << param_size
                         << ", but got " << inputs[kExpAvgSQIndex]->size;
     }
     return;
   }
 
   if (inputs[kExpAvgSQRowIndex]->size != param_size / last_row_dim_size_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_row' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_row' must be "
                       << param_size / last_row_dim_size_ << ", but got " << inputs[kExpAvgSQRowIndex]->size;
   }
   if (inputs[kExpAvgSQColIndex]->size != param_size / last_col_dim_size_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_col' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'exp_avg_sq_col' must be "
                       << param_size / last_col_dim_size_ << ", but got " << inputs[kExpAvgSQColIndex]->size;
   }
 }
 
 void FusedAdaFactorCpuKernelMod::CheckWorkspaceAddresses(const std::vector<kernel::AddressPtr> &workspaces) const {
   if (workspaces.size() != kWorkSpaceNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces should be " << kWorkSpaceNum
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspaces must be " << kWorkSpaceNum
                       << ", but got: " << workspaces.size();
   }
 
   size_t update_size = elem_num_ * kSizeFloat32;
   if (workspaces[kWorkSpaceUpdateIndex]->size != elem_num_ * kSizeFloat32) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'update ' should be " << update_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'update ' must be " << update_size
                       << ", but got " << workspaces[kWorkSpaceUpdateIndex]->size;
   }
 
   if (workspaces[kWorkSpaceRFactorIndex]->size != update_size / last_row_dim_size_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'r_factor' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'r_factor' must be "
                       << update_size / last_row_dim_size_ << ", but got " << workspaces[kWorkSpaceRFactorIndex]->size;
   }
   if (workspaces[kWorkSpaceCFactorIndex]->size != update_size / last_col_dim_size_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'c_factor' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'c_factor' must be "
                       << update_size / last_col_dim_size_ << ", but got " << workspaces[kWorkSpaceCFactorIndex]->size;
   }
 }

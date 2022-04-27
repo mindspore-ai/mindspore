@@ -185,7 +185,7 @@ void Inv(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
 template <typename T>
 void Invert(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, double>) || (std::is_same_v<T, float>) || (std::is_same_v<T, float16>)) {
-    MS_LOG(EXCEPTION) << "For 'Invert', the dtype of 'input_x' should be int8, int16, int32, int64, uint8, uint16, "
+    MS_LOG(EXCEPTION) << "For 'Invert', the dtype of 'input_x' must be int8, int16, int32, int64, uint8, uint16, "
                          "uint32 or uint64, but got "
                       << typeid(T).name();
     return;
@@ -217,8 +217,7 @@ void Gelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 template <typename T>
 void FastGelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr (!std::is_same_v<T, float16> && !std::is_same_v<T, float>) {
-    MS_LOG(EXCEPTION) << "For 'FastGelu', the dtype of 'input_x' should be float16, float, but got "
-                      << typeid(T).name();
+    MS_LOG(EXCEPTION) << "For 'FastGelu', the dtype of 'input_x' must be float16, float, but got " << typeid(T).name();
     return;
   }
   auto task = [&in, &out](size_t start, size_t end) {
@@ -429,7 +428,7 @@ template <typename T>
 void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
-    MS_LOG(EXCEPTION) << "For 'Abs', the dtype of 'input_x' should be int32, int64, float32 or float64, but got "
+    MS_LOG(EXCEPTION) << "For 'Abs', the dtype of 'input_x' must be int32, int64, float32 or float64, but got "
                       << typeid(T).name();
     return;
   } else {
@@ -529,7 +528,7 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
     LaunchFastGeLU<float16>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the type of 'x' should be float16, float32, float64, complex64, complex128, int8, int16, "
+                      << "', the type of 'x' must be float16, float32, float64, complex64, complex128, int8, int16, "
                          "int32, int64, uint8, uint16, uint32, uint64, or bool, but got "
                       << TypeIdLabel(dtype_);
   }
@@ -613,7 +612,7 @@ class SqrtMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
   void InitFunc(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name != kSqrt) {
-      MS_LOG(EXCEPTION) << "Should be " << kSqrt << ", but got " << kernel_name;
+      MS_LOG(EXCEPTION) << "Must be " << kSqrt << ", but got " << kernel_name;
     }
     EltWiseCpuKernelMod::InitKernel(kernel_node);
   }

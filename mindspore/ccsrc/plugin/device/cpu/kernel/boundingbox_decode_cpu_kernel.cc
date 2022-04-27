@@ -25,7 +25,7 @@ void BoundingBoxDecodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != INPUT_NUMS) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
   }
 
   const size_t coordinate_size = 4;
@@ -39,7 +39,7 @@ void BoundingBoxDecodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the input 'means' should be a tuple or a list, and dtype should be float, but got is not.";
+                      << "', the input 'means' must be a tuple or a list, and dtype must be float, but got is not.";
   }
 
   if (common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("stds")->isa<ValueTuple>() ||
@@ -52,12 +52,12 @@ void BoundingBoxDecodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     }
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the input 'stds' should be a tuple or a list, and dtype should be float, but got is not.";
+                      << "', the input 'stds' must be a tuple or a list, and dtype must be float, but got is not.";
   }
 
   if (means_.size() < coordinate_size || stds_.size() < coordinate_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the length of input 'means' and 'stds' should be at least 4, "
+                      << "', the length of input 'means' and 'stds' must be at least 4, "
                          "but got the length of 'means': "
                       << means_.size() << ", and the length of 'stds': " << stds_.size();
   }
@@ -69,7 +69,7 @@ void BoundingBoxDecodeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   if (max_shape_.size() < MIN_MAX_SHAPE_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the length of 'max_shape' should be at least 2, but got: " << max_shape_.size();
+                      << "', the length of 'max_shape' must be at least 2, but got: " << max_shape_.size();
   }
 
   InitTaskFunc(kernel_node);
@@ -87,7 +87,7 @@ bool BoundingBoxDecodeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 
   if (inputs[0]->size != inputs[1]->size) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dtype of inputs 'anchor_box' and 'deltas' should be the same, "
+                  << "', the dtype of inputs 'anchor_box' and 'deltas' must be the same, "
                      "but got the memory size of 'anchor_box': "
                   << inputs[0]->size << " and 'deltas': " << inputs[1]->size;
     return false;

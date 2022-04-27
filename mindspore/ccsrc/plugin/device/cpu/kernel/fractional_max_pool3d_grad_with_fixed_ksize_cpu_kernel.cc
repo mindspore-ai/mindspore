@@ -102,7 +102,7 @@ void FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::InitKernel(const CNodePt
     outputW_ = out_backprop_shape_[w_dim_];
   }
   if (!(input_dims == kDimSize4 || input_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "Input data dimensions should be equal to 4 or 5, but got " << input_dims;
+    MS_EXCEPTION(TypeError) << "Input data dimensions must be equal to 4 or 5, but got " << input_dims;
   }
   for (size_t i = 0; i < input_dims; i++) {
     if (input_shape_[i] <= 0) {
@@ -111,7 +111,7 @@ void FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::InitKernel(const CNodePt
     }
   }
   if (!(out_backprop_dims == kDimSize4 || out_backprop_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "out_backprop data dimensions should be equal to 4 or 5, but got " << out_backprop_dims;
+    MS_EXCEPTION(TypeError) << "out_backprop data dimensions must be equal to 4 or 5, but got " << out_backprop_dims;
   }
   for (size_t i = 0; i < out_backprop_dims; i++) {
     if (out_backprop_shape_[i] <= 0) {
@@ -120,7 +120,7 @@ void FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::InitKernel(const CNodePt
     }
   }
   if (!(argmax_dims == kDimSize4 || argmax_dims == kDimSize5)) {
-    MS_EXCEPTION(TypeError) << "argmax data dimensions should be equal to 4 or 5, but got " << argmax_dims;
+    MS_EXCEPTION(TypeError) << "argmax data dimensions must be equal to 4 or 5, but got " << argmax_dims;
   }
   for (size_t i = 0; i < argmax_dims; i++) {
     if (argmax_shape_[i] <= 0) {

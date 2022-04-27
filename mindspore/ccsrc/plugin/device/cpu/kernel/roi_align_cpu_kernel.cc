@@ -72,7 +72,7 @@ void ROIAlignCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
 
   auto x_shape_size = x_shape.size();
   if (x_shape_size != X_DIMS) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'features' should be 4, but got " << x_shape_size;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'features' must be 4, but got " << x_shape_size;
   }
 
   channels_ = SizeToInt(x_shape[CHANNEL]);
@@ -160,12 +160,12 @@ template <typename T>
 void ROIAlignCpuKernelFunc<T>::CheckParam(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputSize << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kInputSize << ", but got "
                       << inputs.size() << " input(s).";
   }
 
   if (outputs.size() != kOutputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputSize << ", but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << kOutputSize << ", but got "
                       << outputs.size() << " output(s).";
   }
 }

@@ -26,16 +26,16 @@ void IsInfCpuKernelMod::InitKernel(const CNodePtr &kernelNode) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernelNode);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernelNode);
   if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got: " << input_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got: " << input_num;
   }
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernelNode);
   if (output_num != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got: " << output_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got: " << output_num;
   }
 
   input_dtype_ = AnfAlgo::GetInputDeviceDataType(kernelNode, 0);
   if (dtype_map_.find(input_dtype_) == dtype_map_.end()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' should be float, but got: " << input_dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' must be float, but got: " << input_dtype_;
   }
 }
 
@@ -48,7 +48,7 @@ bool IsInfCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   } else if (input_dtype_ == kNumberTypeFloat64) {
     LaunchKernelFloat<double>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' should be float, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'x' must be float, but got "
                       << TypeIdLabel(input_dtype_);
   }
   return true;

@@ -25,7 +25,7 @@ void MatrixBandPartCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A should be a matrix max than 2.";
+    MS_LOG(EXCEPTION) << "Wrong array shape, A must be a matrix max than 2.";
   }
   m_ = shapes_[dim_size_ - kDim2];
   n_ = shapes_[dim_size_ - kDim1];

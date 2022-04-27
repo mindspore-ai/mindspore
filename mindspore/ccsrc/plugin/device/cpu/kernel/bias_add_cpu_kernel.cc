@@ -44,7 +44,7 @@ void BiasAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (input_shape_[1] != bias_shape_[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension length of 'bias' should be equal to "
+                      << "', the first dimension length of 'bias' must be equal to "
                          "the second dimension length of 'input_x', the first dimension length of 'bias': "
                       << bias_shape_[0] << ", and the second dimension length of 'input_x': " << input_shape_[1];
   }

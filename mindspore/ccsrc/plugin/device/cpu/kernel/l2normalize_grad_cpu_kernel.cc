@@ -100,14 +100,14 @@ void L2NormalizeGradCpuFunc<T>::CheckInputShape(const std::vector<size_t> &outpu
   for (const auto &shape : input_shape_list_) {
     if (output_shape != shape) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of input should be same with output's, but got the dimension of input: "
+                        << "', the dimension of input must be the same as output's, but got the dimension of input: "
                         << Vector2Str(shape) << ", and the dimension of output: " << Vector2Str(output_shape);
     }
   }
   auto input_x_shape = input_shape_list_[0];
   if (input_x_shape.size() != 0) {
     if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](size_t i) { return i == 0; })) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'x' should be not null.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'x' can not be null.";
     }
   }
 }

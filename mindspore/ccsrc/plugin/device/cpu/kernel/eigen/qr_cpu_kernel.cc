@@ -40,7 +40,7 @@ void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   const auto mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, MODE);
   if (mode != "full" && mode != "r" && mode != "economic") {
-    MS_LOG(EXCEPTION) << "mode should be in [full, r, economic], but got [" << mode << "].";
+    MS_LOG(EXCEPTION) << "mode must be in [full, r, economic], but got [" << mode << "].";
   }
 
   auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);

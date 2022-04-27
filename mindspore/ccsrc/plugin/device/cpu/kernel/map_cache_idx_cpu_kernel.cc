@@ -76,13 +76,13 @@ void MapCacheIdxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
   auto hashmap_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (hashmap_shape.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' should be 2-D, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' must be 2-D, but got "
                       << hashmap_shape.size() << "-D.";
   }
   hashmap_length_ = hashmap_shape[0];
   if (hashmap_length_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension of 'HashMap' should be greater than 0, but got " << hashmap_length_;
+                      << "', the first dimension of 'HashMap' must be greater than 0, but got " << hashmap_length_;
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   is_need_retrieve_output_shape = true;
@@ -98,8 +98,7 @@ bool MapCacheIdxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int32 or int64, but got "
-                      << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int32 or int64, but got " << dtype_;
   }
   return true;
 }

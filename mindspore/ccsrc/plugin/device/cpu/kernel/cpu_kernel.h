@@ -148,7 +148,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
-  // Should be called before Init.
+  // Must be called before Init.
   void SetThreadPool(ThreadPool *pool) { pool_ = pool; }
 
   static std::vector<KernelAttr> GetCpuSupportedList(const std::string &kernel_name) {
@@ -200,7 +200,7 @@ class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {
   template <typename T>
   inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
     if (index >= addr_list.size()) {
-      MS_LOG(EXCEPTION) << "Address index should be in range(" << addr_list.size() << "), but got " << index << ".";
+      MS_LOG(EXCEPTION) << "Address index must be in range(" << addr_list.size() << "), but got " << index << ".";
     }
 
     if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {

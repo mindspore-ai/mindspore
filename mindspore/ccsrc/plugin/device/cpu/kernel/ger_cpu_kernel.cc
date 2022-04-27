@@ -118,7 +118,7 @@ void GerCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name_ != kernel_type_) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', kernel type should be '" << kernel_name_ << "', but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', kernel type must be '" << kernel_name_ << "', but got "
                       << kernel_type_;
   }
 

@@ -89,7 +89,7 @@ void SearchSortedCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
 
   if (outputs[0]->size / sizeof(T) != inputs[1]->size / sizeof(S)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of `v` and output should be equal, but got the dimension of `v` "
+                      << "', the dimension of `v` and output must be equal, but got the dimension of `v` "
                       << inputs[1]->size << " and the dimension of output " << outputs[0]->size;
   }
 
@@ -99,7 +99,7 @@ void SearchSortedCpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
     for (size_t i = start; i < end; i++) {
       for (size_t j = 0; j < search_len - 1; j++) {
         if (sequence[i * search_len + j] > sequence[i * search_len + j + 1]) {
-          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input sequence should be forward sequence. But got "
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input sequence must be forward sequence. But got "
                             << sequence[i * search_len + j] << '>' << sequence[i * search_len + j + 1];
         }
       }

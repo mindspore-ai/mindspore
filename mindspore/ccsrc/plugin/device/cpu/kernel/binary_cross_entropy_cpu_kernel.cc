@@ -100,7 +100,7 @@ bool BinaryCrossEntropyCpuKernelMod::Launch(const std::vector<AddressPtr> &input
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchKernel<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;
@@ -125,7 +125,7 @@ void BinaryCrossEntropyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else if (reduction == SUM) {
     reduction_ = kSum;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'reduction' should be 'none', 'mean', or 'sum', but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'reduction' must be 'none', 'mean', or 'sum', but got "
                       << reduction;
   }
 }

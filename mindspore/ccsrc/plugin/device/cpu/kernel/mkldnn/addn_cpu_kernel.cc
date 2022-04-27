@@ -49,7 +49,7 @@ void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num_ < kAddNInputsMinNum) {
-    MS_LOG(EXCEPTION) << "Input numbers should not less " << kAddNInputsMinNum << ", but got " << input_num_;
+    MS_LOG(EXCEPTION) << "Input numbers can not less " << kAddNInputsMinNum << ", but got " << input_num_;
   }
   CheckParam(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);

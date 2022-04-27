@@ -32,13 +32,13 @@ void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   output_num_ = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "output_num"));
   if (output_num_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' should be positive int, but got 0.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' must be positive int, but got 0.";
   }
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
                        [](const size_t &value) { return SizeToInt(value); });
   if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be in range [1, "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be in range [1, "
                       << SPLIT_STRIDES_SIZE << "], but got " << input_shape_.size();
   }
   CheckParam(kernel_node);
@@ -107,18 +107,18 @@ bool SplitCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 void SplitCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   int64_t dims = SizeToLong(input_shape_.size());
   if (dims == 0 || dims > SPLIT_STRIDES_SIZE) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor should be in range [1, "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be in range [1, "
                       << SPLIT_STRIDES_SIZE << "], but got " << dims;
   }
   if (axis_ < -dims || axis_ >= dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' should be in range [" << -dims << ", " << dims
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in range [" << -dims << ", " << dims
                       << "), but got " << axis_;
   }
   if (axis_ < 0) {
     axis_ += SizeToLong(input_shape_.size());
   }
   if (output_num_ > IntToSize(input_shape_[LongToUlong(axis_)])) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' should be less than or equal to "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'output_num' must be less than or equal to "
                       << input_shape_[axis_] << ", but got " << output_num_;
   }
 }

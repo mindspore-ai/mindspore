@@ -38,26 +38,26 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, INDICES);
   if (indices_shape.size() != kIndicesSizeNum && indices_shape[1] != kIndices2rdDimNum) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', it requires 'indices' should be a 2-D Tensor and the second dimension length "
-                         "should be 2, but got 'indices' shape: "
+                      << "', it requires 'indices' must be a 2-D Tensor and the second dimension length "
+                         "must be 2, but got 'indices' shape: "
                       << Vector2Str(indices_shape);
   }
   auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', it requires 'values' should be a 1-D Tensor and the first dimension length "
-                         " should be equal to the first dimension length of 'indices', but got 'values' shape: "
+                      << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
+                         " must be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   values_size_ = values_shape[0];
   b_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
   if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' must be "
                       << kSparseTensorDenseMatmulDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";
   }
   if (output_shape_.size() != kSparseTensorDenseMatmulOutputShapeSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
                       << kSparseTensorDenseMatmulOutputShapeSize << "-D, but got " << output_shape_.size() << "-D";
   }
 
@@ -75,7 +75,7 @@ bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernel(const std::vector<kernel:
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size should be greater than 0, but got 0.";
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
     return true;
   }
   auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);

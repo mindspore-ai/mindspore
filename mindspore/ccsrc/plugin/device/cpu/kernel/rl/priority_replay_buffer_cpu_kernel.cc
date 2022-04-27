@@ -39,7 +39,7 @@ void PriorityReplayBufferCreateCpuKernel::InitKernel(const CNodePtr &kernel_node
   const int64_t &seed0 = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed0");
   const int64_t &seed1 = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed1");
 
-  MS_EXCEPTION_IF_CHECK_FAIL(dtypes.size() == shapes.size(), "The dtype and shapes should be same.");
+  MS_EXCEPTION_IF_CHECK_FAIL(dtypes.size() == shapes.size(), "The dtype and shapes must be the same.");
   std::vector<size_t> schema;
   for (size_t i = 0; i < shapes.size(); i++) {
     size_t num_element = std::accumulate(shapes[i].begin(), shapes[i].end(), 1ULL, std::multiplies<size_t>());
@@ -108,7 +108,7 @@ bool PriorityReplayBufferSampleCpuKernel::Launch(const std::vector<AddressPtr> &
   std::tie(indices, weights, samples) = prioriory_replay_buffer_->Sample(batch_size_);
 
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == schema_.size() + kTransitionIndex,
-                             "The dtype and shapes should be same.");
+                             "The dtype and shapes must be the same.");
   MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(outputs[kIndicesIndex]->addr, outputs[kIndicesIndex]->size, indices.data(),
                                       batch_size_ * sizeof(int64_t)) == EOK,
                              "memcpy_s() failed.");
@@ -133,8 +133,8 @@ bool PriorityReplayBufferSampleCpuKernel::Launch(const std::vector<AddressPtr> &
 void PriorityReplayBufferUpdateCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   priorities_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  MS_EXCEPTION_IF_CHECK_FAIL(indices_shape_.size() != 0, "The indices shape should not be null.");
-  MS_EXCEPTION_IF_CHECK_FAIL(priorities_shape_.size() != 0, "The priorities shape should not be null.");
+  MS_EXCEPTION_IF_CHECK_FAIL(indices_shape_.size() != 0, "The indices shape can not be null.");
+  MS_EXCEPTION_IF_CHECK_FAIL(priorities_shape_.size() != 0, "The priorities shape can not be null.");
 
   handle_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "handle");
   prioriory_replay_buffer_ = PriorityReplayBufferFactory::GetInstance().GetByHandle(handle_);
@@ -143,7 +143,7 @@ void PriorityReplayBufferUpdateCpuKernel::InitKernel(const CNodePtr &kernel_node
 
 bool PriorityReplayBufferUpdateCpuKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                                  const std::vector<AddressPtr> &outputs) {
-  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == 2, "inputs should be 2.");
+  MS_EXCEPTION_IF_CHECK_FAIL(inputs.size() == 2, "inputs must be 2.");
   std::vector<size_t> indices(indices_shape_[0]);
   std::vector<float> priorities(priorities_shape_[0]);
   MS_EXCEPTION_IF_CHECK_FAIL(memcpy_s(indices.data(), inputs[0]->size, inputs[0]->addr, inputs[0]->size) == EOK,

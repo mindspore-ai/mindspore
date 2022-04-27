@@ -43,17 +43,17 @@ void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto lu_data_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   auto lu_pivots_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   if (lu_data_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_data's dimensions should be greater than or equal to 2.";
+    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_data's dimensions must be greater than or equal to 2.";
   }
   if (x_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel x's dimensions should be greater than or equal to 2.";
+    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel x's dimensions must be greater than or equal to 2.";
   }
   if (lu_pivots_shape.size() < 1) {
-    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_pivots's dimensions should be greater than or equal to 1.";
+    MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_pivots's dimensions must be greater than or equal to 1.";
   }
   if (lu_data_shape[lu_data_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - kDimNum])
     MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                             << " input lu_data should be square matrix "
+                             << " input lu_data must be square matrix "
                              << "while row is " << lu_data_shape[lu_data_shape.size() - kDimNum] << ", col is "
                              << lu_data_shape[lu_data_shape.size() - 1] << ".";
 
@@ -87,7 +87,7 @@ void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (lu_pivots_shape[lu_pivots_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - 1]) {
     MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel "
-                             << " Number of pivots per batch should be same as the dimension of the matrix.";
+                             << " Number of pivots per batch must be the same as the dimension of the matrix.";
   }
   for (size_t i = 0; i < lu_pivots_shape.size(); i++) {
     if (lu_data_shape[i] != lu_pivots_shape[i]) {

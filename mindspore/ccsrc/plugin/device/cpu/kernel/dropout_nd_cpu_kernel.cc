@@ -37,8 +37,8 @@ void DropoutNdCpuKernelMod::CheckDropOutNdShape() {
                       << kernel_name_;
   }
   if (expected_dims != nd_dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " input dims should be " << expected_dims << "D, but got  "
-                      << nd_dims << "D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " input dims must be " << expected_dims << "D, but got  " << nd_dims
+                      << "D.";
   }
 }
 
@@ -61,7 +61,7 @@ void DropoutNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, keep_prob_attr);
   if (keep_prob_ < 0.0 || keep_prob_ > 1.0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' should be in [0.0, 1.0], but got " << keep_prob_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in [0.0, 1.0], but got " << keep_prob_;
   }
   input_data_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndex0);
   n_ = input_shape_.at(kDim0);

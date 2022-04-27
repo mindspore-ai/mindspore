@@ -40,7 +40,7 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (auto p : perm) {
     p = (p >= 0) ? p : (perm.size() + p);
     if (p < 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value should in [-" << perm.size() << ", "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the perm value must be in [-" << perm.size() << ", "
                         << (perm.size() - 1) << "], but got " << perm;
     }
     axes_.emplace_back(p);
@@ -79,7 +79,7 @@ void TransposeFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (iter != launch_map_.end()) {
     launch_func_ = iter->second;
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be bool, int, float or uint, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be bool, int, float or uint, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
 }
@@ -130,7 +130,7 @@ void TransposeFwdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   } else if constexpr (std::is_same_v<T, bool>) {
     res = DoTransposeBool(input_addr, output_addr, output_shape, &transpose_param_);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be bool, int, float or uint, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be bool, int, float or uint, but got "
                       << typeid(T).name();
   }
   if (res != static_cast<int>(NNACL_OK)) {

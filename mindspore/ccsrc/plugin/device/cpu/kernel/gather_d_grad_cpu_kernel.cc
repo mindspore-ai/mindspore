@@ -70,7 +70,7 @@ void GatherDGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   if (input_shape_ != index_shape_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', shape size of 'x' should be equal to 'index', but got shape size of 'x': "
+                      << "', shape size of 'x' must be equal to 'index', but got shape size of 'x': "
                       << input_shape_.size() << ", and shape size of 'index': " << index_shape_.size();
   }
   axis_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, DIM);
@@ -97,15 +97,15 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   size_t index_size = get_element_num(index_shape_) * sizeof(I);
   size_t output_size = get_element_num(output_shape_) * sizeof(T);
   if (inputs[0]->size != index_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' should be " << index_size
-                      << ", but got " << inputs[0]->size << ".";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' must be " << index_size << ", but got "
+                      << inputs[0]->size << ".";
   }
   if (inputs[1]->size != input_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' should be " << input_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'dim' must be " << input_size
                       << ", but got " << inputs[1]->size << ".";
   }
   if (outputs[0]->size != output_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output should be " << output_size
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of output must be " << output_size
                       << ", but got " << outputs[0]->size << ".";
   }
 
@@ -114,7 +114,7 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   auto out = reinterpret_cast<T *>(outputs[0]->addr);
   int output_rank = SizeToInt(output_shape_.size());
   if (axis_ >= output_rank || axis_ < -output_rank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' should be in [" << -output_rank << ", "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dim' must be in [" << -output_rank << ", "
                       << output_rank << "), but got: " << axis_;
   }
   if (axis_ < 0) {
@@ -126,7 +126,7 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   int max_index = SizeToInt(output_shape_[axis_]);
   for (size_t i = 0; i < index_size; ++i) {
     if (index[i] >= max_index || index[i] < -max_index) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'index' should be in [" << -max_index << ", "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'index' must be in [" << -max_index << ", "
                         << max_index << "), but got: " << index[i];
     }
     if (index[i] < 0) {

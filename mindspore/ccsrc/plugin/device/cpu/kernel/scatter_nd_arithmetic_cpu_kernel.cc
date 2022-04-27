@@ -111,12 +111,12 @@ void ScatterNdArithmeticCpuKernelFunc<T, S>::InitFunc(const CNodePtr &kernel_nod
   auto U = updates_shape.size();
   if (K > P) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the value of last dimension of 'indices' should be less than "
+                      << "', the value of last dimension of 'indices' must be less than "
                          "or equal to the dimension of 'input_x', but got the value of last dimension of 'indices': "
                       << K << " and the dimension of 'input_x': " << P << ".";
   }
   if (Q < kMinIndicesRank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' should be at least 2, "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, "
                       << "but got " << Q << ".";
   }
   if (U != Q - 1 + P - K) {

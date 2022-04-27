@@ -40,7 +40,7 @@ void EmbeddingLookUpPSKernelMod::InitKernel(
   }
   input_shape_ = *(shape_vec[0]);
   if (input_shape_.empty()) {
-    MS_LOG(EXCEPTION) << "Input shape should not empty";
+    MS_LOG(EXCEPTION) << "Input shape can not empty";
   }
   first_dim_size_ = input_shape_[0];
   for (size_t i = 1; i < input_shape_.size(); ++i) {
@@ -60,7 +60,7 @@ void EmbeddingLookUpPSKernelMod::InitKernel(
   }
   offset_ = offset;
 
-  // input shape should be sharded after computing offset_;
+  // input shape must be sharded after computing offset_;
   Shard(&input_shape_, kAxis);
 
   size_t output_size =
@@ -70,7 +70,7 @@ void EmbeddingLookUpPSKernelMod::InitKernel(
 
 void EmbeddingLookUpPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
-    MS_LOG(EXCEPTION) << "Shape should not empty";
+    MS_LOG(EXCEPTION) << "Shape can not empty";
   }
   const auto &indices_shape = shapes[0];
   indices_lens_ = indices_shape[0];

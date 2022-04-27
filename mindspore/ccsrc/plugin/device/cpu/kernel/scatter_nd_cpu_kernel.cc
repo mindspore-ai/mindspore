@@ -52,7 +52,7 @@ void Compute(ScatterNdCpuKernelMod *content, const ComputeParams<S, T> *params, 
       int index = static_cast<int>(indices[i * IntToSize(params->indices_unit_rank_) + j]);
       if (index < 0) {
         MS_LOG(EXCEPTION) << "For '" << kKernelName
-                          << "', each element in 'indices' should be greater than or equal to 0, but got " << index;
+                          << "', each element in 'indices' must be greater than or equal to 0, but got " << index;
       }
       offset += index * out_strides->at(j) * params->unit_size_;
     }
@@ -76,17 +76,17 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the value of last dimension of 'indices' should be less than "
+                      << "', the value of last dimension of 'indices' must be less than "
                          "or equal to the dimension of 'shape', but got  the value of last dimension of 'indices': "
                       << indices_unit_rank << " and the dimension of 'shape': " << shape.size();
   }
   if (indices_shape.size() < kMinIndiceRank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' should be at least 2, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
                       << indices_shape.size();
   }
   if (updates_shape.size() != indices_shape.size() - 1 + shape.size() - indices_unit_rank) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'update' should be equal to the dimension of 'indices' minus 1 plus the "
+                      << "', the dimension of 'update' must be equal to the dimension of 'indices' minus 1 plus the "
                          "dimension of 'shape' minus the value of last dimension of 'indices', but got "
                       << "the dimension of 'update': " << updates_shape.size() << ", the dimension of 'indices' "
                       << indices_shape.size() << ", the dimension of 'shape' " << shape.size()
@@ -157,12 +157,12 @@ bool ScatterNdCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 void ScatterNdCpuKernelMod::Check(const CNodePtr &kernel_node) {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kScatterNdInputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num
                       << " input(s).";
   }
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != kScatterNdOutputSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num
                       << " output(s).";
   }
 }

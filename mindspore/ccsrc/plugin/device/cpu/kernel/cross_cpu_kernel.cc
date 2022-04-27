@@ -46,7 +46,7 @@ void CrossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
         break;
       }
       if (i == input1_shape_.size() - 1 && input1_shape_[i] != dim_size_value) {
-        MS_EXCEPTION(ValueError) << "The size of inputs dim should be 3,but got" << input1_shape_[i];
+        MS_EXCEPTION(ValueError) << "The size of inputs dim must be 3,but got" << input1_shape_[i];
       }
     }
   }

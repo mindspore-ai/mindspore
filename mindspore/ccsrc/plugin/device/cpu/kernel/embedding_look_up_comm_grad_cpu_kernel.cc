@@ -34,17 +34,16 @@ void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   MS_LOG(INFO) << "split_num: " << split_num;
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (split_num <= 0 || split_num_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' should be greater than 0, but got "
-                      << split_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
   }
   split_num_ = LongToSize(split_num);
   if (input_shape.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input should be at least 1-D, but got: " << input_shape.size() << "-D";
+                      << "', the dimension of input must be at least 1-D, but got: " << input_shape.size() << "-D";
   }
   if (input_shape[0] % split_num_ != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension value of input should be multiple of "
+                      << "', the first dimension value of input must be multiple of "
                          "'split_num', but got 'split_num': "
                       << split_num_ << " and the first dimension value of input: " << input_shape[0];
   }

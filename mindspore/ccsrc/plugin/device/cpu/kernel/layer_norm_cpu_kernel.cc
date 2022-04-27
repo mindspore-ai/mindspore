@@ -49,7 +49,7 @@ void LayerNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     param_num_ *= x_shape[i];
   }
   if (block_num_ == 0 || block_size_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got "
                       << Vector2Str(x_shape);
   }
 }
@@ -65,7 +65,7 @@ bool LayerNormCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be float16, float32, or float64, but got " << dtype_;
+                      << "', the dtype of 'input_x' must be float16, float32, or float64, but got " << dtype_;
   }
   return true;
 }

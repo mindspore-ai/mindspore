@@ -43,11 +43,11 @@ bool check_validation(const std::vector<int64_t> &shape, const int64_t num_befor
   int64_t output_num = num_before_axis * num_after_axis;
   int64_t output_size = output_num * static_cast<int64_t>(sizeof(int));
   if (static_cast<int64_t>(inputs[0]->size) != input_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' should be equal to " << input_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of 'input_x' must be equal to " << input_size
                       << ", but got the memory size is " << inputs[0]->size;
   }
   if (static_cast<int64_t>(outputs[0]->size) != output_size) {
-    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of output should be equal to " << output_size
+    MS_LOG(EXCEPTION) << "For '" << kKernelName << "', the memory size of output must be equal to " << output_size
                       << ", but got the memory size is " << outputs[0]->size;
   }
   return true;
@@ -90,7 +90,7 @@ bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
     return false;
   }
   if (inputs.size() < 1) {
-    MS_LOG(ERROR) << "Argmax input size should not less than 1!";
+    MS_LOG(ERROR) << "Argmax input size can not less than 1!";
     return false;
   }
 
@@ -121,12 +121,12 @@ bool ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   shape_ = inputs[0]->GetShapeVector();
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the dimension of 'input_x' should be at least 1, but got 0.";
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got 0.";
     return false;
   }
   axis_ += SizeToLong(shape_len);
   if (axis_ < 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'axis' should be in range [-1, " << (shape_len - 1)
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'axis' must be in range [-1, " << (shape_len - 1)
                     << "], but got " << axis_;
     return false;
   }

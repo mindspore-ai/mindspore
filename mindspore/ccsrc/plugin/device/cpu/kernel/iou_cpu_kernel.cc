@@ -38,19 +38,19 @@ void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   if (anchor_boxes_shape.size() != BOX_SHAPE_SIZE || anchor_boxes_shape[BOX_COORDINATE_INDEX] != kBoxCoordinateLen) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'anchor_boxes' should be [N, 4], but got: " << Vector2Str(anchor_boxes_shape);
+                      << "', the shape of 'anchor_boxes' must be [N, 4], but got: " << Vector2Str(anchor_boxes_shape);
   }
   anchor_boxes_size_ = anchor_boxes_shape[BOX_SIZE_INDEX];
   auto gt_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, GT_BOXES);
   if (gt_boxes_shape.size() != BOX_SHAPE_SIZE || gt_boxes_shape[BOX_COORDINATE_INDEX] != kBoxCoordinateLen) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'gt_boxes' should be [N, 4], but got: " << Vector2Str(gt_boxes_shape);
+                      << "', the shape of 'gt_boxes' must be [N, 4], but got: " << Vector2Str(gt_boxes_shape);
   }
   gt_boxes_size_ = gt_boxes_shape[BOX_SIZE_INDEX];
   iou_size_ = anchor_boxes_size_ * gt_boxes_size_;
   std::string iou_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   if (iou_mode != "iou" && iou_mode != "iof") {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' should be 'iou' or 'iof', but got: " << iou_mode;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'iou' or 'iof', but got: " << iou_mode;
   }
   if (iou_mode == "iof") {
     mode_ = IOF_MODE;

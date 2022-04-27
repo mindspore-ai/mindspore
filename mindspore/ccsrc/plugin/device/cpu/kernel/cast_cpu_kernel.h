@@ -40,7 +40,7 @@ class CastCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kCastInputsNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kCastOutputsNum, kernel_name_);
     if (outputs[0]->size == 0) {
-      MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output should be greater than 0, but got 0.";
+      MS_LOG(WARNING) << "For '" << kernel_name_ << "', the memory size of output must be greater than 0, but got 0.";
       return true;
     }
     return kernel_func_->RunFunc(inputs, workspace, outputs);

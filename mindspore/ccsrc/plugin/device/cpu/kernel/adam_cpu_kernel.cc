@@ -122,43 +122,43 @@ bool AdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
 
   if (inputs[kIndexVar]->size != inputs[kIndexM]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape and dtype of 'm' and 'var' should be same, but got the memory size of 'm': "
+                      << "', the shape and dtype of 'm' and 'var' must be the same, but got the memory size of 'm': "
                       << inputs[kIndexM]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
   if (inputs[kIndexVar]->size != inputs[kIndexV]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape and dtype of 'v' and 'var' should be same, but got the memory size of 'v': "
+                      << "', the shape and dtype of 'v' and 'var' must be the same, but got the memory size of 'v': "
                       << inputs[kIndexV]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
   if (inputs[kIndexVar]->size != inputs[kIndexGrad]->size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape and dtype of 'gradient' and 'var' should be same, but got "
+                      << "', the shape and dtype of 'gradient' and 'var' must be the same, but got "
                          "the memory size of 'gradient': "
                       << inputs[kIndexGrad]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
   size_t f_size = sizeof(float);
   if (inputs[kIndexBeta1Power]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta1_power' should be float, but got 'beta1_power': " << inputs[kIndexBeta1Power];
+                      << "', the 'beta1_power' must be float, but got 'beta1_power': " << inputs[kIndexBeta1Power];
   }
   if (inputs[kIndexBeta2Power]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta2_power' should be float, but got 'beta2_power': " << inputs[kIndexBeta2Power];
+                      << "', the 'beta2_power' must be float, but got 'beta2_power': " << inputs[kIndexBeta2Power];
   }
   if (inputs[kIndexLr]->size != f_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float, but got 'lr': " << inputs[kIndexLr];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' must be float, but got 'lr': " << inputs[kIndexLr];
   }
   if (inputs[kIndexBeta1]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta1' should be float, but got 'beta1': " << inputs[kIndexBeta1];
+                      << "', the 'beta1' must be float, but got 'beta1': " << inputs[kIndexBeta1];
   }
   if (inputs[kIndexBeta2]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'beta2' should be float, but got 'beta2': " << inputs[kIndexBeta2];
+                      << "', the 'beta2' must be float, but got 'beta2': " << inputs[kIndexBeta2];
   }
   if (inputs[kIndexEpsilon]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the 'epsilon' should be float, but got 'epsilon': " << inputs[kIndexEpsilon];
+                      << "', the 'epsilon' must be float, but got 'epsilon': " << inputs[kIndexEpsilon];
   }
 
   if (dtype_ == kNumberTypeFloat32) {
@@ -166,7 +166,7 @@ bool AdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
   } else if (dtype_ == kNumberTypeFloat16) {
     LaunchAdam<float16>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' should be Float16 or Float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'var' must be Float16 or Float32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

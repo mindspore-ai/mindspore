@@ -44,8 +44,7 @@ bool MapUniformCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &input
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be int32 or int64, but got "
-                      << dtype_;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int32 or int64, but got " << dtype_;
   }
   return true;
 }
@@ -68,14 +67,13 @@ void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto group_num = *reinterpret_cast<T *>(inputs[2]->addr);
   auto output_x = reinterpret_cast<T *>(outputs[0]->addr);
   if (group_num <= 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'group_num' should be greater than 0, but got "
-                      << group_num;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'group_num' must be greater than 0, but got " << group_num;
   }
   T max_num = group_num * per_group_size;
   for (size_t i = 0; i < batch_size_; ++i) {
     output_x[i] = input_x[i] % group_num * per_group_size + input_x[i] / group_num;
     if (output_x[i] >= max_num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', all elements in output should be less than " << max_num
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', all elements in output must be less than " << max_num
                         << ", but got " << output_x[i];
     }
   }

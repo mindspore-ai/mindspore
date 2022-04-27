@@ -30,14 +30,14 @@ template <typename T>
 void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspaces,
                                     const std::vector<AddressPtr> &outputs) {
   if (inputs.size() != 2 || outputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the operator should have 2 inputs and 2 outputs, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the operator must have 2 inputs and 2 outputs, but got "
                       << inputs.size() << "input(s) and " << outputs.size() << "output(s)";
   }
   if (inputs[0]->size != outer_size_ * inner_size_ * sizeof(T)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', address size of 'input_x' error.";
   }
   if (inputs[1]->size != sizeof(int)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' should be int, but got " << inputs[1];
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' must be int, but got " << inputs[1];
   }
   auto input = reinterpret_cast<T *>(inputs[0]->addr);
   int k = reinterpret_cast<int *>(inputs[1]->addr)[0];
@@ -45,7 +45,7 @@ void TopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   auto indices = reinterpret_cast<int *>(outputs[1]->addr);
   if (k < 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' should be greater than 0, but got " << k;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'k' must be greater than 0, but got " << k;
   }
   size_t k_num = IntToSize(std::min<int>(inner_size_, k));
   if (outputs[0]->size != outer_size_ * k_num * sizeof(T)) {
@@ -95,7 +95,7 @@ void TopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (x_shape_.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input should be greater than 0, but got empty input.";
+                      << "', the dimension of input must be greater than 0, but got empty input.";
   }
   for (size_t i = 0; i < x_shape_.size() - 1; ++i) {
     outer_size_ *= x_shape_[i];
@@ -121,7 +121,7 @@ bool TopKCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   } else if (dtype_ == kNumberTypeFloat32) {
     LaunchKernel<float>(inputs, workspaces, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input should be float16 or float32, but got "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be float16 or float32, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   return true;

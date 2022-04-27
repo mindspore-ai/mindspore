@@ -66,7 +66,7 @@ void CholeskyInverseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   if (x_shape[x_shape.size() - 1] != x_shape[x_shape.size() - kDimNum]) {
     MS_EXCEPTION(ValueError) << "For CholeskyInverse"
-                             << " input cholesky_inverse should be square matrix "
+                             << " input cholesky_inverse must be square matrix "
                              << "while row is " << x_shape[x_shape.size() - kDimNum] << ", col is "
                              << x_shape[x_shape.size() - 1];
   }

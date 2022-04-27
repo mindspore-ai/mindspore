@@ -83,7 +83,7 @@ class EltWiseGradCpuTypeFunc : public CpuKernelFunc {
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::ReluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'ReLUGrad', the dtype of input should be float.";
+    MS_LOG(EXCEPTION) << "For 'ReLUGrad', the dtype of input must be float.";
   }
 
   int ret = ::ReluGrad(input1 + start, input2 + start, end - start, out + start);
@@ -95,7 +95,7 @@ void EltWiseGradCpuTypeFunc<T>::ReluGrad(const T *input1, const T *input2, T *ou
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::ReLU6Grad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'ReLU6Grad', the dtype of input should be float.";
+    MS_LOG(EXCEPTION) << "For 'ReLU6Grad', the dtype of input must be float.";
   }
 
   int ret = ::Relu6Grad(input1 + start, input2 + start, end - start, out + start);
@@ -121,7 +121,7 @@ void EltWiseGradCpuTypeFunc<T>::AbsGrad(const T *input1, const T *input2, T *out
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::SigmoidGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'SigmoidGrad', the dtype of input should be float.";
+    MS_LOG(EXCEPTION) << "For 'SigmoidGrad', the dtype of input must be float.";
   }
 
   int ret = ::SigmoidGrad(input2 + start, input1 + start, end - start, out + start);
@@ -155,7 +155,7 @@ void EltWiseGradCpuTypeFunc<T>::RsqrtGrad(const T *input1, const T *input2, T *o
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'TanhGrad', the dtype of input should be float.";
+    MS_LOG(EXCEPTION) << "For 'TanhGrad', the dtype of input must be float.";
   }
 
   int ret = ::TanhGrad(input2 + start, input1 + start, end - start, out + start);
@@ -180,7 +180,7 @@ void EltWiseGradCpuTypeFunc<T>::GeluGrad(const T *input1, const T *input2, T *ou
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::FastGeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value && !std::is_same<T, float16>::value) {
-    MS_LOG(EXCEPTION) << "For 'FastGeluGrad', the dtype of input should be float or float16.";
+    MS_LOG(EXCEPTION) << "For 'FastGeluGrad', the dtype of input must be float or float16.";
   }
 
   for (size_t i = start; i < end; i++) {
@@ -341,7 +341,7 @@ void EltWiseGradCpuTypeFunc<T>::ComplexAcoshGrad(const T *input1, const T *input
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::SoftplusGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   if constexpr (!std::is_same<T, float>::value) {
-    MS_LOG(EXCEPTION) << "For 'SoftplusGrad', the dtype of input should be float.";
+    MS_LOG(EXCEPTION) << "For 'SoftplusGrad', the dtype of input must be float.";
   }
 
   int ret = ::SoftplusGrad(input1 + start, input2 + start, end - start, out + start);

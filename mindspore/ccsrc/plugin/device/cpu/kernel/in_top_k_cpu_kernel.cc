@@ -34,12 +34,12 @@ void InTopKCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto prediction_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto target_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (prediction_shape.size() != kInTopKShapeRank) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the rank of the first input should be equal to "
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the rank of the first input must be equal to "
                       << kInTopKShapeRank << ", but got " << prediction_shape.size();
   }
   if (target_shape.size() != kInTopkTargetShapeSize || target_shape[0] != prediction_shape[0]) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the rank of the second input should be equal to "
-                      << kInTopkTargetShapeSize << ", and the shape size should be euqal to " << prediction_shape[0]
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the rank of the second input must be equal to "
+                      << kInTopkTargetShapeSize << ", and the shape size must be euqal to " << prediction_shape[0]
                       << ", but got " << target_shape;
   }
   outer_size_ = 1;
@@ -67,7 +67,7 @@ bool InTopKCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   auto output = reinterpret_cast<bool *>(outputs[0]->addr);
 
   if (k_ < 1) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'k' should be greater than 0, but got " << k_;
+    MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'k' must be greater than 0, but got " << k_;
     auto ret = memset_s(output, outputs[0]->size, 0, outputs[0]->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;

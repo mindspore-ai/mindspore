@@ -50,7 +50,7 @@ bool DynamicAssignCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
     LaunchKernel<double>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << ", the dtype of 'input_x' should be in (int32, int64, float32, float64) on CPU, but got "
+                      << ", the dtype of 'input_x' must be in (int32, int64, float32, float64) on CPU, but got "
                       << TypeIdToType(input_x_dtype_)->ToString();
   }
   return true;
@@ -72,14 +72,14 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
 
   if (input_x_shape.size() != input_y_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' and 'input_y' should be the same, "
+                      << "', the dimension of 'input_x' and 'input_y' must be the same, "
                          "but got the dimension of 'input_x': "
                       << input_x_shape.size() << ", and the dimension of 'input_y': " << input_y_shape.size();
   }
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
     if (input_x_shape[i] != input_y_shape[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the shape of 'input_x' and 'input_y' should be the same, "
+                        << "', the shape of 'input_x' and 'input_y' must be the same, "
                            "but got the shape of 'input_x': "
                         << Vector2Str(input_x_shape) << ", and the shape of 'input_y': " << Vector2Str(input_y_shape);
     }
@@ -90,7 +90,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   size_t total_size = input_x_dtype_size_ * batch_size_;
   if (total_size > max_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', memcpy size should be less than or equal to max size, but got memcpy size: " << total_size
+                      << "', memcpy size must be less than or equal to max size, but got memcpy size: " << total_size
                       << " and max size: " << max_size;
   }
   int ret = memcpy_s(input_x, total_size, input_y, total_size);
@@ -108,7 +108,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     (void)std::transform(input_x_shape.begin(), input_x_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     tensor->set_shape(shape_tmp);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output should be a Parameter.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output must be a Parameter.";
   }
 }
 

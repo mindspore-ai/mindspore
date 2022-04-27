@@ -38,9 +38,8 @@ void StridedSliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   if (input_shape_.size() > DIMENSION_8D || input_shape_.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'input_x' should be in range [1D, 8D], but got " << input_shape_.size()
-                      << "D.";
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be in range [1D, 8D], but got "
+                      << input_shape_.size() << "D.";
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -114,7 +113,7 @@ void StridedSliceCpuKernelMod::InitSliceParam(const CNodePtr &kernel_node, std::
   auto type_pair = type_convert_map.find(dtype_);
   if (type_pair == type_convert_map.end()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dtype of 'input_x' should be bool, int32, float32 or float64, but got "
+                      << "', the dtype of 'input_x' must be bool, int32, float32 or float64, but got "
                       << TypeIdToType(dtype_)->ToString();
   }
   data_size_ = type_pair->second.second;
@@ -191,7 +190,7 @@ bool StridedSliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
                                       const std::vector<kernel::AddressPtr> & /* workspace */,
                                       const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kStridedSliceInputsNum && inputs.size() != kStridedSliceDynamicInputsNum) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kStridedSliceInputsNum
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << kStridedSliceInputsNum
                       << " or " << kStridedSliceDynamicInputsNum << ", but got " << inputs.size();
   }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kStridedSliceOutputsNum, kernel_name_);
@@ -207,7 +206,7 @@ bool StridedSliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inp
     auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     if (begin_shape.size() != 1 || end_shape.size() != 1 || stride_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the dimension of 'begin', 'end', 'strides' should be equal "
+                        << "', the dimension of 'begin', 'end', 'strides' must be equal "
                            "to 1, but got the dimension of 'begin': "
                         << begin_shape.size() << ", the dimension of 'end': " << end_shape.size()
                         << ", and the dimension of 'strides': " << stride_shape.size();

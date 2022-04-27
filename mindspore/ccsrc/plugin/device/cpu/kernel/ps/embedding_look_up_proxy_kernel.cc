@@ -34,7 +34,7 @@ void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   size_t axis = kShape2dDims - input_shape.size();
   if (input_shape.empty() || input_shape.size() > kShape2dDims) {
-    MS_LOG(EXCEPTION) << "Input shape should not empty or greater than " << kShape2dDims << "-D, but got "
+    MS_LOG(EXCEPTION) << "Input shape can not empty or greater than " << kShape2dDims << "-D, but got "
                       << input_shape.size();
   }
 

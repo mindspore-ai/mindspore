@@ -54,7 +54,7 @@ void MatmulDoubleCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (a_shape.size() != kAMatrixDimNum || b_shape.size() != kAMatrixDimNum || out_shape.size() != kAMatrixDimNum) {
-    MS_LOG(EXCEPTION) << "The tensor rank of MatMul should be equal to 2.";
+    MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be equal to 2.";
   }
   trans_a_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
   trans_b_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);

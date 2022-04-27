@@ -81,7 +81,7 @@ class PushMetricsKernelMod : public DeprecatedNativeCpuKernelMod {
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &) {
     if (inputs.size() != 2) {
-      MS_LOG(EXCEPTION) << "Input number of PushMetricsKernelMod should be " << 2 << ", but got " << inputs.size();
+      MS_LOG(EXCEPTION) << "Input number of PushMetricsKernelMod must be " << 2 << ", but got " << inputs.size();
       return false;
     }
 

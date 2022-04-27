@@ -73,7 +73,7 @@ TensorsQueuePutCpuKernelMod::TensorsQueuePutCpuKernelMod() : elements_num_(0) {}
 
 void TensorsQueuePutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  // Current all the tensor in one element should have the same type.
+  // Current all the tensor in one element must have the same type.
   type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kSecondInputIndex);
   elements_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "elements_num");
 
@@ -120,7 +120,7 @@ TensorsQueueGetCpuKernelMod::TensorsQueueGetCpuKernelMod() : elements_num_(0), p
 
 void TensorsQueueGetCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  // Current all the tensor in one element should have the same type.
+  // Current all the tensor in one element must have the same type.
   TypePtr type = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, "dtype");
   elements_num_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "elements_num");
   pop_after_get_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "pop_after_get");
