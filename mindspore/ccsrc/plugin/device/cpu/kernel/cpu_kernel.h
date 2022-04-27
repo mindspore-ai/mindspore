@@ -308,10 +308,11 @@ class TransposeIterator {
 };
 
 ActorThreadPool *GetActorMgrInnerThreadPool();
-void ParallelLaunch(const CTask &task, size_t count, float block_size = 128.0, Content content = nullptr);
-void ParallelLaunch(const std::vector<common::Task> &tasks, Content content = nullptr);
+void ParallelLaunch(const CTask &task, size_t count, float block_size = 128.0, Content content = nullptr,
+                    ThreadPool *pool = nullptr);
+void ParallelLaunch(const std::vector<common::Task> &tasks, Content content = nullptr, ThreadPool *pool = nullptr);
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
-                              ParallelSearchInfo *parallel_search_info);
+                              ParallelSearchInfo *parallel_search_info, ThreadPool *pool = nullptr);
 
 // Deal with pytorch style axis iteration, to iterate every value on specific axis
 class AxisIterator {
