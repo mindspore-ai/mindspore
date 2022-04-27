@@ -14,7 +14,7 @@ mindspore.set_seed
 
     - **seed** (int) – 设置的全局种子。
 
-    **异常:**
+    **异常：**
 
     - **ValueError** – 种子值非法 (小于0)。
     - **TypeError** – 种子值非整型数。
