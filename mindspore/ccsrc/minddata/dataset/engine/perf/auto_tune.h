@@ -46,9 +46,13 @@ class AutoTune {
   Status LaunchThread();
 
  private:
-  /// The main loop in AutoTune, it iterates every interval
+  /// Main entry function for AT, triggers loop function.
   /// \return Status object
   Status Main();
+
+  /// Primary AT loop till exit
+  /// \return Status object
+  Status ATMainLoop(bool output_intermediate_config);
 
   /// \brief Helper to print the tree configuration
   void PrintTreeConfiguration() const;
@@ -115,6 +119,9 @@ class AutoTune {
   const int32_t MIN_NUM_WORKERS = 1;
   const int32_t MAX_QUEUE_SIZE = 128;
   const int32_t MIN_QUEUE_SIZE = 1;
+  // Warmup specifics
+  const int32_t EPOCH_WARMUP = 1;
+  const int64_t STEP_WARMUP = 150;
   // Worker specifics
   const int32_t INCREMENT_WORKER = 2;
   const int32_t DECREMENT_WORKER = -1;
@@ -129,6 +136,9 @@ class AutoTune {
   const float_t MAP_OP_WORKER_LOW_THRESHOLD = 35;
   // Running mode specifics
   enum AutoTuneMode { kAutoTuneModeEpoch, kAutoTuneModeStep };
+  enum AutoTunePhase { kAutoTunePhaseTime, kAutoTuneEnd };
+  // Early stop specifics
+  const int32_t EARLY_STOP_TRIAL_THRESHOLD = 10;
 
   /// Get the out connector capacity of the operator
   /// \param[in] op_id operator id
@@ -155,7 +165,7 @@ class AutoTune {
 
   /// Main AutoTune algorithm
   /// \return Status code
-  Status Analyse();
+  Status AnalyseTime();
 
   /// Send a ChangeRequest to the operator to update the number of workers
   /// \param op_id operator ID
@@ -171,9 +181,9 @@ class AutoTune {
   /// \return Status code
   Status RequestConnectorCapacityChange(int32_t op_id, int32_t old_size, int32_t new_size);
 
-  /// Record the pipeline time of the current epoch into avg_pipeline_times_
+  /// Track the pipeline time of the current epoch into avg_pipeline_times_
   /// \return Status code
-  Status RecordPipelineTime();
+  Status TrackPipelineTime();
 
   /// Utility function to calculate the mean/average of a list of numbers
   /// \tparam T type of the vector
@@ -181,6 +191,22 @@ class AutoTune {
   /// \return double the calculated mean
   template <typename T>
   double Mean(const std::vector<T> &items);
+
+  /// Get and update current epoch and step counts
+  /// \return Status Code
+  Status UpdateCurrentRunInfo();
+
+  /// Decide whether warmup period is complete to start AT
+  /// \return the decision for skipping further or not
+  bool WarmupSkipCheck();
+
+  /// Save current worker and queue size configurations
+  /// \return Status code
+  Status RegisterWorkersQueue();
+
+  /// Reset values of workers and queue sizes for ops to saved best config
+  /// \return  Status code
+  Status ResetWorkersQueue();
 
   /// Pointer to the tree adapter to get tree info
   TreeAdapter *tree_adapter_;
@@ -204,13 +230,25 @@ class AutoTune {
   std::vector<double> avg_pipeline_times_;
 
   /// the current epoch and step indices (starts from 1)
-  int32_t cur_epoch_;
+  int32_t cur_epoch_running_;
+  int32_t last_epoch_autotuned_;
   // step based auto-tuning specifics
-  int32_t cur_step_;
+  int32_t cur_step_running_;
+  int64_t last_step_autotuned_;
+
   int32_t mode_;
   int64_t step_gap_;
-  int32_t last_step_profiled_;
-  bool skip_bool_;
+  bool skip_flag_;
+  int32_t AT_phase_;
+  // tracking whether AT makes a change
+  bool AT_change_;
+
+  // Phase 1 - Analyse Time
+  double phase_1_best_time_;
+  int32_t phase_1_no_improve_count_;
+  std::vector<int32_t> phase_1_best_workers;
+  std::vector<int32_t> phase_1_best_queue;
+
   /// True if should save AutoTune configuration
   bool save_autoconfig_;
 
