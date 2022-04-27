@@ -18,15 +18,18 @@
 #include <memory>
 #include <unordered_map>
 #include <algorithm>
+#include "src/cxx_api/expression/node_impl.h"
 #include "include/api/types.h"
 #include "include/api/context.h"
 #include "include/api/dual_abi_helper.h"
+#include "include/api/serialization.h"
 #include "include/lite_session.h"
 #include "include/context.h"
 #include "include/api/callback/callback.h"
 #include "include/api/metrics/metrics.h"
 #include "src/lite_model.h"
 #include "src/runtime/inner_allocator.h"
+#include "src/cxx_api/expression/net_impl.h"
 #include "src/cxx_api/converters.h"
 #include "src/cxx_api/graph/graph_data.h"
 #include "src/cxx_api/tensor/tensor_impl.h"
@@ -77,6 +80,32 @@ Status ModelImpl::BuildTransferLearning(const std::shared_ptr<Graph> &backbone, 
   }
   MS_LOG(DEBUG) << "Session is not a train session.";
   return kLiteError;
+}
+
+std::unique_ptr<Graph> ModelImpl::BuildTrain(Node *optimizer, std::vector<Expr *> inputs) {
+  auto opt_impl = NodeImpl::GetImpl(optimizer);
+  if (opt_impl == nullptr) {
+    MS_LOG(ERROR) << "missing optimizer node implementation";
+    return nullptr;
+  }
+  auto opt = opt_impl->node();
+  auto in = Expr::convert(inputs);
+  auto net_impl = NetImpl::GetImpl(graph_->net_data_->net().get());
+  if (net_impl == nullptr) {
+    MS_LOG(ERROR) << "missing net implementation";
+    return nullptr;
+  }
+  auto trained_net = net_impl->net()->TrainNet(opt, in);
+  if (trained_net == nullptr) {
+    MS_LOG(ERROR) << "failed to train network";
+    return nullptr;
+  }
+  auto mgraph = net_impl->MakeMs();
+  if (mgraph == nullptr) {
+    MS_LOG(ERROR) << "failed to create graph";
+    return nullptr;
+  }
+  return mgraph;
 }
 
 Status ModelImpl::PrepareMetrics(Model *model, std::vector<session::Metrics *> *out_ms,

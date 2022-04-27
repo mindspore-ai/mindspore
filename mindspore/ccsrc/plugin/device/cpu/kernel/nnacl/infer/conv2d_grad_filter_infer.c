@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
 #include "nnacl/infer/conv2d_grad_filter_infer.h"
 #include "nnacl/infer/infer_register.h"
 
@@ -26,28 +27,33 @@ int Conv2dGradFilterInferShape(const TensorC *const *inputs, size_t inputs_size,
   if (inputs_size < 3 || outputs_size != 1) {
     return NNACL_ERR;
   }
-  if (inputs[0]->format_ != Format_NHWC || inputs[1]->format_ != Format_NHWC) {
+  if (inputs[FIRST_INPUT]->format_ != Format_NHWC || inputs[SECOND_INPUT]->format_ != Format_NHWC) {
     return NNACL_FORMAT_ERROR;
   }
-  SetDataTypeFormat(outputs[0], inputs[0]);
+  SetDataTypeFormat(outputs[FIRST_INPUT], inputs[FIRST_INPUT]);
 
-  if (inputs[2]->shape_size_ < 1 || inputs[2]->data_ == NULL) {
+  if (inputs[THIRD_INPUT]->shape_size_ < DIMENSION_1D || inputs[THIRD_INPUT]->data_ == NULL) {
     return NNACL_ERR;
   }
-  if (inputs[2]->shape_[0] < 0) {
+  if (inputs[THIRD_INPUT]->shape_[kNCHW_N] < 0) {
     return NNACL_ERR;
   }
-  size_t filter_shape_size = (size_t)(inputs[2]->shape_[0]);
-  if (filter_shape_size != 4) {
+  size_t filter_shape_size = (size_t)(inputs[THIRD_INPUT]->shape_[kNCHW_N]);
+  if (filter_shape_size != DIMENSION_4D) {
     return NNACL_ERR;
   }
 
   int filter_shape[MAX_SHAPE_SIZE];
-  const int nchw2nhwc[4] = {0, 2, 3, 1};
-  for (size_t i = 0; i < filter_shape_size; i++) {
-    filter_shape[i] = *((int *)(inputs[2]->data_) + nchw2nhwc[i]);
+  if (inputs[THIRD_INPUT]->format_ == Format_NCHW || inputs[THIRD_INPUT]->format_ == Format_KCHW) {
+    const int nchw2nhwc[] = {kNCHW_N, kNCHW_H, kNCHW_W, kNCHW_C};
+    for (size_t i = 0; i < filter_shape_size; i++) {
+      filter_shape[i] = *((int *)(inputs[THIRD_INPUT]->data_) + nchw2nhwc[i]);
+    }
+  } else if (inputs[THIRD_INPUT]->format_ == Format_NHWC || inputs[THIRD_INPUT]->format_ == Format_KHWC) {
+    memcpy(filter_shape, inputs[THIRD_INPUT]->data_, filter_shape_size * sizeof(int));
+  } else {
+    return NNACL_ERR;
   }
-
   SetShapeArray(outputs[0], filter_shape, filter_shape_size);
   return NNACL_OK;
 }

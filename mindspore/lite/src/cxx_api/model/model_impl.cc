@@ -56,6 +56,14 @@ CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProt
   return proto_;
 }
 
+ExpressionLoader CreateExpressionLoader(ExpressionLoader loader) {
+  static ExpressionLoader loader_ = nullptr;
+  if (loader != nullptr) {
+    loader_ = loader;
+  }
+  return loader_;
+}
+
 Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType model_type,
                         const std::shared_ptr<Context> &ms_context) {
   if (model_data == nullptr) {

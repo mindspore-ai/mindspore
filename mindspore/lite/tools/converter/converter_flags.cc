@@ -101,6 +101,7 @@ Flags::Flags() {
           "Whether to export MindIR pb. "
           "true | false",
           "false");
+  AddFlag(&Flags::noFusionStr, "NoFusion", "Avoid fusion optimization true|false", "false");
 }
 
 int Flags::InitInputOutputDataType() {
@@ -359,6 +360,18 @@ int Flags::InitPreInference() {
   return RET_OK;
 }
 
+int Flags::InitNoFusion() {
+  if (this->noFusionStr == "true") {
+    this->disableFusion = true;
+  } else if (this->noFusionStr == "false") {
+    this->disableFusion = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: NoFusion must be true|false " << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
 int Flags::InitExportMindIR() {
   if (this->exportMindIR == "true") {
     this->export_mindir = true;
@@ -495,10 +508,14 @@ int Flags::Init(int argc, const char **argv) {
     std::cerr << "Init encrypt failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
-
   ret = InitPreInference();
   if (ret != RET_OK) {
     std::cerr << "Init pre inference failed." << std::endl;
+    return RET_INPUT_PARAM_INVALID;
+  }
+  ret = InitNoFusion();
+  if (ret != RET_OK) {
+    std::cerr << "Init no fusion failed." << std::endl;
     return RET_INPUT_PARAM_INVALID;
   }
 
@@ -509,6 +526,7 @@ int Flags::Init(int argc, const char **argv) {
   }
   return RET_OK;
 }
+
 Flags::~Flags() {
   dec_key.clear();
   encKeyStr.clear();
@@ -591,7 +609,7 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
   }
 
 #ifdef _WIN32
-  char *real_path = _fullpath(resolved_path.get(), file.c_str(), kPathLengthUpperLimit);
+  auto *real_path = _fullpath(resolved_path.get(), file.c_str(), kPathLengthUpperLimit);
 #else
   char *real_path = realpath(file.c_str(), resolved_path.get());
 #endif

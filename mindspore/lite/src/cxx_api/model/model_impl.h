@@ -49,6 +49,9 @@ typedef std::shared_ptr<lite::LiteSession>(CreateTrainSessionProto)(std::shared_
                                                                     lite::InnerContext *context);
 CreateTrainSessionProto *CreateTrainSessionCallbackHolder(CreateTrainSessionProto *proto = nullptr);
 
+using ExpressionLoader = std::function<Status(const char *, Graph *)>;
+ExpressionLoader CreateExpressionLoader(ExpressionLoader loader = nullptr);
+
 namespace session {
 class Metrics;
 class TrainLoopCallBack;
@@ -90,6 +93,7 @@ class ModelImpl {
 
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
   bool IsTrainModel();
+  std::unique_ptr<Graph> BuildTrain(Node *optimizer, std::vector<Expr *> inputs);
   Status SetupVirtualBatch(int virtual_batch_multiplier, float lr, float momentum);
   Status SetLearningRate(float learning_rate);
   float GetLearningRate();

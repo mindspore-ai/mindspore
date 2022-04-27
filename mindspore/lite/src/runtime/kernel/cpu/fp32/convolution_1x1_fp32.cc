@@ -25,6 +25,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore::kernel {
 Convolution1x1CPUKernel::~Convolution1x1CPUKernel() {
   FreeTmpBuffer();
+
   if (matmul_param_ != nullptr) {
     delete matmul_param_;
     matmul_param_ = nullptr;
@@ -185,7 +186,7 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
 
   float *thread_input_ptr = input_ptr_ + task_id * thread_stride_ * matmul_param_->deep_;
   float *thread_pack_input = pack_input_ + task_id * row_tile_ * matmul_param_->deep_;
-  float *thread_output_ptr;
+  float *thread_output_ptr = nullptr;
   if (out_tensors()[0]->format() != NC4HW4) {
     thread_output_ptr = output_ptr_ + task_id * thread_stride_ * matmul_param_->col_;
   } else {

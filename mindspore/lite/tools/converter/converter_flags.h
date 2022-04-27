@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
 
 #include <string>
 #include <vector>
@@ -73,6 +73,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitSaveFP16();
 
+  int InitNoFusion();
+
   void InitAclDefaultOption();
 
   int InitExportMindIR();
@@ -90,6 +92,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   TypeId outputDataType;
   std::string saveFP16Str = "off";
   bool saveFP16 = false;
+  std::string noFusionStr = "false";
   std::string inputDataTypeStr;
   std::string outputDataTypeStr;
   ParallelSplitConfig parallel_split_config_{};
@@ -134,4 +137,4 @@ std::string GetStrFromConfigFile(const std::string &file, const std::string &tar
 }  // namespace converter
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_CONVERTER_FLAGS_H_
