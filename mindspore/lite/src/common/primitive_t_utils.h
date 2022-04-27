@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_LITE_SRC_COMMON_PRIMITIVE_T_UTILS_H_
 #define MINDSPORE_LITE_SRC_COMMON_PRIMITIVE_T_UTILS_H_
-
+#ifdef PRIMITIVE_WRITEABLE
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "src/ops/populate/populate_register.h"
@@ -29,4 +29,5 @@ OpParameter *GetOpParameter(schema::PrimitiveT *primitive_t);
 std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const std::shared_ptr<mindspore::ops::BaseOperator> &op);
 }  // namespace lite
 }  // namespace mindspore
+#endif
 #endif  // MINDSPORE_LITE_SRC_COMMON_PRIMITIVE_T_UTILS_H_

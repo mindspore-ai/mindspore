@@ -15,6 +15,7 @@
  */
 
 #include "src/common/primitive_t_utils.h"
+#ifdef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_utils.h"
 #include "ops/primitive_c.h"
 
@@ -72,3 +73,4 @@ std::unique_ptr<schema::PrimitiveT> GetPrimitiveT(const std::shared_ptr<mindspor
 }
 }  // namespace lite
 }  // namespace mindspore
+#endif
