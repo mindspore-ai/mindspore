@@ -331,11 +331,11 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
 }
 
 // Use threadpool of mindrt
-void ParallelLaunch(const CTask &task, size_t count, float block_size, Content content) {
+void ParallelLaunch(const CTask &task, size_t count, float block_size, Content content, ThreadPool *pool) {
   if (count == 0) {
     return;
   }
-  auto thread_pool = GetActorMgrInnerThreadPool();
+  auto thread_pool = pool == nullptr ? GetActorMgrInnerThreadPool() : pool;
   size_t kernel_thread_num = thread_pool->GetKernelThreadNum();
   if (kernel_thread_num == 0) {
     MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
@@ -356,8 +356,8 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size, Content c
   (void)thread_pool->ParallelLaunch(func, content, task_num);
 }
 
-void ParallelLaunch(const std::vector<common::Task> &tasks, Content content) {
-  auto thread_pool = GetActorMgrInnerThreadPool();
+void ParallelLaunch(const std::vector<common::Task> &tasks, Content content, ThreadPool *pool) {
+  auto thread_pool = pool == nullptr ? GetActorMgrInnerThreadPool() : pool;
   size_t kernel_thread_num = thread_pool->GetKernelThreadNum();
   if (kernel_thread_num == 0) {
     MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
@@ -369,7 +369,7 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content) {
 }
 
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
-                              ParallelSearchInfo *parallel_search_info) {
+                              ParallelSearchInfo *parallel_search_info, ThreadPool *pool) {
   const size_t MAX_POW = 6;
   const size_t AVG_COUNT = 5;
   size_t current_pow = parallel_search_info->search_count / AVG_COUNT;
@@ -379,7 +379,7 @@ void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
     }
     float block_size = static_cast<float>(count) / std::pow(2.0f, current_pow);
     double start_time = GetTime();
-    ParallelLaunch(task, count, block_size, content);
+    ParallelLaunch(task, count, block_size, content, pool);
     double cost_time = GetTime() - start_time;
     parallel_search_info->tmp_sum_cost_time += cost_time;
     parallel_search_info->search_count++;
@@ -394,7 +394,7 @@ void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
       }
     }
   } else {
-    ParallelLaunch(task, count, parallel_search_info->best_block_size, content);
+    ParallelLaunch(task, count, parallel_search_info->best_block_size, content, pool);
   }
 }
 
