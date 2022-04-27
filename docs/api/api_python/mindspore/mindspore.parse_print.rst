@@ -1,7 +1,7 @@
 mindspore.parse_print
 =======================================
 
-.. py:class:: mindspore.parse_print(print_file_name)
+.. py:function:: mindspore.parse_print(print_file_name)
 
     解析由 mindspore.ops.Print 生成的数据文件。
 

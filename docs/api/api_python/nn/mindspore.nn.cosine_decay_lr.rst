@@ -1,7 +1,7 @@
 mindspore.nn.cosine_decay_lr
 ==============================
 
-.. py:class:: mindspore.nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
+.. py:function:: mindspore.nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
 
     基于余弦衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
 

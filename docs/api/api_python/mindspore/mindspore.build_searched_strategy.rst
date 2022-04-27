@@ -1,7 +1,7 @@
 mindspore.build_searched_strategy
 =======================================
 
-.. py:class:: mindspore.build_searched_strategy(strategy_filename)
+.. py:function:: mindspore.build_searched_strategy(strategy_filename)
 
     构建网络中每个参数的策略，用于分布式推理。关于它的使用细节，请参考： `保存和加载模型（HyBrid Parallel模式） <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/save_load.html>`_。
 

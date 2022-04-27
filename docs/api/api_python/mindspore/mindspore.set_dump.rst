@@ -1,7 +1,7 @@
 mindspore.set_dump
 ==================
 
-.. py:class:: mindspore.set_dump(target, enabled=True)
+.. py:function:: mindspore.set_dump(target, enabled=True)
 
     启用或者禁用 `target` 及其子节点的Dump数据功能。
 

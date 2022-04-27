@@ -1,7 +1,7 @@
 mindspore.merge_sliced_parameter
 =================================
 
-.. py:method:: mindspore.merge_sliced_parameter(sliced_parameters, strategy=None)
+.. py:function:: mindspore.merge_sliced_parameter(sliced_parameters, strategy=None)
 
     将参数切片合并为一个完整的参数，用于分布式推理。关于它的细节，请参考：`保存和加载模型（HyBrid Parallel模式） <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/save_load.html>`_。
 

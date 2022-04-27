@@ -1,7 +1,7 @@
 mindspore.nn.polynomial_decay_lr
 ====================================
 
-.. py:class:: mindspore.nn.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power, update_decay_epoch=False)
+.. py:function:: mindspore.nn.polynomial_decay_lr(learning_rate, end_learning_rate, total_step, step_per_epoch, decay_epoch, power, update_decay_epoch=False)
 
     基于多项式衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
 

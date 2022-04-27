@@ -1,7 +1,7 @@
 mindspore.load
 =======================================
 
-.. py:class:: mindspore.load(file_name, **kwargs)
+.. py:function:: mindspore.load(file_name, **kwargs)
 
     加载MindIR文件。
 

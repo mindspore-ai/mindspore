@@ -1,7 +1,7 @@
 mindspore.nn.natural_exp_decay_lr
 =================================
 
-.. py:class:: mindspore.nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False)
+.. py:function:: mindspore.nn.natural_exp_decay_lr(learning_rate, decay_rate, total_step, step_per_epoch, decay_epoch, is_stair=False)
 
     基于自然指数衰减函数计算学习率。每个step的学习率将会被存放在一个列表中。
 

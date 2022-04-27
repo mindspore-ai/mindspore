@@ -1,7 +1,7 @@
 mindspore.async_ckpt_thread_status
 =======================================
 
-.. py:class:: mindspore.async_ckpt_thread_status()
+.. py:function:: mindspore.async_ckpt_thread_status()
 
     获取异步保存checkpoint文件线程的状态。
 

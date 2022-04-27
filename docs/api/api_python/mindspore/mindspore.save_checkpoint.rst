@@ -1,7 +1,7 @@
 mindspore.save_checkpoint
 =========================
 
-.. py:class:: mindspore.save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM")
+.. py:function:: mindspore.save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM")
 
     将网络权重保存到checkpoint文件中。
 

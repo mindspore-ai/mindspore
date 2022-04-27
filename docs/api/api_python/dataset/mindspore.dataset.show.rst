@@ -1,7 +1,7 @@
 mindspore.dataset.show
 ======================
 
-.. py:method:: mindspore.dataset.show(dataset, indentation=2)
+.. py:function:: mindspore.dataset.show(dataset, indentation=2)
 
     将数据处理管道图写入MindSpore的INFO级别日志文件。
 

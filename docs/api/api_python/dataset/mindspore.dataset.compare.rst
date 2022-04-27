@@ -1,7 +1,7 @@
 mindspore.dataset.compare
 ==========================
 
-.. py:method:: mindspore.dataset.compare(pipeline1, pipeline2)
+.. py:function:: mindspore.dataset.compare(pipeline1, pipeline2)
 
     比较两个数据处理管道是否相同。
 

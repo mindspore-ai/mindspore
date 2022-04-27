@@ -1,7 +1,7 @@
 mindspore.ms_function
 =====================
 
-.. py:class:: mindspore.ms_function(fn=None, obj=None, input_signature=None, hash_args=None)
+.. py:function:: mindspore.ms_function(fn=None, obj=None, input_signature=None, hash_args=None)
 
     将Python函数编译为一张可调用的MindSpore图。
 

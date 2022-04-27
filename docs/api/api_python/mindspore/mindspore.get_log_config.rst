@@ -1,7 +1,7 @@
 mindspore.get_log_config
 =========================
 
-.. py:class:: mindspore.get_log_config()
+.. py:function:: mindspore.get_log_config()
 
     获取日志配置。
 
