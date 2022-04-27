@@ -20,7 +20,7 @@
 #include "frontend/optimizer/irpass/cast_eliminate.h"
 #include "frontend/optimizer/irpass/convert.h"
 #include "frontend/optimizer/irpass/environ_eliminate.h"
-#include "frontend/optimizer/irpass/grad_var_prepare.h"
+#include "frontend/optimizer/irpass/meta_fg_var_prepare.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include "frontend/optimizer/irpass/inline.h"
 #include "frontend/optimizer/irpass/updatestate_eliminate.h"
@@ -288,7 +288,7 @@ ResolveIRPassLib::ResolveIRPassLib() {
 }
 
 InferenceOptPrepareLib::InferenceOptPrepareLib() {
-  grad_var_prepare_ = MakeSubstitution(std::make_shared<GradVarPrepare>(), "grad_var_prepare", IsCNode);
+  meta_fg_var_prepare_ = MakeSubstitution(std::make_shared<MetaFgVarPrepare>(), "meta_fg_var_prepare", IsCNode);
 }
 }  // namespace irpass
 }  // namespace opt
