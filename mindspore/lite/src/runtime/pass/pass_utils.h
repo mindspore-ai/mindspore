@@ -20,8 +20,6 @@
 #include <vector>
 #include "src/kernel_exec.h"
 #include "src/sub_graph_kernel.h"
-#include "nnacl/format_transpose_parameter.h"
-#include "src/runtime/kernel/cpu/base/format_transpose.h"
 
 namespace mindspore::lite::pass {
 static const std::vector<int> nh2nc_perm = {0, 3, 1, 2};

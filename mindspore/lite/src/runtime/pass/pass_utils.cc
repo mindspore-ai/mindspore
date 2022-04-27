@@ -16,8 +16,9 @@
 
 #include "src/runtime/pass/pass_utils.h"
 #include <string>
-#include <memory>
 #include <vector>
+#include "src/kernel_registry.h"
+#include "nnacl/format_transpose_parameter.h"
 
 namespace mindspore::lite::pass {
 bool IsNoneTranspose(const TransInfoPair &trans) {
@@ -55,29 +56,18 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
   param->op_parameter_.type_ = schema::PrimitiveType_FormatTranspose;
   param->src_format_ = trans_info.src_format_;
   param->dst_format_ = trans_info.dst_format_;
+  kernel::KernelKey format_transpose_key = desc;
+  format_transpose_key.type = schema::PrimitiveType_FormatTranspose;
 
-  auto kernel =
-    new (std::nothrow) kernel::FormatTransposeCPUKernel(reinterpret_cast<OpParameter *>(param), {input}, {output}, ctx);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "New FormatTranspose kernel failed.";
+  kernel::KernelExec *kernel = nullptr;
+  auto ret = KernelRegistry::GetInstance()->GetKernel({input}, {output}, ctx, nullptr, format_transpose_key,
+                                                      reinterpret_cast<OpParameter *>(param), &kernel);
+  if (ret != RET_OK || kernel == nullptr) {
     free(param);
     return nullptr;
   }
   kernel->set_name(name);
-
-  std::shared_ptr<kernel::Kernel> shared_kernel(kernel);
-  auto kernel_exec = new (std::nothrow) kernel::KernelExec(shared_kernel);
-  if (kernel_exec == nullptr) {
-    MS_LOG(ERROR) << "New FormatTranspose kernel failed.";
-    free(param);
-    return nullptr;
-  }
-  kernel_exec->set_context(ctx);
-  // Set kernel desc in need, InfershapePass will depend on the desc type of the kernel.
-  kernel::KernelKey kernel_key = desc;
-  kernel_key.type = schema::PrimitiveType_FormatTranspose;
-  kernel_exec->set_desc(kernel_key);
-  return kernel_exec;
+  return kernel;
 }
 
 void SetShape(Tensor *src_tensor, Tensor *dst_tensor) {
