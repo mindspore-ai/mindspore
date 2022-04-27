@@ -75,7 +75,7 @@ from .math_ops import (Abs, ACos, Asin, Asinh, AddN, AccumulateNV2, AssignAdd, A
                        Sin, Sqrt, Rsqrt, BesselI0, BesselI1, BesselI0e, BesselI1e, TruncateDiv, TruncateMod, Addcdiv,
                        Addcmul, Square, Sub, TensorAdd, Add, Sign, Round, SquareSumAll, Atan, Atanh, Cosh, Sinh, Eps,
                        Tan, MatrixInverse, IndexAdd, Erfinv, Conj, Real, Imag, Complex, Trunc, IsClose, LuSolve,
-                       CholeskyInverse)
+                       CholeskyInverse, BesselJ0, BesselJ1)
 from .nn_ops import (LSTM, SGD, Adam, AdamWeightDecay, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam,
                      ApplyMomentum, BatchNorm, BiasAdd, Conv2D, Conv3D, Conv2DTranspose, Conv3DTranspose,
                      DepthwiseConv2dNative,
@@ -462,6 +462,8 @@ __all__ = [
     "BesselI1",
     "BesselI0e",
     "BesselI1e",
+    "BesselJ0",
+    "BesselJ1",
     "Atan",
     "Atanh",
     "Tan",
