@@ -18,7 +18,7 @@ from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.common.parameter import Parameter
+from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.initializer import initializer
 from mindspore.communication.management import get_group_size, get_rank
 from mindspore.context import ParallelMode
@@ -355,6 +355,63 @@ class EmbeddingLookup(Cell):
             self.forward_unique = True
         if _is_role_worker():
             _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size)
+
+    def _slice_pserver_embeddings(self, param_init):
+        '''
+        Method to slice embedding tables on Parameter Servers.
+        It helps to train with a large scale embedding table and is used only in Parameter Server training mode.
+        So EmbeddingLookup op is on CPU device.
+        '''
+        self.embedding_lookup_list = []
+        # The dimension of each embedding table on servers could be different according to the slicing algorithm.
+        self.embedding_table_vocab_dim_list = []
+        self.embedding_table_list = []
+        # For different servers, the offset of their embedding table should be different.
+        self.embedding_offset = []
+
+        server_num = _get_ps_context("server_num")
+        if server_num == 0:
+            raise ValueError("The Parameter Server number is zero.")
+        # Assign the embedding table dimensions.
+        for i in range(server_num):
+            self.embedding_table_vocab_dim_list.append(self.vocab_size // server_num)
+        rest_vocab_size = self.vocab_size % server_num
+        if rest_vocab_size != 0:
+            for i in range(rest_vocab_size):
+                self.embedding_table_vocab_dim_list[i] += 1
+
+        offset = 0
+        for i in range(server_num):
+            self.embedding_table_list.append(Parameter(initializer(param_init,
+                                                                   [self.embedding_table_vocab_dim_list[i],
+                                                                    self.embedding_size]),
+                                                       name="embedding_table_server_" + str(i)))
+
+            self.embedding_offset.append(offset)
+            offset += self.embedding_table_vocab_dim_list[i]
+
+            # Add EmbeddingLookup ops on different servers.
+            embedding_lookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+            embedding_lookup.add_prim_attr('rank_id', i)
+            embedding_lookup.add_prim_attr('ms_role', 'MS_SERVER')
+            self.embedding_lookup_list.append(embedding_lookup)
+
+        self.embedding_table_param_tuple = ParameterTuple(self.embedding_table_list)
+        # For now unique operation is not applied,
+        # so we need to reduce the lookup results from different servers with AddN.
+        self.reduce_lookup_result = P.AddN()
+
+    def _do_server_embedding_lookup(self, indices):
+        '''
+        Construct backbone for EmbeddingLookup operators on servers.
+        '''
+        result_from_servers = []
+        for i in range(_get_ps_context("server_num")):
+            result = self.embedding_lookup_list[i](self.embedding_table_param_tuple[i],
+                                                   indices, self.embedding_offset[i])
+            result_from_servers.append(result)
+        final_result = self.reduce_lookup_result(result_from_servers)
+        return final_result
 
     def construct(self, indices):
         if self.target == "CPU":
