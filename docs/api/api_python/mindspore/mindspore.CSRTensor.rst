@@ -36,7 +36,7 @@ mindspore.CSRTensor
 
         **参数：**
 
-        - **dtype** (`mindspore.dtype`) - 指定数据类型。
+        - **dtype** (Union[`mindspore.dtype` , `numpy.dtype` , str]) - 指定数据类型。
 
         **返回：**
 
