@@ -19,8 +19,8 @@ Function operator.
 A collection of function to build neural networks or to compute functions.
 """
 
-from . import array_func, parameter_func, math_func
-from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size, ones, ones_like, shape, shape_,
+from . import array_func, parameter_func, math_func, nn_func
+from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size, ones, ones_like, shape, shape_, ger,
                          dyn_shape, rank, reshape, reshape_, tensor_slice, slice, scalar_to_array, scalar_to_tensor,
                          tuple_to_array, expand_dims, transpose, scatter_nd, gather, gather_d, gather_nd, scalar_cast,
                          masked_fill, tensor_scatter_add, tensor_scatter_div, scatter_max, scatter_min, nonzero,
@@ -35,8 +35,10 @@ from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, t
                         asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh, atan2, bitwise_and, bitwise_or,
                         bitwise_xor, erf, erfc, cdist, bessel_i0, bessel_i0e, bessel_j0, bessel_j1, bessel_k0,
                         bessel_k0e, bessel_y0, bessel_y1)
+from .nn_func import fast_gelu
 
 __all__ = []
 __all__.extend(array_func.__all__)
 __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)
+__all__.extend(nn_func.__all__)

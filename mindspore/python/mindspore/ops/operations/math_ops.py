@@ -144,22 +144,10 @@ class Ger(Primitive):
     shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`,then `output` must be a Tensor of shape
     :math:`(m * n)`.
 
-
-    Inputs:
-        - **x1** - (Tensor) - 1-D input Tensor, with dtype of float16 or float32.
-        - **x2** - (Tensor) - 1-D input Tensor, with dtype of float16 or float32.
-
-    Outputs:
-        Tensor, output matrix with the same dtype as inputs.With `x1` shape :math:`(m,)` and
-        `x2` shape of :math:`(n,)`,the `output` has shape :math:`(m * n)`.
-
-    Raises:
-        TypeError: If `x1` or `x2` is not a Tensor.
-        TypeError: If the dtype of `x1` and `x2` is neither float16 nor float32.
-        ValueError: If `x1` or `x2` is not a 1D Tensor.
+    Refer to :func:`mindspore.ops.ger` for more detail
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)

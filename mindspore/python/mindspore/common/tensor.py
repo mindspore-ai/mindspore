@@ -789,6 +789,42 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_div')(self, indices, updates)
 
+    def ger(self, x):
+        """
+        Ger product of `self` and `x`. Calculate the outer product of two one-dimensional arrays. If `self` is a 1D
+        Tensor of shape :math:`(m,)` and `x` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a Tensor of
+        shape :math:`(m * n)`. If `self` is a Tensor of shape :math:`(*B, m)` and `x` is a Tensor of shape
+        :math:`(*B, n)`, then `output` must be a Tensor of shape :math:`(*B, m, n)`.
+
+        Notes:
+            In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D
+            input Tensors.
+
+        Refer to :func:`mindspore.ops.ger` for more detail.
+
+        Args:
+            x (Tensor): input Tensor, with dtype of float16 or float32.
+
+        Returns:
+            Tensor, output matrix with the same dtype as inputs.With `self` shape :math:`(*B, m)` and
+            `x` shape of :math:`(*B, n)`, the `output` has shape :math:`(*B, m, n)`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)
+            >>> x2 = Tensor([1., 2., 3.], mindspore.float32)
+            >>> output = x1.ger(x2)
+            >>> print(output)
+            [[ 1.  2.  3.]
+             [ 2.  4.  6.]
+             [ 3.  6.  9.]
+             [ 4.  8. 12.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('ger')(self, x)
+
     def expand_as(self, x):
         """
         Expand the dimension of target tensor to the dimension of input tensor.

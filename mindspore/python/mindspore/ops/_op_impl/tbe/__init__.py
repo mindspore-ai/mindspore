@@ -102,6 +102,7 @@ from .gelu_ds import _gelu_ds_tbe
 from .gelu_grad import _gelu_grad_tbe
 from .gelu_grad_ds import _gelu_grad_ds_tbe
 from .ger import _ger_tbe
+from .ger_ds import _ger_ds_tbe
 from .fast_gelu import _fast_gelu_tbe
 from .fast_gelu_ds import _fast_gelu_ds_tbe
 from .fast_gelu_grad import _fast_gelu_grad_tbe

@@ -116,6 +116,7 @@ def get_tile_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Reshape)
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
+
     def vmap_rule(operand_bdim, shape_bdim):
         is_all_none, result = vmap_general_preprocess(prim, operand_bdim, shape_bdim)
         if is_all_none:
@@ -220,6 +221,7 @@ def get_fill_vmap_rule(prim, axis_size):
         value = F.reshape(value, (axis_size,) + (1,) * len(value_shape))
         out = P.BroadcastTo((axis_size,) + value_shape)(value)
         return (out, 0)
+
     return vmap_rule
 
 
@@ -239,5 +241,24 @@ def get_tensor_shape_vmap_rule(prim, axis_size):
         out = prim(sub_x)
 
         return (out, None)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Ger)
+def get_fast_gelu_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `Ger`."""
+
+    def vmap_rule(x1_bdim, x2_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x1_bdim, x2_bdim)
+        if is_all_none:
+            return result
+
+        x1, x1_dim = x1_bdim
+        x2, x2_dim = x2_bdim
+        x1 = _bdim_at_front(x1, x1_dim, axis_size)
+        x2 = _bdim_at_front(x2, x2_dim, axis_size)
+        out = prim(x1, x2)
+        return (out, 0)
 
     return vmap_rule

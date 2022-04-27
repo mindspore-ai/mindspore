@@ -186,6 +186,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"bitwise_and", std::string("bitwise_and")},                // P.BitwiseAnd()
        {"bitwise_or", std::string("bitwise_or")},                  // P.BitwiseOr()
        {"bitwise_xor", std::string("bitwise_xor")},                // P.BitwiseXor()
+       {"ger", std::string("ger")},                                // P.Ger()
        {"ravel", std::string("ravel")},                            // P.reshape(,(-1,))
        {"swapaxes", std::string("swapaxes")},                      // P.transpose()
        {"narrow", std::string("narrow")},                          // narrow()
