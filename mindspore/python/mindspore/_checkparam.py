@@ -104,12 +104,13 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False, ret
 
     def _raise_message(third_one_flag=False, three_input_flag=False):
         if third_one_flag:
-            raise ValueError(f"For '{prim_name}' the depth of attr '{arg_name}' should be 1, but got {ret_value[-3]}")
+            raise ValueError(f"For '{prim_name}', the depth of parameter '{arg_name}' must be 1, "
+                             f"but got {ret_value[-3]}.")
         if three_input_flag:
-            raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of "
-                             f"three positive int numbers, but got {arg_value}")
-        raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of three "
-                         f"{'or five ' if allow_five else ''}positive int numbers, but got {arg_value}")
+            raise ValueError(f"For '{prim_name}', the parameter '{arg_name}' must be an positive integer "
+                             f"or a tuple of three positive integer, but got {arg_value}.")
+        raise ValueError(f"For '{prim_name}', the parameter '{arg_name}' must be an positive integer "
+                         f"or a tuple of three {'or five ' if allow_five else ''}positive integer, but got {arg_value}")
 
     def _get_return_value():
         if isinstance(arg_value, int):
@@ -152,21 +153,21 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     - number = check_number(number, 0, Rel.GE, "number", None)
     """
     rel_fn = Rel.get_fns(rel)
-    prim_name = f' in `{prim_name}`' if prim_name else ''
-    arg_name = f'`{arg_name}`' if arg_name else ''
-    prim_info = f'{arg_name}' + f'{prim_name}'
+    prim_name = f"For \'{prim_name}\', the" if prim_name else 'The'
+    arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
+    prim_info = f'{prim_name}' + f'{arg_name}'
     if isinstance(arg_value, arg_type):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f'f{prim_info} must be a legal value, but got `{arg_value}`.')
+            raise ValueError(f"'{prim_info}' must be a legal value, but got '{arg_value}'.")
     else:
-        raise TypeError(f'{prim_info} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
+        raise TypeError(f"{prim_info} must be {arg_type.__name__}, but got '{type(arg_value).__name__}'")
 
     type_mismatch = not isinstance(arg_value, arg_type) or isinstance(arg_value, bool)
     type_except = TypeError if type_mismatch else ValueError
     if type_mismatch or not rel_fn(arg_value, value):
         rel_str = Rel.get_strs(rel).format(value)
-        raise type_except(f'{prim_info} should be {arg_type.__name__} and must {rel_str}, '
-                          f'but got `{arg_value}` with type `{type(arg_value).__name__}`.')
+        raise type_except(f"{prim_info} must be {arg_type.__name__} and must {rel_str}, "
+                          f"but got '{arg_value}' with type '{type(arg_value).__name__}'.")
 
     return arg_value
 
@@ -184,9 +185,9 @@ def check_is_number(arg_value, arg_type, arg_name=None, prim_name=None):
     arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
     if isinstance(arg_value, arg_type) and not isinstance(arg_value, bool):
         if math.isinf(arg_value) or math.isnan(arg_value) or np.isinf(arg_value) or np.isnan(arg_value):
-            raise ValueError(f'{prim_name} {arg_name} must be a legal float, but got `{arg_value}`.')
+            raise ValueError(f"{prim_name} {arg_name} must be a legal float, but got '{arg_value}'.")
         return arg_value
-    raise TypeError(f'{prim_name} type of {arg_name} must be {arg_type.__name__}, but got `{type(arg_value).__name__}`')
+    raise TypeError(f"{prim_name} type of {arg_name} must be {arg_type.__name__}, but got '{type(arg_value).__name__}'")
 
 
 def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg_name=None, prim_name=None):
@@ -198,16 +199,16 @@ def check_number_range(arg_value, lower_limit, upper_limit, rel, value_type, arg
     - number = check_number_range(number, 0, 1, Rel.INC_NEITHER, "number", int) # number in [0, 1]
     """
     rel_fn = Rel.get_fns(rel)
-    prim_name = f'in `{prim_name}`' if prim_name else ''
-    arg_name = f'`{arg_name}`' if arg_name else ''
+    prim_name = f"For \'{prim_name}\', the" if prim_name else 'The'
+    arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
     type_mismatch = not isinstance(arg_value, (np.ndarray, np.generic, value_type)) or isinstance(arg_value, bool)
     if type_mismatch:
-        raise TypeError("{} {} must be `{}`,  but got `{}`.".format(
-            arg_name, prim_name, value_type.__name__, type(arg_value).__name__))
+        raise TypeError("{} {} must be '{}',  but got '{}'.".format(
+            prim_name, arg_name, value_type.__name__, type(arg_value).__name__))
     if not rel_fn(arg_value, lower_limit, upper_limit):
         rel_str = Rel.get_strs(rel).format(lower_limit, upper_limit)
-        raise ValueError("{} {} should be in range of {}, but got {} with type `{}`.".format(
-            arg_name, prim_name, rel_str, arg_value, type(arg_value).__name__))
+        raise ValueError("{} {} must be in range of {}, but got {} with type '{}'.".format(
+            prim_name, arg_name, rel_str, arg_value, type(arg_value).__name__))
     return arg_value
 
 
@@ -376,14 +377,14 @@ class Validator:
         rel_fn = Rel.get_fns(rel)
         if not rel_fn(arg_value, value):
             rel_str = Rel.get_strs(rel).format(value)
-            raise ValueError(f'For \'{prim_name}\' the argument `{arg_name}` must {rel_str}, but got {arg_value}.')
+            raise ValueError(f'For \'{prim_name}\', the argument \'{arg_name}\' must {rel_str}, but got {arg_value}.')
         return arg_value
 
     @staticmethod
     def check_isinstance(arg_name, arg_value, classes):
         """Check arg isinstance of classes"""
         if not isinstance(arg_value, classes):
-            raise ValueError(f'The argument `{arg_name}` should be isinstance of {classes}, but got {arg_value}.')
+            raise ValueError(f'The parameter \'{arg_name}\' must be isinstance of {classes}, but got {arg_value}.')
         return arg_value
 
     @staticmethod
@@ -398,7 +399,7 @@ class Validator:
         if not isinstance(arg_value, bool):
             prim_name = f"For '{prim_name}', the" if prim_name else 'The'
             arg_name = f"'{arg_name}'" if arg_name else 'input value'
-            raise TypeError(f"{prim_name} {arg_name} should be a bool, but got {type(arg_value).__name__}.")
+            raise TypeError(f"{prim_name} {arg_name} must be a bool, but got {type(arg_value).__name__}.")
         return arg_value
 
     @staticmethod
@@ -433,9 +434,9 @@ class Validator:
         """
         if isinstance(arg_value, str) and arg_value in valid_values:
             return arg_value
-        arg_name = arg_name if arg_name else "Parameter"
+        arg_name = arg_name if arg_name else "parameter"
         msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
-        raise ValueError(f"{msg_prefix} '{arg_name}' should be str and must be in '{valid_values}',"
+        raise ValueError(f"{msg_prefix} '{arg_name}' must be str and must be in '{valid_values}',"
                          f" but got '{arg_value}'.")
 
     @staticmethod
@@ -444,24 +445,26 @@ class Validator:
             # Named string regular expression
             reg = r"^\w+[0-9a-zA-Z\_\.]*$"
         if re.match(reg, target, flag) is None:
-            prim_name = f'in `{prim_name}`' if prim_name else ""
-            raise ValueError("'{}' {} is illegal, it should be match regular'{}' by flags'{}.'".format(
-                target, prim_name, reg, flag))
+            prim_name = f"For '{prim_name}', the" if prim_name else "The"
+            raise ValueError("{} '{}' is illegal, it must be match regular'{}' by flags'{}.'".format(
+                prim_name, target, reg, flag))
         return True
 
     @staticmethod
     def check_file_name_by_regular(target, reg=None, prim_name=None):
         """Check whether file name is legitimate."""
         if not isinstance(target, str):
-            raise ValueError("Args file_name {} must be string, please check it".format(target))
+            prim_name = f"For '{prim_name}', the" if prim_name else "The"
+            raise ValueError("{} '{}' must be string, but got {}.".format(prim_name, target, type(target)))
         if target.endswith("\\") or target.endswith("/"):
-            raise ValueError("File name cannot be a directory path.")
+            prim_name = f"For '{prim_name}', the" if prim_name else "The"
+            raise ValueError(f"{prim_name} '{target}' cannot be a directory path.")
         if reg is None:
             reg = r"^[0-9a-zA-Z\_\-\.\:\/\\]+$"
         if re.match(reg, target) is None:
-            prim_name = f'in `{prim_name}`' if prim_name else ""
-            raise ValueError("'{}' {} is illegal, it should be match regular'{}'.".format(
-                target, prim_name, reg))
+            prim_name = f"For '{prim_name}', the" if prim_name else "The"
+            raise ValueError("{} '{}' is illegal, it must be match regular '{}'.".format(
+                prim_name, target, reg))
 
         return True
 
@@ -469,7 +472,8 @@ class Validator:
     def check_pad_value_by_mode(pad_mode, padding, prim_name):
         """Validates value of padding according to pad_mode"""
         if pad_mode != 'pad' and padding != 0:
-            raise ValueError(f"For '{prim_name}', padding must be zero when pad_mode is '{pad_mode}'.")
+            raise ValueError(f"For '{prim_name}', padding must be zero when pad_mode is '{pad_mode}',"
+                             f" but got {padding}.")
         return padding
 
     @staticmethod
@@ -491,11 +495,11 @@ class Validator:
                 addition_error_info = ''
             type_str = (type(type_).__name__ if isinstance(type_, (tuple, list)) else "") + str(type_)
             raise TypeError(f"For '{prim_name}', the type of '{arg_name}'"
-                            f" should be {'one of ' if len(template_types) > 1 else ''}"
+                            f" must be {'one of ' if len(template_types) > 1 else ''}"
                             f"{', '.join((str(x) for x in template_types))}, but got {type_str}"
                             f" {addition_error_info}. The supported data types depend on the hardware that"
-                            f" executes the operator, please refer the official api document to get"
-                            f" more information about the data type.")
+                            f" executes the operator, for more details, please refer to the Mindspore official "
+                            f"website to get more information about the data type.")
 
     @staticmethod
     def check_valid_input(arg_name, arg_value, prim_name):
@@ -518,7 +522,7 @@ class Validator:
             arg1_name, arg1_type = arg1
             arg2_name, arg2_type = arg2
             if arg1_type != arg2_type:
-                raise TypeError(f"For '{prim_name}', type of '{arg2_name}' should be same as '{arg1_name}',"
+                raise TypeError(f"For '{prim_name}', the type of '{arg2_name}' should be same as '{arg1_name}',"
                                 f" but got '{arg1_name}' with type {arg1_type}"
                                 f" and '{arg2_name}' with type {arg2_type}.")
             return arg1
@@ -552,7 +556,7 @@ class Validator:
             if isinstance(arg_val, type(mstype.tensor)):
                 arg_val = arg_val.element_type()
             if not arg_val in valid_values:
-                raise TypeError(f'For \'{prim_name}\', the type of `{arg_key}` should be in {valid_values},'
+                raise TypeError(f'For \'{prim_name}\', the type of \'{arg_key}\' must be in {valid_values},'
                                 f' but got {arg_val}.')
             return arg
 
@@ -572,8 +576,9 @@ class Validator:
                 except_flag = True
 
             if except_flag or arg1_type != arg2_type:
-                raise TypeError(f'For \'{prim_name}\' type of `{arg2_name}` should be same as `{arg1_name}`,'
-                                f' but `{arg1_name}` is {arg1_type} and `{arg2_name}` is {arg2_type}.')
+                raise TypeError(f"For '{prim_name}', the type of '{arg2_name}' must be same as '{arg1_name}',"
+                                f" but got '{arg1_name}' with type {arg1_type}"
+                                f" and '{arg2_name}' with type {arg2_type}.")
             return arg1
 
         reduce(_check_types_same, map(_check_argument_type, args.items()))
@@ -588,7 +593,7 @@ class Validator:
             type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in valid_types]
             num_types = len(valid_types)
             msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
-            raise TypeError(f'{msg_prefix} type of `{arg_name}` should be {"one of " if num_types > 1 else ""}'
+            raise TypeError(f'{msg_prefix} type of \'{arg_name}\' should be {"one of " if num_types > 1 else ""}'
                             f'\'{type_names if num_types > 1 else type_names[0]}\', '
                             f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
 
@@ -628,8 +633,8 @@ class Validator:
         exp_shape = [ori_shape[i] for i in range(len(ori_shape)) if i not in axis]
         if list(shape) != exp_shape:
             raise ValueError(f"For '{prim_name}', "
-                             f"the argument '{arg_name1}'.shape reduce on 'axis': {axis_origin} should "
-                             f"be equal to '{arg_name2}'.shape: {shape}, but got {ori_shape}.")
+                             f"the shape of parameter '{arg_name1}' reduce on 'axis': {axis_origin} must "
+                             f"be equal to the shape of '{arg_name2}': {shape}, but got {ori_shape}.")
 
     @staticmethod
     def check_astype_dtype(dtype):
@@ -637,12 +642,13 @@ class Validator:
         all_types = mstype.__dtype__ + ["int", "float", "bool"]
         if isinstance(dtype, str):
             if dtype.lower() not in all_types:
-                raise TypeError(f"`{dtype}` not understood.")
+                raise TypeError(f"For Tensor.astype, the input type must be one of {all_types}, but got '{dtype}'.")
             dtype = mstype.pytype_to_dtype(np.dtype(dtype.lower()))
         elif isinstance(dtype, type):
             dtype = mstype.pytype_to_dtype(dtype)
         elif not dtype in mstype.number_type + (mstype.bool_,):
-            raise TypeError(f"`{dtype}` not understood.")
+            raise TypeError(f"For Tensor.astype, the input type must be one of {mstype.number_type + (mstype.bool_,)},"
+                            f" but got '{dtype}'.")
         return dtype
 
     @staticmethod
@@ -658,13 +664,14 @@ class Validator:
                 perm = tuple(perm)
             else:
                 if not isinstance(perm, tuple):
-                    raise TypeError(f"The argument `axes` should be a tuple/list, "
-                                    f"or series of int, but got {type(axes[0])}")
+                    raise TypeError(f"For Tensor.transpose, the parameter 'axes' must be a tuple/list, "
+                                    f"or series of integer, but got {type(axes[0])}")
             return perm
 
         # if multiple arguments provided, it must be `ndim` number of ints
         if len(axes) != ndim:
-            raise ValueError("The number of axes must be equal to the dimension of tensor.")
+            raise ValueError(f"For Tensor.transpose, the number of axes must be equal to the dimension of Tensor, "
+                             f"but got {len(axes)} in the number of axes.")
         return axes
 
     @staticmethod
@@ -681,8 +688,8 @@ class Validator:
             else:
                 if not isinstance(new_shape, tuple):
                     raise TypeError(
-                        f"The argument `shape` should be an int, or tuple/list, "
-                        f"or series of int, but got {type(shp[0])}")
+                        f"For Tensor.reshape, the parameter 'shape' must be an integer, or tuple/list, "
+                        f"or series of integer, but got {type(shp[0])}")
             return new_shape
 
         return shp
@@ -691,9 +698,9 @@ class Validator:
     def check_flatten_order(order):
         """Check flatten function input order"""
         if not isinstance(order, str):
-            raise TypeError(f"The order variable should be a string, but got {type(order)}")
+            raise TypeError(f"For Tensor.flatten, the parameter 'order' must be a string, but got {type(order)}")
         if order not in ('C', 'F'):
-            raise ValueError(f"only `C` and `F` are supported as order, but got {order}")
+            raise ValueError(f"For Tensor.flatten, the parameter 'order' must be 'C' or 'F', but got '{order}'")
         return order
 
     @staticmethod
@@ -705,11 +712,12 @@ class Validator:
         if isinstance(axes, (tuple, list)):
             for axis in axes:
                 if not isinstance(axis, int):
-                    raise TypeError(f"The axis argument should be integer, but got {type(axis)}.")
+                    raise TypeError(f"For Tensor.swapaxes, the axis argument must be integer, but got {type(axis)}.")
                 Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             return axes
-        raise TypeError(f"The argument 'axes' should be integer, list or tuple for check, but got {type(axes)}.")
+        raise TypeError(f"For Tensor.swapaxes, the argument 'axes' must be integer, list or tuple for check, "
+                        f"but got {type(axes)}.")
 
     @staticmethod
     def prepare_shape_for_squeeze(shape, axes):
@@ -730,33 +738,36 @@ class Validator:
         # Convert to set
         if isinstance(axes, int):
             if axes >= ndim or axes < -ndim:
-                raise ValueError(f"The axis {axes} is out of bounds for tensor of dimension {ndim}")
+                raise ValueError(f"For Tensor.squeeze, "
+                                 f"the 'axis' must be in the range of [-{ndim}, {ndim}), but got {axes}.")
             axes = {axes}
 
         elif isinstance(axes, (list, tuple)):
             for axis in axes:
                 if axis >= ndim or axis < -ndim:
-                    raise ValueError(f"The axis {axis} is out of bounds for tensor of dimension {ndim}")
+                    raise ValueError(f"For Tensor.squeeze, "
+                                     f"the 'axis' must be in the range of [-{ndim}, {ndim}), but got {axis}.")
             axes = set(axes)
 
         else:
-            raise TypeError(f"Only int, tuple and list are allowed for axes, but got {type(axes)}")
+            raise TypeError(f"For Tensor.squeeze, the parameter 'axes' must be one of [int, tuple, list], "
+                            f"but got {type(axes)}")
 
         for idx, s in enumerate(shape):
             if s != 1 or (idx not in axes) and (idx - ndim not in axes):
                 new_shape.append(s)
             # if an axis is selected with shape entry greater than one, an error is raised.
             if s != 1 and ((idx in axes) or (idx - ndim in axes)):
-                raise ValueError(f"The axis {axes} has shape entry {s} > 1, cannot be squeezed.")
+                raise ValueError(f"For Tensor.squeeze, the shape of parameter 'axis' {axes} must be 1, but got {s}.")
         return tuple(new_shape)
 
     @staticmethod
     def check_axis_in_range(axis, ndim):
         """Checks axes are with the bounds of ndim"""
         if not isinstance(axis, int):
-            raise TypeError(f'The axes should be integers, not {type(axis)}')
+            raise TypeError(f'The axes must be integers, but got {type(axis)}')
         if not -ndim <= axis < ndim:
-            raise ValueError(f'The axis {axis} is out of bounds for array of dimension {ndim}')
+            raise ValueError(f"The 'axis' must be in the range of [-{ndim}, {ndim}), but got {axis}.")
         return axis % ndim
 
     @staticmethod
@@ -773,7 +784,7 @@ class Validator:
                 Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             if any(axes.count(el) > 1 for el in axes):
-                raise ValueError('duplicate value in "axis"')
+                raise ValueError("The element of parameter 'axis' can not be duplicate, but got {axes}.")
             return axes
         Validator.check_axis_in_range(axes, ndim)
         return (axes % ndim,)
@@ -809,7 +820,8 @@ class Validator:
         for items in zip_longest(*reversed_shapes, fillvalue=1):
             max_size = 0 if 0 in items else max(items)
             if any(item not in (1, max_size) for item in items):
-                raise ValueError(f'The operands could not be broadcast together with shapes {*shapes,}')
+                raise ValueError(f'For Tensor, the dimension on each axis must be 1 or the max on the axis'
+                                 f'to support broadcast, but got shapes {*shapes,}')
             shape_out.appendleft(max_size)
         return tuple(shape_out)
 
@@ -825,7 +837,7 @@ class Validator:
         if (type_tuple and isinstance(axis, tuple)) or (type_list and isinstance(axis, list)):
             for ax in axis:
                 if not isinstance(ax, int):
-                    raise TypeError(f"Each axis should be integer, but got {type(ax)} in {axis}.")
+                    raise TypeError(f"For Tensor.ptp, each axis must be integer, but got {type(ax)} in {axis}.")
             return True
 
         type_str = ""
@@ -835,7 +847,7 @@ class Validator:
             type_str += "tuple, "
         if type_list:
             type_str += "list, "
-        raise TypeError(f"The axis should be {type_str}but got {type(axis)}.")
+        raise TypeError(f"For Tensor.ptp, the axis should be {type_str}, but got {type(axis)}.")
 
     @staticmethod
     def check_and_canonicalize_axes(axes, ndim):
@@ -844,13 +856,13 @@ class Validator:
         new_axes = ()
         for ax in axes:
             if not isinstance(ax, int):
-                raise TypeError((f"Each axis should be integer, but got {type(ax)} in {axes}."))
+                raise TypeError(f"Each axis should be integer, but got {type(ax)} in {axes}.")
             if not -ndim <= ax < ndim:
-                raise ValueError(f'The axis {ax} is out of bounds for array of dimension {ndim}')
+                raise ValueError(f"The 'axis' must be in the range of [-{ndim}, {ndim}), but got {ax}.")
             ax = ax if ax >= 0 else ax + ndim
             new_axes += (ax,)
         if any(new_axes.count(el) > 1 for el in new_axes):
-            raise ValueError('duplicate value in "axis"')
+            raise ValueError(f"The element of parameter 'axis' can not be duplicate, but got {new_axes}.")
         return new_axes
 
     @staticmethod
@@ -867,43 +879,49 @@ class Validator:
     def check_sparse_tensor_input(indices, values, shape):
         """Common input check for SparseTensors."""
         if not isinstance(indices, Tensor_):
-            raise TypeError(f"indices should be Tensor, but got {type(indices)}.")
+            raise TypeError(f"For SparseTensors, indices must be Tensor, but got {type(indices)}.")
         if not isinstance(values, Tensor_):
-            raise TypeError(f"values should be Tensor, but got {type(values)}.")
+            raise TypeError(f"For SparseTensors, values must be Tensor, but got {type(values)}.")
         if not isinstance(shape, tuple):
-            raise TypeError(f"shape should be tuple, but got {type(shape)}.")
+            raise TypeError(f"For SparseTensors, shape must be tuple, but got {type(shape)}.")
 
     @staticmethod
     def check_csr_tensor_input(indptr, indices, values, shape):
         """Checks inputs type for CSRTensor."""
         if not isinstance(indptr, Tensor_):
-            raise TypeError(f"indptr should be Tensor, but got {type(indptr)}.")
+            raise TypeError(f"For CSRTensor, indptr must be Tensor, but got {type(indptr)}.")
         Validator.check_sparse_tensor_input(indices, values, shape)
 
     @staticmethod
     def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
         """Checks input tensors' shapes for CSRTensor."""
         if len(csr_shp) != 2:
-            raise ValueError(f"Currently only supports 2-dimensional csr tensor, but got shape length={len(csr_shp)}.")
+            raise ValueError(f"For CSRTensor, currently only supports 2-dimensional csr tensor, "
+                             f"but got shape length={len(csr_shp)}.")
         shape_size = 1
         for item in csr_shp:
             if item <= 0:
-                raise ValueError(f"The element of shape must be positive, but got {item}")
+                raise ValueError(f"For CSRTensor, the element of shape must be positive, but got {item}")
             if not isinstance(item, int):
-                raise TypeError(f"The element type of shape must be int, but got {type(item)}")
+                raise TypeError(f"For CSRTensor, the element type of shape must be int, but got {type(item)}")
             shape_size *= item
         if shape_size < values_shp[0]:
-            raise ValueError(f"Shape total size: {shape_size} is too small to hold {values_shp[0]} non-zero values.")
+            raise ValueError(f"For CSRTensor, shape total size: {shape_size} is too small"
+                             f" to hold {values_shp[0]} non-zero values.")
         if len(values_shp) != 1:
-            raise ValueError(f"Values must be a 1-dimensional tensor, but got a {len(values_shp)} dimension tensor.")
+            raise ValueError(f"For CSRTensor, values must be a 1-dimensional tensor, "
+                             f"but got a {len(values_shp)} dimension tensor.")
         if len(indices_shp) != 1:
-            raise ValueError(f"Indices must be a 1-dimensional tensor, but got a {len(indices_shp)} dimension tensor.")
+            raise ValueError(f"For CSRTensor, indices must be a 1-dimensional tensor, "
+                             f"but got a {len(indices_shp)} dimension tensor.")
         if len(indptr_shp) != 1:
-            raise ValueError(f"Indptr must be a 1-dimensional tensor, but got a {len(indptr_shp)} dimension tensor.")
+            raise ValueError(f"For CSRTensor, indptr must be a 1-dimensional tensor, "
+                             f"but got a {len(indptr_shp)} dimension tensor.")
         if csr_shp[0] + 1 != indptr_shp[0]:
-            raise ValueError(f"Indptr must have length (1 + shape[0]), but got: {indptr_shp[0]}")
+            raise ValueError(f"For CSRTensor, indptr must have length (1 + shape[0]), "
+                             f"but got: {indptr_shp[0]}")
         if indices_shp[0] != values_shp[0]:
-            err_msg1 = "Indices and values must equal in their shape, "
+            err_msg1 = "For CSRTensor, indices and values must equal in their shape, "
             err_msg2 = f"but got indices shape: {indices_shp[0]}, values shape: {values_shp[0]}."
             raise ValueError(err_msg1 + err_msg2)
 
@@ -911,9 +929,11 @@ class Validator:
     def check_csr_tensor_dtype(indptr_dtype, indices_dtype):
         """Checks input tensors' data types for CSRTensor."""
         if indptr_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError(f"Indptr must have int16 or int32 or int64 data type, but got {indptr_dtype}.")
+            raise TypeError(f"For CSRTensor, indptr must have int16 or int32 or int64 data type, "
+                            f"but got {indptr_dtype}.")
         if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError(f"Indices must have int16 or int32 or int64 data type, but got {indices_dtype}.")
+            raise TypeError(f"For CSRTensor, indices must have int16 or int32 or int64 data type, "
+                            f"but got {indices_dtype}.")
 
     @staticmethod
     def check_coo_tensor_input(indices, values, shape):
@@ -924,30 +944,29 @@ class Validator:
     def check_coo_tensor_shape(indices_shp, values_shp, coo_shp):
         """Checks input tensors' shapes for COOTensor."""
         if len(coo_shp) != 2:
-            raise ValueError(f"Currently only supports 2-dimensional COOTensor. COOTensor's `shape` should be a " \
-                             f"tuple with length of 2, but got {coo_shp} with length of {len(coo_shp)}.")
+            raise ValueError(f"For COOTensor, the length of 'shape' must be 2, but got {coo_shp}.")
         for sh in coo_shp:
             if sh <= 0:
-                raise ValueError(f"For COOTensor, the element of `shape` must be positive, but got {sh} in {coo_shp}.")
+                raise ValueError(f"For COOTensor, the element of 'shape' must be positive, but got {sh} in {coo_shp}.")
             if not isinstance(sh, int):
-                raise TypeError(f"For COOTensor, the element type of `shape` must be int, but got {type(sh)}")
+                raise TypeError(f"For COOTensor, the element type of 'shape' must be int, but got {type(sh)}")
         if len(indices_shp) != 2:
-            raise ValueError(f"For COOTensor, `indices` must be a 2-dimensional tensor, but got a {len(indices_shp)}" \
+            raise ValueError(f"For COOTensor, 'indices' must be a 2-dimensional tensor, but got a {len(indices_shp)}"
                              f"dimension tensor.")
         if len(values_shp) != 1:
-            raise ValueError(f"For COOTensor, `values` must be a 1-dimensional tensor, but got a {len(values_shp)}" \
+            raise ValueError(f"For COOTensor, 'values' must be a 1-dimensional tensor, but got a {len(values_shp)}"
                              f"dimension tensor.")
         if indices_shp[0] != values_shp[0]:
-            raise ValueError(f"For COOTensor, `indices.shape[0]` must be euqal to `values.shape[0]`, but got " \
-                             f"`indices.shape[0]` = {indices_shp[0]} and `values.shape[0]` = {values_shp[0]}.")
+            raise ValueError(f"For COOTensor, 'indices.shape[0]' must be euqal to 'values.shape[0]', but got "
+                             f"'indices.shape[0]' = {indices_shp[0]} and 'values.shape[0]' = {values_shp[0]}.")
         if indices_shp[1] != 2:
-            raise ValueError(f"For COOTensor, `indices.shape[1]` must be 2, but got {indices_shp[1]}.")
+            raise ValueError(f"For COOTensor, 'indices.shape[1]' must be 2, but got {indices_shp[1]}.")
 
     @staticmethod
     def check_coo_tensor_dtype(indices_dtype):
         """Checks input tensors' data types for COOTensor."""
         if indices_dtype not in (mstype.int16, mstype.int32, mstype.int64):
-            raise TypeError(f"For COOTensor, `indices` must have int16 or int32 or int64 data type, but got " \
+            raise TypeError(f"For COOTensor, the type of 'indices' must be one of [int16, int32, int64], but got "
                             f"{indices_dtype}.")
 
     @staticmethod
@@ -956,15 +975,19 @@ class Validator:
         dyn_inputs_size = len(dyn_inputs)
         actual_inputs_size = len(actual_inputs)
         if dyn_inputs_size != actual_inputs_size:
-            raise ValueError(f"The number of actual input tensors: {actual_inputs_size} is not equal to the number of "
-                             f"dynamic shape tensors: {dyn_inputs_size}.")
+            raise ValueError(f"The number of actual input tensors must be equal to dynamic shape tensors, but got "
+                             f"actual input tensors: {actual_inputs_size}, dynamic shape tensors: {dyn_inputs_size}.")
         for i in range(dyn_inputs_size):
             if dyn_inputs[i].dtype is not actual_inputs[i].dtype:
-                raise TypeError(f"The data type of index `{i}` args in actual input tensors should be "
-                                f"`{dyn_inputs[i].dtype}`, but got `{actual_inputs[i].dtype}`.")
+                raise TypeError(f"The element with index '{i}' of actual input tensors must have the "
+                                f"same type with '{dyn_inputs[i].dtype}', "
+                                f"but got actual input tensors type : {actual_inputs[i].dtype}, "
+                                f"dynamic shape tensors type: {dyn_inputs[i].dtype}")
             if len(dyn_inputs[i].shape) != len(actual_inputs[i].shape):
-                raise ValueError(f"The dimension of index `{i}` args in actual input tensors should be "
-                                 f"`{len(dyn_inputs[i].shape)}`, but got `{len(actual_inputs[i].shape)}`.")
+                raise TypeError(f"The element with index '{i}' of actual input tensors must have the "
+                                f"same dimension with '{len(dyn_inputs[i].shape)}', "
+                                f"but got actual input tensors dimension : {len(actual_inputs[i].shape)}, "
+                                f"dynamic shape tensors dimension: {len(dyn_inputs[i].shape)}")
             check_dyn_shape_value_equal(i, dyn_inputs[i].shape, actual_inputs[i].shape)
         return True
 
@@ -973,8 +996,8 @@ def check_dyn_shape_value_equal(index, dyn_shape, actual_shape):
     """Check the consistency of dynamic shape and actual input shape."""
     for i, x in enumerate(dyn_shape):
         if x not in (-1, actual_shape[i]):
-            raise ValueError(f"The {i}th value in shape of index `{index}` args should be `{x}`, but got "
-                             f"`{actual_shape[i]}`.")
+            raise ValueError(f"The {i}th value in shape of index '{index}' parameter must be '{x}', but got "
+                             f"'{actual_shape[i]}'.")
     return True
 
 
@@ -982,7 +1005,7 @@ def check_input_format(input_param):
     """Judge input format."""
     if input_param == "NCHW":
         return input_param
-    raise ValueError("The data format must be NCHW.")
+    raise ValueError(f"The data format must be NCHW, but got {input_param}.")
 
 
 def _expand_tuple(n_dimensions):
@@ -992,14 +1015,17 @@ def _expand_tuple(n_dimensions):
         if not isinstance(m, tuple):
             if isinstance(m, int) and not isinstance(m, bool):
                 return tuple(repeat(m, n_dimensions))
-            raise TypeError("Input type must be int or tuple[int].")
+            raise TypeError(f"When expanding an int number to tuple, input type must be integer or tuple[int], "
+                            f"but got {type(m)}")
 
         if not len(m) is n_dimensions:
-            raise TypeError("Input tuple dimension is incorrect.")
+            raise TypeError(f"When expanding an int number to tuple, input tuple dimension must be {n_dimensions}, "
+                            f"but got {m}")
 
         for i in m:
             if not isinstance(i, int) or isinstance(i, bool):
-                raise TypeError("Incorrect type inside of a tuple, must be int!")
+                raise TypeError(f"When expanding an int number to tuple, "
+                                f"the type of element in input tuple must be a integer, but got {type(i)}.")
         return m
 
     return convert
@@ -1011,7 +1037,7 @@ def _check_data_type_valid(data, valid_type):
         return data is None
     if isinstance(data, valid_type):
         if hasattr(data, 'size') and data.size == 0:
-            msg = "Please provide non-empty data."
+            msg = "The input data can not be empty."
             logger.critical(msg)
             raise ValueError(msg)
         return True
@@ -1036,9 +1062,9 @@ def check_input_data(*data, data_class):
                 data_class_str = tuple(i.__name__ if hasattr(i, '__name__') else i for i in data_class) \
                                  if isinstance(data_class, (tuple, list)) else \
                                  (data_class if data_class is None else data_class.__name__)
-                raise TypeError(f'Please provide as model inputs either a single or '
-                                f'a tuple or a list or a dict of {data_class_str}, '
-                                f'but got part data type is {item if item is None else type(item).__name__}.')
+                raise TypeError(f'The type of input data must be in the Union({data_class_str}, '
+                                f'tuple[{data_class_str}], list[{data_class_str}], dict[{data_class_str}]), '
+                                f'but got type {item if item is None else type(item).__name__}.')
 
 
 def check_input_dataset(*dataset, dataset_type):
@@ -1054,7 +1080,7 @@ def check_input_dataset(*dataset, dataset_type):
 def check_output_data(data):
     """Output data check."""
     if data is None:
-        raise RuntimeError('Executor return data ' + str(data) + ', please check your net or input data.')
+        raise RuntimeError('The output data can not be None, please check your net or input data.')
 
 
 once = _expand_tuple(1)
@@ -1081,7 +1107,7 @@ def args_type_check(*type_args, **type_kwargs):
             for name, value in argument_dict.items():
                 if name in bound_types:
                     if value is not None and not isinstance(value, bound_types[name]):
-                        raise TypeError("The argument {} must be {}, but got {}"
+                        raise TypeError("The parameter {} must be {}, but got {}"
                                         .format(name, bound_types[name], type(value)))
             return func(*args, **kwargs)
 
@@ -1111,7 +1137,7 @@ def args_unreset_check(*unreset_args, **unreset_kwargs):
                 argument_dict = argument_dict["kwargs"]
             for name, value in argument_dict.items():
                 if name in _set_record.keys():
-                    raise TypeError('The argument {} is non-renewable parameter {}.'.format(name, bound_unreset[name]))
+                    raise TypeError("For 'set_context', the parameter '{}' can not be set repeatedly.".format(name))
                 if name in bound_unreset:
                     _set_record[name] = value
             return func(*args, **kwargs)
