@@ -1,7 +1,7 @@
 mindspore.nn.piecewise_constant_lr
 ====================================
 
-.. py:class:: mindspore.nn.piecewise_constant_lr(milestone, learning_rates)
+.. py:function:: mindspore.nn.piecewise_constant_lr(milestone, learning_rates)
 
     获取分段常量学习率。每个step的学习率将会被存放在一个列表中。
 

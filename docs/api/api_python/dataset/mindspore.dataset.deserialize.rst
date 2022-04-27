@@ -1,7 +1,7 @@
 mindspore.dataset.deserialize
 ==============================
 
-.. py:method:: mindspore.dataset.deserialize(input_dict=None, json_filepath=None)
+.. py:function:: mindspore.dataset.deserialize(input_dict=None, json_filepath=None)
 
     数据处理管道反序列化，支持输入Python字典或使用 `mindspore.dataset.serialize()` 接口生成的JSON文件。
 

@@ -1,7 +1,7 @@
 mindspore.get_level
 ======================
 
-.. py:class:: mindspore.get_level()
+.. py:function:: mindspore.get_level()
 
     获取日志记录器的级别。
 

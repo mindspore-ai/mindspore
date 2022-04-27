@@ -1,7 +1,7 @@
 mindspore.get_py_obj_dtype
 ===========================
 
-.. py:method:: mindspore.get_py_obj_dtype(obj)
+.. py:function:: mindspore.get_py_obj_dtype(obj)
 
     将Python数据类型转换为MindSpore数据类型。
 

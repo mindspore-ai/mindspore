@@ -1,7 +1,7 @@
 mindspore.set_seed
 ===================
 
-.. py:class:: mindspore.set_seed(seed)
+.. py:function:: mindspore.set_seed(seed)
 
     设置全局种子。
 

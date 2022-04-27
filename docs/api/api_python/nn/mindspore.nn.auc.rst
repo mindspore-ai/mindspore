@@ -1,7 +1,7 @@
 mindspore.nn.auc
 ================
 
-.. py:class:: mindspore.nn.auc(x, y, reorder=False)
+.. py:function:: mindspore.nn.auc(x, y, reorder=False)
 
     使用梯形法则计算曲线下面积AUC（Area Under the Curve，AUC）。这是一个一般函数，给定曲线上的点，
     用于计算ROC (Receiver Operating Curve, ROC) 曲线下的面积。

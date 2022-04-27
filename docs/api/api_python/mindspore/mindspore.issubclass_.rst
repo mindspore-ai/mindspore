@@ -1,7 +1,7 @@
 mindspore.issubclass\_
 =======================
 
-.. py:method:: mindspore.issubclass_(type_, dtype)
+.. py:function:: mindspore.issubclass_(type_, dtype)
 
     判断 `type_` 是否为 `dtype` 的子类。
 

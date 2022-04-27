@@ -1,7 +1,7 @@
 mindspore.load_checkpoint
 ==========================
 
-.. py:class:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM")
+.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM")
 
     加载checkpoint文件。
 

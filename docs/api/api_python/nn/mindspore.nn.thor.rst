@@ -1,7 +1,7 @@
 mindspore.nn.thor
 ==================
 
-.. py:class:: mindspore.nn.thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32, use_nesterov=False, decay_filter=<function <lambda> at 0x0000029724CFA048>, split_indices=None, enable_clip_grad=False, frequency=100)
+.. py:function:: mindspore.nn.thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, batch_size=32, use_nesterov=False, decay_filter=<function <lambda> at 0x0000029724CFA048>, split_indices=None, enable_clip_grad=False, frequency=100)
 
     通过二阶算法THOR更新参数。
 

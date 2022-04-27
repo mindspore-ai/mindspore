@@ -1,7 +1,7 @@
 ﻿mindspore.dataset.serialize
 ============================
 
-.. py:method:: mindspore.dataset.serialize(dataset, json_filepath='')
+.. py:function:: mindspore.dataset.serialize(dataset, json_filepath='')
 
     将数据处理管道序列化成JSON文件。
 
