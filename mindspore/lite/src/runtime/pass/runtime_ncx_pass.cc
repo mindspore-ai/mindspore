@@ -17,12 +17,15 @@
 #include "src/runtime/pass/runtime_ncx_pass.h"
 #include <set>
 #include <memory>
+#ifdef RUNTIME_NCX_PASS
 #include "src/runtime/pass/runtime_optimizer.h"
 #include "src/runtime/pass/to_nchw_format.h"
 #include "src/runtime/pass/decrease_transpose_algo.h"
 #include "src/runtime/pass/infershape_pass.h"
+#endif
 
 namespace mindspore::lite::pass {
+#ifdef RUNTIME_NCX_PASS
 std::set<mindspore::schema::PrimitiveType> ncxhwx_kernels = {};
 
 bool RuntimeNCXPassVaild(kernel::SubGraphKernel *subgraph) {
@@ -42,8 +45,10 @@ bool RuntimeNCXPassVaild(kernel::SubGraphKernel *subgraph) {
   }
   return true;
 }
+#endif
 
 int RuntimeNCXPass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Tensor *> *tensors) {
+#ifdef RUNTIME_NCX_PASS
   for (auto subgraph : *subgraphs) {
     if (subgraph->desc().arch == kernel::kDelegate) {
       continue;
@@ -64,6 +69,7 @@ int RuntimeNCXPass(std::vector<kernel::KernelExec *> *subgraphs, std::vector<Ten
       return RET_ERROR;
     }
   }
+#endif
   return RET_OK;
 }
 }  // namespace mindspore::lite::pass

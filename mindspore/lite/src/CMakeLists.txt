@@ -116,6 +116,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_shape_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/runtime_ncx_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/schema_tensor_wrapper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
@@ -210,11 +211,17 @@ if(MSLITE_ENABLE_STRING_KERNEL)
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
         )
 endif()
-if(MSLITE_ENABLE_RUNTIME_PASS)
-    file(GLOB RUNTIME_PASS_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/*.cc
+if(RUNTIME_NCX_PASS)
+    file(GLOB RUNTIME_NCX_PASS_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/decrease_transpose_algo.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/delete_isolated_kernel.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/infershape_pass.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/pass_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/runtime_optimizer.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/to_nchw_format.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/transpose_strategy.cc
             )
-    set(LITE_SRC ${LITE_SRC} ${RUNTIME_PASS_SRC})
+    set(LITE_SRC ${LITE_SRC} ${RUNTIME_NCX_PASS_SRC})
 endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
