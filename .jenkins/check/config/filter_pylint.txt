@@ -61,6 +61,7 @@
 
 # MindData
 "mindspore/mindspore/python/mindspore/dataset/__init__.py"                                                               "redefined-builtin"
+"mindspore/mindspore/python/mindspore/dataset/audio/transforms.py"                                                       "super-init-not-called"
 "mindspore/mindspore/python/mindspore/dataset/engine/__init__.py"                                                        "redefined-builtin"
 "mindspore/mindspore/python/mindspore/dataset/engine/datasets.py"                                                        "redefined-builtin"
 "mindspore/mindspore/python/mindspore/dataset/engine/datasets.py"                                                        "broad-except"
