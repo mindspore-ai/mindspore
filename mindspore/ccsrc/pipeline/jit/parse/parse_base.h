@@ -159,12 +159,14 @@ const char RESOLVE_NAMESPACE_NAME_MODULE[] = "Module";             // For Module
 
 // Define Resolve type.
 enum ResolveTypeDef : int64_t {
-  RESOLVE_TYPE_NONE = 0,            // Resolve None
-  RESOLVE_TYPE_FUNCTION = 1,        // Resolve function
-  RESOLVE_TYPE_METHOD = 2,          // Resolve class method
-  RESOLVE_TYPE_CLASS_TYPE = 3,      // Resolve class type
-  RESOLVE_TYPE_CLASS_INSTANCE = 4,  // Resolve the class instance of common class
-  RESOLVE_TYPE_INVALID = 0xFF       // Resolve invalid
+  RESOLVE_TYPE_NONE = 0,                // Resolve None
+  RESOLVE_TYPE_FUNCTION = 1,            // Resolve function
+  RESOLVE_TYPE_METHOD = 2,              // Resolve class method
+  RESOLVE_TYPE_CLASS_TYPE = 3,          // Resolve class type
+  RESOLVE_TYPE_CLASS_INSTANCE = 4,      // Resolve the class instance of common class
+  RESOLVE_TYPE_NUMPY_INT_NUMBER = 5,    // Resolve numpy number int type
+  RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 6,  // Resolve numpy number float type
+  RESOLVE_TYPE_INVALID = 0xFF           // Resolve invalid
 };
 
 // Define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE.

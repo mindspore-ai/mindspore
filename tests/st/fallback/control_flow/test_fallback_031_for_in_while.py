@@ -69,7 +69,11 @@ def test_for_in_while_numpy_append():
     assert res == 54
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_for_in_while_sum():
     """
     Feature: JIT Fallback

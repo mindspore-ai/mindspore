@@ -129,6 +129,25 @@ class BaseRewriter : protected SimpleRewriter {
       if (abs == nullptr) {
         continue;
       }
+      bool is_interpret_dict = false;
+      // Do not convert the abstract of Interpret node(AbstractDictionary) to AbstractSequence.
+      if (abs->isa<AbstractDictionary>()) {
+        AbstractDictionaryPtr abs_dict = abs->cast<AbstractDictionaryPtr>();
+        auto &dict_elements = abs_dict->elements();
+        for (auto &element : dict_elements) {
+          TypePtr type = element.second->GetTypeTrack();
+          MS_EXCEPTION_IF_NULL(type);
+          auto value = element.second->BuildValue();
+          MS_EXCEPTION_IF_NULL(value);
+          if (type->type_id() == kMetaTypeExternal && value->isa<parse::InterpretedObject>()) {
+            is_interpret_dict = true;
+            break;
+          }
+        }
+      }
+      if (is_interpret_dict) {
+        continue;
+      }
       // Call abstract converter.
       auto new_abs = ConvertAbstract(abs);
       if (new_abs != nullptr) {
