@@ -55,9 +55,12 @@ abstract::ShapePtr TensorScatterArithmeticInferShape(const PrimitivePtr &primiti
                              << indices_shape.size();
   }
   indices_shape.pop_back();
-  if (last_dim < SizeToLong(input_x_shape.size())) {
-    indices_shape.insert(indices_shape.end(), input_x_shape.begin() + last_dim, input_x_shape.end());
+  if (last_dim > SizeToLong(input_x_shape.size())) {
+    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the last dimension of 'indices' must be less than or equal "
+                             << " to the dimension of 'input_x', but got the last dimension of 'indices': " << last_dim
+                             << " and the dimension of 'input_x': " << input_x_shape.size();
   }
+  indices_shape.insert(indices_shape.end(), input_x_shape.begin() + last_dim, input_x_shape.end());
   if (updates_shape != indices_shape) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
                              << "updates_shape = indices_shape[:-1] + x_shape[indices_shape[-1]:], but got x_shape: "

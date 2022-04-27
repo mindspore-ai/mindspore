@@ -68,10 +68,9 @@ def tensor_scatter_np(func, input_x, indices, updates):
 
 
 def compare_with_numpy(func, input_x, indices, updates):
-    expected = tensor_scatter_np(func, input_x, indices, updates)
-
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     graph_output = TestTensorScatterArithmeticNet(func, input_x, indices, updates)()
+    expected = tensor_scatter_np(func, input_x, indices, updates)
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
@@ -161,3 +160,43 @@ def test_tensor_scatter_arithmetic_one_value(func, data_type, index_type):
     updates = Tensor(np.array([1.0]), data_type)
 
     compare_with_numpy(func, input_x, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'max', 'min'])
+@pytest.mark.parametrize('data_type', [mstype.int8])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_tensor_scatter_arithmetic_dim_check(func, data_type, index_type):
+    """
+    Feature: TensorScatter* operators.
+    Description: test cases for invalid input.
+    Expectation: raise ValueError.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[0, 1, 2]]), index_type)
+    updates = Tensor(np.array([1.0]), data_type)
+
+    with pytest.raises(ValueError):
+        compare_with_numpy(func, input_x, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'max', 'min'])
+@pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
+@pytest.mark.parametrize('index_type', [mstype.int8, mstype.int16])
+def test_tensor_scatter_arithmetic_type_check(func, data_type, index_type):
+    """
+    Feature: TensorScatter* operators.
+    Description: test cases for invalid input.
+    Expectation: raise TypeError.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[0, 1]]), index_type)
+    updates = Tensor(np.array([1.0]), data_type)
+
+    with pytest.raises(TypeError):
+        compare_with_numpy(func, input_x, indices, updates)
