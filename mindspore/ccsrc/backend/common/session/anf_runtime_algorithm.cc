@@ -390,8 +390,7 @@ std::string AnfRuntimeAlgorithm::GetInputReshapeType(const AnfNodePtr &node, siz
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
-  if (build_info->IsInputDefaultPadding()) {
+  if (build_info == nullptr || build_info->IsInputDefaultPadding()) {
     return "";
   }
   return build_info->GetInputReshapeType(input_idx);
@@ -410,8 +409,7 @@ std::string AnfRuntimeAlgorithm::GetOutputReshapeType(const AnfNodePtr &node, si
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto build_info = kernel_info->select_kernel_build_info();
-  MS_EXCEPTION_IF_NULL(build_info);
-  if (build_info->IsOutputDefaultPadding()) {
+  if (build_info == nullptr || build_info->IsOutputDefaultPadding()) {
     return "";
   }
   return build_info->GetOutputReshapeType(output_idx);

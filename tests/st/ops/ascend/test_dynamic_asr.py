@@ -80,12 +80,24 @@ class GradNetWrtX(nn.Cell):
         return self.grad(self.network)(input_, output_grad)
 
 
-def comm_func(dyn_range, input_shp, data_type, op_net):
+def comm_func(dyn_range, input_shp, data_type, op_net, num=None):
     list_data = []
     for i in dyn_range:
         tmp_data = []
         for data_shp in input_shp:
-            cur_shp = [dim if dim is not None else i for dim in data_shp]
+            if num is None:
+                cur_shp = [dim if dim is not None else i for dim in data_shp]
+            else:
+                cur_shp = []
+                k = 0
+                for dim in data_shp:
+                    if dim is not None:
+                        cur_shp.append(dim)
+                    elif k == 1:
+                        cur_shp.append(num)
+                    else:
+                        cur_shp.append(i)
+                    k = k + 1
             tmp_data.append(np.random.random(cur_shp).astype(data_type))
         list_data.append(tuple(tmp_data))
 
@@ -180,6 +192,16 @@ class BatchNorm1d(nn.Cell):
         return out
 
 
+class BatchNorm1dSingleOp(nn.Cell):
+    def __init__(self, channels):
+        super(BatchNorm1dSingleOp, self).__init__()
+        self.batchnorm = nn.BatchNorm1d(channels)
+
+    def construct(self, x):
+        out = self.batchnorm(x)
+        return out
+
+
 class Positional(nn.Cell):
     def __init__(self, d_model: int, max_len: int = 5000):
         super().__init__()
@@ -251,6 +273,40 @@ def test_dynamic_batchnorm1d():
     input_shape = [(None, 64)]
     net = BatchNorm1d(64)
     comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_batchnorm1d_single_op():
+    """
+    Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 64)]
+    net = BatchNorm1dSingleOp(64)
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_batchnorm1d_single_op_2_unknown_shape():
+    """
+    Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, None)]
+    net = BatchNorm1dSingleOp(64)
+    comm_func(dynamic_range, input_shape, data_type, net, 64)
 
 
 @pytest.mark.level0

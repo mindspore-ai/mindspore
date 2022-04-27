@@ -74,10 +74,12 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
     MS_EXCEPTION(ArgumentError) << "Input range size is not equal, min size: " << input_range_min.size()
                                 << "max size: " << input_range_max.size();
   }
+  std::string reshape_type = AnfAlgo::GetInputReshapeType(anf_node, index);
+
   trans::ShapeRangeTransfer shapeRangeTransfer;
   if (input_range_min.empty() && input_range_max.empty()) {
     RangePair ret = {{1, 1}};
-    return shapeRangeTransfer.GetRealRange(ret, format, data_type);
+    return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
   }
   RangePair ret;
   for (size_t i = 0; i < input_range_min.size(); ++i) {
@@ -86,7 +88,7 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
     }
     ret.emplace_back(input_range_min[i], input_range_max[i]);
   }
-  return shapeRangeTransfer.GetRealRange(ret, format, data_type);
+  return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
 }
 
 RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node, size_t index,
@@ -104,10 +106,12 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
     MS_EXCEPTION(ArgumentError) << "Onput range size is not equal, min size: " << output_range_min.size()
                                 << "max size: " << output_range_max.size();
   }
+  std::string reshape_type = AnfAlgo::GetOutputReshapeType(anf_node, index);
+
   trans::ShapeRangeTransfer shapeRangeTransfer;
   if (output_range_max.empty() && output_range_min.empty()) {
     RangePair ret = {{1, 1}};
-    return shapeRangeTransfer.GetRealRange(ret, format, data_type);
+    return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
   }
   RangePair ret;
   for (size_t i = 0; i < output_range_min.size(); ++i) {
@@ -116,7 +120,7 @@ RangePair TbeDynamicShapeUtil::GetOutputDynamicRange(const AnfNodePtr &anf_node,
     }
     ret.emplace_back(output_range_min[i], output_range_max[i]);
   }
-  return shapeRangeTransfer.GetRealRange(ret, format, data_type);
+  return shapeRangeTransfer.GetRealRange(ret, format, data_type, reshape_type);
 }
 }  // namespace tbe
 }  // namespace kernel
