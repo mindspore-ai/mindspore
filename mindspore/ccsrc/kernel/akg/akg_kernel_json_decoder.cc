@@ -142,7 +142,9 @@ class CNodeDecoder {
       nlohmann::json input_desc = input_descs[i][0];
       std::string name = input_desc[kJsonKeyTensorName];
       if (input_desc.find(kJsonKeyValue) != input_desc.end()) {
-        inputs.push_back(DecodeValueNode(input_desc, func_graph));
+        auto value = DecodeValueNode(input_desc, func_graph);
+        if (value == nullptr) return false;
+        inputs.push_back(value);
       } else if (nodes_map_.count(name) == 0) {
         MS_LOG(ERROR) << "Input: " << name << " of: " << op_name_ << " not found.";
         return false;
@@ -262,7 +264,7 @@ class CNodeDecoder {
   ValueNodePtr DecodeValueNode(const nlohmann::json &value_json, const FuncGraphPtr &func_graph) {
     MS_LOG(DEBUG) << "start decode value node, " << value_json;
     auto tensor = DecodeScalar(value_json);
-    MS_EXCEPTION_IF_NULL(tensor);
+    if (tensor == nullptr) return nullptr;
     auto value_node = std::make_shared<ValueNode>(tensor);
     value_node->set_abstract(tensor->ToAbstract());
     // create kernel_info fo new value node.
