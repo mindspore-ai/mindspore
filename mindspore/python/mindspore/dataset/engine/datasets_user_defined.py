@@ -712,10 +712,14 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         return new_op
 
     def is_shuffled(self):
-        return self.sampler.is_shuffled()
+        if self.sampler:
+            return self.sampler.is_shuffled()
+        return False
 
     def is_sharded(self):
-        return self.sampler.is_sharded()
+        if self.sampler:
+            return self.sampler.is_sharded()
+        return False
 
     def parse(self, children=None):
         if self.schema is None:

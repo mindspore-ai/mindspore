@@ -84,7 +84,47 @@ def test_randomdataset_basic3():
     assert num_iter == 20
     logger.info("Test randomdataset basic 3 Complete")
 
+
+def test_randomdataset_basic4():
+    """
+    Feature: Test RandomDataset 04
+    Description: Set num_samples
+    Expectation: RUN successfully
+    """
+    ds1 = ds.RandomDataset(num_samples=10)
+    num_iter = 0
+    for _ in ds1.create_tuple_iterator(output_numpy=True):
+        num_iter += 1
+    assert num_iter == 10
+
+
+def test_randomdataset_basic5():
+    """
+    Feature: Test RandomDataset 05
+    Description: Set total_rows and num_samples
+    Expectation: RUN successfully
+    """
+    ds1 = ds.RandomDataset(total_rows=100, num_samples=10)
+    num_iter = 0
+    for _ in ds1.create_tuple_iterator(output_numpy=True):
+        num_iter += 1
+    assert num_iter == 10
+
+
+def test_randomdataset_basic6():
+    """
+    Feature: Test RandomDataset 06
+    Description: All default
+    Expectation: RUN successfully
+    """
+    ds1 = ds.RandomDataset()
+    for _ in ds1.create_tuple_iterator(output_numpy=True):
+        pass
+
 if __name__ == '__main__':
     test_randomdataset_basic1()
     test_randomdataset_basic2()
     test_randomdataset_basic3()
+    test_randomdataset_basic4()
+    test_randomdataset_basic5()
+    test_randomdataset_basic6()

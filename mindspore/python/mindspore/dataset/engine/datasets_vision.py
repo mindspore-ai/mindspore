@@ -231,7 +231,7 @@ class Caltech101Dataset(GeneratorDataset):
                     An Incremental Bayesian Approach Tested on 101 Object Categories},
         journal   = {Computer Vision and Pattern Recognition Workshop},
         year      = {2004},
-        url       = {http://www.vision.caltech.edu/Image_Datasets/Caltech101/},
+        url       = {https://data.caltech.edu/records/20086},
         }
     """
 
@@ -3671,10 +3671,15 @@ class RandomDataset(SourceDataset, VisionBaseDataset):
                  cache=None, shuffle=None, num_shards=None, shard_id=None):
         super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
                          num_shards=num_shards, shard_id=shard_id, cache=cache)
-        self.total_rows = total_rows
+
+        self.total_rows = replace_none(total_rows, 0)
+        if self.total_rows != 0 and self.num_samples != 0:
+            self.total_rows = min(self.total_rows, self.num_samples)
+        if self.num_samples != 0:
+            self.total_rows = self.num_samples
         if schema is not None:
             self.total_rows = replace_none(total_rows, Schema.get_num_rows(schema))
-        self.schema = schema
+        self.schema = replace_none(schema, "")
         self.columns_list = replace_none(columns_list, [])
 
     def parse(self, children=None):
