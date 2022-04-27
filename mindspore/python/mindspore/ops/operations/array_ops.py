@@ -7233,6 +7233,58 @@ class ScatterElements(Primitive):
         self.init_prim_io_names(inputs=['data', 'indices', 'updates'], outputs=['y'])
 
 
+class ScatterAddWithAxis(Primitive):
+    """
+    ScatterAddWithAxis takes three inputs data, updates, and indices of the same rank r >= 1
+    and an optional attribute axis that identifies an axis of data (default is 0).
+    The output of the operation is produced by creating a copy of the input data, and then add updating its value to
+    values specified by updates at specific index positions specified by indices.
+
+    Args:
+        axis (int): which axis to scatter, default is 0.
+
+    Inputs:
+        - **data** (Tensor) - The target tensor. c
+        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
+        - **update** (Tensor) - The tensor to update the input tensor, has the same type as input,
+          and update.shape should be equal to indices.shape.
+
+    Outputs:
+        Tensor, has the same shape and type as `data`.
+
+    Raises:
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> op = ops.ScatterAddWithAxis(0)
+        >>> data = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[1, 0, 2], [0, 2, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[1, 1, 1], [1, 1, 1]]), mindspore.float32)
+        >>> output = op(data, indices, updates)
+        >>> print(output)
+        [[ 2.0  3.0  3.0]
+         [ 5.0  5.0  7.0]
+         [ 7.0  9.0  10.0]]
+        >>> op = ops.ScatterAddWithAxis(1)
+        >>> data = Tensor(np.array([[1, 2, 3, 4, 5]), mindspore.int32)
+        >>> indices = Tensor(np.array([[2, 4]), mindspore.int32)
+        >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
+        >>> output = op(data, indices, updates)
+        >>> print(output)
+        [[ 1  2  11  4  13]]
+    """
+
+    @prim_attr_register
+    def __init__(self, axis=0):
+        """Initialize ScatterAddWithAxis"""
+        validator.check_value_type("axis", axis, [int], self.name)
+        self.init_prim_io_names(
+            inputs=['data', 'indices', 'updates'], outputs=['y'])
+
+
 class ExtractVolumePatches(Primitive):
     """
     Extract patches from input and put them in the "depth" output dimension. 3D extension of extract_image_patches.
