@@ -26,6 +26,9 @@ from .parameter import Parameter, ParameterTuple
 from .seed import set_seed, get_seed
 from .tensor import Tensor, RowTensor, SparseTensor, COOTensor, CSRTensor
 from .variable import Variable
+from .initializer import Initializer, TruncatedNormal, Normal, \
+    Uniform, HeUniform, HeNormal, XavierUniform, One, Zero, Constant, Identity, \
+    Sparse, Dirac, Orthogonal, VarianceScaling
 
 # symbols from dtype
 __all__ = [
@@ -50,7 +53,14 @@ __all__ = [
     "complex64", "complex128",
     # __method__ from dtype
     "dtype_to_nptype", "issubclass_", "dtype_to_pytype",
-    "pytype_to_dtype", "get_py_obj_dtype"
+    "pytype_to_dtype", "get_py_obj_dtype", 'Initializer',
+    'TruncatedNormal', 'Normal',
+    'Uniform', 'HeUniform',
+    'HeNormal', 'XavierUniform',
+    'One', 'Zero',
+    'Constant', 'Identity',
+    'Sparse', 'Dirac',
+    'Orthogonal', 'VarianceScaling'
 ]
 
 __all__.extend([

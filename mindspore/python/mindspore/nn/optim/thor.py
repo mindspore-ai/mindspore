@@ -337,8 +337,8 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         >>> from mindspore.nn import thor
         >>> from mindspore import Model
         >>> from mindspore import FixedLossScaleManager
-        >>> from mindspore.train.callback import LossMonitor
-        >>> from mindspore.train.train_thor import ConvertModelUtils
+        >>> from mindspore import LossMonitor
+        >>> from mindspore import ConvertModelUtils
         >>> from mindspore import nn
         >>> from mindspore import Tensor
         >>>

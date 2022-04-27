@@ -217,8 +217,8 @@ class ConvertModelUtils:
             >>> from mindspore.nn import thor
             >>> from mindspore import Model
             >>> from mindspore import FixedLossScaleManager
-            >>> from mindspore.train.callback import LossMonitor
-            >>> from mindspore.train.train_thor import ConvertModelUtils
+            >>> from mindspore import LossMonitor
+            >>> from mindspore import ConvertModelUtils
             >>>
             >>> net = Net()
             >>> dataset = create_dataset()

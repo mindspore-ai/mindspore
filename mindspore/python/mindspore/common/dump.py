@@ -62,10 +62,10 @@ def set_dump(target, enabled=True):
         >>> import numpy as np
         >>>
         >>> import mindspore.nn as nn
-        >>> import mindspore.context as context
+        >>> from mindspore import set_context, GRAPH_MODE
         >>> from mindspore import Tensor, set_dump
         >>>
-        >>> context.set_context(device_target="Ascend", mode=context.GRAPH_MODE)
+        >>> set_context(device_target="Ascend", mode=GRAPH_MODE)
         >>>
         >>> class MyNet(nn.Cell):
         ...     def __init__(self):

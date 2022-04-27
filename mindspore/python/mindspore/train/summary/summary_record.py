@@ -136,7 +136,7 @@ class SummaryRecord:
         ValueError: The Summary is not supported, please without `-s on` and recompile source.
 
     Examples:
-        >>> from mindspore.train.summary import SummaryRecord
+        >>> from mindspore import SummaryRecord
         >>> if __name__ == '__main__':
         ...     # use in with statement to auto close
         ...     with SummaryRecord(log_dir="./summary_dir") as summary_record:
@@ -209,7 +209,7 @@ class SummaryRecord:
             ValueError: `mode` is not in the optional value.
 
         Examples:
-            >>> from mindspore.train.summary import SummaryRecord
+            >>> from mindspore import SummaryRecord
             >>> if __name__ == '__main__':
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         summary_record.set_mode('eval')
@@ -270,7 +270,7 @@ class SummaryRecord:
 
         Examples:
             >>> from mindspore import Tensor
-            >>> from mindspore.train.summary import SummaryRecord
+            >>> from mindspore import SummaryRecord
             >>> if __name__ == '__main__':
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         summary_record.add_value('scalar', 'loss', Tensor(0.1))
@@ -325,7 +325,7 @@ class SummaryRecord:
             <https://www.mindspore.cn/docs/en/master/api_python/nn/mindspore.nn.Cell.html#mindspore-nn-cell>`_ 。
 
         Examples:
-            >>> from mindspore.train.summary import SummaryRecord
+            >>> from mindspore import SummaryRecord
             >>> if __name__ == '__main__':
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         result = summary_record.record(step=2)
@@ -438,7 +438,7 @@ class SummaryRecord:
             str, the full path of log file.
 
         Examples:
-            >>> from mindspore.train.summary import SummaryRecord
+            >>> from mindspore import SummaryRecord
             >>> if __name__ == '__main__':
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         log_dir = summary_record.log_dir
@@ -452,7 +452,7 @@ class SummaryRecord:
         Call it to make sure that all pending events have been written to disk.
 
         Examples:
-            >>> from mindspore.train.summary import SummaryRecord
+            >>> from mindspore import SummaryRecord
             >>> if __name__ == '__main__':
             ...     with SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") as summary_record:
             ...         summary_record.flush()
@@ -468,7 +468,7 @@ class SummaryRecord:
         Flush the buffer and write files to disk and close summary records. Please use the statement to autoclose.
 
         Examples:
-            >>> from mindspore.train.summary import SummaryRecord
+            >>> from mindspore import SummaryRecord
             >>> if __name__ == '__main__':
             ...     try:
             ...         summary_record = SummaryRecord(log_dir="./summary_dir")

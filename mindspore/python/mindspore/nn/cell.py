@@ -890,9 +890,9 @@ class Cell(Cell_):
         Examples:
             >>> import numpy as np
             >>> import mindspore
-            >>> from mindspore import nn, Tensor, context
+            >>> from mindspore import nn, Tensor, set_context, GRAPH_MODE
             >>>
-            >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+            >>> set_context(mode=GRAPH_MODE, device_target="Ascend")
             >>> class reluNet(nn.Cell):
             ...     def __init__(self):
             ...         super(reluNet, self).__init__()
@@ -1709,9 +1709,9 @@ class Cell(Cell_):
             >>> import mindspore
             >>> import mindspore.nn as nn
             >>> from mindspore import Tensor
-            >>> from mindspore import context
+            >>> from mindspore import set_context, PYNATIVE_MODE
             >>> from mindspore.ops import GradOperation
-            >>> context.set_context(mode=context.PYNATIVE_MODE)
+            >>> set_context(mode=PYNATIVE_MODE)
             >>> def forward_pre_hook_fn(cell_id, inputs):
             ...     print("forward inputs: ", inputs)
             ...
@@ -1810,9 +1810,9 @@ class Cell(Cell_):
             >>> import mindspore
             >>> import mindspore.nn as nn
             >>> from mindspore import Tensor
-            >>> from mindspore import context
+            >>> from mindspore import set_context, PYNATIVE_MODE
             >>> from mindspore.ops import GradOperation
-            >>> context.set_context(mode=context.PYNATIVE_MODE)
+            >>> set_context(mode=PYNATIVE_MODE)
             >>> def forward_hook_fn(cell_id, inputs, output):
             ...     print("forward inputs: ", inputs)
             ...     print("forward output: ", output)
@@ -1916,9 +1916,9 @@ class Cell(Cell_):
             >>> import mindspore
             >>> import mindspore.nn as nn
             >>> from mindspore import Tensor
-            >>> from mindspore import context
+            >>> from mindspore import set_context, PYNATIVE_MODE
             >>> from mindspore.ops import GradOperation
-            >>> context.set_context(mode=context.PYNATIVE_MODE)
+            >>> set_context(mode=PYNATIVE_MODE)
             >>> def backward_hook_fn(cell_id, grad_input, grad_output):
             ...     print("backward input: ", grad_input)
             ...     print("backward output: ", grad_output)

@@ -255,7 +255,7 @@ For DNN researchers who are unfamiliar with Bayesian models, MDP provides high-l
 1. Define a Deep Neural Network. The LeNet is used in this example.
 
 ```python
-from mindspore.common.initializer import TruncatedNormal
+from mindspore import TruncatedNormal
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 

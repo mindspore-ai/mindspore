@@ -973,8 +973,8 @@ def unique(x, return_inverse=False):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> from mindspore import context
-        >>> context.set_context(mode=context.GRAPH_MODE)
+        >>> from mindspore import set_context, GRAPH_MODE
+        >>> set_context(mode=GRAPH_MODE)
         >>> input_x = np.asarray([1, 2, 2, 2, 3, 4, 5]).astype('int32')
         >>> output_x = np.unique(input_x)
         >>> print(output_x)

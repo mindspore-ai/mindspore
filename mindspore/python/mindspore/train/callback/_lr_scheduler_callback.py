@@ -34,7 +34,7 @@ class LearningRateScheduler(Callback):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Model
-        >>> from mindspore.train.callback import LearningRateScheduler
+        >>> from mindspore import LearningRateScheduler
         >>> import mindspore.nn as nn
         >>> from mindspore import dataset as ds
         ...

@@ -175,14 +175,14 @@ class SummaryCollector(Callback):
 
     Examples:
         >>> import mindspore.nn as nn
-        >>> from mindspore import context
-        >>> from mindspore.train.callback import SummaryCollector
+        >>> from mindspore import set_context, GRAPH_MODE
+        >>> from mindspore import SummaryCollector
         >>> from mindspore import Model
         >>> from mindspore.nn import Accuracy
         >>>
         >>> if __name__ == '__main__':
         ...     # If the device_target is GPU, set the device_target to "GPU"
-        ...     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        ...     set_context(mode=GRAPH_MODE, device_target="Ascend")
         ...     mnist_dataset_dir = '/path/to/mnist_dataset_directory'
         ...     # The detail of create_dataset method shown in model_zoo.official.cv.lenet.src.dataset.py
         ...     ds_train = create_dataset(mnist_dataset_dir, 32)

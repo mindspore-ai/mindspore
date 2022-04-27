@@ -78,8 +78,8 @@ class Profiler:
 
     Examples:
         >>> import numpy as np
-        >>> from mindspore import nn, context
-        >>> from mindspore import Model
+        >>> from mindspore import nn
+        >>> from mindspore import Model, set_context, GRAPH_MODE
         >>> import mindspore.dataset as ds
         >>> from mindspore import Profiler
         >>>
@@ -104,7 +104,7 @@ class Profiler:
         >>>
         >>> if __name__ == '__main__':
         ...     # If the device_target is GPU, set the device_target to "GPU"
-        ...     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        ...     set_context(mode=GRAPH_MODE, device_target="Ascend")
         ...
         ...     # Init Profiler
         ...     # Note that the Profiler should be initialized before model.train

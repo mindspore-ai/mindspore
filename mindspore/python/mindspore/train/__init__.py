@@ -25,8 +25,16 @@ from .loss_scale_manager import LossScaleManager, FixedLossScaleManager, Dynamic
 from .serialization import save_checkpoint, load_checkpoint, load_param_into_net, export, load, parse_print,\
     build_searched_strategy, merge_sliced_parameter, load_distributed_checkpoint, async_ckpt_thread_status,\
     restore_group_info_list
+from .callback import Callback, LossMonitor, TimeMonitor, ModelCheckpoint, SummaryCollector, CheckpointConfig, \
+    RunContext, LearningRateScheduler, SummaryLandscape, FederatedLearningManager, History, LambdaCallback
+from .summary import SummaryRecord
+from .train_thor import ConvertNetUtils, ConvertModelUtils
+
 
 __all__ = ["Model", "DatasetHelper", "amp", "connect_network_with_dataset", "build_train_network", "LossScaleManager",
            "FixedLossScaleManager", "DynamicLossScaleManager", "save_checkpoint", "load_checkpoint",
            "load_param_into_net", "export", "load", "parse_print", "build_searched_strategy", "merge_sliced_parameter",
            "load_distributed_checkpoint", "async_ckpt_thread_status", "restore_group_info_list"]
+__all__.extend(callback.__all__)
+__all__.extend(summary.__all__)
+__all__.extend(train_thor.__all__)
