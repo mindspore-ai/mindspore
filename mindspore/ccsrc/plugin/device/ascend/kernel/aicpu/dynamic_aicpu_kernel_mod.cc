@@ -160,7 +160,7 @@ bool DynamicAicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, cons
     flag = RT_KERNEL_CUSTOM_AICPU;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime(stream_);
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_.data();
   argsInfo.argsSize = static_cast<uint32_t>(args_.length());
@@ -200,7 +200,7 @@ void DynamicAicpuOpKernelMod::Wait() {
     return;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime(stream_);
   auto ret = rtStreamSynchronize(stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call runtime rtStreamSynchronize failed. Op name: " << cnode->fullname_with_scope();

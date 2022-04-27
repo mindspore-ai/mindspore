@@ -187,7 +187,7 @@ bool DynamicTbeKernelMod::CopyTilingToDevice(void *stream_ptr) {
     return true;
   }
   // cppcheck-suppress unreadVariable
-  auto lock = device::KernelRuntime::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
   auto ret = aclrtMemcpyAsync(tiling_data_ptr_, op_para_size, tiling_data_.c_str(), tiling_data_.size(),
                               ACL_MEMCPY_HOST_TO_DEVICE, stream_ptr);
   if (ret != RT_ERROR_NONE) {
@@ -239,7 +239,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     // Skip reduce if axis is a empty Tensor (shape = 0)
     MS_LOG(INFO) << "The node " << cnode->fullname_with_scope() << "Need Skip.";
     // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime();
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     rtError_t status = aclrtMemcpyAsync(outputs[0]->addr, inputs[0]->size, inputs[0]->addr, inputs[0]->size,
                                         ACL_MEMCPY_DEVICE_TO_DEVICE, stream_ptr);
     if (status != RT_ERROR_NONE) {
@@ -277,7 +277,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     const auto dev_func = std::to_string(tiling_key_);
     const auto kernel_info = node_info + "/" + std::to_string(tiling_key_);
     // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime();
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     rtArgsEx_t args_info = {};
     args_info.args = runtimeargs.data();
     args_info.argsSize = args_size;
@@ -289,7 +289,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
     }
   } else {
     // cppcheck-suppress unreadVariable
-    auto lock = device::KernelRuntime::LockRuntime();
+    auto lock = device::KernelRuntime::LockRuntime(stream_ptr);
     auto ret = rtKernelLaunch(func_stub_, block_dim_, runtimeargs.data(), args_size, l2ctrl, stream_ptr);
     if (ret != RT_ERROR_NONE) {
       MS_LOG(ERROR) << "Call runtime rtKernelLaunch error. Node info: " << node_info;

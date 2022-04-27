@@ -76,7 +76,7 @@ bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inpu
   rtL2Ctrl_t *l2ctrl = nullptr;
   const void *stubFunc = reinterpret_cast<void *>(func_stub);
   auto argsSize = static_cast<uint32_t>(UlongToUint(sizeof(void *)) * runtimeargs.size());
-  auto lock = device::KernelRuntime::LockRuntime();
+  auto lock = device::KernelRuntime::LockRuntime(stream_);
   auto ret = rtKernelLaunch(stubFunc, blockdim, runtimeargs.data(), argsSize, l2ctrl, stream_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtKernelLaunch error.";
