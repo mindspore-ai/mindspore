@@ -131,10 +131,10 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
                                         const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexAddOutputsNum, kernel_name_);
-  auto *x = reinterpret_cast<T *>(inputs[0]->addr);
-  int *indices = reinterpret_cast<int *>(inputs[1]->addr);
-  auto *y = reinterpret_cast<T *>(inputs[2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[0]->addr);
+  auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto *indices = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
+  auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   CheckParams();
   size_t x_axis_inner_size = x_axis_size_ * inner_size_;
   size_t y_axis_inner_size = y_axis_size_ * inner_size_;
@@ -158,7 +158,7 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
 
   auto task2 = [&](size_t start, size_t end) {
     size_t length = (end - start) * sizeof(T);
-    int ret = memcpy_s(output + start, length, x + start, length);
+    auto ret = memcpy_s(output + start, length, x + start, length);
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
     }
