@@ -79,7 +79,7 @@
 - [STABLE] Support post quantization to run dynamic quantization algorithm.
 - [BETA] Support post quantized model to run on NVIDIA GPU.
 
-### Contributors
+## Contributors
 
 Thanks goes to these wonderful people:
 
