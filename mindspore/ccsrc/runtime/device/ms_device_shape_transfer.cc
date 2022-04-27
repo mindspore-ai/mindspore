@@ -998,8 +998,8 @@ bool FormatTransfer::NCHW_TO_FRAC_Z(const FormatArgs &args, void *result) {
   auto total_ele_cnt = hf_cnt * vf_cnt * fractal_ele_cnt;
   auto dst_size = total_ele_cnt * size;
   if (dst_size != SizeToLong(args.device_size)) {
-    MS_LOG(ERROR) << "Illegal total data size."
-                  << "dst size is :" << dst_size << "device size is :" << args.device_size;
+    MS_LOG(ERROR) << "Illegal total data size, "
+                  << "dst size is :" << dst_size << ", device size is :" << args.device_size;
     return false;
   }
 

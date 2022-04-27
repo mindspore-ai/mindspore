@@ -144,7 +144,6 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
       (!device_context->AllocateMemory(device_address.get(), device_address->GetSize()))) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
-
   // Copy data from host tensor to device.
   auto tensor_size = LongToSize(tensor->data().nbytes());
   auto tensor_type = tensor->data_type();
@@ -230,6 +229,15 @@ void CopyParameterDataToDevice(const std::vector<AnfNodePtr> &input_nodes,
   for (size_t i = 0; i < input_size; ++i) {
     MS_EXCEPTION_IF_NULL(input_tensors[i]);
     if (input_tensors[i]->NeedSyncHostToDeviceImmediately()) {
+      // First op in dynamic shape scenario(feed mode)
+      if (input_tensors[i]->base_shape_ptr() != nullptr) {
+        auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(input_tensors[i]->device_address());
+        MS_EXCEPTION_IF_NULL(device_address);
+        auto tensor_size = LongToSize(input_tensors[i]->data().nbytes());
+        if (tensor_size != device_address->GetSize()) {
+          device_address->SetSize(tensor_size);
+        }
+      }
       CopyTensorDataToDevice(input_tensors[i], input_nodes[i], device_context);
       input_tensors[i]->set_sync_status(kNoNeedSync);
     }
