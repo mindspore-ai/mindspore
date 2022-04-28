@@ -29,9 +29,7 @@
 #include "src/inner_context.h"
 #include "include/model.h"
 #include "src/scheduler_cb.h"
-#ifndef DELEGATE_CLIP
 #include "include/api/delegate.h"
-#endif
 #include "src/control_flow/control_flow_scheduler.h"
 #include "src/runtime/runtime_shape_fusion_pass.h"
 
@@ -136,6 +134,8 @@ class Scheduler {
   /* delegate related */
   int ReplaceDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels);
   int InitDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels);
+#else
+  int InitDelegateKernels(std::vector<kernel::KernelExec *> *dst_kernels) { return RET_OK; }
 #endif
 
   bool GetEnableGLTexture() { return context_->GetDeviceInfo(DT_GPU).gpu_device_info_.enable_gl_texture_; }
