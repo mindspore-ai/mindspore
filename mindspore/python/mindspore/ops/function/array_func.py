@@ -999,6 +999,63 @@ def tensor_scatter_add(input_x, indices, updates):
     return tensor_scatter_add_(input_x, indices, updates)
 
 
+def space_to_batch_nd(input_x, block_size, paddings):
+    r"""
+    Divides a tensor's spatial dimensions into blocks and combines the block sizes with the original batch.
+
+    This operation will divide spatial dimensions into blocks with `block_shape`,
+    and after division, the output tensor's spatial dimension is the corresponding number of blocks.
+    The output tensor's batch dimension is the product of the original batch and the product of `block_shape`.
+    Before division, the spatial dimensions of the input are zero padded according to paddings if necessary.
+    Assume input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
+    :math:`block\_shape` and :math:`paddings`. Then the shape of the output tensor will be
+    :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`, where
+
+        :math:`n' = n*(block\_shape[0]*...*block\_shape[M])`
+
+        :math:`w'_i = (w_i+paddings[i][0]+paddings[i][1])//block\_shape[i]`
+
+    Args:
+        input_x (Tensor): The input tensor. It must be a 4-D tensor on Ascend.
+        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
+            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
+            equal to `block_shape`. M must be 2 on Ascend.
+        paddings (Union[tuple, list]): The padding values for spatial dimensions, containing 2 subtraction list.
+            Each contains M integer values. All values must be greater than 0.
+            `paddings[i]` specifies the paddings for the spatial dimension i,
+            which corresponds to the input dimension i + offset.
+            It is required that input_shape[i+offset]+paddings[i][0]+paddings[i][1] is divisible by block_shape[i].
+            M must be 2 on Ascend.
+
+    Returns:
+        Tensor, the output tensor with the same data type as input.
+
+    Raises:
+        ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
+        ValueError: If the length of `block_shape` is not 2 on Ascend.
+        ValueError: If the element of `block_shape` is not an integer larger than 1.
+        ValueError: If shape of `paddings` is not (2, M), where M is the length of `block_shape`.
+        ValueError: If the element of `paddings` is not an integer larger than 0.
+        TypeError: If `block_shape` is not one of list, tuple, int.
+        TypeError: If `paddings` is neither list nor tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> block_shape = [2, 2]
+        >>> paddings = [[0, 0], [0, 0]]
+        >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
+        >>> output = ops.space_to_batch_nd(input_x, block_shape, paddings)
+        >>> print(output)
+        [[[[1.]]]
+         [[[2.]]]
+         [[[3.]]]
+         [[[4.]]]]`
+    """
+    return P.SpaceToBatchND(block_size, paddings)(input_x)
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -1227,6 +1284,7 @@ __all__ = [
     'scalar_cast',
     'scalar_to_array',
     'scalar_to_tensor',
+    'space_to_batch_nd',
     'tuple_to_array',
     'expand_dims',
     'transpose',

@@ -24,6 +24,7 @@ from collections import Counter
 import numpy as np
 
 from mindspore import log as logger
+from mindspore import context
 from mindspore.common.initializer import Zero
 from .. import signature as sig
 from .._utils import get_broadcast_shape, is_shape_unknown
@@ -3718,7 +3719,7 @@ class StridedSlice(PrimitiveWithInfer):
         if has_ellipsis:
             # When there is ellipsis, handle the second half of the ellipsis split.
             ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
-                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
+                len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
             ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
             j += 1
             i += ellipsis_occupied_dims
@@ -5636,46 +5637,49 @@ class SpaceToBatchND(PrimitiveWithInfer):
     r"""
     Divides spatial dimensions into blocks and combines the block size with the original batch.
 
-    This operation will divide spatial dimensions (H, W) into blocks with block_shape, the output tensor's H and W
+    This operation will divide spatial dimensions into blocks with `block_shape`, and then the output tensor's spatial
     dimension is the corresponding number of blocks after division. The output tensor's batch dimension is the
-    product of the original batch and the product of `block_shape`. Before division,
-    the spatial dimensions of the input are zero padded according to paddings if necessary.
+    product of the original batch and all elements in `block_shape`.
+    Before division, the spatial dimensions of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
-            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
-            number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
-            equal to `block_shape`. M must be 2.
-        paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction list.
-            Each contains 2 integer value. All values must be greater than 0.
+        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block
+            with all elements greater than 1. If `block_shape` is a list or tuple,
+            the length of `block_shape` is the number of spatial dimensions, called M later.
+            If `block_shape` is an int, the block size of M dimensions are the same, equal to `block_shape`.
+            In this case of Ascend, M must be 2.
+        paddings (Union[tuple, list]): The padding values for spatial dimensions, containing 2 subtraction list.
+            Each contains M integer values. All values must be greater than 0.
             `paddings[i]` specifies the paddings for the spatial dimension i,
-            which corresponds to the input dimension i+2.
-            It is required that input_shape[i+2]+paddings[i][0]+paddings[i][1] is divisible by block_shape[i].
+            which corresponds to the input dimension i + offset.
+            For each i, input_shape[i + offset]+paddings[i][0]+paddings[i][1]
+            should be divisible by block_shape[i].
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor.
+        - **input_x** (Tensor) - The input tensor. The input tensor must be a 4-D tensor on Ascend.
 
     Outputs:
-        Tensor, the output tensor with the same data type as input. Assume input shape is :math:`(n, c, h, w)` with
-        :math:`block\_shape` and :math:`paddings`. The shape of the output tensor will be :math:`(n', c', h', w')`,
+        Tensor, the output tensor with the same data type as input.
+        Assume input shape is :math:`(n, c_1, ... c_k, w_1, ..., w_M)` with
+        :math:`block\_shape` and :math:`paddings`.
+        The shape of the output tensor will be :math:`(n', c_1, ... c_k, w'_1, ..., w'_M)`,
         where
 
-        :math:`n' = n*(block\_shape[0]*block\_shape[1])`
+        :math:`n' = n*(block\_shape[0]*...*block\_shape[M])`
 
-        :math:`c' = c`
-
-        :math:`h' = (h+paddings[0][0]+paddings[0][1])//block\_shape[0]`
-
-        :math:`w' = (w+paddings[1][0]+paddings[1][1])//block\_shape[1]`
+        :math:`w'_i = (w_i+paddings[i][0]+paddings[i][1])//block\_shape[i]`
 
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
         TypeError: If `paddings` is neither list nor tuple.
-        ValueError: If length of shape of `block_shape` is not equal to 1.
-        ValueError: If length of `block_shape` or `paddings` is not equal to 2.
+        ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
+        ValueError: If the length of `block_shape` is not 2 on Ascend.
+        ValueError: If shape of `paddings` is not (2, M), where M is the length of `block_shape`.
+        ValueError: If the element of `block_shape` is not an integer larger than 1.
+        ValueError: If the element of `paddings` is not an integer larger than 0.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> block_shape = [2, 2]
@@ -5693,20 +5697,23 @@ class SpaceToBatchND(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, block_shape, paddings):
         """Initialize SpaceToBatchND"""
+        validator.check_value_type('paddings type', paddings, [list, tuple], self.name)
+        validator.check('paddings length', len(paddings), '', 2, Rel.EQ, self.name)
+
         if isinstance(block_shape, int):
-            block_shape = (block_shape,) * 2
+            block_shape = (block_shape,) * np.array(paddings).shape[0]
+
         self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
         validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, Rel.EQ, self.name)
         block_rank = len(block_shape)
-        validator.check('block_shape length', block_rank, '', 2, Rel.EQ, self.name)
+        if context.get_context("device_target") == "Ascend":
+            validator.check('block_shape length', block_rank, '', 2, Rel.EQ, self.name)
         for elem in block_shape:
             validator.check('block_shape element', elem, '', 1, Rel.GE, self.name)
             validator.check_value_type('block_shape element', elem, [int], self.name)
         self.block_shape = block_shape
 
-        validator.check_value_type('paddings type', paddings, [list, tuple], self.name)
-        validator.check('paddings length', len(paddings), '', 2, Rel.EQ, self.name)
         validator.check('paddings shape', np.array(paddings).shape, '', (block_rank, 2), Rel.EQ, self.name)
         for elem in itertools.chain(*paddings):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
@@ -5719,18 +5726,23 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         x_rank = len(x_shape)
-        validator.check_equal_int(x_rank, 4, 'x_shape rank', self.name)
+        if context.get_context("device_target") == "Ascend":
+            validator.check_equal_int(x_rank, 4, 'x_shape rank', self.name)
         out_shape = copy.deepcopy(x_shape)
 
         block_shape_prod = 1
-        offset = 2
+        offset = len(x_shape) - len(self.block_shape)
+        if offset <= 0:
+            raise ValueError(f"For '{self.name}', the dim of the input should be larger than that of the blocks, "
+                             f"but the shape of the inputs is {x_shape} "
+                             f"while the shape of blocks is {self.block_shape}.")
         for i in range(len(self.block_shape)):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
-                     self.paddings[i][1]
+                self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
                 raise ValueError(f"For '{self.name}', the padded should be divisible by 'block_shape', "
                                  f"where padded = input_x_shape[i + 2] + paddings[i][0] + paddings[i][1], "
-                                 f"but got input_x_shape[{i + 2}]: {out_shape[i + offset]}, "
+                                 f"but got input_x_shape[{i + offset}]: {out_shape[i + offset]}, "
                                  f"paddings[{i}][0]: {self.paddings[i][0]} and paddings[{i}][1]: {self.paddings[i][1]}."
                                  f" Please check the official api documents for "
                                  f"more information about the output tensor.")

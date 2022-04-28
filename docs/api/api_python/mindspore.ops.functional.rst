@@ -252,6 +252,7 @@ Array操作
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.tensor_scatter_add
+    mindspore.ops.space_to_batch_nd
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unique

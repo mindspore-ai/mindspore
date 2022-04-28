@@ -571,6 +571,29 @@ mindspore.Tensor
 
         - **ValueError** - `side` 或 `sorter` 的参数无效。
 
+    .. py:method:: space_to_batch_nd(block_shape, paddings)
+
+        将空间维度划分为对应大小的块，然后在批次维度重排张量。
+
+        **参数：**
+
+        - **block_shape** (list[int], tuple[int], int) - 块形状描述空间维度为分割的个数。
+        - **paddings** (tuple, list) - 空间维度的填充大小。
+
+        **返回：**
+
+        Tensor，经过划分排列之后的结果。
+
+        **异常：**
+
+        - **TypeError** - 如果 `block_shape` 不是 list, tuple 或者 int。
+        - **TypeError** - 如果 `paddings` 不是 list 或者 tuple。
+        - **ValueError** - 如果当 `block_shape` 为 list 或 tuple， `block_shape` 不是一维。
+        - **ValueError** - 如果 Ascend 平台上 `block_shape` 长度不是2。
+        - **ValueError** - 如果 `paddings` 的形状不是 (2, M), 其中 M 为 `block_shape` 的长度。
+        - **ValueError** - 如果 `block_shape` 的元素不是大于一的整数。
+        - **ValueError** - 如果 `paddings` 的元素不是非负的整数。
+
     .. py:method:: shape
         :property:
 

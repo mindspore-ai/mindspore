@@ -946,7 +946,7 @@ def print_info(info):
 
 def make_sparse_tensor(indices, values, dense_shape):
     """Call make_coo_tensor in this function."""
-    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " + \
+    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
                "Please use 'COOTensor' instead.")
     return make_coo_tensor(indices, values, dense_shape)
 
@@ -982,6 +982,7 @@ tensor_operator_registry.register('split', P.Split)
 tensor_operator_registry.register('index_add', P.IndexAdd)
 tensor_operator_registry.register('scatter_max', P.ScatterMax)
 tensor_operator_registry.register('scatter_min', P.ScatterMin)
+tensor_operator_registry.register('space_to_batch_nd', P.SpaceToBatchND)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)
