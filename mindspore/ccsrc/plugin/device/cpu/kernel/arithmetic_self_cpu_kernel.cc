@@ -65,6 +65,8 @@ constexpr auto kAtanh = "Atanh";
 constexpr auto kAbs = "Abs";
 constexpr auto kSqrt = "Sqrt";
 constexpr auto kRsqrt = "Rsqrt";
+constexpr auto kErf = "Erf";
+constexpr auto kErfc = "Erfc";
 
 class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
@@ -277,6 +279,26 @@ void Cos(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = static_cast<T>(cos(static_cast<double>(in[i])));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void Erf(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(erf(static_cast<double>(in[i])));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void Erfc(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(erfc(static_cast<double>(in[i])));
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
@@ -572,7 +594,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimInv->name(), Inv<T>},           {prim::kPrimInvert->name(), Invert<T>},
                           {prim::kPrimRint->name(), Rint<T>},         {prim::kPrimRound->name(), Round<T>},
                           {prim::kPrimAbs->name(), Abs<T>},           {prim::kPrimSqrt->name(), Sqrt<T>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T>}};
+                          {prim::kPrimRsqrt->name(), Rsqrt<T>},       {prim::kPrimErf->name(), Erf<T>},
+                          {prim::kPrimErfc->name(), Erfc<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -742,7 +765,13 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
   {kSqrt,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-     []() { return std::make_shared<SqrtMKLKernelFunc>(); }}}}};
+     []() { return std::make_shared<SqrtMKLKernelFunc>(); }}}},
+  {kErf,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+  {kErfc,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}}};
 }  // namespace
 
 void ArithmeticSelfCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -846,6 +875,10 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErfc); });
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel
