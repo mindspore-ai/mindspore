@@ -89,14 +89,14 @@ PYBIND11_MODULE(_c_expression, m) {
       continue;
     }
     auto parent_names = get_inherit_stack(item.first);
-    // init parent class
+    // Init parent class
     std::for_each(parent_names.rbegin(), parent_names.rend(), [&fns, &has_inited, &m](const std::string &parent_name) {
       if (has_inited.find(parent_name) == has_inited.end()) {
         fns[parent_name](&m);
         has_inited.emplace(parent_name);
       }
     });
-    // init current class
+    // Init current class
     item.second(&m);
     has_inited.emplace(item.first);
   }

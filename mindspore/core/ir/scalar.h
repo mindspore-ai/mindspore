@@ -448,7 +448,7 @@ class MS_CORE_API FloatImm : public Scalar {
   FloatImm() = default;
   /// \brief The constructor for FloatImm.
   ///
-  /// \param[in] v The value of FloatImm.
+  /// \param[in] t The value of FloatImm.
   explicit FloatImm(const TypePtr &t) : Scalar(t) {}
   /// \brief The destructor of FloatImm.
   ~FloatImm() override = default;
