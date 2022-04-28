@@ -67,6 +67,7 @@ void SparseMatrixAdd::Init(const std::vector<int64_t> &csr_a, const std::vector<
 
 AbstractBasePtr SparseMatrixAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
   const std::string op_name = primitive->name();
   // Addition of two CSR tensors. C = Alpha * A + Beta * B.
   // Eight input (CSR_A(three tensors), CSR_B(three tensors), Alpha, Beta)
