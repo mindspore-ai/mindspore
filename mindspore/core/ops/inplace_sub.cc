@@ -61,8 +61,8 @@ abstract::ShapePtr InplaceSubInferShape(const PrimitivePtr &primitive, const std
   CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, v_in_shape.at(0),
                                            primitive->name());
   for (size_t i = 0; i < indices.size(); ++i) {
-    CheckAndConvertUtils::CheckInRange<int64_t>("the value of indices", indices.at(i), kIncludeLeft,
-                                                {0, x_in_shape.at(0)}, primitive->name());
+    CheckAndConvertUtils::CheckInRange<int64_t>("value of indices", indices.at(i), kIncludeLeft, {0, x_in_shape.at(0)},
+                                                primitive->name());
   }
 
   if (!x_min_shape.empty() && !x_max_shape.empty()) {
