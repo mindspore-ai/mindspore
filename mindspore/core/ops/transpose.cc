@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,12 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_min_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
   auto x_max_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
+  (void)CheckAndConvertUtils::CheckInteger("input_x size", SizeToLong(x_shape.size()), kGreaterThan, 0, op_name);
   ShapeVector p_value;
   ShapeVector p_value_raw;
+  if (x_shape[0] == 0) {
+    MS_EXCEPTION(ValueError) << "For Transpose, the input_x must hava value.";
+  }
   if (input_args.size() == 1) {
     if (!primitive->HasAttr("perm")) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is necessary, but missing it!";
@@ -73,7 +77,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
       it = tmp.erase(it);
     }
     if (std::find(tmp.begin(), tmp.end(), dim) != tmp.end()) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', The value of perm is wrong";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of perm is wrong.";
     }
   }
   std::vector<int64_t> in_shape(p_value);
@@ -93,7 +97,7 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
 
 TypePtr TransposeInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  return CheckAndConvertUtils::CheckSubClass("x", input_args[0]->BuildType(), {kTensorType}, prim->name());
+  return CheckAndConvertUtils::CheckSubClass("input_x", input_args[0]->BuildType(), {kTensorType}, prim->name());
 }
 }  // namespace
 
@@ -104,14 +108,12 @@ AbstractBasePtr TransposeInfer(const abstract::AnalysisEnginePtr &, const Primit
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  // The second input is optional.
-  constexpr size_t input_size1 = 1;
-  (void)CheckAndConvertUtils::CheckInteger("Transpose infer", SizeToLong(input_args.size()), kGreaterEqual, input_size1,
-                                           primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputIndex1, primitive->name());
   auto type = TransposeInferType(primitive, input_args);
   auto shape = TransposeInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(Transpose, prim::kPrimTranspose, TransposeInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
