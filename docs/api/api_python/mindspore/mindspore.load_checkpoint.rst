@@ -1,9 +1,13 @@
 mindspore.load_checkpoint
 ==========================
 
-.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM")
+.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM", specify_prefix=None)
 
     加载checkpoint文件。
+
+    .. note::
+        - `specify_prefix` 和 `filter_prefix`的功能相互之间没有影响。
+        - 如果发现没有参数被成功加载，将会报ValueError.
 
     **参数：**
 
@@ -13,6 +17,7 @@ mindspore.load_checkpoint
     - **filter_prefix** (Union[str, list[str], tuple[str]]) – 以 `filter_prefix` 开头的参数将不会被加载。默认值：None。
     - **dec_key** (Union[None, bytes]) – 用于解密的字节类型密钥，如果值为None，则不需要解密。默认值：None。
     - **dec_mode** (str) – 该参数仅当 `dec_key` 不为None时有效。指定解密模式，目前支持“AES-GCM”和“AES-CBC”。默认值：“AES-GCM”。
+    - **specify_prefix** (Union[str, list[str], tuple[str]]) – 以 `specify_prefix` 开头的参数将会被加载。默认值：None。
 
     **返回：**
 
@@ -21,3 +26,5 @@ mindspore.load_checkpoint
     **异常：**
 
     - **ValueError** – checkpoint文件格式不正确。
+    - **ValueError** – 没有一个参数被成功加载。
+    - **ValueError** `specify_prefix` 或者 `filter_prefix` 的数据类型不正确。

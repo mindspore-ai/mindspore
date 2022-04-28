@@ -37,9 +37,19 @@ from mindspore.train.serialization import save_checkpoint, load_checkpoint, load
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
 
-class Net(nn.Cell):
-    """Net definition."""
 
+class Net(nn.Cell):
+    """
+    Net definition.
+    parameter name :
+        conv1.weight
+        bn1.moving_mean
+        bn1.moving_variance
+        bn1.gamma
+        bn1.beta
+        fc.weight
+        fc.bias
+    """
     def __init__(self, num_classes=10):
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
@@ -340,6 +350,98 @@ def test_load_checkpoint_empty_file():
     os.mknod("empty.ckpt")
     with pytest.raises(ValueError):
         load_checkpoint("empty.ckpt")
+
+
+def test_load_checkpoint_error_param():
+    """
+    Feature: Load checkpoint.
+    Description: Load checkpoint with error param.
+    Expectation: Raise value error for error param.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net(10)
+    ckpt_file = "check_name.ckpt"
+    save_checkpoint(net, ckpt_file)
+    with pytest.raises(TypeError):
+        load_checkpoint(ckpt_file, specify_prefix=123)
+    with pytest.raises(ValueError):
+        load_checkpoint(ckpt_file, filter_prefix="")
+    if os.path.exists(ckpt_file):
+        os.remove(ckpt_file)
+
+
+def test_load_checkpoint_error_load():
+    """
+    Feature: Load checkpoint.
+    Description: Load checkpoint with empty parameter dict.
+    Expectation: Raise value error for error load.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net(10)
+    ckpt_file = "check_name.ckpt"
+    save_checkpoint(net, ckpt_file)
+    with pytest.raises(ValueError):
+        load_checkpoint(ckpt_file, specify_prefix="123")
+    if os.path.exists(ckpt_file):
+        os.remove(ckpt_file)
+
+
+def test_load_checkpoint_specify_prefix():
+    """
+    Feature: Load checkpoint.
+    Description: Load checkpoint with param `specify_prefix`.
+    Expectation: Correct loaded checkpoint file.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net(10)
+    ckpt_file = "specify_prefix.ckpt"
+    save_checkpoint(net, ckpt_file)
+    param_dict = load_checkpoint(ckpt_file, specify_prefix="bn")
+    assert len(param_dict) == 4
+    param_dict = load_checkpoint(ckpt_file, specify_prefix="fc")
+    assert len(param_dict) == 2
+    param_dict = load_checkpoint(ckpt_file, specify_prefix=["fc", "bn"])
+    assert len(param_dict) == 6
+    if os.path.exists(ckpt_file):
+        os.remove(ckpt_file)
+
+
+def test_load_checkpoint_filter_prefix():
+    """
+    Feature: Load checkpoint.
+    Description: Load checkpoint with param `filter_prefix`.
+    Expectation: Correct loaded checkpoint file.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net(10)
+    ckpt_file = "filter_prefix.ckpt"
+    save_checkpoint(net, ckpt_file)
+    param_dict = load_checkpoint(ckpt_file, filter_prefix="fc")
+    assert len(param_dict) == 5
+    param_dict = load_checkpoint(ckpt_file, filter_prefix="bn")
+    assert len(param_dict) == 3
+    param_dict = load_checkpoint(ckpt_file, filter_prefix=["bn", "fc"])
+    assert len(param_dict) == 1
+    if os.path.exists(ckpt_file):
+        os.remove(ckpt_file)
+
+
+def test_load_checkpoint_specify_filter_prefix():
+    """
+    Feature: Load checkpoint.
+    Description: Load checkpoint with param `filter_prefix` and `specify_prefix`.
+    Expectation: Correct loaded checkpoint file.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    net = Net(10)
+    ckpt_file = "specify_filter_prefix.ckpt"
+    save_checkpoint(net, ckpt_file)
+    param_dict = load_checkpoint(ckpt_file, specify_prefix="bn", filter_prefix="bn1.moving")
+    assert len(param_dict) == 2
+    param_dict = load_checkpoint(ckpt_file, specify_prefix=["bn", "fc"], filter_prefix="fc.weight")
+    assert len(param_dict) == 5
+    if os.path.exists(ckpt_file):
+        os.remove(ckpt_file)
 
 
 def test_save_and_load_checkpoint_for_network_with_encryption():
