@@ -51,7 +51,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
  public:
   Flags();
 
-  ~Flags() override;
+  ~Flags() = default;
 
   int InitInputOutputDataType();
 

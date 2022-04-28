@@ -527,12 +527,6 @@ int Flags::Init(int argc, const char **argv) {
   return RET_OK;
 }
 
-Flags::~Flags() {
-  dec_key.clear();
-  encKeyStr.clear();
-  memset(encKey, 0, kEncMaxLen);
-}
-
 bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config) {
   // device: [device0 device1] ---> {cpu, gpu}
   // computeRate: [x: y] x >=0 && y >=0 && x/y < 10
