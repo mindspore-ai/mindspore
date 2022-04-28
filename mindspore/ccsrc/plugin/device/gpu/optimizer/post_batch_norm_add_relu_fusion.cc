@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace opt {
 const BaseRef PostBatchNormAddReluFusion::DefinePattern() const {
-  VectorRef batch_norm = VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_});
+  VectorRef batch_norm = VectorRef({prim::kPrimBatchNorm, x_, scale_, bias_, mean_, var_, umonad_});
   VectorRef tuple_get_item = VectorRef({prim::kPrimTupleGetItem, batch_norm, index_});
   VectorRef tensor_add = VectorRef({prim::kPrimAdd, z_, tuple_get_item});
   VectorRef relu = VectorRef({prim::kPrimRelu, tensor_add});
@@ -68,6 +68,7 @@ const AnfNodePtr PostBatchNormAddReluFusion::Process(const FuncGraphPtr &graph, 
   auto bias = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex2);
   auto mean = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex3);
   auto var = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex4);
+  auto umonad = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(batch_norm), kIndex5);
   auto z = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tensor_add), kIndex0);
 
   MS_EXCEPTION_IF_NULL(x);
@@ -75,11 +76,12 @@ const AnfNodePtr PostBatchNormAddReluFusion::Process(const FuncGraphPtr &graph, 
   MS_EXCEPTION_IF_NULL(bias);
   MS_EXCEPTION_IF_NULL(mean);
   MS_EXCEPTION_IF_NULL(var);
+  MS_EXCEPTION_IF_NULL(umonad);
   MS_EXCEPTION_IF_NULL(z);
 
   auto prim = std::make_shared<Primitive>(kBatchNormWithAddAndActivation);
   MS_EXCEPTION_IF_NULL(prim);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, scale, bias, mean, var, z};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x, scale, bias, mean, var, z, umonad};
   auto fused_batch_norm_with_add_relu = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(fused_batch_norm_with_add_relu);
 
