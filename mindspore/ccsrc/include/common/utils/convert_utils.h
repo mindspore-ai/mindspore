@@ -101,7 +101,8 @@ const mindspore::HashSet<std::string> sparse_op_set = {{prim::kSparseTensorDense
                                                        {prim::kCSRMul},
                                                        {prim::kCSRGather},
                                                        {prim::kCSR2COO},
-                                                       {prim::kCSRDiv}};
+                                                       {prim::kCSRDiv},
+                                                       {prim::kSparseMatrixAdd}};
 
 COMMON_EXPORT bool IsAKGSparseOP(const AnfNodePtr &cnode);
 }  // namespace mindspore
