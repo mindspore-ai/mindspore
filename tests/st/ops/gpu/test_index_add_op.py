@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,6 +39,11 @@ class NetIndexAdd(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add():
+    """
+    Feature: test IndexAdd forward.
+    Description: test inputs with different shapes.
+    Expectation: the result match with numpy result
+    """
     x = np.arange(2 * 3 * 4 * 4).reshape(2, 3, 4, 4).astype(np.float32)
     y0 = np.ones((1, 3, 4, 4), dtype=np.float32)
     idx0 = np.array([1]).astype(np.int32)
@@ -100,156 +105,143 @@ def test_index_add():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_index_add_float16():
-    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float16)
-    y = np.ones((2, 2, 4), dtype=np.float16)
+def index_add_forward(nptype):
+    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(nptype)
+    y = np.ones((2, 2, 4), dtype=nptype)
     idx = np.array([0, 2]).astype(np.int32)
     axis = 1
     expect = np.copy(x)
     expect[:, idx, :] = expect[:, idx, :] + y
+    net = NetIndexAdd(x, axis)
+    output = net(Tensor(idx), Tensor(y))
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_float16():
+    """
+    Feature: test IndexAdd forward.
+    Description: test float16 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.float16)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.float16)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_int32():
-    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.int32)
-    y = np.ones((2, 2, 4), dtype=np.int32)
-    idx = np.array([0, 2]).astype(np.int32)
-    axis = 1
-    expect = np.copy(x)
-    expect[:, idx, :] = expect[:, idx, :] + y
+    """
+    Feature: test IndexAdd forward.
+    Description: test int32 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.int32)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.int32)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_int8():
-    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.int8)
-    y = np.ones((2, 2, 4), dtype=np.int8)
-    idx = np.array([0, 2]).astype(np.int32)
-    axis = 1
-    expect = np.copy(x)
-    expect[:, idx, :] = expect[:, idx, :] + y
+    """
+    Feature: test IndexAdd forward.
+    Description: test int8 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.int8)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.int8)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_uint8():
-    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.uint8)
-    y = np.ones((2, 2, 4), dtype=np.uint8)
-    idx = np.array([0, 2]).astype(np.int32)
-    axis = 1
-    expect = np.copy(x)
-    expect[:, idx, :] = expect[:, idx, :] + y
+    """
+    Feature: test IndexAdd forward.
+    Description: test uint8 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.uint8)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.uint8)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_float64():
-    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float64)
-    y = np.ones((2, 2, 4), dtype=np.float64)
-    idx = np.array([0, 2]).astype(np.int32)
-    axis = 1
-    expect = np.copy(x)
-    expect[:, idx, :] = expect[:, idx, :] + y
+    """
+    Feature: test IndexAdd forward.
+    Description: test float64 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.float64)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.float64)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_int16():
-    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.int16)
-    y = np.ones((2, 2, 4), dtype=np.int16)
-    idx = np.array([0, 2]).astype(np.int32)
-    axis = 1
-    expect = np.copy(x)
-    expect[:, idx, :] = expect[:, idx, :] + y
+    """
+    Feature: test IndexAdd forward.
+    Description: test int16 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.int16)
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    net = NetIndexAdd(x, axis)
-    output = net(Tensor(idx), Tensor(y))
-    assert (output.asnumpy() == expect).all()
+    index_add_forward(np.int16)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_invalid_inputs():
+    """
+    Feature: test IndexAdd invalid inputs.
+    Description: invalid inputs check.
+    Expectation: all exception cached.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.uint8)
     y = np.ones((2, 2, 4), dtype=np.uint8)
     with pytest.raises(TypeError):
-        #axis not int
+        # axis not int
         net = NetIndexAdd(x, 1.0)
 
-        #x and y don't have the same type
+        # x and y don't have the same type
         y = np.ones((2, 2, 4), dtype=np.float32)
         idx = np.array([0, 1]).astype(np.int32)
         net = NetIndexAdd(x, 1)
         _ = net(Tensor(idx), Tensor(y))
 
     with pytest.raises(ValueError):
-        #index size not the same as len(y[axis])
+        # index size not the same as len(y[axis])
         idx = np.array([0]).astype(np.int32)
         net = NetIndexAdd(x, 1)
         _ = net(Tensor(idx), Tensor(y))
 
-        #x and y don't have same rank
+        # x and y don't have same rank
         y = np.ones((2, 2), dtype=np.uint8)
         idx = np.array([0, 1]).astype(np.int32)
         net = NetIndexAdd(x, 1)
         _ = net(Tensor(idx), Tensor(y))
 
-        #x and y don't have same shape on dimensions other than axis-th dimension
+        # x and y don't have same shape on dimensions other than axis-th dimension
         y = np.ones((2, 2, 5), dtype=np.uint8)
         idx = np.array([0, 1]).astype(np.int32)
         net = NetIndexAdd(x, 1)
@@ -300,6 +292,11 @@ def index_add_grad_with_type(nptype):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_float64():
+    """
+    Feature: test IndexAdd backward.
+    Description: test float64 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.float64)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -310,6 +307,11 @@ def test_index_add_grad_float64():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_float32():
+    """
+    Feature: test IndexAdd backward.
+    Description: test float32 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.float32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -320,6 +322,11 @@ def test_index_add_grad_float32():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_float16():
+    """
+    Feature: test IndexAdd backward.
+    Description: test float16 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.float16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -330,6 +337,11 @@ def test_index_add_grad_float16():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_int32():
+    """
+    Feature: test IndexAdd backward.
+    Description: test int32 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.int32)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -340,6 +352,11 @@ def test_index_add_grad_int32():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_int16():
+    """
+    Feature: test IndexAdd backward.
+    Description: test int16 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.int16)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -350,6 +367,11 @@ def test_index_add_grad_int16():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_int8():
+    """
+    Feature: test IndexAdd backward.
+    Description: test int8 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.int8)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
@@ -360,7 +382,40 @@ def test_index_add_grad_int8():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_index_add_grad_uint8():
+    """
+    Feature: test IndexAdd backward.
+    Description: test uint8 inputs.
+    Expectation: the result match with numpy result
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     index_add_grad_with_type(np.uint8)
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     index_add_grad_with_type(np.uint8)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_index_add_dynamic():
+    """
+    Feature: test IndexAdd dynamic shape.
+    Description: input y is dynamic shape.
+    Expectation: the result match with numpy result
+    """
+    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)
+    y = np.ones((2, 2, 4), dtype=np.float32)
+    idx = np.array([0, 2]).astype(np.int32)
+    axis = 1
+    expect = np.copy(x)
+    expect[:, idx, :] = expect[:, idx, :] + y
+    y_dyn = Tensor(shape=[2, None, 4], dtype=mindspore.float32)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    net = NetIndexAdd(x, axis)
+    net.set_inputs(Tensor(idx), y_dyn)
+    output = net(Tensor(idx), Tensor(y))
+    assert (output.asnumpy() == expect).all()
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = NetIndexAdd(x, axis)
+    net.set_inputs(Tensor(idx), y_dyn)
+    output = net(Tensor(idx), Tensor(y))
+    assert (output.asnumpy() == expect).all()
