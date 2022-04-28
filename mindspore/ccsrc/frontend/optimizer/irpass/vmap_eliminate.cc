@@ -327,7 +327,8 @@ void BindNoneAxis(const AnfNodePtr &node, const FuncGraphPtr &func_graph, const 
 }
 
 void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
-                         mindspore::HashSet<AnfNodePtr> *visited_node, int axis_size) {
+                         mindspore::HashSet<FuncGraphPtr> *visited_graph, mindspore::HashSet<AnfNodePtr> *visited_node,
+                         int axis_size) {
   // Map ValueNode.
   auto manager = resource->manager();
   auto value_nodes = vmap_fg->value_nodes();
@@ -343,7 +344,11 @@ void ExpandVmapValueNode(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBa
       MS_LOG(DEBUG) << "Map FuncGraph node " << node->DebugString() << ".";
       visited_node->insert(node);
       auto sub_func_graph = GetValueNode<FuncGraphPtr>(node);
-      auto transformed_fg = ExpandVmapFunctor(sub_func_graph, resource, visited_node, axis_size);
+      if (visited_graph->count(sub_func_graph)) {
+        continue;
+      }
+      visited_graph->insert(sub_func_graph);
+      auto transformed_fg = ExpandVmapFunctor(sub_func_graph, resource, visited_graph, visited_node, axis_size);
       auto replace_node = NewValueNode(transformed_fg);
       visited_node->insert(replace_node);
       manager->Replace(node, replace_node);
@@ -388,6 +393,7 @@ void ExpandVmapFreeVariable(const FuncGraphPtr &vmap_fg, const FuncGraphManagerP
 }
 
 FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
+                               mindspore::HashSet<FuncGraphPtr> *visited_graph,
                                mindspore::HashSet<AnfNodePtr> *visited_node, int axis_size) {
   MS_EXCEPTION_IF_NULL(vmap_fg);
   auto manager = resource->manager();
@@ -402,7 +408,7 @@ FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::Reso
     visited_node->insert(node);
   }
 
-  ExpandVmapValueNode(vmap_fg, resource, visited_node, axis_size);
+  ExpandVmapValueNode(vmap_fg, resource, visited_graph, visited_node, axis_size);
   ExpandVmapFreeVariable(vmap_fg, manager, *visited_node);
 
   return vmap_fg;
@@ -419,8 +425,12 @@ AnfNodePtr ExpandVmap(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr
 
     // Record transformed FuncGraphs and other nodes to avoid repeatedly expanding and transforming.
     // Whose lifecycle is limited to the current extension.
+    mindspore::HashSet<FuncGraphPtr> visited_graph;
     mindspore::HashSet<AnfNodePtr> visited_node;
-    auto tf_fg = ExpandVmapFunctor(func_graph, resource, &visited_node, axis_size);
+    visited_graph.insert(func_graph);
+    visited_node.insert(vnode);
+
+    auto tf_fg = ExpandVmapFunctor(func_graph, resource, &visited_graph, &visited_node, axis_size);
     visited_node.clear();
 
     return NewValueNode(tf_fg);

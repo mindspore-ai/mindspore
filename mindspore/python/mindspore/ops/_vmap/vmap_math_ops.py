@@ -29,12 +29,38 @@ def _broadcast_shape(nd, x_ndim, x_shape):
     return x_shape + (1,) * (nd - x_ndim)
 
 
-def _handle_scalar_broadcasting(nd, x, dim):
-    x_shape = F.shape(x)
-    x_ndim = len(x_shape)
-    if dim is None or nd == x_ndim:
-        return x
-    broadcast_shape = _broadcast_shape(nd, x_ndim, x_shape)
+@constexpr
+def _get_broadcast_shape(x_shape, y_shape):
+    """Get the broadcast shape for _handle_broadcasting."""
+    x_len = len(x_shape)
+    y_len = len(y_shape)
+
+    if x_len >= y_len:
+        return x_shape
+
+    # scalar case
+    if not x_len:
+        return (1,) * y_len
+
+    broadcast_shape = ()
+    x_index = x_len - 1
+
+    for i in range(y_len - 1, 0, -1):
+        if x_index == 0:
+            broadcast_shape = (1,) + broadcast_shape
+        elif x_shape[x_index] == y_shape[i] or y_shape[i] == 1 or x_shape[x_index] == 1:
+            broadcast_shape = (x_shape[x_index],) + broadcast_shape
+            x_index -= 1
+        else:
+            broadcast_shape = (1,) + broadcast_shape
+
+    finnal_shape = (x_shape[0],) + tuple(broadcast_shape)
+    return finnal_shape
+
+
+def _handle_broadcasting(x, x_shape, y_shape):
+    """Handle the broadcasting for the broadcast_binary_op."""
+    broadcast_shape = _get_broadcast_shape(x_shape, y_shape)
     return F.reshape(x, broadcast_shape)
 
 
@@ -76,14 +102,10 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
             x = _bdim_at_front(x, x_dim, 1)
         if F.rank(y):
             y = _bdim_at_front(y, y_dim, 1)
-        x_nd = F.rank(x)
-        y_nd = F.rank(y)
-        ndim = x_nd
-        if y_nd > ndim:
-            ndim = y_nd
-
-        x = _handle_scalar_broadcasting(ndim, x, x_dim)
-        y = _handle_scalar_broadcasting(ndim, y, y_dim)
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        x = _handle_broadcasting(x, x_shape, y_shape)
+        y = _handle_broadcasting(y, y_shape, x_shape)
 
         out = prim(x, y)
         return (out, 0)
