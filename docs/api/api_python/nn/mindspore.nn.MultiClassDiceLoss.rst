@@ -14,7 +14,7 @@ mindspore.nn.MultiClassDiceLoss
     **输入：**
 
     - **logits** (Tensor) - shape为 :math:`(N, C, *)` 的Tensor，其中 :math:`*` 表示任意数量的附加维度。logits维度应大于1。数据类型必须为float16或float32。
-    -- **labels** (Tensor) - shape为 :math:`(N, C, *)` 的Tensor，与 `logits` 的shape相同。标签维度应大于1。数据类型必须为float16或float32。
+    - **labels** (Tensor) - shape为 :math:`(N, C, *)` 的Tensor，与 `logits` 的shape相同。标签维度应大于1。数据类型必须为float16或float32。
 
     **输出：**
 
@@ -26,4 +26,4 @@ mindspore.nn.MultiClassDiceLoss
     - **TypeError** - `logits` 或 `labels` 的类型不是Tensor。
     - **ValueError** - `logits` 或 `labels` 的维度小于2。
     - **ValueError** - `weights` 的shape[0]和 `labels` 的shape[1]不相等。
-    - **ValueError** - `weights`是Tensor，但其维度不是2。
+    - **ValueError** - `weights` 是Tensor，但其维度不是2。
