@@ -23,6 +23,8 @@
 #include <iostream>
 #include <string>
 #include <complex>
+#include <map>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -30,23 +32,44 @@
 
 namespace mindspore {
 namespace kernel {
-class BitwiseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class BitwiseCpuKernelMod : public NativeCpuKernelMod {
  public:
   BitwiseCpuKernelMod() = default;
   explicit BitwiseCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~BitwiseCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return func_obj_->RunFunc(inputs, workspace, outputs);
+    return kernel_func_(this, inputs, outputs);
   }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+              const std::vector<KernelTensorPtr> &outputs,
+              const std::map<uint32_t, tensor::TensorPtr> &others = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<CpuKernelFunc> func_obj_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  using BitwiseLaunchFunc = std::function<bool(BitwiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, BitwiseLaunchFunc>> func_list_;
+  BitwiseLaunchFunc kernel_func_;
+
   std::string kernel_type_{"Unknown"};
+  std::string kernel_name_;
+  TypeId input_type_1_{kTypeUnknown};
+  TypeId input_type_2_{kTypeUnknown};
+  std::vector<size_t> input_shape_1_;
+  std::vector<size_t> input_shape_2_;
+  std::vector<size_t> output_shape_;
+  const size_t max_dims_{7};
 };
 }  // namespace kernel
 }  // namespace mindspore

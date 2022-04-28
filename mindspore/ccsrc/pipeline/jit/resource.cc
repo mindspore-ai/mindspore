@@ -181,6 +181,9 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"transpose", std::string("transpose")},         // P.transpose
                                          {"flatten", std::string("flatten")},             // P.reshape(,-1)
                                          {"reshape", std::string("reshape")},             // P.reshape()
+                                         {"bitwise_and", std::string("bitwise_and")},     // P.BitwiseAnd()
+                                         {"bitwise_or", std::string("bitwise_or")},       // P.BitwiseOr()
+                                         {"bitwise_xor", std::string("bitwise_xor")},     // P.BitwiseXor()
                                          {"ravel", std::string("ravel")},                 // P.reshape(,(-1,))
                                          {"swapaxes", std::string("swapaxes")},           // P.transpose()
                                          {"narrow", std::string("narrow")},               // narrow()

@@ -142,6 +142,7 @@ def pack(x):
           ".")
     return stack(x)
 
+
 partial = P.Partial()
 # depend: mount a node to another node
 depend = P.Depend()
@@ -970,6 +971,9 @@ tensor_operator_registry.register('broadcast_to', P.BroadcastTo)
 tensor_operator_registry.register('matmul', P.MatMul)
 tensor_operator_registry.register('argmax', P.Argmax)
 tensor_operator_registry.register('cumsum', P.CumSum)
+tensor_operator_registry.register('bitwise_and', bitwise_and)
+tensor_operator_registry.register('bitwise_or', bitwise_or)
+tensor_operator_registry.register('bitwise_xor', bitwise_xor)
 tensor_operator_registry.register('reduce_max', P.ReduceMax)
 tensor_operator_registry.register('reduce_min', P.ReduceMin)
 tensor_operator_registry.register('maximum', P.Maximum)

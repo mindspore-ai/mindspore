@@ -31,7 +31,6 @@ from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations._inner_ops import Format
 from ...ops.primitive import constexpr
 
-
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
 
 shape_ = P.Shape()
@@ -184,7 +183,7 @@ def strides_(x):
     return strides
 
 
-def astype(x, dtype, copy=True): # pylint: disable=redefined-outer-name
+def astype(x, dtype, copy=True):  # pylint: disable=redefined-outer-name
     """
     Return a copy of the tensor, casted to a specified type.
 
@@ -391,10 +390,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -590,7 +589,7 @@ def copy(x):
     return x
 
 
-def max(x, axis=None, keepdims=False, initial=None, where=True): # pylint: disable=redefined-builtin
+def max(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disable=redefined-builtin
     """
     Returns the maximum of a tensor or maximum along an axis.
 
@@ -635,7 +634,7 @@ def max(x, axis=None, keepdims=False, initial=None, where=True): # pylint: disab
                                  axis=axis, keepdims=keepdims, initial=initial, where=where)
 
 
-def min(x, axis=None, keepdims=False, initial=None, where=True): # pylint: disable=redefined-builtin
+def min(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disable=redefined-builtin
     """
     Returns the minimum of a tensor or minimum along an axis.
 
@@ -779,11 +778,11 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
         e = e.astype(mstype.float32)
         if offset > 0:
             e_left = F.fill(dtype, (n, offset), 0)
-            e_right = e[..., 0:m-offset:1]
+            e_right = e[..., 0:m - offset:1]
             e = P.Concat(1)((e_left, e_right)).astype(dtype)
         elif offset < 0:
             e_upper = F.fill(dtype, (-offset, m), 0)
-            e_lower = e[0:n+offset:1, ...]
+            e_lower = e[0:n + offset:1, ...]
             e = P.Concat(0)((e_upper, e_lower)).astype(dtype)
     e = P.BroadcastTo(shape)(e)
 
@@ -791,7 +790,7 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     res = F.reduce_sum(prod.astype(mstype.float32), -1)
 
     begin = ()
-    for i in range(ndim-2):
+    for i in range(ndim - 2):
         begin += (0,)
     last_dim_begin = max_(0, -offset)
     begin += (last_dim_begin,)
@@ -1031,7 +1030,7 @@ def searchsorted(x, v, side='left', sorter=None):
 
     sort_range = F.make_range(get_log2_size(F.shape_mul(a.shape) + 1))
     for _ in sort_range:
-        mid = (i - F.neg_tensor(j))//2
+        mid = (i - F.neg_tensor(j)) // 2
         mask = less_op(v, F.gather_nd(a, mid.reshape(mid.shape + (1,))))
         i = F.select(mask, i, mid)
         j = F.select(mask, mid, j)
@@ -1271,7 +1270,7 @@ def std(x, axis=None, ddof=0, keepdims=False):
     return F.tensor_pow(x_var, 0.5)
 
 
-def sum(x, axis=None, dtype=None, keepdims=False, initial=None): # pylint: disable=redefined-builtin
+def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
     """
     Return sum of array elements over a given axis.
 
@@ -1537,6 +1536,21 @@ def view(x, *shape):
     return F.reshape(x, shape)
 
 
+def bitwise_and(x, y):
+    """Returns bitwise `and` of two tensors element-wise."""
+    return F.bitwise_and(x, y)
+
+
+def bitwise_or(x, y):
+    """Returns bitwise `or` of two tensors element-wise."""
+    return F.bitwise_or(x, y)
+
+
+def bitwise_xor(x, y):
+    """Returns bitwise `xor` of two tensors element-wise."""
+    return F.bitwise_xor(x, y)
+
+
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
@@ -1756,6 +1770,7 @@ class SequenceIterator:
 
     Iterator to use for sequences like List, Array.
     """
+
     def __init__(self, idx, seq):
         self.idx = idx
         self.seq = seq
@@ -1810,6 +1825,7 @@ def list_insert(self_, index, obj):
     """Insert into list"""
     return _insert(self_, index, obj)
 
+
 #################
 # Array methods #
 #################
@@ -1827,6 +1843,7 @@ def filter_(fun, iter_):
         if fun(elem):
             result.append(elem)
     return result
+
 
 ##################
 # Sparse methods #
@@ -1876,6 +1893,7 @@ def coo_abs(x):
     """Implementation of `abs` for COOTensor."""
     data = F.absolute(x.values)
     return F.make_coo_tensor(x.indices, data, x.shape)
+
 
 ################
 # Sparse Attrs #
