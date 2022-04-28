@@ -93,7 +93,7 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Set the type for the AbstractBase.
   ///
-  /// \param[in] value The type of an anf node.
+  /// \param[in] type The type of an anf node.
   void set_type(const TypePtr &type) {
     MS_EXCEPTION_IF_NULL(type);
     type_ = type;
@@ -101,7 +101,7 @@ class MS_CORE_API AbstractBase : public Base {
 
   /// \brief Set the shape for the AbstractBase.
   ///
-  /// \param[in] value The shape of an anf node.
+  /// \param[in] shape The shape of an anf node.
   virtual void set_shape(const BaseShapePtr &shape) {
     MS_EXCEPTION_IF_NULL(shape);
     shape_ = shape;
@@ -852,7 +852,7 @@ class MS_CORE_API AbstractTuple final : public AbstractSequence {
   /// \brief Constructor of AbstractTuple.
   ///
   /// \param[in] elements A list of abstracts.
-  /// \param[in] tuple_node The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
+  /// \param[in] tuple_nodes The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
   explicit AbstractTuple(AbstractBasePtrList &&elements,
                          const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
       : AbstractSequence(std::move(elements), tuple_nodes) {}
@@ -860,7 +860,7 @@ class MS_CORE_API AbstractTuple final : public AbstractSequence {
   /// \brief Constructor of AbstractTuple.
   ///
   /// \param[in] elements A list of abstracts.
-  /// \param[in] tuple_node The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
+  /// \param[in] tuple_nodes The nodes of tuple, usually are MakeTuple CNodes or tuple ValueNodes.
   explicit AbstractTuple(const AbstractBasePtrList &elements,
                          const std::shared_ptr<AnfNodeWeakPtrList> &tuple_nodes = nullptr)
       : AbstractSequence(elements, tuple_nodes) {}
@@ -915,14 +915,14 @@ class MS_CORE_API AbstractList final : public AbstractSequence {
   /// \brief Constructor of AbstractList.
   ///
   /// \param[in] elements A list of abstracts.
-  /// \param[in] list_node The nodes of list, usually are MakeList CNodes or list ValueNodes.
+  /// \param[in] list_nodes The nodes of list, usually are MakeList CNodes or list ValueNodes.
   explicit AbstractList(AbstractBasePtrList &&elements, const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr)
       : AbstractSequence(std::move(elements), list_nodes) {}
 
   /// \brief Constructor of AbstractList.
   ///
   /// \param[in] elements A list of abstracts.
-  /// \param[in] list_node The nodes of list, usually are MakeList CNodes or list ValueNodes.
+  /// \param[in] list_nodes The nodes of list, usually are MakeList CNodes or list ValueNodes.
   explicit AbstractList(const AbstractBasePtrList &elements,
                         const std::shared_ptr<AnfNodeWeakPtrList> &list_nodes = nullptr)
       : AbstractSequence(elements, list_nodes) {}
@@ -1269,7 +1269,7 @@ class MS_CORE_API AbstractRefKey final : public AbstractBase {
 
   /// \brief Get the ref key.
   ///
-  /// \param[in] The pointer to RefKey.
+  /// \return The pointer to RefKey.
   RefKeyPtr ref_key_value() const { return ref_key_value_; }
 
   AbstractBasePtr Join(const AbstractBasePtr &other) override;

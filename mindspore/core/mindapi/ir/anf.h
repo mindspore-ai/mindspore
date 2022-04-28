@@ -116,7 +116,7 @@ class MIND_API Parameter : public AnfNode {
 
   /// \brief Set the name of this Parameter.
   ///
-  /// \param[in] The name.
+  /// \param[in] name The name.
   void set_name(const std::string &name);
 
   /// \brief Check if there is a default parameter.

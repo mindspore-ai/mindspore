@@ -128,7 +128,7 @@ class MS_API Model {
   /// \param[in] backbone The static, non-learnable part of the graph
   /// \param[in] head The trainable part of the graph
   /// \param[in] context A context used to store options during execution
-  /// \param[in] cfg A config used by training
+  /// \param[in] train_cfg A config used by training
   ///
   /// \return Status
   Status BuildTransferLearning(GraphCell backbone, GraphCell head, const std::shared_ptr<Context> &context,
@@ -173,7 +173,6 @@ class MS_API Model {
   ///
   /// \param[in] inputs A vector where model inputs are arranged in sequence.
   /// \param[out] outputs Which is a pointer to a vector. The model outputs are filled in the container in sequence.
-  /// \param[in] whether to use data preprocess in model.
   /// \param[in] before CallBack before predict.
   /// \param[in] after CallBack after predict.
   ///
@@ -225,7 +224,7 @@ class MS_API Model {
 
   /// \brief update gradient tensors of the model.
   ///
-  /// \param[in] inputs A vector new gradients.
+  /// \param[in] gradients A vector new gradients.
   /// \return Status of operation
   Status ApplyGradients(const std::vector<MSTensor> &gradients);
 
@@ -236,7 +235,7 @@ class MS_API Model {
 
   /// \brief update weights tensors of the model.
   ///
-  /// \param[in] inputs A vector new weights.
+  /// \param[in] new_weights A vector new weights.
   /// \return Status of operation
   Status UpdateFeatureMaps(const std::vector<MSTensor> &new_weights);
 
@@ -247,7 +246,7 @@ class MS_API Model {
 
   /// \brief update the optimizer parameters
   ///
-  /// \param[in] inputs A vector new optimizer params.
+  /// \param[in] params A vector new optimizer params.
   /// \return Status of operation
   Status SetOptimizerParams(const std::vector<MSTensor> &params);
 
@@ -299,7 +298,7 @@ class MS_API Model {
 
   /// \brief Bind GLTexture2D object to cl Memory.
   ///
-  /// \param[in] inputGlTexture The input GLTexture id for Model.
+  /// \param[in] inputGLTexture The input GLTexture id for Model.
   /// \param[in] outputGLTexture The output GLTexture id for Model.
   ///
   /// \return Status of operation.

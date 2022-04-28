@@ -59,7 +59,7 @@ class MS_API Serialization {
   ///
   /// \param[in] files The path of model files.
   /// \param[in] model_type The Type of model file, options are ModelType::kMindIR, ModelType::kOM.
-  /// \param[out] graph The output parameter, an object saves graph data.
+  /// \param[out] graphs The output parameter, an object saves graph data.
   /// \param[in] dec_key The decryption key, key length is 16, 24, or 32.
   /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC.
   ///

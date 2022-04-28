@@ -216,22 +216,22 @@ class MS_API MSTensor {
 
   /// \brief Set the shape of for the MSTensor. Only valid for Lite.
   ///
-  /// \param[in] Shape of the MSTensor, a vector of int64_t.
+  /// \param[in] shape Shape of the MSTensor, a vector of int64_t.
   void SetShape(const std::vector<int64_t> &shape);
 
   /// \brief Set the data type for the MSTensor. Only valid for Lite.
   ///
-  /// \param[in] The data type of the MSTensor.
+  /// \param[in] data_type The data type of the MSTensor.
   void SetDataType(enum DataType data_type);
 
   /// \brief Set the name for the MSTensor. Only valid for Lite.
   ///
-  /// \param[in] The name of the MSTensor.
+  /// \param[in] name The name of the MSTensor.
   inline void SetTensorName(const std::string &name);
 
   /// \brief Set the Allocator for the MSTensor. Only valid for Lite.
   ///
-  /// \param[in] A pointer to Allocator.
+  /// \param[in] allocator A pointer to Allocator.
   void SetAllocator(std::shared_ptr<Allocator> allocator);
 
   /// \brief Obtain the Allocator of the MSTensor. Only valid for Lite.
@@ -241,7 +241,7 @@ class MS_API MSTensor {
 
   /// \brief Set the format for the MSTensor. Only valid for Lite.
   ///
-  /// \param[in] The format of the MSTensor.
+  /// \param[in] format The format of the MSTensor.
   void SetFormat(mindspore::Format format);
 
   /// \brief Obtain the format of the MSTensor. Only valid for Lite.
@@ -257,7 +257,7 @@ class MS_API MSTensor {
   ///
   /// \note The memory pointed to origin data pointer of MSTensor needs to be managed by the user
   ///
-  /// \param[in] A pointer to the data of the MSTensor.
+  /// \param[in] data A pointer to the data of the MSTensor.
   void SetData(void *data);
 
   /// \brief Get the quantization parameters of the MSTensor. Only valid for Lite.
@@ -267,7 +267,7 @@ class MS_API MSTensor {
 
   /// \brief Set the quantization parameters for the MSTensor. Only valid for Lite.
   ///
-  /// \param[in] The quantization parameters of the MSTensor.
+  /// \param[in] quant_params The quantization parameters of the MSTensor.
   void SetQuantParams(std::vector<QuantParam> quant_params);
 
   const std::shared_ptr<Impl> impl() const { return impl_; }
