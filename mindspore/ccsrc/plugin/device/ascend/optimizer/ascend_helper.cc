@@ -217,7 +217,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
 AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                                            const AnfNodePtr &node, const KernelSelectPtr &kernel_select,
                                            const std::string &input_format, const std::string &dst_format,
-                                           const std::string &reshape_type) {
+                                           const std::string &reshape_type, const TypeId &type_id) {
   if (input_format == dst_format) {
     MS_LOG(INFO) << "Input format[" << input_format << "] is equal to dst format, no need to insert transdata.";
     return input_node;
@@ -271,7 +271,7 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
     common::AnfAlgo::CopyNodeAttr(kAttrFracZGroup, orig_node, trans_data);
   }
   // refresh the transdata's format to ori format & dst format
-  RefreshKernelBuildInfo(input_format, dst_format, trans_data, reshape_type);
+  RefreshKernelBuildInfo(input_format, dst_format, trans_data, reshape_type, type_id);
   if (is_insert_output) {
     ReFreshInferShape(trans_node, node);
   }

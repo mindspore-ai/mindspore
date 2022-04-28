@@ -129,7 +129,7 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
 AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                                            const AnfNodePtr &node, const KernelSelectPtr &kernel_select,
                                            const std::string &input_format, const std::string &dst_format,
-                                           const std::string &reshape_type);
+                                           const std::string &reshape_type, const TypeId &type_id = kTypeUnknown);
 
 const std::set<std::string> kCommonFormatSet = {kOpFormat_DEFAULT, kOpFormat_ND, kOpFormat_NCHW, kOpFormat_NCDHW};
 }  // namespace opt
