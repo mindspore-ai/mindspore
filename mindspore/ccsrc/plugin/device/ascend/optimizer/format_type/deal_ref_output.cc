@@ -122,12 +122,12 @@ AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_grap
     if (cur_format != kOpFormat_DEFAULT) {
       auto cur_reshape_type = AnfAlgo::GetOutputReshapeType(cnode, output_index);
       final_node = AddTransOpNodeToGraphWithFormat(func_graph, final_node, final_node, kernel_select, cur_format,
-                                                   kOpFormat_DEFAULT, cur_reshape_type);
+                                                   kOpFormat_DEFAULT, cur_reshape_type, cur_type);
     }
     if (origin_format != kOpFormat_DEFAULT) {
       auto origin_reshape_type = AnfAlgo::GetOutputReshapeType(origin_pair.first, origin_pair.second);
       final_node = AddTransOpNodeToGraphWithFormat(func_graph, final_node, final_node, kernel_select, kOpFormat_DEFAULT,
-                                                   origin_format, origin_reshape_type);
+                                                   origin_format, origin_reshape_type, cur_type);
     }
     final_index = 0;
     need_refresh_ref_addr = true;
