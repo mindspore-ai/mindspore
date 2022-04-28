@@ -156,11 +156,6 @@ int Calibrator::AddQuantizedOp(const CNodePtr &cnode) {
 }
 
 int Calibrator::GenerateInputData(const std::string &input_name, size_t image_index,
-                                  mindspore::tensor::MSTensor *tensor) const {
-  return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
-}
-
-int Calibrator::GenerateInputData(const std::string &input_name, size_t image_index,
                                   mindspore::MSTensor *tensor) const {
   return preprocess::PreProcess(data_pre_process_param_, input_name, image_index, tensor);
 }

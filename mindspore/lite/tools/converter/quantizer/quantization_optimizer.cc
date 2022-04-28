@@ -19,7 +19,6 @@
 #include "tools/converter/quantizer/quantization_optimizer.h"
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <deque>
 #include <map>
 #include <set>
@@ -121,11 +120,11 @@ int DoDynamicQuant(const FuncGraphPtr &old_graph, const converter::Flags *config
   return RET_OK;
 }
 
-lite::Model *ParseLiteModel(const FuncGraphPtr &func_graph, const converter::Flags &flags) {
+lite::LiteModel *ParseLiteModel(const FuncGraphPtr &func_graph, const converter::Flags &flags) {
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
-    return static_cast<Model *>(nullptr);
+    return static_cast<lite::LiteModel *>(nullptr);
   }
 
   // transform
@@ -135,7 +134,7 @@ lite::Model *ParseLiteModel(const FuncGraphPtr &func_graph, const converter::Fla
   if (status != RET_OK) {
     MS_LOG(ERROR) << "FBTransform model failed";
     delete meta_graph;
-    return static_cast<Model *>(nullptr);
+    return static_cast<LiteModel *>(nullptr);
   }
   meta_graph->version = Version();
 
@@ -147,13 +146,13 @@ lite::Model *ParseLiteModel(const FuncGraphPtr &func_graph, const converter::Fla
   auto content = builder.GetBufferPointer();
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer nullptr";
-    return static_cast<Model *>(nullptr);
+    return static_cast<LiteModel *>(nullptr);
   }
-  return lite::Model::Import((const char *)content, size);
+  return static_cast<LiteModel *>(LiteModel::Import((const char *)content, size));
 }
 
 int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config,
-                 const std::shared_ptr<mindspore::Model> &origin_model, mindspore::lite::Model *origin_lite_model) {
+                 const std::shared_ptr<mindspore::Model> &origin_model, mindspore::lite::LiteModel *origin_lite_model) {
   auto quant_model = std::make_shared<mindspore::Model>();
   CHECK_NULL_RETURN(quant_model);
   auto ret = BuildModelByFuncGraph(quant_model, old_graph, *config);
@@ -198,7 +197,7 @@ int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags 
   int status;
 
   std::shared_ptr<mindspore::Model> origin;
-  lite::Model *origin_lite_model = nullptr;
+  lite::LiteModel *origin_lite_model = nullptr;
   if (config->commonQuantParam.is_debug) {  // Bak fp32 model for debug
     converter::Flags new_flag = *config;
     new_flag.commonQuantParam.quant_type = schema::QuantType_QUANT_NONE;

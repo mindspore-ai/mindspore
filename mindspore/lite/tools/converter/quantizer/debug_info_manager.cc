@@ -195,7 +195,7 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
   return RET_OK;
 }
 
-int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::tensor::MSTensor *> &inputs,
+int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tensor *> &inputs,
                                          OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
                                          const mindspore::lite::Tensor &tensor) {
   MS_CHECK_TRUE_MSG(quant_debug_info != nullptr, RET_ERROR, "quant_debug_info is nullptr.");
@@ -271,9 +271,8 @@ int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_
 }
 
 int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
-                                      const std::vector<mindspore::tensor::MSTensor *> &inputs,
-                                      OpParameter *op_parameter, bool is_input, int tensor_index,
-                                      mindspore::lite::Tensor *compared_tensor) {
+                                      const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter,
+                                      bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor) {
   CHECK_NULL_RETURN(op_parameter);
   CHECK_NULL_RETURN(compared_tensor);
   QuantDebugInfo compared_debug_info;

@@ -43,8 +43,6 @@ class Calibrator {
 
   ~Calibrator() = default;
 
-  int GenerateInputData(const std::string &input_name, size_t image_index, mindspore::tensor::MSTensor *tensor) const;
-
   int GenerateInputData(const std::string &input_name, size_t image_index, mindspore::MSTensor *tensor) const;
 
   int AddQuantizedOp(const CNodePtr &cnode);

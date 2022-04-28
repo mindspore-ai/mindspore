@@ -24,13 +24,7 @@
 #include "src/common/log_util.h"
 
 namespace mindspore::lite::quant {
-WeightQuantizer::~WeightQuantizer() {
-  for (const auto &fp32_output_tensor : fp32_output_tensors_) {
-    for (const auto &kv : fp32_output_tensor) {
-      delete kv.second;
-    }
-  }
-}
+WeightQuantizer::~WeightQuantizer() {}
 
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
                                  const std::set<PrimitivePtr> &support_weight_quant_types,
