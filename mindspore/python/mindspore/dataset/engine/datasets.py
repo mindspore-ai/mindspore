@@ -574,11 +574,12 @@ class Dataset:
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
                 (default=None).
             per_batch_map (callable, optional): Per batch map callable (default=None). A callable which takes
-                (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch
-                of Tensors on a given column. The number of lists should match with the number of entries in
-                input_columns. The last parameter of the callable should always be a BatchInfo object. Per_batch_map
-                should return (list[Tensor], list[Tensor], ...). The length of each list in output should be the same as
-                the input. output_columns is required if the number of output lists is different from input.
+                (list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo) as input parameters. Each
+                list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists should
+                match with the number of entries in input_columns. The last parameter of the callable should always be
+                a BatchInfo object. Per_batch_map should return (list[numpy.ndarray], list[numpy.ndarray], ...). The
+                length of each list in output should be the same as the input. output_columns is required if the number
+                of output lists is different from input.
             input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of the list
                 should match with signature of per_batch_map callable (default=None).
             output_columns (Union[str, list[str]], optional): List of names assigned to the columns

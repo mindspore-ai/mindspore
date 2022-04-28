@@ -488,7 +488,7 @@ class HWC2CHW(py_transforms.PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>>
-        >>> transforms_list = Compose([py_vision.Decode(),
+        >>> transforms_list = Compose([c_vision.Decode(),
         ...                            py_vision.HWC2CHW()])
         >>> # apply the transform to dataset through map function
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
@@ -627,11 +627,19 @@ class MixUp(py_transforms.PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> # Setup multi-batch mixup transformation
-        >>> transform = [py_vision.MixUp(batch_size=16, alpha=0.2, is_single=False)]
-        >>> # Apply the transform to the dataset through dataset.map()
-        >>> image_folder_dataset = image_folder_dataset.map(input_columns="image",
-        ...                                                 operations=transform)
+        >>> # first decode the image
+        >>> image_folder_dataset = image_folder_dataset.map(operations=c_vision.Decode(),
+        ...                                                 input_columns="image")
+        >>> # then ont hot decode the label
+        >>> image_folder_dataset = image_folder_dataset.map(operations=c_transforms.OneHot(10),
+        ...                                                 input_columns="label")
+        >>> # batch the samples
+        >>> batch_size = 4
+        >>> image_folder_dataset = image_folder_dataset.batch(batch_size=batch_size)
+        >>> # finally mix up the images and labels
+        >>> image_folder_dataset = image_folder_dataset.map(
+        ...     operations=py_vision.MixUp(batch_size=batch_size, alpha=0.2),
+        ...     input_columns=["image", "label"])
     """
 
     @check_mix_up

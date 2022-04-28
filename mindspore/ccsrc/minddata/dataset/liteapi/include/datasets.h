@@ -150,7 +150,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to transfer data through a device.
-  /// \notes If device is Ascend, features of data will be transferred one by one. The limitation
+  /// \note If device is Ascend, features of data will be transferred one by one. The limitation
   ///     of data transmission per time is 256M.
   /// \param[in] queue_name Channel name (default="", create new unique name).
   /// \param[in] device_type Type of device (default="", get from MSContext).
@@ -193,7 +193,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to create a BatchDataset
-  /// \notes Combines batch_size number of consecutive rows into batches
+  /// \note Combines batch_size number of consecutive rows into batches
   /// \param[in] batch_size The number of rows each batch is created with
   /// \param[in] drop_remainder Determines whether or not to drop the last possibly incomplete
   ///     batch. If true, and if there are less than batch_size rows
@@ -209,7 +209,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   std::shared_ptr<BatchDataset> Batch(int32_t batch_size, bool drop_remainder = false);
 
   /// \brief Function to create a MapDataset
-  /// \notes Applies each operation in operations to this dataset
+  /// \note Applies each operation in operations to this dataset
   /// \param[in] operations Vector of raw pointers to TensorTransform objects to be applied on the dataset. Operations
   ///     are applied in the order they appear in this list
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
@@ -274,7 +274,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to create a MapDataset
-  /// \notes Applies each operation in operations to this dataset
+  /// \note Applies each operation in operations to this dataset
   /// \param[in] operations Vector of shared pointers to TensorTransform objects to be applied on the dataset.
   ///     Operations are applied in the order they appear in this list
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
@@ -306,7 +306,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to create a MapDataset
-  /// \notes Applies each operation in operations to this dataset
+  /// \note Applies each operation in operations to this dataset
   /// \param[in] operations Vector of TensorTransform objects to be applied on the dataset. Operations are applied in
   ///     the order they appear in this list
   /// \param[in] input_columns Vector of the names of the columns that will be passed to the first
@@ -336,7 +336,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to create a Project Dataset
-  /// \notes Applies project to the dataset
+  /// \note Applies project to the dataset
   /// \param[in] columns The name of columns to project
   /// \return Shared pointer to the current Dataset
   /// \par Example
@@ -350,7 +350,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   }
 
   /// \brief Function to create a Shuffle Dataset
-  /// \notes Randomly shuffles the rows of this dataset
+  /// \note Randomly shuffles the rows of this dataset
   /// \param[in] buffer_size The size of the buffer (must be larger than 1) for shuffling
   /// \return Shared pointer to the current ShuffleDataset
   /// \par Example
@@ -576,7 +576,7 @@ class MS_API AlbumDataset : public Dataset {
 };
 
 /// \brief Function to create an AlbumDataset
-/// \notes The generated dataset is specified through setting a schema
+/// \note The generated dataset is specified through setting a schema
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] data_schema Path to dataset schema file
 /// \param[in] column_names Column names used to specify columns to load, if empty, will read all columns.
@@ -611,7 +611,7 @@ Album(const std::string &dataset_dir, const std::string &data_schema, const std:
 }
 
 /// \brief Function to create an AlbumDataset
-/// \notes The generated dataset is specified through setting a schema
+/// \note The generated dataset is specified through setting a schema
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] data_schema Path to dataset schema file
 /// \param[in] column_names Column names used to specify columns to load
@@ -628,7 +628,7 @@ inline std::shared_ptr<AlbumDataset> MS_API Album(const std::string &dataset_dir
 }
 
 /// \brief Function to create an AlbumDataset
-/// \notes The generated dataset is specified through setting a schema
+/// \note The generated dataset is specified through setting a schema
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] data_schema Path to dataset schema file
 /// \param[in] column_names Column names used to specify columns to load
@@ -676,7 +676,7 @@ class MS_API MnistDataset : public Dataset {
 };
 
 /// \brief Function to create a MnistDataset
-/// \notes The generated dataset has two columns ["image", "label"]
+/// \note The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of MNIST, can be "train", "test" or "all" (default = "all").
 /// \param[in] sampler Shared pointer to a sampler object used to choose samples from the dataset. If sampler is not
@@ -705,7 +705,7 @@ Mnist(const std::string &dataset_dir, const std::string &usage = "all",
 }
 
 /// \brief Function to create a MnistDataset
-/// \notes The generated dataset has two columns ["image", "label"]
+/// \note The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of MNIST, can be "train", "test" or "all"
 /// \param[in] sampler Raw pointer to a sampler object used to choose samples from the dataset.
@@ -718,7 +718,7 @@ inline std::shared_ptr<MnistDataset> MS_API Mnist(const std::string &dataset_dir
 }
 
 /// \brief Function to create a MnistDataset
-/// \notes The generated dataset has two columns ["image", "label"]
+/// \note The generated dataset has two columns ["image", "label"]
 /// \param[in] dataset_dir Path to the root directory that contains the dataset
 /// \param[in] usage of MNIST, can be "train", "test" or "all"
 /// \param[in] sampler Sampler object used to choose samples from the dataset.

@@ -1409,9 +1409,9 @@ class PhaseVocoder(AudioTensorOperation):
     Examples:
         >>> import numpy as np
         >>>
-        >>> waveform = np.random.randn(2, 44, 10, 2)
+        >>> waveform = np.random.random([2, 44, 10, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
-        >>> phase_advance = np.random.randn(44, 1)
+        >>> phase_advance = np.random.random([44, 1])
         >>> transforms = [audio.PhaseVocoder(rate=2, phase_advance=phase_advance)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
     """
@@ -1661,7 +1661,7 @@ class TimeStretch(AudioTensorOperation):
     Examples:
         >>> import numpy as np
         >>>
-        >>> waveform = np.random.random([1, 30])
+        >>> waveform = np.random.random([44, 10, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeStretch()]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
