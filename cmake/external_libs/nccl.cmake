@@ -6,9 +6,10 @@ else()
     set(MD5 "073b19899f374c5ba07d2db02dc38f9f")
 endif()
 
+find_package(CUDA REQUIRED)
 set(nccl_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 mindspore_add_pkg(nccl
-        VER 2.7.6-1
+        VER 2.7.6-1-${CUDA_VERSION}
         LIBS nccl
         URL ${REQ_URL}
         MD5 ${MD5}
