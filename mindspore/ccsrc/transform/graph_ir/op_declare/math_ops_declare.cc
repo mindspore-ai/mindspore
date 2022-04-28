@@ -106,4 +106,10 @@ INPUT_MAP(IsFinite) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(IsFinite) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(IsFinite) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(IsFinite, kNameIsFinite, ADPT_DESC(IsFinite))
+
+// IsNan
+INPUT_MAP(IsNan) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(IsNan) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(IsNan) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(IsNan, kNameIsNan, ADPT_DESC(IsNan))
 }  // namespace mindspore::transform

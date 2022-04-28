@@ -353,6 +353,7 @@ constexpr const char kNameTensorArrayGather[] = "TensorArrayGather";
 constexpr const char kNameTensorMove[] = "TensorMove";
 constexpr const char kNameWhile[] = "While";
 constexpr const char kNameKMeansCentroids[] = "KMeansCentroids";
+constexpr const char kNameIsNan[] = "IsNan";
 
 class OpAdapterDesc;
 
