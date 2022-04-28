@@ -22,6 +22,7 @@ from mindspore import log as logger
 from .node_type import NodeType
 from .node import Node
 from .symbol_tree import SymbolTree
+from .tree_node_helper import TreeNodeHelper
 
 
 class PatternNode:
@@ -309,12 +310,17 @@ class PatternEngine:
                 continue
             if cur_node in visited:
                 continue
+            if cur_node.get_node_type() == NodeType.Tree:
+                subtree = TreeNodeHelper.get_sub_tree(cur_node)
+                self.apply(subtree)
+                visited.append(cur_node)
+                queue.extend(cur_node.get_inputs())
+                continue
             visited.append(cur_node)
             matched, matched_dict = self._match(self._pattern, cur_node)
             # not matched
             if not matched or not PatternEngine._check_match(self._pattern, matched_dict):
-                if cur_node is not None:
-                    queue.extend(cur_node.get_inputs())
+                queue.extend(cur_node.get_inputs())
                 continue
             # matched
             new_nodes: [Node] = []

@@ -15,6 +15,7 @@
 """Parse ast.ClassDef which is subclass of Cell to SymbolTree."""
 import ast
 
+import astunparse
 from mindspore import log as logger
 from mindspore._extends.parse.namespace import CellNamespace
 from ..symbol_tree import SymbolTree
@@ -22,6 +23,81 @@ from ..parser import Parser
 from ..parser_register import ParserRegister, reg_parser
 from ..api.scoped_value import ScopedValue
 from ..ast_helpers import AstReplacer, AstModifier
+
+
+class AstScopeChecker:
+    """
+    Check scope of ast node meets the constraints recursively.
+
+    Args:
+        scope_constraints (str): A string represents constraints of scope.
+    """
+
+    def __init__(self, scope_constraints: str):
+        self._scope = scope_constraints
+
+    def check(self, node: ast.AST) -> bool:
+        """
+        Check scope of `node` meets the constraints recursively.
+
+        Args:
+            node (ast.AST): A ast.AST node to be checked.
+
+        Returns:
+            A bool represents if input `node` meets constraints.
+        """
+        if isinstance(node, ast.Compare):
+            return self._check_compare(node)
+        if isinstance(node, ast.Attribute):
+            return self._check_attribute(node)
+        if isinstance(node, ast.Name):
+            return False
+        if isinstance(node, ast.BoolOp):
+            return self._check_bool(node)
+        if isinstance(node, ast.UnaryOp):
+            return self._check_unary(node)
+        if isinstance(node, ast.Call):
+            return self._check_call(node)
+        if isinstance(node, (ast.Constant, ast.NameConstant, ast.Bytes, ast.Str, ast.Num)):
+            return True
+        raise RuntimeError("Unsupported test check:", astunparse.unparse(node))
+
+    def _check_attribute(self, node: ast.Attribute):
+        """Check an ast.Attribute meets the constraints recursively."""
+        if not isinstance(node.value, ast.Name):
+            return False
+        if node.value.id != self._scope:
+            return False
+        return True
+
+    def _check_compare(self, node: ast.Compare):
+        """Check an ast.Compare meets the constraints recursively."""
+        left = node.left
+        for comparator in node.comparators:
+            if not self.check(comparator):
+                return False
+        return self.check(left)
+
+    def _check_bool(self, node: ast.BoolOp):
+        """Check an ast.BoolOp meets the constraints recursively."""
+        for value in node.values:
+            if not self.check(value):
+                return False
+        return True
+
+    def _check_call(self, node: ast.Call):
+        """Check an ast.Call meets the constraints recursively."""
+        for arg in node.args:
+            if not self.check(arg):
+                return False
+        for kwarg in node.keywords:
+            if not self.check(kwarg):
+                return False
+        return self.check(node.func)
+
+    def _check_unary(self, node: ast.UnaryOp):
+        """Check an ast.UnaryOp meets the constraints recursively."""
+        return self.check(node.operand)
 
 
 class ClassDefParser(Parser):
@@ -46,6 +122,8 @@ class ClassDefParser(Parser):
         super_index = ClassDefParser._find_super_expr_of_init_func(init_ast)
         ClassDefParser._modify_arguments_of_init_func(init_ast)
         self._replace_ori_field_of_init_func(stree, init_ast.body, super_index)
+        # re-find super_index for init_func changed in _replace_ori_field_of_init_func
+        super_index = ClassDefParser._find_super_expr_of_init_func(init_ast)
         ClassDefParser._insert_handler_to_init_func(init_ast, super_index)
 
     @staticmethod
@@ -83,6 +161,30 @@ class ClassDefParser(Parser):
                                          kw_defaults=[], defaults=[], vararg=None, kwarg=None)
         ast.fix_missing_locations(ast_init_fn)
 
+    @staticmethod
+    def _remove_empty_ast_in_init_func(bodies: []):
+        """Remove ast.If, ast.For or other ast node with body when their body is empty recursively."""
+        body_index_to_be_deleted = []
+        for body_index, body in enumerate(bodies):
+            if isinstance(body, ast.If):
+                ClassDefParser._remove_empty_ast_in_init_func(body.body)
+                ClassDefParser._remove_empty_ast_in_init_func(body.orelse)
+                if not body.body or not body.orelse:
+                    body_index_to_be_deleted.append(body_index)
+                continue
+            if isinstance(body, ast.For):
+                ClassDefParser._remove_empty_ast_in_init_func(body.body)
+                ClassDefParser._remove_empty_ast_in_init_func(body.orelse)
+                if not body.body or not body.orelse:
+                    body_index_to_be_deleted.append(body_index)
+                continue
+            if hasattr(body, "body"):
+                ClassDefParser._remove_empty_ast_in_init_func(body.body)
+                if not body.body:
+                    body_index_to_be_deleted.append(body_index)
+        for counter, index in enumerate(body_index_to_be_deleted):
+            bodies.pop(index - counter)
+
     def _replace_ori_field_of_init_func(self, stree: SymbolTree, bodies: [], super_index: int):
         """
         Replace original field in init func to self.XX = getattr(self._handler, "XX").
@@ -99,14 +201,17 @@ class ClassDefParser(Parser):
             RuntimeError: Only support target.value in [ast.Name] in assign node.
         """
         body_index_to_be_deleted = []
+        scope_checker = AstScopeChecker("self")
         for body_index, body in enumerate(bodies):
             if body_index == super_index:
                 continue  # ignoring super.__init__()
-            if isinstance(body, ast.If) and isinstance(body.test, ast.Attribute) \
-                    and isinstance(body.test.value, ast.Name) and body.test.value.id == 'self':
-                self._replace_ori_field_of_init_func(stree, body.body, -1)
-                self._replace_ori_field_of_init_func(stree, body.orelse, -1)
-                continue
+            if isinstance(body, ast.If):
+                if scope_checker.check(body.test):
+                    self._replace_ori_field_of_init_func(stree, body.body, -1)
+                    self._replace_ori_field_of_init_func(stree, body.orelse, -1)
+                    continue
+                else:
+                    logger.warning("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
             if not isinstance(body, ast.Assign):  # if not assign node, delete
                 body_index_to_be_deleted.append(body_index)
                 continue
@@ -128,6 +233,7 @@ class ClassDefParser(Parser):
                                    ast.Constant(value=field_name, kind=None)], [])
         for counter, index in enumerate(body_index_to_be_deleted):
             bodies.pop(index - counter)
+        ClassDefParser._remove_empty_ast_in_init_func(bodies)
 
     @staticmethod
     def _insert_handler_to_init_func(ast_init_fn: ast.FunctionDef, super_index):

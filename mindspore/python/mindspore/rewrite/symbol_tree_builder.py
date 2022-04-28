@@ -38,7 +38,7 @@ class SymbolTreeBuilder:
 
     def __init__(self, network: Cell):
         if not isinstance(network, Cell):
-            raise RuntimeError("Only support network with Cell type now")
+            raise RuntimeError("Only support network with Cell type now, ", network)
         self._origin_net = network
         network_str = inspect.getsource(type(network))
         self._ast_root: ast.Module = ast.parse(network_str)
@@ -185,5 +185,5 @@ class SymbolTreeBuilder:
         self._merge_module_of_subtree()
         self._reduce_redundant_import()
         ast.fix_missing_locations(self._root_tree.get_module_ast())
-        self._root_tree.start_observe()
+        self._root_tree.finish_build()
         return self._root_tree

@@ -15,38 +15,38 @@
 """Abstract class, observer of observer design pattern."""
 
 import abc
+from .event import Event
 
 
 class Observer(abc.ABC):
     """Abstract class, observer of observer design pattern."""
 
     def __init__(self):
-        self._observing = False
+        self._event_filter = set()
+        self._event_filter.add(Event.CodeChangeEvent)
 
-    def start_observe(self):
+    def add_event(self, event: Event):
         """
-        Start observing so that current `Observer` can do response when any change occurred in `Observable`.
+        Add event filter. An observer only responses to event in its event_filter list.
         """
+        self._event_filter.add(event)
 
-        self._observing = True
-
-    def stop_observe(self):
+    def remove_event(self, event: Event):
         """
-        Stop observing so that current `Observer` will do nothing even when changes occurred in linked `Observable`.
+        Remove event filter. An observer only responses to event in its event_filter list.
         """
+        self._event_filter.remove(event)
 
-        self._observing = False
-
-    def on_change(self):
+    def on_change(self, event: Event):
         """
         Called back when any changes occurred in linked `Observable`.
         """
 
-        if self._observing:
-            self._on_change()
+        if event in self._event_filter:
+            self._on_change(event)
 
     @abc.abstractmethod
-    def _on_change(self):
+    def _on_change(self, event: Event):
         """
         Abstract method for defining how to response when any changes occurred in linked `Observable`.
         """

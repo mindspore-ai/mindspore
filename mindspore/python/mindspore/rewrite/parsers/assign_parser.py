@@ -28,6 +28,7 @@ from ..parser_register import reg_parser
 from ..api.scoped_value import ScopedValue, ValueType
 from ..symbol_tree_builder import SymbolTreeBuilder
 from ..ast_helpers import AstReplacer, AstModifier
+from ..common.event import Event
 
 
 class AssignParser(Parser):
@@ -203,7 +204,8 @@ class AssignParser(Parser):
         """
 
         if func_scope != "self":
-            raise NotImplementedError("Not support parse operator which is instantiated at runtime now")  # todo
+            logger.warning("Not support parse operator which is instantiated at runtime now: ", func_scope, "; name: ",
+                           func_name)
         var_dict = stree.get_origin_network().__dict__
         for key, value in var_dict["_cells"].items():
             if key == func_name:
@@ -227,7 +229,8 @@ class AssignParser(Parser):
             targets.append(all_targets)
         return targets
 
-    def _update_field_in_init(self, func_scope, func_name, stree: SymbolTree, sub_tree: SymbolTree):
+    @staticmethod
+    def _update_field_in_init(func_scope, func_name, stree: SymbolTree, sub_tree: SymbolTree) -> bool:
         """
         When node is an invoking to sub-network, update value of ast.Assign of corresponding field in `__init__` method.
 
@@ -254,8 +257,10 @@ class AssignParser(Parser):
             NotImplementedError: If targets of ast.Assign of corresponding field in `__init__` method.
         """
 
+        changed = False
         if func_scope != "self":
-            raise NotImplementedError("Not support parse operator which is instantiated at runtime now")
+            logger.warning("Not support parse operator which is instantiated at runtime now: ", func_scope, "; name: ",
+                           func_name)
         init_func_ast = stree.get_init_func_ast()
         class_name = sub_tree.get_opt_cls_name()
         for body in init_func_ast.body:
@@ -264,16 +269,18 @@ class AssignParser(Parser):
             if len(body.targets) > 1:
                 raise NotImplementedError("Not support multi-targets in assign now!")
             target = body.targets[0]
-            if not isinstance(target, ast.Attribute) or not(target.value, ast.Name) or target.value.id != "self":
+            if not isinstance(target, ast.Attribute) or not (target.value, ast.Name) or target.value.id != "self":
                 continue
             if target.attr != func_name:
                 continue
+            changed = True
             global_vars_key = func_name + "_args"
             stree.add_global_vars(global_vars_key, sub_tree.get_global_vars())
             args_call = AstModifier.create_call(ScopedValue.create_naming_value("get", "global_vars"),
                                                 [ScopedValue.create_variable_value(global_vars_key)])
             body.value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
             break
+        return changed
 
     def _convert_ast_call_to_node(self, ast_node: ast.Call, father_ast_node: ast.Assign, stree: SymbolTree) -> Node:
         """
@@ -301,8 +308,8 @@ class AssignParser(Parser):
 
         _, op = AssignParser._find_op_and_type(func_scope, func_name, stree)
         if op is None:
-            raise RuntimeError("Operator instance undefined: '", ast.unparse(ast_node.func), "' of '",
-                               ast.unparse(ast_node), "'")
+            raise RuntimeError("Operator instance undefined: '", astunparse.unparse(ast_node.func), "' of '",
+                               astunparse.unparse(ast_node), "'")
         if isinstance(op, Primitive):
             return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, call_kwargs, func_name)
         if isinstance(op, Cell):
@@ -310,7 +317,43 @@ class AssignParser(Parser):
             if is_sub_tree:
                 stb = SymbolTreeBuilder(op)
                 new_stree = stb.build()
-                self._update_field_in_init(func_scope, func_name, stree, new_stree)
+                changed = AssignParser._update_field_in_init(func_scope, func_name, stree, new_stree)
+                if changed:
+                    # class SubSubNet:
+                    #     def __init__(self, global_vars):
+                    #         self._handler = global_vars.get("handler")
+                    #
+                    # class SubNet:
+                    #     def __init__(self, global_vars):
+                    #         self._handler = global_vars.get("handler")
+                    #         self._subsubnet = None
+                    #         if xxx:
+                    #             self._subsubnet = SubSubNet(xxx)
+                    #
+                    # Assuming there are two instance of SubNet A and B. "if xxx" in A is True, and in B is False.
+                    # So self._subsubnet in A is an instance of SubSubNet, and in B is None.
+                    # So After rewrite, A's code:
+                    # class SubNetA:
+                    #     def __init__(self, global_vars):
+                    #         self._handler = global_vars.get("handler")
+                    #         self._subsubnet = SubSubNet(global_vars.get("subsubnet_args"))
+                    # while B's code:
+                    # class SubNetB:
+                    #     def __init__(self, global_vars):
+                    #         self._handler = global_vars.get("handler")
+                    #         self._subsubnet = getattr(self._handler, "_subsubnet")
+                    # So SubNet should use SubNetA as its code when _update_field_in_init return True.
+                    # So SubNet should use SubNetB as its code when _update_field_in_init return False or undefined
+                    # error will occur to "global_vars.get("subsubnet_args")".
+                    stree.on_change(Event.CodeChangeEvent)
+                # Sub-network in main-network is expressed as:
+                # self._subnet = SubNet(global_vars.get("subnet_args"))
+                # when subnet is changed, its class will change, take SubNet1 as new class-name, so code main-network
+                # also need to change:
+                # self._subnet = SubNet1(global_vars.get("subnet_args"))
+                # so a change in sub-network should also be identified as a change in main-network.
+                # so main-network should observe sub-network
+                new_stree.reg_observer(stree)
                 replacer = AstReplacer(new_stree.get_class_ast())
                 replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
                 return TreeNode(new_stree, father_ast_node, targets, func, call_args, call_kwargs, func_name,
