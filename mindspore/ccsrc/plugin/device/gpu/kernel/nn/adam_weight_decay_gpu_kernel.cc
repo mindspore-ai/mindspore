@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(AdamWeightDecay,
+MS_REG_GPU_KERNEL_TWO(AdamWeightDecay,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
@@ -32,8 +32,8 @@ MS_REG_GPU_KERNEL_ONE(AdamWeightDecay,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      AdamWeightDecayGpuKernelMod, float)
-MS_REG_GPU_KERNEL_ONE(AdamWeightDecay,
+                      AdamWeightDecayGpuKernelMod, float, float)
+MS_REG_GPU_KERNEL_TWO(AdamWeightDecay,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
@@ -47,6 +47,21 @@ MS_REG_GPU_KERNEL_ONE(AdamWeightDecay,
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      AdamWeightDecayGpuKernelMod, half)
+                      AdamWeightDecayGpuKernelMod, half, half)
+MS_REG_GPU_KERNEL_TWO(AdamWeightDecay,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      AdamWeightDecayGpuKernelMod, float, half)
 }  // namespace kernel
 }  // namespace mindspore

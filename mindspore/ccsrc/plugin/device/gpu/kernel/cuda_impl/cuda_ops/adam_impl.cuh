@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ template <typename T>
 CUDA_LIB_EXPORT void ApplyAdam(const size_t size, const T *gradient, const T *beta1_power, const T *beta2_power,
                                const T *learning_rate, const T *beta1, const T *beta2, const T *epsilon, T *variable,
                                T *m, T *v, cudaStream_t cuda_stream);
-template <typename T>
-CUDA_LIB_EXPORT void AdamWeightDecayOp(const size_t size, const T *gradient, const float *learning_rate,
+template <typename T, typename S>
+CUDA_LIB_EXPORT void AdamWeightDecayOp(const size_t size, const S *gradient, const float *learning_rate,
                                        const float *beta1, const float *beta2, const float *epsilon, const float *decay,
-                                       T *variable, T *m, T *v, cudaStream_t cuda_stream);
+                                       S *variable, T *m, T *v, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAM_IMPL_CUH_
