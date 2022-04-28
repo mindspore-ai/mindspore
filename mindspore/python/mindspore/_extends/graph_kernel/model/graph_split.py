@@ -93,10 +93,22 @@ class CommonPattern:
                 min_area = a
         for a, _ in dom.in_relations.items():
             if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom) and \
-                    len(dom.ops[0].inputs[0].to_ops) == 1 and not a.is_output and \
                     (min_area is None or a.pattern < min_area.pattern):
                 min_area, forward_fuse = a, True
         return ([min_area], forward_fuse) if min_area else []
+
+    @staticmethod
+    def isolate_reshape(dom):
+        """fuse strategy for isolate reshape dom"""
+        if dom.pattern != PrimLib.RESHAPE or len(dom.ops) != 1:
+            return []
+        for a, _ in dom.out_relations.items():
+            if dom.check_acyclic(a):
+                return [a], False
+        for a, _ in dom.in_relations.items():
+            if a.check_acyclic(dom):
+                return [a], True
+        return []
 
     @staticmethod
     def elemwise_depth(dom):
@@ -104,8 +116,8 @@ class CommonPattern:
         if dom.pattern not in (PrimLib.ELEMWISE, PrimLib.BROADCAST) or len(dom.in_relations) != 1:
             return []
         a, r = list(dom.in_relations.items())[0]
-        if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r != PrimLib.ELEMWISE or \
-                a.dom_op().output.shape != dom.dom_op().output.shape:
+        if a.pattern > PrimLib.BROADCAST or len(a.out_relations) != 1 or r > PrimLib.ELEMWISE or \
+                tensor_size(a.dom_op().output) != tensor_size(dom.dom_op().output):
             return []
         return [a], True
 
@@ -116,8 +128,8 @@ class CommonPattern:
             return []
         fused = []
         for a, r in dom.in_relations.items():
-            if a.pattern <= PrimLib.BROADCAST and r == PrimLib.ELEMWISE and a.check_acyclic(dom) and \
-                    a.dom_op().output.shape == dom.dom_op().output.shape:
+            if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.ELEMWISE and a.check_acyclic(dom) and \
+                    tensor_size(a.dom_op().output) == tensor_size(dom.dom_op().output):
                 fused.append(a)
         return fused, True
 
@@ -592,24 +604,28 @@ class GraphSplitByPattern:
     def find_cheap_regions(self, dom):
         """extract all the cheap regions in dom area, toposort each region before return"""
 
-        def _grow_region(region_ops, op, weight, inputs):
+        def _grow_region(region_ops, candidate_op, inputs):
             """include op to region_ops if region grow"""
-            # region successfully ends at inputs
-            if not op.inputs:
-                region_ops.append(op)
-                return False, op, weight, True
-            if op.inputs[0] in inputs and len(op.inputs) == 1 and \
-                    PrimLib.iter_type(op) <= PrimLib.BROADCAST:
-                region_ops.append(op)
-                return False, op, weight, True
-            # region fails to grow
+            op = candidate_op
             max_weight = 20
-            if weight > max_weight or len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST:
-                return False, op, weight, False
-            # region grows successfully
-            weight = weight + 1
-            region_ops.append(op)
-            return True, op.inputs[0].op, weight, False
+            weight = 1
+            while weight <= max_weight:
+                # region successfully ends at inputs
+                if not op.inputs:
+                    region_ops.append(op)
+                    return True
+                if op.inputs[0] in inputs and len(op.inputs) == 1 and \
+                        PrimLib.iter_type(op) <= PrimLib.BROADCAST:
+                    region_ops.append(op)
+                    return True
+                # region fails to grow
+                if len(op.inputs) > 1 or PrimLib.iter_type(op) > PrimLib.BROADCAST:
+                    return False
+                # region grows successfully
+                weight = weight + 1
+                region_ops.append(op)
+                op = op.inputs[0].op
+            return False
 
         def _find_cheap_regions(dom):
             sub = self.to_subgraph(dom)
@@ -622,13 +638,7 @@ class GraphSplitByPattern:
                 if len(output.to_ops) < 2:
                     continue
                 region_ops = []
-                grow = True
-                candidate_op = output.op
-                weight = 1
-                result = False
-                while grow:
-                    grow, candidate_op, weight, result = _grow_region(region_ops, candidate_op, weight, inputs)
-                if result:
+                if _grow_region(region_ops, output.op, inputs):
                     region_ops.reverse()
                     # tensor size should equal or becomes larger(cast up, broadcast)
                     if region_ops[0].inputs and region_ops[0].inputs[0].get_size() > region_ops[-1].output.get_size():
@@ -984,6 +994,23 @@ class GraphSplitGpu(GraphSplitByPattern):
 
             return fused, fwd
 
+        def _injective_output(dom):
+            """Fuse rule for injective """
+            injective_ops = {"Transpose", "StridedSlice"}
+            if dom.dom_op().prim not in injective_ops:
+                return None
+            to_ops = dom.dom_op().output.to_ops
+            if dom.is_output or len(to_ops) != 1 or len(dom.out_relations) != 1:
+                return None
+            to_area = list(dom.out_relations.keys())[0]
+            if (to_area.pattern > PrimLib.REDUCE and to_area.dom_op().prim not in injective_ops) or \
+                to_ops[0] not in to_area.ops:
+                return None
+            if len(to_area.ops) > self.TRANSPOSE_FUSE_DEPTH or \
+                any((PrimLib.iter_type(op) == PrimLib.RESHAPE for op in to_area.ops)):
+                return None
+            return [to_area], False
+
         def _h_broadcast(dom, a):
             if dom.pattern > PrimLib.BROADCAST:
                 return []
@@ -1027,6 +1054,8 @@ class GraphSplitGpu(GraphSplitByPattern):
                 if self.enable_stitch_fusion:
                     changed = self.fuse(_reduce_stitch) or changed
             self.fuse(_transpose)
+            self.fuse(_injective_output)
+            self.fuse(CommonPattern.isolate_reshape)
             if self.enable_horizontal_fusion:
                 self.hfuse(_h_broadcast)
                 self.hfuse(_h_reduce)
