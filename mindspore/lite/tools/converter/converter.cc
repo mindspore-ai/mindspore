@@ -371,9 +371,12 @@ int RunConverter(int argc, const char **argv) {
     }
   }
   // clear key
+  flags->dec_key.clear();
+  flags->encKeyStr.clear();
   status = memset_s(flags->encKey, converter::kEncMaxLen, 0, converter::kEncMaxLen);
   if (status != EOK) {
     MS_LOG(ERROR) << "memset failed.";
+    delete meta_graph;
     return RET_ERROR;
   }
   delete meta_graph;
