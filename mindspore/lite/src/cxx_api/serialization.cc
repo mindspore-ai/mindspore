@@ -104,11 +104,12 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
   }
 
   std::string filename(file.data(), file.size());
-  if (filename.find_last_of(".") == std::string::npos ||
-      filename.size() > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+  if (filename.size() > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+    MS_LOG(ERROR) << "file name is too long.";
     return kLiteInputParamInvalid;
   }
-  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+  auto pos = filename.find_last_of('.');
+  if (pos == std::string::npos || filename.substr(pos + 1) != "ms") {
     filename = filename + ".ms";
   }
 

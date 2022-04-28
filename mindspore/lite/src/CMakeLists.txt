@@ -85,7 +85,9 @@ if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
 endif()
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     file(GLOB CXX_API_TRAIN_SRCS
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model_impl.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/train_support.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/metrics/*.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/callback/*.cc
             )
@@ -311,6 +313,9 @@ set(TRAIN_SRC
         ${TRAIN_SRC_WITH_MD}
         ${EXPRESSION_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model_build.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model_build_impl.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/converters.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_fusion.cc

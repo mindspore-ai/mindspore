@@ -481,7 +481,7 @@ int TrainSession::MixPrecisionPostProcess(kernel::KernelExec *kernel) {
   }
 
   for (auto &tensor : kernel->in_tensors()) {
-    if ((tensor->IsScale() == true) && ((!IsLossKernel(kernel) && IsLossTensor(tensor)) || (all_scale == true))) {
+    if (tensor->IsScale() && ((!IsLossKernel(kernel) && IsLossTensor(tensor)) || all_scale)) {
       ScaleTensor(tensor, 1.0f / scale);
     }
   }

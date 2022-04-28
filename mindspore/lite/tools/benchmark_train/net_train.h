@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_
 
 #include <getopt.h>
-#include <signal.h>
+#include <csignal>
 #include <unordered_map>
 #include <fstream>
 #include <iostream>
@@ -30,6 +30,10 @@
 #include <cfloat>
 #include <utility>
 #include <algorithm>
+#include "include/api/model.h"
+#include "include/api/types.h"
+#include "include/api/context.h"
+#include "include/api/cfg.h"
 
 #ifdef ENABLE_FP16
 #include <arm_neon.h>
@@ -37,7 +41,6 @@
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
-#include "include/lite_session.h"
 
 #ifdef ENABLE_FP16
 static __attribute__((always_inline)) inline bool MS_ISNAN_FP16(float16_t var) {
@@ -193,35 +196,37 @@ class MS_API NetTrain {
 
  private:
   // call GenerateInputData or ReadInputFile to init inputTensors
-  int LoadInput(Vector<tensor::MSTensor *> *ms_inputs);
-  void CheckSum(mindspore::tensor::MSTensor *tensor, std::string node_type, int id, std::string in_out);
+  int LoadInput();
+  void CheckSum(MSTensor *tensor, const std::string &node_type, int id, const std::string &in_out);
   // call GenerateRandomData to fill inputTensors
-  int GenerateInputData(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
+  int GenerateInputData();
 
-  int GenerateRandomData(mindspore::tensor::MSTensor *tensor);
+  int GenerateRandomData(mindspore::MSTensor *tensor);
 
-  int ReadInputFile(std::vector<mindspore::tensor::MSTensor *> *ms_inputs);
-  int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, int train_session, int epochs,
+  int ReadInputFile();
+
+  void InitMSContext(const std::shared_ptr<Context> &context);
+
+  void InitTrainCfg(const std::shared_ptr<TrainCfg> &train_cfg);
+
+  int CreateAndRunNetwork(const std::string &filename, const std::string &bb_filename, bool is_train, int epochs,
                           bool check_accuracy = true);
 
-  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForInference(const std::string &filename,
-                                                                        const Context &context);
+  int CreateAndRunNetworkForInference(const std::string &filename, const std::shared_ptr<mindspore::Context> &context);
 
-  std::unique_ptr<session::LiteSession> CreateAndRunNetworkForTrain(const std::string &filename,
-                                                                    const std::string &bb_filename,
-                                                                    const Context &context, const TrainCfg &train_cfg,
-                                                                    int epochs);
-
+  int CreateAndRunNetworkForTrain(const std::string &filename, const std::string &bb_filename,
+                                  const std::shared_ptr<mindspore::Context> &context,
+                                  const std::shared_ptr<TrainCfg> &train_cfg, int epochs);
   int InitCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
 
   template <typename T>
-  void PrintInputData(tensor::MSTensor *input) {
+  void PrintInputData(mindspore::MSTensor *input) {
     MS_ASSERT(input != nullptr);
     static int i = 0;
     auto inData = reinterpret_cast<T *>(input->MutableData());
-    size_t tensorSize = input->ElementsNum();
+    size_t tensorSize = input->ElementNum();
     size_t len = (tensorSize < 20) ? tensorSize : 20;
     std::cout << "InData" << i++ << ": ";
     for (size_t j = 0; j < len; j++) {
@@ -230,10 +235,18 @@ class MS_API NetTrain {
     std::cout << std::endl;
   }
 
-  int MarkPerformance(const std::unique_ptr<session::LiteSession> &session);
-  int MarkAccuracy(const std::unique_ptr<session::LiteSession> &session, bool enforce_accuracy = true);
-  int CompareOutput(const session::LiteSession &lite_session);
-  int SaveModels(const std::unique_ptr<session::LiteSession> &session);
+  template <typename T>
+  std::vector<int64_t> ConverterToInt64Vector(const std::vector<T> &srcDims) {
+    std::vector<int64_t> dims;
+    for (auto shape : srcDims) {
+      dims.push_back(static_cast<int64_t>(shape));
+    }
+    return dims;
+  }
+  int MarkPerformance();
+  int MarkAccuracy(bool enforce_accuracy = true);
+  int CompareOutput();
+  int SaveModels();
   int CheckExecutionOfSavedModels();
   void TensorNan(const float *data, int size) {
     for (int i = 0; i < size; i++) {
@@ -262,8 +275,11 @@ class MS_API NetTrain {
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
 
-  mindspore::KernelCallBack before_call_back_;
-  mindspore::KernelCallBack after_call_back_;
+  mindspore::Model ms_model_;
+  std::vector<mindspore::MSTensor> ms_inputs_for_api_;
+
+  mindspore::MSKernelCallBack before_call_back_{nullptr};
+  mindspore::MSKernelCallBack after_call_back_{nullptr};
 };
 
 int MS_API RunNetTrain(int argc, const char **argv);
