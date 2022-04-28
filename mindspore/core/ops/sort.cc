@@ -33,6 +33,10 @@ abstract::TupleShapePtr SortInferShape(const PrimitivePtr &primitive, const std:
   const int64_t input_num = 1;
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, input_num,
                                            prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto x_rank = SizeToLong(x_shape.size());
+  auto axis = GetValue<int64_t>(primitive->GetAttr("axis"));
+  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto x = input_args[0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
