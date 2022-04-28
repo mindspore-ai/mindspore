@@ -835,7 +835,7 @@ void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
     num_channels = (*output)->shape()[CHANNEL_INDEX_HWC];
     while (itr != end) {
       for (int64_t i = 0; i < num_channels - static_cast<int>(pad); i++) {
-        *itr_out = static_cast<T2>(static_cast<float>(*itr) / std[i] - mean[i]);
+        *itr_out = static_cast<T2>((static_cast<float>(*itr) - mean[i]) / std[i]);
         ++itr_out;
         ++itr;
       }
@@ -848,7 +848,7 @@ void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
     while (itr != end) {
       for (int64_t i = 0; i < num_channels - static_cast<int>(pad); i++) {
         for (int64_t j = 0; j < channel_len; j++) {
-          *itr_out = static_cast<T2>(static_cast<float>(*itr) / std[i] - mean[i]);
+          *itr_out = static_cast<T2>((static_cast<float>(*itr) - mean[i]) / std[i]);
           ++itr_out;
           ++itr;
         }
@@ -960,7 +960,6 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       RETURN_STATUS_UNEXPECTED("NormalizePad: std vector element must be greater than 0.0, got: " +
                                std::to_string(std_c));
     }
-    mean_c = mean_c / std_c;
     mean_v.push_back(mean_c);
     std_v.push_back(std_c);
   }
