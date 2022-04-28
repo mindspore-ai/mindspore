@@ -42,6 +42,7 @@ constexpr auto kGraphKernelEstimateOps = "estimate_ops";
 constexpr auto kGraphKernelGetNodeCalAmount = "estimate_calculation_amount";
 constexpr auto kGraphKernelSplitFunc = "split_with_json";
 constexpr auto kGetGraphKernelOpExpander = "get_op_expander";
+constexpr auto kGetGraphKernelExpanderOpList = "get_expander_op_list";
 constexpr auto kJsonKeyMultiGraph = "multi_graph";
 constexpr auto kJsonKeyGraphDesc = "graph_desc";
 constexpr auto kJsonKeyGraphMode = "graph_mode";

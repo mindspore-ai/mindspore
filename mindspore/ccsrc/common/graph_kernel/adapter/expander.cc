@@ -86,13 +86,35 @@ bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_j
 }
 
 FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
+  auto op_name = AnfUtils::GetCNodeName(node);
   // use cpp OpDesc in priority
   auto use_py = common::GetEnv("PYEXPANDER");
   if (use_py.empty()) {
-    if (expanders::OpDescFactory::Instance().HasOp(AnfUtils::GetCNodeName(node))) {
+    if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
       return DefaultExpander::ExpandToGraph(node);
     }
   }
+  // Acquire Python GIL
+  py::gil_scoped_acquire gil;
+  if (Py_IsInitialized() == 0) {
+    MS_LOG(ERROR) << "Python Interpreter is finalized";
+    return nullptr;
+  }
+
+  MS_LOG(DEBUG) << "CallPyFn: [" << kGetGraphKernelExpanderOpList << "].";
+  auto res = python_adapter::CallPyFn(kGraphKernelModule, kGetGraphKernelExpanderOpList);
+  // parse result.
+  if (py::isinstance<py::none>(res)) {
+    MS_LOG(ERROR) << "CallPyFn: [" << kGetGraphKernelExpanderOpList << "] failed.";
+    return nullptr;
+  }
+
+  std::string expander_op_list = py::cast<std::string>(res);
+  if (expander_op_list.find(op_name) == std::string::npos) {
+    MS_LOG(DEBUG) << "Do not support to expand: " << op_name;
+    return nullptr;
+  }
+
   nlohmann::json kernel_json;
   if (!CreateJsonInfo(node, &kernel_json)) {
     constexpr int recursive_level = 2;
@@ -101,13 +123,6 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
     return nullptr;
   }
   auto node_desc_str = kernel_json.dump();
-  // Acquire Python GIL
-  py::gil_scoped_acquire gil;
-  if (Py_IsInitialized() == 0) {
-    MS_LOG(ERROR) << "Python Interpreter is finalized";
-    return nullptr;
-  }
-
   // call graph kernel ops generator.
   MS_LOG(DEBUG) << "CallPyFn: [" << kGetGraphKernelOpExpander << "] with input json:\n" << node_desc_str;
   auto ret = python_adapter::CallPyFn(kGraphKernelModule, kGetGraphKernelOpExpander, node_desc_str);
