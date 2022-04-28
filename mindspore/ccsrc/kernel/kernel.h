@@ -235,6 +235,8 @@ enum class KernelModType {
   DeprecatedNativeCpuKernelMod,
 };
 
+enum KernelErrorCode { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_INVALID_SHAPE = 2 };
+
 class KernelMod {
  public:
   KernelMod() {}
@@ -258,11 +260,11 @@ class KernelMod {
   // tensor size and allocate output tensor memory).
   // sometimes resize need the input tensor data, framework will sync and retain these tensor data from device to host
   // and pass them by the param inputsOnHost
-  virtual bool Resize(
+  virtual int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
-    return true;
+    return KernelErrorCode::KRET_OK;
   }
   // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
   virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape; }
@@ -290,6 +292,12 @@ class KernelMod {
  protected:
   virtual void SyncData() {}
   virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
+  bool IsValidShape(const std::vector<int64_t> &shape) {
+    if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; })) {
+      return false;
+    }
+    return true;
+  }
 
  protected:
   std::string kernel_name_;

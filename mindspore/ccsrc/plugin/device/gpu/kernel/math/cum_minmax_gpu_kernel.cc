@@ -70,9 +70,9 @@ bool CumMinMaxGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &others) {
+int CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
   ResetResource();
   std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
   auto rank = SizeToLong(input_shape.size());
@@ -90,14 +90,14 @@ bool CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
 
   element_size_ = outer_size_ * inner_size_ * axis_size_;
   if (!element_size_) {
-    return true;
+    return 0;
   }
 
   input_size_list_.push_back(element_size_ * t_size_);
   output_size_list_.push_back(element_size_ * t_size_);
   output_size_list_.push_back(element_size_ * s_size_);
   workspace_size_list_.push_back(element_size_ * sizeof(size_t));
-  return true;
+  return 0;
 }
 
 template <typename T, typename S>

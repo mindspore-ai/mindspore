@@ -111,24 +111,24 @@ bool ArgmaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return false;
+int ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   shape_ = inputs[0]->GetShapeVector();
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got 0.";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   axis_ += SizeToLong(shape_len);
   if (axis_ < 0) {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', the 'axis' must be in range [-1, " << (shape_len - 1)
                     << "], but got " << axis_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   axis_ = axis_ % SizeToLong(shape_len);
   num_before_axis_ = 1;
@@ -141,7 +141,7 @@ bool ArgmaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     }
   }
   dim_axis_ = shape_[LongToSize(axis_)];
-  return true;
+  return 0;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Argmax, ArgmaxCpuKernelMod);

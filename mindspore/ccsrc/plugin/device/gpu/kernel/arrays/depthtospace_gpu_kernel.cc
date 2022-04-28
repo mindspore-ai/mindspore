@@ -72,9 +72,9 @@ bool DepthToSpaceFwdKernelMod::Init(const BaseOperatorPtr &base_operator, const 
   return true;
 }
 
-bool DepthToSpaceFwdKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                      const std::vector<KernelTensorPtr> &outputs,
-                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DepthToSpaceFwdKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   std::vector<std::vector<int64_t>> input_shapes;
   std::vector<std::vector<int64_t>> output_shapes;
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
@@ -82,11 +82,11 @@ bool DepthToSpaceFwdKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
   input_shapes.emplace_back(input_shape);
   output_shapes.emplace_back(output_shape);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   input_size_list_ = helper_ptr_->GetInputSizeList();
   output_size_list_ = helper_ptr_->GetOutputSizeList();
-  return true;
+  return 0;
 }
 
 std::vector<KernelAttr> DepthToSpaceFwdKernelMod::GetOpSupport() {

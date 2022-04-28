@@ -52,9 +52,9 @@ bool IndexAddGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-bool IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
+int IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
   ResetResource();
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   index_shape_ = inputs[kIndex1]->GetShapeVector();
@@ -66,10 +66,10 @@ bool IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (it_x != x_shape_.end() || it_y != y_shape_.end() || it_idx != index_shape_.end()) {
     is_null_input_ = true;
     InitSizeLists();
-    return true;
+    return 0;
   }
   if (!CheckParams()) {
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
   outer_size_ = 1;
@@ -98,7 +98,7 @@ bool IndexAddGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   output_size_ = x_size_;
 
   InitSizeLists();
-  return true;
+  return 0;
 }
 
 void IndexAddGpuKernelMod::ResetResource() noexcept {

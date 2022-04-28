@@ -66,9 +66,9 @@ void DynamicTbeKernelMod::SyncData() {
   }
 }
 
-bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -84,7 +84,7 @@ bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
 
   need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
-    return true;
+    return 0;
   }
 
   // gen FuncStub
@@ -140,7 +140,7 @@ bool DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   workspace_size_list_.resize(workspace_size_list.size());
   std::transform(workspace_size_list.begin(), workspace_size_list.end(), workspace_size_list_.begin(),
                  [](int64_t size) { return static_cast<size_t>(size); });
-  return true;
+  return 0;
 }
 
 std::string DynamicTbeKernelMod::ParseCompileJson(const CNodePtr &cnode) {

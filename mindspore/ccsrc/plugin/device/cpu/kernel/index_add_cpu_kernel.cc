@@ -58,19 +58,19 @@ bool IndexAddCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   return true;
 }
 
-bool IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                  const std::vector<KernelTensorPtr> &outputs,
-                                  const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
-    MS_LOG(WARNING) << kernel_name_ << " resize failed.";
-    return false;
+int IndexAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                 const std::vector<KernelTensorPtr> &outputs,
+                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   // Get input, output and attr info
   x_shape_ = inputs[kIndex0]->GetShapeVector();
   y_shape_ = inputs[kIndex2]->GetShapeVector();
   indices_shape_ = inputs[kIndex1]->GetShapeVector();
   axis_ = GetValue<int64_t>(base_operator_->GetAttr(AXIS));
-  return true;
+  return 0;
 }
 
 void IndexAddCpuKernelMod::CheckParams() {

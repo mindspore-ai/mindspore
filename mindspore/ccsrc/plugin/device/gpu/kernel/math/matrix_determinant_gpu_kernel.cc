@@ -59,10 +59,10 @@ bool MatrixDeterminantGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   return true;
 }
 
-bool MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                           const std::vector<KernelTensorPtr> &inputs,
-                                           const std::vector<KernelTensorPtr> &outputs,
-                                           const std::map<uint32_t, tensor::TensorPtr> &) {
+int MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                          const std::vector<KernelTensorPtr> &inputs,
+                                          const std::vector<KernelTensorPtr> &outputs,
+                                          const std::map<uint32_t, tensor::TensorPtr> &) {
   DestroyResource();
   ResetResource();
   // For input shape and output shape's rationality have been checked in core/ops/matrix_determinant or
@@ -73,7 +73,7 @@ bool MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   is_null_input_ = (input_elements_ == 0);
   if (is_null_input_) {
     InitSizeLists();
-    return true;
+    return 0;
   }
   // For log_matrix_determinant, there are two outputs, but shapes are equal.
   output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
@@ -87,7 +87,7 @@ bool MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   m_ = input_shape_.back();
   InitSizeLists();
   outputs_ = outputs;
-  return true;
+  return 0;
 }
 
 template <typename T>

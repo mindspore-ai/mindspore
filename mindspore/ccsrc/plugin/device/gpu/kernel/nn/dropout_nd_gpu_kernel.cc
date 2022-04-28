@@ -107,15 +107,15 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
   for (const auto &input : inputs) {
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
-    if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-      return true;
+    if (!IsValidShape(input_shape)) {
+      return KRET_INVALID_SHAPE;
     }
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
@@ -124,7 +124,7 @@ bool DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (!CheckDropOutNdShape() || channels_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, should be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   size_t input_size = input_elements_ * unit_size_;
   input_size_list_.emplace_back(input_size);
@@ -136,7 +136,7 @@ bool DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   num_per_channel_ = input_elements_ / channels_ / batches_;
   size_t workspace_size = channels_ * sizeof(float);
   workspace_size_list_.emplace_back(workspace_size);
-  return true;
+  return KRET_OK;
 }
 
 void DropoutNDGpuKernelMod::ResetResource() noexcept {

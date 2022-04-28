@@ -98,20 +98,14 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KRET_OK;
   ResetResource();
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-      return true;
-    }
-  }
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) {
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' NativeCpuKernelMod::Resize failed.";
-    return false;
+    return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
@@ -119,13 +113,13 @@ bool DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (!CheckDropOutNdShape() || channels_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, should be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   // The number of elements per channel
   element_per_channel_ = input_elements_ / channels_;
   size_t workspace_size = channels_ * sizeof(float);
   workspace_size_list_.emplace_back(workspace_size);
-  return true;
+  return KRET_OK;
 }
 
 void DropoutNdCpuKernelMod::ResetResource() noexcept {

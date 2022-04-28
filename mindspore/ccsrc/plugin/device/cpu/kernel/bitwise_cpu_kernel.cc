@@ -63,12 +63,12 @@ bool BitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-bool BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return false;
+int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
   std::vector<int64_t> input_shape_2 = inputs[1]->GetShapeVector();
@@ -92,7 +92,7 @@ bool BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
     output_shape_[i] = static_cast<size_t>(output_shape[i]);
   }
 
-  return true;
+  return 0;
 }
 
 template <typename T>

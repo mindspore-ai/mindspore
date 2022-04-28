@@ -43,9 +43,9 @@ bool SeluGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   return true;
 }
 
-bool SeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                              const std::vector<KernelTensorPtr> &outputs,
-                              const std::map<uint32_t, tensor::TensorPtr> &) {
+int SeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
   DestroyResource();
   ResetResource();
   input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
@@ -54,18 +54,18 @@ bool SeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   is_null_input_ = (input_elements_ == 0);
   if (is_null_input_) {
     InitSizeLists();
-    return true;
+    return 0;
   }
   // If input shape contains -1, we just return true.
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-      return true;
+      return 0;
     }
   }
   outputs_ = outputs;
   InitSizeLists();
-  return true;
+  return 0;
 }
 
 template <typename T>

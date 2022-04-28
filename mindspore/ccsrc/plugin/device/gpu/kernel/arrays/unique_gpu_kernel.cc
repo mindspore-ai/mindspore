@@ -86,18 +86,21 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int UniqueGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
     DestroyResource();
     ResetResource();
-    return Init(base_operator, inputs, outputs);
+    if (!Init(base_operator, inputs, outputs)) {
+      return KRET_RESIZE_FAILED;
+    }
+    return 0;
   } else {
     base_operator_ = base_operator;
     inputs_ = inputs;
     outputs_ = outputs;
-    return true;
+    return 0;
   }
 }
 

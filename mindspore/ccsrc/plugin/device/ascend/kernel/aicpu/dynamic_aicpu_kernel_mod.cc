@@ -52,9 +52,9 @@ DynamicAicpuOpKernelMod::~DynamicAicpuOpKernelMod() {
   }
 }
 
-bool DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                     const std::vector<KernelTensorPtr> &outputs,
-                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
@@ -72,7 +72,7 @@ bool DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   if (input_num == 0 && output_num == 0) {
     MS_LOG(INFO) << "Node:" << cnode->fullname_with_scope() << " no need to update output shape";
-    return true;
+    return 0;
   }
 
   // Parse aicpu ext info
@@ -85,7 +85,7 @@ bool DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const
 
   if (ext_info_.empty()) {
     MS_LOG(INFO) << "No need to copy to device, ext_info_ is empty. ";
-    return true;
+    return 0;
   }
 
   for (size_t i = 0; i < input_num; ++i) {
@@ -102,7 +102,7 @@ bool DynamicAicpuOpKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     }
   }
 
-  return true;
+  return 0;
 }
 
 void DynamicAicpuOpKernelMod::AllocateExtInfoDeviceAddr(const CNodePtr &cnode) {
