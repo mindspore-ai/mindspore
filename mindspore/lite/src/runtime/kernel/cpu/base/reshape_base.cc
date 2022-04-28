@@ -33,6 +33,7 @@ using mindspore::schema::PrimitiveType_Squeeze;
 using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
+constexpr int kMinCostPerThread = 16384;
 int ReshapeBaseCPUKernel::Run() {
   /*
    * in_tensor : CPU-allocator ;  out_tensor : GPU-allocator
@@ -55,7 +56,32 @@ int ReshapeBaseCPUKernel::Run() {
     CHECK_NULL_RETURN(out_tensor->data());
     CHECK_NULL_RETURN(in_tensor->data());
     MS_CHECK_FALSE(in_tensor->Size() == 0, RET_ERROR);
-    if (in_tensor->data() != out_tensor->data()) std::memcpy(out_tensor->data(), in_tensor->data(), in_tensor->Size());
+    auto size = in_tensor->Size();
+    thread_num_ = MSMIN(static_cast<size_t>(op_parameter_->thread_num_), UP_DIV(size, kMinCostPerThread));
+    if (thread_num_ < 1) {
+      thread_num_ = 1;
+    }
+    auto block_size = UP_DIV(size, thread_num_);
+    thread_num_ = UP_DIV(size, block_size);
+    auto in_data = static_cast<const uint8_t *>(in_tensor->data());
+    auto out_data = static_cast<uint8_t *>(out_tensor->data());
+    auto Copy = [in_data, out_data, size, block_size, this](void *, int task_id, float, float) {
+      auto in_start = in_data + task_id * block_size;
+      auto out_start = out_data + task_id * block_size;
+      auto copy_size = block_size;
+      if (task_id == (thread_num_ - 1)) {
+        copy_size = size - task_id * block_size;
+      }
+      memcpy(out_start, in_start, copy_size);
+      return RET_OK;
+    };
+    if (in_data != out_data) {
+      if (thread_num_ == 1) {
+        memcpy(out_data, in_data, size);
+        return RET_OK;
+      }
+      return lite::ParallelLaunch(this->ms_context_, Copy, nullptr, thread_num_);
+    }
     return RET_OK;
   }
 
