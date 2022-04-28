@@ -659,7 +659,7 @@ thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, ba
 
 ##### Dump Config
 
-Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorials/experts/zh-CN/master/debug/dump.html#dump).
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/tutorials/experts/en/master/debug/dump.html#dump-introduction).
 
 | 1.2.1                                                  | 1.3.0                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |

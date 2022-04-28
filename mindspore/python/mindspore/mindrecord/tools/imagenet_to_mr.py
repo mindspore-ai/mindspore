@@ -30,10 +30,6 @@ class ImageNetToMR:
     """
     A class to transform from imagenet to MindRecord.
 
-    Note:
-        For details about Examples, please refer to `Converting the ImageNet Dataset <https://
-        www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-the-imagenet-dataset>`_.
-
     Args:
         map_file (str): The map file that indicates label. The map file content should be like this:
 
