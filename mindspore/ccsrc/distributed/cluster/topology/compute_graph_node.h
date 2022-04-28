@@ -45,6 +45,10 @@ class ComputeGraphNode : public NodeBase {
   // Returns nullptr if no message returned after timeout.
   std::shared_ptr<std::string> RetrieveMessageFromMSN(const std::string &msg_name, uint32_t timeout = 5);
 
+  // Write and read user defined metadata to the meta server node.
+  bool PutMetadata(const std::string &name, const std::string &value);
+  std::string GetMetadata(const std::string &name, uint32_t timeout = 5);
+
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();

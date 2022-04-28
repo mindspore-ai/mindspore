@@ -78,6 +78,10 @@ bool MetaServerNode::InitTCPServer() {
     std::bind(&MetaServerNode::ProcessUnregister, this, std::placeholders::_1);
   system_msg_handlers_[MessageName::kHeartbeat] =
     std::bind(&MetaServerNode::ProcessHeartbeat, this, std::placeholders::_1);
+  system_msg_handlers_[MessageName::kWriteMetadata] =
+    std::bind(&MetaServerNode::ProcessWriteMetadata, this, std::placeholders::_1);
+  system_msg_handlers_[MessageName::kReadMetadata] =
+    std::bind(&MetaServerNode::ProcessReadMetadata, this, std::placeholders::_1);
   return true;
 }
 
@@ -199,6 +203,40 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
     MS_LOG(ERROR) << "Invalid node: " << node_id << ".";
   }
   return rpc::NULL_MSG;
+}
+
+MessageBase *const MetaServerNode::ProcessWriteMetadata(MessageBase *const message) {
+  const std::string &body = message->Body();
+  MetadataMessage meta_msg;
+  meta_msg.ParseFromArray(body.c_str(), body.length());
+  if (meta_msg.name().length() == 0) {
+    MS_LOG(ERROR) << "Empty metadata name.";
+    return rpc::NULL_MSG;
+  }
+  std::shared_lock<std::shared_mutex> lock(meta_mutex_);
+  metadata_[meta_msg.name()] = meta_msg.value();
+  return rpc::NULL_MSG;
+}
+
+MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const message) {
+  const std::string &body = message->Body();
+  MetadataMessage meta_msg;
+  meta_msg.ParseFromArray(body.c_str(), body.length());
+
+  std::shared_lock<std::shared_mutex> lock(meta_mutex_);
+  MessageName result;
+  std::unique_ptr<MessageBase> response;
+
+  if (metadata_.find(meta_msg.name()) == metadata_.end()) {
+    result = MessageName::kInvalidMetadata;
+  } else {
+    result = MessageName::kValidMetadata;
+    std::string meta_value = metadata_[meta_msg.name()];
+    meta_msg.set_value(meta_value);
+  }
+  response = CreateMessage(meta_server_addr_.GetUrl(), result, meta_msg.SerializeAsString());
+  MS_EXCEPTION_IF_NULL(response);
+  return response.release();
 }
 
 void MetaServerNode::UpdateTopoState() {
