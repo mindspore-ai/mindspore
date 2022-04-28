@@ -246,11 +246,6 @@ endif()
 
 if(MSLITE_ENABLE_CUSTOM_KERNEL)
     file(GLOB KERNEL_REG_SRC ${CMAKE_CURRENT_SOURCE_DIR}/registry/*.cc)
-else()
-    set(KERNEL_REG_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/registry/register_kernel_interface.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/registry/register_kernel.cc
-            )
 endif()
 
 set(LITE_SRC

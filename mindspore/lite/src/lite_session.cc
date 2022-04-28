@@ -61,12 +61,9 @@ extern void mindspore_log_init();
 #endif
 namespace lite {
 namespace {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-constexpr auto kArchCPU = "CPU";
-#endif
-
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 bool ExistCustomCpuKernel() {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+  constexpr auto kArchCPU = "CPU";
   auto custom_kernel_creators = registry::RegistryKernelImpl::GetInstance()->GetCustomKernelCreators();
   for (const auto &custom_kernel_creator : custom_kernel_creators) {  // <provider, <arch, <type, CreateKernel*>>>
     if (custom_kernel_creator.second.empty()) {
@@ -79,9 +76,9 @@ bool ExistCustomCpuKernel() {
       return true;
     }
   }
+#endif
   return false;
 }
-#endif
 }  // namespace
 
 LiteSession::LiteSession() {
@@ -1414,11 +1411,9 @@ int LiteSession::RuntimeAllocatorInit() {
   if (RuntimeAllocatorValid() != RET_OK) {
     return RET_OK;
   }
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (ExistCustomCpuKernel()) {
     return RET_OK;
   }
-#endif
   if (runtime_allocator_ == nullptr) {
     runtime_allocator_ = std::shared_ptr<RuntimeAllocator>(new (std::nothrow) RuntimeAllocator());
   } else {

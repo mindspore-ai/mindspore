@@ -41,20 +41,6 @@ using mindspore::kernel::KERNEL_ARCH;
 using mindspore::kernel::KernelKey;
 
 namespace mindspore::lite {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-namespace {
-constexpr auto kArchCPU = "CPU";
-constexpr auto kArchGPU = "GPU";
-void KernelKeyToKernelDesc(const KernelKey &key, registry::KernelDesc *desc) {
-  MS_ASSERT(desc != nullptr);
-  desc->data_type = static_cast<DataType>(key.data_type);
-  desc->type = key.type;
-  desc->arch = key.kernel_arch;
-  desc->provider = key.provider;
-}
-}  // namespace
-#endif
-
 void KernelRegistry::CreatorArraysInit() {
   std::unique_lock<std::mutex> malloc_creator_array(lock_);
   if (creator_arrays_ == nullptr) {
@@ -176,14 +162,13 @@ bool KernelRegistry::SupportKernel(const KernelKey &key) {
   return SupportKernelC(key.type, NHWC, key.data_type);
 }
 
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                     const mindspore::Context *ms_ctx, const kernel::KernelKey &key,
                                     kernel::KernelExec **kernel, const void *primitive) {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   MS_ASSERT(ms_ctx != nullptr);
   MS_ASSERT(kernel != nullptr);
-  registry::KernelDesc desc;
-  KernelKeyToKernelDesc(key, &desc);
+  registry::KernelDesc desc{static_cast<DataType>(key.data_type), key.type, key.kernel_arch, key.provider};
   auto creator = registry::RegisterKernel::GetCreator(static_cast<const schema::Primitive *>(primitive), &desc);
   if (creator == nullptr) {
     return RET_NOT_SUPPORT;
@@ -194,6 +179,8 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
   if (base_kernel != nullptr) {
     auto *kernel_exec = new (std::nothrow) kernel::KernelExec(base_kernel);
     if (kernel_exec != nullptr) {
+      constexpr auto kArchCPU = "CPU";
+      constexpr auto kArchGPU = "GPU";
       kernel::KernelKey tmp_key = key;
       if (desc.arch == kArchCPU) {
         tmp_key.arch = kernel::kCPU;
@@ -207,9 +194,9 @@ int KernelRegistry::GetCustomKernel(const std::vector<Tensor *> &in_tensors, con
       return RET_OK;
     }
   }
+#endif
   return RET_ERROR;
 }
-#endif
 
 kernel::LiteKernel *KernelRegistry::GetLiteKernel(const std::vector<Tensor *> &in_tensors,
                                                   const std::vector<Tensor *> &out_tensors, const InnerContext *ctx,

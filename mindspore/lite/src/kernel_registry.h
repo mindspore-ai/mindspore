@@ -48,11 +48,9 @@ class KernelRegistry {
   int ReplaceKernelExec(kernel::KernelExec *kernel, const kernel::KernelKey &key);
 
  protected:
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   int GetCustomKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                       const mindspore::Context *ctx, const kernel::KernelKey &key, kernel::KernelExec **kernel,
                       const void *primitive = nullptr);
-#endif
   kernel::LiteKernel *GetLiteKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                     const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *parameter);
   static const int device_type_length_{kKernelArch_MAX - kKernelArch_MIN + 1};
