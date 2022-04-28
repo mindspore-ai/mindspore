@@ -38,7 +38,7 @@ abstract::TupleShapePtr Dropout2DInferShape(const PrimitivePtr &primitive,
   auto input_shape = input_shape_map[kShape];
   // Check Dropout2d input shape whether equal to 4D.
   const int64_t input_rank = 4;
-  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kGreaterEqual, input_rank,
                                            primitive->name());
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, input_shape_ptr});
 }
@@ -57,7 +57,7 @@ abstract::TupleShapePtr Dropout3DInferShape(const PrimitivePtr &primitive,
   auto input_shape = input_shape_map[kShape];
   // Check Dropout3d input shape whether equal to 5D.
   const int64_t input_rank = 5;
-  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kGreaterEqual, input_rank,
                                            primitive->name());
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, input_shape_ptr});
 }
@@ -78,6 +78,25 @@ TypePtr DropoutNDInferType(const PrimitivePtr &primitive, const std::vector<Abst
 
 MIND_API_OPERATOR_IMPL(Dropout2D, BaseOperator);
 MIND_API_OPERATOR_IMPL(Dropout3D, BaseOperator);
+
+void Dropout2D::Init(float keep_prob) { set_keep_prob(keep_prob); }
+
+void Dropout2D::set_keep_prob(float keep_prob) { (void)AddAttr(kKeepProb, api::MakeValue(keep_prob)); }
+
+float Dropout2D::get_keep_prob() const {
+  auto value_ptr = GetAttr(kKeepProb);
+  return GetValue<float>(value_ptr);
+}
+
+void Dropout3D::Init(float keep_prob) { set_keep_prob(keep_prob); }
+
+void Dropout3D::set_keep_prob(float keep_prob) { (void)AddAttr(kKeepProb, api::MakeValue(keep_prob)); }
+
+float Dropout3D::get_keep_prob() const {
+  auto value_ptr = GetAttr(kKeepProb);
+  return GetValue<float>(value_ptr);
+}
+
 AbstractBasePtr Dropout2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   TypePtr output_type = DropoutNDInferType(primitive, input_args);

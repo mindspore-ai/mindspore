@@ -6730,11 +6730,13 @@ class Dropout2D(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, keep_prob=0.5):
+    def __init__(self, keep_prob=0.5, batch_rank=0):
         """Initialize Dropout2D."""
         super().__init__("Dropout2D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+        self.batch_rank = validator.check_value_type("batch_rank", batch_rank, [int], self.name)
+        self.batch_rank = validator.check_int(batch_rank, 0, Rel.GE, "batch_rank", self.name)
 
 
 class Dropout3D(PrimitiveWithInfer):
@@ -6779,11 +6781,13 @@ class Dropout3D(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, keep_prob=0.5):
+    def __init__(self, keep_prob=0.5, batch_rank=0):
         """Initialize Dropout3D."""
         super().__init__("Dropout3D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+        self.batch_rank = validator.check_value_type("batch_rank", batch_rank, [int], self.name)
+        self.batch_rank = validator.check_int(batch_rank, 0, Rel.GE, "batch_rank", self.name)
 
 
 class CTCLoss(Primitive):
@@ -9176,6 +9180,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         [[[[[13. 16.]]]]]
         [[[[[12 15]]]]]
     """
+
     @prim_attr_register
     def __init__(self, ksize, output_shape, data_format="NCDHW"):
         """Initialize FractionalMaxPool3DWithFixedKsize."""
@@ -9264,6 +9269,7 @@ class FractionalAvgPool(Primitive):
           [[11],
            [13]]]]), Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]), Tensor(shape=[3], dtype=Int64, value= [0, 2, 4]))
     """
+
     @prim_attr_register
     def __init__(self, pooling_ratio, pseudo_random=False, overlapping=False, deterministic=False, seed=0, seed2=0):
         """Initialize FractionalAvgPool."""
@@ -9315,6 +9321,7 @@ class NthElement(Primitive):
         >>> print(out)
         [2 5]
     """
+
     @prim_attr_register
     def __init__(self, reverse=False):
         """Initialize NthElement."""
