@@ -86,7 +86,7 @@ class BufferCPUSampleKernelMod : public DeprecatedNativeCpuKernelMod {
       std::shuffle(indexes.begin(), indexes.end(), generator_);
 #endif
     } else {
-      std::uniform_int_distribution<> distrib(0, count_addr[0]);
+      std::uniform_int_distribution<> distrib(0, count_addr[0] - 1);  //  random integers in a range [a,b]
       for (size_t i = 0; i < batch_size_; ++i) {
         (void)indexes.emplace_back(distrib(generator_));
       }
