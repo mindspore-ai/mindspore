@@ -87,7 +87,7 @@ MindSpore context，用于配置当前执行环境，包括执行模式、执行
     - **save_dump_path** (str) - 此参数已弃用，将在下一版本中删除。
     - **enable_profiling** (bool) - 此参数已弃用，将在下一版本中删除。请使用mindspore.profiler.Profiler API。
     - **profiling_options** (str) - 此参数已弃用，将在下一版本中删除。请使用mindspore.profiler.Profiler API。
-    - **print_file_path** (str)：该路径用于保存打印数据。使用时 :class:`mindspore.ops.print` 可以打印输入的张量或字符串信息，使用方法 :func:`mindspore.parse_print` 解析保存的文件。如果设置了此参数，打印数据保存到文件，未设置将显示到屏幕。如果保存的文件已经存在，则将添加时间戳后缀到文件中。将数据保存到文件解决了屏幕打印中的数据丢失问题, 如果未设置，将报告错误:"prompt to set the upper absolute path"。
+    - **print_file_path** (str)：该路径用于保存打印数据。使用时 :class:`mindspore.ops.Print` 可以打印输入的张量或字符串信息，使用方法 :func:`mindspore.parse_print` 解析保存的文件。如果设置了此参数，打印数据保存到文件，未设置将显示到屏幕。如果保存的文件已经存在，则将添加时间戳后缀到文件中。将数据保存到文件解决了屏幕打印中的数据丢失问题, 如果未设置，将报告错误:"prompt to set the upper absolute path"。
     - **env_config_path** (str) - 通过 `context.set_context(env_config_path="./mindspore_config.json")` 来设置MindSpore环境配置文件路径。
 
       配置Running Data Recorder：

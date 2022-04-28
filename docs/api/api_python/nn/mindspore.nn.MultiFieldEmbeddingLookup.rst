@@ -27,9 +27,9 @@ mindspore.nn.MultiFieldEmbeddingLookup
 
     **输入：**
 
-    - **input_indices**(Tensor) - 指定输入Tensor元素的索引，其shape为 :math:`(batch\_size, seq\_length)` 。数据类型为int32、int64。
-    - **input_values**(Tensor) - 指定 `input_indices` 元素的权重。将检索出的向量乘以 `input_values` 。其shape为 :math:`(batch\_size, seq\_length)` 。类型为float32。
-    - **field_ids**(Tensor)- 指定 `input_indices` 元素的字段ID，其shape为 :math:`(batch\_size, seq\_length)` 。类型为int32。
+    - **input_indices** (Tensor) - 指定输入Tensor元素的索引，其shape为 :math:`(batch\_size, seq\_length)` 。数据类型为int32、int64。
+    - **input_values** (Tensor) - 指定 `input_indices` 元素的权重。将检索出的向量乘以 `input_values` 。其shape为 :math:`(batch\_size, seq\_length)` 。类型为float32。
+    - **field_ids** (Tensor)- 指定 `input_indices` 元素的字段ID，其shape为 :math:`(batch\_size, seq\_length)` 。类型为int32。
 
     **输出：**
 

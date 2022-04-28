@@ -13,7 +13,7 @@ mindspore.nn.MatrixDiagPart
 
     **输出：**
     
-    Tensor，shape与输入`x`相同。shape必须为 :math:`x.shape[:-2]+[min(x.shape[-2:])]` 。
+    Tensor，shape与输入 `x` 相同。shape必须为 :math:`x.shape[:-2]+[min(x.shape[-2:])]` 。
 
     **异常：**
     

@@ -1,5 +1,5 @@
 ﻿mindspore.ops.tuple_to_array
-===========================
+============================
 
 .. py:function:: mindspore.ops.tuple_to_array(input_x)
 

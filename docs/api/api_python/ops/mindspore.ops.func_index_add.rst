@@ -1,5 +1,5 @@
 mindspore.ops.index_add
-=================
+=======================
 
 .. py:function:: mindspore.ops.index_add(x, indices, y, axis, use_lock=True, check_index_bound=True)
 
