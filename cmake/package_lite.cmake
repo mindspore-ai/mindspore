@@ -2,7 +2,6 @@ include(CMakePackageConfigHelpers)
 
 set(RUNTIME_PKG_NAME ${PKG_NAME_PREFIX}-${RUNTIME_COMPONENT_NAME})
 
-set(CODEGEN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/codegen)
 set(CONVERTER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/converter)
 set(OBFUSCATOR_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/obfuscator)
 set(CROPPER_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/cropper)
@@ -24,12 +23,13 @@ set(MSLITE_PROPOSAL_LIB_NAME libmslite_proposal)
 set(MICRO_NNIE_LIB_NAME libmicro_nnie)
 set(DPICO_ACL_ADAPTER_LIB_NAME libdpico_acl_adapter)
 set(BENCHMARK_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark)
-set(MICRO_DIR ${TOP_DIR}/mindspore/lite/tools/converter/micro)
 
 set(MINDSPORE_LITE_TRAIN_LIB_NAME libmindspore-lite-train)
 set(BENCHMARK_TRAIN_NAME benchmark_train)
 set(BENCHMARK_TRAIN_ROOT_DIR ${RUNTIME_PKG_NAME}/tools/benchmark_train)
 file(GLOB JPEGTURBO_LIB_LIST ${jpeg_turbo_LIBPATH}/*.so)
+
+include(${TOP_DIR}/cmake/package_micro.cmake)
 
 function(__install_white_list_ops)
     install(FILES
@@ -356,34 +356,6 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite_cv")
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
 endif()
-
-function(__install_micro_wrapper)
-    file(GLOB NNACL_FILES GLOB ${NNACL_DIR}/*.h)
-    install(FILES ${NNACL_FILES} DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${NNACL_DIR}/base DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${NNACL_DIR}/int8 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${NNACL_DIR}/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${NNACL_DIR}/intrinsics DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${MICRO_DIR}/coder/wrapper DESTINATION ${CODEGEN_ROOT_DIR}/include
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(TARGETS wrapper ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/lib COMPONENT ${RUNTIME_COMPONENT_NAME})
-endfunction()
-
-function(__install_micro_codegen)
-    set(MICRO_CMSIS_DIR ${CMAKE_BINARY_DIR}/cmsis/CMSIS)
-    install(DIRECTORY ${MICRO_CMSIS_DIR}/Core/Include DESTINATION ${CODEGEN_ROOT_DIR}/third_party/include/CMSIS/Core
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${MICRO_CMSIS_DIR}/DSP/Include DESTINATION ${CODEGEN_ROOT_DIR}/third_party/include/CMSIS/DSP
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${MICRO_CMSIS_DIR}/NN/Include DESTINATION ${CODEGEN_ROOT_DIR}/third_party/include/CMSIS/NN
-            COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(TARGETS cmsis_nn ARCHIVE DESTINATION ${CODEGEN_ROOT_DIR}/third_party/lib
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-endfunction()
 
 if(WIN32)
     install(FILES ${TOP_DIR}/build/.commit_id DESTINATION ${RUNTIME_PKG_NAME}

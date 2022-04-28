@@ -401,6 +401,10 @@ build_lite() {
           echo "Use the '-I arm64' command when compiling MindSpore Lite on an aarch64 architecture system."
           exit 1
         fi
+        if [[ "${MSLITE_MICRO_PLATFORM}" == cortex-m* ]]; then
+          CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/cortex-m7.toolchain.cmake
+          LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=cortex-m7"
+        fi
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=lite_cv"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_X86_64=on"
       fi
@@ -442,7 +446,7 @@ build_lite() {
         fi
       fi
       make package
-      if [[ "${local_lite_platform}" == "x86_64" ]]; then
+      if [[ "${local_lite_platform}" == "x86_64" && "X$CMAKE_TOOLCHAIN_FILE" == "X" ]]; then
         build_python_wheel_package "x86_64"
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"

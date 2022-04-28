@@ -293,8 +293,8 @@ void MatMulInt8_4x2_r(const int8_t *a, const int8_t *b, int8_t *dst, size_t row,
 }
 
 #ifndef ENABLE_ARM
-void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
-                   const int *bias, int mini, int maxi, int out_zp, const int32_t *multiplier,
+void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int32_t *a_sums,
+                   const int32_t *bias, int mini, int maxi, int out_zp, const int32_t *multiplier,
                    const int32_t *left_shift, const int32_t *right_shift, size_t stride, size_t filter_peroc,
                    const int32_t *filter_zp) {
   /*
@@ -783,7 +783,7 @@ void RowMajor2Col4x16MajorInt8(const int8_t *src, int8_t *dst, int row, int col)
   }
 }
 
-void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order) {
+void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int32_t *dst, DataOrder order) {
   for (int r = 0; r < row; ++r) {
     int sum = 0;
     for (int c = 0; c < col; ++c) {
@@ -800,7 +800,7 @@ void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int *ds
 
 // dst: bias + depth*input_zp*weight_zp - input_zp*weight_col_sums
 void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, const int *weight_zp_ptr, const int *bias,
-                        int *dst, DataOrder order, bool filter_per_channel) {
+                        int32_t *dst, DataOrder order, bool filter_per_channel) {
   for (int c = 0; c < col; ++c) {
     int sum = 0;
     for (int r = 0; r < row; ++r) {
