@@ -636,6 +636,78 @@ class Tensor(Tensor_):
             shape = shape[0]
         return tensor_operator_registry.get('reshape')()(self, shape)
 
+    def bitwise_and(self, x):
+        """
+        Returns bitwise `and` of two tensors element-wise.
+
+        Refer to :func:`mindspore.ops.bitwise_and` for more detail.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor, has the same type as the `x`.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> a = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+            >>> b = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+            >>> output = a.bitwise_and(b)
+            >>> print(output)
+            [ 0  0  1 -1  1  0  1]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bitwise_and')(self, x)
+
+    def bitwise_or(self, x):
+        """
+        Returns bitwise `or` of two tensors element-wise.
+
+        Refer to :func:`mindspore.ops.bitwise_or` for more detail.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor, has the same type as the `x`.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> a = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+            >>> b = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+            >>> output = a.bitwise_or(b)
+            >>> print(output)
+            [ 0  1  1 -1 -1  3  3]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bitwise_or')(self, x)
+
+    def bitwise_xor(self, x):
+        """
+        Returns bitwise `xor` of two tensors element-wise.
+
+        Refer to :func:`mindspore.ops.bitwise_xor` for more detail.
+
+        Args:
+            x (Tensor): The input tensor.
+
+        Returns:
+            Tensor, has the same type as the `x`.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> import numpy as np
+            >>> a = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
+            >>> b = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
+            >>> output = a.bitwise_xor(b)
+            >>> print(output)
+            [ 0  1  0  0 -2  3  2]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('bitwise_xor')(self, x)
+
     def expand_as(self, x):
         """
         Expand the dimension of target tensor to the dimension of input tensor.

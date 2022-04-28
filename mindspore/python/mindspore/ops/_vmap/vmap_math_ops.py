@@ -57,8 +57,12 @@ def _handle_scalar_broadcasting(nd, x, dim):
 @vmap_rules_getters.register(P.NotEqual)
 @vmap_rules_getters.register(P.LogicalOr)
 @vmap_rules_getters.register(P.LogicalAnd)
+@vmap_rules_getters.register(P.BitwiseAnd)
+@vmap_rules_getters.register(P.BitwiseOr)
+@vmap_rules_getters.register(P.BitwiseXor)
 def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations with broadcasting, such as `Add` and `Sub`."""
+
     def vmap_rule(x_bdim, y_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim)
         if is_all_none:
