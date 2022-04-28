@@ -38,11 +38,10 @@ bool Initialize() {
     MS_EXCEPTION_IF_NULL(cluster_ctx);
     if (cluster_ctx->node_role() != kEnvRoleOfScheduler && cluster_ctx->node_role() != kEnvRoleOfServer) {
       // Global rank id and size should be manually set if cluster is initialized by MindSpore communication framework.
-      auto abstract_node =
-        std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster::ClusterContext::instance()->node());
+      auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(cluster_ctx->node());
       MS_EXCEPTION_IF_NULL(abstract_node);
       collective::CollectiveManager::instance()->set_global_rank_id(abstract_node->rank_id());
-      auto global_rank_size = cluster::ClusterContext::instance()->node_num();
+      auto global_rank_size = cluster_ctx->node_num(cluster_ctx->node_role());
       collective::CollectiveManager::instance()->set_global_rank_size(global_rank_size);
 
       if (RecoveryContext::GetInstance()->enable_recovery()) {
