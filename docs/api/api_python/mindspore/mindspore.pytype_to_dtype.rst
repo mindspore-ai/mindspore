@@ -12,3 +12,7 @@ mindspore.pytype_to_dtype
     **返回：**
 
     MindSpore的数据类型。
+
+    **异常：**
+
+    - **NotImplementedError** – Python类型无法转换为MindSpore类型。
