@@ -159,7 +159,7 @@ INTRIN_GLOBALS = {
     **INTRIN_BINARY_OP,
 }
 
-INTRIN_GPU_UNARY_OP = {
+INTRIN_GENERAL_UNARY_OP = {
     'rsqrt': _rsqrt,
     'erf': _erf,
     'isnan': numpy.isnan,
@@ -180,18 +180,20 @@ INTRIN_GPU_UNARY_OP = {
     'round': numpy.round,
 }
 
-INTRIN_GPU_BINARY_OP = {
+INTRIN_CPU_NOT_SUPPORT = ["atan2", "expm1"]
+
+INTRIN_GENERAL_BINARY_OP = {
     'ceil_div': lambda a, b: (a + b - 1) // b,
 }
 
-INTRIN_GPU = {
-    **INTRIN_GPU_UNARY_OP,
-    **INTRIN_GPU_BINARY_OP
+INTRIN_GENERAL = {
+    **INTRIN_GENERAL_UNARY_OP,
+    **INTRIN_GENERAL_BINARY_OP
 }
 
 INTRIN_RUNTIME = {
     **INTRIN_GLOBALS,
-    **INTRIN_GPU
+    **INTRIN_GENERAL
 }
 
 
@@ -283,16 +285,17 @@ class VariableUsage(ast.NodeVisitor):
             raise ValueError(
                 "In the function {} written in the Hybrid DSL, function call id {} "
                 "not in intrinsics' list".format(self.func_name, func_id))
-        if self.device != "GPU" and func_id in list(INTRIN_GPU.keys()):
+        if (self.device == "Ascend" and func_id in list(INTRIN_GENERAL.keys())) or \
+                (self.device == "CPU" and func_id in INTRIN_CPU_NOT_SUPPORT):
             raise ValueError(
                 "In the function {} written in the Hybrid DSL, function {} is not available on the "
                 "device {}".format(self.func_name, func_id, self.device))
-        if func_id in list(INTRIN_UNARY_OP.keys()) + list(INTRIN_GPU_UNARY_OP.keys()) + list(INTRIN_LOOP.keys()) \
+        if func_id in list(INTRIN_UNARY_OP.keys()) + list(INTRIN_GENERAL_UNARY_OP.keys()) + list(INTRIN_LOOP.keys()) \
                 and len(node.args) != 1:
             raise TypeError(
                 "In the function {} written in the Hybrid DSL, function {} "
                 "expects one input, but get {}".format(self.func_name, func_id, len(node.args)))
-        if func_id in list(INTRIN_BINARY_OP.keys()) + list(INTRIN_GPU_BINARY_OP.keys()) + \
+        if func_id in list(INTRIN_BINARY_OP.keys()) + list(INTRIN_GENERAL_BINARY_OP.keys()) + \
                 list(INTRIN_BUFFER.keys()) and len(node.args) != 2:
             raise TypeError(
                 "In the function {} written in the Hybrid DSL, function {} "

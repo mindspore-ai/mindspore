@@ -64,6 +64,10 @@ constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
 constexpr auto kJsonKeyStitchOp = "stitch_op";
 constexpr auto kJsonKeyStitchAtomicOp = "stitch_atomic_op";
 constexpr auto kJsonKeyComputeCapability = "compute_capability";
+constexpr auto kJsonKeyTargetOption = "target_option";
+
+// target related compile options
+constexpr auto kCPUTargetOption = "-mcpu=core-avx2 -mattr=avx2";
 
 // dump option
 struct DumpOption {
