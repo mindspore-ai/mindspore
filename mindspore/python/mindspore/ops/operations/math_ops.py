@@ -2427,7 +2427,7 @@ class Erf(Primitive):
     Refer to :func:`mindspore.ops.erf` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
@@ -2463,7 +2463,7 @@ class Erfc(Primitive):
         TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU``  ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
