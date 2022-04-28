@@ -37,7 +37,7 @@ class MixPrecisionCfg {
 
   ~MixPrecisionCfg() = default;
 
-  bool dynamic_loss_scale_ = false;   /**< Enable\disable dynamic loss scale during mix precision training */
+  bool dynamic_loss_scale_ = false;   /**< Enable/disable dynamic loss scale during mix precision training */
   float loss_scale_;                  /**< Initial loss scale factor  */
   bool keep_batchnorm_fp32_ = true;   /**< Keep batch norm in FP32 while training */
   uint32_t num_of_not_nan_iter_th_;   /**< a threshold for modifying loss scale when dynamic loss scale is enabled */

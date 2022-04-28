@@ -69,7 +69,7 @@ class MS_CORE_API Number : public Object {
 
   /// \brief Get type name for Number object.
   ///
-  /// \param Define the type name.
+  /// \param type_name Define the type name.
   /// \return The full type name of the Number object.
   std::string GetTypeName(const std::string &type_name) const {
     std::ostringstream oss;
