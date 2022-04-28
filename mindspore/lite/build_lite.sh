@@ -240,6 +240,26 @@ build_lite_aarch64_jni_and_jar() {
     rm -rf ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
 }
 
+build_python_wheel_package() {
+  local python_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'`
+  if [[ "${python_version}" == "3" ]]; then
+    cd ${BASEPATH}/mindspore/lite/build/
+    mkdir -pv package/mindspore_lite/lib/
+    cp ../python/api/* package/mindspore_lite/
+    cp src/*.so package/mindspore_lite/lib/
+    cp python/*.so package/mindspore_lite/lib/
+    cp .commit_id package/mindspore_lite/
+    echo "__version__ = '${VERSION_STR}'" > package/mindspore_lite/version.py
+    cp ../python/setup.py  package/
+    export TOP_DIR=${BASEPATH}
+    cd package
+    python setup.py bdist_wheel
+    cp dist/mindspore_lite-*.whl ${BASEPATH}/output/
+  else
+    echo -e "\e[31mPython3 not found, so Python API will not be compiled. \e[0m"
+  fi
+}
+
 build_lite() {
     LITE_CMAKE_ARGS=${CMAKE_ARGS}
     [ -n "${BASEPATH}" ] && rm -rf ${BASEPATH}/output
@@ -401,6 +421,7 @@ build_lite() {
       fi
       make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
+        build_python_wheel_package
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
             build_lite_x86_64_jni_and_jar "${CMAKE_ARGS}"
