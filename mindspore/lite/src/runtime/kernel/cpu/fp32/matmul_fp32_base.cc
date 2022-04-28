@@ -24,6 +24,7 @@
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32_avx.h"
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32_avx512.h"
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32_common.h"
+#include "nnacl/fp32/pack_fp32_opt.h"
 
 using mindspore::lite::RET_NULL_PTR;
 
@@ -94,6 +95,9 @@ int MatmulFp32BaseCPUKernel::PackMatrixA() {
     if (is_packed) {
       return RET_OK;
     }
+  }
+  if (pack_opt_) {
+    return PackMatrixAImplOpt();  // currently, only arm64 support.
   }
   return PackMatrixAImpl();
 }
@@ -295,6 +299,7 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
     row_tile_ = 1;
     matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
     matrix_a_.need_pack = false;
+    pack_opt_ = false;
   }
   if (params_->col_ == 1 && !params_->a_const_) {
     out_need_aligned_ = false;
@@ -304,6 +309,7 @@ int MatmulFp32BaseCPUKernel::InitParameter() {
     matrix_b_pack_fun_ = params_->b_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
     matrix_a_.need_pack = params_->a_transpose_ && params_->row_ != 1;
     matrix_b_.need_pack = false;
+    pack_opt_ = false;
   }
   params_->row_align_ = UP_ROUND(params_->row_, row_tile_);
   params_->col_align_ = UP_ROUND(params_->col_, col_tile_);

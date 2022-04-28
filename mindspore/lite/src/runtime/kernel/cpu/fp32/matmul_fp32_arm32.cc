@@ -31,6 +31,11 @@ void MatmulFp32BaseCPUKernel::InitGlobalVariable() {
   col_min_unit_ = C4NUM;
 }
 
+int MatmulFp32BaseCPUKernel::PackMatrixAImplOpt() {
+  MS_LOG(ERROR) << "Matmul: don't support optimized-packing, only support single-thread currently.";
+  return RET_ERROR;
+}
+
 int MatmulFp32BaseCPUKernel::ParallelRunByBatch(int task_id) const {
   int start_batch = task_id * batch_stride_;
   int end_batch = MSMIN(params_->batch, start_batch + batch_stride_);
