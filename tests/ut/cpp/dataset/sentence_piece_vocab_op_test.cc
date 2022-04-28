@@ -16,6 +16,7 @@
 
 #include <string>
 #include <string_view>
+
 #include "common/common.h"
 #include "minddata/dataset/engine/datasetops/build_sentence_piece_vocab_op.h"
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
@@ -60,11 +61,11 @@ TEST_F(MindDataTestSentencePieceVocabOp, TestSentencePieceFromFileFuntions) {
   MS_LOG(INFO) << "Doing MindDataTestSentencePieceVocabOp  TestSentencePieceFromFileFuntions.";
 
   std::string dataset_path;
-  dataset_path = datasets_root_path_ + "/test_sentencepiece/botchan.txt";
+  dataset_path = datasets_root_path_ + "/test_sentencepiece/vocab.txt";
   std::vector<std::string> path_list;
   path_list.emplace_back(dataset_path);
   std::unordered_map<std::string, std::string> param_map;
   std::shared_ptr<SentencePieceVocab> spm = std::make_unique<SentencePieceVocab>();
-  Status rc = SentencePieceVocab::BuildFromFile(path_list, 5000, 0.9995, SentencePieceModel::kUnigram, param_map, &spm);
+  Status rc = SentencePieceVocab::BuildFromFile(path_list, 100, 0.9995, SentencePieceModel::kUnigram, param_map, &spm);
   ASSERT_TRUE(rc.IsOk());
 }
