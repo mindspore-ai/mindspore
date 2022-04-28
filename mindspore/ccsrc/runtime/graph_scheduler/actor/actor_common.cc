@@ -158,6 +158,10 @@ bool IsPersistentDeviceTensor(const AnfNodePtr &node) {
   return false;
 }
 
+bool IsControlFlowActor(KernelTransformType actor_type) {
+  return ((actor_type >= KernelTransformType::kSwitchActor) && (actor_type <= KernelTransformType::kStackActor));
+}
+
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor) {
   MS_EXCEPTION_IF_NULL(dst_device_tensor);
   MS_EXCEPTION_IF_NULL(src_device_tensor);

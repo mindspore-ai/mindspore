@@ -60,6 +60,8 @@ class ExitActor : public ControlActor {
 
  private:
   friend class ControlNodeScheduler;
+  friend class SchedulerHelper;
+
   void CopyDeviceAddress(OpContext<DeviceTensor> *const context);
 
   // Exit actor will send to different actors according to different callers, so the output data, control,

@@ -180,17 +180,6 @@ class BACKEND_EXPORT GraphScheduler {
   // 3. The processing of linking output result arrows.
   void LinkOutputResultArrowForOutputActor(OutputActor *to_actor, const GraphCompilerInfo &graph_compiler_info);
 
-  void AddDeviceTensorStore(const AnfNode *anf_node, const DeviceTensorPtr &device_tensor);
-  // Add the arrow between from actor and to actor.
-  void AddDataArrow(AbstractActor *const from_actor, AbstractActor *const to_actor, const AnfNodePtr &from_kernel,
-                    size_t from_output_index, size_t to_input_index);
-  void AddResultArrow(AbstractActor *const from_actor, OutputActor *const to_actor, const AnfNodePtr &from_kernel,
-                      size_t from_output_index, size_t output_position);
-  void AddControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor);
-
-  // Check whether the actor set is valid.
-  void CheckActorValid(const ActorSet *actor_set) const;
-
   // Persist device tensors of graph's some nodes(such as weights and value nodes).
   void PersistDeviceTensor(const GraphCompilerInfo &graph_compiler_info);
   // When the parameters of root graph are not in backend kernel graphs, need persist device tensor by this function.

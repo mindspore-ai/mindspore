@@ -63,6 +63,7 @@ class EntranceActor : public ControlActor {
 
  private:
   friend class ControlNodeScheduler;
+  friend class SchedulerHelper;
 
   // Indicate whether the entrance actor is the execution of loop body. In the control flow, the subgraph can be
   // triggered to execute in two ways: one is the begin execution of step, another is the execution of loop body.
