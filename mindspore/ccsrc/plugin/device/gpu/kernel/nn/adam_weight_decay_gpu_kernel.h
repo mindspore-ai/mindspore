@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t INPUT_NUM = 9;
-template <typename T>
+template <typename T, typename S>
 class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   AdamWeightDecayGpuKernelMod()
@@ -48,7 +48,7 @@ class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
-    T *variable = GetDeviceAddress<T>(inputs, 0);
+    S *variable = GetDeviceAddress<S>(inputs, 0);
     T *m = GetDeviceAddress<T>(inputs, 1);
     T *v = GetDeviceAddress<T>(inputs, 2);
     float *lr = GetDeviceAddress<float>(inputs, 3);
@@ -56,8 +56,8 @@ class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     float *beta2 = GetDeviceAddress<float>(inputs, 5);
     float *epsilon = GetDeviceAddress<float>(inputs, 6);
     float *decay = GetDeviceAddress<float>(inputs, 7);
-    T *gradient = GetDeviceAddress<T>(inputs, 8);
-    AdamWeightDecayOp(inputs[0]->size / sizeof(T), gradient, lr, beta1, beta2, epsilon, decay, variable, m, v,
+    S *gradient = GetDeviceAddress<S>(inputs, 8);
+    AdamWeightDecayOp(inputs[0]->size / sizeof(S), gradient, lr, beta1, beta2, epsilon, decay, variable, m, v,
                       reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -71,7 +71,7 @@ class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << input_num;
     }
 
-    variable_size_ = sizeof(T);
+    variable_size_ = sizeof(S);
     m_size_ = sizeof(T);
     v_size_ = sizeof(T);
     learning_rate_size_ = sizeof(float);
@@ -79,7 +79,7 @@ class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     beta2_size_ = sizeof(float);
     epsilon_size_ = sizeof(float);
     decay_size_ = sizeof(float);
-    gradient_size_ = sizeof(T);
+    gradient_size_ = sizeof(S);
 
     auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto m_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);

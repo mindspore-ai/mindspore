@@ -1425,9 +1425,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.padding
 
             h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                    / stride_h
+                / stride_h
             w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                    / stride_w
+                / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -4390,7 +4390,10 @@ class AdamWeightDecay(PrimitiveWithInfer):
 
     def infer_dtype(self, var_dtype, m_dtype, v_dtype, lr_dtype, beta1_dtype, beta2_dtype,
                     epsilon_dtype, decay_dtype, grad_dtype):
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
+        args = {"var": var_dtype, "grad": grad_dtype}
+        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
+
+        args = {"m": m_dtype, "v": v_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
 
         args = {"lr": lr_dtype, "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype,
