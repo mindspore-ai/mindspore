@@ -1161,7 +1161,7 @@ class ReduceProd(_Reduce):
         super(ReduceProd, self).__init__(keep_dims)
 
 
-class CumProd(PrimitiveWithInfer):
+class CumProd(Primitive):
     """
     Computes the cumulative product of the tensor x along axis.
     For example, if input is a vector of size N, the result will also be a vector of size N, with elements.
@@ -1188,7 +1188,7 @@ class CumProd(PrimitiveWithInfer):
         ValueError: If `axis` is None.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> a, b, c, = 1, 2, 3
@@ -1217,9 +1217,9 @@ class CumProd(PrimitiveWithInfer):
          [ 4. 10. 18.]
          [20. 30. 90.]]
         >>> print(output5)
-        [[1.  2.   6.]
-         [4. 20. 120.]
-         [5. 15.  75.]]
+        [[  1.   2.   6.]
+         [  4.  20. 120.]
+         [  5.  15.  75.]]
     """
 
     @prim_attr_register
@@ -1229,19 +1229,6 @@ class CumProd(PrimitiveWithInfer):
         self.exclusive = validator.check_value_type("exclusive", exclusive, [bool], cls_name)
         self.reverse = validator.check_value_type("reverse", reverse, [bool], cls_name)
         self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
-
-    def infer_shape(self, x_shape, axis_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type, axis_type):
-        cls_name = self.name
-        validator.check_tensor_dtype_valid('x', x_type, mstype.number_type, cls_name)
-        validator.check_subclass("axis", axis_type, mstype.int_, cls_name)
-        return x_type
-
-    def infer_value(self, x, axis):
-        if axis is None:
-            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
 
 
 class Lcm(Primitive):
@@ -1557,7 +1544,7 @@ class Betainc(Primitive):
         """Initialize Betainc"""
 
 
-class CumSum(PrimitiveWithInfer):
+class CumSum(Primitive):
     """
     Computes the cumulative sum of input tensor along axis.
 

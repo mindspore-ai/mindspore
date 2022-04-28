@@ -22,6 +22,8 @@ namespace kernel {
 namespace {
 constexpr size_t kCumSumStaticInputsNum = 1;
 constexpr size_t kCumSumDynamicInputsNum = 2;
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 template <typename T>
 inline void LeftMove(const T *input, T *output, size_t dim0, size_t dim1, size_t dim2, size_t stride, size_t stride2,
@@ -242,6 +244,10 @@ std::vector<std::pair<KernelAttr, CumSumCpuKernelMod::CumSumLaunchFunc>> CumSumC
    &CumSumCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &CumSumCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &CumSumCpuKernelMod::LaunchKernel<std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &CumSumCpuKernelMod::LaunchKernel<std::complex<double>>},
   // Dynamic shape related.
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
    &CumSumCpuKernelMod::LaunchKernel<int8_t>},

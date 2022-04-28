@@ -209,6 +209,8 @@ from .check_numerics import _check_numerics_aicpu
 from .affine_grid import _affine_grid_aicpu
 from .cummax import _cummax_aicpu
 from .lcm import _lcm_aicpu
+from .cumsum import _cumsum_aicpu
+from .cumprod import _cumprod_aicpu
 from .round import _round_aicpu
 from .gcd import _gcd_aicpu
 from .truncated_normal import _truncated_normal_aicpu

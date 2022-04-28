@@ -35,6 +35,8 @@ constexpr auto kInitData = "InitData";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kPrint = "Print";
 constexpr auto kPack = "Pack";
+constexpr auto kCumSum = "CumSum";
+constexpr auto kCumProd = "CumProd";
 constexpr auto kMeshgrid = "Meshgrid";
 constexpr auto kOutputTypes = "output_types";
 constexpr auto kOutputShapes = "output_shapes";
@@ -128,6 +130,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kStack, "Pack"},
   {kUnstack, "Unpack"},
   {kGather, "GatherV2"},
+  {kCumSum, "Cumsum"},
+  {kCumProd, "Cumprod"},
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},
