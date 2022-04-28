@@ -30,13 +30,13 @@ int TransFullyFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *trans
   auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(trans_kernel1, out_tensor);
   auto ret = subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
   if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Update kernel link failed when fusing kernel " << trans_kernel0->name() << " and "
+    MS_LOG(ERROR) << "Update kernel link failed when fusing kernel " << trans_kernel0->name() << " and "
                   << trans_kernel1->name();
     return RET_ERROR;
   }
   ret = subgraph->UpdateInOutTensors(in_kernel, out_kernels, in_tensor, out_tensor, true);
   if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Update tensor failed when fusing kernel " << trans_kernel0->name() << " and "
+    MS_LOG(ERROR) << "Update tensor failed when fusing kernel " << trans_kernel0->name() << " and "
                   << trans_kernel1->name();
     return RET_ERROR;
   }
@@ -61,7 +61,7 @@ int TransHeadTailFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *tr
   auto out_kernels = kernel::KernelExecUtil::FindOutKernelsForOutTensor(trans_kernel1, out_tensor);
   auto ret = subgraph->UpdateInOutKernels(in_kernel, out_kernels, trans_kernel0, trans_kernel1);
   if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Update kernel link failed when fusing kernel " << trans_kernel0->name() << " and "
+    MS_LOG(ERROR) << "Update kernel link failed when fusing kernel " << trans_kernel0->name() << " and "
                   << trans_kernel1->name();
     return RET_ERROR;
   }
@@ -106,12 +106,12 @@ int DecreaseTransposeAlgo::TransTransFusion(kernel::SubGraphKernel *subgraph) {
     TransInfoPair pre_trans;
     TransInfoPair post_trans;
     if (GetTransposeInfo(kernel, &post_trans) != RET_OK) {
-      MS_LOG(DEBUG) << "The kernel " << kernel->name() << " isn't transpose and can't be fused.";
+      MS_LOG(INFO) << "The kernel " << kernel->name() << " isn't transpose and can't be fused.";
       continue;
     }
     auto pre_kernel = kernel->in_kernels().at(0);
     if (GetTransposeInfo(pre_kernel, &pre_trans) != RET_OK) {
-      MS_LOG(DEBUG) << "The kernel " << pre_kernel->name() << " isn't transpose and can't be fused.";
+      MS_LOG(INFO) << "The kernel " << pre_kernel->name() << " isn't transpose and can't be fused.";
       continue;
     }
     if (pre_trans.dst_format_ != post_trans.src_format_) {
@@ -229,12 +229,12 @@ int DoPreFusion(kernel::SubGraphKernel *subgraph, kernel::KernelExec *kernel, st
         auto pre_in_kernel = kernel::KernelExecUtil::FindInKernelForInTensor(in_kernel, in_kernel->in_tensors().at(0));
         ret = subgraph->UpdateInOutKernels(pre_in_kernel, {kernel}, in_kernel, in_kernel);
         if (ret != RET_OK) {
-          MS_LOG(DEBUG) << "Update kernel link failed when removing kernel " << in_kernel->name();
+          MS_LOG(ERROR) << "Update kernel link failed when removing kernel " << in_kernel->name();
           return RET_ERROR;
         }
         ret = subgraph->UpdateInOutTensors(pre_in_kernel, {kernel}, in_kernel->in_tensors().at(0), in_tensor, true);
         if (ret != RET_OK) {
-          MS_LOG(DEBUG) << "Update tensor failed when removing kernel " << in_kernel->name();
+          MS_LOG(ERROR) << "Update tensor failed when removing kernel " << in_kernel->name();
           return RET_ERROR;
         }
 

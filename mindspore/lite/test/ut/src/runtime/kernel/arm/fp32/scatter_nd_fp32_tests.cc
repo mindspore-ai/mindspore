@@ -42,7 +42,7 @@ TEST_F(TestScatterNdFp32, ScatterNd) {
   ASSERT_EQ(ctx->Init(), RET_OK);
   param->op_parameter.thread_num_ = ctx->thread_num_;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, schema::PrimitiveType_ScatterNd};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, NHWC, schema::PrimitiveType_ScatterNd};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
@@ -75,7 +75,7 @@ TEST_F(TestScatterNdFp32, ScatterNdUpdate) {
   ASSERT_EQ(ctx->Init(), RET_OK);
   param->op_parameter.thread_num_ = ctx->thread_num_;
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ScatterNdUpdate};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_ScatterNdUpdate};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);

@@ -16,11 +16,20 @@
 
 #include "src/runtime/pass/pass_utils.h"
 #include <string>
+#include <memory>
+#include <map>
 #include <vector>
 #include "src/kernel_registry.h"
 #include "nnacl/format_transpose_parameter.h"
 
 namespace mindspore::lite::pass {
+static const std::map<FormatC, std::string> format_str = {
+  {Format_NCHW, "NCHW"}, {Format_NHWC, "NHWC"}, {Format_NC4HW4, "NC4HW4"}, {Format_NCHW, "NC8HW8"}};
+
+std::string GetFormatStr(const FormatC &format) {
+  return format_str.find(format) != format_str.end() ? format_str.at(format) : "";
+}
+
 bool IsNoneTranspose(const TransInfoPair &trans) {
   return trans.src_format_ == Format_NONE && trans.dst_format_ == Format_NONE;
 }
@@ -58,10 +67,11 @@ kernel::KernelExec *CreateFormatTranspose(Tensor *input, Tensor *output, const T
   param->dst_format_ = trans_info.dst_format_;
   kernel::KernelKey format_transpose_key = desc;
   format_transpose_key.type = schema::PrimitiveType_FormatTranspose;
+  format_transpose_key.format = NHWC;
 
   kernel::KernelExec *kernel = nullptr;
-  auto ret = KernelRegistry::GetInstance()->GetKernel({input}, {output}, ctx, nullptr, format_transpose_key,
-                                                      reinterpret_cast<OpParameter *>(param), &kernel);
+  auto ret = KernelRegistry::GetInstance()->GetKernelExec({input}, {output}, ctx, nullptr, format_transpose_key,
+                                                          reinterpret_cast<OpParameter *>(param), &kernel);
   if (ret != RET_OK || kernel == nullptr) {
     free(param);
     return nullptr;
@@ -172,44 +182,5 @@ int GetTransposeInfo(const kernel::KernelExec *kernel, TransInfoPair *trans_info
     trans_info->dst_format_ = param->dst_format_;
   }
   return RET_OK;
-}
-
-void PrintfSubgraph(kernel::SubGraphKernel *subgraph) {
-  std::cout << "subgraph in kernel ------------------------------------------ " << std::endl;
-  for (const auto &kernel : subgraph->in_nodes()) {
-    std::cout << kernel->name() << std::endl;
-  }
-  std::cout << "subgraph out kernel ------------------------------------------ " << std::endl;
-  for (const auto &kernel : subgraph->out_nodes()) {
-    std::cout << kernel->name() << std::endl;
-  }
-  std::cout << "subgraph in tensor ------------------------------------------ " << std::endl;
-  for (const auto &tensor : subgraph->in_tensors()) {
-    std::cout << tensor->ToString() << std::endl;
-  }
-  std::cout << "subgraph out tensor ------------------------------------------ " << std::endl;
-  for (const auto &tensor : subgraph->out_tensors()) {
-    std::cout << tensor->ToString() << std::endl;
-  }
-  std::cout << std::endl;
-
-  for (const auto &node : subgraph->nodes()) {
-    std::cout << node->name() << std::endl;
-    for (size_t i = 0; i < node->in_kernels().size(); i++) {
-      std::cout << "input kernel " << i << "%%%%%%%% \t\t\t " << node->in_kernels().at(i)->name() << std::endl;
-    }
-    for (size_t i = 0; i < node->out_kernels().size(); i++) {
-      std::cout << "output kernel " << i << "%%%%%%%% \t\t\t " << node->out_kernels().at(i)->name() << std::endl;
-    }
-    std::cout << "----------------------------------------" << std::endl;
-    for (size_t i = 0; i < node->in_tensors().size(); i++) {
-      std::cout << "input tensor " << i << "======== \t\t\t " << node->in_tensors().at(i)->ToString() << std::endl;
-    }
-    for (size_t i = 0; i < node->out_tensors().size(); i++) {
-      std::cout << "output tensor " << i << "======== \t\t\t " << node->out_tensors().at(i)->ToString() << std::endl;
-    }
-    std::cout << "*****************************************" << std::endl;
-    std::cout << std::endl;
-  }
 }
 }  // namespace mindspore::lite::pass

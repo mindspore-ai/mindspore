@@ -120,6 +120,7 @@ int32_t Tensor::Batch() const {
     case mindspore::NHWC4:
     case mindspore::NCHW:
     case mindspore::NC4HW4:
+    case mindspore::NC8HW8:
     case mindspore::KCHW:
     case mindspore::KHWC:
     case mindspore::NC:
@@ -155,6 +156,8 @@ int32_t Tensor::Channel() const {
     case mindspore::KCHW:
     case mindspore::NC:
     case mindspore::NC4:
+    case mindspore::NC4HW4:
+    case mindspore::NC8HW8:
       return this->shape_[1];
     case mindspore::HWCK:
       if (this->shape_.size() != 4) {
@@ -164,7 +167,6 @@ int32_t Tensor::Channel() const {
     case mindspore::HWKC:
     case mindspore::NHWC:
     case mindspore::NHWC4:
-    case mindspore::NC4HW4:
     case mindspore::KHWC:
       if (this->shape_.size() != 4) {
         return RET_ERROR;
@@ -188,13 +190,14 @@ int32_t Tensor::Height() const {
     case mindspore::NCHW:
     case mindspore::KCHW:
     case mindspore::CKHW:
+    case mindspore::NC4HW4:
+    case mindspore::NC8HW8:
       if (this->shape_.size() != 4) {
         return RET_ERROR;
       }
       return this->shape_[2];
     case mindspore::NHWC:
     case mindspore::NHWC4:
-    case mindspore::NC4HW4:
     case mindspore::KHWC:
     case mindspore::CHWK:
       return this->shape_[1];
@@ -219,6 +222,8 @@ int32_t Tensor::Width() const {
     case mindspore::NCHW:
     case mindspore::KCHW:
     case mindspore::CKHW:
+    case mindspore::NC4HW4:
+    case mindspore::NC8HW8:
       if (this->shape_.size() != 4) {
         return RET_ERROR;
       }
@@ -226,7 +231,6 @@ int32_t Tensor::Width() const {
     case mindspore::KHWC:
     case mindspore::NHWC:
     case mindspore::NHWC4:
-    case mindspore::NC4HW4:
     case mindspore::CHWK:
       if (this->shape_.size() != 4) {
         return RET_ERROR;
@@ -260,6 +264,12 @@ int64_t Tensor::ElementsNum() const {
   if (this->category_ == CONST_SCALAR) {
     return 1;
   }
+  if (format_ == mindspore::NC4HW4) {
+    return ElementsC4Num();
+  }
+  if (format_ == mindspore::NC8HW8) {
+    return ElementsC8Num();
+  }
   int64_t num = 1;
   for (size_t i = 0; i < shape_.size(); ++i) {
     CHECK_INT64_MUL_OVERFLOW(num, shape_[i]);
@@ -292,6 +302,30 @@ int64_t Tensor::ElementsC4Num() const {
   return result;
 }
 
+int64_t Tensor::ElementsC8Num() const {
+  if (this->category_ == CONST_SCALAR) {
+    return 1;
+  }
+  int64_t result = 1;
+  constexpr int kC8Align = 8;
+  if (this->shape_.size() == 4) {
+    CHECK_INT64_MUL_OVERFLOW(result, Batch());
+    result *= Batch();
+    CHECK_INT64_MUL_OVERFLOW(result, Height());
+    result *= Height();
+    CHECK_INT64_MUL_OVERFLOW(result, Width());
+    result *= Width();
+    CHECK_INT64_MUL_OVERFLOW(result, (Channel() + 7LL) / kC8Align * kC8Align);
+    result *= (Channel() + 7LL) / kC8Align * kC8Align;
+  } else if (this->shape_.size() == 2) {
+    CHECK_INT64_MUL_OVERFLOW(result, this->shape_[0]);
+    result *= this->shape_[0];
+    CHECK_INT64_MUL_OVERFLOW(result, (this->shape_[1] + 7LL) / kC8Align * kC8Align);
+    result *= (this->shape_[1] + 7LL) / kC8Align * kC8Align;
+  }
+  return result;
+}
+
 int Tensor::DimensionSize(const size_t index) const {
   int dim_size = -1;
   if (index < shape_.size()) {
@@ -304,7 +338,8 @@ int Tensor::DimensionSize(const size_t index) const {
 
 std::string Tensor::ToString() const {
   std::ostringstream oss;
-  oss << "schema::Format: " << EnumNameFormat(static_cast<schema::Format>(this->format_));
+  oss << "Tensor name: " << this->tensor_name();
+  oss << " schema::Format: " << EnumNameFormat(static_cast<schema::Format>(this->format_));
   oss << " DataType: " << this->data_type_;
   oss << " Category: " << this->category_;
   oss << " Shape:";

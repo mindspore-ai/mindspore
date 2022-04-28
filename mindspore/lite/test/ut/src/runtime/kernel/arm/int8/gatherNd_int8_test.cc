@@ -74,7 +74,7 @@ TEST_F(TestGatherNdInt8, GatherNdTest) {
   output0_tensor.set_shape(out_shape);
   output0_tensor.AddQuantParam(output_quant_arg);
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_GatherNd};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_GatherNd};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;

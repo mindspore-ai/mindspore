@@ -101,7 +101,7 @@ bool TransposeStrategy::CheckFusion(kernel::KernelExec *kernel, TransInfoPair *p
   }
   auto in_and_out_size = kernel->in_tensors().size() + kernel->out_kernels().size();
   if ((input_count + output_count) <= in_and_out_size / 2) {
-    MS_LOG(DEBUG) << "The fusion can't decrease transpose op number.";
+    MS_LOG(INFO) << "The fusion can't decrease transpose op number.";
     return false;
   }
   if (IsNoneTranspose(*pre_trans)) {
@@ -200,7 +200,7 @@ int TransposeStrategy::ChangeKernelAxis(kernel::KernelExec *kernel, const TransI
     return RET_ERROR;
   }
   if (dynamic_format_kernel_lists.at(kernel->type()) == false) {
-    MS_LOG(DEBUG) << "No need to change axis for " << kernel->name();
+    MS_LOG(INFO) << "No need to change axis for " << kernel->name();
     return RET_OK;
   }
   auto process_iter = process_funcs.find(kernel->type());

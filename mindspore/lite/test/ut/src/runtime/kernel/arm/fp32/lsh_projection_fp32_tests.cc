@@ -55,7 +55,7 @@ TEST_F(TestLshProjectionFp32, Dense1DInputs) {
 
   LshProjectionParameter parameter = {};
   parameter.lsh_type_ = kDenseType;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_LshProjection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_LshProjection};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -98,7 +98,7 @@ TEST_F(TestLshProjectionFp32, Sparse1DInputs) {
 
   LshProjectionParameter parameter = {};
   parameter.lsh_type_ = kSparseType;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_LshProjection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_LshProjection};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -145,7 +145,7 @@ TEST_F(TestLshProjectionFp32, Sparse3DInputs) {
 
   LshProjectionParameter parameter = {};
   parameter.lsh_type_ = kSparseType;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_LshProjection};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_LshProjection};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

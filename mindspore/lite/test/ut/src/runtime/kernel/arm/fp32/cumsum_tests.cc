@@ -43,7 +43,7 @@ TEST_F(TestCumsum, TestThread1) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -98,7 +98,7 @@ TEST_F(TestCumsum, TestExclusive) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = true;
   parameter->reverse_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -152,7 +152,7 @@ TEST_F(TestCumsum, TestReverse) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = false;
   parameter->reverse_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -206,7 +206,7 @@ TEST_F(TestCumsum, TestReverseExclusive) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = true;
   parameter->reverse_ = true;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -260,7 +260,7 @@ TEST_F(TestCumsum, TestIntRank2) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -309,7 +309,7 @@ TEST_F(TestCumsum, TestIntRank2Thread2) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -357,7 +357,7 @@ TEST_F(TestCumsum, TestIntRank2Thread4) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_CumSum;
   parameter->exclusive_ = false;
   parameter->reverse_ = false;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_CumSum};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_CumSum};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);

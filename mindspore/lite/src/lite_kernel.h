@@ -87,6 +87,8 @@ class LiteKernel : public Kernel {
 
   OpParameter *op_parameter() const { return op_parameter_; }
 
+  void set_parameter(OpParameter *param) { op_parameter_ = param; }
+
   bool InferShapeDone() const {
     if (std::any_of(in_tensors_.begin(), in_tensors_.end(),
                     [](const lite::Tensor *input) { return input->data_type() == kObjectTypeTensorType; })) {

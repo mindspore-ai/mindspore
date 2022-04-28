@@ -62,6 +62,7 @@ class Scheduler {
   std::vector<kernel::KernelExec *> NonTailCallNodes();
 
  private:
+  bool CheckRunNCXPass();
   int SchedulePreProcess();
   int CheckInputParam(std::vector<kernel::KernelExec *> *dst_kernels);
   void FindNodeInoutTensors(const Model::Node &node, std::vector<Tensor *> *inputs, std::vector<Tensor *> *outputs);

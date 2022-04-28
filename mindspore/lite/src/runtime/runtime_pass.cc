@@ -23,6 +23,23 @@ namespace {
 const constexpr int kMaxDepth = 2048;
 }
 
+void ChangeTensorDesc(Tensor *tensor, Format specified_format) {
+  if (tensor->shape().size() == DIMENSION_4D) {
+    auto batch = tensor->Batch();
+    auto height = tensor->Height();
+    auto width = tensor->Width();
+    auto channel = tensor->Channel();
+    if (specified_format == NHWC) {
+      tensor->set_shape({batch, height, width, channel});
+    }
+    if (specified_format == NCHW || specified_format == NC4HW4) {
+      tensor->set_shape({batch, channel, height, width});
+    }
+  }
+  tensor->set_format(specified_format);
+  return;
+}
+
 void Nc4hw4PassReplace(std::vector<kernel::KernelExec *> *kernels, std::vector<Tensor *> *tensors, size_t index) {
   kernel::KernelExec *conv_kernel = kernels->at(index);
   kernel::KernelExec *transpose_kernel = conv_kernel->out_kernels().front();
@@ -39,7 +56,7 @@ void Nc4hw4PassReplace(std::vector<kernel::KernelExec *> *kernels, std::vector<T
     transpose_param_tensor = nullptr;
 
     Tensor *conv_out_tensor = conv_kernel->out_tensors().front();
-    conv_out_tensor->set_format(NC4HW4);
+    ChangeTensorDesc(conv_out_tensor, NC4HW4);
     Tensor *c4_input_tensor = c4_kernel->in_tensors().front();
     c4_kernel->set_in_tensor(conv_out_tensor, 0);
     (void)VectorSetNull(tensors, c4_input_tensor);
@@ -54,10 +71,7 @@ void Nc4hw4PassReplace(std::vector<kernel::KernelExec *> *kernels, std::vector<T
     transpose_param_tensor = nullptr;
 
     Tensor *nwhc_tensor = c4_kernel->out_tensors().front();
-    std::vector<int> nhwc_shape = {nwhc_tensor->Batch(), nwhc_tensor->Height(), nwhc_tensor->Width(),
-                                   nwhc_tensor->Channel()};
-    nwhc_tensor->set_format(NHWC);
-    nwhc_tensor->set_shape(nhwc_shape);
+    ChangeTensorDesc(nwhc_tensor, NHWC);
     for (auto end : end_kernels) {
       end->set_in_tensor(nwhc_tensor, 0);
     }
@@ -187,8 +201,12 @@ void Nc4hw4PassAct(std::vector<kernel::KernelExec *> *kernels, std::vector<Tenso
 }
 
 void ConvNormC4PassActReplace(const kernel::KernelExec *conv_op, const kernel::KernelExec *in_op) {
-  conv_op->out_tensors().front()->set_format(NC4HW4);
-  in_op->in_tensors().front()->set_format(NC4HW4);
+  auto connect_tensor = conv_op->out_tensors().front();
+  if (connect_tensor->shape().size() != DIMENSION_4D) {
+    return;
+  }
+  ChangeTensorDesc(connect_tensor, NC4HW4);
+  ChangeTensorDesc(in_op->in_tensors().front(), NC4HW4);
 }
 
 void ConvNormC4PassActIndex(std::vector<kernel::KernelExec *> *kernels, size_t index) {

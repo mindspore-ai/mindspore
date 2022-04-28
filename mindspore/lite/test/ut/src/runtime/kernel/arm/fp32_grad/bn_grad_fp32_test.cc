@@ -81,7 +81,7 @@ TEST_F(TestBNGradFp32, BNGradFp32) {
   ctx.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_BatchNormGrad};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_BatchNormGrad};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel_obj = creator(inputs, outputs, reinterpret_cast<OpParameter *>(bn_param), &ctx, desc);
@@ -170,7 +170,7 @@ TEST_F(TestBNGradFp32, BNTtrainFp32) {
   std::vector<lite::Tensor *> outputs = {&out_tensor, &save_scale_tensor, &save_bias_tensor, &save_mean_tensor,
                                          &save_var_tensor};
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_FusedBatchNorm};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, NHWC, schema::PrimitiveType_FusedBatchNorm};
 
   mindspore::lite::InnerContext context;
   context.thread_num_ = 1;

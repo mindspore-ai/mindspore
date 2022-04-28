@@ -63,7 +63,7 @@ CoreFuncs *GetCoreFuncs(bool use_fp16);
 extern "C" {
 #endif
 KernelBase *CreateKernel(OpParameter *param, TensorC *in[], size_t insize, TensorC *out[], size_t outsize,
-                         int data_type);
+                         int data_type, FormatC format);
 bool SupportKernelC(int opType, int format, int dataType);
 ExecEnv *GetExecEnv(void);
 #ifdef __cplusplus

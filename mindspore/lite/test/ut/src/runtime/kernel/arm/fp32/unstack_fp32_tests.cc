@@ -46,7 +46,7 @@ TEST_F(TestUnstackFp32, Unstack) {
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2, &out_tensor3};
 
   UnstackParameter parameter = {{}, 4, -2, 3, 4, 2};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Unstack};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Unstack};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -97,7 +97,7 @@ TEST_F(TestUnstackFp32, Unstack2) {
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1, &out_tensor2};
 
   UnstackParameter parameter = {{}, 3, 0, 1, 3, 8};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Unstack};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Unstack};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);

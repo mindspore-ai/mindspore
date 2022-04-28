@@ -40,7 +40,7 @@ class TestOneHotFp32 : public mindspore::CommonTest {
   OneHotParameter *param_;
   std::vector<lite::Tensor *> inputs_{&indices_tensor_, &depth_tensor_, &off_on_tensor_};
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, schema::PrimitiveType_OneHot};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt32, NHWC, schema::PrimitiveType_OneHot};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;

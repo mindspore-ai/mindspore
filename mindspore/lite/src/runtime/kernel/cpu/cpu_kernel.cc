@@ -72,7 +72,7 @@ int CPUKernel::Registry(const KernelKey &key) {
 
   UpdateTensorC();
 
-  kernel_ = CreateKernel(op_parameter_, &in_, in_size_, &out_, out_size_, key.data_type);
+  kernel_ = CreateKernel(op_parameter_, &in_, in_size_, &out_, out_size_, key.data_type, (FormatC)key.format);
   if (kernel_ == nullptr) {
     return RET_ERROR;
   }

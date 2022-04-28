@@ -44,7 +44,7 @@ TEST_F(TestReverseSequenceFp32, BatchLessSeq) {
   ReverseSequenceParameter parameter = {0};
   parameter.batch_axis_ = 1;
   parameter.seq_axis_ = 2;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ReverseSequence};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_ReverseSequence};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -91,7 +91,7 @@ TEST_F(TestReverseSequenceFp32, BatchGreaterSeq) {
   ReverseSequenceParameter parameter = {0};
   parameter.batch_axis_ = 2;
   parameter.seq_axis_ = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ReverseSequence};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_ReverseSequence};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);
@@ -138,7 +138,7 @@ TEST_F(TestReverseSequenceFp32, BatchSeqNotAdjacent) {
   ReverseSequenceParameter parameter = {0};
   parameter.batch_axis_ = 0;
   parameter.seq_axis_ = 2;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ReverseSequence};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_ReverseSequence};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);

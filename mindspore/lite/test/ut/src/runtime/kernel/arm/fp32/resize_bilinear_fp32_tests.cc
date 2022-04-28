@@ -38,7 +38,7 @@ class TestResizeBilinearFp32 : public mindspore::CommonTest {
   std::vector<lite::Tensor *> inputs_{&in_tensor_};
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
   ResizeParameter param_ = {{}};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Resize};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
@@ -63,7 +63,7 @@ void TestResizeBilinearFp32::Prepare(const std::vector<int> &input_shape, const 
 
   ResizeParameter param_ = {
     {}, static_cast<int>(schema::ResizeMethod_LINEAR), output_shape[1], output_shape[2], align_corners};
-  desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Resize};
+  desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Resize};
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());

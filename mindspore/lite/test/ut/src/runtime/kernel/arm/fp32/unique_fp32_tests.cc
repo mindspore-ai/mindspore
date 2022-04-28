@@ -40,7 +40,7 @@ TEST_F(TestUniqueFp32, Unique) {
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
   OpParameter parameter = {0};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Unique};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Unique};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   EXPECT_NE(creator, nullptr);

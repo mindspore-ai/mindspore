@@ -48,7 +48,7 @@ TEST_F(TestRaggedRangeFp32, 001) {
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
   RaggedRangeParameter param = {{}, 1, true, true, true};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_RaggedRange};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_RaggedRange};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -100,7 +100,7 @@ TEST_F(TestRaggedRangeFp32, 002) {
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
   RaggedRangeParameter param = {{}, 4, false, false, false};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_RaggedRange};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_RaggedRange};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

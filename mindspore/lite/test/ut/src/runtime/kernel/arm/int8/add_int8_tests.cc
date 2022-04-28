@@ -50,7 +50,7 @@ TEST_F(TestQuantizedAdd, Add) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   OpParameter parameter = {};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_AddFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_AddFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

@@ -37,26 +37,30 @@ using mindspore::lite::RET_OK;
 
 std::string SubGraphKernel::ToString() const {
   std::ostringstream oss;
-  oss << "===============================================" << std::endl << "Subgraph type : " << this->subgraph_type_;
-  oss << std::endl << this->in_tensors().size() << "Subgraph inputTensors:";
+  oss << "===============================================" << std::endl
+      << "Subgraph type : " << this->subgraph_type_ << std::endl;
+  oss << this->in_tensors().size() << " Subgraph inputTensors:" << std::endl;
   for (auto tensor : in_tensors()) {
-    oss << " " << tensor;
+    oss << tensor->ToString() << std::endl;
   }
-  oss << std::endl << this->out_tensors().size() << "Subgraph outputTensors:";
+  oss << std::endl << this->out_tensors().size() << " Subgraph outputTensors:" << std::endl;
   for (auto tensor : out_tensors()) {
-    oss << " " << tensor;
+    oss << tensor->ToString() << std::endl;
   }
-  oss << std::endl << "Subgraph input nodes :" << std::endl;
+  oss << std::endl << this->in_nodes_.size() << " Subgraph input nodes:" << std::endl;
   for (auto kernel : this->in_nodes_) {
-    oss << " " << kernel->ToString() << std::endl;
+    oss << "***********************************************" << std::endl;
+    oss << kernel->ToString() << std::endl;
   }
-  oss << std::endl << "Subgraph output nodes :" << std::endl;
+  oss << std::endl << this->out_nodes_.size() << " Subgraph output nodes:" << std::endl;
   for (auto kernel : this->out_nodes_) {
-    oss << " " << kernel->ToString() << std::endl;
+    oss << "***********************************************" << std::endl;
+    oss << kernel->ToString() << std::endl;
   }
-  oss << std::endl << nodes_.size() << "　nodes in subgraph :";
+  oss << std::endl << nodes_.size() << " nodes in subgraph:" << std::endl;
   for (auto kernel : this->nodes_) {
-    oss << " " << kernel->name();
+    oss << "***********************************************" << std::endl;
+    oss << kernel->ToString() << std::endl;
   }
   return oss.str();
 }
@@ -306,7 +310,7 @@ int SubGraphKernel::UpdateInOutTensors(KernelExec *in_kernel, std::vector<Kernel
 // Keep_input is false, reserve the output tensor: pre_kernel -> out_tensor -> post_kernel.
 int SubGraphKernel::DeleteSingleWayNode(KernelExec *kernel, bool keep_input) {
   if (lite::IsContain(in_nodes_, kernel) && lite::IsContain(out_nodes_, kernel)) {
-    MS_LOG(DEBUG) << "A single kernel subgraph can't delete this kernel.";
+    MS_LOG(INFO) << "A single kernel subgraph can't delete this kernel.";
     return RET_OK;
   }
   auto in_tensor = kernel->in_tensors().at(0);
@@ -314,21 +318,21 @@ int SubGraphKernel::DeleteSingleWayNode(KernelExec *kernel, bool keep_input) {
   auto in_kernel = KernelExecUtil::FindInKernelForInTensor(kernel, in_tensor);
   auto out_kernels = KernelExecUtil::FindOutKernelsForOutTensor(kernel, out_tensor);
   if (in_kernel == nullptr && out_kernels.empty()) {
-    MS_LOG(DEBUG) << "A single kernel model can't delete this kernel.";
+    MS_LOG(INFO) << "A single kernel model can't delete this kernel.";
     return RET_OK;
   }
 
   // update kernel link
   auto ret = UpdateInOutKernels(in_kernel, out_kernels, kernel, kernel);
   if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Update kernel link failed when removing kernel " << kernel->name();
+    MS_LOG(ERROR) << "Update kernel link failed when removing kernel " << kernel->name();
     return RET_ERROR;
   }
 
   // update tensor link
   ret = UpdateInOutTensors(in_kernel, out_kernels, in_tensor, out_tensor, keep_input);
   if (ret != RET_OK) {
-    MS_LOG(DEBUG) << "Update tensor failed when removing kernel " << kernel->name();
+    MS_LOG(ERROR) << "Update tensor failed when removing kernel " << kernel->name();
     return RET_ERROR;
   }
   DropNode(kernel);

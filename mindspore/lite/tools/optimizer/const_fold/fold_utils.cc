@@ -90,10 +90,11 @@ kernel::KernelExec *GetKernelExec(std::vector<Tensor *> inputs, std::vector<Tens
     return nullptr;
   }
   auto data_type = inputs.front()->data_type();
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, static_cast<schema::PrimitiveType>(parameter->type_)};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, NHWC,
+                         static_cast<schema::PrimitiveType>(parameter->type_)};
   kernel::KernelExec *kernel_exec = nullptr;
-  ret = lite::KernelRegistry::GetInstance()->GetKernel(inputs, *outputs, context, ms_context, desc, parameter,
-                                                       &kernel_exec);
+  ret = lite::KernelRegistry::GetInstance()->GetKernelExec(inputs, *outputs, context, ms_context, desc, parameter,
+                                                           &kernel_exec);
   if (ret != lite::RET_OK) {
     if (parameter->destroy_func_ != nullptr) {
       parameter->destroy_func_(parameter);

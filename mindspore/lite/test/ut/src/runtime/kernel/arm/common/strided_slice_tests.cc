@@ -71,7 +71,7 @@ TEST_F(TestStridedSlice, StridedSlice) {
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -115,7 +115,7 @@ TEST_F(TestStridedSlice, 7d) {
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -160,7 +160,7 @@ TEST_F(TestStridedSlice, 8d) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_StridedSlice};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -205,7 +205,7 @@ TEST_F(TestStridedSlice, FastRun7d) {
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -251,7 +251,7 @@ TEST_F(TestStridedSlice, FastRun7dSingleThread) {
   StridedSliceParameter *parameter = new StridedSliceParameter;
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_StridedSlice};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();
@@ -298,7 +298,7 @@ TEST_F(TestStridedSlice, StridedSliceInt8) {
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
   InitStridedSliceParam(parameter, &in_tensor, &begins_tensor, &ends_tensor, &strides_tensor);
   parameter->op_parameter_.type_ = schema::PrimitiveType_StridedSlice;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_StridedSlice};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_StridedSlice};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto ctx = std::make_shared<lite::InnerContext>();

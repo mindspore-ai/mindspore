@@ -94,7 +94,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vec
 
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> BuildKernels()
   MS_LOG(DEBUG) << "create OpenCLKernel";
-  kernel::KernelKey key{kernel::kGPU, kernel_inputs.front()->data_type(), primitive_type};
+  kernel::KernelKey key{kernel::kGPU, kernel_inputs.front()->data_type(), NHWC, primitive_type};
   if (key.data_type == kNumberTypeFloat32 && fp16_enable) {
     key.data_type = kNumberTypeFloat16;
   }
@@ -254,7 +254,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   // simulating benchmark:  session_->CompileGraph() -> scheduler.Schedule() -> BuildKernels()
   MS_LOG(DEBUG) << "create OpenCLKernel";
-  kernel::KernelKey key{kernel::kGPU, kernel_inputs.front()->data_type(), primitive_type};
+  kernel::KernelKey key{kernel::kGPU, kernel_inputs.front()->data_type(), NHWC, primitive_type};
   if (key.data_type == kNumberTypeFloat32 && fp16_enable) {
     key.data_type = kNumberTypeFloat16;
   }

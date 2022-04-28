@@ -56,22 +56,22 @@ void KernelExec::InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask
 std::string KernelExec::ToString() const {
   std::ostringstream oss;
   oss << "KernelExec: " << this->name();
-  oss << ", Type: " << this->type_str();
-  oss << ", " << this->in_tensors().size() << " InputTensors:";
+  oss << ", Type: " << this->type_str() << std::endl;
+  oss << this->in_tensors().size() << " InputTensors:" << std::endl;
   for (auto tensor : in_tensors()) {
-    oss << " " << tensor;
+    oss << tensor->ToString() << std::endl;
   }
-  oss << ", " << this->out_tensors().size() << " OutputTensors:";
+  oss << this->out_tensors().size() << " OutputTensors:" << std::endl;
   for (auto tensor : out_tensors()) {
-    oss << " " << tensor;
+    oss << tensor->ToString() << std::endl;
   }
-  oss << ", " << this->in_kernels_.size() << " InputKernels:";
+  oss << this->in_kernels_.size() << " InputKernels: ";
   for (auto in_kernel : in_kernels_) {
-    oss << " " << in_kernel->name();
+    oss << in_kernel->name() << ", ";
   }
-  oss << ", " << this->out_kernels_.size() << " OutputKernels:";
+  oss << std::endl << this->out_kernels_.size() << " OutputKernels: ";
   for (auto out_kernel : out_kernels_) {
-    oss << " " << out_kernel->name();
+    oss << out_kernel->name() << ", ";
   }
   return oss.str();
 }
@@ -89,5 +89,13 @@ int KernelExec::DoExecute() {
     }
   }
   return ret;
+}
+
+void KernelExec::RepalceKernel(std::shared_ptr<Kernel> kernel) {
+  if (desc_.provider == kBuiltin) {
+    std::static_pointer_cast<LiteKernel>(kernel_)->set_parameter(nullptr);  // set nullptr, don't release op_parameter
+    kernel_.reset();
+    kernel_ = kernel;
+  }
 }
 }  // namespace mindspore::kernel

@@ -70,7 +70,7 @@ TEST_F(TestUnsqueezeInt8, Unsqueeze_1) {
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   op_param.axis_ = 0;
   op_param.offset_[0] = 1;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Unsqueeze};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_Unsqueeze};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto *kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&op_param), ctx, desc);

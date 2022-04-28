@@ -52,7 +52,7 @@ TEST_F(TestBatchnormFp32, BNTest) {
   output0_tensor.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0_tensor};
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
@@ -112,7 +112,7 @@ TEST_F(TestBatchnormFp32, FusedBNTest) {
   output0.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0};
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_FusedBatchNorm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_FusedBatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;
@@ -166,7 +166,7 @@ TEST_F(TestBatchnormFp32, easyTest) {
   output0.set_data(output.data());
   std::vector<lite::Tensor *> outputs_tensor = {&output0};
 
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_BatchNorm};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_BatchNorm};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   lite::InnerContext ctx;

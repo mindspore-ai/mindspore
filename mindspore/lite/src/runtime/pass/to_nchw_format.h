@@ -25,11 +25,14 @@
 
 namespace mindspore::lite::pass {
 /* ToNCHWFormat PASS
- * The Lite default format is NHWC
- * for cpu fp32 graph, format_ is NC4HW4
- * for cpu fp16 graph, format_ is NC8HW8
- * for NPU graph, format_ is NCHW
+ * The Lite default src_format_ is NHWC
+ * for cpu fp32 graph, dst_format_ is NC4HW4
+ * for cpu fp16 graph, dst_format_ is NC8HW8
+ * for NPU graph, dst_format_ is NCHW
  * */
+
+/* In ToNCHWFormat Run function, handle the kernels that are related to format, like: conv2d, pooling, etc.
+ * The kernel with dynamic format will be ignored, like: activation, arithmetic, arithmetic_self, etc. */
 
 class ToNCHWFormat : public RuntimePass {
  public:

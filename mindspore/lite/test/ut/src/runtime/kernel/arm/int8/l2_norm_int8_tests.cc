@@ -50,7 +50,7 @@ TEST_F(TestL2NormInt8, norm) {
   param_.epsilon_ = 1e-6;
   param_.act_type_ = ActType_No;
   param_.shape_ = nullptr;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2NormalizeFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_L2NormalizeFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -97,7 +97,7 @@ TEST_F(TestL2NormInt8, norm2) {
   param_.epsilon_ = 1e-6;
   param_.act_type_ = ActType_No;
   param_.shape_ = nullptr;
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_L2NormalizeFusion};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_L2NormalizeFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);

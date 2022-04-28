@@ -37,6 +37,7 @@
 #include "src/common/context_util.h"
 #include "src/runtime/infer_manager.h"
 #include "src/runtime/runtime_pass.h"
+#include "src/runtime/pass/runtime_ncx_pass.h"
 #ifndef AUTO_PARALLEL_CLIP
 #include "src/sub_graph_split.h"
 #endif
@@ -377,6 +378,25 @@ STATUS Scheduler::DelQuantDTypeCastKernel(std::vector<kernel::KernelExec *> *ker
   return RET_OK;
 }
 
+bool Scheduler::CheckRunNCXPass() {
+  // Only valid for CPU inference right now.
+  if (*is_control_flow_ || delegate_ != nullptr || is_train_session_) {
+    return false;
+  }
+  if (!context_->IsDeviceTypeEnabled(DeviceType::DT_CPU)) {
+    return false;
+  }
+  if (context_->IsDeviceTypeEnabled(DeviceType::DT_GPU) || context_->IsDeviceTypeEnabled(DeviceType::DT_NPU) ||
+      context_->IsDeviceTypeEnabled(DeviceType::DT_ASCEND)) {
+    return false;
+  }
+  if (std::all_of(inputs_->begin(), inputs_->end(),
+                  [](const auto &tensor) { return tensor->format() == Format::NCHW; })) {
+    return true;
+  }
+  return false;
+}
+
 int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   int check_input_ret = CheckInputParam(dst_kernels);
   if (check_input_ret != RET_OK) {
@@ -444,6 +464,14 @@ int Scheduler::Schedule(std::vector<kernel::KernelExec *> *dst_kernels) {
   if (status != RET_OK) {
     MS_LOG(ERROR) << "runtime pass failed.";
     return RET_ERROR;
+  }
+  // Support NC4HW4(fp32) or NC8HW8(fp16) runtime kernel.
+  if (CheckRunNCXPass()) {
+    status = pass::RuntimeNCXPass(dst_kernels, src_tensors_);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "runtime pass failed.";
+      return RET_ERROR;
+    }
   }
 
   ret = InitKernels(std::move(*dst_kernels));
@@ -540,7 +568,7 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::KernelExec *> *dst_ker
           break;
         }
       }
-      kernel::KernelKey delegate_desc{kernel::kDelegate, delegate_type, schema::PrimitiveType_NONE, "", ""};
+      kernel::KernelKey delegate_desc{kernel::kDelegate, delegate_type, NHWC, schema::PrimitiveType_NONE, "", ""};
       kernel_exec->set_desc(delegate_desc);
       dst_kernels->push_back(kernel_exec);
     }
@@ -1008,8 +1036,8 @@ int Scheduler::FindCpuKernel(const std::vector<Tensor *> &in_tensors, const std:
       return RET_NOT_SUPPORT;
     }
   }
-  ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, cpu_desc, op_parameter,
-                                                 kernel);
+  ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, cpu_desc,
+                                                     op_parameter, kernel);
   if (ret == RET_OK) {
     MS_LOG(DEBUG) << "Get TypeId(expect = " << kernel_data_type << ", real = " << cpu_desc.data_type
                   << ") op success: " << PrimitiveCurVersionTypeName(op_type);
@@ -1032,7 +1060,7 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
   }
 
   // support more data type like int32
-  kernel::KernelKey gpu_desc{kernel::KERNEL_ARCH::kGPU, desc.data_type, desc.type};
+  kernel::KernelKey gpu_desc{kernel::KERNEL_ARCH::kGPU, desc.data_type, NHWC, desc.type};
   if (desc.data_type == kNumberTypeFloat32 && context_->IsGpuFloat16Enabled()) {
     gpu_desc.data_type = kNumberTypeFloat16;
   }
@@ -1052,8 +1080,8 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
     MS_LOG(DEBUG) << "CopyConstTensorsData failed: " << ret;
     return RET_NOT_SUPPORT;
   }
-  ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, gpu_desc, op_parameter,
-                                                 kernel);
+  ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, gpu_desc,
+                                                     op_parameter, kernel);
   if (ret == RET_OK) {
     MS_LOG(DEBUG) << "Get gpu op success: " << PrimitiveCurVersionTypeName(gpu_desc.type);
   } else {
@@ -1072,19 +1100,19 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   if (prim_type == schema::PrimitiveType_Custom) {
     for (auto &&device : context_->device_list_) {
       if (!device.provider_.empty() && !device.provider_device_.empty()) {
-        kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, device.provider_device_,
-                               device.provider_};
-        ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
-                                                       kernel, node->primitive_);
+        kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type,       NHWC, prim_type,
+                               device.provider_device_,   device.provider_};
+        ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, desc,
+                                                           nullptr, kernel, node->primitive_);
         if (ret == RET_OK && *kernel != nullptr) {
           return ret;
         }
       }
     }
 
-    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, "", ""};
-    ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
-                                                   kernel, node->primitive_);
+    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, NHWC, prim_type, "", ""};
+    ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
+                                                       kernel, node->primitive_);
     if (ret == RET_OK && *kernel != nullptr) {
       return ret;
     }
@@ -1098,10 +1126,10 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
   }
   for (auto &&device : context_->device_list_) {
     if (!device.provider_.empty()) {
-      kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, prim_type, device.provider_device_,
-                             device.provider_};
-      ret = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
-                                                     kernel, node->primitive_);
+      kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type,       NHWC, prim_type,
+                             device.provider_device_,   device.provider_};
+      ret = KernelRegistry::GetInstance()->GetKernelExec(in_tensors, out_tensors, context_, ms_context_, desc, nullptr,
+                                                         kernel, node->primitive_);
       if (ret == RET_OK && *kernel != nullptr) {
         return ret;
       }
@@ -1155,7 +1183,7 @@ kernel::KernelExec *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   int kernel_thread_count = op_parameter->thread_num_;
 #endif
   op_parameter->is_train_session_ = is_train_session_;
-  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, op_parameter->type_};
+  kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, data_type, NHWC, op_parameter->type_};
 
 #ifdef GPU_OPENCL
   bool gpu_priority = DeviceTypePriority(context_, DT_GPU, DT_CPU);
@@ -1294,7 +1322,7 @@ int Scheduler::SubGraphPreferDataType(const int &subgraph_index, TypeId *prefer_
       MS_LOG(ERROR) << "Can not find OpParameter!type: " << GetPrimitiveTypeName(node->primitive_, schema_version_);
       return RET_ERROR;
     }
-    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, op_parameter->type_};
+    kernel::KernelKey desc{kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat16, NHWC, op_parameter->type_};
     if (!KernelRegistry::GetInstance()->SupportKernel(desc)) {
       *prefer_data_type = kNumberTypeFloat32;
       return RET_OK;

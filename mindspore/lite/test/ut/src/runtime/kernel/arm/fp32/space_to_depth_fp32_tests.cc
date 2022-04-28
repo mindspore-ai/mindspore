@@ -84,7 +84,7 @@ TEST_F(SpaceToDepthTestFp32, SpaceToDepthTest2) {
   auto ctx = std::make_shared<lite::InnerContext>();
   ctx->thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_SpaceToDepth};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_SpaceToDepth};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
   auto kernel = creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(param), ctx.get(), desc);
