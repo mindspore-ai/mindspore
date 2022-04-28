@@ -162,6 +162,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
   static std::vector<size_t> GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
   static std::vector<size_t> GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
+  static KernelGraphPtr FetchKernelGraph(const AnfNodePtr &node);
   static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);
   // Save inputs/outputs/workspace address in kernel_mod.
@@ -173,6 +174,12 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool IsDynamicShapeSkipExecute(const CNodePtr &cnode);
   // return true if need to update output's shape and type after launch
   static bool IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &cnode);
+  // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
+  // 'Unique' will change after Launch, the output address size should update.
+  static void UpdateOutputAddrSize(device::KernelInfo *kernel_info, const CNodePtr &kernel);
+  // Update the shape of internal parameter in the sub graph.
+  static void UpdateInternalParameterShape(const std::map<size_t, AnfNodeWeakPtr> &internal_parameters,
+                                           const CNodePtr &cnode);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

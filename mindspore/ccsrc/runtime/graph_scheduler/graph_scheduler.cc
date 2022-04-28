@@ -168,7 +168,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     if (parameter->used_graph_count() != 0) {
       continue;
     }
-    auto front_input_node = FetchFrontNodeByBackendNode(input_node, graph);
+    auto front_input_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
     DeviceTensorStore::GetInstance().Remove(front_input_node.get());
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(input_node);
     for (size_t index = 0; index < output_num; ++index) {
@@ -180,7 +180,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
 
   // Clear input value node device tensor and device tensor store.
   for (const auto &value_node : graph->graph_value_nodes()) {
-    auto front_value_node = FetchFrontNodeByBackendNode(value_node, graph);
+    auto front_value_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     DeviceTensorStore::GetInstance().Remove(front_value_node.get());
     if (AnfAlgo::OutputAddrExist(value_node, 0)) {
       AnfAlgo::SetOutputAddr(nullptr, 0, value_node.get());
@@ -845,7 +845,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
           (void)data_source_actors.emplace_back(host_queue_ds_actor);
         }
 
-        const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
+        const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
         // In the scenario where multiple backend nodes correspond to the same front node, only the first backend node
         // is saved in the host queue data source actor.
         if (front_node_position_temp_map.count(front_node) > 0) {
@@ -1176,7 +1176,7 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
   (void)std::for_each(auto_monad_kernels.begin(), auto_monad_kernels.end(), [&](const CNodePtr &kernel) {
     for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel); ++i) {
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::GetPrevNodeOutput(kernel, i, false);
-      auto front_node = FetchFrontNodeByBackendNode(from_kernel_with_output_idx.first, graph);
+      auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(from_kernel_with_output_idx.first, *graph);
       if (IsPersistentDeviceTensor(front_node)) {
         (void)to_actor->auto_monad_device_tensor_stores_.insert(front_node);
       }
@@ -1268,7 +1268,7 @@ void GraphScheduler::LinkDataArrowForDeviceTensorStore(AbstractActor *const, Abs
 
   auto from_kernel = from_kernel_with_output_idx.first;
   MS_EXCEPTION_IF_NULL(from_kernel);
-  auto device_tensor_store_key = FetchFrontNodeByBackendNode(from_kernel, graph);
+  auto device_tensor_store_key = AnfAlgo::FetchFrontNodeByBackendNode(from_kernel, *graph);
   (void)to_actor->device_tensor_store_keys_.emplace_back(to_kernel_with_input_idx.second, device_tensor_store_key);
 }
 
@@ -1772,7 +1772,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
     for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
       auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
-      auto graph = FetchKernelGraph(from_kernel_with_output_idx.first);
+      auto graph = AnfAlgo::FetchKernelGraph(from_kernel_with_output_idx.first);
       auto kernel_type =
         FetchKernelTransformType(from_kernel_with_output_idx.first, graph, graph_compiler_info.origin_parameters_order_,
                                  graph_compiler_info.strategy_);
@@ -1946,7 +1946,7 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
     }
     for (const auto &output_with_index : unique_outputs) {
       MS_EXCEPTION_IF_NULL(output_with_index.first);
-      auto origin_output_with_index = FetchFrontNodeWithIndexByGraphOutput(output_with_index, graph);
+      auto origin_output_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
       const auto &iter = graph_compiler_info.origin_outputs_order_.find(origin_output_with_index);
       if (iter == graph_compiler_info.origin_outputs_order_.end()) {
         continue;
@@ -2194,7 +2194,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         continue;
       }
       auto device_tensor = AnfAlgo::GetMutableOutputAddr(value_node, 0, false);
-      const auto &front_node = FetchFrontNodeByBackendNode(value_node, graph);
+      const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
       device_tensor->SetNodeIndex(value_node, 0);
       AddDeviceTensorStore(front_node.get(), device_tensor);
     }
@@ -2206,7 +2206,7 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
         auto front_output_with_index = graph->GetFrontNodeByInternalParameter(input_node);
         front_node = front_output_with_index.first;
       } else if (IsPersistentDeviceTensor(input_node)) {
-        front_node = FetchFrontNodeByBackendNode(input_node, graph);
+        front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
       }
       // The front node may be value node in the heterogeneous scene, needs to handle.
       if ((front_node == nullptr) ||
@@ -2345,7 +2345,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       if (!AnfAlgo::OutputAddrExist(value_node, 0)) {
         continue;
       }
-      const auto &front_node = FetchFrontNodeByBackendNode(value_node, graph);
+      const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
       MS_EXCEPTION_IF_NULL(front_node);
       const auto device_tensors = DeviceTensorStore::GetInstance().Fetch(front_node.get());
       ofs << "\t\tdevice tensor key:" << front_node->fullname_with_scope() << "\tvalue size:" << device_tensors.size()
@@ -2365,7 +2365,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
       if (!IsPersistentDeviceTensor(input_node)) {
         continue;
       }
-      const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
       const auto &root_parameters = graph_compiler_info.origin_parameters_order_;
       if (front_node == nullptr ||
           find(root_parameters.begin(), root_parameters.end(), front_node) == root_parameters.end()) {

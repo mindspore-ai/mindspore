@@ -152,7 +152,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
       MS_LOG(ERROR) << "Copy data failed.";
       return false;
     }
-    if (HasAbstractRef(input_node) && ref_node_addr_map_.count(input_node) == 0) {
+    if (common::AnfAlgo::HasAbstractRef(input_node) && ref_node_addr_map_.count(input_node) == 0) {
       ref_node_addr_map_[input_node] = input_device_tensor;
     }
   }

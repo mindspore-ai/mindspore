@@ -460,8 +460,8 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   if (is_dynamic_shape_) {
     kernel::UpdateNodeShape(kernel_);
-    UpdateOutputAddrSize(kernel_info_, kernel_);
-    UpdateInternalParameterShape(internal_parameters_, kernel_);
+    AnfAlgo::UpdateOutputAddrSize(kernel_info_, kernel_);
+    AnfAlgo::UpdateInternalParameterShape(internal_parameters_, kernel_);
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);

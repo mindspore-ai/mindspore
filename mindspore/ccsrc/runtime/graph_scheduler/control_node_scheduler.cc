@@ -95,11 +95,11 @@ bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
     return false;
   }
 
-  if (HasAbstractRef(backend_node)) {
+  if (common::AnfAlgo::HasAbstractRef(backend_node)) {
     return false;
   }
 
-  auto kernel_graph = FetchKernelGraph(backend_node);
+  auto kernel_graph = AnfAlgo::FetchKernelGraph(backend_node);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->IsInRefOutputMap({backend_node, index})) {
     return false;
@@ -1268,7 +1268,7 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
     } else if (no_input_kernel_actor->type_ == KernelTransformType::kKernelActor) {
       const auto &kernel_actor = dynamic_cast<KernelActor *>(no_input_kernel_actor.get());
       MS_EXCEPTION_IF_NULL(kernel_actor);
-      kernel_graph = FetchKernelGraph(kernel_actor->kernel());
+      kernel_graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel());
     } else {
       continue;
     }
@@ -1289,7 +1289,7 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
   for (auto &kernel_actor : actor_set->kernel_actors_) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     if ((kernel_actor->output_data_arrows_.size() == 0) && (kernel_actor->output_control_arrows_.size() == 0)) {
-      auto kernel_graph = FetchKernelGraph(kernel_actor->kernel());
+      auto kernel_graph = AnfAlgo::FetchKernelGraph(kernel_actor->kernel());
       MS_EXCEPTION_IF_NULL(kernel_graph);
       auto to_actor_name = parser->FetchGroupNameByKernelGraph(kernel_graph) + kExitActorNameSuffix;
       auto to_actor = FetchActor(to_actor_name);
@@ -1665,7 +1665,7 @@ void ControlNodeScheduler::AddFormalParameterDeviceTensor(ControlActor *const fr
     }
   }
 
-  if (!HasAbstractRef(input_node)) {
+  if (!common::AnfAlgo::HasAbstractRef(input_node)) {
     return;
   }
 

@@ -233,31 +233,16 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
                           const std::string &op_name);
 void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_context);
 
-// Get front node by backend node.
-AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph);
-KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &output_with_index,
-                                                     const KernelGraphPtr &graph);
-
-KernelGraphPtr FetchKernelGraph(const AnfNodePtr &node);
 KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const KernelGraphPtr &graph,
                                              const std::vector<AnfNodePtr> &host_parameters = {},
                                              GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);
 std::string FetchActorName(KernelTransformType kernel_type, const std::string &actor_set_name,
                            const AnfNodePtr &node = nullptr, const KernelGraphPtr &graph = nullptr);
 
-// Check whether the parameter is a ref parameter.
-bool HasAbstractRef(const AnfNodePtr &node);
-
 // Fetch the input indexes which may be modified that exist in the input ref parameter.
 std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &node);
 // Fetch the output indexes which may be modified that exist in the ref node.
 std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &node, const KernelGraphPtr &graph);
-
-// The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
-// 'Unique' will change after Launch, the output address size should update.
-void UpdateOutputAddrSize(KernelInfo *kernel_info, const CNodePtr &kernel);
-// Update the shape of internal parameter.
-void UpdateInternalParameterShape(const std::map<size_t, AnfNodeWeakPtr> &internal_parameters, const CNodePtr &cnode);
 }  // namespace runtime
 }  // namespace mindspore
 
