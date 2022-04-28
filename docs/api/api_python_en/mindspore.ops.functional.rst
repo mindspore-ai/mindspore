@@ -73,6 +73,8 @@ Element-by-Element Operations
     mindspore.ops.bessel_j1
     mindspore.ops.bessel_k0
     mindspore.ops.bessel_k0e
+    mindspore.ops.bessel_y0
+    mindspore.ops.bessel_y1
     mindspore.ops.bitwise_and
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor

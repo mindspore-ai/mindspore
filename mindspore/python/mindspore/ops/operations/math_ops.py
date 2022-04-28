@@ -4812,6 +4812,70 @@ class BesselJ1(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
+class BesselY0(Primitive):
+    """
+    Computes BesselY0 of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> bessel_y0 = ops.BesselY0()
+        >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
+        >>> output = bessel_y0(x)
+        >>> print(output)
+        [-0.44451873  0.08825696  0.51037567  -0.01694074]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselY0"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+
+class BesselY1(Primitive):
+    """
+    Computes BesselY1 of input element-wise.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Data type must be float16, float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor of float16, float32.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> bessel_y1 = ops.BesselY1()
+        >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
+        >>> output = bessel_y1(x)
+        >>> print(output)
+        [-1.47147239  -0.78121282  -0.10703243  0.39792571]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize BesselY1"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+
 class Inv(Primitive):
     r"""
     Computes Reciprocal of input tensor element-wise.

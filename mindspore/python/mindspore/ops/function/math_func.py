@@ -1524,6 +1524,62 @@ def bessel_k0e(x):
     return bessel_k0e_(x)
 
 
+bessel_y0_ = P.BesselY0()
+def bessel_y0(x):
+    r"""
+    Computes the Bessel y0 function of x element-wise.
+
+    Args:
+        x (Tensor): The input tensor. The data type must be float16, float32 or float64.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
+        >>> output = ops.bessel_y0(x)
+        >>> print(output)
+        [-0.44451874  0.08825696  0.51037567  -0.01694074]
+    """
+    return bessel_y0_(x)
+
+
+bessel_y1_ = P.BesselY1()
+def bessel_y1(x):
+    r"""
+    Computes the Bessel y1 function of x element-wise.
+
+    Args:
+        x (Tensor): The input tensor. The data type must be float16, float32 or float64.
+            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Returns:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
+        >>> output = ops.bessel_y1(x)
+        >>> print(output)
+        [-1.47147239  -0.78121282  -0.10703243  0.39792571]
+    """
+    return bessel_y1_(x)
+
+
 #####################################
 # Comparison Operation Functions.
 #####################################
@@ -2111,6 +2167,8 @@ __all__ = [
     'bessel_i0',
     'bessel_i0e',
     'bessel_k0',
-    'bessel_k0e'
+    'bessel_k0e',
+    'bessel_y0',
+    'bessel_y1'
 ]
 __all__.sort()
