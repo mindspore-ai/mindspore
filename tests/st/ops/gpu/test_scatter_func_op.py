@@ -722,6 +722,11 @@ def test_scatter_func_disordered_dynamic_int32():
     ).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_d_net("min", inputx, indices, updates)
+    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32))
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -756,6 +761,11 @@ def test_scatter_func_disordered_dynamic_int8():
     ).astype(np.int8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_d_net("min", inputx, indices, updates)
+    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int8))
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -786,20 +796,24 @@ def test_scatter_func_disordered_dynamic_uint8():
     ).astype(np.uint8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_d_net("min", inputx, indices, updates)
+    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.uint8))
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_scatter_func_input_less_than_1_dynamic_float32():
-    inputx = Tensor(
-        np.array(
-            [
-                [0.214141, 0.415151, 0.51516],
-                [0.876542, 0.451611, 0.55112],
-                [0.111244, 0.633333, 0.34444],
-            ]
-        ).astype(np.float32)
-    )
+    inputx_np = np.array(
+        [
+            [0.214141, 0.415151, 0.51516],
+            [0.876542, 0.451611, 0.55112],
+            [0.111244, 0.633333, 0.34444],
+        ]
+    ).astype(np.float32)
+    inputx = Tensor(inputx_np)
     indices = Tensor(np.array([[[1, 0, 2], [2, 2, 0]], [[1, 0, 1], [2, 1, 2]]]).astype(np.int32))
     updates = Tensor(np.arange(34, 70).reshape((2, 2, 3, 3)).astype(np.float32))
 
@@ -832,6 +846,11 @@ def test_scatter_func_input_less_than_1_dynamic_float32():
         ],
         dtype=np.float32,
     )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # min
+    output = scatter_func_d_net("min", inputx, indices, updates)
+    expected = inputx_np
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -871,6 +890,16 @@ def test_scatter_func_dynamic_two_inputs():
     expected_2 = np.array([[-39.0, -38.0, -37.0], [-36.0, -35.0, -34.0]])
     np.testing.assert_array_almost_equal(output_1.asnumpy(), expected_1)
     np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
+
+    # min
+    output_1, output_2 = scatter_func_d2_net(
+        "min", inputx, indices_1, updates_1, indices_2, updates_2
+    )
+    expected_1 = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    expected_2 = expected_1
+    np.testing.assert_array_almost_equal(output_1.asnumpy(), expected_1)
+    np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
+
 
 if __name__ == "__main__":
     test_scatter_func_small_float32()

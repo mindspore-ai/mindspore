@@ -626,10 +626,24 @@ def scatter_max(input_x, indices, updates):
     return scatter_max_(input_x, indices, updates)
 
 
-def scatter_min(input_x, indices, updates, use_locking=False):
-    r"""
+scatter_min_ = P.ScatterMin()
+def scatter_min(input_x, indices, updates):
+    """
+    Updates the value of the input tensor through the minimum operation.
+
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    for each `i, ..., j` in `indices.shape`:
+
+    .. math::
+
+        \text{input_x}[\text{indices}[i, ..., j], :]
+        = min(\text{input_x}[\text{indices}[i, ..., j], :], \text{updates}[i, ..., j, :])
+
+    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower priority data type will be converted to
+    the relatively highest priority data type.
 
     Args:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
@@ -637,7 +651,6 @@ def scatter_min(input_x, indices, updates, use_locking=False):
         - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
-        - use_locking (bool): Whether to protect the assignment by a lock. Default: False.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
@@ -666,7 +679,7 @@ def scatter_min(input_x, indices, updates, use_locking=False):
         [[0. 0. 0.]
          [0. 0. 0.]]
     """
-    return P.ScatterMin(use_locking)(input_x, indices, updates)
+    return scatter_min_(input_x, indices, updates)
 
 
 scatter_nd_ = P.ScatterNd()
