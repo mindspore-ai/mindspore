@@ -859,6 +859,17 @@ def get_bprop_scatter_max(self):
     return bprop
 
 
+@bprop_getters.register(P.ScatterMin)
+def get_bprop_scatter_min(self):
+    """Generate bprop for ScatterMin"""
+    gather = P.Gather()
+
+    def bprop(x, indices, update, out, dout):
+        return dout, zeros_like(indices), gather(dout, indices, 0)
+
+    return bprop
+
+
 @bprop_getters.register(P.Argmax)
 def get_bprop_argmax(self):
     """Generate bprop for Argmax"""

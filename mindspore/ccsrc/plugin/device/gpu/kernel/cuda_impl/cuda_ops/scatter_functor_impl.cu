@@ -62,6 +62,17 @@ __global__ void ScatterMaxKernel(const size_t inner_size, const size_t updates_s
 }
 
 template <typename T, typename S>
+__global__ void ScatterMinKernel(const size_t inner_size, const size_t updates_size, const S *indices, const T *updates,
+                                 T *input) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
+    const size_t index = pos / inner_size;
+    const size_t offset = pos % inner_size;
+    const size_t current_pos = indices[index] * inner_size + offset;
+    input[current_pos] = updates[pos] < input[current_pos] ? updates[pos] : input[current_pos];
+  }
+}
+
+template <typename T, typename S>
 void ScatterFunc(enum ScatterFunctorType func_type, const size_t &inner_size, const size_t &indices_size,
                  const S *indices, const T *updates, T *input, cudaStream_t cuda_stream) {
   const size_t updates_size = inner_size * indices_size;
@@ -77,6 +88,9 @@ void ScatterFunc(enum ScatterFunctorType func_type, const size_t &inner_size, co
                                                                                          indices, updates, input);
     case SCATTER_FUNC_MAX:
       return ScatterMaxKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(inner_size, updates_size,
+                                                                                         indices, updates, input);
+    case SCATTER_FUNC_MIN:
+      return ScatterMinKernel<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(inner_size, updates_size,
                                                                                          indices, updates, input);
     default:
       break;

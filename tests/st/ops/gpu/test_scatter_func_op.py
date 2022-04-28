@@ -29,6 +29,7 @@ func_map = {
     "add": P.ScatterAdd,
     "sub": P.ScatterSub,
     "max": P.ScatterMax,
+    "min": P.ScatterMin,
 }
 
 
@@ -130,6 +131,11 @@ def test_scatter_func_small_float32():
     expected = np.array([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -162,6 +168,12 @@ def test_scatter_func_input_updated():
     net = TestScatterFuncNet("max", lock, inputx, indices, updates)
     net()
     expected = np.array([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
+    np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
+
+    # min
+    net = TestScatterFuncNet("min", lock, inputx, indices, updates)
+    net()
+    expected = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
@@ -329,6 +341,12 @@ def test_scatter_func_large_shape_float32():
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.ones((4, 2, 3, 4)).astype(np.float32)
+    expected[0][0][0][0] = 0.0
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -356,6 +374,11 @@ def test_scatter_func_small_float32_use_locking_false():
     # max
     output = scatter_func_use_locking_false_net("max", inputx, indices, updates)
     expected = np.array([[3.0, 4.0, 5.0], [0.0, 1.0, 2.0]])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # min
+    output = scatter_func_use_locking_false_net("min", inputx, indices, updates)
+    expected = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -418,6 +441,11 @@ def test_scatter_func_input_less_than_1_float32():
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = inputx.asnumpy()
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -445,6 +473,11 @@ def test_scatter_func_float16():
     # max
     output = scatter_func_net("max", inputx, indices, updates)
     expected = np.array([[6.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -496,6 +529,11 @@ def test_scatter_func_large_float16():
     ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.zeros((2, 3, 4)).astype(np.float16)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -539,6 +577,11 @@ def test_scatter_func_disordered_float16():
             [99.0, 100.0, 101.0, 102.0],
         ]
     )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.float16))
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
@@ -590,6 +633,11 @@ def test_scatter_func_large_int32():
     ])
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.zeros((2, 3, 4)).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -633,6 +681,11 @@ def test_scatter_func_disordered_int32():
             [99.0, 100.0, 101.0, 102.0],
         ]
     )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # min
+    output = scatter_func_net("min", inputx, indices, updates)
+    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32))
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 

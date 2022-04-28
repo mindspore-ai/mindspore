@@ -385,6 +385,30 @@ def test_scatter_max():
     grad.compile(indices, updates)
 
 
+def test_scatter_min():
+    """
+    Feature: Bprop pre-compilation.
+    Description: Compile the backward graph for the scatter_min op.
+    Expectation: Load the bprop mindir successfully.
+    """
+
+    class ScatterMinNet(nn.Cell):
+        def __init__(self):
+            super(ScatterMinNet, self).__init__()
+            self.scatter_min = P.ScatterMin()
+            self.input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32),
+                                     name="input_x")
+
+        def construct(self, indices, updates):
+            return self.scatter_min(self.input_x, indices, updates)
+
+    indices = Tensor(np.array([[0, 0], [1, 1]]), mstype.int32)
+    updates = Tensor(np.ones([2, 2, 3]) * 88, mstype.float32)
+    scatter_min = ScatterMinNet()
+    grad = GradNet(scatter_min)
+    grad.compile(indices, updates)
+
+
 def test_relu_grad():
     """
     Feature: Bprop pre-compilation.

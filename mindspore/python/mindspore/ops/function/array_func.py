@@ -587,6 +587,49 @@ def transpose(input_x, input_perm):
     return transpose_(input_x, input_perm)
 
 
+def scatter_min(input_x, indices, updates, use_locking=False):
+    r"""
+    Using given values to update tensor value through the min operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        - **input_x** (Parameter) - The target tensor, with data type of Parameter.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+        - use_locking (bool): Whether to protect the assignment by a lock. Default: False.
+
+    Outputs:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `indices` is not an int32.
+        TypeError: If `use_locking` is not a bool.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import ops
+        >>> input_x = Parameter(Tensor(np.zeros((2, 3)), mindspore.float32), name="input_x")
+        >>> indices = Tensor(np.array([1, 0]), mindspore.int32)
+        >>> update = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
+        >>> scatter_min = ops.ScatterMin()
+        >>> output = scatter_min(input_x, indices, update)
+        >>> print(output)
+        [[0. 0. 0.]
+         [0. 0. 0.]]
+    """
+    return P.ScatterMin(use_locking)(input_x, indices, updates)
+
+
 scatter_nd_ = P.ScatterNd()
 def scatter_nd(indices, updates, shape):
     r"""
@@ -1040,6 +1083,7 @@ __all__ = [
     'gather',
     'gather_d',
     'gather_nd',
-    'masked_fill'
+    'masked_fill',
+    'scatter_min'
 ]
 __all__.sort()
