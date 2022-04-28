@@ -103,7 +103,7 @@ class MS_CORE_API Tuple final : public Object {
 
   /// \brief Shadow copy function for Tuple.
   ///
-  /// \param[in] obj TypePtrList to be copied.
+  /// \param[in] objs TypePtrList to be copied.
   explicit Tuple(const TypePtrList &objs) : Object(kObjectTypeTuple, false), elements_(objs.begin(), objs.end()) {}
 
   /// \brief Destructor of Tuple.
@@ -152,7 +152,7 @@ class MS_CORE_API Dictionary final : public Object {
 
   /// \brief Constructor for Dictionary.
   ///
-  /// \param[in] objs The elements of Dictionary.
+  /// \param[in] key_values The elements of Dictionary.
   explicit Dictionary(const std::vector<std::pair<std::string, TypePtr>> &key_values)
       : Object(kObjectTypeDictionary, false), key_values_(key_values) {}
 
