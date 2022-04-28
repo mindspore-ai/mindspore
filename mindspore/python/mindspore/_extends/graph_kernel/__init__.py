@@ -14,5 +14,5 @@
 # ============================================================================
 """init"""
 from .splitter import split_with_json
-from .expander import get_op_expander
+from .expander import get_op_expander, get_expander_op_list
 from .parallel_estimate import estimate_calculation_amount, estimate_ops
