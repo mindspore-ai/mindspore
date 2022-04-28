@@ -53,7 +53,7 @@ class ScatterArithmeticCpuKernelFunc : public CpuKernelFunc {
   using TypeComputeFunc = std::function<void(ScatterArithmeticCpuKernelFunc *, T *, const int *, const T *)>;
 
   TypeComputeFunc compute_func_;
-  int input_shape_0{0};
+  int first_dim_size{0};
   size_t input_size_{0};
   size_t inner_size_{0};
   size_t indices_size_{0};
@@ -90,7 +90,7 @@ void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
                       << "', the dimension of 'input_x' must be greater than or equal to 1, but got "
                       << input_shape.size() << ".";
   }
-  input_shape_0 = SizeToInt(input_shape[0]);
+  first_dim_size = SizeToInt(input_shape[0]);
   input_size_ = 1;
   inner_size_ = 1;
   if (input_shape.empty()) {
@@ -131,11 +131,12 @@ bool ScatterArithmeticCpuKernelFunc<T>::RunFunc(const std::vector<kernel::Addres
 template <typename T>
 void ScatterArithmeticCpuKernelFunc<T>::ScatterAdd(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
-    if (indices[i] >= input_shape_0) {
-      continue;
-    }
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       input[base_index_input + j] += updates[base_index_updates + j];
     }
@@ -145,11 +146,12 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterAdd(T *input, const int *indices,
 template <typename T>
 void ScatterArithmeticCpuKernelFunc<T>::ScatterSub(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
-    if (indices[i] >= input_shape_0) {
-      continue;
-    }
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       input[base_index_input + j] -= updates[base_index_updates + j];
     }
@@ -161,6 +163,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterMul(T *input, const int *indices,
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       input[base_index_input + j] *= updates[base_index_updates + j];
     }
@@ -170,6 +176,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterMul(T *input, const int *indices,
 template <typename T>
 void ScatterArithmeticCpuKernelFunc<T>::ScatterDiv(T *input, const int *indices, const T *updates) const {
   for (size_t i = 0; i < indices_size_; i++) {
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       auto dividend = input[indices[i] * inner_size_ + j];
       auto divisor = updates[i * inner_size_ + j];
@@ -197,6 +207,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterMax(T *input, const int *indices,
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       input[base_index_input + j] = input[base_index_input + j] > updates[base_index_updates + j]
                                       ? input[base_index_input + j]
@@ -210,6 +224,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterMin(T *input, const int *indices,
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       input[base_index_input + j] = input[base_index_input + j] < updates[base_index_updates + j]
                                       ? input[base_index_input + j]
@@ -223,6 +241,10 @@ void ScatterArithmeticCpuKernelFunc<T>::ScatterUpdate(T *input, const int *indic
   for (size_t i = 0; i < indices_size_; i++) {
     auto base_index_updates = i * inner_size_;
     auto base_index_input = indices[i] * inner_size_;
+    if (indices[i] < 0 || indices[i] >= first_dim_size) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices should be in [0, " << first_dim_size
+                        << "), but got '" << indices[i] << "' in indices.";
+    }
     for (size_t j = 0; j < inner_size_; j++) {
       input[base_index_input + j] = updates[base_index_updates + j];
     }
