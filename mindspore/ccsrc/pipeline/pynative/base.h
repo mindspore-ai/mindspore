@@ -44,10 +44,18 @@ struct OpExecInfo {
   size_t next_input_index = 0;
   std::string op_name;
   std::string op_info;
-  std::string next_op_name = "";
+  std::string next_op_name;
   PrimitivePyPtr py_primitive;
   AbstractBasePtr abstract;
   py::list op_inputs;
+  // dynamic shape
+  bool has_dynamic_input = false;
+  bool has_dynamic_output = false;
+  // Tensor id with Shape info
+  mindspore::HashMap<std::string, abstract::ShapePtr> id_with_dynamic_shape;
+  // Tensor input and with its value
+  std::vector<std::pair<size_t, ValuePtr>> index_with_value;
+  std::vector<tensor::TensorPtr> input_tensors;
 #ifdef ENABLE_D
   py::dict op_attrs;
 #endif
@@ -58,7 +66,8 @@ using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 
 const std::set<std::string> ignore_infer_prim = {"mixed_precision_cast"};
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
-const std::set<std::string> dynamic_shape_const_input_to_attr = {"Cast", "ExpandDims", "EmbeddingLookup", "Transpose"};
+const std::set<std::string> dynamic_shape_const_input_to_attr = {"Cast", "ExpandDims", "EmbeddingLookup", "Transpose",
+                                                                 "ReduceMean"};
 }  // namespace pynative
 }  // namespace mindspore
 

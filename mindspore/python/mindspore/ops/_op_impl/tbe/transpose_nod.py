@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 """Transpose op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-transpose_op_info = TBERegOp("TransposeNOD") \
+transpose_nod_op_info = TBERegOp("TransposeNOD") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
     .binfile_name("transpose.so") \
@@ -27,6 +27,7 @@ transpose_op_info = TBERegOp("TransposeNOD") \
     .input(0, "x", False, "required", "all") \
     .input(1, "perm", False, "required", "all", "optional") \
     .output(0, "y", False, "required", "all") \
+    .dynamic_shape(True) \
     .need_check_supported(True) \
     .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I8_Default, DataType.I32_Default, DataType.I8_Default) \
@@ -53,7 +54,7 @@ transpose_op_info = TBERegOp("TransposeNOD") \
     .get_op_info()
 
 
-@op_info_register(transpose_op_info)
-def _transpose_tbe():
+@op_info_register(transpose_nod_op_info)
+def _transpose_nod_tbe():
     """Transpose TBE register"""
     return

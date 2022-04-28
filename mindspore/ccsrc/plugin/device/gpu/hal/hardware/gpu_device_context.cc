@@ -435,30 +435,27 @@ void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { 
 
 void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  bool is_pynative_infer = ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER);
-  bool is_pynative_mode = ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
-  auto dynamic_shape_depends = abstract::GetDependsFormMap(kernel);
-  if ((is_pynative_infer || is_pynative_mode) && dynamic_shape_depends.empty()) {
-    return;
-  }
-
   if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
     MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
   }
 
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  kernel::NativeGpuKernelMod *gpu_kernel = dynamic_cast<kernel::NativeGpuKernelMod *>(kernel_mod);
-  MS_EXCEPTION_IF_NULL(gpu_kernel);
-
   auto func_graph = kernel->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   if (!(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
     opt::dynamic_shape::InferOp(kernel);
     auto args = kernel::GetArgsFromCNode(kernel);
-    if (!gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+    if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod) {
+      auto update = kernel::AbstractArgsFromCNode(kernel);
+      if (args == nullptr) {
+        args = std::make_shared<kernel::KernelArgs>();
+      }
+      args->op = update.op;
+      update.depend_tensor_map = args->depend_tensor_map;
+      kernel::SetArgsToCNode(kernel, update);
+    }
+    if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
       MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
     }
   }

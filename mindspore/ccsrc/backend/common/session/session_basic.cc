@@ -352,8 +352,13 @@ ParameterPtr ConstructRunOpParameter(const std::shared_ptr<KernelGraph> &graph, 
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
   // construct abstract of parameter
   auto type_of_tensor = input_tensor->Dtype();
-  auto shape_of_tensor = input_tensor->shape();
-  auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
+  std::shared_ptr<abstract::AbstractTensor> abstract;
+  // Base_shape_ptr is set in dynamic shape scenario, if nullptr, not dynamic shape
+  if (input_tensor->base_shape_ptr() != nullptr) {
+    abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, input_tensor->base_shape_ptr());
+  } else {
+    abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, input_tensor->shape());
+  }
   param->set_abstract(abstract);
   return param;
 }
@@ -1294,49 +1299,80 @@ void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGrap
   }
 }
 
-GraphInfo SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel,
-                                             const std::vector<tensor::TensorPtr> &input_tensors) {
+void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTensorInfo &tensor_info,
+                                        GraphInfo *graph_info) {
   MS_EXCEPTION_IF_NULL(kernel);
+  MS_EXCEPTION_IF_NULL(graph_info);
+  // Get input tensor info
+  const auto &input_tensors = tensor_info.input_tensors;
+  const auto &input_tensors_mask = tensor_info.input_tensors_mask;
+  if (input_tensors.size() != input_tensors_mask.size()) {
+    MS_LOG(EXCEPTION) << "Input tensors size " << input_tensors.size() << " should be equal to tensors mask size "
+                      << input_tensors_mask.size();
+  }
+
+  std::ostringstream buf;
   auto prim = common::AnfAlgo::GetCNodePrimitive(kernel);
   MS_EXCEPTION_IF_NULL(prim);
-  const AbstractBasePtr &abstract = kernel->abstract();
-  MS_EXCEPTION_IF_NULL(abstract);
-  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel);
-  GraphInfo graph_info;
-  // get input tensor info
-  for (const auto &tensor : input_tensors) {
+  buf << prim->id();
+  bool has_const_input = false;
+  for (size_t i = 0; i < input_tensors.size(); ++i) {
+    auto &tensor = input_tensors[i];
     MS_EXCEPTION_IF_NULL(tensor);
-    auto tensor_shape = tensor->shape();
-    (void)std::for_each(tensor_shape.begin(), tensor_shape.end(),
-                        [&](const auto &dim) { (void)graph_info.append(std::to_string(dim) + "_"); });
-    (void)graph_info.append(std::to_string(tensor->data_type()) + "_");
+    if (tensor->base_shape_ptr() != nullptr) {
+      buf << tensor->base_shape_ptr()->ToString();
+    } else {
+      buf << tensor->shape();
+    }
+    buf << tensor->data_type();
+    buf << tensor->padding_type();
+    // In the case of the same shape, but dtype and format are inconsistent
     if (tensor->device_address() != nullptr) {
-      const auto type_id = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address())->type_id();
-      (void)graph_info.append(std::to_string(type_id) + "_");
-      const auto format = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address())->format();
-      (void)graph_info.append(format + "_");
+      auto p_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+      MS_EXCEPTION_IF_NULL(p_address);
+      buf << p_address->type_id();
+      buf << p_address->format();
     }
-    for (const auto &padding_type : tensor->padding_type()) {
-      (void)graph_info.append(std::to_string(padding_type) + "_");
+    // For constant input
+    if (input_tensors_mask[i] == kValueNodeTensorMask) {
+      has_const_input = true;
+      auto dtype = tensor->Dtype();
+      MS_EXCEPTION_IF_NULL(dtype);
+      if (dtype->type_id() == kNumberTypeBool) {
+        buf << *reinterpret_cast<bool *>(tensor->data_c());
+      } else if (dtype->type_id() == kNumberTypeInt64) {
+        buf << *reinterpret_cast<int64_t *>(tensor->data_c());
+      } else if (dtype->type_id() == kNumberTypeFloat16) {
+        buf << *reinterpret_cast<float16 *>(tensor->data_c());
+      } else if (dtype->type_id() == kNumberTypeFloat32) {
+        buf << *reinterpret_cast<float *>(tensor->data_c());
+      } else {
+        MS_LOG(EXCEPTION) << "The dtype of the constant input is not one of them: bool, int64, Float16 or Float32.";
+      }
     }
+    buf << "_";
   }
-  // get attr info
+
+  // Get attr info
   const auto &attr_map = prim->attrs();
-  (void)std::for_each(attr_map.begin(), attr_map.end(), [&](const auto &element) {
-    if (element.second->ToString().empty()) {
-      return;
-    }
-    (void)graph_info.append(element.second->ToString() + "_");
-  });
-  auto build_shape = abstract->BuildShape();
-  MS_EXCEPTION_IF_NULL(build_shape);
-  (void)graph_info.append(build_shape->ToString() + "_");
-  for (size_t output_index = 0; output_index < output_num; output_index += 1) {
-    const auto output_type = common::AnfAlgo::GetOutputInferDataType(kernel, output_index);
-    (void)graph_info.append(std::to_string(output_type) + "_");
+  (void)std::for_each(attr_map.begin(), attr_map.end(),
+                      [&buf](const auto &element) { buf << element.second->ToString(); });
+
+  // Generally, different inputs can have different output; but different constant inputs may lead to different output
+  if (has_const_input) {
+    buf << "_";
+    const AbstractBasePtr &abstract = kernel->abstract();
+    MS_EXCEPTION_IF_NULL(abstract);
+    auto build_shape = abstract->BuildShape();
+    MS_EXCEPTION_IF_NULL(build_shape);
+    auto build_type = abstract->BuildType();
+    MS_EXCEPTION_IF_NULL(build_type);
+    // Get output shape
+    buf << build_shape->ToString();
+    // Get output dtype
+    buf << build_type->type_id();
   }
-  graph_info.append(std::to_string(prim->id()));
-  return graph_info;
+  *graph_info = buf.str();
 }
 
 OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInfo &graph_info,
@@ -1362,7 +1398,8 @@ OpRunInfo SessionBasic::GetSingleOpRunInfo(const CNodePtr &cnode, const GraphInf
                            .op_name = primitive->name(),
                            .primitive = primitive.get(),
                            .abstract = abstract,
-                           .is_dynamic_shape = shape->IsDynamic(),
+                           .input_is_dynamic_shape = common::AnfAlgo::IsNodeInputDynamicShape(cnode),
+                           .output_is_dynamic_shape = shape->IsDynamic(),
                            .is_auto_mixed_precision = false,
                            .lazy_build = !shape->IsDynamic(),
                            .next_op_name = std::string(),
@@ -1684,7 +1721,19 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
     MS_EXCEPTION_IF_NULL(tensor);
     MS_LOG(DEBUG) << "Get" << i << "th input tensor of " << cnode->fullname_with_scope() << " from "
                   << real_input->fullname_with_scope() << "-" << kernel_with_index.second;
-
+    BaseShapePtr base_shape = nullptr;
+    auto real_input_abs = real_input->abstract();
+    MS_EXCEPTION_IF_NULL(real_input_abs);
+    if (real_input_abs->isa<abstract::AbstractTuple>()) {
+      auto tuple_abs = real_input_abs->cast<abstract::AbstractTuplePtr>();
+      base_shape = tuple_abs->elements()[kernel_with_index.second]->BuildShape();
+    } else {
+      base_shape = real_input_abs->BuildShape();
+    }
+    MS_EXCEPTION_IF_NULL(base_shape);
+    if (base_shape->IsDynamic()) {
+      tensor->set_base_shape(base_shape);
+    }
     input_tensor_info->input_tensors.emplace_back(tensor);
   }
 }
@@ -2406,7 +2455,8 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   // set abstract,which include inferred shapes and types
   cnode->set_abstract(op_run_info.abstract);
   // get output dynamic shape info
-  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info.is_dynamic_shape), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(op_run_info.input_is_dynamic_shape), cnode);
+  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(op_run_info.output_is_dynamic_shape), cnode);
   if (op_run_info.is_auto_mixed_precision) {
     common::AnfAlgo::SetNodeAttr(kAttrPynativeNextOpName, MakeValue(op_run_info.next_op_name), cnode);
     common::AnfAlgo::SetNodeAttr(kAttrPynativeNextIndex, MakeValue(op_run_info.next_input_index), cnode);
@@ -2566,7 +2616,8 @@ void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<
 
     VectorRef op_outputs;
     // Get OpRunInfo and GraphInfo
-    GraphInfo graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
+    GraphInfo graph_info;
+    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
     OpRunInfo run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, &graph_output_info);
 
     // Build and run current single op

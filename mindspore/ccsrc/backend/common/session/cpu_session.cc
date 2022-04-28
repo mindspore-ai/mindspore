@@ -299,7 +299,7 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   }
   UpdateDynamicOutputShape(tensor_to_node);
   // update output abstract of dynamic op to op_run_info
-  if (op_run_info->is_dynamic_shape) {
+  if (op_run_info->output_is_dynamic_shape) {
     UpdateOutputAbstract(kernel_graph, op_run_info);
   }
   SetOutputFlags(*outputs);

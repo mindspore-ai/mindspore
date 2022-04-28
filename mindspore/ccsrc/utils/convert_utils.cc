@@ -311,7 +311,9 @@ ValuePtr ShallowCopyTensorValue(const ValuePtr &value) {
   if (value->isa<tensor::Tensor>()) {
     auto tensor_value = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor_value);
-    return std::make_shared<tensor::Tensor>(*tensor_value);
+    auto shallow_tensor = std::make_shared<tensor::Tensor>(*tensor_value);
+    shallow_tensor->set_base_shape(tensor_value->base_shape_ptr());
+    return shallow_tensor;
   } else if (value->isa<ValueTuple>()) {
     std::vector<ValuePtr> values;
     auto value_tuple = value->cast<ValueTuplePtr>();

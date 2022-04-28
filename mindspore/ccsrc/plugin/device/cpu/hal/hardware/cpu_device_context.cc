@@ -293,23 +293,26 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 }
 
 void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-
+  MS_EXCEPTION_IF_NULL(kernel);
   if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
     MS_LOG(EXCEPTION) << "Akg kernels do not support dynamic shape by now.";
   }
-
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
   auto func_graph = kernel->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   if (!(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
-    kernel::DeprecatedNativeCpuKernelMod *cpu_kernel = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
-    MS_EXCEPTION_IF_NULL(cpu_kernel);
     opt::dynamic_shape::InferOp(kernel);
     auto args = kernel::GetArgsFromCNode(kernel);
+    if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
+      auto update = kernel::AbstractArgsFromCNode(kernel);
+      if (args == nullptr) {
+        args = std::make_shared<kernel::KernelArgs>();
+      }
+      args->op = update.op;
+      update.depend_tensor_map = args->depend_tensor_map;
+      kernel::SetArgsToCNode(kernel, update);
+    }
     if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
       MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
     }

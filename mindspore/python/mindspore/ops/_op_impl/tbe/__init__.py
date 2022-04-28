@@ -252,7 +252,7 @@ from .sparse_apply_proximal_adagrad import _sparse_apply_proximal_adagrad
 from .sparse_apply_proximal_adagrad_ds import _sparse_apply_proximal_adagrad_ds
 from .apply_proximal_adagrad import _apply_proximal_adagrad
 from .apply_proximal_adagrad_ds import _apply_proximal_adagrad_ds_tbe
-from .transpose import _transpose_tbe
+from .transpose_nod import _transpose_nod_tbe
 from .transpose_d import _transpose_d_tbe
 from .transpose_ds import _transpose_ds_tbe
 from .truncate_div import _truncate_div_tbe

@@ -574,9 +574,6 @@ class PrimitiveWithInfer(Primitive):
             # fn may return None
             out[track] = fn(*(x[track] for x in args))
 
-        # in non-graph_mode, it is not necessary to infer min/max shape
-        if not is_graph_mode:
-            return out
         # output does not contain dynamic shape, no need to calculate min/max shape
 
         def has_dynamic_shape(shp):

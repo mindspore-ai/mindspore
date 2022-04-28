@@ -81,6 +81,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kTruncatedNormal = prim::kPrimTruncatedNormal->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
+  static const auto &kTransposeNOD = prim::kPrimTransposeNOD->name();
   // Common dynamic shape depends.
   static const PrimShapeDependMap dynamic_shape_depends{{kUnsortedSegmentSum, ShapeSet{2}},
                                                         {kFractionalAvgPoolGrad, ShapeSet{0}},
@@ -108,7 +109,9 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kNonDeterministicInts, ShapeSet{0}},
                                                         {kReduceSum, ShapeSet{1}},
                                                         {kTruncatedNormal, ShapeSet{0}},
-                                                        {kRaggedRange, ShapeSet{0, 1, 2}}};
+                                                        {kRaggedRange, ShapeSet{0, 1, 2}},
+                                                        {kTransposeNOD, ShapeSet{1}}};
+
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -313,6 +316,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimDiv, R{InferImplDiv, nullptr, true}},
     {prim::kPrimRealDiv, R{ops::RealDivInfer, nullptr, false}},
     {prim::kPrimTranspose, R{InferImplTranspose, nullptr, true}},
+    {prim::kPrimTransposeNOD, R{InferImplTranspose, nullptr, true}},
     {prim::kPrimStridedSlice, R{ops::StridedSliceInfer, nullptr, true}},
     {prim::kPrimSlice, R{ops::SliceInfer, nullptr, true}},
     {prim::kPrimSliceGrad, R{ops::SliceGradInfer, nullptr, true}},

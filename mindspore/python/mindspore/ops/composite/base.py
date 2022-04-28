@@ -386,7 +386,7 @@ class GradOperation(GradOperation_):
                     print("Another grad step is running")
                 self._pynative_forward_run(grad_, args, kwargs, fn)
                 _pynative_executor.grad(grad_, fn, weights, (0,), *args, **kwargs)
-                out = _pynative_executor(fn, *args, **kwargs)
+                out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
         else:
@@ -489,7 +489,7 @@ class _Grad(GradOperation_):
                     print("Another grad step is running")
                 self._pynative_forward_run(grad_, args, kwargs, fn)
                 _pynative_executor.grad(grad_, fn, weights, grad_position, *args, **kwargs)
-                out = _pynative_executor(fn, *args, **kwargs)
+                out = _pynative_executor(fn, grad_.sens_param, *args, **kwargs)
                 _pynative_executor.clear_grad(fn, *args, **kwargs)
                 return out
         else:

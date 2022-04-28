@@ -799,7 +799,7 @@ bool AscendSession::DisableLazyBuild(const OpRunInfo &op_run_info) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   return !op_run_info.lazy_build || ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode ||
-         op_run_info.is_dynamic_shape || ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+         op_run_info.output_is_dynamic_shape || ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
 }
 
 void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
@@ -824,10 +824,10 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   auto &task_manager = PynativeTaskManager::GetInstance();
   if (!cache_miss && task_manager.QueueEmpty()) {
     // Cache match and there are no task in Queue. Just Launch immediately.
-    LaunchFunc(graph, tensor_to_node, op_run_info->is_dynamic_shape, *input_tensors);
+    LaunchFunc(graph, tensor_to_node, op_run_info->output_is_dynamic_shape, *input_tensors);
   } else {
-    auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->is_dynamic_shape, graph, tensors_mask,
-                                                         *input_tensors, tensor_to_node);
+    auto run_op_context = std::make_shared<RunOpContext>(graph_info, op_run_info->output_is_dynamic_shape, graph,
+                                                         tensors_mask, *input_tensors, tensor_to_node);
     task_manager.PushLaunchTask(std::make_shared<LaunchTask>(run_op_context));
 
     if (cache_miss || !task_manager.QueueEmpty()) {
@@ -876,7 +876,7 @@ void AscendSession::RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_r
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   UpdateOutputs(graph, outputs, *input_tensors, &tensor_to_node);
   // update output abstract of dynamic op to op_run_info
-  if (op_run_info->is_dynamic_shape) {
+  if (op_run_info->output_is_dynamic_shape) {
     UpdateOutputAbstract(graph, op_run_info);
   }
   RunOpMemoryClear(graph.get());
@@ -950,9 +950,10 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     InputTensorInfo input_tensor_info;
     GetOpInputStubTensors(kernel, parameter_index, graph_inputs, op_output_info, &input_tensor_info);
     // Get OpRunInfo and GraphInfo
-    const GraphInfo &graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
+    GraphInfo graph_info;
+    GetSingleOpGraphInfo(kernel, input_tensor_info, &graph_info);
     OpRunInfo op_run_info = GetSingleOpRunInfo(kernel, graph_info, input_tensor_info, nullptr);
-    if (op_run_info.is_dynamic_shape) {
+    if (op_run_info.output_is_dynamic_shape) {
       MS_LOG(INFO) << "BuildOpsInGraph stop, op " << op_run_info.op_name << " is dynamic shape.";
       break;
     }
@@ -969,7 +970,8 @@ void AscendSession::BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfN
     GenOpOutputStubTensor(single_op_graph, kernel, cnode_refcount, &op_output_info);
     opt::HideNopNode(single_op_graph.get());
     // The graph info could have been changed in PreBuildOp
-    const GraphInfo &new_graph_info = GetSingleOpGraphInfo(kernel, input_tensor_info.input_tensors);
+    GraphInfo new_graph_info;
+    GetSingleOpGraphInfo(kernel, input_tensor_info, &new_graph_info);
     single_op_graphs.emplace(single_op_graph, new_graph_info);
     const auto &execution_order = single_op_graph->execution_order();
     std::copy(execution_order.begin(), execution_order.end(), std::back_inserter(kernels));

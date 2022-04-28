@@ -1252,15 +1252,13 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(
                                              runtime::GraphExecutionStrategy::kStep);
 }
 
-void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const KernelGraphPtr &graph) {
+void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const std::string &graph_info,
+                                       const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  if (graph_info_to_device_context_.empty()) {
-    MS_LOG(EXCEPTION) << "The map graph_info_to_device_context_ is empty.";
-  }
-  const auto &graph_info = graph_info_to_device_context_.begin()->first;
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->EraseSingleOpCache(graph_info, graph->graph_id());
   actor_to_graph_compiler_info_.erase(actor_info);
+  graph_info_to_device_context_.erase(graph_info);
 }
 
 void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
@@ -1409,10 +1407,12 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
 
   auto device_context = graph_compiler_info->device_contexts_.front();
   auto &op_executor = runtime::OpExecutor::GetInstance();
+  bool is_dynamic_shape = op_run_info->output_is_dynamic_shape || op_run_info->input_is_dynamic_shape;
 
-  bool async_exec_disabled = graph_compiler_info->need_erase_ || !op_run_info->lazy_build ||
+  bool async_exec_disabled = is_dynamic_shape || graph_compiler_info->need_erase_ || !op_run_info->lazy_build ||
                              OpInBlackList(*op_run_info) || GetExecutionMode() == kGraphMode ||
                              EnablePyNativeSyncRunning();
+  MS_LOG(DEBUG) << "Pynative async_exec_disabled " << async_exec_disabled;
   if (!async_exec_disabled) {
     MS_LOG(DEBUG) << "Async exec enabled, op:" << op_run_info->op_name;
     DispatchOpTask(single_op_cache_hit, outputs, graph_compiler_info, op_run_info);
@@ -1435,11 +1435,11 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
   UpdateOutput(output_nodes, outputs);
   ClearGraphDeviceAddress(graph, device_context, op_run_info->is_gradient_out);
   ClearInputDeviceAddress(graph, device_context);
-  if (op_run_info->is_dynamic_shape) {
+  if (op_run_info->output_is_dynamic_shape) {
     UpdateOutputAbstract(graph, op_run_info);
   }
   if (graph_compiler_info->need_erase_) {
-    EraseSingleOpCache(graph_compiler_info->name_, graph);
+    EraseSingleOpCache(graph_compiler_info->name_, op_run_info->graph_info, graph);
   }
 }
 
@@ -1472,6 +1472,17 @@ void MindRTBackend::RunOp(OpRunInfo *op_run_info, VectorRef *outputs) {
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     bool enable_cache = context_ptr->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE);
+    // If op not support dynamic shape, op will select static opinfo, update graph dynamic attr
+    bool is_dynamic_shape = op_run_info->output_is_dynamic_shape || op_run_info->input_is_dynamic_shape;
+    if (is_dynamic_shape) {
+      const auto &graph = graph_compiler_->Fetch(op_run_info->graph_info);
+      MS_EXCEPTION_IF_NULL(graph);
+      graph->UpdateGraphDynamicAttr();
+      // Dynamic shape but select static op, must no cache
+      if (!graph->is_dynamic_shape()) {
+        enable_cache = false;
+      }
+    }
     auto graph_compiler_info =
       ConstructGraphCompilerInfo(actor_info, &op_run_info->tensor_mask, &op_run_info->input_tensors, !enable_cache);
     graph_compiler_info_ptr = graph_compiler_info.get();

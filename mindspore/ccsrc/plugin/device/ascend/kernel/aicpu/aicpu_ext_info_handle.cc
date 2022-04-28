@@ -107,7 +107,7 @@ bool AicpuExtInfoHandler::ParseExtShapeType(const AicpuExtInfo &aicpu_ext_info) 
                   << " but got:" << *type;
     return false;
   }
-  MS_LOG(INFO) << "Node:" << node_name_ << "parse ext shape type success infoLen=" << aicpu_ext_info.infoLen;
+  MS_LOG(INFO) << "Node:" << node_name_ << " parse ext shape type success infoLen=" << aicpu_ext_info.infoLen;
   return true;
 }
 
