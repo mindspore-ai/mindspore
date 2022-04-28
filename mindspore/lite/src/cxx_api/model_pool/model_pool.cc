@@ -29,6 +29,7 @@ namespace mindspore {
 namespace {
 constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
+constexpr int kNumMaxTaskQueueSize = 1000;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -639,6 +640,11 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     return kSuccess;
   } else {
     // do predict
+    if (predict_task_queue_->GetTaskNum(max_wait_worker_node_id) > kNumMaxTaskQueueSize) {
+      MS_LOG(ERROR) << "The number of waiting tasks in the queue exceeds the limit, ret=" << kLiteServiceDeny;
+      predict_task_mutex_.unlock();
+      return kLiteServiceDeny;
+    }
     predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
     if (predict_task == nullptr) {
