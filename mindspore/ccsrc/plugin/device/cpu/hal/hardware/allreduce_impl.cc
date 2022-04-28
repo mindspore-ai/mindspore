@@ -34,11 +34,11 @@ AllReduceLauncher::AllReduceLauncher() {
     MS_LOG(EXCEPTION) << "The abstract node is nullptr when init AllReduceLauncher.";
   }
   rank_id_ = abs_node_->rank_id();
-  rank_size_ = IntToSize(distributed::cluster::ClusterContext::instance()->node_num());
 
   const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
   MS_EXCEPTION_IF_NULL(cluster_ctx);
   node_role_ = cluster_ctx->node_role();
+  rank_size_ = IntToSize(cluster_ctx->node_num(cluster_ctx->node_role()));
 }
 
 bool AllReduceLauncher::Execute(const void *input_data, void *const output_data, size_t data_size) const {
