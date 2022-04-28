@@ -447,6 +447,7 @@ bool TransformOpOptimizer::Run(const FuncGraphPtr &kernel_graph) {
     if (Process(litegraph)) {
       changed = true;
       auto new_funcgraph = GkUtils::LiteGraph2AnfGraph(litegraph, Callback::Instance());
+      if (new_funcgraph == nullptr) continue;
       new_funcgraph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, sub_func_graph->get_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL));
       auto cnode = node->cast<CNodePtr>();
       AnfNodePtrList inputs(cnode->inputs().begin() + 1, cnode->inputs().end());

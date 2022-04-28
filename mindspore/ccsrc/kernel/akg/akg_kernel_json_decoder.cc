@@ -374,7 +374,7 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const nlohmann::json &kernel
   }
   for (const auto &op_desc : op_node_descs) {
     auto op_node = DecodeCNode(op_desc, graph, kernel_json[kJsonKeyProcess]);
-    MS_EXCEPTION_IF_NULL(op_node);
+    if (op_node == nullptr) return nullptr;
   }
   MS_LOG(DEBUG) << "Decode cnodes successfully.";
 
@@ -386,7 +386,7 @@ FuncGraphPtr AkgKernelJsonDecoder::DecodeFusedNodes(const nlohmann::json &kernel
     return nullptr;
   }
   auto output = DecodeOutput(output_descs, graph);
-  MS_EXCEPTION_IF_NULL(output);
+  if (output == nullptr) return nullptr;
   MS_LOG(DEBUG) << "Decode json successfully, json: " << kernel_json;
   return graph;
 }
