@@ -41,11 +41,13 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
   auto input1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   if (input1_shape.size() != 1) {
-    MS_EXCEPTION(ValueError) << "the shape size of the input1 must be equal to 1.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the shape size of 'input1' must be 1, but got: " << input1_shape.size() << ".";
   }
   auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   if (input2_shape.size() != 0) {
-    MS_EXCEPTION(ValueError) << "the shape size of the input2 must be equal to 0.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the shape size of 'input2' must be 0, but got: " << input2_shape.size() << ".";
   }
   auto input_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
   MS_EXCEPTION_IF_NULL(input_shape);
@@ -62,7 +64,8 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInputDims) {
-    MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', input must be a 1-D tensor, but got: " << shape_v.size() << "-D.";
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
@@ -74,7 +77,8 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
           out_shape.push_back(input_shape_ptr[i]);
           shape_m *= input_shape_ptr[i];
         } else {
-          MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                   << "', each dimension of input shape must be greater than 0.";
         }
       }
     } else if (input_type_element->type_id() == kNumberTypeInt64) {
@@ -84,16 +88,18 @@ abstract::ShapePtr FillV2InferShape(const PrimitivePtr &primitive, const std::ve
           out_shape.push_back(input_shape_ptr[i]);
           shape_m *= input_shape_ptr[i];
         } else {
-          MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                   << "', each dimension of input shape must be greater than 0.";
         }
       }
     } else {
-      MS_EXCEPTION(TypeError) << "the datatype of the input1 not support, support datatype: int32, int64.";
+      MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the dtype of input1 must be in [int32, int64].";
     }
     if (shape_m > max_length) {
-      MS_EXCEPTION(ValueError) << "The number of elements of output must be less than max length: " << max_length
-                               << ", but got " << shape_m
-                               << "! The shape of  output should be reduced or max_length should be increased";
+      MS_EXCEPTION(ValueError)
+        << "For '" << primitive->name()
+        << "', the number of elements of output must be less than 'max_length'. But got number of elements: " << shape_m
+        << ", 'max_length': " << max_length << ".";
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
@@ -120,7 +126,7 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     const std::set<TypePtr> input1_valid_types = {kInt32, kInt64};
     (void)CheckAndConvertUtils::CheckTensorTypeValid("input1 datatype", input1_type, input1_valid_types, prim_name);
   } else {
-    MS_EXCEPTION(TypeError) << "the datatype of the input1 not support, support datatype: int32, int64.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', the dtype of input1 must be in [int32, int64].";
   }
   // Check the data type of the second input and infer the data type of the output from the second input
   auto input2 = input_args[kInputIndex1];
@@ -131,9 +137,10 @@ TypePtr FillV2InferType(const PrimitivePtr &primitive, const std::vector<Abstrac
     output_valid_types.insert(kBool);
     (void)CheckAndConvertUtils::CheckTensorTypeValid("output datatype", input2_type, output_valid_types, prim_name);
   } else {
-    MS_EXCEPTION(TypeError) << "the datatype of the input2 not support, support datatype: "
-                               "bool, int8, int16, int32, int64, uint8, uint16, uint32, "
-                               "uint64, float16, float32, float64.";
+    MS_EXCEPTION(TypeError)
+      << "For '" << prim_name
+      << "', the dtype of input2 must be in [bool, int8, int16, int32, int64, uint8, uint16, uint32, "
+         "uint64, float16, float32, float64].";
   }
   auto input2_tensor_type = (input2_type->cast<TensorTypePtr>())->element();
 

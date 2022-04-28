@@ -33,13 +33,14 @@ abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
   auto x_shape_value = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
   auto axis = GetValue<int64_t>(primitive->GetAttr(AXIS));
   if (x_shape_value.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', inputs 'axis' should be greater than 0, but got "
-                             << x_shape_value.size() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', input tensor's shape size must be greater than 0, but got: " << x_shape_value.size()
+                             << ".";
   }
   if (axis >= static_cast<int64_t>(x_shape_value.size()) || axis < -static_cast<int64_t>(x_shape_value.size())) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "',The value of 'axis' should be in the range of ["
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the value of 'axis' must be in the range of ["
                              << -static_cast<int64_t>(x_shape_value.size()) << ","
-                             << static_cast<int64_t>(x_shape_value.size()) << "], but got axis:" << axis << ".";
+                             << static_cast<int64_t>(x_shape_value.size()) << "], but got 'axis': " << axis << ".";
   }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape, x_shape});
 }

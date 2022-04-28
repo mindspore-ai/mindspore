@@ -42,29 +42,33 @@ abstract::ShapePtr ApplyCenteredRMSPropInferShape(const PrimitivePtr &primitive,
   // var and mg must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !mg_shape_ptr->IsDynamic()) {
     if (*var_shape != *mg_shape) {
-      MS_EXCEPTION(ValueError) << op_name << " mean gradient shape " << mg_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', 'mean_gradient'must have the same shape as 'var'. But got 'mean_gradient' shape: "
+                               << mg_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   // var and ms must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !ms_shape_ptr->IsDynamic()) {
     if (*var_shape != *ms_shape) {
-      MS_EXCEPTION(ValueError) << op_name << " mean square shape " << ms_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', 'mean_square' must have the same shape as 'var'. But got 'mean_square' shape: "
+                               << ms_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   // var and mom must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !mom_shape_ptr->IsDynamic()) {
     if (*var_shape != *mom_shape) {
-      MS_EXCEPTION(ValueError) << op_name << " moment shape " << mom_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', 'moment' must have the same shape as 'var'. But got 'moment' shape: "
+                               << mom_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   // var and grad must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !grad_shape_ptr->IsDynamic()) {
     if (*var_shape != *grad_shape) {
-      MS_EXCEPTION(ValueError) << op_name << " grad shape " << grad_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << op_name
+                               << "', 'grad' must have the same shape as 'var'. But got 'grad' shape: "
+                               << grad_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   auto shape_element = var_shape->cast<abstract::ShapePtr>();

@@ -46,22 +46,28 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
   // var and accum must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !accum_shape_ptr->IsDynamic()) {
     if (*var_shape != *accum_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg accum shape " << accum_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', 'var' and 'accum' must have the same shape when is not dynamic. But got 'var' shape: "
+        << var_shape->ToString() << ", 'accum' shape: " << accum_shape->ToString() << ".";
     }
   }
   // var and accum update must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !accum_update_shape_ptr->IsDynamic()) {
     if (*var_shape != *accum_update_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg accum update shape " << accum_update_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', 'var' and 'accum_update' must have the same shape when is not dynamic. But got 'var' shape: "
+        << var_shape->ToString() << ", 'accum_update' shape: " << accum_update_shape->ToString() << ".";
     }
   }
   // var and grad must have the same shape when is not dynamic
   if (!var_shape_ptr->IsDynamic() && !grad_shape_ptr->IsDynamic()) {
     if (*var_shape != *grad_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg grad shape " << grad_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', 'var' and 'grad' must have the same shape when is not dynamic. But got 'var' shape: "
+        << var_shape->ToString() << ", 'grad' shape: " << grad_shape->ToString() << ".";
     }
   }
   const int64_t kShapeSize = 1;

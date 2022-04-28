@@ -41,11 +41,14 @@ ShapeVector CalDynamicOutputShape(const PrimitivePtr &primitive, const ValuePtrL
     if (indexed_value->isa<Int64Imm>()) {
       value = GetValue<int64_t>(indexed_value);
     } else {
-      MS_LOG(EXCEPTION) << "DropOutGenMask shape value must be int64, but " << indexed_value->ToString();
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', the type of shape value must be int64, but got: " << indexed_value->ToString() << ".";
     }
 
     if (value <= 0) {
       MS_LOG(EXCEPTION) << "DropOutGenMask product of value should be > 0";
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', product of value must be greater than 0, but got: " << value << ".";
     }
 
     if (std::numeric_limits<int64_t>::max() / count / value < 1) {
@@ -76,12 +79,13 @@ ShapeVector CalOutputShape(const PrimitivePtr &primitive, const AbstractBasePtrL
       value = GetValue<int64_t>(value_track);
     } else {
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', input x_shape elements should be int64 or int32, but got " << value_track->ToString()
+                        << "', input x_shape elements must be int64 or int32, but got: " << value_track->ToString()
                         << ".";
     }
 
     if (value <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', product of value should be > 0, but got " << value;
+      MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                        << "', product of value must be greater than 0, but got: " << value << ".";
     }
 
     if (std::numeric_limits<int64_t>::max() / count / value < 1) {
@@ -128,8 +132,8 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     auto shape = shape_base->cast<abstract::ShapePtr>();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->shape().size() != 1) {
-      MS_EXCEPTION(TypeError) << "For '" << op_name << "', Input 'shape' must be a 1-D Tensor, but got "
-                              << shape->shape().size() << ".";
+      MS_EXCEPTION(TypeError) << "For '" << op_name
+                              << "', input 'shape' must be a 1-D Tensor, but got: " << shape->shape().size() << ".";
     }
     size_t shape_rank = LongToSize(shape->shape()[0]);
 
@@ -145,7 +149,7 @@ abstract::ShapePtr DropoutGenMaskInferShape(const PrimitivePtr &primitive,
     if (max_value.size() != shape_rank || min_value.size() != shape_rank) {
       MS_LOG(EXCEPTION)
         << "For '" << op_name
-        << "', The size of max_value and min_value should be equal to the shape rank, but got max_value's size:"
+        << "', the size of max_value and min_value must be equal to the shape rank, but got max_value's size: "
         << max_value.size() << ", min_value's size: " << min_value.size() << ".";
     }
     ShapeVector out_min_shape = CalDynamicOutputShape(primitive, min_value);

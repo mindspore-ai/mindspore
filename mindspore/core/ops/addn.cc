@@ -44,16 +44,17 @@ abstract::ShapePtr AddNInferShape(const PrimitivePtr &primitive, const std::vect
       const auto &shape_0_vec = shape_0->cast<abstract::ShapePtr>()->shape();
       if ((shape_vec == ShapeVector({1}) && shape_0_vec == ShapeVector()) ||
           (shape_vec == ShapeVector() && shape_0_vec == ShapeVector({1}))) {
-        MS_LOG(DEBUG) << "The primitive[" << primitive->name() << "]'s input[" << i << "] shape: " << shape->ToString()
-                      << " are consistent with the shape of input[0]" << shape_0->ToString();
+        MS_LOG(DEBUG) << "For '" << primitive->name() << "', shape of input[" << i
+                      << "] and that of input[0] must be the same. But got shape of input[" << i
+                      << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString() << ".";
         continue;
       }
     }
     if (!shape->IsDynamic() && !shape_0->IsDynamic()) {
       if (*shape != *shape_0) {
-        MS_EXCEPTION(ValueError) << "The primitive[" << primitive->name() << "]'s input shape must be same, "
-                                 << "but got the shape of input[" << i << "]: " << shape->ToString()
-                                 << ", shape of input[0]:" << shape_0->ToString();
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', input shape must be same, but got shape of input[" << i
+                                 << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString() << ".";
       }
     }
   }

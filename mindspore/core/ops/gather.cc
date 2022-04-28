@@ -65,7 +65,7 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   } else {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
                       << "', the third input type should be tensor or scalar, but got invalid abstract type:"
-                      << input_args[kInputIndex2]->type_name();
+                      << input_args[kInputIndex2]->type_name() << ".";
   }
   auto params_shp = params->shape()->shape();
   auto indices_shp = indices->shape()->shape();
@@ -78,8 +78,8 @@ AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const Primitive
   ShapeVector indices_shp_max = (ind_dyn) ? indices->shape()->max_shape() : indices->shape()->shape();
   // check axis_val within interval: [-params_rank, params_rank)
   if (!(-params_rank <= axis_val) || !(axis_val < params_rank)) {
-    MS_LOG(EXCEPTION) << "For Gather - Axis value must be within [ " << -params_rank << ", " << params_rank << " ) "
-                      << "Got " << axis_val << ".";
+    MS_LOG(EXCEPTION) << "For 'Gather', axis value must be within range [" << -params_rank << ", " << params_rank
+                      << "], but got: " << axis_val << ".";
   }
   if (axis_val < 0) {
     axis_val += params_rank;

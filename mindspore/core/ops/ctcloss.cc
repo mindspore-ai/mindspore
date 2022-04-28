@@ -58,12 +58,14 @@ void CheckCTCLossInputs(const std::vector<AbstractBasePtr> &input_args, const st
                                            op_name);
 
   if (labels_indices_shape[0] != labels_values_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For CTCLoss first dim of label_indices and label_value must be same, but got "
-                             << labels_indices_shape[0] << " and " << labels_values_shape[0];
+    MS_EXCEPTION(ValueError)
+      << "For 'CTCLoss', the first dim of 'label_indices' and 'label_value' must be same, but got 'label_indices':"
+      << labels_indices_shape[0] << ", 'label_value': " << labels_values_shape[0] << ".";
   }
   if (inputs_shape[1] != sequence_length_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For CTCLoss input batch_size must be same with sequence_length batch_size, but got "
-                             << inputs_shape[1] << " and " << sequence_length_shape[0];
+    MS_EXCEPTION(ValueError)
+      << "For 'CTCLoss', input batch_size must be same with 'sequence_length' batch_size, but got input batch_size:"
+      << inputs_shape[1] << ", 'sequence_length' batch_size: " << sequence_length_shape[0] << ".";
   }
 }
 

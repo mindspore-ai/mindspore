@@ -83,20 +83,23 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
   same_shape_args_map.insert({"grad", grad_shape});
   if (!var_shape_ptr->IsDynamic() && !m_shape_ptr->IsDynamic()) {
     if (*m_shape != *var_shape) {
-      MS_EXCEPTION(ValueError) << primitive->name() << " evaluator arg m shape " << m_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', evaluator arg 'm' and 'var' must have the same shape. But got 'm' shape: "
+                               << m_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   if (!v_shape_ptr->IsDynamic() && !var_shape_ptr->IsDynamic()) {
     if (*v_shape != *var_shape) {
-      MS_EXCEPTION(ValueError) << primitive->name() << " evaluator arg v shape " << v_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', evaluator arg 'v' and 'var' must have the same shape. But got 'v' shape: "
+                               << v_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   if (!grad_shape_ptr->IsDynamic() && !var_shape_ptr->IsDynamic()) {
     if (*grad_shape != *var_shape) {
-      MS_EXCEPTION(ValueError) << primitive->name() << " evaluator arg grad shape " << grad_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', evaluator arg 'grad' and 'var' must have the same shape. But got 'grad' shape: "
+                               << grad_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
 

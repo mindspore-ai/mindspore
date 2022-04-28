@@ -40,8 +40,8 @@ abstract::ShapePtr MaskedFillInferShape(const PrimitivePtr &primitive, const std
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     if (value_shape.size() != 0) {
       MS_EXCEPTION(ValueError)
-        << "For " + op_name +
-             ", 'value' only supports a 0-dimensional value tensor or a float number, but got tensor with "
+        << "For '" << op_name
+        << "', 'value' only supports a 0-dimensional value tensor or a float number, but got tensor with "
         << value_shape.size() << " dimension(s).";
     }
     broadcast_shape = CalBroadCastShape(broadcast_shape, value_shape, op_name);

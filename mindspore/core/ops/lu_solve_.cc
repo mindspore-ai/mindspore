@@ -60,23 +60,29 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
   auto lu_pivots_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape());
   auto lu_pivots_shape = lu_pivots_shape_map[kShape];
   if (lu_data_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For " << op_name << " lu_data's dimensions should be greater than or equal to 2.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', lu_data's dimension must be greater than or equal to 2, but got: "
+                             << lu_data_shape.size() << ".";
   }
   if (x_shape.size() < kDimNum) {
-    MS_EXCEPTION(ValueError) << "For " << op_name << " x's dimensions should be greater than or equal to 2.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', x's dimension must be greater than or equal to 2, but got: " << x_shape.size()
+                             << ".";
   }
   if (lu_pivots_shape.size() < 1) {
-    MS_EXCEPTION(ValueError) << "For " << op_name << " lu_pivots's dimensions should be greater than or equal to 1.";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', lu_pivots's dimension must be greater than or equal to 1, but got: "
+                             << lu_pivots_shape.size() << ".";
   }
   if (lu_data_shape[lu_data_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - kDimNum]) {
-    MS_EXCEPTION(ValueError) << "For " << op_name << " input lu_data should be square matrix "
-                             << "while row is " << lu_data_shape[lu_data_shape.size() - kDimNum] << ", col is "
-                             << lu_data_shape[lu_data_shape.size() - 1] << ".";
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', input lu_data should be a square matrix, "
+                             << "but got row: " << lu_data_shape[lu_data_shape.size() - kDimNum]
+                             << ", col: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
   }
   if (x_shape[x_shape.size() - kDimNum] != lu_data_shape[lu_data_shape.size() - kDimNum]) {
-    MS_EXCEPTION(ValueError) << "For " << op_name << " x's col rank is not same as lu_data's col rank. "
-                             << "x is " << x_shape[x_shape.size() - kDimNum] << ", lu_data is "
-                             << lu_data_shape[lu_data_shape.size() - kDimNum] << ".";
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', x's col rank must be the same as lu_data's col rank, "
+                             << "but got x's: " << x_shape[x_shape.size() - kDimNum]
+                             << ", lu_data's: " << lu_data_shape[lu_data_shape.size() - kDimNum] << ".";
   }
   if (x_shape.size() == lu_data_shape.size()) {
     for (size_t i = 0; i <= x_shape.size() - kDimNum; i++) {
@@ -101,10 +107,10 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
     }
   }
   if (lu_pivots_shape[lu_pivots_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - 1]) {
-    MS_EXCEPTION(ValueError) << "For " << op_name
-                             << " the last dimension of lu_pivots must be equal to the last dimension of lu_data, "
-                             << "lu_data is " << lu_data_shape[lu_data_shape.size() - 1] << ", lu_pivots is "
-                             << lu_pivots_shape[lu_pivots_shape.size() - 1] << ".";
+    MS_EXCEPTION(ValueError) << "For '" << op_name
+                             << "', the last dimension of lu_pivots must be the same as lu_data's, "
+                             << "but got lu_pivots': " << lu_pivots_shape[lu_pivots_shape.size() - 1]
+                             << ", lu_data's: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
   }
   for (size_t i = 0; i < lu_pivots_shape.size(); i++) {
     if (lu_data_shape[i] != lu_pivots_shape[i]) {

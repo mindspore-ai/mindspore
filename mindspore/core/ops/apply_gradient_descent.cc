@@ -39,8 +39,9 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
   auto delta_shape_ptr = delta_shape->cast<abstract::ShapePtr>();
   if (!var_shape_ptr->IsDynamic() && !delta_shape_ptr->IsDynamic()) {
     if (*var_shape != *delta_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg delta shape " << delta_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', evaluator arg 'delta' must have the same shape as 'var'. But got 'delta' shape: "
+                               << delta_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   // alpha must be a scalar [Number, Tensor]

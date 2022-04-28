@@ -41,8 +41,9 @@ abstract::ShapePtr ApproximateEqualInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(shape_ptr_x2);
   if (!shape_ptr_x1->IsDynamic() && !shape_ptr_x2->IsDynamic()) {
     if (shape_ptr_x1->shape() != shape_ptr_x2->shape()) {
-      MS_EXCEPTION(ArgumentError) << "x1 shape and x2 shape should be same, but x1 shape: " << shape_ptr_x1->ToString()
-                                  << ", x2 shape:" << shape_ptr_x2->ToString();
+      MS_EXCEPTION(ArgumentError) << "For '" << prim_name
+                                  << "', arg 'x1' must have the same shape as 'x2'. But got 'x1' shape: "
+                                  << shape_ptr_x1->ToString() << ", 'x2' shape: " << shape_ptr_x2->ToString() << ".";
     }
   }
   return shape_ptr_x1;

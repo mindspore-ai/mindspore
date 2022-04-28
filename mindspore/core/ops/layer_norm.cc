@@ -58,7 +58,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto const &input_shape_list = input_shape->shape();
   const size_t input_rank = input_shape_list.size();
   if (input_rank == 0) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank should not be zero, but got " << input_rank;
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << input_rank << ".";
   }
 
   // begin_norm_axis and begin_params_axis should be smaller than the size of input_x and >= -1
@@ -86,7 +86,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   auto const &gamma_shape_list = gamma_shape->shape();
   auto const &beta_shape_list = beta_shape->shape();
   if (gamma_shape_list.empty() || beta_shape_list.empty()) {
-    MS_LOG(EXCEPTION) << "LayerNorm evaluator gamma or beta is a AbstractScalar that is not support.";
+    MS_LOG(EXCEPTION) << "For 'LayerNorm', evaluator gamma or beta can not be an AbstractScalar.";
   }
 
   size_t begin_params_axis_u = LongToSize(begin_params_axis);
@@ -106,9 +106,9 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     if ((gamma_shape_list[gamma_beta_shape_dim] != input_shape_list[i]) ||
         (beta_shape_list[gamma_beta_shape_dim] != input_shape_list[i])) {
       MS_LOG(EXCEPTION) << "For '" << op_name
-                        << "', Gamma or beta shape should match input shape, but got input shape: "
+                        << "', gamma or beta shape should match input shape, but got input shape: "
                         << input_shape->ToString() << ", gamma shape: " << gamma_shape->ToString()
-                        << ", beta shape: " << beta_shape->ToString();
+                        << ", beta shape: " << beta_shape->ToString() << ".";
     }
   }
 

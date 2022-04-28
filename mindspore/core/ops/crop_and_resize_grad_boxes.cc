@@ -72,16 +72,25 @@ abstract::ShapePtr CropAndResizeGradBoxesInferShape(const PrimitivePtr &primitiv
   (void)CheckAndConvertUtils::CheckInteger("box_index rank", SizeToLong(input_shape3.size()), kEqual, kBoxIndShapeLen,
                                            prim_name);
   if (!(input_shape1[kHeight] > 0 && input_shape1[kWidth] > 0)) {
-    MS_EXCEPTION(ValueError) << "the height and width of images must be over 0 ";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the height and width of images must be greater than 0. But got height: "
+                             << input_shape1[kHeight] << ", width: " << input_shape1[kWidth] << ".";
   }
   if (!(input_shape0[kHeight] > 0 && input_shape0[kWidth] > 0)) {
-    MS_EXCEPTION(ValueError) << "the height and width of grads must be over 0 ";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the height and width of grads must be greater than 0. But got height: "
+                             << input_shape1[kHeight] << ", width: " << input_shape1[kWidth] << ".";
   }
   if (!(input_shape0[0] == input_shape3[0] && input_shape2[0] == input_shape0[0])) {
-    MS_EXCEPTION(ValueError) << "the first dimension of the tensors in {grads, boxes, box_index} must be equal.";
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', the first dimension of the tensors in {grads, boxes, box_index} must be equal. But got grads[0]: "
+      << input_shape0[0] << ", boxes[0]: " << input_shape2[0] << ", box_index[0]: " << input_shape3[0] << ".";
   }
   if (input_shape0[kDepth] != input_shape1[kDepth]) {
-    MS_EXCEPTION(ValueError) << "the depth of grads and images must be equal.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the depth of grads and images must be equal. But grads depth: "
+                             << input_shape0[kDepth] << ", images depth: " << input_shape1[kDepth] << ".";
   }
   return std::make_shared<abstract::Shape>(input_shape2);
 }

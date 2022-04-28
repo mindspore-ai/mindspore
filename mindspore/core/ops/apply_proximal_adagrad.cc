@@ -62,8 +62,10 @@ abstract::TupleShapePtr ApplyProximalAdagradInferShape(const PrimitivePtr &primi
   same_shape_args_map.insert({"grad", grad_shape_ptr});
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape_ptr) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg " << elem.first << " shape " << elem.second->ToString()
-                               << " are not consistent with var shape " << var_shape_ptr->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
+                               << "' must have the same shape as 'var'. But got '" << elem.first
+                               << "' shape: " << elem.second->ToString()
+                               << ", 'var' shape: " << var_shape_ptr->ToString() << ".";
     }
   }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});

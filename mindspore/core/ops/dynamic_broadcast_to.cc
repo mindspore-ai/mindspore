@@ -41,8 +41,8 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
     y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 1);
     auto shape_value = y_shape->shape();
     if (shape_value.size() != 1) {
-      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the shape size should be 1, but got "
-                              << shape_value.size();
+      MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the shape size must be 1, but got: " << shape_value.size()
+                              << ".";
     }
     std::vector<int64_t> output_shape;
     std::vector<int64_t> max_shape;
@@ -58,12 +58,17 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
       auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
       auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
       if (!min_value || !max_value) {
-        MS_EXCEPTION(ValueError) << "For BroadcastTo, inputs['shape'] min or max value is empty.";
+        MS_EXCEPTION(ValueError)
+          << "For 'BroadcastTo', inputs['shape'] min or max value can not be empty. But got min: " << min_value
+          << "max: " << max_value << ".";
       }
       min_shape = GetValue<std::vector<int64_t>>(min_value);
       max_shape = GetValue<std::vector<int64_t>>(max_value);
       if (min_shape.size() != out_dims || max_shape.size() != out_dims) {
-        MS_EXCEPTION(ValueError) << "For BroadcastTo, inputs['shape'] min or max value not match with out dims.";
+        MS_EXCEPTION(ValueError) << "For 'BroadcastTo', inputs['shape'] min or max must have the same size as output's"
+                                    ". But got min shape size: "
+                                 << min_shape.size() << ", max shape size: " << max_shape.size()
+                                 << ", output size: " << out_dims << ".";
       }
     }
     return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
@@ -71,7 +76,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
     auto out_shape = GetValue<std::vector<int64_t>>(y_value);
     return std::make_shared<abstract::Shape>(out_shape);
   }
-  MS_EXCEPTION(TypeError) << "For BroadcastTo, input args must be tensor or tuple.";
+  MS_EXCEPTION(TypeError) << "For 'BroadcastTo', input args must be tensor or tuple.";
 }
 
 TypePtr DynamicBroadcastToInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
