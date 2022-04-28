@@ -57,7 +57,7 @@ Status ModelParallelRunner::Predict(const std::vector<MSTensor> &inputs, std::ve
   auto status = model_pool_->Predict(inputs, outputs, before, after);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner predict failed.";
-    return kLiteError;
+    return status;
   }
   return kSuccess;
 }
