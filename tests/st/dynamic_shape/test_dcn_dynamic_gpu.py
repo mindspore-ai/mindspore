@@ -212,7 +212,7 @@ def get_train_loss(numeric_columns, sparse_columns, data_list, mode):
     return loss_list
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_train():
