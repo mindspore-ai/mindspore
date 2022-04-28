@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public abstract class TrainModel {
-    private static final Logger logger = Logger.getLogger(TrainModel.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(TrainModel.class.toString());
 
     LiteSession trainSession;
 
@@ -79,26 +80,26 @@ public abstract class TrainModel {
      */
     public int trainModel(String modelPath, int epochs) {
         if (modelPath == null) {
-            logger.severe(Common.addTag("model path cannot be empty"));
+            logger.severe("model path cannot be empty");
             return -1;
         }
         if (epochs <= 0) {
-            logger.severe(Common.addTag("epochs cannot smaller than 0"));
+            logger.severe("epochs cannot smaller than 0");
             return -1;
         }
         int status = padSamples();
         if (status != 0) {
-            logger.severe(Common.addTag("train model failed"));
+            logger.severe("train model failed");
             return -1;
         }
         status = trainLoop(epochs);
         if (status == -1) {
-            logger.severe(Common.addTag("train loop failed"));
+            logger.severe("train loop failed");
             return -1;
         }
         boolean isSuccess = trainSession.export(modelPath, 0, 1);
         if (!isSuccess) {
-            logger.severe(Common.addTag("save model failed"));
+            logger.severe("save model failed");
             return -1;
         }
         return 0;
@@ -107,7 +108,7 @@ public abstract class TrainModel {
     private int trainLoop(int epochs) {
         boolean isTrain = trainSession.train();
         if (!isTrain) {
-            logger.severe(Common.addTag("trainsession set train failed"));
+            logger.severe("trainsession set train failed");
             return -1;
         }
         long startTime = System.currentTimeMillis();
@@ -116,26 +117,26 @@ public abstract class TrainModel {
             for (int j = 0; j < batchNum; j++) {
                 List<Integer> labels = fillModelInput(j, true);
                 if (labels == null) {
-                    logger.severe(Common.addTag("train model fill model input failed"));
+                    logger.severe("train model fill model input failed");
                     return -1;
                 }
                 boolean isSuccess = trainSession.runGraph();
                 if (!isSuccess) {
-                    logger.severe(Common.addTag("run graph failed"));
+                    logger.severe("run graph failed");
                     return -1;
                 }
                 float loss = getLoss(trainSession);
                 if (Float.isNaN(loss)) {
-                    logger.severe(Common.addTag("loss is nan"));
+                    logger.severe("loss is nan");
                     return -1;
                 }
                 sumLossPerEpoch += loss;
-                logger.info(Common.addTag("batch:" + j + ",loss:" + loss));
+                logger.info("batch:" + j + ",loss:" + loss);
             }
-            logger.info(Common.addTag("----------epoch:" + i + ",mean loss:" + sumLossPerEpoch / batchNum +
-                    "----------"));
+            logger.info("----------epoch:" + i + ",mean loss:" + sumLossPerEpoch / batchNum +
+                    "----------");
             long endTime = System.currentTimeMillis();
-            logger.info(Common.addTag("total train time:" + (endTime - startTime) + "ms"));
+            logger.info("total train time:" + (endTime - startTime) + "ms");
         }
         return 0;
     }
@@ -143,7 +144,7 @@ public abstract class TrainModel {
     private float getLoss(LiteSession trainSession) {
         Optional<MSTensor> tensor = searchOutputsForSize(trainSession, 1);
         if (!tensor.isPresent()) {
-            logger.severe(Common.addTag("cannot find loss tensor"));
+            logger.severe("cannot find loss tensor");
             return Float.NaN;
         }
         return tensor.get().getFloatData()[0];
@@ -151,26 +152,26 @@ public abstract class TrainModel {
 
     private Optional<MSTensor> searchOutputsForSize(LiteSession trainSession, int size) {
         if (trainSession == null) {
-            logger.severe(Common.addTag("trainSession cannot be null"));
+            logger.severe("trainSession cannot be null");
             return Optional.empty();
         }
         Map<String, MSTensor> outputs = trainSession.getOutputMapByTensor();
         for (MSTensor tensor : outputs.values()) {
             if (tensor == null) {
-                logger.severe(Common.addTag("tensor cannot be null"));
+                logger.severe("tensor cannot be null");
                 return Optional.empty();
             }
             if (tensor.elementsNum() == size) {
                 return Optional.of(tensor);
             }
         }
-        logger.severe(Common.addTag("can not find output the tensor,element num is " + size));
+        logger.severe("can not find output the tensor,element num is " + size);
         return Optional.empty();
     }
 
     private int calAccuracy(List<Integer> labels, int numOfClass, int padSize) {
         if (labels == null || labels.isEmpty()) {
-            logger.severe(Common.addTag("labels cannot be null"));
+            logger.severe("labels cannot be null");
             return -1;
         }
         Optional<MSTensor> outputTensor = searchOutputsForSize(trainSession, batchSize * numOfClass);
@@ -218,12 +219,12 @@ public abstract class TrainModel {
     public float evalModel() {
         int ret = padSamples();
         if (ret != 0) {
-            logger.severe(Common.addTag("eval model failed"));
+            logger.severe("eval model failed");
             return Float.NaN;
         }
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
-            logger.severe(Common.addTag("train session switch eval mode failed"));
+            logger.severe("train session switch eval mode failed");
             return Float.NaN;
         }
 
@@ -231,46 +232,46 @@ public abstract class TrainModel {
         for (int j = 0; j < batchNum; j++) {
             List<Integer> labels = fillModelInput(j, false);
             if (labels == null) {
-                logger.severe(Common.addTag("train model fill model input failed"));
+                logger.severe("train model fill model input failed");
                 return Float.NaN;
             }
             long startTime = System.currentTimeMillis();
             isSuccess = trainSession.runGraph();
             if (!isSuccess) {
-                logger.severe(Common.addTag("run graph failed"));
+                logger.severe("run graph failed");
                 return Float.NaN;
             }
             long endTime = System.currentTimeMillis();
-            logger.info(Common.addTag("run graph time cost:" + (endTime - startTime)));
+            logger.info("run graph time cost:" + (endTime - startTime));
             int batchPadSize = j == batchNum - 1 ? padSize : 0;
             if (batchSize <= batchPadSize) {
-                logger.severe(Common.addTag("pad size error"));
+                logger.severe("pad size error");
                 return Float.NaN;
             }
             float curAcc = calAccuracy(labels, numOfClass, batchPadSize);
             if (curAcc == Integer.MAX_VALUE) {
-                logger.severe(Common.addTag("cur acc is too big"));
+                logger.severe("cur acc is too big");
                 return Float.NaN;
             }
             totalRightPredicts += curAcc;
-            logger.info(Common.addTag("batch num:" + j + ",acc is:" + curAcc / (batchSize - batchPadSize)));
+            logger.info("batch num:" + j + ",acc is:" + curAcc / (batchSize - batchPadSize));
         }
         if (trainSampleSize - padSize <= 0) {
-            logger.severe(Common.addTag("train sample size cannot less than pad size"));
+            logger.severe("train sample size cannot less than pad size");
             return Float.NaN;
         }
         float totalAccuracy = totalRightPredicts / (trainSampleSize - padSize);
-        logger.info(Common.addTag("total acc:" + totalAccuracy));
+        logger.info("total acc:" + totalAccuracy);
         return totalAccuracy;
     }
 
     private int getPredictLabel(float[] scores, int start, int end) {
         if (scores == null || scores.length == 0) {
-            logger.severe(Common.addTag("scores cannot be empty"));
+            logger.severe("scores cannot be empty");
             return -1;
         }
         if (start >= scores.length || start < 0 || end > scores.length || end < 0) {
-            logger.severe(Common.addTag("start,end cannot out of scores length"));
+            logger.severe("start,end cannot out of scores length");
             return -1;
         }
         float maxScore = scores[start];
@@ -292,7 +293,7 @@ public abstract class TrainModel {
      */
     public int setBatchSize(int batchSize) {
         if (batchSize <= 0) {
-            logger.severe(Common.addTag("batch size should more than 0"));
+            logger.severe("batch size should more than 0");
             return -1;
         }
         this.batchSize = batchSize;

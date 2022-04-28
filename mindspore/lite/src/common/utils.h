@@ -43,9 +43,6 @@ uint64_t GetTimeUs();
 bool IsSupportSDot();
 
 size_t GetMaxMallocSize();
-#ifdef BFC_MEMORY
-int64_t GetFreeMemory();
-#endif
 
 #ifdef __ANDROID__
 uint32_t getHwCap(int hwcap_type);

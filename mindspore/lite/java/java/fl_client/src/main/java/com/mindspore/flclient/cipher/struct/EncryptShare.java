@@ -17,6 +17,7 @@
 package com.mindspore.flclient.cipher.struct;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.util.logging.Logger;
 
@@ -26,7 +27,7 @@ import java.util.logging.Logger;
  * @since 2021-8-27
  */
 public class EncryptShare {
-    private static final Logger LOGGER = Logger.getLogger(DecryptShareSecrets.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(DecryptShareSecrets.class.toString());
     private String flID;
     private NewArray<byte[]> share;
 
@@ -37,8 +38,8 @@ public class EncryptShare {
      */
     public String getFlID() {
         if (flID == null || flID.isEmpty()) {
-            LOGGER.severe(Common.addTag("[DecryptShareSecrets] the parameter of <flID> is null, please set it before " +
-                    "using"));
+            LOGGER.severe("[DecryptShareSecrets] the parameter of <flID> is null, please set it before " +
+                    "using");
             throw new IllegalArgumentException();
         }
         return flID;

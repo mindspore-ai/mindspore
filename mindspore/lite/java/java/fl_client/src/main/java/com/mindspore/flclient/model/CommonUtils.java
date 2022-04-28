@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.MSTensor;
 
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class CommonUtils {
-    private static final Logger logger = Logger.getLogger(CommonUtils.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(CommonUtils.class.toString());
 
     /**
      * Get max value index.
@@ -37,11 +38,11 @@ public class CommonUtils {
      */
     public static int getMaxScoreIndex(float[] scores, int start, int end) {
         if (scores == null || scores.length == 0) {
-            logger.severe(Common.addTag("scores cannot be empty"));
+            logger.severe("scores cannot be empty");
             return -1;
         }
         if (start >= scores.length || start < 0 || end > scores.length || end < 0) {
-            logger.severe(Common.addTag("start,end cannot out of scores length"));
+            logger.severe("start,end cannot out of scores length");
             return -1;
         }
         float maxScore = scores[start];
@@ -63,13 +64,13 @@ public class CommonUtils {
      */
     public static Map<String, float[]> convertTensorToFeatures(List<MSTensor> tensors) {
         if (tensors == null) {
-            logger.severe(Common.addTag("tensors cannot be null"));
+            logger.severe("tensors cannot be null");
             return new HashMap<>();
         }
         Map<String, float[]> features = new HashMap<>(tensors.size());
         for (MSTensor mstensor : tensors) {
             if (mstensor == null) {
-                logger.severe(Common.addTag("tensors cannot be null"));
+                logger.severe("tensors cannot be null");
                 return new HashMap<>();
             }
             features.put(mstensor.tensorName(), mstensor.getFloatData());

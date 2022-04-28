@@ -212,6 +212,9 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
             config_parser_mid
             coder_mid
             )
+    if(SUPPORT_TRAIN)
+        target_link_libraries(lite-test-converter train_cpu_kernel_mid)
+    endif()
 endif()
 
 if(MSLITE_ENABLE_CONVERTER)

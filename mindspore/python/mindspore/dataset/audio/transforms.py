@@ -862,7 +862,7 @@ class FrequencyMasking(AudioTensorOperation):
             from [0, freq_mask_param]; When `iid_masks` is False, directly use it as length of the mask.
             The value should be in range of [0, freq_length], where `freq_length` is the length of audio waveform
             in frequency domain. Default: 0.
-        mask_start (int): Starting point to apply mask, only works when `iid_masks` is True. The value should
+        mask_start (int, optional): Starting point to apply mask, only works when `iid_masks` is True. The value should
             be in range of [0, freq_length - freq_mask_param], where `freq_length` is the length of audio waveform
             in frequency domain. Default: 0.
         mask_value (float, optional): Value to assign to the masked columns. Default: 0.0.
@@ -1480,11 +1480,11 @@ class TimeMasking(AudioTensorOperation):
 
     Args:
         iid_masks (bool, optional): Whether to apply different masks to each example/channel. Default: False.
-        time_mask_param (int): When `iid_masks` is True, length of the mask will be uniformly sampled
+        time_mask_param (int, optional): When `iid_masks` is True, length of the mask will be uniformly sampled
             from [0, time_mask_param]; When `iid_masks` is False, directly use it as length of the mask.
             The value should be in range of [0, time_length], where `time_length` is the length of audio waveform
             in time domain. Default: 0.
-        mask_start (int): Starting point to apply mask, only works when `iid_masks` is True. The value should
+        mask_start (int, optional): Starting point to apply mask, only works when `iid_masks` is True. The value should
             be in range of [0, time_length - time_mask_param], where `time_length` is the length of audio waveform
             in time domain. Default: 0.
         mask_value (float, optional): Value to assign to the masked columns. Default: 0.0.

@@ -17,13 +17,15 @@
 #include "ps/core/comm_util.h"
 
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
+
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
-#include <algorithm>
+#include <iomanip>
 #include <regex>
 
 namespace mindspore {
@@ -590,6 +592,64 @@ bool CommUtil::StringToBool(const std::string &alive) {
     return false;
   }
   return false;
+}
+
+Time CommUtil::GetNowTime() {
+  ps::core::Time time;
+  auto time_now = std::chrono::system_clock::now();
+  std::time_t tt = std::chrono::system_clock::to_time_t(time_now);
+  struct tm ptm;
+  (void)localtime_r(&tt, &ptm);
+  std::ostringstream time_mill_oss;
+  time_mill_oss << std::put_time(&ptm, "%Y-%m-%d %H:%M:%S");
+
+  std::ostringstream time_minute_oss;
+  time_minute_oss << std::put_time(&ptm, "%Y-%m-%d %H:%M");
+
+  std::ostringstream time_day_oss;
+  time_day_oss << std::put_time(&ptm, "%Y-%m-%d");
+
+  // calculate millisecond, the format of time_str_mill is 2022-01-10 20:22:20.067
+  auto second_time_stamp = std::chrono::duration_cast<std::chrono::seconds>(time_now.time_since_epoch());
+  auto mill_time_stamp = std::chrono::duration_cast<std::chrono::milliseconds>(time_now.time_since_epoch());
+  auto ms_stamp = mill_time_stamp - second_time_stamp;
+  time_mill_oss << "." << std::setfill('0') << std::setw(kMillSecondLength) << ms_stamp.count();
+
+  time.time_stamp = mill_time_stamp.count();
+  time.time_str_mill = time_mill_oss.str();
+  time.time_str_second = time_minute_oss.str();
+  time.time_str_day = time_day_oss.str();
+  return time;
+}
+
+bool CommUtil::ParseAndCheckConfigJson(Configuration *file_configuration, const std::string &key,
+                                       FileConfig *file_config) {
+  MS_EXCEPTION_IF_NULL(file_configuration);
+  MS_EXCEPTION_IF_NULL(file_config);
+  if (!file_configuration->Exists(key)) {
+    MS_LOG(WARNING) << key << " config is not set. Don't write.";
+    return false;
+  } else {
+    std::string value = file_configuration->Get(key, "");
+    nlohmann::json value_json;
+    try {
+      value_json = nlohmann::json::parse(value);
+    } catch (const std::exception &e) {
+      MS_LOG(EXCEPTION) << "The hyper-parameter data is not in json format.";
+      return false;
+    }
+    // Parse the storage type.
+    uint32_t storage_type = ps::core::CommUtil::JsonGetKeyWithException<uint32_t>(value_json, ps::kStoreType);
+    if (std::to_string(storage_type) != ps::kFileStorage) {
+      MS_LOG(EXCEPTION) << "Storage type " << storage_type << " is not supported.";
+      return false;
+    }
+    // Parse storage file path.
+    std::string file_path = ps::core::CommUtil::JsonGetKeyWithException<std::string>(value_json, ps::kStoreFilePath);
+    file_config->storage_type = storage_type;
+    file_config->storage_file_path = file_path;
+  }
+  return true;
 }
 }  // namespace core
 }  // namespace ps

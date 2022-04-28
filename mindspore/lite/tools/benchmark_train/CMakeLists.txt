@@ -24,7 +24,7 @@ if(PLATFORM_ARM32 OR PLATFORM_ARM64)
 else()
     if(WIN32)
         target_link_libraries(benchmark_train mindspore-lite_static mindspore-lite-train_static pthread cpu_kernel_mid
-                              nnacl_mid)
+                              nnacl_mid train_cpu_kernel_mid)
     else()
         target_link_libraries(benchmark_train mindspore-lite mindspore-lite-train pthread)
     endif()

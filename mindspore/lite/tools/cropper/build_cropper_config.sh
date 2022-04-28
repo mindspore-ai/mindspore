@@ -192,6 +192,7 @@ getCommonFile() {
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/*.cc)
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/async/*.cc)
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/actor/*.cc)
+  while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/thread/*.cc)
   src_files=()
   while IFS='' read -r line; do src_files+=("$line"); done < <(ls mindspore/lite/src/*.cc)
   regist_files=()

@@ -26,10 +26,12 @@
 #include "ps/core/file_configuration.h"
 #include "fl/server/local_meta_store.h"
 #include "fl/server/iteration.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace fl {
 namespace server {
+constexpr auto kInstanceName = "instanceName";
 constexpr auto kFLName = "flName";
 constexpr auto kInstanceStatus = "instanceStatus";
 constexpr auto kFLIterationNum = "flIterationNum";
@@ -40,6 +42,9 @@ constexpr auto kIterExecutionTime = "iterationExecutionTime";
 constexpr auto kMetrics = "metrics";
 constexpr auto kClientVisitedInfo = "clientVisitedInfo";
 constexpr auto kIterationResult = "iterationResult";
+constexpr auto kStartTime = "startTime";
+constexpr auto kEndTime = "endTime";
+constexpr auto kDataRate = "dataRate";
 
 const std::map<InstanceState, std::string> kInstanceStateName = {
   {InstanceState::kRunning, "running"}, {InstanceState::kDisable, "disable"}, {InstanceState::kFinish, "finish"}};
@@ -80,6 +85,9 @@ class IterationMetrics {
   void set_iteration_time_cost(uint64_t iteration_time_cost);
   void set_round_client_num_map(const std::map<std::string, size_t> round_client_num_map);
   void set_iteration_result(IterationResult iteration_result);
+  void SetStartTime(const ps::core::Time &start_time);
+  void SetEndTime(const ps::core::Time &end_time);
+  void SetInstanceName(const std::string &instance_name);
 
  private:
   // This is the main config file set by ps context.
@@ -122,6 +130,11 @@ class IterationMetrics {
 
   // Current iteration running result.
   IterationResult iteration_result_;
+
+  ps::core::Time start_time_;
+  ps::core::Time end_time_;
+
+  std::string instance_name_;
 };
 }  // namespace server
 }  // namespace fl
