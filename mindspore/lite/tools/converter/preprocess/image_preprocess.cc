@@ -116,46 +116,6 @@ int CenterCrop(cv::Mat *image, int width, int height) {
 }
 
 int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
-               size_t image_index, mindspore::tensor::MSTensor *tensor) {
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "tensor is nullptr.";
-    return RET_NULL_PTR;
-  }
-  size_t size;
-  char *data_buffer = nullptr;
-  auto ret =
-    PreProcess(data_pre_process_param, input_name, image_index, reinterpret_cast<void **>(&data_buffer), &size);
-  if (data_buffer == nullptr || size == 0) {
-    MS_LOG(ERROR) << "data_buffer is nullptr or size == 0";
-    return RET_ERROR;
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Preprocess failed.";
-    delete[] data_buffer;
-    return RET_ERROR;
-  }
-  auto data = tensor->MutableData();
-  if (data == nullptr) {
-    MS_LOG(ERROR) << "Get tensor MutableData return nullptr";
-    delete[] data_buffer;
-    return RET_NULL_PTR;
-  }
-  if (size != tensor->Size()) {
-    MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
-                  << " input tensor size: " << tensor->Size();
-    delete[] data_buffer;
-    return RET_ERROR;
-  }
-  if (memcpy_s(data, tensor->Size(), data_buffer, size) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] data_buffer;
-    return RET_ERROR;
-  }
-  delete[] data_buffer;
-  return RET_OK;
-}
-
-int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
                size_t image_index, mindspore::MSTensor *tensor) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "tensor is nullptr.";

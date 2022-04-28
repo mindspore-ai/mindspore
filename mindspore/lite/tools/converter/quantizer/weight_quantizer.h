@@ -19,7 +19,6 @@
 
 #include <future>
 #include <memory>
-#include <unordered_map>
 #include <map>
 #include <list>
 #include <string>
@@ -82,7 +81,6 @@ class WeightQuantizer : public Quantizer {
   size_t bit_num_{8};
   // delete it in the future.
   std::set<tensor::TensorPtr> weight_quantized_tensors_;
-  std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
   bool is_mixed_bit_ = false;
   double mixed_bit_init_scale_ = 0.02;
   int quant_min_{-128};

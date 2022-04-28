@@ -305,17 +305,17 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
   return ret;
 }
 
-mindspore::tensor::MSTensor *MSTensorToLiteTensor(const MSTensor &tensor) {
+mindspore::lite::Tensor *MSTensorToLiteTensor(const MSTensor &tensor) {
   if (tensor.impl() == nullptr) {
     MS_LOG(ERROR) << "Tensor " << tensor.Name() << " is nullptr.";
     return static_cast<lite::Tensor *>(nullptr);
   }
   auto lite_impl = std::static_pointer_cast<LiteTensorImpl>(tensor.impl());
-  return static_cast<tensor::MSTensor *>(lite_impl->lite_tensor());
+  return static_cast<mindspore::lite::Tensor *>(lite_impl->lite_tensor());
 }
 
-std::vector<mindspore::tensor::MSTensor *> MSTensorToLiteTensors(const std::vector<MSTensor> &srcTensors) {
-  std::vector<mindspore::tensor::MSTensor *> dstTensors;
+std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<mindspore::MSTensor> &srcTensors) {
+  std::vector<mindspore::lite::Tensor *> dstTensors;
   dstTensors.reserve(srcTensors.size());
   for (auto inTensor : srcTensors) {
     auto tensor = MSTensorToLiteTensor(inTensor);

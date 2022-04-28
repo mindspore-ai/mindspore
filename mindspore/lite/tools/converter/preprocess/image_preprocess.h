@@ -40,9 +40,6 @@ int PreProcess(const DataPreProcessParam &data_pre_process_param, const std::str
                void **data, size_t *size);
 
 int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
-               size_t image_index, mindspore::tensor::MSTensor *tensor);
-
-int PreProcess(const preprocess::DataPreProcessParam &data_pre_process_param, const std::string &input_name,
                size_t image_index, mindspore::MSTensor *tensor);
 
 int ImagePreProcess(const ImagePreProcessParam &image_preprocess_param, cv::Mat *image, void **data, size_t *size);
