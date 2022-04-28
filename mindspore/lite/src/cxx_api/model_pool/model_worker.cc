@@ -159,6 +159,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   auto model_input = model_->GetInputs();
   if (model_input.size() != inputs.size()) {
     MS_LOG(ERROR) << "model input size is: " << model_input.size() << ", but get input size is: " << inputs.size();
+    available_ = true;
     return kLiteError;
   }
   auto resize_pair = GetModelResize(model_input, inputs);
@@ -168,6 +169,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     auto status = model_->Resize(model_->GetInputs(), dims);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model pool resize failed.";
+      available_ = true;
       return kLiteError;
     }
   }
@@ -187,6 +189,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   auto status = model_->Predict(model_input, &model_output, before, after);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model predict failed.";
+    available_ = true;
     return status;
   }
   for (size_t i = 0; i < model_input.size(); i++) {
@@ -195,6 +198,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   if (need_copy_output_) {
     status = CopyOutputTensor(model_output, outputs);
     if (status != kSuccess) {
+      available_ = true;
       return kLiteError;
     }
   } else {

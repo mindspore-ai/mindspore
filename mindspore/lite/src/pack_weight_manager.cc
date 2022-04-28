@@ -43,9 +43,9 @@ STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, in
   return RET_OK;
 }
 
-char *PackWeightManager::GetNumaModelBuf(int numa_id) {
+char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
-  return pack_weight_->GetNumaModelBuf(numa_id);
+  return pack_weight_->GetNumaModelBuf(model_buf, numa_id);
 #endif
   return nullptr;
 }
