@@ -133,6 +133,9 @@ int Benchmark::GenerateGLTexture(std::map<std::string, GLuint> *input_gl_texture
 
 int Benchmark::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::tensor::MSTensor *tensor,
                                      std::string name, void *data) {
+  MS_ASSERT(gl_texture != nullptr);
+  MS_ASSERT(tensor != nullptr);
+
   auto image_id = 0;
 
   int width = 1, height = 1, channel = 1;
@@ -228,7 +231,6 @@ int Benchmark::ReadGLTextureFile(std::map<std::string, GLuint> *input_gl_texture
     }
   }
   for (const auto &output : ms_outputs_) {
-    MS_ASSERT(tensor != nullptr);
     auto status = FillGLTextureToTensor(output_gl_texture, output.second, output.first);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Fill GLTexture to output tensor" << status;
