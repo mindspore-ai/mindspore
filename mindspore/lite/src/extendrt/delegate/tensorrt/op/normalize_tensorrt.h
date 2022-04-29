@@ -39,10 +39,16 @@ class NormalizeTensorRT : public TensorRTOp {
  private:
   int PreprocessInputs(nvinfer1::INetworkDefinition *network);
 
+  int RunAsOptPlugin(nvinfer1::INetworkDefinition *network);
+
+  int RunAsTrtOps(nvinfer1::INetworkDefinition *network);
+
+  bool RunOptPlugin();
+
   ITensorHelper norm_input_;
   nvinfer1::ITensor *gamma_{nullptr};
   nvinfer1::ITensor *beta_{nullptr};
-  uint32_t axis_{0};
+  size_t axis_{0};
   const float two_{2.0f};
   float epsilon_{0.0f};
 };
