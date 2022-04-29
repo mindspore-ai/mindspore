@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace OpenGL {
-#if defined(GPU_OPENCL) && defined(__ANDROID__)
+#if defined(GPU_OPENCL) && defined(__ANDROID__) && defined(ENABLE_ARM64)
 const char *g_glsl_host_to_device_2d =
   "#version 320 es\n"
   "#define PRECISION highp\n"

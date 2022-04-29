@@ -23,7 +23,7 @@
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 
-#if defined(GPU_OPENCL) && defined(__ANDROID__)
+#if defined(GPU_OPENCL) && defined(__ANDROID__) && defined(ENABLE_ARM64)
 #include "EGL/egl.h"
 #include "GLES3/gl3.h"
 #include "GLES3/gl32.h"
