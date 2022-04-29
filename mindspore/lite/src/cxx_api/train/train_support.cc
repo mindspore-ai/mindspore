@@ -38,6 +38,7 @@
 #include "src/cxx_api/callback/callback_impl.h"
 #include "src/common/log_adapter.h"
 #include "src/train/train_session.h"
+#include "src/train/static_allocator.h"
 
 namespace mindspore {
 std::shared_ptr<lite::LiteSession> CreateTrainSession(std::shared_ptr<Graph::GraphData> graph_data,
@@ -57,6 +58,12 @@ std::shared_ptr<lite::LiteSession> CreateTrainSession(std::shared_ptr<Graph::Gra
       return nullptr;
     }
     shared_session.reset(session);
+
+    context->allocator = std::make_shared<StaticAllocator>();
+    if (context->allocator == nullptr) {
+      MS_LOG(ERROR) << " cannot convert to static allocation";
+      return nullptr;
+    }
 
     lite::TrainCfg train_cfg;
     if (cfg != nullptr) {
