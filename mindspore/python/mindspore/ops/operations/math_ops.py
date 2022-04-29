@@ -4432,7 +4432,7 @@ class BitwiseAnd(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_and` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -4451,7 +4451,7 @@ class BitwiseOr(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_or` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
@@ -4470,7 +4470,7 @@ class BitwiseXor(_BitwiseBinaryOp):
     Refer to :func:`mindspore.ops.bitwise_xor` for more detail.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
