@@ -2415,9 +2415,32 @@ class FractionalAvgPoolGrad(Primitive):
     """Computes gradients for FractionalAvgPool operation."""
 
     @prim_attr_register
-    def  __init__(self, overlapping=False):
+    def __init__(self, overlapping=False):
         self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=["orig_input_tensor_shape", "out_backprop", "row_pooling_sequence",
                                         "col_pooling_sequence"],
                                 outputs=["y"])
         validator.check_value_type("overlapping", overlapping, [bool], self.name)
+
+
+class PSROIPoolingGrad(Primitive):
+    """Computes gradients for PSROIPooling operation."""
+
+    @prim_attr_register
+    def __init__(self, input_size, spatial_scale, group_size, output_dim):
+        """Initialize PSROIPoolingGrad."""
+        self.init_prim_io_names(inputs=["x", "rois"], outputs=['y'])
+        validator.check_value_type("input_size", input_size, [int, tuple], self.name)
+        validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
+        validator.check_value_type("group_size", group_size, [int], self.name)
+        validator.check_value_type("output_dim", output_dim, [int], self.name)
+
+        self.input_size = list(input_size)
+        self.spatial_scale = spatial_scale
+        self.group_size = group_size
+        self.output_dim = output_dim
+
+        self.add_prim_attr('input_size', self.input_size)
+        self.add_prim_attr('spatial_scale', self.spatial_scale)
+        self.add_prim_attr('group_size', self.group_size)
+        self.add_prim_attr('output_dim', self.output_dim)

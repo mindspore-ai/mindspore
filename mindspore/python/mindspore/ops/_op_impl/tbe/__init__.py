@@ -569,3 +569,4 @@ from .expm1_ds import _expm1_ds_tbe
 from .deformable_offsets import _deformable_offsets_tbe
 from .parallel_resize_bilinear import _parallel_resize_bilinear_op_info_tbe
 from .parallel_resize_bilinear_grad import _parallel_resize_bilinear_grad_op_info_tbe
+from .p_s_r_o_i_pooling_grad import _p_s_r_o_i_pooling_grad_tbe
