@@ -1407,37 +1407,61 @@ class MatmulDDSGrad(PrimitiveWithInfer):
         return q, k
 
 
-class NonZero(Primitive):
+class NonZeroWithValue(Primitive):
     """
-    Returns the indices of the elements that are non-zero (in row-major order - by dimension).
-
-    Args:
-        transpose (bool): Permutes the dimensions of the output tensor according to input permutation,
-                          default is false
+    Returns the value of elements that are non-zero (in row-major order - by dimension).
 
     Inputs:
         - **x** (Tensor), input array of rank >= 2.
 
     Outputs:
-        2-D Tensor, int64, indices of elements that are non-zero.
+         elements that are non-zero.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> op = ops.NonZero(True)
+        >>> op = NonZeroWithValue()
         >>> data = Tensor(np.array([[1, 0, 0], [0, 0, 1]]), mindspore.float32)
-        >>> output = op(data)
-        >>> print(output)
-        [[ 0 0]
-         [ 1 1]]
+        >>> value, index, count = op(data)
+        >>> print(value)
+        [1.0, 1.0]
     """
 
     @prim_attr_register
     def __init__(self, transpose=False):
-        """Initialize ScatterElements"""
+        """Initialize NonZeroWithValue"""
         validator.check_value_type("transpose", transpose, [bool], self.name)
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        self.init_prim_io_names(inputs=['x'], outputs=['value', 'index', 'count'])
+
+
+class NonZeroWithValueShape(Primitive):
+    """
+    Returns the value and index of elements that are non-zero (in row-major order - by dimension).
+
+    Inputs:
+        - **x** (Tensor), input array of rank >= 2.
+
+    Outputs:
+         elements that are non-zero.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> non_zero = NonZeroWithValue()
+        >>> op = NonZeroWithValueShape()
+        >>> data = Tensor(np.array([[1, 0, 0], [0, 0, 1]]), mindspore.float32)
+        >>> value, index, count = non_zero(data)
+        >>> out_value, out_index = op(value, index, count)
+        >>> print(out_index)
+        [[0, 1], [0, 2]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize NonZeroWithValueShape"""
+        self.init_prim_io_names(inputs=['value', 'index', 'count'], outputs=['out_value', 'out_index'])
 
 
 class SliceGetItem(Primitive):

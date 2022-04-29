@@ -2307,6 +2307,22 @@ void DfGraphConvertor::UpdateOpDesc(const AnfNodePtr node) {
   // get Operator from op_cache_
   OperatorPtr op = Convert(node);
   adpt->updateOutputDesc(op, node->Shape(), node->Type(), node);
+
+  std::string name = op->GetOpType();
+  if (name == prim::kPrimNonZeroWithValueShape->name()) {
+    MS_EXCEPTION_IF_NULL(op);
+    auto op_desc = ge::OpDescUtils::GetOpDescFromOperator(*op);
+    if (op_desc == nullptr) {
+      return;
+    }
+    const auto output_desc0 = op_desc->MutableOutputDesc("out_value");
+    ge::TensorUtils::SetReuseInput(*output_desc0, true);
+    ge::TensorUtils::SetReuseInputIndex(*output_desc0, 0);
+
+    const auto output_desc1 = op_desc->MutableOutputDesc("out_index");
+    ge::TensorUtils::SetReuseInput(*output_desc1, true);
+    ge::TensorUtils::SetReuseInputIndex(*output_desc1, 1);
+  }
 }
 
 OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
