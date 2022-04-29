@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,20 @@
 #include <string>
 
 #include "ops/hshrink.h"
+#include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
+void HShrink::set_lambd(const float &lambd) { (void)this->AddAttr(kLambd, api::MakeValue(lambd)); }
+
+float HShrink::get_lambd() const {
+  auto value_ptr = GetAttr(kLambd);
+  return GetValue<float>(value_ptr);
+}
+
 namespace {
 abstract::ShapePtr HShrinkInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -33,6 +41,7 @@ abstract::ShapePtr HShrinkInferShape(const PrimitivePtr &primitive, const std::v
   auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
+
 TypePtr HShrinkInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());

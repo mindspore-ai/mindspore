@@ -8484,7 +8484,7 @@ class HShrink(Primitive):
         Tensor, the same shape and data type as the input.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Raises:
         TypeError: If `lambd` is not a float.

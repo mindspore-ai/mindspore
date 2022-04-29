@@ -263,6 +263,7 @@ constexpr auto kIndices = "indices";
 constexpr auto kBegin = "begin";
 constexpr auto kSrcFormat = "src_format";
 constexpr auto kDstFormat = "dst_format";
+constexpr auto kLambd = "lambd";
 
 enum Index : size_t {
   kInputIndex0 = 0,

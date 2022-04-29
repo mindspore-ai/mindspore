@@ -2274,7 +2274,7 @@ class HShrinkGrad(Primitive):
     Computes gradients for HShrinkGrad operation.
 
     Args:
-        Lambd (float): the λ value for the Hardshrink formulation. Default: 0.5
+        lambd (float): the λ value for the Hardshrink formulation. Default: 0.5
 
     Inputs:
         - **Gradients** (Tensor) - the gradients of loss to output of HShrink function.
@@ -2292,7 +2292,7 @@ class HShrinkGrad(Primitive):
         TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
     """
 
     @prim_attr_register
