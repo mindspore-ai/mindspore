@@ -45,44 +45,12 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
   bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
               const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
   std::vector<KernelAttr> GetOpSupport() override;
 
-  void ResetResource() noexcept {
-    cudnn_handle_ = nullptr;
-    is_null_input_ = false;
-    input_elements_ = 0;
-    keep_prob_ = 0.0;
-    n_ = 0;
-    c_ = 0;
-    num_chan_ = 0;
-    num_per_chan_ = 0;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() {
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
-
-    size_t input_size = input_elements_ * unit_size_;
-    size_t mask_size = input_elements_ * sizeof(bool);
-    input_size_list_.push_back(input_size);
-    // For output size: the same as input size
-    output_size_list_.push_back(input_size);
-    output_size_list_.push_back(mask_size);
-
-    // The workspace of rand_f for curandGen
-    size_t workspace_size = num_chan_ * sizeof(float);
-    workspace_size_list_.push_back(workspace_size);
-  }
+  void ResetResource() noexcept;
 
  private:
-  void CheckDropOutNdShape();
+  bool CheckDropOutNdShape();
 
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -95,20 +63,15 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
   size_t unit_size_{1};
   bool is_null_input_{false};
   bool states_init_{false};
+  std::vector<size_t> input_shape_;
   size_t input_elements_{};
-  size_t n_{1};
-  size_t c_{1};
-  size_t num_chan_{1};
-  size_t num_per_chan_{1};
+  size_t batches_{1};
+  size_t channels_{1};
+  size_t num_per_channel_{1};
   float keep_prob_{0.5};
-  std::optional<bool> is_input_dynamic_shape_{};
-  BaseOperatorPtr kernel_ptr_{nullptr};
   void *cuda_stream_{nullptr};
   cudnnHandle_t cudnn_handle_{};
-  curandGenerator_t curand_generator_{nullptr};
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  std::vector<KernelTensorPtr> outputs_ = {};
+  curandGenerator_t cu_rand_generator_{nullptr};
   DropoutNdFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, DropoutNdFunc>> func_list_;
 };

@@ -1425,9 +1425,9 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad_top, pad_bottom, pad_left, pad_right = self.padding
 
             h_out = 1 + (x_shape[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) * (dilation_h - 1)) \
-                / stride_h
+                    / stride_h
             w_out = 1 + (x_shape[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) * (dilation_w - 1)) \
-                / stride_w
+                    / stride_w
             h_out = math.floor(h_out)
             w_out = math.floor(w_out)
 
@@ -6722,7 +6722,7 @@ class Dropout2D(PrimitiveWithInfer):
                     or if the dim of input is not 4-D.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> dropout = ops.Dropout2D(keep_prob=0.5)
@@ -6733,13 +6733,11 @@ class Dropout2D(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, keep_prob=0.5, batch_rank=0):
+    def __init__(self, keep_prob=0.5):
         """Initialize Dropout2D."""
         super().__init__("Dropout2D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
-        self.batch_rank = validator.check_value_type("batch_rank", batch_rank, [int], self.name)
-        self.batch_rank = validator.check_int(batch_rank, 0, Rel.GE, "batch_rank", self.name)
 
 
 class Dropout3D(PrimitiveWithInfer):
@@ -6784,13 +6782,11 @@ class Dropout3D(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, keep_prob=0.5, batch_rank=0):
+    def __init__(self, keep_prob=0.5):
         """Initialize Dropout3D."""
         super().__init__("Dropout3D")
         self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
-        self.batch_rank = validator.check_value_type("batch_rank", batch_rank, [int], self.name)
-        self.batch_rank = validator.check_int(batch_rank, 0, Rel.GE, "batch_rank", self.name)
 
 
 class CTCLoss(Primitive):
