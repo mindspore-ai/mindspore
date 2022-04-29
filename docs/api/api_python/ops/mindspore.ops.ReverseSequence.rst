@@ -22,3 +22,4 @@ mindspore.ops.ReverseSequence
     **异常：**
 
     - **TypeError** - `seq_dim` 或 `batch_dim` 不是int。
+    - **ValueError** -  `batch_dim` 大于或等于 `x` 的shape长度。
