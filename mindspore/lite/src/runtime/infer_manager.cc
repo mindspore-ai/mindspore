@@ -33,10 +33,11 @@ namespace lite {
 namespace {
 static const size_t kNumMaxMallocSize = GetMaxMallocSize();
 }
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
+
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                      const void *primitive, std::set<std::string> &&providers, int schema_version,
                      const kernel::Kernel *kernel) {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (primitive == nullptr && kernel == nullptr) {
     return RET_NOT_SUPPORT;
   }
@@ -86,8 +87,9 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     return RET_ERROR;
   }
   return RET_OK;
-}
 #endif
+  return lite::RET_NOT_SUPPORT;
+}
 
 int CheckInfershapeResult(int result, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, OpParameter *parameter) {

@@ -24,28 +24,17 @@ namespace mindspore {
 namespace registry {
 Status RegisterKernel::RegCustomKernel(const std::vector<char> &arch, const std::vector<char> &provider,
                                        DataType data_type, const std::vector<char> &type, const CreateKernel creator) {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return RegistryKernelImpl::GetInstance()->RegCustomKernel(CharToString(arch), CharToString(provider), data_type,
                                                             CharToString(type), creator);
-#else
-  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return kLiteNotSupport;
-#endif
 }
 
 Status RegisterKernel::RegKernel(const std::vector<char> &arch, const std::vector<char> &provider, DataType data_type,
                                  int op_type, const CreateKernel creator) {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   return RegistryKernelImpl::GetInstance()->RegKernel(CharToString(arch), CharToString(provider), data_type, op_type,
                                                       creator);
-#else
-  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return kLiteNotSupport;
-#endif
 }
 
 CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, KernelDescHelper *desc) {
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   if (desc == nullptr || primitive == nullptr) {
     return nullptr;
   }
@@ -53,10 +42,6 @@ CreateKernel RegisterKernel::GetCreator(const schema::Primitive *primitive, Kern
   auto ret = RegistryKernelImpl::GetInstance()->GetProviderCreator(primitive, &kernel_desc);
   desc->arch = StringToChar(kernel_desc.arch);
   return ret;
-#else
-  MS_LOG(ERROR) << unsupport_custom_kernel_register_log;
-  return nullptr;
-#endif
 }
 }  // namespace registry
 }  // namespace mindspore

@@ -26,7 +26,9 @@
 #include "src/common/graph_util.h"
 #include "src/common/utils.h"
 #include "src/kernel_registry.h"
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 #include "include/registry/register_kernel.h"
+#endif
 #include "src/kernel_exec_util.h"
 #include "src/sub_graph_kernel.h"
 #include "src/ops/populate/populate_register.h"
@@ -677,13 +679,10 @@ int Scheduler::InferNodeShape(const lite::Model::Node *node) {
   std::vector<Tensor *> inputs;
   std::vector<Tensor *> outputs;
   FindNodeInoutTensors(*node, &inputs, &outputs);
-  int ret;
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders(), schema_version_);
+  auto ret = KernelInferShape(inputs, outputs, node->primitive_, context_->GetProviders(), schema_version_);
   if (ret != RET_NOT_SUPPORT) {
     return ret;
   }
-#endif
 
   auto parame_gen = PopulateRegistry::GetInstance()->GetParameterCreator(
     GetPrimitiveType(node->primitive_, schema_version_), schema_version_);
@@ -1091,9 +1090,9 @@ int Scheduler::FindGpuKernel(const std::vector<Tensor *> &in_tensors, const std:
 }
 #endif
 
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
 int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                                   const Model::Node *node, TypeId data_type, kernel::KernelExec **kernel) {
+#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
   MS_ASSERT(kernel != nullptr);
   int ret = RET_NOT_SUPPORT;
   auto prim_type = GetPrimitiveType(node->primitive_, schema_version_);
@@ -1135,10 +1134,9 @@ int Scheduler::FindProviderKernel(const std::vector<Tensor *> &in_tensors, const
       }
     }
   }
-
+#endif
   return RET_NOT_SUPPORT;
 }
-#endif
 
 kernel::KernelExec *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in_tensors,
                                                  const std::vector<Tensor *> &out_tensors, const Model::Node *node,
@@ -1165,13 +1163,10 @@ kernel::KernelExec *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     }
   }
   kernel::KernelExec *kernel = nullptr;
-  int status;
-#ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
+  auto status = FindProviderKernel(in_tensors, out_tensors, node, data_type, &kernel);
   if (status == RET_OK && kernel != nullptr) {
     return kernel;
   }
-#endif
   MS_ASSERT(!node->output_indices_.empty());
   OpParameter *op_parameter = op_parameters_[node->output_indices_.at(0)];
   if (op_parameter == nullptr) {
