@@ -279,6 +279,8 @@ Array操作
      - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.tensor_scatter_add
      - Refer to :class:`mindspore.ops.TensorScatterAdd`.
+   * - mindspore.ops.tensor_scatter_div
+     - Refer to :class:`mindspore.ops.TensorScatterDiv`.
    * - mindspore.ops.tensor_scatter_update
      - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
    * - mindspore.ops.tensor_slice

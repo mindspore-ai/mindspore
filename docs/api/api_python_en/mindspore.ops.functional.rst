@@ -251,6 +251,7 @@ Array Operation
     mindspore.ops.select
     mindspore.ops.shape
     mindspore.ops.size
+    mindspore.ops.tensor_scatter_div
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unique
