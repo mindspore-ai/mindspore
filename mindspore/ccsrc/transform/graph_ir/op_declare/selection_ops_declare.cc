@@ -79,13 +79,11 @@ OUTPUT_MAP(GatherV2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(GatherV2D, prim::kPrimGather->name(), ADPT_DESC(GatherV2D))
 REG_ADPT_DESC(Gather, kNameGather, ADPT_DESC(GatherV2D))
 
-// ScatterNdD
-INPUT_MAP(ScatterNdD) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(ScatterNdD) = {
-  {3, ATTR_DESC(shape, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(ScatterNdD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(ScatterNdD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ScatterNdD, kNameScatterNdD, ADPT_DESC(ScatterNdD))
+// ScatterNd
+INPUT_MAP(ScatterNd) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}, {3, INPUT_DESC(shape)}};
+ATTR_MAP(ScatterNd) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(ScatterNd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ScatterNd, kNameScatterNd, ADPT_DESC(ScatterNd))
 
 // ScatterNonAliasingAdd
 INPUT_MAP(ScatterNonAliasingAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
