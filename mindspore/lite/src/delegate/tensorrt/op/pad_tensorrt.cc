@@ -136,4 +136,5 @@ int PadTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_out_tensors_[0]);
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PadFusion, PadTensorRT)
 }  // namespace mindspore::lite

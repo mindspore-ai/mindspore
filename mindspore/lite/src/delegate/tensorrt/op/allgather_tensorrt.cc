@@ -109,4 +109,5 @@ nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const 
   }
   return out_dims;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AllGather, AllGatherTensorRT)
 }  // namespace mindspore::lite

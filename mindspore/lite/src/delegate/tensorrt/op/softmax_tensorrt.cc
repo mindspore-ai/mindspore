@@ -91,4 +91,5 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(nvinfer1::INetworkDefinit
   current_layer_->setAxes(axis_bit);
   return current_layer_;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Softmax, SoftMaxTensorRT)
 }  // namespace mindspore::lite

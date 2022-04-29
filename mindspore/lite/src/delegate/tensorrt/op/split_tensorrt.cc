@@ -97,4 +97,5 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->layer_ = slice_layer;
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Split, SplitTensorRT)
 }  // namespace mindspore::lite

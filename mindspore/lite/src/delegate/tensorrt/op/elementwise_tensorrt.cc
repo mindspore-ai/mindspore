@@ -285,4 +285,14 @@ bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::M
   }
   return false;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_SubFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_DivFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_RealDiv, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PowFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AddFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_MulFusion, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Eltwise, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Minimum, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Maximum, ElementWiseTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
 }  // namespace mindspore::lite

@@ -121,4 +121,6 @@ size_t ReduceScatterPlugin::getSerializationSize() const noexcept { return sizeo
 void ReduceScatterPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &red_mode_, sizeof(schema::ReduceMode));
 }
+
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ReduceScatter, ReduceScatterTensorRT)
 }  // namespace mindspore::lite

@@ -205,4 +205,6 @@ void PoolTensorRT::AddParams(nvinfer1::IPoolingLayer *pooling_layer) {
     pooling_layer->setPaddingNd(dims);
   }
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AvgPoolFusion, PoolTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_MaxPoolFusion, PoolTensorRT)
 }  // namespace mindspore::lite

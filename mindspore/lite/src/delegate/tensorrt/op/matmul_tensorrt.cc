@@ -301,4 +301,5 @@ bool MatMulTensorRT::RunFullConnect() {
   }
   return false;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_MatMulFusion, MatMulTensorRT)
 }  // namespace mindspore::lite
