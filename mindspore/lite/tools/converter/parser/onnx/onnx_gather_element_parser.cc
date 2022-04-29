@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-#include "tools/converter/parser/onnx/onnx_nonzero_parser.h"
+#include "tools/converter/parser/onnx/onnx_gather_element_parser.h"
 #include <memory>
-#include "tools/converter/parser/onnx/onnx_model_parser.h"
-#include "ops/where.h"
+#include "ops/gather_d.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveCPtr OnnxNonZeroParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
-  auto prim = std::make_unique<ops::Where>();
-  auto prim_c = prim->GetPrim();
-  prim_c->AddAttr("is_nonzero", MakeValue(true));
+PrimitiveCPtr OnnxGatherElementParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto prim = std::make_unique<ops::GatherD>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
+  auto prim_c = prim->GetPrim();
+  int32_t axis = 0;
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "axis") {
+      axis = static_cast<int32_t>(onnx_node_attr.i());
+    }
+  }
+  prim_c->AddAttr("dims", MakeValue(axis));
+
   return prim->GetPrim();
 }
 
-OnnxNodeRegistrar g_onnxNonZeroParser("NonZero", new OnnxNonZeroParser());
+OnnxNodeRegistrar g_onnxGatherElementParser("GatherElements", new OnnxGatherElementParser());
 }  // namespace lite
 }  // namespace mindspore

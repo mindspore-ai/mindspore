@@ -169,6 +169,7 @@ int ScatterNdUpdateCPUKernel::Run() {
   return ret;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ScatterNdUpdate, LiteKernelCreator<ScatterNdUpdateCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ScatterNdUpdate, LiteKernelCreator<ScatterNdUpdateCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ScatterNdUpdate, LiteKernelCreator<ScatterNdUpdateCPUKernel>)
