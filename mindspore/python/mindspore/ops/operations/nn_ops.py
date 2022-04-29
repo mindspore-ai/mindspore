@@ -6103,7 +6103,7 @@ class ApplyPowerSign(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
