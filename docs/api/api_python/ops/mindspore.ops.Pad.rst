@@ -6,8 +6,8 @@ mindspore.ops.Pad
     根据参数 `paddings` 对输入进行填充。
 
     例如， 仅填充输入Tensor的最后一个维度，则填充方式为(padding_left, padding_right)；填充输入Tensor的最后两个维度，
-    则填充方式为(padding_left, padding_right, padding_top, padding_bottom)；填充最后3个维度，则填充方式为
-    (padding_left, padding_right, padding_top, padding_bottom, padding_front, padding_back)。
+    则填充方式为((padding_top, padding_bottom), (padding_left, padding_right))；填充最后3个维度，则填充方式为
+    ((padding_front, padding_back), (padding_top, padding_bottom), (padding_left, padding_right))。
  
     .. math::
         \begin{aligned}
