@@ -58,19 +58,34 @@ function Run_Benchmark() {
         fi
 
         echo "Benchmarking ${model_name} ......"
+        model_type=${model_name##*.}
         model_file=${ms_models_path}'/'${model_name}'.ms'
         input_files=""
         output_file=""
         data_path=${model_data_path}'/data/'
-        if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+        if [[ ${model_type} == "mindir" ]]; then
+          if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
             input_files=${data_path}'input/'${model_name}'.ms.bin'
-        else
+          else
             for i in $(seq 1 $input_num)
             do
             input_files=${input_files}${data_path}'input/'${model_name}'.ms.bin_'$i','
             done
+          fi
+          output_file=${data_path}'output/'${model_name}'.ms.out'
+        else
+          if [[ ${input_num} == "" || ${input_num} == 1 ]]; then
+            input_files=${data_path}'input/'${model_name}'.bin'
+          else
+            for i in $(seq 1 $input_num)
+            do
+            input_files=${input_files}${data_path}'input/'${model_name}'.bin_'$i','
+            done
+          fi
+          output_file=${data_path}'output/'${model_name}'.out'
         fi
-        output_file=${data_path}'output/'${model_name}'.ms.out'
+
+
 
         # set accuracy limitation
         acc_limit="0.5"
