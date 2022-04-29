@@ -18,7 +18,7 @@ mindspore.nn.piecewise_constant_lr
 
     **返回：**
 
-    list[float]。列表的大小为 :math:`MN`。
+    list[float]。列表的大小为 :math:`M_N`。
 
     **异常：**
 
