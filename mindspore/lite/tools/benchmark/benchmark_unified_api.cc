@@ -81,6 +81,9 @@ int BenchmarkUnifiedApi::GenerateGLTexture(std::map<std::string, GLuint> *input_
 
 int BenchmarkUnifiedApi::FillGLTextureToTensor(std::map<std::string, GLuint> *gl_texture, mindspore::MSTensor *tensor,
                                                std::string name, void *data) {
+  MS_ASSERT(gl_texture != nullptr);
+  MS_ASSERT(tensor != nullptr);
+
   auto image_id = 0;
 
   int width = 1, height = 1, channel = 1;
