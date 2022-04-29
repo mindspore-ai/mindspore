@@ -263,8 +263,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                         mode, currently supports 'AES-GCM' and 'AES-CBC'. Default: 'AES-GCM'.
 
     Raises:
-        TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter
-                   `integrated_save` and `async_save` are not bool type.
+        TypeError: If the parameter save_obj is not `nn.Cell` or list type. And if the parameter `integrated_save`
+                   and `async_save` are not bool type. If the parameter ckpt_file_name is not string type.
 
     Examples:
         >>> from mindspore import save_checkpoint
