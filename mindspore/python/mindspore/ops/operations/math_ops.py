@@ -4526,10 +4526,10 @@ class BesselI1(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> bessel_i1 = ops.BesselI1()
@@ -4605,10 +4605,10 @@ class BesselI1e(Primitive):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> bessel_i1e = ops.BesselI1e()
