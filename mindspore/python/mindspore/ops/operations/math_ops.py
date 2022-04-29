@@ -3081,7 +3081,7 @@ class Ceil(PrimitiveWithInfer):
         TypeError: If dtype of x is not float16 or float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)

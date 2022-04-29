@@ -121,3 +121,40 @@ def test_pynative_imag():
     output = P.Imag()(ms_x)
     expect = np.imag(x)
     assert np.allclose(output.asnumpy(), expect)
+
+
+
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_graph_ceil():
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for ceil in graph mode cpu backend.
+    Expectation: the result match numpy ceil
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.array([1.1, -2.1]).astype(np.float32))
+    np_x = np.array([1.1, -2.1]).astype(np.float32)
+    output = P.Ceil()(x)
+    expect = np.ceil(np_x)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_pynative_ceil():
+    """
+    Feature: ALL TO ALL
+    Description:  test cases for ceil in pynative mode cpu backend.
+    Expectation: the result match numpy ceil
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x = Tensor(np.array([1.1, -2.1]).astype(np.float32))
+    np_x = np.array([1.1, -2.1]).astype(np.float32)
+    output = P.Ceil()(x)
+    expect = np.ceil(np_x)
+    assert np.allclose(output.asnumpy(), expect)

@@ -65,6 +65,8 @@ CUDA_LIB_EXPORT void Abs(const T *input, T *output, const size_t count, cudaStre
 template <typename T>
 CUDA_LIB_EXPORT void Floor(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+CUDA_LIB_EXPORT void Ceil(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 CUDA_LIB_EXPORT void Rint(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void Round(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
