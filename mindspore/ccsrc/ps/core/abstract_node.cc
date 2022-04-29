@@ -39,6 +39,7 @@ AbstractNode::~AbstractNode() {
     server_thread_->join();
   }
 }
+
 void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   MS_EXCEPTION_IF_NULL(client);
   auto message_meta = std::make_shared<MessageMeta>();
@@ -51,6 +52,7 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   register_message.set_role(node_info_.node_role_);
   register_message.set_ip(node_info_.ip_);
   register_message.set_port(node_info_.port_);
+  register_message.set_is_recover(is_recover.load());
   register_message.set_fl_iteration_num(PSContext::instance()->fl_iteration_num());
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -357,7 +359,7 @@ uint64_t AbstractNode::CollectiveSendAsync(const NodeRole &node_role, const uint
 
   auto client = GetOrCreateTcpClient(rank_id, node_role);
   MS_EXCEPTION_IF_NULL(client);
-  return SendMessageAsync(client, message_meta, Protos::RAW, data, size);
+  return SendCollectiveMeta(client, message_meta, Protos::RAW, data, size);
 }
 
 static std::string CollectiveMetaToString(const CollectiveMessageMeta &meta) {
@@ -390,7 +392,7 @@ uint64_t AbstractNode::FlCollectiveSendAsync(const CollectiveMessageMeta &collec
                 << ", send meta:" << CollectiveMetaToString(message_meta->collective_meta());
   auto client = GetOrCreateTcpClient(recv_rank_id, SERVER);
   MS_EXCEPTION_IF_NULL(client);
-  return SendMessageAsync(client, message_meta, Protos::RAW, data, size);
+  return SendCollectiveMeta(client, message_meta, Protos::RAW, data, size);
 }
 
 bool AbstractNode::FlCollectiveWaitInner(const CollectiveMessageMeta &expect_meta, VectorPtr *output,
@@ -758,7 +760,6 @@ void AbstractNode::ProcessHeartbeatResp(const std::shared_ptr<MessageMeta> &meta
     MS_LOG(DEBUG) << "The node id:" << info.node_id_ << ", the rank id:" << info.rank_id_
                   << ", the node role:" << CommUtil::NodeRoleToString(info.node_role_) << " is alive:" << info.is_alive;
   }
-
   bool is_worker = heartbeat_resp_message.is_worker();
   bool is_ps_mode = PSContext::instance()->server_mode() == ps::kServerModePS;
   bool not_enable_recover_node_timeout = (is_worker && is_ps_mode);
@@ -1216,20 +1217,6 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, con
   return Wait(request_id, timeout);
 }
 
-uint64_t AbstractNode::SendMessageAsync(const std::shared_ptr<TcpClient> &client,
-                                        const std::shared_ptr<MessageMeta> &meta, const Protos &protos,
-                                        const void *data, size_t size) {
-  MS_EXCEPTION_IF_NULL(client);
-  MS_EXCEPTION_IF_NULL(meta);
-  MS_EXCEPTION_IF_NULL(data);
-  uint64_t request_id = AddMessageTrack(1);
-  meta->set_request_id(request_id);
-  client->SendMessage(meta, protos, data, size);
-  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
-  return request_id;
-}
-
 bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                                    const Protos &protos, const void *data, size_t size, const uint32_t &timeout) {
   MS_EXCEPTION_IF_NULL(client);
@@ -1241,6 +1228,20 @@ bool AbstractNode::SendMessageSync(const std::shared_ptr<TcpClient> &client, con
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                 << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
   return Wait(request_id, timeout);
+}
+
+uint64_t AbstractNode::SendCollectiveMeta(const std::shared_ptr<TcpClient> &client,
+                                          const std::shared_ptr<MessageMeta> &meta, const Protos &protos,
+                                          const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(client);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  uint64_t request_id = AddMessageTrack(1);
+  meta->set_request_id(request_id);
+  client->SendMessage(meta, protos, data, size);
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  return request_id;
 }
 
 void AbstractNode::ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn,

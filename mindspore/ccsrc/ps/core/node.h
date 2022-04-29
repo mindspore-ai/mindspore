@@ -82,8 +82,8 @@ class BACKEND_EXPORT Node {
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
                        const uint32_t &timeout = kCommTimeoutInSeconds);
   // Send data asynchronously
-  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
-                            const Protos &protos, const void *data, size_t size);
+  bool SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                        const Protos &protos, const void *data, size_t size);
 
   uint64_t AddMessageTrack(const uint32_t &expected_response);
   bool CheckMessageTrack(const uint64_t &request_id);

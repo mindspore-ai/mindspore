@@ -31,6 +31,7 @@ bool WorkerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start Worker node timeout!";
     return false;
   }
+  is_recover = false;
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Worker start]: 5. Successfully start worker node!";
   return true;

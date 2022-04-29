@@ -354,6 +354,20 @@ void SchedulerNode::ProcessRegister(const std::shared_ptr<TcpServer> &server,
     return;
   }
 
+  auto node_infos = node_manager_.nodes_info();
+  if (node_manager_.GetClusterState() == ClusterState::CLUSTER_SCALE_OUT && register_message.is_recover() &&
+      node_infos.count(node_id) > 0) {
+    ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
+    // set the last worker num and last server num and start cluster scale out rollback
+    node_manager_.set_worker_num(clusterConfig.initial_worker_num);
+    node_manager_.set_server_num(clusterConfig.initial_server_num);
+    node_manager_.set_total_node_num(clusterConfig.initial_total_node_num);
+
+    node_manager_.UpdateClusterState(ClusterState::CLUSTER_SCALE_OUT_ROLLBACK);
+    MS_LOG(INFO) << "Trigger scale out rollback because the node is recovery, the last worker num:"
+                 << clusterConfig.initial_worker_num << ", the last server num:" << clusterConfig.initial_server_num;
+  }
+
   node_manager_.UpdateHeartbeat(node_id);
   RegisterRespMessage register_resp_message;
   register_resp_message.set_node_id(node_id);
@@ -956,7 +970,7 @@ bool SchedulerNode::QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler
 
   if (!res) {
     std::string message =
-      "Cluster servers are ready for scaling rollback. Please process server scaling rollback later.";
+      "Cluster servers are not ready for scaling rollback. Please process server scaling rollback later.";
     RequestProcessResult result(RequestProcessResultCode::kSystemError, message);
     MS_LOG(WARNING) << message;
     resp->ErrorResponse(HTTP_BADREQUEST, result);
@@ -1240,7 +1254,7 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
     js["code"] = kSuccessCode;
     js["result"] = true;
   } else {
-    js["message"] = "Start new instance failed.";
+    js["error_message"] = "Start new instance failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1371,7 +1385,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     PersistMetaData();
   } else {
-    js["message"] = "start enabling FL-Server failed.";
+    js["error_message"] = "start enabling FL-Server failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1442,7 +1456,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
     PersistMetaData();
   } else {
-    js["message"] = "start disabling FL-Server failed.";
+    js["error_message"] = "start disabling FL-Server failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }

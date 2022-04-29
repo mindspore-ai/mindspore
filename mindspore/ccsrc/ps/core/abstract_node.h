@@ -58,7 +58,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
         node_recovery_(nullptr),
         persistent_state_(PersistentState::NOT_ENABLE_PERSIST),
         scheduler_ip_(""),
-        scheduler_port_(0) {}
+        scheduler_port_(0),
+        is_recover(false) {}
   ~AbstractNode() override;
 
   typedef void (AbstractNode::*ResponseHandler)(const std::shared_ptr<MessageMeta> &meta, const void *data,
@@ -213,8 +214,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
                        const uint32_t &timeout = kCommTimeoutInSeconds);
   bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
                        const Protos &, const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
-  uint64_t SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
-                            const Protos &protos, const void *data, size_t size);
+  uint64_t SendCollectiveMeta(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                              const Protos &protos, const void *data, size_t size);
   void ProcessCollectiveSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                  const Protos &protos, const void *data, size_t size);
   void ProcessSendData(const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
@@ -343,6 +344,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
   size_t failed_iteration_num_ = 0;
   bool iteration_failed_ = false;
   CancelSafeModeFn cancelSafeModeFn_;
+
+  std::atomic<bool> is_recover;
 };
 using AbstractNodePtr = std::shared_ptr<AbstractNode>;
 }  // namespace core

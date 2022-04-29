@@ -51,19 +51,18 @@ bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommM
   return Wait(request_id, timeout);
 }
 
-uint64_t Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
-                                const Protos &protos, const void *data, size_t size) {
+bool Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
+                            const Protos &protos, const void *data, size_t size) {
   MS_EXCEPTION_IF_NULL(client);
   MS_EXCEPTION_IF_NULL(meta);
   MS_EXCEPTION_IF_NULL(data);
-  uint64_t request_id = AddMessageTrack(1);
-  meta->set_request_id(request_id);
   if (!client->SendMessage(meta, protos, data, size)) {
     MS_LOG(WARNING) << "Client send message failed.";
+    return false;
   }
   MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
-  return request_id;
+                << ", the node id is:" << node_info_.node_id_;
+  return true;
 }
 
 bool Node::SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,

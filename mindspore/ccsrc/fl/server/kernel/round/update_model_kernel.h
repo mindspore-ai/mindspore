@@ -80,6 +80,8 @@ class UpdateModelKernel : public RoundKernel {
                            const std::string &reason, const std::string &next_req_time);
   ResultCode VerifyUpdateModel(const schema::RequestUpdateModel *update_model_req,
                                const std::shared_ptr<FBBuilder> &fbb, DeviceMeta *device_meta);
+  bool VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req);
+
   // The executor is for updating the model for updateModel request.
   Executor *executor_{nullptr};
 

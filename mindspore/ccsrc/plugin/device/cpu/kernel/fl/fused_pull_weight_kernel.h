@@ -46,9 +46,6 @@ class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
                         << weight_full_names_.size() << " weights as inputs.";
     }
 
-    std::shared_ptr<fl::FBBuilder> fbb = std::make_shared<fl::FBBuilder>();
-    MS_EXCEPTION_IF_NULL(fbb);
-
     total_iteration_++;
     uint64_t step_num_per_iteration = fl::worker::FLWorker::GetInstance().worker_step_num_per_iteration();
     if (step_num_per_iteration == 0) {
@@ -64,10 +61,8 @@ class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
 
     fl_iteration_++;
     MS_LOG(INFO) << "Launching pulling weight for federated learning iteration " << fl_iteration_;
-    if (!BuildPullWeightReq(fbb)) {
-      MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
-    }
 
+    std::shared_ptr<fl::FBBuilder> fbb;
     std::shared_ptr<std::vector<unsigned char>> pull_weight_rsp_msg = nullptr;
     const schema::ResponsePullWeight *pull_weight_rsp = nullptr;
     int retcode = schema::ResponseCode_SucNotReady;
@@ -76,6 +71,13 @@ class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
         MS_LOG(WARNING) << "Worker has finished.";
         return true;
       }
+      // Recreate fbb to avoid memory leak of FlatBuffers.
+      fbb = std::make_shared<fl::FBBuilder>();
+      if (!BuildPullWeightReq(fbb)) {
+        MS_LOG(ERROR) << "Building request for FusedPullWeight failed.";
+        continue;
+      }
+
       if (!fl::worker::FLWorker::GetInstance().SendToServer(
             0, fbb->GetBufferPointer(), fbb->GetSize(), ps::core::TcpUserCommand::kPullWeight, &pull_weight_rsp_msg)) {
         MS_LOG(WARNING) << "Sending request for FusedPullWeight to server 0 failed. Retry later.";
@@ -83,21 +85,29 @@ class FusedPullWeightKernelMod : public DeprecatedNativeCpuKernelMod {
         std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
         continue;
       }
-      MS_EXCEPTION_IF_NULL(pull_weight_rsp_msg);
+
+      if (pull_weight_rsp_msg == nullptr || pull_weight_rsp_msg->data() == nullptr) {
+        continue;
+      }
+      auto pull_weight_rsp_data = reinterpret_cast<const uint8_t *>(pull_weight_rsp_msg->data());
+
+      flatbuffers::Verifier verifier(pull_weight_rsp_data, sizeof(unsigned char) * pull_weight_rsp_msg->size());
+      if (!verifier.VerifyBuffer<schema::ResponsePullWeight>()) {
+        MS_LOG(ERROR) << "The schema of ResponsePullWeight is invalid.";
+        continue;
+      }
 
       pull_weight_rsp = flatbuffers::GetRoot<schema::ResponsePullWeight>(pull_weight_rsp_msg->data());
-      MS_EXCEPTION_IF_NULL(pull_weight_rsp);
+      if (pull_weight_rsp == nullptr) {
+        continue;
+      }
+
       retcode = pull_weight_rsp->retcode();
       if (retcode == schema::ResponseCode_SucNotReady) {
         std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDurationOfPullWeights));
         fl_iteration_ = pull_weight_rsp->iteration();
         MS_LOG(DEBUG) << "Server is not ready for downloading yet. Reason: " << pull_weight_rsp->reason()->str()
                       << ". Retry later.";
-        // Recreate fbb to avoid memory leak of FlatBuffers.
-        fbb = std::make_shared<fl::FBBuilder>();
-        if (!BuildPullWeightReq(fbb)) {
-          MS_LOG(EXCEPTION) << "Building request for FusedPullWeight failed.";
-        }
         continue;
       } else if (retcode != schema::ResponseCode_SUCCEED) {
         MS_LOG(WARNING) << "FusedPullWeight failed. Server return code: " << pull_weight_rsp->retcode()
