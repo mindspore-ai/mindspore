@@ -86,17 +86,17 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto dense_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "x1_dense_shape");
-    RETURN_IF_FALSE_WITH_LOG(dense_shape.size() != kMatrixDims, "The rank of dense_shape should be 2.");
+    auto dense_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "csra_shape");
+    RETURN_IF_FALSE_WITH_LOG(dense_shape.size() == kMatrixDims, "The rank of dense_shape should be 2.");
     row_ = LongToInt(dense_shape[0]);
     col_ = LongToInt(dense_shape[1]);
 
     const auto &x1_col_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, InputList::X1_COLUMN);
-    RETURN_IF_FALSE_WITH_LOG(x1_col_shape.size() != 1, "The rank of column should be 1.");
+    RETURN_IF_FALSE_WITH_LOG(x1_col_shape.size() == 1, "The rank of column should be 1.");
     x1_nnz_ = SizeToInt(x1_col_shape[0]);
 
     const auto &x2_col_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, InputList::X2_COLUMN);
-    RETURN_IF_FALSE_WITH_LOG(x2_col_shape.size() != 1, "The rank of row should be 1.");
+    RETURN_IF_FALSE_WITH_LOG(x2_col_shape.size() == 1, "The rank of row should be 1.");
     x2_nnz_ = SizeToInt(x2_col_shape[0]);
 
     type_id_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, InputList::X1_VALUE);
@@ -135,9 +135,9 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
 
     T alpha_host, beta_host;
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&alpha_host, alpha, sizeof(T), cudaMemcpyHostToDevice, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&alpha_host, alpha, sizeof(T), cudaMemcpyDeviceToHost, stream),
                                        "cudaMemcpy failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&beta_host, beta, sizeof(T), cudaMemcpyHostToDevice, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(&beta_host, beta, sizeof(T), cudaMemcpyDeviceToHost, stream),
                                        "cudaMemcpy failed.");
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
 
@@ -205,7 +205,6 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  std::weak_ptr<CNode> kernel_node_;
   TypeId type_id_{kTypeUnknown};
   cusparseHandle_t handle_{nullptr};
   cusparseMatDescr_t x1_descr_{nullptr};

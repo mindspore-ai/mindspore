@@ -22,10 +22,16 @@ namespace kernel {
 #define GPU_SPARSE_MATRIX_ADD_KERNEL_REGISTER(ms_dtype, cuda_type) \
   MS_REG_GPU_KERNEL_ONE(SparseMatrixAdd,                           \
                         KernelAttr()                               \
+                          .AddInputAttr(kNumberTypeInt32)          \
+                          .AddInputAttr(kNumberTypeInt32)          \
+                          .AddInputAttr(ms_dtype)                  \
+                          .AddInputAttr(kNumberTypeInt32)          \
+                          .AddInputAttr(kNumberTypeInt32)          \
                           .AddInputAttr(ms_dtype)                  \
                           .AddInputAttr(ms_dtype)                  \
                           .AddInputAttr(ms_dtype)                  \
-                          .AddInputAttr(ms_dtype)                  \
+                          .AddOutputAttr(kNumberTypeInt32)         \
+                          .AddOutputAttr(kNumberTypeInt32)         \
                           .AddOutputAttr(ms_dtype),                \
                         SparseMatrixAddGpuKernel, cuda_type)
 
