@@ -982,7 +982,7 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
   InOutDegreeList in_out_degree_list = GenerateInOutDegreeList(segments, comm_edges);
   if (in_out_degree_list.empty()) {
     MS_LOG(WARNING) << "After splitting, this process has no graph on it. So optimize out the whole graph.";
-    auto return_value_node = CreateFakeValueNode(false);
+    auto return_value_node = CreateReplacedOutputNode(func_graph_, func_graph_->output());
     (void)func_graph_->manager()->Replace(func_graph_->output(), return_value_node);
     return;
   }
@@ -995,6 +995,13 @@ void GraphSplitter::SplitGraph(const std::vector<SplitGraphSegment> &segments,
 }
 
 void GraphSplitter::SplitGraph(const FusedInterProcessOpPairMap &fused_inter_process_op_pairs) {
+  if (fused_inter_process_op_pairs.empty()) {
+    MS_LOG(WARNING) << "After splitting, this process has no graph on it. So optimize out the whole graph.";
+    auto return_value_node = CreateReplacedOutputNode(func_graph_, func_graph_->output());
+    (void)func_graph_->manager()->Replace(func_graph_->output(), return_value_node);
+    return;
+  }
+
   // Step 1: Replace origin nodes with recv nodes.
   ReplaceOriginNodesWithRecv(fused_inter_process_op_pairs);
 

@@ -583,5 +583,9 @@ void PSContext::set_continuous_failure_times(uint32_t continuous_failure_times) 
 }
 
 uint32_t PSContext::continuous_failure_times() { return continuous_failure_times_; }
+
+bool PSContext::enable_distributed_mindrt() const {
+  return distributed::cluster::ClusterContext::instance()->initialized();
+}
 }  // namespace ps
 }  // namespace mindspore

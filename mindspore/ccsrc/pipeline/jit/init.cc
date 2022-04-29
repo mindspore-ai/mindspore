@@ -557,7 +557,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("set_participation_time_level", &PSContext::set_participation_time_level, "Set participation time level.")
     .def("participation_time_level", &PSContext::participation_time_level, "Get participation time level.")
     .def("set_continuous_failure_times", &PSContext::set_continuous_failure_times, "Set continuous failure times")
-    .def("continuous_failure_times", &PSContext::continuous_failure_times, "Get continuous failure times.");
+    .def("continuous_failure_times", &PSContext::continuous_failure_times, "Get continuous failure times.")
+    .def("enable_distributed_mindrt", &PSContext::enable_distributed_mindrt, "Whether distributed MindRT is enabled.");
   (void)m.def("_encrypt", &mindspore::pipeline::PyEncrypt, "Encrypt the data.");
   (void)m.def("_decrypt", &mindspore::pipeline::PyDecrypt, "Decrypt the data.");
   (void)m.def("_is_cipher_file", &mindspore::pipeline::PyIsCipherFile, "Determine whether the file is encrypted");

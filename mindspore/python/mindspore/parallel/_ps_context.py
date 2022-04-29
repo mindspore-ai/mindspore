@@ -302,6 +302,14 @@ def _is_fl_mode():
     return _get_ps_context("server_mode") in ("FEDERATED_LEARNING", "HYBRID_TRAINING")
 
 
+def _enable_distributed_mindrt():
+    '''
+    Whether the distributed MindRT is enabled.
+    This method is used to distinguish from old distributed training mode.
+    '''
+    return ps_context().enable_distributed_mindrt()
+
+
 def _check_value(key, value):
     """
     Validate the value for parameter server context keys.

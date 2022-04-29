@@ -25,6 +25,12 @@
 
 namespace mindspore {
 namespace runtime {
+RecvActor::~RecvActor() {
+  if (server_) {
+    server_->Finalize();
+  }
+}
+
 void RecvActor::SetOpcontext(OpContext<DeviceTensor> *const op_context) {
   std::unique_lock<std::mutex> lock(context_mtx_);
   MS_EXCEPTION_IF_NULL(op_context);

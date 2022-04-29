@@ -25,6 +25,11 @@
 namespace mindspore {
 namespace distributed {
 namespace rpc {
+// Print error message every 1000 times and sleep for 5ms in case the log file is too large.
+static size_t kPrintCount = 0;
+size_t kPrintCountInterval = 1000;
+size_t kPrintTimeInterval = 50000;
+
 // Handle socket events like read/write.
 void SocketEventHandler(int fd, uint32_t events, void *context) {
   Connection *conn = reinterpret_cast<Connection *>(context);
@@ -61,9 +66,13 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
       (conn->recv_message_type != ParseType::kHttpReq && conn->recv_message_type != ParseType::kHttpRsp &&
        (events & (uint32_t)(EPOLLHUP | EPOLLRDHUP | EPOLLERR)))) {
     if (conn->recv_message_type == ParseType::kTcpMsg) {
-      MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
-                   << ", errcode: " << conn->error_code << ", errno: " << errno << ", to: " << conn->destination.c_str()
-                   << ", type:" << conn->recv_message_type << ", remote: " << conn->is_remote;
+      if (kPrintCount++ % kPrintCountInterval == 0) {
+        MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
+                     << ", errcode: " << conn->error_code << ", errno: " << errno
+                     << ", to: " << conn->destination.c_str() << ", type:" << conn->recv_message_type
+                     << ", remote: " << conn->is_remote;
+        usleep(kPrintTimeInterval);
+      }
     }
     conn->state = ConnectionState::kDisconnecting;
     if (conn->event_callback != nullptr) {

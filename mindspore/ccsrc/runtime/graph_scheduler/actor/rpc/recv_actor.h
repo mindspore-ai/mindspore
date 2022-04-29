@@ -36,8 +36,11 @@ class RecvActor : public RpcActor {
                      const std::set<size_t> &modifiable_ref_output_indexes)
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                  modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kRecvActor),
+        ip_(""),
+        port_(0),
+        server_(nullptr),
         is_context_valid_(false) {}
-  ~RecvActor() override = default;
+  ~RecvActor() override;
 
   // Besides set the op context, this method also notify the message handler to 'RunOpInterProcessData'.
   void SetOpcontext(OpContext<DeviceTensor> *const op_context) override;
