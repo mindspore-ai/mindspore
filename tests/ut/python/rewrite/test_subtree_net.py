@@ -100,10 +100,52 @@ def erase_relu_in_conv2(stree: SymbolTree):
             break
 
 
+def inset_subtree(stree: SymbolTree):
+    for node in stree.nodes():
+        if node.get_name() == "conv2":
+            position = stree.before(node)
+            subtree = SubNet()
+            new_node = Node.create_call_cell(subtree, targets=[ScopedValue.create_naming_value('x')], name='conv',
+                                             args=[ScopedValue.create_naming_value('x')], kwargs={})
+            stree.insert(position, new_node)
+            break
+
+
+def inset_subtree2(stree: SymbolTree):
+    for node in stree.nodes():
+        if node.get_name() == "conv2":
+            position = stree.before(node)
+            subtree = SubNet()
+            new_node = Node.create_call_cell(subtree, targets=[ScopedValue.create_naming_value('x')], name='conv11',
+                                             args=[ScopedValue.create_naming_value('x')], kwargs={})
+            stree.insert(position, new_node)
+            break
+
+
+def add_relu_in_conv11(stree: SymbolTree):
+    for node in stree.nodes():
+        if node.get_node_type() != NodeType.Tree:
+            continue
+        if node.get_name() == "conv11":
+            _stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            for inner_node in _stree.nodes():
+                if inner_node.get_node_type() != NodeType.Output:
+                    continue
+                position = _stree.before(inner_node)
+                new_relu = nn.ReLU()
+                new_relu_node = Node.create_call_cell(new_relu, targets=['x'], name='relu1',
+                                                      args=[ScopedValue.create_naming_value('x')])
+                _stree.insert(position, new_relu_node)
+                _stree.set_output(0, new_relu_node.get_targets()[0].value)
+                break
+            break
+
+
 def transform(stree: SymbolTree):
     add_relu_in_conv1(stree)
     replace_bn_in_conv2(stree)
     erase_relu_in_conv2(stree)
+    inset_subtree(stree)
 
 
 def test_subtree_net():
@@ -115,7 +157,20 @@ def test_subtree_net():
 
     net = MainNet()
     stree = SymbolTree.create(net)
+    print(stree.get_code())
     transform(stree)
+    for node in stree.nodes():
+        print("after transform node name: ", node.get_name(), "; node type: ", node.get_node_type())
+        if node.get_node_type() != NodeType.Tree:
+            continue
+        if node.get_name() == "conv":
+            modify_stree: SymbolTree = TreeNodeHelper.get_sub_tree(node)
+            for inner_node in modify_stree.nodes():
+                print("inserted subtree node: ", inner_node.get_name())
+
+    inset_subtree2(stree)
+    add_relu_in_conv11(stree)
+
     print(stree.get_code())
     print(stree.get_handler().get_global_vars().keys())
     net_opt = stree.get_network()

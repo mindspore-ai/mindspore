@@ -121,7 +121,6 @@ def erase_node_x_11(stree: SymbolTree):
 
 def transform(stree: SymbolTree):
     add_conv_before_flatten(stree)
-    add_my_cell_after_x_12(stree)
     erase_node_x_11(stree)
 
 

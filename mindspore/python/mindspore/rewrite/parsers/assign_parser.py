@@ -186,7 +186,6 @@ class AssignParser(Parser):
         return results
 
     def _is_subtree_cell(self, cell: Cell) -> bool:
-        assert isinstance(cell, Cell)
         return not type(cell).__name__ in self._cell_namespce
 
     @staticmethod
@@ -353,7 +352,6 @@ class AssignParser(Parser):
                 # self._subnet = SubNet1(global_vars.get("subnet_args"))
                 # so a change in sub-network should also be identified as a change in main-network.
                 # so main-network should observe sub-network
-                new_stree.reg_observer(stree)
                 replacer = AstReplacer(new_stree.get_class_ast())
                 replacer.replace_all(new_stree.get_ori_cls_name(), new_stree.get_opt_cls_name())
                 return TreeNode(new_stree, father_ast_node, targets, func, call_args, call_kwargs, func_name,

@@ -51,14 +51,15 @@ class SymbolTree:
         """
         return self._symbol_tree
 
-    def nodes(self) -> {}:
+    def nodes(self):
         """
         Get all nodes of corresponding network.
 
         Returns:
             A dict mapping from name of node to node.
         """
-        return [Node(node_impl) for node_impl in self._symbol_tree.nodes(unfold_subtree=False)]
+        for node in self._symbol_tree.nodes():
+            yield Node(node)
 
     def get_node(self, node_name: str) -> Optional[Node]:
         """
