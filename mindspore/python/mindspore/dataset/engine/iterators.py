@@ -78,17 +78,9 @@ class Iterator:
         consumer.Init(self.ir_tree)
         self._runtime_context.AssignConsumer(consumer)
         self._iterator = self._runtime_context.GetConsumer()
+        self._output_numpy = output_numpy
+        self._do_copy = do_copy
 
-        self._transform_tensor = lambda t: t.as_array()
-        if not output_numpy:
-            def _transform(t, do_copy):
-                array = t.as_array()
-                if array.dtype.type is np.bytes_:
-                    array = np.char.decode(array)
-                if do_copy:
-                    return Tensor(array)
-                return Tensor.from_numpy(array)
-            self._transform_tensor = lambda t: _transform(t, do_copy)
         self.__index = 0
 
         self.offload_model = None
@@ -144,6 +136,7 @@ class Iterator:
                            "It might because Iterator stop() had been called, or C++ pipeline crashed silently.")
             raise RuntimeError("Iterator does not have a running C++ pipeline.")
 
+        # Note offload is applied inside _get_next() if applicable since get_next converts to output format
         data = self._get_next()
         if not data:
             if self.__index == 0:
@@ -152,9 +145,6 @@ class Iterator:
                 self.__ori_dataset.dataset_size = self.__index
             raise StopIteration
         self.__index += 1
-
-        if self.offload_model is not None:
-            data = offload.apply_offload_iterators(data, self.offload_model)
 
         return data
 
@@ -187,6 +177,24 @@ class Iterator:
         """
         self._iterator.Reset(step)
 
+    def _transform_md_to_output(self, t):
+        if self._output_numpy:
+            return t.as_array()
+        return self._transform_md_to_tensor(t)
+
+    def _transform_md_to_tensor(self, t):
+        array = t.as_array()
+        if array.dtype.type is np.bytes_:
+            array = np.char.decode(array)
+        if self._do_copy:
+            return Tensor(array)
+        return Tensor.from_numpy(array)
+
+    def _transform_tensor_to_output(self, t):
+        if self._output_numpy:
+            return t.asnumpy()
+        return t
+
 
 class DictIterator(Iterator):
     """
@@ -201,7 +209,18 @@ class DictIterator(Iterator):
             Dict, the next record in the dataset.
         """
         try:
-            return {k: self._transform_tensor(t) for k, t in self._iterator.GetNextAsMap().items()}
+            if self.offload_model is None:
+                return {k: self._transform_md_to_output(t) for k, t in self._iterator.GetNextAsMap().items()}
+            data = [self._transform_md_to_tensor(t) for t in self._iterator.GetNextAsList()]
+            if data:
+                data = offload.apply_offload_iterators(data, self.offload_model)
+                # Create output dictionary after offload
+                out_data = {}
+                for i, col in enumerate(self.get_col_names()):
+                    out_data[col] = self._transform_tensor_to_output(data[i])
+                data = out_data
+            return data
+
         except RuntimeError as err:
             # maybe "Out of memory" / "MemoryError" error
             err_info = str(err)
@@ -231,7 +250,12 @@ class TupleIterator(Iterator):
             List, the next record in the dataset.
         """
 
-        return [self._transform_tensor(t) for t in self._iterator.GetNextAsList()]
+        if self.offload_model is None:
+            return [self._transform_md_to_output(t) for t in self._iterator.GetNextAsList()]
+        data = [self._transform_md_to_tensor(t) for t in self._iterator.GetNextAsList()]
+        if data:
+            data = offload.apply_offload_iterators(data, self.offload_model)
+        return [self._transform_tensor_to_output(t) for t in data]
 
 
 class DummyIterator:
