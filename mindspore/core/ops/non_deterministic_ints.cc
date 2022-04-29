@@ -30,7 +30,7 @@ namespace {
 abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "Input[0] only support tensor!";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', input must be a tensor.";
   }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInpuDims = 1;
@@ -53,10 +53,12 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
   auto shape_v = shape_ptr->shape();
   if (shape_v.size() != kInpuDims) {
-    MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', input tensor must be a 1-D tensor. But got shape size: " << shape_v.size() << ".";
   }
   if (shape_v[0] < kInpuSizes) {
-    MS_EXCEPTION(ValueError) << "The input tensor elements must >= 2.";
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input tensor must have a least 2 elements, but got "
+                             << shape_v[0] << ".";
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
@@ -68,7 +70,9 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
           out_shape.push_back(input_shape_ptr[i]);
           shape_m *= input_shape_ptr[i];
         } else {
-          MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                   << "', each dimension of input must be greater than 0. But got input_shape[" << i
+                                   << "]: " << input_shape_ptr[i] << ".";
         }
       }
     } else if (input_type_element->type_id() == kNumberTypeInt64) {
@@ -78,14 +82,17 @@ abstract::ShapePtr NonDeterministicIntsInferShape(const PrimitivePtr &primitive,
           out_shape.push_back(input_shape_ptr[i]);
           shape_m *= input_shape_ptr[i];
         } else {
-          MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";
+          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                   << "', each dimension of input must be greater than 0. But got input_shape[" << i
+                                   << "]: " << input_shape_ptr[i] << ".";
         }
       }
     }
     if (shape_m > max_length) {
-      MS_EXCEPTION(ValueError) << "The number of elements of output must be less than max length: " << max_length
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                               << "', the number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
-                               << "! The shape of  output should be reduced or max_length should be increased";
+                               << ". The shape of output should be reduced or max_length should be increased";
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {

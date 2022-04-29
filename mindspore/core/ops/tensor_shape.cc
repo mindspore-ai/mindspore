@@ -30,8 +30,8 @@ abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, 
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, 1, primitive->name());
   auto input = input_args[0]->cast<abstract::AbstractTensorPtr>();
   if (input == nullptr) {
-    MS_EXCEPTION(TypeError) << "For the input['input_x'] of primitive[" << primitive->name() << "] should be a Tensor"
-                            << ", but got " << input_args[0]->BuildType()->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "' input must be a Tensor, but got "
+                            << input_args[0]->BuildType()->ToString() << ".";
   }
   MS_EXCEPTION_IF_NULL(input->shape());
   auto shape = input->shape()->shape();

@@ -53,8 +53,8 @@ TypePtr ReLU6GradInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
-                            << " input must be tensor type but got " << x_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
+                            << ".";
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);

@@ -57,7 +57,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
       auto idx = item >= 0 ? item : len + item;
       if (in_shape[LongToSize(idx)] != 1L) {
         MS_EXCEPTION(ValueError) << "For '" << op_name << ", input_x shape[" << LongToSize(idx)
-                                 << "] should be equal to one, but got " << in_shape[LongToSize(idx)] << ".";
+                                 << "] must be equal to one, but got " << in_shape[LongToSize(idx)] << ".";
       }
     }
     for (int64_t i = 0; i < len; i++) {
@@ -81,7 +81,7 @@ TypePtr SqueezeInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
   auto name = prim->name();
-  MS_LOG(DEBUG) << "Infer data type for " << name;
+  MS_LOG(DEBUG) << "Inferring data type for '" << name << "'.";
   return input_args[0]->BuildType();
 }
 }  // namespace
@@ -92,8 +92,8 @@ AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   const size_t x_index = 0;
   auto x_type = input_args[x_index]->BuildType();
   if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "For Squeeze, the " << x_index << "'s input should be a Tensor, but got "
-                            << x_type->ToString();
+    MS_EXCEPTION(TypeError) << "For 'Squeeze', the " << x_index << "'s input must be a Tensor, but got "
+                            << x_type->ToString() << ".";
   }
 
   return abstract::MakeAbstract(SqueezeInferShape(primitive, input_args), SqueezeInferType(primitive, input_args));

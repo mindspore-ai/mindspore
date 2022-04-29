@@ -27,7 +27,7 @@ AbstractBasePtr PrimitiveC::Infer(const AbstractBasePtrList &abstract_list) {
   auto infer_map = abstract::GetPrimitiveToEvalImplMap();
   auto iter = infer_map.find(std::make_shared<Primitive>(this->name()));
   if (iter == infer_map.end()) {
-    MS_EXCEPTION(NotExistsError) << "Cannot find the " << this->name() << "infer function in the infer map!";
+    MS_EXCEPTION(NotExistsError) << "Can not find the " << this->name() << "infer function in the infer map!";
   }
   auto infer_function = iter->second.infer_shape_impl_;
   return infer_function(nullptr, shared_from_base<Primitive>(), abstract_list);

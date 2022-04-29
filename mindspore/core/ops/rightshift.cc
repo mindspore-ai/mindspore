@@ -51,8 +51,8 @@ TypePtr RightShiftInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto input_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   if (!input_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s"
-                            << " input must be tensor type but got " << input_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input type must be tensor, but got: " << input_type->ToString() << ".";
   }
   const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);

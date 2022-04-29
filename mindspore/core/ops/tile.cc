@@ -76,8 +76,8 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
 
   for (auto multiple : multiples_v) {
     if (multiple <= 0) {
-      MS_LOG(EXCEPTION) << "For '" << prim_name << "', multiples should be an int and must > 0, but got "
-                        << multiples_v;
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "', 'multiples' must be an positive integer, but got " << multiples_v
+                        << ".";
     }
   }
 

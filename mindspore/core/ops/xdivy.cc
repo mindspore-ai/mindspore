@@ -54,8 +54,8 @@ TypePtr XdivyInferType(const PrimitivePtr &primitive, const std::vector<Abstract
   auto input_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(input_type);
   if (!input_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s"
-                            << " input must be tensor type but got " << input_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << input_type->ToString()
+                            << ".";
   }
   const std::set<TypePtr> valid_types = {kFloat32, kFloat16};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim_name);

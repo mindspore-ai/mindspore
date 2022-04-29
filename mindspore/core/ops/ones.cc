@@ -33,10 +33,9 @@ abstract::ShapePtr OnesInferShape(const PrimitivePtr &primitive, const std::vect
   auto shape_value = input_args[0]->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (shape_value->isa<ValueList>()) {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
-                            << "], the input"
-                               " must be a Int or a tuple with all Int elements, but got "
-                            << shape_value->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input must be a Int or a tuple with all Int elements, but got: "
+                            << shape_value->ToString() << ".";
   }
   std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
   (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
@@ -48,7 +47,7 @@ TypePtr OnesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   // check
   auto dtype_value = input_args[1]->BuildValue();
   if (!dtype_value->isa<Type>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', The dtype of Ones is invalid!";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the dtype of Ones must be Type(), but got an invalid type!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
   const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,

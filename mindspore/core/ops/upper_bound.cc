@@ -29,16 +29,16 @@ abstract::ShapePtr UpperBoundInferShape(const PrimitivePtr &primitive, const std
   size_t size_exp = 2;
   if (x_shape.size() != size_exp) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', The rank of sorted_x need to be equal to 2, but got " << values_shape.size();
+                             << "', the rank of sorted_x must be equal to 2, but got: " << x_shape.size() << ".";
   }
   if (values_shape.size() != size_exp) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', The rank of values need to be equal to 2, but got "
-                             << values_shape.size();
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the rank of values must be equal to 2, but got: " << values_shape.size() << ".";
   }
   if (x_shape[0] != values_shape[0]) {
     MS_EXCEPTION(ValueError)
       << "For '" << primitive->name()
-      << "', The number of rows of sorted_x must be consistent with that of values, but got the shape of values: "
+      << "', the number of rows of sorted_x must be consistent with that of values, but got the shape of values: "
       << input_args[1]->BuildShape()->ToString()
       << ", the shape of sorted_x: " << input_args[0]->BuildShape()->ToString() << ".";
   }

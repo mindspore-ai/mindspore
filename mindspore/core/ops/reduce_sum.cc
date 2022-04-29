@@ -29,8 +29,8 @@ namespace {
 int64_t InferImplReduceFuncCheckAxis(const PrimitivePtr &prim, const int64_t &axis, const size_t dim) {
   int64_t dim_ = static_cast<int64_t>(dim);
   if (axis < -dim_ || axis >= dim_) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', axis should be in [" << -dim_ << ", " << dim_
-                      << "). But got axis = " << axis;
+    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
+                      << "). But got 'axis' = " << axis << ".";
   }
   int64_t ret_axis = axis;
   if (axis >= -dim_ && axis < 0) {
@@ -81,7 +81,7 @@ void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *sha
       (void)shape->erase(shape->begin() + axis_value);
     }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', Axis should be one of types: [int/tuple/list].";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'axis' must be one of these types: [int/tuple/list].";
   }
   return;
 }
@@ -101,7 +101,7 @@ abstract::ShapePtr ReduceSumInferShape(const PrimitivePtr &primitive, const std:
   auto keep_dimis_value_ptr = primitive->GetAttr(kKeepDims);
   MS_EXCEPTION_IF_NULL(keep_dimis_value_ptr);
   if (!keep_dimis_value_ptr->isa<BoolImm>()) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', keep_dims should be Bool.";
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'keep_dims' must be Bool.";
   }
   bool keep_dims = GetValue<bool>(keep_dimis_value_ptr);
   ShapeVector out_shape = {};

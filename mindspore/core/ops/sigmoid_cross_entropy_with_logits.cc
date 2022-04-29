@@ -38,8 +38,8 @@ abstract::ShapePtr SigmoidCrossEntropyWithLogitsInferShape(const PrimitivePtr &p
     if (*logits_shape != *label_shape) {
       MS_EXCEPTION(ValueError)
         << "For " << op_name
-        << ", evaluator arg label shape should be consistent with logits shape, but got label shape: "
-        << label_shape->ToString() << ", logits shape: " << logits_shape->ToString();
+        << ", evaluator arg 'label' shape must be consistent with 'logits' shape, but got 'label' shape: "
+        << label_shape->ToString() << ", 'logits' shape: " << logits_shape->ToString() << ".";
     }
   }
   auto logits_element = logits_shape->cast<abstract::ShapePtr>();
