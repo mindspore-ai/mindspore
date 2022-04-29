@@ -236,41 +236,13 @@ void FreeMemoryByRefCount(DeviceTensor *const device_tensor, const DeviceContext
   }
 }
 
-AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(backend_node);
-  MS_EXCEPTION_IF_NULL(graph);
-  auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(backend_node, *graph);
-  return front_node;
-}
-
-KernelWithIndex FetchFrontNodeWithIndexByGraphOutput(const KernelWithIndex &output_with_index,
-                                                     const KernelGraphPtr &graph) {
-  MS_EXCEPTION_IF_NULL(graph);
-  auto front_node_with_index = graph->GetFrontNodeWithIndexByGraphOutput(output_with_index);
-  // PyNative forward graph does not has front node, using backend node instead.
-  if (front_node_with_index.first == nullptr) {
-    front_node_with_index = output_with_index;
-  }
-  return front_node_with_index;
-}
-
-KernelGraphPtr FetchKernelGraph(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &func_graph = node->func_graph();
-  if (func_graph == nullptr) {
-    return nullptr;
-  } else {
-    return func_graph->cast<KernelGraphPtr>();
-  }
-}
-
 KernelTransformType FetchKernelTransformType(const AnfNodePtr &node, const KernelGraphPtr &graph,
                                              const std::vector<AnfNodePtr> &host_parameters,
                                              GraphExecutionStrategy strategy) {
   // Fetch kernel graph.
   KernelGraphPtr kernel_graph = nullptr;
   if (graph == nullptr) {
-    kernel_graph = FetchKernelGraph(node);
+    kernel_graph = AnfAlgo::FetchKernelGraph(node);
   } else {
     kernel_graph = graph;
   }
@@ -312,7 +284,7 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   // Fetch kernel graph.
   KernelGraphPtr kernel_graph = nullptr;
   if (graph == nullptr) {
-    kernel_graph = FetchKernelGraph(node);
+    kernel_graph = AnfAlgo::FetchKernelGraph(node);
   } else {
     kernel_graph = graph;
   }
@@ -345,14 +317,6 @@ std::string FetchActorName(KernelTransformType kernel_type, const std::string &a
   return actor_name;
 }
 
-bool HasAbstractRef(const AnfNodePtr &node) {
-  if (node == nullptr) {
-    return false;
-  }
-  auto &abs = node->abstract();
-  return (abs != nullptr) && abs->isa<abstract::AbstractRef>();
-}
-
 std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
 
@@ -363,7 +327,7 @@ std::set<size_t> FetchModifiableRefInputIndex(const CNodePtr &cnode) {
     if (HasAbstractMonad(input)) {
       has_monad = true;
     }
-    if (HasAbstractRef(input)) {
+    if (common::AnfAlgo::HasAbstractRef(input)) {
       (void)ref_input_indexes.insert(i - 1);
     }
   }
@@ -390,34 +354,11 @@ std::set<size_t> FetchModifiableRefOutputIndex(const CNodePtr &cnode, const Kern
     }
     auto input_pair = graph->GetRefCorrespondOutput(output_pair);
     MS_EXCEPTION_IF_NULL(input_pair.first);
-    if (HasAbstractRef(input_pair.first)) {
+    if (common::AnfAlgo::HasAbstractRef(input_pair.first)) {
       (void)ref_output_indexes.insert(i);
     }
   }
   return ref_output_indexes;
-}
-
-void UpdateOutputAddrSize(KernelInfo *kernel_info, const CNodePtr &kernel) {
-  auto &output_addresses = kernel_info->output_address_list();
-  for (size_t i = 0; i < output_addresses.size(); ++i) {
-    auto output_address = output_addresses[i].get();
-    MS_EXCEPTION_IF_NULL(output_address);
-    auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
-    if (output_addr_size != output_address->GetSize()) {
-      output_address->SetSize(output_addr_size);
-    }
-  }
-}
-
-void UpdateInternalParameterShape(const std::map<size_t, AnfNodeWeakPtr> &internal_parameters, const CNodePtr &cnode) {
-  MS_EXCEPTION_IF_NULL(cnode);
-  for (auto &internal_parameter_iter : internal_parameters) {
-    auto internal_parameter = internal_parameter_iter.second.lock();
-    MS_EXCEPTION_IF_NULL(internal_parameter);
-    common::AnfAlgo::SetOutputInferTypeAndShape(
-      {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
-      {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());
-  }
 }
 }  // namespace runtime
 }  // namespace mindspore

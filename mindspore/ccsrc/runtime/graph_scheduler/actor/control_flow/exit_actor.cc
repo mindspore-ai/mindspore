@@ -166,7 +166,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
 
     const KernelWithIndex &node_with_index = input_device_tensor->GetNodeIndex();
     MS_EXCEPTION_IF_NULL(node_with_index.first);
-    if (HasAbstractRef(node_with_index.first)) {
+    if (common::AnfAlgo::HasAbstractRef(node_with_index.first)) {
       (void)new_device_tensors.emplace_back(input_device_tensor);
       continue;
     }

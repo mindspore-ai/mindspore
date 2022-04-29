@@ -354,7 +354,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
     // Prepare the data of device tensor store(value nodes of graph).
     for (const auto &value_node : graph->graph_value_nodes()) {
       if (AnfAlgo::OutputAddrExist(value_node, 0)) {
-        const auto &front_node = FetchFrontNodeByBackendNode(value_node, graph);
+        const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
         PrepareDataForValueNode(value_node, front_node, device_context, context);
       }
     }
@@ -366,7 +366,7 @@ void DataPrepareActor::PrepareDataForDeviceTensorStore(const std::vector<std::ve
       const auto &input_node = input_nodes[j];
       const auto &input_tensor = tensors[j];
       MS_EXCEPTION_IF_NULL(input_node);
-      const auto &front_node = FetchFrontNodeByBackendNode(input_node, graph);
+      const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
       if (IsPersistentDeviceTensor(input_node) && parser->IsRootGraphPersistentDeviceTensor(front_node)) {
         PrepareDataForWeightNode(input_node, front_node, input_tensor, device_context, context);
       }

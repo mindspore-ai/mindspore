@@ -225,6 +225,13 @@ class COMMON_EXPORT AnfAlgo {
     return attr_dup != nullptr && GetValue<bool>(attr_dup);
   }
 
+  // Check whether the node has Ref abstract.
+  static inline bool HasAbstractRef(const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto &abs = node->abstract();
+    return (abs != nullptr) && abs->isa<abstract::AbstractRef>();
+  }
+
   // Get the real output node and indexes of get item, make tuple, depend, load.
   static AnfNodePtr GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *index_stack);
   static bool IsNopNode(const AnfNodePtr &node);

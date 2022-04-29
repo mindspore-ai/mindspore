@@ -38,9 +38,9 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
     if (AnfUtils::GetCustomActorType(kernel_.lock()) == kInfer) {
       auto base_node = AnfUtils::GetCustomActorBaseNode(kernel_.lock());
       auto kernel_info = dynamic_cast<KernelInfo *>(base_node->kernel_info());
-      UpdateOutputAddrSize(kernel_info, base_node);
+      AnfAlgo::UpdateOutputAddrSize(kernel_info, base_node);
       // Update the shape of internal parameter.
-      UpdateInternalParameterShape(internal_parameters_, base_node);
+      AnfAlgo::UpdateInternalParameterShape(internal_parameters_, base_node);
     }
   } catch (const std::exception &e) {
     if (strategy_ == GraphExecutionStrategy::kPipeline) {

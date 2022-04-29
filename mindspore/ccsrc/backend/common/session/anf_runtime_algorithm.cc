@@ -977,6 +977,16 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const An
   return device_shape;
 }
 
+KernelGraphPtr AnfRuntimeAlgorithm::FetchKernelGraph(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &func_graph = node->func_graph();
+  if (func_graph == nullptr) {
+    return nullptr;
+  } else {
+    return func_graph->cast<KernelGraphPtr>();
+  }
+}
+
 AnfNodePtr AnfRuntimeAlgorithm::FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph) {
   MS_EXCEPTION_IF_NULL(backend_node);
   auto front_node_with_index = graph.GetFrontNodeByInternalParameter(backend_node);
@@ -1252,6 +1262,31 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   auto kernel_mod = GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->IsNeedRetrieveOutputShape();
+}
+
+void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo *kernel_info, const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto &output_addresses = kernel_info->output_address_list();
+  for (size_t i = 0; i < output_addresses.size(); ++i) {
+    auto output_address = output_addresses[i].get();
+    MS_EXCEPTION_IF_NULL(output_address);
+    auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
+    if (output_addr_size != output_address->GetSize()) {
+      output_address->SetSize(output_addr_size);
+    }
+  }
+}
+
+void AnfRuntimeAlgorithm::UpdateInternalParameterShape(const std::map<size_t, AnfNodeWeakPtr> &internal_parameters,
+                                                       const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  for (auto &internal_parameter_iter : internal_parameters) {
+    auto internal_parameter = internal_parameter_iter.second.lock();
+    MS_EXCEPTION_IF_NULL(internal_parameter);
+    common::AnfAlgo::SetOutputInferTypeAndShape(
+      {common::AnfAlgo::GetOutputInferDataType(cnode, internal_parameter_iter.first)},
+      {common::AnfAlgo::GetOutputInferShape(cnode, internal_parameter_iter.first)}, internal_parameter.get());
+  }
 }
 }  // namespace session
 }  // namespace mindspore
