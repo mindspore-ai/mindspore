@@ -34,6 +34,7 @@
 #include "src/delegate/tensorrt/op/matmul_tensorrt.h"
 #include "src/delegate/tensorrt/op/scale_tensorrt.h"
 #include "src/delegate/tensorrt/op/slice_tensorrt.h"
+#include "src/delegate/tensorrt/op/split_tensorrt.h"
 #include "src/delegate/tensorrt/op/pool_tensorrt.h"
 #include "src/delegate/tensorrt/op/pad_tensorrt.h"
 #include "src/delegate/tensorrt/op/resize_tensorrt.h"
@@ -115,6 +116,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Resize, GetTensorRTOp<ResizeTensorRT>},
     {schema::PrimitiveType_ScaleFusion, GetTensorRTOp<ScaleTensorRT>},
     {schema::PrimitiveType_StridedSlice, GetTensorRTOp<SliceTensorRT>},
+    {schema::PrimitiveType_Split, GetTensorRTOp<SplitTensorRT>},
     {schema::PrimitiveType_Shape, GetTensorRTOp<ShapeTensorRT>},
     {schema::PrimitiveType_Unsqueeze, GetTensorRTOp<ShuffleTensorRT>},
     {schema::PrimitiveType_Squeeze, GetTensorRTOp<ShuffleTensorRT>},
@@ -133,8 +135,7 @@ Status TensorRTDelegate::Init() {
     {schema::PrimitiveType_Ceil, GetTensorRTOp<UnaryTensorRT>},
     {schema::PrimitiveType_Floor, GetTensorRTOp<UnaryTensorRT>},
   };
-  int ret = lite::SetCudaDevice(device_info_);
-  if (ret != RET_OK) {
+  if (lite::SetCudaDevice(device_info_) != RET_OK) {
     return mindspore::kLiteError;
   }
   if (runtime_ == nullptr) {
@@ -149,8 +150,7 @@ Status TensorRTDelegate::Init() {
     return mindspore::kLiteError;
   }
 
-  auto cuda_ret = cudaStreamCreate(&stream_);
-  if (cuda_ret != cudaSuccess) {
+  if (cudaStreamCreate(&stream_) != cudaSuccess) {
     MS_LOG(ERROR) << "Cuda create stream failed";
     return mindspore::kLiteError;
   }
