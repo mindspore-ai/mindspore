@@ -15,12 +15,14 @@
  */
 
 #include "plugin/device/cpu/kernel/reduce_cpu_kernel.h"
+#include <complex>
 #include <string>
 #include <vector>
 #include <algorithm>
 #include <utility>
 #include <map>
 #include "nnacl/fp32/reduce_fp32.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,6 +30,9 @@ namespace {
 constexpr size_t kReduceSmallVectorSize = 200000;
 constexpr size_t kReduceInputsNum = 1;
 constexpr size_t kReduceOutputsNum = 1;
+
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 
 template <typename T>
 class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
@@ -40,6 +45,7 @@ class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
 
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
+  void ChooseFunc(const std::string &kernel_name_);
 
   enum class ReduceFuncType {
     kReduceAllType,
@@ -78,27 +84,7 @@ void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  axis_.clear();
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  UpdateAxis(prim, kernel_node, kernel_name_, &axis_);
-  int64_t dimension = SizeToLong(input_shape_.size());
-  (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
-    if (a < -dimension || a >= dimension) {
-      MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
-                        << "), but got " << a;
-    }
-    a = a < 0 ? dimension + a : a;
-  });
-  // Delete the duplicate axis.
-  sort(axis_.begin(), axis_.end());
-  auto last = std::unique(axis_.begin(), axis_.end());
-  axis_.erase(last, axis_.end());
-
+void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
   if constexpr (std::is_same<T, bool>::value) {
     if (kernel_name_ == prim::kPrimReduceAll->name()) {
       reduce_type_ = ReduceFuncType::kReduceAllType;
@@ -108,6 +94,13 @@ void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
       reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
     } else {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
+    }
+  } else if constexpr (((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {  // NOLINT
+    if (kernel_name_ == prim::kPrimReduceProd->name()) {
+      reduce_type_ = ReduceFuncType::kReduceProdType;
+      reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for complex.";
     }
   } else {
     if (kernel_name_ == prim::kPrimReduceMax->name()) {
@@ -129,6 +122,31 @@ void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
     }
   }
+}
+
+template <typename T>
+void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  axis_.clear();
+  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
+  MS_EXCEPTION_IF_NULL(prim);
+  UpdateAxis(prim, kernel_node, kernel_name_, &axis_);
+  int64_t dimension = SizeToLong(input_shape_.size());
+  (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
+    if (a < -dimension || a >= dimension) {
+      MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
+                        << "), but got " << a;
+    }
+    a = a < 0 ? dimension + a : a;
+  });
+  // Delete the duplicate axis.
+  sort(axis_.begin(), axis_.end());
+  auto last = std::unique(axis_.begin(), axis_.end());
+  axis_.erase(last, axis_.end());
+
+  ChooseFunc(kernel_name_);
 
   // special accelerate for axis = 1 and input has 2 dims
   if constexpr (std::is_same<T, float>::value) {
@@ -281,8 +299,18 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceF
   {prim::kPrimReduceProd->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), SpecializeReduceFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), SpecializeReduceFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16), SpecializeReduceFunc<int16_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32), SpecializeReduceFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>}}},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64), SpecializeReduceFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8), SpecializeReduceFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16), SpecializeReduceFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32), SpecializeReduceFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64), SpecializeReduceFunc<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+     SpecializeReduceFunc<complex64>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+     SpecializeReduceFunc<complex128>}}},
   {prim::kPrimReduceAll->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}},
   {prim::kPrimReduceAny->name(),

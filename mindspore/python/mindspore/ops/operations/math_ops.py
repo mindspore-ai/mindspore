@@ -1049,7 +1049,7 @@ class ReduceProd(_Reduce):
         TypeError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
@@ -1092,6 +1092,11 @@ class ReduceProd(_Reduce):
           [2.62144e+05]
           [5.31441e+05]]]
     """
+
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """Initialize ReduceProd"""
+        super(ReduceProd, self).__init__(keep_dims)
 
 
 class CumProd(PrimitiveWithInfer):
