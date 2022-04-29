@@ -3,9 +3,6 @@
 
     将ImageNet数据集转换为MindRecord格式数据集。
 
-    .. note::
-        示例的详细信息，请参见 `Converting the ImageNet Dataset <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/record.html#converting-the-imagenet-dataset>`_。
-
     **参数：**
 
     - **map_file** (str) - 标签映射文件的路径。映射文件内容如下：

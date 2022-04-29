@@ -12,7 +12,7 @@ mindspore.ops.eye
 
     - **n** (int) - 指定返回Tensor的行数。仅支持常量值。
     - **m** (int) - 指定返回Tensor的列数。仅支持常量值。
-    - **t** (mindspore.dtype) - 指定返回Tensor的数据类型。数据类型必须是 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 。
+    - **t** (mindspore.dtype) - 指定返回Tensor的数据类型。数据类型必须是 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
 
     **返回：**
 
