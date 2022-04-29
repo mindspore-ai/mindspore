@@ -231,7 +231,7 @@ Dropout层
     mindspore.nn.SGD
     mindspore.nn.thor
 
-评估指标
+评价指标
 --------
 
 .. mscnplatformautosummary::
