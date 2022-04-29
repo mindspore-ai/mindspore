@@ -124,6 +124,7 @@ class COMMON_EXPORT DfGraphConvertor {
   DfGraphConvertor &GenerateBroadcastGraph(const TensorOrderMap &tensors);
   void InitParamWithData(const TensorOrderMap &tensors);
   OutHandler GetNormalOpInput(const AnfNodePtr &pred);
+  void DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i);
   void SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node);
   void SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast, const std::vector<GeTensorDesc> &broadcast_desc,
                       const DfGraphPtr &broadcast_graph, std::vector<ge::Operator> broadcast_input);
@@ -224,6 +225,7 @@ class COMMON_EXPORT DfGraphConvertor {
   void SetParamIndexMap(const std::vector<AnfNodePtr> &graphs);
   void SetWhileOutputHandle(const OperatorPtr &prev_while_op);
   void GetWhileUsedInputIndex(const std::vector<AnfNodePtr> &graphs);
+  AnfNodePtr GetPred();
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   std::shared_ptr<DfGraph> df_graph_{nullptr};

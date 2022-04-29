@@ -2135,6 +2135,19 @@ OutHandler DfGraphConvertor::GetNormalOpInput(const AnfNodePtr &pred) {
   return out_handler;
 }
 
+void DfGraphConvertor::DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pred, size_t i) {
+  if (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == prim::kTupleGetItem) {
+    compute_sout_ << op_draw_name_[pred->cast<CNodePtr>()->input(1).get()] << " -> " << op_draw_name_[node.get()] << ":"
+                  << i << endl;
+  } else if (pred->isa<Parameter>()) {
+    compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << i << endl;
+  } else {
+    // don't draw anything.
+    MS_LOG(INFO) << "DRAW_GE_GRAPH: Shouldn't have this case.";
+  }
+  return;
+}
+
 void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node) {
   OperatorPtr src = Convert(node);
   int case_flag = 0;
@@ -2152,46 +2165,34 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
   MS_LOG(DEBUG) << "op:  " << src->GetName() << "'s input size is " << input_size - 1;
 
   for (size_t i = 1; i < input_size; i++) {
-    AnfNodePtr pred = nullptr;
-    if (case_flag != 0) {
-      pred = case_input_handle_cache_[node.get()]->at(i - 1);
-    } else {
-      pred = inputs[i];
-    }
+    AnfNodePtr pred = (case_flag != 0) ? case_input_handle_cache_[node.get()]->at(i - 1) : inputs[i];
     pred = GetRealInputNode(node, pred);
-    if (pred == nullptr) {
-      continue;
-    }
-    if (HasAbstractMonad(pred)) {
+    if (pred == nullptr || HasAbstractMonad(pred)) {
       continue;
     }
 
     int index = SizeToInt(i);
-    // find in out_hadnle_cache_ first
+    // find in out_handle_cache_ first
     auto it = out_handle_cache_.find(pred.get());
     if (it != out_handle_cache_.end()) {
       int ret = adpt->setInput(src, index, it->second);
       if (ret == 0) {
-        if (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == prim::kTupleGetItem) {
-          compute_sout_ << op_draw_name_[pred->cast<CNodePtr>()->input(1).get()] << " -> " << op_draw_name_[node.get()]
-                        << ":" << i << endl;
-        } else if (pred->isa<Parameter>()) {
-          compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << i << endl;
-        } else {
-          // don't draw anything.
-          MS_LOG(INFO) << "DRAW_GE_GRAPH: Shouldn't have this case.";
-        }
+        DrawOpInput(node, pred, i);
         AddGraphConstInput(it->second.op);
       }
     } else if (tuple_out_handle_cache_.find(pred.get()) != tuple_out_handle_cache_.end()) {
       SetTupleOpInput(adpt, node, pred, src, index);
     } else {
       OutHandler handler = GetNormalOpInput(pred);
-      bool is_pred_handler = IsAfterGraph() && pred->isa<Parameter>();
-      int ret = is_pred_handler ? adpt->setInput(src, index, handler) : adpt->setInput(src, index, handler.op);
-      if (ret == 0 && !is_pred_handler) {
-        compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << index << endl;
-        AddGraphConstInput(handler.op);
+      if (handler.op != nullptr) {
+        bool is_pred_handler = IsAfterGraph() && pred->isa<Parameter>();
+        int ret = is_pred_handler ? adpt->setInput(src, index, handler) : adpt->setInput(src, index, handler.op);
+        if (ret == 0 && !is_pred_handler) {
+          compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << index << endl;
+          AddGraphConstInput(handler.op);
+        }
+      } else if (tuple_out_handle_cache_.find(pred.get()) != tuple_out_handle_cache_.end()) {
+        SetTupleOpInput(adpt, node, pred, src, index);
       }
     }
   }
