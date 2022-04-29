@@ -223,4 +223,5 @@ nvinfer1::ITensor *ScaleTensorRT::AddSqueezeOp(nvinfer1::ITensor *in_tensor, nvi
   MS_LOG(DEBUG) << "squeeze_dims cnt for scale: " << squeeze_dims.nbDims;
   return Reshape(network, in_tensor, squeeze_dims);
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ScaleFusion, ScaleTensorRT)
 }  // namespace mindspore::lite

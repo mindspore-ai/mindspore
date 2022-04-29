@@ -127,4 +127,5 @@ void CastPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &origin_datatype_, sizeof(nvinfer1::DataType));
   SerializeValue(&buffer, &dest_datatype_, sizeof(nvinfer1::DataType));
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cast, CastTensorRT)
 }  // namespace mindspore::lite

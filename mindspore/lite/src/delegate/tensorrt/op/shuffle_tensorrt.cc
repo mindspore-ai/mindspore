@@ -402,4 +402,10 @@ nvinfer1::Dims ShuffleTensorRT::InferReshapeDims(const nvinfer1::Dims &input_dim
   }
   return reshape_dims;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Unsqueeze, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Squeeze, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Reshape, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Transpose, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Flatten, ShuffleTensorRT)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ExpandDims, ShuffleTensorRT)
 }  // namespace mindspore::lite

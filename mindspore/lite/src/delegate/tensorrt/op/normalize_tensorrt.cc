@@ -127,4 +127,5 @@ int NormalizeTensorRT::PreprocessInputs(nvinfer1::INetworkDefinition *network) {
   }
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LayerNormFusion, NormalizeTensorRT)
 }  // namespace mindspore::lite

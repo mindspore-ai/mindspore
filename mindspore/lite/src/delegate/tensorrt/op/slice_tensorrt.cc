@@ -126,4 +126,5 @@ int SliceTensorRT::ConvertParamsDims() {
   }
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_StridedSlice, SliceTensorRT)
 }  // namespace mindspore::lite

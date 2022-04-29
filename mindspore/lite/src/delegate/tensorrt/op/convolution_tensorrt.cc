@@ -180,4 +180,5 @@ ConvolutionTensorRT::~ConvolutionTensorRT() {
     pack_weight_ = nullptr;
   }
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Conv2DFusion, ConvolutionTensorRT)
 }  // namespace mindspore::lite

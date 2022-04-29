@@ -157,4 +157,5 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition
 
   return activation_layer;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Activation, ActivationTensorRT)
 }  // namespace mindspore::lite

@@ -122,4 +122,5 @@ int TopKTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, Format::NHWC, true});
   return RET_OK;
 }
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ArgMaxFusion, TopKTensorRT)
 }  // namespace mindspore::lite
