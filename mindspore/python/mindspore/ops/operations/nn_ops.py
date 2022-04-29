@@ -3861,9 +3861,9 @@ class Pad(PrimitiveWithInfer):
     For example,
     to pad only the last dimension of the input tensor, then pad has the form (padding_left,padding_right);
     to pad the last 2 dimensions of the input tensor, then use
-    (padding_left,padding_right, padding_top,padding_bottom);
+    ((padding_top, padding_bottom), (padding_left, padding_right));
     to pad the last 3 dimensions, use
-    (padding_left,padding_right, padding_top,padding_bottom padding_front,padding_back).
+    ((padding_front, padding_back), (padding_top, padding_bottom), (padding_left, padding_right)).
 
     .. math::
         \begin{aligned}
