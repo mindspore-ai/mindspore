@@ -226,14 +226,19 @@ class Compose(PyTensorOperation):
             if isinstance(item, (nn.Cell, ops.Primitive)):
                 raise ValueError("Input operations should not contain network computing operator like in "
                                  "mindspore.nn or mindspore.ops, got operation:", str(item))
+        ops = []
+        for op in operations:
+            if str(op).find("c_transform") >= 0 or isinstance(op, TensorOperation):
+                ops.append(op)
+            else:
+                ops.append(util.FuncWrapper(op))
+        operations = ops
         if len(operations) == 1:
-            if str(operations).find("c_transform") >= 0 or isinstance(operations[0], TensorOperation):
-                return operations
-            return [util.FuncWrapper(operations[0])]
+            return operations
 
         new_ops, start_ind, end_ind = [], 0, 0
         for i, op in enumerate(operations):
-            if str(op).find("c_transform") >= 0:
+            if str(op).find("c_transform") >= 0 or isinstance(op, TensorOperation):
                 # reset counts
                 if start_ind != end_ind:
                     new_ops.append(Compose(operations[start_ind:end_ind]))
