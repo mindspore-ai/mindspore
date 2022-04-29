@@ -37,10 +37,10 @@ abstract::ShapePtr InplaceSubInferShape(const PrimitivePtr &primitive, const std
   auto v_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack());
 
   if (x_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << ", the input x should be Tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input x should be Tensor.";
   }
   if (v_shape_map.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << ", the input v should be Tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input v should be Tensor.";
   }
 
   auto x_in_shape = x_shape_map[kShape];
@@ -98,8 +98,9 @@ std::vector<int64_t> InplaceSub::get_indices() {
 MIND_API_OPERATOR_IMPL(InplaceSub, BaseOperator);
 AbstractBasePtr InplaceSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(InplaceSubInferShape(primitive, input_args),
-                                InplaceSubInferType(primitive, input_args));
+  auto dtype = InplaceSubInferType(primitive, input_args);
+  auto shape = InplaceSubInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, dtype);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(InplaceSub, prim::kPrimInplaceSub, InplaceSubInfer, nullptr, true);
 }  // namespace ops
