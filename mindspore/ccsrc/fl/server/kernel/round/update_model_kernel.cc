@@ -235,7 +235,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     } else {
       verifyFeatureMapIsSuccess = VerifySignDSFeatureMap(feature_map, update_model_req);
     }
-  } else if (ps::PSContext::instance()->upload_compress_type() == kDiffSparseQuant) {
+  } else if (IsCompress(update_model_req)) {
     verifyFeatureMapIsSuccess = VerifyUploadCompressFeatureMap(update_model_req);
   } else {
     verifyFeatureMapIsSuccess = LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map);
@@ -274,6 +274,14 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     }
   }
   return ResultCode::kSuccess;
+}
+
+bool UpdateModelKernel::IsCompress(const schema::RequestUpdateModel *update_model_req) {
+  if (ps::PSContext::instance()->upload_compress_type() != kNoCompress &&
+      update_model_req->upload_compress_type() != schema::CompressType_NO_COMPRESS) {
+    return true;
+  }
+  return false;
 }
 
 bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,

@@ -92,6 +92,9 @@ class UpdateModelKernel : public RoundKernel {
   std::map<std::string, UploadData> DecodeFeatureMap(std::map<std::string, std::vector<float>> *weight_map,
                                                      const schema::RequestUpdateModel *update_model_req,
                                                      schema::CompressType upload_compress_type, size_t data_size);
+
+  // Check upload mode
+  bool IsCompress(const schema::RequestUpdateModel *update_model_req);
 };
 }  // namespace kernel
 }  // namespace server
