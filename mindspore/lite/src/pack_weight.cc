@@ -18,7 +18,9 @@ namespace mindspore::lite {
 
 STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, RET_ERROR, "model buf is nullptr in pack weight manager.");
-  if (numa_model_buf_.find(numa_id) != numa_model_buf_.end()) {
+  if (model_buf_map_.find(model_buf) != model_buf_map_.end() &&
+      find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) !=
+        numa_model_buf_[model_buf].end()) {
     MS_LOG(DEBUG) << "same numa id, use same model buf.";
     return RET_OK;
   }
@@ -34,7 +36,7 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
     return RET_ERROR;
   }
   memcpy(new_model_buf, model_buf, model_size);
-  numa_model_buf_.insert(std::make_pair(numa_id, new_model_buf));
+  numa_model_buf_[model_buf] = {numa_id};
   auto *model_const_weight = new (std::nothrow) ModelConstWeight();
   if (model_const_weight == nullptr) {
     MS_LOG(ERROR) << "model const weight is nullptr.";
@@ -43,15 +45,18 @@ STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_si
   model_const_weight->numa_id = numa_id;
   buf_model_weight_[new_model_buf] = model_const_weight;
   buf_model_weight_[new_model_buf]->allocator = allocator;
+  model_buf_map_.insert(std::make_pair(model_buf, new_model_buf));
   return RET_OK;
 }
 
-char *PackWeight::GetNumaModelBuf(int numa_id) {
-  if (numa_model_buf_.find(numa_id) == numa_model_buf_.end()) {
+char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
+  if (model_buf_map_.find(model_buf) == model_buf_map_.end() ||
+      find(numa_model_buf_[model_buf].begin(), numa_model_buf_[model_buf].end(), numa_id) ==
+        numa_model_buf_[model_buf].end()) {
     MS_LOG(ERROR) << "can not find numa id in saved model buf.";
     return nullptr;
   }
-  return numa_model_buf_[numa_id];
+  return model_buf_map_[model_buf];
 }
 
 STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data) {

@@ -367,7 +367,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     int numa_node_id = model_pool_context[i]->numa_id;
     auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
-    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(numa_node_id);
+    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
     MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
@@ -641,6 +641,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     // split batch
     auto status = PredictBySplitBatch(inputs, outputs, before, after, max_wait_worker_node_id);
     if (status != kSuccess) {
+      predict_task_mutex_.unlock();
       MS_LOG(ERROR) << "do split batch failed. ret=" << status;
       return kLiteError;
     }
@@ -665,6 +666,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
     if (predict_task == nullptr) {
       MS_LOG(ERROR) << "predict_task is nullptr.";
+      predict_task_mutex_.unlock();
       return kLiteNullptr;
     }
     predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);

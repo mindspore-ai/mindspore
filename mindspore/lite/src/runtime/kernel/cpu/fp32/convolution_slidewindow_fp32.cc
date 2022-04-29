@@ -213,7 +213,6 @@ int ConvolutionSWCPUKernel::MallocWeightBiasData() {
       MS_LOG(ERROR) << "malloc packed weight failed.";
       return RET_NULL_PTR;
     }
-    memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   }
 
   if (in_tensors_.size() == kInputSize2) {
