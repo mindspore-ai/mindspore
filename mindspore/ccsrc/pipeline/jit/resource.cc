@@ -208,6 +208,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"searchsorted", std::string("searchsorted")},              // P.Select()
        {"take", std::string("take")},                              // P.GatherNd()
        {"tensor_scatter_add", std::string("tensor_scatter_add")},  // P.TensorScatterAdd()
+       {"tensor_scatter_div", std::string("tensor_scatter_div")},  // P.TensorScatterDiv()
        {"trace", std::string("trace")},                            // P.Eye()
        {"var", std::string("var")},                                // P.ReduceSum
        {"std", std::string("std")},                                // P.ReduceSum
