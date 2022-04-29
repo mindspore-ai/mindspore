@@ -156,6 +156,30 @@ std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std:
   }
   return nullptr;
 }
+
+bool ComputeGraphNode::PutMetadata(const std::string &name, const std::string &value) {
+  MetadataMessage metadata;
+  metadata.set_name(name);
+  metadata.set_value(value);
+  return SendMessageToMSN(std::to_string(static_cast<int>(MessageName::kWriteMetadata)), metadata.SerializeAsString());
+}
+
+std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t timeout) {
+  MetadataMessage metadata;
+  metadata.set_name(name);
+
+  auto message = CreateMessage(meta_server_addr_.GetUrl(), std::to_string(static_cast<int>(MessageName::kReadMetadata)),
+                               metadata.SerializeAsString());
+  MS_EXCEPTION_IF_NULL(message);
+
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  if (retval != rpc::NULL_MSG && (retval->name == std::to_string(static_cast<int>(MessageName::kValidMetadata)))) {
+    metadata.ParseFromArray(retval->body.c_str(), retval->body.length());
+    return metadata.value();
+  }
+  return "";
+}
 }  // namespace topology
 }  // namespace cluster
 }  // namespace distributed

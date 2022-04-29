@@ -100,6 +100,10 @@ class MetaServerNode : public NodeBase {
   // Process the received heartbeat message sent from compute graph nodes.
   MessageBase *const ProcessHeartbeat(MessageBase *const message);
 
+  // Process user-defined metadata writing and reading requests.
+  MessageBase *const ProcessWriteMetadata(MessageBase *const message);
+  MessageBase *const ProcessReadMetadata(MessageBase *const message);
+
   // Maintain the state which is type of `TopoState` of this cluster topology.
   void UpdateTopoState();
 
@@ -139,6 +143,11 @@ class MetaServerNode : public NodeBase {
 
   // The next assignable rank id for new registered compute graph node.
   std::atomic<size_t> next_rank_id_;
+
+  // The metadata written and read by users.
+  std::map<std::string, std::string> metadata_;
+
+  mutable std::shared_mutex meta_mutex_;
 };
 }  // namespace topology
 }  // namespace cluster

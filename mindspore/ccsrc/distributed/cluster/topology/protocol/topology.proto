@@ -34,3 +34,8 @@ message UnregistrationMessage {
 message HeartbeatMessage {
   string node_id = 1;
 }
+
+message MetadataMessage {
+  string name = 1;
+  string value = 2;
+}
