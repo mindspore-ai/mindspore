@@ -267,6 +267,7 @@ from .logsoftmax_grad_ds import _logsoftmax_grad_ds_tbe
 from .logsoftmax import _logsoftmax_tbe
 from .logsoftmax_ds import _logsoftmax_ds_tbe
 from .select import _select_tbe
+from .select_ds import _select_ds_tbe
 from .pow import _pow_tbe
 from .pow_ds import _pow_ds_tbe
 from .maximum import _maximum_tbe
