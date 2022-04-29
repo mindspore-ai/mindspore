@@ -73,15 +73,6 @@ bool BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
   std::vector<int64_t> input_shape_2 = inputs[1]->GetShapeVector();
   std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
-  auto in_shape_size_1 = input_shape_1.size();
-  auto in_shape_size_2 = input_shape_2.size();
-  auto output_shape_size = output_shape.size();
-  if (in_shape_size_1 != in_shape_size_2 || in_shape_size_1 != output_shape_size) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input shape is invalid, input0 shape size should be the same as "
-                  << "input1 shape size and output shape size but got input0 shape size " << in_shape_size_1
-                  << " input 1 shape size" << in_shape_size_2 << " output shape size " << output_shape_size;
-    return false;
-  }
 
   if (output_shape.size() > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
