@@ -51,18 +51,21 @@ abstract::ShapePtr BoundingBoxDecodeInferShape(const PrimitivePtr &primitive,
                                            prim_name);
 
   if (anchor_box_shape[0] != deltas_shape[0]) {
-    MS_EXCEPTION(ValueError) << "anchor_box first dimension must be the same as deltas first dimension, but got"
-                                "anchor_box_shape: "
-                             << anchor_box_shape[0] << ", deltas_shape: " << deltas_shape[0];
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', 'anchor_box' and 'deltas' must have the same first dimension. But got anchor_box_shape[0]: "
+      << anchor_box_shape[0] << ", deltas_shape[0]: " << deltas_shape[0] << ".";
   }
 
   const int64_t last_dimension = 4;
   if (anchor_box_shape[1] != last_dimension) {
-    MS_EXCEPTION(ValueError) << "anchor_box last dimension must be 4, but got anchor_box_shape: "
-                             << anchor_box_shape[1];
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', 'anchor_box' must have a last dimension of 4, but got: " << anchor_box_shape[1]
+                             << ".";
   }
   if (deltas_shape[1] != last_dimension) {
-    MS_EXCEPTION(ValueError) << "deltas last dimension must be 4, but got deltas_shape: " << deltas_shape[1];
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', 'deltas' must have a last dimension of 4, but got: " << deltas_shape[1] << ".";
   }
 
   auto x_shape = anchor_box->cast<abstract::ShapePtr>();

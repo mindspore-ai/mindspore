@@ -44,8 +44,8 @@ constexpr size_t right_padding = 3;
 void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
-      MS_EXCEPTION(ValueError) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
-                               << shape[i];
+      MS_EXCEPTION(ValueError) << "For '" << op << "',  shape element [" << i
+                               << "] must be positive integer or SHP_ANY, but got: " << shape[i] << ".";
     }
   }
 }
@@ -53,7 +53,8 @@ void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
 void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
   for (size_t i = 0; i < shape.size(); ++i) {
     if (shape[i] < 0) {
-      MS_LOG(EXCEPTION) << op << " shape element [" << i << "] must be positive integer, but got " << shape[i];
+      MS_LOG(EXCEPTION) << "For '" << op << "',  shape element [" << i
+                        << "] must be positive integer, but got: " << shape[i] << ".";
     }
   }
 }
@@ -62,7 +63,8 @@ int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, cons
   MS_EXCEPTION_IF_NULL(attr);
   int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
   if (attr_val <= 0) {
-    MS_LOG(EXCEPTION) << op << " invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
+    MS_LOG(EXCEPTION) << "For '" << op << "', '" << attr_name << "' should be greater than 0, but got: " << attr_val
+                      << ".";
   }
   return attr_val;
 }

@@ -38,16 +38,17 @@ abstract::ShapePtr LstsqInferShape(const PrimitivePtr &primitive, const std::vec
   auto a_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto a_shape = a_shape_map[kShape];
   if (x_shape.size() != x_dim_num) {
-    MS_EXCEPTION(ValueError) << "For lstsq, the dimension of x must be equal to 2, while got x_dim: " << x_shape.size()
+    MS_EXCEPTION(ValueError) << "For 'Lstsq', the dimension of x must be equal to 2, but got x_dim: " << x_shape.size()
                              << ".";
   }
   if (a_shape.size() != a_dim_num_2 && a_shape.size() != a_dim_num_1) {
-    MS_EXCEPTION(ValueError) << "For lstsq, the dimension of a must be equal to 2 or 1, while got a_dim: "
+    MS_EXCEPTION(ValueError) << "For 'Lstsq', the dimension of 'a' must be equal to 2 or 1, but got a_dim: "
                              << a_shape.size() << ".";
   }
   if (x_shape[0] != a_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For lstsq, the length of x_dim[0]: " << x_shape[0]
-                             << " is not equal to the length of a_dims[0]: " << a_shape[0] << ".";
+    MS_EXCEPTION(ValueError)
+      << "For 'Lstsq', the length of x_dim[0] must be equal to the length of a_dims[0]. But got x_dim[0]: "
+      << x_shape[0] << ",  a_dims[0]: " << a_shape[0] << ".";
   }
   ShapeVector y_shape;
   if (a_shape.size() == a_dim_num_1) {

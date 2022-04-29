@@ -48,24 +48,23 @@ abstract::TupleShapePtr CoalesceInferShape(const PrimitivePtr &primitive,
   auto x_values_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto x_shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   if (x_indices_shape.size() != x_indices_shape_size || x_values_shape.size() != 1 || x_shape_shape.size() != 1) {
-    MS_EXCEPTION(ValueError) << "For Coalesce, x_indices should be a 2-D tensor"
-                             << ", x_values should be a 1-D tensor"
-                             << ", x_shape should be a 1-D tensor"
-                             << ", but got x_indices is a " << x_indices_shape.size() << "-D tensor"
-                             << ", got x_values is a " << x_values_shape.size() << "-D tensor"
-                             << ", got x_shape is a " << x_shape_shape.size() << "-D tensor";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "' x_indices must be a 2-D tensor"
+                             << ", x_values and x_shape must be a 1-D tensor, but got x_indices is a "
+                             << x_indices_shape.size() << "-D tensor, got x_values is a " << x_values_shape.size()
+                             << "-D tensor, got x_shape is a " << x_shape_shape.size() << "-D tensor"
+                             << ".";
   }
   if (x_indices_shape[0] != x_shape_shape[0]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", sizes of dim0 of x_indices and dim0 of x_shape should be the same"
-                             << ", but size of dim0 of got x_indices is " << x_indices_shape[0]
-                             << ", size of dim0 of got x_shape is " << x_shape_shape[0];
+                             << ", size of dim0 of x_indices and dim0 of x_shape must be the same"
+                             << ", but got x_indices dim0 size: " << x_indices_shape[0]
+                             << ", x_shape dim0 size: " << x_shape_shape[0] << ".";
   }
   if (x_indices_shape[1] != x_values_shape[0]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", sizes of dim1 of x_indices and dim0 of x_values should be the same"
-                             << ", but size of dim1 of got x_indices is " << x_indices_shape[1]
-                             << ", size of dim0 of got x_values is " << x_values_shape[0];
+                             << ", size of dim1 of x_indices and dim0 of x_values must be the same"
+                             << ", but got x_indices dim1 size: " << x_indices_shape[1]
+                             << ", x_shape dim0 size: " << x_values_shape[0] << ".";
   }
   ShapeVector y_indices_shape = {x_indices_shape[0], -1};
   ShapeVector y_indices_min_shape = {x_indices_shape[0], 1};

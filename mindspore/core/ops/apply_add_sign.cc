@@ -48,14 +48,16 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
   if (!m_shape_ptr->IsDynamic() && !var_shape_ptr->IsDynamic()) {
     if (*m_shape != *var_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg m shape " << m_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', evaluator arg 'm' and 'var' must have the same shape. But got 'm' shape: "
+                               << m_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   if (!grad_shape_ptr->IsDynamic() && !var_shape_ptr->IsDynamic()) {
     if (*grad_shape != *var_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg grad shape " << grad_shape->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "', evaluator arg 'grad' and 'var' must have the same shape. But got 'grad' shape: "
+                               << grad_shape->ToString() << ", 'var' shape: " << var_shape->ToString() << ".";
     }
   }
   const int64_t kShapeSize = 1;

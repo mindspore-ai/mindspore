@@ -57,12 +57,14 @@ abstract::ShapePtr DynamicResizeNearestNeighborInferShape(const PrimitivePtr &pr
       auto min_value = size->cast<abstract::AbstractTensorPtr>()->get_min_value();
       auto max_value = size->cast<abstract::AbstractTensorPtr>()->get_max_value();
       if (!min_value || !max_value) {
-        MS_EXCEPTION(ValueError) << "For ResizeNearestNeighbor, inputs['size'] min or max value is empty.";
+        MS_EXCEPTION(ValueError) << "For 'ResizeNearestNeighbor', inputs['size'] min or max value is can not be empty.";
       }
       min_size = GetValue<std::vector<int64_t>>(min_value);
       max_size = GetValue<std::vector<int64_t>>(max_value);
       if (min_size.size() != size_size || max_size.size() != size_size) {
-        MS_EXCEPTION(ValueError) << "For ResizeNearestNeighbor, inputs['size'] min or max value size is not 2.";
+        MS_EXCEPTION(ValueError)
+          << "For 'ResizeNearestNeighbor', inputs['size'] min and max value size must be 2, but got min: "
+          << min_size.size() << ",  max: " << max_size.size() << ".";
       }
     }
   } else if (size->isa<abstract::AbstractTuple>()) {

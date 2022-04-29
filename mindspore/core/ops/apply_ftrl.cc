@@ -44,8 +44,10 @@ abstract::ShapePtr ApplyFtrlInferShape(const PrimitivePtr &primitive, const std:
   same_shape_args_map.insert({"linear", linear_shape});
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg " << elem.first << " shape " << elem.second->ToString()
-                               << " are not consistent with var shape " << var_shape->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
+                               << "' must have the same shape as 'var'. But got '" << elem.first
+                               << "' shape:  " << elem.second->ToString() << ", 'var' shape: " << var_shape->ToString()
+                               << ".";
     }
   }
   auto shape_ptr = var_shape->cast<abstract::ShapePtr>();

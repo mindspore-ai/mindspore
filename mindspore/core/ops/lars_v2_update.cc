@@ -37,28 +37,31 @@ abstract::ShapePtr LARSUpdateInferShape(const PrimitivePtr &primitive, const std
 
   if (weight_shape[kShape].size() != gradient_shape[kShape].size()) {
     MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', weight shape size should be equal to gradient shape size, but got "
-                             << "weight shape: " << weight_shape << " and gradient shape: " << gradient_shape;
+                             << "', weight shape size must be equal to gradient shape size, but got "
+                             << "weight shape size: " << weight_shape[kShape].size()
+                             << ", gradient shape size: " << gradient_shape[kShape].size() << ".";
   }
   if (norm_weight_shape[kShape].size() != norm_gradient_shape[kShape].size()) {
     MS_EXCEPTION(ValueError) << "For " << op_name
-                             << "', norm weight shape size should be equal to norm gradient shape size, but got "
-                             << "weight shape: " << norm_weight_shape << " and gradient shape: " << norm_gradient_shape;
+                             << "', norm weight shape size must be equal to norm gradient shape size, but got "
+                             << "norm weight shape size: " << norm_weight_shape[kShape].size()
+                             << ", norm gradient shape size: " << norm_gradient_shape[kShape].size() << ".";
   }
   for (size_t index = 0; index < weight_shape[kShape].size(); index++) {
     if (weight_shape[kShape][index] != gradient_shape[kShape][index]) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', The " << index
-                               << "'s shape  of weight shape should euqal with gradient shape, but got "
-                               << "weight shape: " << norm_weight_shape
-                               << " and gradient shape:" << norm_gradient_shape;
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the " << index
+                               << "th dim of weight shape and gradient shape must be equal, but got "
+                               << "weight shape[" << index << "]: " << weight_shape[kShape][index]
+                               << ", gradient shape[" << index << "]: " << gradient_shape[kShape][index] << ".";
     }
   }
-  for (size_t index = 0; index < weight_shape[kShape].size(); index++) {
-    if (weight_shape[kShape][index] != gradient_shape[kShape][index]) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', The " << index
-                               << "'s shape  of weight shape should euqal with gradient shape, but got "
-                               << "weight shape: " << norm_weight_shape
-                               << " and gradient shape:" << norm_gradient_shape;
+  for (size_t index = 0; index < norm_weight_shape[kShape].size(); index++) {
+    if (norm_weight_shape[kShape][index] != norm_gradient_shape[kShape][index]) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the " << index
+                               << "th dim of norm weight shape and norm gradient shape must be equal, but got "
+                               << "norm weight shape[" << index << "]: " << norm_weight_shape[kShape][index]
+                               << ", norm gradient shape[" << index << "]: " << norm_gradient_shape[kShape][index]
+                               << ".";
     }
   }
   auto shp_len = weight_decay_shape[kShape].size();

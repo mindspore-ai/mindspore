@@ -155,8 +155,8 @@ ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<Abstract
     default: {
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', the supported type is in the list: ['bool', 'int8', 'int16', 'int32', 'int64', "
-                                 "'uint8', 'uint16', 'uint32', 'uint64', 'float16', 'float32', 'float64'], but got "
-                              << result_type->ToString();
+                                 "'uint8', 'uint16', 'uint32', 'uint64', 'float16', 'float32', 'float64'], but got: "
+                              << result_type->ToString() << ".";
     }
   }
   return result_tensor;

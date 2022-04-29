@@ -78,8 +78,8 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
       }
       found_ell = false;
     } else {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", Operand " << cur_element
-                               << " in the equation contains invalid subscript, which can only consist of [a-zA-z].";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', operand " << cur_element
+                               << " in the equation can only contain [a-zA-z], but got: " << cur_element << ".";
     }
   }
   if (cur_element != input_shapes.size() - 1) {
@@ -234,13 +234,13 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
   auto equation = GetValue<std::string>(primitive->GetAttr(kEquation));
   equation.erase(std::remove(equation.begin(), equation.end(), ' '), equation.end());
   if (equation.length() == 0) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", the equation is required, but got none.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the equation is required, but got none.";
   }
   const std::string seg_arrow = "->";
   const auto seg_pos = equation.find(seg_arrow);
   if (seg_pos == 0) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", the equation should contain characters to the left of the arrow, but got none.";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the equation should contain characters to the left of the arrow, but got none.";
   }
 
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
@@ -259,13 +259,13 @@ abstract::ShapePtr EinsumInferShape(const PrimitivePtr &primitive, const std::ve
     auto shape = elements[idx]->BuildShape();
     MS_EXCEPTION_IF_NULL(shape);
     if (shape->IsDimZero()) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the dim of inputs' shape can not be zero, but got input["
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the dim of inputs' shape can not be zero, but got input["
                                << idx << "] shape: " << shape->ToString() << ".";
     }
     auto &shape_vec = shape->cast<abstract::ShapePtr>()->shape();
     for (auto &val : shape_vec) {
       if (val == 0) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", the shape can not contain zero, but got input[" << idx
+        MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape can not contain zero, but got input[" << idx
                                  << "] shape: " << shape->ToString() << ".";
       }
     }

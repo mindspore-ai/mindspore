@@ -68,16 +68,17 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   auto context = MsContext::GetInstance();
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   if (!is_ascend && x_shp.size() != y_shp.size()) {
-    MS_EXCEPTION(ValueError) << "For BatchMatMul on cpu/gpu, input x's size should be equal to input y's size, "
-                                "while x size = "
-                             << x_shp.size() << ", y size = " << y_shp.size();
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "' on cpu/gpu, input 'x' should have the same size as input 'y'. But got 'x' size: "
+                             << x_shp.size() << "'y' size: " << y_shp.size() << ".";
   }
   constexpr size_t x_dim_limit = 3;
   constexpr size_t y_dim_limit = 2;
   if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
-    MS_EXCEPTION(ValueError) << "For BatchMatMul, input x should be greater or equal to 3, input y should be greater "
-                                "or equal to 2 while x size = "
-                             << x_shp.size() << ", y size = " << y_shp.size();
+    MS_EXCEPTION(ValueError)
+      << "For '" << prim_name
+      << "', input 'x' should be greater or equal to 3, input 'y' should be greater or equal to 2. But got 'x': "
+      << x_shp.size() << ", 'y': " << y_shp.size() << ".";
   }
   constexpr size_t offset = 2;
   std::vector<int> x_last(x_shp.end() - offset, x_shp.end());
@@ -146,8 +147,8 @@ TypePtr BatchMatmulInferType(const PrimitivePtr &prim, const std::vector<Abstrac
     auto out_type = prim->GetAttr("cast_type");
     MS_EXCEPTION_IF_NULL(out_type);
     if (!out_type->isa<Type>()) {
-      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', MatMul cast_type must be a 'Type', but got "
-                               << out_type;
+      MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', MatMul cast_type must be a 'Type', but got: '"
+                               << out_type << "'.";
     }
     x_type = out_type->cast<TypePtr>();
   }

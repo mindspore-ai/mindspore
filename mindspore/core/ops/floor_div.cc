@@ -58,7 +58,7 @@ TypePtr FloorDivInferType(const PrimitivePtr &primitive, const std::vector<Abstr
   if (!input_type01->isa<TensorType>() && !input_type02->isa<TensorType>()) {
     MS_EXCEPTION(TypeError) << "For " << prim_name << ","
                             << " one of the inputs must be tensor type but got " << input_type01->ToString() << " and "
-                            << input_type02->ToString();
+                            << input_type02->ToString() << ".";
   }
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt8,   kInt16,
                                          kInt32,   kInt64,   kUInt8,   kUInt16, kBool};

@@ -37,12 +37,13 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<int64_t> *kernel_size, 
   // attr kernel size
   *kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   if (kernel_size->size() != kKernelDims) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', kernel_size must be 5, but got " << kernel_size->size();
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'kernel_size' must be 5, but got " << kernel_size->size()
+                      << ".";
   }
   // attr strides
   *strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
   if (strides->size() != kStridesDims) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "',strides must be 5, but got " << strides->size();
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', 'strides' must be 5, but got " << strides->size() << ".";
   }
   if (std::any_of(strides->begin(), strides->end(), [](int64_t stride) { return stride <= 0; })) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()

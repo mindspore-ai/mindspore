@@ -64,9 +64,9 @@ TypePtr MulNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
       return type_y;
     } else {
       MS_EXCEPTION(TypeError)
-        << "For '" << prim->name()
-        << "', Complex math binary op expecting Tensor [complex64, complex64],[complex64, float32], [float32, "
-           "complex64],[complex128, complex128],[complex128, float64], [float64, complex128], but got["
+        << "For '" << op_name
+        << "', complex math binary op expecting Tensor [complex64, complex64],[complex64, float32], [float32, "
+           "complex64], [complex128, complex128], [complex128, float64] or [float64, complex128], but got ["
         << type_x->ToString() << ", " << type_y->ToString() << "].";
     }
   }

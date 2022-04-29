@@ -32,8 +32,8 @@ abstract::ShapePtr DiagPartInferShape(const PrimitivePtr &primitive, const std::
   auto op_name = primitive->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
   if ((input_shape.size() % kScaleNum) != 0 || input_shape.size() == 0) {
-    MS_EXCEPTION(ValueError) << "For DiagPart, input rank must be non-zero and even, but got rank "
-                             << input_shape.size();
+    MS_EXCEPTION(ValueError) << "For 'DiagPart', input rank must be non-zero and even, but got rank: "
+                             << input_shape.size() << ".";
   }
   auto length = input_shape.size() / kScaleNum;
   std::vector<int64_t> out_shape;

@@ -52,9 +52,9 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
       }
     }
     if (*shape != *shape_0) {
-      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', Shape of input[" << i
-                               << "] should be not consistent with the shape of input[0], but got shape of input[" << i
-                               << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString();
+      MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', shape of input[" << i
+                               << "] must be consistent with the shape of input[0], but got shape of input[" << i
+                               << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString() << ".";
     }
   }
   auto in_shape = element0_shape_map[kShape];

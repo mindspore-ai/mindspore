@@ -43,14 +43,17 @@ abstract::ShapePtr AssignInferShape(const PrimitivePtr &prim, const std::vector<
     } else if (value_shape.size() == 1 && value_shape[0] == 1 && variable_shape.empty()) {
       return shape_element;
     } else {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the rank of value is " << value_shape.size()
-                               << ". It should be same with variable's rank " << variable_shape.size() << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "','value' must have the same rank as 'variable'. But got 'value' rank: "
+                               << value_shape.size() << ", 'variable' rank: " << variable_shape.size() << ".";
     }
   }
   for (uint64_t i = 0; i < variable_shape.size(); i++) {
     if (variable_shape[i] != value_shape[i]) {
-      MS_EXCEPTION(ValueError) << "For " << prim_name << ", the shape of value is " << value_shape_ptr->ToString()
-                               << ". It should be same with variable's shape " << variable_shape_ptr->ToString() << ".";
+      MS_EXCEPTION(ValueError) << "For '" << prim_name
+                               << "','value' must have the same shape as 'variable'. But got 'value' shape: "
+                               << value_shape_ptr->ToString()
+                               << ", 'variable' shape: " << variable_shape_ptr->ToString() << ".";
     }
   }
   return shape_element;
