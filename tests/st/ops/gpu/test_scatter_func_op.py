@@ -722,6 +722,13 @@ def test_scatter_func_disordered_dynamic_int32():
     ).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_d_net("max", inputx, indices, updates)
+    expected = np.array(
+        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
+    ).astype(np.int32)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
     # min
     output = scatter_func_d_net("min", inputx, indices, updates)
     expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32))
@@ -761,6 +768,13 @@ def test_scatter_func_disordered_dynamic_int8():
     ).astype(np.int8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_d_net("max", inputx, indices, updates)
+    expected = np.array(
+        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
+    ).astype(np.int8)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
     # min
     output = scatter_func_d_net("min", inputx, indices, updates)
     expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int8))
@@ -793,6 +807,13 @@ def test_scatter_func_disordered_dynamic_uint8():
     output = scatter_func_d_net("sub", inputx, indices, updates)
     expected = np.array(
         [[138.0, 132.0, 126.0, 120.0], [151.0, 148.0, 145.0, 142.0], [94.0, 88.0, 82.0, 76.0]]
+    ).astype(np.uint8)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    # max
+    output = scatter_func_d_net("max", inputx, indices, updates)
+    expected = np.array(
+        [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
     ).astype(np.uint8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
@@ -848,6 +869,13 @@ def test_scatter_func_input_less_than_1_dynamic_float32():
     )
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
+    # max
+    output = scatter_func_d_net("max", inputx, indices, updates)
+    expected = np.array(
+        [[37.0, 38.0, 39.0], [34.0, 35.0, 66.0], [67.0, 68.0, 69.0],], dtype=np.float32,
+    )
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
     # min
     output = scatter_func_d_net("min", inputx, indices, updates)
     expected = inputx_np
@@ -891,6 +919,15 @@ def test_scatter_func_dynamic_two_inputs():
     np.testing.assert_array_almost_equal(output_1.asnumpy(), expected_1)
     np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
 
+    # max
+    output_1, output_2 = scatter_func_d2_net(
+        "max", inputx, indices_1, updates_1, indices_2, updates_2
+    )
+    expected_1 = np.array([[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]])
+    expected_2 = np.array([[17.0, 16.0, 15.0], [11.0, 10.0, 9.0]])
+    np.testing.assert_array_almost_equal(output_1.asnumpy(), expected_1)
+    np.testing.assert_array_almost_equal(output_2.asnumpy(), expected_2)
+
     # min
     output_1, output_2 = scatter_func_d2_net(
         "min", inputx, indices_1, updates_1, indices_2, updates_2
@@ -902,13 +939,8 @@ def test_scatter_func_dynamic_two_inputs():
 
 
 if __name__ == "__main__":
-    test_scatter_func_small_float32()
-    test_scatter_func_input_updated()
-    test_scatter_func_large_shape_float32()
-    test_scatter_func_small_float32_use_locking_false()
-    test_scatter_func_input_less_than_1_float32()
-    test_scatter_func_float16()
-    test_scatter_func_large_float16()
-    test_scatter_func_disordered_float16()
-    test_scatter_func_large_int32()
-    test_scatter_func_disordered_int32()
+    test_scatter_func_disordered_dynamic_int32()
+    test_scatter_func_disordered_dynamic_int8()
+    test_scatter_func_disordered_dynamic_uint8()
+    test_scatter_func_input_less_than_1_dynamic_float32()
+    test_scatter_func_dynamic_two_inputs()

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/scatter_min.h"
+#include "ops/scatter_max.h"
 #include <set>
 #include <map>
 #include <string>
@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ScatterMinInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr ScatterMaxInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   BaseShapePtr input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
   BaseShapePtr indices_shape_ptr = input_args[kInputIndex1]->BuildShape();
@@ -61,7 +61,7 @@ abstract::ShapePtr ScatterMinInferShape(const PrimitivePtr &primitive, const std
   return output_shape;
 }
 
-TypePtr ScatterMinInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr ScatterMaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto input_x_type_ptr = input_args[kInputIndex0]->BuildType();
   auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
   auto updates_type_ptr = input_args[kInputIndex2]->BuildType();
@@ -80,16 +80,16 @@ TypePtr ScatterMinInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(ScatterMin, BaseOperator);
-AbstractBasePtr ScatterMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+MIND_API_OPERATOR_IMPL(ScatterMax, BaseOperator);
+AbstractBasePtr ScatterMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto infer_type = ScatterMinInferType(primitive, input_args);
-  auto infer_shape = ScatterMinInferShape(primitive, input_args);
+  auto infer_type = ScatterMaxInferType(primitive, input_args);
+  auto infer_shape = ScatterMaxInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMin, prim::kPrimScatterMin, ScatterMinInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(ScatterMax, prim::kPrimScatterMax, ScatterMaxInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
