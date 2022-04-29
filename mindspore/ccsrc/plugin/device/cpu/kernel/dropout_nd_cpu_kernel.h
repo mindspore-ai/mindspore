@@ -16,28 +16,41 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_ND_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_DROPOUT_ND_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class DropoutNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DropoutNdCpuKernelMod : public NativeCpuKernelMod {
  public:
-  DropoutNdCpuKernelMod() = default;
+  DropoutNdCpuKernelMod() { ResetResource(); }
   ~DropoutNdCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  bool Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
+
+  void ResetResource() noexcept;
+
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  bool CheckDropOutNdShape();
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
@@ -46,18 +59,14 @@ class DropoutNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     std::function<bool(DropoutNdCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
-  void CheckDropOutNdShape();
-
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  std::vector<size_t> mask_shape_;
-  size_t n_{1};
-  size_t c_{1};
+  size_t batches_{1};
   size_t channels_{1};
-  size_t element_nums_{1};
+  size_t input_elements_{1};
   size_t element_per_channel_{1};
-  TypeId input_data_dtype_{kTypeUnknown};
   float keep_prob_{0.0};
+  std::vector<KernelTensorPtr> outputs_ = {};
   DropoutNdFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, DropoutNdFunc>> func_list_;
 };

@@ -101,6 +101,25 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+
+@vmap_rules_getters.register(P.Dropout2D)
+@vmap_rules_getters.register(P.Dropout2D)
+def get_dropout_nd_vmap_rule(prim, axis_size):
+    """VmapRule for 'DropoutND' operation."""
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        output, mask = prim(x)
+        return ((output, 0), (mask, 0))
+
+    return vmap_rule
+
+
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU6)(get_unop_vmap_rule)
