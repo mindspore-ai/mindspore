@@ -124,30 +124,25 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
   }
 
-  void EraseLocalPyParam(const std::string &name) {
-    auto key_iter = local_py_params_keys_.find(name);
-    auto value_iter = local_py_params_values_.find(name);
-    if (key_iter != local_py_params_keys_.end() && value_iter != local_py_params_values_.end()) {
-      MS_LOG(DEBUG) << "Erase '" << name << "' from local_py_params, the key node:" << key_iter->second->DebugString()
-                    << ", the value node:" << value_iter->second->DebugString();
-      local_py_params_keys_.erase(key_iter);
-      local_py_params_values_.erase(value_iter);
-    }
-  }
-
+  // Update local parameters from previous block.
   void UpdateLocalPyParam(const std::map<std::string, AnfNodePtr> &keys, std::map<std::string, AnfNodePtr> values) {
     if (keys.size() != values.size()) {
       MS_LOG(EXCEPTION) << "keys size should be equal to values size.";
     }
     for (auto iter = keys.begin(); iter != keys.end(); ++iter) {
       const std::string &cur_key_name = iter->first;
-      if (local_py_params_keys_.find(cur_key_name) == local_py_params_keys_.end()) {
+      auto key_iter = local_py_params_keys_.find(cur_key_name);
+      if (key_iter == local_py_params_keys_.end()) {
         (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(cur_key_name, iter->second));
         (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(cur_key_name, values[cur_key_name]));
         MS_LOG(DEBUG) << "Add '" << iter->second->DebugString() << "', " << values[cur_key_name]->DebugString();
       } else {
-        MS_LOG(DEBUG) << "Update '" << iter->second->DebugString() << "', " << values[cur_key_name]->DebugString();
-        local_py_params_values_[cur_key_name] = values[cur_key_name];
+        // The local variable is already in the current block. This means the current block has multiples previous
+        // blocks. If this local variable is used in the current block, it should be converted to phi node. So we erase
+        // it from local_py_params.
+        (void)local_py_params_keys_.erase(key_iter);
+        (void)local_py_params_values_.erase(cur_key_name);
+        MS_LOG(DEBUG) << "Erase '" << iter->second->DebugString() << "', " << values[cur_key_name]->DebugString();
       }
     }
     if (local_py_params_keys_.size() != local_py_params_values_.size()) {

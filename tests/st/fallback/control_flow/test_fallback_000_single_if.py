@@ -263,3 +263,26 @@ def test_single_if_change_variable_value():
         return Tensor(0)
     res = control_flow_if()
     assert np.all(res.asnumpy() == np.array([4, 5, 6, 7]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_if_np_all():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if():
+        x = np.array([1, 2, 3, 4])
+        y = np.array([4, 5, 6])
+        if np.all(x == np.array([1, 2, 3, 4])) and np.any(y == np.array([4, 4, 4])):
+            x += 3
+            return Tensor(x)
+        return Tensor(0)
+    res = control_flow_if()
+    assert np.all(res.asnumpy() == np.array([4, 5, 6, 7]))
