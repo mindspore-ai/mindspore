@@ -587,6 +587,45 @@ def transpose(input_x, input_perm):
     return transpose_(input_x, input_perm)
 
 
+scatter_max_ = P.ScatterMax()
+def scatter_max(input_x, indices, updates):
+    r"""
+    Using given values to update tensor value through the max operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        - **input_x** (Parameter) - The target tensor, with data type of Parameter.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32.
+        - **updates** (Tensor) - The tensor doing the max operation with `input_x`,
+          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+
+    Outputs:
+        Tensor, the updated `input_x`, the type and shape same as `input_x`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `indices` is not an int32.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
+        >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
+        >>> scatter_max = ops.ScatterMax()
+        >>> output = scatter_max(input_x, indices, updates)
+        >>> print(output)
+        [[88. 88. 88.]
+         [88. 88. 88.]]
+    """
+    return scatter_max_(input_x, indices, updates)
+
+
 def scatter_min(input_x, indices, updates, use_locking=False):
     r"""
     Using given values to update tensor value through the min operation, along with the input indices.
@@ -1084,6 +1123,7 @@ __all__ = [
     'gather_d',
     'gather_nd',
     'masked_fill',
+    'scatter_max',
     'scatter_min'
 ]
 __all__.sort()
