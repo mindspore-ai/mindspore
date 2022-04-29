@@ -32,6 +32,7 @@ class BatchNormAddReluFusion : public PatternProcessPass {
     var_ = std::make_shared<Var>();
     index_ = std::make_shared<Var>();
     z_ = std::make_shared<Var>();
+    umonad_ = std::make_shared<Var>();
   }
   ~BatchNormAddReluFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -45,6 +46,7 @@ class BatchNormAddReluFusion : public PatternProcessPass {
   VarPtr var_;
   VarPtr index_;
   VarPtr z_;
+  VarPtr umonad_;
 };
 }  // namespace opt
 }  // namespace mindspore

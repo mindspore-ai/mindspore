@@ -30,6 +30,7 @@ class PostBatchNormAddReluFusion : public PatternProcessPass {
     bias_ = std::make_shared<Var>();
     mean_ = std::make_shared<Var>();
     var_ = std::make_shared<Var>();
+    umonad_ = std::make_shared<Var>();
     index_ = std::make_shared<Var>();
     z_ = std::make_shared<Var>();
   }
@@ -43,6 +44,7 @@ class PostBatchNormAddReluFusion : public PatternProcessPass {
   VarPtr bias_;
   VarPtr mean_;
   VarPtr var_;
+  VarPtr umonad_;
   VarPtr index_;
   VarPtr z_;
 };
