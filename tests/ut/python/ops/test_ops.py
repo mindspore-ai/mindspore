@@ -55,6 +55,7 @@ from mindspore.ops.operations.math_ops import Orgqr
 from mindspore.ops.operations.math_ops import CompareAndBitpack
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
+from mindspore.ops.operations.math_ops import Qr
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import FillDiagonal
 from mindspore.ops.operations.array_ops import Im2Col
@@ -2487,6 +2488,10 @@ test_case_math_ops = [
         'block': STFT(n_fft=64, hop_length=16, win_length=64, normalized=False, onesided=True, return_complex=False),
         'desc_inputs': [Tensor(np.random.rand(2, 7192), mstype.float32),
                         Tensor(np.ones((64,)), mstype.float32)],
+        'skip': ['backward']}),
+    ('Qr', {
+        'block': Qr(),
+        'desc_inputs': [Tensor(np.array([[12., -51, 4], [6, 167, -68], [-4, 24, -41]]).astype(np.float32))],
         'skip': ['backward']}),
 ]
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_SCIPY_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_SCIPY_CPU_KERNEL_H_
 
 #include <utility>
 #include <vector>
@@ -24,33 +24,36 @@
 
 namespace mindspore {
 namespace kernel {
-class QrCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class QRCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  QrCpuKernelMod() = default;
-  ~QrCpuKernelMod() override = default;
+  QRCpuKernelMod() = default;
+  ~QRCpuKernelMod() override = default;
   void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using QrFunc = std::function<bool(QrCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using QRFunc = std::function<bool(QRCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, QrFunc>> func_list_;
-  QrFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, QRFunc>> func_list_;
+  QRFunc kernel_func_;
 
-  size_t m{0};
-  size_t n{0};
-  bool full_matrices_{false};
+  size_t a_row_{0};
+  size_t a_col_{0};
+  size_t q_row_{0};
+  size_t q_col_{0};
+  size_t r_row_{0};
+  size_t r_col_{0};
+  bool economic_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_QR_SCIPY_CPU_KERNEL_H_

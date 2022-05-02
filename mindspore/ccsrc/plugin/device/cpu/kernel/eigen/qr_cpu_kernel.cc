@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,95 +23,135 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kAMatrixDimNum = 2;
+constexpr size_t kAMatrixDimNumMin = 2;
 constexpr size_t kQRInputsNum = 1;
 constexpr size_t kQROutputsNum = 2;
 constexpr size_t kPivotsIndex = 1;
 constexpr size_t kPermutationIndex = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
+constexpr int64_t kParallelDataNums = 8 * 1024;
 }  // namespace
-void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+void QrCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   CHECK_KERNEL_INPUTS_NUM(input_num, kQRInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kQROutputsNum, kernel_name_);
 
-  const auto mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, MODE);
-  if (mode != "full" && mode != "r" && mode != "economic") {
-    MS_LOG(EXCEPTION) << "mode must be in [full, r, economic], but got [" << mode << "].";
+  full_matrices_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "full_matrices");
+  auto x_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  if (x_shape.empty() || x_shape.size() < kAMatrixDimNumMin) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', input x matrix shape must greater than or equal to 2, but got "
+                     << x_shape.size();
   }
-
-  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  CHECK_KERNEL_INPUTS_NUM(a_shape.size(), kAMatrixDimNum, kernel_name_);
-  a_row_ = a_shape[kDim0];
-  a_col_ = a_shape[kDim1];
-
+  m = x_shape[x_shape.size() - kRowIndex];
+  n = x_shape[x_shape.size() - kColIndex];
   auto q_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
-  CHECK_KERNEL_INPUTS_NUM(q_shape.size(), kAMatrixDimNum, kernel_name_);
-  q_row_ = q_shape[kDim0];
-  q_col_ = q_shape[kDim1];
-
-  auto r_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 1));
-  CHECK_KERNEL_INPUTS_NUM(r_shape.size(), kAMatrixDimNum, kernel_name_);
-  r_row_ = r_shape[kDim0];
-  r_col_ = r_shape[kDim1];
-
-  if (mode == "economic") {
-    economic_ = true;
+  if (q_shape.empty() || q_shape.size() < kAMatrixDimNumMin) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', output q matrix shape must greater than or equal to 2, but got "
+                     << q_shape.size();
   }
-
+  auto r_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 1));
+  if (r_shape.empty() || r_shape.size() < kAMatrixDimNumMin) {
+    MS_LOG_EXCEPTION << "For '" << kernel_name_ << "', output r matrix shape must greater than or equal to 2, but got "
+                     << r_shape.size();
+  }
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "QR does not support this kernel data type: " << kernel_attr;
+    MS_LOG(EXCEPTION) << "Qr does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
-bool QRCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+bool QrCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                   const std::vector<kernel::AddressPtr> &,
                                   const std::vector<kernel::AddressPtr> &outputs) {
-  T *a_value = reinterpret_cast<T *>(inputs[0]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> input_a(a_value, a_row_, a_col_);
-  T *q_value = reinterpret_cast<T *>(outputs[0]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_q(q_value, q_row_, q_col_);
-  T *r_value = reinterpret_cast<T *>(outputs[1]->addr);
-  Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> output_r(r_value, r_row_, r_col_);
-
-  auto householder_qr = input_a.householderQr();
-  if (economic_) {
-    // r_row_ = std::min(a_row_, a_col_)
-    output_r = Eigen::MatrixXd::Identity(r_row_, a_row_).template cast<T>() *
-               householder_qr.matrixQR().template triangularView<Eigen::Upper>();
-    // q_col_ = std::min(a_row_, a_col_)
-    output_q = householder_qr.householderQ() * Eigen::MatrixXd::Identity(q_row_, q_col_).template cast<T>();
-  } else {
-    output_r = householder_qr.matrixQR().template triangularView<Eigen::Upper>();
-    output_q = householder_qr.householderQ();
+  auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output_q = reinterpret_cast<T *>(outputs[0]->addr);
+  auto output_r = reinterpret_cast<T *>(outputs[1]->addr);
+  typedef Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MartixXd;
+  size_t p = std::min(m, n);
+  size_t size_mn = m * n;
+  size_t size_mm = m * m;
+  size_t size_mp = m * p;
+  size_t size_pn = p * n;
+  if (size_mn > 0) {
+    size_t input_num = static_cast<int64_t>(inputs[0]->size / sizeof(T));
+    size_t matrix_num = input_num / size_mn;
+    size_t data_size = input_num * sizeof(T);
+    if (data_size <= kParallelDataNums) {
+      for (size_t i = 0; i < matrix_num; i++) {
+        Eigen::Map<MartixXd> martix_x(input_x + i * size_mn, m, n);
+        Eigen::HouseholderQR<MartixXd> qr(martix_x);
+        if (full_matrices_) {
+          Eigen::Map<MartixXd> martix_q(output_q + i * size_mm, m, m);
+          Eigen::Map<MartixXd> martix_r(output_r + i * size_mn, m, n);
+          martix_q = qr.householderQ();
+          martix_r = qr.matrixQR().template triangularView<Eigen::Upper>();
+        } else {
+          Eigen::Map<MartixXd> martix_q(output_q + i * size_mp, m, p);
+          Eigen::Map<MartixXd> martix_r(output_r + i * size_pn, p, n);
+          MartixXd tmp = MartixXd::Identity(m, p);
+          martix_q = qr.householderQ() * tmp;
+          auto qr_top = qr.matrixQR().block(0, 0, p, n);
+          martix_r = qr_top.template triangularView<Eigen::Upper>();
+        }
+      }
+    } else {
+      auto task = [this, &input_x, &output_q, &output_r, p, size_mm, size_mn, size_mp, size_pn](size_t start,
+                                                                                                size_t end) {
+        for (size_t i = start; i < end; i++) {
+          Eigen::Map<MartixXd> martix_x(input_x + i * size_mn, m, n);
+          Eigen::HouseholderQR<MartixXd> qr(martix_x);
+          if (full_matrices_) {
+            Eigen::Map<MartixXd> martix_q(output_q + i * size_mm, m, m);
+            Eigen::Map<MartixXd> martix_r(output_r + i * size_mn, m, n);
+            martix_q = qr.householderQ();
+            martix_r = qr.matrixQR().template triangularView<Eigen::Upper>();
+          } else {
+            Eigen::Map<MartixXd> martix_q(output_q + i * size_mp, m, p);
+            Eigen::Map<MartixXd> martix_r(output_r + i * size_pn, p, n);
+            MartixXd tmp = MartixXd::Identity(m, p);
+            martix_q = qr.householderQ() * tmp;
+            auto qr_top = qr.matrixQR().block(0, 0, p, n);
+            martix_r = qr_top.template triangularView<Eigen::Upper>();
+          }
+        }
+      };
+      CPUKernelUtils::ParallelFor(task, matrix_num);
+    }
   }
-  if (output_r.RowsAtCompileTime != 0 && output_r.ColsAtCompileTime != 0 && output_q.RowsAtCompileTime != 0 &&
-      output_q.ColsAtCompileTime != 0) {
-    return true;
-  }
-  MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
+  return true;
 }
 
-std::vector<std::pair<KernelAttr, QRCpuKernelMod::QRFunc>> QRCpuKernelMod::func_list_ = {
+std::vector<std::pair<KernelAttr, QrCpuKernelMod::QrFunc>> QrCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &QrCpuKernelMod::LaunchKernel<Eigen::half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &QRCpuKernelMod::LaunchKernel<float>},
+   &QrCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &QRCpuKernelMod::LaunchKernel<double>}};
+   &QrCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &QrCpuKernelMod::LaunchKernel<std::complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &QrCpuKernelMod::LaunchKernel<std::complex<double>>}};
 
-std::vector<KernelAttr> QRCpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> QrCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, QRFunc> &pair) { return pair.first; });
+                       [](const std::pair<KernelAttr, QrFunc> &pair) { return pair.first; });
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, QR, QRCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Qr, QrCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
