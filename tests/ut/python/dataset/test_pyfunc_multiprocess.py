@@ -18,8 +18,8 @@ Test Python Multiprocessing with Python functions/ops
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms as py_transforms
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as transforms
+import mindspore.dataset.vision.transforms as vision
 from util import visualize_list
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
@@ -65,25 +65,25 @@ def skip_test_pyfunc_multiproc_shrmem():
 def create_dataset_pyop_multiproc(num_parallel_workers=None, max_rowsize=16, batch_size=32, repeat_size=1,
                                   num_samples=None):
     """
-    Create dataset with Python ops list and python_multiprocessing=True for Map op
+    Create dataset with Python implementations list and python_multiprocessing=True for Map op
     """
 
     # Define dataset
     data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=num_samples)
 
-    data1 = data1.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+    data1 = data1.map(operations=[vision.ToType(np.int32)], input_columns="label",
                       num_parallel_workers=num_parallel_workers,
                       python_multiprocessing=True, max_rowsize=max_rowsize)
 
-    # Setup transforms list which include Python ops
+    # Setup transforms list which include Python implementations
     transforms_list = [
         lambda x: x,
-        py_vision.HWC2CHW(),
-        py_vision.RandomErasing(0.9, value='random'),
-        py_vision.Cutout(4, 2),
+        vision.HWC2CHW(),
+        vision.RandomErasing(0.9, value='random'),
+        vision.CutOut(4, 2, is_hwc=False),
         lambda y: y
     ]
-    compose_op = py_transforms.Compose(transforms_list)
+    compose_op = transforms.Compose(transforms_list)
     data1 = data1.map(operations=compose_op, input_columns="image", num_parallel_workers=num_parallel_workers,
                       python_multiprocessing=True, max_rowsize=max_rowsize)
 
@@ -160,7 +160,7 @@ def test_pyfunc_multiproc_max_rowsize_large():
 def test_pyfunc_multiproc_basic_pipeline(plot=False):
     """
     Feature: Python Multiprocessing
-    Description: Test Map op with python_multiprocessing=True in a basic pipeline with Py ops
+    Description: Test Map op with python_multiprocessing=True in a basic pipeline with Python implementations
     Expectation: Images in plots from the 2 pipelines are visually fine
     """
     # Reduce memory required by disabling the shared memory optimization
@@ -168,19 +168,19 @@ def test_pyfunc_multiproc_basic_pipeline(plot=False):
     ds.config.set_enable_shared_mem(False)
 
     # Define map operations
-    transforms_list = [py_vision.CenterCrop(64), py_vision.RandomRotation(30)]
+    transforms_list = [vision.CenterCrop(64), vision.RandomRotation(30)]
     transforms1 = [
-        py_vision.Decode(),
-        py_transforms.RandomChoice(transforms_list),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        transforms.RandomChoice(transforms_list),
+        vision.ToTensor()
     ]
-    transform1 = py_transforms.Compose(transforms1)
+    transform1 = transforms.Compose(transforms1)
 
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = py_transforms.Compose(transforms2)
+    transform2 = transforms.Compose(transforms2)
 
     # First dataset
     data1 = ds.TFRecordDataset(TF_DATA_DIR, TF_SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -207,7 +207,7 @@ def test_pyfunc_multiproc_basic_pipeline(plot=False):
 def test_pyfunc_multiproc_child_exception():
     """
     Feature: Python Multiprocessing
-    Description: Test Map op with python_multiprocessing=True with Python op encountering exception
+    Description: Test Map op with python_multiprocessing=True with Python implementation encountering exception
     Expectation: Exception is correctly processed
     """
     # Reduce memory required by disabling the shared memory optimization
@@ -216,13 +216,13 @@ def test_pyfunc_multiproc_child_exception():
 
     # Define map operations
     # Note: crop size[5000, 5000] > image size[4032, 2268]
-    transforms_list = [py_vision.RandomCrop(5000)]
-    transforms = [
-        py_vision.Decode(),
-        py_transforms.RandomChoice(transforms_list),
-        py_vision.ToTensor()
+    transforms_list = [vision.RandomCrop(5000)]
+    transform = [
+        vision.Decode(True),
+        transforms.RandomChoice(transforms_list),
+        vision.ToTensor()
     ]
-    transform = py_transforms.Compose(transforms)
+    transform = transforms.Compose(transform)
     # Generate dataset
     data = ds.TFRecordDataset(TF_DATA_DIR, TF_SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=transform, input_columns=["image"], python_multiprocessing=True)

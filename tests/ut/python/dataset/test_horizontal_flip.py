@@ -18,7 +18,7 @@ Testing HorizontalFlip Python API
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 
 from mindspore import log as logger
 from util import visualize_image, diff_mse
@@ -30,14 +30,14 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_horizontal_flip_pipeline(plot=False):
     """
-    Test HorizontalFlip of c_transforms
+    Test HorizontalFlip of C implementation
     """
     logger.info("test_horizontal_flip_pipeline")
 
     # First dataset
     dataset1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    decode_op = c_vision.Decode()
-    horizontal_flip_op = c_vision.HorizontalFlip()
+    decode_op = vision.Decode()
+    horizontal_flip_op = vision.HorizontalFlip()
     dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
     dataset1 = dataset1.map(operations=horizontal_flip_op, input_columns=["image"])
 
@@ -68,7 +68,7 @@ def test_horizontal_flip_eager():
     logger.info("test_horizontal_flip_eager")
     img = cv2.imread(IMAGE_FILE)
 
-    img_ms = c_vision.HorizontalFlip()(img)
+    img_ms = vision.HorizontalFlip()(img)
     img_cv = cv2.flip(img, 1)
     mse = diff_mse(img_ms, img_cv)
     assert mse == 0

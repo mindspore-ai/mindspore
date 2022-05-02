@@ -15,7 +15,7 @@
 
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as ops
+import mindspore.dataset.transforms.transforms as ops
 
 
 def test_random_choice():

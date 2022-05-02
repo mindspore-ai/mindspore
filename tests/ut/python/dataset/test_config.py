@@ -22,9 +22,8 @@ import numpy as np
 
 import mindspore.dataset as ds
 import mindspore.dataset.engine.iterators as it
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import dataset_equal
 
@@ -94,12 +93,12 @@ def test_pipeline():
     num_parallel_workers_original = ds.config.get_num_parallel_workers()
 
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    data1 = data1.map(operations=[c_vision.Decode(True)], input_columns=["image"])
+    data1 = data1.map(operations=[vision.Decode()], input_columns=["image"])
     ds.serialize(data1, "testpipeline.json")
 
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_parallel_workers=num_parallel_workers_original,
                                shuffle=False)
-    data2 = data2.map(operations=[c_vision.Decode(True)], input_columns=["image"])
+    data2 = data2.map(operations=[vision.Decode()], input_columns=["image"])
     ds.serialize(data2, "testpipeline2.json")
 
     # check that the generated output is different
@@ -137,8 +136,8 @@ def test_deterministic_run_fail():
     # Assuming we get the same seed on calling constructor, if this op is re-used then result won't be
     # the same in between the two datasets. For example, RandomCrop constructor takes seed (0)
     # outputs a deterministic series of numbers, e,g "a" = [1, 2, 3, 4, 5, 6] <- pretend these are random
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_op, input_columns=["image"])
 
@@ -177,8 +176,8 @@ def test_seed_undeterministic():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # We get the seed when constructor is called
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_op, input_columns=["image"])
 
@@ -187,7 +186,7 @@ def test_seed_undeterministic():
     data2 = data2.map(operations=decode_op, input_columns=["image"])
     # Since seed is set up on constructor, so the two ops output deterministic sequence.
     # Assume the generated random sequence "a" = [1, 2, 3, 4, 5, 6] <- pretend these are random
-    random_crop_op2 = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    random_crop_op2 = vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data2 = data2.map(operations=random_crop_op2, input_columns=["image"])
     try:
         dataset_equal(data1, data2, 0)
@@ -217,8 +216,8 @@ def test_seed_deterministic():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # seed will be read in during constructor call
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_op, input_columns=["image"])
 
@@ -226,7 +225,7 @@ def test_seed_deterministic():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=decode_op, input_columns=["image"])
     # If seed is set up on constructor, so the two ops output deterministic sequence
-    random_crop_op2 = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    random_crop_op2 = vision.RandomCrop([512, 512], [200, 200, 200, 200])
     data2 = data2.map(operations=random_crop_op2, input_columns=["image"])
 
     dataset_equal(data1, data2, 0)
@@ -252,8 +251,8 @@ def test_deterministic_run_distribution():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    random_horizontal_flip_op = c_vision.RandomHorizontalFlip(0.1)
-    decode_op = c_vision.Decode()
+    random_horizontal_flip_op = vision.RandomHorizontalFlip(0.1)
+    decode_op = vision.Decode()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_horizontal_flip_op, input_columns=["image"])
 
@@ -261,7 +260,7 @@ def test_deterministic_run_distribution():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=decode_op, input_columns=["image"])
     # If seed is set up on constructor, so the two ops output deterministic sequence
-    random_horizontal_flip_op2 = c_vision.RandomHorizontalFlip(0.1)
+    random_horizontal_flip_op2 = vision.RandomHorizontalFlip(0.1)
     data2 = data2.map(operations=random_horizontal_flip_op2, input_columns=["image"])
 
     dataset_equal(data1, data2, 0)
@@ -288,11 +287,11 @@ def test_deterministic_python_seed():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([512, 512], [200, 200, 200, 200]),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.RandomCrop([512, 512], [200, 200, 200, 200]),
+        vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data1 = data1.map(operations=transform, input_columns=["image"])
     data1_output = []
     # config.set_seed() calls random.seed()
@@ -340,11 +339,11 @@ def test_deterministic_python_seed_multi_thread():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([512, 512], [200, 200, 200, 200]),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.RandomCrop([512, 512], [200, 200, 200, 200]),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data1 = data1.map(operations=transform, input_columns=["image"], python_multiprocessing=True)
     data1_output = []
     # config.set_seed() calls random.seed()

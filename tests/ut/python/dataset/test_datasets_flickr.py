@@ -16,7 +16,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 FLICKR30K_DATASET_DIR = "../data/dataset/testFlickrData/flickr30k/flickr30k-images"
@@ -95,7 +95,7 @@ def test_flickr30k_dataset_basic():
 
     # case 3: test batch with drop_remainder=False
     data3 = ds.FlickrDataset(FLICKR30K_DATASET_DIR, FLICKR30K_ANNOTATION_FILE_2, decode=True, shuffle=False)
-    resize_op = c_vision.Resize((100, 100))
+    resize_op = vision.Resize((100, 100))
     data3 = data3.map(operations=resize_op, input_columns=["image"], num_parallel_workers=1)
     assert data3.get_dataset_size() == 3
     assert data3.get_batch_size() == 1
@@ -109,7 +109,7 @@ def test_flickr30k_dataset_basic():
 
     # case 4: test batch with drop_remainder=True
     data4 = ds.FlickrDataset(FLICKR30K_DATASET_DIR, FLICKR30K_ANNOTATION_FILE_2, decode=True, shuffle=False)
-    resize_op = c_vision.Resize((100, 100))
+    resize_op = vision.Resize((100, 100))
     data4 = data4.map(operations=resize_op, input_columns=["image"], num_parallel_workers=1)
     assert data4.get_dataset_size() == 3
     assert data4.get_batch_size() == 1

@@ -21,7 +21,7 @@ import pytest
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -78,7 +78,7 @@ def test_decode_op():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     # Serialize and Load dataset requires using vision.Decode instead of vision.Decode().
-    data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
+    data1 = data1.map(operations=[vision.Decode()], input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)

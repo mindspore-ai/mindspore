@@ -22,8 +22,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.transforms as c_vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -1690,7 +1689,7 @@ def test_cache_nomap_clue2():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train', num_samples=2)
-    ds1 = ds1.map(py_vision.not_random(lambda x: x), ["label"], cache=some_cache)
+    ds1 = ds1.map(vision.not_random(lambda x: x), ["label"], cache=some_cache)
 
     num_epoch = 4
     iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
@@ -1767,7 +1766,7 @@ def test_cache_nomap_csv2():
 
     ds1 = ds.CSVDataset(CSV_DATA_DIR, column_defaults=["1", "2", "3", "4"],
                         column_names=['col1', 'col2', 'col3', 'col4'], num_samples=2)
-    ds1 = ds1.map(py_vision.not_random(lambda x: x), ["col1"], cache=some_cache)
+    ds1 = ds1.map(vision.not_random(lambda x: x), ["col1"], cache=some_cache)
 
     num_epoch = 4
     iter1 = ds1.create_dict_iterator(num_epochs=num_epoch, output_numpy=True)
@@ -2203,7 +2202,7 @@ def test_cache_nomap_pyfunc_lambda():
 
     # This dataset has 12 records in it
     data1 = ds.TFRecordDataset(PYFUNC_DATA_DIR, PYFUNC_SCHEMA_DIR, shuffle=False)
-    transforms = [py_vision.not_random(lambda x: x + x), py_vision.not_random(lambda x: x - 1)]
+    transforms = [vision.not_random(lambda x: x + x), vision.not_random(lambda x: x - 1)]
     data1 = data1.map(operations=transforms, input_columns="col0", cache=some_cache)
 
     num_iter = 0
@@ -2244,7 +2243,7 @@ def test_cache_nomap_pyfunc_builtin():
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
-    ds1 = ds1.map(operations=[py_vision.Decode(), py_vision.ToTensor()], input_columns=["image"], cache=some_cache)
+    ds1 = ds1.map(operations=[vision.Decode(), vision.ToTensor()], input_columns=["image"], cache=some_cache)
 
     num_iter = 0
     for _ in ds1.create_dict_iterator(num_epochs=1):
@@ -2254,7 +2253,7 @@ def test_cache_nomap_pyfunc_builtin():
     other_cache = ds.DatasetCache(session_id=session_id, size=0)
     # This dataset has 3 records in it only
     ds2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"])
-    ds2 = ds2.map(operations=[py_vision.Decode(), py_vision.RandomCrop(224), py_vision.ToTensor()],
+    ds2 = ds2.map(operations=[vision.Decode(), vision.RandomCrop(224), vision.ToTensor()],
                   input_columns=["image"], cache=other_cache)
 
     with pytest.raises(RuntimeError) as e:
@@ -2269,7 +2268,7 @@ def test_cache_nomap_pyfunc_builtin():
 def test_cache_nomap_pyfunc_function():
     """
     Test cache after map op with a python customized function.
-    Only allowed if the function is decorated with 'py_vision.not_random', otherwise an error will be raised.
+    Only allowed if the function is decorated with 'vision.not_random', otherwise an error will be raised.
 
         Cache
           |
@@ -2278,7 +2277,7 @@ def test_cache_nomap_pyfunc_function():
       TFRecord
     """
 
-    @py_vision.not_random
+    @vision.not_random
     def not_random_func(x):
         return np.ones(x.shape, dtype=x.dtype)
 

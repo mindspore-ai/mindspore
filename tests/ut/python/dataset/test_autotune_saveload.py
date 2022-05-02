@@ -21,8 +21,8 @@ import random
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as c_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.transforms as transforms
+import mindspore.dataset.vision.transforms as vision
 
 MNIST_DATA_DIR = "../data/dataset/testMnistData"
 DATA_DIR = "../data/dataset/testPK/data"
@@ -123,7 +123,7 @@ class TestAutotuneSaveLoad:
         ds.config.set_seed(1)
 
         data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=100)
-        one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
+        one_hot_encode = transforms.OneHot(10)  # num_classes is input argument
         data1 = data1.map(operations=one_hot_encode, input_columns="label")
 
         data1 = data1.batch(batch_size=10, drop_remainder=True)
@@ -169,8 +169,8 @@ class TestAutotuneSaveLoad:
 
         # Dataset with offload activated.
         dataset = ds.ImageFolderDataset(DATA_DIR, num_samples=8)
-        dataset = dataset.map(operations=[c_vision.Decode()], input_columns="image")
-        dataset = dataset.map(operations=[c_vision.HWC2CHW()], input_columns="image", offload=True)
+        dataset = dataset.map(operations=[vision.Decode()], input_columns="image")
+        dataset = dataset.map(operations=[vision.HWC2CHW()], input_columns="image", offload=True)
         dataset = dataset.batch(8, drop_remainder=True)
 
         for _ in dataset.create_tuple_iterator(num_epochs=1, output_numpy=True):
@@ -205,7 +205,7 @@ class TestAutotuneSaveLoad:
         ds.config.set_enable_autotune(True, str(tmp_path / at_final_json_filename))
 
         data1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=100)
-        one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
+        one_hot_encode = transforms.OneHot(10)  # num_classes is input argument
         data1 = data1.map(operations=one_hot_encode, input_columns="label")
         data1 = data1.batch(batch_size=10, drop_remainder=True)
 

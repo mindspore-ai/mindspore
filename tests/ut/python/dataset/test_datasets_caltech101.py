@@ -24,7 +24,7 @@ from PIL import Image
 from scipy.io import loadmat
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATASET_DIR = "../data/dataset/testCaltech101Data"
@@ -176,21 +176,21 @@ def test_caltech101_basic():
     assert num_iter == 8
 
     # case 5: test get_dataset_size, resize and batch
-    all_data = ds.Caltech101Dataset(DATASET_DIR, num_samples=4)
-    all_data = all_data.map(operations=[c_vision.Decode(), c_vision.Resize((224, 224))], input_columns=["image"],
+    all_data = ds.Caltech101Dataset(DATASET_DIR, num_samples=12)
+    all_data = all_data.map(operations=[vision.Decode(), vision.Resize((120, 120))], input_columns=["image"],
                             num_parallel_workers=1)
 
     assert all_data.get_dataset_size() == 4
     assert all_data.get_batch_size() == 1
     # drop_remainder is default to be False
-    all_data = all_data.batch(batch_size=3)
-    assert all_data.get_batch_size() == 3
-    assert all_data.get_dataset_size() == 2
+    all_data = all_data.batch(batch_size=4)
+    assert all_data.get_batch_size() == 4
+    assert all_data.get_dataset_size() == 1
 
     num_iter = 0
     for _ in all_data.create_dict_iterator(num_epochs=1):
         num_iter += 1
-    assert num_iter == 2
+    assert num_iter == 1
 
     # case 6: test get_class_indexing
     all_data = ds.Caltech101Dataset(DATASET_DIR, num_samples=4)

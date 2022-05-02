@@ -22,7 +22,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore._c_dataengine as cde
-import mindspore.dataset.transforms.c_transforms as C
+import mindspore.dataset.transforms.transforms as C
 
 FILES = ["../data/dataset/testTFTestAllTypes/test.data"]
 DATASET_ROOT = "../data/dataset/testTFTestAllTypes/"

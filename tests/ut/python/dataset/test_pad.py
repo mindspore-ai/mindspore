@@ -18,9 +18,8 @@ Testing Pad op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import diff_mse, save_and_check_md5
 
@@ -37,9 +36,9 @@ def test_pad_op():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
-    pad_op = c_vision.Pad((100, 100, 100, 100))
+    pad_op = vision.Pad((100, 100, 100, 100))
     ctrans = [decode_op,
               pad_op,
               ]
@@ -48,11 +47,11 @@ def test_pad_op():
 
     # Second dataset
     transforms = [
-        py_vision.Decode(),
-        py_vision.Pad(100),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.Pad(100),
+        vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
@@ -79,9 +78,9 @@ def test_pad_op2():
     logger.info("test padding parameter with size 2")
 
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    resize_op = c_vision.Resize([90, 90])
-    pad_op = c_vision.Pad((100, 9,))
+    decode_op = vision.Decode()
+    resize_op = vision.Resize([90, 90])
+    pad_op = vision.Pad((100, 9,))
     ctrans = [decode_op, resize_op, pad_op]
 
     data1 = data1.map(operations=ctrans, input_columns=["image"])
@@ -101,18 +100,18 @@ def test_pad_grayscale():
     # Note: image.transpose performs channel swap to allow py transforms to
     # work with c transforms
     transforms = [
-        py_vision.Decode(),
-        py_vision.Grayscale(1),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.Grayscale(1),
+        vision.ToTensor(),
         (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data1 = data1.map(operations=transform, input_columns=["image"])
 
     # if input is grayscale, the output dimensions should be single channel
-    pad_gray = c_vision.Pad(100, fill_value=(20, 20, 20))
+    pad_gray = vision.Pad(100, fill_value=(20, 20, 20))
     data1 = data1.map(operations=pad_gray, input_columns=["image"])
     dataset_shape_1 = []
     for item1 in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -121,7 +120,7 @@ def test_pad_grayscale():
 
     # Dataset for comparison
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
     # we use the same padding logic
     ctrans = [decode_op, pad_gray]
@@ -135,7 +134,7 @@ def test_pad_grayscale():
 
     for shape1, shape2 in zip(dataset_shape_1, dataset_shape_2):
         # validate that the first two dimensions are the same
-        # we have a little inconsistency here because the third dimension is 1 after py_vision.Grayscale
+        # we have a little inconsistency here because the third dimension is 1 after vision.Grayscale
         assert shape1[0:1] == shape2[0:1]
 
 
@@ -147,8 +146,8 @@ def test_pad_md5():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    pad_op = c_vision.Pad(150)
+    decode_op = vision.Decode()
+    pad_op = vision.Pad(150)
     ctrans = [decode_op,
               pad_op,
               ]
@@ -158,11 +157,11 @@ def test_pad_md5():
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     pytrans = [
-        py_vision.Decode(),
-        py_vision.Pad(150),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.Pad(150),
+        vision.ToTensor(),
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(pytrans)
+    transform = mindspore.dataset.transforms.transforms.Compose(pytrans)
     data2 = data2.map(operations=transform, input_columns=["image"])
     # Compare with expected md5 from images
     filename1 = "pad_01_c_result.npz"

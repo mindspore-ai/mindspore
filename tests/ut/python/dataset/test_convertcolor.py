@@ -18,7 +18,7 @@ Testing ConvertColor op in DE
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as c_vision
 import mindspore.dataset.vision.utils as mode
 from mindspore import log as logger
 from util import visualize_image, diff_mse
@@ -61,7 +61,7 @@ def convert_color(ms_convert, cv_convert, plot=False):
 
 def test_convertcolor_pipeline(plot=False):
     """
-    Test ConvertColor of c_transforms
+    Test ConvertColor of transforms
     """
     logger.info("test_convertcolor_pipeline")
     convert_color(mode.ConvertMode.COLOR_BGR2GRAY, cv2.COLOR_BGR2GRAY, plot)

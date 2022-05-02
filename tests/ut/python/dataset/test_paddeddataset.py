@@ -7,7 +7,7 @@ from PIL import Image
 
 import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
-import mindspore.dataset.vision.c_transforms as V_C
+import mindspore.dataset.vision.transforms as V_C
 
 FILES_NUM = 4
 CV_DIR_NAME = "../data/mindrecord/testImageNetData"

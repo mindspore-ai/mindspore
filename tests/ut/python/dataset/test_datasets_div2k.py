@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 
 
 DATASET_DIR = "../data/dataset/testDIV2KData/div2k"
@@ -90,7 +90,7 @@ def test_div2k_basic_func():
     data3 = ds.DIV2KDataset(DATASET_DIR, usage=usage, downgrade=downgrade, scale=scale, decode=True)
     assert data3.get_dataset_size() == 5
     assert data3.get_batch_size() == 1
-    resize_op = c_vision.Resize([100, 100])
+    resize_op = vision.Resize([100, 100])
     data3 = data3.map(operations=resize_op, input_columns=["hr_image"], num_parallel_workers=1)
     data3 = data3.map(operations=resize_op, input_columns=["lr_image"], num_parallel_workers=1)
     data3 = data3.batch(batch_size=3)  # drop_remainder is default to be False

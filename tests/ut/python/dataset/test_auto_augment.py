@@ -18,7 +18,7 @@ Testing AutoAugment in DE
 import numpy as np
 
 import mindspore.dataset as ds
-from mindspore.dataset.vision.c_transforms import Decode, AutoAugment, Resize
+from mindspore.dataset.vision.transforms import Decode, AutoAugment, Resize
 from mindspore.dataset.vision.utils import AutoAugmentPolicy, Inter
 from mindspore import log as logger
 from util import visualize_image, visualize_list, diff_mse
