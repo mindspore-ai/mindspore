@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_NORMALIZE_PAD_IR_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_NORMALIZE_PAD_IR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_TO_TENSOR_IR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_TO_TENSOR_IR_H_
 
 #include <map>
 #include <memory>
@@ -30,17 +30,14 @@
 
 namespace mindspore {
 namespace dataset {
-
 namespace vision {
+constexpr char kToTensorOperation[] = "ToTensor";
 
-constexpr char kNormalizePadOperation[] = "NormalizePad";
-
-class NormalizePadOperation : public TensorOperation {
+class ToTensorOperation : public TensorOperation {
  public:
-  NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype,
-                        bool is_hwc);
+  explicit ToTensorOperation(const std::string &data_type);
 
-  ~NormalizePadOperation();
+  ~ToTensorOperation();
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -53,12 +50,9 @@ class NormalizePadOperation : public TensorOperation {
   static Status from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation);
 
  private:
-  std::vector<float> mean_;
-  std::vector<float> std_;
-  std::string dtype_;
-  bool is_hwc_;
+  DataType data_type_;
 };
 }  // namespace vision
 }  // namespace dataset
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_NORMALIZE_PAD_IR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IR_VISION_TO_TENSOR_IR_H_

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -55,11 +55,10 @@ from .validators import check_lookup, check_jieba_add_dict, check_to_vectors, \
     check_sentence_piece_tokenizer
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
-from ..transforms.c_transforms import TensorOperation
+from ..transforms.transforms import TensorOperation
 from ..transforms.validators import invalidate_callable
 
 
-# pylint: disable=super-init-not-called
 class TextTensorOperation(TensorOperation):
     """
     Base class of Text Tensor Ops
@@ -132,6 +131,7 @@ class JiebaTokenizer(TextTensorOperation):
 
     @check_jieba_init
     def __init__(self, hmm_path, mp_path, mode=JiebaMode.MIX, with_offsets=False):
+        super().__init__()
         if not isinstance(mode, JiebaMode):
             raise TypeError("Wrong input type for mode, should be JiebaMode.")
 
@@ -143,9 +143,15 @@ class JiebaTokenizer(TextTensorOperation):
         self.with_offsets = with_offsets
         self.words = []
 
+    def __check_path__(self, model_path):
+        """check model path"""
+        if not os.path.exists(os.path.realpath(model_path)):
+            raise ValueError(
+                " jieba mode file {} is not exist.".format(model_path))
+
     def parse(self):
         jieba_tokenizer = cde.JiebaTokenizerOperation(self.hmm_path, self.mp_path,
-                                                      DE_C_INTER_JIEBA_MODE[self.mode],
+                                                      DE_C_INTER_JIEBA_MODE.get(self.mode),
                                                       self.with_offsets)
         for word in self.words:
             jieba_tokenizer.add_word(word[0], word[1])
@@ -230,6 +236,14 @@ class JiebaTokenizer(TextTensorOperation):
                 freq = int(data[1])
             self.add_word(data[0], freq)
 
+    def __decode(self, data):
+        """decode the dict file to utf8"""
+        try:
+            data = data.decode('utf-8')
+        except UnicodeDecodeError:
+            raise ValueError("user dict file must be utf8 format.")
+        return data.lstrip('\ufeff')
+
     def __parser_file(self, file_path):
         """parser user defined word by file"""
         if not os.path.exists(file_path):
@@ -250,20 +264,6 @@ class JiebaTokenizer(TextTensorOperation):
             words_list.append(words)
         file_dict.close()
         return words_list
-
-    def __decode(self, data):
-        """decode the dict file to utf8"""
-        try:
-            data = data.decode('utf-8')
-        except UnicodeDecodeError:
-            raise ValueError("user dict file must be utf8 format.")
-        return data.lstrip('\ufeff')
-
-    def __check_path__(self, model_path):
-        """check model path"""
-        if not os.path.exists(os.path.realpath(model_path)):
-            raise ValueError(
-                " jieba mode file {} is not exist.".format(model_path))
 
 
 class Lookup(TextTensorOperation):
@@ -296,6 +296,7 @@ class Lookup(TextTensorOperation):
 
     @check_lookup
     def __init__(self, vocab, unknown_token=None, data_type=mstype.int32):
+        super().__init__()
         self.vocab = vocab
         self.unknown_token = unknown_token
         self.data_type = data_type
@@ -346,6 +347,7 @@ class Ngram(TextTensorOperation):
 
     @check_ngram
     def __init__(self, n, left_pad=("", 0), right_pad=("", 0), separator=" "):
+        super().__init__()
         self.ngrams = n
         self.left_pad = left_pad
         self.right_pad = right_pad
@@ -387,12 +389,13 @@ class SentencePieceTokenizer(TextTensorOperation):
 
     @check_sentence_piece_tokenizer
     def __init__(self, mode, out_type):
+        super().__init__()
         self.mode = mode
         self.out_type = out_type
 
     def parse(self):
         self.mode = self.mode.c_sentence_piece_vocab if isinstance(self.mode, SentencePieceVocab) else self.mode
-        return cde.SentencePieceTokenizerOperation(self.mode, DE_C_INTER_SENTENCEPIECE_OUTTYPE[self.out_type])
+        return cde.SentencePieceTokenizerOperation(self.mode, DE_C_INTER_SENTENCEPIECE_OUTTYPE.get(self.out_type))
 
 
 class SlidingWindow(TextTensorOperation):
@@ -431,6 +434,7 @@ class SlidingWindow(TextTensorOperation):
 
     @check_slidingwindow
     def __init__(self, width, axis=0):
+        super().__init__()
         self.width = width
         self.axis = axis
 
@@ -467,6 +471,7 @@ class ToNumber(TextTensorOperation):
 
     @check_to_number
     def __init__(self, data_type):
+        super().__init__()
         data_type = mstype_to_detype(data_type)
         self.data_type = str(data_type)
 
@@ -504,6 +509,7 @@ class ToVectors(TextTensorOperation):
 
     @check_to_vectors
     def __init__(self, vectors, unk_init=None, lower_case_backup=False):
+        super().__init__()
         self.vectors = vectors
         self.unk_init = unk_init if unk_init is not None else []
         self.lower_case_backup = lower_case_backup
@@ -545,6 +551,7 @@ class TruncateSequencePair(TextTensorOperation):
 
     @check_pair_truncate
     def __init__(self, max_length):
+        super().__init__()
         self.max_length = max_length
 
     def parse(self):
@@ -578,6 +585,7 @@ class UnicodeCharTokenizer(TextTensorOperation):
 
     @check_with_offsets
     def __init__(self, with_offsets=False):
+        super().__init__()
         self.with_offsets = with_offsets
 
     def parse(self):
@@ -626,8 +634,9 @@ class WordpieceTokenizer(TextTensorOperation):
     """
 
     @check_wordpiece_tokenizer
-    def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100,
-                 unknown_token='[UNK]', with_offsets=False):
+    def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]',
+                 with_offsets=False):
+        super().__init__()
         self.vocab = vocab
         self.suffix_indicator = suffix_indicator
         self.max_bytes_per_token = max_bytes_per_token
@@ -752,12 +761,13 @@ if platform.system().lower() != 'windows':
         @check_basic_tokenizer
         def __init__(self, lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE,
                      preserve_unused_token=True, with_offsets=False):
+            super().__init__()
             if not isinstance(normalization_form, NormalizeForm):
                 raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
             self.lower_case = lower_case
             self.keep_whitespace = keep_whitespace
-            self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
+            self.normalization_form = DE_C_INTER_NORMALIZE_FORM.get(normalization_form)
             self.preserve_unused_token = preserve_unused_token
             self.with_offsets = with_offsets
 
@@ -848,6 +858,7 @@ if platform.system().lower() != 'windows':
         def __init__(self, vocab, suffix_indicator='##', max_bytes_per_token=100, unknown_token='[UNK]',
                      lower_case=False, keep_whitespace=False, normalization_form=NormalizeForm.NONE,
                      preserve_unused_token=True, with_offsets=False):
+            super().__init__()
             if not isinstance(normalization_form, NormalizeForm):
                 raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
@@ -857,7 +868,7 @@ if platform.system().lower() != 'windows':
             self.unknown_token = unknown_token
             self.lower_case = lower_case
             self.keep_whitespace = keep_whitespace
-            self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
+            self.normalization_form = DE_C_INTER_NORMALIZE_FORM.get(normalization_form)
             self.preserve_unused_token = preserve_unused_token
             self.with_offsets = with_offsets
 
@@ -942,11 +953,12 @@ if platform.system().lower() != 'windows':
         """
 
         def __init__(self, normalize_form=NormalizeForm.NFKC):
+            super().__init__()
             if not isinstance(normalize_form, NormalizeForm):
                 raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
             normalize_form = replace_none(normalize_form, NormalizeForm.NFKC)
-            self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
+            self.normalize_form = DE_C_INTER_NORMALIZE_FORM.get(normalize_form)
 
         def parse(self):
             return cde.NormalizeUTF8Operation(self.normalize_form)
@@ -984,6 +996,7 @@ if platform.system().lower() != 'windows':
 
         @check_regex_replace
         def __init__(self, pattern, replace, replace_all=True):
+            super().__init__()
             self.pattern = pattern
             self.replace = replace
             self.replace_all = replace_all
@@ -1035,6 +1048,7 @@ if platform.system().lower() != 'windows':
 
         @check_regex_tokenizer
         def __init__(self, delim_pattern, keep_delim_pattern='', with_offsets=False):
+            super().__init__()
             self.delim_pattern = delim_pattern
             self.keep_delim_pattern = keep_delim_pattern
             self.with_offsets = with_offsets
@@ -1077,6 +1091,7 @@ if platform.system().lower() != 'windows':
 
         @check_unicode_script_tokenizer
         def __init__(self, keep_whitespace=False, with_offsets=False):
+            super().__init__()
             keep_whitespace = replace_none(keep_whitespace, False)
             with_offsets = replace_none(with_offsets, False)
             self.keep_whitespace = keep_whitespace
@@ -1117,6 +1132,7 @@ if platform.system().lower() != 'windows':
 
         @check_with_offsets
         def __init__(self, with_offsets=False):
+            super().__init__()
             self.with_offsets = with_offsets
 
         def parse(self):

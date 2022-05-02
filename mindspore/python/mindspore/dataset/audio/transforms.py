@@ -22,7 +22,7 @@ their training models.
 import numpy as np
 
 import mindspore._c_dataengine as cde
-from ..transforms.c_transforms import TensorOperation
+from ..transforms.transforms import TensorOperation
 from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
     ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
@@ -93,12 +93,13 @@ class AllpassBiquad(AudioTensorOperation):
 
     @check_allpass_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.central_freq = central_freq
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.AllpassBiquadOperation(self.sample_rate, self.central_freq, self.Q)
+        return cde.AllpassBiquadOperation(self.sample_rate, self.central_freq, self.quality_factor)
 
 
 DE_C_SCALE_TYPE = {ScaleType.POWER: cde.ScaleType.DE_SCALE_TYPE_POWER,
@@ -149,13 +150,14 @@ class AmplitudeToDB(AudioTensorOperation):
 
     @check_amplitude_to_db
     def __init__(self, stype=ScaleType.POWER, ref_value=1.0, amin=1e-10, top_db=80.0):
+        super().__init__()
         self.stype = stype
         self.ref_value = ref_value
         self.amin = amin
         self.top_db = top_db
 
     def parse(self):
-        return cde.AmplitudeToDBOperation(DE_C_SCALE_TYPE[self.stype], self.ref_value, self.amin, self.top_db)
+        return cde.AmplitudeToDBOperation(DE_C_SCALE_TYPE.get(self.stype), self.ref_value, self.amin, self.top_db)
 
 
 class Angle(AudioTensorOperation):
@@ -229,13 +231,14 @@ class BandBiquad(AudioTensorOperation):
 
     @check_band_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707, noise=False):
+        super().__init__()
         self.sample_rate = sample_rate
         self.central_freq = central_freq
-        self.Q = Q
+        self.quality_factor = Q
         self.noise = noise
 
     def parse(self):
-        return cde.BandBiquadOperation(self.sample_rate, self.central_freq, self.Q, self.noise)
+        return cde.BandBiquadOperation(self.sample_rate, self.central_freq, self.quality_factor, self.noise)
 
 
 class BandpassBiquad(AudioTensorOperation):
@@ -289,13 +292,15 @@ class BandpassBiquad(AudioTensorOperation):
 
     @check_bandpass_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707, const_skirt_gain=False):
+        super().__init__()
         self.sample_rate = sample_rate
         self.central_freq = central_freq
-        self.Q = Q
+        self.quality_factor = Q
         self.const_skirt_gain = const_skirt_gain
 
     def parse(self):
-        return cde.BandpassBiquadOperation(self.sample_rate, self.central_freq, self.Q, self.const_skirt_gain)
+        return cde.BandpassBiquadOperation(self.sample_rate, self.central_freq, self.quality_factor,
+                                           self.const_skirt_gain)
 
 
 class BandrejectBiquad(AudioTensorOperation):
@@ -343,12 +348,13 @@ class BandrejectBiquad(AudioTensorOperation):
 
     @check_bandreject_biquad
     def __init__(self, sample_rate, central_freq, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.central_freq = central_freq
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.BandrejectBiquadOperation(self.sample_rate, self.central_freq, self.Q)
+        return cde.BandrejectBiquadOperation(self.sample_rate, self.central_freq, self.quality_factor)
 
 
 class BassBiquad(AudioTensorOperation):
@@ -396,13 +402,14 @@ class BassBiquad(AudioTensorOperation):
 
     @check_bass_biquad
     def __init__(self, sample_rate, gain, central_freq=100.0, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.gain = gain
         self.central_freq = central_freq
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
+        return cde.BassBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.quality_factor)
 
 
 class Biquad(TensorOperation):
@@ -427,6 +434,7 @@ class Biquad(TensorOperation):
 
     @check_biquad
     def __init__(self, b0, b1, b2, a0, a1, a2):
+        super().__init__()
         self.b0 = b0
         self.b1 = b1
         self.b2 = b2
@@ -468,6 +476,7 @@ class ComplexNorm(AudioTensorOperation):
 
     @check_complex_norm
     def __init__(self, power=1.0):
+        super().__init__()
         self.power = power
 
     def parse(self):
@@ -513,11 +522,12 @@ class ComputeDeltas(AudioTensorOperation):
 
     @check_compute_deltas
     def __init__(self, win_length=5, pad_mode=BorderType.EDGE):
+        super().__init__()
         self.win_len = win_length
         self.pad_mode = pad_mode
 
     def parse(self):
-        return cde.ComputeDeltasOperation(self.win_len, DE_C_BORDER_TYPE[self.pad_mode])
+        return cde.ComputeDeltasOperation(self.win_len, DE_C_BORDER_TYPE.get(self.pad_mode))
 
 
 class Contrast(AudioTensorOperation):
@@ -527,6 +537,7 @@ class Contrast(AudioTensorOperation):
     Comparable with compression, this effect modifies an audio signal to make it sound louder.
 
     Similar to `SoX <http://sox.sourceforge.net/sox.html>`_ implementation.
+
 
     Note:
         The dimension of the audio waveform to be processed needs to be (..., time).
@@ -555,6 +566,7 @@ class Contrast(AudioTensorOperation):
 
     @check_contrast
     def __init__(self, enhancement_amount=75.0):
+        super().__init__()
         self.enhancement_amount = enhancement_amount
 
     def parse(self):
@@ -580,6 +592,7 @@ class DBToAmplitude(AudioTensorOperation):
 
     @check_db_to_amplitude
     def __init__(self, ref, power):
+        super().__init__()
         self.ref = ref
         self.power = power
 
@@ -607,6 +620,7 @@ class DCShift(AudioTensorOperation):
 
     @check_dc_shift
     def __init__(self, shift, limiter_gain=None):
+        super().__init__()
         self.shift = shift
         self.limiter_gain = limiter_gain if limiter_gain else shift
 
@@ -633,6 +647,7 @@ class DeemphBiquad(AudioTensorOperation):
 
     @check_deemph_biquad
     def __init__(self, sample_rate):
+        super().__init__()
         self.sample_rate = sample_rate
 
     def parse(self):
@@ -667,6 +682,7 @@ class DetectPitchFrequency(AudioTensorOperation):
 
     @check_detect_pitch_frequency
     def __init__(self, sample_rate, frame_time=0.01, win_length=30, freq_low=85, freq_high=3400):
+        super().__init__()
         self.sample_rate = sample_rate
         self.frame_time = frame_time
         self.win_length = win_length
@@ -708,11 +724,12 @@ class Dither(AudioTensorOperation):
 
     @check_dither
     def __init__(self, density_function=DensityFunction.TPDF, noise_shaping=False):
+        super().__init__()
         self.density_function = density_function
         self.noise_shaping = noise_shaping
 
     def parse(self):
-        return cde.DitherOperation(DE_C_DENSITY_FUNCTION[self.density_function], self.noise_shaping)
+        return cde.DitherOperation(DE_C_DENSITY_FUNCTION.get(self.density_function), self.noise_shaping)
 
 
 class EqualizerBiquad(AudioTensorOperation):
@@ -736,13 +753,14 @@ class EqualizerBiquad(AudioTensorOperation):
 
     @check_equalizer_biquad
     def __init__(self, sample_rate, center_freq, gain, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.center_freq = center_freq
         self.gain = gain
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.EqualizerBiquadOperation(self.sample_rate, self.center_freq, self.gain, self.Q)
+        return cde.EqualizerBiquadOperation(self.sample_rate, self.center_freq, self.gain, self.quality_factor)
 
 
 DE_C_FADE_SHAPE = {FadeShape.QUARTER_SINE: cde.FadeShape.DE_FADE_SHAPE_QUARTER_SINE,
@@ -789,12 +807,13 @@ class Fade(AudioTensorOperation):
 
     @check_fade
     def __init__(self, fade_in_len=0, fade_out_len=0, fade_shape=FadeShape.LINEAR):
+        super().__init__()
         self.fade_in_len = fade_in_len
         self.fade_out_len = fade_out_len
         self.fade_shape = fade_shape
 
     def parse(self):
-        return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADE_SHAPE[self.fade_shape])
+        return cde.FadeOperation(self.fade_in_len, self.fade_out_len, DE_C_FADE_SHAPE.get(self.fade_shape))
 
 
 DE_C_MODULATION = {Modulation.SINUSOIDAL: cde.Modulation.DE_MODULATION_SINUSOIDAL,
@@ -831,8 +850,9 @@ class Flanger(AudioTensorOperation):
     """
 
     @check_flanger
-    def __init__(self, sample_rate, delay=0.0, depth=2.0, regen=0.0, width=71.0, speed=0.5,
-                 phase=25.0, modulation=Modulation.SINUSOIDAL, interpolation=Interpolation.LINEAR):
+    def __init__(self, sample_rate, delay=0.0, depth=2.0, regen=0.0, width=71.0, speed=0.5, phase=25.0,
+                 modulation=Modulation.SINUSOIDAL, interpolation=Interpolation.LINEAR):
+        super().__init__()
         self.sample_rate = sample_rate
         self.delay = delay
         self.depth = depth
@@ -845,8 +865,8 @@ class Flanger(AudioTensorOperation):
 
     def parse(self):
         return cde.FlangerOperation(self.sample_rate, self.delay, self.depth, self.regen, self.width, self.speed,
-                                    self.phase, DE_C_MODULATION[self.modulation],
-                                    DE_C_INTERPOLATION[self.interpolation])
+                                    self.phase, DE_C_MODULATION.get(self.modulation),
+                                    DE_C_INTERPOLATION.get(self.interpolation))
 
 
 class FrequencyMasking(AudioTensorOperation):
@@ -895,6 +915,7 @@ class FrequencyMasking(AudioTensorOperation):
 
     @check_masking
     def __init__(self, iid_masks=False, freq_mask_param=0, mask_start=0, mask_value=0.0):
+        super().__init__()
         self.iid_masks = iid_masks
         self.frequency_mask_param = freq_mask_param
         self.mask_start = mask_start
@@ -923,6 +944,7 @@ class Gain(AudioTensorOperation):
 
     @check_gain
     def __init__(self, gain_db=1.0):
+        super().__init__()
         self.gain_db = gain_db
 
     def parse(self):
@@ -964,8 +986,9 @@ class GriffinLim(AudioTensorOperation):
     """
 
     @check_griffin_lim
-    def __init__(self, n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN,
-                 power=2, momentum=0.99, length=None, rand_init=True):
+    def __init__(self, n_fft=400, n_iter=32, win_length=None, hop_length=None, window_type=WindowType.HANN, power=2,
+                 momentum=0.99, length=None, rand_init=True):
+        super().__init__()
         self.n_fft = n_fft
         self.n_iter = n_iter
         self.win_length = win_length if win_length else self.n_fft
@@ -1002,12 +1025,13 @@ class HighpassBiquad(AudioTensorOperation):
 
     @check_highpass_biquad
     def __init__(self, sample_rate, cutoff_freq, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.cutoff_freq = cutoff_freq
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.HighpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
+        return cde.HighpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.quality_factor)
 
 
 class InverseMelScale(AudioTensorOperation):
@@ -1041,6 +1065,7 @@ class InverseMelScale(AudioTensorOperation):
     @check_inverse_mel_scale
     def __init__(self, n_stft, n_mels=128, sample_rate=16000, f_min=0.0, f_max=None, max_iter=100000,
                  tolerance_loss=1e-5, tolerance_change=1e-8, sgdargs=None, norm=NormType.NONE, mel_type=MelType.HTK):
+        super().__init__()
         self.n_stft = n_stft
         self.n_mels = n_mels
         self.sample_rate = sample_rate
@@ -1059,7 +1084,7 @@ class InverseMelScale(AudioTensorOperation):
     def parse(self):
         return cde.InverseMelScaleOperation(self.n_stft, self.n_mels, self.sample_rate, self.f_min, self.f_max,
                                             self.max_iter, self.tolerance_loss, self.tolerance_change, self.sgdargs,
-                                            DE_C_NORM_TYPE[self.norm], DE_C_MEL_TYPE[self.mel_type])
+                                            DE_C_NORM_TYPE.get(self.norm), DE_C_MEL_TYPE.get(self.mel_type))
 
 
 class LFilter(AudioTensorOperation):
@@ -1088,6 +1113,7 @@ class LFilter(AudioTensorOperation):
 
     @check_lfilter
     def __init__(self, a_coeffs, b_coeffs, clamp=True):
+        super().__init__()
         self.a_coeffs = a_coeffs
         self.b_coeffs = b_coeffs
         self.clamp = clamp
@@ -1140,12 +1166,13 @@ class LowpassBiquad(AudioTensorOperation):
 
     @check_lowpass_biquad
     def __init__(self, sample_rate, cutoff_freq, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.cutoff_freq = cutoff_freq
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.LowpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.Q)
+        return cde.LowpassBiquadOperation(self.sample_rate, self.cutoff_freq, self.quality_factor)
 
 
 class Magphase(AudioTensorOperation):
@@ -1166,6 +1193,7 @@ class Magphase(AudioTensorOperation):
 
     @check_magphase
     def __init__(self, power=1.0):
+        super().__init__()
         self.power = power
 
     def parse(self):
@@ -1193,6 +1221,7 @@ class MaskAlongAxis(AudioTensorOperation):
 
     @check_mask_along_axis
     def __init__(self, mask_start, mask_width, mask_value, axis):
+        super().__init__()
         self.mask_start = mask_start
         self.mask_width = mask_width
         self.mask_value = mask_value
@@ -1225,6 +1254,7 @@ class MaskAlongAxisIID(AudioTensorOperation):
 
     @check_mask_along_axis_iid
     def __init__(self, mask_param, mask_value, axis):
+        super().__init__()
         self.mask_param = mask_param
         self.mask_value = mask_value
         self.axis = axis
@@ -1268,6 +1298,7 @@ class MelScale(AudioTensorOperation):
     @check_mel_scale
     def __init__(self, n_mels=128, sample_rate=16000, f_min=0, f_max=None, n_stft=201, norm=NormType.NONE,
                  mel_type=MelType.HTK):
+        super().__init__()
         self.n_mels = n_mels
         self.sample_rate = sample_rate
         self.f_min = f_min
@@ -1278,7 +1309,7 @@ class MelScale(AudioTensorOperation):
 
     def parse(self):
         return cde.MelScaleOperation(self.n_mels, self.sample_rate, self.f_min, self.f_max, self.n_stft,
-                                     DE_C_NORM_TYPE[self.norm], DE_C_MEL_TYPE[self.mel_type])
+                                     DE_C_NORM_TYPE.get(self.norm), DE_C_MEL_TYPE.get(self.mel_type))
 
 
 class MuLawDecoding(AudioTensorOperation):
@@ -1299,6 +1330,7 @@ class MuLawDecoding(AudioTensorOperation):
 
     @check_mu_law_coding
     def __init__(self, quantization_channels=256):
+        super().__init__()
         self.quantization_channels = quantization_channels
 
     def parse(self):
@@ -1323,6 +1355,7 @@ class MuLawEncoding(AudioTensorOperation):
 
     @check_mu_law_coding
     def __init__(self, quantization_channels=256):
+        super().__init__()
         self.quantization_channels = quantization_channels
 
     def parse(self):
@@ -1349,6 +1382,7 @@ class Overdrive(AudioTensorOperation):
 
     @check_overdrive
     def __init__(self, gain=20.0, color=20.0):
+        super().__init__()
         self.gain = gain
         self.color = color
 
@@ -1383,8 +1417,9 @@ class Phaser(AudioTensorOperation):
     """
 
     @check_phaser
-    def __init__(self, sample_rate, gain_in=0.4, gain_out=0.74,
-                 delay_ms=3.0, decay=0.4, mod_speed=0.5, sinusoidal=True):
+    def __init__(self, sample_rate, gain_in=0.4, gain_out=0.74, delay_ms=3.0, decay=0.4, mod_speed=0.5,
+                 sinusoidal=True):
+        super().__init__()
         self.decay = decay
         self.delay_ms = delay_ms
         self.gain_in = gain_in
@@ -1418,6 +1453,7 @@ class PhaseVocoder(AudioTensorOperation):
 
     @check_phase_vocoder
     def __init__(self, rate, phase_advance):
+        super().__init__()
         self.rate = rate
         self.phase_advance = cde.Tensor(phase_advance)
 
@@ -1444,6 +1480,7 @@ class RiaaBiquad(AudioTensorOperation):
 
     @check_riaa_biquad
     def __init__(self, sample_rate):
+        super().__init__()
         self.sample_rate = sample_rate
 
     def parse(self):
@@ -1473,6 +1510,7 @@ class SlidingWindowCmn(AudioTensorOperation):
 
     @check_sliding_window_cmn
     def __init__(self, cmn_window=600, min_cmn_window=100, center=False, norm_vars=False):
+        super().__init__()
         self.cmn_window = cmn_window
         self.min_cmn_window = min_cmn_window
         self.center = center
@@ -1514,6 +1552,7 @@ class SpectralCentroid(TensorOperation):
 
     @check_spectral_centroid
     def __init__(self, sample_rate, n_fft=400, win_length=None, hop_length=None, pad=0, window=WindowType.HANN):
+        super().__init__()
         self.sample_rate = sample_rate
         self.pad = pad
         self.window = window
@@ -1523,7 +1562,7 @@ class SpectralCentroid(TensorOperation):
 
     def parse(self):
         return cde.SpectralCentroidOperation(self.sample_rate, self.n_fft, self.win_length, self.hop_length,
-                                             self.pad, DE_C_WINDOW_TYPE[self.window])
+                                             self.pad, DE_C_WINDOW_TYPE.get(self.window))
 
 
 class Spectrogram(TensorOperation):
@@ -1559,6 +1598,7 @@ class Spectrogram(TensorOperation):
     @check_spectrogram
     def __init__(self, n_fft=400, win_length=None, hop_length=None, pad=0, window=WindowType.HANN, power=2.0,
                  normalized=False, center=True, pad_mode=BorderType.REFLECT, onesided=True):
+        super().__init__()
         self.n_fft = n_fft
         self.win_length = win_length if win_length else n_fft
         self.hop_length = hop_length if hop_length else self.win_length // 2
@@ -1572,8 +1612,8 @@ class Spectrogram(TensorOperation):
 
     def parse(self):
         return cde.SpectrogramOperation(self.n_fft, self.win_length, self.hop_length, self.pad,
-                                        DE_C_WINDOW_TYPE[self.window], self.power, self.normalized,
-                                        self.center, DE_C_BORDER_TYPE[self.pad_mode], self.onesided)
+                                        DE_C_WINDOW_TYPE.get(self.window), self.power, self.normalized,
+                                        self.center, DE_C_BORDER_TYPE.get(self.pad_mode), self.onesided)
 
 
 class TimeMasking(AudioTensorOperation):
@@ -1596,9 +1636,9 @@ class TimeMasking(AudioTensorOperation):
 
     Raises:
         TypeError: If `iid_masks` is not of type bool.
-        TypeError: If `time_mask_param` is not of type integer.
+        TypeError: If `time_mask_param` is not of type int.
         ValueError: If `time_mask_param` is greater than the length of audio waveform in time domain.
-        TypeError: If `mask_start` is not of type integer.
+        TypeError: If `mask_start` is not of type int.
         ValueError: If `mask_start` a negative number.
         TypeError: If `mask_value` is not of type float.
         ValueError: If `mask_value` is a negative number.
@@ -1610,7 +1650,7 @@ class TimeMasking(AudioTensorOperation):
     Examples:
         >>> import numpy as np
         >>>
-        >>> waveform = np.random.random([1, 3, 2])
+        >>> waveform = np.random.random([4, 3, 2])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])
         >>> transforms = [audio.TimeMasking(time_mask_param=1)]
         >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms, input_columns=["audio"])
@@ -1622,6 +1662,7 @@ class TimeMasking(AudioTensorOperation):
 
     @check_masking
     def __init__(self, iid_masks=False, time_mask_param=0, mask_start=0, mask_value=0.0):
+        super().__init__()
         self.iid_masks = iid_masks
         self.time_mask_param = time_mask_param
         self.mask_start = mask_start
@@ -1675,6 +1716,7 @@ class TimeStretch(AudioTensorOperation):
 
     @check_time_stretch
     def __init__(self, hop_length=None, n_freq=201, fixed_rate=None):
+        super().__init__()
         self.n_freq = n_freq
         self.fixed_rate = fixed_rate
 
@@ -1707,13 +1749,14 @@ class TrebleBiquad(AudioTensorOperation):
 
     @check_treble_biquad
     def __init__(self, sample_rate, gain, central_freq=3000, Q=0.707):
+        super().__init__()
         self.sample_rate = sample_rate
         self.gain = gain
         self.central_freq = central_freq
-        self.Q = Q
+        self.quality_factor = Q
 
     def parse(self):
-        return cde.TrebleBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.Q)
+        return cde.TrebleBiquadOperation(self.sample_rate, self.gain, self.central_freq, self.quality_factor)
 
 
 DE_C_GAIN_TYPE = {GainType.AMPLITUDE: cde.GainType.DE_GAIN_TYPE_AMPLITUDE,
@@ -1745,8 +1788,9 @@ class Vol(AudioTensorOperation):
 
     @check_vol
     def __init__(self, gain, gain_type=GainType.AMPLITUDE):
+        super().__init__()
         self.gain = gain
         self.gain_type = gain_type
 
     def parse(self):
-        return cde.VolOperation(self.gain, DE_C_GAIN_TYPE[self.gain_type])
+        return cde.VolOperation(self.gain, DE_C_GAIN_TYPE.get(self.gain_type))

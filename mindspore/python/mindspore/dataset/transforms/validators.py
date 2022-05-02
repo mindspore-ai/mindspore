@@ -107,7 +107,7 @@ def check_slice_option(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [slice_option], _ = parse_user_args(method, *args, **kwargs)
-        from .c_transforms import _SliceOption
+        from .transforms import _SliceOption
         if slice_option is not None:
             type_check(slice_option, (int, list, slice, bool, type(Ellipsis), _SliceOption), "slice_option")
 
@@ -127,7 +127,7 @@ def check_slice_op(method):
         [slice_op], _ = parse_user_args(method, *args, **kwargs)
 
         for s in slice_op:
-            from .c_transforms import _SliceOption
+            from .transforms import _SliceOption
             if s is not None:
                 type_check(s, (int, list, slice, bool, type(Ellipsis), _SliceOption), "slice")
                 if isinstance(s, list) and s:
@@ -147,6 +147,23 @@ def check_mask_op(method):
         [operator, constant, dtype], _ = parse_user_args(method, *args, **kwargs)
 
         from .c_transforms import Relational
+        type_check(operator, (Relational,), "operator")
+        type_check(constant, (str, float, bool, int, bytes), "constant")
+        type_check(dtype, (typing.Type,), "dtype")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_mask_op_new(method):
+    """Wrapper method to check the parameters of mask."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [operator, constant, dtype], _ = parse_user_args(method, *args, **kwargs)
+
+        from .transforms import Relational
         type_check(operator, (Relational,), "operator")
         type_check(constant, (str, float, bool, int, bytes), "constant")
         type_check(dtype, (typing.Type,), "dtype")

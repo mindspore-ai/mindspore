@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,8 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/status.h"
 
-#define CHANNEL_INDEX 2           // images are hwc, so index 2 represents number of channels
+#define CHANNEL_INDEX_HWC 2       // images are hwc, so index 2 represents number of channels
+#define CHANNEL_INDEX_CHW 0       // images are chw, so index 0 represents number of channels
 #define DEFAULT_IMAGE_CHANNELS 3  // images are 3 channels in general
 #define DEFAULT_IMAGE_RANK 3      // images are hwc channels in general
 #define MAX_BIT_VALUE 255         // max bit value after decode is 256
@@ -202,18 +203,21 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 /// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
 /// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
 /// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
+/// \param is_hwc: Check if input is HWC/CHW format
 /// \param output: Normalized image Tensor of same input shape and type DE_FLOAT32
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
-                 std::vector<float> std);
+                 std::vector<float> std, bool is_hwc);
 
 /// \brief Returns Normalized and paded image
 /// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
 /// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
 /// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
 /// \param dtype: output dtype
+/// \param is_hwc: Check if input is HWC/CHW format
 /// \param output: Normalized image Tensor and pad an extra channel, return a dtype Tensor
 Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                    const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype);
+                    const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype,
+                    bool is_hwc);
 
 /// \brief Returns image with adjusted brightness.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
@@ -284,10 +288,11 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 /// \param random_color: whether or not random fill value should be used
 /// \param fill_r: red fill value for erase
 /// \param fill_g: green fill value for erase
-/// \param fill_b: blue fill value for erase.
+/// \param fill_b: blue fill value for erase
+/// \param is_hwc: Check if input is HWC/CHW format
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
-             uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0);
+             uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0, bool is_hwc = true);
 
 /// \brief Pads the input image and puts the padded image in the output
 /// \param input: input Tensor
@@ -389,6 +394,13 @@ Status ComputePatchSize(const std::shared_ptr<CVTensor> &input_cv,
 /// \param[in] op_name operator name.
 /// \param[in] rank refers to the rank of input image shape.
 Status ValidateImageRank(const std::string &op_name, int32_t rank);
+
+/// \brief Rescale and convert HWC to CHW format.
+/// \param[in] input The input image
+/// \param[in] data_type The output data type
+/// \param[out] output The output image
+/// \return Status code
+Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

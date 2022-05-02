@@ -1322,6 +1322,14 @@ def check_map(method):
             except OSError:
                 pass
 
+        operations = operations if isinstance(operations, list) else [operations]
+        # import nn and ops locally for type check
+        from mindspore import nn, ops
+        for item in operations:
+            if isinstance(item, (nn.Cell, ops.Primitive)):
+                raise ValueError("Input operations should not contain network computing operator like in "
+                                 "mindspore.nn or mindspore.ops, got operation: ", str(item))
+
         nreq_param_columns = ['input_columns', 'output_columns', 'column_order']
 
         if column_order is not None:

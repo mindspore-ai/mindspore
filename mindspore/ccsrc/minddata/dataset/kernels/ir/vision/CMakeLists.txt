@@ -59,6 +59,7 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         softdvpp_decode_random_crop_resize_jpeg_ir.cc
         softdvpp_decode_resize_jpeg_ir.cc
         swap_red_blue_ir.cc
+        to_tensor_ir.cc
         uniform_aug_ir.cc
         vertical_flip_ir.cc
         )

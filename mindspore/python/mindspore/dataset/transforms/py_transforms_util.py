@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,22 @@ Built-in py_transforms_utils functions.
 """
 import json
 import random
+from enum import IntEnum
 from types import FunctionType
 import numpy as np
 
 from ..core.py_util_helpers import is_numpy, ExceptionHandler
+
+
+class Implementation(IntEnum):
+    """
+    Implementation types for operations
+
+    - Implementation.C: the operation is implemented in C++
+    - Implementation.PY: the operation is implemented in Python
+    """
+    C = 0
+    PY = 1
 
 
 def all_numpy(args):
@@ -173,6 +185,7 @@ class FuncWrapper:
         if not callable(transform):
             raise ValueError("Input operations should be callable python function, but got: " + str(transform))
         self.transform = transform
+        self.implementation = Implementation.C
         try:
             if hasattr(self.transform, "random") and not self.transform.random:
                 self.random = False
@@ -180,7 +193,6 @@ class FuncWrapper:
             self.random = True
 
     def __call__(self, *args):
-        result = None
         try:
             result = self.transform(*args)
         except Exception:

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,6 +92,17 @@ def check_mix_up_batch_c(method):
         return method(self, *args, **kwargs)
 
     return new_method
+
+
+def check_normalize_param(mean, std):
+    type_check(mean, (list, tuple), "mean")
+    type_check(std, (list, tuple), "std")
+    if len(mean) != len(std):
+        raise ValueError("Length of mean and std must be equal.")
+    for mean_value in mean:
+        check_value(mean_value, [0, 255], "mean_value")
+    for std_value in std:
+        check_value_normalize_std(std_value, [0, 255], "std_value")
 
 
 def check_normalize_c_param(mean, std):
@@ -379,6 +390,32 @@ def check_alpha(method):
     return new_method
 
 
+def check_normalize(method):
+    """A wrapper that wraps a parameter checker around the original function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mean, std, is_hwc], _ = parse_user_args(method, *args, **kwargs)
+        check_normalize_param(mean, std)
+        type_check(is_hwc, (bool,), "is_hwc")
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_normalize_py(method):
+    """A wrapper that wraps a parameter checker around the original function(normalize operation written in Python)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mean, std], _ = parse_user_args(method, *args, **kwargs)
+        check_normalize_py_param(mean, std)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_normalize_c(method):
     """A wrapper that wraps a parameter checker around the original function(normalize operation written in C++)."""
 
@@ -392,13 +429,18 @@ def check_normalize_c(method):
     return new_method
 
 
-def check_normalize_py(method):
-    """A wrapper that wraps a parameter checker around the original function(normalize operation written in Python)."""
+def check_normalizepad(method):
+    """A wrapper that wraps a parameter checker around the original function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [mean, std], _ = parse_user_args(method, *args, **kwargs)
-        check_normalize_py_param(mean, std)
+        [mean, std, dtype, is_hwc], _ = parse_user_args(method, *args, **kwargs)
+        check_normalize_param(mean, std)
+        type_check(is_hwc, (bool,), "is_hwc")
+        if not isinstance(dtype, str):
+            raise TypeError("dtype should be string.")
+        if dtype not in ["float32", "float16"]:
+            raise ValueError("dtype only supports float32 or float16.")
 
         return method(self, *args, **kwargs)
 
@@ -689,6 +731,23 @@ def check_random_erasing(method):
                 type_check(item, (int,), "value")
                 check_value(item, [0, 255], "value")
         check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_cutout_new(method):
+    """Wrapper method to check the parameters of cutout operation."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [length, num_patches, is_hwc], _ = parse_user_args(method, *args, **kwargs)
+        type_check(length, (int,), "length")
+        type_check(num_patches, (int,), "num_patches")
+        type_check(is_hwc, (bool,), "is_hwc")
+        check_value(length, (1, FLOAT_MAX_INTEGER))
+        check_value(num_patches, (1, FLOAT_MAX_INTEGER))
 
         return method(self, *args, **kwargs)
 

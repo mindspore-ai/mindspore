@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ constexpr char kCutOutOperation[] = "CutOut";
 
 class CutOutOperation : public TensorOperation {
  public:
-  explicit CutOutOperation(int32_t length, int32_t num_patches);
+  explicit CutOutOperation(int32_t length, int32_t num_patches, bool is_hwc);
 
   ~CutOutOperation();
 
@@ -54,6 +54,7 @@ class CutOutOperation : public TensorOperation {
  private:
   int32_t length_;
   int32_t num_patches_;
+  bool is_hwc_;
 };
 
 }  // namespace vision

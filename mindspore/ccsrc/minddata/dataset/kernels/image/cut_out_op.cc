@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ const uint8_t CutOutOp::kDefFillB = 0;
 
 // constructor
 CutOutOp::CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, bool random_color, uint8_t fill_r,
-                   uint8_t fill_g, uint8_t fill_b)
+                   uint8_t fill_g, uint8_t fill_b, bool is_hwc)
     : rnd_(GetSeed()),
       box_height_(box_height),
       box_width_(box_width),
@@ -39,7 +39,8 @@ CutOutOp::CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, b
       random_color_(random_color),
       fill_r_(fill_r),
       fill_g_(fill_g),
-      fill_b_(fill_b) {}
+      fill_b_(fill_b),
+      is_hwc_(is_hwc) {}
 
 // main function call for cut out
 Status CutOutOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
@@ -47,7 +48,7 @@ Status CutOutOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   std::shared_ptr<CVTensor> inputCV = CVTensor::AsCVTensor(input);
   // cut out will clip the erasing area if the box is near the edge of the image and the boxes are black
   RETURN_IF_NOT_OK(Erase(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_, &rnd_, fill_r_,
-                         fill_g_, fill_b_));
+                         fill_g_, fill_b_, is_hwc_));
   return Status::OK();
 }
 }  // namespace dataset

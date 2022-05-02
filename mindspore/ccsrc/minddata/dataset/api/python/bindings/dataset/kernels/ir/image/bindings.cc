@@ -70,6 +70,7 @@
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_random_crop_resize_jpeg_ir.h"
 #include "minddata/dataset/kernels/ir/vision/softdvpp_decode_resize_jpeg_ir.h"
+#include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 
@@ -171,8 +172,8 @@ PYBIND_REGISTER(CutOutOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::CutOutOperation, TensorOperation, std::shared_ptr<vision::CutOutOperation>>(
                     *m, "CutOutOperation",
                     "Tensor operation to randomly erase a portion of the image. Takes height and width.")
-                    .def(py::init([](int32_t length, int32_t num_patches) {
-                      auto cut_out = std::make_shared<vision::CutOutOperation>(length, num_patches);
+                    .def(py::init([](int32_t length, int32_t num_patches, bool is_hwc) {
+                      auto cut_out = std::make_shared<vision::CutOutOperation>(length, num_patches, is_hwc);
                       THROW_IF_ERROR(cut_out->ValidateParams());
                       return cut_out;
                     }));
@@ -261,8 +262,8 @@ PYBIND_REGISTER(
   NormalizeOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::NormalizeOperation, TensorOperation, std::shared_ptr<vision::NormalizeOperation>>(
       *m, "NormalizeOperation")
-      .def(py::init([](const std::vector<float> &mean, const std::vector<float> &std) {
-        auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std);
+      .def(py::init([](const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc) {
+        auto normalize = std::make_shared<vision::NormalizeOperation>(mean, std, is_hwc);
         THROW_IF_ERROR(normalize->ValidateParams());
         return normalize;
       }));
@@ -272,11 +273,12 @@ PYBIND_REGISTER(
   NormalizePadOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::NormalizePadOperation, TensorOperation, std::shared_ptr<vision::NormalizePadOperation>>(
       *m, "NormalizePadOperation")
-      .def(py::init([](const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype) {
-        auto normalize_pad = std::make_shared<vision::NormalizePadOperation>(mean, std, dtype);
-        THROW_IF_ERROR(normalize_pad->ValidateParams());
-        return normalize_pad;
-      }));
+      .def(py::init(
+        [](const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype, bool is_hwc) {
+          auto normalize_pad = std::make_shared<vision::NormalizePadOperation>(mean, std, dtype, is_hwc);
+          THROW_IF_ERROR(normalize_pad->ValidateParams());
+          return normalize_pad;
+        }));
   }));
 
 PYBIND_REGISTER(PadOperation, 1, ([](const py::module *m) {
@@ -691,6 +693,17 @@ PYBIND_REGISTER(SoftDvppDecodeResizeJpegOperation, 1, ([](const py::module *m) {
                       THROW_IF_ERROR(soft_dvpp_decode_resize_jpeg->ValidateParams());
                       return soft_dvpp_decode_resize_jpeg;
                     }));
+                }));
+
+PYBIND_REGISTER(ToTensorOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<vision::ToTensorOperation, TensorOperation, std::shared_ptr<vision::ToTensorOperation>>(
+                      *m, "ToTensorOperation")
+                      .def(py::init([](const std::string &data_type) {
+                        auto totensor = std::make_shared<vision::ToTensorOperation>(data_type);
+                        THROW_IF_ERROR(totensor->ValidateParams());
+                        return totensor;
+                      }));
                 }));
 
 PYBIND_REGISTER(

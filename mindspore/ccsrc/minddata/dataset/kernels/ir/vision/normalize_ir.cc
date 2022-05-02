@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ namespace mindspore {
 namespace dataset {
 namespace vision {
 // NormalizeOperation
-NormalizeOperation::NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std)
-    : mean_(mean), std_(std) {}
+NormalizeOperation::NormalizeOperation(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc)
+    : mean_(mean), std_(std), is_hwc_(is_hwc) {}
 
 NormalizeOperation::~NormalizeOperation() = default;
 
@@ -36,12 +36,13 @@ Status NormalizeOperation::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<TensorOp> NormalizeOperation::Build() { return std::make_shared<NormalizeOp>(mean_, std_); }
+std::shared_ptr<TensorOp> NormalizeOperation::Build() { return std::make_shared<NormalizeOp>(mean_, std_, is_hwc_); }
 
 Status NormalizeOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["mean"] = mean_;
   args["std"] = std_;
+  args["is_hwc"] = is_hwc_;
   *out_json = args;
   return Status::OK();
 }
@@ -49,9 +50,11 @@ Status NormalizeOperation::to_json(nlohmann::json *out_json) {
 Status NormalizeOperation::from_json(nlohmann::json op_params, std::shared_ptr<TensorOperation> *operation) {
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "mean", kNormalizeOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "std", kNormalizeOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "is_hwc", kNormalizeOperation));
   std::vector<float> mean = op_params["mean"];
   std::vector<float> std = op_params["std"];
-  *operation = std::make_shared<vision::NormalizeOperation>(mean, std);
+  bool is_hwc = op_params["is_hwc"];
+  *operation = std::make_shared<vision::NormalizeOperation>(mean, std, is_hwc);
   return Status::OK();
 }
 }  // namespace vision

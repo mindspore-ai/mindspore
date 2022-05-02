@@ -30,6 +30,9 @@ class MindDataTestNormalizePadOP : public UT::CVOP::CVOpCommon {
   MindDataTestNormalizePadOP() : CVOpCommon() {}
 };
 
+/// Feature: NormalizePad op
+/// Description: Test input parameters with dtype float32 at Runtime level
+/// Expectation: Op is successfully processed.
 TEST_F(MindDataTestNormalizePadOP, TestFloat32) {
   MS_LOG(INFO) << "Doing TestNormalizePadOp::TestFloat32.";
   std::shared_ptr<Tensor> output_tensor;
@@ -39,12 +42,16 @@ TEST_F(MindDataTestNormalizePadOP, TestFloat32) {
   float std[3] = {70.0, 68.0, 71.0};
 
   // NormalizePad Op
-  std::unique_ptr<NormalizePadOp> op(new NormalizePadOp(mean[0], mean[1], mean[2], std[0], std[1], std[2], "float32"));
+  std::unique_ptr<NormalizePadOp> op =
+    std::make_unique<NormalizePadOp>(mean[0], mean[1], mean[2], std[0], std[1], std[2], "float32", true);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());
 }
 
+/// Feature: NormalizePad op
+/// Description: Test input parameters with dtype float16 at Runtime level
+/// Expectation: Op is successfully processed.
 TEST_F(MindDataTestNormalizePadOP, TestFloat16) {
   MS_LOG(INFO) << "Doing TestNormalizePadOp::TestFloat16.";
   std::shared_ptr<Tensor> output_tensor;
@@ -54,7 +61,8 @@ TEST_F(MindDataTestNormalizePadOP, TestFloat16) {
   float std[3] = {70.0, 68.0, 71.0};
 
   // NormalizePad Op
-  std::unique_ptr<NormalizePadOp> op(new NormalizePadOp(mean[0], mean[1], mean[2], std[0], std[1], std[2], "float16"));
+  std::unique_ptr<NormalizePadOp> op =
+    std::make_unique<NormalizePadOp>(mean[0], mean[1], mean[2], std[0], std[1], std[2], "float16", true);
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsOk());

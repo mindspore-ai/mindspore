@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,10 +186,10 @@ Status AutoAugmentOp::ApplyAugment(const std::shared_ptr<Tensor> &input, std::sh
     RETURN_IF_NOT_OK(affine.Compute(input, output));
   } else if (op_name == "Rotate") {
     const int kRIndex = 0;
-    const int kBIndex = 1;
-    const int kGIndex = 2;
+    const int kGIndex = 1;
+    const int kBIndex = 2;
     RETURN_IF_NOT_OK(Rotate(input, output, {}, magnitude, interpolation_, false, fill_value_[kRIndex],
-                            fill_value_[kBIndex], fill_value_[kGIndex]));
+                            fill_value_[kGIndex], fill_value_[kBIndex]));
   } else if (op_name == "Brightness") {
     RETURN_IF_NOT_OK(AdjustBrightness(input, output, 1 + magnitude));
   } else if (op_name == "Color") {

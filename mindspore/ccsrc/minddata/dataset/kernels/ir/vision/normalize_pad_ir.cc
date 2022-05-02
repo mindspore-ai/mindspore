@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ namespace vision {
 #ifndef ENABLE_ANDROID
 // NormalizePadOperation
 NormalizePadOperation::NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std,
-                                             const std::string &dtype)
-    : mean_(mean), std_(std), dtype_(dtype) {}
+                                             const std::string &dtype, bool is_hwc)
+    : mean_(mean), std_(std), dtype_(dtype), is_hwc_(is_hwc) {}
 
 NormalizePadOperation::~NormalizePadOperation() = default;
 
@@ -51,7 +51,8 @@ std::shared_ptr<TensorOp> NormalizePadOperation::Build() {
   constexpr size_t dimension_one = 1;
   constexpr size_t dimension_two = 2;
   return std::make_shared<NormalizePadOp>(mean_[dimension_zero], mean_[dimension_one], mean_[dimension_two],
-                                          std_[dimension_zero], std_[dimension_one], std_[dimension_two], dtype_);
+                                          std_[dimension_zero], std_[dimension_one], std_[dimension_two], dtype_,
+                                          is_hwc_);
 }
 
 Status NormalizePadOperation::to_json(nlohmann::json *out_json) {
@@ -59,6 +60,7 @@ Status NormalizePadOperation::to_json(nlohmann::json *out_json) {
   args["mean"] = mean_;
   args["std"] = std_;
   args["dtype"] = dtype_;
+  args["is_hwc"] = is_hwc_;
   *out_json = args;
   return Status::OK();
 }
@@ -67,10 +69,12 @@ Status NormalizePadOperation::from_json(nlohmann::json op_params, std::shared_pt
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "mean", kNormalizePadOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "std", kNormalizePadOperation));
   RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "dtype", kNormalizePadOperation));
+  RETURN_IF_NOT_OK(ValidateParamInJson(op_params, "is_hwc", kNormalizePadOperation));
   std::vector<float> mean = op_params["mean"];
   std::vector<float> std = op_params["std"];
   std::string dtype = op_params["dtype"];
-  *operation = std::make_shared<vision::NormalizePadOperation>(mean, std, dtype);
+  bool is_hwc = op_params["is_hwc"];
+  *operation = std::make_shared<vision::NormalizePadOperation>(mean, std, dtype, is_hwc);
   return Status::OK();
 }
 

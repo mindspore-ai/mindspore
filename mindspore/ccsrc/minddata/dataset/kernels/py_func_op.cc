@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,20 +67,16 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
                               "True, PyFunc may execute time out.";
               goto TimeoutError;
             }
-            if (!py::isinstance<py::array>(ret_py_ele)) {
-              goto ShapeMisMatch;
-            }
+
             std::shared_ptr<Tensor> out;
             RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &out));
             output->push_back(out);
           }
-        } else if (py::isinstance<py::array>(ret_py_obj)) {
+        } else {
           // In case of a n-1 mapping, the return value will be a numpy array
           std::shared_ptr<Tensor> out;
           RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_obj.cast<py::array>(), &out));
           output->push_back(out);
-        } else {
-          goto ShapeMisMatch;
         }
       }
     } catch (const py::error_already_set &e) {
@@ -91,10 +87,6 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
 ComputeReturn:
   return ret;
 
-ShapeMisMatch:
-  ret = Status(StatusCode::kMDShapeMisMatch, __LINE__, __FILE__,
-               "PyFunc should return a numpy array or a numpy array tuple, check data type of return value in user "
-               "defined python function.");
   goto ComputeReturn;
 
 TimeoutError:
