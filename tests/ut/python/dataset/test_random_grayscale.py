@@ -17,8 +17,8 @@ Testing RandomGrayscale op in DE
 """
 import numpy as np
 
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset as ds
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, \
@@ -37,23 +37,25 @@ def test_random_grayscale_valid_prob(plot=False):
     logger.info("test_random_grayscale_valid_prob")
 
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms1 = [
-        py_vision.Decode(),
+        vision.Decode(True),
         # Note: prob is 1 so the output should always be grayscale images
-        py_vision.RandomGrayscale(1),
-        py_vision.ToTensor()
+        vision.RandomGrayscale(1),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     image_gray = []
@@ -77,24 +79,26 @@ def test_random_grayscale_input_grayscale_images():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.Grayscale(1),
+        vision.Decode(True),
+        vision.Grayscale(1),
         # Note: If the input images is grayscale image with 1 channel.
-        py_vision.RandomGrayscale(0.5),
-        py_vision.ToTensor()
+        vision.RandomGrayscale(0.5),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     image_gray = []
@@ -125,13 +129,14 @@ def test_random_grayscale_md5_valid_input():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomGrayscale(0.8),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomGrayscale(0.8),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     # Check output images with md5 comparison
@@ -152,13 +157,14 @@ def test_random_grayscale_md5_no_param():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomGrayscale(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomGrayscale(),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     # Check output images with md5 comparison
@@ -177,18 +183,20 @@ def test_random_grayscale_invalid_param():
     logger.info("test_random_grayscale_invalid_param")
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     try:
         transforms = [
-            py_vision.Decode(),
-            py_vision.RandomGrayscale(1.5),
-            py_vision.ToTensor()
+            vision.Decode(True),
+            vision.RandomGrayscale(1.5),
+            vision.ToTensor()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            e)
 
 
 if __name__ == "__main__":

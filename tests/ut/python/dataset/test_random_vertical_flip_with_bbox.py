@@ -17,7 +17,7 @@ Testing RandomVerticalFlipWithBBox op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 
 from mindspore import log as logger
 from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
@@ -41,7 +41,7 @@ def test_random_vertical_flip_with_bbox_op_c(plot_vis=False):
 
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+    test_op = vision.RandomVerticalFlipWithBBox(1)
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -72,13 +72,13 @@ def test_random_vertical_flip_with_bbox_op_coco_c(plot_vis=False):
     dataCoco2 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
                                decode=True, shuffle=False)
 
-    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+    test_op = vision.RandomVerticalFlipWithBBox(1)
 
     dataCoco2 = dataCoco2.map(operations=[test_op], input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
                               column_order=["image", "bbox"])
 
-    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+    test_op = vision.RandomVerticalFlipWithBBox(1)
 
     unaugSamp, augSamp = [], []
 
@@ -105,7 +105,7 @@ def test_random_vertical_flip_with_bbox_op_rand_c(plot_vis=False):
 
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.RandomVerticalFlipWithBBox(0.8)
+    test_op = vision.RandomVerticalFlipWithBBox(0.8)
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -140,7 +140,7 @@ def test_random_vertical_flip_with_bbox_op_edge_c(plot_vis=False):
 
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+    test_op = vision.RandomVerticalFlipWithBBox(1)
 
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(
@@ -175,7 +175,7 @@ def test_random_vertical_flip_with_bbox_op_invalid_c():
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
-        test_op = c_vision.RandomVerticalFlipWithBBox(2)
+        test_op = vision.RandomVerticalFlipWithBBox(2)
 
         # map to apply ops
         dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -195,7 +195,7 @@ def test_random_vertical_flip_with_bbox_op_bad_c():
     Tests RandomVerticalFlipWithBBox Op with invalid bounding boxes, expected to catch multiple errors
     """
     logger.info("test_random_vertical_flip_with_bbox_op_bad_c")
-    test_op = c_vision.RandomVerticalFlipWithBBox(1)
+    test_op = vision.RandomVerticalFlipWithBBox(1)
 
     data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")

@@ -18,7 +18,7 @@ Testing the random horizontal flip with bounding boxes op in DE
 import numpy as np
 import mindspore.log as logger
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
     config_get_set_seed, config_get_set_num_parallel_workers, save_and_check_md5
 
@@ -37,25 +37,27 @@ def test_random_horizontal_flip_with_bbox_op_c(plot_vis=False):
     logger.info("test_random_horizontal_flip_with_bbox_op_c")
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
+    test_op = vision.RandomHorizontalFlipWithBBox(1)
 
-    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"])
+    data_voc2 = data_voc2.map(operations=[test_op], input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              column_order=["image", "bbox"])
 
-    unaugSamp, augSamp = [], []
+    unaug_samp, aug_samp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
+    for unaug, aug in zip(data_voc1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                          data_voc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        unaug_samp.append(unaug)
+        aug_samp.append(aug)
 
     if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+        visualize_with_bounding_boxes(unaug_samp, aug_samp)
 
 
 def test_random_horizontal_flip_with_bbox_op_coco_c(plot_vis=False):
@@ -71,27 +73,27 @@ def test_random_horizontal_flip_with_bbox_op_coco_c(plot_vis=False):
     dataCoco2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
                                decode=True, shuffle=False)
 
-    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
+    test_op = vision.RandomHorizontalFlipWithBBox(1)
 
     dataCoco2 = dataCoco2.map(operations=[test_op], input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
                               column_order=["image", "bbox"])
 
-    unaugSamp, augSamp = [], []
+    unaug_samp, aug_samp = [], []
 
-    for unAug, Aug in zip(dataCoco1.create_dict_iterator(num_epochs=1, output_numpy=True),
+    for unaug, aug in zip(dataCoco1.create_dict_iterator(num_epochs=1, output_numpy=True),
                           dataCoco2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
+        unaug_samp.append(unaug)
+        aug_samp.append(aug)
 
     if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp, "bbox")
+        visualize_with_bounding_boxes(unaug_samp, aug_samp, "bbox")
 
 
 def test_random_horizontal_flip_with_bbox_valid_rand_c(plot_vis=False):
     """
     Uses a valid non-default input, expect to pass
-    Prints images side by side with and without Aug applied + bboxes to
+    Prints images side by side with and without augmentation applied + bboxes to
     compare and test
     """
     logger.info("test_random_horizontal_bbox_valid_rand_c")
@@ -100,29 +102,31 @@ def test_random_horizontal_flip_with_bbox_valid_rand_c(plot_vis=False):
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Load dataset
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.RandomHorizontalFlipWithBBox(0.6)
+    test_op = vision.RandomHorizontalFlipWithBBox(0.6)
 
     # map to apply ops
-    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"])
+    data_voc2 = data_voc2.map(operations=[test_op], input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              column_order=["image", "bbox"])
 
     filename = "random_horizontal_flip_with_bbox_01_c_result.npz"
-    save_and_check_md5(dataVoc2, filename, generate_golden=GENERATE_GOLDEN)
+    save_and_check_md5(data_voc2, filename, generate_golden=GENERATE_GOLDEN)
 
-    unaugSamp, augSamp = [], []
+    unaug_samp, aug_samp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
+    for unaug, aug in zip(data_voc1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                          data_voc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        unaug_samp.append(unaug)
+        aug_samp.append(aug)
 
     if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+        visualize_with_bounding_boxes(unaug_samp, aug_samp)
 
     # Restore config setting
     ds.config.set_seed(original_seed)
@@ -132,40 +136,44 @@ def test_random_horizontal_flip_with_bbox_valid_rand_c(plot_vis=False):
 def test_random_horizontal_flip_with_bbox_valid_edge_c(plot_vis=False):
     """
     Test RandomHorizontalFlipWithBBox op (testing with valid edge case, box covering full image).
-    Prints images side by side with and without Aug applied + bboxes to compare and test
+    Prints images side by side with and without augmentation applied + bboxes to compare and test
     """
     logger.info("test_horizontal_flip_with_bbox_valid_edge_c")
 
-    dataVoc1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc1 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
+    test_op = vision.RandomHorizontalFlipWithBBox(1)
 
     # map to apply ops
     # Add column for "bbox"
-    dataVoc1 = dataVoc1.map(
-        operations=lambda img, bbox: (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
+    data_voc1 = data_voc1.map(
+        operations=lambda img, bbox: (img, np.array(
+            [[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
         input_columns=["image", "bbox"],
         output_columns=["image", "bbox"],
         column_order=["image", "bbox"])
-    dataVoc2 = dataVoc2.map(
-        operations=lambda img, bbox: (img, np.array([[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
+    data_voc2 = data_voc2.map(
+        operations=lambda img, bbox: (img, np.array(
+            [[0, 0, img.shape[1], img.shape[0], 0, 0, 0]]).astype(np.float32)),
         input_columns=["image", "bbox"],
         output_columns=["image", "bbox"],
         column_order=["image", "bbox"])
-    dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                            output_columns=["image", "bbox"],
-                            column_order=["image", "bbox"])
+    data_voc2 = data_voc2.map(operations=[test_op], input_columns=["image", "bbox"],
+                              output_columns=["image", "bbox"],
+                              column_order=["image", "bbox"])
 
-    unaugSamp, augSamp = [], []
+    unaug_samp, aug_samp = [], []
 
-    for unAug, Aug in zip(dataVoc1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                          dataVoc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        unaugSamp.append(unAug)
-        augSamp.append(Aug)
+    for unaug, aug in zip(data_voc1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                          data_voc2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        unaug_samp.append(unaug)
+        aug_samp.append(aug)
 
     if plot_vis:
-        visualize_with_bounding_boxes(unaugSamp, augSamp)
+        visualize_with_bounding_boxes(unaug_samp, aug_samp)
 
 
 def test_random_horizontal_flip_with_bbox_invalid_prob_c():
@@ -174,18 +182,20 @@ def test_random_horizontal_flip_with_bbox_invalid_prob_c():
     """
     logger.info("test_random_horizontal_bbox_invalid_prob_c")
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
 
     try:
         # Note: Valid range of prob should be [0.0, 1.0]
-        test_op = c_vision.RandomHorizontalFlipWithBBox(1.5)
+        test_op = vision.RandomHorizontalFlipWithBBox(1.5)
         # map to apply ops
-        dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
-                                output_columns=["image", "bbox"],
-                                column_order=["image", "bbox"])  # Add column for "bbox"
+        data_voc2 = data_voc2.map(operations=[test_op], input_columns=["image", "bbox"],
+                                  output_columns=["image", "bbox"],
+                                  column_order=["image", "bbox"])  # Add column for "bbox"
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(error)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            error)
 
 
 def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
@@ -194,16 +204,23 @@ def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
     """
     logger.info("test_random_horizontal_bbox_invalid_bounds_c")
 
-    test_op = c_vision.RandomHorizontalFlipWithBBox(1)
+    test_op = vision.RandomHorizontalFlipWithBBox(1)
 
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.NegativeXY, "negative value")
-    dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WrongShape, "4 features")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow,
+                   "bounding boxes is out of bounds of the image")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow,
+                   "bounding boxes is out of bounds of the image")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data_voc2, test_op,
+                   InvalidBBoxType.NegativeXY, "negative value")
+    data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection",
+                              usage="train", shuffle=False, decode=True)
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 
 
 if __name__ == "__main__":

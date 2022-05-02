@@ -16,10 +16,12 @@
 Testing ToType op in DE
 """
 import numpy as np
+import mindspore._c_dataengine as cde
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
+from mindspore.dataset.core.datatypes import nptype_to_detype
 from util import save_and_check_md5
 
 GENERATE_GOLDEN = False
@@ -37,21 +39,21 @@ def test_to_type_op():
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.ToTensor(),
         # Note: Convert the datatype from float32 to int16
-        py_vision.ToType(np.int16)
+        vision.ToType(np.int16)
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -76,12 +78,12 @@ def test_to_type_01():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.ToTensor(),
         # Note: Convert the datatype from float32 to int32
-        py_vision.ToType(np.int32)
+        vision.ToType(np.int32)
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -98,12 +100,12 @@ def test_to_type_02():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.ToTensor(),
         # Note: Convert to type int
-        py_vision.ToType('int')
+        vision.ToType('int')
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -122,11 +124,11 @@ def test_to_type_03():
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         transforms = [
-            py_vision.Decode(),
+            vision.Decode(True),
             # Note: If the object is not numpy, e.g. PIL image, TypeError will raise
-            py_vision.ToType(np.int32)
+            vision.ToType(np.int32)
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -144,12 +146,12 @@ def test_to_type_04():
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         transforms = [
-            py_vision.Decode(),
-            py_vision.ToTensor(),
+            vision.Decode(True),
+            vision.ToTensor(),
             # Note: if output_type is not explicitly given
-            py_vision.ToType()
+            vision.ToType()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -167,16 +169,62 @@ def test_to_type_05():
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         transforms = [
-            py_vision.Decode(),
-            py_vision.ToTensor(),
+            vision.Decode(True),
+            vision.ToTensor(),
             # Note: if output_type is not explicitly given
-            py_vision.ToType('invalid')
+            vision.ToType('invalid')
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except Exception as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "data type" in str(e)
+
+
+def test_np_to_de():
+    """
+    Feature: NumPy Type to DE Type conversion
+    Description: Test NumPy Type to DE Type conversion for all valid types
+    Expectation: Data results are correct
+    """
+
+    assert nptype_to_detype(np.dtype("bool")) == cde.DataType("bool")
+
+    assert nptype_to_detype(np.dtype("int8")) == cde.DataType("int8")
+    assert nptype_to_detype(np.dtype("int16")) == cde.DataType("int16")
+    assert nptype_to_detype(np.dtype("int32")) == cde.DataType("int32")
+    assert nptype_to_detype(np.dtype("int64")) == cde.DataType("int64")
+    assert nptype_to_detype(np.dtype("int")) == cde.DataType("int64")
+
+    assert nptype_to_detype(np.dtype("uint8")) == cde.DataType("uint8")
+    assert nptype_to_detype(np.dtype("uint16")) == cde.DataType("uint16")
+    assert nptype_to_detype(np.dtype("uint32")) == cde.DataType("uint32")
+    assert nptype_to_detype(np.dtype("uint64")) == cde.DataType("uint64")
+
+    assert nptype_to_detype(np.dtype("float16")) == cde.DataType("float16")
+    assert nptype_to_detype(np.dtype("float32")) == cde.DataType("float32")
+    assert nptype_to_detype(np.dtype("float64")) == cde.DataType("float64")
+
+    assert nptype_to_detype(np.dtype("str")) == cde.DataType("string")
+
+    assert nptype_to_detype(bool) == cde.DataType("bool")
+
+    assert nptype_to_detype(np.int8) == cde.DataType("int8")
+    assert nptype_to_detype(np.int16) == cde.DataType("int16")
+    assert nptype_to_detype(np.int32) == cde.DataType("int32")
+    assert nptype_to_detype(np.int64) == cde.DataType("int64")
+    assert nptype_to_detype(int) == cde.DataType("int64")
+
+    assert nptype_to_detype(np.uint8) == cde.DataType("uint8")
+    assert nptype_to_detype(np.uint16) == cde.DataType("uint16")
+    assert nptype_to_detype(np.uint32) == cde.DataType("uint32")
+    assert nptype_to_detype(np.uint64) == cde.DataType("uint64")
+
+    assert nptype_to_detype(np.float16) == cde.DataType("float16")
+    assert nptype_to_detype(np.float32) == cde.DataType("float32")
+    assert nptype_to_detype(np.float64) == cde.DataType("float64")
+
+    assert nptype_to_detype(str) == cde.DataType("string")
 
 
 if __name__ == "__main__":
@@ -186,3 +234,4 @@ if __name__ == "__main__":
     test_to_type_03()
     test_to_type_04()
     test_to_type_05()
+    test_np_to_de()

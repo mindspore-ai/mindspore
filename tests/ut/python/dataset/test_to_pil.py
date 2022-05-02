@@ -16,9 +16,8 @@
 Testing ToPIL op in DE
 """
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -38,13 +37,13 @@ def test_to_pil_01():
     # Generate dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
+        vision.Decode(True),
         # If input is already PIL image.
-        py_vision.ToPIL(),
-        py_vision.CenterCrop(375),
-        py_vision.ToTensor()
+        vision.ToPIL(),
+        vision.CenterCrop(375),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data1 = data1.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
@@ -60,14 +59,14 @@ def test_to_pil_02():
 
     # Generate dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     transforms = [
         # If input type is not PIL.
-        py_vision.ToPIL(),
-        py_vision.CenterCrop(375),
-        py_vision.ToTensor()
+        vision.ToPIL(),
+        vision.CenterCrop(375),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=transform, input_columns=["image"])
 

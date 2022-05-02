@@ -18,7 +18,7 @@ Testing RandomAdjustSharpness in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_list, visualize_image, diff_mse
 
@@ -34,7 +34,7 @@ def test_random_adjust_sharpness_pipeline(plot=False):
 
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transforms_original = [c_vision.Decode(), c_vision.Resize(size=[224, 224])]
+    transforms_original = [vision.Decode(), vision.Resize(size=[224, 224])]
     ds_original = data_set.map(operations=transforms_original, input_columns="image")
     ds_original = ds_original.batch(512)
 
@@ -48,9 +48,9 @@ def test_random_adjust_sharpness_pipeline(plot=False):
 
     # Randomly Sharpness Adjusted Images
     data_set1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transform_random_adjust_sharpness = [c_vision.Decode(),
-                                         c_vision.Resize(size=[224, 224]),
-                                         c_vision.RandomAdjustSharpness(2.0, 0.6)]
+    transform_random_adjust_sharpness = [vision.Decode(),
+                                         vision.Resize(size=[224, 224]),
+                                         vision.RandomAdjustSharpness(2.0, 0.6)]
     ds_random_adjust_sharpness = data_set1.map(operations=transform_random_adjust_sharpness, input_columns="image")
     ds_random_adjust_sharpness = ds_random_adjust_sharpness.batch(512)
     for idx, (image, _) in enumerate(ds_random_adjust_sharpness):
@@ -77,9 +77,9 @@ def test_random_adjust_sharpness_eager():
     img = np.fromfile(image_file, dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
-    img = c_vision.Decode()(img)
-    img_sharped = c_vision.RandomSharpness((2.0, 2.0))(img)
-    img_random_sharped = c_vision.RandomAdjustSharpness(2.0, 1.0)(img)
+    img = vision.Decode()(img)
+    img_sharped = vision.RandomSharpness((2.0, 2.0))(img)
+    img_random_sharped = vision.RandomAdjustSharpness(2.0, 1.0)(img)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img_random_sharped), img_random_sharped.shape))
 
     assert img_random_sharped.all() == img_sharped.all()
@@ -89,8 +89,8 @@ def test_random_adjust_sharpness_comp(plot=False):
     """
     Test RandomAdjustSharpness op compared with Sharpness op.
     """
-    random_adjust_sharpness_op = c_vision.RandomAdjustSharpness(degree=2.0, prob=1.0)
-    sharpness_op = c_vision.RandomSharpness((2.0, 2.0))
+    random_adjust_sharpness_op = vision.RandomAdjustSharpness(degree=2.0, prob=1.0)
+    sharpness_op = vision.RandomSharpness((2.0, 2.0))
 
     dataset1 = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     for item in dataset1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -118,7 +118,7 @@ def test_random_adjust_sharpness_invalid_prob():
     logger.info("test_random_adjust_sharpness_invalid_prob")
     dataset = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     try:
-        random_adjust_sharpness_op = c_vision.RandomAdjustSharpness(2.0, 1.5)
+        random_adjust_sharpness_op = vision.RandomAdjustSharpness(2.0, 1.5)
         dataset = dataset.map(operations=random_adjust_sharpness_op, input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -132,7 +132,7 @@ def test_random_adjust_sharpness_invalid_degree():
     logger.info("test_random_adjust_sharpness_invalid_prob")
     dataset = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     try:
-        random_adjust_sharpness_op = c_vision.RandomAdjustSharpness(-1.0, 1.5)
+        random_adjust_sharpness_op = vision.RandomAdjustSharpness(-1.0, 1.5)
         dataset = dataset.map(operations=random_adjust_sharpness_op, input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))

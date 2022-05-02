@@ -17,9 +17,8 @@ Testing RandomAffine op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as py_vision
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -38,17 +37,17 @@ def test_random_affine_op(plot=False):
     logger.info("test_random_affine_op")
     # define map operations
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
 
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -76,12 +75,12 @@ def test_random_affine_op_c(plot=False):
     logger.info("test_random_affine_op_c")
     # define map operations
     transforms1 = [
-        c_vision.Decode(),
-        c_vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0))
+        vision.Decode(),
+        vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0))
     ]
 
     transforms2 = [
-        c_vision.Decode()
+        vision.Decode()
     ]
 
     #  First dataset
@@ -112,12 +111,12 @@ def test_random_affine_md5():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     # define map operations
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomAffine(degrees=(-5, 15), translate=(0.1, 0.3),
-                               scale=(0.9, 1.1), shear=(-10, 10, -5, 5)),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomAffine(degrees=(-5, 15), translate=(0.1, 0.3),
+                            scale=(0.9, 1.1), shear=(-10, 10, -5, 5)),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -141,9 +140,9 @@ def test_random_affine_c_md5():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     # define map operations
     transforms = [
-        c_vision.Decode(),
-        c_vision.RandomAffine(degrees=(-5, 15), translate=(-0.1, 0.1, -0.3, 0.3),
-                              scale=(0.9, 1.1), shear=(-10, 10, -5, 5))
+        vision.Decode(),
+        vision.RandomAffine(degrees=(-5, 15), translate=(-0.1, 0.1, -0.3, 0.3),
+                            scale=(0.9, 1.1), shear=(-10, 10, -5, 5))
     ]
 
     #  Generate dataset
@@ -168,8 +167,8 @@ def test_random_affine_default_c_md5():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     # define map operations
     transforms = [
-        c_vision.Decode(),
-        c_vision.RandomAffine(degrees=0)
+        vision.Decode(),
+        vision.RandomAffine(degrees=0)
     ]
 
     #  Generate dataset
@@ -192,8 +191,8 @@ def test_random_affine_py_exception_non_pil_images():
     logger.info("test_random_affine_exception_negative_degrees")
     dataset = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3, num_parallel_workers=3)
     try:
-        transform = mindspore.dataset.transforms.py_transforms.Compose([py_vision.ToTensor(),
-                                                                        py_vision.RandomAffine(degrees=(15, 15))])
+        transform = mindspore.dataset.transforms.transforms.Compose([vision.ToTensor(),
+                                                                     vision.RandomAffine(degrees=(15, 15))])
         dataset = dataset.map(operations=transform, input_columns=["image"], num_parallel_workers=3)
         for _ in dataset.create_dict_iterator(num_epochs=1):
             pass
@@ -208,7 +207,7 @@ def test_random_affine_exception_negative_degrees():
     """
     logger.info("test_random_affine_exception_negative_degrees")
     try:
-        _ = py_vision.RandomAffine(degrees=-15)
+        _ = vision.RandomAffine(degrees=-15)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input degrees is not within the required interval of [0, 16777216]."
@@ -220,13 +219,13 @@ def test_random_affine_exception_translation_range():
     """
     logger.info("test_random_affine_exception_translation_range")
     try:
-        _ = c_vision.RandomAffine(degrees=15, translate=(0.1, 1.5))
+        _ = vision.RandomAffine(degrees=15, translate=(0.1, 1.5))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input translate at 1 is not within the required interval of [-1.0, 1.0]."
     logger.info("test_random_affine_exception_translation_range")
     try:
-        _ = c_vision.RandomAffine(degrees=15, translate=(-2, 1.5))
+        _ = vision.RandomAffine(degrees=15, translate=(-2, 1.5))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input translate at 0 is not within the required interval of [-1.0, 1.0]."
@@ -238,13 +237,13 @@ def test_random_affine_exception_scale_value():
     """
     logger.info("test_random_affine_exception_scale_value")
     try:
-        _ = py_vision.RandomAffine(degrees=15, scale=(0.0, 0.0))
+        _ = vision.RandomAffine(degrees=15, scale=(0.0, 0.0))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input scale[1] must be greater than 0."
 
     try:
-        _ = py_vision.RandomAffine(degrees=15, scale=(2.0, 1.1))
+        _ = vision.RandomAffine(degrees=15, scale=(2.0, 1.1))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input scale[1] must be equal to or greater than scale[0]."
@@ -256,26 +255,26 @@ def test_random_affine_exception_shear_value():
     """
     logger.info("test_random_affine_exception_shear_value")
     try:
-        _ = py_vision.RandomAffine(degrees=15, shear=-5)
+        _ = vision.RandomAffine(degrees=15, shear=-5)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input shear must be greater than 0."
 
     try:
-        _ = py_vision.RandomAffine(degrees=15, shear=(5, 1))
+        _ = vision.RandomAffine(degrees=15, shear=(5, 1))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input shear[1] must be equal to or greater than shear[0]"
 
     try:
-        _ = py_vision.RandomAffine(degrees=15, shear=(5, 1, 2, 8))
+        _ = vision.RandomAffine(degrees=15, shear=(5, 1, 2, 8))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input shear[1] must be equal to or greater than shear[0] and " \
                          "shear[3] must be equal to or greater than shear[2]."
 
     try:
-        _ = py_vision.RandomAffine(degrees=15, shear=(5, 9, 2, 1))
+        _ = vision.RandomAffine(degrees=15, shear=(5, 9, 2, 1))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input shear[1] must be equal to or greater than shear[0] and " \
@@ -289,7 +288,7 @@ def test_random_affine_exception_degrees_size():
     """
     logger.info("test_random_affine_exception_degrees_size")
     try:
-        _ = py_vision.RandomAffine(degrees=[15])
+        _ = vision.RandomAffine(degrees=[15])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "If degrees is a sequence, the length must be 2."
@@ -302,7 +301,7 @@ def test_random_affine_exception_translate_size():
     """
     logger.info("test_random_affine_exception_translate_size")
     try:
-        _ = py_vision.RandomAffine(degrees=15, translate=(0.1))
+        _ = vision.RandomAffine(degrees=15, translate=(0.1))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(
@@ -317,7 +316,7 @@ def test_random_affine_exception_scale_size():
     """
     logger.info("test_random_affine_exception_scale_size")
     try:
-        _ = py_vision.RandomAffine(degrees=15, scale=(0.5))
+        _ = vision.RandomAffine(degrees=15, scale=(0.5))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Argument scale with value 0.5 is not of type [<class 'tuple'>," \
@@ -331,7 +330,7 @@ def test_random_affine_exception_shear_size():
     """
     logger.info("test_random_affine_exception_shear_size")
     try:
-        _ = py_vision.RandomAffine(degrees=15, shear=(-5, 5, 10))
+        _ = vision.RandomAffine(degrees=15, shear=(-5, 5, 10))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "shear must be of length 2 or 4."

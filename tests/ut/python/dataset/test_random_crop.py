@@ -17,10 +17,8 @@ Testing RandomCrop op in DE
 """
 import numpy as np
 
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.transforms.c_transforms as ops
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as ops
+import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore import log as logger
@@ -42,8 +40,8 @@ def test_random_crop_op_c(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
 
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_op, input_columns=["image"])
@@ -71,20 +69,20 @@ def test_random_crop_op_py(plot=False):
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([512, 512], [200, 200, 200, 200]),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop([512, 512], [200, 200, 200, 200]),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = ops.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
     # Second dataset
     # Second dataset for comparison
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = ops.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
 
     crop_images = []
@@ -100,7 +98,7 @@ def test_random_crop_op_py(plot=False):
 
 def test_random_crop_01_c():
     """
-    Test RandomCrop op with c_transforms: size is a single integer, expected to pass
+    Test RandomCrop op with C implementation: size is a single integer, expected to pass
     """
     logger.info("test_random_crop_01_c")
     original_seed = config_get_set_seed(0)
@@ -109,8 +107,8 @@ def test_random_crop_01_c():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: If size is an int, a square crop of size (size, size) is returned.
-    random_crop_op = c_vision.RandomCrop(512)
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop(512)
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
 
@@ -123,7 +121,7 @@ def test_random_crop_01_c():
 
 def test_random_crop_01_py():
     """
-    Test RandomCrop op with py_transforms: size is a single integer, expected to pass
+    Test RandomCrop op with transforms: size is a single integer, expected to pass
     """
     logger.info("test_random_crop_01_py")
     original_seed = config_get_set_seed(0)
@@ -133,11 +131,11 @@ def test_random_crop_01_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: If size is an int, a square crop of size (size, size) is returned.
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop(512),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop(512),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_01_py_result.npz"
@@ -149,7 +147,7 @@ def test_random_crop_01_py():
 
 def test_random_crop_02_c():
     """
-    Test RandomCrop op with c_transforms: size is a list/tuple with length 2, expected to pass
+    Test RandomCrop op with C implementation: size is a list/tuple with length 2, expected to pass
     """
     logger.info("test_random_crop_02_c")
     original_seed = config_get_set_seed(0)
@@ -158,8 +156,8 @@ def test_random_crop_02_c():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: If size is a sequence of length 2, it should be (height, width).
-    random_crop_op = c_vision.RandomCrop([512, 375])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 375])
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
 
@@ -172,7 +170,7 @@ def test_random_crop_02_c():
 
 def test_random_crop_02_py():
     """
-    Test RandomCrop op with py_transforms: size is a list/tuple with length 2, expected to pass
+    Test RandomCrop op with transforms: size is a list/tuple with length 2, expected to pass
     """
     logger.info("test_random_crop_02_py")
     original_seed = config_get_set_seed(0)
@@ -182,11 +180,11 @@ def test_random_crop_02_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: If size is a sequence of length 2, it should be (height, width).
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([512, 375]),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop([512, 375]),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_02_py_result.npz"
@@ -198,7 +196,7 @@ def test_random_crop_02_py():
 
 def test_random_crop_03_c():
     """
-    Test RandomCrop op with c_transforms: input image size == crop size, expected to pass
+    Test RandomCrop op with C implementation: input image size == crop size, expected to pass
     """
     logger.info("test_random_crop_03_c")
     original_seed = config_get_set_seed(0)
@@ -207,8 +205,8 @@ def test_random_crop_03_c():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The size of the image is 4032*2268
-    random_crop_op = c_vision.RandomCrop([2268, 4032])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([2268, 4032])
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
 
@@ -221,7 +219,7 @@ def test_random_crop_03_c():
 
 def test_random_crop_03_py():
     """
-    Test RandomCrop op with py_transforms: input image size == crop size, expected to pass
+    Test RandomCrop op with transforms: input image size == crop size, expected to pass
     """
     logger.info("test_random_crop_03_py")
     original_seed = config_get_set_seed(0)
@@ -231,11 +229,11 @@ def test_random_crop_03_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The size of the image is 4032*2268
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([2268, 4032]),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop([2268, 4032]),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_03_py_result.npz"
@@ -247,15 +245,15 @@ def test_random_crop_03_py():
 
 def test_random_crop_04_c():
     """
-    Test RandomCrop op with c_transforms: input image size < crop size, expected to fail
+    Test RandomCrop op with C implementation: input image size < crop size, expected to fail
     """
     logger.info("test_random_crop_04_c")
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The size of the image is 4032*2268
-    random_crop_op = c_vision.RandomCrop([2268, 4033])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([2268, 4033])
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
     try:
@@ -266,7 +264,7 @@ def test_random_crop_04_c():
 
 def test_random_crop_04_py():
     """
-    Test RandomCrop op with py_transforms:
+    Test RandomCrop op with transforms:
     input image size < crop size, expected to fail
     """
     logger.info("test_random_crop_04_py")
@@ -275,11 +273,11 @@ def test_random_crop_04_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The size of the image is 4032*2268
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([2268, 4033]),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop([2268, 4033]),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
     try:
         data.create_dict_iterator(num_epochs=1).__next__()
@@ -289,7 +287,7 @@ def test_random_crop_04_py():
 
 def test_random_crop_05_c():
     """
-    Test RandomCrop op with c_transforms:
+    Test RandomCrop op with C implementation:
     input image size < crop size but pad_if_needed is enabled,
     expected to pass
     """
@@ -300,8 +298,8 @@ def test_random_crop_05_c():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The size of the image is 4032*2268
-    random_crop_op = c_vision.RandomCrop([2268, 4033], [200, 200, 200, 200], pad_if_needed=True)
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([2268, 4033], [200, 200, 200, 200], pad_if_needed=True)
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
 
@@ -314,7 +312,7 @@ def test_random_crop_05_c():
 
 def test_random_crop_05_py():
     """
-    Test RandomCrop op with py_transforms:
+    Test RandomCrop op with transforms:
     input image size < crop size but pad_if_needed is enabled,
     expected to pass
     """
@@ -326,11 +324,11 @@ def test_random_crop_05_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The size of the image is 4032*2268
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop([2268, 4033], [200, 200, 200, 200], pad_if_needed=True),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop([2268, 4033], [200, 200, 200, 200], pad_if_needed=True),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_05_py_result.npz"
@@ -342,7 +340,7 @@ def test_random_crop_05_py():
 
 def test_random_crop_06_c():
     """
-    Test RandomCrop op with c_transforms:
+    Test RandomCrop op with C implementation:
     invalid size, expected to raise TypeError
     """
     logger.info("test_random_crop_06_c")
@@ -351,8 +349,8 @@ def test_random_crop_06_c():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:
         # Note: if size is neither an int nor a list of length 2, an exception will raise
-        random_crop_op = c_vision.RandomCrop([512, 512, 375])
-        decode_op = c_vision.Decode()
+        random_crop_op = vision.RandomCrop([512, 512, 375])
+        decode_op = vision.Decode()
         data = data.map(operations=decode_op, input_columns=["image"])
         data = data.map(operations=random_crop_op, input_columns=["image"])
     except TypeError as e:
@@ -361,7 +359,7 @@ def test_random_crop_06_c():
 
 def test_random_crop_06_py():
     """
-    Test RandomCrop op with py_transforms:
+    Test RandomCrop op with transforms:
     invalid size, expected to raise TypeError
     """
     logger.info("test_random_crop_06_py")
@@ -371,11 +369,11 @@ def test_random_crop_06_py():
     try:
         # Note: if size is neither an int nor a list of length 2, an exception will raise
         transforms = [
-            py_vision.Decode(),
-            py_vision.RandomCrop([512, 512, 375]),
-            py_vision.ToTensor()
+            vision.Decode(True),
+            vision.RandomCrop([512, 512, 375]),
+            vision.ToTensor()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = ops.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -383,7 +381,7 @@ def test_random_crop_06_py():
 
 def test_random_crop_07_c():
     """
-    Test RandomCrop op with c_transforms:
+    Test RandomCrop op with C implementation:
     padding_mode is Border.CONSTANT and fill_value is 255 (White),
     expected to pass
     """
@@ -394,8 +392,8 @@ def test_random_crop_07_c():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The padding_mode is default as Border.CONSTANT and set filling color to be white.
-    random_crop_op = c_vision.RandomCrop(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
 
@@ -408,7 +406,7 @@ def test_random_crop_07_c():
 
 def test_random_crop_07_py():
     """
-    Test RandomCrop op with py_transforms:
+    Test RandomCrop op with transforms:
     padding_mode is Border.CONSTANT and fill_value is 255 (White),
     expected to pass
     """
@@ -420,11 +418,11 @@ def test_random_crop_07_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The padding_mode is default as Border.CONSTANT and set filling color to be white.
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop(512, [200, 200, 200, 200], fill_value=(255, 255, 255)),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop(512, [200, 200, 200, 200], fill_value=(255, 255, 255)),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_07_py_result.npz"
@@ -436,7 +434,7 @@ def test_random_crop_07_py():
 
 def test_random_crop_08_c():
     """
-    Test RandomCrop op with c_transforms: padding_mode is Border.EDGE,
+    Test RandomCrop op with C implementation: padding_mode is Border.EDGE,
     expected to pass
     """
     logger.info("test_random_crop_08_c")
@@ -446,8 +444,8 @@ def test_random_crop_08_c():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The padding_mode is Border.EDGE.
-    random_crop_op = c_vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
+    decode_op = vision.Decode()
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_crop_op, input_columns=["image"])
 
@@ -460,7 +458,7 @@ def test_random_crop_08_c():
 
 def test_random_crop_08_py():
     """
-    Test RandomCrop op with py_transforms: padding_mode is Border.EDGE,
+    Test RandomCrop op with transforms: padding_mode is Border.EDGE,
     expected to pass
     """
     logger.info("test_random_crop_08_py")
@@ -471,11 +469,11 @@ def test_random_crop_08_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # Note: The padding_mode is Border.EDGE.
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_crop_08_py_result.npz"
@@ -487,25 +485,25 @@ def test_random_crop_08_py():
 
 def test_random_crop_09():
     """
-    Test RandomCrop op: invalid type of input image (not PIL), expected to raise TypeError
+    Test RandomCrop op: invalid type of input image format, expected to raise RuntimeError
     """
     logger.info("test_random_crop_09")
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.ToTensor(),
-        # Note: if input is not PIL image, TypeError will raise
-        py_vision.RandomCrop(512)
+        vision.Decode(True),
+        vision.ToTensor(),
+        # Note: Input is wrong image format
+        vision.RandomCrop(512)
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
     try:
         data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "should be PIL image" in str(e)
+        assert "Unexpected error. Pad: input shape is not <H,W,C> or <H, W>, got rank: 3" in str(e)
 
 def test_random_crop_comp(plot=False):
     """
@@ -516,19 +514,19 @@ def test_random_crop_comp(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    random_crop_op = c_vision.RandomCrop(cropped_size)
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop(cropped_size)
+    decode_op = vision.Decode()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomCrop(cropped_size),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomCrop(cropped_size),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_cropped = []
@@ -551,8 +549,8 @@ def test_random_crop_09_c():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
                     output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
-    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
-    decode_op = c_vision.Decode()
+    random_crop_op = vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = vision.Decode()
 
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=decode_op, input_columns=["image_copy"])

@@ -18,7 +18,7 @@ Testing Rotate Python API
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from mindspore.dataset.vision.utils import Inter
 from util import visualize_image, diff_mse
@@ -30,14 +30,14 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_rotate_pipeline_with_expanding(plot=False):
     """
-    Test Rotate of c_transforms with expanding
+    Test Rotate of C implementation with expanding
     """
     logger.info("test_rotate_pipeline_with_expanding")
 
     # First dataset
     dataset1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    decode_op = c_vision.Decode()
-    rotate_op = c_vision.Rotate(90, expand=True)
+    decode_op = vision.Decode()
+    rotate_op = vision.Rotate(90, expand=True)
     dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
     dataset1 = dataset1.map(operations=rotate_op, input_columns=["image"])
 
@@ -63,15 +63,15 @@ def test_rotate_pipeline_with_expanding(plot=False):
 
 def test_rotate_pipeline_without_expanding():
     """
-    Test Rotate of c_transforms without expanding
+    Test Rotate of C implementation without expanding
     """
     logger.info("test_rotate_pipeline_without_expanding")
 
     # Create a Dataset then decode and rotate the image
     dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    decode_op = c_vision.Decode()
-    resize_op = c_vision.Resize((64, 128))
-    rotate_op = c_vision.Rotate(30)
+    decode_op = vision.Decode()
+    resize_op = vision.Resize((64, 128))
+    rotate_op = vision.Rotate(30)
     dataset = dataset.map(operations=decode_op, input_columns=["image"])
     dataset = dataset.map(operations=resize_op, input_columns=["image"])
     dataset = dataset.map(operations=rotate_op, input_columns=["image"])
@@ -87,8 +87,8 @@ def test_rotate_eager():
     """
     logger.info("test_rotate_eager")
     img = cv2.imread(IMAGE_FILE)
-    resize_img = c_vision.Resize((32, 64))(img)
-    rotate_img = c_vision.Rotate(-90, expand=True)(resize_img)
+    resize_img = vision.Resize((32, 64))(img)
+    rotate_img = vision.Rotate(-90, expand=True)(resize_img)
     assert rotate_img.shape == (64, 32, 3)
 
 
@@ -98,17 +98,17 @@ def test_rotate_exception():
     """
     logger.info("test_rotate_exception")
     try:
-        _ = c_vision.Rotate("60")
+        _ = vision.Rotate("60")
     except TypeError as e:
         logger.info("Got an exception in Rotate: {}".format(str(e)))
         assert "not of type [<class 'float'>, <class 'int'>]" in str(e)
     try:
-        _ = c_vision.Rotate(30, Inter.BICUBIC, False, (0, 0, 0))
+        _ = vision.Rotate(30, Inter.BICUBIC, False, (0, 0, 0))
     except ValueError as e:
         logger.info("Got an exception in Rotate: {}".format(str(e)))
         assert "Value center needs to be a 2-tuple." in str(e)
     try:
-        _ = c_vision.Rotate(-120, Inter.NEAREST, False, (-1, -1), (255, 255))
+        _ = vision.Rotate(-120, Inter.NEAREST, False, (-1, -1), (255, 255))
     except TypeError as e:
         logger.info("Got an exception in Rotate: {}".format(str(e)))
         assert "fill_value should be a single integer or a 3-tuple." in str(e)

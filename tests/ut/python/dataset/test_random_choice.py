@@ -17,8 +17,8 @@ Testing RandomChoice op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms as py_transforms
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as data_trans
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_list, diff_mse
 
@@ -32,19 +32,19 @@ def test_random_choice_op(plot=False):
     """
     logger.info("test_random_choice_op")
     # define map operations
-    transforms_list = [py_vision.CenterCrop(64), py_vision.RandomRotation(30)]
+    transforms_list = [vision.CenterCrop(64), vision.RandomRotation(30)]
     transforms1 = [
-        py_vision.Decode(),
-        py_transforms.RandomChoice(transforms_list),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        data_trans.RandomChoice(transforms_list),
+        vision.ToTensor()
     ]
-    transform1 = py_transforms.Compose(transforms1)
+    transform1 = data_trans.Compose(transforms1)
 
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = py_transforms.Compose(transforms2)
+    transform2 = data_trans.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -71,20 +71,20 @@ def test_random_choice_comp(plot=False):
     """
     logger.info("test_random_choice_comp")
     # define map operations
-    transforms_list = [py_vision.CenterCrop(64)]
+    transforms_list = [vision.CenterCrop(64)]
     transforms1 = [
-        py_vision.Decode(),
-        py_transforms.RandomChoice(transforms_list),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        data_trans.RandomChoice(transforms_list),
+        vision.ToTensor()
     ]
-    transform1 = py_transforms.Compose(transforms1)
+    transform1 = data_trans.Compose(transforms1)
 
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.CenterCrop(64),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.CenterCrop(64),
+        vision.ToTensor()
     ]
-    transform2 = py_transforms.Compose(transforms2)
+    transform2 = data_trans.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -116,13 +116,13 @@ def test_random_choice_exception_random_crop_badinput():
     logger.info("test_random_choice_exception_random_crop_badinput")
     # define map operations
     # note: crop size[5000, 5000] > image size[4032, 2268]
-    transforms_list = [py_vision.RandomCrop(5000)]
+    transforms_list = [vision.RandomCrop(5000)]
     transforms = [
-        py_vision.Decode(),
-        py_transforms.RandomChoice(transforms_list),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        data_trans.RandomChoice(transforms_list),
+        vision.ToTensor()
     ]
-    transform = py_transforms.Compose(transforms)
+    transform = data_trans.Compose(transforms)
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=transform, input_columns=["image"])
