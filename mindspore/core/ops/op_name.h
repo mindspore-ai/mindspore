@@ -51,6 +51,7 @@ constexpr auto kCondition = "condition";
 constexpr auto kCrops = "crops";
 constexpr auto kEquation = "equation";
 constexpr auto kCustom = "custom";
+constexpr auto kDiagonal = "diagonal";
 constexpr auto kDampening = "dampening";
 constexpr auto kDataType = "data_type";
 constexpr auto kDctCoeffNum = "dct_coeff_num";

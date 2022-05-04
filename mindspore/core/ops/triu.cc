@@ -31,12 +31,17 @@ namespace {
 abstract::ShapePtr TriuInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  auto x = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x);
-  auto shape_element = x->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+
+  const int64_t kShapeSize = 2;
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto x_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  (void)CheckAndConvertUtils::CheckInteger("x's rank", x_shape.size(), kGreaterEqual, kShapeSize, prim_name);
+  if (min_shape.size() != 0 && max_shape.size() != 0) {
+    return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
+  }
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr TriuInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -48,6 +53,12 @@ TypePtr TriuInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   return x_type;
 }
 }  // namespace
+
+void Triu::Init(const int diagonal) { set_diagonal(diagonal); }
+
+void Triu::set_diagonal(const int diagonal) { (void)this->AddAttr(kDiagonal, api::MakeValue(diagonal)); }
+
+int Triu::get_diagonal() const { return static_cast<int>(GetValue<int64_t>(GetAttr(kDiagonal))); }
 
 AbstractBasePtr TriuInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
