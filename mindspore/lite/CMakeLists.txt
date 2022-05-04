@@ -56,6 +56,7 @@ option(MSLITE_ENABLE_EXPERIMENTAL_KERNEL "enable experimental kernel" on)
 option(MSLITE_ENABLE_GRAPH_KERNEL "enable graph kernel" off)
 option(MSLITE_ENABLE_CONVERT_PYTORCH_MODEL "enable to convert pytorch model" off)
 option(MSLITE_ENABLE_KERNEL_EXECUTOR "enable kernel executor" off)
+option(MSLITE_ENABLE_GITEE_MIRROR "enable download third_party from gitee mirror" off)
 
 #Option that can be configured through manually
 option(ENABLE_VERBOSE "" off)
@@ -187,6 +188,14 @@ endif()
 if(DEFINED ENV{MSLITE_ENABLE_CONVERT_PYTORCH_MODEL} AND DEFINED ENV{LIB_TORCH_PATH})
     set(ENABLE_CONVERT_PYTORCH_MODEL $ENV{MSLITE_ENABLE_CONVERT_PYTORCH_MODEL})
     set(LIB_TORCH_PATH $ENV{LIB_TORCH_PATH})
+endif()
+
+if(DEFINED ENV{MSLITE_ENABLE_GITEE_MIRROR})
+    set(MSLITE_ENABLE_GITEE_MIRROR $ENV{MSLITE_ENABLE_GITEE_MIRROR})
+endif()
+
+if(MSLITE_ENABLE_GITEE_MIRROR)
+    set(ENABLE_GITEE ON)
 endif()
 
 if(MACHINE_LINUX_ARM64)
