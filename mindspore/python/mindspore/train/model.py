@@ -205,6 +205,7 @@ class Model:
         self._build_predict_network()
         self._current_epoch_num = 0
         self._current_step_num = 0
+        self.epoch_iter = 0
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -488,8 +489,19 @@ class Model:
                 eval_network.compile(*inputs)
                 break
 
+    @staticmethod
+    def _transform_callbacks(callbacks):
+        """Transform callback to a list."""
+        if callbacks is None:
+            return []
+
+        if isinstance(callbacks, Iterable):
+            return list(callbacks)
+
+        return [callbacks]
+
     @_save_final_ckpt
-    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
+    def _train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
         """
         Training.
 
@@ -506,6 +518,8 @@ class Model:
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink.
             sink_size (int): Control the amount of data in each sink. Default: -1.
+            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+                                 Default: 0.
         """
         epoch = Validator.check_positive_int(epoch)
         if self._parameter_broadcast:
@@ -513,7 +527,7 @@ class Model:
 
         cb_params = _InternalCallbackParam()
         cb_params.train_network = self._train_network
-        cb_params.epoch_num = epoch
+        cb_params.epoch_num = epoch - initial_epoch
         if dataset_sink_mode and sink_size > 0:
             cb_params.batch_num = sink_size
         else:
@@ -539,26 +553,17 @@ class Model:
         with _CallbackManager(callbacks) as list_callback:
             self._check_reuse_dataset(train_dataset)
             if not dataset_sink_mode:
-                self._train_process(epoch, train_dataset, list_callback, cb_params)
+                self._train_process(epoch, train_dataset, list_callback, cb_params, initial_epoch)
             elif context.get_context("device_target") == "CPU":
                 logger.info("The CPU cannot support dataset sink mode currently."
                             "So the training process will be performed with dataset not sink.")
-                self._train_process(epoch, train_dataset, list_callback, cb_params)
+                self._train_process(epoch, train_dataset, list_callback, cb_params, initial_epoch)
             else:
-                self._train_dataset_sink_process(epoch, train_dataset, list_callback, cb_params, sink_size)
+                self._train_dataset_sink_process(epoch, train_dataset, list_callback,
+                                                 cb_params, sink_size, initial_epoch)
 
-    @staticmethod
-    def _transform_callbacks(callbacks):
-        """Transform callback to a list."""
-        if callbacks is None:
-            return []
-
-        if isinstance(callbacks, Iterable):
-            return list(callbacks)
-
-        return [callbacks]
-
-    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None, sink_size=-1):
+    def _train_dataset_sink_process(self, epoch, train_dataset, list_callback=None, cb_params=None,
+                                    sink_size=-1, initial_epoch=0):
         """
         Training process. The data would be passed to network through dataset channel.
 
@@ -572,13 +577,15 @@ class Model:
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
             sink_size (int): Control the amount of data in each sink. Default: -1.
+            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+                                 Default: 0.
         """
         is_graph = (context.get_context("mode") == context.GRAPH_MODE)
         if sink_size == -1:
-            epoch_num = epoch
+            epoch_num = epoch - initial_epoch
         else:
-            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size())
-            train_dataset.__total_batch__ = epoch * sink_size
+            epoch_num = math.ceil(epoch * sink_size / train_dataset.get_dataset_size()) - initial_epoch
+            train_dataset.__total_batch__ = (epoch - initial_epoch) * sink_size
 
         cb_params.cur_step_num = 0
         cb_params.dataset_sink_mode = True
@@ -586,7 +593,6 @@ class Model:
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
         # used to stop training for early stop, such as stopAtTIme or stopATStep
-        should_stop = False
         dataset_helper = None
         if hasattr(train_dataset, '_dataset_helper'):
             dataset_helper = train_dataset._dataset_helper
@@ -597,8 +603,8 @@ class Model:
         # Used to check whether need perform recovery for process which is restarted.
         self._check_need_load_ckpt(cb_params, train_dataset.get_dataset_size(), sink_size)
 
-        while self.epoch_iter < epoch:
-            cb_params.cur_epoch_num = self.epoch_iter + 1
+        while self.epoch_iter < (epoch - initial_epoch):
+            cb_params.cur_epoch_num = self.epoch_iter + 1 + initial_epoch
             self._current_epoch_num = cb_params.cur_epoch_num
             self._current_step_num = 0
             list_callback.epoch_begin(run_context)
@@ -641,18 +647,16 @@ class Model:
             if need_exec_callback_epoch_end:
                 list_callback.epoch_end(run_context)
 
-            should_stop = should_stop or run_context.get_stop_requested()
+            should_stop = run_context.get_stop_requested()
             if should_stop:
                 break
 
             need_reset_to_beginning = self.enable_recovery and _get_recovery_context("need_reset")\
                                       and not _get_recovery_context("latest_ckpt_file")
+            self.epoch_iter += 1
             if need_reset_to_beginning:
                 self.epoch_iter = 0
                 cb_params.cur_step_num = 0
-                continue
-
-            self.epoch_iter += 1
 
         dataset_helper.stop_send()
         dataset_helper.release()
@@ -715,7 +719,7 @@ class Model:
             _reset_training_dataset(cb_params.cur_step_num)
             self.need_load_ckpt = False
 
-    def  _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
+    def _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
         """
         Execute recovery for normal process when there is process exit abnormally.
 
@@ -747,8 +751,7 @@ class Model:
 
             _set_recovery_context(need_reset=False)
 
-
-    def _train_process(self, epoch, train_dataset, list_callback=None, cb_params=None):
+    def _train_process(self, epoch, train_dataset, list_callback=None, cb_params=None, initial_epoch=0):
         """
         Training process. The data would be passed to network directly.
 
@@ -761,18 +764,18 @@ class Model:
                                      function respectively.
             list_callback (Callback): Executor of callback list. Default: None.
             cb_params (_InternalCallbackParam): Callback parameters. Default: None.
+            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+                                 Default: 0.
         """
         dataset_helper, _ = self._exec_preprocess(is_train=True,
                                                   dataset=train_dataset,
                                                   dataset_sink_mode=False,
-                                                  epoch_num=epoch)
+                                                  epoch_num=(epoch-initial_epoch))
         cb_params.cur_step_num = 0
         cb_params.dataset_sink_mode = False
         run_context = RunContext(cb_params)
         list_callback.begin(run_context)
-        # used to stop training for early stop, such as stopAtTIme or stopATStep
-        should_stop = False
-        for i in range(epoch):
+        for i in range(initial_epoch, epoch):
             cb_params.cur_epoch_num = i + 1
             self._current_epoch_num = cb_params.cur_epoch_num
             self._current_step_num = 0
@@ -801,7 +804,7 @@ class Model:
                 list_callback.step_end(run_context)
                 if _is_role_pserver() or _is_role_sched():
                     os._exit(0)
-                should_stop = should_stop or run_context.get_stop_requested()
+                should_stop = run_context.get_stop_requested()
                 if should_stop:
                     break
 
@@ -811,13 +814,13 @@ class Model:
             self._flush_from_cache(cb_params)
 
             list_callback.epoch_end(run_context)
-            should_stop = should_stop or run_context.get_stop_requested()
+            should_stop = run_context.get_stop_requested()
             if should_stop:
                 break
 
         list_callback.end(run_context)
 
-    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1):
+    def train(self, epoch, train_dataset, callbacks=None, dataset_sink_mode=True, sink_size=-1, initial_epoch=0):
         """
         Training API.
 
@@ -843,6 +846,7 @@ class Model:
             epoch (int): Total training epochs. Generally, train network will be trained on complete dataset per epoch.
                          If `dataset_sink_mode` is set to True and `sink_size` is greater than 0, each epoch will
                          train `sink_size` steps instead of total steps of dataset.
+                         If `epoch` used with `initial_epoch`, it is to be understood as "final epoch".
             train_dataset (Dataset): A training dataset iterator. If `loss_fn` is defined, the data and label will be
                                      passed to the `network` and the `loss_fn` respectively, so a tuple (data, label)
                                      should be returned from dataset. If there is multiple data or labels, set `loss_fn`
@@ -860,6 +864,8 @@ class Model:
                              If sink_size = -1, sink the complete dataset for each epoch.
                              If sink_size > 0, sink sink_size data for each epoch.
                              Default: -1.
+            initial_epoch (int): Epoch at which to start train, it useful for resuming a previous training run.
+                                 Default: 0.
 
         Examples:
             >>> from mindspore import Model, nn, FixedLossScaleManager
@@ -874,7 +880,7 @@ class Model:
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
             >>> model.train(2, dataset)
         """
-        dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
+        Validator.check_bool(dataset_sink_mode)
         if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
 
@@ -888,6 +894,11 @@ class Model:
             raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
 
         Validator.check_is_int(sink_size)
+        Validator.check_non_negative_int(initial_epoch)
+        if initial_epoch >= epoch:
+            raise ValueError(f"For 'Model.train', the parameter 'epoch' must bigger than parameter 'initial_epoch',"
+                             f" but got the parameter 'epoch' is {epoch}, 'initial_epoch' is {initial_epoch}.")
+
         dataset_size = train_dataset.get_dataset_size()
         if dataset_size == 0:
             raise ValueError("There is no valid data in dataset, please check dataset file firstly.")
@@ -903,7 +914,8 @@ class Model:
                     train_dataset,
                     callbacks=callbacks,
                     dataset_sink_mode=dataset_sink_mode,
-                    sink_size=sink_size)
+                    sink_size=sink_size,
+                    initial_epoch=initial_epoch)
 
     def build(self, train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None):
         """
