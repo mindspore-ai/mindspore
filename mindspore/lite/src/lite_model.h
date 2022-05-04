@@ -94,6 +94,10 @@ class LiteModel : public Model {
 
   template <typename T>
   bool CheckNeedWeightQuant(const T &meta_graph, const flatbuffers::Vector<uint32_t> *in_tensor_index) {
+    if (in_tensor_index == nullptr) {
+      MS_LOG(ERROR) << "in_tensor_index is nullptr";
+      return false;
+    }
     const size_t min_quant_size = 2;
     if (in_tensor_index->size() < min_quant_size) {
       return false;

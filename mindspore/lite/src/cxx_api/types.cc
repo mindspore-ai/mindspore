@@ -67,7 +67,15 @@ class Buffer::Impl {
   std::vector<uint8_t> data_;
 };
 
-MSTensor::MSTensor() : impl_(std::make_shared<LiteTensorImpl>()) {}
+MSTensor::MSTensor() {
+  auto impl = std::make_shared<LiteTensorImpl>(new (std::nothrow) lite::Tensor());
+  if (impl != nullptr) {
+    impl->set_from_session(false);
+  } else {
+    MS_LOG(ERROR) << "Failed to allocate tensor impl.";
+  }
+  impl_ = impl;
+}
 MSTensor::MSTensor(std::nullptr_t) : impl_(nullptr) {}
 MSTensor::MSTensor(const std::shared_ptr<Impl> &impl) : impl_(impl) {}
 MSTensor::MSTensor(const std::vector<char> &name, enum DataType type, const std::vector<int64_t> &shape,

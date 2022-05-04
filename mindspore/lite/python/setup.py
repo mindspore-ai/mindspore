@@ -46,7 +46,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(),
-    package_data={'': ['*.py', 'lib/*.so', '.commit_id']},
+    package_data={'': ['*.py', 'lib/*.so*', '.commit_id']},
     include_package_data=True,
     cmdclass={},
     entry_points={},

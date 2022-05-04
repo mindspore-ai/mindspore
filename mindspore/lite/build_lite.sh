@@ -247,6 +247,16 @@ build_python_wheel_package() {
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
     cp src/*.so package/mindspore_lite/lib/
+    local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
+    if [[ "$1" == "x86_64" ]]; then
+      local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
+    fi
+    if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog" ]; then
+      cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog/*.so* package/mindspore_lite/lib/
+    fi
+    if [ -d "${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib" ]; then
+      cp ${INSTALL_PREFIX}/${pkg_name}/tools/converter/lib/*.so* package/mindspore_lite/lib/
+    fi
     cp python/*.so package/mindspore_lite/lib/
     cp .commit_id package/mindspore_lite/
     echo "__version__ = '${VERSION_STR}'" > package/mindspore_lite/version.py
@@ -254,7 +264,15 @@ build_python_wheel_package() {
     export TOP_DIR=${BASEPATH}
     cd package
     python setup.py bdist_wheel
-    cp dist/mindspore_lite-*.whl ${BASEPATH}/output/
+    local minor_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'`
+    local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
+    if [[ "${minor_version}" == "7" ]]; then
+      py_tags="cp37-cp37m"
+    fi
+    local whl_name=mindspore-lite-${VERSION_STR}-${py_tags}-linux_$1.whl
+    cp dist/mindspore_lite-*.whl ${BASEPATH}/output/${whl_name}
+    cd ${BASEPATH}/output/
+    sha256sum ${whl_name} > ${whl_name}.sha256
   else
     echo -e "\e[31mPython3 not found, so Python API will not be compiled. \e[0m"
   fi
@@ -421,7 +439,7 @@ build_lite() {
       fi
       make package
       if [[ "${local_lite_platform}" == "x86_64" ]]; then
-        build_python_wheel_package
+        build_python_wheel_package "x86_64"
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
             build_lite_x86_64_jni_and_jar "${CMAKE_ARGS}"

@@ -51,6 +51,7 @@ void TensorPyBind(const py::module &m) {
     .value("kInvalidType", DataType::kInvalidType);
 
   py::enum_<Format>(m, "Format")
+    .value("DEFAULT_FORMAT", Format::DEFAULT_FORMAT)
     .value("NCHW", Format::NCHW)
     .value("NHWC", Format::NHWC)
     .value("NHWC4", Format::NHWC4)
@@ -67,7 +68,9 @@ void TensorPyBind(const py::module &m) {
     .value("NC4HW4", Format::NC4HW4)
     .value("NCDHW", Format::NCDHW)
     .value("NWC", Format::NWC)
-    .value("NCW", Format::NCW);
+    .value("NCW", Format::NCW)
+    .value("NDHWC", Format::NDHWC)
+    .value("NC8HW8", Format::NC8HW8);
 
   py::class_<MSTensor, std::shared_ptr<MSTensor>>(m, "TensorBind")
     .def(py::init<>())
