@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ConvGradInputCpuKernelMod : public MKLCpuKernelMod {
+class ConvGradInputCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   ConvGradInputCpuKernelMod() = default;
   explicit ConvGradInputCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

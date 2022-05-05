@@ -29,7 +29,7 @@ namespace kernel {
 constexpr auto kUnkown = "Unknown";
 constexpr size_t kPoolingDilation = 1;
 
-class PoolingCpuKernelMod : public MKLCpuKernelMod {
+class PoolingCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   PoolingCpuKernelMod() = default;
   explicit PoolingCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace kernel {
-class BatchNormCpuKernelMod : public MKLCpuKernelMod {
+class BatchNormCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   BatchNormCpuKernelMod() = default;
   ~BatchNormCpuKernelMod() override = default;

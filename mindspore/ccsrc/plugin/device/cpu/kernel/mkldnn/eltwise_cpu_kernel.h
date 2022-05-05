@@ -34,7 +34,7 @@ constexpr auto kSigmoid = "Sigmoid";
 constexpr auto kTanh = "Tanh";
 constexpr auto kSoftplus = "Softplus";
 constexpr auto kUnKnown = "UnKnown";
-class EltWiseCpuKernelMod : public MKLCpuKernelMod {
+class EltWiseCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   EltWiseCpuKernelMod() = default;
   explicit EltWiseCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
