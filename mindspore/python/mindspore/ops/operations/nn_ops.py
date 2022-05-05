@@ -447,7 +447,7 @@ class Softsign(Primitive):
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` `CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0, -1, 2, 30, -30]), mindspore.float32)

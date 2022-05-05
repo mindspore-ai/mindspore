@@ -67,6 +67,7 @@ constexpr auto kSqrt = "Sqrt";
 constexpr auto kRsqrt = "Rsqrt";
 constexpr auto kErf = "Erf";
 constexpr auto kErfc = "Erfc";
+constexpr auto kSoftsign = "Softsign";
 
 class ArithmeticSelfCpuKernelFunc : public CpuKernelFunc {
  public:
@@ -187,9 +188,7 @@ void Inv(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
 template <typename T>
 void Invert(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, double>) || (std::is_same_v<T, float>) || (std::is_same_v<T, float16>)) {
-    MS_LOG(EXCEPTION) << "For 'Invert', the dtype of 'input_x' must be int8, int16, int32, int64, uint8, uint16, "
-                         "uint32 or uint64, but got "
-                      << typeid(T).name();
+    MS_LOG(EXCEPTION) << "'Invert' cannot be instantiated.";
     return;
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
@@ -219,7 +218,7 @@ void Gelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size
 template <typename T>
 void FastGelu(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr (!std::is_same_v<T, float16> && !std::is_same_v<T, float>) {
-    MS_LOG(EXCEPTION) << "For 'FastGelu', the dtype of 'input_x' must be float16, float, but got " << typeid(T).name();
+    MS_LOG(EXCEPTION) << "'FastGelu' cannot be instantiated.";
     return;
   }
   auto task = [&in, &out](size_t start, size_t end) {
@@ -450,8 +449,7 @@ template <typename T>
 void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
                 (std::is_same_v<T, uint64_t>)) {
-    MS_LOG(EXCEPTION) << "For 'Abs', the dtype of 'input_x' must be int32, int64, float32 or float64, but got "
-                      << typeid(T).name();
+    MS_LOG(EXCEPTION) << "'Abs' cannot be instantiated.";
     return;
   } else {
     auto task = [&in, &out](size_t start, size_t end) {
@@ -481,6 +479,22 @@ void Rsqrt(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t siz
     }
   };
   ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void Softsign(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  if constexpr ((std::is_same_v<T, uint8_t>) || (std::is_same_v<T, uint16_t>) || (std::is_same_v<T, uint32_t>) ||
+                (std::is_same_v<T, uint64_t>)) {
+    MS_LOG(EXCEPTION) << "'Softsign' cannot be instantiated.";
+    return;
+  } else {
+    auto task = [&in, &out](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        out[i] = in[i] / (1.0 + abs(in[i]));
+      }
+    };
+    ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+  }
 }
 
 template <typename T>
@@ -595,7 +609,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
                           {prim::kPrimRint->name(), Rint<T>},         {prim::kPrimRound->name(), Round<T>},
                           {prim::kPrimAbs->name(), Abs<T>},           {prim::kPrimSqrt->name(), Sqrt<T>},
                           {prim::kPrimRsqrt->name(), Rsqrt<T>},       {prim::kPrimErf->name(), Erf<T>},
-                          {prim::kPrimErfc->name(), Erfc<T>}};
+                          {prim::kPrimErfc->name(), Erfc<T>},         {prim::kPrimRsqrt->name(), Rsqrt<T>},
+                          {prim::kPrimSoftsign->name(), Softsign<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
@@ -771,7 +786,10 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
   {kErfc,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}}};
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
+  {kSoftsign,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc}}}};
 }  // namespace
 
 void ArithmeticSelfCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -879,6 +897,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErfc); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softsign,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSoftsign); });
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Identity, IdentityCpuKernelMod);
 }  // namespace kernel
