@@ -19,7 +19,6 @@ from .symbol_tree import SymbolTree
 from .node import Node
 from .node_type import NodeType
 from ..symbol_tree import SymbolTree as SymbolTreeImpl
-from ..node import TreeNode
 
 
 class TreeNodeHelper:
@@ -47,7 +46,6 @@ class TreeNodeHelper:
 
         if node.get_node_type() == NodeType.Tree:
             node_impl = node.get_handler()
-            assert isinstance(node_impl, TreeNode)
             subtree: SymbolTreeImpl = node_impl.symbol_tree
             if subtree is None:
                 return None

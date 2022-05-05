@@ -19,6 +19,7 @@ from mindspore.nn import Cell, Conv2d, BatchNorm2d, ReLU
 from mindspore.ops import Add, AddN
 from mindspore.rewrite import ScopedValue, Node, SymbolTree
 from mindspore.rewrite import PatternEngine, PatternNode, Replacement, VarNode
+from .utils import get_symbol_tree_nodes_count
 
 
 def test_tree_pattern_match():
@@ -92,13 +93,13 @@ def test_one_to_one_pattern():
     assert bn is not None
     assert relu1 is not None
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
 
     bn_replace = BnReplace()
     bn_replace.apply(stree)
 
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     conv = stree.get_node("conv")
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
@@ -167,13 +168,13 @@ def test_one_to_multi_chain_pattern():
     assert bn is not None
     assert relu1 is not None
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
 
     bn_replace = BnReplace()
     bn_replace.apply(stree)
 
     assert len(construct_ast.body) == 7
-    assert len(stree.nodes()) == 8
+    assert get_symbol_tree_nodes_count(stree) == 8
     conv = stree.get_node("conv")
     bn = stree.get_node("bn")
     relu1 = stree.get_node("relu1")
@@ -296,13 +297,13 @@ def test_tree_pattern():
     assert relu2 is not None
     construct_ast: ast.FunctionDef = getattr(stree.get_handler(), "_root_ast")
     assert len(construct_ast.body) == 8
-    assert len(stree.nodes()) == 9
+    assert get_symbol_tree_nodes_count(stree) == 9
 
     add_relu_pattern = AddReluPattern()
     add_relu_pattern.apply(stree)
 
     assert len(construct_ast.body) == 10
-    assert len(stree.nodes()) == 11
+    assert get_symbol_tree_nodes_count(stree) == 11
     conv1 = stree.get_node("conv1")
     conv2 = stree.get_node("conv2")
     add = stree.get_node("add")
@@ -481,13 +482,13 @@ def test_multi_input_to_multi_pattern_tree_pattern():
     assert relu is not None
     construct_ast: ast.FunctionDef = getattr(stree.get_handler(), "_root_ast")
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 9
+    assert get_symbol_tree_nodes_count(stree) == 9
 
     multi_input_pattern = MultiInputPattern()
     multi_input_pattern.apply(stree)
 
     assert len(construct_ast.body) == 4
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     conv1 = stree.get_node("conv1")
     conv2 = stree.get_node("conv2")
     add1 = stree.get_node("add1")
@@ -598,13 +599,13 @@ def test_one_input_to_multi_pattern_tree_pattern():
     assert relu is not None
     construct_ast: ast.FunctionDef = getattr(stree.get_handler(), "_root_ast")
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
 
     multi_input_pattern = MultiInputPattern()
     multi_input_pattern.apply(stree)
 
     assert len(construct_ast.body) == 4
-    assert len(stree.nodes()) == 5
+    assert get_symbol_tree_nodes_count(stree) == 5
     conv1 = stree.get_node("conv1")
     conv2 = stree.get_node("conv2")
     add1 = stree.get_node("add1")

@@ -15,6 +15,7 @@
 from mindspore.nn import Cell, Conv2d
 from mindspore.rewrite import SymbolTree
 from mindspore.ops import operations as P
+from .utils import get_node_by_index
 
 
 class SubNet(Cell):
@@ -56,7 +57,8 @@ def test_multi_targets():
     """
     test_cls = NetMultiTargets()
     stree = SymbolTree.create(test_cls)
-    node = stree.nodes()[2]
+    node = get_node_by_index(stree, 2)
+    assert node is not None
     targets = node.get_targets()
     assert targets[0].value == 'c1'
     assert targets[1].value == 'c2'

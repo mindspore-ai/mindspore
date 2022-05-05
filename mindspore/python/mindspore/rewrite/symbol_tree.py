@@ -32,6 +32,7 @@ from .namer import TargetNamer, NodeNamer, ClassNamer
 from .common.observer import Observer
 from .common.observable import Observable
 from .common.event import Event
+from .node_visitor import NodeVisitor
 
 
 class Position:
@@ -113,6 +114,7 @@ class SymbolTree(Observer, Observable):
         self._return: Optional[Node] = None
 
         self._modified = False
+        self._node_visitor = None
 
     def finish_build(self):
         self.add_event(Event.TopologicalChangeEvent)
@@ -258,25 +260,27 @@ class SymbolTree(Observer, Observable):
             raise RuntimeError("Key of global_vars duplicated:", key)
         self._global_vars[key] = value
 
-    def nodes(self, unfold_subtree=False):
+    def get_nodes_dict(self):
+        """Get dict of nodes"""
+        return self._nodes
+
+    def nodes(self):
         """
         Getter of nodes if current SymbolTree.
-
-        Args:
-            unfold_subtree (bool): Need to iterate into sub-symbol-tree recursively.
 
         Returns:
             A list of instance of Nodes.
         """
-        if unfold_subtree:
-            nodes = []
-            for _, v in self._nodes.items():
-                if isinstance(v, TreeNode):
-                    nodes.extend(v.symbol_tree.nodes(unfold_subtree))
-                else:
-                    nodes.append(v)
-            return nodes
-        return self._nodes.values()
+        if self._node_visitor is None:
+            self._node_visitor = NodeVisitor(self)
+        it = iter(self._node_visitor)
+
+        while True:
+            try:
+                n = next(it)
+                yield n
+            except StopIteration:
+                return None
 
     def get_node(self, node_name: str) -> Optional[Node]:
         """
@@ -431,19 +435,44 @@ class SymbolTree(Observer, Observable):
         # _unique_targets must called after _update_args_for_unique and _update_kwargs_for_unique
         self._unique_targets(node)
         self._insert_node(position, node)
+        if isinstance(node, TreeNode):
+            node.symbol_tree.reg_observer(self)
+        if self._node_visitor:
+            self._node_visitor.append_node(node)
         # update init-function-ast and construct-function-ast
         if insert_to_ast:
             node.set_func(ScopedValue.create_naming_value(node_name, "self"))
-            node_ast = node.get_ast()
-            if not isinstance(node_ast, ast.Assign):
-                raise RuntimeError("Only support insert cell op now")
-            AstModifier.insert_assign_to_function(self._init_func_ast,
-                                                  targets=[ScopedValue(ValueType.NamingValue, "self", node_name)],
-                                                  expr=ScopedValue(ValueType.NamingValue, "global_vars", "get"),
-                                                  args=[ScopedValue(ValueType.StringValue, "", node_name)])
-            AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
-                                                      None if position is None else position.node.get_ast(),
-                                                      position.before_node)
+            if isinstance(node, TreeNode):
+                global_vars_key = node.get_name() + "_args"
+                self.add_global_vars(global_vars_key, node.symbol_tree.get_global_vars())
+                args_call = AstModifier.create_call(ScopedValue.create_naming_value("get", "global_vars"),
+                                                    [ScopedValue.create_variable_value(global_vars_key)])
+                value = ast.Call(func=ast.Name(node.symbol_tree.get_opt_cls_name(), ast.Store(), lineno=0,
+                                               col_offset=0), args=[args_call], keywords=[], lineno=0, col_offset=0)
+
+                ast_target = ast.Name("self." + node.get_name(), ast.Store(), lineno=0, col_offset=0)
+                assign = ast.Assign(targets=[ast_target], value=value, lineno=0, col_offset=0)
+                AstModifier.insert_assign_ast_to_function(self._init_func_ast, assign)
+
+                assign_construct = AstModifier.create_call_assign(node.get_targets(), ScopedValue.create_naming_value
+                                                                  (node.get_name(), "self"), node.get_args(), {})
+                AstModifier.insert_assign_ast_to_function(self._root_ast, assign_construct,
+                                                          None if position is None else position.node.get_ast(),
+                                                          position.before_node)
+                sub_stree: SymbolTree = node.symbol_tree
+                from .symbol_tree_builder import SymbolTreeBuilder
+                SymbolTreeBuilder.merge_module_of_subtree(self, sub_stree)
+            else:
+                node_ast = node.get_ast()
+                if not isinstance(node_ast, ast.Assign):
+                    raise RuntimeError("Only support insert cell op now")
+                AstModifier.insert_assign_to_function(self._init_func_ast,
+                                                      targets=[ScopedValue(ValueType.NamingValue, "self", node_name)],
+                                                      expr=ScopedValue(ValueType.NamingValue, "global_vars", "get"),
+                                                      args=[ScopedValue(ValueType.StringValue, "", node_name)])
+                AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
+                                                          None if position is None else position.node.get_ast(),
+                                                          position.before_node)
             self._global_vars[node_name] = node.get_instance()
         return node
 
@@ -595,6 +624,8 @@ class SymbolTree(Observer, Observable):
                 value.isolate()
                 break
         self._topo_mgr.on_erase_node(node)
+        if self._node_visitor:
+            self._node_visitor.remove_node(node)
         return node
 
     def _insert_tree(self, position: Position, root: Node, insert_to_ast: bool = True) -> Node:

@@ -23,6 +23,8 @@ from mindspore import log as logger
 from .ast_helpers import AstModifier
 from .api.scoped_value import ScopedValue, ValueType
 from .api.node_type import NodeType
+from .namespace import is_subtree
+from .ast_helpers.ast_replacer import AstReplacer
 
 PASS_THROUGH_METHOD = ScopedValue.create_naming_value("PassThrough")
 
@@ -222,6 +224,41 @@ class Node:
         real_return_values = ScopedValue.create_name_values(return_values)
         return cls(NodeType.Output, ast_node, None, ScopedValue.create_naming_value("return"), real_return_values, {},
                    name, None)
+
+    @staticmethod
+    def create_call_op(op: Union[Cell, Primitive], ast_node: Optional[ast.AST],
+                       targets: [Union[ScopedValue, str]], func: Union[ScopedValue, str],
+                       args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = ""):
+        """
+        Static method of Node. Instantiate an instance of node whose type is `CallCell` or `CallPrimitive`.
+        If op is custom defined, it is treated by TreeNode.
+        A `CallCell` node represents an invoking to cell-op.
+        A `CallPrimitive` node represents an invoking to primitive-op.
+
+        Args:
+            op (Union[Cell, Primitive]): An instance of `Cell` or `Primitive` corresponding to this node.
+            ast_node ([ast.AST, optional]): An instance of ast.AST represents corresponding node in ast.
+            targets (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            func ([ScopedValue, optional]): An instance of `ScopedValue`. See detail in docstring of Node class.
+            args (list[ScopedValue]): A list of instance of `ScopedValue`. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of `ScopedValue`. See detail in docstring of `Node`
+                class.
+            name (str): A string represents name of node. Name of node will be unique when inserted into `SymbolTree`.
+                Name of node also used as field name in network class.
+        """
+        cls_name = type(op).__name__
+
+        if is_subtree(cls_name):
+            from .symbol_tree_builder import SymbolTreeBuilder
+            stb = SymbolTreeBuilder(op)
+            stree = stb.build()
+            replacer = AstReplacer(stree.get_class_ast())
+            replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
+            return TreeNode.create_tree_node(stree, None, targets, ScopedValue.create_naming_value(name, "self"),
+                                             args, kwargs, name, op)
+
+        return Node.create_call_buildin_op(op, None, targets, ScopedValue.create_naming_value(name, "self"),
+                                           args, kwargs, name)
 
     @staticmethod
     def _get_construct_arg_names(parameters):
@@ -440,6 +477,10 @@ class Node:
         """
         return self._prev
 
+    def set_prev(self, prev):
+        """Set previous node of current node in source code order. """
+        self._prev = prev
+
     def get_next(self) -> 'Node':
         """
         Get next node of current node in source code order.
@@ -448,6 +489,10 @@ class Node:
             An instance of Node as next node.
         """
         return self._next
+
+    def set_next(self, _next):
+        """Set next node of current node in source code order."""
+        self._next = _next
 
     def has_same_ast(self, node: Union['Node', ast.AST]) -> bool:
         """
@@ -460,7 +505,7 @@ class Node:
             A bool.
         """
         if isinstance(node, Node):
-            return self.has_same_ast(node._ast_node)
+            return self.has_same_ast(node.get_ast())
         if isinstance(node, ast.AST):
             return id(self._ast_node) == id(node)
         return False
@@ -570,7 +615,8 @@ class Node:
             keyword_map_index[keyword_ast.arg] = index
         for keyword_index in range(self._kwargs_num):
             key = self._normalized_args_keys[keyword_index + self._args_num]
-            AstModifier.update_arg_value(self._normalized_args.get(key), keywords_ast[keyword_map_index[key]].value)
+            AstModifier.update_arg_value(self._normalized_args.get(key),
+                                         keywords_ast[keyword_map_index.get(key)].value)
 
     def _sync_call_method_args_to_ast(self):
         """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallMethod."""
@@ -646,9 +692,9 @@ class Node:
         origin_prev: Optional[Node] = self._prev
         origin_next: Optional[Node] = self._next
         if origin_prev is not None:
-            origin_prev._next = origin_next
+            origin_prev.set_next(origin_next)
         if origin_next is not None:
-            origin_next._prev = origin_prev
+            origin_next.set_prev(origin_prev)
         self._prev = None
         self._next = None
 
@@ -662,9 +708,9 @@ class Node:
         node.isolate()
         origin_prev: Optional[Node] = self._prev
         if origin_prev is not None:
-            origin_prev._next = node
-        node._prev = origin_prev
-        node._next = self
+            origin_prev.set_next(node)
+        node.set_prev(origin_prev)
+        node.set_next(self)
         self._prev = node
 
     def insert_after(self, node: 'Node'):
@@ -677,10 +723,10 @@ class Node:
         node.isolate()
         origin_next: Optional[Node] = self._next
         self._next = node
-        node._prev = self
-        node._next = origin_next
+        node.set_prev(self)
+        node.set_next(origin_next)
         if origin_next is not None:
-            origin_next._prev = node
+            origin_next.set_prev(node)
 
     def get_inputs(self) -> ['Node']:
         """
@@ -850,12 +896,12 @@ class Node:
         if arg_idx >= self._args_num or arg_idx < 0:
             raise RuntimeError("arg_idx out of range: ", arg_idx)
         if out_idx is None:
-            if len(node._targets) != 1:
+            if len(node.get_targets()) != 1:
                 raise RuntimeError("node should has one output when out_idx is not provided")
             out_idx = 0
-        if out_idx >= len(node._targets):
+        if out_idx >= len(node.get_targets()):
             raise RuntimeError("out_idx out of range: ", out_idx)
-        new_arg = node._targets[out_idx]
+        new_arg = node.get_targets()[out_idx]
         self._normalized_args[self._normalized_args_keys[arg_idx]] = new_arg
         self._sync_arg()
 

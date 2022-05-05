@@ -21,6 +21,7 @@ from mindspore.rewrite import ScopedValue, ValueType, NodeType
 from mindspore.rewrite import Node as NodeApi
 from mindspore.rewrite.symbol_tree import SymbolTree
 from mindspore.rewrite.node import Node
+from .utils import get_symbol_tree_nodes_count
 
 
 class Network(Cell):
@@ -107,7 +108,7 @@ def test_insert_node():
     consumers = getattr(getattr(stree, "_topo_mgr"), "_target_consumer")
     providers_len = len(providers)
     consumers_len = len(consumers)
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     assert len(construct_ast.body) == 6
     assert len(relu1.get_targets()) == 1
     assert len(relu2.get_normalized_args().values()) == 1
@@ -120,7 +121,7 @@ def test_insert_node():
     position = stree.before(relu2)
     node = stree.insert_node(position, node)
     # check nodes size
-    assert len(stree.nodes()) == 8
+    assert get_symbol_tree_nodes_count(stree) == 8
     # check args
     assert len(relu2.get_normalized_args().values()) == 1
     assert relu1.get_targets()[0] == list(relu2.get_normalized_args().values())[0]
@@ -158,7 +159,7 @@ def test_set_node_arg():
     Expectation: Success.
     """
     stree, bn, relu1, relu2 = create_symbol_tree()
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     assert len(bn.get_targets()) == 1
     bn_output = bn.get_targets()[0]
     # check bn topological order
@@ -210,7 +211,7 @@ def test_set_node_arg_by_node():
     Expectation: Success.
     """
     stree, bn, relu1, relu2 = create_symbol_tree()
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     assert len(bn.get_targets()) == 1
     bn_output = bn.get_targets()[0]
     # check bn topological order
@@ -265,13 +266,13 @@ def test_erase_succeed():
     construct_ast: ast.FunctionDef = getattr(stree, "_root_ast")
     providers = getattr(getattr(stree, "_topo_mgr"), "_target_provider")
     providers_len = len(providers)
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     assert len(construct_ast.body) == 6
 
     stree.set_node_arg_by_node(relu2, 0, bn)
     stree.erase_node(relu1)
 
-    assert len(stree.nodes()) == 6
+    assert get_symbol_tree_nodes_count(stree) == 6
     assert len(providers) == providers_len - 1
     assert len(construct_ast.body) == 5
 
@@ -300,13 +301,13 @@ def test_replace_one_to_one():
     stree, bn, relu1, relu2 = create_symbol_tree()
     construct_ast: ast.FunctionDef = getattr(stree, "_root_ast")
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
 
     new_conv = Conv2d(16, 16, 5)
     new_conv_node = NodeApi.create_call_cell(new_conv, [ScopedValue.create_naming_value("new_conv")],
                                              bn.get_targets()).get_handler()
     new_conv_node = stree.replace(relu1, [new_conv_node])
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
     # check ast
     assert len(construct_ast.body) == 6
     node_ast: ast.Assign = construct_ast.body[2]
@@ -341,7 +342,7 @@ def test_replace_one_to_multi():
     stree, bn, relu1, relu2 = create_symbol_tree()
     construct_ast: ast.FunctionDef = getattr(stree, "_root_ast")
     assert len(construct_ast.body) == 6
-    assert len(stree.nodes()) == 7
+    assert get_symbol_tree_nodes_count(stree) == 7
 
     new_conv_node = NodeApi.create_call_cell(Conv2d(16, 16, 5), [ScopedValue.create_naming_value("new_conv")],
                                              bn.get_targets()).get_handler()
@@ -350,7 +351,7 @@ def test_replace_one_to_multi():
     new_relu_node = stree.replace(relu1, [new_relu_node, new_conv_node])
     new_conv_node = new_relu_node.get_inputs()[0]
 
-    assert len(stree.nodes()) == 8
+    assert get_symbol_tree_nodes_count(stree) == 8
     # check ast
     assert len(construct_ast.body) == 7
     new_conv_ast: ast.Assign = construct_ast.body[2]

@@ -114,7 +114,6 @@ class ClassDefParser(Parser):
 
     def _is_subtree_field(self, ori_net, field) -> bool:
         op = getattr(ori_net, field)
-        assert op is not None
         return not type(op).__name__ in self._cell_namespace
 
     def _process_init_func_ast(self, stree: SymbolTree, init_ast: ast.FunctionDef):
