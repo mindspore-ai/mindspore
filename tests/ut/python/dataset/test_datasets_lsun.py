@@ -18,7 +18,7 @@ Test LSUN dataset operators
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testLSUN"

@@ -18,9 +18,8 @@ Testing CutOut op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as c
-import mindspore.dataset.vision.py_transforms as f
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_image, visualize_list, diff_mse, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -33,7 +32,7 @@ GENERATE_GOLDEN = False
 
 def test_cut_out_op(plot=False):
     """
-    Test Cutout
+    Test CutOut
     """
     logger.info("test_cut_out")
 
@@ -41,17 +40,17 @@ def test_cut_out_op(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     transforms_1 = [
-        f.Decode(),
-        f.ToTensor(),
-        f.RandomErasing(value='random')
+        vision.Decode(True),
+        vision.ToTensor(),
+        vision.RandomErasing(value='random')
     ]
-    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c.Decode()
-    cut_out_op = c.CutOut(80)
+    decode_op = vision.Decode()
+    cut_out_op = vision.CutOut(80, is_hwc=True)
 
     transforms_2 = [
         decode_op,
@@ -81,7 +80,7 @@ def test_cut_out_op(plot=False):
 
 def test_cut_out_op_multicut(plot=False):
     """
-    Test Cutout
+    Test CutOut
     """
     logger.info("test_cut_out")
 
@@ -89,16 +88,16 @@ def test_cut_out_op_multicut(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     transforms_1 = [
-        f.Decode(),
-        f.ToTensor(),
+        vision.Decode(True),
+        vision.ToTensor(),
     ]
-    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c.Decode()
-    cut_out_op = c.CutOut(80, num_patches=10)
+    decode_op = vision.Decode()
+    cut_out_op = vision.CutOut(80, num_patches=10, is_hwc=True)
 
     transforms_2 = [
         decode_op,
@@ -129,7 +128,7 @@ def test_cut_out_op_multicut(plot=False):
 
 def test_cut_out_md5():
     """
-    Test Cutout with md5 check
+    Test CutOut with md5 check
     """
     logger.info("test_cut_out_md5")
     original_seed = config_get_set_seed(2)
@@ -137,24 +136,24 @@ def test_cut_out_md5():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c.Decode()
-    cut_out_op = c.CutOut(100)
+    decode_op = vision.Decode()
+    cut_out_op = vision.CutOut(100, is_hwc=True)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=cut_out_op, input_columns=["image"])
 
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        f.Decode(),
-        f.ToTensor(),
-        f.Cutout(100)
+        vision.Decode(True),
+        vision.ToTensor(),
+        vision.CutOut(100, is_hwc=False)
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     # Compare with expected md5 from images
     filename1 = "cut_out_01_c_result.npz"
     save_and_check_md5(data1, filename1, generate_golden=GENERATE_GOLDEN)
-    filename2 = "cut_out_01_py_result.npz"
+    filename2 = "cut_out_02_c_result.npz"
     save_and_check_md5(data2, filename2, generate_golden=GENERATE_GOLDEN)
 
     # Restore config
@@ -162,9 +161,11 @@ def test_cut_out_md5():
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
-def test_cut_out_comp(plot=False):
+def test_cut_out_comp_hwc(plot=False):
     """
-    Test Cutout with c++ and python op comparison
+    Feature: CutOut op
+    Description: Test CutOut with HWC input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) comparison
+    Expectation: Test succeeds. Manual confirmation of logged info. Manual visualization confirmation.
     """
     logger.info("test_cut_out_comp")
 
@@ -172,19 +173,19 @@ def test_cut_out_comp(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     transforms_1 = [
-        f.Decode(),
-        f.ToTensor(),
-        f.Cutout(200)
+        vision.Decode(True),
+        vision.ToTensor(),
+        vision.CutOut(250, is_hwc=False)
     ]
-    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     transforms_2 = [
-        c.Decode(),
-        c.CutOut(200)
+        vision.Decode(),
+        vision.CutOut(250, is_hwc=True)
     ]
 
     data2 = data2.map(operations=transforms_2, input_columns=["image"])
@@ -209,8 +210,59 @@ def test_cut_out_comp(plot=False):
         visualize_list(image_list_1, image_list_2, visualize_mode=2)
 
 
+def skip_test_cut_out_comp_chw():
+    """
+    Feature: CutOut op
+    Description: Test CutOut with CHW input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) & HWC2CHW
+                 comparison.
+    Expectation: Test succeeds.  Manual confirmation of logged info.
+    """
+    logger.info("test_cut_out_comp_chw")
+
+    # First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+
+    transforms_1 = [
+        vision.Decode(),
+        vision.HWC2CHW(),
+        vision.CutOut(200, is_hwc=False)
+    ]
+    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
+    data1 = data1.map(operations=transform_1, input_columns=["image"])
+
+    # Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+
+    transforms_2 = [
+        vision.Decode(True),
+        vision.ToTensor(),
+        vision.CutOut(200, is_hwc=False)
+    ]
+
+    data2 = data2.map(operations=transforms_2, input_columns=["image"])
+
+    num_iter = 0
+    image_list_1, image_list_2 = [], []
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        num_iter += 1
+        image_1 = item1["image"]
+        image_2 = item2["image"]
+        if image_1.shape != image_2.shape:
+            raise RuntimeError("image_1.shape != image_2.shape: " + str(image_1.shape) + " " + str(image_2.shape))
+        image_list_1.append(image_1)
+        image_list_2.append(image_2)
+
+        logger.info("shape of image_1: {}".format(image_1.shape))
+        logger.info("shape of image_2: {}".format(image_2.shape))
+
+        logger.info("dtype of image_1: {}".format(image_1.dtype))
+        logger.info("dtype of image_2: {}".format(image_2.dtype))
+
+
 if __name__ == "__main__":
     test_cut_out_op(plot=True)
     test_cut_out_op_multicut(plot=True)
     test_cut_out_md5()
-    test_cut_out_comp(plot=True)
+    test_cut_out_comp_hwc(plot=True)
+    skip_test_cut_out_comp_chw()

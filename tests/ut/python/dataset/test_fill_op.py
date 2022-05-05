@@ -18,7 +18,7 @@ Testing fill op
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as data_trans
+import mindspore.dataset.transforms.transforms as data_trans
 
 
 def test_fillop_basic():

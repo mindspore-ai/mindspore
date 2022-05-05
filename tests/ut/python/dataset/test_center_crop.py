@@ -17,9 +17,8 @@ Testing CenterCrop op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_list, save_and_check_md5
 
@@ -91,11 +90,11 @@ def test_center_crop_comp(height=375, width=375, plot=False):
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.CenterCrop([height, width]),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.CenterCrop([height, width]),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_cropped = []
@@ -120,13 +119,13 @@ def test_crop_grayscale(height=375, width=375):
     # Note: image.transpose performs channel swap to allow py transforms to
     # work with c transforms
     transforms = [
-        py_vision.Decode(),
-        py_vision.Grayscale(1),
-        py_vision.ToTensor(),
+        vision.Decode(True),
+        vision.Grayscale(1),
+        vision.ToTensor(),
         (lambda image: (image.transpose(1, 2, 0) * 255).astype(np.uint8))
     ]
 
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data1 = data1.map(operations=transform, input_columns=["image"])
 

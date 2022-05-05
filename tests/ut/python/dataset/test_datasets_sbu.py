@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testSBUDataset"
@@ -99,7 +99,7 @@ def test_sbu_case():
 
     dataset = ds.SBUDataset(DATA_DIR, decode=False)
 
-    dataset = dataset.map(operations=[vision.Decode(rgb=True), vision.Resize((224, 224))], input_columns=["image"])
+    dataset = dataset.map(operations=[vision.Decode(), vision.Resize((224, 224))], input_columns=["image"])
     repeat_num = 4
     dataset = dataset.repeat(repeat_num)
     batch_size = 2
@@ -280,7 +280,7 @@ def test_sbu_decode():
 
     sampler = ds.SequentialSampler(num_samples=50)
     dataset = ds.SBUDataset(dataset_dir=DATA_DIR, decode=False, sampler=sampler)
-    dataset_1 = dataset.map(operations=[vision.Decode(rgb=True)], input_columns=["image"])
+    dataset_1 = dataset.map(operations=[vision.Decode()], input_columns=["image"])
 
     dataset_2 = ds.SBUDataset(dataset_dir=DATA_DIR, decode=True, sampler=sampler)
 

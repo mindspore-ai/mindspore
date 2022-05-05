@@ -14,7 +14,7 @@
 # ==============================================================================
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 
 DATA_DIR = "../data/dataset/testVOC2012"
 IMAGE_ID = ["32", "33", "39", "42", "61", "63", "68", "121", "123", "129"]

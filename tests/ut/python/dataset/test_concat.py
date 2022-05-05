@@ -16,9 +16,8 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as C
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as F
+import mindspore.dataset.transforms.transforms as C
+import mindspore.dataset.vision.transforms as F
 from mindspore import log as logger
 
 
@@ -326,15 +325,15 @@ def test_concat_14():
     Test concat: Testing concat on two different source datasets with different dataset operations.
     """
     logger.info("test_concat_14")
-    DATA_DIR = "../data/dataset/testPK/data"
-    DATA_DIR2 = "../data/dataset/testImageNetData/train/"
+    data_dir = "../data/dataset/testPK/data"
+    data_dir2 = "../data/dataset/testImageNetData/train/"
 
-    data1 = ds.ImageFolderDataset(DATA_DIR, num_samples=3)
-    data2 = ds.ImageFolderDataset(DATA_DIR2, num_samples=2)
+    data1 = ds.ImageFolderDataset(data_dir, num_samples=3)
+    data2 = ds.ImageFolderDataset(data_dir2, num_samples=2)
 
-    transforms1 = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
-                                                                      F.Resize((224, 224)),
-                                                                      F.ToTensor()])
+    transforms1 = C.Compose([F.Decode(True),
+                             F.Resize((224, 224)),
+                             F.ToTensor()])
 
     data1 = data1.map(operations=transforms1, input_columns=["image"])
     data2 = data2.map(operations=transforms1, input_columns=["image"])
@@ -360,11 +359,11 @@ def test_concat_15():
     Test concat: create dataset with different format of dataset file, and then concat
     """
     logger.info("test_concat_15")
-    DATA_DIR = "../data/dataset/testPK/data"
-    DATA_DIR2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    data_dir = "../data/dataset/testPK/data"
+    data_dir2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 
-    data1 = ds.ImageFolderDataset(DATA_DIR)
-    data2 = ds.TFRecordDataset(DATA_DIR2, columns_list=["image"])
+    data1 = ds.ImageFolderDataset(data_dir)
+    data2 = ds.TFRecordDataset(data_dir2, columns_list=["image"])
 
     data1 = data1.project(["image"])
     data3 = data1 + data2
@@ -377,11 +376,11 @@ def test_concat_16():
     Test concat: test get_dataset_size on nested concats
     """
     logger.info("test_concat_16")
-    DATA_DIR = "../data/dataset/testPK/data"
-    DATA_DIR2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+    data_dir = "../data/dataset/testPK/data"
+    data_dir2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 
-    data1 = ds.ImageFolderDataset(DATA_DIR)
-    data2 = ds.TFRecordDataset(DATA_DIR2, columns_list=["image"])
+    data1 = ds.ImageFolderDataset(data_dir)
+    data2 = ds.TFRecordDataset(data_dir2, columns_list=["image"])
 
     data3 = ds.GeneratorDataset(generator, ["col1"])
     data4 = ds.GeneratorDataset(generator_10, ["col1"])

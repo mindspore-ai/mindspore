@@ -15,7 +15,7 @@
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testPK/data"
@@ -51,7 +51,7 @@ def test_apply_imagefolder_case():
     data2 = ds.ImageFolderDataset(DATA_DIR, num_shards=4, shard_id=3)
 
     decode_op = vision.Decode()
-    normalize_op = vision.Normalize([121.0, 115.0, 100.0], [70.0, 68.0, 71.0])
+    normalize_op = vision.Normalize([121.0, 115.0, 100.0], [70.0, 68.0, 71.0], True)
 
     def dataset_fn(ds_):
         ds_ = ds_.map(operations=decode_op)

@@ -20,9 +20,8 @@ from numpy.testing import assert_allclose
 import PIL
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as F
-import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
@@ -44,20 +43,20 @@ def generate_numpy_random_rgb(shape):
 def test_adjust_gamma_c_eager():
     """
     Feature: AdjustGamma op
-    Description: Test eager support for AdjustGamma C++ op
+    Description: Test eager support for AdjustGamma C implementation
     Expectation: Receive non-None output image from op
     """
     # Eager 3-channel
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.float32)
     img_in = rgb_flat.reshape((8, 8, 3))
 
-    adjustgamma_op = C.AdjustGamma(10, 1)
+    adjustgamma_op = vision.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
     img_in2 = PIL.Image.open("../data/dataset/apple.jpg").convert("RGB")
 
-    adjustgamma_op2 = C.AdjustGamma(10, 1)
+    adjustgamma_op2 = vision.AdjustGamma(10, 1)
     img_out2 = adjustgamma_op2(img_in2)
     assert img_out2 is not None
 
@@ -65,20 +64,20 @@ def test_adjust_gamma_c_eager():
 def test_adjust_gamma_py_eager():
     """
     Feature: AdjustGamma op
-    Description: Test eager support for AdjustGamma Python op
+    Description: Test eager support for AdjustGamma Python implementation
     Expectation: Receive non-None output image from op
     """
     # Eager 3-channel
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.uint8)
     img_in = PIL.Image.fromarray(rgb_flat.reshape((8, 8, 3)))
 
-    adjustgamma_op = F.AdjustGamma(10, 1)
+    adjustgamma_op = vision.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
     img_in2 = PIL.Image.open("../data/dataset/apple.jpg").convert("RGB")
 
-    adjustgamma_op2 = F.AdjustGamma(10, 1)
+    adjustgamma_op2 = vision.AdjustGamma(10, 1)
     img_out2 = adjustgamma_op2(img_in2)
     assert img_out2 is not None
 
@@ -88,7 +87,7 @@ def test_adjust_gamma_c_eager_gray():
     rgb_flat = generate_numpy_random_rgb((64, 1)).astype(np.float32)
     img_in = rgb_flat.reshape((8, 8))
 
-    adjustgamma_op = C.AdjustGamma(10, 1)
+    adjustgamma_op = vision.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
@@ -98,32 +97,34 @@ def test_adjust_gamma_py_eager_gray():
     rgb_flat = generate_numpy_random_rgb((64, 1)).astype(np.uint8)
     img_in = PIL.Image.fromarray(rgb_flat.reshape((8, 8)))
 
-    adjustgamma_op = F.AdjustGamma(10, 1)
+    adjustgamma_op = vision.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
 
 def test_adjust_gamma_invalid_gamma_param_c():
     """
-    Test AdjustGamma C Op with invalid ignore parameter
+    Test AdjustGamma C implementation with invalid ignore parameter
     """
-    logger.info("Test AdjustGamma C Op with invalid ignore parameter")
+    logger.info("Test AdjustGamma C implementation with invalid ignore parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
-                                input_columns=["image"])
+        data_set = data_set.map(
+            operations=[vision.Decode(), vision.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
+            input_columns=["image"])
         # invalid gamma
-        data_set = data_set.map(operations=C.AdjustGamma(gamma=-10.0, gain=1.0),
+        data_set = data_set.map(operations=vision.AdjustGamma(gamma=-10.0, gain=1.0),
                                 input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
         assert "Input is not within the required interval of " in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
-                                input_columns=["image"])
+        data_set = data_set.map(
+            operations=[vision.Decode(), vision.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
+            input_columns=["image"])
         # invalid gamma
-        data_set = data_set.map(operations=C.AdjustGamma(gamma=[1, 2], gain=1.0),
+        data_set = data_set.map(operations=vision.AdjustGamma(gamma=[1, 2], gain=1.0),
                                 input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
@@ -132,16 +133,16 @@ def test_adjust_gamma_invalid_gamma_param_c():
 
 def test_adjust_gamma_invalid_gamma_param_py():
     """
-    Test AdjustGamma python Op with invalid ignore parameter
+    Test AdjustGamma Python implementation with invalid ignore parameter
     """
-    logger.info("Test AdjustGamma python Op with invalid ignore parameter")
+    logger.info("Test AdjustGamma Python implementation with invalid ignore parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.py_transforms.Compose([
-            F.Decode(),
-            F.Resize((224, 224)),
-            F.AdjustGamma(gamma=-10.0),
-            F.ToTensor()
+        trans = mindspore.dataset.transforms.transforms.Compose([
+            vision.Decode(True),
+            vision.Resize((224, 224)),
+            vision.AdjustGamma(gamma=-10.0),
+            vision.ToTensor()
         ])
         data_set = data_set.map(operations=[trans], input_columns=["image"])
     except ValueError as error:
@@ -149,11 +150,11 @@ def test_adjust_gamma_invalid_gamma_param_py():
         assert "Input is not within the required interval of " in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.py_transforms.Compose([
-            F.Decode(),
-            F.Resize((224, 224)),
-            F.AdjustGamma(gamma=[1, 2]),
-            F.ToTensor()
+        trans = mindspore.dataset.transforms.transforms.Compose([
+            vision.Decode(True),
+            vision.Resize((224, 224)),
+            vision.AdjustGamma(gamma=[1, 2]),
+            vision.ToTensor()
         ])
         data_set = data_set.map(operations=[trans], input_columns=["image"])
     except TypeError as error:
@@ -163,15 +164,16 @@ def test_adjust_gamma_invalid_gamma_param_py():
 
 def test_adjust_gamma_invalid_gain_param_c():
     """
-    Test AdjustGamma C Op with invalid gain parameter
+    Test AdjustGamma C implementation with invalid gain parameter
     """
-    logger.info("Test AdjustGamma C Op with invalid gain parameter")
+    logger.info("Test AdjustGamma C implementation with invalid gain parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        data_set = data_set.map(operations=[C.Decode(), C.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
-                                input_columns=["image"])
+        data_set = data_set.map(
+            operations=[vision.Decode(), vision.Resize((224, 224)), lambda img: np.array(img[:, :, 0])],
+            input_columns=["image"])
         # invalid gain
-        data_set = data_set.map(operations=C.AdjustGamma(gamma=10.0, gain=[1, 10]),
+        data_set = data_set.map(operations=vision.AdjustGamma(gamma=10.0, gain=[1, 10]),
                                 input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in AdjustGamma: {}".format(str(error)))
@@ -180,16 +182,16 @@ def test_adjust_gamma_invalid_gain_param_c():
 
 def test_adjust_gamma_invalid_gain_param_py():
     """
-    Test AdjustGamma python Op with invalid gain parameter
+    Test AdjustGamma Python implementation with invalid gain parameter
     """
-    logger.info("Test AdjustGamma python Op with invalid gain parameter")
+    logger.info("Test AdjustGamma Python implementation with invalid gain parameter")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
-        trans = mindspore.dataset.transforms.py_transforms.Compose([
-            F.Decode(),
-            F.Resize((224, 224)),
-            F.AdjustGamma(gamma=10.0, gain=[1, 10]),
-            F.ToTensor()
+        trans = mindspore.dataset.transforms.transforms.Compose([
+            vision.Decode(True),
+            vision.Resize((224, 224)),
+            vision.AdjustGamma(gamma=10.0, gain=[1, 10]),
+            vision.ToTensor()
         ])
         data_set = data_set.map(operations=[trans], input_columns=["image"])
     except TypeError as error:
@@ -199,11 +201,11 @@ def test_adjust_gamma_invalid_gain_param_py():
 
 def test_adjust_gamma_pipeline_c():
     """
-    Test AdjustGamma C Op Pipeline
+    Test AdjustGamma C implementation Pipeline
     """
     # First dataset
-    transforms1 = [C.Decode(), C.Resize([64, 64])]
-    transforms1 = mindspore.dataset.transforms.py_transforms.Compose(
+    transforms1 = [vision.Decode(), vision.Resize([64, 64])]
+    transforms1 = mindspore.dataset.transforms.transforms.Compose(
         transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -213,11 +215,11 @@ def test_adjust_gamma_pipeline_c():
 
     # Second dataset
     transforms2 = [
-        C.Decode(),
-        C.Resize([64, 64]),
-        C.AdjustGamma(1.0, 1.0)
+        vision.Decode(),
+        vision.Resize([64, 64]),
+        vision.AdjustGamma(1.0, 1.0)
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(
+    transform2 = mindspore.dataset.transforms.transforms.Compose(
         transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -240,11 +242,11 @@ def test_adjust_gamma_pipeline_c():
 
 def test_adjust_gamma_pipeline_py():
     """
-    Test AdjustGamma python Op Pipeline
+    Test AdjustGamma Python implementation Pipeline
     """
     # First dataset
-    transforms1 = [F.Decode(), F.Resize([64, 64]), F.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.py_transforms.Compose(
+    transforms1 = [vision.Decode(True), vision.Resize([64, 64]), vision.ToTensor()]
+    transforms1 = mindspore.dataset.transforms.transforms.Compose(
         transforms1)
     ds1 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -254,12 +256,12 @@ def test_adjust_gamma_pipeline_py():
 
     # Second dataset
     transforms2 = [
-        F.Decode(),
-        F.Resize([64, 64]),
-        F.AdjustGamma(1.0, 1.0),
-        F.ToTensor()
+        vision.Decode(True),
+        vision.Resize([64, 64]),
+        vision.AdjustGamma(1.0, 1.0),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(
+    transform2 = mindspore.dataset.transforms.transforms.Compose(
         transforms2)
     ds2 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
@@ -282,12 +284,11 @@ def test_adjust_gamma_pipeline_py():
 
 def test_adjust_gamma_pipeline_py_gray():
     """
-    Test AdjustGamma python Op Pipeline 1-channel
+    Test AdjustGamma Python implementation Pipeline 1-channel
     """
     # First dataset
-    transforms1 = [F.Decode(), F.Resize([64, 64]), F.Grayscale(), F.ToTensor()]
-    transforms1 = mindspore.dataset.transforms.py_transforms.Compose(
-        transforms1)
+    transforms1_list = [vision.Decode(True), vision.Resize([60, 60]), vision.Grayscale(), vision.ToTensor()]
+    transforms1 = mindspore.dataset.transforms.transforms.Compose(transforms1_list)
     ds1 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
                              columns_list=["image"],
@@ -295,15 +296,14 @@ def test_adjust_gamma_pipeline_py_gray():
     ds1 = ds1.map(operations=transforms1, input_columns=["image"])
 
     # Second dataset
-    transforms2 = [
-        F.Decode(),
-        F.Resize([64, 64]),
-        F.Grayscale(),
-        F.AdjustGamma(1.0, 1.0),
-        F.ToTensor()
+    transforms2_list = [
+        vision.Decode(True),
+        vision.Resize([60, 60]),
+        vision.Grayscale(),
+        vision.AdjustGamma(1.0, 1.0),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(
-        transforms2)
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2_list)
     ds2 = ds.TFRecordDataset(DATA_DIR_2,
                              SCHEMA_DIR,
                              columns_list=["image"],

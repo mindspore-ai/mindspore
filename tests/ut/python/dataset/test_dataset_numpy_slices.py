@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import mindspore.dataset as de
 from mindspore import log as logger
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 
 
 def test_numpy_slices_list_1():
@@ -69,7 +69,7 @@ def test_numpy_slices_list_append():
 
     data1 = de.TFRecordDataset(DATA_DIR)
     resize_op = vision.Resize((resize_height, resize_width))
-    data1 = data1.map(operations=[vision.Decode(True), resize_op], input_columns=["image"])
+    data1 = data1.map(operations=[vision.Decode(), resize_op], input_columns=["image"])
 
     res = []
     for data in data1.create_dict_iterator(num_epochs=1, output_numpy=True):

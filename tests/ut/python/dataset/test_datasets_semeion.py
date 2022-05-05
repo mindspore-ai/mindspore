@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 
 DATA_DIR_SEMEION = "../data/dataset/testSemeionData"
 
@@ -228,7 +228,7 @@ def test_semeion_pipeline():
     """
     # Original image
     dataset = ds.SemeionDataset(DATA_DIR_SEMEION, num_samples=1)
-    resize_op = c_vision.Resize((100, 100))
+    resize_op = vision.Resize((100, 100))
     # Filtered image by Resize
     dataset = dataset.map(operations=resize_op, input_columns=["image"], num_parallel_workers=1)
     i = 0

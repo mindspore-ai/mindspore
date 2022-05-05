@@ -18,10 +18,8 @@ Test Python Multiprocessing with AutoTuning
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as c_transforms
-import mindspore.dataset.transforms.py_transforms as py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision import Inter
 
 CIFAR10_DATA_DIR = "../data/dataset/testCifar10Data"
@@ -37,15 +35,15 @@ def create_pyfunc_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, 
     # Define dataset
     cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
-    cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+    cifar10_ds = cifar10_ds.map(operations=[vision.ToType(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
-    # Setup transforms list which include Python ops / Pyfuncs
+    # Setup transforms list which include Python implementations / Pyfuncs
     transforms_list = [
-        py_vision.ToPIL(),
-        py_vision.RandomGrayscale(prob=0.2),
+        vision.ToPIL(),
+        vision.RandomGrayscale(prob=0.2),
         np.array]  # need to convert PIL image to a NumPy array to pass it to C++ operation
-    compose_op = py_transforms.Compose(transforms_list)
+    compose_op = transforms.Compose(transforms_list)
     cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
                                 num_parallel_workers=num_parallel_workers,
                                 python_multiprocessing=True)
@@ -69,7 +67,7 @@ def create_pyop_cop_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1
     cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
     # Map#1 - with Pyfunc
-    cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+    cifar10_ds = cifar10_ds.map(operations=[vision.ToType(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
     # Map#2 - with C Ops
@@ -78,19 +76,19 @@ def create_pyop_cop_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1
     shift = 0.0
     rescale_nml = 1 / 0.3081
     shift_nml = -1 * 0.1307 / 0.3081
-    resize_op = c_vision.Resize((resize_height, resize_width), interpolation=Inter.LINEAR)
-    rescale_op = c_vision.Rescale(rescale, shift)
-    rescale_nml_op = c_vision.Rescale(rescale_nml, shift_nml)
-    hwc2chw_op = c_vision.HWC2CHW()
-    transforms = [resize_op, rescale_op, rescale_nml_op, hwc2chw_op]
-    compose_op = c_transforms.Compose(transforms)
+    resize_op = vision.Resize((resize_height, resize_width), interpolation=Inter.LINEAR)
+    rescale_op = vision.Rescale(rescale, shift)
+    rescale_nml_op = vision.Rescale(rescale_nml, shift_nml)
+    hwc2chw_op = vision.HWC2CHW()
+    transform = [resize_op, rescale_op, rescale_nml_op, hwc2chw_op]
+    compose_op = transforms.Compose(transform)
     cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
                                 num_parallel_workers=num_parallel_workers,
                                 python_multiprocessing=True)
 
     # Map#3 - with Pyfunc
     transforms_list = [lambda x: x]
-    compose_op = py_transforms.Compose(transforms_list)
+    compose_op = transforms.Compose(transforms_list)
     cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
                                 num_parallel_workers=num_parallel_workers,
                                 python_multiprocessing=True)
@@ -113,14 +111,14 @@ def create_mixed_map_dataset(batch_size=32, repeat_size=1, num_parallel_workers=
     # Define dataset
     cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
-    cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+    cifar10_ds = cifar10_ds.map(operations=[vision.ToType(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
     # Map with operations: Pyfunc + C Ops + Pyfunc
-    resize_op = c_vision.Resize((32, 32), interpolation=Inter.LINEAR)
-    rescale_op = c_vision.Rescale(1.0 / 255.0, 0.0)
-    rescale_nml_op = c_vision.Rescale(1 / 0.3081, -1 * 0.1307 / 0.3081)
-    hwc2chw_op = c_vision.HWC2CHW()
+    resize_op = vision.Resize((32, 32), interpolation=Inter.LINEAR)
+    rescale_op = vision.Rescale(1.0 / 255.0, 0.0)
+    rescale_nml_op = vision.Rescale(1 / 0.3081, -1 * 0.1307 / 0.3081)
+    hwc2chw_op = vision.HWC2CHW()
     cifar10_ds = cifar10_ds.map(
         operations=[lambda x: x, resize_op, rescale_op, rescale_nml_op, hwc2chw_op, lambda y: y],
         input_columns="image", num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
@@ -140,7 +138,7 @@ def create_per_batch_map_dataset(batch_size=32, repeat_size=1, num_parallel_work
     # Define dataset
     cifar100_ds = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=num_samples)
 
-    cifar100_ds = cifar100_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="fine_label")
+    cifar100_ds = cifar100_ds.map(operations=[vision.ToType(np.int32)], input_columns="fine_label")
 
     cifar100_ds = cifar100_ds.map(operations=[lambda z: z], input_columns="image")
 
@@ -171,15 +169,15 @@ def create_mp_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_
     # Define dataset
     cifar10_ds = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=num_samples)
 
-    cifar10_ds = cifar10_ds.map(operations=[py_vision.ToType(np.int32)], input_columns="label",
+    cifar10_ds = cifar10_ds.map(operations=[vision.ToType(np.int32)], input_columns="label",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 
-    # Setup transforms list which include Python ops / Pyfuncs
+    # Setup transforms list which include Python implementations / Pyfuncs
     transforms_list = [
-        py_vision.ToPIL(),
-        py_vision.RandomGrayscale(prob=0.8),
+        vision.ToPIL(),
+        vision.RandomGrayscale(prob=0.8),
         np.array]  # need to convert PIL image to a NumPy array to pass it to C++ operation
-    compose_op = py_transforms.Compose(transforms_list)
+    compose_op = transforms.Compose(transforms_list)
     cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)
 

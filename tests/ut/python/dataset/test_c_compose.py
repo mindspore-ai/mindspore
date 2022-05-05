@@ -15,8 +15,7 @@
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as ops
-import mindspore.dataset.transforms.py_transforms as py_ops
+import mindspore.dataset.transforms.transforms as ops
 
 
 def test_compose():
@@ -39,7 +38,7 @@ def test_compose():
     assert test_config([[1, 0]], [ops.Duplicate(), ops.Concatenate(), ops.Duplicate(), ops.Concatenate()]) == [
         [1, 0] * 4]
     # test one python transform followed by a C transform. type after oneHot is float (mixed use-case)
-    assert test_config([1, 0], [py_ops.OneHotOp(2), ops.TypeCast(mstype.int32)]) == [[0, 1], [1, 0]]
+    assert test_config([1, 0], [ops.OneHot(2), ops.TypeCast(mstype.int32)]) == [[0, 1], [1, 0]]
     # test exceptions. compose, randomApply randomChoice use the same validator
     assert "op_list[0] is neither a c_transform op" in test_config([1, 0], [1, ops.TypeCast(mstype.int32)])
     # test empty op list

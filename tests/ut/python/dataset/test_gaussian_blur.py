@@ -18,7 +18,7 @@ Testing GaussianBlur Python API
 import cv2
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 
 from mindspore import log as logger
 from util import visualize_image, diff_mse
@@ -30,14 +30,14 @@ IMAGE_FILE = "../data/dataset/apple.jpg"
 
 def test_gaussian_blur_pipeline(plot=False):
     """
-    Test GaussianBlur of c_transforms
+    Test GaussianBlur of C implementation
     """
     logger.info("test_gaussian_blur_pipeline")
 
     # First dataset
     dataset1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
-    decode_op = c_vision.Decode()
-    gaussian_blur_op = c_vision.GaussianBlur(3, 3)
+    decode_op = vision.Decode()
+    gaussian_blur_op = vision.GaussianBlur(3, 3)
     dataset1 = dataset1.map(operations=decode_op, input_columns=["image"])
     dataset1 = dataset1.map(operations=gaussian_blur_op, input_columns=["image"])
 
@@ -68,7 +68,7 @@ def test_gaussian_blur_eager():
     logger.info("test_gaussian_blur_eager")
     img = cv2.imread(IMAGE_FILE)
 
-    img_ms = c_vision.GaussianBlur((3, 5), (3.5, 3.5))(img)
+    img_ms = vision.GaussianBlur((3, 5), (3.5, 3.5))(img)
     img_cv = cv2.GaussianBlur(img, (3, 5), 3.5, 3.5)
     mse = diff_mse(img_ms, img_cv)
     assert mse == 0
@@ -80,22 +80,22 @@ def test_gaussian_blur_exception():
     """
     logger.info("test_gaussian_blur_exception")
     try:
-        _ = c_vision.GaussianBlur([2, 2])
+        _ = vision.GaussianBlur([2, 2])
     except ValueError as e:
         logger.info("Got an exception in GaussianBlur: {}".format(str(e)))
         assert "not an odd value" in str(e)
     try:
-        _ = c_vision.GaussianBlur(3.0, [3, 3])
+        _ = vision.GaussianBlur(3.0, [3, 3])
     except TypeError as e:
         logger.info("Got an exception in GaussianBlur: {}".format(str(e)))
         assert "not of type [<class 'int'>, <class 'list'>, <class 'tuple'>]" in str(e)
     try:
-        _ = c_vision.GaussianBlur(3, -3)
+        _ = vision.GaussianBlur(3, -3)
     except ValueError as e:
         logger.info("Got an exception in GaussianBlur: {}".format(str(e)))
         assert "not within the required interval" in str(e)
     try:
-        _ = c_vision.GaussianBlur(3, [3, 3, 3])
+        _ = vision.GaussianBlur(3, [3, 3, 3])
     except TypeError as e:
         logger.info("Got an exception in GaussianBlur: {}".format(str(e)))
         assert "should be a single number or a list/tuple of length 2" in str(e)

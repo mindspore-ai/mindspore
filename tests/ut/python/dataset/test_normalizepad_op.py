@@ -17,9 +17,8 @@ Testing Normalize op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_image
 
@@ -43,16 +42,18 @@ def normalizepad_np(image, mean, std):
     return output
 
 
-def test_normalizepad_op_c(plot=False):
+def test_normalizepad_op_hwc(plot=False):
     """
-    Test NormalizePad in cpp transformations
+    Feature: NormalizePad op
+    Description: Test NormalizePad with Decode versus NumPy comparison
+    Expectation: Test succeeds. MSE difference is negligible.
     """
-    logger.info("Test Normalize in cpp")
+    logger.info("Test NormalizePad with hwc")
     mean = [121.0, 115.0, 100.0]
     std = [70.0, 68.0, 71.0]
     # define map operations
-    decode_op = c_vision.Decode()
-    normalizepad_op = c_vision.NormalizePad(mean, std)
+    decode_op = vision.Decode()
+    normalizepad_op = vision.NormalizePad(mean, std, is_hwc=True)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -77,29 +78,37 @@ def test_normalizepad_op_c(plot=False):
         num_iter += 1
 
 
-def test_normalizepad_op_py(plot=False):
+def test_normalizepad_op_chw(plot=False):
     """
-    Test NormalizePad in python transformations
+    Feature: NormalizePad op
+    Description: Test NormalizePad with CHW input, Decode(to_pil=True) & ToTensor versus NumPy comparison
+    Expectation: Test succeeds. MSE difference is negligible.
     """
-    logger.info("Test Normalize in python")
+    logger.info("Test NormalizePad with chw")
     mean = [0.475, 0.45, 0.392]
     std = [0.275, 0.267, 0.278]
     # define map operations
     transforms = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
-    normalizepad_op = py_vision.NormalizePad(mean, std)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    normalizepad_op = vision.NormalizePad(mean, std, is_hwc=False)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data1 = data1.map(operations=transform, input_columns=["image"])
     data1 = data1.map(operations=normalizepad_op, input_columns=["image"])
 
+    transforms2 = [
+        vision.Decode(True),
+        vision.ToTensor()
+    ]
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=transform, input_columns=["image"])
+    data2 = data2.map(operations=transform2, input_columns=["image"])
 
     num_iter = 0
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
@@ -115,6 +124,45 @@ def test_normalizepad_op_py(plot=False):
         num_iter += 1
 
 
+def test_normalizepad_op_comp_chw():
+    """
+    Feature: NormalizePad op
+    Description: Test NormalizePad with CHW input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) & HWC2CHW
+                 comparison.
+    Expectation: Test succeeds. MSE difference is negligible.
+    """
+    logger.info("Test NormalizePad with CHW input")
+    mean = [0.475, 0.45, 0.392]
+    std = [0.275, 0.267, 0.278]
+    # define map operations
+    transforms = [
+        vision.Decode(True),
+        vision.ToTensor()
+    ]
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    normalizepad_op = vision.NormalizePad(mean, std, is_hwc=False)
+
+    #  First dataset
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data1 = data1.map(operations=transform, input_columns=["image"])
+    data1 = data1.map(operations=normalizepad_op, input_columns=["image"])
+
+    #  Second dataset
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = data2.map(operations=vision.Decode(), input_columns=["image"])
+    data2 = data2.map(operations=vision.HWC2CHW(), input_columns=["image"])
+    data2 = data2.map(operations=vision.NormalizePad(mean, std, is_hwc=False), input_columns=["image"])
+
+    num_iter = 0
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        image_de_normalized = item1["image"]
+        image_np_normalized = item2["image"] / 255
+        mse = diff_mse(image_de_normalized, image_np_normalized)
+        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse < 0.01
+
+
 def test_decode_normalizepad_op():
     """
     Test Decode op followed by NormalizePad op
@@ -125,8 +173,8 @@ def test_decode_normalizepad_op():
                                shuffle=False)
 
     # define map operations
-    decode_op = c_vision.Decode()
-    normalizepad_op = c_vision.NormalizePad([121.0, 115.0, 100.0], [70.0, 68.0, 71.0], "float16")
+    decode_op = vision.Decode()
+    normalizepad_op = vision.NormalizePad([121.0, 115.0, 100.0], [70.0, 68.0, 71.0], "float16")
 
     # apply map operations on images
     data1 = data1.map(operations=[decode_op, normalizepad_op], input_columns=["image"])
@@ -138,64 +186,77 @@ def test_decode_normalizepad_op():
         num_iter += 1
 
 
-def test_normalizepad_exception_unequal_size_c():
+def test_normalizepad_exception_unequal_size_1():
     """
-    Test NormalizePad in c transformation: len(mean) != len(std)
-    expected to raise ValueError
+    Feature: Normalize op
+    Description: Test Normalize with error input: len(mean) != len(std)
+    Expectation: ValueError raised
     """
-    logger.info("test_normalize_exception_unequal_size_c")
+    logger.info("test_normalizepad_exception_unequal_size_1")
     try:
-        _ = c_vision.NormalizePad([100, 250, 125], [50, 50, 75, 75])
+        _ = vision.NormalizePad([100, 250, 125], [50, 50, 75, 75])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Length of mean and std must be equal."
 
     try:
-        _ = c_vision.NormalizePad([100, 250, 125], [50, 50, 75], 1)
+        _ = vision.NormalizePad([100, 250, 125], [50, 50, 75], 1)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "dtype should be string."
 
     try:
-        _ = c_vision.NormalizePad([100, 250, 125], [50, 50, 75], "")
+        _ = vision.NormalizePad([100, 250, 125], [50, 50, 75], "")
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "dtype only support float32 or float16."
+        assert str(e) == "dtype only supports float32 or float16."
 
 
-def test_normalizepad_exception_unequal_size_py():
+def test_normalizepad_exception_unequal_size_2():
     """
-    Test NormalizePad in python transformation: len(mean) != len(std)
-    expected to raise ValueError
+    Feature: Normalize op
+    Description: Test Normalize with error input: len(mean) != len(std)
+    Expectation: ValueError raised
     """
-    logger.info("test_normalizepad_exception_unequal_size_py")
+    logger.info("test_normalizepad_exception_unequal_size_2")
     try:
-        _ = py_vision.NormalizePad([0.50, 0.30, 0.75], [0.18, 0.32, 0.71, 0.72])
+        _ = vision.NormalizePad([0.50, 0.30, 0.75], [0.18, 0.32, 0.71, 0.72], is_hwc=False)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Length of mean and std must be equal."
 
     try:
-        _ = py_vision.NormalizePad([0.50, 0.30, 0.75], [0.18, 0.32, 0.71], 1)
+        _ = vision.NormalizePad([0.50, 0.30, 0.75], [0.18, 0.32, 0.71], 1, is_hwc=False)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "dtype should be string."
 
     try:
-        _ = py_vision.NormalizePad([0.50, 0.30, 0.75], [0.18, 0.32, 0.71], "")
+        _ = vision.NormalizePad([0.50, 0.30, 0.75], [0.18, 0.32, 0.71], "", is_hwc=False)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert str(e) == "dtype only support float32 or float16."
+        assert str(e) == "dtype only supports float32 or float16."
 
 
-def test_normalizepad_exception_invalid_range_py():
+def test_normalizepad_exception_invalid_range():
     """
-    Test NormalizePad in python transformation: value is not in range [0,1]
-    expected to raise ValueError
+    Feature: Normalize op
+    Description: Test Normalize with error input: value is not in range [0,1]
+    Expectation: ValueError raised
     """
-    logger.info("test_normalizepad_exception_invalid_range_py")
+    logger.info("test_normalizepad_exception_invalid_range")
     try:
-        _ = py_vision.NormalizePad([0.75, 1.25, 0.5], [0.1, 0.18, 1.32])
+        _ = vision.NormalizePad([0.75, 1.25, 0.5], [0.1, 0.18, 1.32], is_hwc=False)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert "Input mean_value is not within the required interval of [0.0, 1.0]." in str(e)
+
+
+if __name__ == "__main__":
+    test_normalizepad_op_hwc(plot=True)
+    test_normalizepad_op_chw(plot=True)
+    test_normalizepad_op_comp_chw()
+    test_decode_normalizepad_op()
+    test_normalizepad_exception_unequal_size_1()
+    test_normalizepad_exception_unequal_size_2()
+    test_normalizepad_exception_invalid_range()

@@ -18,9 +18,8 @@ Testing the OneHot Op
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as data_trans
-import mindspore.dataset.transforms.py_transforms as py_trans
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.transforms.transforms as data_trans
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import dataset_equal_with_function
 
@@ -69,9 +68,9 @@ def test_one_hot_post_aug():
     resize_height, resize_width = 224, 224
 
     # Define map operations
-    decode_op = c_vision.Decode()
-    rescale_op = c_vision.Rescale(rescale, shift)
-    resize_op = c_vision.Resize((resize_height, resize_width))
+    decode_op = vision.Decode()
+    rescale_op = vision.Rescale(rescale, shift)
+    resize_op = vision.Resize((resize_height, resize_width))
 
     # Apply map operations on images
     data1 = data1.map(operations=decode_op, input_columns=["image"])
@@ -99,6 +98,7 @@ def test_one_hot_post_aug():
 
     assert num_iter == 1
 
+
 def test_one_hot_success():
     # success
     class GetDatasetGenerator:
@@ -117,12 +117,13 @@ def test_one_hot_success():
 
     dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
 
-    one_hot_encode = py_trans.OneHotOp(10)
-    trans = py_trans.Compose([one_hot_encode])
+    one_hot_encode = data_trans.OneHot(10)
+    trans = data_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
     for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
         assert item["label"][index] == 1.0
+
 
 def test_one_hot_success2():
     # success
@@ -142,13 +143,14 @@ def test_one_hot_success2():
 
     dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
 
-    one_hot_encode = py_trans.OneHotOp(10)
-    trans = py_trans.Compose([one_hot_encode])
+    one_hot_encode = data_trans.OneHot(10)
+    trans = data_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
     for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
         logger.info(item)
-        assert item["label"][0][index] == 1.0
+        assert item["label"][index] == 1.0
+
 
 def test_one_hot_success3():
     # success
@@ -171,14 +173,15 @@ def test_one_hot_success3():
 
     dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
 
-    one_hot_encode = py_trans.OneHotOp(10)
-    trans = py_trans.Compose([one_hot_encode])
+    one_hot_encode = data_trans.OneHot(10)
+    trans = data_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
     for item in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         logger.info(item)
         for i in range(10):
-            assert item["label"][i][0][i] == 1.0
+            assert item["label"][i][i] == 1.0
+
 
 def test_one_hot_type_error():
     # type error
@@ -198,15 +201,16 @@ def test_one_hot_type_error():
 
     dataset = ds.GeneratorDataset(GetDatasetGenerator(), ["data", "label"], shuffle=False)
 
-    one_hot_encode = py_trans.OneHotOp(10)
-    trans = py_trans.Compose([one_hot_encode])
+    one_hot_encode = data_trans.OneHot(10)
+    trans = data_trans.Compose([one_hot_encode])
     dataset = dataset.map(operations=trans, input_columns=["label"])
 
     try:
         for index, item in enumerate(dataset.create_dict_iterator(num_epochs=1, output_numpy=True)):
             assert item["label"][index] == 1.0
     except RuntimeError as e:
-        assert "the input numpy type should be int" in str(e)
+        assert "OneHot only support input of int type, but got:float64" in str(e)
+
 
 if __name__ == "__main__":
     test_one_hot()

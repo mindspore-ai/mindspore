@@ -25,7 +25,7 @@ import pytest
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 from mindspore.mindrecord import FileWriter

@@ -15,7 +15,7 @@
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 
 CELEBA_DIR = "../data/dataset/testCelebAData"
 CIFAR10_DIR = "../data/dataset/testCifar10Data"

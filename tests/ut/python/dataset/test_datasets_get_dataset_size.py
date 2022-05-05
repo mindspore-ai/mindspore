@@ -14,7 +14,7 @@
 # ==============================================================================
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
+import mindspore.dataset.vision.transforms as vision
 
 IMAGENET_RAWDATA_DIR = "../data/dataset/testImageNetData2/train"
 IMAGENET_TFFILE_DIR = ["../data/dataset/test_tf_file_3_images2/train-0000-of-0001.data",

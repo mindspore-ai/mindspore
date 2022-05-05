@@ -19,8 +19,7 @@ import cv2
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import diff_mse
 
@@ -38,7 +37,7 @@ def test_decode_op():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     # Serialize and Load dataset requires using vision.Decode instead of vision.Decode().
-    data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
+    data1 = data1.map(operations=[vision.Decode()], input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -60,7 +59,7 @@ def test_decode_op_tf_file_dataset():
 
     # Decode with rgb format set to True
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.FILES)
-    data1 = data1.map(operations=vision.Decode(True), input_columns=["image"])
+    data1 = data1.map(operations=vision.Decode(), input_columns=["image"])
 
     for item in data1.create_dict_iterator(num_epochs=1):
         logger.info('decode == {}'.format(item['image']))
@@ -103,8 +102,8 @@ def test_read_image_decode_op():
     data_path = "../data/dataset/testPK/data/class1/0.jpg"
     dataset1 = ds.GeneratorDataset(ImageDataset(data_path, data_type="numpy"), ["data", "label"])
     dataset2 = ds.GeneratorDataset(ImageDataset(data_path, data_type="bytes"), ["data", "label"])
-    decode_op = py_vision.Decode()
-    to_tensor = py_vision.ToTensor(output_type=np.int32)
+    decode_op = vision.Decode(True)
+    to_tensor = vision.ToTensor(output_type=np.int32)
     dataset1 = dataset1.map(operations=[decode_op, to_tensor], input_columns=["data"])
     dataset2 = dataset2.map(operations=[decode_op, to_tensor], input_columns=["data"])
 

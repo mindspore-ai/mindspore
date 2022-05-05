@@ -20,7 +20,7 @@ import pytest
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 
 DATASET_DIR = "../data/dataset/testSBData/sbd"
 
@@ -100,7 +100,7 @@ def test_sbd_basic02():
 
     # case 3: test batch with drop_remainder=False
     data3 = ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shuffle=False, decode=True)
-    resize_op = c_vision.Resize((100, 100))
+    resize_op = vision.Resize((100, 100))
     data3 = data3.map(operations=resize_op, input_columns=["image"], num_parallel_workers=1)
     data3 = data3.map(operations=resize_op, input_columns=["task"], num_parallel_workers=1)
     assert data3.get_dataset_size() == 4
@@ -115,7 +115,7 @@ def test_sbd_basic02():
 
     # case 4: test batch with drop_remainder=True
     data4 = ds.SBDataset(DATASET_DIR, task='Segmentation', usage='train', shuffle=False, decode=True)
-    resize_op = c_vision.Resize((100, 100))
+    resize_op = vision.Resize((100, 100))
     data4 = data4.map(operations=resize_op, input_columns=["image"], num_parallel_workers=1)
     data4 = data4.map(operations=resize_op, input_columns=["task"], num_parallel_workers=1)
     assert data4.get_dataset_size() == 4
