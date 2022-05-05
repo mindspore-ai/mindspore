@@ -82,9 +82,9 @@ class Round {
 
   float kernel_upload_loss() const;
 
-  std::multimap<uint64_t, size_t> GetSendData() const;
+  std::map<uint64_t, size_t> GetSendData() const;
 
-  std::multimap<uint64_t, size_t> GetReceiveData() const;
+  std::map<uint64_t, size_t> GetReceiveData() const;
 
   std::vector<std::pair<uint64_t, uint32_t>> GetUpdateModelCompleteInfo() const;
 

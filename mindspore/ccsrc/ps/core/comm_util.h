@@ -116,9 +116,7 @@ const std::map<std::string, ClusterState> kClusterStateMap = {
 
 struct Time {
   uint64_t time_stamp;
-  std::string time_str_second;
   std::string time_str_mill;
-  std::string time_str_day;
 };
 
 struct FileConfig {

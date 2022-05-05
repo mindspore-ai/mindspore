@@ -103,19 +103,23 @@ class RoundKernel {
 
   bool verifyResponse(const std::shared_ptr<ps::core::MessageHandler> &message, const void *data, size_t len);
 
+  void CalculateSendData(size_t send_len);
+
+  void CalculateReceiveData(size_t receive_len);
+
   // Record the size of send data and the time stamp
-  void RecordSendData(const std::pair<uint64_t, size_t> &send_data);
+  void RecordSendData(uint64_t time_stamp_second, size_t send_data);
 
   // Record the size of receive data and the time stamp
-  void RecordReceiveData(const std::pair<uint64_t, size_t> &receive_data);
+  void RecordReceiveData(uint64_t time_stamp_second, size_t receive_data);
 
   // Get the info of send data
-  std::multimap<uint64_t, size_t> GetSendData();
+  std::map<uint64_t, size_t> GetSendData();
 
   // Get the info of receive data
-  std::multimap<uint64_t, size_t> GetReceiveData();
+  std::map<uint64_t, size_t> GetReceiveData();
 
-  // Clear the send data infp
+  // Clear the send data info
   void ClearData();
 
  protected:
@@ -148,13 +152,21 @@ class RoundKernel {
   std::mutex send_data_rate_mutex_;
 
   // The size of send data ant time
-  std::multimap<uint64_t, size_t> send_data_and_time_;
+  std::map<uint64_t, size_t> send_data_and_time_;
 
   // The mutex for receive_data_and_time_
   std::mutex receive_data_rate_mutex_;
 
   // The size of receive data and time
-  std::multimap<uint64_t, size_t> receive_data_and_time_;
+  std::map<uint64_t, size_t> receive_data_and_time_;
+
+  std::atomic_size_t send_data_ = 0;
+
+  std::atomic_uint64_t send_data_time_ = 0;
+
+  std::atomic_size_t receive_data_ = 0;
+
+  std::atomic_uint64_t receive_data_time_ = 0;
 };
 }  // namespace kernel
 }  // namespace server
