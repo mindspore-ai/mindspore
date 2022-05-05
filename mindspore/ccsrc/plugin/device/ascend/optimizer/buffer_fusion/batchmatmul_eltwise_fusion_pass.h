@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_FUSEDMULADD_FUSION_PASS_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_FUSEDMULADD_FUSION_PASS_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_ELTWISE_FUSION_PASS_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_ELTWISE_FUSION_PASS_H_
 
 #include "utils/hash_set.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/fusion_base_pass.h"
@@ -27,20 +27,21 @@
 
 namespace mindspore {
 namespace opt {
-class BatchMatmulFusedMulAddFusionPass : public FusionBasePass {
+class BatchMatmulEltwiseFusionPass : public FusionBasePass {
  public:
-  explicit BatchMatmulFusedMulAddFusionPass(const FusionIdAllocatorPtr &idAllocator)
-      : FusionBasePass("BatchMatmulFusedMulAddFusionPass", idAllocator) {
-    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BatchMatmulFusedMulAddFusionPass);
+  explicit BatchMatmulEltwiseFusionPass(const FusionIdAllocatorPtr &idAllocator)
+      : FusionBasePass("BatchMatmulEltwiseFusionPass", idAllocator) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::TbeBatchMatmulElementWiseFusionPass);
   }
-  ~BatchMatmulFusedMulAddFusionPass() override = default;
+  ~BatchMatmulEltwiseFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchBatchMatmulFusedMulAdd(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                   FusedNodeRecord *candidate_fusion);
+  bool MatchPattern1(const CNodePtr &eltwise1, mindspore::HashSet<AnfNodePtr> *record);
+  bool MatchPattern2(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record);
+  bool MatchPattern3(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record);
 };
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_FUSEDMULADD_FUSION_PASS_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_BUFFER_FUSION_PASS_BATCHMATMUL_ELTWISE_FUSION_PASS_H_

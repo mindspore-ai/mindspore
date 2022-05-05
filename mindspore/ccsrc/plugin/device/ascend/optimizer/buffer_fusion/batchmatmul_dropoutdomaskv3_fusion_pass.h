@@ -32,7 +32,9 @@ namespace opt {
 class BatchMatmulDropoutDoMaskV3FusionPass : public FusionBasePass {
  public:
   explicit BatchMatmulDropoutDoMaskV3FusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("BatchMatmulDropoutDoMaskV3FusionPass", std::move(idAllocator)) {}
+      : FusionBasePass("BatchMatmulDropoutDoMaskV3FusionPass", std::move(idAllocator)) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::BatchMatMulDropOutDoMaskV3DFusionPass);
+  }
   ~BatchMatmulDropoutDoMaskV3FusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 

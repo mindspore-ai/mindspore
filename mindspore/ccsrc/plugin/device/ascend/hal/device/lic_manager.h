@@ -43,7 +43,9 @@ enum class OptPassEnum {
   ConvBnReduceFusionPass,
   MulAddNPass,
   Resnet50DbnDwFusionPass,
+  BatchMatMulDropOutDoMaskV3DFusionPass,
   MatmulConfusiontransposeUbFusion,
+  MatMulDropOutDoMaskV3DFusionPass,
   TbeBatchMatmulElementWiseFusionPass,
   Invalid,
 };

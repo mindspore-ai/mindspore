@@ -44,7 +44,9 @@ static const std::map<std::string, OptPassEnum> kPassCodeMap = {
   {std::to_string(39), OptPassEnum::ClipByNormNoDivSquareSumFusion},
   {std::to_string(42), OptPassEnum::MulAddNPass},
   {std::to_string(43), OptPassEnum::Resnet50DbnDwFusionPass},
+  {std::to_string(44), OptPassEnum::BatchMatMulDropOutDoMaskV3DFusionPass},
   {std::to_string(45), OptPassEnum::MatmulConfusiontransposeUbFusion},
+  {std::to_string(46), OptPassEnum::MatMulDropOutDoMaskV3DFusionPass},
   {std::to_string(47), OptPassEnum::TbeBatchMatmulElementWiseFusionPass},
 };
 
