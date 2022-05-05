@@ -18,6 +18,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.context as context
+from mindspore.ops import functional as F
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor, Parameter
 
@@ -27,6 +28,10 @@ func_map = {
     "div": ops.TensorScatterDiv,
     "max": ops.TensorScatterMax,
     "min": ops.TensorScatterMin,
+}
+
+function_func_map = {
+    "div": F.tensor_scatter_div,
 }
 
 np_func_map = {
@@ -200,3 +205,52 @@ def test_tensor_scatter_arithmetic_type_check(func, data_type, index_type):
 
     with pytest.raises(TypeError):
         compare_with_numpy(func, input_x, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['div'])
+@pytest.mark.parametrize('data_type', [mstype.float32])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_tensor_scatter_arithmetic_tensor_func_check(func, data_type, index_type):
+    """
+    Feature: TensorScatter* tensor operators.
+    Description: test cases for invalid input.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[0, 1]]), index_type)
+    updates = Tensor(np.array([1.0]), data_type)
+    expected = tensor_scatter_np(func, input_x, indices, updates)
+
+    if func == 'div':
+        output = input_x.tensor_scatter_div(indices, updates)
+
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
+
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['div'])
+@pytest.mark.parametrize('data_type', [mstype.float32])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_tensor_scatter_arithmetic_functional_func_check(func, data_type, index_type):
+    """
+    Feature: TensorScatter* functional operators.
+    Description: test cases for invalid input.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[0, 1]]), index_type)
+    updates = Tensor(np.array([1.0]), data_type)
+    expected = tensor_scatter_np(func, input_x, indices, updates)
+    output = function_func_map.get(func)(input_x, indices, updates)
+
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)

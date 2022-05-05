@@ -1569,6 +1569,15 @@ def tensor_scatter_add(x, indices, updates):
     return F.tensor_scatter_add(x, indices, updates)
 
 
+def tensor_sactter_div(input_x, indices, updates):
+    """
+    Create a new tensor by division the values from the positions in `input_x` indicated by
+    `indices`, with values from `updates`. When multiple value are given for the same index,
+    the output result will be the division of values.
+    """
+    return F.tensor_scatter_div(input_x, indices, updates)
+
+
 def coo_to_csr(x):
     """convert coo to csr."""
     row_indices = x.indices[:, 0]
