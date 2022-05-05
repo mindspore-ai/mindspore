@@ -53,6 +53,9 @@ class TCPClient {
   // Returns nullptr after timeout.
   MessageBase *ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t timeout = 30);
 
+  // Force the data in the send buffer to be sent out.
+  bool Flush(const std::string &dst_url);
+
  private:
   // The basic TCP communication component used by the client.
   std::unique_ptr<TCPComm> tcp_comm_;

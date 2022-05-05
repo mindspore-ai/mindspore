@@ -106,6 +106,8 @@ MessageBase *TCPClient::ReceiveSync(std::unique_ptr<MessageBase> &&msg, uint32_t
   }
   return NULL_MSG;
 }
+
+bool TCPClient::Flush(const std::string &dst_url) { return tcp_comm_->Flush(dst_url); }
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore
