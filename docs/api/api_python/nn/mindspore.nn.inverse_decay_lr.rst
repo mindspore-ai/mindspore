@@ -29,5 +29,5 @@ mindspore.nn.inverse_decay_lr
 
     - **TypeError** - `total_step` 或 `step_per_epoch` 或 `decay_epoch` 不是int。
     - **TypeError** - `is_stair` 不是bool。
-    - **ValueError** - `learning_rate` 或 `decay_rate` 不是float。
+    - **TypeError** - `learning_rate` 或 `decay_rate` 不是float。
     - **ValueError** - `learning_rate` 或 `decay_rate` 小于等于0。
