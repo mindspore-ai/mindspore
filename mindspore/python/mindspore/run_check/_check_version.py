@@ -419,7 +419,7 @@ def check_version_and_env_config():
         except OSError:
             logger.warning(
                 "Pre-Load Lirary libgomp.so.1 failed, this might cause cannot allocate TLS memory problem, "
-                "if so find solution in FAQ in https://www.mindspore.cn/docs/faq/en/r1.7/index.html.")
+                "if so find solution in FAQ in https://www.mindspore.cn/docs/en/r1.7/faq/installation.html.")
     elif __package_name__.lower() == "mindspore-gpu":
         env_checker = GPUEnvChecker()
     else:
