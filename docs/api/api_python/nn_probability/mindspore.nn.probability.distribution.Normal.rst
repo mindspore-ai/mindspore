@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Normal
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Normal(mean=None, sd=None, seed=None, dtype=mstype.float32, name='Normal')
+.. py:class:: mindspore.nn.probability.distribution.Normal(mean=None, sd=None, seed=None, dtype=mindspore.float32, name='Normal')
 
     正态分布（Normal distribution）。
     连续随机分布，取值范围为 :math:`(-\inf, \inf)` ，概率密度函数为

@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.LogNormal
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.LogNormal(loc=None, scale=None, seed=0, dtype=mstype.float32, name='LogNormal')
+.. py:class:: mindspore.nn.probability.distribution.LogNormal(loc=None, scale=None, seed=0, dtype=mindspore.float32, name='LogNormal')
 
     对数正态分布（LogNormal distribution）。
     连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为

@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Uniform
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Uniform(low=None, high=None, seed=None, dtype=mstype.float32, name='Uniform')
+.. py:class:: mindspore.nn.probability.distribution.Uniform(low=None, high=None, seed=None, dtype=mindspore.float32, name='Uniform')
 
     均匀分布（Uniform Distribution）。
     连续随机分布，取值范围为 :math:`[a, b]` ，概率密度函数为
