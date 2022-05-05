@@ -40,7 +40,7 @@ FuncGraph::FuncGraph(GraphDebugInfoPtr &&debug_info)
       has_vararg_(false),
       has_kwarg_(false),
       exist_multi_target_(false),
-      kwonlyargs_count_(0),
+      kw_only_args_count_(0),
       hyper_param_count_(0),
       is_generated_(false),
       is_bprop_(false),
@@ -569,21 +569,20 @@ AnfNodePtr FuncGraph::GetVariableArgParameter() {
     return nullptr;
   }
 
-  // one vararg + kwarg so the min param num is 2;
-  constexpr size_t min_param_num = 2;
+  size_t min_param_num = 1;
   if (has_kwarg_) {
-    if (parameters_.size() < hyper_param_count_ + min_param_num) {
-      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
-                        << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
-    }
-    return parameters_[(parameters_.size() - hyper_param_count_) - min_param_num];
+    min_param_num += 1;
   }
+  min_param_num += kw_only_args_count_;
+  min_param_num += hyper_param_count_;
 
-  if (parameters_.size() < hyper_param_count_ + 1) {
-    MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
-                      << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
+  if (parameters_.size() < min_param_num) {
+    MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size()
+                      << " which less than the sum of following: hyper_param_count: " << hyper_param_count_
+                      << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
+                      << ", kw_only_args_count_: " << kw_only_args_count_;
   }
-  return parameters_[(parameters_.size() - hyper_param_count_) - 1];
+  return parameters_[parameters_.size() - min_param_num + kw_only_args_count_];
 }
 
 std::string FuncGraph::GetVariableArgName() {
@@ -591,24 +590,9 @@ std::string FuncGraph::GetVariableArgName() {
     return "";
   }
 
-  // one vararg + kwarg so the min param num is 2;
-  constexpr size_t min_param_num = 2;
-  if (has_kwarg_) {
-    if (parameters_.size() < hyper_param_count_ + min_param_num) {
-      MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
-                        << hyper_param_count_ << ", parameters is less than 2 + hyper_param_count";
-    }
-    const auto &parameter =
-      parameters_[(parameters_.size() - hyper_param_count_) - min_param_num]->cast<ParameterPtr>();
-    MS_EXCEPTION_IF_NULL(parameter);
-    return parameter->name();
-  }
-
-  if (parameters_.size() < hyper_param_count_ + 1) {
-    MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size() << ", hyper_param_count is "
-                      << hyper_param_count_ << ", parameters is less than 1 + hyper_param_count";
-  }
-  const auto &parameter = parameters_[(parameters_.size() - hyper_param_count_) - 1]->cast<ParameterPtr>();
+  const auto &param_node = GetVariableArgParameter();
+  MS_EXCEPTION_IF_NULL(param_node);
+  const auto &parameter = param_node->cast<ParameterPtr>();
   MS_EXCEPTION_IF_NULL(parameter);
   return parameter->name();
 }
@@ -637,6 +621,37 @@ std::string FuncGraph::GetVariableKwargName() {
   return "";
 }
 
+AnfNodePtrList FuncGraph::GetKwOnlyArgsParameters() {
+  AnfNodePtrList kw_only_args;
+  if (kw_only_args_count_ == 0) {
+    return kw_only_args;
+  }
+
+  size_t min_param_num = 0;
+  size_t varargs_kwargs_num = 0;
+  if (has_vararg_) {
+    min_param_num += 1;
+    varargs_kwargs_num += 1;
+  }
+  if (has_kwarg_) {
+    min_param_num += 1;
+    varargs_kwargs_num += 1;
+  }
+  min_param_num += kw_only_args_count_;
+  min_param_num += hyper_param_count_;
+
+  if (parameters_.size() < min_param_num) {
+    MS_LOG(EXCEPTION) << "Length of parameters is " << parameters_.size()
+                      << " which less than the sum of following: hyper_param_count: " << hyper_param_count_
+                      << ", has_vararg: " << has_vararg_ << ", has_kwarg: " << has_kwarg_
+                      << ", kw_only_args_count: " << kw_only_args_count_;
+  }
+  size_t kw_only_args_start_offset = parameters_.size() - min_param_num;
+  std::copy(parameters_.cbegin() + kw_only_args_start_offset,
+            parameters_.cend() - hyper_param_count_ - varargs_kwargs_num, std::back_inserter(kw_only_args));
+  return kw_only_args;
+}
+
 int FuncGraph::GetPositionalArgsCount() const {
   int count = SizeToInt(parameters_.size());
   if (has_kwarg_) {
@@ -645,7 +660,7 @@ int FuncGraph::GetPositionalArgsCount() const {
   if (has_vararg_) {
     count--;
   }
-  return (count - kwonlyargs_count_) - SizeToInt(hyper_param_count_);
+  return (count - kw_only_args_count_) - SizeToInt(hyper_param_count_);
 }
 
 AnfNodePtr FuncGraph::GetParameterByName(const std::string &name) {

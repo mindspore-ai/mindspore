@@ -245,22 +245,61 @@ void Parser::LiftIfBranchGraphFV() {
 }
 
 namespace {
+bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return false;
+  }
+  auto cnode = dyn_cast<CNode>(node);
+  if (cnode == nullptr) {
+    return false;
+  }
+  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
+  auto sort_rhs_first =
+    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
+  return sort_rhs_first;
+}
+
+std::pair<CNodePtr, AnfNodePtr> GetRealOutputNodes(const FuncGraphPtr &call_graph) {
+  auto graph_output = call_graph->output();
+  if (graph_output == nullptr) {
+    MS_LOG(EXCEPTION) << "graph_output is null, call_graph: " << call_graph->ToString();
+  }
+  auto graph_output_cnode = dyn_cast<CNode>(graph_output);
+  MS_EXCEPTION_IF_NULL(graph_output_cnode);
+  // If output cnode is not the tail call but a Depend CNode, keep the dependency node for later use.
+  AnfNodePtr graph_dependency_node = nullptr;
+  if (IsDependOfIsolatedNodes(graph_output_cnode)) {
+    auto graph_real_output_cnode = dyn_cast<CNode>(graph_output_cnode->input(1));
+    // Get the dependency node;
+    constexpr auto dependency_node_index = 2;
+    graph_dependency_node = graph_output_cnode->input(dependency_node_index);
+    MS_EXCEPTION_IF_NULL(graph_real_output_cnode);
+    graph_output_cnode = graph_real_output_cnode;
+  }
+  return {graph_output_cnode, graph_dependency_node};
+}
+
 void TransformParallelCallFormerToMiddle(const FuncGraphPtr &former_call_graph, const FuncGraphPtr &latter_call_graph,
                                          size_t middle_graph_output_cnode_size, bool use_arguments_pack) {
-  // The 'former_graph_output' is middle graph call.
-  auto former_graph_output = former_call_graph->output();
-  MS_EXCEPTION_IF_NULL(former_graph_output);
+  // The 'former_graph_output' is middle graph call or depend.
+  const auto &[former_graph_output_cnode, former_graph_dependency_node] = GetRealOutputNodes(former_call_graph);
+  MS_EXCEPTION_IF_NULL(former_graph_output_cnode);
   std::vector<AnfNodePtr> inputs({NewValueNode(latter_call_graph)});
   if (use_arguments_pack) {
     for (size_t i = 0; i < middle_graph_output_cnode_size - 1; ++i) {
       auto getitem_input = former_call_graph->NewCNodeInOrder(
-        {NewValueNode(prim::kPrimTupleGetItem), former_graph_output, NewValueNode(SizeToLong(i))});
+        {NewValueNode(prim::kPrimTupleGetItem), former_graph_output_cnode, NewValueNode(SizeToLong(i))});
       (void)inputs.emplace_back(getitem_input);
     }
   } else {
-    (void)inputs.emplace_back(former_graph_output);
+    (void)inputs.emplace_back(former_graph_output_cnode);
   }
   auto new_output = former_call_graph->NewCNodeBefore(former_call_graph->return_node(), std::move(inputs));
+  if (former_graph_dependency_node != nullptr) {
+    // Adjust the former funcgraph output with Depend.
+    new_output = former_call_graph->NewCNodeAfter(
+      new_output, {NewValueNode(prim::kPrimDepend), new_output, former_graph_dependency_node});
+  }
   former_call_graph->set_output(new_output);
 }
 
@@ -287,86 +326,136 @@ bool TransformParallelCallMiddleToLatter(const FuncGraphPtr &middle_call_graph,
   return use_arguments_pack;
 }
 
-bool IsDependOfIsolatedNodes(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
-    return false;
+bool IsValueContainScalar(const ValuePtr &value) {
+  if (value->isa<Scalar>()) {
+    return true;
   }
-  auto cnode = dyn_cast<CNode>(node);
-  if (cnode == nullptr) {
-    return false;
-  }
-  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
-  auto sort_rhs_first =
-    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
-  return sort_rhs_first;
+  return false;
 }
 
-std::pair<CNodePtr, AnfNodePtr> GetRealMiddleOutputNodes(const FuncGraphPtr &middle_call_graph) {
-  auto middle_graph_output = middle_call_graph->output();
-  if (middle_graph_output == nullptr) {
-    MS_LOG(EXCEPTION) << "middle_graph_output is null, middle_call_graph: " << middle_call_graph->ToString();
+bool IsOutputContainScalar(const CNodePtr &output_cnode) {
+  return std::any_of(output_cnode->inputs().cbegin() + 1, output_cnode->inputs().end(), [](const AnfNodePtr &node) {
+    if (node->isa<ValueNode>()) {
+      auto value_node = node->cast<ValueNodePtr>();
+      return IsValueContainScalar(value_node->value());
+    }
+    return false;
+  });
+}
+
+bool CheckMiddleGraphOutputContainScalar(
+  const std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> &parallel_call_vec) {
+  std::vector<bool> contains_scalar;
+  for (auto &call_graphs_pair : parallel_call_vec) {
+    MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
+    auto middle_call_graph = call_graphs_pair.second->func_graph();
+    constexpr auto recur_2 = 2;
+    const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
+    const auto middle_graph_output_cnode = middle_graph_output_pair.first;
+    auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+    if (middle_graph_output_cnode_size <= 1) {
+      MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
+      return false;
+    }
+
+    static const auto transform_if_const_scalar = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") == "2");
+    if (!transform_if_const_scalar && IsOutputContainScalar(middle_graph_output_cnode)) {
+      MS_LOG(DEBUG) << "CNode's inputs contain const scalar, " << middle_graph_output_cnode->DebugString(recur_2);
+      contains_scalar.push_back(true);
+    } else {
+      contains_scalar.push_back(false);
+    }
   }
-  auto middle_graph_output_cnode = dyn_cast<CNode>(middle_graph_output);
-  MS_EXCEPTION_IF_NULL(middle_graph_output_cnode);
-  // If latter_call_graph is not the tail call in middle funcgraph, keep the dependency node for later use.
-  AnfNodePtr middle_graph_dependency_node = nullptr;
-  if (IsDependOfIsolatedNodes(middle_graph_output_cnode)) {
-    auto middle_graph_real_output_cnode = dyn_cast<CNode>(middle_graph_output_cnode->input(1));
-    // Get the dependency node;
-    constexpr auto dependency_node_index = 2;
-    middle_graph_dependency_node = middle_graph_output_cnode->input(dependency_node_index);
-    MS_EXCEPTION_IF_NULL(middle_graph_real_output_cnode);
-    middle_graph_output_cnode = middle_graph_real_output_cnode;
+
+  return std::all_of(contains_scalar.cbegin(), contains_scalar.cend(), [](bool is_scalar) { return is_scalar; });
+}
+
+bool CheckMiddleGraphOutputPyInterpret(
+  const std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> &parallel_call_vec) {
+  bool contain_py_interpret = false;
+  for (auto &call_graphs_pair : parallel_call_vec) {
+    MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
+    auto middle_call_graph = call_graphs_pair.second->func_graph();
+    constexpr auto recur_2 = 2;
+    const auto &middle_graph_output_pair = GetRealOutputNodes(middle_call_graph);
+    const auto middle_graph_output_cnode = middle_graph_output_pair.first;
+    auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+    if (middle_graph_output_cnode_size <= 1) {
+      MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
+      return false;
+    }
+
+    contain_py_interpret |=
+      std::any_of(middle_graph_output_cnode->inputs().cbegin() + 1, middle_graph_output_cnode->inputs().cend(),
+                  [](const AnfNodePtr &node) { return IsPrimitiveCNode(node, prim::kPrimPyInterpret); });
+    if (contain_py_interpret) {
+      return true;
+    }
   }
-  return {middle_graph_output_cnode, middle_graph_dependency_node};
+
+  return false;
 }
 }  // namespace
 
 // Transform tail call to parallel call.
 void Parser::TransformParallelCall() {
   std::unordered_set<FuncGraphPtr> latter_call_graphs_set;
-  for (auto &call_graphs_pair : parallel_call_graphs_) {
-    MS_EXCEPTION_IF_NULL(call_graphs_pair.first);
-    auto former_call_graph = call_graphs_pair.first->func_graph();
-    MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
-    auto middle_call_graph = call_graphs_pair.second->func_graph();
-    // Transform the call of {middle_graph -> latter_graph}.
-    auto middle_graph_return = middle_call_graph->get_return();
-    if (middle_graph_return == nullptr) {
-      MS_LOG(INFO) << "middle_graph_return is null, middle_call_graph: " << middle_call_graph->ToString();
+  for (auto &parallel_call_vec : parallel_call_graphs_) {
+    bool all_middle_graphs_output_scalar = CheckMiddleGraphOutputContainScalar(parallel_call_vec);
+    if (all_middle_graphs_output_scalar) {
+      MS_LOG(DEBUG) << "All middle func graph's output contain const scalar, cannot transform to Parallel_If.";
       continue;
     }
-    constexpr auto recur_3 = 3;
-    MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
-                  << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
-    const auto &[middle_graph_output_cnode, middle_graph_dependency_node] = GetRealMiddleOutputNodes(middle_call_graph);
-    auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
-    if (middle_graph_output_cnode_size <= 1) {
+    // After Join, Value in Abstract of PyInterpret CNode will be kAnyValue, it cannot be PyInterpreted again, so
+    // ignore the transformation.
+    bool is_middle_graphs_output_py_interpret = CheckMiddleGraphOutputPyInterpret(parallel_call_vec);
+    if (is_middle_graphs_output_py_interpret) {
+      MS_LOG(DEBUG) << "Middle func graph's output contain PyInterpret CNode, cannot transform to Parallel_If.";
+      continue;
+    }
+    for (auto &call_graphs_pair : parallel_call_vec) {
+      MS_EXCEPTION_IF_NULL(call_graphs_pair.first);
+      auto former_call_graph = call_graphs_pair.first->func_graph();
+      MS_EXCEPTION_IF_NULL(call_graphs_pair.second);
+      auto middle_call_graph = call_graphs_pair.second->func_graph();
+      // Transform the call of {middle_graph -> latter_graph}.
+      auto middle_graph_return = middle_call_graph->get_return();
+      if (middle_graph_return == nullptr) {
+        MS_LOG(INFO) << "middle_graph_return is null, middle_call_graph: " << middle_call_graph->ToString();
+        continue;
+      }
+      constexpr auto recur_3 = 3;
       constexpr auto recur_2 = 2;
-      MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
-      continue;
-    }
-    auto latter_graph_node = middle_graph_output_cnode->input(0);
-    bool use_arguments_pack = TransformParallelCallMiddleToLatter(
-      middle_call_graph, middle_graph_output_cnode, middle_graph_dependency_node, middle_graph_output_cnode_size);
+      MS_LOG(DEBUG) << "Tail call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
+                    << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
+      const auto &[middle_graph_output_cnode, middle_graph_dependency_node] = GetRealOutputNodes(middle_call_graph);
+      auto middle_graph_output_cnode_size = middle_graph_output_cnode->inputs().size();
+      if (middle_graph_output_cnode_size <= 1) {
+        MS_LOG(DEBUG) << "CNode's inputs size should exceed 1, " << middle_graph_output_cnode->DebugString(recur_2);
+        continue;
+      }
 
-    // Transform the call of {former_graph -> middle_graph}.
-    auto latter_call_graph = GetValueNode<FuncGraphPtr>(latter_graph_node);
-    if (latter_call_graph == nullptr) {
-      constexpr auto recur_2 = 2;
-      MS_LOG(ERROR) << "The latter graph node is not FuncGraph, " << latter_graph_node->DebugString(recur_2);
-      continue;
-    }
-    if (latter_call_graphs_set.find(latter_call_graph) != latter_call_graphs_set.end()) {
-      MS_LOG(DEBUG) << "The latter graph is handled before, " << latter_call_graph->ToString();
-      continue;
-    }
-    (void)latter_call_graphs_set.emplace(latter_call_graph);
-    TransformParallelCallFormerToMiddle(former_call_graph, latter_call_graph, middle_graph_output_cnode_size,
-                                        use_arguments_pack);
+      auto latter_graph_node = middle_graph_output_cnode->input(0);
+      bool use_arguments_pack = TransformParallelCallMiddleToLatter(
+        middle_call_graph, middle_graph_output_cnode, middle_graph_dependency_node, middle_graph_output_cnode_size);
 
-    MS_LOG(DEBUG) << "Parallel call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
-                  << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
+      // Transform the call of {former_graph -> middle_graph}.
+      auto latter_call_graph = GetValueNode<FuncGraphPtr>(latter_graph_node);
+      if (latter_call_graph == nullptr) {
+        MS_LOG(ERROR) << "The latter graph node is not FuncGraph, " << latter_graph_node->DebugString(recur_2);
+        continue;
+      }
+      if (latter_call_graphs_set.find(latter_call_graph) != latter_call_graphs_set.end()) {
+        MS_LOG(DEBUG) << "The latter graph is handled before, " << latter_call_graph->ToString();
+        continue;
+      }
+      (void)latter_call_graphs_set.emplace(latter_call_graph);
+      TransformParallelCallFormerToMiddle(former_call_graph, latter_call_graph, middle_graph_output_cnode_size,
+                                          use_arguments_pack);
+
+      MS_LOG(DEBUG) << "Parallel call graphs return: {former: " << former_call_graph->get_return()->DebugString(recur_3)
+                    << ", middle: " << middle_call_graph->get_return()->DebugString(recur_3) << "}";
+    }
   }
 
   // Lift inner, then lift outer.
@@ -1708,15 +1797,16 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
                   << ", false_end: " << false_end->ToString() << ", after_block: " << after_block->ToString();
     (void)ignored_if_latter_call_graphs_.insert(after_block);
   }
-  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") == "1");
+  static const auto transform_tail_call_to_parallel_call = (common::GetEnv("MS_DEV_IF_PARALLEL_CALL") != "0");
   if (transform_tail_call_to_parallel_call && true_branch_graphs.second != nullptr &&
       false_branch_graphs.second != nullptr) {
     true_branch_graphs.first = block;
-    (void)parallel_call_graphs_.emplace_back(true_branch_graphs);
     MS_LOG(DEBUG) << "Record tail call graphs, true: {former: " << true_branch_graphs.first->func_graph()->ToString()
                   << ", middle: " << true_branch_graphs.second->func_graph()->ToString() << "}";
     false_branch_graphs.first = block;
-    (void)parallel_call_graphs_.emplace_back(false_branch_graphs);
+    std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> branch_graphs_vec{true_branch_graphs,
+                                                                                 false_branch_graphs};
+    (void)parallel_call_graphs_.emplace_back(branch_graphs_vec);
     MS_LOG(DEBUG) << "Record tail call graphs, false: {former: " << false_branch_graphs.first->func_graph()->ToString()
                   << ", middle: " << false_branch_graphs.second->func_graph()->ToString() << "}";
   }
@@ -1987,7 +2077,8 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
     std::pair<FunctionBlockPtr, FunctionBlockPtr> loop_graphs;
     loop_graphs.first = body_block;
     loop_graphs.second = after_body_block;
-    (void)parallel_call_graphs_.emplace_back(loop_graphs);
+    std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> loop_graphs_vec{loop_graphs};
+    (void)parallel_call_graphs_.emplace_back(loop_graphs_vec);
     MS_LOG(DEBUG) << "Record tail call graphs, loop: {former: " << loop_graphs.first->func_graph()->ToString()
                   << ", middle: " << loop_graphs.second->func_graph()->ToString() << "}";
     // Record the rolled body function, for later lifting operation.

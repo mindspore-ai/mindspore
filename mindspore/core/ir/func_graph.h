@@ -165,14 +165,16 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::map<std::string, AnfNodePtr> &parameter_default_value() { return parameter_default_value_; }
   void set_has_vararg(bool has_) { has_vararg_ = has_; }
   bool has_vararg() const { return has_vararg_; }
+  // Parameters are ordered as: Positional Parameters, Kwonlyargs, *Varargs, **Kwargs, HyperParam;
   AnfNodePtr GetVariableArgParameter();
   std::string GetVariableArgName();
   void set_has_kwarg(bool has_) { has_kwarg_ = has_; }
   bool has_kwarg() const { return has_kwarg_; }
-  void set_kwonlyargs_count(int count) { kwonlyargs_count_ = count; }
-  int kwonlyargs_count() const { return kwonlyargs_count_; }
+  void set_kwonlyargs_count(int count) { kw_only_args_count_ = count; }
+  int kwonlyargs_count() const { return kw_only_args_count_; }
   AnfNodePtr GetVariableKwargParameter();
   std::string GetVariableKwargName();
+  AnfNodePtrList GetKwOnlyArgsParameters();
   void set_hyper_param_count(size_t count) { hyper_param_count_ = count; }
   size_t hyper_param_count() const { return hyper_param_count_; }
   int GetPositionalArgsCount() const;
@@ -412,11 +414,11 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   std::vector<AnfNodePtr> parameters_;
   std::vector<AnfNodePtr> paramter_obj_nodes_;
 
-  // Whether there is a *args and **kwargs, and count kwonlyargs'number.
+  // Whether there is a *args and **kwargs, and count kw_only_args'number.
   bool has_vararg_;
   bool has_kwarg_;
   bool exist_multi_target_;
-  int kwonlyargs_count_;
+  int kw_only_args_count_;
   // Hyper param is placed on the top graph,
   // and positioned in the end of the param list, so we record the number to trace the position.
   size_t hyper_param_count_;

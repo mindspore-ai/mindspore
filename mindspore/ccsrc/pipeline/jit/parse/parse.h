@@ -339,7 +339,7 @@ class Parser {
 
   // The func graphs to transform tail call ir to independent call ir.
   // Contains: {former_graph, middle_graph}, latter_graph is no need.
-  std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>> parallel_call_graphs_;
+  std::vector<std::vector<std::pair<FunctionBlockPtr, FunctionBlockPtr>>> parallel_call_graphs_;
   // The true branch and false branch call info. of if statement.
   std::vector<std::tuple<CNodePtr, FunctionBlockPtr, FunctionBlockPtr>> if_branch_calls_;
   // The rolled_body callers info. for later lifting operation.

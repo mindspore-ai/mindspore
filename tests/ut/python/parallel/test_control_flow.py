@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -95,6 +96,7 @@ class Net(nn.Cell):
         return out
 
 
+@pytest.mark.skip(reason='Working on it in Parallel')
 def test_control_flow():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_auto_parallel_context(device_num=8, global_rank=0)
