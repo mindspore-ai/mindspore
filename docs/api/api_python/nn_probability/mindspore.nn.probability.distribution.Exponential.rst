@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Exponential
 ===================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Exponential(rate=None, seed=None, dtype=mindspore.float32, name='Exponential')
+.. py:class:: mindspore.nn.probability.distribution.Exponential(rate=None, seed=None, dtype=mstype.float32, name='Exponential')
 
     指数分布（Exponential Distribution）。
     连续随机分布，取值范围为所有实数，概率密度函数为
@@ -15,7 +15,7 @@ mindspore.nn.probability.distribution.Exponential
 
     - **rate** (int, float, list, numpy.ndarray, Tensor) - 率参数。默认值：None。
     - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-    - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mindspore.float32。
+    - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。
     - **name** (str) - 分布的名称。默认值：'Exponential'。
 
     .. note:: 
