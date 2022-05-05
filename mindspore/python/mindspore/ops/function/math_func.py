@@ -1313,7 +1313,7 @@ def erf(x):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
@@ -1345,7 +1345,7 @@ def erfc(x):
         TypeError: If dtype of `x` is not float16 or float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
