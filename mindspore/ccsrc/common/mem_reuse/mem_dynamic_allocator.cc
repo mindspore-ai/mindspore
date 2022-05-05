@@ -65,9 +65,9 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   return device_addr;
 }
 
-std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(size_t total_size,
-                                                                          const std::vector<size_t> &size_list) {
+std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const std::vector<size_t> &size_list) {
   std::vector<DeviceMemPtr> device_addr_list;
+  size_t total_size = std::accumulate(size_list.begin(), size_list.end(), 0);
   // Pre-alloc the one whole piece memory.
   auto device_addr = AllocTensorMem(total_size, false);
   if (!device_addr) {

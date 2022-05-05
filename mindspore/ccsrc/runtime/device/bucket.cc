@@ -94,8 +94,8 @@ void Bucket::AllocateAllReduceMemory() {
 
   total_size_ = total_size;
 
-  AllocateContinousMemory(ar_input_address_list_, total_size, align_size_list_);
-  AllocateContinousMemory(ar_output_address_list_, total_size, align_size_list_);
+  AllocateContinuousMemory(ar_input_address_list_, total_size, align_size_list_);
+  AllocateContinuousMemory(ar_output_address_list_, total_size, align_size_list_);
 
   // generate memecpy output addr
   if (origin_size_list.size() != ar_input_address_list_.size()) {

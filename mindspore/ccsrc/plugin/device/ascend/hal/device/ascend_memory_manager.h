@@ -40,8 +40,8 @@ class AscendMemoryManager : public MemoryManager {
   uint8_t *MallocCommunicationMemFromMemPool(size_t size) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                       std::vector<size_t> size_list) override;
-  std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override {
-    return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(total_size, size_list);
+  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override {
+    return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(size_list);
   }
 
   void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;

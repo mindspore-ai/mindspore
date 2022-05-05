@@ -84,8 +84,8 @@ class Bucket {
   virtual void CopyTensorToContiguousMemory() = 0;
   virtual DeviceAddressPtr CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const = 0;
   virtual size_t GetAlignSize(size_t size) const = 0;
-  virtual void AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
-                                       const std::vector<size_t> &size_list) const = 0;
+  virtual void AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                        const std::vector<size_t> &size_list) const = 0;
 };
 }  // namespace mindspore::device
 

@@ -35,8 +35,8 @@ DeviceAddressPtr AscendBucket::CreateDeviceAddress(size_t size, TypeId type_id, 
 
 size_t AscendBucket::GetAlignSize(size_t size) const { return MemoryManager::GetCommonAlignSize(size); }
 
-void AscendBucket::AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
-                                           const std::vector<size_t> &size_list) const {
+void AscendBucket::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                            const std::vector<size_t> &size_list) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(runtime_instance);
   if (!runtime_instance->MallocContinuousMemFromMemPool(to_allocate_address, total_size, size_list)) {

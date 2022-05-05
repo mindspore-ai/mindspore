@@ -35,8 +35,8 @@ class GPUBucket : public Bucket {
   void LaunchAllReduce() override;
   DeviceAddressPtr CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const override;
   size_t GetAlignSize(size_t size) const override;
-  void AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
-                               const std::vector<size_t> &size_list) const override;
+  void AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                const std::vector<size_t> &size_list) const override;
 
   const void *collective_handle_;
 };

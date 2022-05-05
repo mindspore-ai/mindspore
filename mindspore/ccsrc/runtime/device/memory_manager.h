@@ -60,7 +60,7 @@ class MemoryManager : public MemHandler {
   virtual void FreeMemFromMemPool(void *device_ptr);
   virtual bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                               std::vector<size_t> size_list);
-  virtual std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list);
+  virtual std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list);
 
   static size_t GetCommonAlignSize(size_t input_size);
   static size_t GetCommunicationAlignSize(size_t input_size);

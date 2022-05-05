@@ -79,11 +79,10 @@ class AscendDeviceContext : public DeviceContext {
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *const ptr) const override;
 
-  // Allocate continuous device memory end to end into 'addr_list'.
+  // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.
-  bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
-                                const std::vector<size_t> &size_list) const override;
+  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
   // Create concrete device address according different device type.
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,

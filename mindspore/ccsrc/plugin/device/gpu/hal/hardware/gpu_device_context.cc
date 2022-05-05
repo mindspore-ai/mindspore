@@ -222,12 +222,12 @@ void GPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
   address->ptr_ = nullptr;
 }
 
-bool GPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
-                                                const std::vector<size_t> &size_list) const {
+std::vector<void *> GPUDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   if (!BindDeviceToCurrentThread()) {
-    return false;
+    std::vector<void *> ptr_list;
+    return ptr_list;
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
 void *GPUDeviceContext::AllocateMemory(size_t size) const {

@@ -38,8 +38,8 @@ class AscendBucket : public Bucket {
   void CleanAllReduceInputAddr();
   DeviceAddressPtr CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const override;
   size_t GetAlignSize(size_t size) const override;
-  void AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
-                               const std::vector<size_t> &size_list) const override;
+  void AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                const std::vector<size_t> &size_list) const override;
 };
 }  // namespace mindspore::device::ascend
 #endif  // MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_BUCKET_H_

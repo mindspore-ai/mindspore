@@ -154,7 +154,7 @@ class DynamicMemPoolBestFit {
   // The main program entry of memory alloc.
   DeviceMemPtr AllocTensorMem(size_t size, bool from_persistent_mem = false);
   // The main program entry of continuous memory alloc.
-  std::vector<DeviceMemPtr> AllocContinuousTensorMem(size_t total_size, const std::vector<size_t> &size_list);
+  std::vector<DeviceMemPtr> AllocContinuousTensorMem(const std::vector<size_t> &size_list);
   // The main program entry of memory free.
   void FreeTensorMem(const DeviceMemPtr &device_addr);
 
