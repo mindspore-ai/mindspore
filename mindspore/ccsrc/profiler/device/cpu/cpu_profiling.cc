@@ -29,7 +29,6 @@ namespace mindspore {
 namespace profiler {
 namespace cpu {
 std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ = std::make_shared<CPUProfiler>();
-
 std::shared_ptr<CPUProfiler> &CPUProfiler::GetInstance() { return profiler_inst_; }
 
 void CPUProfiler::Init(const std::string &profileDataPath = "") {
@@ -121,6 +120,25 @@ void CPUProfiler::OpDataProducerBeginParallel(const std::string op_name, const u
 #endif
 }
 
+void CPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
+  auto op_name = kernel->fullname_with_scope();
+  auto begin_iter = op_name.rfind('/') + 1;
+  auto end_iter = op_name.rfind('-');
+  if (begin_iter != std::string::npos && end_iter != std::string::npos && begin_iter < end_iter) {
+    cur_kernel_info_.op_type = op_name.substr(begin_iter, end_iter - begin_iter);
+    cur_kernel_info_.op_name = op_name.substr(begin_iter, op_name.length() - begin_iter);
+  }
+  for (uint32_t i = 0; i < (uint32_t)kernel->inputs().size(); i++) {
+    if (kernel->input(i)->Shape() != nullptr) {
+      cur_kernel_input_info_.input_id = i;
+      cur_kernel_input_info_.shape = kernel->input(i)->Shape()->DumpText();
+      cur_kernel_info_.cur_kernel_all_inputs_info.push_back(cur_kernel_input_info_);
+    }
+  }
+  all_kernel_info_.push_back(cur_kernel_info_);
+  cur_kernel_info_.cur_kernel_all_inputs_info.clear();
+}
+
 void CPUProfiler::OpDataProducerEndParallel(const std::string op_name) {
   auto stop_timestamp = GetHostMonoTimeStamp();
   float op_time_elapsed = SetRuntimeEnd(op_name, stop_timestamp);
@@ -168,6 +186,9 @@ void CPUProfiler::SaveProfileData() {
     MS_EXCEPTION_IF_NULL(cpu_data_saver_inst);
     cpu_data_saver_inst->ParseOpInfo(op_info_map_);
     cpu_data_saver_inst->WriteFile(profile_data_path_);
+    if (!all_kernel_info_.empty()) {
+      cpu_data_saver_inst->WriteFrameWork(profile_data_path_, all_kernel_info_);
+    }
   }
 }
 

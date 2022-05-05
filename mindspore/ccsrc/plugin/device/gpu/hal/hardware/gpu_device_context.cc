@@ -544,6 +544,7 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), streams_.front());
   bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
   profiler_inst->OpDataProducerEnd();
+  profiler_inst->RecordFrameWorkInfo(kernel);
 
   auto op_launch_start_end_time = profiler_inst->GetSingleOpLaunchTime();
   MS_LOG(DEBUG) << "Launch kernel:" << kernel->fullname_with_scope() << " cost:"

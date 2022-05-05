@@ -23,17 +23,27 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 #include "profiler/device/profiling.h"
 #if ENABLE_GPU
 #include "profiler/device/gpu/gpu_profiling.h"
 #endif
 #include "actor/actormgr.h"
+#include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {
 namespace profiler {
 namespace cpu {
 const float kNanosecondToMillisecond = 1000000;
-
+struct CurKernelInputInfo {
+  uint32_t input_id;
+  std::string shape;
+};
+struct CurKernelInfo {
+  std::string op_type;
+  std::string op_name;
+  std::vector<CurKernelInputInfo> cur_kernel_all_inputs_info;
+};
 class CPUProfiler : public Profiler {
  public:
   static std::shared_ptr<CPUProfiler> &GetInstance();
@@ -51,6 +61,10 @@ class CPUProfiler : public Profiler {
   void OpDataProducerBeginParallel(const std::string op_name, const uint32_t pid);
   float SetRuntimeEnd(const std::string op_name, const uint64_t stop_timestamp);
   void SetRuntimeStart(const std::string op_name, const uint64_t start_timestamp);
+  void RecordFrameWorkInfo(const CNodePtr &kernel);
+  CurKernelInputInfo cur_kernel_input_info_;
+  CurKernelInfo cur_kernel_info_;
+  std::vector<CurKernelInfo> all_kernel_info_;
 
  private:
   void SetRunTimeData(const std::string &op_name, const uint32_t pid, bool is_parallel = false);
