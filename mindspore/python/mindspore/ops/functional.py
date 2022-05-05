@@ -225,7 +225,7 @@ def _trans_jet_inputs(primals_item, series_item):
                         f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got"
                         f" {dtype(primals_item).__name__} and {dtype(series_item).__name__}.")
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
-        return cast(primals_item, mstype.float64), cast(series_item, mstype.float64)
+        return cast(primals_item, mstype.float32), cast(series_item, mstype.float32)
     return primals_item, series_item
 
 
@@ -328,7 +328,7 @@ def _trans_derivative_inputs(primals_item):
                         f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got"
                         f" {dtype(primals_item).__name__}.")
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
-        return cast(primals_item, mstype.float64)
+        return cast(primals_item, mstype.float32)
     return primals_item
 
 

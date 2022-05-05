@@ -43,6 +43,20 @@ def _factorial(order):
     return factorial
 
 
+def _trans_scalar_inputs(x, y):
+    """If an op accepts multiple inputs and support scalar input by broadcasting it to another input, it requires
+    special process(like Mul op) or different broadcast in taylor rule."""
+    if not x.shape:
+        trans_x = zeros_like(y)
+        trans_x[0] = x
+        return trans_x, y
+    if not y.shape:
+        trans_y = zeros_like(x)
+        trans_y[0] = y
+        return x, trans_y
+    return x, y
+
+
 @taylor_fprop_getters.register(P.Add)
 @taylor_fprop_getters.register(P.Sub)
 def taylor_add_or_sub(self):
@@ -53,14 +67,18 @@ def taylor_add_or_sub(self):
         prim = self
 
     def taylor_fprop_add_or_sub(input_x, input_y):
-        series = prim(input_x, input_y)
-        return series
+        if not input_x.shape and not input_y.shape:
+            return prim(input_x, input_y)
+        input_x, input_y = _trans_scalar_inputs(input_x, input_y)
+        return prim(input_x, input_y)
 
     return taylor_fprop_add_or_sub
 
 
 def _taylor_fprop_mul(input_x, input_y):
     """The rule to generate `Mul` taylor rule."""
+    if not input_x.shape or not input_y.shape:
+        return input_x * input_y
     primals = mul_op(input_x[0], input_y[0])
     series_num = len(input_x) - 1
     factorial = _factorial(series_num)
@@ -87,6 +105,9 @@ def taylor_mul(self):
 
 def _taylor_fprop_realdiv(input_x, input_y):
     """The rule to generate `RealDiv` taylor rule."""
+    if not input_y.shape:
+        return input_x / input_y
+    input_x, input_y = _trans_scalar_inputs(input_x, input_y)
     primals = div_op(input_x[0], input_y[0])
     series_num = len(input_x) - 1
     factorial = _factorial(series_num)
@@ -129,6 +150,26 @@ def taylor_exp(self):
         return series
 
     return taylor_fprop_exp
+
+
+@taylor_fprop_getters.register(P.Log)
+def taylor_log(self):
+    """Higher order derivatives rule definition for `Log` operation."""
+
+    def taylor_fprop_log(inputs):
+        primals = log_op(inputs[0])
+        series_num = len(inputs) - 1
+        factorial = _factorial(series_num)
+        series = zeros_like(inputs)
+        series[0] = primals
+        for k in range(1, series_num + 1):
+            for i in range(1, k):
+                tmp = i * inputs[k - i] * series[i] / (factorial[k - i] * factorial[i])
+                series[k] -= tmp
+            series[k] = (inputs[k] - factorial[k - 1] * series[k]) / inputs[0]
+        return series
+
+    return taylor_fprop_log
 
 
 def _taylor_fprop_sin_cos(inputs):

@@ -54,6 +54,17 @@ class SingleInputSingleOutputNet(nn.Cell):
         return out
 
 
+class SingleInputSingleOutputWithScalarNet(nn.Cell):
+    def __init__(self):
+        super(SingleInputSingleOutputWithScalarNet, self).__init__()
+        self.log = P.Log()
+
+    def construct(self, x):
+        out1 = self.log(x)
+        out = 1 / out1 + 2
+        return out * 3
+
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,6 +82,29 @@ def test_jet_single_input_single_output_graph_mode():
     net = SingleInputSingleOutputNet()
     expected_primals = np.array([-0.43931, -0.43931]).astype(np.float32)
     expected_series = np.array([[0.92187, 0.92187], [-1.56750, -1.56750], [-0.74808, -0.74808]]).astype(np.float32)
+    out_primals, out_series = jet(net, primals, series)
+    assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
+    assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jet_single_input_single_output_with_scalar_graph_mode():
+    """
+    Features: Function jet
+    Description: Test jet with single input with scalar in graph mode.
+    Expectation: No exception.
+    """
+    primals = Tensor([2., 2.])
+    series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
+    net = SingleInputSingleOutputWithScalarNet()
+    expected_primals = np.array([10.328085, 10.328085]).astype(np.float32)
+    expected_series = np.array([[-3.1220534, -3.1220534], [2.943144, 2.943144],
+                                [-4.551988, -4.551988]]).astype(np.float32)
     out_primals, out_series = jet(net, primals, series)
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
     assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)

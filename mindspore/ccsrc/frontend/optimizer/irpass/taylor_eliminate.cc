@@ -26,7 +26,7 @@ namespace internal {
 // White list of ops with taylor rule.
 mindspore::HashSet<std::string> taylor_ops{prim::kPrimAdd->name(), prim::kPrimSub->name(), prim::kPrimRealDiv->name(),
                                            prim::kPrimMul->name(), prim::kPrimSin->name(), prim::kPrimCos->name(),
-                                           prim::kPrimExp->name()};
+                                           prim::kPrimExp->name(), prim::kPrimLog->name()};
 // The ops below are excluded when considering taylor rules.
 mindspore::HashSet<std::string> taylor_exception_ops{prim::kPrimReturn->name(), prim::kPrimMakeTuple->name(),
                                                      prim::kPrimTupleGetItem->name(), prim::kPrimCast->name()};
