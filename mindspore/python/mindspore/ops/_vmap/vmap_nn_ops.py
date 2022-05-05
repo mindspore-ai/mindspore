@@ -103,7 +103,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.Dropout2D)
-@vmap_rules_getters.register(P.Dropout2D)
+@vmap_rules_getters.register(P.Dropout3D)
 def get_dropout_nd_vmap_rule(prim, axis_size):
     """VmapRule for 'DropoutND' operation."""
 
@@ -115,7 +115,7 @@ def get_dropout_nd_vmap_rule(prim, axis_size):
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
         output, mask = prim(x)
-        return ((output, 0), (mask, 0))
+        return (output, 0), (mask, 0)
 
     return vmap_rule
 

@@ -27,123 +27,126 @@
 
 namespace mindspore {
 namespace kernel {
-void DropoutNDGpuKernelMod::CheckDropOutNdShape() {
+bool DropoutNDGpuKernelMod::CheckDropOutNdShape() {
+  constexpr size_t k4d = 4;
+  constexpr size_t k5d = 5;
+  constexpr size_t k4d_remain_dim = 2;
+  constexpr size_t k5d_remain_dim = 3;
   size_t nd_dims = input_shape_.size();
-  size_t expected_dims = 0;
+  size_t expected_dims;
+  size_t last_remain_dim;
   if (kernel_name_ == prim::kPrimDropout2D->name()) {
     // Dropout2D ---> data format NCHW(4 dims)
-    expected_dims = 4;
+    expected_dims = k4d;
+    last_remain_dim = k4d_remain_dim;
   } else if (kernel_name_ == prim::kPrimDropout3D->name()) {
     // Dropout3D ---> data format NCDHW(5 dims)
-    expected_dims = 5;
+    expected_dims = k5d;
+    last_remain_dim = k5d_remain_dim;
   } else {
-    MS_LOG(EXCEPTION) << "For 'DropoutNd' should only support Dropout2D or Dropout3D, right now, but got "
-                      << kernel_name_;
+    MS_LOG(ERROR) << "For 'DropoutNd' should only support Dropout2D or Dropout3D, right now, but got " << kernel_name_;
+    return false;
   }
-  if (expected_dims != nd_dims) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " input dims should be " << expected_dims << "D, but got  "
-                      << nd_dims << "D.";
+  if (nd_dims < expected_dims) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << " input dims should larger than " << expected_dims << "D, but got  "
+                  << nd_dims << "D.";
+    return false;
   }
+  // Flatten input shape to [batch, channels, XHW] for VMap.
+  batches_ = 1;
+  for (size_t i = 0; i < nd_dims - expected_dims; ++i) {
+    batches_ *= input_shape_.at(i);
+  }
+  channels_ = 1;
+  for (size_t i = nd_dims - expected_dims; i < nd_dims - last_remain_dim; ++i) {
+    channels_ *= input_shape_.at(i);
+  }
+  return true;
 }
 
 bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
-  // A Code Block For getting launch_kernel function.
-  {
-    kernel_name_ = base_operator->name();
-    if (kernel_name_ == prim::kPrimDropout2D->name()) {
-      kernel_ptr_ = std::make_shared<ops::Dropout2D>(base_operator->GetPrim());
-    } else if (kernel_name_ == prim::kPrimDropout3D->name()) {
-      kernel_ptr_ = std::make_shared<ops::Dropout3D>(base_operator->GetPrim());
-    } else {
-      MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod' should get Dropout2D or Dropout3D but get invalid kernel name : "
-                    << kernel_name_;
-      return false;
-    }
-    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-    if (!is_match) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
-      return false;
-    }
-    kernel_func_ = func_list_[index].second;
-    unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  }
-
+  kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-
-  // A Code Block For setting input and output shape.
-  {
-    input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-    input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-    is_null_input_ = (input_elements_ == 0);
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    outputs_ = outputs;
-    CheckDropOutNdShape();
-    CheckTensorSize({input_shape_});
-    // Get N and C values from 5 dim input tensor
-    n_ = input_shape_.at(kDim0);
-    c_ = input_shape_.at(kDim1);
-    num_chan_ = n_ * c_;
-    MS_EXCEPTION_IF_ZERO("num channel", num_chan_);
-    num_per_chan_ = input_elements_ / num_chan_;  // number of elements per channel
-    InitSizeLists();
+  if (kernel_name_ == prim::kPrimDropout2D->name()) {
+    auto kernel_ptr = std::make_shared<ops::Dropout2D>(base_operator->GetPrim());
+    keep_prob_ = kernel_ptr->get_keep_prob();
+  } else if (kernel_name_ == prim::kPrimDropout3D->name()) {
+    auto kernel_ptr = std::make_shared<ops::Dropout3D>(base_operator->GetPrim());
+    keep_prob_ = kernel_ptr->get_keep_prob();
+  } else {
+    MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod' should get Dropout2D or Dropout3D but get invalid kernel name : "
+                  << kernel_name_;
+    return false;
   }
-  constexpr auto keep_prob = "keep_prob";
-  if (!kernel_ptr_->HasAttr(keep_prob)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "',has no attribute of keep_prob";
-  }
-  keep_prob_ = GetValue<float>(kernel_ptr_->GetAttr(keep_prob));
   if ((keep_prob_ < 0.0) || (keep_prob_ > 1.0)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'keep_prob' should be in range [0.0, 1.0], "
-                      << "but got " << keep_prob_;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'keep_prob' should be in range [0.0, 1.0], "
+                  << "but got " << keep_prob_;
+    return false;
   }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   if (!states_init_) {
-    CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&curand_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+    CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&cu_rand_generator_, CURAND_RNG_PSEUDO_DEFAULT),
                                  "Failed to create generator");
-    MS_EXCEPTION_IF_NULL(curand_generator_);
-    CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(curand_generator_, time(NULL)),
+    MS_EXCEPTION_IF_NULL(cu_rand_generator_);
+    CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(cu_rand_generator_, time(NULL)),
                                  "Failed to SetPseudoRandomGeneratorSeed");
     states_init_ = true;
   }
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-
-  // A Code Block For dealing with input_dynamic_shape.
-  {
-    if (!is_input_dynamic_shape_.has_value()) {
-      bool is_input_dynamic_shape = false;
-      for (const auto &input : inputs) {
-        auto input_shape = input->GetShapeVector();
-        if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
-          is_input_dynamic_shape = true;
-          break;
-        }
-      }
-      is_input_dynamic_shape_ = is_input_dynamic_shape;
-    }
-  }
   return true;
 }
 
 bool DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  if (is_input_dynamic_shape_.has_value() && is_input_dynamic_shape_.value()) {
-    DestroyResource();
-    ResetResource();
-    return Init(base_operator, inputs, outputs);
-  } else {
-    kernel_ptr_ = base_operator;
-    outputs_ = outputs;
-    return true;
+  ResetResource();
+  for (const auto &input : inputs) {
+    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
+    auto input_shape = input->GetShapeVector();
+    if (std::any_of(input_shape.begin(), input_shape.end(), [](int64_t dim) { return dim < 0; })) {
+      return true;
+    }
   }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  if (!CheckDropOutNdShape() || channels_ == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, should be 4D or 5D "
+                  << " but got " << input_shape_.size() << "D";
+    return false;
+  }
+  size_t input_size = input_elements_ * unit_size_;
+  input_size_list_.emplace_back(input_size);
+  size_t output_size = input_elements_ * unit_size_;
+  size_t output_mask_size = input_elements_ * sizeof(bool);
+  output_size_list_.emplace_back(output_size);
+  output_size_list_.emplace_back(output_mask_size);
+  // The number of elements per channel
+  num_per_channel_ = input_elements_ / channels_ / batches_;
+  size_t workspace_size = channels_ * sizeof(float);
+  workspace_size_list_.emplace_back(workspace_size);
+  return true;
+}
+
+void DropoutNDGpuKernelMod::ResetResource() noexcept {
+  is_null_input_ = false;
+  input_elements_ = 0;
+  channels_ = 0;
+  num_per_channel_ = 0;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
 }
 
 template <typename T>
@@ -163,15 +166,14 @@ bool DropoutNDGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                       "For DropoutNDGpuKernelMod failed to cudaMemset");
     return true;
   }
-  CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(curand_generator_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
+  CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(cu_rand_generator_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                "For DropoutNDGpuKernelMod failed to set stream for generator");
-  // For curandGen only supports float or double.
+  // For cu_rand_generator only supports float or double.
   // To generate random float data for every channel.
-  CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(curand_generator_, rand_f, num_chan_),
+  CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(cu_rand_generator_, rand_f, channels_),
                                "For DropoutNDGpuKernelMod failed to generate uniform");
-  DropoutNDForward(input, mask, output, rand_f, input_elements_, keep_prob_, num_per_chan_,
+  DropoutNDForward(input, mask, output, rand_f, input_elements_, keep_prob_, num_per_channel_,
                    reinterpret_cast<cudaStream_t>(cuda_stream_));
-
   return true;
 }
 
