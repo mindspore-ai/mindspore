@@ -135,6 +135,31 @@ class MS_CORE_API CheckAndConvertUtils {
   }
 
   template <typename T>
+  static T CheckValue(const std::string &arg_name, T arg_value, CompareEnum compare_operator,
+                      const std::string &match_name, T match_value, const std::string &prim_name) {
+    auto iter = kCompareMap<T>.find(compare_operator);
+    if (iter == kCompareMap<T>.end()) {
+      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
+    }
+    if (iter->second(arg_value, match_value)) {
+      return arg_value;
+    }
+    std::ostringstream buffer;
+    if (prim_name.empty()) {
+      buffer << "The attribute[" << arg_name << "] must ";
+    } else {
+      buffer << "For primitive[" << prim_name << "], the " << arg_name << " must ";
+    }
+    auto iter_to_string = kCompareToString.find(compare_operator);
+    if (iter_to_string == kCompareToString.end()) {
+      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
+                                   << " cannot find in the compare string map";
+    }
+    buffer << iter_to_string->second << " " << match_name << " " << match_value << " , but got " << arg_value << ".";
+    MS_EXCEPTION(ValueError) << buffer.str();
+  }
+
+  template <typename T>
   static void CheckInRange(const std::string &arg_name, T arg_value, CompareRange compare_operator,
                            const std::pair<T, T> &range, const std::string &prim_name) {
     auto iter = kCompareRangeMap<T>.find(compare_operator);
