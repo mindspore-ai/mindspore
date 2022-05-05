@@ -927,7 +927,8 @@ int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<sc
         ms_tensor->dataType = type_ptr->type_id();
         meta_graphT->allTensors.emplace_back(ms_tensor);
         if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) ||
-            opt::CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm)) {
+            opt::CheckPrimitiveType(cnode, prim::kPrimFusedBatchNorm) ||
+            opt::CheckPrimitiveType(cnode, prim::kPrimLayerNormFusion)) {
           break;
         }
       }
