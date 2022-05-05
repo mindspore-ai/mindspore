@@ -223,6 +223,8 @@ bool IsInternalParameter(const AnfNodePtr &node, const KernelGraphPtr &graph);
 // Judge whether the device tensor of the node is persistent or not.
 bool IsPersistentDeviceTensor(const AnfNodePtr &node);
 
+bool IsControlFlowActor(KernelTransformType actor_type);
+
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
 

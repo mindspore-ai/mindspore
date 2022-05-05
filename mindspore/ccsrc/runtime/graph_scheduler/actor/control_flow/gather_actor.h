@@ -48,6 +48,7 @@ class GatherActor : public ControlActor {
 
  private:
   friend class ControlNodeScheduler;
+  friend class SchedulerHelper;
 
   // Gather the input data and input partials to a new partial.
   void GatherInput(OpContext<DeviceTensor> *const context);
