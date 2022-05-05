@@ -1177,8 +1177,8 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
 
   // Makeup input tensors.
   std::vector<KernelTensorPtr> input_tensors;
-  auto real_intput_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
-  size_t input_num = common::AnfAlgo::GetInputNum(cnode);
+  auto real_input_types = AnfAlgo::GetAllInputDeviceTypes(cnode);
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t input_idx = 0; input_idx < input_num; ++input_idx) {
     const auto &[prev_node, output_idx] = common::AnfAlgo::GetPrevNodeOutput(cnode, input_idx);
     auto prev_abstract = prev_node->abstract();
@@ -1187,22 +1187,26 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
       auto abs_tuple = prev_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
       MS_EXCEPTION_IF_NULL(abs_tuple);
       MS_EXCEPTION_IF_CHECK_FAIL((output_idx < abs_tuple->elements().size()), "Index is out of range.");
-      auto abs_index = abs_tuple->elements()[output_idx];
-      input_abstract = abs_index;
+      auto located_abstract = abs_tuple->elements()[output_idx];
+      input_abstract = located_abstract;
     } else {
       input_abstract = prev_abstract->Clone();
     }
-    input_abstract->set_type(TypeIdToType(real_intput_types[input_idx]));
-    auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
+    TypePtr input_type_ptr = TypeIdToType(real_input_types[input_idx]);
     auto device_shape_adaptively = AnfAlgo::GetInputDeviceShapeAdaptively(cnode, input_idx);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), input_abstract,
-                           std::vector<int64_t>(device_shape_adaptively.begin(), device_shape_adaptively.end())};
+    ShapeVector input_shape;
+    (void)std::transform(device_shape_adaptively.begin(), device_shape_adaptively.end(),
+                         std::back_inserter(input_shape), SizeToLong);
+    auto abstract_shape_ptr = input_abstract->BuildShape();
+    auto new_input_abstract = std::make_shared<abstract::AbstractTensor>(input_type_ptr, abstract_shape_ptr);
+    auto format_str = AnfAlgo::GetInputFormat(cnode, input_idx);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_input_abstract, input_shape};
     KernelTensorPtr input_tensor = std::make_shared<KernelTensor>();
     input_tensor->SetTensorInfo(tensor_info);
     input_tensors.push_back(input_tensor);
   }
 
-  // Makeup otuput tensors.
+  // Makeup output tensors.
   std::vector<KernelTensorPtr> output_tensors;
   auto real_output_types = AnfAlgo::GetAllOutputDeviceTypes(cnode);
   auto cur_abstract = cnode->abstract();
@@ -1211,23 +1215,29 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(abs_tuple);
     size_t output_num = abs_tuple->elements().size();
     for (size_t output_idx = 0; output_idx < output_num; ++output_idx) {
-      auto output_abstract = abs_tuple->elements()[output_idx];
-      output_abstract->set_type(TypeIdToType(real_output_types[output_idx]));
-      auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
+      TypePtr output_type_ptr = TypeIdToType(real_output_types[output_idx]);
       auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, output_idx);
-      TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract,
-                             std::vector<int64_t>(device_shape_adaptively.begin(), device_shape_adaptively.end())};
+      ShapeVector output_shape;
+      (void)std::transform(device_shape_adaptively.begin(), device_shape_adaptively.end(),
+                           std::back_inserter(output_shape), SizeToLong);
+      auto abstract_shape_ptr = abs_tuple->elements().at(output_idx)->BuildShape();
+      auto new_output_abstract = std::make_shared<abstract::AbstractTensor>(output_type_ptr, abstract_shape_ptr);
+      auto format_str = AnfAlgo::GetOutputFormat(cnode, output_idx);
+      TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_output_abstract, output_shape};
       KernelTensorPtr output_tensor = std::make_shared<KernelTensor>();
       output_tensor->SetTensorInfo(tensor_info);
       output_tensors.push_back(output_tensor);
     }
   } else {
-    auto output_abstract = cur_abstract->Clone();
-    output_abstract->set_type(TypeIdToType(real_output_types[0]));
-    auto format_str = AnfAlgo::GetOutputFormat(cnode, 0);
+    TypePtr output_type_ptr = TypeIdToType(real_output_types[0]);
     auto device_shape_adaptively = AnfAlgo::GetOutputDeviceShapeAdaptively(cnode, 0);
-    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract,
-                           std::vector<int64_t>(device_shape_adaptively.begin(), device_shape_adaptively.end())};
+    ShapeVector output_shape;
+    (void)std::transform(device_shape_adaptively.begin(), device_shape_adaptively.end(),
+                         std::back_inserter(output_shape), SizeToLong);
+    auto abstract_shape_ptr = cur_abstract->BuildShape();
+    auto output_abstract = std::make_shared<abstract::AbstractTensor>(output_type_ptr, abstract_shape_ptr);
+    auto format_str = AnfAlgo::GetOutputFormat(cnode, 0);
+    TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), output_abstract, output_shape};
     KernelTensorPtr output_tensor = std::make_shared<KernelTensor>();
     output_tensor->SetTensorInfo(tensor_info);
     output_tensors.push_back(output_tensor);
