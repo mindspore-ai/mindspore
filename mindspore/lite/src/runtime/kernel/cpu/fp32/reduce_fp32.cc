@@ -220,8 +220,8 @@ void ReduceCPUKernel::InitialKernelList() {
                                   {ReduceMode_ReduceSumSquare, ReduceSum, IntReduceSum, nullptr},
                                   {ReduceMode_ReduceASum, ReduceSum, IntReduceSum, nullptr},
                                   {ReduceMode_ReduceAll, nullptr, nullptr, ReduceAll}};
-  int list_len = sizeof(func_list) / sizeof(ReduceKernelList);
-  for (int i = 0; i < list_len; ++i) {
+  size_t list_len = sizeof(func_list) / sizeof(ReduceKernelList);
+  for (size_t i = 0; i < list_len; ++i) {
     if (mode_ == func_list[i].type_) {
       reducer_ = func_list[i].float_func_;
       int_reducer_ = func_list[i].int_func_;
