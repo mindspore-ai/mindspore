@@ -48,7 +48,7 @@ def allocate_and_math_intrin_example(a, b):
 
     for i0 in range(a.shape[0]):
         for i1 in range(b.shape[1]):
-            d[i0, i1] = exp(a[i0, i1])
+            d[i0, i1] = abs(a[i0, i1])
             c[i0, i1] = d[i0, i1] + b[i0, i1]
     return c
 
@@ -259,7 +259,10 @@ def test_ms_hybrid_cpu_graph_mode():
         pass
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-        ms_hybrid_allocate_cpu()
+        ms_hybrid_cast_with_infer()
+        ms_hybrid_cast_without_infer()
+        ms_hybrid_allocate()
+        ms_hybrid_grid()
 
 
 @pytest.mark.level0
@@ -276,4 +279,7 @@ def test_ms_hybrid_cpu_pynative_mode():
         pass
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-        ms_hybrid_allocate_cpu()
+        ms_hybrid_cast_with_infer()
+        ms_hybrid_cast_without_infer()
+        ms_hybrid_allocate()
+        ms_hybrid_grid()
