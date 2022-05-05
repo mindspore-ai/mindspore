@@ -3825,35 +3825,6 @@ class BCEWithLogitsLoss(PrimitiveWithInfer):
         super().__init__("BCEWithLogitsLoss")
         self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
-    def infer_shape(self, logits, label, weight, pos_weight):
-        validator.check('logits_shape', logits, 'label_shape', label, Rel.EQ, self.name)
-        reversed_weight_shape = tuple(reversed(weight))
-        reversed_label = tuple(reversed(logits))
-        for i, v in enumerate(reversed_weight_shape):
-            if v not in (reversed_label[i], 1):
-                raise ValueError(f"For {self.name}, the shapes of 'logits' and 'weight' can not broadcast. "
-                                 f"'logits': {tuple(logits)}, 'weight' shape {tuple(weight)}.")
-
-        reversed_pos_shape = tuple(reversed(pos_weight))
-        reversed_label = tuple(reversed(logits))
-        for i, v in enumerate(reversed_pos_shape):
-            if v not in (reversed_label[i], 1):
-                raise ValueError(f"For {self.name}, the shapes of 'logits' and 'pos_weight' can not broadcast. "
-                                 f"'logits': {tuple(logits)}, 'pos_weight' shape {tuple(pos_weight)}.")
-
-        if self.reduction in ('mean', 'sum'):
-            shape = []
-        else:
-            shape = logits
-        return shape
-
-    def infer_dtype(self, logits, label, weight, pos_weight):
-        validator.check_tensor_dtype_valid('logits dtype', logits, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('label dtype', label, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('weight dtype', weight, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_dtype_valid('pos_weight dtype', pos_weight, [mstype.float16, mstype.float32], self.name)
-        return logits
-
 
 class Pad(PrimitiveWithInfer):
     r"""

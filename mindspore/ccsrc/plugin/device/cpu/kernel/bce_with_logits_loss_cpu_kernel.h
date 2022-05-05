@@ -16,24 +16,33 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_NN_BCE_WITH_LOGITS_LOSS_KERNEL_H
+
 #include <vector>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 enum ReductionType { kNone, kMean, kSum };
-class BCEWithLogitsLossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod {
  public:
   BCEWithLogitsLossCpuKernelMod() = default;
-  ~BCEWithLogitsLossCpuKernelMod() override;
+  ~BCEWithLogitsLossCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  void ResetResource() noexcept;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -47,7 +56,6 @@ class BCEWithLogitsLossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                      const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
   size_t input_size_{1};
-  TypeId input_data_type_{kTypeUnknown};
   std::vector<size_t> input_logits_shape_;
   std::vector<size_t> input_label_shape_;
   std::vector<size_t> input_weight_shape_;
