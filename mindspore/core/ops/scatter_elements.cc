@@ -43,13 +43,13 @@ abstract::ShapePtr ScatterElementsInferShape(const PrimitivePtr &primitive,
   auto updates_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(updates_shape_ptr)[kShape];
   if (input_x_shape.size() < 1 || indices_shape.size() < 1 || updates_shape.size() < 1) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", 'input_x_shape', 'indices_shape' and "
-                             << "'updates_shape' dims should be greater than 1. but got input_x_shape:" << input_x_shape
+                             << "'updates_shape' dims must be greater than 1. but got input_x_shape:" << input_x_shape
                              << ", indices_shape:" << indices_shape << ", updates_shape: " << updates_shape << ".";
   }
 
   if (updates_shape != indices_shape) {
     MS_EXCEPTION(ValueError) << "For " << prim_name << ", "
-                             << "'updates_shape' should be as same as 'indices_shape' but got indices_shape: "
+                             << "'updates_shape' must be as same as 'indices_shape' but got indices_shape: "
                              << indices_shape << ", updates_shape: " << updates_shape << ".";
   }
 

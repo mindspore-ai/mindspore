@@ -103,7 +103,7 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     auto x_shape_size = x_shape.size();
     if (x_shape_size != X_SHAPE_SIZE) {
-      MS_LOG(ERROR) << "x shape size is " << x_shape_size << ", but should be 4.";
+      MS_LOG(ERROR) << "x shape size is " << x_shape_size << ", but must be 4.";
       return false;
     }
 
@@ -116,7 +116,7 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     x_size_ = batch_size * channels_ * height_ * width_ * sizeof(T);
 
     if (rois_shape.size() != ROI_SHAPE_SIZE) {
-      MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of rois_shape should be 2 "
+      MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of rois_shape must be 2 "
                         << "(number_rois, (bs, xmin, ymin, xmax, ymax)), "
                         << "but got the rank of rois_shape: " << rois_shape.size();
     }

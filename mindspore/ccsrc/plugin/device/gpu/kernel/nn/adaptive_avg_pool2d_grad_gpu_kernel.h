@@ -63,7 +63,7 @@ class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
     if (input_num != kAdaptiveAvgPool2dGradInputNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be "
                         << kAdaptiveAvgPool2dGradInputNum << ", but got " << input_num;
     }
 

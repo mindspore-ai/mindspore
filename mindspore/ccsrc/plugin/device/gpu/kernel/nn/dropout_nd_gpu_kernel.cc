@@ -83,7 +83,7 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     return false;
   }
   if ((keep_prob_ < 0.0) || (keep_prob_ > 1.0)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'keep_prob' should be in range [0.0, 1.0], "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'keep_prob' must be in range [0.0, 1.0], "
                   << "but got " << keep_prob_;
     return false;
   }
@@ -122,7 +122,7 @@ bool DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   if (!CheckDropOutNdShape() || channels_ == 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, should be 4D or 5D "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, must be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";
     return false;
   }

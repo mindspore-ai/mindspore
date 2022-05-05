@@ -156,7 +156,7 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (pad_list.size() != k2DPadSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got " << pad_list.size();
     }
     pad_height_ = pad_list[kTop2DPadIndex];
     pad_width_ = pad_list[kLeft2DPadIndex];
@@ -326,7 +326,7 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != StaticInput && input_num != DynamicInput) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2 or 3, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2 or 3, but got " << input_num;
     }
     if (input_num == DynamicInput) {
       is_dynamic_attr_ = true;
@@ -341,7 +341,7 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
   void SelectAlgorithm(cudnnTensorDescriptor_t x_desc_real) {
@@ -413,15 +413,14 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != k2DStrideSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 2, but got "
-                        << stride_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' must be 2, but got " << stride_.size();
     }
     if (dilation_.size() != k2DDilationSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' must be 4, but got "
                         << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis must be 1, but got "
                         << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }

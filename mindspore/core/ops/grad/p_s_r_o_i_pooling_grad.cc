@@ -51,7 +51,7 @@ abstract::ShapePtr PSROIPoolingGradInferShape(const PrimitivePtr &primitive,
                                                     primitive->name());
   if (output_dim != x_shape[1]) {
     MS_EXCEPTION(ValueError) << "For 'PSROIPoolingGrad', the channel of input feature is invalid, got: " << x_shape[1]
-                             << ", should be equal to output_dim: " << output_dim << ".";
+                             << ", must be equal to output_dim: " << output_dim << ".";
   }
 
   int64_t rois_batch = rois_shape[0];

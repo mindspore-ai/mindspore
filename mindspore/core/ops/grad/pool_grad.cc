@@ -25,7 +25,7 @@ std::vector<int64_t> PoolGrad::_grad_check_vector(const std::string &arg_name, s
                                                   const std::string &op_name) {
   std::vector<int64_t> ret;
   std::string error_msg = "For '" + op_name + "'" + " the '" + arg_name +
-                          "' should be a vector of one, two or four "
+                          "' must be a vector of one, two or four "
                           "positive int number(s), but got error arg_val";
   switch ((int64_t)arg_val.size()) {
     case 1:

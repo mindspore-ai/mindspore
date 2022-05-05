@@ -78,7 +78,7 @@ abstract::ShapePtr FractionalAvgPoolGradInferShape(const PrimitivePtr &primitive
       MS_EXCEPTION(ValueError) << "For '" << op_name
                                << "', the number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
-                               << "! The shape of  output should be reduced or max_length should be increased";
+                               << "! The shape of  output must be reduced or max_length must be increased";
     }
     return std::make_shared<abstract::Shape>(output_shape);
   } else {

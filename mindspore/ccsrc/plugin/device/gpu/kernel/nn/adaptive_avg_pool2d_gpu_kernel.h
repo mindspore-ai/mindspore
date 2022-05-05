@@ -67,13 +67,13 @@ class AdaptiveAvgPool2DKernelMod : public DeprecatedNativeGpuKernelMod {
       output_height = static_cast<uint>(shape_addr[0]);
       output_width = static_cast<uint>(shape_addr[1]);
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'output_size' should be 1 or 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'output_size' must be 1 or 2, but got "
                         << shape_addr.size();
     }
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
 
     input_size_ = sizeof(T);

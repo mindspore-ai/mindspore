@@ -56,11 +56,11 @@ class PReLUGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     ResetResource();
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 3) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 3, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 2, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_num;
     }
 
     auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -86,8 +86,8 @@ class PReLUGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     if (weight_shape.size() != 1 || (weight_shape[0] != 1 && weight_shape[0] != channel_num)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight should be equal to 1 and "
-                        << "weight.shape[0] should be equal to 1 or the channel number, but got the dimension of "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight must be equal to 1 and "
+                        << "weight.shape[0] must be equal to 1 or the channel number, but got the dimension of "
                         << "weight: " << weight_shape.size() << ", weight.shape[0]: " << weight_shape[0]
                         << ", the channel num: " << channel_num;
     }

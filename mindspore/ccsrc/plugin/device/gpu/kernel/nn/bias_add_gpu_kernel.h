@@ -78,7 +78,7 @@ class BiasAddGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::string format = GetAttr<std::string>(kernel_node, "format");
     string::size_type pos = format.find("C");
     if (pos == std::string::npos || pos >= num_dims) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character should be in 'format', but got " << format;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format;
     }
 
     // Expand to 4 dims for cudnnSetTensorNdDescriptorEx.

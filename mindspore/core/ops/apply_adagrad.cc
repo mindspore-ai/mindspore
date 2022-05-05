@@ -38,7 +38,7 @@ abstract::TupleShapePtr ApplyAdagradInferShape(const PrimitivePtr &primitive,
   auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto accum_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto grad_shape_ptr = input_args[kInputIndex3]->BuildShape();
-  // lr should be scalar or size equal with 1
+  // lr must be scalar or size equal with 1
   (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kLessEqual, 1, prim_name);
   if (lr_shape.size() == 1) {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape's first rank must be 1", lr_shape[0], kEqual, 1, prim_name);

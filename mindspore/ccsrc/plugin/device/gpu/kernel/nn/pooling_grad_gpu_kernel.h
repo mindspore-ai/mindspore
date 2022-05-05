@@ -235,7 +235,7 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     size_t expect_input_num = (kernel_name_ == kAvgPool3DGradOpName) ? kAvgPool3DGradInputNum : kInputNum;
     if (input_num != expect_input_num) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << expect_input_num
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << expect_input_num
                         << ", but got " << input_num;
     }
   }

@@ -63,7 +63,7 @@ class ActivationFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << node_name << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << node_name << "', the number of inputs must be 1, but got " << input_num;
     }
     auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "input");

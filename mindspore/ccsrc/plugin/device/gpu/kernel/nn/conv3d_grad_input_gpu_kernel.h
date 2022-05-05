@@ -93,8 +93,8 @@ class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   void CheckSize(const size_t value, const size_t expect_value, const string arg_name) {
     if (value != expect_value) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of " << arg_name << " should be "
-                        << expect_value << ", but got " << value;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of " << arg_name << " must be " << expect_value
+                        << ", but got " << value;
     }
   }
 
@@ -244,11 +244,11 @@ class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void CheckParam(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
 
@@ -307,26 +307,25 @@ class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != k3DStrideSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 5, but got "
-                        << stride_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' must be 5, but got " << stride_.size();
     }
     if (stride_[0] != 1 || stride_[1] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis must be 1, but got "
                         << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != k3DDilationSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 5, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' must be 5, but got "
                         << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis must be 1, but got "
                         << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
 
   void SetPad(const CNodePtr &kernel_node, const std::vector<int> &pad_list) {
     if (pad_list.size() != k3DPadSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 6, but got " << pad_list.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 6, but got " << pad_list.size();
     }
     pad_depth_ = pad_list[kHead3DPadIndex];
     pad_height_ = pad_list[kTop3DPadIndex];

@@ -74,7 +74,7 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
       if (cur_element >= input_shapes.size()) {
         MS_EXCEPTION(ValueError)
           << "For " << prim_name
-          << ", the number of inputs should be equal to the number of inputs and equation's operand, but it does not.";
+          << ", the number of inputs must be equal to the number of inputs and equation's operand, but it does not.";
       }
       found_ell = false;
     } else {
@@ -85,7 +85,7 @@ static void seg_left_equation(const std::string &left_equation, const std::strin
   if (cur_element != input_shapes.size() - 1) {
     MS_EXCEPTION(ValueError)
       << "For " << prim_name
-      << ", the number of inputs should be equal to the number of inputs and equation's operand, but it does not.";
+      << ", the number of inputs must be equal to the number of inputs and equation's operand, but it does not.";
   }
   for (size_t i = 0; i < (*left_elements).size(); ++i) {
     auto it = std::find((*left_elements)[i].begin(), (*left_elements)[i].end(), kEinsumEllVal);

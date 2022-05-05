@@ -96,7 +96,7 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
   }
 
   if (real_tensor->data_type() != imag_tensor->data_type()) {
-    MS_EXCEPTION(TypeError) << "For 'ComplexInfer', the real part and imaginary part of input should have the same "
+    MS_EXCEPTION(TypeError) << "For 'ComplexInfer', the real part and imaginary part of input must have the same "
                                "data type. But got real type: "
                             << real_tensor->data_type() << ", imaginary type: " << imag_tensor->data_type() << ".";
   }

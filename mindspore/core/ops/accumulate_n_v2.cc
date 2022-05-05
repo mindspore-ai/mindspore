@@ -46,7 +46,7 @@ abstract::ShapePtr AccumulateNV2InferShape(const PrimitivePtr &primitive,
       if ((shape_vec == ShapeVector({1}) && shape_0_vec == ShapeVector()) ||
           (shape_vec == ShapeVector() && shape_0_vec == ShapeVector({1}))) {
         MS_LOG(DEBUG) << "For '" << primitive->name() << "', Shape of input[" << i
-                      << "] should be consistent with the shape of input[0], but got shape of input[" << i
+                      << "] must be consistent with the shape of input[0], but got shape of input[" << i
                       << "]: " << shape->ToString() << ", shape of input[0]: " << shape_0->ToString();
         continue;
       }

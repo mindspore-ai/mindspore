@@ -61,7 +61,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
     MS_LOG(EXCEPTION) << "For '" << op_name << "', input_rank can not be zero, but got: " << input_rank << ".";
   }
 
-  // begin_norm_axis and begin_params_axis should be smaller than the size of input_x and >= -1
+  // begin_norm_axis and begin_params_axis must be smaller than the size of input_x and >= -1
   ValuePtr bna_ptr = primitive->GetAttr("begin_norm_axis");
   int64_t begin_norm_axis =
     abstract::CheckAxis(op_name, "begin_norm_axis", bna_ptr, -1, SizeToLong(input_rank), "input_x");
@@ -70,7 +70,7 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   int64_t begin_params_axis =
     abstract::CheckAxis(op_name, "begin_params_axis", bpa_ptr, -1, SizeToLong(input_rank), "input_x");
 
-  // the beta and gama shape should be x_shape[begin_params_axis:]
+  // the beta and gama shape must be x_shape[begin_params_axis:]
   auto valid_types = {kFloat16, kFloat32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x_dtype", input_args[x_index]->BuildType(), valid_types, op_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("gamma_dtype", input_args[gamma_index]->BuildType(), valid_types,
@@ -95,9 +95,9 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
       (beta_shape_list.size() + begin_params_axis_u < input_shape_list.size())) {
     MS_LOG(EXCEPTION)
       << "For '" << op_name
-      << ", begin_params_axis should be less than or equal to input_x shape size, gama shape size add "
-         "begin_params_axis should be equal to or greater than input_x shape size, and beta shape size add "
-         "begin_params_axis should be equal to or greater than input_x shape size, but got begin_params_axis: "
+      << ", begin_params_axis must be less than or equal to input_x shape size, gama shape size add "
+         "begin_params_axis must be equal to or greater than input_x shape size, and beta shape size add "
+         "begin_params_axis must be equal to or greater than input_x shape size, but got begin_params_axis: "
       << begin_params_axis << ", input_x shape size: " << input_shape_list.size()
       << ", gama shape size: " << gamma_shape_list.size() << ", beta shape size: " << beta_shape_list.size() << ".";
   }

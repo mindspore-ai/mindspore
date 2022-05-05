@@ -45,7 +45,7 @@ void CheckTrueValueValidAndKValue(const std::vector<AbstractBasePtr> &input_args
   if (true_value > max_value) {
     MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the number of elements of output must be less than max length: "
                              << max_value << ", but got " << true_value
-                             << "! The shape of output should be reduced or max_length should be increased.";
+                             << "! The shape of output must be reduced or max_length must be increased.";
   }
   if (!(k_val[0] > -row_val && k_val[0] < col_val)) {
     MS_EXCEPTION(ValueError) << "For MatrixDiagV3, the value of k must be in (-num_rows, num_cols), "
@@ -136,7 +136,7 @@ abstract::ShapePtr MatrixDiagV3InferShape(const PrimitivePtr &primitive,
       additional_value = x_shape[rank - kNumber2];
     } else {
       if (!(k_val[0] <= k_val[1]))
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1].";
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
       int64_t num_diags = k_val[1] - k_val[0] + 1;
       CheckAndConvertUtils::CheckInteger("x rank", rank, kGreaterEqual, kNumber2, prim_name);
       if (x_shape[rank - kNumber2] != num_diags)

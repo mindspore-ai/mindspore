@@ -65,12 +65,11 @@ abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vec
     for (size_t i = 1; i < elements.size(); ++i) {
       auto input_shape_tmp = CheckAndConvertUtils::ConvertShapePtrToShapeMap(elements[i]->BuildShape())[kShape];
       if (input_shape_tmp.size() != input_shape.size()) {
-        MS_EXCEPTION(ValueError) << "All input shape size should be the same!";
+        MS_EXCEPTION(ValueError) << "All input shape size must be the same!";
       }
       for (size_t j = 0; j < input_shape.size(); ++j) {
         if (input_shape_tmp.at(j) != input_shape.at(j))
-          MS_EXCEPTION(ValueError) << "All input shape should be the same! " << input_shape_tmp << " And "
-                                   << input_shape;
+          MS_EXCEPTION(ValueError) << "All input shape must be the same! " << input_shape_tmp << " And " << input_shape;
       }
     }
     std::vector<int64_t> infer_shape = input_shape;
@@ -117,8 +116,8 @@ TypePtr StackInferType(const PrimitivePtr &primitive, const std::vector<Abstract
     auto infer_typei = elementi->BuildType();
     MS_EXCEPTION_IF_NULL(infer_typei);
     if (infer_typei == infer_type0) {
-      MS_EXCEPTION(TypeError) << "All input should have the same data type!input[" << i
-                              << "] data type = " << infer_typei << "infer_type0= " << infer_type0;
+      MS_EXCEPTION(TypeError) << "All input must have the same data type!input[" << i << "] data type = " << infer_typei
+                              << "infer_type0= " << infer_type0;
     }
   }
   return infer_type0;

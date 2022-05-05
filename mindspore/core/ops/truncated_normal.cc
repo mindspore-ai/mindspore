@@ -85,7 +85,7 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
     if (shape_m > max_length) {
       MS_EXCEPTION(ValueError) << "The number of elements of output must be less than max length: " << max_length
                                << ", but got " << shape_m
-                               << "! The shape of  output should be reduced or max_length should be increased";
+                               << "! The shape of  output must be reduced or max_length must be increased";
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {

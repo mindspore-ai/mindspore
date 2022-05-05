@@ -109,19 +109,19 @@ class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN) {
       if (input_num != CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be "
                           << CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
       }
     } else {
       if (input_num != NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be "
                           << NO_CUDNN_BATCHNORM_OPS_BN_INPUT_NUM << ", but got " << input_num;
       }
     }
 
     auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (shape.size() != 4 && shape.size() != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 2 or 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input must be 2 or 4, but got "
                         << shape.size();
     }
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");

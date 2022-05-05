@@ -79,11 +79,11 @@ class SoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKern
     InitResource();
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 2, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 2, but got " << output_num;
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
 
@@ -166,12 +166,12 @@ class SoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKern
     }
 
     if (labels_dim_length != logits_dim_length) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits and labels should be the same, but "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits and labels must be the same, but "
                         << "got the dimension of labels: " << labels_dim_length
                         << ", the dimension of logits: " << logits_dim_length;
     }
     if (!std::equal(labels_shape.begin(), labels_shape.end(), logits_shape.begin())) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of logits and labels should be the same except "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of logits and labels must be the same except "
                         << "the last dimension, but got the shape of logits: " << CONVERT_VECTOR_TO_STRING(logits_shape)
                         << ", the shape of labels: " << CONVERT_VECTOR_TO_STRING(labels_shape);
     }

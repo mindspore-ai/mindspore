@@ -103,7 +103,7 @@ void CheckLensValue(const PrimitivePtr &primitive, std::vector<int64_t> lens) {
   for (auto len : lens) {
     if (len < 0) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                               << "', 'send_lens' or 'recv_lens' should be >=0, but got invalid len:" << len << ".";
+                               << "', 'send_lens' or 'recv_lens' must be >=0, but got invalid len:" << len << ".";
     }
   }
 }

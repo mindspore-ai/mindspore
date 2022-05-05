@@ -107,7 +107,7 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     const size_t kInputDimSize = 4;
     if (in_shape.size() != kInputDimSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 4, but got "
                         << in_shape.size();
     }
     std::vector<int> filter_shape;
@@ -207,12 +207,12 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
 
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
   void SetPad(const std::vector<size_t> &in_shape, const CNodePtr &kernel_node) {
@@ -230,7 +230,7 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     old_width_ = SizeToInt(in_shape[kInIdxForW]);
 
     if (pad_list.size() != kPadSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' should be 4, but got " << pad_list.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got " << pad_list.size();
     }
     pad_height_ = pad_list[kTopPadIndex] + pad_list[kBottomPadIndex];
     pad_width_n = pad_list[kLeftPadIndex] + pad_list[kRightPadIndex];
@@ -291,19 +291,18 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_),
                          [](const int64_t &value) { return static_cast<int>(value); });
     if (stride_.size() != kStrideSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' should be 4, but got "
-                        << stride_.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'stride' must be 4, but got " << stride_.size();
     }
     if (stride_[0] != 1 || stride_[1] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'stride' at 0 and 1 axis must be 1, but got "
                         << "stride[0]: " << stride_[0] << ", stride[1]: " << stride_[1];
     }
     if (dilation_.size() != kDilationSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'dilation' must be 4, but got "
                         << dilation_.size();
     }
     if (dilation_[0] != 1 || dilation_[1] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis must be 1, but got "
                         << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }

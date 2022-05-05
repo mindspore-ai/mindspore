@@ -114,13 +114,13 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     std::vector<size_t> outputC_shape = output_shape;
     if ((size_t)axis_ >= output_shape.size()) {
-      MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernelMod', axis_ should be less than the rank of output "
+      MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernelMod', axis_ must be less than the rank of output "
                         << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
     }
     outputC_shape[axis_] = 1;
 
     if (inputA_shape.size() != output_shape.size() || inputA_shape.size() != outputC_shape.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output should be the same, but "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output must be the same, but "
                         << "got the dimension of input: " << inputA_shape.size()
                         << ", the dimension of output: " << output_shape.size();
     }
@@ -178,11 +178,11 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void CheckIONumber(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
   void DestroyResource() noexcept {

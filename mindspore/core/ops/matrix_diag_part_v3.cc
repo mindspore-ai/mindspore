@@ -103,7 +103,7 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
                                  << ", but got " << k_val[1] << ".";
       }
       if (!(k_val[0] <= k_val[1])) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1].";
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
       }
       max_diag_len = std::min(row + std::min(k_val[1], 0), col + std::min(-k_val[0], 0));
       out_shape.push_back(k_val[1] - k_val[0] + 1);
@@ -118,7 +118,7 @@ abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(ValueError) << "For " << prim_name
                                << ", the number of elements of output must be less than max length: " << max_value
                                << ", but got " << true_value
-                               << "! The shape of output should be reduced or max_length should be increased.";
+                               << "! The shape of output must be reduced or max_length must be increased.";
     }
     return std::make_shared<abstract::Shape>(out_shape);
   } else {

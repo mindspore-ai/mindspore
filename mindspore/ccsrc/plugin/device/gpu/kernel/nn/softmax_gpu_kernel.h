@@ -104,11 +104,11 @@ class SoftmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
@@ -240,7 +240,7 @@ class SoftmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       transpose_axis_.push_back(0);
       need_transpose_ = true;
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in range [-" << shape_size_
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in range [-" << shape_size_
                         << ", " << shape_size_ << "), but got " << axis;
     }
 
@@ -256,9 +256,9 @@ class SoftmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (axis_pos < 0) {
       axis_pos += input_shape.size();
     }
-    // axis should be -1 with ND
+    // axis must be -1 with ND
     if (axis_pos != SizeToInt(input_shape.size() - 1)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be equal to -1 or "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be equal to -1 or "
                         << (input_shape.size() - 1) << ", but got " << axis;
     }
     // squeeze to 2d, then invoke cudnn
@@ -285,8 +285,8 @@ class SoftmaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     if (axis_pos >= SizeToInt(input_shape.size())) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in range [-"
-                        << input_shape.size() << ", " << input_shape.size() << "), but got " << axis;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in range [-" << input_shape.size()
+                        << ", " << input_shape.size() << "), but got " << axis;
     }
     // n keep tracks of squeezed size
     size_t n = 1;

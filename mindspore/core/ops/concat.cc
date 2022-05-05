@@ -85,7 +85,7 @@ TypePtr ConcatInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   if (!input_args[0]->isa<abstract::AbstractTuple>() && !input_args[0]->isa<abstract::AbstractList>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input should be a list or tuple of tensors. But got："
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input must be a list or tuple of tensors. But got："
                             << input_args[0]->ToString() << ".";
   }
   auto elements = input_args[0]->isa<abstract::AbstractTuple>()

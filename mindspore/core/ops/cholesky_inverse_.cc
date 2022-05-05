@@ -34,7 +34,7 @@ abstract::ShapePtr CholeskyInverseInferShape(const PrimitivePtr &primitive,
                              << "', The dimension of x must be equal to 2, but got: " << x_shape.size() << ".";
   }
   if (x_shape[x_shape.size() - 1] != x_shape[x_shape.size() - kDimNum])
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', input should be square matrix, "
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', input must be square matrix, "
                              << "while row is " << x_shape[x_shape.size() - kDimNum] << ", col is "
                              << x_shape[x_shape.size() - 1];
   return std::make_shared<abstract::Shape>(x_shape);

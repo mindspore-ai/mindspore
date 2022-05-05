@@ -109,7 +109,7 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool CheckInputShape(const std::vector<size_t> &output_shape) {
     for (auto &shape : input_shape_list_) {
       if (output_shape != shape) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input and output should be the same, but "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input and output must be the same, but "
                           << "got the shape of input: " << CONVERT_VECTOR_TO_STRING(shape)
                           << ", the shape of output: " << CONVERT_VECTOR_TO_STRING(output_shape);
       }
@@ -158,7 +158,7 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     std::vector<size_t> output_reduce_shape = output_shape;
     if ((size_t)axis_ >= output_shape.size()) {
-      MS_LOG(EXCEPTION) << "For 'L2NormalizeGradGpuKernelMod', axis_ should be less than the rank of output "
+      MS_LOG(EXCEPTION) << "For 'L2NormalizeGradGpuKernelMod', axis_ must be less than the rank of output "
                         << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
     }
     output_reduce_shape[axis_] = 1;
@@ -187,12 +187,12 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void CheckIONumber(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != INPUT_SIZE) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << INPUT_SIZE << ", but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be " << INPUT_SIZE << ", but got "
                         << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
   void InitResource() override {

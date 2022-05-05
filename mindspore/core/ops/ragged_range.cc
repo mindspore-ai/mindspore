@@ -124,13 +124,13 @@ abstract::TupleShapePtr RaggedRangeInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION(ValueError) << "For RaggedRange"
                                << ", the number of elements of output must be less than max length: " << max_length
                                << ", but got " << rt_dense_values_shape_vec[0]
-                               << "! The shape of output should be reduced or max_length should be increased.";
+                               << "! The shape of output must be reduced or max_length must be increased.";
     }
     if (rt_nested_splits_shape_vec[0] > max_length) {
       MS_EXCEPTION(ValueError) << "For RaggedRange"
                                << ", the number of elements of output must be less than max length: " << max_length
                                << ", but got " << rt_nested_splits_shape_vec[0]
-                               << "! The shape of output should be reduced or max_length should be increased.";
+                               << "! The shape of output must be reduced or max_length must be increased.";
     }
     abstract::ShapePtr rt_dense_values_shape = std::make_shared<abstract::Shape>(rt_dense_values_shape_vec);
     abstract::ShapePtr rt_nested_splits_shape = std::make_shared<abstract::Shape>(rt_nested_splits_shape_vec);
@@ -158,15 +158,15 @@ TuplePtr RaggedRangeInferType(const PrimitivePtr &primitive, const std::vector<A
   auto deltas_type = input_args[kInputIndex2]->BuildType();
   MS_EXCEPTION_IF_NULL(deltas_type);
   if (!(starts_type->isa<TensorType>())) {
-    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input starts should be a Tensor, but got "
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input starts must be a Tensor, but got "
                             << starts_type->ToString() << ".";
   }
   if (!(limits_type->isa<TensorType>())) {
-    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input limits should be a Tensor, but got "
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input limits must be a Tensor, but got "
                             << limits_type->ToString() << ".";
   }
   if (!(deltas_type->isa<TensorType>())) {
-    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input deltas should be a Tensor, but got "
+    MS_EXCEPTION(TypeError) << "For " << prim_name << ", the input deltas must be a Tensor, but got "
                             << deltas_type->ToString() << ".";
   }
   if (!((starts_type->ToString() == limits_type->ToString()) && (starts_type->ToString() == deltas_type->ToString()) &&

@@ -47,7 +47,7 @@ abstract::TupleShapePtr SoftmaxCrossEntropyWithLogitsInferShape(const PrimitiveP
     if (*logits_shape != *label_shape) {
       MS_EXCEPTION(ValueError)
         << "For '" << prim_name
-        << "', evaluator arg 'label' shape should be consistent with 'logits' shape, but got 'label' shape: "
+        << "', evaluator arg 'label' shape must be consistent with 'logits' shape, but got 'label' shape: "
         << label_shape->ToString() << ", 'logits' shape: " << logits_shape->ToString() << ".";
     }
   }

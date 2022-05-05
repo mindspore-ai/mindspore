@@ -33,7 +33,7 @@ class MIND_API TopKFusion : public TopK {
 
   /// \brief Method to init the op's attributes.
   ///
-  /// \param[in] sorted Define a boolean value indicate whether the output should be sorted.
+  /// \param[in] sorted Define a boolean value indicate whether the output must be sorted.
   /// \param[in] axis Define the operation axis, which is no use now, but the default is the last dimension.
   /// \param[in] largest Define the number of largest value along with the axis, which is not attribute now, but the
   ///            second input of this operation.

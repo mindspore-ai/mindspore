@@ -90,14 +90,14 @@ class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     MS_EXCEPTION_IF_NULL(prim);
     std::vector<std::vector<int64_t>> paddings = GetValue<std::vector<std::vector<int64_t>>>(prim->GetAttr("paddings"));
     if (paddings.size() != input_rank_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'paddings' should be equal to the dimension of "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'paddings' must be equal to the dimension of "
                         << "input, but got the length of 'paddings': " << paddings.size()
                         << " the dimension of input: " << input_rank_;
     }
 
     for (size_t i = 0; i < paddings.size(); i++) {
       if (paddings[i].size() != 2) {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of element of 'paddings' should be equal to 2, "
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of element of 'paddings' must be equal to 2, "
                           << "but got the size of paddings[" << i << "]: " << paddings[i].size();
       }
       flattened_paddings_.push_back(paddings[i][0]);
@@ -116,7 +116,7 @@ class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "got the " << input_rank_;
     }
     if (output_shape.size() != input_rank_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output should be the same, but "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and output must be the same, but "
                         << "got the dimension of input: " << input_rank_
                         << ", the dimension of output: " << output_shape.size();
     }
@@ -158,11 +158,11 @@ class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void CheckIONumber(const CNodePtr &kernel_node) {
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 1, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
 
