@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Geometric
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Geometric(probs=None, seed=None, dtype=mstype.int32, name='Geometric')
+.. py:class:: mindspore.nn.probability.distribution.Geometric(probs=None, seed=None, dtype=mindspore.int32, name='Geometric')
 
     几何分布（Geometric Distribution）。
 
