@@ -15,9 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/convolution_fp32.h"
-#ifdef SERVER_INFERENCE
 #include "src/pack_weight_manager.h"
-#endif
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
 #include "schema/model_generated.h"
