@@ -65,6 +65,9 @@ class TCPComm {
   // The flag sync means if the message is sent directly or added to the task queue.
   ssize_t Send(MessageBase *msg, bool sync = false);
 
+  // Force the data in the send buffer to be sent out.
+  bool Flush(const std::string &dst_url);
+
   // Set the message processing handler.
   void SetMessageHandler(const MessageHandler &handler);
 

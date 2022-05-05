@@ -345,6 +345,17 @@ ssize_t TCPComm::Send(MessageBase *msg, bool sync) {
   }
 }
 
+bool TCPComm::Flush(const std::string &dst_url) {
+  Connection *conn = conn_pool_->FindConnection(dst_url);
+  if (conn == nullptr) {
+    MS_LOG(ERROR) << "Can not find the connection to url: " << dst_url;
+    return false;
+  } else {
+    std::lock_guard<std::mutex> lock(*(conn->conn_mutex));
+    return conn->Flush();
+  }
+}
+
 bool TCPComm::Connect(const std::string &dst_url) {
   std::lock_guard<std::mutex> lock(*conn_mutex_);
 
