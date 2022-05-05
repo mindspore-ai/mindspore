@@ -40,12 +40,14 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
   constexpr size_t kLambWeightInputIdx = 4;
   constexpr size_t kRandomInputIdx = 1;
   constexpr size_t kAdamInputIdx = 10;
+  constexpr size_t kAdamWeightDecayInputIdx = 9;
   std::map<std::string, ExpanderCreatorFuncList> creators = {
     {prim::kPrimAssignAdd->name(), {OpUMonadExpanderDeco::GetCreator(kAssignInputIdx)}},
     {prim::kLambApplyOptimizerAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambOptimizerInputIdx)}},
     {prim::kLambApplyWeightAssign->name(), {OpUMonadExpanderDeco::GetCreator(kLambWeightInputIdx)}},
     {prim::kPrimStandardNormal->name(), {OpUMonadExpanderDeco::GetCreator(kRandomInputIdx)}},
     {prim::kPrimAdam->name(), {OpUMonadExpanderDeco::GetCreator(kAdamInputIdx)}},
+    {prim::kPrimAdamWeightDecay->name(), {OpUMonadExpanderDeco::GetCreator(kAdamWeightDecayInputIdx)}},
     {prim::kPrimDropout->name(), {DropoutExpanderDeco::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
