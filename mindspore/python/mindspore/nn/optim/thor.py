@@ -325,9 +325,9 @@ def thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0
         TypeError: If `loss_scale`, `momentum` or `frequency` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
         TypeError: If `use_nesterov` is not a bool.
+        TypeError: If `frequency` is not int.
         ValueError: If `loss_scale` is less than or equal to 0.
         ValueError: If `weight_decay` or `momentum` is less than 0.
-        ValueError: If `frequency` is not int.
         ValueError: If `frequency` is less than 2.
 
     Supported Platforms:
