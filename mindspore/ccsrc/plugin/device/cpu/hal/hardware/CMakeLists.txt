@@ -2,8 +2,9 @@ if(ENABLE_CPU)
     file(GLOB_RECURSE HARDWARE_CPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
     list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "mpi_collective_comm_lib.cc" "mpi_communication_group.cc")
 
-    if(WIN32)
+    if(WIN32 OR APPLE)
         list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "ms_collective_comm_lib.cc" "allreduce_impl.cc")
+        list(REMOVE_ITEM HARDWARE_CPU_SRC_LIST "ms_collective_topo.cc")
     endif()
     if(ENABLE_MPI)
         set(MPI_COLLECTIVE_SRCS "mpi_collective_comm_lib.cc"
