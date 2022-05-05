@@ -16,33 +16,42 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LRN_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LRN_CPU_KERNEL_H_
+
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/mkldnn/mkl_cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class LrnCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class LrnCpuKernelMod : public MKLCpuKernelMod {
  public:
   LrnCpuKernelMod() = default;
   ~LrnCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  bool GetLrnAttr(const BaseOperatorPtr &base_operator);
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using LrnFunc = std::function<bool(LrnCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                      const std::vector<kernel::AddressPtr> &)>;
-  void GetLrnAttr(const CNodePtr &kernel_node);
+
   int64_t depth_radius_{1};
   float bias_{0.0};
   float alpha_{0.0};
@@ -50,7 +59,6 @@ class LrnCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   LrnFunc kernel_func_;
   dnnl::algorithm dnnl_algorithm_{};
   std::string norm_region_;
-  std::vector<size_t> input_shape_;
   static std::vector<std::pair<KernelAttr, LrnFunc>> func_list_;
 };
 }  // namespace kernel
