@@ -34,8 +34,8 @@ class NetCosh(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_cosh_graph(dtype):
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
+def test_cosh_graph(dtype, tol):
     """
     Feature: ALL To ALL
     Description: test cases for Cosh
@@ -47,14 +47,14 @@ def test_cosh_graph(dtype):
     net = NetCosh()
     output = net(input_x)
     expect = np.cosh(np_array)
-    assert np.allclose(output.asnumpy(), expect)
+    assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_cosh_py(dtype):
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
+def test_cosh_py(dtype, tol):
     """
     Feature: ALL To ALL
     Description: test cases for Cosh
@@ -66,4 +66,4 @@ def test_cosh_py(dtype):
     net = NetCosh()
     output = net(input_x)
     expect = np.cosh(np_array)
-    assert np.allclose(output.asnumpy(), expect)
+    assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
