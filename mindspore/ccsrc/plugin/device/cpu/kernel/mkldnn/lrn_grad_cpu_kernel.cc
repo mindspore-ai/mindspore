@@ -13,50 +13,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/cpu/kernel/lrn_grad_cpu_kernel.h"
+
+#include "plugin/device/cpu/kernel/mkldnn/lrn_grad_cpu_kernel.h"
 #include <vector>
 #include <algorithm>
 #include <utility>
 #include <memory>
 #include <string>
+#include <map>
+#include "mindspore/core/ops/grad/lrn_grad.h"
 
 namespace mindspore {
 namespace kernel {
-void LrnGradCpuKernelMod::GetLrnAttr(const CNodePtr &kernel_node) {
-  const std::string depth_radius = "depth_radius";
-  if (!common::AnfAlgo::HasNodeAttr(depth_radius, kernel_node)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' has no kernel attribute: " << depth_radius;
+bool LrnGradCpuKernelMod::GetLrnGradAttr(const BaseOperatorPtr &base_operator) {
+  if (kernel_name_ != ops::kNameLRNGrad) {
+    MS_LOG(ERROR) << "For 'LRNGrad' kernel name get failed, but got " << kernel_name_;
+    return false;
   }
-  depth_radius_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "depth_radius");
-  const std::string bias = "bias";
-  if (!common::AnfAlgo::HasNodeAttr(bias, kernel_node)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' has no kernel attribute: " << bias;
-  }
-  bias_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "bias");
-  const std::string alpha = "alpha";
-  if (!common::AnfAlgo::HasNodeAttr(alpha, kernel_node)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' has no kernel attribute: " << alpha;
-  }
-  alpha_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "alpha");
-
-  const std::string beta = "beta";
-  if (!common::AnfAlgo::HasNodeAttr(beta, kernel_node)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' has no kernel attribute: " << beta;
-  }
-  beta_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
+  auto kernel_ptr = std::make_shared<ops::LRNGrad>(base_operator->GetPrim());
+  depth_radius_ = kernel_ptr->get_depth_radius();
+  bias_ = kernel_ptr->get_bias();
+  alpha_ = kernel_ptr->get_alpha();
+  beta_ = kernel_ptr->get_beta();
   dnnl_algorithm_ = dnnl::algorithm::lrn_across_channels;
+  return true;
 }
 
-void LrnGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool LrnGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  if (!GetLrnGradAttr(base_operator)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got GetReductionAttr failed.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
-  GetLrnAttr(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
+  return true;
+}
+
+int LrnGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  int ret = KRET_OK;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+    return ret;
+  }
+  std::vector<size_t> input_shape_;
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape_);
   const auto lrn_multiple = 2;
   dnnl::memory::dim local_size = lrn_multiple * depth_radius_ + 1;
@@ -73,6 +86,7 @@ void LrnGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_DST, src_desc);
   AddArgument(DNNL_ARG_DIFF_SRC, src_desc);
   AddArgument(DNNL_ARG_DIFF_DST, src_desc);
+  return ret;
 }
 
 template <typename T>
@@ -94,6 +108,7 @@ bool LrnGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
 std::vector<std::pair<KernelAttr, LrnGradCpuKernelMod::LrnGradFunc>> LrnGradCpuKernelMod::func_list_ = {
   // For kNumberTypeFloat16 input data type will cast to kNumberTypeFloat32 from frontend to backend.
   {KernelAttr()
+     .AddAllSameAttr(true)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kNumberTypeFloat32)
