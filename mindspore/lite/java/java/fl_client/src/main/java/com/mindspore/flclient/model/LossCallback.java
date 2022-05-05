@@ -16,10 +16,10 @@
 
 package com.mindspore.flclient.model;
 
+import com.mindspore.Model;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -39,8 +39,8 @@ public class LossCallback extends Callback {
     /**
      * Defining a constructor of loss callback.
      */
-    public LossCallback(LiteSession session) {
-        super(session);
+    public LossCallback(com.mindspore.Model model) {
+        super(model);
     }
 
     @Override

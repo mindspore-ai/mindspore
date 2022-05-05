@@ -19,21 +19,15 @@ package com.mindspore.flclient;
 import static com.mindspore.flclient.FLParameter.MAX_WAIT_TRY_TIME;
 import static com.mindspore.flclient.FLParameter.RESTART_TIME_PER_ITER;
 import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.ANDROID;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.flclient.model.AlInferBert;
-import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.RunType;
-import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.flclient.model.TrainLenet;
 import com.mindspore.flclient.pki.PkiUtil;
-import com.mindspore.lite.config.CpuBindMode;
+import com.mindspore.config.CpuBindMode;
 import mindspore.schema.ResponseGetModel;
 
 import java.io.IOException;
@@ -82,16 +76,14 @@ public class SyncFLJob {
     }
 
     public SyncFLJob() {
-        if (!Common.checkFLName(flParameter.getFlName())) {
-            try {
-                LOGGER.info("the flName: " + flParameter.getFlName());
-                Class.forName(flParameter.getFlName());
-            } catch (ClassNotFoundException e) {
-                LOGGER.severe("catch ClassNotFoundException error, the set flName does not exist, " +
-                        "please " +
-                        "check: " + e.getMessage());
-                throw new IllegalArgumentException();
-            }
+        try {
+            LOGGER.info("the flName: " + flParameter.getFlName());
+            Class.forName(flParameter.getFlName());
+        } catch (ClassNotFoundException e) {
+            LOGGER.severe("catch ClassNotFoundException error, the set flName does not exist, " +
+                    "please " +
+                    "check: " + e.getMessage());
+            throw new IllegalArgumentException();
         }
     }
 
@@ -102,7 +94,7 @@ public class SyncFLJob {
      */
     public FLClientStatus flJobRun() {
         flJobResultCallback = flParameter.getIflJobResultCallback();
-        if (!Common.checkFLName(flParameter.getFlName()) && ANDROID.equals(flParameter.getDeployEnv())) {
+        if (ANDROID.equals(flParameter.getDeployEnv())) {
             Common.setSecureRandom(Common.getFastSecureRandom());
         } else {
             Common.setSecureRandom(new SecureRandom());
@@ -284,12 +276,6 @@ public class SyncFLJob {
 
     private boolean checkEvalPath() {
         boolean tag = true;
-        if (Common.checkFLName(flParameter.getFlName())) {
-            if ("null".equals(flParameter.getTestDataset())) {
-                tag = false;
-            }
-            return tag;
-        }
         if (!flParameter.getDataMap().containsKey(RunType.EVALMODE)) {
             LOGGER.info("[evaluate] the data map set by user do not contain evaluation dataset, " +
                     "don't evaluate the model after getting model from server");
@@ -307,20 +293,6 @@ public class SyncFLJob {
         } else {
             return false;
         }
-    }
-
-
-    /**
-     * Starts an inference task on the device.
-     *
-     * @return the status code corresponding to the response message.
-     */
-    public int[] modelInference() {
-        if (Common.checkFLName(flParameter.getFlName())) {
-            LOGGER.warning(Common.LOG_DEPRECATED);
-            return deprecatedModelInference();
-        }
-        return new int[0];
     }
 
     /**
@@ -341,7 +313,7 @@ public class SyncFLJob {
             client.free();
             return null;
         }
-        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(),
+        Status tag = client.initSessionAndInputs(flParameter.getInferModelPath(),
                 flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
             LOGGER.severe("[model inference] unsolved error code in <initSessionAndInputs>: the return " +
@@ -370,13 +342,10 @@ public class SyncFLJob {
      * @return the status code corresponding to the response message.
      */
     public FLClientStatus getModel() {
-        if (!Common.checkFLName(flParameter.getFlName()) && ANDROID.equals(flParameter.getDeployEnv())) {
+        if (ANDROID.equals(flParameter.getDeployEnv())) {
             Common.setSecureRandom(Common.getFastSecureRandom());
         } else {
             Common.setSecureRandom(new SecureRandom());
-        }
-        if (Common.checkFLName(flParameter.getFlName())) {
-            return deprecatedGetModel();
         }
         localFLParameter.setServerMod(flParameter.getServerMod().toString());
         localFLParameter.setMsConfig(0, 1, 0, false);
@@ -570,118 +539,11 @@ public class SyncFLJob {
         }
     }
 
-
-    private static void deprecatedTask(String[] args) {
-        String trainDataset = args[0];
-        String vocabFile = args[1];
-        String idsFile = args[2];
-        String testDataset = args[3];
-        String flName = args[4];
-        String trainModelPath = args[5];
-        String inferModelPath = args[6];
-        boolean useSSL = Boolean.parseBoolean(args[7]);
-        String domainName = args[8];
-        boolean useElb = Boolean.parseBoolean(args[9]);
-        int serverNum = Integer.parseInt(args[10]);
-        String certPath = args[11];
-        String task = args[12];
-
-        FLParameter flParameter = FLParameter.getInstance();
-        flParameter.setFlName(flName);
-        SyncFLJob syncFLJob = new SyncFLJob();
-        switch (task) {
-            case "train":
-                LOGGER.info("start syncFLJob.flJobRun()");
-                flParameter.setTrainDataset(trainDataset);
-                flParameter.setTrainModelPath(trainModelPath);
-                flParameter.setTestDataset(testDataset);
-                flParameter.setInferModelPath(inferModelPath);
-                flParameter.setDomainName(domainName);
-                if (Common.isHttps()) {
-                    flParameter.setCertPath(certPath);
-                }
-                flParameter.setUseElb(useElb);
-                flParameter.setServerNum(serverNum);
-                if (ALBERT.equals(flName)) {
-                    flParameter.setVocabFile(vocabFile);
-                    flParameter.setIdsFile(idsFile);
-                }
-                syncFLJob.flJobRun();
-                break;
-            case "inference":
-                LOGGER.info("start syncFLJob.modelInference()");
-                flParameter.setTestDataset(testDataset);
-                flParameter.setInferModelPath(inferModelPath);
-                if (ALBERT.equals(flName)) {
-                    flParameter.setVocabFile(vocabFile);
-                    flParameter.setIdsFile(idsFile);
-                }
-                syncFLJob.modelInference();
-                break;
-            case "getModel":
-                LOGGER.info("start syncFLJob.getModel()");
-                flParameter.setTrainModelPath(trainModelPath);
-                flParameter.setInferModelPath(inferModelPath);
-                flParameter.setDomainName(domainName);
-                if (Common.isHttps()) {
-                    flParameter.setCertPath(certPath);
-                }
-                flParameter.setUseElb(useElb);
-                flParameter.setServerNum(serverNum);
-                syncFLJob.getModel();
-                break;
-            default:
-                LOGGER.info("do not do any thing!");
-        }
-    }
-
-    private int[] deprecatedModelInference() {
-        int[] labels = new int[0];
-        if (flParameter.getFlName().equals(ALBERT)) {
-            AlInferBert alInferBert = AlInferBert.getInstance();
-            LOGGER.info("===========model inference=============");
-            labels = alInferBert.inferModel(flParameter.getInferModelPath(), flParameter.getTestDataset(),
-                    flParameter.getVocabFile(), flParameter.getIdsFile());
-            if (labels == null || labels.length == 0) {
-                LOGGER.severe("[model inference] the returned label from adInferBert.inferModel() is null, please " +
-                        "check");
-            }
-            LOGGER.info("[model inference] the predicted labels: " + Arrays.toString(labels));
-            SessionUtil.free(alInferBert.getTrainSession());
-            LOGGER.info("[model inference] inference finish");
-        } else if (flParameter.getFlName().equals(LENET)) {
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            LOGGER.info("===========model inference=============");
-            labels = trainLenet.inferModel(flParameter.getInferModelPath(), flParameter.getTestDataset().split(",")[0]);
-            if (labels == null || labels.length == 0) {
-                LOGGER.severe("[model inference] the return labels is null.");
-            }
-            LOGGER.info("[model inference] the predicted labels: " + Arrays.toString(labels));
-            SessionUtil.free(trainLenet.getTrainSession());
-            LOGGER.info("[model inference] inference finish");
-        }
-        return labels;
-
-    }
-
-    private FLClientStatus deprecatedGetModel() {
-        localFLParameter.setServerMod(ServerMod.FEDERATED_LEARNING.toString());
-        FLClientStatus status;
-        FLLiteClient flLiteClient = new FLLiteClient();
-        status = flLiteClient.getModel();
-        return status;
-    }
-
     public static void main(String[] args) {
         if (args[4] == null || args[4].isEmpty()) {
             LOGGER.severe("the parameter of <args[4]> is null, please check");
             throw new IllegalArgumentException();
         }
-        if (Common.checkFLName(args[4])) {
-            deprecatedTask(args);
-        } else {
-            task(args);
-        }
-
+        task(args);
     }
 }

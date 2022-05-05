@@ -16,10 +16,10 @@
 
 package com.mindspore.flclient.demo.common;
 
+import com.mindspore.Model;
 import com.mindspore.flclient.model.Callback;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +40,8 @@ public class PredictCallback extends Callback {
     /**
      * Defining a constructor of predict callback.
      */
-    public PredictCallback(LiteSession session, int batchSize, int numOfClass) {
-        super(session);
+    public PredictCallback(Model model, int batchSize, int numOfClass) {
+        super(model);
         this.batchSize = batchSize;
         this.numOfClass = numOfClass;
     }

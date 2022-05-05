@@ -28,7 +28,6 @@ dependencies {
     testImplementation 'junit:junit:4.13'
 
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation project(':linux_x86')
 }
 
 archivesBaseName = 'mindspore-lite-java'

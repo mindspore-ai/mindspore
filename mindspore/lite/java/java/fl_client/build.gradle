@@ -46,8 +46,7 @@ dependencies {
     // https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java
     compile('com.google.flatbuffers:flatbuffers-java:2.0.0')
     compile('org.bouncycastle:bcprov-jdk15on:1.68')
-    compile project(':common')
-    compile project(':linux_x86')
+    compile project(':mindspore-lite-java')
 
     // Use JUnit test framework
     // Using compile to replace Implementation, because we need resolve the path.
@@ -58,7 +57,8 @@ dependencies {
     testCompile('com.alibaba:fastjson:1.2.58')
     testCompile('commons-io:commons-io:2.0.1')
     // the module jar for test, need change to your local path while UTTest
-    testCompile(files('ut_data/test_data/jar/quick_start_flclient.jar'))
+    testCompile(files('/ut_data/test_data/jar/quick_start_flclient.jar'))
+    testCompile(files('/ut_data/test_data/jar/flclient_models.jar'))
 }
 
 test {
@@ -67,9 +67,11 @@ test {
     environment "LD_LIBRARY_PATH", "../linux_x86/libs/"
     // need set MS_FL_UT_BASE_PATH the path of ut_data
     // now ut data on the private repository https://gitee.com/zhangzhaoju/mindspore_fl_test_data
-    environment "MS_FL_UT_BASE_PATH", "/home/zhangzhaoju/ms_dev/mindspore_fl_test_data/ut_data"
+    environment "MS_FL_UT_BASE_PATH", "/ut_data"
+    // set MS_CATCH_MSG we can using real server to catch msg
+    // environment "MS_CATCH_MSG", "True"
     jvmArgs "-javaagent:${project.configurations.testCompile.find { it.name.startsWith("jmockit") }}"
-    reports {junitXml.outputLocation.set(layout.buildDirectory.dir("ut_test_result"))}
+    reports { junitXml.outputLocation.set(layout.buildDirectory.dir("ut_test_result")) }
 }
 
 def getFlatVersion(path) {

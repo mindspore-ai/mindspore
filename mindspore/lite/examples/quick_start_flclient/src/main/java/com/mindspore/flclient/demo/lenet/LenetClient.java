@@ -48,16 +48,16 @@ public class LenetClient extends Client {
     public List<Callback> initCallbacks(RunType runType, DataSet dataSet) {
         List<Callback> callbacks = new ArrayList<>();
         if (runType == RunType.TRAINMODE) {
-            Callback lossCallback = new LossCallback(trainSession);
+            Callback lossCallback = new LossCallback(model);
             callbacks.add(lossCallback);
         } else if (runType == RunType.EVALMODE) {
             if (dataSet instanceof LenetDataSet) {
-                Callback evalCallback = new ClassifierAccuracyCallback(trainSession, dataSet.batchSize, NUM_OF_CLASS,
+                Callback evalCallback = new ClassifierAccuracyCallback(model, dataSet.batchSize, NUM_OF_CLASS,
                         ((LenetDataSet) dataSet).getTargetLabels());
                 callbacks.add(evalCallback);
             }
         } else {
-            Callback inferCallback = new PredictCallback(trainSession, dataSet.batchSize, NUM_OF_CLASS);
+            Callback inferCallback = new PredictCallback(model, dataSet.batchSize, NUM_OF_CLASS);
             callbacks.add(inferCallback);
         }
         return callbacks;

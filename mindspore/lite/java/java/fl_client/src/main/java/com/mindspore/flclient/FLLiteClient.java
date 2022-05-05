@@ -16,23 +16,15 @@
 
 package com.mindspore.flclient;
 
-import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
-
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.flclient.model.AlInferBert;
-import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.CommonUtils;
 import com.mindspore.flclient.model.RunType;
-import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.flclient.model.TrainLenet;
 import com.mindspore.flclient.pki.PkiBean;
 import com.mindspore.flclient.pki.PkiUtil;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 
 import mindspore.schema.CipherPublicParams;
 import mindspore.schema.FLPlan;
@@ -116,9 +108,6 @@ public class FLLiteClient {
         int seed = flJob.iteration();
         LOGGER.info("[startFLJob] [compression] seed: " + seed);
         localFLParameter.setSeed(seed);
-        if (Common.checkFLName(flParameter.getFlName())) {
-            deprecatedSetBatchSize(batchSize);
-        }
         LOGGER.info("[startFLJob] the GlobalParameter <serverMod> from server: " + serverMod);
         LOGGER.info("[startFLJob] the GlobalParameter <iterations> from server: " + iterations);
         LOGGER.info("[startFLJob] the GlobalParameter <epochs> from server: " + epochs);
@@ -366,14 +355,9 @@ public class FLLiteClient {
      * @return the status code corresponding to the response message.
      */
     public FLClientStatus localTrain() {
-
         LOGGER.info("[train] ====================================global train epoch " + iteration +
                 "====================================");
-        if (Common.checkFLName(flParameter.getFlName())) {
-            status = deprecatedTrainLoop();
-        } else {
-            status = trainLoop();
-        }
+        status = trainLoop();
         return status;
     }
 
@@ -466,10 +450,6 @@ public class FLLiteClient {
 
     public Map<String, float[]> getFeatureMap() {
         Map<String, float[]> featureMap = new HashMap<>();
-        if (Common.checkFLName(flParameter.getFlName())) {
-            featureMap = deprecatedGetFeatureMap();
-            return featureMap;
-        }
         status = Common.initSession(flParameter.getTrainModelPath());
         if (status == FLClientStatus.FAILED) {
             Common.freeSession();
@@ -624,12 +604,12 @@ public class FLLiteClient {
         float acc = 0;
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
             LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
-            client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
+            client.initSessionAndInputs(flParameter.getInferModelPath(), flParameter.getInputShape());
             LOGGER.info("[evaluate] modelPath: " + flParameter.getInferModelPath());
             acc = client.evalModel();
         } else {
             LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
-            client.initSessionAndInputs(flParameter.getTrainModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
+            client.initSessionAndInputs(flParameter.getTrainModelPath(), flParameter.getInputShape());
             LOGGER.info("[evaluate] modelPath: " + flParameter.getTrainModelPath());
             acc = client.evalModel();
         }
@@ -655,11 +635,7 @@ public class FLLiteClient {
     public FLClientStatus evaluateModel() {
         LOGGER.info("===================================evaluate model after getting model from " +
                 "server===================================");
-        if (Common.checkFLName(flParameter.getFlName())) {
-            status = deprecatedEvaluateLoop();
-        } else {
-            status = evaluateLoop();
-        }
+        status = evaluateLoop();
         return status;
     }
 
@@ -670,10 +646,6 @@ public class FLLiteClient {
      */
     public int setInput() {
         int dataSize = 0;
-        if (Common.checkFLName(flParameter.getFlName())) {
-            dataSize = deprecatedSetInput(flParameter.getTrainDataset());
-            return dataSize;
-        }
         retCode = ResponseCode.SUCCEED;
         LOGGER.info("==========set input===========");
 
@@ -684,185 +656,6 @@ public class FLLiteClient {
             return -1;
         }
         return dataSize;
-    }
-
-    private int deprecatedSetBatchSize(int batchSize) {
-        if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-            LOGGER.info("[startFLJob] set <batchSize> for AlTrainBert: " + batchSize);
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            alTrainBert.setBatchSize(batchSize);
-        } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
-            LOGGER.info("[startFLJob] set <batchSize> for TrainLenet: " + batchSize);
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            trainLenet.setBatchSize(batchSize);
-        } else {
-            LOGGER.severe("[startFLJob] the ServerMod returned from server is not valid");
-            return -1;
-        }
-        return 0;
-    }
-
-    private int deprecatedSetInput(String dataPath) {
-        retCode = ResponseCode.SUCCEED;
-        LOGGER.info("==========set input===========");
-        int dataSize = 0;
-        if (flParameter.getFlName().equals(ALBERT)) {
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            dataSize = alTrainBert.initDataSet(dataPath, flParameter.getVocabFile(), flParameter.getIdsFile());
-            LOGGER.info("[set input] " + "dataPath: " + dataPath + " dataSize: " + +dataSize + " " +
-                    "vocabFile: " + flParameter.getVocabFile() + " idsFile: " + flParameter.getIdsFile());
-        } else if (flParameter.getFlName().equals(LENET)) {
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            if (dataPath.split(",").length < 2) {
-                LOGGER.severe("[set input] the set dataPath for lenet is not valid, should be the " +
-                        "format of <data.bin,label.bin> ");
-                return -1;
-            }
-            dataSize = trainLenet.initDataSet(dataPath.split(",")[0], dataPath.split(",")[1]);
-            LOGGER.info("[set input] " + "dataPath: " + dataPath.split(",")[0] + " dataSize: " +
-                    dataSize + " labelPath: " + dataPath.split(",")[1]);
-        }
-        if (dataSize <= 0) {
-            retCode = ResponseCode.RequestError;
-            return -1;
-        }
-        return dataSize;
-    }
-
-    private FLClientStatus deprecatedTrainLoop() {
-        retCode = ResponseCode.SUCCEED;
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            retCode = ResponseCode.RequestError;
-            return status;
-        }
-        status = FLClientStatus.SUCCESS;
-        retCode = ResponseCode.SUCCEED;
-        if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info("[train] train in albert");
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            int tag = alTrainBert.trainModel(flParameter.getTrainModelPath(), epochs);
-            if (tag == -1) {
-                failed("[train] unsolved error code in <alTrainBert.trainModel>", ResponseCode.RequestError);
-            }
-        } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info("[train] train in lenet");
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            int tag = trainLenet.trainModel(flParameter.getTrainModelPath(), epochs);
-            if (tag == -1) {
-                failed("[train] unsolved error code in <trainLenet.trainModel>", ResponseCode.RequestError);
-            }
-        } else {
-            failed("[train] the flName is not valid", ResponseCode.RequestError);
-        }
-        Common.freeSession();
-        return status;
-    }
-
-    private Map<String, float[]> deprecatedGetFeatureMap() {
-        status = Common.initSession(flParameter.getTrainModelPath());
-        if (status == FLClientStatus.FAILED) {
-            Common.freeSession();
-            retCode = ResponseCode.RequestError;
-            return new HashMap<>();
-        }
-        Map<String, float[]> featureMap = new HashMap<>();
-        if (flParameter.getFlName().equals(ALBERT)) {
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            featureMap = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(alTrainBert.getTrainSession()));
-        } else if (flParameter.getFlName().equals(LENET)) {
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            featureMap = SessionUtil.convertTensorToFeatures(SessionUtil.getFeatures(trainLenet.getTrainSession()));
-        }
-        Common.freeSession();
-        return featureMap;
-    }
-
-
-    private FLClientStatus deprecatedEvaluateLoop() {
-        status = FLClientStatus.SUCCESS;
-        retCode = ResponseCode.SUCCEED;
-        if (flParameter.getFlName().equals(ALBERT)) {
-            float acc = 0;
-            if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
-                LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
-                AlInferBert alInferBert = AlInferBert.getInstance();
-                int tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
-                if (tag == -1) {
-                    failed("[evaluate] unsolved error code in <initSessionAndInputs>: the return is -1",
-                            ResponseCode.RequestError);
-                    return FLClientStatus.FAILED;
-                }
-                int dataSize = alInferBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(),
-                        flParameter.getIdsFile(), true);
-                if (dataSize <= 0) {
-                    failed("[evaluate] unsolved error code in <alInferBert.initDataSet>: the return dataSize<=0",
-                            ResponseCode.RequestError);
-                    return status;
-                }
-                acc = alInferBert.evalModel();
-                SessionUtil.free(alInferBert.getTrainSession());
-            } else {
-                LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
-                AlTrainBert alTrainBert = AlTrainBert.getInstance();
-                int tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), false);
-                if (tag == -1) {
-                    failed("[evaluate] unsolved error code in <initSessionAndInputs>: the return is -1",
-                            ResponseCode.RequestError);
-                    return FLClientStatus.FAILED;
-                }
-                int dataSize = alTrainBert.initDataSet(flParameter.getTestDataset(), flParameter.getVocabFile(),
-                        flParameter.getIdsFile());
-                if (dataSize <= 0) {
-                    failed("[evaluate] unsolved error code in <alTrainBert.initDataSet>: the return dataSize<=0",
-                            ResponseCode.RequestError);
-                    return status;
-                }
-                acc = alTrainBert.evalModel();
-                SessionUtil.free(alTrainBert.getTrainSession());
-            }
-            if (Float.isNaN(acc)) {
-                failed("[evaluate] unsolved error code in <evalModel>: the return acc is NAN",
-                        ResponseCode.RequestError);
-                return status;
-            }
-            LOGGER.info("[evaluate] modelPath: " + flParameter.getInferModelPath() + " dataPath: " +
-                    flParameter.getTestDataset() + " vocabFile: " + flParameter.getVocabFile() +
-                    " idsFile: " + flParameter.getIdsFile());
-            LOGGER.info("[evaluate] evaluate acc: " + acc);
-        } else if (flParameter.getFlName().equals(LENET)) {
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            if (flParameter.getTestDataset().split(",").length < 2) {
-                failed("[evaluate] the set testDataPath for lenet is not valid, should be the format of <data.bin," +
-                        "label.bin>", ResponseCode.RequestError);
-                return status;
-            }
-            int tag = trainLenet.initSessionAndInputs(flParameter.getTrainModelPath(), true);
-            if (tag == -1) {
-                failed("[evaluate] unsolved error code in <initSessionAndInputs>: the return is -1",
-                        ResponseCode.RequestError);
-                return FLClientStatus.FAILED;
-            }
-            int dataSize = trainLenet.initDataSet(flParameter.getTestDataset().split(",")[0],
-                    flParameter.getTestDataset().split(",")[1]);
-            if (dataSize <= 0) {
-                failed("[evaluate] unsolved error code in <trainLenet.initDataSet>: the return dataSize<=0",
-                        ResponseCode.RequestError);
-                return status;
-            }
-            float acc = trainLenet.evalModel();
-            SessionUtil.free(trainLenet.getTrainSession());
-            if (Float.isNaN(acc)) {
-                failed("[evaluate] unsolved error code in <trainLenet.evalModel>: the return acc is NAN",
-                        ResponseCode.RequestError);
-                return status;
-            }
-            LOGGER.info("[evaluate] modelPath: " + flParameter.getInferModelPath() + " dataPath: " +
-                    flParameter.getTestDataset().split(",")[0] + " labelPath: " +
-                    flParameter.getTestDataset().split(",")[1]);
-            LOGGER.info("[evaluate] evaluate acc: " + acc);
-        }
-        return status;
     }
 
     private FLClientStatus serverJobFinished(String logTag) {

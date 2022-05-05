@@ -17,13 +17,9 @@
 package com.mindspore.flclient;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
-import com.mindspore.flclient.model.AlInferBert;
-import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
-import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.flclient.model.TrainLenet;
 import mindspore.schema.ResponseCode;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -43,10 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.mindspore.flclient.FLParameter.MAX_SLEEP_TIME;
-import static com.mindspore.flclient.FLParameter.MAX_WAIT_TRY_TIME;
 import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 /**
  * Define basic global methods used in federated learning task.
@@ -57,10 +50,6 @@ public class Common {
     public static final String LOG_DEPRECATED = "This method will be deprecated in the next version, it is " +
             "recommended to " +
             "use the latest method according to the use cases in the official website tutorial";
-    /**
-     * The list of trust flName.
-     */
-    public static final List<String> FL_NAME_TRUST_LIST = new ArrayList<>(Arrays.asList("lenet", "albert"));
 
     /**
      * The list of trust ssl protocol.
@@ -181,17 +170,6 @@ public class Common {
         albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.gamma");
         albertWeightName.add("albert.encoder.albert_layer_groups.0.albert_layers.0.full_layer_layer_norm.beta");
         LOGGER.info("albertWeightName size: " + albertWeightName.size());
-    }
-
-    /**
-     * Check whether the flName set by user is in the trust list.
-     *
-     * @param flName the model name set by user.
-     * @return boolean value, true indicates the flName set by user is valid, false indicates the flName set by user
-     * is not valid.
-     */
-    public static boolean checkFLName(String flName) {
-        return (FL_NAME_TRUST_LIST.contains(flName));
     }
 
     /**
@@ -536,15 +514,9 @@ public class Common {
      */
     public static FLClientStatus initSession(String modelPath) {
         FLParameter flParameter = FLParameter.getInstance();
-        LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
-        if (Common.checkFLName(flParameter.getFlName())) {
-            return deprecatedInitSession();
-        }
-        Status tag;
-        LOGGER.info("==========Loading model from path: " + modelPath + ", Create " +
-                " Session=============");
+        LOGGER.info("==========Loading model, " + modelPath + " Create Session=============");
         Client client = ClientManager.getClient(flParameter.getFlName());
-        tag = client.initSessionAndInputs(modelPath, localFLParameter.getMsConfig(), flParameter.getInputShape());
+        Status tag = client.initSessionAndInputs(modelPath, flParameter.getInputShape());
         if (!Status.SUCCESS.equals(tag)) {
             LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
                     "is -1");
@@ -558,70 +530,9 @@ public class Common {
      */
     protected static void freeSession() {
         FLParameter flParameter = FLParameter.getInstance();
-        if (Common.checkFLName(flParameter.getFlName())) {
-            deprecatedFreeSession();
-        } else {
-            LOGGER.info("===========free session=============");
-            Client client = ClientManager.getClient(flParameter.getFlName());
-            client.free();
-        }
-    }
-
-    /**
-     * Initialization session.
-     *
-     * @return the status code in client.
-     */
-    private static FLClientStatus deprecatedInitSession() {
-        FLParameter flParameter = FLParameter.getInstance();
-        int tag = 0;
-        if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
-                    "Train Session=============");
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            tag = alTrainBert.initSessionAndInputs(flParameter.getTrainModelPath(), true);
-            if (tag == -1) {
-                LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return " +
-                        "is -1");
-                return FLClientStatus.FAILED;
-            }
-            LOGGER.info("==========Loading inference model, " + flParameter.getInferModelPath() + " " +
-                    "Create inference Session=============");
-            AlInferBert alInferBert = AlInferBert.getInstance();
-            tag = alInferBert.initSessionAndInputs(flParameter.getInferModelPath(), false);
-        } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info("==========Loading train model, " + flParameter.getTrainModelPath() + " Create " +
-                    "Train Session=============");
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            tag = trainLenet.initSessionAndInputs(flParameter.getTrainModelPath(), true);
-        }
-        if (tag == -1) {
-            LOGGER.severe("[initSession] unsolved error code in <initSessionAndInputs>: the return is " +
-                    "-1");
-            return FLClientStatus.FAILED;
-        }
-        return FLClientStatus.SUCCESS;
-    }
-
-    /**
-     * Free session.
-     */
-    private static void deprecatedFreeSession() {
-        FLParameter flParameter = FLParameter.getInstance();
-        if (flParameter.getFlName().equals(ALBERT)) {
-            LOGGER.info("===========free train session=============");
-            AlTrainBert alTrainBert = AlTrainBert.getInstance();
-            SessionUtil.free(alTrainBert.getTrainSession());
-            if (!flParameter.getTestDataset().equals("null")) {
-                LOGGER.info("===========free inference session=============");
-                AlInferBert alInferBert = AlInferBert.getInstance();
-                SessionUtil.free(alInferBert.getTrainSession());
-            }
-        } else if (flParameter.getFlName().equals(LENET)) {
-            LOGGER.info("===========free session=============");
-            TrainLenet trainLenet = TrainLenet.getInstance();
-            SessionUtil.free(trainLenet.getTrainSession());
-        }
+        LOGGER.info("===========free session=============");
+        Client client = ClientManager.getClient(flParameter.getFlName());
+        client.free();
     }
 
     /**

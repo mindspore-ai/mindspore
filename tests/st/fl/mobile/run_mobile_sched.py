@@ -18,7 +18,7 @@ import subprocess
 import os
 import ast
 
-parser = argparse.ArgumentParser(description="Run test_mobile_lenet.py case")
+parser = argparse.ArgumentParser(description="start scheduler of mobile net")
 parser.add_argument("--device_target", type=str, default="CPU")
 parser.add_argument("--server_mode", type=str, default="FEDERATED_LEARNING")
 parser.add_argument("--worker_num", type=int, default=0)

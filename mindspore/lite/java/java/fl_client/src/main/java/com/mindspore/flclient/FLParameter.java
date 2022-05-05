@@ -16,8 +16,6 @@
 
 package com.mindspore.flclient;
 
-import static com.mindspore.flclient.LocalFLParameter.ALBERT;
-
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.compression.CompressMode;
 import com.mindspore.flclient.model.RunType;
@@ -241,85 +239,6 @@ public class FLParameter {
         this.iflJobResultCallback = iflJobResultCallback;
     }
 
-    public String getTrainDataset() {
-        if (trainDataset == null || trainDataset.isEmpty()) {
-            LOGGER.severe("[flParameter] the parameter of <trainDataset> is null or empty, please set " +
-                    "it before using");
-            throw new IllegalArgumentException();
-        }
-        return trainDataset;
-    }
-
-    public void setTrainDataset(String trainDataset) {
-        LOGGER.warning(Common.LOG_DEPRECATED);
-        String realTrainDataset = Common.getRealPath(trainDataset);
-        if (Common.checkPath(realTrainDataset)) {
-            this.trainDataset = realTrainDataset;
-        } else {
-            LOGGER.severe("[flParameter] the parameter of <trainDataset> does not exist, please check " +
-                    "it before setting");
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public String getVocabFile() {
-        if ("null".equals(vocabFile) && ALBERT.equals(flName)) {
-            LOGGER.severe("[flParameter] the parameter of <vocabFile> is null, please set it before " +
-                    "using");
-            throw new IllegalArgumentException();
-        }
-        return vocabFile;
-    }
-
-    public void setVocabFile(String vocabFile) {
-        LOGGER.warning(Common.LOG_DEPRECATED);
-        String realVocabFile = Common.getRealPath(vocabFile);
-        if (Common.checkPath(realVocabFile)) {
-            this.vocabFile = realVocabFile;
-        } else {
-            LOGGER.severe("[flParameter] the parameter of <vocabFile> does not exist, please check it " +
-                    "before setting");
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public String getIdsFile() {
-        if ("null".equals(idsFile) && ALBERT.equals(flName)) {
-            LOGGER.severe("[flParameter] the parameter of <idsFile> is null, please set it before " +
-                    "using");
-            throw new IllegalArgumentException();
-        }
-        return idsFile;
-    }
-
-    public void setIdsFile(String idsFile) {
-        LOGGER.warning(Common.LOG_DEPRECATED);
-        String realIdsFile = Common.getRealPath(idsFile);
-        if (Common.checkPath(realIdsFile)) {
-            this.idsFile = realIdsFile;
-        } else {
-            LOGGER.severe("[flParameter] the parameter of <idsFile> does not exist, please check it " +
-                    "before setting");
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public String getTestDataset() {
-        return testDataset;
-    }
-
-    public void setTestDataset(String testDataset) {
-        LOGGER.warning(Common.LOG_DEPRECATED);
-        String realTestDataset = Common.getRealPath(testDataset);
-        if (Common.checkPath(realTestDataset)) {
-            this.testDataset = realTestDataset;
-        } else {
-            LOGGER.severe("[flParameter] the parameter of <testDataset> does not exist, please check it" +
-                    " before setting");
-            throw new IllegalArgumentException();
-        }
-    }
-
     public String getFlName() {
         if (flName == null || flName.isEmpty()) {
             LOGGER.severe("[flParameter] the parameter of <flName> is null or empty, please set it " +
@@ -371,16 +290,6 @@ public class FLParameter {
                     " it before setting");
             throw new IllegalArgumentException();
         }
-    }
-
-    public boolean isUseSSL() {
-        return useSSL;
-    }
-
-    public void setUseSSL(boolean useSSL) {
-        LOGGER.warning("Certificate authentication is required for https communication, this parameter " +
-                "is true by default and no need to set it, " + Common.LOG_DEPRECATED);
-        this.useSSL = useSSL;
     }
 
     public String getSslProtocol() {

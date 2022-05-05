@@ -17,7 +17,7 @@ import argparse
 import subprocess
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Finish test_mobile_lenet.py case")
+    parser = argparse.ArgumentParser(description="Stop cluster now")
     parser.add_argument("--scheduler_port", type=int, default=8113)
 
     args, _ = parser.parse_known_args()

@@ -16,11 +16,11 @@
 
 package com.mindspore.flclient.demo.common;
 
+import com.mindspore.Model;
 import com.mindspore.flclient.model.Callback;
 import com.mindspore.flclient.model.CommonUtils;
 import com.mindspore.flclient.model.Status;
-import com.mindspore.lite.LiteSession;
-import com.mindspore.lite.MSTensor;
+import com.mindspore.MSTensor;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,8 +41,8 @@ public class ClassifierAccuracyCallback extends Callback {
     /**
      * Defining a constructor of  ClassifierAccuracyCallback.
      */
-    public ClassifierAccuracyCallback(LiteSession session, int batchSize, int numOfClass, List<Integer> targetLabels) {
-        super(session);
+    public ClassifierAccuracyCallback(Model model, int batchSize, int numOfClass, List<Integer> targetLabels) {
+        super(model);
         this.batchSize = batchSize;
         this.numOfClass = numOfClass;
         this.targetLabels = targetLabels;

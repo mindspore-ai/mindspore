@@ -6,7 +6,6 @@
  * Detailed information about configuring a multi-project build in Gradle can be found
  * in the user manual at https://docs.gradle.org/6.6/userguide/multi_project_builds.html
  */
-
-includeFlat('common')
-includeFlat('linux_x86')
+include(':mindspore-lite-java')
+project(':mindspore-lite-java').projectDir = new File(settingsDir,'../../')
 rootProject.name = 'flclient'
