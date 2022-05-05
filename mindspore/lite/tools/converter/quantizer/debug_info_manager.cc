@@ -25,6 +25,8 @@
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "src/common/file_utils.h"
+#include "tools/common/string_util.h"
 
 namespace mindspore::lite {
 namespace {
@@ -166,16 +168,19 @@ int DebugInfoManager::SaveInfo(const std::string &file_path) {
   return RET_OK;
 }
 
-int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor) {
-  if (tensor.data_type() == kNumberTypeFloat32) {
-    GetStatByTensor<float>(static_cast<float *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
-  } else if (tensor.data_type() == kNumberTypeInt32) {
-    GetStatByTensor<int>(static_cast<int *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
-  } else if (tensor.data_type() == kNumberTypeInt8) {
-    GetStatByTensor<int8_t>(static_cast<int8_t *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
-  } else {
-    MS_LOG(ERROR) << tensor.tensor_name() << " unsupported data type " << tensor.data_type();
-    return RET_ERROR;
+int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
+                                          const quant::DebugMode &debug_mode) {
+  if (debug_mode == quant::DETAIL) {
+    if (tensor.data_type() == kNumberTypeFloat32) {
+      GetStatByTensor<float>(static_cast<float *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
+    } else if (tensor.data_type() == kNumberTypeInt32) {
+      GetStatByTensor<int>(static_cast<int *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
+    } else if (tensor.data_type() == kNumberTypeInt8) {
+      GetStatByTensor<int8_t>(static_cast<int8_t *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
+    } else {
+      MS_LOG(ERROR) << tensor.tensor_name() << " unsupported data type " << tensor.data_type();
+      return RET_ERROR;
+    }
   }
   quant_debug_info->clip = 0;
 
@@ -197,7 +202,7 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
 
 int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tensor *> &inputs,
                                          OpParameter *op_parameter, int tensor_index, QuantDebugInfo *quant_debug_info,
-                                         const mindspore::lite::Tensor &tensor) {
+                                         const mindspore::lite::Tensor &tensor, const quant::DebugMode &debug_mode) {
   MS_CHECK_TRUE_MSG(quant_debug_info != nullptr, RET_ERROR, "quant_debug_info is nullptr.");
   auto preferred_dim =
     mindspore::lite::WeightDecoder::GetPreferredDim(inputs, op_parameter, tensor_index, tensor.shape(), Version());
@@ -215,7 +220,9 @@ int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tens
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(quant_data);
-  GetStatByTensor<float>(static_cast<float *>(quant_data), tensor.ElementsNum(), quant_debug_info);
+  if (debug_mode == quant::DETAIL) {
+    GetStatByTensor<float>(static_cast<float *>(quant_data), tensor.ElementsNum(), quant_debug_info);
+  }
 
   size_t buf_size = tensor.ElementsNum() * sizeof(float);
   quant_debug_info->tensor_data.data = malloc(buf_size);
@@ -233,9 +240,8 @@ int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tens
   return RET_OK;
 }
 
-int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, OpParameter *op_parameter,
-                                    bool is_input, int tensor_index, mindspore::lite::Tensor *origin_tensor) {
-  CHECK_NULL_RETURN(op_parameter);
+int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input, int tensor_index,
+                                    mindspore::lite::Tensor *origin_tensor, const quant::DebugMode &debug_mode) {
   CHECK_NULL_RETURN(origin_tensor);
 
   if (call_back_param.node_type == schema::EnumNamePrimitiveType(schema::PrimitiveType_QuantDTypeCast)) {
@@ -249,7 +255,7 @@ int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_
   origin_debug_info.tensor_name = origin_tensor->tensor_name();
   auto is_const = origin_tensor->category() == CONST_TENSOR || origin_tensor->category() == CONST_SCALAR;
   origin_debug_info.tensor_type_flag = is_const ? WEIGHT : ACTIVATION;
-  auto ret = SetOriginStaticInfo(&origin_debug_info, *origin_tensor);
+  auto ret = SetOriginStaticInfo(&origin_debug_info, *origin_tensor, debug_mode);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << origin_tensor->tensor_name() << " get origin static info failed.";
     return RET_ERROR;
@@ -272,7 +278,8 @@ int DebugInfoManager::AddOriginInfo(const mindspore::MSCallBackParam &call_back_
 
 int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                                       const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter,
-                                      bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor) {
+                                      bool is_input, int tensor_index, mindspore::lite::Tensor *compared_tensor,
+                                      const quant::DebugMode &debug_mode) {
   CHECK_NULL_RETURN(op_parameter);
   CHECK_NULL_RETURN(compared_tensor);
   QuantDebugInfo compared_debug_info;
@@ -285,13 +292,14 @@ int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_bac
   auto is_const = compared_tensor->category() == CONST_TENSOR || compared_tensor->category() == CONST_SCALAR;
   compared_debug_info.tensor_type_flag = is_const ? WEIGHT : ACTIVATION;
   if (!compared_tensor->quant_params().empty()) {
-    auto ret = SetQuantStaticInfo(inputs, op_parameter, tensor_index, &compared_debug_info, *compared_tensor);
+    auto ret =
+      SetQuantStaticInfo(inputs, op_parameter, tensor_index, &compared_debug_info, *compared_tensor, debug_mode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << compared_tensor->tensor_name() << " get quant static info failed.";
       return RET_ERROR;
     }
   } else {
-    auto ret = SetOriginStaticInfo(&compared_debug_info, *compared_tensor);
+    auto ret = SetOriginStaticInfo(&compared_debug_info, *compared_tensor, debug_mode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << compared_tensor->tensor_name() << " get origin static info failed.";
       return RET_ERROR;
@@ -302,7 +310,7 @@ int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_bac
 }
 
 std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseInputTensors(
-  const mindspore::lite::Model &model) {
+  const mindspore::lite::LiteModel &model) {
   std::map<std::string, mindspore::schema::Tensor *> maps;
   for (auto node : model.all_nodes_) {
     for (auto index : node->input_indices_) {
@@ -357,7 +365,7 @@ int DebugInfoManager::GetDataFromTensorMap(const mindspore::schema::Tensor &sche
 }
 
 int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                     mindspore::tensor::MSTensor *tensor, mindspore::lite::Tensor *new_tensor) {
+                                     mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor) {
   auto iter = input_tensor_map.find(tensor->tensor_name());
   if (iter == input_tensor_map.end()) {
     MS_LOG(ERROR) << tensor->tensor_name() << " find failed.";
@@ -379,13 +387,16 @@ int DebugInfoManager::GetConstTensor(const std::map<std::string, mindspore::sche
 
 MSKernelCallBack DebugInfoManager::GetOriginBeforeCallBack(
   const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-  const std::map<std::string, OpParameter *> &op_parameters) {
+  const std::map<std::string, OpParameter *> &op_parameters, const quant::DebugMode &debug_mode) {
   auto before_callback = [&](const std::vector<mindspore::MSTensor> &inputs,
                              const std::vector<mindspore::MSTensor> &outputs, const MSCallBackParam &call_param) {
     for (size_t i = 0; i < inputs.size(); ++i) {
       auto tensor = inputs.at(i);
+      if (debug_mode == quant::FAST) {
+        continue;
+      }
       auto lite_tensor = quant::MSTensorToLiteTensor(inputs.at(i));
-      MS_LOG(INFO) << " Get " << tensor.Name() << " statistics info.";
+      MS_LOG(INFO) << "Get input " << tensor.Name() << " statistics info.";
       if (tensor.IsConst()) {
         mindspore::lite::Tensor new_tensor;
         auto ret = GetConstTensor(input_tensor_map, lite_tensor, &new_tensor);
@@ -393,14 +404,13 @@ MSKernelCallBack DebugInfoManager::GetOriginBeforeCallBack(
           MS_LOG(ERROR) << tensor.Name() << " get const tensor failed.";
           return false;
         }
-        ret = AddOriginInfo(call_param, op_parameters.at(call_param.node_name), true, i, &new_tensor);
+        ret = AddOriginInfo(call_param, true, i, &new_tensor, debug_mode);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << tensor.Name() << " add origin info failed.";
           return false;
         }
       } else {
-        auto ret = AddOriginInfo(call_param, op_parameters.at(call_param.node_name), true, i,
-                                 static_cast<mindspore::lite::Tensor *>(lite_tensor));
+        auto ret = AddOriginInfo(call_param, true, i, static_cast<mindspore::lite::Tensor *>(lite_tensor), debug_mode);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << tensor.Name() << " add origin info failed.";
           return false;
@@ -414,14 +424,13 @@ MSKernelCallBack DebugInfoManager::GetOriginBeforeCallBack(
 
 MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
   const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-  const std::map<std::string, OpParameter *> &op_parameters) {
+  const std::map<std::string, OpParameter *> &op_parameters, const quant::DebugMode &debug_mode) {
   auto before_callback = [&](const std::vector<mindspore::MSTensor> &inputs,
                              const std::vector<mindspore::MSTensor> &outputs, const MSCallBackParam &call_param) {
     auto lite_inputs = quant::MSTensorToLiteTensors(inputs);
     for (size_t i = 0; i < inputs.size(); ++i) {
       auto tensor = inputs.at(i);
       auto lite_tensor = quant::MSTensorToLiteTensor(tensor);
-      MS_LOG(INFO) << " Get " << tensor.Name() << " statistics info.";
       if (save_flag_ && !tensor.QuantParams().empty()) {
         QuantParamExtend quant_param;
         quant_param.node_name = call_param.node_name;
@@ -432,6 +441,10 @@ MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
         quant_param.dims = lite_tensor->shape();
         quant_params_.push_back(quant_param);
       }
+      if (debug_mode == quant::FAST && (origin_outputs_.find(tensor.Name()) == origin_outputs_.end())) {
+        continue;
+      }
+      MS_LOG(INFO) << "Get input " << tensor.Name() << " statistics info.";
       auto is_const = static_cast<mindspore::lite::Tensor *>(lite_tensor)->category() == CONST_TENSOR ||
                       static_cast<mindspore::lite::Tensor *>(lite_tensor)->category() == CONST_SCALAR;
       if (is_const) {
@@ -441,14 +454,15 @@ MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
           MS_LOG(ERROR) << tensor.Name() << " get const tensor failed.";
           return false;
         }
-        ret = AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), true, i, &new_tensor);
+        ret = AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), true, i, &new_tensor,
+                              debug_mode);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << tensor.Name() << " add compared info failed.";
           return false;
         }
       } else {
         auto ret = AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), true, i,
-                                   static_cast<mindspore::lite::Tensor *>(lite_tensor));
+                                   lite_tensor, debug_mode);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << tensor.Name() << " add compared info failed.";
           return false;
@@ -462,16 +476,16 @@ MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
 
 MSKernelCallBack DebugInfoManager::GetBeforeCallBack(
   const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-  const std::map<std::string, OpParameter *> &op_parameters, bool is_origin) {
+  const std::map<std::string, OpParameter *> &op_parameters, bool is_origin, const quant::DebugMode &debug_mode) {
   if (is_origin) {
-    return GetOriginBeforeCallBack(input_tensor_map, op_parameters);
+    return GetOriginBeforeCallBack(input_tensor_map, op_parameters, debug_mode);
   } else {
-    return GetQuantBeforeCallBack(input_tensor_map, op_parameters);
+    return GetQuantBeforeCallBack(input_tensor_map, op_parameters, debug_mode);
   }
 }
 
 MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, OpParameter *> &op_parameters,
-                                                    bool is_origin) {
+                                                    bool is_origin, const quant::DebugMode &debug_mode) {
   MSKernelCallBack after_callback;
   if (is_origin) {
     after_callback = [&](const std::vector<mindspore::MSTensor> &inputs,
@@ -490,8 +504,14 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
           quant_param.dims = lite_tensor->shape();
           quant_params_.push_back(quant_param);
         }
-        AddOriginInfo(call_param, op_parameters.at(call_param.node_name), false, i,
-                      static_cast<mindspore::lite::Tensor *>(lite_tensor));
+        // subgraph isolation by appending "_duplicate" to output tensor
+        std::string delimiter = "_duplicate";
+        std::vector<std::string> tensor_names = SplitStringToVector(tensor.Name(), delimiter);
+        if (debug_mode == quant::FAST && origin_outputs_.find(tensor_names[0]) == origin_outputs_.end()) {
+          continue;
+        }
+        MS_LOG(INFO) << "Get output " << tensor.Name() << " statistics info.";
+        AddOriginInfo(call_param, false, i, static_cast<mindspore::lite::Tensor *>(lite_tensor), debug_mode);
       }
       return true;
     };
@@ -501,10 +521,14 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
       // all outputs are same dtype.
       for (size_t i = 0; i < outputs.size(); ++i) {
         auto tensor = outputs.at(i);
+        if (debug_mode == quant::FAST && (origin_outputs_.find(tensor.Name()) == origin_outputs_.end())) {
+          continue;
+        }
+        MS_LOG(INFO) << " Get output " << tensor.Name() << " statistics info.";
         auto lite_tensor = quant::MSTensorToLiteTensor(tensor);
         auto lite_inputs = quant::MSTensorToLiteTensors(inputs);
-        AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), false, i,
-                        static_cast<mindspore::lite::Tensor *>(lite_tensor));
+        AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), false, i, lite_tensor,
+                        debug_mode);
       }
       return true;
     };
@@ -574,7 +598,7 @@ int DebugInfoManager::SaveQuantParam(const std::string &file_path) {
   return RET_OK;
 }
 
-int DebugInfoManager::GetClipAndCos() {
+int DebugInfoManager::GetClipAndCos(const quant::DebugMode &debug_mode) {
   for (auto &info : compared_info_) {
     auto iter = origin_info_.find(info.primary_key);
     if (iter == origin_info_.end()) {
@@ -590,87 +614,172 @@ int DebugInfoManager::GetClipAndCos() {
     }
     info.cos_similarity = mindspore::lite::GetCosSimilarity(iter->second.tensor_data.data, info.tensor_data.data,
                                                             info.tensor_data.elements_num, info.tensor_data.data_type);
-    info.clip = mindspore::lite::GetClipRate(iter->second.tensor_data.data, info.tensor_data.data,
-                                             info.tensor_data.elements_num, info.tensor_data.data_type);
+    if (debug_mode == quant::DETAIL) {
+      info.clip = mindspore::lite::GetClipRate(iter->second.tensor_data.data, info.tensor_data.data,
+                                               info.tensor_data.elements_num, info.tensor_data.data_type);
+    }
   }
   return RET_OK;
+}
+
+int DebugInfoManager::GetOutputInfo() {
+  std::vector<QuantDebugInfo> output_info;
+  for (auto iter = compared_info_.begin(); iter != compared_info_.end(); ++iter) {
+    if (origin_outputs_.find(iter->tensor_name) != origin_outputs_.end() && iter->primary_key.in_out_flag == OUTPUT) {
+      MS_LOG(INFO) << "output tensor name: " << iter->tensor_name << " data_type_flag: " << iter->data_type_flag;
+      output_info.push_back(*iter);
+    }
+  }
+  output_infos_.push_back(output_info);
+  return RET_OK;
+}
+
+int DebugInfoManager::SaveOutputInfo(const std::string &file_path) {
+  if (output_infos_.empty()) {
+    return RET_OK;
+  }
+  std::ofstream out_file;
+  out_file.open(file_path, std::ios::out);
+  if (!out_file.is_open()) {
+    MS_LOG(ERROR) << "file open failed";
+    return RET_ERROR;
+  }
+  out_file << "Round,TensorName,CosineSimilarity,";
+  out_file << "\n";
+  for (size_t round = 0; round < output_infos_.size(); round++) {
+    for (const auto &param : output_infos_[round]) {
+      out_file << round << ",";
+      out_file << param.tensor_name << ",";
+      out_file << param.cos_similarity << ",";
+      out_file << "\n";
+    }
+  }
+  out_file.close();
+  std::cout << "Success save quant param to " + file_path << "\n";
+  return RET_OK;
+}
+
+int DebugInfoManager::StatisticsDataPerRound(
+  const std::shared_ptr<mindspore::Model> &origin, const std::shared_ptr<mindspore::Model> &quant,
+  const std::map<std::string, OpParameter *> &op_parameters, const converter::Flags &config,
+  const std::map<std::string, mindspore::schema::Tensor *> &origin_input_tensor_map,
+  const std::map<std::string, mindspore::schema::Tensor *> &quant_input_tensor_map, const int &round) {
+  int ret;
+  auto data_preprocess = config.dataPreProcessParam;
+  for (auto tensor : origin->GetInputs()) {
+    if (data_preprocess.calibrate_size > 0) {
+      ret = preprocess::PreProcess(data_preprocess, tensor.Name(), round, &tensor);
+    } else {
+      ret = GenerateRandomData(&tensor);
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "round" << round << ":" << tensor.Name() << " pre-process failed.";
+      return ret;
+    }
+  }
+  std::cout << "Statistics the original data distribution. Round " << round << std::endl;
+  auto origin_before_callBack =
+    GetBeforeCallBack(origin_input_tensor_map, op_parameters, true, config.commonQuantParam.debug_mode);
+  auto origin_after_callBack = GetAfterCallBack(op_parameters, true, config.commonQuantParam.debug_mode);
+  auto origin_outputs = origin->GetOutputs();
+  auto status = origin->Predict(origin->GetInputs(), &origin_outputs, origin_before_callBack, origin_after_callBack);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "round:" << round << " origin model run graph failed.";
+    return RET_ERROR;
+  }
+
+  std::cout << "Statistics the quant data distribution. Round " << round << std::endl;
+  auto quant_before_callBack =
+    GetBeforeCallBack(quant_input_tensor_map, op_parameters, false, config.commonQuantParam.debug_mode);
+  auto quant_after_callBack = GetAfterCallBack(op_parameters, false, config.commonQuantParam.debug_mode);
+  for (auto tensor : quant->GetInputs()) {
+    auto tensor_data = tensor.MutableData();
+    CHECK_NULL_RETURN(tensor_data);
+    ret = memcpy_s(tensor_data, tensor.DataSize(), origin->GetInputByTensorName(tensor.Name()).Data().get(),
+                   origin->GetInputByTensorName(tensor.Name()).DataSize());
+    if (ret != EOK) {
+      MS_LOG(ERROR) << tensor.Name() << " memcpy failed.";
+      return RET_ERROR;
+    }
+  }
+  auto quant_outputs = quant->GetOutputs();
+  status = quant->Predict(quant->GetInputs(), &quant_outputs, quant_before_callBack, quant_after_callBack);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "round:" << round << " quant model run graph failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const std::string &file_name) {
+  auto real_path = RealPath(dir_path.c_str());
+  std::string file_path{};
+#ifdef _WIN32
+  file_path = real_path + "\\" + file_name;
+#else
+  file_path = real_path + "/" + file_name;
+#endif
+  return file_path;
 }
 
 int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Model> &origin,
                                              const std::shared_ptr<mindspore::Model> &quant,
                                              const std::map<std::string, OpParameter *> &op_parameters,
-                                             const std::string &debug_info_save_path,
-                                             const preprocess::DataPreProcessParam &data_preprocess,
-                                             const mindspore::lite::Model *origin_lite_model,
-                                             const mindspore::lite::Model *quant_lite_model) {
+                                             const converter::Flags &config,
+                                             const mindspore::lite::LiteModel &origin_lite_model,
+                                             const mindspore::lite::LiteModel &quant_lite_model) {
   auto begin = GetTimeUs();
-  auto origin_input_tensor_map = ParseInputTensors(*origin_lite_model);
-  auto quant_input_tensor_map = ParseInputTensors(*quant_lite_model);
+  auto origin_input_tensor_map = ParseInputTensors(origin_lite_model);
+  auto quant_input_tensor_map = ParseInputTensors(quant_lite_model);
+  for (auto tensor : origin->GetOutputs()) {
+    origin_outputs_[tensor.Name()] = tensor;
+  }
   int ret;
+  auto data_preprocess = config.dataPreProcessParam;
   // When the calibration data set does not exist, use 1 round of random numbers for comparison
   int rounds = data_preprocess.calibrate_size > 0 ? data_preprocess.calibrate_size : 1;
-
   for (int round = 0; round < rounds; round++) {
-    for (auto tensor : origin->GetInputs()) {
-      if (data_preprocess.calibrate_size > 0) {
-        ret = preprocess::PreProcess(data_preprocess, tensor.Name(), round, &tensor);
-      } else {
-        ret = GenerateRandomData(&tensor);
-      }
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "round" << round << ":" << tensor.Name() << " pre-process failed.";
-        return ret;
-      }
-    }
-    std::cout << "Statistics the original data distribution. Round " << round << std::endl;
-    auto origin_before_callBack = GetBeforeCallBack(origin_input_tensor_map, op_parameters, true);
-    auto origin_after_callBack = GetAfterCallBack(op_parameters, true);
-    auto origin_outputs = origin->GetOutputs();
-    auto status = origin->Predict(origin->GetInputs(), &origin_outputs, origin_before_callBack, origin_after_callBack);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "round:" << round << " origin model run graph failed.";
+    ret = StatisticsDataPerRound(origin, quant, op_parameters, config, origin_input_tensor_map, quant_input_tensor_map,
+                                 round);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Statistics Data failed for round: " << round;
       FreeBuffer();
       return RET_ERROR;
     }
-    std::cout << "Statistics the quant data distribution. Round " << round << std::endl;
-    auto quant_before_callBack = GetBeforeCallBack(quant_input_tensor_map, op_parameters, false);
-    auto quant_after_callBack = GetAfterCallBack(op_parameters, false);
-    for (auto tensor : quant->GetInputs()) {
-      auto tensor_data = tensor.MutableData();
-      CHECK_NULL_RETURN(tensor_data);
-      ret = memcpy_s(tensor_data, tensor.DataSize(), origin->GetInputByTensorName(tensor.Name()).Data().get(),
-                     origin->GetInputByTensorName(tensor.Name()).DataSize());
-      if (ret != EOK) {
-        MS_LOG(ERROR) << tensor.Name() << " memcpy failed.";
-        return RET_ERROR;
-      }
-    }
-    auto quant_outputs = quant->GetOutputs();
-    status = quant->Predict(quant->GetInputs(), &quant_outputs, quant_before_callBack, quant_after_callBack);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "round:" << round << " quant model run graph failed.";
-      FreeBuffer();
-      return RET_ERROR;
-    }
-    ret = GetClipAndCos();
+    ret = GetClipAndCos(config.commonQuantParam.debug_mode);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Get clip and cos failed.";
-      return ret;
-    }
-    auto info_save_path = debug_info_save_path + FILE_SEPARATOR + "round" + "_" + std::to_string(round) + ".csv";
-    ret = SaveInfo(info_save_path);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Failed to save debug info to " + info_save_path;
       FreeBuffer();
       return ret;
+    }
+    GetOutputInfo();
+    if (config.commonQuantParam.debug_mode == quant::DETAIL) {
+      auto file_name = "round_" + std::to_string(round) + ".csv";
+      auto file_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
+      ret = SaveInfo(file_path);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Failed to save debug info to " + file_path;
+        FreeBuffer();
+        return ret;
+      }
     }
     FreeBuffer();
     save_flag_ = false;
   }
-  auto quant_param_save_path = debug_info_save_path + FILE_SEPARATOR + "quant_param" + ".csv";
+
+  auto file_name = "quant_param.csv";
+  auto quant_param_save_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
   ret = SaveQuantParam(quant_param_save_path);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Failed to quant param to " + quant_param_save_path;
+    MS_LOG(ERROR) << "Failed to save quant param to " + quant_param_save_path;
+    return ret;
+  }
+
+  file_name = "output_param.csv";
+  auto output_param_save_path = CreateFilePath(config.commonQuantParam.debug_info_save_path, file_name);
+  ret = SaveOutputInfo(output_param_save_path);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Failed to save output param to " + output_param_save_path;
     return ret;
   }
   auto end = GetTimeUs();

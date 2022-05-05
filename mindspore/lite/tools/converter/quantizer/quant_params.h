@@ -34,6 +34,11 @@ enum TargetDevice {
   NVGPU,
 };
 
+enum DebugMode {
+  FAST,
+  DETAIL,
+};
+
 struct CommonQuantParam {
   schema::QuantType quant_type = schema::QuantType_QUANT_NONE;
   int bit_num = 8;
@@ -41,6 +46,7 @@ struct CommonQuantParam {
   int min_quant_weight_channel = 16;
   bool is_debug = false;
   std::string debug_info_save_path;
+  DebugMode debug_mode = DETAIL;
   std::set<std::string> skip_quant_node;
   int thread_num = 4;
 };

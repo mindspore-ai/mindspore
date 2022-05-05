@@ -110,7 +110,6 @@ int QuantParamParser::ParseCommonQuant(const CommonQuantString &common_quant_str
   if (!common_quant->debug_info_save_path.empty()) {
     common_quant->is_debug = true;
   }
-
   return RET_OK;
 }
 
