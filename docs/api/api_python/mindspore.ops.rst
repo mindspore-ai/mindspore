@@ -454,6 +454,7 @@ Array操作
     mindspore.ops.Stack
     mindspore.ops.StridedSlice
     mindspore.ops.TensorScatterAdd
+    mindspore.ops.TensorScatterDiv
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterSub

@@ -252,6 +252,7 @@ Array操作
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.tensor_scatter_add
+    mindspore.ops.tensor_scatter_div
     mindspore.ops.space_to_batch_nd
     mindspore.ops.tile
     mindspore.ops.transpose
@@ -279,8 +280,6 @@ Array操作
      - Refer to :class:`mindspore.ops.Stack`.
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
-   * - mindspore.ops.tensor_scatter_div
-     - Refer to :class:`mindspore.ops.TensorScatterDiv`.
    * - mindspore.ops.tensor_scatter_update
      - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
    * - mindspore.ops.tensor_slice
