@@ -58,11 +58,8 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
 }
 
 FuncGraphPtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &kernel_node)> &func) {
-  auto processor = kernel::GetStrProcessorFromContext();
-  bool fallback = processor != kernel::kProcessorAiCore;
-  if (common::GetEnv("EXPANDERFALLBACK") == "on") fallback = true;
-  if (common::GetEnv("EXPANDERFALLBACK") == "off") fallback = false;
-  if (!fallback) return nullptr;
+  if (common::AnfAlgo::IsDynamicShape(node)) return nullptr;
+  if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") return nullptr;
   auto expand_fg = GetCNodeFuncGraph(graphkernel::GetExpander(node)->Run(node));
   if (expand_fg != nullptr) {
     auto todos = TopoSort(expand_fg->get_return());
