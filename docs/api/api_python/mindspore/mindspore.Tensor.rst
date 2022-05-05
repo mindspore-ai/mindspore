@@ -686,6 +686,24 @@ mindspore.Tensor
 
         - **ValueError** - `axis` 超出范围，或 `mode` 被设置为'raise'、'wrap'和'clip'以外的值。
 
+    .. py:method:: tensor_scatter_add(indices, updates)
+
+        根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
+
+        **参数：**
+
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相加操作的Tensor，其数据类型与该Tensor相同。updates.shape应等于indices.shape[:-1] + self.shape[indices.shape[-1]:]。
+
+        **返回：**
+
+        Tensor，shape和数据类型与原Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+
     .. py:method:: tensor_scatter_div(indices, updates)
 
         根据指定的索引, 通过除法进行计算, 将输出赋值到输出Tensor中。
