@@ -15,7 +15,6 @@
  */
 
 #include "nnacl/infer/where_infer.h"
-#include <stdio.h>
 #include "nnacl/infer/infer_register.h"
 
 static size_t GetAxisout(const TensorC *input0, const TensorC *input1, const TensorC *input2, size_t index) {
