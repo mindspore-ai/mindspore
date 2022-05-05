@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_with_bounding_boxes, InvalidBBoxType, check_bad_bbox, \
     save_and_check_md5
@@ -43,7 +43,7 @@ def test_resize_with_bbox_op_voc_c(plot_vis=False):
 
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.ResizeWithBBox(100)
+    test_op = vision.ResizeWithBBox(100)
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -79,7 +79,7 @@ def test_resize_with_bbox_op_coco_c(plot_vis=False):
     dataCOCO2 = ds.CocoDataset(DATA_DIR_2[0], annotation_file=DATA_DIR_2[1], task="Detection",
                                decode=True, shuffle=False)
 
-    test_op = c_vision.ResizeWithBBox(200)
+    test_op = vision.ResizeWithBBox(200)
 
     # map to apply ops
 
@@ -112,7 +112,7 @@ def test_resize_with_bbox_op_edge_c(plot_vis=False):
 
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
 
-    test_op = c_vision.ResizeWithBBox(500)
+    test_op = vision.ResizeWithBBox(500)
 
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(
@@ -146,7 +146,7 @@ def test_resize_with_bbox_op_invalid_c():
 
     try:
         # invalid interpolation value
-        c_vision.ResizeWithBBox(400, interpolation="invalid")
+        vision.ResizeWithBBox(400, interpolation="invalid")
 
     except TypeError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
@@ -158,7 +158,7 @@ def test_resize_with_bbox_op_bad_c():
     Tests ResizeWithBBox Op with invalid bounding boxes, expected to catch multiple errors
     """
     logger.info("test_resize_with_bbox_op_bad_c")
-    test_op = c_vision.ResizeWithBBox((200, 300))
+    test_op = vision.ResizeWithBBox((200, 300))
 
     data_voc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
@@ -179,7 +179,7 @@ def test_resize_with_bbox_op_params_outside_of_interpolation_dict():
     size = (500, 500)
     more_para = None
     with pytest.raises(KeyError, match="None"):
-        c_vision.ResizeWithBBox(size, more_para)
+        vision.ResizeWithBBox(size, more_para)
 
 
 if __name__ == "__main__":

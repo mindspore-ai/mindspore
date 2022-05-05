@@ -17,10 +17,8 @@ Testing the random vertical flip op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.transforms.c_transforms as ops
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as ops
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, visualize_image, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -50,8 +48,8 @@ def test_random_vertical_op(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_vertical_op = c_vision.RandomVerticalFlip(1.0)
+    decode_op = vision.Decode()
+    random_vertical_op = vision.RandomVerticalFlip(1.0)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_vertical_op, input_columns=["image"])
 
@@ -81,7 +79,7 @@ def test_random_vertical_op(plot=False):
 
 def test_random_vertical_valid_prob_c():
     """
-    Test RandomVerticalFlip op with c_transforms: valid non-default input, expect to pass
+    Test RandomVerticalFlip op with C implementation: valid non-default input, expect to pass
     """
     logger.info("test_random_vertical_valid_prob_c")
     original_seed = config_get_set_seed(0)
@@ -89,8 +87,8 @@ def test_random_vertical_valid_prob_c():
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_horizontal_op = c_vision.RandomVerticalFlip(0.8)
+    decode_op = vision.Decode()
+    random_horizontal_op = vision.RandomVerticalFlip(0.8)
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_horizontal_op, input_columns=["image"])
 
@@ -104,7 +102,7 @@ def test_random_vertical_valid_prob_c():
 
 def test_random_vertical_valid_prob_py():
     """
-    Test RandomVerticalFlip op with py_transforms: valid non-default input, expect to pass
+    Test RandomVerticalFlip op with Python implementation: valid non-default input, expect to pass
     """
     logger.info("test_random_vertical_valid_prob_py")
     original_seed = config_get_set_seed(0)
@@ -113,11 +111,11 @@ def test_random_vertical_valid_prob_py():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomVerticalFlip(0.8),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomVerticalFlip(0.8),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_vertical_01_py_result.npz"
@@ -130,16 +128,16 @@ def test_random_vertical_valid_prob_py():
 
 def test_random_vertical_invalid_prob_c():
     """
-    Test RandomVerticalFlip op in c_transforms: invalid input, expect to raise error
+    Test RandomVerticalFlip op in C implementation: invalid input, expect to raise error
     """
     logger.info("test_random_vertical_invalid_prob_c")
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     try:
         # Note: Valid range of prob should be [0.0, 1.0]
-        random_horizontal_op = c_vision.RandomVerticalFlip(1.5)
+        random_horizontal_op = vision.RandomVerticalFlip(1.5)
         data = data.map(operations=decode_op, input_columns=["image"])
         data = data.map(operations=random_horizontal_op, input_columns=["image"])
     except ValueError as e:
@@ -149,7 +147,7 @@ def test_random_vertical_invalid_prob_c():
 
 def test_random_vertical_invalid_prob_py():
     """
-    Test RandomVerticalFlip op in py_transforms: invalid input, expect to raise error
+    Test RandomVerticalFlip op in Python implementation: invalid input, expect to raise error
     """
     logger.info("test_random_vertical_invalid_prob_py")
 
@@ -157,12 +155,12 @@ def test_random_vertical_invalid_prob_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:
         transforms = [
-            py_vision.Decode(),
+            vision.Decode(True),
             # Note: Valid range of prob should be [0.0, 1.0]
-            py_vision.RandomVerticalFlip(1.5),
-            py_vision.ToTensor()
+            vision.RandomVerticalFlip(1.5),
+            vision.ToTensor()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = ops.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -177,21 +175,21 @@ def test_random_vertical_comp(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     # Note: The image must be flipped if prob is set to be 1
-    random_horizontal_op = c_vision.RandomVerticalFlip(1)
+    random_horizontal_op = vision.RandomVerticalFlip(1)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_horizontal_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
+        vision.Decode(True),
         # Note: The image must be flipped if prob is set to be 1
-        py_vision.RandomVerticalFlip(1),
-        py_vision.ToTensor()
+        vision.RandomVerticalFlip(1),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     images_list_c = []
@@ -218,8 +216,8 @@ def test_random_vertical_op_1():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
                     output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
-    random_vertical_op = c_vision.RandomVerticalFlip(1.0)
-    decode_op = c_vision.Decode()
+    random_vertical_op = vision.RandomVerticalFlip(1.0)
+    decode_op = vision.Decode()
 
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=decode_op, input_columns=["image_copy"])

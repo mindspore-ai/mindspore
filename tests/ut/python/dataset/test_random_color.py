@@ -19,9 +19,8 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as vision
-import mindspore.dataset.vision.py_transforms as F
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_list, diff_mse, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -45,9 +44,9 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
     # Original Images
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
-                                                                              F.Resize((224, 224)),
-                                                                              F.ToTensor()])
+    transforms_original = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
+                                                                           vision.Resize((224, 224)),
+                                                                           vision.ToTensor()])
 
     ds_original = data.map(operations=transforms_original, input_columns="image")
 
@@ -64,10 +63,10 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
             # Random Color Adjusted Images
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms_random_color = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
-                                                                                  F.Resize((224, 224)),
-                                                                                  F.RandomColor(degrees=degrees),
-                                                                                  F.ToTensor()])
+    transforms_random_color = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
+                                                                               vision.Resize((224, 224)),
+                                                                               vision.RandomColor(degrees=degrees),
+                                                                               vision.ToTensor()])
 
     ds_random_color = data.map(operations=transforms_random_color, input_columns="image")
 
@@ -147,9 +146,9 @@ def test_random_color_py_md5():
     # Generate dataset
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
-    transforms = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
-                                                                     F.RandomColor((2.0, 2.5)),
-                                                                     F.ToTensor()])
+    transforms = mindspore.dataset.transforms.transforms.Compose([vision.Decode(True),
+                                                                  vision.RandomColor((2.0, 2.5)),
+                                                                  vision.ToTensor()])
 
     data = data.map(operations=transforms, input_columns="image")
     # Compare with expected md5 from images
@@ -177,13 +176,13 @@ def test_compare_random_color_op(degrees=None, plot=False):
 
     if degrees is None:
         c_op = vision.RandomColor()
-        p_op = F.RandomColor()
+        p_op = vision.RandomColor()
     else:
         c_op = vision.RandomColor(degrees)
-        p_op = F.RandomColor(degrees)
+        p_op = vision.RandomColor(degrees)
 
-    transforms_random_color_py = mindspore.dataset.transforms.py_transforms.Compose(
-        [lambda img: img.astype(np.uint8), F.ToPIL(),
+    transforms_random_color_py = mindspore.dataset.transforms.transforms.Compose(
+        [lambda img: img.astype(np.uint8), vision.ToPIL(),
          p_op, np.array])
 
     data1 = data1.map(operations=[vision.Decode(), c_op], input_columns=["image"])

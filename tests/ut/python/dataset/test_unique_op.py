@@ -18,7 +18,7 @@ Testing unique op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as ops
+import mindspore.dataset.transforms.transforms as ops
 
 
 def compare(array, res, idx, cnt):

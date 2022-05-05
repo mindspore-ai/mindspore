@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as ops
+import mindspore.dataset.transforms.transforms as ops
 
 
 def slice_compare(array, indexing, expected_array):

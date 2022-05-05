@@ -19,10 +19,8 @@ import numpy as np
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as data_util
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as data_trans
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
@@ -37,9 +35,9 @@ def test_type_cast():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
-    type_cast_op = data_util.TypeCast(mstype.float32)
+    type_cast_op = data_trans.TypeCast(mstype.float32)
 
     ctrans = [decode_op,
               type_cast_op,
@@ -48,10 +46,10 @@ def test_type_cast():
     data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
-    transforms = [py_vision.Decode(),
-                  py_vision.ToTensor()
+    transforms = [vision.Decode(True),
+                  vision.ToTensor()
                   ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = data_trans.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
@@ -60,13 +58,13 @@ def test_type_cast():
                             data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         num_iter += 1
         c_image = item1["image"]
-        py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
 
         logger.info("shape of c_image: {}".format(c_image.shape))
-        logger.info("shape of py_image: {}".format(py_image.shape))
+        logger.info("shape of image: {}".format(image.shape))
 
         logger.info("dtype of c_image: {}".format(c_image.dtype))
-        logger.info("dtype of py_image: {}".format(py_image.dtype))
+        logger.info("dtype of image: {}".format(image.dtype))
         assert c_image.dtype == "float32"
 
 
@@ -78,9 +76,9 @@ def test_type_cast_string():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
 
-    type_cast_op = data_util.TypeCast(mstype.float16)
+    type_cast_op = data_trans.TypeCast(mstype.float16)
 
     ctrans = [decode_op,
               type_cast_op
@@ -89,10 +87,10 @@ def test_type_cast_string():
     data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
-    transforms = [py_vision.Decode(),
-                  py_vision.ToTensor()
+    transforms = [vision.Decode(True),
+                  vision.ToTensor()
                   ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = data_trans.Compose(transforms)
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
@@ -101,13 +99,13 @@ def test_type_cast_string():
                             data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         num_iter += 1
         c_image = item1["image"]
-        py_image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
 
         logger.info("shape of c_image: {}".format(c_image.shape))
-        logger.info("shape of py_image: {}".format(py_image.shape))
+        logger.info("shape of image: {}".format(image.shape))
 
         logger.info("dtype of c_image: {}".format(c_image.dtype))
-        logger.info("dtype of py_image: {}".format(py_image.dtype))
+        logger.info("dtype of image: {}".format(image.dtype))
         assert c_image.dtype == "float16"
 
 

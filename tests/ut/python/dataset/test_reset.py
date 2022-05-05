@@ -19,7 +19,7 @@ import os
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from util_minddataset import add_and_remove_cv_file
 
 np.random.seed(0)
@@ -38,9 +38,9 @@ def create_cifar_dataset1(size):
     crop_size = 64
     data = ds.Cifar100Dataset(data_dir, num_samples=size, shuffle=False)
     data = data.project(["image"])
-    pad_op = c_vision.Pad(pad_size)
+    pad_op = vision.Pad(pad_size)
     data = data.map(operations=pad_op, input_columns=["image"])
-    crop_op = c_vision.CenterCrop(crop_size)
+    crop_op = vision.CenterCrop(crop_size)
     data = data.map(operations=crop_op, input_columns=["image"])
     return data
 
@@ -53,9 +53,9 @@ def create_cifar_dataset2(size):
     data = ds.Cifar100Dataset(data_dir, num_samples=size, shuffle=False)
     data = data.repeat(repeat_count)
     data = data.project(["image"])
-    pad_op = c_vision.Pad(pad_size)
+    pad_op = vision.Pad(pad_size)
     data = data.map(operations=pad_op, input_columns=["image"])
-    crop_op = c_vision.CenterCrop(crop_size)
+    crop_op = vision.CenterCrop(crop_size)
     data = data.map(operations=crop_op, input_columns=["image"])
     return data
 

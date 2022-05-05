@@ -17,8 +17,8 @@ Testing RandomPerspective op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
@@ -37,17 +37,17 @@ def test_random_perspective_op(plot=False):
     logger.info("test_random_perspective_op")
     # define map operations
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.RandomPerspective(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomPerspective(),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
 
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
 
     #  First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -78,13 +78,13 @@ def skip_test_random_perspective_md5():
 
     # define map operations
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomPerspective(distortion_scale=0.3, prob=0.7,
-                                    interpolation=Inter.BILINEAR),
-        py_vision.Resize(1450),  # resize to a smaller size to prevent round-off error
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomPerspective(distortion_scale=0.3, prob=0.7,
+                                 interpolation=Inter.BILINEAR),
+        vision.Resize(1450),  # resize to a smaller size to prevent round-off error
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
 
     #  Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -105,7 +105,7 @@ def test_random_perspective_exception_distortion_scale_range():
     """
     logger.info("test_random_perspective_exception_distortion_scale_range")
     try:
-        _ = py_vision.RandomPerspective(distortion_scale=1.5)
+        _ = vision.RandomPerspective(distortion_scale=1.5)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input distortion_scale is not within the required interval of [0.0, 1.0]."
@@ -117,7 +117,7 @@ def test_random_perspective_exception_prob_range():
     """
     logger.info("test_random_perspective_exception_prob_range")
     try:
-        _ = py_vision.RandomPerspective(prob=1.2)
+        _ = vision.RandomPerspective(prob=1.2)
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input prob is not within the required interval of [0.0, 1.0]."

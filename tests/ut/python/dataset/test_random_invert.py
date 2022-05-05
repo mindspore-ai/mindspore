@@ -18,7 +18,7 @@ Testing RandomInvert in DE
 import numpy as np
 
 import mindspore.dataset as ds
-from mindspore.dataset.vision.c_transforms import Decode, Resize, RandomInvert, Invert
+from mindspore.dataset.vision.transforms import Decode, Resize, RandomInvert, Invert
 from mindspore import log as logger
 from util import visualize_list, visualize_image, diff_mse
 

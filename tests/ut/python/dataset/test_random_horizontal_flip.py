@@ -17,10 +17,8 @@ Testing the random horizontal flip op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.transforms.c_transforms as ops
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as ops
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, visualize_image, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -49,14 +47,16 @@ def test_random_horizontal_op(plot=False):
     logger.info("test_random_horizontal_op")
 
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_horizontal_op = c_vision.RandomHorizontalFlip(1.0)
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
+    decode_op = vision.Decode()
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_horizontal_op, input_columns=["image"])
 
     # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     data2 = data2.map(operations=decode_op, input_columns=["image"])
 
     num_iter = 0
@@ -81,16 +81,17 @@ def test_random_horizontal_op(plot=False):
 
 def test_random_horizontal_valid_prob_c():
     """
-    Test RandomHorizontalFlip op with c_transforms: valid non-default input, expect to pass
+    Test RandomHorizontalFlip op with C implementation: valid non-default input, expect to pass
     """
     logger.info("test_random_horizontal_valid_prob_c")
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_horizontal_op = c_vision.RandomHorizontalFlip(0.8)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
+    decode_op = vision.Decode()
+    random_horizontal_op = vision.RandomHorizontalFlip(0.8)
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=random_horizontal_op, input_columns=["image"])
 
@@ -104,20 +105,21 @@ def test_random_horizontal_valid_prob_c():
 
 def test_random_horizontal_valid_prob_py():
     """
-    Test RandomHorizontalFlip op with py_transforms: valid non-default input, expect to pass
+    Test RandomHorizontalFlip op with transforms: valid non-default input, expect to pass
     """
     logger.info("test_random_horizontal_valid_prob_py")
     original_seed = config_get_set_seed(0)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomHorizontalFlip(0.8),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomHorizontalFlip(0.8),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
 
     filename = "random_horizontal_01_py_result.npz"
@@ -130,44 +132,49 @@ def test_random_horizontal_valid_prob_py():
 
 def test_random_horizontal_invalid_prob_c():
     """
-    Test RandomHorizontalFlip op in c_transforms: invalid input, expect to raise error
+    Test RandomHorizontalFlip op in C implementation: invalid input, expect to raise error
     """
     logger.info("test_random_horizontal_invalid_prob_c")
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
+    decode_op = vision.Decode()
     try:
         # Note: Valid range of prob should be [0.0, 1.0]
-        random_horizontal_op = c_vision.RandomHorizontalFlip(1.5)
+        random_horizontal_op = vision.RandomHorizontalFlip(1.5)
         data = data.map(operations=decode_op, input_columns=["image"])
-        data = data.map(operations=random_horizontal_op, input_columns=["image"])
+        data = data.map(operations=random_horizontal_op,
+                        input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            e)
 
 
 def test_random_horizontal_invalid_prob_py():
     """
-    Test RandomHorizontalFlip op in py_transforms: invalid input, expect to raise error
+    Test RandomHorizontalFlip op in transforms: invalid input, expect to raise error
     """
     logger.info("test_random_horizontal_invalid_prob_py")
 
     # Generate dataset
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
 
     try:
         transforms = [
-            py_vision.Decode(),
+            vision.Decode(True),
             # Note: Valid range of prob should be [0.0, 1.0]
-            py_vision.RandomHorizontalFlip(1.5),
-            py_vision.ToTensor()
+            vision.RandomHorizontalFlip(1.5),
+            vision.ToTensor()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = ops.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
+            e)
 
 
 def test_random_horizontal_comp(plot=False):
@@ -176,22 +183,24 @@ def test_random_horizontal_comp(plot=False):
     """
     logger.info("test_random_horizontal_comp")
     # First dataset
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
+    decode_op = vision.Decode()
     # Note: The image must be flipped if prob is set to be 1
-    random_horizontal_op = c_vision.RandomHorizontalFlip(1)
+    random_horizontal_op = vision.RandomHorizontalFlip(1)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_horizontal_op, input_columns=["image"])
 
     # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
+        vision.Decode(True),
         # Note: The image must be flipped if prob is set to be 1
-        py_vision.RandomHorizontalFlip(1),
-        py_vision.ToTensor()
+        vision.RandomHorizontalFlip(1),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     images_list_c = []
@@ -209,21 +218,24 @@ def test_random_horizontal_comp(plot=False):
     if plot:
         visualize_list(images_list_c, images_list_py, visualize_mode=2)
 
+
 def test_random_horizontal_op_1():
     """
     Test RandomHorizontalFlip with different fields.
     """
     logger.info("Test RandomHorizontalFlip with different fields.")
 
-    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=[
+        "image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
                     output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
-    random_horizontal_op = c_vision.RandomHorizontalFlip(1.0)
-    decode_op = c_vision.Decode()
+    random_horizontal_op = vision.RandomHorizontalFlip(1.0)
+    decode_op = vision.Decode()
 
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=decode_op, input_columns=["image_copy"])
-    data = data.map(operations=random_horizontal_op, input_columns=["image", "image_copy"])
+    data = data.map(operations=random_horizontal_op,
+                    input_columns=["image", "image_copy"])
 
     num_iter = 0
     for data1 in data.create_dict_iterator(num_epochs=1, output_numpy=True):

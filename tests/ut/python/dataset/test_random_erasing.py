@@ -18,8 +18,8 @@ Testing RandomErasing op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.vision.py_transforms as vision
+import mindspore.dataset.transforms.transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import diff_mse, visualize_image, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -32,28 +32,28 @@ GENERATE_GOLDEN = False
 
 def test_random_erasing_op(plot=False):
     """
-    Test RandomErasing and Cutout
+    Test RandomErasing and CutOut
     """
     logger.info("test_random_erasing")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms_1 = [
-        vision.Decode(),
+        vision.Decode(True),
         vision.ToTensor(),
         vision.RandomErasing(value='random')
     ]
-    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms_2 = [
-        vision.Decode(),
+        vision.Decode(True),
         vision.ToTensor(),
-        vision.Cutout(80)
+        vision.CutOut(80, is_hwc=False)
     ]
-    transform_2 = mindspore.dataset.transforms.py_transforms.Compose(transforms_2)
+    transform_2 = mindspore.dataset.transforms.transforms.Compose(transforms_2)
     data2 = data2.map(operations=transform_2, input_columns=["image"])
 
     num_iter = 0
@@ -85,11 +85,11 @@ def test_random_erasing_md5():
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms_1 = [
-        vision.Decode(),
+        vision.Decode(True),
         vision.ToTensor(),
         vision.RandomErasing(value='random')
     ]
-    transform_1 = mindspore.dataset.transforms.py_transforms.Compose(transforms_1)
+    transform_1 = mindspore.dataset.transforms.transforms.Compose(transforms_1)
     data = data.map(operations=transform_1, input_columns=["image"])
     # Compare with expected md5 from images
     filename = "random_erasing_01_result.npz"

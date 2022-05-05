@@ -18,7 +18,7 @@ Testing RandomAutoContrast op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_list, visualize_image, diff_mse
 
@@ -34,7 +34,7 @@ def test_random_auto_contrast_pipeline(plot=False):
 
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transforms_original = [c_vision.Decode(), c_vision.Resize(size=[224, 224])]
+    transforms_original = [vision.Decode(), vision.Resize(size=[224, 224])]
     ds_original = data_set.map(operations=transforms_original, input_columns="image")
     ds_original = ds_original.batch(512)
 
@@ -48,9 +48,9 @@ def test_random_auto_contrast_pipeline(plot=False):
 
     # Randomly Automatically Contrasted Images
     data_set1 = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-    transform_random_auto_contrast = [c_vision.Decode(),
-                                      c_vision.Resize(size=[224, 224]),
-                                      c_vision.RandomAutoContrast(prob=0.6)]
+    transform_random_auto_contrast = [vision.Decode(),
+                                      vision.Resize(size=[224, 224]),
+                                      vision.RandomAutoContrast(prob=0.6)]
     ds_random_auto_contrast = data_set1.map(operations=transform_random_auto_contrast, input_columns="image")
     ds_random_auto_contrast = ds_random_auto_contrast.batch(512)
     for idx, (image, _) in enumerate(ds_random_auto_contrast):
@@ -77,9 +77,9 @@ def test_random_auto_contrast_eager():
     img = np.fromfile(image_file, dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
-    img = c_vision.Decode()(img)
-    img_auto_contrast = c_vision.AutoContrast(1.0, None)(img)
-    img_random_auto_contrast = c_vision.RandomAutoContrast(1.0, None, 1.0)(img)
+    img = vision.Decode()(img)
+    img_auto_contrast = vision.AutoContrast(1.0, None)(img)
+    img_random_auto_contrast = vision.RandomAutoContrast(1.0, None, 1.0)(img)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img_auto_contrast), img_random_auto_contrast.shape))
 
     assert img_auto_contrast.all() == img_random_auto_contrast.all()
@@ -89,8 +89,8 @@ def test_random_auto_contrast_comp(plot=False):
     """
     Test RandomAutoContrast op compared with AutoContrast op.
     """
-    random_auto_contrast_op = c_vision.RandomAutoContrast(prob=1.0)
-    auto_contrast_op = c_vision.AutoContrast()
+    random_auto_contrast_op = vision.RandomAutoContrast(prob=1.0)
+    auto_contrast_op = vision.AutoContrast()
 
     dataset1 = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     for item in dataset1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -117,7 +117,7 @@ def test_random_auto_contrast_invalid_prob():
     logger.info("test_random_auto_contrast_invalid_prob")
     dataset = ds.ImageFolderDataset(data_dir, 1, shuffle=False, decode=True)
     try:
-        random_auto_contrast_op = c_vision.RandomAutoContrast(prob=1.5)
+        random_auto_contrast_op = vision.RandomAutoContrast(prob=1.5)
         dataset = dataset.map(operations=random_auto_contrast_op, input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -131,20 +131,20 @@ def test_random_auto_contrast_invalid_ignore():
     logger.info("test_random_auto_contrast_invalid_ignore")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(),
-                                            c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(),
+                                            vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        data_set = data_set.map(operations=c_vision.RandomAutoContrast(ignore=255.5), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(ignore=255.5), input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value 255.5 is not of type" in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(), c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid ignore
-        data_set = data_set.map(operations=c_vision.RandomAutoContrast(ignore=(10, 100)), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(ignore=(10, 100)), input_columns="image")
     except TypeError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Argument ignore with value (10,100) is not of type" in str(error)
@@ -157,21 +157,21 @@ def test_random_auto_contrast_invalid_cutoff():
     logger.info("test_random_auto_contrast_invalid_cutoff")
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(),
-                                            c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(),
+                                            vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid cutoff
-        data_set = data_set.map(operations=c_vision.RandomAutoContrast(cutoff=-10.0), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(cutoff=-10.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(),
-                                            c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(),
+                                            vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
         # invalid cutoff
-        data_set = data_set.map(operations=c_vision.RandomAutoContrast(cutoff=120.0), input_columns="image")
+        data_set = data_set.map(operations=vision.RandomAutoContrast(cutoff=120.0), input_columns="image")
     except ValueError as error:
         logger.info("Got an exception in DE: {}".format(str(error)))
         assert "Input cutoff is not within the required interval of [0, 50)." in str(error)
@@ -185,11 +185,11 @@ def test_random_auto_contrast_one_channel():
     """
     logger.info("test_random_auto_contrast_one_channel")
 
-    c_op = c_vision.RandomAutoContrast()
+    c_op = vision.RandomAutoContrast()
 
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(), c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
                                             lambda img: np.array(img[:, :, 0])], input_columns=["image"])
 
         data_set = data_set.map(operations=c_op, input_columns="image")
@@ -207,11 +207,11 @@ def test_random_auto_contrast_four_dim():
     """
     logger.info("test_random_auto_contrast_four_dim")
 
-    c_op = c_vision.RandomAutoContrast()
+    c_op = vision.RandomAutoContrast()
 
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(), c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
                                             lambda img: np.array(img[2, 200, 10, 32])], input_columns=["image"])
 
         data_set = data_set.map(operations=c_op, input_columns="image")
@@ -229,11 +229,11 @@ def test_random_auto_contrast_invalid_input():
     """
     logger.info("test_random_invert_invalid_input")
 
-    c_op = c_vision.RandomAutoContrast()
+    c_op = vision.RandomAutoContrast()
 
     try:
         data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
-        data_set = data_set.map(operations=[c_vision.Decode(), c_vision.Resize((224, 224)),
+        data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
                                             lambda img: np.array(img[2, 32, 3], dtype=uint32)], input_columns=["image"])
         data_set = data_set.map(operations=c_op, input_columns="image")
 

@@ -18,10 +18,8 @@ Testing RandomCropAndResize op in DE
 import numpy as np
 import cv2
 
-import mindspore.dataset.transforms.py_transforms
-import mindspore.dataset.transforms.c_transforms as ops
-import mindspore.dataset.vision.c_transforms as c_vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as ops
+import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset.vision.utils as mode
 import mindspore.dataset as ds
 from mindspore.dataset.vision.utils import Inter
@@ -43,12 +41,12 @@ def test_random_crop_and_resize_callable():
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     img = decode_op(img)
     assert img.shape == (2268, 4032, 3)
 
     # test one tensor
-    random_crop_and_resize_op1 = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
+    random_crop_and_resize_op1 = vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
     img1 = random_crop_and_resize_op1(img)
     assert img1.shape == (256, 512, 3)
 
@@ -61,9 +59,9 @@ def test_random_crop_and_resize_op_c(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     # With these inputs we expect the code to crop the whole image
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
+    random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_and_resize_op, input_columns=["image"])
 
@@ -98,20 +96,20 @@ def test_random_crop_and_resize_op_py(plot=False):
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # With these inputs we expect the code to crop the whole image
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomResizedCrop((256, 512), (2, 2), (1, 3)),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = ops.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
     # Second dataset
     # Second dataset for comparison
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms2 = [
-        py_vision.Decode(),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.ToTensor()
     ]
-    transform2 = mindspore.dataset.transforms.py_transforms.Compose(transforms2)
+    transform2 = ops.Compose(transforms2)
     data2 = data2.map(operations=transform2, input_columns=["image"])
     num_iter = 0
     crop_and_resize_images = []
@@ -140,11 +138,11 @@ def test_random_crop_and_resize_op_py_ANTIALIAS():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     # With these inputs we expect the code to crop the whole image
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3), Inter.ANTIALIAS),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomResizedCrop((256, 512), (2, 2), (1, 3), Inter.ANTIALIAS),
+        vision.ToTensor()
     ]
-    transform1 = mindspore.dataset.transforms.py_transforms.Compose(transforms1)
+    transform1 = ops.Compose(transforms1)
     data1 = data1.map(operations=transform1, input_columns=["image"])
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -161,19 +159,19 @@ def test_random_crop_and_resize_01():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1))
+    decode_op = vision.Decode()
+    random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1))
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_and_resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1)),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomResizedCrop((256, 512), (0.5, 0.5), (1, 1)),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     filename1 = "random_crop_and_resize_01_c_result.npz"
@@ -197,19 +195,19 @@ def test_random_crop_and_resize_02():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), interpolation=mode.Inter.NEAREST)
+    decode_op = vision.Decode()
+    random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), interpolation=mode.Inter.NEAREST)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_and_resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), interpolation=mode.Inter.NEAREST),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomResizedCrop((256, 512), interpolation=mode.Inter.NEAREST),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     filename1 = "random_crop_and_resize_02_c_result.npz"
@@ -232,19 +230,19 @@ def test_random_crop_and_resize_03():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), max_attempts=1)
+    decode_op = vision.Decode()
+    random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), max_attempts=1)
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_and_resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomResizedCrop((256, 512), max_attempts=1),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomResizedCrop((256, 512), max_attempts=1),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     filename1 = "random_crop_and_resize_03_c_result.npz"
@@ -266,10 +264,10 @@ def test_random_crop_and_resize_04_c():
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     try:
         # If input range of scale is not in the order of (min, max), ValueError will be raised.
-        random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (1, 0.5), (0.5, 0.5))
+        random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), (1, 0.5), (0.5, 0.5))
         data = data.map(operations=decode_op, input_columns=["image"])
         data = data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except ValueError as e:
@@ -279,7 +277,7 @@ def test_random_crop_and_resize_04_c():
 
 def test_random_crop_and_resize_04_py():
     """
-    Test RandomCropAndResize with py_transforms: invalid range of scale (max<min),
+    Test RandomCropAndResize with transforms: invalid range of scale (max<min),
     expected to raise ValueError
     """
     logger.info("test_random_crop_and_resize_04_py")
@@ -288,12 +286,12 @@ def test_random_crop_and_resize_04_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:
         transforms = [
-            py_vision.Decode(),
+            vision.Decode(True),
             # If input range of scale is not in the order of (min, max), ValueError will be raised.
-            py_vision.RandomResizedCrop((256, 512), (1, 0.5), (0.5, 0.5)),
-            py_vision.ToTensor()
+            vision.RandomResizedCrop((256, 512), (1, 0.5), (0.5, 0.5)),
+            vision.ToTensor()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = ops.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -302,16 +300,16 @@ def test_random_crop_and_resize_04_py():
 
 def test_random_crop_and_resize_05_c():
     """
-    Test RandomCropAndResize with c_transforms: invalid range of ratio (max<min),
+    Test RandomCropAndResize with C implementation: invalid range of ratio (max<min),
     expected to raise ValueError
     """
     logger.info("test_random_crop_and_resize_05_c")
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     try:
-        random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (1, 1), (1, 0.5))
+        random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), (1, 1), (1, 0.5))
         # If input range of ratio is not in the order of (min, max), ValueError will be raised.
         data = data.map(operations=decode_op, input_columns=["image"])
         data = data.map(operations=random_crop_and_resize_op, input_columns=["image"])
@@ -322,7 +320,7 @@ def test_random_crop_and_resize_05_c():
 
 def test_random_crop_and_resize_05_py():
     """
-    Test RandomCropAndResize with py_transforms: invalid range of ratio (max<min),
+    Test RandomCropAndResize with transforms: invalid range of ratio (max<min),
     expected to raise ValueError
     """
     logger.info("test_random_crop_and_resize_05_py")
@@ -331,12 +329,12 @@ def test_random_crop_and_resize_05_py():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     try:
         transforms = [
-            py_vision.Decode(),
+            vision.Decode(True),
             # If input range of ratio is not in the order of (min, max), ValueError will be raised.
-            py_vision.RandomResizedCrop((256, 512), (1, 1), (1, 0.5)),
-            py_vision.ToTensor()
+            vision.RandomResizedCrop((256, 512), (1, 1), (1, 0.5)),
+            vision.ToTensor()
         ]
-        transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+        transform = ops.Compose(transforms)
         data = data.map(operations=transform, input_columns=["image"])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
@@ -351,19 +349,19 @@ def test_random_crop_and_resize_comp(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
-    random_crop_and_resize_op = c_vision.RandomResizedCrop(512, (1, 1), (0.5, 0.5))
+    decode_op = vision.Decode()
+    random_crop_and_resize_op = vision.RandomResizedCrop(512, (1, 1), (0.5, 0.5))
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=random_crop_and_resize_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        py_vision.Decode(),
-        py_vision.RandomResizedCrop(512, (1, 1), (0.5, 0.5)),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.RandomResizedCrop(512, (1, 1), (0.5, 0.5)),
+        vision.ToTensor()
     ]
-    transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
+    transform = ops.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_cropped = []
@@ -382,16 +380,16 @@ def test_random_crop_and_resize_comp(plot=False):
 
 def test_random_crop_and_resize_06():
     """
-    Test RandomCropAndResize with c_transforms: invalid values for scale,
+    Test RandomCropAndResize with C implementation: invalid values for scale,
     expected to raise ValueError
     """
     logger.info("test_random_crop_and_resize_05_c")
 
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = c_vision.Decode()
+    decode_op = vision.Decode()
     try:
-        random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), scale="", ratio=(1, 0.5))
+        random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), scale="", ratio=(1, 0.5))
         data = data.map(operations=decode_op, input_columns=["image"])
         data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except TypeError as e:
@@ -399,7 +397,7 @@ def test_random_crop_and_resize_06():
         assert "Argument scale with value \"\" is not of type [<class 'tuple'>, <class 'list'>]" in str(e)
 
     try:
-        random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), scale=(1, "2"), ratio=(1, 0.5))
+        random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), scale=(1, "2"), ratio=(1, 0.5))
         data = data.map(operations=decode_op, input_columns=["image"])
         data.map(operations=random_crop_and_resize_op, input_columns=["image"])
     except TypeError as e:
@@ -415,8 +413,8 @@ def test_random_crop_and_resize_07():
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data = data.map(operations=ops.Duplicate(), input_columns=["image"],
                     output_columns=["image", "image_copy"], column_order=["image", "image_copy"])
-    random_crop_and_resize_op = c_vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
-    decode_op = c_vision.Decode()
+    random_crop_and_resize_op = vision.RandomResizedCrop((256, 512), (2, 2), (1, 3))
+    decode_op = vision.Decode()
 
     data = data.map(operations=decode_op, input_columns=["image"])
     data = data.map(operations=decode_op, input_columns=["image_copy"])

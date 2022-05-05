@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as c_transforms
+import mindspore.dataset.transforms.transforms as transforms
 from mindspore import log as logger
 from util import save_and_check_md5
 
@@ -437,7 +437,7 @@ def test_manifest_sampler_chain_batch_repeat():
 
     # Create ManifestDataset with sampler chain
     data1 = ds.ManifestDataset(manifest_file, decode=True, sampler=sampler)
-    one_hot_encode = c_transforms.OneHot(3)
+    one_hot_encode = transforms.OneHot(3)
     data1 = data1.map(operations=one_hot_encode, input_columns=["label"])
     data1 = data1.batch(batch_size=1, drop_remainder=False)
     data1 = data1.repeat(count=2)

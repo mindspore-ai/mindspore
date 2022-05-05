@@ -17,7 +17,7 @@ Testing RandomPosterize op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers, diff_mse
@@ -40,8 +40,8 @@ def test_random_posterize_op_c(plot=False, run_golden=False):
 
     # define map operations
     transforms1 = [
-        c_vision.Decode(),
-        c_vision.RandomPosterize((1, 8))
+        vision.Decode(),
+        vision.RandomPosterize((1, 8))
     ]
 
     #  First dataset
@@ -49,7 +49,7 @@ def test_random_posterize_op_c(plot=False, run_golden=False):
     data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[c_vision.Decode()], input_columns=["image"])
+    data2 = data2.map(operations=[vision.Decode()], input_columns=["image"])
 
     image_posterize = []
     image_original = []
@@ -89,8 +89,8 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
 
     # define map operations
     transforms1 = [
-        c_vision.Decode(),
-        c_vision.RandomPosterize(1)
+        vision.Decode(),
+        vision.RandomPosterize(1)
     ]
 
     #  First dataset
@@ -98,7 +98,7 @@ def test_random_posterize_op_fixed_point_c(plot=False, run_golden=True):
     data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[c_vision.Decode()], input_columns=["image"])
+    data2 = data2.map(operations=[vision.Decode()], input_columns=["image"])
 
     image_posterize = []
     image_original = []
@@ -131,8 +131,8 @@ def test_random_posterize_default_c_md5(plot=False, run_golden=True):
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
     # define map operations
     transforms1 = [
-        c_vision.Decode(),
-        c_vision.RandomPosterize()
+        vision.Decode(),
+        vision.RandomPosterize()
     ]
 
     #  First dataset
@@ -140,7 +140,7 @@ def test_random_posterize_default_c_md5(plot=False, run_golden=True):
     data1 = data1.map(operations=transforms1, input_columns=["image"])
     #  Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[c_vision.Decode()], input_columns=["image"])
+    data2 = data2.map(operations=[vision.Decode()], input_columns=["image"])
 
     image_posterize = []
     image_original = []
@@ -171,32 +171,32 @@ def test_random_posterize_exception_bit():
     logger.info("test_random_posterize_exception_bit")
     # Test max > 8
     try:
-        _ = c_vision.RandomPosterize((1, 9))
+        _ = vision.RandomPosterize((1, 9))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input is not within the required interval of [1, 8]."
     # Test min < 1
     try:
-        _ = c_vision.RandomPosterize((0, 7))
+        _ = vision.RandomPosterize((0, 7))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input is not within the required interval of [1, 8]."
     # Test max < min
     try:
-        _ = c_vision.RandomPosterize((8, 1))
+        _ = vision.RandomPosterize((8, 1))
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Input is not within the required interval of [1, 8]."
     # Test wrong type (not uint8)
     try:
-        _ = c_vision.RandomPosterize(1.1)
+        _ = vision.RandomPosterize(1.1)
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == ("Argument bits with value 1.1 is not of type [<class 'list'>, <class 'tuple'>, "
                           "<class 'int'>], but got <class 'float'>.")
     # Test wrong number of bits
     try:
-        _ = c_vision.RandomPosterize((1, 1, 1))
+        _ = vision.RandomPosterize((1, 1, 1))
     except TypeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
         assert str(e) == "Size of bits should be a single integer or a list/tuple (min, max) of length 2."
@@ -211,10 +211,10 @@ def test_rescale_with_random_posterize():
     DATA_DIR_10 = "../data/dataset/testCifar10Data"
     dataset = ds.Cifar10Dataset(DATA_DIR_10)
 
-    rescale_op = c_vision.Rescale((1.0 / 255.0), 0.0)
+    rescale_op = vision.Rescale((1.0 / 255.0), 0.0)
     dataset = dataset.map(operations=rescale_op, input_columns=["image"])
 
-    random_posterize_op = c_vision.RandomPosterize((4, 8))
+    random_posterize_op = vision.RandomPosterize((4, 8))
     dataset = dataset.map(operations=random_posterize_op, input_columns=["image"], num_parallel_workers=1)
 
     try:

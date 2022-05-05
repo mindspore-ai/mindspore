@@ -17,8 +17,7 @@ Testing Resize op in DE
 """
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.transforms as vision
 from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
@@ -68,11 +67,11 @@ def test_resize_op_ANTIALIAS():
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
     # define map operations
-    decode_op = py_vision.Decode()
-    resize_op = py_vision.Resize(20, Inter.ANTIALIAS)
+    decode_op = vision.Decode(True)
+    resize_op = vision.Resize(20, Inter.ANTIALIAS)
 
     # apply map operations on images
-    data1 = data1.map(operations=[decode_op, resize_op, py_vision.ToTensor()], input_columns=["image"])
+    data1 = data1.map(operations=[decode_op, resize_op, vision.ToTensor()], input_columns=["image"])
 
     num_iter = 0
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):

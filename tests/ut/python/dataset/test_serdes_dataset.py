@@ -26,10 +26,8 @@ from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as c
-import mindspore.dataset.transforms.py_transforms as py
-import mindspore.dataset.vision.c_transforms as vision
-import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.transforms.transforms as transforms
+import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 
@@ -53,7 +51,7 @@ def test_serdes_imagefolder_dataset(remove_json_files=True):
     sampler.add_child(child_sampler)
     data1 = ds.ImageFolderDataset(data_dir, sampler=sampler)
     data1 = data1.repeat(1)
-    data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
+    data1 = data1.map(operations=[vision.Decode()], input_columns=["image"])
     rescale_op = vision.Rescale(rescale, shift)
 
     resize_op = vision.Resize((resize_height, resize_width), Inter.LINEAR)
@@ -113,7 +111,7 @@ def test_serdes_mnist_dataset(remove_json_files=True):
     ds.config.set_seed(1)
 
     data1 = ds.MnistDataset(data_dir, num_samples=100)
-    one_hot_encode = c.OneHot(10)  # num_classes is input argument
+    one_hot_encode = transforms.OneHot(10)  # num_classes is input argument
     data1 = data1.map(operations=one_hot_encode, input_columns="label")
 
     # batch_size is input argument
@@ -161,11 +159,11 @@ def test_serdes_cifar10_dataset(remove_json_files=True):
         vision.RandomCrop((32, 32), (4, 4, 4, 4)),
         vision.Resize((224, 224)),
         vision.Rescale(1.0 / 255.0, 0.0),
-        vision.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]),
+        vision.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010], True),
         vision.HWC2CHW()
     ]
 
-    type_cast_op = c.TypeCast(mstype.int32)
+    type_cast_op = transforms.TypeCast(mstype.int32)
     data1 = data1.map(operations=type_cast_op, input_columns="label")
     data1 = data1.map(operations=trans, input_columns="image")
     data1 = data1.batch(3, drop_remainder=True)
@@ -383,18 +381,17 @@ def test_serdes_pyvision(remove_json_files=True):
     schema_file = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
     data1 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
     transforms1 = [
-        py_vision.Decode(),
-        py_vision.CenterCrop([32, 32]),
-        py_vision.ToTensor()
+        vision.Decode(True),
+        vision.CenterCrop([32, 32]),
+        vision.ToTensor()
     ]
     transforms2 = [
-        py_vision.RandomColorAdjust(),
-        py_vision.FiveCrop(1),
-        py_vision.Grayscale(),
-        py.OneHotOp(1)
+        vision.RandomColorAdjust(),
+        vision.FiveCrop(1),
+        vision.Grayscale()
     ]
-    data1 = data1.map(operations=py.Compose(transforms1), input_columns=["image"])
-    data1 = data1.map(operations=py.RandomApply(transforms2), input_columns=["image"])
+    data1 = data1.map(operations=transforms.Compose(transforms1), input_columns=["image"])
+    data1 = data1.map(operations=transforms.RandomApply(transforms2), input_columns=["image"])
     util_check_serialize_deserialize_file(data1, "pyvision_dataset_pipeline", remove_json_files)
     data2 = ds.TFRecordDataset(data_dir, schema_file, columns_list=["image", "label"], shuffle=False)
     data2 = data2.map(operations=(lambda x, y, z: (
@@ -438,7 +435,7 @@ def skip_test_serdes_fill(remove_json_files=True):
         yield (np.array([4, 5, 6, 7], dtype=np.int32),)
 
     data = ds.GeneratorDataset(gen, column_names=["col"])
-    fill_op = c.Fill(3)
+    fill_op = transforms.Fill(3)
 
     data = data.map(operations=fill_op, input_columns=["col"])
     expected = np.array([3, 3, 3, 3], dtype=np.int32)

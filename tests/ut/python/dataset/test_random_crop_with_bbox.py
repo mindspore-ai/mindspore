@@ -17,7 +17,7 @@ Testing RandomCropWithBBox op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.transforms as vision
 import mindspore.dataset.vision.utils as mode
 
 from mindspore import log as logger
@@ -43,7 +43,7 @@ def test_random_crop_with_bbox_op_c(plot_vis=False):
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     # define test OP with values to match existing Op UT
-    test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
+    test_op = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -74,7 +74,7 @@ def test_random_crop_with_bbox_op_coco_c(plot_vis=False):
     dataCoco2 = ds.CocoDataset(DATA_DIR_COCO[0], annotation_file=DATA_DIR_COCO[1], task="Detection",
                                decode=True, shuffle=False)
 
-    test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
+    test_op = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
     dataCoco2 = dataCoco2.map(operations=[test_op], input_columns=["image", "bbox"],
                               output_columns=["image", "bbox"],
@@ -105,7 +105,7 @@ def test_random_crop_with_bbox_op2_c(plot_vis=False):
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     # define test OP with values to match existing Op unit - test
-    test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
+    test_op = vision.RandomCropWithBBox(512, [200, 200, 200, 200], fill_value=(255, 255, 255))
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -142,7 +142,7 @@ def test_random_crop_with_bbox_op3_c(plot_vis=False):
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     # define test OP with values to match existing Op unit - test
-    test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
+    test_op = vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # map to apply ops
     dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -172,7 +172,7 @@ def test_random_crop_with_bbox_op_edge_c(plot_vis=False):
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     # define test OP with values to match existing Op unit - test
-    test_op = c_vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
+    test_op = vision.RandomCropWithBBox(512, [200, 200, 200, 200], padding_mode=mode.Border.EDGE)
 
     # maps to convert data into valid edge case data
     dataVoc1 = dataVoc1.map(
@@ -210,7 +210,7 @@ def test_random_crop_with_bbox_op_invalid_c():
 
     try:
         # define test OP with values to match existing Op unit - test
-        test_op = c_vision.RandomCropWithBBox([512, 512, 375])
+        test_op = vision.RandomCropWithBBox([512, 512, 375])
 
         # map to apply ops
         dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
@@ -229,7 +229,7 @@ def test_random_crop_with_bbox_op_bad_c():
     Tests RandomCropWithBBox Op with invalid bounding boxes, expected to catch multiple errors.
     """
     logger.info("test_random_crop_with_bbox_op_bad_c")
-    test_op = c_vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
+    test_op = vision.RandomCropWithBBox([512, 512], [200, 200, 200, 200])
 
     data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WidthOverflow, "bounding boxes is out of bounds of the image")
@@ -250,7 +250,7 @@ def test_random_crop_with_bbox_op_bad_padding():
     dataVoc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
 
     try:
-        test_op = c_vision.RandomCropWithBBox([512, 512], padding=-1)
+        test_op = vision.RandomCropWithBBox([512, 512], padding=-1)
 
         dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
@@ -263,7 +263,7 @@ def test_random_crop_with_bbox_op_bad_padding():
         assert "Input padding is not within the required interval of [0, 2147483647]." in str(err)
 
     try:
-        test_op = c_vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])
+        test_op = vision.RandomCropWithBBox([512, 512], padding=[16777216, 16777216, 16777216, 16777216])
 
         dataVoc2 = dataVoc2.map(operations=[test_op], input_columns=["image", "bbox"],
                                 output_columns=["image", "bbox"],
