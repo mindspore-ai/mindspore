@@ -795,9 +795,7 @@ if [[ "${DEBUG_MODE}" == "on" ]]; then
 else
     CMAKE_ARGS="${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release "
 fi
-if [[ "X$ENABLE_GITEE" = "Xon" ]]; then
-    CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_GITEE=ON"
-fi
+
 if [[ "X$ENABLE_FAST_HASH_TABLE" == "Xon" ]]; then
     CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_FAST_HASH_TABLE=ON"
 else
