@@ -32,7 +32,7 @@ from mindspore.profiler.common.util import get_file_path, fwrite_format
 from mindspore.profiler.common.validator.validate_path import \
     validate_and_normalize_path
 from mindspore.profiler.parser.aicpu_data_parser import DataPreProcessParser
-from mindspore.profiler.parser.framework_parser import FrameworkParser
+from mindspore.profiler.parser.framework_parser import FrameworkParser, GpuFrameWorkParser
 from mindspore.profiler.parser.hwts_log_parser import HWTSLogParser
 from mindspore.profiler.parser.integrator import Integrator, DeviceTarget
 from mindspore.profiler.parser.integrator import GpuTimelineGenerator, CpuTimelineGenerator, AscendTimelineGenerator
@@ -157,6 +157,56 @@ class Profiler:
         self._decide_device_target(kwargs)
         if self.start_profile:
             self.start()
+
+    def op_analyse(self, op_name, **kwargs):
+        """
+        Profiler users can use this interface to obtain operator performance data.
+
+        Args:
+            op_name (str, list): The primitive operator name.
+            device_id (int): ID of the target device, operator performance data of a specified card is analyzed using
+                the device_id parameter. Default: 0.
+
+        Raises:
+            TypeError: If the op_name parameter type is incorrect,
+                Profiler cannot parse the generated operator performance data.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore.profiler import Profiler
+            >>>
+            ...     # Profiler init.
+            ...     profiler = Profiler()
+            ...
+            ...     # Train Model or eval Model.
+            ...     net = Net()
+            ...     train(net)
+            ...
+            ...     # Profiler end
+            ...     profiler.analyse()
+            ...
+            ...     profiler.op_analyse(op_name=["BiasAdd", "Conv2D"])
+
+        Examples:
+            >>> from mindspore.profiler import Profiler
+            >>>
+            ...     # Profiler init.
+            ...     profiler = Profiler(output_path="my_profiler_path")
+            ...     profiler.op_analyse(op_name="Conv2D")
+        """
+
+        device_id = kwargs.pop("device_id", None)
+        self._dev_id = self._dev_id if device_id is None else device_id
+        if self._dev_id is None:
+            self._dev_id = 0
+        if not isinstance(op_name, str) and not isinstance(op_name, list):
+            raise TypeError(f"For 'Profiler.op_analyse()', the parameter op_name must be str or list, "
+                            f"but got type {type(op_name)}")
+        parser = GpuFrameWorkParser(self._output_path, self._dev_id, op_name)
+        op_info = parser.parse()
+        return op_info
 
     def _decide_device_target(self, kwargs):
         """Complete Profiler initialization according to device_target"""
