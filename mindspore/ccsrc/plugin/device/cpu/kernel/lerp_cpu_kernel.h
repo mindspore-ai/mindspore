@@ -16,22 +16,34 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LERP_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_LERP_CPU_KERNEL_H_
+
 #include <string>
 #include <vector>
 #include <utility>
+#include <map>
+#include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
+
 namespace mindspore {
 namespace kernel {
-class LerpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class LerpCpuKernelMod : public NativeCpuKernelMod {
  public:
   LerpCpuKernelMod() = default;
   ~LerpCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  void ResetResource() noexcept;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -43,7 +55,6 @@ class LerpCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                       const std::vector<kernel::AddressPtr> &)>;
   size_t output_size_{1};
   LerpFunc kernel_func_;
-  std::string kernel_type_;
   std::vector<size_t> start_shape_;
   std::vector<size_t> end_shape_;
   std::vector<size_t> weight_shape_;
