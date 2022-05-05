@@ -30,33 +30,24 @@ void ContextPyBind(const py::module &m) {
   py::class_<DeviceInfoContext, std::shared_ptr<DeviceInfoContext>>(m, "DeviceInfoContextBind");
 
   py::class_<CPUDeviceInfo, DeviceInfoContext, std::shared_ptr<CPUDeviceInfo>>(m, "CPUDeviceInfoBind")
-    .def(py::init<>([](bool enable_fp16) {
-      auto device_info = std::make_shared<CPUDeviceInfo>();
-      device_info->SetEnableFP16(enable_fp16);
-      return device_info;
-    }))
+    .def(py::init<>())
     .def("get_device_type", &CPUDeviceInfo::GetDeviceType)
+    .def("set_enable_fp16", &CPUDeviceInfo::SetEnableFP16)
     .def("get_enable_fp16", &CPUDeviceInfo::GetEnableFP16);
 
   py::class_<GPUDeviceInfo, DeviceInfoContext, std::shared_ptr<GPUDeviceInfo>>(m, "GPUDeviceInfoBind")
-    .def(py::init<>([](uint32_t device_id, bool enable_fp16, const std::string &precision_mode) {
-      auto device_info = std::make_shared<GPUDeviceInfo>();
-      device_info->SetDeviceID(device_id);
-      device_info->SetEnableFP16(enable_fp16);
-      if (precision_mode != "") {
-        device_info->SetPrecisionMode(precision_mode);
-      }
-      return device_info;
-    }))
+    .def(py::init<>())
     .def("get_device_type", &GPUDeviceInfo::GetDeviceType)
-    .def("get_enable_fp16", &GPUDeviceInfo::GetEnableFP16)
-    .def("get_precision_mode", &GPUDeviceInfo::GetPrecisionMode)
+    .def("set_device_id", &GPUDeviceInfo::SetDeviceID)
     .def("get_device_id", &GPUDeviceInfo::GetDeviceID)
+    .def("set_enable_fp16", &GPUDeviceInfo::SetEnableFP16)
+    .def("get_enable_fp16", &GPUDeviceInfo::GetEnableFP16)
     .def("get_rank_id", &GPUDeviceInfo::GetRankID)
     .def("get_group_size", &GPUDeviceInfo::GetGroupSize);
 
   py::class_<AscendDeviceInfo, DeviceInfoContext, std::shared_ptr<AscendDeviceInfo>>(m, "AscendDeviceInfoBind")
     .def(py::init<>())
+    .def("get_device_type", &AscendDeviceInfo::GetDeviceType)
     .def("set_device_id", &AscendDeviceInfo::SetDeviceID)
     .def("get_device_id", &AscendDeviceInfo::GetDeviceID)
     .def("set_input_format",
@@ -89,22 +80,18 @@ void ContextPyBind(const py::module &m) {
     .def("get_insert_op_cfg_path", &AscendDeviceInfo::GetInsertOpConfigPath);
 
   py::class_<Context, std::shared_ptr<Context>>(m, "ContextBind")
-    .def(py::init<>([](int32_t thread_num, int32_t thread_affinity_mode,
-                       const std::vector<int> &thread_affinity_core_list, bool enable_parallel) {
-      auto context = std::make_shared<Context>();
-      context->SetThreadNum(thread_num);
-      context->SetThreadAffinity(thread_affinity_mode);
-      context->SetThreadAffinity(thread_affinity_core_list);
-      context->SetEnableParallel(enable_parallel);
-      return context;
-    }))
+    .def(py::init<>())
     .def("append_device_info",
          [](Context &context, const std::shared_ptr<DeviceInfoContext> &device_info) {
            context.MutableDeviceInfo().push_back(device_info);
          })
+    .def("set_thread_num", &Context::SetThreadNum)
     .def("get_thread_num", &Context::GetThreadNum)
+    .def("set_thread_affinity_mode", py::overload_cast<int>(&Context::SetThreadAffinity))
     .def("get_thread_affinity_mode", &Context::GetThreadAffinityMode)
+    .def("set_thread_affinity_core_list", py::overload_cast<const std::vector<int> &>(&Context::SetThreadAffinity))
     .def("get_thread_affinity_core_list", &Context::GetThreadAffinityCoreList)
+    .def("set_enable_parallel", &Context::SetEnableParallel)
     .def("get_enable_parallel", &Context::GetEnableParallel)
     .def("get_device_list", [](Context &context) {
       std::string result;

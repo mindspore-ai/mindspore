@@ -30,48 +30,59 @@ void ModelPyBind(const py::module &m) {
   py::class_<Model, std::shared_ptr<Model>>(m, "ModelBind")
     .def(py::init<>())
     .def("build_from_buff",
-         [](Model *model, const void *model_data, size_t data_size, ModelType model_type,
+         [](Model &model, const void *model_data, size_t data_size, ModelType model_type,
             const std::shared_ptr<Context> &model_context = nullptr) {
-           auto ret = model->Build(model_data, data_size, model_type, model_context);
+           auto ret = model.Build(model_data, data_size, model_type, model_context);
            return static_cast<uint32_t>(ret.StatusCode());
          })
     .def("build_from_file",
-         [](Model *model, const std::string &model_path, ModelType model_type,
+         [](Model &model, const std::string &model_path, ModelType model_type,
             const std::shared_ptr<Context> &context = nullptr) {
-           auto ret = model->Build(model_path, ModelType::kMindIR_Lite, context);
+           auto ret = model.Build(model_path, model_type, context);
+           return static_cast<uint32_t>(ret.StatusCode());
+         })
+    .def("build_from_file_with_decrypt",
+         [](Model &model, const std::string &model_path, ModelType model_type,
+            const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+            const std::string &cropto_lib_path) {
+           auto ret = model.Build(model_path, model_type, model_context, dec_key, dec_mode, cropto_lib_path);
            return static_cast<uint32_t>(ret.StatusCode());
          })
     .def("resize",
-         [](Model *model, const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
-           auto ret = model->Resize(inputs, dims);
+         [](Model &model, const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
+           auto ret = model.Resize(inputs, dims);
            return static_cast<uint32_t>(ret.StatusCode());
          })
     .def("predict",
-         [](Model *model, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+         [](Model &model, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
             const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
-           auto ret = model->Predict(inputs, outputs, before, after);
+           auto ret = model.Predict(inputs, outputs, before, after);
            return static_cast<uint32_t>(ret.StatusCode());
          })
     .def("get_inputs", &Model::GetInputs)
     .def("get_outputs", &Model::GetOutputs)
     .def("get_input_by_tensor_name",
-         [](Model *model, const std::string &tensor_name) { return model->GetInputByTensorName(tensor_name); })
+         [](Model &model, const std::string &tensor_name) { return model.GetInputByTensorName(tensor_name); })
     .def("get_output_by_tensor_name",
-         [](Model *model, const std::string &tensor_name) { return model->GetOutputByTensorName(tensor_name); });
+         [](Model &model, const std::string &tensor_name) { return model.GetOutputByTensorName(tensor_name); });
 
 #ifdef PARALLEL_INFERENCE
-  py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
-    .def(py::init<>([](const std::string &model_path, const std::shared_ptr<Context> &context, int workers_num) {
+  py::class_<RunnerConfig, std::shared_ptr<RunnerConfig>>(m, "RunnerConfigBind")
+    .def(py::init<>([](const std::shared_ptr<Context> &context, int workers_num) {
       auto config = std::make_shared<RunnerConfig>();
       config->context = context;
       config->workers_num = workers_num;
-      auto runner = std::make_shared<ModelParallelRunner>();
-      auto ret = runner->Init(model_path, config);
-      if (ret.StatusCode() != kSuccess) {
-        std::cout << "Init failed" << std::endl;
-      }
-      return runner;
-    }))
+      return config;
+    }));
+
+  py::class_<ModelParallelRunner, std::shared_ptr<ModelParallelRunner>>(m, "ModelParallelRunnerBind")
+    .def(py::init<>())
+    .def("init",
+         [](ModelParallelRunner &model, const std::string &model_path,
+            const std::shared_ptr<RunnerConfig> &runner_config) {
+           auto ret = model.Init(model_path, runner_config);
+           return static_cast<uint32_t>(ret.StatusCode());
+         })
     .def("get_inputs", &ModelParallelRunner::GetInputs)
     .def("get_outputs", &ModelParallelRunner::GetOutputs)
     .def("predict", [](ModelParallelRunner &model, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,

@@ -22,7 +22,11 @@ if(Python3_FOUND)
 
   file(GLOB_RECURSE PY_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
   pybind11_add_module(_c_lite_wrapper NO_EXTRAS ${PY_SRC_LIST})
-  target_link_libraries(_c_lite_wrapper PRIVATE mindspore-lite)
+
+  target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static -Wl,--no-whole-archive)
+  if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_RUNTIME_GLOG)
+    target_link_libraries(_c_lite_wrapper PRIVATE mindspore::glog)
+  endif()
 else()
   message(WARNING "Python3 not found, so Python API will not be compiled.")
 endif()
