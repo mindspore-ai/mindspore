@@ -154,3 +154,24 @@ def test_for_in_while_round():
         return Tensor(res)
     out = control_flow_for_in_while()
     assert out == -2.85841
+
+
+@pytest.mark.skip(reason='Not support graph fallback feature yet')
+def test_for_in_while_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for_in_while():
+        x = np.array([1, 3, 5, 7, 9])
+        y = np.array([2, 4, 6, 8, 10])
+        while (x < y).all():
+            x += y
+            for _ in range(2):
+                y = x - 2
+        x = x * 2
+        return Tensor(x + y)
+    res = control_flow_for_in_while()
+    assert (res.asnumpy() == [7, 19, 31, 43, 55]).all()

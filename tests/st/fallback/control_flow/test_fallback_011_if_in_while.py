@@ -173,3 +173,28 @@ def test_if_in_while_built_in_func_3():
         return Tensor(sum(x))
     res = control_flow_if_in_while()
     assert res == 26
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_if_in_while_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if_in_while():
+        x = np.array([1, 2])
+        y = np.array([3, 2])
+        index = Tensor(1)
+        while index < Tensor(3):
+            index += 1
+            if (y > x).all():
+                y += x
+        return Tensor(y)
+    res = control_flow_if_in_while()
+    assert (res.asnumpy() == [3, 2]).all()

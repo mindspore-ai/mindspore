@@ -1118,6 +1118,13 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
     return MakeUnpackCall(block->func_graph(), call_function_node, packed_arguments);
   }
   // else there is no keyword arguments and starred, parsed as normal arguments without unpack
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback && group_arguments.size() == 0 && IsPrimitiveCNode(call_function_node, prim::kPrimPyInterpret)) {
+    // call Interpret node is invalid. Do not new call Interpret node.
+    // %1 = Interpret_node
+    // %2 = %1()
+    return call_function_node;
+  }
   std::vector<AnfNodePtr> func_call_nodes;
   func_call_nodes.push_back(call_function_node);
   (void)std::transform(group_arguments.begin(), group_arguments.end(), std::back_inserter(func_call_nodes),
