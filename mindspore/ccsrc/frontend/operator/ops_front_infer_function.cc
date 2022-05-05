@@ -343,7 +343,7 @@ AbstractBasePtr InferImplIsInstance(const AnalysisEnginePtr &, const PrimitivePt
   bool result = false;
 
   if (!CheckCmpValid(cmp)) {
-    MS_LOG(EXCEPTION) << "isinstance() arg 2 must be a type or tuple of types.";
+    MS_EXCEPTION(TypeError) << "isinstance() arg 2 must be a type or tuple of types.";
   }
 
   // x is Cell object.

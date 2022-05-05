@@ -271,7 +271,7 @@ def test_isinstance_x_ms_class_obj_5():
     def foo():
         return isinstance(ms_obj, (int, float, (MSClass2(), MSCombine)))
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         foo()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
@@ -574,7 +574,7 @@ def test_isinstance_wrong_cmp_input():
     def foo():
         return isinstance(Tensor(1), (np.array([1, 2, 3], Tensor)))
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         foo()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
@@ -589,7 +589,7 @@ def test_isinstance_wrong_cmp_input_2():
     def foo():
         return isinstance(Tensor(1), Tensor(1))
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         foo()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
@@ -604,7 +604,7 @@ def test_isinstance_wrong_cmp_input_3():
     def foo():
         return isinstance(Tensor(1), [list, tuple])
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         foo()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
@@ -619,7 +619,7 @@ def test_isinstance_wrong_cmp_input_4():
     def foo():
         return isinstance(Tensor(1), [1, tuple])
 
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         foo()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 

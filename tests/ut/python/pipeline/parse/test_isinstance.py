@@ -86,7 +86,7 @@ def test_isinstance_not_supported():
             return isinstance(self.value, None)
 
     net = Net()
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         net()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
 
@@ -101,6 +101,6 @@ def test_isinstance_second_arg_is_list():
             return isinstance(self.value, [tuple, int, float])
 
     net = Net()
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(TypeError) as err:
         net()
     assert "isinstance() arg 2 must be a type or tuple of types" in str(err.value)
