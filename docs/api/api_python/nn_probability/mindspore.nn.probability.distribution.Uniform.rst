@@ -16,7 +16,7 @@ mindspore.nn.probability.distribution.Uniform
     - **low** (int, float, list, numpy.ndarray, Tensor) - 分布的下限。默认值：None。
     - **high** (int, float, list, numpy.ndarray, Tensor) - 分布的上限。默认值：None。
     - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-    - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mindspore.float32。
+    - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。
     - **name** (str) - 分布的名称。默认值：'Uniform'。
 
     .. note:: 

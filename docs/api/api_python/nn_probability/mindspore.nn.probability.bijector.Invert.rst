@@ -52,10 +52,6 @@ mindspore.nn.probability.bijector.Invert
 
         Tensor，基础Bijector的输出随机变量的值。
 
-        **返回：**
-
-        Tensor，输出随机变量的值。
-
     .. py:method:: inverse_log_jacobian(y)
 
         计算基础Bijector的正映射导数的对数，即 :math:`Y = \log dg(x) / dx` 。
