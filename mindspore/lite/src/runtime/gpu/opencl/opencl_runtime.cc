@@ -296,6 +296,16 @@ int OpenCLRuntime::Init() {
     }
   }
 
+  // only gltexture enable, load clCreateFromGLTexture func
+  if (this->GetGLTextureEnable()) {
+    clCreateFromGLTexture = reinterpret_cast<clCreateFromGLTextureFunc>(dlsym(handle_, "clCreateFromGLTexture"));
+    if (clCreateFromGLTexture == nullptr) {
+      MS_LOG(ERROR) << "load func (clCreateFromGLTexture) failed!";
+      UnLoadOpenCLLibrary(handle_);
+      return false;
+    }
+  }
+
   ms_ret = InitQueue(&platforms);
   if (ms_ret != RET_OK) {
     return ms_ret;
