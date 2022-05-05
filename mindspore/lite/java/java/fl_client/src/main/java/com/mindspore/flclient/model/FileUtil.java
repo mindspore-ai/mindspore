@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class FileUtil {
-    private static final Logger logger = Logger.getLogger(FileUtil.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(FileUtil.class.toString());
 
     /**
      * init dataset
@@ -49,7 +50,7 @@ public class FileUtil {
     public static List<Feature> init(String trainFile, String vocabFile, String idsFile, boolean isTrainMode,
                                      int maxSeqLen) {
         if (trainFile == null || vocabFile == null || idsFile == null) {
-            logger.severe(Common.addTag("dataset init failed,trainFile,idsFile,vocabFile cannot be empty"));
+            logger.severe("dataset init failed,trainFile,idsFile,vocabFile cannot be empty");
             return new ArrayList<>();
         }
         // read train file
@@ -61,13 +62,13 @@ public class FileUtil {
         for (String line : allLines) {
             String[] tokens = line.split(">>>");
             if (tokens.length != 2) {
-                logger.warning(Common.addTag("line may have format problem,need include >>>"));
+                logger.warning("line may have format problem,need include >>>");
                 continue;
             }
             examples.add(tokens[1]);
             tokens = tokens[0].split("<<<");
             if (tokens.length != 2) {
-                logger.warning(Common.addTag("line may have format problem,need include >>>"));
+                logger.warning("line may have format problem,need include >>>");
                 continue;
             }
             labels.add(tokens[1]);
@@ -100,7 +101,7 @@ public class FileUtil {
     public static List<Feature> readInferData(String inferFile, String vocabFile, String idsFile, boolean isTrainMode
             , int maxSeqLen) {
         if (inferFile == null || vocabFile == null || idsFile == null) {
-            logger.severe(Common.addTag("dataset init failed,trainFile,idsFile,vocabFile cannot be empty"));
+            logger.severe("dataset init failed,trainFile,idsFile,vocabFile cannot be empty");
             return new ArrayList<>();
         }
         // read train file
@@ -134,7 +135,7 @@ public class FileUtil {
      */
     public static byte[] readBinFile(String dataFile) {
         if (dataFile == null || dataFile.isEmpty()) {
-            logger.severe(Common.addTag("file cannot be empty"));
+            logger.severe("file cannot be empty");
             return new byte[0];
         }
         // read train file
@@ -143,14 +144,14 @@ public class FileUtil {
         try {
             data = Files.readAllBytes(path);
         } catch (IOException e) {
-            logger.severe(Common.addTag("read data file failed,please check data file path"));
+            logger.severe("read data file failed,please check data file path");
         }
         return data;
     }
 
     private static List<String> readTxtFile(String file) {
         if (file == null) {
-            logger.severe(Common.addTag("file cannot be empty"));
+            logger.severe("file cannot be empty");
             return new ArrayList<>();
         }
         Path path = Paths.get(file);
@@ -158,7 +159,7 @@ public class FileUtil {
         try {
             allLines = Files.readAllLines(path, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            logger.severe(Common.addTag("read txt file failed,please check txt file path"));
+            logger.severe("read txt file failed,please check txt file path");
         }
         return allLines;
     }

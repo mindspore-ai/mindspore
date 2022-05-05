@@ -15,6 +15,11 @@
  */
 
 #include "ps/core/scheduler_node.h"
+
+#include <string>
+
+#include "include/common/debug/common.h"
+#include "fl/server/common.h"
 #include "ps/core/scheduler_recovery.h"
 
 namespace mindspore {
@@ -32,10 +37,13 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   InitNodeMetaData();
+  bool is_recover = false;
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
-    if (!RecoverScheduler()) {
+    InitEventTxtFile();
+    is_recover = RecoverScheduler();
+    if (is_recover) {
       MS_LOG(DEBUG) << "Recover the server node is failed.";
     }
   }
@@ -49,6 +57,10 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
   Initialize();
   StartUpdateClusterStateTimer();
   RunRecovery();
+
+  if (is_recover) {
+    RecordSchedulerRestartInfo();
+  }
 
   if (is_worker_timeout_) {
     BroadcastTimeoutEvent();
@@ -258,6 +270,7 @@ void SchedulerNode::InitCommandHandler() {
   handlers_[NodeCommand::SCALE_OUT_DONE] = &SchedulerNode::ProcessScaleOutDone;
   handlers_[NodeCommand::SCALE_IN_DONE] = &SchedulerNode::ProcessScaleInDone;
   handlers_[NodeCommand::SEND_EVENT] = &SchedulerNode::ProcessSendEvent;
+  handlers_[NodeCommand::FAILURE_EVENT_INFO] = &SchedulerNode::ProcessFailureEvent;
   RegisterActorRouteTableServiceHandler();
   RegisterInitCollectCommServiceHandler();
   RegisterRecoveryServiceHandler();
@@ -267,6 +280,26 @@ void SchedulerNode::RegisterActorRouteTableServiceHandler() {
   handlers_[NodeCommand::REGISTER_ACTOR_ROUTE] = &SchedulerNode::ProcessRegisterActorRoute;
   handlers_[NodeCommand::DELETE_ACTOR_ROUTE] = &SchedulerNode::ProcessDeleteActorRoute;
   handlers_[NodeCommand::LOOKUP_ACTOR_ROUTE] = &SchedulerNode::ProcessLookupActorRoute;
+}
+
+void SchedulerNode::InitEventTxtFile() {
+  MS_LOG(DEBUG) << "Start init event txt";
+  ps::core::FileConfig event_file_config;
+  if (!ps::core::CommUtil::ParseAndCheckConfigJson(config_.get(), kFailureEvent, &event_file_config)) {
+    MS_LOG(EXCEPTION) << "Parse and checkout config json failed";
+    return;
+  }
+
+  std::lock_guard<std::mutex> lock(event_txt_file_mtx_);
+  event_file_path_ = event_file_config.storage_file_path;
+  auto realpath = Common::CreatePrefixPath(event_file_path_.c_str());
+  if (!realpath.has_value()) {
+    MS_LOG(EXCEPTION) << "Creating path for " << event_file_path_ << " failed.";
+    return;
+  }
+  event_txt_file_.open(realpath.value(), std::ios::out | std::ios::app);
+  event_txt_file_.close();
+  MS_LOG(DEBUG) << "Init event txt success!";
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -612,6 +645,34 @@ void SchedulerNode::ProcessLookupActorRoute(const std::shared_ptr<TcpServer> &se
   if (!server->SendMessage(conn, meta, Protos::PROTOBUF, address.SerializeAsString().data(), address.ByteSizeLong())) {
     MS_LOG(ERROR) << "Scheduler failed to respond message for lookup route.";
   }
+}
+
+void SchedulerNode::ProcessFailureEvent(const std::shared_ptr<TcpServer> &server,
+                                        const std::shared_ptr<TcpConnection> &conn,
+                                        const std::shared_ptr<MessageMeta> &meta, const void *data, size_t size) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(server);
+  MS_ERROR_IF_NULL_WO_RET_VAL(conn);
+  MS_ERROR_IF_NULL_WO_RET_VAL(meta);
+  MS_ERROR_IF_NULL_WO_RET_VAL(data);
+  FailureEventMessage failure_event_message;
+  failure_event_message.ParseFromArray(data, SizeToInt(size));
+  std::string node_role = failure_event_message.node_role();
+  std::string ip = failure_event_message.ip();
+  uint32_t port = failure_event_message.port();
+  std::string time = failure_event_message.time();
+  std::string event = failure_event_message.event();
+  std::lock_guard<std::mutex> lock(event_txt_file_mtx_);
+  event_txt_file_.open(event_file_path_, std::ios::out | std::ios::app);
+  if (!event_txt_file_.is_open()) {
+    MS_LOG(EXCEPTION) << "The event txt file is not open";
+    return;
+  }
+  std::string event_info = "nodeRole:" + node_role + "," + ip + ":" + std::to_string(port) + "," +
+                           "currentTime:" + time + "," + "event:" + event + ";";
+  event_txt_file_ << event_info << "\n";
+  (void)event_txt_file_.flush();
+  event_txt_file_.close();
+  MS_LOG(INFO) << "Process failure event success!";
 }
 
 bool SchedulerNode::SendPrepareBuildingNetwork(const std::unordered_map<std::string, NodeInfo> &node_infos) {
@@ -1240,7 +1301,7 @@ void SchedulerNode::ProcessNewInstance(const std::shared_ptr<HttpMessageHandler>
     js["code"] = kSuccessCode;
     js["result"] = true;
   } else {
-    js["message"] = "Start new instance failed.";
+    js["error_message"] = "Start new instance failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1371,7 +1432,7 @@ void SchedulerNode::ProcessEnableFLS(const std::shared_ptr<HttpMessageHandler> &
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_READY);
     PersistMetaData();
   } else {
-    js["message"] = "start enabling FL-Server failed.";
+    js["error_message"] = "start enabling FL-Server failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1442,7 +1503,7 @@ void SchedulerNode::ProcessDisableFLS(const std::shared_ptr<HttpMessageHandler> 
     node_manager_.UpdateClusterState(ClusterState::CLUSTER_DISABLE_FLS);
     PersistMetaData();
   } else {
-    js["message"] = "start disabling FL-Server failed.";
+    js["error_message"] = "start disabling FL-Server failed.";
     js["code"] = kErrorCode;
     js["result"] = false;
   }
@@ -1584,7 +1645,7 @@ bool SchedulerNode::RecoverScheduler() {
   MS_EXCEPTION_IF_NULL(config_);
   if (config_->Exists(kKeyRecovery)) {
     MS_LOG(INFO) << "The scheduler node is support recovery.";
-    scheduler_recovery_ = std::make_unique<SchedulerRecovery>();
+    scheduler_recovery_ = std::make_shared<SchedulerRecovery>();
     MS_EXCEPTION_IF_NULL(scheduler_recovery_);
     bool ret = scheduler_recovery_->Initialize(config_->Get(kKeyRecovery, ""));
     bool ret_node = scheduler_recovery_->InitializeNodes(config_->Get(kKeyRecovery, ""));
@@ -1594,6 +1655,29 @@ bool SchedulerNode::RecoverScheduler() {
     }
   }
   return false;
+}
+
+void SchedulerNode::RecordSchedulerRestartInfo() {
+  MS_LOG(DEBUG) << "Start to record scheduler restart error message";
+  std::lock_guard<std::mutex> lock(event_txt_file_mtx_);
+  event_txt_file_.open(event_file_path_, std::ios::out | std::ios::app);
+  if (!event_txt_file_.is_open()) {
+    MS_LOG(EXCEPTION) << "The event txt file is not open";
+    return;
+  }
+  std::string node_role = CommUtil::NodeRoleToString(node_info_.node_role_);
+  auto scheduler_recovery_ptr = std::dynamic_pointer_cast<SchedulerRecovery>(scheduler_recovery_);
+  MS_EXCEPTION_IF_NULL(scheduler_recovery_ptr);
+  auto ip = scheduler_recovery_ptr->GetMetadata(kRecoverySchedulerIp);
+  auto port = scheduler_recovery_ptr->GetMetadata(kRecoverySchedulerPort);
+  std::string time = ps::core::CommUtil::GetNowTime().time_str_mill;
+  std::string event = "Node restart";
+  std::string event_info =
+    "nodeRole:" + node_role + "," + ip + ":" + port + "," + "currentTime:" + time + "," + "event:" + event + ";";
+  event_txt_file_ << event_info << "\n";
+  (void)event_txt_file_.flush();
+  event_txt_file_.close();
+  MS_LOG(DEBUG) << "Record scheduler node restart info " << event_info << " success!";
 }
 
 void SchedulerNode::PersistMetaData() {

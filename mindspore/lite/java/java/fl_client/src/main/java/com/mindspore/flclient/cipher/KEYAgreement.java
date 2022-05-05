@@ -20,6 +20,7 @@ import static com.mindspore.flclient.LocalFLParameter.KEY_LEN;
 
 import com.mindspore.flclient.Common;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.bouncycastle.crypto.params.KeyParameter;
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
  * @since 2021-06-30
  */
 public class KEYAgreement {
-    private static final Logger LOGGER = Logger.getLogger(KEYAgreement.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(KEYAgreement.class.toString());
     private static final int PBKDF2_ITERATIONS = 10000;
     private static final int HASH_BIT_SIZE = 256;
 
@@ -59,7 +60,7 @@ public class KEYAgreement {
      */
     public byte[] generatePublicKey(byte[] privateKey) {
         if (privateKey == null || privateKey.length == 0) {
-            LOGGER.severe(Common.addTag("privateKey is null"));
+            LOGGER.severe("privateKey is null");
             return new byte[0];
         }
         byte[] publicKey = new byte[KEY_LEN];
@@ -76,11 +77,11 @@ public class KEYAgreement {
      */
     public byte[] keyAgreement(byte[] privateKey, byte[] publicKey) {
         if (privateKey == null || privateKey.length == 0) {
-            LOGGER.severe(Common.addTag("privateKey is null"));
+            LOGGER.severe("privateKey is null");
             return new byte[0];
         }
         if (publicKey == null || publicKey.length == 0) {
-            LOGGER.severe(Common.addTag("publicKey is null"));
+            LOGGER.severe("publicKey is null");
             return new byte[0];
         }
         byte[] secret = new byte[KEY_LEN];
@@ -97,7 +98,7 @@ public class KEYAgreement {
      */
     public byte[] getEncryptedPassword(byte[] password, byte[] salt) {
         if (password == null || password.length == 0) {
-            LOGGER.severe(Common.addTag("password is null"));
+            LOGGER.severe("password is null");
             return new byte[0];
         }
         PKCS5S2ParametersGenerator gen = new PKCS5S2ParametersGenerator(new SHA256Digest());

@@ -22,6 +22,7 @@
 #include <string>
 #include <map>
 #include "ps/core/communicator/communicator_base.h"
+#include "ps/core/file_configuration.h"
 #include "fl/server/common.h"
 #include "fl/server/round.h"
 #include "fl/server/local_meta_store.h"
@@ -134,14 +135,18 @@ class Iteration {
 
   void set_instance_state(InstanceState staet);
 
+  // Create a thread to record date rate
+  void StartThreadToRecordDataRate();
+
+  // Set file_configuration
+  void SetFileConfig(const std::shared_ptr<ps::core::FileConfiguration> &file_configuration);
+
  private:
   Iteration()
       : running_round_num_(0),
         server_node_(nullptr),
         communicator_(nullptr),
         iteration_state_(IterationState::kCompleted),
-        start_timestamp_(0),
-        complete_timestamp_(0),
         iteration_loop_count_(0),
         iteration_num_(1),
         is_last_iteration_valid_(true),
@@ -164,7 +169,11 @@ class Iteration {
                                {kStartFLJobRejectClientNum, 0},
                                {kUpdateModelRejectClientNum, 0},
                                {kGetModelRejectClientNum, 0}}),
-        iteration_result_(IterationResult::kSuccess) {
+        iteration_result_(IterationResult::kSuccess),
+        iteration_fail_num_(0),
+        is_date_rate_thread_running_(true),
+        file_configuration_(nullptr),
+        instance_name_("") {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration();
@@ -223,6 +232,8 @@ class Iteration {
 
   void StartNewInstance();
 
+  std::string GetDataRateFilePath();
+
   std::shared_ptr<ps::core::ServerNode> server_node_;
   std::shared_ptr<ps::core::TcpCommunicator> communicator_;
 
@@ -236,8 +247,12 @@ class Iteration {
   std::mutex iteration_state_mtx_;
   std::condition_variable iteration_state_cv_;
   std::atomic<IterationState> iteration_state_;
-  uint64_t start_timestamp_;
-  uint64_t complete_timestamp_;
+
+  // Iteration start time
+  ps::core::Time start_time_;
+
+  // Iteration complete time
+  ps::core::Time complete_time_;
 
   // The count of iteration loops which are completed.
   size_t iteration_loop_count_;
@@ -295,6 +310,21 @@ class Iteration {
 
   // mutex for iter move to next, avoid core dump
   std::mutex iter_move_mtx_;
+
+  // The number of iteration continuous failure
+  uint32_t iteration_fail_num_;
+
+  // The thread to record data rate
+  std::thread data_rate_thread_;
+
+  // The state of data rate thread
+  std::atomic_bool is_date_rate_thread_running_;
+
+  // The ptr of config file
+  std::shared_ptr<ps::core::FileConfiguration> file_configuration_;
+
+  // The instance name
+  std::string instance_name_;
 };
 }  // namespace server
 }  // namespace fl

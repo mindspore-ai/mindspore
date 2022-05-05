@@ -26,13 +26,14 @@
 #include "include/api/model.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
+class PredictTaskQueue;
 class ModelWorker {
  public:
   ModelWorker() = default;
 
   ~ModelWorker() = default;
 
-  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context, int node_id = -1);
+  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context);
 
   std::vector<MSTensor> GetInputs();
 
@@ -43,6 +44,8 @@ class ModelWorker {
 
   void Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue);
 
+  bool IsAvailable();
+
  private:
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
@@ -51,8 +54,10 @@ class ModelWorker {
  private:
   bool need_init_resize_ = true;
   std::shared_ptr<mindspore::Model> model_ = nullptr;
-  std::mutex mtx_model_;
+  std::mutex mtx_worker_;
   bool need_copy_output_ = true;
+  std::atomic_bool available_ = true;
+  std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_

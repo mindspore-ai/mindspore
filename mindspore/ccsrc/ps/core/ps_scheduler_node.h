@@ -90,6 +90,10 @@ class BACKEND_EXPORT PSSchedulerNode : public SchedulerNode {
 
   void RecoverFromPersistence() override;
 
+  void InitEventTxtFile() override {}
+
+  void RecordSchedulerRestartInfo() override {}
+
   // Record received host hash name from workers.
   std::vector<size_t> host_hash_names_;
   // Record rank id of the nodes which sended host name.

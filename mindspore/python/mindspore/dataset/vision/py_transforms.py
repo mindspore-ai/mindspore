@@ -1582,7 +1582,7 @@ class RandomSharpness(py_transforms.PyTensorOperation):
     Adjust the sharpness of the input PIL Image by a random degree.
 
     Args:
-        degrees (Sequence[float, float]): Range of sharpness adjustment degree to select from, arranged
+        degrees (Sequence[float, float], optional): Range of sharpness adjustment degree to select from, arranged
             in order of (min, max). A degree of 0.0 gives a blurred image, a degree of 1.0
             gives the original image and a degree of 2.0 gives a sharpened image.
             Default: (0.1, 1.9).

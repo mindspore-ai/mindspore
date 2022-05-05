@@ -19,6 +19,7 @@ package com.mindspore.flclient.pki;
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.LocalFLParameter;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemWriter;
 
@@ -50,7 +51,7 @@ import java.util.logging.Logger;
  * @since 2021-08-25
  */
 public class PkiUtil {
-    private static final Logger LOGGER = Logger.getLogger(PkiUtil.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(PkiUtil.class.toString());
 
     /**
      * generate PkiBean
@@ -82,7 +83,7 @@ public class PkiUtil {
             messageDigest = MessageDigest.getInstance("SHA-256");
             hash = messageDigest.digest(str.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.severe(Common.addTag("[PkiUtil] catch NoSuchAlgorithmException: " + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch NoSuchAlgorithmException: " + e.getMessage());
         }
         return hash;
     }
@@ -100,8 +101,8 @@ public class PkiUtil {
         try {
             pemWriter.writeObject(new PemObject("CERTIFICATE", certificate.getEncoded()));
         } catch (IOException | CertificateEncodingException e) {
-            LOGGER.severe(Common.addTag("[PkiUtil] catch IOException or CertificateEncodingException in getPermFormat: "
-                    + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch IOException or CertificateEncodingException in getPermFormat: "
+                    + e.getMessage());
         } finally {
             pemWriter.flush();
             pemWriter.close();
@@ -128,7 +129,7 @@ public class PkiUtil {
         } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException
                 | UnrecoverableKeyException | NoSuchProviderException | InvalidKeyException
                 | SignatureException e) {
-            LOGGER.severe(Common.addTag("[PkiUtil] catch Exception: " + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch Exception: " + e.getMessage());
         }
         return signData;
     }
@@ -157,7 +158,7 @@ public class PkiUtil {
             certificates = ((KeyStore.PrivateKeyEntry) entry).getCertificateChain();
         } catch (IOException | CertificateException | NoSuchAlgorithmException
                 | UnrecoverableEntryException | KeyStoreException e) {
-            LOGGER.severe(Common.addTag("[PkiUtil] catch Exception: " + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch Exception: " + e.getMessage());
         }
 
         return certificates;
@@ -198,7 +199,7 @@ public class PkiUtil {
             equipCert = readPemFormat(certificates[1]);
             equipCertBytesHash = getSHA256Str(equipCert);
         } catch (IOException e) {
-            LOGGER.severe(Common.addTag("[PkiUtil] catch Exception: " + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch Exception: " + e.getMessage());
         }
 
         return toHexFormat(equipCertBytesHash);
@@ -217,7 +218,7 @@ public class PkiUtil {
             equipCert = readPemFormat(certificateGradeOne);
             equipCertBytesHash = getSHA256Str(equipCert);
         } catch (IOException e) {
-            LOGGER.severe(Common.addTag("[PkiUtil] catch Exception: " + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch Exception: " + e.getMessage());
         }
         if (equipCertBytesHash == null) {
             return "";
@@ -240,15 +241,14 @@ public class PkiUtil {
         StringWriter writer = new StringWriter();
         PemWriter pemWriter = new PemWriter(writer);
         if (certificate == null) {
-            LOGGER.severe(Common.addTag("[PkiUtil] the input parameter certificate is null, please check"));
+            LOGGER.severe("[PkiUtil] the input parameter certificate is null, please check");
             throw new IllegalArgumentException();
         }
         try {
             pemWriter.writeObject(new PemObject("CERTIFICATE", certificate.getEncoded()));
         } catch (IOException | CertificateEncodingException e) {
-            LOGGER.severe(
-                    Common.addTag("[PkiUtil] catch IOException or CertificateEncodingException in getPermFormat: "
-                            + e.getMessage()));
+            LOGGER.severe("[PkiUtil] catch IOException or CertificateEncodingException in getPermFormat: "
+                    + e.getMessage());
         } finally {
             pemWriter.flush();
             pemWriter.close();

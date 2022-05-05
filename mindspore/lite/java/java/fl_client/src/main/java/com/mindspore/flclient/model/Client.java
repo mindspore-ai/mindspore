@@ -18,6 +18,7 @@ package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
 import com.mindspore.flclient.LocalFLParameter;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.Model;
@@ -42,7 +43,7 @@ import java.util.stream.IntStream;
  * @since v1.0
  */
 public abstract class Client {
-    private static final Logger logger = Logger.getLogger(Client.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(Client.class.toString());
 
     /**
      * lite session object.
@@ -99,12 +100,12 @@ public abstract class Client {
      */
     public Status initSessionAndInputs(String modelPath, MSConfig config, int[][] inputShapes) {
         if (modelPath == null) {
-            logger.severe(Common.addTag("session init failed"));
+            logger.severe("session init failed");
             return Status.FAILED;
         }
         Optional<LiteSession> optTrainSession = initSession(modelPath, config, inputShapes != null);
         if (!optTrainSession.isPresent()) {
-            logger.severe(Common.addTag("session init failed"));
+            logger.severe("session init failed");
             return Status.FAILED;
         }
         trainSession = optTrainSession.get();
@@ -119,7 +120,7 @@ public abstract class Client {
         } else {
             boolean isSuccess = trainSession.resize(trainSession.getInputs(), inputShapes);
             if (!isSuccess) {
-                logger.severe(Common.addTag("session resize failed"));
+                logger.severe("session resize failed");
                 return Status.FAILED;
             }
             for (int[] shapes : inputShapes) {
@@ -149,24 +150,24 @@ public abstract class Client {
     public Status trainModel(int epochs) {
         boolean isSuccess = trainSession.train();
         if (!isSuccess) {
-            logger.severe(Common.addTag("train session switch eval mode failed"));
+            logger.severe("train session switch eval mode failed");
             return Status.FAILED;
         }
         if (epochs <= 0) {
-            logger.severe(Common.addTag("epochs cannot smaller than 0"));
+            logger.severe("epochs cannot smaller than 0");
             return Status.INVALID;
         }
 
         DataSet trainDataSet = dataSets.getOrDefault(RunType.TRAINMODE, null);
         if (trainDataSet == null) {
-            logger.severe(Common.addTag("not find train dataset"));
+            logger.severe("not find train dataset");
             return Status.NULLPTR;
         }
         trainDataSet.padding();
         List<Callback> trainCallbacks = initCallbacks(RunType.TRAINMODE, trainDataSet);
         Status status = runModel(epochs, trainCallbacks, trainDataSet);
         if (status != Status.SUCCESS) {
-            logger.severe(Common.addTag("train loop failed"));
+            logger.severe("train loop failed");
             return status;
         }
         return Status.SUCCESS;
@@ -180,7 +181,7 @@ public abstract class Client {
     public float evalModel() {
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
-            logger.severe(Common.addTag("train session switch eval mode failed"));
+            logger.severe("train session switch eval mode failed");
             return Float.NaN;
         }
         DataSet evalDataSet = dataSets.getOrDefault(RunType.EVALMODE, null);
@@ -188,7 +189,7 @@ public abstract class Client {
         List<Callback> evalCallbacks = initCallbacks(RunType.EVALMODE, evalDataSet);
         Status status = runModel(1, evalCallbacks, evalDataSet);
         if (status != Status.SUCCESS) {
-            logger.severe(Common.addTag("train loop failed"));
+            logger.severe("train loop failed");
             return Float.NaN;
         }
         return getEvalAccuracy(evalCallbacks);
@@ -202,7 +203,7 @@ public abstract class Client {
     public List<Object> inferModel() {
         boolean isSuccess = trainSession.eval();
         if (!isSuccess) {
-            logger.severe(Common.addTag("train session switch eval mode failed"));
+            logger.severe("train session switch eval mode failed");
             return null;
         }
         DataSet inferDataSet = dataSets.getOrDefault(RunType.INFERMODE, null);
@@ -210,7 +211,7 @@ public abstract class Client {
         List<Callback> inferCallbacks = initCallbacks(RunType.INFERMODE, inferDataSet);
         Status status = runModel(1, inferCallbacks, inferDataSet);
         if (status != Status.SUCCESS) {
-            logger.severe(Common.addTag("train loop failed"));
+            logger.severe("train loop failed");
             return null;
         }
         return getInferResult(inferCallbacks);
@@ -222,13 +223,13 @@ public abstract class Client {
         for (int i = 0; i < epochs; i++) {
             for (int j = 0; j < dataSet.batchNum; j++) {
                 if (localFLParameter.isStopJobFlag()) {
-                    logger.info(Common.addTag("the stopJObFlag is set to true, the job will be stop"));
+                    logger.info("the stopJObFlag is set to true, the job will be stop");
                     return Status.FAILED;
                 }
                 fillModelInput(dataSet, j);
                 boolean isSuccess = trainSession.runGraph();
                 if (!isSuccess) {
-                    logger.severe(Common.addTag("run graph failed"));
+                    logger.severe("run graph failed");
                     return Status.FAILED;
                 }
                 for (Callback callBack : callbacks) {
@@ -244,7 +245,7 @@ public abstract class Client {
             }
         }
         long endTime = System.currentTimeMillis();
-        logger.info(Common.addTag("total run time:" + (endTime - startTime) + "ms"));
+        logger.info("total run time:" + (endTime - startTime) + "ms");
         return Status.SUCCESS;
     }
 
@@ -256,12 +257,12 @@ public abstract class Client {
      */
     public Status saveModel(String modelPath) {
         if (modelPath == null) {
-            logger.severe(Common.addTag("model path cannot be empty"));
+            logger.severe("model path cannot be empty");
             return Status.NULLPTR;
         }
         boolean isSuccess = trainSession.export(modelPath, 0, 1);
         if (!isSuccess) {
-            logger.severe(Common.addTag("save model failed"));
+            logger.severe("save model failed");
             return Status.FAILED;
         }
         return Status.SUCCESS;
@@ -269,7 +270,7 @@ public abstract class Client {
 
     private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig, boolean isDynamicInferModel) {
         if (modelPath == null) {
-            logger.severe(Common.addTag("modelPath cannot be empty"));
+            logger.severe("modelPath cannot be empty");
             return Optional.empty();
         }
         // only lite session support dynamic shape
@@ -277,13 +278,13 @@ public abstract class Client {
             Model model = new Model();
             boolean isSuccess = model.loadModel(modelPath);
             if (!isSuccess) {
-                logger.severe(Common.addTag("load model failed:" + modelPath+" ,please check model is valid or disk" +
-                "space is enough,please check lite log for detail."));
+                logger.severe("load model failed:" + modelPath+" ,please check model is valid or disk" +
+                "space is enough,please check lite log for detail.");
                 return Optional.empty();
             }
             trainSession = LiteSession.createSession(msConfig);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed.please check lite log for detail."));
+                logger.severe("init session failed.please check lite log for detail.");
                 msConfig.free();
                 model.free();
                 return Optional.empty();
@@ -291,7 +292,7 @@ public abstract class Client {
             msConfig.free();
             isSuccess = trainSession.compileGraph(model);
             if (!isSuccess) {
-                logger.severe(Common.addTag("compile graph failed,please check lite log for detail."));
+                logger.severe("compile graph failed,please check lite log for detail.");
                 model.free();
                 trainSession.free();
                 return Optional.empty();
@@ -301,8 +302,8 @@ public abstract class Client {
         } else {
             trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
             if (trainSession == null) {
-                logger.severe(Common.addTag("init session failed,please check model :" + modelPath + " is valid or " +
-                        "disk space is enough.please check lite log for detail."));
+                logger.severe("init session failed,please check model :" + modelPath + " is valid or " +
+                        "disk space is enough.please check lite log for detail.");
                 return Optional.empty();
             }
             return Optional.of(trainSession);
@@ -330,13 +331,13 @@ public abstract class Client {
      */
     public Status updateFeatures(String modelName, List<FeatureMap> featureMaps) {
         if (trainSession == null || featureMaps == null || modelName == null || modelName.isEmpty()) {
-            logger.severe(Common.addTag("trainSession,featureMaps modelName cannot be null"));
+            logger.severe("trainSession,featureMaps modelName cannot be null");
             return Status.NULLPTR;
         }
         List<MSTensor> tensors = new ArrayList<>(featureMaps.size());
         for (FeatureMap newFeature : featureMaps) {
             if (newFeature == null) {
-                logger.severe(Common.addTag("newFeature cannot be null"));
+                logger.severe("newFeature cannot be null");
                 return Status.NULLPTR;
             }
             ByteBuffer by = newFeature.dataAsByteBuffer();
@@ -348,7 +349,7 @@ public abstract class Client {
         boolean isSuccess = trainSession.updateFeatures(tensors);
         for (MSTensor tensor : tensors) {
             if (tensor == null) {
-                logger.severe(Common.addTag("tensor cannot be null"));
+                logger.severe("tensor cannot be null");
                 return Status.NULLPTR;
             }
             tensor.free();
@@ -382,7 +383,7 @@ public abstract class Client {
         if (trainSession.setLearningRate(lr)) {
             return Status.SUCCESS;
         }
-        logger.severe(Common.addTag("set learning rate failed"));
+        logger.severe("set learning rate failed");
         return Status.FAILED;
     }
 

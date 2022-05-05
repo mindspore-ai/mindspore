@@ -18,17 +18,29 @@
 #include "tools/converter/optimizer.h"
 #include "tools/converter/legacy_optimizer/fusion/matmul_biasadd_fusion_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
+#include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 
 namespace mindspore {
 namespace lite {
+namespace {
+std::vector<schema::CNodeT *> GetGraphNodes(const schema::MetaGraphT &graph_defT) {
+  std::vector<schema::CNodeT *> old_nodes{};
+  old_nodes.resize(graph_defT.nodes.size());
+  std::transform(graph_defT.nodes.begin(), graph_defT.nodes.end(), old_nodes.begin(),
+                 [](const std::unique_ptr<schema::CNodeT> &node) { return node.get(); });
+  return old_nodes;
+}
+}  // namespace
 STATUS GraphFusion::Run(schema::MetaGraphT *graph) {
   if (graph == nullptr) {
     MS_LOG(ERROR) << "graph is nullptr.";
     return RET_ERROR;
   }
+  auto old_nodes = GetGraphNodes(*graph);
   Optimizer fusion_optimizer;
   fusion_optimizer.AddPass(new (std::nothrow) MatMulBiasAddFusionPass());
   fusion_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+  fusion_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
   auto status = fusion_optimizer.Run(graph);
   if (status != RET_OK && status != RET_NO_CHANGE) {
     MS_LOG(ERROR) << "graph fusion failed.";

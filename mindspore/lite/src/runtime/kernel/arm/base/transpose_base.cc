@@ -214,8 +214,7 @@ int TransposeBaseCPUKernel::CopyInputToOutput() {
   auto out_tensor = out_tensors().front();
   CHECK_NULL_RETURN(out_tensor);
   if (in_tensor->allocator() == nullptr || in_tensor->allocator() != out_tensor->allocator() ||
-      in_tensor->allocator() != ms_context_->allocator || op_parameter_->is_train_session_ ||
-      ((in_tensor->IsGraphInput() || in_tensor->IsGraphOutput()) && out_tensor->IsGraphOutput())) {
+      in_tensor->allocator() != ms_context_->allocator || op_parameter_->is_train_session_) {
     CHECK_NULL_RETURN(out_tensor->data());
     CHECK_NULL_RETURN(in_tensor->data());
     MS_CHECK_FALSE(in_tensor->Size() == 0, RET_ERROR);

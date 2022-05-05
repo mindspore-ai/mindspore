@@ -51,9 +51,25 @@ void StartFLJobKernel::InitKernel(size_t) {
   return;
 }
 
+bool StartFLJobKernel::VerifyFLJobRequest(const schema::RequestFLJob *start_fl_job_req) {
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, false);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), false);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_name(), false);
+  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->timestamp(), false);
+
+  if (ps::PSContext::instance()->pki_verify()) {
+    MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->key_attestation(), false);
+    MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->equip_cert(), false);
+    MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->equip_ca_cert(), false);
+    MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->sign_data(), false);
+  }
+  return true;
+}
+
 bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
                               const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(DEBUG) << "Launching StartFLJobKernel kernel.";
+  ps::core::Time start_fl_job_time = ps::core::CommUtil::GetNowTime();
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
@@ -72,8 +88,8 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   }
 
   const schema::RequestFLJob *start_fl_job_req = flatbuffers::GetRoot<schema::RequestFLJob>(req_data);
-  if (start_fl_job_req == nullptr) {
-    std::string reason = "Building flatbuffers schema failed for RequestFLJob.";
+  if (!VerifyFLJobRequest(start_fl_job_req)) {
+    std::string reason = "Verify flatbuffers schema failed for RequestFLJob.";
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_RequestError, reason, false,
       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
@@ -100,6 +116,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   }
 
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
+  device_meta.set_now_time(start_fl_job_time.time_stamp);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());
@@ -149,14 +166,10 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
 
 bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
                                       const schema::RequestFLJob *start_fl_job_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, false);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), false);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->timestamp(), false);
-
   std::string fl_id = start_fl_job_req->fl_id()->str();
   std::string timestamp = start_fl_job_req->timestamp()->str();
   auto sign_data_vector = start_fl_job_req->sign_data();
-  if (sign_data_vector == nullptr || sign_data_vector->size() == 0) {
+  if (sign_data_vector->size() == 0) {
     std::string reason = "sign data is empty.";
     BuildStartFLJobRsp(
       fbb, schema::ResponseCode_RequestError, reason, false,
@@ -169,10 +182,6 @@ bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
   for (unsigned int i = 0; i < sign_data_vector->size(); i++) {
     sign_data[i] = sign_data_vector->Get(i);
   }
-
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->key_attestation(), false);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->equip_cert(), false);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->equip_ca_cert(), false);
 
   std::string key_attestation = start_fl_job_req->key_attestation()->str();
   std::string equip_cert = start_fl_job_req->equip_cert()->str();
@@ -200,13 +209,6 @@ bool StartFLJobKernel::JudgeFLJobCert(const std::shared_ptr<FBBuilder> &fbb,
 
 bool StartFLJobKernel::StoreKeyAttestation(const std::shared_ptr<FBBuilder> &fbb,
                                            const schema::RequestFLJob *start_fl_job_req) {
-  // update key attestation
-  if (start_fl_job_req == nullptr) {
-    return false;
-  }
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), false);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->key_attestation(), false);
-
   std::string fl_id = start_fl_job_req->fl_id()->str();
   std::string key_attestation = start_fl_job_req->key_attestation()->str();
 
@@ -246,8 +248,6 @@ void StartFLJobKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::Message
 
 ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                                          const schema::RequestFLJob *start_fl_job_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kFail);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), ResultCode::kFail);
   if (DistributedCountService::GetInstance().CountReachThreshold(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason = "Current amount for startFLJob has reached the threshold. Please startFLJob later.";
     BuildStartFLJobRsp(
@@ -260,10 +260,6 @@ ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<F
 }
 
 DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, {});
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_name(), {});
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), {});
-
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
@@ -294,9 +290,6 @@ ResultCode StartFLJobKernel::ReadyForStartFLJob(const std::shared_ptr<FBBuilder>
 
 ResultCode StartFLJobKernel::CountForStartFLJob(const std::shared_ptr<FBBuilder> &fbb,
                                                 const schema::RequestFLJob *start_fl_job_req) {
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, ResultCode::kFail);
-  MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), ResultCode::kFail);
-
   if (!DistributedCountService::GetInstance().Count(name_, start_fl_job_req->fl_id()->str())) {
     std::string reason =
       "Counting start fl job request failed for fl id " + start_fl_job_req->fl_id()->str() + ", Please retry later.";

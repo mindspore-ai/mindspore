@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-#include <random>
 #include <algorithm>
 #include "src/runtime/kernel/arm/fp32_grad/dropout.h"
 #include "schema/model_generated.h"
@@ -49,6 +48,10 @@ int DropoutCPUKernel::Prepare() {
   } else {
     scale_ = kOne / (kOne - param->ratio_);
   }
+
+  std::bernoulli_distribution::param_type p1(param->ratio_);
+  distribution_.param(p1);
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -78,11 +81,8 @@ int DropoutCPUKernel::DoExecute(int task_id) {
     if (IsEval()) {
       std::copy(&(input_ptr[start]), &(input_ptr[end]), &(output_ptr[start]));
     } else {
-      std::default_random_engine generator;
-      std::bernoulli_distribution distribution(param->ratio_);
-
       for (int i = start; i < end; i++) {
-        mask[i] = static_cast<float>(distribution(generator));
+        mask[i] = static_cast<float>(distribution_(generator_));
         output_ptr[i] = input_ptr[i] * mask[i] * scale_;
       }
     }

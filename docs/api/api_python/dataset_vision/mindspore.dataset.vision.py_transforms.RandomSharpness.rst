@@ -7,7 +7,7 @@ mindspore.dataset.vision.py_transforms.RandomSharpness
 
     **参数：**
 
-    - **degrees** (Sequence[float, float]) - 锐度调节系数的随机选取范围，按照(min, max)顺序排列。调节系数为0.0时将返回模糊图像；调节系数为1.0时将返回原始图像；调节系数为2.0时将返回锐化图像。默认值：(0.1, 1.9)。
+    - **degrees** (Sequence[float, float]，可选) - 锐度调节系数的随机选取范围，按照(min, max)顺序排列。调节系数为0.0时将返回模糊图像；调节系数为1.0时将返回原始图像；调节系数为2.0时将返回锐化图像。默认值：(0.1, 1.9)。
 
     **异常：**
 

@@ -46,9 +46,6 @@ constexpr int kDefaultKernelSpinCount = 3000;
 constexpr int kMinSpinCount = 1;
 constexpr int kDefaultFrequency = 1;
 constexpr float kMaxScale = 1.;
-#ifdef OPERATOR_PARALLELISM
-constexpr size_t MAX_READY_TASK_NR = 4096;
-#endif
 
 /* Thread status */
 constexpr int kThreadBusy = 0;  // busy, the thread is running task
@@ -71,27 +68,22 @@ typedef struct Task {
   std::atomic_int finished{0};
   std::atomic_int status{THREAD_OK};  // return status, RET_OK
 } Task;
-#ifdef OPERATOR_PARALLELISM
-typedef struct TaskMessage {
-  Task *task;
-  int task_id;
-} TaskMessage;
-#endif
+
 class ThreadPool;
 class Worker {
  public:
-  explicit Worker(ThreadPool *pool) : pool_(pool) {}
+  explicit Worker(ThreadPool *pool, size_t index) : pool_(pool), worker_id_(index) {}
   virtual ~Worker();
   // create thread and start running at the same time
   virtual void CreateThread();
   // assign task and then activate thread
   void Active(Task *task, int task_id);
   // activate thread
-  void Active();
+  virtual void Active();
   // whether or not it is idle and marked as held
   bool available();
   // assigns task first before running
-  bool RunLocalKernelTask();
+  virtual bool RunLocalKernelTask();
   // set max spin count before running
   void SetMaxSpinCount(int max_spin_count) { max_spin_count_ = max_spin_count; }
   void InitWorkerMask(const std::vector<int> &core_list, const size_t workers_size);
@@ -111,20 +103,17 @@ class Worker {
   void set_mask(const cpu_set_t &mask) { mask_ = mask; }
   pthread_t handle() { return thread_.native_handle(); }
 #endif
-#ifdef OPERATOR_PARALLELISM
-  inline TaskMessage *GetTaskMessages() { return task_messages_; }
-  inline void SetTaskMessages(TaskMessage *task_messages) { task_messages_ = task_messages; }
-  inline bool RunQueueWorkTask() const;
-#endif
   bool check_task_nullptr();
   inline bool get_task_free() const { return task_free_; }
   inline void set_task_free(bool flag) { task_free_ = flag; }
+  inline void set_alive(bool flag) { alive_ = flag; }
+  inline bool alive() { return alive_; }
 
  protected:
   void SetAffinity();
   void Run();
   void YieldAndDeactive();
-  void WaitUntilActive();
+  virtual void WaitUntilActive();
 
   bool alive_{true};
   std::thread thread_;
@@ -148,9 +137,7 @@ class Worker {
   int max_spin_count_{kMinSpinCount};
   bool task_free_{true};
   ThreadPool *pool_{nullptr};
-#ifdef OPERATOR_PARALLELISM
-  TaskMessage *task_messages_{nullptr};
-#endif
+  size_t worker_id_{0};
 };
 
 class MS_CORE_API ThreadPool {
@@ -163,8 +150,10 @@ class MS_CORE_API ThreadPool {
   int SetCpuAffinity(const std::vector<int> &core_list);
   int SetCpuAffinity(BindMode bind_mode);
   int SetProcessAffinity(BindMode bind_mode) const;
+  void SyncRunTask(Task *task, int start_num, int task_num) const;
+  int SyncRunFunc(const Func &func, Content content, int start, int end) const;
 
-  int ParallelLaunch(const Func &func, Content content, int task_num) const;
+  virtual int ParallelLaunch(const Func &func, Content content, int task_num);
   void DisableOccupiedActorThread() { occupied_actor_thread_ = false; }
   void SetActorThreadNum(size_t actor_thread_num) { actor_thread_num_ = actor_thread_num; }
   void SetKernelThreadNum(size_t kernel_thread_num) { kernel_thread_num_ = kernel_thread_num; }
@@ -174,62 +163,42 @@ class MS_CORE_API ThreadPool {
   void SetSpinCountMinValue();
   void SetMaxSpinCount(int spin_count);
   void SetMinSpinCount(int spin_count);
-  void ActiveWorkers() const;
+  virtual void ActiveWorkers();
   void SetWorkerIdMap();
   const std::unordered_map<std::thread::id, size_t> &GetWorkerIdMap() const { return worker_ids_; }
   float GetServerCpuFrequence() const { return server_cpu_frequence; }
-#ifdef OPERATOR_PARALLELISM
-  inline TaskMessage *PopTaskFromQueue() const {
-#ifdef USE_HQUEUE
-    return task_queue_.Dequeue();
-#else
-    std::lock_guard<std::mutex> _l(task_mutex_);
-    if (task_queue_.empty()) {
-      return nullptr;
+  inline size_t actor_thread_num() { return actor_thread_num_; }
+  template <typename T = Worker>
+  int CreateThreads(size_t thread_num, const std::vector<int> &core_list) {
+    size_t core_num = std::thread::hardware_concurrency();
+    thread_num = thread_num < core_num ? thread_num : core_num;
+    THREAD_INFO("ThreadInfo, Num: [%zu], CoreNum: [%zu]", thread_num, core_num);
+    if (thread_num == 0) {
+      THREAD_INFO("Current thread as working thread.");
+      return THREAD_OK;
     }
-    auto task_message = task_queue_.front();
-    task_queue_.pop();
-    return task_message;
-#endif
+    std::lock_guard<std::mutex> _l(pool_mutex_);
+    for (size_t i = 0; i < thread_num; ++i) {
+      auto worker = new (std::nothrow) T(this, workers_.size());
+      THREAD_ERROR_IF_NULL(worker);
+      worker->InitWorkerMask(core_list, workers_.size());
+      workers_.push_back(worker);
+      worker->CreateThread();
+      THREAD_INFO("create kernel thread[%zu]", i);
+    }
+    return THREAD_OK;
   }
-  inline void PushTaskToQueue(TaskMessage *task_message) const {
-    if (!task_message) {
-      return;
-    }
-#ifdef USE_HQUEUE
-    while (!task_queue_.Enqueue(task_message)) {
-    }
-#else
-    std::lock_guard<std::mutex> _l(task_mutex_);
-    task_queue_.push(task_message);
-#endif
-  }
-  inline bool RunQueueWorkTask() const {
-    auto task_message = PopTaskFromQueue();
-    if (task_message == nullptr) {
-      return false;
-    }
-    auto task = task_message->task;
-    task_message->task = nullptr;
-    task->status |= task->func(task->content, task_message->task_id, 0, 0);
-    (void)++task->finished;
-    return true;
-  }
-#endif
 
  protected:
   ThreadPool() = default;
 
-  int CreateThreads(size_t thread_num, const std::vector<int> &core_list);
-
   int InitAffinityInfo();
-
-  void SyncRunTask(Task *task, int start_num, int task_num) const;
 
   void DistributeTask(Task *task, int task_num, Worker *curr) const;
   void CalculateScales(const std::vector<Worker *> &workers, int sum_frequency) const;
   void ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num, const Worker *curr) const;
 
+  Worker *CurrentWorker(size_t *index) const;
   Worker *CurrentWorker() const;
 
   std::mutex pool_mutex_;
@@ -242,17 +211,6 @@ class MS_CORE_API ThreadPool {
   int max_spin_count_{kDefaultSpinCount};
   int min_spin_count_{kMinSpinCount};
   float server_cpu_frequence = -1.0f;  // Unit : GHz
-#ifdef OPERATOR_PARALLELISM
-#ifdef USE_HQUEUE
-  mutable HQueue<TaskMessage> task_queue_;
-#else
-  mutable std::mutex task_mutex_;
-  mutable std::queue<TaskMessage *> task_queue_;
-#endif
-#endif
 };
-#ifdef OPERATOR_PARALLELISM
-inline bool Worker::RunQueueWorkTask() const { return pool_->RunQueueWorkTask(); }
-#endif
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_MINDRT_RUNTIME_THREADPOOL_H_
