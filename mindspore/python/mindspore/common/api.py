@@ -287,6 +287,8 @@ class _MindsporeFunctionExecutor:
                         str(self.fn.__code__.co_firstlineno) + '.' + str(id(self.fn))
         if _pynative_executor.grad_flag():
             generate_name = generate_name + ".grad"
+        if is_pynative_parallel():
+            generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
         self.fn.__parse_method__ = method_name
 
         # Add key with obj
@@ -427,7 +429,7 @@ def _get_ms_function_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
-def ms_function(fn=None, obj=None, input_signature=None, hash_args=None):
+def ms_function(fn=None, input_signature=None, hash_args=None):
     """
     Create a callable MindSpore graph from a Python function.
 
@@ -435,7 +437,6 @@ def ms_function(fn=None, obj=None, input_signature=None, hash_args=None):
 
     Args:
         fn (Function): The Python function that will be run as a graph. Default: None.
-        obj (Object): The Python object is used to distinguish the compiled function. Default: None.
         input_signature (Tensor): The Tensor which describes the input arguments. The shape and dtype of the Tensor
             will be supplied to this function. If input_signature is specified, each input to `fn` must be a `Tensor`.
             And the input parameters of `fn` cannot accept `**kwargs`. The shape and dtype of actual inputs should
@@ -509,14 +510,12 @@ def ms_function(fn=None, obj=None, input_signature=None, hash_args=None):
 
         @wraps(func)
         def staging_specialize(*args):
-            if obj is not None:
-                logger.warning("Obj is no longer in use, and the function's own object has been used to \
-                                distinguish whether it has been compiled.")
             process_obj = None
             if args and not isinstance(args[0], MsTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
-            if process_obj is None and is_pynative_parallel():
-                process_obj = obj
+            if is_pynative_parallel():
+                process_obj = args[0]
+                args = args[1:]
             out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj)(*args)
             return out
 
