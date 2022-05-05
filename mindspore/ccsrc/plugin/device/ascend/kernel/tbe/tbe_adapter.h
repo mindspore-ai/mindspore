@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,8 @@ const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
                                                           {"ParallelResizeBilinear", "SyncResizeBilinearV2"},
                                                           {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
                                                           {"Split", "SplitD"},
-                                                          {"CeLU", "CeluV2"}};
+                                                          {"CeLU", "CeluV2"},
+                                                          {"IndexAdd", "InplaceIndexAdd"}};
 
 enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
 using FAttrsPass = void (*)(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
