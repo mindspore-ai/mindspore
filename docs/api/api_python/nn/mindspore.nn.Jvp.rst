@@ -3,7 +3,7 @@ mindspore.nn.Jvp
 
 .. py:class:: mindspore.nn.Jvp(fn)
 
-    计算给定网络的雅可比向量积(Jacobian-vector product, JVP)。JVP对应 `前向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/master/design/gradient.html#id3>`_。
+    计算给定网络的雅可比向量积(Jacobian-vector product, JVP)。JVP对应 `前向模式自动微分 <https://www.mindspore.cn/docs/zh-CN/r1.7/design/gradient.html#前向自动微分>`_。
 
     **参数：**
 
