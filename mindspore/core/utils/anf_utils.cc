@@ -223,8 +223,8 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   auto kernel_info = cnode->kernel_info();
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
-    if (runtime_cache.runtime_cache().is_real_kernel() != CacheBool::UNCACHED) {
-      return (runtime_cache.runtime_cache().is_real_kernel() == CacheBool::TRUE);
+    if (runtime_cache.runtime_cache().is_real_kernel() != Uncached) {
+      return (runtime_cache.runtime_cache().is_real_kernel() == True);
     }
   }
   bool res = !IsOneOfPrimitive(cnode->input(kAnfPrimitiveIndex), virtual_prims);
@@ -232,9 +232,9 @@ bool AnfUtils::IsRealKernel(const AnfNodePtr &node) {
   if (kernel_info) {
     auto runtime_cache = kernel_info->runtime_cache();
     if (res) {
-      runtime_cache.runtime_cache().set_real_kernel(CacheBool::TRUE);
+      runtime_cache.runtime_cache().set_real_kernel(True);
     } else {
-      runtime_cache.runtime_cache().set_real_kernel(CacheBool::FALSE);
+      runtime_cache.runtime_cache().set_real_kernel(False);
     }
   }
 

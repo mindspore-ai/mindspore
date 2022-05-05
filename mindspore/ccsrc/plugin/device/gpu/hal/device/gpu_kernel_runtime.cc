@@ -20,7 +20,7 @@
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/cuda_driver.h"
 #include "plugin/device/gpu/hal/device/gpu_event.h"
-#include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
+#include "runtime/data_queue/data_queue_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
@@ -281,13 +281,13 @@ void GPUKernelRuntime::ReleaseDeviceRes() {
     }
   }
 #endif
-  if (GpuBufferMgr::GetInstance().IsInit()) {
-    if (!GpuBufferMgr::GetInstance().IsClosed()) {
-      if (!GpuBufferMgr::GetInstance().CloseNotify()) {
+  if (DataQueueMgr::GetInstance().IsInit()) {
+    if (!DataQueueMgr::GetInstance().IsClosed()) {
+      if (!DataQueueMgr::GetInstance().CloseNotify()) {
         MS_LOG(ERROR) << "Could not close gpu data queue.";
       }
     }
-    CHECK_OP_RET_WITH_ERROR(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
+    CHECK_OP_RET_WITH_ERROR(DataQueueMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
 
   // Destroy remaining memory swap events and free host memory.

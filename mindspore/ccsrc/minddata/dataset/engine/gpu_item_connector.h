@@ -24,15 +24,15 @@
 #include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
-#include "plugin/device/gpu/hal/device/blocking_queue.h"
+#include "runtime/data_queue/blocking_queue.h"
 
-using mindspore::device::DataItemGpu;
+using mindspore::device::DataQueueItem;
 
 namespace mindspore {
 namespace dataset {
 
 struct GpuConnectorItem {
-  std::vector<device::DataItemGpu> data_item;
+  std::vector<device::DataQueueItem> data_item;
   bool eoe_flag;  // flag to indicate an EOE item in the connector
 };
 

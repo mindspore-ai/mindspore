@@ -27,6 +27,7 @@
 
 #include "minddata/dataset/engine/perf/device_queue_tracing.h"
 #include "minddata/dataset/util/status.h"
+#include "mindspore/core/utils/data_queue_handler.h"
 #ifdef ENABLE_DUMP_IR
 #include "minddata/dataset/util/rdr.h"
 #endif
@@ -39,24 +40,22 @@
 #ifdef ENABLE_GPUQUE
 #include "minddata/dataset/engine/gpu_item_connector.h"
 #include "minddata/dataset/util/circular_pool.h"
-#include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
-using mindspore::device::BlockQueueStatus_T;
-using mindspore::device::GpuBufferMgr;
 #endif
 
 namespace mindspore {
 namespace dataset {
 using DATA_INFO = std::vector<std::pair<DataType, TensorShape>>;
 using DATA_INFO_QUEUE = Queue<DATA_INFO>;
-
+using mindspore::device::BlockQueueStatus_T;
+using mindspore::device::DataQueueItem;
 constexpr int32_t kTimeOutMilliSeconds = 25000;
 const int kDataInfoQueueCapacity = 128;
 
 class DeviceQueueOp : public PipelineOp {
  public:
   static const uint32_t INVALID_HANDLE = 0xffffffffUL;
-  static const uint32_t WAIT_TIME = 5;
+  const uint32_t WAIT_TIME = 5;
 
   enum class DeviceType { Ascend = 0, GPU = 1, CPU = 2 };
 
@@ -131,6 +130,9 @@ class DeviceQueueOp : public PipelineOp {
   // Name: PrintEndInfoWhenFirstBatch(bool)
   // Description: Print info when first batch send successful in sink_mode
   void PrintEndInfoWhenFirstBatch(bool *first_push_flag);
+  Status RetryPushData(const std::vector<DataQueueItem> &data, bool profiling, uint64_t *push_time);
+  bool NoExceptionRaised();
+  Status SendDataToAscendDynamic();
 
 #ifdef ENABLE_TDTQUE
   void WaitContinueSignal() const;
@@ -144,8 +146,8 @@ class DeviceQueueOp : public PipelineOp {
 
 #ifdef ENABLE_GPUQUE
   Status SendDataToGPU();
-  Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row, const int32_t &worker_id);
-  Status RetryPushData(const std::vector<DataItemGpu> &data, bool profiling, uint64_t *push_time);
+  Status MallocForGPUData(std::vector<device::DataQueueItem> *items, const TensorRow &curr_row,
+                          const int32_t &worker_id);
   void ReleaseData(void *addr, int32_t worker_id);
   Status LaunchParallelCopyThread();
   Status PushDataToGPU();
@@ -188,6 +190,7 @@ class DeviceQueueOp : public PipelineOp {
   std::atomic<bool> first_fetch_flag_;
   std::mutex data_info_mutex_;
   bool first_push_flag_;  // default: false, when first push, it will be true
+  bool dynamic_shape_{false};
 
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;

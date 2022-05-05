@@ -32,7 +32,6 @@ class RtKernel : public AscendKernelMod {
   RtKernel();
   ~RtKernel() override;
   virtual bool Init(const AnfNodePtr &anf_node);
-
   void SetInputSizeList(const std::vector<size_t> &size_list) override;
   void SetOutputSizeList(const std::vector<size_t> &size_list) override;
   void SetWorkspaceSizeList(const std::vector<size_t> &size_list) override;

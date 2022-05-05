@@ -29,6 +29,7 @@
 #include "ir/tensor.h"
 #include "base/base_ref.h"
 #include "include/common/visible.h"
+#include "utils/callback_handler.h"
 
 namespace py = pybind11;
 namespace mindspore {

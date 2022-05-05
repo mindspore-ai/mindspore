@@ -167,6 +167,9 @@ class DeviceContext {
   // Ensure the thread safety for creating stream.
   std::mutex stream_mutex_;
 
+  // Ensure the thread safety for allocating device memory.
+  mutable std::mutex alloc_mem_mutex_;
+
   // The collective communication library.
   CollectiveCommunicationLib *collective_comm_lib_;
 };

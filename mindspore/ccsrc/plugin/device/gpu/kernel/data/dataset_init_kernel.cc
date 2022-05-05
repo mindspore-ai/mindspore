@@ -17,13 +17,13 @@
 #include "plugin/device/gpu/kernel/data/dataset_init_kernel.h"
 #include "plugin/device/gpu/kernel/data/dataset_utils.h"
 #include "kernel/common_utils.h"
-#include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
+#include "runtime/data_queue/data_queue_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
 #include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace kernel {
-using mindspore::device::GpuBufferMgr;
+using mindspore::device::DataQueueMgr;
 
 DatasetInitKernelMod::DatasetInitKernelMod() : total_bytes_(0) {}
 
@@ -59,7 +59,7 @@ bool DatasetInitKernelMod::Launch(const std::vector<AddressPtr> &, const std::ve
                       << len << "].";
   }
 
-  auto status = GpuBufferMgr::GetInstance().Create(queue_name_, addr, shapes_, buffer_q_capacity_);
+  auto status = DataQueueMgr::GetInstance().Create(queue_name_, addr, shapes_, buffer_q_capacity_);
   if (status) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', init Dataset Failed. len: " << len << ", status:" << status;
   }

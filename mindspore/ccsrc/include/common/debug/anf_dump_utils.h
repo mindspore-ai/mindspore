@@ -24,6 +24,7 @@
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
 #include "include/common/visible.h"
+#include "utils/callback_handler.h"
 
 namespace mindspore {
 COMMON_EXPORT std::string GetNodeFuncStr(const AnfNodePtr &nd);

@@ -117,7 +117,8 @@ def set_seed(seed):
     if not isinstance(seed, int) or isinstance(seed, bool):
         raise TypeError("seed isn't of type int.")
     if seed < 0 or seed > UINT32_MAX:
-        raise ValueError("seed given is not within the required range [0, UINT32_MAX(4294967295)].")
+        raise ValueError(
+            "seed given is not within the required range [0, UINT32_MAX(4294967295)].")
     _config.set_seed(seed)
     random.seed(seed)
     # numpy.random isn't thread safe
@@ -164,7 +165,8 @@ def set_prefetch_size(size):
     if not isinstance(size, int) or isinstance(size, bool):
         raise TypeError("size isn't of type int.")
     if size <= 0 or size > INT32_MAX:
-        raise ValueError("size is not within the required range (0, INT32_MAX(2147483647)].")
+        raise ValueError(
+            "size is not within the required range (0, INT32_MAX(2147483647)].")
     _config.set_op_connector_size(size)
 
 
@@ -278,7 +280,8 @@ def set_monitor_sampling_interval(interval):
     if not isinstance(interval, int) or isinstance(interval, bool):
         raise TypeError("interval isn't of type int.")
     if interval <= 0 or interval > INT32_MAX:
-        raise ValueError("Interval given is not within the required range (0, INT32_MAX(2147483647)].")
+        raise ValueError(
+            "Interval given is not within the required range (0, INT32_MAX(2147483647)].")
     _config.set_monitor_sampling_interval(interval)
 
 
@@ -505,16 +508,20 @@ def set_enable_autotune(enable, filepath_prefix=None):
     save_autoconfig = bool(enable and filepath_prefix is not None)
 
     if filepath_prefix and not isinstance(filepath_prefix, str):
-        raise TypeError("json_filepath must be a str value but was: {}.".format(filepath_prefix))
+        raise TypeError(
+            "json_filepath must be a str value but was: {}.".format(filepath_prefix))
 
     if enable and filepath_prefix == "":
-        raise RuntimeError("The value of json_filepath cannot be the empty string.")
+        raise RuntimeError(
+            "The value of json_filepath cannot be the empty string.")
 
     if not enable and filepath_prefix is not None:
-        logger.warning("The value of json_filepath is ignored when enable is False.")
+        logger.warning(
+            "The value of json_filepath is ignored when enable is False.")
 
     if enable and filepath_prefix is None:
-        logger.warning("Dataset AutoTune is enabled but no json path is specified, check INFO log for tuned result.")
+        logger.warning(
+            "Dataset AutoTune is enabled but no json path is specified, check INFO log for tuned result.")
 
     json_filepath = replace_none(filepath_prefix, "")
 
@@ -584,7 +591,8 @@ def set_autotune_interval(interval):
     if not isinstance(interval, int) or isinstance(interval, bool):
         raise TypeError("interval must be of type int.")
     if interval < 0 or interval > INT32_MAX:
-        raise ValueError("Interval given is not within the required range [0, INT32_MAX(2147483647)].")
+        raise ValueError(
+            "Interval given is not within the required range [0, INT32_MAX(2147483647)].")
     _config.set_autotune_interval(interval)
 
 
@@ -618,7 +626,8 @@ def get_enable_shared_mem():
     """
     # For Windows and MacOS we forbid shared mem function temporarily
     if platform.system().lower() in {"windows", "darwin"}:
-        logger.warning("For Windows and MacOS we forbid shared mem function temporarily.")
+        logger.warning(
+            "For Windows and MacOS we forbid shared mem function temporarily.")
         return False
     return _config.get_enable_shared_mem()
 
@@ -762,7 +771,8 @@ def set_multiprocessing_timeout_interval(interval):
     if not isinstance(interval, int) or isinstance(interval, bool):
         raise TypeError("interval isn't of type int.")
     if interval <= 0 or interval > INT32_MAX:
-        raise ValueError("Interval given is not within the required range (0, INT32_MAX(2147483647)).")
+        raise ValueError(
+            "Interval given is not within the required range (0, INT32_MAX(2147483647)).")
     _config.set_multiprocessing_timeout_interval(interval)
 
 
@@ -782,3 +792,33 @@ def get_multiprocessing_timeout_interval():
         >>> multiprocessing_timeout_interval = ds.config.get_multiprocessing_timeout_interval()
     """
     return _config.get_multiprocessing_timeout_interval()
+
+
+def set_dynamic_shape(is_dynamic):
+    """
+    Set the dynamic shape flag of the dataset.
+
+    Args:
+        is_dynamic (bool): Whether the dataset is dynamic shape. Default: False
+
+    Raises:
+        TypeError: If `is_dynamic` is not a boolean data type.
+
+    Examples:
+        >>> ds.config.set_dynamic_shape(True)
+    """
+    if not isinstance(is_dynamic, bool):
+        raise TypeError("is_dynamic must be a boolean dtype.")
+    _config.set_dynamic_shape(is_dynamic)
+
+
+def get_dynamic_shape():
+    """
+    Get the dynamic shape flag of the dataset
+    Returns:
+        bool, whether the dataset is dynamic shape.
+
+    Examples:
+        >>> is_dynamic_shape = ds.config.get_dynamic_shape()
+    """
+    return _config.get_dynamic_shape()

@@ -171,7 +171,7 @@ TensorCopySlicesDesc::TensorCopySlicesDesc() {}
 TensorCopySlicesDesc::~TensorCopySlicesDesc() {}
 
 // TensorCopySlices Register
-std::vector<std::shared_ptr<kernel::KernelBuildInfo>> TensorCopySlicesDesc::GetKernelInfo() {
+std::vector<std::shared_ptr<kernel::KernelBuildInfo>> TensorCopySlicesDesc::GetKernelInfo(const CNodePtr &) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> tensor_copy_slices_build_info{};
   for (const auto &format : format_list) {
     for (const auto &type : data_type_list) {

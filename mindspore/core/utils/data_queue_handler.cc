@@ -14,20 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_VISIBLE_H_
-#define MINDSPORE_CCSRC_INCLUDE_COMMON_VISIBLE_H_
-
-#include <utility>
-
-#if (defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(__CYGWIN__))
-#ifdef COMMON_DLL
-#define COMMON_EXPORT __declspec(dllexport)
-#else
-#define COMMON_EXPORT __declspec(dllimport)
-#endif
-#define COMMON_LOCAL
-#else
-#define COMMON_EXPORT __attribute__((visibility("default")))
-#define COMMON_LOCAL __attribute__((visibility("hidden")))
-#endif
-#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_VISIBLE_H_
+#include "utils/data_queue_handler.h"
+namespace {
+// empty source file trick to avoid symbol ex/import problem on Windows
+}  // namespace

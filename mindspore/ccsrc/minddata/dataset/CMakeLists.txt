@@ -56,6 +56,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/mindrecord/incl
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
 
+
 ######################################################################
 
 ####################### Flags ########################################
@@ -245,12 +246,7 @@ endif()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core
                                           mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                                           mindspore::sentencepiece_train ${ICU_LIB})
-if(ENABLE_GPUQUE)
-    target_link_libraries(_c_dataengine PRIVATE gpu_queue
-                          ${CUDNN_LIBRARY_PATH}
-                          ${CUDA_PATH}/lib64/libcudart.so
-                          ${CUDA_PATH}/lib64/stubs/libcuda.so)
-endif()
+
 
 if(ENABLE_TDTQUE)
     target_link_libraries(_c_dataengine PRIVATE ${ACL} ${ACL_TDT_CHANNEL})

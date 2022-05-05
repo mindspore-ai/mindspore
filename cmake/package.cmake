@@ -197,11 +197,6 @@ if(ENABLE_GPU)
         endif()
     endif()
     install(
-        TARGETS gpu_queue
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-    install(
             TARGETS cuda_ops
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore

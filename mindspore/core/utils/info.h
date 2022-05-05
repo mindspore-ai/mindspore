@@ -26,10 +26,15 @@
 #include "utils/visible.h"
 #include "ir/scope.h"
 #include "utils/trace_info.h"
-
 namespace mindspore {
 enum SourceLineTip { kSourceLineTipDiscard = 0, kSourceLineTipNextLine = 1, kSourceLineTipInLine = 2 };
-typedef enum CacheBool { UNCACHED = -1, FALSE, TRUE } CacheBool;
+
+// typedef enum CacheBool { UNCACHED = -1, FALSE, TRUE } CacheBool;
+using CacheBool = int32_t;
+const CacheBool Uncached = -1;
+const CacheBool False = 0;
+const CacheBool True = 1;
+
 // Location class record the location in source code.
 class Location {
  public:

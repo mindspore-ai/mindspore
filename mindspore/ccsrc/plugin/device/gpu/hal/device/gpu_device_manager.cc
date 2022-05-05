@@ -18,7 +18,6 @@
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/convert_utils.h"
-#include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
 
 namespace mindspore {
 namespace device {
@@ -94,7 +93,6 @@ bool GPUDeviceManager::set_cur_device_id(uint32_t device_id) {
   if (!dev_id_init_) {
     dev_id_init_ = true;
     cur_dev_id_ = device_id;
-    mindspore::device::GpuBufferMgr::GetInstance().set_device_id(UintToInt(device_id));
     return true;
   } else {
     MS_LOG(ERROR) << "Device already been set.";
