@@ -24,10 +24,12 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from ..cell import Cell
 
-__all__ = ['Softmax',
+__all__ = ['Softmin',
+           'Softmax',
            'LogSoftmax',
            'ReLU',
            'ReLU6',
+           'SiLU',
            'Tanh',
            'GELU',
            'FastGelu',
@@ -93,6 +95,60 @@ class CELU(Cell):
 
     def construct(self, x):
         return self.celu(x)
+
+
+class Softmin(Cell):
+    r"""
+    Softmin activation function. It is a two-category function :class:`mindspore.nn.Sigmoid` in the promotion of
+    multi-classification, the purpose is to show the results of multi-classification in the form of probability.
+
+    Calculate the value of the exponential function for the elements of the input Tensor on the `axis`, and then
+    normalized to lie in range [0, 1] and sum up to 1.
+
+    Softmin is defined as:
+
+    .. math::
+        \text{softmin}(x_{i}) =  \frac{\exp(-x_i)}{\sum_{j=0}^{n-1}\exp(-x_j)},
+
+    where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
+
+    Args:
+        axis (Union[int, tuple[int]]): The axis to apply Softmin operation, if the dimension of input `x` is x.ndim,
+            the range of axis is `[-x.ndim, x.ndim)`, -1 means the last dimension. Default: -1.
+
+    Inputs:
+        - **x** (Tensor) - The input of Softmin with data type of float16 or float32.
+
+    Outputs:
+        Tensor, which has the same type and shape as `x` with values in the range[0,1].
+
+    Raises:
+        TypeError: If `axis` is neither an int nor a tuple.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        ValueError: If `axis` is a tuple whose length is less than 1.
+        ValueError: If `axis` is a tuple whose elements are not all in range [-len(x), len(x)).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> # axis = -1(default), and the sum of return value is 1.0.
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> softmin = nn.Softmin()
+        >>> output = softmin(x)
+        >>> print(output)
+        [0.03168 0.01166 0.0861  0.636   0.2341 ]
+        >>> assert(1.0 == output.sum())
+    """
+
+    def __init__(self, axis=-1):
+        """Initialize Softmin."""
+        super(Softmin, self).__init__()
+        self.softmax = P.Softmax(axis)
+
+    def construct(self, x):
+        x = -1 * x
+        return self.softmax(x)
 
 
 class Softmax(Cell):
@@ -395,6 +451,53 @@ class LeakyReLU(Cell):
         alpha_array = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
         out = self.select_op(alpha_array * x, x)
         return out
+
+
+class SiLU(Cell):
+    r"""
+    Sigmoid Linear Unit activation function.
+
+    Applies the sigmoid linear unit function element-wise.
+
+    .. math::
+
+        \text{SiLU}(x) = x * \sigma(x),
+
+    where math::`\sigma(x)` is Sigmoid function, which is defined as:
+
+    .. math::
+
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
+
+    The picture about SiLU looks like this `SiLU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_rectified_linear.svg>`_ .
+
+    Inputs:
+        - **x** (Tensor) - The input of SiLU is a Tensor of any dimension. The data type is `number <https://www.mind
+          spore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ .
+
+    Outputs:
+        Tensor, with the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> silu = nn.SiLU()
+        >>> output = silu(x)
+    """
+
+    def __init__(self):
+        """Initialize SiLU."""
+        super(SiLU, self).__init__()
+        self.sigmoid = P.Sigmoid()
+
+    def construct(self, x):
+        return self.sigmoid(x) * x
 
 
 class Tanh(Cell):
@@ -943,10 +1046,12 @@ class HShrink(Cell):
 
 
 _activation = {
+    'softmin': Softmin,
     'softmax': Softmax,
     'logsoftmax': LogSoftmax,
     'relu': ReLU,
     'relu6': ReLU6,
+    'silu': SiLU,
     'tanh': Tanh,
     'gelu': GELU,
     'fast_gelu': FastGelu,

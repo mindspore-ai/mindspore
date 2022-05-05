@@ -118,7 +118,9 @@ MindSpore中 `mindspore.nn` 接口与上一版本相比，新增、删除和支�
     mindspore.nn.PReLU
     mindspore.nn.ReLU
     mindspore.nn.ReLU6
+    mindspore.nn.SiLU
     mindspore.nn.Sigmoid
+    mindspore.nn.Softmin
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
