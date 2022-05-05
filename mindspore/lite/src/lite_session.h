@@ -97,7 +97,6 @@ class LiteSession : public session::LiteSession {
   void InitGraphInputMap(const lite::Model *model);
   void InitGraphOutputNodeMap(const lite::Model *model);
   void InitGraphOutputTensorMap(const lite::Model *model);
-  void AdjustModelOutputTensorInitRefCount(const lite::Model *model);
   int UpdateInputShapeMap();
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
   int SetAllocatorForDelegateKernels(const kernel::KernelExec *kernel);

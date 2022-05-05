@@ -108,6 +108,7 @@ int SkipGramCPUKernel::Run() {
     }
   }
   auto ret = mindspore::lite::WriteSeperatedStringsToTensor(out_tensors_.at(0), result);
+  out_tensors_.at(0)->ResetRefCount();  // ref-count of data will be lost due to "WriteSeperatedStringsToTensor"
   return ret;
 }
 
