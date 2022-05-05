@@ -349,3 +349,75 @@ def test_print_string_add_string():
 
     patterns = {"I'm MindSpore. I'm 3 years old.\n"}
     check_output(cap.output, patterns)
+
+
+@security_off_wrap
+def test_print_list():
+    """
+    Feature: JIT Fallback
+    Description: Support print(list).
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        list_x = [1, 2, 3, 4, 5]
+        print("list_x:", list_x)
+        return 0
+
+    cap = Capture()
+    with capture(cap):
+        res = print_func()
+        assert res == 0
+        time.sleep(0.1)
+
+    patterns = {"list_x:\n(1, 2, 3, 4, 5)\n"}
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+def test_print_tuple():
+    """
+    Feature: JIT Fallback
+    Description: Support print(tuple).
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        tuple_x = (6, 7, 8, 9, 10)
+        print("tuple_x:", tuple_x)
+        return 0
+
+    cap = Capture()
+    with capture(cap):
+        res = print_func()
+        assert res == 0
+        time.sleep(0.1)
+
+    patterns = {"tuple_x:\n( 6,  7,  8,  9, 10)\n"}
+    check_output(cap.output, patterns)
+
+
+@security_off_wrap
+def test_print_dict():
+    """
+    Feature: JIT Fallback
+    Description: Support print(dict).
+    Expectation: No exception.
+    """
+    @ms_function
+    def print_func():
+        dict_x1 = dict(zip(['one', 'two', 'three'], [1, 2, 3]))
+        dict_x2 = dict([("one", 1), ("two", 2)])
+        print("dict_x1:", dict_x1)
+        print("dict_x2:", dict_x2)
+        return 0
+
+    cap = Capture()
+    with capture(cap):
+        res = print_func()
+        assert res == 0
+        time.sleep(0.1)
+
+    patterns = {"dict_x1: {'one': 1, 'two': 2, 'three': 3}\n"
+                "dict_x2: {'one': 1, 'two': 2}\n"}
+    check_output(cap.output, patterns)
