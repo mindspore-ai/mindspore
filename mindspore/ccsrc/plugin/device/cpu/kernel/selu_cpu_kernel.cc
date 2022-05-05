@@ -13,47 +13,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "plugin/device/cpu/kernel/selu_cpu_kernel.h"
 #include <vector>
 #include <algorithm>
 #include <utility>
 #include <memory>
+#include <map>
+#include <functional>
+
 namespace mindspore {
 namespace kernel {
-void SeluCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool SeluCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kIndex0);
+  return true;
+}
+
+int SeluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                             const std::vector<KernelTensorPtr> &outputs,
+                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  int ret = KRET_OK;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+    return ret;
+  }
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+
   if (input_shape_ != output_shape_) {
-    MS_LOG(EXCEPTION) << kernel_name_ << " input shape does not match to output_shape " << input_shape_ << " vs "
-                      << output_shape_;
+    MS_LOG(ERROR) << kernel_name_ << " input shape does not match to output_shape " << input_shape_ << " vs "
+                  << output_shape_;
+    return KRET_RESIZE_FAILED;
   }
-  for (const auto &out_shape : output_shape_) {
-    output_size_ *= out_shape;
-  }
+  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  return ret;
+}
+
+void SeluCpuKernelMod::ResetResource() noexcept {
+  input_shape_.clear();
+  output_shape_.clear();
+  output_size_ = 0;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
 }
 
 template <typename T>
 bool SeluCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                     const std::vector<kernel::AddressPtr> &outputs) {
   // The below alpha value and scale value is predefined, according to https://arxiv.org/abs/1706.02515
-  double alpha = 1.67326324;
-  double scale = 1.05070098;
-  auto *input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  T *output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  auto task = [&input, &output, &alpha, &scale](size_t start, size_t end) {
+  T scale = static_cast<T>(1.05070098);
+  T scale_dot_alpha = static_cast<T>(1.67326324 * 1.05070098);
+  auto input = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+  auto output = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  auto task = [&input, &output, &scale_dot_alpha, &scale](size_t start, size_t end) {
+    T template_zero = static_cast<T>(0);
     for (size_t i = start; i < end; i++) {
-      auto input_value = static_cast<double>(input[i]);
-      output[i] = static_cast<T>(input_value >= 0.0 ? scale * input_value : scale * alpha * std::expm1(input_value));
+      T input_value = input[i];
+      output[i] = input_value >= template_zero
+                    ? scale * input_value
+                    : scale_dot_alpha * static_cast<T>(std::expm1(static_cast<float>(input_value)));
     }
   };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_, pool_);
   return true;
 }
 
@@ -69,7 +105,6 @@ std::vector<KernelAttr> SeluCpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, SeluFunc> &pair) { return pair.first; });
   return support_list;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SeLU, SeluCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
