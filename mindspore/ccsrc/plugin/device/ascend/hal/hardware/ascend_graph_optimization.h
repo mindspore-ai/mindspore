@@ -33,7 +33,6 @@ class AscendGraphOptimization {
 
   void OptimizeGraph(const KernelGraphPtr &graph);
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph);
-  void SetOperatorInfo(const KernelGraphPtr &graph);
   void UnifyMindIR(const KernelGraphPtr &graph);
   void Reset();
 
@@ -42,6 +41,11 @@ class AscendGraphOptimization {
   ~AscendGraphOptimization() = default;
   AscendGraphOptimization(const AscendGraphOptimization &) = delete;
   AscendGraphOptimization &operator=(const AscendGraphOptimization &) = delete;
+
+  // Select the matching backend kernels according to the data type and format of input and output for all
+  // execution operators, and set final device data type and format information for backend kernels, device
+  // data type and format which replace original data type and format will use for executing kernels.
+  void SetOperatorInfo(const KernelGraphPtr &graph);
   // Graph Optimized level-2 interface
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph);
   void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph);

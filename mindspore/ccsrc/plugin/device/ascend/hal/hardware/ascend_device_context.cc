@@ -328,10 +328,6 @@ void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
   AscendGraphOptimization::GetInstance().OptimizeGraph(graph);
 }
 
-void AscendDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
-  AscendGraphOptimization::GetInstance().SetOperatorInfo(graph);
-}
-
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   MS_LOG(INFO) << "Status record: start create kernel.";
   PROF_START(create_kernel);
@@ -481,9 +477,10 @@ void AscendDeviceContext::AllocateGraphMemory(const NotNull<KernelGraphPtr> &roo
   PROF_START(graph_memory_alloc);
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->ClearGlobalIdleMem();
-  memo_.clear();
+  std::set<KernelGraphPtr> memo;
+  memo.clear();
   mem_manager_->ResetDynamicMemory();
-  AssignInputMemory(root_graph, NOT_NULL(&memo_));
+  AssignInputMemory(root_graph, NOT_NULL(&memo));
   device::KernelAdjust::GetInstance().AssignLoopCtrlMemory(*root_graph.get());
   InitMemReuseExecOrder(root_graph.get().get());
   runtime_instance_->SetReuseCommunicationAddress(*root_graph.get());

@@ -60,7 +60,7 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   OptimizeGraphWithDeviceInfo(graph);
   OptimizeExecutionOrder(graph);
   PostOptimization(graph);
-  // must clear memo_ which holds kernelgraph after using AscendGraphOptimization class.
+  // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
   memo_.clear();
   // clear and reset graph_manager_ after optimization
   graph_manager_ = MakeManager();
@@ -79,6 +79,9 @@ void AscendGraphOptimization::OptimizeSingleOpGraph(const KernelGraphPtr &graph)
   // If there is more than one node in the graph,
   // and one of the nodes is a nop node, the node will be hidden.
   // The DAG of Actors will be invalid(lack an input edge).
+
+  // must clear memo_ which holds kernel graph after using AscendGraphOptimization class.
+  memo_.clear();
 }
 
 void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) {
@@ -301,6 +304,8 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
   opt::CommonUnifyMindIR(graph);
   opt::AscendUnifyMindIR(graph);
   PROF_END(unify_mindir);
+  // must clear memo_ which holds kernelgraph after using AscendGraphOptimization class.
+  memo_.clear();
   MS_LOG(INFO) << "Status record: end unify mindir. graph id: " << graph->graph_id();
 }
 

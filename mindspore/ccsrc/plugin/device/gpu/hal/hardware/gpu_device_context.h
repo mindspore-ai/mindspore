@@ -58,7 +58,6 @@ class GPUDeviceContext : public DeviceContext {
   // Optimize the single operator graph for PyNative mode.
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
-  void SetOperatorInfo(const KernelGraphPtr &graph) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   // Infer kernel shape and update abstract info for dynamic shape kernel.
@@ -85,6 +84,11 @@ class GPUDeviceContext : public DeviceContext {
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool InitDevice();
+
+  // Select the matching backend kernels according to the data type and format of input and output for all
+  // execution operators, and set final device data type and format information for backend kernels, device
+  // data type and format which replace original data type and format will use for executing kernels.
+  void SetOperatorInfo(const KernelGraphPtr &graph) const;
 
   // General graph optimezer ignore device data type and format.
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const;
