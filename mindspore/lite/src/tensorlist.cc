@@ -29,7 +29,7 @@ TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, C
 
 TensorList::~TensorList() {
   if (!this->tensors_.empty()) {
-    this->TensorList::FreeData();
+    this->TensorList::FreeData(false);
     this->FreeTensorListData();
   }
 }
@@ -97,7 +97,7 @@ int TensorList::MallocData(const AllocatorPtr allocator) {
   return RET_OK;
 }
 
-void TensorList::FreeData() {
+void TensorList::FreeData(bool is_force) {
   if (this->IsConst() || this->IsGraphInput()) {
     return;
   }
@@ -106,7 +106,7 @@ void TensorList::FreeData() {
     if (tensor == nullptr) {
       continue;
     }
-    tensor->FreeData();
+    tensor->FreeData(is_force);
   }
 }
 

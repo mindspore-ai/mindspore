@@ -135,7 +135,7 @@ int SubGraphKernel::ReSize() {
   }
   return RET_OK;
 }
-void SubGraphKernel::InitInputOutputTensorInitRefCount() {
+void SubGraphKernel::InitInputTensorInitRefCount() {
   for (auto &input : this->in_tensors()) {
     int input_init_refcount = input->init_ref_count();
     for (auto *node : nodes_) {
@@ -144,16 +144,16 @@ void SubGraphKernel::InitInputOutputTensorInitRefCount() {
     }
     input->set_init_ref_count(input_init_refcount);
   }
-  for (auto &output : this->out_tensors()) {
-    if (output->init_ref_count() == 0) {
-      output->set_init_ref_count(1);
-    }
-  }
 }
 
 void SubGraphKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
   for (auto *node : nodes_) {
     node->InitOutTensorInitRefCount(mask_kernels);
+  }
+  for (auto &output : this->out_tensors()) {
+    if (output->init_ref_count() == 0) {  // true only when output is also an input and only exist in control-flow model
+      output->set_init_ref_count(1);
+    }
   }
 }
 

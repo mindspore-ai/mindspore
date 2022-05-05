@@ -101,7 +101,7 @@ Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data, AllocatorPt
 }
 
 Tensor::~Tensor() {
-  FreeData();
+  FreeData(false);
   this->data_ = nullptr;
 }
 
@@ -369,13 +369,13 @@ int Tensor::MallocData(const AllocatorPtr allocator) {
   return RET_OK;
 }
 
-void Tensor::FreeData() {
+void Tensor::FreeData(bool is_force) {
   if (IS_RUNTIME_ALLOCATOR(allocator_)) {
     return;
   }
   if (this->data_ != nullptr && this->own_data_) {
     if (this->allocator_ != nullptr) {
-      if (allocator_->DecRefCount(this->data_, 1) <= 0) {
+      if (is_force || allocator_->DecRefCount(this->data_, 1) <= 0) {
         allocator_->Free(this->data_);  // Due to existing various allocator, here do not set data to nullptr.
       }
       if (!IS_STATIC_ALLOCATOR(allocator_) || allocator_->RefCount(this->data_) != 0) {
@@ -419,7 +419,7 @@ void Tensor::DecRefCount() {
   }
   int tensor_ref_count = --ref_count_;
   if (tensor_ref_count <= 0) {
-    FreeData();
+    FreeData(false);
   } else if (allocator_ != nullptr) {
     (void)allocator_->DecRefCount(this->data_, 1);
   }

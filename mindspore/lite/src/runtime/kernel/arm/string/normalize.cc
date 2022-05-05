@@ -132,6 +132,7 @@ int NormalizeCPUKernel::Run() {
   }
   auto out_tensor = out_tensors_.at(0);
   WriteStringsToTensor(out_tensor, out_string_pack);
+  out_tensor->ResetRefCount();  // ref-count of data will be lost due to "WriteStringsToTensor"
   FreeBuffer();
   return RET_OK;
 }
