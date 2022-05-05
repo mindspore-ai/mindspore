@@ -44,6 +44,8 @@ class NativeGpuKernelModFactory {
 
   std::string SupportedTypeList(const std::string &kernel_name);
 
+  std::vector<KernelAttr> GetGpuSupportedList(const std::string &kernel_name);
+
   bool ReducePrecision(const std::string &kernel_name,
                        std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder);
 
@@ -60,6 +62,9 @@ class NativeGpuKernelModFactory {
   void CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index);
   bool CheckIOParam(const std::string &kernel_name, const KernelBuildInfo *kernel_info,
                     std::vector<std::pair<KernelAttr, NativeGpuKernelModCreater>> *iter_second, size_t attr_index);
+
+  // Set output and input ref map to kernel info which will be used by graph compiler.
+  void SetRefMapToKernelInfo(const std::string &kernel_name, size_t index, device::KernelInfo *kernel_info);
 
   // map to maintain kernel and creator, KernelAttr object and creator must be registered as a pair.
   std::map<std::string, std::vector<std::pair<KernelAttr, NativeGpuKernelModCreater>>> map_kernel_name_to_creater_;

@@ -165,6 +165,26 @@ void CPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
   MS_EXCEPTION_IF_NULL(graph);
   SetOperatorInfo(graph);
   OptimizeGraphImpl(graph);
+  UpdateKernelRefInfo(graph);
+}
+
+void CPUDeviceContext::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  const std::vector<CNodePtr> &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel);
+
+    auto kernel_attr_list = kernel::NativeCpuKernelMod::GetCpuSupportedList(op_name);
+    if (kernel_attr_list.empty()) {
+      MS_LOG(DEBUG) << "kernel_attr_list is empty";
+      return;
+    }
+
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    kernel_info->set_ref_map(kernel_attr_list[0].GetAllOutInRef(), kernel_attr_list[0].GetOutInRefMap());
+  }
 }
 
 void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {

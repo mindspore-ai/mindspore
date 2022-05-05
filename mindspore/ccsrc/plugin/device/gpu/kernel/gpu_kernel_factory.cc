@@ -72,6 +72,21 @@ std::string NativeGpuKernelModFactory::SupportedTypeList(const std::string &kern
   return type_lists;
 }
 
+std::vector<KernelAttr> NativeGpuKernelModFactory::GetGpuSupportedList(const std::string &kernel_name) {
+  std::vector<KernelAttr> kernel_attr_list;
+  auto iter = map_kernel_name_to_creater_.find(kernel_name);
+  if (map_kernel_name_to_creater_.end() == iter) {
+    return kernel_attr_list;
+  }
+
+  for (size_t attr_index = 0; attr_index < (iter->second).size(); ++attr_index) {
+    auto attr = (iter->second)[attr_index].first;
+    kernel_attr_list.push_back(attr);
+  }
+
+  return kernel_attr_list;
+}
+
 bool NativeGpuKernelModFactory::ReducePrecision(
   const std::string &kernel_name, std::shared_ptr<mindspore::kernel::KernelBuildInfo::KernelBuildInfoBuilder> builder) {
   MS_EXCEPTION_IF_NULL(builder);
@@ -104,6 +119,21 @@ bool NativeGpuKernelModFactory::ReducePrecision(
     }
   }
   return NativeGpuKernelModFactory::SearchRegistered(kernel_name, builder->Build());
+}
+
+void NativeGpuKernelModFactory::SetRefMapToKernelInfo(const std::string &kernel_name, size_t index,
+                                                      device::KernelInfo *kernel_info) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(kernel_info);
+
+  auto iter = map_kernel_name_to_creater_.find(kernel_name);
+  if (map_kernel_name_to_creater_.end() == iter) {
+    return;
+  }
+
+  const auto &kernel_attr = (iter->second)[index].first;
+  if (!kernel_attr.GetOutInRefMap().empty()) {
+    kernel_info->set_ref_map(kernel_attr.GetAllOutInRef(), kernel_attr.GetOutInRefMap());
+  }
 }
 
 void NativeGpuKernelModFactory::CheckSM(const KernelBuildInfo *kernel_info, const size_t &input_index) {
@@ -181,6 +211,7 @@ NativeGpuKernelMod *NativeGpuKernelModFactory::Create(const std::string &kernel_
   MS_EXCEPTION_IF_NULL(kernel_build_Info);
   std::pair<bool, size_t> ret_pair = GpuKernelAttrCheck(kernel_name, kernel_build_Info);
   if (ret_pair.first) {
+    SetRefMapToKernelInfo(kernel_name, ret_pair.second, kernel_info);
     return (map_kernel_name_to_creater_.find(kernel_name)->second)[ret_pair.second].second();
   }
   return nullptr;
