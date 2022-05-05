@@ -146,7 +146,7 @@ bool BesselJ1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   }
   kernel_name_ = kernel_ptr->name();
   if (inputs.size() != kBesselJ1InputsNum || outputs.size() != kBesselJ1OutputsNum) {
-    MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kBesselJ1InputsNum << " and "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "': input and output size should be " << kBesselJ1InputsNum << " and "
                   << kBesselJ1OutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
     return false;
   }
