@@ -1174,10 +1174,16 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
   std::vector<KernelGraphPtr> graphs;
   std::vector<DeviceContext *> device_contexts;
   std::string name = "kernel_graph";
+  size_t graph_index = 0;
   for (const auto &graph_id_to_context : graph_id_to_device_context_) {
     (void)graphs.emplace_back(graph_compiler_->Fetch(graph_id_to_context.first));
     (void)device_contexts.emplace_back(graph_id_to_context.second);
-    (void)name.append("_").append(std::to_string(graph_id_to_context.first));
+    if (graph_index == 0) {
+      (void)name.append("_").append(std::to_string(graph_id_to_context.first));
+    } else if (graph_index == graph_id_to_device_context_.size() - 1) {
+      (void)name.append("-").append(std::to_string(graph_id_to_context.first));
+    }
+    ++graph_index;
   }
 
   FuncGraphToKernelGraphGroup func_graph_to_kernel_graphs;

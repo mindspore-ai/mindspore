@@ -2115,42 +2115,27 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   }
 
   // Get the saved actor set name.
-  auto &kernel_graphs = graph_compiler_info.graphs_;
-  MS_EXCEPTION_IF_NULL(kernel_graphs.front());
-  auto first_graph_id = kernel_graphs.front()->graph_id();
-  MS_EXCEPTION_IF_NULL(kernel_graphs.back());
-  auto last_graph_id = kernel_graphs.back()->graph_id();
   std::string strategy = kGraphExecutionStrategyStr.at(graph_compiler_info.strategy_);
   if (execution_order_running_) {
     strategy = "pipeline_with_excution_order";
   }
-  std::string save_name = "actor_set_" + strategy + "_kernel_graph_" + std::to_string(first_graph_id);
-  if (last_graph_id != first_graph_id) {
-    save_name = save_name + "-" + std::to_string(last_graph_id);
-  }
-
-  std::string filename = GetSaveGraphsPathName(save_name + ".ir");
-  std::ofstream ofs(filename);
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open file [" << filename << "] failed!";
+  std::string save_name = "actor_set/0_actor_set_" + strategy + actor_set->name_;
+  std::string path_name = GetSaveGraphsPathName(save_name + ".ir");
+  auto realpath = Common::CreatePrefixPath(path_name);
+  if (!realpath.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed, path: " << path_name;
     return;
   }
 
-  DumpDeviceTensorStore(graph_compiler_info, ofs);
-  DumpDataPrepareActor(actor_set->data_prepare_actor_, ofs);
-  DumpDSActors(actor_set->data_source_actors_, ofs);
-  DumpKernelActors(actor_set->kernel_actors_, ofs);
-  DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
-  // The on input kernel actors are taken over by control actor in the control flow scene.
-  if ((graph_compiler_info.control_node_parser_ == nullptr) ||
-      (!graph_compiler_info.control_node_parser_->IsInited())) {
-    DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);
+  ChangeFileMode(realpath.value(), S_IWUSR);
+  std::ofstream ofs(realpath.value());
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open file [" << realpath.value() << "] failed!";
+    return;
   }
-  DumpCopyActors(actor_set->copy_actors_, ofs);
-  DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
-  DumpOutputActor(actor_set->output_actor_, ofs);
-  DumpControlActors(actor_set->control_actors_, ofs);
-  DumpCustomActors(actor_set->custom_actors_, ofs);
+  DumpDeviceTensorStore(graph_compiler_info, ofs);
+  SchedulerHelper::DumpActorSet(actor_set, ofs);
+  ChangeFileMode(realpath.value(), S_IRUSR);
 }
 
 void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compiler_info, std::ofstream &ofs) const {
