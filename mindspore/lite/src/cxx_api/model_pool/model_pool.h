@@ -80,9 +80,8 @@ class ModelPool {
                              int max_wait_worker_node_id);
 
   std::vector<std::thread> model_worker_vec_;
-  std::vector<std::shared_ptr<ModelWorker>> model_workers_;
-  std::vector<MSTensor> model_inputs_;
-  std::vector<MSTensor> model_outputs_;
+  std::vector<MSTensor> model_pool_inputs_;
+  std::vector<MSTensor> model_pool_outputs_;
   size_t workers_num_ = 1;
   std::mutex predict_task_mutex_;
   bool is_user_data_ = false;

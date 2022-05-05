@@ -29,6 +29,7 @@ namespace mindspore {
 namespace {
 constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
+constexpr int kNumMaxTaskQueueSize = 1000;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -304,19 +305,35 @@ ModelPoolContextVec ModelPool::CreateModelContext(const std::shared_ptr<RunnerCo
 }
 
 std::vector<MSTensor> ModelPool::GetInputs() {
-  if (model_inputs_.empty()) {
+  std::vector<MSTensor> inputs;
+  if (model_pool_inputs_.empty()) {
     MS_LOG(ERROR) << "model input is empty.";
     return {};
   }
-  return model_inputs_;
+  for (size_t i = 0; i < model_pool_inputs_.size(); i++) {
+    auto tensor =
+      mindspore::MSTensor::CreateTensor(model_pool_inputs_.at(i).Name(), model_pool_inputs_.at(i).DataType(),
+                                        model_pool_inputs_.at(i).Shape(), nullptr, 0);
+    inputs.push_back(*tensor);
+    delete tensor;
+  }
+  return inputs;
 }
 
 std::vector<MSTensor> ModelPool::GetOutputs() {
-  if (model_outputs_.empty()) {
+  std::vector<MSTensor> outputs;
+  if (model_pool_outputs_.empty()) {
     MS_LOG(ERROR) << "model output is empty.";
     return {};
   }
-  return model_outputs_;
+  for (size_t i = 0; i < model_pool_outputs_.size(); i++) {
+    auto tensor =
+      mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(), model_pool_outputs_.at(i).DataType(),
+                                        model_pool_outputs_.at(i).Shape(), nullptr, 0);
+    outputs.push_back(*tensor);
+    delete tensor;
+  }
+  return outputs;
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
@@ -350,7 +367,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     int numa_node_id = model_pool_context[i]->numa_id;
     auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
-    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(numa_node_id);
+    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
     MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
@@ -369,8 +386,8 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   }
   // init model pool input and output
   if (model_worker != nullptr) {
-    model_inputs_ = model_worker->GetInputs();
-    model_outputs_ = model_worker->GetOutputs();
+    model_pool_inputs_ = model_worker->GetInputs();
+    model_pool_outputs_ = model_worker->GetOutputs();
   }
   if (graph_buf != nullptr) {
     delete[] graph_buf;
@@ -624,6 +641,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     // split batch
     auto status = PredictBySplitBatch(inputs, outputs, before, after, max_wait_worker_node_id);
     if (status != kSuccess) {
+      predict_task_mutex_.unlock();
       MS_LOG(ERROR) << "do split batch failed. ret=" << status;
       return kLiteError;
     }
@@ -639,10 +657,16 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     return kSuccess;
   } else {
     // do predict
+    if (predict_task_queue_->GetTaskNum(max_wait_worker_node_id) > kNumMaxTaskQueueSize) {
+      MS_LOG(ERROR) << "The number of waiting tasks in the queue exceeds the limit, ret=" << kLiteServiceDeny;
+      predict_task_mutex_.unlock();
+      return kLiteServiceDeny;
+    }
     predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
     if (predict_task == nullptr) {
       MS_LOG(ERROR) << "predict_task is nullptr.";
+      predict_task_mutex_.unlock();
       return kLiteNullptr;
     }
     predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
