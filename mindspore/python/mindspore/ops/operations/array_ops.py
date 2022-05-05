@@ -3581,9 +3581,6 @@ class StridedSlice(PrimitiveWithInfer):
         if "min_shape" in x and "max_shape" in x:
             min_shape = x["min_shape"]
             max_shape = x["max_shape"]
-        if (-1 in x_shape and (min_shape is None or max_shape is None)):
-            raise ValueError(f"For '{self.name}',  "
-                             f"input x is currently not support dynamic shape without giving the min and max shape.")
         return x_shape, min_shape, max_shape
 
     def __infer__(self, x, begin, end, strides):
@@ -3604,7 +3601,7 @@ class StridedSlice(PrimitiveWithInfer):
             ret_shape = [-1] * len(x_shape)
             ret_min_shape = list(x_shape)
             ret_max_shape = list(x_shape)
-            for i, val in enumerate(ret_shape):
+            for i, _ in enumerate(ret_shape):
                 ret_min_shape[i] = end_v['min_value'][i] - begin_v['min_value'][i]
                 ret_max_shape[i] = end_v['max_value'][i] - begin_v['max_value'][i]
             i = 0
@@ -3620,20 +3617,15 @@ class StridedSlice(PrimitiveWithInfer):
 
         if None in (begin_v['value'], end_v['value'], strides_v['value']) or (-1 in x_shape):
             ret_shape = self._compute_dynamic_slicing_shape(x_shape, begin_len)
-            ret_min_shape = [1] * len(x_shape)
-            ret_max_shape = x_shape
-            for i, val in enumerate(ret_shape):
-                if val > 0:
-                    ret_min_shape[i] = val
-                    ret_max_shape[i] = val
-                elif -1 in x_shape:
-                    ret_min_shape[i] = min_shape[i]
-                    ret_max_shape[i] = max_shape[i]
-            return {'shape': ret_shape,
+
+            rets = {'shape': ret_shape,
                     'dtype': x['dtype'],
-                    'value': None,
-                    'max_shape': ret_max_shape,
-                    'min_shape': ret_min_shape}
+                    'value': None}
+
+            if max_shape is not None and min_shape is not None:
+                rets = self._compute_max_min_shape(rets, x_shape, max_shape, min_shape, ret_shape)
+
+            return rets
 
         ret_shape = self._compute_slicing_shape(x_shape, begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):
@@ -3666,6 +3658,22 @@ class StridedSlice(PrimitiveWithInfer):
         return {'shape': ret_shape,
                 'dtype': x['dtype'],
                 'value': value}
+
+    def _compute_max_min_shape(self, rets, x_shape, max_shape, min_shape, ret_shape):
+        """compute max/min shape"""
+        ret_min_shape = [1] * len(x_shape)
+        ret_max_shape = x_shape
+        for i, val in enumerate(ret_shape):
+            if val > 0:
+                ret_min_shape[i] = val
+                ret_max_shape[i] = val
+            elif -1 in x_shape:
+                ret_min_shape[i] = min_shape[i]
+                ret_max_shape[i] = max_shape[i]
+        rets['max_shape'] = ret_max_shape
+        rets['min_shape'] = ret_min_shape
+
+        return rets
 
     def _compute_slicing_shape(self, x_shape, begin_v, end_v, strides_v):
         """Computes the shape of the slicing."""
