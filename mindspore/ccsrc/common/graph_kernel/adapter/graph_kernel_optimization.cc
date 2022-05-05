@@ -54,6 +54,7 @@
 #include "common/graph_kernel/graph_kernel_recompute.h"
 #include "common/graph_kernel/reduce_fake_out_mem.h"
 #include "common/graph_kernel/depend_elimination.h"
+#include "common/graph_kernel/floatstatus_addn_fusion.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_build.h"
 
@@ -91,6 +92,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
 PassManagerPtr GraphKernelOptimizer::Cluster() const {
   auto pm = std::make_shared<GraphKernelPassManager>(1, "cluster");
+
+  // Expand FloatStatus(AddN)
+  pm->Add(std::make_shared<FloatStatusAddNFusion>(), OptLevel_2, is_gpu);
 
   // Expand complex basic kernels to composite kernels
   pm->Add(std::make_shared<GraphKernelExpanderWithPy>(), OptLevel_1);

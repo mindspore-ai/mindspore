@@ -118,6 +118,7 @@ OP_REGISTER("GatherNd", OpaqueOp);
 OP_REGISTER("UnsortedSegmentSum", OpaqueOp);
 OP_REGISTER("Conv2D", OpaqueOp);
 OP_REGISTER("TransData", OpaqueOp);
+OP_REGISTER("ElemAny", ElemAnyOp);
 // virtual ops
 OP_REGISTER("Assign", VirtualOp);
 OP_REGISTER("TupleGetItem", VirtualOp);

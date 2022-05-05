@@ -35,9 +35,9 @@ class StitchAtomicCleanInserter : public AtomicCleanInserter {
  protected:
   void CorrectKernelBuildInfo(const AnfNodePtr &composite_node,
                               const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &clean_infos) override;
-  void ProcessOriginCNode(const AnfNodePtr &composite_node,
-                          const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-                          bool atomic_add_attr = true) override;
+  void ProcessOriginCNode(
+    const AnfNodePtr &composite_node,
+    const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) override;
 
  private:
   CNodePtr CreateAssignNode(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter,

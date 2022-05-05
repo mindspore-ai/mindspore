@@ -994,6 +994,18 @@ class GraphSplitGpu(GraphSplitByPattern):
 
             return fused, fwd
 
+        def _elemwise_elemany(dom):
+            """Fuse rule for elemany."""
+            if dom.dom_op().prim != "ElemAny":
+                return None
+
+            fused = []
+            for a, _ in dom.in_relations.items():
+                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom):
+                    fused.append(a)
+
+            return fused, True
+
         def _injective_output(dom):
             """Fuse rule for injective """
             injective_ops = {"Transpose", "StridedSlice"}
@@ -1004,10 +1016,10 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return None
             to_area = list(dom.out_relations.keys())[0]
             if (to_area.pattern > PrimLib.REDUCE and to_area.dom_op().prim not in injective_ops) or \
-                to_ops[0] not in to_area.ops:
+                    to_ops[0] not in to_area.ops:
                 return None
             if len(to_area.ops) > self.TRANSPOSE_FUSE_DEPTH or \
-                any((PrimLib.iter_type(op) == PrimLib.RESHAPE for op in to_area.ops)):
+                    any((PrimLib.iter_type(op) == PrimLib.RESHAPE for op in to_area.ops)):
                 return None
             return [to_area], False
 
@@ -1060,6 +1072,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 self.hfuse(_h_broadcast)
                 self.hfuse(_h_reduce)
                 self.hfuse(_h_opaque)
+            self.fuse(_elemwise_elemany)
 
         def _fuse_once(fuse_func):
             if fuse_func(CommonPattern.reshape) or fuse_func(CommonPattern.elemwise_depth) or \

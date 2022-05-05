@@ -142,6 +142,16 @@ class TransposeOp : public OpaqueOp {
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
 };
 
+class ElemAnyOp : public OpaqueOp {
+ public:
+  explicit ElemAnyOp(const std::string &op) : OpaqueOp(op) {}
+  ~ElemAnyOp() = default;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &) override { return {{1}}; }
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
+};
+
 class PadAkgOp : public OpaqueOp {
  public:
   explicit PadAkgOp(const std::string &op) : OpaqueOp(op) {}

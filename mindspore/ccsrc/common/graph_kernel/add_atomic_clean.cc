@@ -262,7 +262,7 @@ std::vector<AtomicAddUserInfo> AtomicCleanInserter::FindOriginCNodeUsers(
   if (info_and_broadcast_to_nodes[0].first.real_output_num <= 1) {
     // Find users directly.
     auto users = mng->node_users()[composite_node];
-    auto update_state_node = InsertUpdateState(main_graph, composite_node);
+    auto update_state_node = InsertUpdateState(main_graph, {composite_node});
     for (const auto &[user, index] : users) {
       reduce_user_nodes.push_back({info_and_broadcast_to_nodes[0].second, update_state_node, user, IntToSize(index)});
     }
@@ -284,7 +284,7 @@ std::vector<AtomicAddUserInfo> AtomicCleanInserter::FindOriginCNodeUsers(
       const auto &getitem_node = getitem_user_nodes[i].first;
       const auto &broadcast_to_node = getitem_user_nodes[i].second;
       auto real_users = mng->node_users()[getitem_node];
-      auto update_state_node = InsertUpdateState(main_graph, getitem_node);
+      auto update_state_node = InsertUpdateState(main_graph, {getitem_node});
       for (const auto &[user, index] : real_users) {
         reduce_user_nodes.push_back({broadcast_to_node, update_state_node, user, IntToSize(index)});
       }

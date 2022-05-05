@@ -34,6 +34,7 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("GreaterEqual", {lhs, rhs}); }
   NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LessEqual", {lhs, rhs}); }
   NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Equal", {lhs, rhs}); }
+  NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
   NodePtr Assign(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Assign", {lhs, rhs}); }
 
   NodePtr Neg(const NodePtr &input) const { return Emit("Neg", {input}); }
@@ -42,6 +43,8 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Log(const NodePtr &input) const { return Emit("Log", {input}); }
   NodePtr Sqrt(const NodePtr &input) const { return Emit("Sqrt", {input}); }
   NodePtr Tanh(const NodePtr &input) const { return Emit("Tanh", {input}); }
+  NodePtr IsInf(const NodePtr &input) const { return Emit("IsInf", {input}); }
+  NodePtr IsNan(const NodePtr &input) const { return Emit("IsNan", {input}); }
 
   NodePtr Cast(const NodePtr &input, const TypeId &type_id) const {
     return Emit("Cast", {input}, {{"dst_type", TypeIdToType(type_id)}});

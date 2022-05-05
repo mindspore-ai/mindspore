@@ -51,7 +51,7 @@ bool IsAkgOp(const AnfNodePtr &node) {
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
-  static std::unordered_set<std::string> ops{"UnPadAkg", "PadAkg"};
+  static std::unordered_set<std::string> ops{"UnPadAkg", "PadAkg", "ElemAny"};
   auto name = AnfUtils::GetCNodeName(node);
   return ops.find(name) != ops.end();
 }

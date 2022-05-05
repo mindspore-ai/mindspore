@@ -39,13 +39,14 @@ class CleanInserter : public opt::Pass {
                                       const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &clean_infos);
   virtual CNodePtr CreateCleanCompositeNode(const CleanZeroUserInfo &op_info, const FuncGraphPtr &main_graph,
                                             TypeId dst_type);
-  CNodePtr InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtr &node) const;
+  CNodePtr InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const;
   void CreateAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph,
                                         const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &parameters_infos);
   virtual void ProcessOriginCNode(
     const AnfNodePtr &composite_node,
-    const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
-    bool atomic_add_attr = true);
+    const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes);
+
+  virtual void SetTargetAttrs(const CNodePtr &) {}
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CLEAN_INSERTER_H_

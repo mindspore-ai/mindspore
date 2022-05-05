@@ -232,6 +232,7 @@ class PrimLib:
         'UnsortedSegmentSum': Prim(OPAQUE),
         'StandardNormal': Prim(OPAQUE),
         'OneHot': Prim(OPAQUE),
+        'ElemAny': Prim(OPAQUE),
     }
 
     default_primtive = Prim(UNKNOWN)
