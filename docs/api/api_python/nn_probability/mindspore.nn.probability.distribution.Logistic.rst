@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Logistic
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Logistic(loc=None, scale=None, seed=None, dtype=mindspore.float32, name='Logistic')
+.. py:class:: mindspore.nn.probability.distribution.Logistic(loc=None, scale=None, seed=None, dtype=mstype.float32, name='Logistic')
 
     Logistic分布（Logistic distribution）。
     连续随机分布，取值范围为 :math:`(0, \inf)` ，概率密度函数为
@@ -16,7 +16,7 @@ mindspore.nn.probability.distribution.Logistic
     - **loc** (int, float, list, numpy.ndarray, Tensor) - Logistic分布的位置。默认值：None。
     - **scale** (int, float, list, numpy.ndarray, Tensor) - Logistic分布的尺度。默认值：None。
     - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-    - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mindspore.float32。
+    - **dtype** (mindspore.dtype) - 事件样例的类型。默认值：mstype.float32。
     - **name** (str) - 分布的名称。默认值：'Logistic'。
 
     .. note:: 

@@ -1,7 +1,7 @@
 mindspore.nn.probability.distribution.Beta
 ================================================
 
-.. py:class:: mindspore.nn.probability.distribution.Beta(concentration1=None, concentration0=None, seed=None, dtype=mindspore.float32, name='Beta')
+.. py:class:: mindspore.nn.probability.distribution.Beta(concentration1=None, concentration0=None, seed=None, dtype=mstype.float32, name='Beta')
 
     Beta 分布（Beta Distribution）。
     连续随机分布，取值范围为 :math:`[0, 1]` ，概率密度函数为
@@ -16,7 +16,7 @@ mindspore.nn.probability.distribution.Beta
     - **concentration1** (int, float, list, numpy.ndarray, Tensor) - Beta 分布的alpha。默认值：None。
     - **concentration0** (int, float, list, numpy.ndarray, Tensor) - Beta 分布的beta。默认值：None。
     - **seed** (int) - 采样时使用的种子。如果为None，则使用全局种子。默认值：None。
-    - **dtype** (mindspore.dtype) - 采样结果的数据类型。默认值：mindspore.float32。
+    - **dtype** (mindspore.dtype) - 采样结果的数据类型。默认值：mstype.float32。
     - **name** (str) - 分布的名称。默认值：'Beta'。
 
     .. note::
