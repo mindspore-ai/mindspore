@@ -112,7 +112,7 @@ int ScaleCPUKernel::CalculateParameter() {
   auto scale_shape = scale_tensor->shape();
 
   if (scale_param_->axis_ < 0) {
-    scale_param_->axis_ = scale_param_->axis_ + in_shape.size();
+    scale_param_->axis_ = static_cast<int>(scale_param_->axis_ + in_shape.size());
   }
   if (scale_param_->axis_ < 0 || scale_shape.size() + scale_param_->axis_ > in_shape.size()) {
     MS_LOG(ERROR) << "Scale tensor shape is incorrect.";

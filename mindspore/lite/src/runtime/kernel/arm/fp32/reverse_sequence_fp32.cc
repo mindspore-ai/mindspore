@@ -52,7 +52,7 @@ int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int
 }
 int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) const {
   int count = 1;
-  for (size_t i = axis + 1; i < shape.size(); ++i) {
+  for (int i = axis + 1; i < static_cast<int>(shape.size()); ++i) {
     count *= shape.at(i);
   }
   return count;
@@ -68,7 +68,7 @@ int ReverseSequenceCPUKernel::ReSize() {
   ConvertAxisToPositive(input0->shape(), &(para->seq_axis_));
   MS_CHECK_TRUE_RET(para->batch_axis_ >= 0 && para->seq_axis_ >= 0, RET_ERROR);
 
-  para->ndim_ = input0->shape().size();
+  para->ndim_ = static_cast<int>(input0->shape().size());
   for (int i = 0; i < para->ndim_; i++) {
     para->input_shape0_[i] = input0->DimensionSize(i);
     para->output_shape_[i] = output->DimensionSize(i);
