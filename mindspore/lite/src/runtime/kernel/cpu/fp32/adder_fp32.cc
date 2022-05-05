@@ -87,7 +87,6 @@ int AdderCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "malloc packed weight failed.";
     return RET_ERROR;
   }
-  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
   RowMajor2Col4Major(origin_weight, reinterpret_cast<float *>(packed_weight_), out_channel, in_channel * kernel_plane);
   CHECK_LESS_RETURN(MAX_MALLOC_SIZE, oc_block_num * oc_block * sizeof(float));
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * oc_block * sizeof(float)));
