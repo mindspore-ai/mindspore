@@ -88,11 +88,11 @@ class ModelPool {
   int numa_node_num_ = 1;
   int used_numa_node_num_ = 0;
   bool use_numa_bind_mode_ = false;
-  bool use_gpu_ = false;
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
   bool use_split_batch_ = false;
   std::vector<std::shared_ptr<ModelWorker>> all_model_worker_;
+  bool create_worker_success_ = true;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_

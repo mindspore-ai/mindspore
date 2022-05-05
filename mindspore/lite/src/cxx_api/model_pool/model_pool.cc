@@ -374,15 +374,20 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
       MS_LOG(ERROR) << "model worker is nullptr.";
       return kLiteError;
     }
-    auto status = model_worker->Init(new_model_buf, size, model_pool_context[i]->context);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << " model thread init failed.";
-      return kLiteError;
-    }
     int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
-    model_worker_vec_.push_back(std::thread(&ModelWorker::Run, model_worker, task_queue_id, predict_task_queue_));
+    model_worker_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
+                                            task_queue_id, model_pool_context[i]->context, predict_task_queue_,
+                                            &create_worker_success_));
     all_model_worker_.push_back(model_worker);
+  }
+  for (size_t i = 0; i < workers_num_; i++) {
+    auto work = all_model_worker_[i];
+    work->WaitCreateWorkerDone();
+    if (!create_worker_success_) {
+      MS_LOG(ERROR) << "init failed.";
+      return kLiteError;
+    }
   }
   // init model pool input and output
   if (model_worker != nullptr) {
