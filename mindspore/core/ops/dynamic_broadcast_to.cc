@@ -28,6 +28,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 2, prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto input_y = input_args[1];
   MS_EXCEPTION_IF_NULL(input_y);
   abstract::ShapePtr y_shape;
@@ -45,6 +46,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
                               << ".";
     }
     std::vector<int64_t> output_shape;
+    std::vector<int64_t> real_shape;
     std::vector<int64_t> max_shape;
     std::vector<int64_t> min_shape;
     if (y_shape->IsDynamic()) {
@@ -52,9 +54,6 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
       output_shape.push_back(-2);
     } else {
       auto out_dims = LongToSize(y_shape->shape()[0]);
-      for (size_t i = 0; i < out_dims; i++) {
-        output_shape.push_back(-1);
-      }
       auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
       auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
       if (!min_value || !max_value) {
@@ -69,6 +68,25 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
                                     ". But got min shape size: "
                                  << min_shape.size() << ", max shape size: " << max_shape.size()
                                  << ", output size: " << out_dims << ".";
+      }
+      for (size_t i = 0; i < out_dims; i++) {
+        output_shape.push_back(-1);
+        real_shape.push_back(-1);
+        if (min_shape[i] == max_shape[i]) {
+          real_shape[i] = min_shape[i];
+        }
+      }
+      CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(real_shape.size()),
+                                  prim_name);
+      auto outer_dim_offset = real_shape.size() - x_shape.size();
+      for (size_t i = 0; i < x_shape.size(); ++i) {
+        if (real_shape[i + outer_dim_offset] == -1 || x_shape[i] == -1) {
+          continue;
+        }
+        if (real_shape[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
+          MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: " << x_shape
+                                   << ", target shape: " << real_shape;
+        }
       }
     }
     return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);

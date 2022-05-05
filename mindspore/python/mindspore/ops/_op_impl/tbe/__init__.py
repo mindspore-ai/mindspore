@@ -510,6 +510,7 @@ from .mod_ds import _mod_ds_tbe
 from .max_pool_grad_grad import _max_pool_grad_grad_tbe
 from .max_pool_grad_grad_with_argmax import _max_pool_grad_grad_with_argmax_tbe
 from .tensor_move import _tensor_move_tbe
+from .tensor_move_ds import _tensor_move_ds_tbe
 from .population_count import _population_count_tbe
 from .parallel_concat import _parallel_concat_tbe
 from .adam_apply_one_assign import _adam_apply_one_assign_tbe

@@ -961,5 +961,13 @@ AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr
   MS_EXCEPTION_IF_NULL(output);
   return output;
 }
+AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
+  // An object of a subclass of AbstractBase
+  CheckArgsSize(primitive->name(), args_spec_list, 1);
+  auto output = args_spec_list[0];
+  MS_EXCEPTION_IF_NULL(output);
+  return output;
+}
 }  // namespace abstract
 }  // namespace mindspore
