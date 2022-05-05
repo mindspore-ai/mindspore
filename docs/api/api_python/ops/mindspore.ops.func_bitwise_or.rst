@@ -20,7 +20,7 @@ mindspore.ops.bitwise_or
 
     **返回：**
 
-    Tensor，是一个与`x` 相同类型的Tensor。
+    Tensor，是一个与 `x` 相同类型的Tensor。
 
     **异常：**
 
