@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public MKLCpuKernelMod {
+class SoftmaxCrossEntropyWithLogitsCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   SoftmaxCrossEntropyWithLogitsCpuKernelMod() = default;
   ~SoftmaxCrossEntropyWithLogitsCpuKernelMod() override = default;

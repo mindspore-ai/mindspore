@@ -132,11 +132,11 @@ auto GetMemDesc(const T &prim_desc) {
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
 class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
  private:
-  ActorThreadPool *tp_;
+  ThreadPool *tp_;
   int thread_num_{8};
 
  public:
-  explicit mkl_threadpool(ActorThreadPool *tp) { tp_ = tp; }
+  explicit mkl_threadpool(ThreadPool *tp) { tp_ = tp; }
   void set_num_threads(int num) { thread_num_ = num; }
   int get_num_threads() const override { return std::min(SizeToInt(tp_->GetKernelThreadNum()), thread_num_); }
   bool get_in_parallel() const override { return false; }
@@ -164,10 +164,10 @@ struct PaddingInfo {
   bool ceil_mode{false};
 };
 
-class MKLCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class DeprecatedMKLCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
-  MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0) {
+  DeprecatedMKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0) {
     auto thread_pool = GetActorMgrInnerThreadPool();
     mkl_threadpool_ = std::make_shared<mkl_threadpool>(thread_pool);
     MS_LOG(DEBUG) << "begin to invoke dnnl::threadpool_interop::make_stream";
@@ -175,9 +175,9 @@ class MKLCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     MS_LOG(DEBUG) << "end to invoke dnnl::threadpool_interop::make_stream";
   }
 #else
-  MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
+  DeprecatedMKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
 #endif
-  ~MKLCpuKernelMod() override = default;
+  ~DeprecatedMKLCpuKernelMod() override = default;
 
  protected:
   bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
@@ -209,7 +209,53 @@ class MKLCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::shared_ptr<dnnl::threadpool_interop::threadpool_iface> mkl_threadpool_{nullptr};
 #endif
 };
+
+class MKLCpuKernelMod : public NativeCpuKernelMod {
+ public:
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0) {
+    auto thread_pool = pool_ == nullptr ? GetActorMgrInnerThreadPool() : pool_;
+    mkl_threadpool_ = std::make_shared<mkl_threadpool>(thread_pool);
+    MS_LOG(DEBUG) << "begin to invoke dnnl::threadpool_interop::make_stream";
+    stream_ = dnnl::threadpool_interop::make_stream(engine_, mkl_threadpool_.get());
+    MS_LOG(DEBUG) << "end to invoke dnnl::threadpool_interop::make_stream";
+  }
+#else
+  MKLCpuKernelMod() : engine_(dnnl::engine::kind::cpu, 0), stream_(engine_) {}
+#endif
+  ~MKLCpuKernelMod() override = default;
+
+ protected:
+  bool BinaryBroadCast(std::vector<size_t> *src0_shape, std::vector<size_t> *src1_shape,
+                       std::vector<size_t> *dst_shape) const;
+  void GetPadding(const BaseOperatorPtr &base_operator, const std::vector<size_t> &src_shape,
+                  const PaddingInfo &padding_info) const;
+  void AddArgument(int arg_key, const dnnl::memory::desc &mem_desc, bool alloc = false);
+  void SetArgumentHandle(int arg_key, void *ptr);
+  dnnl::memory::format_tag GetDefaultFormatTag(const dnnl::memory::dims &dims) const;
+  dnnl::memory::desc GetDefaultMemDesc(const std::vector<size_t> &shape) const;
+  dnnl::memory::desc GetExactMemDesc(const std::vector<size_t> &shape,
+                                     dnnl::memory::data_type type = dnnl::memory::data_type::f32) const;
+  void ExecutePrimitive();
+  inline dnnl::memory::desc formatted_md(const dnnl::memory::dims &dimensions, dnnl::memory::format_tag layout) const {
+    MS_LOG(DEBUG) << "begin to invoke constructor of dnnl::memory::desc";
+    auto desc = dnnl::memory::desc{{dimensions}, dnnl::memory::data_type::f32, layout};
+    MS_LOG(DEBUG) << "end to invoke constructor of dnnl::memory::desc";
+    return desc;
+  }
+  void Reorder(dnnl::memory *src_mem, dnnl::memory *dst_mem);
+
+  size_t GetSize(const dnnl::memory::desc &desc) const;
+  void SetDataHandle(dnnl::memory mem, void *ptr);
+  void *GetDataHandle(const dnnl::memory &mem) const;
+  std::unordered_map<int, dnnl::memory> arguments_;
+  std::shared_ptr<dnnl::primitive> primitive_{nullptr};
+  dnnl::engine engine_;
+  dnnl::stream stream_;
+#ifdef USE_MS_THREADPOOL_FOR_DNNL
+  std::shared_ptr<dnnl::threadpool_interop::threadpool_iface> mkl_threadpool_{nullptr};
+#endif
+};
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MKL_CPU_KERNEL_H_

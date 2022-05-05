@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class LogSoftmaxGradCpuKernelMod : public MKLCpuKernelMod {
+class LogSoftmaxGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   LogSoftmaxGradCpuKernelMod() = default;
   ~LogSoftmaxGradCpuKernelMod() override = default;

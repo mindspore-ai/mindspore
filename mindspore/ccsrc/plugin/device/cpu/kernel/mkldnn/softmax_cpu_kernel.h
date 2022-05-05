@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-class SoftmaxCpuKernelMod : public MKLCpuKernelMod {
+class SoftmaxCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   SoftmaxCpuKernelMod() = default;
   ~SoftmaxCpuKernelMod() override = default;

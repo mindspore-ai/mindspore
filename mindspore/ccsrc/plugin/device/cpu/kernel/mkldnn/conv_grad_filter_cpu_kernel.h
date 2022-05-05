@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ConvGradFilterCpuKernelMod : public MKLCpuKernelMod {
+class ConvGradFilterCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   ConvGradFilterCpuKernelMod() = default;
   explicit ConvGradFilterCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}

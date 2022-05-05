@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class ConvCpuKernelMod : public MKLCpuKernelMod {
+class ConvCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   ConvCpuKernelMod() = default;
   ~ConvCpuKernelMod() override = default;

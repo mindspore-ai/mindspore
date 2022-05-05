@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class LrnGradCpuKernelMod : public MKLCpuKernelMod {
+class LrnGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  public:
   LrnGradCpuKernelMod() = default;
   ~LrnGradCpuKernelMod() override = default;
