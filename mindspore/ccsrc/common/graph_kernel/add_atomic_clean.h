@@ -24,6 +24,7 @@
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/session/kernel_graph.h"
+#include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/clean_inserter.h"
 
 namespace mindspore::graphkernel {
@@ -82,6 +83,9 @@ class AtomicCleanInserter : public CleanInserter {
   void ProcessOriginCNodeUser(const FuncGraphPtr &main_graph, const AnfNodePtr &composite_node,
                               const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes,
                               const FuncGraphManagerPtr &mng);
+  void SetTargetAttrs(const CNodePtr &cnode) override {
+    SetNodeAttrSafely("enable_atomic_add", MakeValue(true), cnode);
+  }
 
  private:
   std::vector<AtomicAddUserInfo> FindOriginCNodeUsers(

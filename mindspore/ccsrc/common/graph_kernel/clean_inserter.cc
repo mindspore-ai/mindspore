@@ -30,7 +30,6 @@
 #include "utils/log_adapter.h"
 #include "kernel/kernel.h"
 #include "kernel/common_utils.h"
-#include "backend/common/session/kernel_graph.h"
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
@@ -102,11 +101,12 @@ void CleanInserter::CreateAssignNodeAndCorrectReturn(
   }
 }
 
-CNodePtr CleanInserter::InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtr &node) const {
+CNodePtr CleanInserter::InsertUpdateState(const FuncGraphPtr &main_graph, const AnfNodePtrList &nodes) const {
   // Insert update_state_node, need mount a monad node.
   auto u = NewValueNode(kUMonad);
   u->set_abstract(kUMonad->ToAbstract());
-  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u, node};
+  AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u};
+  (void)update_state_inputs.insert(update_state_inputs.end(), nodes.begin(), nodes.end());
   auto update_state_cnode = main_graph->NewCNode(update_state_inputs);
   update_state_cnode->set_abstract(kUMonad->ToAbstract());
   main_graph->AddNode(update_state_cnode);
@@ -160,16 +160,16 @@ CNodePtr CleanInserter::CreateCleanCompositeNode(const CleanZeroUserInfo &op_inf
   auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
   broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
   SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner});
-  auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "atomic_clean");
+  auto graph_attr = GkUtils::ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "clean_inserter");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
-  new_sub_graph->set_attr("composite_type", MakeValue("atomic_clean"));
+  new_sub_graph->set_attr("composite_type", MakeValue("clean_inserter"));
 
   return broadcast_to_composite_node;
 }
 
 void CleanInserter::ProcessOriginCNode(
   const AnfNodePtr &composite_node,
-  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes, bool atomic_add_attr) {
+  const std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> &info_and_broadcast_to_nodes) {
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {
@@ -179,15 +179,15 @@ void CleanInserter::ProcessOriginCNode(
 
   // Add input
   std::vector<std::pair<CleanZeroUserInfo, AnfNodePtr>> parameters_infos;
-  for (const auto &[atomic_add_info, new_input] : info_and_broadcast_to_nodes) {
-    // Add atomic attribute to target node.
-    if (atomic_add_attr) SetNodeAttrSafely("enable_atomic_add", MakeValue(true), atomic_add_info.op_node);
+  for (const auto &[target_node_info, new_input] : info_and_broadcast_to_nodes) {
+    // Add attribute to target node.
+    SetTargetAttrs(target_node_info.op_node);
 
     // add parameter
     auto parameter = sub_graph->add_parameter();
     parameter->set_abstract(new_input->abstract());
     parameter->set_kernel_info(new_input->kernel_info_ptr());
-    (void)parameters_infos.emplace_back(atomic_add_info, parameter);
+    (void)parameters_infos.emplace_back(target_node_info, parameter);
   }
 
   auto inputs = composite_node->cast<CNodePtr>()->inputs();

@@ -20,6 +20,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <memory>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "utils/hash_map.h"
@@ -29,6 +30,9 @@
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
+
+GVAR_DEF(PrimitivePtr, kPrimFloatStatus, std::make_shared<Primitive>("FloatStatus"));
+GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));
 
 using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
 
