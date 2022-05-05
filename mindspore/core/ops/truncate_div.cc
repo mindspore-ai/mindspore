@@ -48,8 +48,8 @@ TypePtr TruncateDivInferType(const PrimitivePtr &primitive, const std::vector<Ab
   auto z_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(z_type);
   if (!z_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s"
-                            << " input must be tensor type but got " << z_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << z_type->ToString()
+                            << ".";
   }
   auto type_x = input_args[0]->BuildType();
   auto type_y = input_args[1]->BuildType();
@@ -71,8 +71,8 @@ TypePtr TruncateDivInferType(const PrimitivePtr &primitive, const std::vector<Ab
     } else {
       MS_EXCEPTION(TypeError)
         << "For '" << prim_name
-        << "', Complex math binary op expecting Tensor [complex64, complex64],[complex64, float32], [float32, "
-           "complex64],[complex128, complex128],[complex128, float64], [float64, complex128], but got["
+        << "', complex math binary op expecting Tensor [complex64, complex64], [complex64, float32], [float32, "
+           "complex64], [complex128, complex128], [complex128, float64], [float64, complex128], but got ["
         << type_x->ToString() << ", " << type_y->ToString() << "].";
     }
   }

@@ -66,18 +66,22 @@ abstract::BaseShapePtr SelectInferShape(const PrimitivePtr &primitive, const std
   auto y_shape_size = y_shape.size();
   if (cond_shape_size != 0 && x_shape_size != 0 && y_shape_size != 0) {
     if (cond_shape_size != x_shape_size || y_shape_size != x_shape_size) {
-      MS_EXCEPTION(ValueError) << "Dim of tensor condition, x and y must be equal!";
+      MS_EXCEPTION(ValueError)
+        << "For 'Select', shape size of tensor condition, x and y must be equal. But got condition size: "
+        << cond_shape_size << ", x size: " << x_shape_size << ", y size: " << y_shape_size << ".";
     } else {
       for (size_t i = 0; i < x_shape_size; i++) {
         if ((x_shape[i] > 0 && cond_shape[i] > 0 && x_shape[i] != cond_shape[i]) ||
             (x_shape[i] > 0 && y_shape[i] > 0 && x_shape[i] != y_shape[i])) {
-          MS_EXCEPTION(ValueError) << "Shape of tensor condition, x and y must be equal!";
+          MS_EXCEPTION(ValueError)
+            << "For 'Select', shape of tensor condition, x and y must be the same. But got condition shape: "
+            << cond_shape << ", x shape: " << x_shape << ", y shape: " << y_shape << ".";
         }
       }
     }
   } else {
     if (!(CheckScalarOrTensor(cond_shape) && CheckScalarOrTensor(x_shape) && CheckScalarOrTensor(y_shape))) {
-      MS_EXCEPTION(ValueError) << "When any of cond, x, y is of scalar type, "
+      MS_EXCEPTION(ValueError) << "For 'Select', when any of cond, x, y is of scalar type, "
                                   "the rest must be 1D tensor with one element or scalar!";
     }
   }
@@ -100,7 +104,7 @@ TypePtr SelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   if (*x_type != *y_type) {
     MS_EXCEPTION(TypeError) << "For '" << prim_name
                             << "', the x_type and y_type must be the same, but got x_type: " << x_type->ToString()
-                            << " and y_type: " << y_type->ToString();
+                            << " and y_type: " << y_type->ToString() << ".";
   }
   return x_type;
 }
@@ -187,7 +191,7 @@ void SelectInnerInferValue(const PrimitivePtr &prim, const tensor::TensorPtr &co
       MS_EXCEPTION(TypeError) << "For '" << prim->name()
                               << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', "
                                  "'uint16','uint32', 'uint64','float16', 'float32', 'float64'], but got "
-                              << result_type->ToString();
+                              << result_type->ToString() << ".";
     }
   }
 }

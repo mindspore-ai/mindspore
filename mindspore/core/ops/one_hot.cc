@@ -49,7 +49,8 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   } else if (depth->isa<Int64Imm>()) {
     depth_value = GetValue<int64_t>(depth);
   } else {
-    MS_EXCEPTION(TypeError) << "For '" << op_name << "', depth must be a tensor or number of int64.";
+    MS_EXCEPTION(TypeError) << "For '" << op_name
+                            << "', 'depth' must be a tensor or number of int64, but got an invalid type.";
   }
 
   (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);

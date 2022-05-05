@@ -34,10 +34,8 @@ abstract::ShapePtr ZerosInferShape(const PrimitivePtr &primitive, const std::vec
   auto shape_value = input_args[0]->BuildValue();
   MS_EXCEPTION_IF_NULL(shape_value);
   if (shape_value->isa<ValueList>()) {
-    MS_EXCEPTION(TypeError) << "For primitive[" << prim_name
-                            << "], the input"
-                               " must be a Int or a tuple with all Int elements, but got "
-                            << shape_value->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "' input must be a Int or a tuple of Int elements, but got "
+                            << shape_value->ToString() << ".";
   }
   std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
   (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
@@ -54,7 +52,7 @@ TypePtr ZerosInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
     MS_EXCEPTION(TypeError)
       << "For '" << prim_name
       << "', the supported data type is ['bool', 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16','uint32', "
-         "'uint64','float16', 'float32', 'float64'], but got the invalid dtype!";
+         "'uint64','float16', 'float32', 'float64'], but got an invalid dtype!";
   }
   auto output_type = dtype_value->cast<TypePtr>();
   const std::set<TypePtr> valid_types = {kBool,   kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,

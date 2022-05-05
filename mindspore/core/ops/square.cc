@@ -47,9 +47,7 @@ TypePtr SquareInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto x_dtype = input_args[kInputIndex0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_dtype);
   if (!x_dtype->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "For Primitive['Square'], the input argument['x'] "
-                               "must be a Tensor but got "
-                            << x_dtype->ToString() << ".";
+    MS_EXCEPTION(TypeError) << "For 'Square', the input 'x' must be a Tensor, but got " << x_dtype->ToString() << ".";
   }
   return x_dtype;
 }

@@ -36,11 +36,11 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
   ShapeVector p_value;
   ShapeVector p_value_raw;
   if (x_shape[0] == 0) {
-    MS_EXCEPTION(ValueError) << "For Transpose, the input_x must hava value.";
+    MS_EXCEPTION(ValueError) << "For 'Transpose', first dim of input_x's shape can not be 0, but got 0.";
   }
   if (input_args.size() == 1) {
     if (!primitive->HasAttr("perm")) {
-      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of input_perm is necessary, but missing it!";
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the value of 'input_perm' is necessary, but missing it.";
     }
     ValuePtr perm = primitive->GetAttr("perm");
     MS_EXCEPTION_IF_NULL(perm);
@@ -63,9 +63,8 @@ abstract::ShapePtr TransposeInferShape(const PrimitivePtr &primitive, const std:
     p_value.emplace_back(p);
   }
   if (x_shape.size() != p_value.size()) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', The dimension of x and perm must be equal, but got x dimension: " << x_shape.size()
-                             << ", perm dimension: " << p_value.size() << ".";
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the dim of 'input_x' and 'input_perm' must be equal, but got "
+                             << x_shape.size() << " and " << p_value.size() << " respectively.";
   }
   for (auto i : p_value) {
     (void)CheckAndConvertUtils::CheckInteger("perm element", i, kLessThan, SizeToLong(p_value.size()), op_name);

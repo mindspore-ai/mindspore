@@ -37,10 +37,8 @@ std::vector<int64_t> ReLUV2GetOutputMaskShape(const PrimitivePtr &prim, const st
                                               const std::shared_ptr<Type> &x_dtype) {
   std::vector<int64_t> mask_shape;
   if (input_shape.size() != kInputDims) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name()
-                             << "', The 'input_x' should be a 4-D tensor,but got a " +
-                                  std::to_string(input_shape.size()) + "-D tensor whose shape is " +
-                                  std::to_string(input_shape.size());
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', the 'input_x' must be a 4-D tensor, but got a "
+                             << std::to_string(input_shape.size()) << "-D tensor.";
   }
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i == 1) {
@@ -99,8 +97,8 @@ TypePtr ReLUV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
-                            << " input must be tensor type but got " << x_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input type must be tensor, but got: " << x_type->ToString()
+                            << ".";
   }
   auto mask_dtype = kUInt8;
   return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, mask_dtype});

@@ -52,7 +52,7 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
                (y_shape[y_length + i] == abstract::Shape::SHP_ANY)) {
       (void)broadcast_shape.push_back(abstract::Shape::SHP_ANY);
     } else {
-      MS_EXCEPTION(ValueError) << "For op " << op_name << ", the two input '" << op_x_name << "' and '" << op_y_name
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name
                                << "' can not broadcast";
     }
   }

@@ -37,7 +37,7 @@ void CheckSliceType(const AbstractBasePtr &input_arg, const std::string &arg_nam
     (void)CheckAndConvertUtils::CheckTensorTypeValid(arg_name, input_arg->BuildType(), {kInt64}, prim_name);
     return;
   }
-  MS_EXCEPTION(TypeError) << "For StridedSlice, begin, end and stride must be tuple or Tensor.";
+  MS_EXCEPTION(TypeError) << "For 'StridedSlice',  'begin', 'end' and 'stride' must be a tuple or Tensor.";
 }
 
 abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
@@ -58,7 +58,7 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   }
 
   if (!shapex->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For StridedSliceGrad, shapex must be tuple or Tensor.";
+    MS_EXCEPTION(TypeError) << "For 'StridedSliceGrad', 'shapex' must be tuple or Tensor.";
   }
 
   if (shape_value->isa<tensor::Tensor>()) {
@@ -69,23 +69,25 @@ abstract::ShapePtr StridedSliceGradInferShape(const PrimitivePtr &primitive,
   // shape_value is AnyValue
   auto shapex_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, shape_index);
   if (shapex_shape->shape().size() != 1) {
-    MS_EXCEPTION(ValueError) << "For StridedSliceGrad, shapex must be 1-D, but got " << shapex_shape->shape().size()
-                             << ".";
+    MS_EXCEPTION(ValueError) << "For 'StridedSliceGrad', 'shapex' must be 1-D, but got: "
+                             << shapex_shape->shape().size() << "-D.";
   }
   auto shapex_len = LongToSize(shapex_shape->shape()[0]);
   auto abstract_tensor = shapex->cast<abstract::AbstractTensorPtr>();
   auto shape_min_value = abstract_tensor->get_min_value();
   auto shape_max_value = abstract_tensor->get_max_value();
   if (shape_min_value == nullptr || shape_max_value == nullptr) {
-    MS_LOG(EXCEPTION) << "For " << prim_name
-                      << ", max value or min value of 'shapex' can not be empty when 'shapex' is not a constant.";
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', max value or min value of 'shapex' can not be empty when 'shapex' is not a constant.";
   }
 
   auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
   auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
   if (shape_max.size() != shapex_len || shape_min.size() != shapex_len) {
-    MS_LOG(EXCEPTION) << "For " << prim_name << ", shapex's min value size: " << shape_min.size()
-                      << ", or max value size: " << shape_max.size() << ", not match with shapex size: " << shapex_len;
+    MS_LOG(EXCEPTION)
+      << "For '" << prim_name
+      << "', shapex's min value size and max value size must match with shapex size. But got min value size: "
+      << shape_min.size() << ",  max value size: " << shape_max.size() << ", shapex size: " << shapex_len << ".";
   }
   for (size_t i = 0; i < shapex_len; i++) {
     if (shape_min[i] == shape_max[i]) {
@@ -151,7 +153,8 @@ void StridedSliceGrad::set_ellipsis_mask(int64_t ellipsis_mask) {
   std::bitset<sizeof(int64_t) * 8> bs(ellipsis_mask);
   std::ostringstream buffer;
   if (bs.count() > 1) {
-    buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask();
+    buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask()
+           << ".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
   (void)this->AddAttr(kEllipsisMask, api::MakeValue(ellipsis_mask));

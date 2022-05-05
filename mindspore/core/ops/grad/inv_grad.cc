@@ -49,8 +49,8 @@ TypePtr InvGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   MS_EXCEPTION_IF_NULL(x_type);
   MS_EXCEPTION_IF_NULL(grad_type);
   if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
-                            << " input must be tensor type but got " << x_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
+                            << ".";
   }
   std::set<TypePtr> check_list = {kFloat16, kFloat32, kInt32, kInt8};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, check_list, prim->name());

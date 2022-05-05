@@ -48,7 +48,8 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION_IF_NULL(shape_ptr);
       auto shape_shape = shape_ptr->shape();
       if (shape_shape.size() != 1) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name << "', filter size must be 1-D, but got " << shape_shape.size();
+        MS_LOG(EXCEPTION) << "For '" << prim_name << "', filter size must be 1-D, but got " << shape_shape.size()
+                          << "-D.";
       }
 
       auto abstract_tensor = filter_size->cast<abstract::AbstractTensorPtr>();
@@ -65,7 +66,9 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
 
       auto filter_len = LongToSize(shape_shape[0]);
       if (shape_max.size() != filter_len || shape_min.size() != filter_len) {
-        MS_LOG(EXCEPTION) << "For " << prim_name << ", filter size's min or max value is valid.";
+        MS_LOG(EXCEPTION) << "For '" << prim_name
+                          << "', filter size's min or max must be equal to filter_len, but got min: "
+                          << shape_min.size() << ", max: " << shape_max.size() << ", filter_len: " << filter_len << ".";
       }
 
       for (size_t i = 0; i < filter_len; i++) {
@@ -84,8 +87,8 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
   } else {
     auto size_type = filter_size->BuildType();
     MS_EXCEPTION_IF_NULL(size_type);
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s input[filter size] must be a tuple or Tensor, "
-                            << "but got " << size_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input filter size be a tuple or Tensor, but got: " << size_type->ToString() << ".";
   }
   return ret_shape;
 }

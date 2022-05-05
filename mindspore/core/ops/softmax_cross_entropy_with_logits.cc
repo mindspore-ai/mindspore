@@ -45,8 +45,10 @@ abstract::TupleShapePtr SoftmaxCrossEntropyWithLogitsInferShape(const PrimitiveP
   // logits and label must have the same shape when is not dynamic
   if (!logits_shape_ptr->IsDynamic() && !label_shape_ptr->IsDynamic()) {
     if (*logits_shape != *label_shape) {
-      MS_EXCEPTION(ValueError) << prim_name << " evaluator arg label shape " << label_shape->ToString()
-                               << " are not consistent with logits shape " << logits_shape->ToString();
+      MS_EXCEPTION(ValueError)
+        << "For '" << prim_name
+        << "', evaluator arg 'label' shape should be consistent with 'logits' shape, but got 'label' shape: "
+        << label_shape->ToString() << ", 'logits' shape: " << logits_shape->ToString() << ".";
     }
   }
   auto logits_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(logits_shape);

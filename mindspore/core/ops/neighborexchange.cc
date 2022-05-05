@@ -124,9 +124,9 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
   auto abstract_element = abstract_tuple->elements();
   auto send_shapes = GetValue<ValuePtrList>(primitive->GetAttr(kSendShapes));
   if (abstract_element.size() != send_shapes.size()) {
-    MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', Input tuple size must be equal to attr '" << kSendShapes
-                                << "' size, but got Input tuple size:" << abstract_element.size() << ", attr "
-                                << kSendShapes << " size " << send_shapes.size();
+    MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input tuple size must be equal to attr '" << kSendShapes
+                                << "' size, but got input tuple size: " << abstract_element.size() << ", attr '"
+                                << kSendShapes << "' size: " << send_shapes.size() << ".";
   }
   for (size_t i = 0; i < abstract_element.size(); ++i) {
     // get attr shape
@@ -140,15 +140,15 @@ void NeighborExchangeCheck(const PrimitivePtr &primitive, const std::vector<Abst
     MS_EXCEPTION_IF_NULL(arg_base_shape);
     auto shape = arg_base_shape->cast<abstract::ShapePtr>();
     if (shape == nullptr) {
-      MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', Input " << i << " should be a tensor.";
+      MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input[" << i << "] must be a tensor.";
     }
     // comp two shape
     auto shape_vec = shape->shape();
     if (shape_vec != send_shape) {
       MS_EXCEPTION(ArgumentError) << "For '" << prim_name << "', input[" << i
-                                  << "] shape should be equal to attr shape, but got input[" << i
+                                  << "] shape must be equal to attr shape, but got input[" << i
                                   << "] shape: " << GetShapeStr(shape_vec)
-                                  << ", attr shape : " << GetShapeStr(send_shape);
+                                  << ", attr shape : " << GetShapeStr(send_shape) << ".";
     }
   }
 }

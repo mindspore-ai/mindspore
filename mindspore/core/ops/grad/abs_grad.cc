@@ -50,8 +50,8 @@ TypePtr AbsGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   auto x_type = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
-                            << " input must be tensor type but got " << x_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a tensor, but got: " << x_type->ToString()
+                            << ".";
   }
   return x_type;
 }

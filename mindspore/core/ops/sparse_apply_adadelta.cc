@@ -65,8 +65,9 @@ abstract::TupleShapePtr SparseApplyAdadeltaInferShape(const PrimitivePtr &primit
   (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape.size(), kGreaterEqual, 1, prim_name);
   // Indices size must equal with grad first dimension size
   if (indices_shape[0] != grad_shape[0]) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << " the indices size must equal to grad first dimension size "
-                             << grad_shape[0] << ", but got " << indices_shape[0];
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the indices size must be equal to grad first dimension size. But got indices size: "
+                             << indices_shape[0] << ", grad first dimension size: " << grad_shape[0] << ".";
   }
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr, accum_updata_shape_ptr});

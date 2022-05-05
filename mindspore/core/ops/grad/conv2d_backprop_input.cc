@@ -103,7 +103,7 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
       MS_EXCEPTION_IF_NULL(shape_ptr);
       auto shape_shape = shape_ptr->shape();
       if (shape_shape.size() != 1) {
-        MS_LOG(EXCEPTION) << "The " << prim_name << "'s x size must be 1-D.";
+        MS_LOG(EXCEPTION) << "For '" << prim_name << "', x size must be 1-D, but got " << shape_shape.size() << "-D.";
       }
 
       auto abstract_tensor = input_size->cast<abstract::AbstractTensorPtr>();
@@ -111,7 +111,8 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
       auto shape_max_value = abstract_tensor->get_max_value();
       auto shape_min_value = abstract_tensor->get_min_value();
       if (shape_max_value == nullptr || shape_min_value == nullptr) {
-        MS_LOG(EXCEPTION) << "Max_value or min value of x size can not be empty when its value is dynamic.";
+        MS_LOG(EXCEPTION) << "For '" << prim_name
+                          << "', max value or min value of x size can not be empty when its value is dynamic.";
       }
 
       auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
@@ -138,8 +139,8 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
   } else {
     auto size_type = input_size->BuildType();
     MS_EXCEPTION_IF_NULL(size_type);
-    MS_EXCEPTION(TypeError) << "The primitive[" << prim_name << "]'s input[x size] must be a tuple or Tensor, "
-                            << "but got " << size_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input[x size] must be a tuple or Tensor, but got: " << size_type->ToString() << ".";
   }
   auto dout_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];

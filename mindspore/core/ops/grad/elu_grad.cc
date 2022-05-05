@@ -58,8 +58,8 @@ TypePtr EluGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
   if (!x_type->isa<TensorType>()) {
-    MS_EXCEPTION(TypeError) << "The " << prim_name << "'s "
-                            << " input must be tensor type but got " << x_type->ToString();
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input must be a tuple or Tensor, but got: " << x_type->ToString() << ".";
   }
   return x_type;
 }

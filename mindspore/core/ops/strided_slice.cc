@@ -113,7 +113,7 @@ int64_t GetSlicingLengthForNegativeStrides(int64_t start_pos, int64_t end_pos, i
 int64_t ComputeSlicingLength(int64_t start_pos, int64_t end_pos, int64_t strides, int64_t x_dim) {
   int64_t slicing_length = 0;
   if (strides == 0) {
-    MS_EXCEPTION(ValueError) << "StridedSlice's input strides cannot contain 0.";
+    MS_EXCEPTION(ValueError) << "For 'StridedSlice', input 'strides' can not contain 0.";
   }
   if (strides > 0) {
     slicing_length = GetSlicingLengthForPositiveStrides(start_pos, end_pos, strides, x_dim);
@@ -174,9 +174,9 @@ void EllipsisInferShape(const PrimitivePtr &primitive, const std::vector<int64_t
     }
     if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
       if ((-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
-        MS_EXCEPTION(ValueError)
-          << "For '" << primitive->name()
-          << "', when shrink axis, the 'strides' should be greater than or equal to one, but got " << strides << ".";
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', when shrink axis, the 'strides' must be greater than or equal to one, but got "
+                                 << strides << ".";
       }
       j += 1;
       i += 1;
@@ -233,9 +233,9 @@ std::vector<int64_t> ComputeInferShape(const PrimitivePtr &primitive, const std:
       }
       if (j < shrink_axis_pos.size() && shrink_axis_pos[j] == 1) {
         if (!(-x_shape[i] <= start && start < x_shape[i]) || strides < 0) {
-          MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                                   << "', when shrink axis, the 'strides'  greater than or equal to one, but got "
-                                   << strides << ".";
+          MS_EXCEPTION(ValueError)
+            << "For '" << primitive->name()
+            << "', when shrink axis, the 'strides' must be greater than or equal to one, but got " << strides << ".";
         }
         j += 1;
         i += 1;
@@ -319,13 +319,13 @@ bool CheckAndGetDynamicSlice(const AbstractBasePtr &input_arg, const std::string
       *slice_len = LongToSize(slice_shape->shape()[0]);
     }
   } else {
-    MS_EXCEPTION(TypeError) << "For StridedSlice, " << arg_name << " must be tuple or Tensor.";
+    MS_EXCEPTION(TypeError) << "For 'StridedSlice', '" << arg_name << "' must be tuple or Tensor.";
   }
 
   if (arg_name == "strides") {
     if (std::any_of((*slice_value).begin(), (*slice_value).end(),
                     [](int64_t stride_value) { return stride_value == 0; })) {
-      MS_EXCEPTION(ValueError) << "StridedSlice's input strides cannot contain 0.";
+      MS_EXCEPTION(ValueError) << "For 'StridedSlice', input 'strides' can not contain 0.";
     }
   }
   return is_dynamic;
@@ -345,7 +345,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   if (x_is_dyn && (min_shape.size() == 0 || max_shape.size() == 0)) {
     MS_EXCEPTION(ValueError)
       << "For '" << prim_name
-      << ", input x dynamic shape is currently not supported if min and max shapes are not given.";
+      << "', input x dynamic shape is currently not supported if min and max shapes are not given.";
   }
   ShapeVector begin_v;
   ShapeVector end_v;
@@ -361,9 +361,9 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   bool end_dynamic = CheckAndGetDynamicSlice(input_args[end_index], "end", &end_v, &end_len);
   bool stride_dynamic = CheckAndGetDynamicSlice(input_args[stride_index], "strides", &strides_v, &stride_len);
   if (begin_len != stride_len || end_len != stride_len) {
-    MS_EXCEPTION(ValueError) << "For " << prim_name << ", 'begin', 'end' and 'strides' must be the same length, "
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', 'begin', 'end' and 'strides' must have the same length, "
                              << "but got length of 'begin': " << begin_len << ", 'end': " << end_len
-                             << ", 'strides': " << stride_len;
+                             << ", 'strides': " << stride_len << ".";
   }
   bool slice_dynamic = false;
   if (begin_dynamic || end_dynamic || stride_dynamic || x_is_dyn) {
@@ -373,7 +373,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
     ret_in_shape = ComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape);
     bool has_zero_shape = std::any_of(ret_in_shape.begin(), ret_in_shape.end(), [](int64_t i) { return i == 0; });
     if (has_zero_shape) {
-      MS_LOG(EXCEPTION) << "StridedSlice haven't support zero shape yet, now the out shape is " << ret_in_shape;
+      MS_LOG(EXCEPTION) << "'StridedSlice' doesn't support zero shape, but got out shape: " << ret_in_shape << ".";
     }
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
@@ -421,7 +421,8 @@ void StridedSlice::set_ellipsis_mask(int64_t ellipsis_mask) {
   std::bitset<sizeof(int64_t) * 8> bs(ellipsis_mask);
   std::ostringstream buffer;
   if (bs.count() > 1) {
-    buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask();
+    buffer << "For" << this->name() << ", only support one ellipsis in the index, but got " << this->get_end_mask()
+           << ".";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
   (void)this->AddAttr(kEllipsisMask, api::MakeValue(ellipsis_mask));
