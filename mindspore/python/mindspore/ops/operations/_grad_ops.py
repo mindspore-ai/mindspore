@@ -867,6 +867,59 @@ class MaxPoolGrad(_PoolGrad):
         return x1_dtype
 
 
+class MaxPoolGradV1(Primitive):
+    """Performs gradients of the MaxPoolV1 operation."""
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        self.init_prim_io_names(
+            inputs=['x_origin', 'out_origin', 'grad'], outputs=['output'])
+
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        self.pad_mode = validator.check_string(
+            pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(
+            data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.add_prim_attr('data_format', self.format)
+
+        def _grad_check_int_or_tuple(arg_name, arg_val):
+            validator.check_value_type(
+                arg_name, arg_val, (int, tuple), self.name)
+            error_msg = ValueError(f"For '{self.name}' the '{arg_name}' should be an positive int number "
+                                   f"or a tuple of two or four positive int numbers, but got {arg_val}")
+            if isinstance(arg_val, int):
+                ret = (1, 1, arg_val, arg_val)
+            elif len(arg_val) == 2:
+                ret = (1, 1, arg_val[0], arg_val[1])
+            elif len(arg_val) == 4:
+                ret = arg_val
+            else:
+                raise error_msg
+            # whether all elements of tuple are positive integers
+            for item in ret:
+                if not isinstance(item, int) or item <= 0:
+                    raise error_msg
+            return ret
+
+        self.kernel_size = _grad_check_int_or_tuple("kernel_size", kernel_size)
+        self.strides = _grad_check_int_or_tuple("strides", strides)
+
+        kernel_size_adapted = self.kernel_size if self.format == 'NCHW' else (
+            self.kernel_size[0], self.kernel_size[2], self.kernel_size[3], self.kernel_size[1])
+        strides_adapted = self.strides if self.format == 'NCHW' else (
+            self.strides[0], self.strides[2], self.strides[3], self.strides[1])
+
+        if len(kernel_size) == 4:
+            kernel_size_adapted = kernel_size
+        if len(strides) == 4:
+            strides_adapted = strides
+
+        self.add_prim_attr("kernel_size", kernel_size_adapted)
+        self.add_prim_attr("strides", strides_adapted)
+
+
 class MaxPoolGradGrad(_PoolGrad):
     r"""
     Performs gradients of the MaxPoolGrad operation.

@@ -297,6 +297,10 @@ void SetNodedefProto(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDe
   if (op_name == kInitDataSetQueue) {
     op_name = kInitData;
   }
+  // when op_name is different in mindspore and aicpu
+  if (auto iter = kOpNameToAicpuOpNameMap.find(op_name); iter != kOpNameToAicpuOpNameMap.end()) {
+    op_name = iter->second;
+  }
   // set op name
   proto->set_op(op_name);
   // set inputs tensor

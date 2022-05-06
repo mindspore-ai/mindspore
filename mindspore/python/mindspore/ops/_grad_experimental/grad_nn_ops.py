@@ -31,6 +31,8 @@ from ..operations._grad_ops import FractionalAvgPoolGrad
 from ..operations.nn_ops import NthElement
 from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
+from ..operations.nn_ops import MaxPoolV1
+from ..operations._grad_ops import MaxPoolGradV1
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -179,5 +181,21 @@ def get_bprop_p_s_r_o_i_pooling(self):
         p_s_r_o_i_pooling_grad = PSROIPoolingGrad((shape[2:]), spatial_scale, group_size, output_dim)
         dx = p_s_r_o_i_pooling_grad(dout, rois)
         return (dx, zeros_like(rois))
+
+    return bprop
+
+
+@bprop_getters.register(MaxPoolV1)
+def get_bprop_max_pool_v1_grad(self):
+    """Grad definition for `MaxPoolV1` operation."""
+    maxpool_grad_v1 = MaxPoolGradV1(
+        kernel_size=self.kernel_size,
+        strides=self.strides,
+        pad_mode=self.pad_mode,
+        data_format=self.format)
+
+    def bprop(x, out, dout):
+        dx = maxpool_grad_v1(x, out, dout)
+        return (dx,)
 
     return bprop
