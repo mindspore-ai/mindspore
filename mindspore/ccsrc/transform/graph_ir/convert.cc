@@ -2108,6 +2108,10 @@ AnfNodePtr DfGraphConvertor::GetRealInputNode(const CNodePtr &node, const AnfNod
 
   if (IsPrimitiveCNode(pred, prim::kPrimLoad)) {
     pred = ParseLoadInput(pred->cast<CNodePtr>());
+    // for scenario like: Depend->Load->TensorMove
+    if (IsPrimitiveCNode(pred, prim::kPrimDepend)) {
+      return GetRealInputNode(node, pred);
+    }
   }
 
   return TransformConstOp(node, pred);
@@ -2673,48 +2677,69 @@ void DfGraphConvertor::ConvertTupleGetItem(const CNodePtr node) {
   out_handle_cache_[node.get()] = handle;
 }
 
+AnfNodePtr DfGraphConvertor::GetRealOpForMakeTuple(const AnfNodePtr &node, const AnfNodePtr &make_tuple,
+                                                   int64_t index) {
+  MS_EXCEPTION_IF_NULL(make_tuple);
+  auto make_tuple_cnode = make_tuple->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(make_tuple_cnode);
+  auto tuple_inputs = make_tuple_cnode->inputs();
+  if (tuple_inputs.size() < LongToSize(index + 1L)) {
+    MS_LOG(ERROR) << "Make tuple input items node not correct! size:" << tuple_inputs.size()
+                  << ", item index:" << index;
+    error_ = FAILED;
+    return node;
+  }
+  return GetRealOpNode(tuple_inputs[LongToSize(index + 1L)]);
+}
+
 // Get the real op for tuple_getitem through make tuple, or depend
 AnfNodePtr DfGraphConvertor::GetRealOpNode(AnfNodePtr node) {
   const int TUPLE_GET_ITEM_INDEX = 2;
   if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     auto node_inputs = node->cast<CNodePtr>()->inputs();
     if (node_inputs.size() != 3) {  // "tuple_getitem" primitive must have 3 inputs
-      MS_LOG(ERROR) << "tuple get item node not correct!";
+      MS_LOG(ERROR) << "Tuple get item node not correct!";
       error_ = FAILED;
       return node;
     }
     MS_EXCEPTION_IF_NULL(node_inputs[TUPLE_GET_ITEM_INDEX]);
     if (!node_inputs[TUPLE_GET_ITEM_INDEX]->isa<ValueNode>()) {
       error_ = INVALID_ARGUMENT;
-      MS_LOG(EXCEPTION) << "can't convert get item with non-constant index";
+      MS_LOG(EXCEPTION) << "Can't convert get item with non-constant index";
     }
-    auto value_ptr = GetValueNode(node_inputs[TUPLE_GET_ITEM_INDEX])->cast<Int32ImmPtr>();
+    auto value_ptr = GetValueNode(node_inputs[TUPLE_GET_ITEM_INDEX])->cast<Int64ImmPtr>();
     if (value_ptr == nullptr) {
       MS_LOG(ERROR) << "Can not convert get item as value is nullptr!";
       error_ = FAILED;
       return node;
     }
     int64_t index = value_ptr->value();
-
-    // make_tuple apply inputs:make_tuple, [tuple_items,]
-    if (IsPrimitiveCNode(node_inputs[1], prim::kPrimMakeTuple)) {
-      auto tuple_inputs = node->cast<CNodePtr>()->inputs();
-      if (tuple_inputs.size() < LongToSize(index + 1L)) {
-        MS_LOG(ERROR) << "make tuple input items node not correct! size:" << tuple_inputs.size()
-                      << ", item index:" << index;
+    // Handle scenario like: MakeTuple->Depend->TupleGetItem
+    if (IsPrimitiveCNode(node_inputs[1], prim::kPrimDepend)) {
+      auto depend_node = node_inputs[1]->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(depend_node);
+      auto depend_inputs = depend_node->inputs();
+      if (depend_inputs.size() != 3) {  // "Depend" primitive have 3 inputs
+        MS_LOG(ERROR) << "Depend input items not correct";
         error_ = FAILED;
         return node;
       }
-      return GetRealOpNode(tuple_inputs[LongToSize(index + 1L)]);
+      if (IsPrimitiveCNode(depend_inputs[1], prim::kPrimMakeTuple)) {
+        return GetRealOpForMakeTuple(depend_node, depend_inputs[1], index);
+      }
+    }
+    // Make_tuple apply inputs:make_tuple, [tuple_items,]
+    if (IsPrimitiveCNode(node_inputs[1], prim::kPrimMakeTuple)) {
+      return GetRealOpForMakeTuple(node, node_inputs[1], index);
     }
     return GetRealOpNode(node_inputs[1]);
   }
 
-  // depend apply inputs: depend,output,depended_node
+  // Depend apply inputs: depend,output,depended_node
   if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
     auto depend_inputs = node->cast<CNodePtr>()->inputs();
     if (depend_inputs.size() != 3) {  // "Depend" primitive have 3 inputs
-      MS_LOG(ERROR) << "depend input items not correct";
+      MS_LOG(ERROR) << "Depend input items not correct";
       error_ = FAILED;
       return node;
     }

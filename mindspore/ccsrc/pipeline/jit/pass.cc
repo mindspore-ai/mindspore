@@ -566,6 +566,12 @@ OptPassGroupMap GetAfterRecomputePass(const opt::irpass::OptimizeIRPassLib &) {
   return map;
 }
 
+OptPassGroupMap GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(const opt::irpass::OptimizeIRPassLib &irpass) {
+  opt::OptPassConfig sparse_split = opt::OptPassConfig({irpass.sparse_softmax_cross_entropy_with_logits_});
+  OptPassGroupMap map({{"sparse_split", sparse_split}});
+  return map;
+}
+
 static mindspore::HashMap<std::string, std::shared_ptr<Optimizer>> g_pass_opts = {};
 
 void InitOpt(const ResourcePtr &res) {
@@ -585,6 +591,8 @@ void InitOpt(const ResourcePtr &res) {
     g_pass_opts["opt_prepare"] = Optimizer::MakeOptimizer("opt_prepare", res, GetPreparePhases(irpass));
     g_pass_opts["opt_after_recompute"] =
       Optimizer::MakeOptimizer("opt_after_recompute", res, GetAfterRecomputePass(irpass));
+    g_pass_opts["sparse_split"] =
+      Optimizer::MakeOptimizer("sparse_spilt", res, GetSparseSoftmaxCrossEntropyWithLogitsSplitPass(irpass));
   }
 }
 }  // namespace
@@ -623,6 +631,7 @@ bool OptPassTransformGraphGroup(const ResourcePtr &res) { return OptPassGroup(re
 bool ControlGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_control"); }
 bool PrepareGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_prepare"); }
 bool OptAfterRecomputeGroup(const ResourcePtr &res) { return OptPassGroup(res, "opt_after_recompute"); }
+bool SparseSplitPass(const ResourcePtr &res) { return OptPassGroup(res, "sparse_split"); }
 
 bool OptPassRNGroup(const ResourcePtr &res) { return OptPassGroup(res, "renormal"); }
 
@@ -835,6 +844,7 @@ std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_b", OptPassBGroup},
                                    {"opt_control", ControlGroup},
                                    {"opt_prepare", PrepareGroup},
+                                   {"sparse_split", SparseSplitPass},
                                    {"cconv", CconvPass}};
 
 std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},

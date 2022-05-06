@@ -170,6 +170,9 @@ class OptimizeIRPassLib {
   // ge TensorArray process
   SubstitutionPtr ge_tensor_array_add_flow_;
   SubstitutionPtr ge_tensor_array_cast_index_;
+
+  // sparse_softmax_cross_entropy_with_logits split for GE
+  SubstitutionPtr sparse_softmax_cross_entropy_with_logits_;
 };
 
 // the collection of irpass for resolve action
