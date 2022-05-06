@@ -49,6 +49,10 @@ def set_seed(seed):
         Seed set by numpy.random.seed() only used by numpy.random, while seed set by this API will also used by
         numpy.random, so just set all seed by this API is recommended.
 
+        In semi_auto_parallel/auto_parallel mode, when using set_seed, weights with same shape and same sharding
+        strategy would be initialized to the same result, otherwise, weights with same shape and same sharding strategy
+        would be initialized to the different result.
+
     Args:
         seed (int): The seed to be set.
 

@@ -110,6 +110,7 @@ class Tensor(Tensor_):
         >>> print(t4.dtype)
         Float32
     """
+    delta_seed = 0
 
     def __init__(self, input_data=None, dtype=None, shape=None, init=None, internal=False):
         self.init_finished = False
@@ -2229,13 +2230,23 @@ class Tensor(Tensor_):
                 from .seed import get_seed
                 global_seed = get_seed()
                 self._np_seed = np.random.get_state()[1][0]
-                self.need_set_seed = ((slice_index is not None) and (global_seed is None))
+                self.need_set_seed = (slice_index is not None)
+                self._global_seed = global_seed
+                self._device_num = 1
+                if self.need_set_seed:
+                    self._device_num = get_group_size()
 
             def __enter__(self):
                 if self.need_set_seed:
                     self.seed = self.init.seed
-                    np.random.seed(slice_index)
-                    self.init.seed = slice_index
+                    if self._global_seed is not None:
+                        np.random.seed(slice_index + self._global_seed)
+                        self.init.seed = slice_index + self._global_seed
+                    else:
+                        np.random.seed(slice_index + Tensor.delta_seed)
+                        self.init.seed = slice_index + Tensor.delta_seed
+                        Tensor.delta_seed += self._device_num
+
 
             def __exit__(self, ptype, value, trace):
                 if self.need_set_seed:

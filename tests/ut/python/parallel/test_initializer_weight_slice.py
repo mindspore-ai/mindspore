@@ -25,25 +25,31 @@ from mindspore.common import set_seed
 from hccl_test.manage.api import Hccl
 
 class Net(nn.Cell):
-    def __init__(self, strategy1, strategy2, weight):
+    def __init__(self, strategy1, strategy2, weight1, weight2):
         super().__init__()
-        self.weight = Parameter(weight, "w1")
-        self.matmul = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
+        self.weight1 = Parameter(weight1, "w1")
+        self.weight2 = Parameter(weight2, "w2")
+        self.matmul1 = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
+        self.matmul2 = P.MatMul(transpose_a=False, transpose_b=True).shard(strategy1)
         self.relu = P.ReLU().shard(strategy2)
 
     def construct(self, x):
-        out = self.matmul(x, self.weight)
+        out = self.matmul1(x, self.weight1)
+        out = self.matmul2(out, self.weight2)
         out = self.relu(out)
         return out
 
-def check_initializer_weight_slice(init_name="Uniform"):
+
+def check_initializer_weight_slice(init_name="Uniform", using_seed=False):
     def get_slice(rank):
+        if using_seed:
+            set_seed(1)
         hccl = Hccl()
         rank_save = hccl.rank_id
         hccl.rank_id = rank
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(dataset_strategy="full_batch")
-        context.set_auto_parallel_context(device_num=8, global_rank=0)
+        context.set_auto_parallel_context(device_num=8, global_rank=rank)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         strategy1 = ((2, 1), (4, 1))
         strategy2 = ((2, 4),)
@@ -51,40 +57,65 @@ def check_initializer_weight_slice(init_name="Uniform"):
         exe = me._cell_graph_executor
 
         x = Tensor(np.ones([32, 32]), dtype=ms.float32)
-        weight = initializer(init_name, [64, 32], ms.float32)
-        net = Net(strategy1, strategy2, weight)
+        weight1 = initializer(init_name, [32, 32], ms.float32)
+        weight2 = initializer(init_name, [32, 32], ms.float32)
+        net = Net(strategy1, strategy2, weight1, weight2)
         net.set_auto_parallel()
         net.set_train()
         exe.compile(net, x, auto_parallel_mode=True, phase='train')
         hccl.rank_id = rank_save
-        return net.parameters_dict()['w1'].data.asnumpy()
+        return net.parameters_dict()['w1'].data.asnumpy(), net.parameters_dict()['w2'].data.asnumpy()
 
-    slice0 = get_slice(0)
-    slice1 = get_slice(1)
-    slice4 = get_slice(4)
-    slice_shape = slice0.shape
+    Tensor.delta_seed = 0
+    w1_slice0, w2_slice0 = get_slice(0)
+    Tensor.delta_seed = 0
+    w1_slice1, _ = get_slice(1)
+    Tensor.delta_seed = 0
+    w1_slice4, _ = get_slice(4)
+    slice_shape = w1_slice0.shape
 
-    slice0 = slice0.flatten()
-    slice1 = slice1.flatten()
-    slice4 = slice4.flatten()
-    expect_slice_shape = (16, 32)
+    w1_slice0 = w1_slice0.flatten()
+    w1_slice1 = w1_slice1.flatten()
+    w1_slice4 = w1_slice4.flatten()
+    w2_slice0 = w2_slice0.flatten()
+    expect_slice_shape = (8, 32)
 
     assert expect_slice_shape == slice_shape
-    assert all(slice0 == slice4)
+    assert all(w1_slice0 == w1_slice4)
     if init_name not in ["One", "Zero"]:
-        assert any(slice0 != slice1)
+        assert any(w1_slice0 != w1_slice1)
+        if using_seed:
+            assert all(w1_slice0 == w2_slice0)
+        else:
+            assert any(w1_slice0 != w2_slice0)
+
 
 initializers = ["Uniform", "Normal", "TruncatedNormal", "HeUniform", "HeNormal", "XavierUniform", "One", "Zero"]
 
+
 def test_initializer_weight_slice():
+    """
+    Feature: test initializer in auto parallel with/without using set_seed.
+    Description: test initializer in auto parallel with/without using set_seed.
+    Expectation: without any assert error.
+    """
     for init_name in initializers:
         check_initializer_weight_slice(init_name)
+    for init_name in initializers:
+        check_initializer_weight_slice(init_name, using_seed=True)
+
 
 def test_wrong_order_set_parallel_mode_with_initializer():
-    weight = initializer("Normal", [64, 32], ms.float32)
+    """
+    Feature: test parameter initialize in auto parallel.
+    Description: test parameter initialize in auto parallel applying initializer before setting auto parallel mode.
+    Expectation: without any assert error.
+    """
+    weight1 = initializer("Normal", [32, 32], ms.float32)
+    weight2 = initializer("Normal", [32, 32], ms.float32)
     strategy1 = ((2, 1), (4, 1))
     strategy2 = ((2, 4),)
-    net = Net(strategy1, strategy2, weight)
+    net = Net(strategy1, strategy2, weight1, weight2)
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
@@ -92,67 +123,39 @@ def test_wrong_order_set_parallel_mode_with_initializer():
     with pytest.raises(RuntimeError):
         exe.compile(net, x, auto_parallel_mode=True, phase='train')
 
+
 def test_wrong_order_set_same_parallel_mode_with_initializer():
+    """
+    Feature: test parameter initialize in auto parallel.
+    Description: test parameter initialize in auto parallel applying initializer after setting auto parallel mode.
+    Expectation: without any assert error.
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    weight = initializer("Normal", [64, 32], ms.float32)
+    weight1 = initializer("Normal", [32, 32], ms.float32)
+    weight2 = initializer("Normal", [32, 32], ms.float32)
     strategy1 = ((2, 1), (4, 1))
     strategy2 = ((2, 4),)
-    net = Net(strategy1, strategy2, weight)
+    net = Net(strategy1, strategy2, weight1, weight2)
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0)
     net.set_auto_parallel()
     exe.compile(net, x, auto_parallel_mode=True, phase='train')
 
+
 def test_wrong_order_set_parallel_mode_without_initializer():
-    weight = Tensor(np.ones([64, 32]), ms.float32)
+    """
+    Feature: test parameter initialize in auto parallel.
+    Description: test parameter initialize in auto parallel not using initializer.
+    Expectation: without any assert error.
+    """
+    weight1 = Tensor(np.ones([32, 32]), ms.float32)
+    weight2 = Tensor(np.ones([32, 32]), ms.float32)
     strategy1 = ((2, 1), (4, 1))
     strategy2 = ((2, 4),)
-    net = Net(strategy1, strategy2, weight)
+    net = Net(strategy1, strategy2, weight1, weight2)
     exe = me._cell_graph_executor
     x = Tensor(np.ones([32, 32]), dtype=ms.float32)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     net.set_auto_parallel()
     exe.compile(net, x, auto_parallel_mode=True, phase='train')
-
-def test_check_initializer_weight_slice_seed(init_name="Uniform"):
-    def get_slice(rank):
-        set_seed(1)
-        hccl = Hccl()
-        rank_save = hccl.rank_id
-        hccl.rank_id = rank
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(dataset_strategy="full_batch")
-        context.set_auto_parallel_context(device_num=8, global_rank=0)
-        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
-        strategy1 = ((2, 1), (4, 1))
-        strategy2 = ((2, 4),)
-        context.set_context(mode=context.GRAPH_MODE)
-        exe = me._cell_graph_executor
-
-        x = Tensor(np.ones([32, 32]), dtype=ms.float32)
-        weight = initializer(init_name, [64, 32], ms.float32)
-        net = Net(strategy1, strategy2, weight)
-        net.set_auto_parallel()
-        net.set_train()
-        exe.compile(net, x, auto_parallel_mode=True, phase='train')
-        hccl.rank_id = rank_save
-        return net.parameters_dict()['w1'].data.asnumpy()
-
-
-    slice0 = get_slice(0)
-    slice1 = get_slice(1)
-    slice4 = get_slice(4)
-    slice_shape = slice0.shape
-
-    slice0 = slice0.flatten()
-    slice1 = slice1.flatten()
-    slice4 = slice4.flatten()
-    expect_slice_shape = (16, 32)
-
-    assert expect_slice_shape == slice_shape
-    assert all(slice0 == slice4)
-    assert all(slice0 == slice1)
-
-if __name__ == '__main__':
-    test_initializer_weight_slice()
