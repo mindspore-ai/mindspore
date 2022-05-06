@@ -23,6 +23,7 @@
 #include "tools/common/meta_graph_utils.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "src/common/log_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -64,8 +65,8 @@ STATUS QuantCastFusionPass::DoFusion(MetaGraphT *graph, const std::string &patte
 
   auto srcAttr = srcNode->primitive->value.AsQuantDTypeCast();
   auto dstAttr = dstNode->primitive->value.AsQuantDTypeCast();
-  MS_ASSERT(srcAttr != nullptr);
-  MS_ASSERT(dstAttr != nullptr);
+  CHECK_NULL_RETURN(srcAttr);
+  CHECK_NULL_RETURN(dstAttr);
   if (srcAttr->dst_t != dstAttr->src_t) {
     MS_LOG(ERROR) << "srcNode and dstNode can not been fused";
     return RET_ERROR;

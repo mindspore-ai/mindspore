@@ -62,7 +62,7 @@ void SubgraphTensorPass::UpdateTensorIdx(schema::MetaGraphT *graph, const uint32
 
 void SubgraphTensorPass::RemoveUselessTensors(schema::MetaGraphT *graph) {
   for (auto it = graph->allTensors.begin(); it != graph->allTensors.end();) {
-    uint32_t idx = it - graph->allTensors.begin();
+    uint32_t idx = static_cast<uint32_t>(it - graph->allTensors.begin());
     if (IsUsing(*graph, idx)) {
       it++;
     } else {

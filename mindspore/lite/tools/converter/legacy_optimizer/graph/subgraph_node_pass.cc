@@ -96,7 +96,7 @@ STATUS SubgraphNodePass::Run(schema::MetaGraphT *graph) {
 
   for (auto it = old_nodes_.begin(); it != old_nodes_.end();) {
     if (!IsContain(new_nodes, *it)) {
-      size_t node_idx = it - old_nodes_.begin();
+      size_t node_idx = static_cast<size_t>(it - old_nodes_.begin());
       for (auto &subgraph : graph->subGraph) {
         auto node_idx_pos = std::find(subgraph->nodeIndices.begin(), subgraph->nodeIndices.end(), node_idx);
         if (node_idx_pos != subgraph->nodeIndices.end()) {

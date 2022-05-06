@@ -23,6 +23,7 @@
 #include "tools/common/graph_util.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/common/tensor_util.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
@@ -63,9 +64,11 @@ class DTypeTransPass : public GraphPass {
     newCNode->name = inCNode.name;
     newCNode->quantType = inCNode.quantType;
     newCNode->primitive = std::make_unique<schema::PrimitiveT>();
+    MS_CHECK_TRUE_MSG(inCNode.primitive != nullptr, nullptr, "Primitive of inCNode is nullptr.");
     newCNode->primitive->value.type = inCNode.primitive->value.type;
 
     auto oldQuantDTypeCastParam = inCNode.primitive->value.AsQuantDTypeCast();
+    MS_CHECK_TRUE_MSG(oldQuantDTypeCastParam != nullptr, nullptr, "Old quant dataType cast param is nullptr.");
     auto QuantDTypeCastParam = new (std::nothrow) QuantDTypeCastT;
     if (QuantDTypeCastParam == nullptr) {
       MS_LOG(ERROR) << "new QuantDTypeCast failed";
