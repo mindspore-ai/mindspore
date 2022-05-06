@@ -176,7 +176,7 @@ int BenchmarkBase::ReadTensorData(std::ifstream &in_file_stream, const std::stri
   }
   std::vector<float> data;
   std::vector<std::string> strings_data;
-  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<size_t>());
+  size_t shape_size = std::accumulate(dims.begin(), dims.end(), 1u, std::multiplies<size_t>());
   if (GetDataTypeByTensorName(tensor_name) == static_cast<int>(kObjectTypeString)) {
     strings_data.push_back(line);
     for (size_t i = 1; i < shape_size; i++) {
@@ -396,6 +396,7 @@ int BenchmarkBase::Init() {
   MS_LOG(INFO) << "CosineDistanceThreshold = " << this->flags_->cosine_distance_threshold_;
   MS_LOG(INFO) << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_;
   MS_LOG(INFO) << "NumThreads = " << this->flags_->num_threads_;
+  MS_LOG(INFO) << "InterOpParallelNum = " << this->flags_->inter_op_parallel_num_;
   MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
   MS_LOG(INFO) << "EnableParallel = " << this->flags_->enable_parallel_;
   MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
@@ -413,6 +414,7 @@ int BenchmarkBase::Init() {
   std::cout << "CosineDistanceThreshold = " << this->flags_->cosine_distance_threshold_ << std::endl;
   std::cout << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_ << std::endl;
   std::cout << "NumThreads = " << this->flags_->num_threads_ << std::endl;
+  std::cout << "InterOpParallelNum = " << this->flags_->inter_op_parallel_num_ << std::endl;
   std::cout << "Fp16Priority = " << this->flags_->enable_fp16_ << std::endl;
   std::cout << "EnableParallel = " << this->flags_->enable_parallel_ << std::endl;
   std::cout << "calibDataPath = " << this->flags_->benchmark_data_file_ << std::endl;

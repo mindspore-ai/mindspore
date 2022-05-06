@@ -1403,7 +1403,7 @@ int LiteSession::RuntimeAllocatorValid() {
   return RET_ERROR;
 #endif
 
-  if (context_->enable_parallel_ == true) {
+  if ((context_->enable_parallel_ == true) || (context_->inter_op_parallel_num_ > 1)) {
     MS_LOG(DEBUG) << "Not support runtime allocator in subgraph parallel.";
     return RET_ERROR;
   }

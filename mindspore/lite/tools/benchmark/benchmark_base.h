@@ -264,8 +264,12 @@ class MS_API BenchmarkBase {
       std::vector<size_t> castedMSShape;
       size_t shapeSize = 1;
       for (ST dim : msShape) {
+        if (dim <= 0) {
+          MS_LOG(ERROR) << "Invalid shape.";
+          return RET_ERROR;
+        }
         castedMSShape.push_back(dim);
-        shapeSize *= dim;
+        shapeSize *= static_cast<size_t>(dim);
       }
 
       CheckTensor *calibTensor = iter->second;
@@ -364,8 +368,12 @@ class MS_API BenchmarkBase {
       std::vector<size_t> castedMSShape;
       size_t shapeSize = 1;
       for (int64_t dim : msShape) {
+        if (dim <= 0) {
+          MS_LOG(ERROR) << "Invalid shape.";
+          return RET_ERROR;
+        }
         castedMSShape.push_back(size_t(dim));
-        shapeSize *= dim;
+        shapeSize *= static_cast<size_t>(dim);
       }
 
       CheckTensor *calibTensor = iter->second;

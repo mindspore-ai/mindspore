@@ -829,7 +829,7 @@ int BenchmarkUnifiedApi::MarkPerformance() {
   }
 
   if (flags_->loop_count_ > 0) {
-    time_avg /= flags_->loop_count_;
+    time_avg /= static_cast<size_t>(flags_->loop_count_);
     MS_LOG(INFO) << "Model = " << flags_->model_file_.substr(flags_->model_file_.find_last_of(DELIM_SLASH) + 1).c_str()
                  << ", NumThreads = " << flags_->num_threads_ << ", MinRunTime = " << time_min / kFloatMSEC
                  << ", MaxRuntime = " << time_max / kFloatMSEC << ", AvgRunTime = " << time_avg / kFloatMSEC;
