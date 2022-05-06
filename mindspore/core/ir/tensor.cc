@@ -484,6 +484,9 @@ class TensorSubData : public TensorData {
   // Get the owner Tensor.
   const TensorPtr &GetOwner() const { return data_owner_; }
 
+  // Data offset in bytes.
+  size_t data_offset() const { return data_offset_; }
+
  protected:
   const TensorPtr data_owner_;
   size_t data_offset_{0};
@@ -819,6 +822,18 @@ TypeId Tensor::set_data_type(TypeId data_type) {
     return MetaTensor::set_data_type(data_type);
   }
   return data_type;
+}
+
+std::pair<void *, size_t> Tensor::GetChunkOffset() const {
+  // Get sub-data.
+  auto sub_data = std::dynamic_pointer_cast<TensorSubData>(data_ptr());
+  if (sub_data == nullptr) {
+    return {nullptr, 0};
+  }
+  // Get owner tensor from sub-data.
+  auto owner_tensor = sub_data->GetOwner();
+  MS_EXCEPTION_IF_NULL(owner_tensor);
+  return {owner_tensor->data_c(), sub_data->data_offset()};
 }
 
 // A helper data structure for flatten tensors.

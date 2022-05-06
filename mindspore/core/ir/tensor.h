@@ -23,6 +23,7 @@
 #include <numeric>
 #include <mutex>
 #include <condition_variable>
+#include <utility>
 
 #include "ir/device_sync.h"
 #include "ir/meta_tensor.h"
@@ -567,6 +568,11 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   /// \param[in] lazy_callback The callback from backend when lazy build is enabled
   void set_lazy_callback(const std::function<void(void)> &lazy_callback) { lazy_callback_ = lazy_callback; }
+
+  /// \brief Get the memory chunk pointer and offset if memory chunk for this tensor exists.
+  ///
+  /// \return The memory chunk pointer and offset, nullptr and 0 if no memory chunk exists.
+  std::pair<void *, size_t> GetChunkOffset() const;
 
   /// \brief Reset tensors data so that they are using contiguous memory chunks grouped by data type.
   ///
