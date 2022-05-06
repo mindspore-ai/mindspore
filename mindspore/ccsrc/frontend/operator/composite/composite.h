@@ -103,20 +103,22 @@ enum TailType { kGradAll, kGradFirst, kGradByPosition, kNotGrad };
 class Tail : public MetaFuncGraph {
  public:
   explicit Tail(const std::string &name, TailType tail_type = kNotGrad)
-      : MetaFuncGraph(name), tail_type_(tail_type), enable_tuple_grad_(false) {}
+      : MetaFuncGraph(name), tail_type_(tail_type), enable_tuple_grad_first_(false) {}
   ~Tail() override = default;
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  FuncGraphPtr GenerateSequenceFuncGraph(const abstract::AbstractSequencePtr &sequeue,
-                                         const abstract::AbstractSequencePtr &pos = nullptr) const;
 
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
-  void set_enable_tuple_grad(bool enable_tuple_grad) { enable_tuple_grad_ = enable_tuple_grad; }
+  void set_enable_tuple_grad_first(bool enable_tuple_grad_first) { enable_tuple_grad_first_ = enable_tuple_grad_first; }
 
  private:
+  FuncGraphPtr GenerateTailFuncGraph(const abstract::AbstractSequencePtr &sequence_arg) const;
+  FuncGraphPtr GenerateGradFuncGraph(const abstract::AbstractTuplePtr &sequeue,
+                                     const abstract::AbstractTuplePtr &position = nullptr) const;
+
   TailType tail_type_;
-  bool enable_tuple_grad_;
+  bool enable_tuple_grad_first_;
 };
 using TailPtr = std::shared_ptr<Tail>;
 
@@ -148,7 +150,7 @@ class GradOperation : public MetaFuncGraph {
   MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
 
   FuncGraphPtr GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                       const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad,
+                       const std::vector<AnfNodePtr> &forward_graph_params, bool enable_tuple_grad_first,
                        const std::vector<AnfNodePtr> &weight_args = {});
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
@@ -163,7 +165,7 @@ class GradOperation : public MetaFuncGraph {
 
  private:
   void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                       const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad);
+                       const AnfNodePtr &weights, const AnfNodePtr &position, bool enable_tuple_grad_first);
 };
 using GradOperationPtr = std::shared_ptr<GradOperation>;
 

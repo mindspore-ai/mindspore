@@ -657,22 +657,12 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
   }
 }
 
-void AnalysisEngine::SetUndeterminedFlag(const EvaluatorPtr &evaluator, const FuncGraphPtr &possible_parent_fg) {
-  MS_EXCEPTION_IF_NULL(evaluator);
+void AnalysisEngine::SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) {
+  MS_EXCEPTION_IF_NULL(possible_parent_fg);
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
-  if (possible_parent_fg != nullptr) {
-    possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
-    MS_LOG(DEBUG) << "Set graph undetermined: " << possible_parent_fg->ToString();
-    return;
-  }
-  auto fg_eval = evaluator->cast<FuncGraphEvaluatorPtr>();
-  if (fg_eval == nullptr) {
-    return;
-  }
-  auto fg = fg_eval->func_graph();
-  MS_EXCEPTION_IF_NULL(fg);
-  MS_LOG(EXCEPTION) << "cannot set Undetermined flag for fg: " << fg->ToString();
+  possible_parent_fg->set_flag(kFuncGraphFlagUndetermined, true);
+  MS_LOG(DEBUG) << "Set graph undetermined flag for " << possible_parent_fg->ToString();
 }
 
 EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators,
@@ -960,7 +950,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluatorsMultiThread(const std::ve
     static std::atomic<int> id_count{0};
     std::string thread_id = AnalysisSchedule::thread_id() + "." + std::to_string(id_count.fetch_add(1));
     MS_EXCEPTION_IF_NULL(evaluator);
-    SetUndeterminedFlag(evaluator, possible_parent_fg);
+    SetUndeterminedFlag(possible_parent_fg);
     AsyncAbstractPtr async_result_branch = std::make_shared<AsyncAbstract>();
     // Control the order to run.
     AsyncAbstractPtr control_run_order = std::make_shared<AsyncAbstract>();
@@ -1032,7 +1022,7 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
   auto possible_parent_fg = out_conf->node()->func_graph();
   for (auto eval : evaluators) {
     MS_EXCEPTION_IF_NULL(eval);
-    SetUndeterminedFlag(eval, possible_parent_fg);
+    SetUndeterminedFlag(possible_parent_fg);
     const auto current_inf = EvaluatorArgs(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
