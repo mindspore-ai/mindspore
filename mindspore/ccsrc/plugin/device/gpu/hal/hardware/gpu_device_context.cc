@@ -461,7 +461,8 @@ void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
       update.depend_tensor_map = args->depend_tensor_map;
       kernel::SetArgsToCNode(kernel, update);
     }
-    if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+    if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
+        kernel::KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
     }
   }

@@ -116,7 +116,8 @@ void CreateGPUKernel(const std::vector<CNodePtr> &kernels) {
         if (!gpu_kernel_mod->Init(args.op, args.inputs, args.outputs)) {
           MS_LOG(EXCEPTION) << "Initialize gpu kernel op[" << kernel->fullname_with_scope() << "] failed.";
         }
-        if (!gpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel))) {
+        if (gpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel)) ==
+            kernel::KRET_RESIZE_FAILED) {
           MS_LOG(EXCEPTION) << "gpu kernel op[" << kernel->fullname_with_scope() << "] Resize failed.";
         }
         session::AnfRuntimeAlgorithm::SetKernelMod(gpu_kernel_mod, kernel.get());

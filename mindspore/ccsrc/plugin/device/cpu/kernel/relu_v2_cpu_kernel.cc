@@ -101,19 +101,19 @@ bool ReLUV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   return true;
 }
 
-bool ReLUV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                const std::vector<KernelTensorPtr> &outputs,
-                                const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
-    MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
-    return false;
+int ReLUV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   if (input_shape.size() != kDim4) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dims of input shape must be 4, but got " << input_shape.size();
-    return false;
+    return KRET_RESIZE_FAILED;
   }
-  return true;
+  return 0;
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLUV2,

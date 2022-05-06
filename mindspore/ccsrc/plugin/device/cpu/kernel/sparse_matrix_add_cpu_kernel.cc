@@ -69,15 +69,11 @@ bool SparseMatirxAddCpuKernelMod::Init(const BaseOperatorPtr &base_operater, con
   return true;
 }
 
-bool SparseMatirxAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return false;
-  }
-  return true;
+int SparseMatirxAddCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  return NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
 }
 
 template <typename T, typename S>

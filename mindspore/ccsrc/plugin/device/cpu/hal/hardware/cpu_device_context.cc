@@ -286,7 +286,8 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
       if (!ret) {
         MS_LOG(EXCEPTION) << trace::DumpSourceLines(node);
       }
-      if (!cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(node))) {
+      if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(node)) ==
+          kernel::KRET_RESIZE_FAILED) {
         MS_LOG(EXCEPTION) << "CPU kernel op [" << node->fullname_with_scope() << "] Resize failed.";
       }
       AnfAlgo::SetKernelMod(cpu_kernel, node.get());
@@ -319,7 +320,8 @@ void CPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
       update.depend_tensor_map = args->depend_tensor_map;
       kernel::SetArgsToCNode(kernel, update);
     }
-    if (!kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+    if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
+        kernel::KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
     }
   }

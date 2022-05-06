@@ -89,7 +89,8 @@ AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr
     if (!ret) {
       MS_LOG(EXCEPTION) << trace::DumpSourceLines(cast);
     }
-    if (!cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(cast))) {
+    if (cpu_kernel->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(cast)) ==
+        kernel::KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "CPU kernel op [" << cast->fullname_with_scope() << "] Resize failed.";
     }
     AnfAlgo::SetKernelMod(cpu_kernel, cast.get());

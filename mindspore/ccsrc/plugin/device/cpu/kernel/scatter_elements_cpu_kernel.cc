@@ -36,14 +36,14 @@ struct ReductionAssignment {
 };
 }  // namespace
 
-bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                         const std::vector<KernelTensorPtr> &inputs,
-                                         const std::vector<KernelTensorPtr> &outputs,
-                                         const std::map<uint32_t, tensor::TensorPtr> &others) {
+int ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                        const std::vector<KernelTensorPtr> &inputs,
+                                        const std::vector<KernelTensorPtr> &outputs,
+                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed.";
-    return false;
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   kernel_name_ = base_operator->name();
   auto input_shape = inputs[kIndex0]->GetShapeVector();
@@ -52,7 +52,7 @@ bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the dimension of 'input_x' should be greater than or equal to 1, but got " << input_dims_
                   << ".";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   indices_shape_ = inputs[kIndex1]->GetShapeVector();
   auto update_shape = inputs[kIndex2]->GetShapeVector();
@@ -61,7 +61,7 @@ bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << "', the shape of 'indice' and the shape of 'update' should be same, but got "
                   << "indice shape: " << indices_shape_ << "; "
                   << "update shape: " << update_shape << ".";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   if (input_dims_ != indices_shape_.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
@@ -69,7 +69,7 @@ bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << "input_x dims: " << input_dims_ << "; "
                   << "indice dims: " << indices_shape_.size() << "; "
                   << "update dims: " << update_shape.size() << ".";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
   if (base_operator->HasAttr(kAttrAxis)) {
@@ -83,7 +83,7 @@ bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', the 'axis' should be less than input dims and greater than or equal 0, but got " << axis_
                   << ", while input dims is: " << input_dims_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
 
   for (size_t i = 0; i < input_dims_; ++i) {
@@ -91,7 +91,7 @@ bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       MS_LOG(ERROR) << "For '" << kernel_name_
                     << "', the indices dims should be less than input dims, but got indice dim is: "
                     << indices_shape_[i] << " at axis: " << i << ", while input dim is:" << input_shape[i];
-      return false;
+      return KRET_RESIZE_FAILED;
     }
   }
 
@@ -108,7 +108,7 @@ bool ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   output_dim_index_.resize(input_dims_);
   output_dim_index_.assign(input_dims_, 0);
-  return true;
+  return 0;
 }
 
 template <typename S>

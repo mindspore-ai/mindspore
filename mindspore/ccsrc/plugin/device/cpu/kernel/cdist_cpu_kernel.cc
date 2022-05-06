@@ -132,12 +132,12 @@ bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   return true;
 }
 
-bool CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) {
-    MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
-    return false;
+int CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs,
+                              const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   std::vector<int64_t> in_shape0 = inputs[0]->GetShapeVector();
   std::vector<int64_t> in_shape1 = inputs[1]->GetShapeVector();
@@ -145,7 +145,7 @@ bool CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   if (in_shape1.size() != in_shape_size || in_shape_size < kCdistInputDimsMin) {
     MS_LOG(ERROR) << "invalid input shape, input0 shape size " << in_shape_size << ", input1 shape size "
                   << in_shape1.size() << ", kernel_name_ " << kernel_name_;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   batch_ = 0;
   for (size_t i = 0; i < in_shape_size - kCdistInputDimsMin; i++) {
@@ -159,7 +159,7 @@ bool CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 
   thread_num_ = std::min(static_cast<size_t>(batch_), pool_->GetKernelThreadNum());
 
-  return true;
+  return 0;
 }
 
 template <typename T>

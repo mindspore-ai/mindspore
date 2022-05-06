@@ -778,7 +778,8 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
-      if (!gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+      if (gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
+          kernel::KRET_RESIZE_FAILED) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
       }
     }
@@ -899,7 +900,8 @@ bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *grap
     if (common::AnfAlgo::IsDynamicShape(kernel)) {
       opt::dynamic_shape::InferOp(kernel);
       auto args = kernel::GetArgsFromCNode(kernel);
-      if (!gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map)) {
+      if (gpu_kernel->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
+          kernel::KRET_RESIZE_FAILED) {
         MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
       }
     }

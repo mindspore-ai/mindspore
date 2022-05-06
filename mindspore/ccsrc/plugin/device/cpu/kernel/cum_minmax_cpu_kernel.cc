@@ -60,12 +60,12 @@ bool CumMinMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   return true;
 }
 
-bool CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                   const std::vector<KernelTensorPtr> &outputs,
-                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return false;
+int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                  const std::vector<KernelTensorPtr> &outputs,
+                                  const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   auto rank = SizeToLong(input_shape.size());
@@ -82,7 +82,7 @@ bool CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   axis_inner_size_ = axis_size_ * inner_size_;
   element_size_ = axis_inner_size_ * outer_size_;
-  return true;
+  return 0;
 }
 
 size_t CumMinMaxCpuKernelMod::GetRealIndex(size_t index) {

@@ -62,12 +62,12 @@ bool MaximumCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-bool MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                                 const std::vector<KernelTensorPtr> &outputs,
-                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) {
-    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return false;
+int MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+    return ret;
   }
   input_x_shape_ = inputs[0]->GetShapeVector();
   input_y_shape_ = inputs[1]->GetShapeVector();
@@ -87,9 +87,9 @@ bool MaximumCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   } else {
     MS_LOG(WARNING) << "For '" << kernel_name_ << "', inputs must be two tensors or one tensor and one scalar, but got "
                     << input_x_dtype << " and " << input_y_dtype;
-    return false;
+    return KRET_RESIZE_FAILED;
   }
-  return true;
+  return 0;
 }
 
 void MaximumCpuKernelMod::InitInputTensorAndScalar(size_t max_input_shape_size) {

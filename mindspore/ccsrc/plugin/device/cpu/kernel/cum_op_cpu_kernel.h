@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_J1_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_J1_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUM_OP_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUM_OP_CPU_KERNEL_H_
 
 #include <vector>
+#include <utility>
+#include <string>
 #include <memory>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -25,42 +27,47 @@
 
 namespace mindspore {
 namespace kernel {
-class BesselJ1CpuKernelMod : public NativeCpuKernelMod {
+constexpr auto kUnKnown = "UnKnown";
+class CumOpCpuKernelMod : public NativeCpuKernelMod {
  public:
-  BesselJ1CpuKernelMod() = default;
-  ~BesselJ1CpuKernelMod() override = default;
+  CumOpCpuKernelMod() = default;
+  explicit CumOpCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  ~CumOpCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
+
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double polevl(double x, const double coef[], int N);
-  static double p1evl(double x, const double coef[], int N);
-  static double j1(double x);
-  template <typename T>
-  static void BesselJ1Func(const T *input, T *output, size_t start, size_t end);
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using BesselKernel = std::function<bool(BesselJ1CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &)>;
-  BesselKernel kernel_func_;
+  size_t GetRealIndex(size_t index);
 
-  size_t input_size_;
-  std::vector<int64_t> input_shape_;
-  std::vector<int64_t> output_shape_;
-  TypeId input_dtype_;
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  using CumMinMaxLaunchFunc = std::function<bool(CumOpCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                                 const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, CumMinMaxLaunchFunc>> func_list_;
+  CumMinMaxLaunchFunc kernel_func_;
+  BaseOperatorPtr base_operator_;
+  int64_t inner_size_{1};
+  int64_t outer_size_{1};
+  int64_t axis_size_{1};
+  int64_t element_size_{1};     // Avoid repeated calculation
+  int64_t axis_inner_size_{1};  // Avoid repeated calculation
+  std::string kernel_type_{kUnKnown};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_J1_CPU_KERNEL_H_
+
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUM_OP_CPU_KERNEL_H_

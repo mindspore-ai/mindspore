@@ -45,25 +45,28 @@ void CheckDeviceSm(const KernelAttr &kernel_attr) {
 }
 }  // namespace
 
-bool DeprecatedNativeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                          const std::vector<KernelTensorPtr> &inputs,
-                                          const std::vector<KernelTensorPtr> &outputs,
-                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+int DeprecatedNativeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                         const std::vector<KernelTensorPtr> &inputs,
+                                         const std::vector<KernelTensorPtr> &outputs,
+                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto cnode = kernel_node_.lock();
   if (cnode == nullptr) {
     MS_LOG(ERROR) << "kernel_node_ is not a cnode.";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
       common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
       abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
-    return true;
+    return KRET_OK;
   }
 
   MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
   DestroyResource();
   ResetResource();
-  return Init(cnode);
+  if (!Init(cnode)) {
+    return KRET_RESIZE_FAILED;
+  }
+  return KRET_OK;
 }
 
 void DeprecatedNativeGpuKernelMod::SetGpuRefMapToKernelInfo(const CNodePtr &apply_kernel) {
