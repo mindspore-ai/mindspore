@@ -130,8 +130,8 @@ STATUS ComputeQuantTensorPerChannel(TensorT *tensor, const int &tensor_index, co
   }
   auto &used_node = graph.nodes.at(used_nodes_idx.front());
   auto &primitive = used_node->primitive;
-  int input_index = GetTensorInputIndexInCNode(tensor_index, *used_node);
-  quant::CalQuantAssitInfo(*primitive, tensor->dims, input_index, &channel_at_first, &channel_cnt);
+  auto input_index = GetTensorInputIndexInCNode(tensor_index, *used_node);
+  quant::CalQuantAssitInfo(*primitive, tensor->dims, static_cast<int>(input_index), &channel_at_first, &channel_cnt);
 
   auto *raw_datas = reinterpret_cast<float *>(tensor->data.data());
   auto channels = quant::CalChannels(tensor->dims, channel_cnt, &channel_at_first);
