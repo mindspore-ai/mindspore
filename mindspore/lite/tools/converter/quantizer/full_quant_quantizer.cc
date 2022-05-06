@@ -36,8 +36,8 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/bias_correction_strategy.h"
-#include "tools/converter/quantizer/cle_strategy.h"
 #include "tools/anf_exporter/anf_exporter.h"
+#include "tools/converter/quantizer/cle_strategy.h"
 
 using std::string;
 using std::vector;
@@ -51,7 +51,7 @@ static const std::set<PrimitivePtr> has_bias_operator = {prim::kPrimConv2DFusion
 FullQuantQuantizer::~FullQuantQuantizer() {}
 
 int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
-                                           const PrimitivePtr &primitive, bool is_input, size_t index) const {
+                                           const PrimitivePtr &primitive, size_t index, bool is_input) const {
   auto quant_param_holder = GetCNodeQuantHolder(primitive);
   MS_CHECK_TRUE_MSG(quant_param_holder != nullptr, RET_NULL_PTR, "quant_param_holder is nullptr.");
   schema::QuantParamT quant_param;
@@ -83,7 +83,7 @@ int FullQuantQuantizer::SetInOutQuantParam(const AnfNodePtr &input_node, const s
 }
 
 int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight,
-                                               const PrimitivePtr &primitive, bool per_channel, int input_index) const {
+                                               const PrimitivePtr &primitive, int input_index, bool per_channel) const {
   CHECK_NULL_RETURN(cnode);
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(primitive);
@@ -94,9 +94,12 @@ int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const Para
   }
   int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_,
-                                            weight_q_min_, bit_num_, weight_quant_type, kNumberTypeInt8,
-                                            input_index - 1, preferred_dim, weight_symmetric_, true);
+  auto weight_q_min = per_channel ? weight_channel_q_min_ : weight_layer_q_min_;
+  auto weight_q_max = per_channel ? weight_channel_q_max_ : weight_layer_q_max_;
+  auto symmetric = per_channel ? weight_channel_symmetric_ : weight_layer_symmetric_;
+  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max,
+                                            weight_q_min, bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1,
+                                            preferred_dim, symmetric);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -104,8 +107,8 @@ int FullQuantQuantizer::DoParameterWeightQuant(const CNodePtr &cnode, const Para
   return RET_OK;
 }
 
-int FullQuantQuantizer::DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive,
-                                               bool per_channel, int input_index) const {
+int FullQuantQuantizer::DoValueNodeWeightQuant(const CNodePtr &cnode, const ValueNodePtr &weight,
+                                               const PrimitivePtr &primitive, int input_index, bool per_channel) const {
   CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(primitive);
   auto tensor_info = weight->value()->cast<tensor::TensorPtr>();
@@ -113,10 +116,14 @@ int FullQuantQuantizer::DoValueNodeWeightQuant(const ValueNodePtr &weight, const
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
+  int preferred_dim = GetPreferredDim(cnode, input_index - 1, ConvertShapeVectorToInt32(tensor_info->shape()));
   auto weight_quant_type = per_channel ? WeightQuantType::FIXED_BIT_PER_CHANNEL : WeightQuantType::FIXED_BIT_PER_LAYER;
-  auto status =
-    FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max_, weight_q_min_,
-                                bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1, weight_symmetric_, true);
+  auto weight_q_min = per_channel ? weight_channel_q_min_ : weight_layer_q_min_;
+  auto weight_q_max = per_channel ? weight_channel_q_max_ : weight_layer_q_max_;
+  auto symmetric = per_channel ? weight_channel_symmetric_ : weight_layer_symmetric_;
+  auto status = FixedBitQuantFilter<int8_t>(weight, tensor_info, primitive, QuantType_QUANT_ALL, weight_q_max,
+                                            weight_q_min, bit_num_, weight_quant_type, kNumberTypeInt8, input_index - 1,
+                                            preferred_dim, symmetric);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -137,8 +144,8 @@ int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNod
   }
   // support for share weight.
   if (type_id == kNumberTypeInt8) {
-    auto iter = weight_quant_params_bak.find(input_node->fullname_with_scope());
-    if (iter == weight_quant_params_bak.end()) {
+    auto iter = weight_quant_params_bak_.find(input_node->fullname_with_scope());
+    if (iter == weight_quant_params_bak_.end()) {
       return RET_ERROR;
     } else {
       auto quant_param_holder = GetCNodeQuantHolder(primitive);
@@ -149,7 +156,7 @@ int FullQuantQuantizer::IsSupportWeightQuant(const CNodePtr &cnode, const AnfNod
   }
   // Only data the data type is fp32 can be quant.
   if (type_id != kNumberTypeFloat32) {
-    auto ret = SetInOutQuantParam(input_node, nullptr, primitive, true, input_index - 1);
+    auto ret = SetInOutQuantParam(input_node, nullptr, primitive, input_index - 1, true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Set In/Out quant param failed.";
       return ret;
@@ -175,13 +182,13 @@ int FullQuantQuantizer::DoParameterNodeQuant(const CNodePtr &cnode, const Parame
       return ret;
     }
   } else if (flags_.fullQuantParam.per_channel && CheckNodeInSet(cnode, per_channel_ops_)) {
-    ret = DoParameterWeightQuant(cnode, input_node, primitive, true, input_index);
+    ret = DoParameterWeightQuant(cnode, input_node, primitive, input_index, true);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
     }
   } else {
-    ret = DoParameterWeightQuant(cnode, input_node, primitive, false, input_index);
+    ret = DoParameterWeightQuant(cnode, input_node, primitive, input_index, false);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << op_name << " Do bias quant failed.";
       return ret;
@@ -198,7 +205,7 @@ int FullQuantQuantizer::DoValueNodeQuant(const CNodePtr &cnode, const ValueNodeP
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
   auto op_name = cnode->fullname_with_scope();
-  ret = DoValueNodeWeightQuant(input_node, primitive, false, input_index);
+  ret = DoValueNodeWeightQuant(cnode, input_node, primitive, input_index, false);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << op_name << " Do value node weight quant failed.";
     return ret;
@@ -225,7 +232,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
     if (is_graph_input) {
       // do input quant
       auto &info = (*inputs_diverg_info)[op_name][i - 1];
-      ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
+      ret = SetInOutQuantParam(input_node, info, primitive, i - 1, true);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
         return ret;
@@ -248,7 +255,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
       } else {
         // do input quant
         auto &info = (*inputs_diverg_info)[op_name][i - 1];
-        ret = SetInOutQuantParam(input_node, info, primitive, true, i - 1);
+        ret = SetInOutQuantParam(input_node, info, primitive, i - 1, true);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << input_node->fullname_with_scope() << " Set activation quant failed.";
           return ret;
@@ -267,7 +274,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return ret;
       }
       // support shared weight
-      weight_quant_params_bak[input_node->fullname_with_scope()] =
+      weight_quant_params_bak_[input_node->fullname_with_scope()] =
         primitive_quant_holder->get_input_quant_params()[i - 1];
     } else if (input_node->isa<mindspore::ValueNode>()) {
       if (weight_data_type_ == kTypeUnknown) {
@@ -282,7 +289,7 @@ int FullQuantQuantizer::QuantNodeSimpleOp(const CNodePtr &cnode) {
         return ret;
       }
       // support shared weight
-      weight_quant_params_bak[input_node->fullname_with_scope()] =
+      weight_quant_params_bak_[input_node->fullname_with_scope()] =
         primitive_quant_holder->get_input_quant_params()[i - 1];
     } else {
       MS_LOG(ERROR) << input_node->fullname_with_scope() << ":" << input_node->type_name() << " is not support type";
@@ -359,7 +366,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
     auto &infos = (*outputs_diverg_info)[op_name];
     for (size_t index = 0; index < infos.size(); index++) {
       auto &info = infos.at(index);
-      auto ret = SetInOutQuantParam(cnode, info, primitive, false, index);
+      auto ret = SetInOutQuantParam(cnode, info, primitive, index, false);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "Set In/Out quant param failed.";
         return ret;
@@ -406,7 +413,8 @@ void FullQuantQuantizer::InitCpuConfig() {
   activation_target_data_type_ = kNumberTypeInt8;
   weight_data_type_ = kNumberTypeInt8;
   activation_symmetric_ = false;
-  weight_symmetric_ = true;
+  weight_channel_symmetric_ = true;
+  weight_layer_symmetric_ = false;
   support_int8_ops_ = {
     // Compute
     prim::kPrimConv2DFusion,
@@ -433,7 +441,8 @@ void FullQuantQuantizer::InitKirinConfig() {
   activation_target_data_type_ = kTypeUnknown;
   weight_data_type_ = kNumberTypeInt8;
   activation_symmetric_ = false;
-  weight_symmetric_ = true;
+  weight_channel_symmetric_ = true;
+  weight_layer_symmetric_ = false;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimFullConnection};
   flags_.fullQuantParam.bias_correction = false;
   per_channel_ops_ = {prim::kPrimConv2DFusion};
@@ -444,7 +453,8 @@ void FullQuantQuantizer::InitNvGpuConfig() {
   activation_target_data_type_ = kTypeUnknown;
   activation_symmetric_ = true;
   weight_data_type_ = kTypeUnknown;
-  weight_symmetric_ = true;
+  weight_channel_symmetric_ = true;
+  weight_layer_symmetric_ = false;
   support_int8_ops_ = {prim::kPrimConv2DFusion, prim::kPrimMatMul, prim::kPrimActivation,
                        prim::kPrimConv2dTransposeFusion};
   per_channel_ops_ = {};
@@ -462,11 +472,18 @@ void FullQuantQuantizer::InitQMinMax() {
   }
   MS_ASSERT(weight_data_type_ == kNumberTypeInt8 || weight_data_type_ == kNumberTypeUInt8);
   if (weight_data_type_ == kNumberTypeInt8) {
-    weight_q_min_ = QuantMin(this->bit_num_, false, weight_symmetric_);  // -127
-    weight_q_max_ = QuantMax(this->bit_num_, false);                     // 127
+    weight_channel_q_min_ = QuantMin(this->bit_num_, false, weight_channel_symmetric_);  // -127
+    weight_channel_q_max_ = QuantMax(this->bit_num_, false);                             // 127
   } else if (activation_quant_data_type_ == kNumberTypeUInt8) {
-    weight_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
-    weight_q_max_ = QuantMax(this->bit_num_, true);         // 255
+    weight_channel_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
+    weight_channel_q_max_ = QuantMax(this->bit_num_, true);         // 255
+  }
+  if (weight_data_type_ == kNumberTypeInt8) {
+    weight_layer_q_min_ = QuantMin(this->bit_num_, false, weight_layer_symmetric_);  // -128
+    weight_layer_q_max_ = QuantMax(this->bit_num_, false);                           // 127
+  } else if (activation_quant_data_type_ == kNumberTypeUInt8) {
+    weight_layer_q_min_ = QuantMin(this->bit_num_, true, false);  // 0
+    weight_layer_q_max_ = QuantMax(this->bit_num_, true);         // 255
   }
 }
 

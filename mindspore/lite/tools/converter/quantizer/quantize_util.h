@@ -195,7 +195,7 @@ Status BuildModelByFuncGraph(const std::shared_ptr<mindspore::Model> &model, con
 
 mindspore::lite::Tensor *MSTensorToLiteTensor(const mindspore::MSTensor &tensor);
 
-std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<mindspore::MSTensor> &srcTensors);
+std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<mindspore::MSTensor> &src_tensors);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info);
 

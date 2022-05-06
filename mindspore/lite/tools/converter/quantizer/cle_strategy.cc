@@ -51,6 +51,9 @@ int CLEStrategy::ReplaceGraphRelu6ToRelu() {
 }
 
 int CLEStrategy::ReplaceCNodeRelu6ToRelu(const CNodePtr &cnode) {
+  if (!replace_relu6_flag_) {
+    return RET_OK;
+  }
   // Optimize with pattern.
   if (opt::CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -346,12 +349,10 @@ int CLEStrategy::WeightEqualization() {
         MS_LOG(ERROR) << "Replace Relu6 to Relu failed.";
         return ret;
       }
-      if (depthwise_replace_relu6_flag_) {
-        ret = ReplaceCNodeRelu6ToRelu(group.layer2);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Replace Relu6 to Relu failed.";
-          return ret;
-        }
+      ret = ReplaceCNodeRelu6ToRelu(group.layer2);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Replace Relu6 to Relu failed.";
+        return ret;
       }
       ret = CalcScaleWithThreeLayer(group, &scales12, &scales23);
       if (ret != RET_OK) {
