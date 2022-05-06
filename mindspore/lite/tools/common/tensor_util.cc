@@ -238,9 +238,9 @@ size_t GetElementSize(const TypeId &dataType) {
   }
 }
 
-size_t GetShapeSize(const TensorT &tensor) {
+int GetShapeSize(const TensorT &tensor) {
   auto shape = tensor.dims;
-  size_t shapeSize = 1;
+  int shapeSize = 1;
   for (auto dim : shape) {
     shapeSize *= dim;
   }
@@ -277,8 +277,8 @@ size_t GetRefCount(MetaGraphT *graphT, uint32_t tensorIdx) {
   }
   return refCount;
 }
-size_t GetShapeSize(const std::vector<int32_t> &shape) {
-  size_t shapeSize = 1;
+int GetShapeSize(const std::vector<int32_t> &shape) {
+  int shapeSize = 1;
   for (auto dim : shape) {
     shapeSize *= dim;
   }
