@@ -718,7 +718,7 @@ static bool IsMirror(int orientation) {
 }
 // rotate the image by EXIF orientation
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation) {
-  if (input->Rank() != 2 || input->Rank() != 3) {
+  if (input->Rank() != 2 && input->Rank() != 3) {
     RETURN_STATUS_UNEXPECTED("Rotate: input image is not in shape of <H,W,C> or <H,W>");
   }
 
