@@ -16,6 +16,7 @@ import numpy as np
 
 import mindspore.nn as nn
 import mindspore.ops as ops
+import mindspore.common.dtype as mstype
 from mindspore import context
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -24,6 +25,7 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 
 grad_all = C.GradOperation(get_all=True)
 grad_by_list = C.GradOperation(get_by_list=True)
+
 
 class CropAndResizeNet(nn.Cell):
     def __init__(self, crop_size):
@@ -102,6 +104,7 @@ class BPropOperatatorNet(nn.Cell):
         x = self.bn(x)
         return x
 
+
 def test_user_defined_bprop_with_u():
     net = BPropOperatatorNet(mul_size=(128, 96))
     grad_net = TestUserDefinedBpropGradNet(net)
@@ -153,6 +156,7 @@ def test_second_grad_with_j_primitive():
 # A CNode being used as FV is MapMorphism after MapMorphism of call-site CNode;
 def test_ad_fv_cnode_order():
     context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         # cnode xay is not being MapMorphism when cnode second_level() is being MapMorphism and
         # BackPropagateFv as MapMorphism is started from output node and from left to right order.
@@ -164,6 +168,7 @@ def test_ad_fv_cnode_order():
                     return xay
 
                 return second_level() + xay
+
             return first_level()
 
     input_x = Tensor(np.array([1.0], dtype=np.float32))
@@ -178,6 +183,7 @@ def test_ad_fv_cnode_order():
 # True and False branch of switch have different number of parameters.
 def test_if_branch_with_different_params():
     context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -215,6 +221,7 @@ def test_if_branch_with_different_params():
 # because weight1 in Net may use old_parameter other than replicated one.
 def test_limit_lift_fv_scope():
     context.set_context(mode=context.GRAPH_MODE)
+
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
@@ -276,6 +283,7 @@ def test_same_primal_used_by_multi_j():
 
 def test_same_primal_used_by_multi_j_with_monad1():
     context.set_context(mode=context.GRAPH_MODE)
+
     class AdamNet(nn.Cell):
         def __init__(self, var, m, v):
             super(AdamNet, self).__init__()
@@ -318,6 +326,7 @@ def test_same_primal_used_by_multi_j_with_monad1():
 
 def test_same_primal_used_by_multi_j_with_monad2():
     context.set_context(mode=context.GRAPH_MODE)
+
     class AdamNet(nn.Cell):
         def __init__(self, var, m, v):
             super(AdamNet, self).__init__()
@@ -364,6 +373,7 @@ def test_grad_args_type_error1():
         def __init__(self):
             super(Net, self).__init__()
             self.matmul = P.MatMul()
+
         def construct(self, x, y):
             out = self.matmul(x, y)
             return out
@@ -373,6 +383,7 @@ def test_grad_args_type_error1():
             super(GradNetWrtX, self).__init__()
             self.net = net
             self.grad_op = ops.GradOperation(get_all=2)
+
         def construct(self, x, y):
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
@@ -390,6 +401,7 @@ def test_grad_args_type_error2():
         def __init__(self):
             super(Net, self).__init__()
             self.matmul = P.MatMul()
+
         def construct(self, x, y):
             out = self.matmul(x, y)
             return out
@@ -399,6 +411,7 @@ def test_grad_args_type_error2():
             super(GradNetWrtX, self).__init__()
             self.net = net
             self.grad_op = ops.GradOperation(get_by_list=2)
+
         def construct(self, x, y):
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
@@ -416,6 +429,7 @@ def test_grad_args_type_error3():
         def __init__(self):
             super(Net, self).__init__()
             self.matmul = P.MatMul()
+
         def construct(self, x, y):
             out = self.matmul(x, y)
             return out
@@ -425,6 +439,7 @@ def test_grad_args_type_error3():
             super(GradNetWrtX, self).__init__()
             self.net = net
             self.grad_op = ops.GradOperation(sens_param=2)
+
         def construct(self, x, y):
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
@@ -442,6 +457,7 @@ def test_grad_net_is_none():
         def __init__(self):
             super(Net, self).__init__()
             self.add = P.Add()
+
         def construct(self, x, y):
             out = self.add(x, y)
             return out
@@ -451,6 +467,7 @@ def test_grad_net_is_none():
             super(GradNetWrtX, self).__init__()
             self.net = P.Add()
             self.grad_op = ops.GradOperation()
+
         def construct(self, x, y):
             gradient_function = self.grad_op(None)
             return gradient_function(x, y)
@@ -468,6 +485,7 @@ def test_grad_missing_net():
         def __init__(self):
             super(Net, self).__init__()
             self.add = P.Add()
+
         def construct(self, x, y):
             out = self.add(x, y)
             return out
@@ -477,6 +495,7 @@ def test_grad_missing_net():
             super(GradNetWrtX, self).__init__()
             self.net = net
             self.grad_op = ops.GradOperation()
+
         def construct(self, x, y):
             gradient_function = self.grad_op()
             return gradient_function(x, y)
@@ -516,7 +535,7 @@ def test_user_defined_bprop_inputs_size_error():
     try:
         grad_net(x, y)
     except Exception as e:
-        assert "The function 'bprop' of Primitive or Cell requires at least 2 params 'out' and 'dout', but got only"\
+        assert "The function 'bprop' of Primitive or Cell requires at least 2 params 'out' and 'dout', but got only" \
                in str(e)
 
 
@@ -591,6 +610,7 @@ def test_grad_hook():
             super(Net, self).__init__()
             self.add = P.Add()
             self.hook = P.HookBackward(var_hook_function)
+
         def construct(self, x, y):
             x = self.hook(x)
             out = self.add(x, y)
@@ -601,6 +621,7 @@ def test_grad_hook():
             super(GradNetWrtX, self).__init__()
             self.net = net
             self.grad_op = ops.GradOperation()
+
         def construct(self, x, y):
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
@@ -612,3 +633,183 @@ def test_grad_hook():
     except Exception as e:
         assert "The Primitive 'HookBackward' is not supported in graph mode, which is only supported in pynative " \
                "mode." in str(e)
+
+
+def test_custom_cell_bprop_with_parameter():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the custom cell bprop use Parameter.
+    Expectation: Raise an error
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x * self.z
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    try:
+        GradNet(Net())(x, y)
+    except Exception as e:
+        assert "The user defined 'bprop' function in scope" in str(e)
+        assert "does not support using Parameter" in str(e)
+
+
+def test_custom_cell_bprop_with_parameter_in_sub_cell():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the custom cell bprop use Parameter in sub-cell.
+    Expectation: Raise an error
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.net = Net1()
+
+        def construct(self, x, y):
+            return self.net(x, y)
+
+    class Net1(nn.Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x * self.z
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    try:
+        GradNet(Net())(x, y)
+    except Exception as e:
+        assert "The user defined 'bprop' function in scope" in str(e)
+        assert "does not support using Parameter" in str(e)
+
+
+def test_pynative_custom_cell_bprop_with_parameter():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the custom cell bprop use Parameter.
+    Expectation: Raise an error
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x * self.z
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    try:
+        GradNet(Net())(x, y)
+    except Exception as e:
+        assert "The user defined 'bprop' function does not support using Parameter" in str(e)
+
+
+def test_pynative_custom_cell_bprop_with_parameter_in_sub_cell():
+    """
+    Feature: Custom cell bprop
+    Description: Get the gradients of inputs when the custom cell bprop use Parameter in sub-cell.
+    Expectation: Raise an error
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.net = Net1()
+
+        def construct(self, x, y):
+            return self.net(x, y)
+
+    class Net1(nn.Cell):
+        def __init__(self):
+            super(Net1, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+        def bprop(self, x, y, out, dout):
+            dx = x * self.z
+            dy = y + y
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+
+        def construct(self, x, y):
+            grad_f = grad_all(self.net)
+            return grad_f(x, y)
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    try:
+        GradNet(Net())(x, y)
+    except Exception as e:
+        assert "The user defined 'bprop' function does not support using Parameter" in str(e)
