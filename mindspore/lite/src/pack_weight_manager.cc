@@ -43,9 +43,9 @@ STATUS PackWeightManager::InitByBuf(const char *model_buf, size_t model_size, in
   return RET_OK;
 }
 
-char *PackWeightManager::GetNumaModelBuf(int numa_id) {
+char *PackWeightManager::GetNumaModelBuf(const char *model_buf, int numa_id) {
 #ifdef SHARING_MODEL_WEIGHT
-  return pack_weight_->GetNumaModelBuf(numa_id);
+  return pack_weight_->GetNumaModelBuf(model_buf, numa_id);
 #endif
   return nullptr;
 }
@@ -86,7 +86,6 @@ void *PackWeightManager::MallocData(size_t size) {
   }
   void *data = nullptr;
 #ifdef _WIN32
-  // Byte alignment, calculate the size of the aligned memory block, the size is a multiple of 2.
   size_t round_size = (size + kMemAlignSize - 1) & (~(kMemAlignSize - 1));
   data = _aligned_malloc(round_size, kMemAlignSize);
 #elif defined(__ANDROID__)
