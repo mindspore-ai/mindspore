@@ -19,50 +19,48 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops import operations as P
 
 
-def hshrink_grad_op_np_bencmark(grad, input_x, lambd):
+def hshrink_op_np_bencmark(input_x, lambd):
     """
-    Feature: generate a hshrink grad numpy benchmark.
+    Feature: generate a hshrink numpy benchmark.
     Description: The input shape need to match to output shape.
-    Expectation: match to mindspore HShrinkGrad.
+    Expectation: match to nn mindspore HShrink.
     """
-    result = np.zeros_like(grad, dtype=grad.dtype)
-    for index, _ in np.ndenumerate(grad):
+    result = np.zeros_like(input_x, dtype=input_x.dtype)
+    for index, _ in np.ndenumerate(input_x):
         if input_x[index] > lambd or input_x[index] < (-1 * lambd):
-            result[index] = grad[index]
+            result[index] = input_x[index]
         else:
             result[index] = 0
     return result
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
 @pytest.mark.parametrize("lambd", [0.5])
-def test_hshrink_grad(dtype, data_shape, lambd):
+def test_hshrink(dtype, data_shape, lambd):
     """
-    Feature: HShrinkGrad cpu kernel
-    Description: test the rightness of HShrinkGrad cpu kernel
-    Expectation: the output[0] is same as hshrink_grad_op_np_bencmark output
+    Feature: HShrink gpu kernel
+    Description: test the rightness of HShrink gpu kernel
+    Expectation: the output[0] is same as hshrink_op_np_bencmark output
     """
-    class NetHShrinkGrad(nn.Cell):
+    class NetHShrink(nn.Cell):
         def __init__(self):
-            super(NetHShrinkGrad, self).__init__()
-            self.hard_shrink_grad = G.HShrinkGrad(lambd)
+            super(NetHShrink, self).__init__()
+            self.hard_shrink = P.HShrink(lambd)
 
-        def construct(self, grad, input_x):
-            return self.hard_shrink_grad(grad, input_x)
+        def construct(self, input_x):
+            return self.hard_shrink(input_x)
 
-    grad_data = np.random.random(data_shape).astype(dtype)
     input_data = np.random.uniform(
         low=-1, high=1, size=data_shape).astype(dtype)
-    benchmark_output = hshrink_grad_op_np_bencmark(
-        grad_data, input_data, lambd)
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
-    hshrink_grad = NetHShrinkGrad()
-    output = hshrink_grad(Tensor(grad_data), Tensor(input_data))
+    benchmark_output = hshrink_op_np_bencmark(input_data, lambd)
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    hshrink = NetHShrink()
+    output = hshrink(Tensor(input_data))
     assert np.allclose(output.asnumpy(), benchmark_output)

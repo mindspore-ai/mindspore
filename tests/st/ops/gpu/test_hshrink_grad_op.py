@@ -38,15 +38,15 @@ def hshrink_grad_op_np_bencmark(grad, input_x, lambd):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
 @pytest.mark.parametrize("lambd", [0.5])
 def test_hshrink_grad(dtype, data_shape, lambd):
     """
-    Feature: HShrinkGrad cpu kernel
-    Description: test the rightness of HShrinkGrad cpu kernel
+    Feature: HShrinkGrad gpu kernel
+    Description: test the rightness of HShrinkGrad gpu kernel
     Expectation: the output[0] is same as hshrink_grad_op_np_bencmark output
     """
     class NetHShrinkGrad(nn.Cell):
@@ -62,7 +62,7 @@ def test_hshrink_grad(dtype, data_shape, lambd):
         low=-1, high=1, size=data_shape).astype(dtype)
     benchmark_output = hshrink_grad_op_np_bencmark(
         grad_data, input_data, lambd)
-    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     hshrink_grad = NetHShrinkGrad()
     output = hshrink_grad(Tensor(grad_data), Tensor(input_data))
     assert np.allclose(output.asnumpy(), benchmark_output)

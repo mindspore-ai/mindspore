@@ -19,17 +19,31 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+def hshrink_op_np_bencmark(input_x, lambd):
+    """
+    Feature: generate a hshrink numpy benchmark.
+    Description: The input shape need to match to output shape.
+    Expectation: match to np mindspore HShrink.
+    """
+    result = np.zeros_like(input_x, dtype=input_x.dtype)
+    for index, _ in np.ndenumerate(input_x):
+        if input_x[index] > lambd or input_x[index] < (-1 * lambd):
+            result[index] = input_x[index]
+        else:
+            result[index] = 0
+    return result
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
-def test_hshrink(dtype):
+@pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
+@pytest.mark.parametrize("lambd", [0.5])
+def test_hshrink(dtype, data_shape, lambd):
     """
     Feature: HShrink cpu kernel
     Description: test the rightness of HShrink cpu kernel
@@ -38,15 +52,15 @@ def test_hshrink(dtype):
     class NetHShrink(nn.Cell):
         def __init__(self):
             super(NetHShrink, self).__init__()
-            self.hard_shrink = P.HShrink(lambd=0.5)
-            self.x = Parameter(Tensor(np.array([[0.5, 1, 2.0],
-                                                [0.0533, 0.0776, -2.1233]], dtype=dtype)), name='x')
+            self.hard_shrink = P.HShrink(lambd)
 
-        def construct(self):
-            return self.hard_shrink(self.x)
+        def construct(self, input_x):
+            return self.hard_shrink(input_x)
 
+    input_data = np.random.uniform(
+        low=-1, high=1, size=data_shape).astype(dtype)
+    benchmark_output = hshrink_op_np_bencmark(input_data, lambd)
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     hshrink = NetHShrink()
-    output = hshrink()
-    expect = np.array([[0, 1, 2],
-                       [0, 0, -2.1233]], dtype=dtype)
-    assert np.allclose(output.asnumpy(), expect)
+    output = hshrink(Tensor(input_data))
+    assert np.allclose(output.asnumpy(), benchmark_output)

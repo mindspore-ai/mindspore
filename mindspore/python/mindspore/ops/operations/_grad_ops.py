@@ -2292,7 +2292,7 @@ class HShrinkGrad(Primitive):
         TypeError: If dtype of `gradients` or `features` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
     """
 
     @prim_attr_register
