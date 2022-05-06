@@ -354,14 +354,14 @@ def test_raise_14():
         def construct(self):
             x = Tensor(1)
             if x == 1:
-                raise NotImplementedError("The input should not be Tensor(1).")
+                raise UserWarning("The input should not be Tensor(1).")
             return x
 
     with pytest.raises(RuntimeError) as raise_info_14:
         net = RaiseNet()
         res = net()
         print("res:", res)
-    assert "Unsupported exception type: NotImplementedError." in str(raise_info_14.value)
+    assert "Unsupported exception type: UserWarning." in str(raise_info_14.value)
 
 
 @pytest.mark.level0

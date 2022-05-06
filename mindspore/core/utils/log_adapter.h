@@ -71,16 +71,24 @@ enum ExceptionType {
   KeyError,
   AttributeError,
   NameError,
-  AssertionError
+  AssertionError,
+  BaseException,
+  KeyboardInterrupt,
+  Exception,
+  StopIteration,
+  OverflowError,
+  ZeroDivisionError,
+  EnvironmentError,
+  IOError,
+  OSError,
+  ImportError,
+  MemoryError,
+  UnboundLocalError,
+  RuntimeError,
+  NotImplementedError,
+  IndentationError,
+  RuntimeWarning,
 };
-
-// exception types
-const std::vector<std::string> exception_types = {
-  "NoExceptionType", "UnknownError",       "ArgumentError",       "NotSupportError",
-  "NotExistsError",  "AlreadyExistsError", "UnavailableError",    "DeviceProcessError",
-  "AbortedError",    "TimeOutError",       "ResourceUnavailable", "NoPermissionError",
-  "IndexError",      "ValueError",         "TypeError",           "KeyError",
-  "AttributeError",  "NameError",          "AssertionError"};
 
 static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoExceptionType", NoExceptionType},
                                                                           {"UnknownError", UnknownError},
@@ -100,7 +108,23 @@ static inline std::map<std::string, ExceptionType> exception_types_map = {{"NoEx
                                                                           {"KeyError", KeyError},
                                                                           {"AttributeError", AttributeError},
                                                                           {"NameError", NameError},
-                                                                          {"AssertionError", AssertionError}};
+                                                                          {"AssertionError", AssertionError},
+                                                                          {"BaseException", BaseException},
+                                                                          {"KeyboardInterrupt", KeyboardInterrupt},
+                                                                          {"Exception", Exception},
+                                                                          {"StopIteration", StopIteration},
+                                                                          {"OverflowError", OverflowError},
+                                                                          {"ZeroDivisionError", ZeroDivisionError},
+                                                                          {"EnvironmentError", EnvironmentError},
+                                                                          {"IOError", IOError},
+                                                                          {"OSError", OSError},
+                                                                          {"ImportError", ImportError},
+                                                                          {"MemoryError", MemoryError},
+                                                                          {"UnboundLocalError", UnboundLocalError},
+                                                                          {"RuntimeError", RuntimeError},
+                                                                          {"NotImplementedError", NotImplementedError},
+                                                                          {"IndentationError", IndentationError},
+                                                                          {"RuntimeWarning", RuntimeWarning}};
 
 struct LocationInfo {
   LocationInfo(const char *file, int line, const char *func) : file_(file), line_(line), func_(func) {}

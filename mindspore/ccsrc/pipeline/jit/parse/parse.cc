@@ -1106,7 +1106,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   // Process raise ValueError
   if (py::isinstance<py::none>(function_ast_node)) {
     auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
-    if (std::find(exception_types.begin(), exception_types.end(), name_id) != exception_types.end()) {
+    if (exception_types_map.find(name_id) != exception_types_map.end()) {
       return {NewValueNode(name_id)};
     } else {
       MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id << ".";
@@ -1120,7 +1120,7 @@ std::vector<AnfNodePtr> Parser::ParseRaiseCall(const FunctionBlockPtr &block, co
   if (arg_type == AST_SUB_TYPE_NAME) {
     auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(function_ast_node, "id"));
     MS_LOG(DEBUG) << "The name of call node is: " << name_id;
-    if (std::find(exception_types.begin(), exception_types.end(), name_id) != exception_types.end()) {
+    if (exception_types_map.find(name_id) != exception_types_map.end()) {
       return ParseException(block, args, name_id);
     } else {
       MS_LOG(EXCEPTION) << "Unsupported exception type: " << name_id << ".";
