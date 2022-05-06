@@ -56,11 +56,11 @@ from .._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
                      "Int32": mstype.int32, "UInt32": mstype.uint32, "Int64": mstype.int64, "UInt64": mstype.uint64,
                      "Float16": mstype.float16, "Float32": mstype.float32, "Float64": mstype.float64,
-                     "Bool": mstype.bool_}
+                     "Bool": mstype.bool_, "str": mstype.string}
 
 tensor_to_np_type = {"Int8": np.int8, "UInt8": np.uint8, "Int16": np.int16, "UInt16": np.uint16,
                      "Int32": np.int32, "UInt32": np.uint32, "Int64": np.int64, "UInt64": np.uint64,
-                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_}
+                     "Float16": np.float16, "Float32": np.float32, "Float64": np.float64, "Bool": np.bool_, "str": "U"}
 
 _ckpt_mutex = Lock()
 
@@ -242,6 +242,24 @@ def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM"):
         raise e
 
 
+def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
+    """Check save_obj and ckpt_file_name for save_checkpoint."""
+    if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
+        raise TypeError("For 'save_checkpoint', the parameter 'save_obj' must be nn.Cell or list, "
+                        "but got {}.".format(type(save_obj)))
+    if not isinstance(ckpt_file_name, str):
+        raise TypeError("For 'save_checkpoint', the parameter {} for checkpoint file name is invalid,"
+                        "'ckpt_file_name' must be "
+                        "string, but got {}.".format(ckpt_file_name, type(ckpt_file_name)))
+    ckpt_file_name = os.path.realpath(ckpt_file_name)
+    if os.path.isdir(ckpt_file_name):
+        raise IsADirectoryError("For 'save_checkpoint', the parameter `ckpt_file_name`: {} is a directory, "
+                                "it must be a file name.".format(ckpt_file_name))
+    if not ckpt_file_name.endswith('.ckpt'):
+        ckpt_file_name += ".ckpt"
+    return ckpt_file_name
+
+
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM"):
     """
@@ -255,8 +273,8 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         ckpt_file_name (str): Checkpoint file name. If the file name already exists, it will be overwritten.
         integrated_save (bool): Whether to integrated save in automatic model parallel scene. Default: True
         async_save (bool): Whether to open an independent thread to save the checkpoint file. Default: False
-        append_dict (dict): Additional information that needs to be saved.  The key of dict must be str,
-            the value of dict must be one of int, float or bool. Default: None
+        append_dict (dict): Additional information that needs to be saved. The key of dict must be str, the value
+                            of dict must be one of int, float, bool, string, Parameter or Tensor. Default: None.
         enc_key (Union[None, bytes]): Byte type key used for encryption. If the value is None, the encryption
                                       is not required. Default: None.
         enc_mode (str): This parameter is valid only when enc_key is not set to None. Specifies the encryption
@@ -272,19 +290,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> net = Net()
         >>> save_checkpoint(net, "lenet.ckpt")
     """
-    if not isinstance(save_obj, nn.Cell) and not isinstance(save_obj, list):
-        raise TypeError("For 'save_checkpoint', the argument 'save_obj' should be nn.Cell or list, "
-                        "but got {}.".format(type(save_obj)))
-    if not isinstance(ckpt_file_name, str):
-        raise TypeError("For 'save_checkpoint', the argument {} for checkpoint file name is invalid,"
-                        "'ckpt_file_name' must be "
-                        "string, but got {}.".format(ckpt_file_name, type(ckpt_file_name)))
-    ckpt_file_name = os.path.realpath(ckpt_file_name)
-    if os.path.isdir(ckpt_file_name):
-        raise IsADirectoryError("For 'save_checkpoint', the argument `ckpt_file_name`: {} is a directory, "
-                                "it should be a file name.".format(ckpt_file_name))
-    if not ckpt_file_name.endswith('.ckpt'):
-        ckpt_file_name += ".ckpt"
+    ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
     integrated_save = Validator.check_bool(integrated_save)
     async_save = Validator.check_bool(async_save)
     append_dict = _check_append_dict(append_dict)
@@ -315,7 +321,9 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     if append_dict:
         append_info_list = []
         for k_name, value in append_dict.items():
-            append_info_list.append({"name": k_name, "data": Tensor(value)})
+            if not isinstance(value, str):
+                value = Tensor(value)
+            append_info_list.append({"name": k_name, "data": value})
             save_obj.extend(append_info_list)
 
     data_list = OrderedDict()
@@ -323,19 +331,25 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         for param in save_obj:
             key = param["name"]
             data_list[key] = []
-            if isinstance(param["data"], Parameter):
-                param["data"].init_data()
-            dims = []
-            if param['data'].shape == ():
-                dims.append(0)
+            if isinstance(param["data"], str):
+                data_list[key].append([0])
+                data_list[key].append('str')
+                data = np.array(param["data"])
+                data_list[key].append(data)
             else:
-                for dim in param['data'].shape:
-                    dims.append(dim)
-            data_list[key].append(dims)
-            tensor_type = str(param["data"].dtype)
-            data_list[key].append(tensor_type)
-            data = param["data"].asnumpy().reshape(-1)
-            data_list[key].append(data)
+                if isinstance(param["data"], Parameter):
+                    param["data"].init_data()
+                dims = []
+                if param['data'].shape == ():
+                    dims.append(0)
+                else:
+                    for dim in param['data'].shape:
+                        dims.append(dim)
+                data_list[key].append(dims)
+                tensor_type = str(param["data"].dtype)
+                data_list[key].append(tensor_type)
+                data = param["data"].asnumpy().reshape(-1)
+                data_list[key].append(data)
 
     if async_save:
         data_copy = copy.deepcopy(data_list)
@@ -355,7 +369,7 @@ def _check_append_dict(append_dict):
         raise TypeError("For 'save_checkpoint', the argument 'append_dict' must be dict, but got "
                         "{}.".format(type(append_dict)))
     for key, value in append_dict.items():
-        if not isinstance(key, str) or not isinstance(value, (int, float, bool)):
+        if not isinstance(key, str) or not isinstance(value, (int, float, bool, str, Parameter, Tensor)):
             raise TypeError(f"For 'save_checkpoint', the type of dict 'append_info' must be key: string, "
                             f"value: int, float or bool, but got key: {type(key)}, value: {type(value)}")
     return append_dict
@@ -454,7 +468,10 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             will be loaded. Default: None.
 
     Returns:
-        Dict, key is parameter name, value is a Parameter.
+        Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
+            :func:`mindspore.save_checkpoint` and the `append_info` parameter of :class:`CheckpointConfig` are used to
+            save the checkpoint, `append_dict` and `append_info` are dict types, and their value are string, then the
+            return value obtained by loading checkpoint is string, and in other cases the return value is Parameter.
 
     Raises:
         ValueError: Checkpoint file's format is incorrect.
@@ -487,6 +504,9 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             data_type = element.tensor.tensor_type
             np_type = tensor_to_np_type.get(data_type)
             ms_type = tensor_to_ms_type[data_type]
+            if data_type == 'str':
+                str_length = int(len(data)/4)
+                np_type = np_type + str(str_length)
             element_data = np.frombuffer(data, np_type)
             param_data_list.append(element_data)
             if (element_id == len(checkpoint_list.value) - 1) or \
@@ -494,15 +514,16 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                 param_data = np.concatenate((param_data_list), axis=0)
                 param_data_list.clear()
                 dims = element.tensor.dims
-                if dims == [0]:
-                    if 'Float' in data_type:
+                if dims == [0] and data_type == 'str':
+                    parameter_dict[element.tag] = str(element_data[0])
+                else:
+                    if dims == [0] and 'Float' in data_type:
                         param_data = float(param_data[0])
-                    elif 'Int' in data_type:
+                    if dims == [0] and 'Int' in data_type:
                         param_data = int(param_data[0])
-                elif dims != [1]:
-                    param_data = param_data.reshape(list(dims))
-
-                parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
+                    if dims not in ([0], [1]):
+                        param_data = param_data.reshape(list(dims))
+                    parameter_dict[element.tag] = Parameter(Tensor(param_data, ms_type), name=element.tag)
 
         logger.info("Loading checkpoint files process is finished.")
 
@@ -643,7 +664,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
                "but got {}.".format(type(parameter_dict)))
         raise TypeError(msg)
     for key, value in parameter_dict.items():
-        if not isinstance(key, str) or not isinstance(value, Parameter):
+        if not isinstance(key, str) or not isinstance(value, (Parameter, str)):
             logger.critical("Load parameters into net failed.")
             msg = ("For 'parameter_dict', the element in the argument 'parameter_dict' should be a "
                    "'str' and 'Parameter' , but got {} and {}.".format(type(key), type(value)))
@@ -1150,7 +1171,7 @@ def quant_mode_manage(func):
     def warpper(network, *inputs, file_format, **kwargs):
         if 'quant_mode' not in kwargs:
             return network
-        quant_mode = kwargs['quant_mode']
+        quant_mode = kwargs.get('quant_mode')
         if not isinstance(quant_mode, str):
             raise TypeError("For 'export', the type of 'quant_mode' should be string, "
                             "but got {}.".format(type(quant_mode)))
