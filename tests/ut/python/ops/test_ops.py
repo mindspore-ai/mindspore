@@ -48,6 +48,7 @@ from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedK
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import NthElement
+from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -3374,6 +3375,31 @@ test_case_other_ops = [
                         Tensor(np.random.randint(0, 10, size=(4, 50, 50, 3)).astype(np.int32)),
                         Tensor(np.random.uniform(0, 1, size=(4, 4)).astype(np.float32)),
                         Tensor(np.random.randint(0, 4, size=(4)).astype(np.int32))
+                        ],
+        'skip': ['backward']}),
+    ('PSROIPooling', {
+        'block': PSROIPooling(1.0/16, 7, 3),
+        'desc_inputs': [Tensor(np.random.randint(0, 255, size=(4, 3 * 7 * 7, 80, 48)).astype(np.float32)),
+                        Tensor(np.array([[[0.0000],
+                                          [150.3563],
+                                          [200.1320],
+                                          [579.3563],
+                                          [602.3452]],
+                                         [[1.0000],
+                                          [657.1263],
+                                          [302.8564],
+                                          [762.4214],
+                                          [567.9854]],
+                                         [[2.0000],
+                                          [321.3122],
+                                          [232.2410],
+                                          [679.0281],
+                                          [587.6346]],
+                                         [[3.0000],
+                                          [664.1630],
+                                          [387.4919],
+                                          [778.7322],
+                                          [562.7321]]]).astype(np.float32))
                         ],
         'skip': ['backward']}),
 ]

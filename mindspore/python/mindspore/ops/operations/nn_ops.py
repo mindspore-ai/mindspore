@@ -9328,3 +9328,84 @@ class NthElement(Primitive):
         self.add_prim_attr("reverse", self.reverse)
         self.init_prim_io_names(inputs=['input', 'n'],
                                 outputs=['output'])
+
+
+class PSROIPooling(Primitive):
+    r"""
+    Position Sensitive ROI-Pooling
+
+    Args:
+        spatial_scale (float): a scaling factor that maps the box coordinates to the input coordinates.
+                               For example, if your boxes are defined on the scale of a 224x224 image and
+                               your input is a 112x112 feature map (resulting from a 0.5x scaling of the original
+                               image), you’ll want to set this to 0.5.
+        group_size (int): the size of the output (in pixels) after the pooling is performed, as (height, width).
+        output_dim (int): the dim of the output after the pooling is performed.
+
+    Inputs:
+        - **features** (Tensor) - The input features, whose shape must be :math:`(N, C, H, W)`. With data type is
+          float16 or float32. This formula should hold: :math:`(C == output_dim * group_size * group_size)`.
+        - **rois** (Tensor) - The shape is `(batch, 5, rois_n)`. With data type of float16 or float32.
+          The size of first dimension `batch` is batch_size. The size of the second dimension must be `5`.
+          The size of third dimension `rois_n` is the number of rois. The value of `rois` like:
+          (index, x1, y1, x2, y2). The first element of `rois_n` is the index of the `rois`. And the box coordinates
+          in (x1, y1, x2, y2) format where the regions will be taken from. The coordinate must satisfy
+          0 <= x1 < x2 and 0 <= y1 < y2.
+
+    Outputs:
+        - out (rois.shape[0] * rois.shape[2], output_dim, group_size, group_size), the result after pooling.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations import nn_ops
+        >>> features = np.random.randn(4, 3 * 7 * 7, 80, 48)
+        >>> features = Tensor.from_numpy(features).astype(mindspore.float32)
+        >>> rois = Tensor.from_numpy(
+        >>>     np.array([[[0.0000],
+        >>>                [150.3563],
+        >>>                [200.1320],
+        >>>                [579.3563],
+        >>>                [602.3452]],
+        >>>               [[1.0000],
+        >>>                [657.1263],
+        >>>                [302.8564],
+        >>>                [762.4214],
+        >>>                [567.9854]],
+        >>>               [[2.0000],
+        >>>                [321.3122],
+        >>>                [232.2410],
+        >>>                [679.0281],
+        >>>                [587.6346]],
+        >>>               [[3.0000],
+        >>>                [664.1630],
+        >>>                [387.4919],
+        >>>                [778.7322],
+        >>>                [562.7321]]])).astype(mindspore.float32)
+        >>> psROIPooling = nn_ops.PSROIPooling(spatial_scale=1.0/16, output_dim=3,
+        >>>                                       group_size=7)
+        >>> out = psROIPooling(features, rois)
+        >>> print(out.shape)
+            (4, 3, 7, 7)
+        >>> print(out.dtype)
+            Float32
+    """
+
+    @prim_attr_register
+    def __init__(self, spatial_scale, group_size, output_dim):
+
+        """Initialize PSROIPooling"""
+        validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
+        validator.check_value_type("group_size", group_size, [int], self.name)
+        validator.check_value_type("output_dim", output_dim, [int], self.name)
+        self.spatial_scale = spatial_scale
+        self.group_size = group_size
+        self.output_dim = output_dim
+
+        self.add_prim_attr('spatial_scale', self.spatial_scale)
+        self.add_prim_attr('group_size', self.group_size)
+        self.add_prim_attr('output_dim', self.output_dim)
