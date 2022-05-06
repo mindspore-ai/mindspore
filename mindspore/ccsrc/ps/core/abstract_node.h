@@ -57,7 +57,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
         node_recovery_(nullptr),
         persistent_state_(PersistentState::NOT_ENABLE_PERSIST),
         scheduler_ip_(""),
-        scheduler_port_(0) {}
+        scheduler_port_(0),
+        is_recover(false) {}
   ~AbstractNode() override;
 
   typedef void (AbstractNode::*ResponseHandler)(const std::shared_ptr<MessageMeta> &meta, const void *data,
@@ -344,6 +345,8 @@ class BACKEND_EXPORT AbstractNode : public Node {
   size_t failed_iteration_num_ = 0;
   bool iteration_failed_ = false;
   CancelSafeModeFn cancelSafeModeFn_;
+
+  std::atomic<bool> is_recover;
 };
 }  // namespace core
 }  // namespace ps

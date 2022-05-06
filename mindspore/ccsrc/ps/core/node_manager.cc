@@ -251,7 +251,7 @@ void NodeManager::UpdateCluster(bool is_cluster_ready) {
         finish_nodes_id_.insert(iter->first);
       }
     }
-    if (cluster_state_ != ClusterState::CLUSTER_DISABLE_FLS) {
+    if (cluster_state_ != ClusterState::CLUSTER_DISABLE_FLS && cluster_state_ != ClusterState::CLUSTER_SCALE_OUT) {
       UpdateClusterState(ClusterState::NODE_TIMEOUT);
     }
   } else if (SizeToUint(heartbeats_.size()) == total_node_num_ && cluster_state_ == ClusterState::NODE_TIMEOUT) {

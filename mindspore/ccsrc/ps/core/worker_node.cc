@@ -31,6 +31,7 @@ bool WorkerNode::Start(const uint32_t &timeout) {
     MS_LOG(ERROR) << "Start Worker node timeout!";
     return false;
   }
+  is_recover = false;
   MsException::Instance().CheckException();
   MS_LOG(INFO) << "[Worker start]: 5. Successfully start worker node!";
   return true;
@@ -40,7 +41,6 @@ void WorkerNode::Initialize() {
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
   InitNodeNum();
-  bool is_recover = false;
   if (!config_->Initialize()) {
     MS_LOG(WARNING) << "The config file is empty.";
   } else {
