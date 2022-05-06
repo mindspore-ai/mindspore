@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
+#include "kernel/ascend_kernel_mod.h"
 
 namespace mindspore {
 namespace device {
@@ -469,6 +470,11 @@ void InsertAtomicCleanOps(const KernelGraphPtr &kernel_graph) {
   for (const auto &node : exe_orders) {
     if (node_to_cleans.find(node) != node_to_cleans.end()) {
       auto atomics = node_to_cleans[node];
+      auto kernel_mod = AnfAlgo::GetKernelMod(node);
+      auto ascend_kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(kernel_mod);
+      if (ascend_kernel_mod != nullptr && common::AnfAlgo::IsDynamicShape(node)) {
+        ascend_kernel_mod->SetAtomicCleanNodes(atomics);
+      }
       (void)std::copy(atomics.begin(), atomics.end(), std::back_inserter(new_orders));
     }
     new_orders.push_back(node);

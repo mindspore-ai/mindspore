@@ -1005,6 +1005,9 @@ bool AscendKernelRuntime::RunDynamicKernelAsync(const session::KernelGraph &grap
   for (size_t i = 0; i < kernels.size(); ++i) {
     auto &kernel = kernels[i];
     MS_EXCEPTION_IF_NULL(kernel);
+    if (common::AnfAlgo::GetCNodeName(kernel) == kDynamicAtomicAddrCleanOpName) {
+      continue;
+    }
     auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
     MS_EXCEPTION_IF_NULL(kernel_mod);
     auto depends = abstract::GetDependsFormMap(kernel);
