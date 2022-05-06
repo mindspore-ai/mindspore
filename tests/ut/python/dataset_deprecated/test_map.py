@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""
+Test Map op in Dataset
+"""
 import pytest
 import mindspore.dataset as ds
 from mindspore.dataset.transforms import c_transforms
 from mindspore.dataset.transforms import py_transforms
+import mindspore.dataset.text as text
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
 
@@ -120,6 +124,55 @@ def test_map_py_transform_exception():
     assert " should be a " in str(info.value)
 
 
+def test_map_text_and_data_transforms():
+    """
+    Feature: Map op
+    Description: Test Map op with both Text Transforms and Data Transforms
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+    data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
+
+    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
+                                    special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
+
+    padend_op = c_transforms.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
+    lookup_op = text.Lookup(vocab, "<unk>")
+
+    # Use both Text Lookup op and Data Transforms PadEnd op in operations list for Map
+    data = data.map(operations=[lookup_op, padend_op], input_columns=["text"])
+    res = []
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(d["text"].item())
+    assert res == [4, 5, 3, 6, 7, 2], res
+
+
+def test_compose_text_and_data_transforms():
+    """
+    Feature: Map op
+    Description: Test Compose op with both Text Transforms and Data Transforms
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+    data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
+
+    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
+                                    special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
+
+    padend_op = c_transforms.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
+    lookup_op = text.Lookup(vocab, "<unk>")
+
+    # Use both Text Lookup op and Data Transforms PadEnd op in transforms list for Compose
+    compose_op = c_transforms.Compose(transforms=[lookup_op, padend_op])
+    data = data.map(operations=compose_op, input_columns=["text"])
+    res = []
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(d["text"].item())
+    assert res == [4, 5, 3, 6, 7, 2], res
+
+
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
+    test_map_text_and_data_transforms()
+    test_compose_text_and_data_transforms()

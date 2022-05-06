@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,9 +29,28 @@ MNIST_DATA_DIR = "../data/dataset/testMnistData"
 GENERATE_GOLDEN = False
 
 
+def test_equalize_callable():
+    """
+    Feature: Equalize Op
+    Description: Test op in eager mode
+    Expectation: Output image shape from op is verified
+    """
+    logger.info("Test Equalize is callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img = vision.Decode()(img)
+    img = vision.Equalize()(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    assert img.shape == (2268, 4032, 3)
+
+
 def test_equalize_py(plot=False):
     """
-    Test Equalize Python implementation
+    Feature: Equalize Op
+    Description: Test Python implementation
+    Expectation: Dataset pipeline runs successfully and results are visually verified
     """
     logger.info("Test Equalize")
 
@@ -86,9 +105,11 @@ def test_equalize_py(plot=False):
 
 def test_equalize_c(plot=False):
     """
-    Test Equalize C implementation
+    Feature: Equalize Op
+    Description: Test C++ implementation
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
-    logger.info("Test Equalize C implementation")
+    logger.info("Test Equalize C++ implementation")
 
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -136,9 +157,11 @@ def test_equalize_c(plot=False):
 
 def test_equalize_py_c(plot=False):
     """
-    Test Equalize C implementation and Python implementation
+    Feature: Equalize Op
+    Description: Test C++ implementation and Python implementation
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
-    logger.info("Test Equalize cpp and Python implementation")
+    logger.info("Test Equalize C++ and Python implementation")
 
     # equalize Images in cpp
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -156,7 +179,7 @@ def test_equalize_py_c(plot=False):
                                           image.asnumpy(),
                                           axis=0)
 
-    # Equalize images in python
+    # Equalize images in Python
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224))], input_columns=["image"])
 
@@ -189,9 +212,11 @@ def test_equalize_py_c(plot=False):
 
 def test_equalize_one_channel():
     """
-    Test Equalize C implementation with one channel image
+    Feature: Equalize Op
+    Description: Test Equalize C++ implementation with one channel images
+    Expectation: Invalid input is detected
     """
-    logger.info("Test Equalize C implementation With One Channel Images")
+    logger.info("Test Equalize C++ implementation with One Channel Images")
 
     c_op = vision.Equalize()
 
@@ -209,9 +234,11 @@ def test_equalize_one_channel():
 
 def test_equalize_mnist_c(plot=False):
     """
-    Test Equalize C implementation with MNIST dataset (Grayscale images)
+    Feature: Equalize Op
+    Description: Test Equalize C++ implementation with MNIST dataset (Grayscale images)
+    Expectation: Dataset pipeline runs successfully and md5 results are verified
     """
-    logger.info("Test Equalize C implementation With MNIST Images")
+    logger.info("Test Equalize C++ implementation with MNIST Images")
     data_set = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
     ds_equalize_c = data_set.map(operations=vision.Equalize(), input_columns="image")
     ds_orig = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
@@ -236,7 +263,9 @@ def test_equalize_mnist_c(plot=False):
 
 def test_equalize_md5_py():
     """
-    Test Equalize Python implementation with md5 check
+    Feature: Equalize Op
+    Description: Test Python implementation with md5 check
+    Expectation: Dataset pipeline runs successfully and md5 results are verified
     """
     logger.info("Test Equalize")
 
@@ -248,15 +277,17 @@ def test_equalize_md5_py():
 
     data1 = data1.map(operations=transforms, input_columns="image")
     # Compare with expected md5 from images
-    filename = "equalize_01_result.npz"
+    filename = "equalize_01_result_py_unified.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_equalize_md5_c():
+def test_equalize_md5_c():
     """
-    Test Equalize C implementation with md5 check
+    Feature: Equalize Op
+    Description: Test C++ implementation with md5 check
+    Expectation: Dataset pipeline runs successfully and md5 results are verified
     """
-    logger.info("Test Equalize C implementation with md5 check")
+    logger.info("Test Equalize C++ implementation with md5 check")
 
     # Generate dataset
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -268,11 +299,12 @@ def skip_test_equalize_md5_c():
 
     data = data_set.map(operations=transforms_equalize, input_columns="image")
     # Compare with expected md5 from images
-    filename = "equalize_01_result_c.npz"
+    filename = "equalize_01_result_c_unified.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
 if __name__ == "__main__":
+    test_equalize_callable()
     test_equalize_py(plot=False)
     test_equalize_c(plot=False)
     test_equalize_py_c(plot=False)

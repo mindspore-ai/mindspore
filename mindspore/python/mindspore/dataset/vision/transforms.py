@@ -55,6 +55,7 @@ import random
 import numpy as np
 
 import mindspore._c_dataengine as cde
+from mindspore._c_expression import typing
 from . import py_transforms_util as util
 from .py_transforms_util import is_pil
 from .utils import Border, Inter, parse_padding
@@ -70,6 +71,7 @@ from .validators import check_adjust_gamma, check_alpha, check_auto_contrast, ch
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_random_solarize, \
     check_soft_dvpp_decode_random_crop_resize_jpeg, FLOAT_MAX_INTEGER, \
     check_cut_mix_batch_c, check_posterize, check_gaussian_blur, check_rotate, check_slice_patches
+from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation, PyTensorOperation, CompoundOperation, TypeCast
 
@@ -1007,11 +1009,19 @@ class MixUp(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> # Setup multi-batch mixup transformation
-        >>> transform = [vision.MixUp(batch_size=16, alpha=0.2, is_single=False)]
-        >>> # Apply the transform to the dataset through dataset.map()
-        >>> image_folder_dataset = image_folder_dataset.map(input_columns="image",
-        ...                                                 operations=transform)
+        >>> # first decode the image
+        >>> image_folder_dataset = image_folder_dataset.map(operations=c_vision.Decode(),
+        ...                                                 input_columns="image")
+        >>> # then ont hot decode the label
+        >>> image_folder_dataset = image_folder_dataset.map(operations=c_transforms.OneHot(10),
+        ...                                                 input_columns="label")
+        >>> # batch the samples
+        >>> batch_size = 4
+        >>> image_folder_dataset = image_folder_dataset.batch(batch_size=batch_size)
+        >>> # finally mix up the images and labels
+        >>> image_folder_dataset = image_folder_dataset.map(
+        ...     operations=py_vision.MixUp(batch_size=batch_size, alpha=0.2),
+        ...     input_columns=["image", "label"])
     """
 
     @check_mix_up
@@ -3369,11 +3379,11 @@ class ToPIL(PyTensorOperation):
 class ToTensor(TensorOperation, PyTensorOperation):
     """
     Rescale of pixel value range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
-    For Python implementation of operation, convert the input PIL Image or numpy.ndarray to numpy.ndarray
-    of the desired dtype.
+    Also convert the input PIL Image or numpy.ndarray to numpy.ndarray of the desired dtype.
 
     Args:
-        output_type (numpy.dtype, optional): The desired dtype of the output image. Default: :class:`numpy.float32`.
+        output_type (mindspore.dtype or numpy.dtype, optional): The desired dtype of the output image.
+            Default: :class:`numpy.float32`.
 
     Raises:
         TypeError: If the input image is not of type :class:`PIL.Image` or :class:`numpy.ndarray`.
@@ -3394,9 +3404,13 @@ class ToTensor(TensorOperation, PyTensorOperation):
         ...                                                 input_columns="image")
     """
 
-    def __init__(self, output_type="float32"):
+    def __init__(self, output_type=np.float32):
         super().__init__()
-        self.output_type = output_type
+        if isinstance(output_type, typing.Type):
+            output_type = mstype_to_detype(output_type)
+        else:
+            output_type = nptype_to_detype(output_type)
+        self.output_type = str(output_type)
         self.random = False
 
     def __call__(self, img):

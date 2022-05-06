@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,10 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomApply op in DE
+Test RandomApply op in Dataset
 """
 import numpy as np
+import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.transforms as data_trans
 import mindspore.dataset.vision.transforms as vision
@@ -27,6 +28,43 @@ GENERATE_GOLDEN = False
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+
+def test_random_apply_c():
+    """
+    Feature: RandomApply Op
+    Description: Test C++ implementation, both valid and invalid input
+    Expectation: Dataset pipeline runs successfully and results are verified for valid input.
+        Invalid input is detected.
+    """
+    original_seed = config_get_set_seed(0)
+
+    def test_config(arr, op_list, prob=0.5):
+        try:
+            data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
+            data = data.map(operations=data_trans.RandomApply(op_list, prob), input_columns=["col"])
+            res = []
+            for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+                res.append(i["col"].tolist())
+            return res
+        except (TypeError, ValueError) as e:
+            return str(e)
+
+    res1 = test_config([[0, 1]], [data_trans.Duplicate(), data_trans.Concatenate()])
+    assert res1 in [[[0, 1]], [[0, 1, 0, 1]]]
+    # test single nested compose
+    assert test_config([[0, 1, 2]], [
+        data_trans.Compose([data_trans.Duplicate(), data_trans.Concatenate(), data_trans.Slice([0, 1, 2])])]) == \
+           [[0, 1, 2]]
+    # test exception
+    assert "is not of type [<class 'list'>]" in test_config([1, 0], data_trans.TypeCast(mstype.int32))
+    assert "Input prob is not within the required interval" in test_config([0, 1], [data_trans.Slice([0, 1])], 1.1)
+    assert "is not of type [<class 'float'>, <class 'int'>]" in test_config([1, 0], [data_trans.TypeCast(mstype.int32)],
+                                                                            None)
+    assert "op_list with value None is not of type [<class 'list'>]" in test_config([1, 0], None)
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
 
 
 def test_random_apply_op(plot=False):
@@ -130,6 +168,7 @@ def test_random_apply_exception_random_crop_badinput():
 
 
 if __name__ == '__main__':
+    test_random_apply_c()
     test_random_apply_op(plot=True)
     test_random_apply_md5()
     test_random_apply_exception_random_crop_badinput()

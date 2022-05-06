@@ -64,9 +64,7 @@ def compose(transforms, *args):
             result.reraise()
         args = (args,) if not isinstance(args, tuple) else args
 
-    if all_numpy(args):
-        return args
-    raise TypeError('args should be NumPy ndarray. Got {}. Append ToTensor() to transforms.'.format(type(args)))
+    return args
 
 
 def one_hot_encoding(label, num_classes, epsilon):

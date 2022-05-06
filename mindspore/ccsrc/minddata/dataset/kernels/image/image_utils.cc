@@ -1318,101 +1318,44 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   return Status::OK();
 }
 
-Status ValidateCutOutImage(std::shared_ptr<CVTensor> input_cv, int channel_index, const std::string &right_shape) {
-  CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > channel_index, "CutOut: shape is invalid.");
-  int num_channels = input_cv->shape()[channel_index];
-  if (input_cv->mat().data == nullptr) {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] CutOut: load image failed.");
-  }
-  if (input_cv->Rank() != DEFAULT_IMAGE_RANK || num_channels > DEFAULT_IMAGE_CHANNELS) {
+Status ValidateCutOutImage(const std::shared_ptr<Tensor> &input, bool is_hwc, int32_t box_height, int32_t box_width) {
+  uint32_t channel_index = is_hwc ? CHANNEL_INDEX_HWC : CHANNEL_INDEX_CHW;
+  uint32_t height_index = is_hwc ? 0 : 1;
+  uint32_t width_index = is_hwc ? 1 : 2;
+  std::string right_shape = is_hwc ? "<H,W,C>" : "<C,H,W>";
+  uint64_t num_channels = input->shape()[channel_index];
+  int64_t image_h = input->shape()[height_index];
+  int64_t image_w = input->shape()[width_index];
+
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() > channel_index, "CutOut: shape is invalid.");
+
+  if (input->Rank() != DEFAULT_IMAGE_RANK || num_channels > DEFAULT_IMAGE_CHANNELS) {
     RETURN_STATUS_UNEXPECTED("CutOut: image shape is not " + right_shape +
-                             " or channel is larger than 3, but got rank: " + std::to_string(input_cv->Rank()) +
+                             " or channel is larger than 3, but got rank: " + std::to_string(input->Rank()) +
                              ", and channel: " + std::to_string(num_channels));
+  }
+
+  if (box_height > image_h || box_width > image_w) {
+    RETURN_STATUS_UNEXPECTED(
+      "CutOut: box size is too large for image erase, got box height: " + std::to_string(box_height) +
+      "box weight: " + std::to_string(box_width) + ", and image height: " + std::to_string(image_h) +
+      ", image width: " + std::to_string(image_w));
   }
   return Status::OK();
 }
 
-Status Erase_CHW(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-                 int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
-                 uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
+Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
+             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd, uint8_t fill_r,
+             uint8_t fill_g, uint8_t fill_b, bool is_hwc) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    RETURN_IF_NOT_OK(ValidateCutOutImage(input_cv, CHANNEL_INDEX_CHW, "<C,H,W>"));
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_CHW];
-    int32_t image_h = input->shape()[1];
-    int32_t image_w = input->shape()[2];
-    if (box_height > image_h || box_width > image_w) {
-      RETURN_STATUS_UNEXPECTED(
-        "CutOut: box size is too large for image erase, got box height: " + std::to_string(box_height) +
-        "box weight: " + std::to_string(box_width) + ", and image height: " + std::to_string(image_h) +
-        ", image width: " + std::to_string(image_w));
-    }
-    // for random color
-    std::normal_distribution<double> normal_distribution(0, 1);
-    std::uniform_int_distribution<int> height_distribution_bound(0, image_h - box_height);
-    std::uniform_int_distribution<int> width_distribution_bound(0, image_w - box_width);
-    std::uniform_int_distribution<int> height_distribution_unbound(0, image_h + box_height);
-    std::uniform_int_distribution<int> width_distribution_unbound(0, image_w + box_width);
-    for (int32_t i = 0; i < num_patches; i++) {
-      int32_t h_start = (bounded) ? height_distribution_bound(*rnd) : (height_distribution_unbound(*rnd) - box_height);
-      int32_t w_start = (bounded) ? width_distribution_bound(*rnd) : (width_distribution_unbound(*rnd) - box_width);
-
-      int32_t max_width = (w_start + box_width > image_w) ? image_w : w_start + box_width;
-      int32_t max_height = (h_start + box_height > image_h) ? image_h : h_start + box_height;
-      h_start = (h_start < 0) ? 0 : h_start;
-      w_start = (w_start < 0) ? 0 : w_start;
-      for (int j = 0; j < num_channels; j++) {
-        cv::Mat mat;
-        RETURN_IF_NOT_OK(input_cv->MatAtIndex({j}, &mat));
-        for (int y = w_start; y < max_width; y++) {
-          for (int x = h_start; x < max_height; x++) {
-            if (random_color) {
-              // fill each box with a random value
-              if (num_channels == 1) {
-                mat.at<uchar>(cv::Point(y, x)) = static_cast<int32_t>(normal_distribution(*rnd));
-              } else {
-                mat.at<cv::Vec3b>(cv::Point(y, x))[kIndexZero] = static_cast<int32_t>(normal_distribution(*rnd));
-                mat.at<cv::Vec3b>(cv::Point(y, x))[kIndexOne] = static_cast<int32_t>(normal_distribution(*rnd));
-                mat.at<cv::Vec3b>(cv::Point(y, x))[kIndexTwo] = static_cast<int32_t>(normal_distribution(*rnd));
-              }
-            } else {
-              if (num_channels == 1) {
-                mat.at<uchar>(cv::Point(y, x)) = fill_r;
-              } else {
-                mat.at<cv::Vec3b>(cv::Point(y, x))[kIndexZero] = fill_r;
-                mat.at<cv::Vec3b>(cv::Point(y, x))[kIndexOne] = fill_g;
-                mat.at<cv::Vec3b>(cv::Point(y, x))[kIndexTwo] = fill_b;
-              }
-            }
-          }
-        }
-      }
-      *output = input;
-    }
-    return Status::OK();
-  } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("CutOut: " + std::string(e.what()));
-  }
-}
-
-Status Erase_HWC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-                 int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
-                 uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
-  try {
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    RETURN_IF_NOT_OK(ValidateCutOutImage(input_cv, CHANNEL_INDEX_HWC, "<H,W,C>"));
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
-    cv::Mat input_img = input_cv->mat();
-    int32_t image_h = input_cv->shape()[0];
-    int32_t image_w = input_cv->shape()[1];
-    // check if erase size is bigger than image itself
-    if (box_height > image_h || box_width > image_w) {
-      RETURN_STATUS_UNEXPECTED(
-        "CutOut: box size is too large for image erase, got box height: " + std::to_string(box_height) +
-        "box weight: " + std::to_string(box_width) + ", and image height: " + std::to_string(image_h) +
-        ", image width: " + std::to_string(image_w));
-    }
-
+    RETURN_IF_NOT_OK(ValidateCutOutImage(input_cv, is_hwc, box_height, box_width));
+    uint32_t channel_index = is_hwc ? CHANNEL_INDEX_HWC : CHANNEL_INDEX_CHW;
+    uint32_t height_index = is_hwc ? 0 : 1;
+    uint32_t width_index = is_hwc ? 1 : 2;
+    uint64_t num_channels = input_cv->shape()[channel_index];
+    int64_t image_h = input_cv->shape()[height_index];
+    int64_t image_w = input_cv->shape()[width_index];
     // for random color
     std::normal_distribution<double> normal_distribution(0, 1);
     std::uniform_int_distribution<int> height_distribution_bound(0, image_h - box_height);
@@ -1421,7 +1364,6 @@ Status Erase_HWC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     std::uniform_int_distribution<int> width_distribution_unbound(0, image_w + box_width);
     // core logic
     // update values based on random erasing or cutout
-
     for (int32_t i = 0; i < num_patches; i++) {
       // rows in cv mat refers to the height of the cropped box
       // we determine h_start and w_start using two different distributions as erasing is used by two different
@@ -1435,46 +1377,42 @@ Status Erase_HWC(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       // w_start and h_start will never be less than 0.
       h_start = (h_start < 0) ? 0 : h_start;
       w_start = (w_start < 0) ? 0 : w_start;
-      for (int y = w_start; y < max_width; y++) {
-        for (int x = h_start; x < max_height; x++) {
+
+      for (int x = h_start; x < max_height; x++) {
+        for (int y = w_start; y < max_width; y++) {
+          uint8_t fill_value_r = fill_r;
+          uint8_t fill_value_g = fill_g;
+          uint8_t fill_value_b = fill_b;
           if (random_color) {
             // fill each box with a random value
-            if (num_channels == 1) {
-              input_img.at<uchar>(cv::Point(y, x)) = static_cast<int32_t>(normal_distribution(*rnd));
-            } else {
-              input_img.at<cv::Vec3b>(cv::Point(y, x))[kIndexZero] = static_cast<int32_t>(normal_distribution(*rnd));
-              input_img.at<cv::Vec3b>(cv::Point(y, x))[kIndexOne] = static_cast<int32_t>(normal_distribution(*rnd));
-              input_img.at<cv::Vec3b>(cv::Point(y, x))[kIndexTwo] = static_cast<int32_t>(normal_distribution(*rnd));
-            }
+            fill_value_r = static_cast<int32_t>(normal_distribution(*rnd));
+            fill_value_g = static_cast<int32_t>(normal_distribution(*rnd));
+            fill_value_b = static_cast<int32_t>(normal_distribution(*rnd));
+          }
+
+          if (num_channels == 1) {
+            input_cv->SetItemAt<uint8_t>({x, y}, fill_value_r);
           } else {
-            if (num_channels == 1) {
-              input_img.at<uchar>(cv::Point(y, x)) = fill_r;
-            } else {
-              input_img.at<cv::Vec3b>(cv::Point(y, x))[kIndexZero] = fill_r;
-              input_img.at<cv::Vec3b>(cv::Point(y, x))[kIndexOne] = fill_g;
-              input_img.at<cv::Vec3b>(cv::Point(y, x))[kIndexTwo] = fill_b;
-            }
+            std::vector<dsize_t> index_r =
+              is_hwc ? std::vector<dsize_t>{x, y, kIndexZero} : std::vector<dsize_t>{kIndexZero, x, y};
+            std::vector<dsize_t> index_g =
+              is_hwc ? std::vector<dsize_t>{x, y, kIndexOne} : std::vector<dsize_t>{kIndexOne, x, y};
+            std::vector<dsize_t> index_b =
+              is_hwc ? std::vector<dsize_t>{x, y, kIndexTwo} : std::vector<dsize_t>{kIndexTwo, x, y};
+            input_cv->SetItemAt<uint8_t>(index_r, fill_value_r);
+            input_cv->SetItemAt<uint8_t>(index_g, fill_value_g);
+            input_cv->SetItemAt<uint8_t>(index_b, fill_value_b);
           }
         }
       }
     }
+
     *output = std::static_pointer_cast<Tensor>(input);
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("CutOut: " + std::string(e.what()));
   }
-}
 
-Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd, uint8_t fill_r,
-             uint8_t fill_g, uint8_t fill_b, bool is_hwc) {
-  if (!is_hwc) {
-    RETURN_IF_NOT_OK(
-      Erase_CHW(input, output, box_height, box_width, num_patches, bounded, random_color, rnd, fill_r, fill_g, fill_b));
-  } else {
-    RETURN_IF_NOT_OK(
-      Erase_HWC(input, output, box_height, box_width, num_patches, bounded, random_color, rnd, fill_r, fill_g, fill_b));
-  }
   return Status::OK();
 }
 
@@ -1841,10 +1779,9 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] ToTensor: load image failed.");
     }
-    if (input_cv->Rank() == 2) {
-      // If input tensor is 2D, we assume we have hw dimensions
-      *output = input;
-      return Status::OK();
+    if (input_cv->Rank() == MIN_IMAGE_DIMENSION) {
+      // If input tensor is 2D, we assume we have HW dimensions
+      RETURN_IF_NOT_OK(input_cv->ExpandDim(MIN_IMAGE_DIMENSION));
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > CHANNEL_INDEX_HWC,
@@ -1855,20 +1792,30 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       RETURN_STATUS_UNEXPECTED("ToTensor: image shape should be <H,W,C>, but got rank: " +
                                std::to_string(input_cv->shape().Size()));
     }
-    cv::Mat output_img;
 
     int height = input_cv->shape()[0];
     int width = input_cv->shape()[1];
 
     std::shared_ptr<CVTensor> output_cv;
-    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, data_type, &output_cv));
+    // Reshape from HCW to CHW
+    RETURN_IF_NOT_OK(
+      CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, DataType(DataType::DE_FLOAT32), &output_cv));
+    // Rescale tensor by dividing by 255
+    const float kMaxBitValueinFloat = 255.;
     for (int i = 0; i < num_channels; ++i) {
+      cv::Mat mat_t;
+      cv::extractChannel(input_cv->mat(), mat_t, i);
       cv::Mat mat;
       RETURN_IF_NOT_OK(output_cv->MatAtIndex({i}, &mat));
-      cv::extractChannel(input_cv->mat(), mat, i);
+      mat_t.convertTo(mat, CV_32F, 1 / kMaxBitValueinFloat, 0);
     }
-    output_cv->mat().convertTo(output_cv->mat(), CV_32F, 1.0 / MAX_BIT_VALUE);
-    *output = std::static_pointer_cast<Tensor>(output_cv);
+
+    // Process tensor output according to desired output data type
+    if (data_type != DataType(DataType::DE_FLOAT32)) {
+      RETURN_IF_NOT_OK(TypeCast(output_cv, output, data_type));
+    } else {
+      *output = std::move(output_cv);
+    }
     return Status::OK();
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("ToTensor: " + std::string(e.what()));
