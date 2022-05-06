@@ -28,6 +28,7 @@ if(BUILD_LITE)
                 CONFIGURE_COMMAND ./Configure android-arm64 -D__ANDROID_API__=29 no-zlib
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
                 )
     elseif(PLATFORM_ARM32 AND ANDROID_NDK_TOOLCHAIN_INCLUDED)
         set(ANDROID_NDK_ROOT $ENV{ANDROID_NDK})
@@ -43,6 +44,7 @@ if(BUILD_LITE)
                 CONFIGURE_COMMAND ./Configure android-arm -D__ANDROID_API__=19 no-zlib
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
                 )
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR APPLE)
         mindspore_add_pkg(openssl
@@ -53,6 +55,7 @@ if(BUILD_LITE)
                 CONFIGURE_COMMAND ./config no-zlib
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
                 )
     else()
         MESSAGE(FATAL_ERROR "openssl does not support compilation for the current environment.")
@@ -71,6 +74,7 @@ else()
                 CONFIGURE_COMMAND ./config no-zlib no-shared
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3711.patch
                 PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2021-3712.patch
+                PATCHES ${OPENSSL_PATCH_ROOT}/CVE-2022-0778.patch
                 )
         include_directories(${openssl_INC})
         add_library(mindspore::ssl ALIAS openssl::ssl)
