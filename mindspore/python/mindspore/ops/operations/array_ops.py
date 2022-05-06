@@ -4230,7 +4230,7 @@ class ScatterNdUpdate(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class ScatterMax(_ScatterOp):
+class ScatterMax(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the maximum operation.
 
@@ -4284,7 +4284,7 @@ class ScatterMax(_ScatterOp):
     """
 
 
-class ScatterMin(_ScatterOp):
+class ScatterMin(_ScatterOpDynamic):
     r"""
     Updates the value of the input tensor through the minimum operation.
 
