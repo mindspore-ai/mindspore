@@ -71,13 +71,13 @@ void LUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kLUOutputsNum, kernel_name_);
-  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex);
+  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex));
   InitMatrixInfo(a_shape, &a_row_, &a_col_);
-  auto lu_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
+  auto lu_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex));
   InitMatrixInfo(lu_shape, &lu_row_, &lu_col_);
-  auto permutation_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kPermutationIndex);
+  auto permutation_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kPermutationIndex));
   InitMatrixInfo(permutation_shape, &permutation_row_, &permutation_col_);
-  auto pivots_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex);
+  auto pivots_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kPivotsIndex));
   InitPivotVecInfo(pivots_shape, &pivots_row_, &pivots_col_);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);

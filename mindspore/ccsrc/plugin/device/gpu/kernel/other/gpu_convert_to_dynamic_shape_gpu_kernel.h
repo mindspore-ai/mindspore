@@ -63,7 +63,8 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
       InitSizeLists();
       return true;
     }
-    for (const size_t &e : input_shape_) {
+    input_size_ = 1;
+    for (const auto &e : input_shape_) {
       input_size_ *= e;
     }
 
@@ -77,6 +78,8 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
     input_shape_.clear();
     input_size_ = 1;
     is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
   }
 
  protected:
@@ -85,7 +88,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
                                "cudaStreamSynchronized failed");
 
     std::vector<TypeId> output_types = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
-    std::vector<std::vector<size_t>> output_shapes = {input_shape_};
+    std::vector<ShapeVector> output_shapes = {input_shape_};
     common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node_.lock().get());
   }
   void InitSizeLists() override {
@@ -95,8 +98,8 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
 
  private:
   void *cuda_stream_ptr_;
-  std::vector<size_t> input_shape_;
-  size_t input_size_;
+  ShapeVector input_shape_;
+  int64_t input_size_;
   bool is_null_input_;
 };
 }  // namespace kernel

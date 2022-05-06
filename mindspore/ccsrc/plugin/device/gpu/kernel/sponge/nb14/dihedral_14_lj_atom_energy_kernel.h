@@ -49,15 +49,15 @@ class Dihedral14LJAtomEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_LJ_type_A = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
     auto shape_LJ_type_B = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
 
-    for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
-    for (size_t i = 0; i < shape_LJtype.size(); i++) ele_LJtype *= shape_LJtype[i];
-    for (size_t i = 0; i < shape_charge.size(); i++) ele_charge *= shape_charge[i];
-    for (size_t i = 0; i < shape_boxlength_f.size(); i++) ele_boxlength_f *= shape_boxlength_f[i];
-    for (size_t i = 0; i < shape_a_14.size(); i++) ele_a_14 *= shape_a_14[i];
-    for (size_t i = 0; i < shape_b_14.size(); i++) ele_b_14 *= shape_b_14[i];
-    for (size_t i = 0; i < shape_lj_scale_factor.size(); i++) ele_lj_scale_factor *= shape_lj_scale_factor[i];
-    for (size_t i = 0; i < shape_LJ_type_A.size(); i++) ele_LJ_type_A *= shape_LJ_type_A[i];
-    for (size_t i = 0; i < shape_LJ_type_B.size(); i++) ele_LJ_type_B *= shape_LJ_type_B[i];
+    ele_uint_crd *= SizeOf(shape_uint_crd);
+    ele_LJtype *= SizeOf(shape_LJtype);
+    ele_charge *= SizeOf(shape_charge);
+    ele_boxlength_f *= SizeOf(shape_boxlength_f);
+    ele_a_14 *= SizeOf(shape_a_14);
+    ele_b_14 *= SizeOf(shape_b_14);
+    ele_lj_scale_factor *= SizeOf(shape_lj_scale_factor);
+    ele_LJ_type_A *= SizeOf(shape_LJ_type_A);
+    ele_LJ_type_B *= SizeOf(shape_LJ_type_B);
 
     InitSizeLists();
     return true;

@@ -81,10 +81,8 @@ std::shared_ptr<session::KernelGraph> AscendLaunchTransData::ObtainTransDataKern
   std::vector<TypeId> input_dtypes = {dtype_};
   std::vector<TypeId> output_dtypes = {dtype_};
   // obtain input & output shape
-  std::vector<int64_t> input_shape;
-  std::transform(shape_.begin(), shape_.end(), std::back_inserter(input_shape), SizeToLong);
-  std::vector<std::vector<int64_t>> input_shapes = {{input_shape}};
-  std::vector<std::vector<size_t>> output_shapes = {{shape_}};
+  std::vector<ShapeVector> input_shapes = {{shape_}};
+  std::vector<ShapeVector> output_shapes = {{shape_}};
   auto transdata_graph = session::SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
     kTransDataOpName, input_dtypes, input_shapes, output_dtypes, output_shapes);
   MS_EXCEPTION_IF_NULL(transdata_graph);

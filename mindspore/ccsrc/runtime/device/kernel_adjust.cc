@@ -46,7 +46,7 @@ constexpr auto kSpecifyParameter = "accu_status";
 constexpr auto kSplitOverFlow = "split_overflow";
 constexpr auto kLayerOverFlow = "layer_overflow";
 constexpr auto kMixLayerStatusParameter = "mix_layer_status";
-size_t kNPUShape = 8;
+int64_t kNPUShape = 8;
 constexpr size_t kLastHandleDiff = 2;
 }  // namespace
 namespace mindspore {
@@ -556,7 +556,7 @@ CNodePtr KernelAdjust::CreatTupleGetItemNode(const std::shared_ptr<session::Kern
   CNodePtr tuple_getitem = kernel_graph_ptr->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   tuple_getitem->set_scope(node->scope());
-  std::vector<size_t> origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
+  auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
   TypeId origin_type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
   common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
   return tuple_getitem;
@@ -731,7 +731,7 @@ CNodePtr KernelAdjust::CreateNPUAllocStatus(const std::shared_ptr<session::Kerne
   auto npu_alloc_cnode = kernel_graph_ptr->NewCNode(npu_alloc_inputs);
   MS_EXCEPTION_IF_NULL(npu_alloc_cnode);
   npu_alloc_cnode->set_scope(kDefaultScope);
-  std::vector<size_t> npu_output_shape = {kNPUShape};
+  ShapeVector npu_output_shape = {kNPUShape};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {npu_output_shape}, npu_alloc_cnode.get());
 
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
@@ -783,7 +783,7 @@ CNodePtr KernelAdjust::CreateAssign(const std::shared_ptr<session::KernelGraph> 
   MS_EXCEPTION_IF_NULL(specify_para);
 
   std::vector<float> reset(kNPUShape, 0.0);
-  ShapeVector reset_shape({static_cast<int64_t>(kNPUShape)});
+  ShapeVector reset_shape({kNPUShape});
   auto shp_buf_size = sizeof(float) * reset.size();
   auto reset_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, reset_shape, reset.data(), shp_buf_size);
   auto reset_value_node = std::make_shared<ValueNode>(reset_tensor);

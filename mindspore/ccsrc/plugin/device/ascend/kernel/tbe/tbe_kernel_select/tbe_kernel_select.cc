@@ -337,7 +337,7 @@ bool TbeKernelSelect::FilterInVaildShape(const KernelBuildInfoIter &kernel_build
   return true;
 }
 
-bool TbeKernelSelect::IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format) {
+bool TbeKernelSelect::IsShapeMatchFormat(const ShapeVector &shape, const std::string &format) {
   if (format == kOpFormat_DEFAULT) {
     return true;
   }

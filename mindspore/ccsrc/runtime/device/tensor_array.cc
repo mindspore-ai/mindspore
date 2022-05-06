@@ -17,7 +17,7 @@
 
 namespace mindspore {
 namespace device {
-bool TensorArray::CheckValue(const TypeId &dtype, const std::vector<size_t> &shape) {
+bool TensorArray::CheckValue(const TypeId &dtype, const ShapeVector &shape) {
   MS_LOG(DEBUG) << "Check the data shape and type for " << name_;
   if (dtype != dtype_->type_id()) {
     MS_LOG(ERROR) << "Invalid data type " << TypeIdLabel(dtype) << " for " << name_ << ", the origin type is "

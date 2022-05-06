@@ -43,11 +43,11 @@ void UnpackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i < IntToSize(unstack_param_.axis_)) {
-      unstack_param_.pre_dims_ *= SizeToInt(input_shape[i]);
+      unstack_param_.pre_dims_ *= LongToInt(input_shape[i]);
     } else if (i > IntToSize(unstack_param_.axis_)) {
-      unstack_param_.after_dims_ *= SizeToInt(input_shape[i]);
+      unstack_param_.after_dims_ *= LongToInt(input_shape[i]);
     } else {
-      unstack_param_.axis_dim_ = SizeToInt(input_shape[i]);
+      unstack_param_.axis_dim_ = LongToInt(input_shape[i]);
     }
   }
 

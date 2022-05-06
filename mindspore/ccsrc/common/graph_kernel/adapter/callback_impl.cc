@@ -34,31 +34,19 @@
 namespace mindspore::graphkernel {
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) {
-  auto vec = AnfAlgo::GetInputDeviceShape(node, i);
-  ShapeVector ret;
-  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
-  return ret;
+  return AnfAlgo::GetInputDeviceShape(node, i);
 }
 
 ShapeVector CallbackImpl::GetOutputShape(const AnfNodePtr &node, size_t i) {
-  auto vec = AnfAlgo::GetOutputDeviceShape(node, i);
-  ShapeVector ret;
-  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
-  return ret;
+  return AnfAlgo::GetOutputDeviceShape(node, i);
 }
 
 ShapeVector CallbackImpl::GetInputInferShape(const AnfNodePtr &node, size_t i) {
-  auto vec = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
-  ShapeVector ret;
-  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
-  return ret;
+  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
 }
 
 ShapeVector CallbackImpl::GetOutputInferShape(const AnfNodePtr &node, size_t i) {
-  auto vec = common::AnfAlgo::GetOutputInferShape(node, i);
-  ShapeVector ret;
-  (void)std::transform(vec.begin(), vec.end(), std::back_inserter(ret), SizeToLong);
-  return ret;
+  return common::AnfAlgo::GetOutputInferShape(node, i);
 }
 
 TypeId CallbackImpl::GetInputType(const AnfNodePtr &node, size_t i) { return AnfAlgo::GetInputDeviceDataType(node, i); }
@@ -235,7 +223,7 @@ ShapeVector CallbackImplWithInferShape::GetInputShape(const AnfNodePtr &node, si
 }
 
 ShapeVector CallbackImplWithInferShape::GetOutputShape(const AnfNodePtr &node, size_t i) {
-  return CallbackImpl::GetOutputInferShape(node, i);
+  return common::AnfAlgo::GetOutputInferShape(node, i);
 }
 
 TypeId CallbackImplWithInferShape::GetInputType(const AnfNodePtr &node, size_t i) {

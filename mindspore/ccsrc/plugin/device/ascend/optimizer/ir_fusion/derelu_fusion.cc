@@ -54,7 +54,7 @@ CNodePtr DereluFusion::CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &r
   if (common::AnfAlgo::IsDynamicShape(relu)) {
     return nullptr;
   }
-  std::vector<size_t> mask_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
+  auto mask_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
   if (mask_shape.size() != kMaskShapeSize) {
     MS_LOG(DEBUG) << "relu's infer shape size not equal 4";
     return nullptr;

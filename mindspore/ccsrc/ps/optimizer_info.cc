@@ -98,7 +98,7 @@ void DenseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   }
 }
 
-void DenseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &, size_t n, size_t, size_t) {
+void DenseOptimInfo::ComputeMean(const std::vector<ShapeVector> &, size_t n, size_t, size_t) {
   if (n > 1) {
     MS_EXCEPTION_IF_NULL(gradient()->addr);
     float *accum_grad_data = reinterpret_cast<float *>(gradient()->addr);
@@ -179,8 +179,7 @@ void SparseOptimInfo::Accumulate(const Values &values, const Lengths &lengths) {
   indices()->size += incr_indice_data_size;
 }
 
-void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes, size_t n, size_t server_num,
-                                  size_t rank_id) {
+void SparseOptimInfo::ComputeMean(const std::vector<ShapeVector> &shapes, size_t n, size_t server_num, size_t rank_id) {
   if (n == 0 || indices()->size == 0) {
     MS_LOG(EXCEPTION) << "The size of shapes or indices are 0.";
   }
@@ -211,11 +210,11 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   int *indices_data = reinterpret_cast<int *>(indices()->addr);
 
   if (sharded_) {
-    size_t original_row_count = input_shapes.front();
+    auto original_row_count = input_shapes.front();
     if (original_row_count > 0) {
       size_t offset = 0;
       std::map<int64_t, int64_t> rank_dims =
-        Util::AllRankLocalShard(SizeToLong(original_row_count), SizeToLong(rank_id), SizeToLong(server_num));
+        Util::AllRankLocalShard(original_row_count, SizeToLong(rank_id), SizeToLong(server_num));
       for (size_t i = 0; i < rank_id; i++) {
         if (rank_dims.count(i) == 0) {
           MS_LOG(EXCEPTION) << "No local shard number for rank " << i;

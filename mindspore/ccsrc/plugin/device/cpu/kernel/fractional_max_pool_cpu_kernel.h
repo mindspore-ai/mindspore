@@ -53,8 +53,8 @@ class FractionalMaxPoolCpuKernelMod : public DeprecatedNativeCpuKernelMod {
     FractionalMaxPoolCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, FractionalMaxPoolFunc>> func_list_;
   FractionalMaxPoolFunc kernel_func_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
   std::vector<float> pooling_ratio_;
   bool pseudo_random_{false};
   bool overlapping_{false};

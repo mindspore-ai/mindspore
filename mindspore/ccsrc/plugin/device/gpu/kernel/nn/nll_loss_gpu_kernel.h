@@ -56,7 +56,7 @@ class NLLLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "logits");
     if (is_null_input_) {
@@ -67,11 +67,9 @@ class NLLLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of logits cannot be less than 2, but "
                         << "got the " << input_shape.size();
     }
-    n_ = static_cast<int>(input_shape[0]);
-    c_ = static_cast<int>(input_shape[1]);
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    n_ = LongToInt(input_shape[0]);
+    c_ = LongToInt(input_shape[1]);
+    input_size_ *= SizeOf(input_shape);
     string reduction = GetAttr<string>(kernel_node, "reduction");
     reduction_ = kReductionModeMap[reduction];
     if ((reduction_ == ReductionMode::kSum) || (reduction_ == ReductionMode::kMean)) {

@@ -99,7 +99,7 @@ bool MatrixDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   if (diag_rank < 1) {
     MS_LOG(EXCEPTION) << "For MatrixDiagV3, input x dims must be greater equal than 1 while got " << diag_rank << ".";
   }
-  max_diag_len_ = SizeToLong(diagonal_shape_[diag_rank - 1]);
+  max_diag_len_ = diagonal_shape_[diag_rank - 1];
   // k
   auto *k_data = reinterpret_cast<int32_t *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(k_data);

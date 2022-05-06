@@ -79,6 +79,9 @@ void FractionalMaxPool3DWithFixedKsizeCPUKernelMod::InitKernel(const CNodePtr &k
   output_shape_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "output_shape");
   ksize_ = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "ksize");
   data_format_ = common::AnfAlgo::GetNodeAttr<string>(kernel_node, FORMAT);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, random_samples_shape_, output_shape_})) {
+    return;
+  }
   size_t input_num_dims = input_shape_.size();
   size_t random_samples_dims = random_samples_shape_.size();
   size_t output_shape_dims = output_shape_.size();

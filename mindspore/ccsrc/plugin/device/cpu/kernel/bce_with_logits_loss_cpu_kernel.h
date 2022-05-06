@@ -56,10 +56,10 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
                     const std::vector<AddressPtr> &outputs);
 
   size_t input_size_{1};
-  std::vector<size_t> input_logits_shape_;
-  std::vector<size_t> input_label_shape_;
-  std::vector<size_t> input_weight_shape_;
-  std::vector<size_t> input_post_weight_shape_;
+  ShapeVector input_logits_shape_;
+  ShapeVector input_label_shape_;
+  ShapeVector input_weight_shape_;
+  ShapeVector input_post_weight_shape_;
   ReductionType reduction_{kNone};
 };
 }  // namespace kernel

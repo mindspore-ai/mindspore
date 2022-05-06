@@ -111,7 +111,7 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
       if (ax < 0) {
         ax = 0;
       }
-      input_shape_.push_back(IntToSize(ax));
+      input_shape_.push_back(ax);
     }
   }
 }

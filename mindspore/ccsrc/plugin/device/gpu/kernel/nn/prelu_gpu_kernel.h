@@ -70,7 +70,7 @@ class PReLUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     input_length_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<>());
     size_t input_rank = input_shape.size();
-    size_t channel_num;
+    int64_t channel_num;
     if (input_rank == 0) {
       channel_num = 1;
       per_channel_length_ = 1;
@@ -88,7 +88,7 @@ class PReLUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "weight: " << weight_shape.size() << ", weight.shape[0]: " << weight_shape[0]
                         << ", the channel num: " << channel_num;
     }
-    weight_length_ = weight_shape[0];
+    weight_length_ = LongToSizeClipNeg(weight_shape[0]);
     InitSizeLists();
     return true;
   }

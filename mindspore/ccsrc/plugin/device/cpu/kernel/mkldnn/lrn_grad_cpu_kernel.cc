@@ -67,10 +67,8 @@ int LrnGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
     return ret;
   }
-  std::vector<size_t> input_shape_;
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape_);
+  dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape);
   const auto lrn_multiple = 2;
   dnnl::memory::dim local_size = lrn_multiple * depth_radius_ + 1;
   const auto dnnl_alpha = static_cast<float>(local_size) * alpha_;

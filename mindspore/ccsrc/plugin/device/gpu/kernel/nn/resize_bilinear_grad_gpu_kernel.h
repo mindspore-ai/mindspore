@@ -73,9 +73,9 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    std::vector<size_t> dy_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    std::vector<size_t> dx_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto dy_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    auto dx_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") || CHECK_SHAPE_NULL(x_shape, kernel_name, "x") ||
                      CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");
     if (is_null_input_) {
@@ -94,20 +94,14 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dx must be equal to 4, but got "
                         << dx_shape.size();
     }
-    n_ = SizeToInt(dy_shape[kDyIndexForN]);
-    c_ = SizeToInt(dy_shape[kDyIndexForC]);
-    dy_h_ = SizeToInt(dy_shape[kDyIndexForH]);
-    dy_w_ = SizeToInt(dy_shape[kDyIndexForW]);
-    dx_h_ = SizeToInt(dx_shape[kDxIndexForH]);
-    dx_w_ = SizeToInt(dx_shape[kDxIndexForW]);
-    dy_size_ = sizeof(T);
-    for (auto x : dy_shape) {
-      dy_size_ *= x;
-    }
-    dx_size_ = sizeof(T);
-    for (auto x : dx_shape) {
-      dx_size_ *= x;
-    }
+    n_ = LongToInt(dy_shape[kDyIndexForN]);
+    c_ = LongToInt(dy_shape[kDyIndexForC]);
+    dy_h_ = LongToInt(dy_shape[kDyIndexForH]);
+    dy_w_ = LongToInt(dy_shape[kDyIndexForW]);
+    dx_h_ = LongToInt(dx_shape[kDxIndexForH]);
+    dx_w_ = LongToInt(dx_shape[kDxIndexForW]);
+    dy_size_ = sizeof(T) * SizeOf(dy_shape);
+    dx_size_ = sizeof(T) * SizeOf(dx_shape);
     workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(float);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
     half_pixel_centers_ = GetAttr<bool>(kernel_node, "half_pixel_centers");

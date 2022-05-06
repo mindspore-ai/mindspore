@@ -90,21 +90,10 @@ class FtrlGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < variable_shape.size(); i++) {
-      variable_size_ *= variable_shape[i];
-    }
-
-    for (size_t i = 0; i < accumulation_shape.size(); i++) {
-      accumulation_size_ *= accumulation_shape[i];
-    }
-
-    for (size_t i = 0; i < linear_shape.size(); i++) {
-      linear_size_ *= linear_shape[i];
-    }
-
-    for (size_t i = 0; i < gradient_shape.size(); i++) {
-      gradient_size_ *= gradient_shape[i];
-    }
+    variable_size_ *= SizeOf(variable_shape);
+    accumulation_size_ *= SizeOf(accumulation_shape);
+    linear_size_ *= SizeOf(linear_shape);
+    gradient_size_ *= SizeOf(gradient_shape);
 
     InitSizeLists();
     return true;

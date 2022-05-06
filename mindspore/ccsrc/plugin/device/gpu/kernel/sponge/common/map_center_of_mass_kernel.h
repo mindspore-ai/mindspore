@@ -45,12 +45,12 @@ class MapCenterOfMassGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_no_wrap_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
     auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
 
-    for (size_t i = 0; i < shape_start.size(); i++) ele_start *= shape_start[i];
-    for (size_t i = 0; i < shape_end.size(); i++) ele_end *= shape_end[i];
-    for (size_t i = 0; i < shape_center_of_mass.size(); i++) ele_center_of_mass *= shape_center_of_mass[i];
-    for (size_t i = 0; i < shape_box_length.size(); i++) ele_box_length *= shape_box_length[i];
-    for (size_t i = 0; i < shape_no_wrap_crd.size(); i++) ele_no_wrap_crd *= shape_no_wrap_crd[i];
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
+    ele_start *= SizeOf(shape_start);
+    ele_end *= SizeOf(shape_end);
+    ele_center_of_mass *= SizeOf(shape_center_of_mass);
+    ele_box_length *= SizeOf(shape_box_length);
+    ele_no_wrap_crd *= SizeOf(shape_no_wrap_crd);
+    ele_crd *= SizeOf(shape_crd);
 
     InitSizeLists();
     return true;

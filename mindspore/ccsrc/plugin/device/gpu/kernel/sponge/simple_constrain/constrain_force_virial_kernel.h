@@ -57,16 +57,15 @@ class ConstrainForceVirialGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_constant_rs = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
     auto shape_constrain_ks = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 8);
 
-    for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    for (size_t i = 0; i < shape_pair_dr.size(); i++) ele_pair_dr *= shape_pair_dr[i];
-    for (size_t i = 0; i < shape_atom_i_serials.size(); i++) ele_atom_i_serials *= shape_atom_i_serials[i];
-    for (size_t i = 0; i < shape_atom_j_serials.size(); i++) ele_atom_j_serials *= shape_atom_j_serials[i];
-    for (size_t i = 0; i < shape_constant_rs.size(); i++) ele_constant_rs *= shape_constant_rs[i];
-    for (size_t i = 0; i < shape_constrain_ks.size(); i++) ele_constrain_ks *= shape_constrain_ks[i];
-
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_quarter_cof.size(); i++) ele_quarter_cof *= shape_quarter_cof[i];
-    for (size_t i = 0; i < shape_mass_inverse.size(); i++) ele_mass_inverse *= shape_mass_inverse[i];
+    ele_scaler *= SizeOf(shape_scaler);
+    ele_pair_dr *= SizeOf(shape_pair_dr);
+    ele_atom_i_serials *= SizeOf(shape_atom_i_serials);
+    ele_atom_j_serials *= SizeOf(shape_atom_j_serials);
+    ele_constant_rs *= SizeOf(shape_constant_rs);
+    ele_constrain_ks *= SizeOf(shape_constrain_ks);
+    ele_crd *= SizeOf(shape_crd);
+    ele_quarter_cof *= SizeOf(shape_quarter_cof);
+    ele_mass_inverse *= SizeOf(shape_mass_inverse);
 
     InitSizeLists();
     return true;

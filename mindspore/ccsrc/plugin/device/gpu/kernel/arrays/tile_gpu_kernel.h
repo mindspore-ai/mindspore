@@ -77,24 +77,18 @@ class TileGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be less than 1, but got "
                         << output_shape_.size();
     }
-    input_size_ = 1;
-    for (size_t i = 0; i < input_shape_.size(); i++) {
-      input_size_ *= input_shape_[i];
-    }
-
-    output_size_ = 1;
+    input_size_ = SizeOf(input_shape_);
     if (output_shape_.size() > TILE_MAX_DIMENSION) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be greater than "
                         << TILE_MAX_DIMENSION << ", but got " << output_shape_.size();
     }
     shape_size_ = output_shape_.size();
-    for (size_t i = 0; i < output_shape_.size(); i++) {
-      output_size_ *= output_shape_[i];
-    }
+    output_size_ = SizeOf(output_shape_);
+
     std::vector<int64_t> multiples = GetAttr<std::vector<int64_t>>(kernel_node, "multiples");
     int64_t filling_value = static_cast<int64_t>(multiples.size()) - static_cast<int64_t>(input_shape_.size());
     // input_shape_.size() == output_shape_.size() == shape_size_
-    (void)input_shape_.insert(input_shape_.begin(), LongToSize(filling_value), 1);
+    (void)input_shape_.insert(input_shape_.begin(), filling_value, 1);
     InitSizeLists();
     return true;
   }
@@ -124,8 +118,8 @@ class TileGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t output_size_;
   size_t shape_size_;
   bool is_null_input_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

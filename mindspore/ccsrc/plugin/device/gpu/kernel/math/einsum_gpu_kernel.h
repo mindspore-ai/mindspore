@@ -43,7 +43,7 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   // workspace[2] : res; workspace[1]:src workspace[2]: dst
   void RunSingleOpProcess(const OpStruct &op_info, T *src_ptr, T *dst_ptr, void *stream_ptr) {
     auto name = std::get<IDX_NAME>(op_info);
-    auto inp_shape = std::get<IDX_INP_SHAPE>(op_info);
+    auto inp_shape = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(op_info));
     auto op_param = std::get<IDX_PARAM>(op_info);
     func_helper_.SingleElementProcess(name, src_ptr, dst_ptr, inp_shape, op_param, stream_ptr);
   }
@@ -85,9 +85,9 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       input_ptr = GetDeviceAddress<T>(inputs, idx);
       RunSingleOpVecProcess(input_ptr, single_op_[idx], stream_ptr, &src_ptr, &dst_ptr);
       auto name = std::get<IDX_NAME>(res_op_[count]);
-      auto shape_a = std::get<IDX_INP_SHAPE>(res_op_[count]);
+      auto shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[count]));
       auto shape_b = std::get<IDX_PARAM>(res_op_[count]);
-      auto shape_c = std::get<IDX_OUT_SHAPE>(res_op_[count]);
+      auto shape_c = Convert2SizeTClipNeg(std::get<IDX_OUT_SHAPE>(res_op_[count]));
 
       func_helper_.TwoElementProcess(name, res_ptr, src_ptr, dst_ptr, shape_a, shape_b, shape_c, stream_ptr);
       T *temp = res_ptr;
@@ -99,7 +99,7 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
       name = std::get<IDX_NAME>(res_op_[count]);
       while (single_op_func_.count(name) != 0) {
-        shape_a = std::get<IDX_INP_SHAPE>(res_op_[count]);
+        shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[count]));
         shape_b = std::get<IDX_PARAM>(res_op_[count]);
         func_helper_.SingleElementProcess(name, res_ptr, dst_ptr, shape_a, shape_b, stream_ptr);
         temp = res_ptr;
@@ -137,7 +137,7 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         MS_LOG(ERROR) << "For " << node_name << ", input types should be the same, but it does not.";
         return false;
       }
-      std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
+      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
       input_shapes_.push_back(in_shape);
     }
     std::string equation = GetAttr<std::string>(kernel_node, "equation");
@@ -210,8 +210,8 @@ class EinsumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   EinsumHelper<T> func_helper_;
   std::string node_name_;
   TypeId type_id_;
-  std::vector<std::vector<size_t>> input_shapes_;
-  std::vector<size_t> out_shape_;
+  std::vector<std::vector<int64_t>> input_shapes_;
+  std::vector<int64_t> out_shape_;
   std::vector<std::vector<OpStruct>> single_op_;
   std::vector<OpStruct> res_op_;
   std::set<std::string> single_op_func_ = {"ReduceSum", "Diagonal", "Transpose"};

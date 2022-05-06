@@ -54,10 +54,10 @@ class LerpCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<Ler
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
   size_t output_size_{1};
-  std::vector<size_t> start_shape_;
-  std::vector<size_t> end_shape_;
-  std::vector<size_t> weight_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector start_shape_;
+  ShapeVector end_shape_;
+  ShapeVector weight_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

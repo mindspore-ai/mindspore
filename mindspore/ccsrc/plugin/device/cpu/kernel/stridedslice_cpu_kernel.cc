@@ -83,16 +83,16 @@ bool StridedSliceCpuKernelMod::MatchParallelPattern() {
 }
 
 void StridedSliceCpuKernelMod::InitParallelParam() {
-  outer_ = SizeToInt(
-    std::accumulate(input_shape_.begin(), input_shape_.begin() + split_axis_, size_t(1), std::multiplies<size_t>()));
-  inner_ = SizeToInt(
-    std::accumulate(input_shape_.begin() + split_axis_ + 1, input_shape_.end(), size_t(1), std::multiplies<size_t>()));
+  outer_ = LongToInt(
+    std::accumulate(input_shape_.begin(), input_shape_.begin() + split_axis_, size_t(1), std::multiplies<int64_t>()));
+  inner_ = LongToInt(
+    std::accumulate(input_shape_.begin() + split_axis_ + 1, input_shape_.end(), size_t(1), std::multiplies<int64_t>()));
 
   int max_thread_num = SizeToInt(common::ThreadPool::GetInstance().GetSyncRunThreadNum());
   int thread_num = 1;
   if (outer_ == 1) {
     parallel_strategy_ = kOnSplitAxis;
-    thread_num = std::min(SizeToInt(output_shape_[split_axis_]), max_thread_num);
+    thread_num = std::min(LongToInt(output_shape_[split_axis_]), max_thread_num);
     cal_num_per_thread_ = UP_DIV(output_shape_[split_axis_], thread_num);
   } else {
     parallel_strategy_ = kOnOuter;
@@ -118,7 +118,7 @@ void StridedSliceCpuKernelMod::InitSliceParam(const CNodePtr &kernel_node, std::
   }
   data_size_ = type_pair->second.second;
   slice_param_.data_type = type_pair->second.first;
-  std::vector<size_t> input_shape_pad = input_shape_;
+  auto input_shape_pad = input_shape_;
   FillEmptyDims(kernel_node, begin, end, stride, &input_shape_pad);
   ParseStrideSliceMasks(kernel_node, begin, end, stride, input_shape_pad);
 
@@ -126,7 +126,7 @@ void StridedSliceCpuKernelMod::InitSliceParam(const CNodePtr &kernel_node, std::
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
   for (size_t i = 0; i < DIMENSION_8D; i++) {
-    slice_param_.in_shape_[i] = SizeToInt(input_shape_pad[i]);
+    slice_param_.in_shape_[i] = LongToInt(input_shape_pad[i]);
     slice_param_.begins_[i] = LongToInt(_begin[i]);
     slice_param_.ends_[i] = LongToInt(_end[i]);
     slice_param_.strides_[i] = LongToInt(_stride[i]);
@@ -139,15 +139,16 @@ common::Status StridedSliceCpuKernelMod::RunTaskOnOuter(const uint8_t *input_add
                                                         int start_pos) {
   int begin_index = slice_param_.begins_[split_axis_];
   int inner_size = inner_ * data_size_;
-  const uint8_t *cur_in_ptr = input_addr + (start_pos * input_shape_[split_axis_] + begin_index) * inner_size;
-  uint8_t *cur_out_ptr = output_addr + start_pos * output_shape_[split_axis_] * inner_size;
+  const uint8_t *cur_in_ptr =
+    input_addr + (start_pos * LongToInt(input_shape_[split_axis_]) + begin_index) * inner_size;
+  uint8_t *cur_out_ptr = output_addr + start_pos * LongToInt(output_shape_[split_axis_]) * inner_size;
   int cur_outer = outer_ - start_pos;
   if (cur_outer <= 0) {
     return common::SUCCESS;
   }
   cur_outer = cur_outer > cal_num_per_thread_ ? cal_num_per_thread_ : cur_outer;
-  FastStride(cur_in_ptr, cur_out_ptr, output_shape_[split_axis_], slice_param_.strides_[split_axis_], cur_outer,
-             inner_size, input_shape_[split_axis_] * inner_size);
+  FastStride(cur_in_ptr, cur_out_ptr, LongToInt(output_shape_[split_axis_]), slice_param_.strides_[split_axis_],
+             cur_outer, inner_size, LongToSize(input_shape_[split_axis_]) * inner_size);
   return common::SUCCESS;
 }
 
@@ -157,7 +158,7 @@ common::Status StridedSliceCpuKernelMod::RunTaskOnSplitAxis(const uint8_t *input
   int inner_size = inner_ * data_size_;
   const uint8_t *cur_in_ptr = input_addr + (start_pos * slice_param_.strides_[split_axis_] + begin_index) * inner_size;
   uint8_t *cur_out_ptr = output_addr + start_pos * inner_size;
-  int cal_axis_num = output_shape_[split_axis_] - start_pos;
+  int cal_axis_num = LongToInt(output_shape_[split_axis_]) - start_pos;
   if (cal_axis_num <= 0) {
     return common::SUCCESS;
   }

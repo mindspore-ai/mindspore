@@ -70,9 +70,9 @@ class BroadcastOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     GetOpType(kernel_node);
-    auto shape1 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto shape2 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto shape3 = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto shape1 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto shape2 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto shape3 = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(shape1, kernel_name_, "input") ||
                      CHECK_SHAPE_NULL(shape2, kernel_name_, "input") ||
                      CHECK_SHAPE_NULL(shape3, kernel_name_, "output");

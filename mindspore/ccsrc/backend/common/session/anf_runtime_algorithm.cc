@@ -83,7 +83,7 @@ static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t
   {prim::kPrimStridedSliceGrad->name(),
    {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}}};
 
-std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<size_t> &shape) {
+std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<int64_t> &shape) {
   std::ostringstream buffer;
   buffer << "<" << TypeIdLabel(type);
   if (!fmt.empty()) {
@@ -170,7 +170,17 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_
     output_type_id = common::AnfAlgo::GetOutputInferDataType(node, output_index);
   }
   size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-  std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
+  auto shape = AnfAlgo::GetOutputDeviceShape(node, output_index);
+  if (IsDynamic(shape)) {
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, output_index);
+    if (!max_shape.empty()) {
+      shape = max_shape;
+      MS_LOG(DEBUG) << "shape[" << shape << "] is dynamic, using max_shape[" << max_shape << "] instead.";
+    } else {
+      shape = {1};
+      MS_LOG(DEBUG) << "shape[" << shape << "] is dynamic, set default to {1}";
+    }
+  }
   auto format = AnfAlgo::GetOutputFormat(node, output_index);
   auto dtype = AnfAlgo::GetOutputDeviceDataType(node, output_index);
   if (shape.empty() && format != kOpFormat_DEFAULT) {
@@ -178,7 +188,7 @@ size_t AnfRuntimeAlgorithm::GetOutputTensorMemSize(const AnfNodePtr &node, size_
     shape = trans::TransShapeToDevice(shape, format, node, output_index, dtype);
   }
   // scalar's output shape is a empty vector
-  size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+  size_t tensor_size = type_size * SizeOf(shape);
   return tensor_size;
 }
 
@@ -331,11 +341,28 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeForTbeBuild(const 
   return trans::TransShapeToDevice(infer_shape, format, node, output_idx, dtype);
 }
 
-std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
+bool AnfRuntimeAlgorithm::IsShapesDynamic(const std::vector<ShapeVector> &shapes) {
+  for (const auto &shape : shapes) {
+    if (IsDynamic(shape)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx) {
   auto format = GetOutputFormat(node, output_idx);
   auto infer_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
   if (infer_shape.empty()) {
     return infer_shape;
+  }
+
+  if (IsDynamic(infer_shape)) {
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, output_idx);
+    if (!max_shape.empty()) {
+      infer_shape = max_shape;
+    }
   }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
@@ -366,7 +393,7 @@ std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShapeForTbeBuild(const A
   return trans::TransShapeToDevice(infer_shape, format, node, input_idx, dtype, false);
 }
 
-std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
+std::vector<int64_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx) {
   auto format = GetInputFormat(node, input_idx);
   auto infer_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, input_idx);
   if (infer_shape.empty()) {
@@ -930,9 +957,9 @@ bool AnfRuntimeAlgorithm::IsIndependentNode(const CNodePtr &node) {
   return true;
 }
 
-static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, std::vector<size_t> *device_shape) {
-  constexpr size_t kDefaultValueForDynamicDim = 16;
-  auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](size_t size) {
+static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, ShapeVector *device_shape) {
+  constexpr int64_t kDefaultValueForDynamicDim = 16;
+  auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
     return static_cast<int64_t>(size) < 0 ? kDefaultValueForDynamicDim : size;
   };
   if (!max_shape.empty()) {
@@ -940,7 +967,7 @@ static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, s
       (void)std::transform(max_shape.begin(), max_shape.end(), std::back_inserter(*device_shape),
                            ConvertNegOneToDefault);
     } else {
-      (void)std::transform(max_shape.begin(), max_shape.end(), device_shape->begin(), IntToSize);
+      *device_shape = max_shape;
     }
   } else {
     auto tmp_shape = *device_shape;
@@ -954,10 +981,10 @@ static inline void GetMaxOrDefaultShape(const std::vector<int64_t> &max_shape, s
 // why do we do this? Because in dynamic shape case, the input shape is unknown when the `init`
 // function executes at the very first time, but we still need to  some helpful shape to make
 // sure the `init` executes correctly.
-std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
+ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetInputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (AnfUtils::IsShapeDynamic(device_shape) || device_shape.empty()) {
+  if (IsDynamic(device_shape) || device_shape.empty()) {
     auto max_shape = common::AnfAlgo::GetInputMaxShape(anf_node, index);
     GetMaxOrDefaultShape(max_shape, &device_shape);
     auto format = GetInputFormat(anf_node, index);
@@ -967,11 +994,11 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const Anf
 
   if (device_shape.empty()) {
     KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
-    auto shape = common::AnfAlgo::GetOutputInferShapeSigned(kernel_with_index.first, kernel_with_index.second);
-    std::vector<size_t> ret_shape;
-    constexpr size_t kDefaultValueForDynamicDim = 1;
+    auto shape = common::AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
+    ShapeVector ret_shape;
+    constexpr int64_t kDefaultValueForDynamicDim = 1;
     auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
-      return size < 0 ? kDefaultValueForDynamicDim : LongToSize(size);
+      return size < 0 ? kDefaultValueForDynamicDim : size;
     };
     std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
     auto format = GetInputFormat(anf_node, index);
@@ -984,10 +1011,10 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const Anf
 }
 
 // The same to GetInputDeviceShapeAdaptively
-std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
+ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index) {
   auto device_shape = GetOutputDeviceShape(anf_node, index);
   // Initialize GPUKernel with max shape to fit 'InitDynamicOutputKernelRef()' for memory reuse.
-  if (AnfUtils::IsShapeDynamic(device_shape) || device_shape.empty()) {
+  if (IsDynamic(device_shape) || device_shape.empty()) {
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(anf_node, index);
     GetMaxOrDefaultShape(max_shape, &device_shape);
     auto format = GetOutputFormat(anf_node, index);
@@ -997,10 +1024,10 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const An
 
   if (device_shape.empty()) {
     auto shape = common::AnfAlgo::GetOutputInferShapeSigned(anf_node, index);
-    std::vector<size_t> ret_shape;
-    constexpr size_t kDefaultValueForDynamicDim = 1;
+    ShapeVector ret_shape;
+    constexpr int64_t kDefaultValueForDynamicDim = 1;
     auto ConvertNegOneToOne = [&kDefaultValueForDynamicDim](int64_t size) {
-      return size < 0 ? kDefaultValueForDynamicDim : LongToSize(size);
+      return size < 0 ? kDefaultValueForDynamicDim : size;
     };
     std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToOne);
     auto format = GetOutputFormat(anf_node, index);
@@ -1285,7 +1312,7 @@ bool AnfRuntimeAlgorithm::IsDynamicShapeSkipExecute(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(axes_abs);
   auto axes_shape = AnfAlgo::GetInputDeviceShape(cnode, axes_index);
   if (axes_abs->isa<abstract::AbstractTensor>()) {
-    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](ssize_t shape) { return shape == 0; })) {
+    if (std::any_of(axes_shape.begin(), axes_shape.end(), [](int64_t shape) { return shape == 0; })) {
       return true;
     }
   }

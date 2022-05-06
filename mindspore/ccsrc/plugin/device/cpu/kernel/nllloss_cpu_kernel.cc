@@ -39,7 +39,7 @@ void NLLLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << kernel_name_ << " does not support this kernel data type: " << kernel_attr;
   }
 
-  std::vector<size_t> logits_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto logits_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto reduction = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, REDUCTION);
   auto pair = kReductionMap.find(reduction);
   if (pair == kReductionMap.end()) {
@@ -47,8 +47,8 @@ void NLLLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
   }
 
-  nllloss_param_.batch_ = SizeToInt(logits_shape[0]);
-  nllloss_param_.class_num_ = SizeToInt(logits_shape[1]);
+  nllloss_param_.batch_ = logits_shape[0];
+  nllloss_param_.class_num_ = logits_shape[1];
   nllloss_param_.reduction_type_ = pair->second;
 }
 

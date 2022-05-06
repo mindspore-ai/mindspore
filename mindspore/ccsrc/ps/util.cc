@@ -236,7 +236,7 @@ kernel::KernelBuildInfoPtr Util::GenerateKernelBuildInfo(const std::vector<AnfNo
   std::vector<std::string> outputs_device_format;
   std::vector<TypeId> inputs_device_type;
   std::vector<TypeId> outputs_device_type;
-  std::vector<std::vector<size_t>> outputs_shape;
+  std::vector<ShapeVector> outputs_shape;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   for (size_t idx = 0; idx < node_list.size(); ++idx) {
     auto cnode = utils::cast<CNodePtr>(node_list[idx]);

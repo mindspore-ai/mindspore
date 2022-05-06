@@ -23,6 +23,7 @@
 
 #include "ir/anf.h"
 #include "distributed/constants.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -107,7 +108,7 @@ class PsEmbeddingCacheInserter {
 
   // Record EmbeddingLookup nodes which are executed on server from origin function graph.
   // Key: shape of EmbeddingLookup node, Value: EmbeddingLookup AnfNodePtr.
-  std::map<std::vector<size_t>, AnfNodePtr> shapes_to_nodes_;
+  std::map<ShapeVector, AnfNodePtr> shapes_to_nodes_;
 };
 }  // namespace parallel
 }  // namespace mindspore

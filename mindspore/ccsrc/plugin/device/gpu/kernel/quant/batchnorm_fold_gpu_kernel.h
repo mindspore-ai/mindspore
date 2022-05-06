@@ -127,10 +127,10 @@ class BatchNormFoldGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << input_shape.size();
     }
     CheckTensorSize({input_shape});
-    batch_ = input_shape[0];
-    channel_ = input_shape[1];
-    height_ = input_shape[2];
-    width_ = input_shape[3];
+    batch_ = LongToInt(input_shape[0]);
+    channel_ = LongToInt(input_shape[1]);
+    height_ = LongToInt(input_shape[2]);
+    width_ = LongToInt(input_shape[3]);
 
     input_size_ = sizeof(T) * batch_ * channel_ * height_ * width_;
     output_size_ = sizeof(T) * channel_;

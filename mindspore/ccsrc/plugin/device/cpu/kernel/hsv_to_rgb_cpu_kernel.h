@@ -47,7 +47,7 @@ class HSVToRGBCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T1>
   void ComputeFloat(void *input, void *output, int64_t pixel_num);
   void ComputeHalf(void *input, void *output, int64_t pixel_num);
-  std::vector<size_t> shape;
+  ShapeVector shape;
   const size_t kInputNum = 1;
   const size_t kOutputNum = 1;
 };

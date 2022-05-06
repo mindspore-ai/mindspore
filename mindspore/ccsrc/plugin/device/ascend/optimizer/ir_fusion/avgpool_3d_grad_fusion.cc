@@ -97,8 +97,8 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   MS_EXCEPTION_IF_NULL(func_graph);
   //  assist tensor 1
   int64_t c1 = (fc + kC0 - 1) / kC0;
-  std::vector<int64_t> assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
-  std::vector<size_t> infer_shape = {IntToSize(1), LongToSize(fc), LongToSize(kd), LongToSize(kh), LongToSize(kw)};
+  ShapeVector assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
+  ShapeVector infer_shape = {1, fc, kd, kh, kw};
   float val = 1.0;
   if (divisor_override != 0) {
     val = 1.0 / divisor_override;
@@ -110,15 +110,13 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   return ConstructFilterValueNode(func_graph, val, assist_shape, infer_shape, cnt);
 }
 
-AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector<size_t> &ori_shape,
+AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const ShapeVector &ori_shape,
                                const std::vector<int64_t> &ori_input_shape, const std::vector<int64_t> &kernel_size,
                                const std::vector<int64_t> &strides, const std::vector<int64_t> &pad_list,
                                bool count_include_pad) {
   MS_EXCEPTION_IF_NULL(func_graph);
   //  assist tensor 2
-  std::vector<int64_t> grad_shape;
-  (void)std::transform(ori_shape.begin(), ori_shape.end(), std::back_inserter(grad_shape), SizeToLong);
-  std::vector<int64_t> assist_shape = grad_shape;  // NCDHW
+  std::vector<int64_t> assist_shape = ori_shape;  // NCDHW
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   MS_EXCEPTION_IF_NULL(tensor);
   auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
@@ -128,14 +126,14 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const std::vector
   auto len_d = ori_input_shape[kDim2] + pad_d;
   auto len_h = ori_input_shape[kDim3] + pad_h;
   auto len_w = ori_input_shape[kDim4] + pad_w;
-  for (int64_t nn = 0; nn < grad_shape[kDim0]; nn++) {
-    for (int64_t cc = 0; cc < grad_shape[kDim1]; cc++) {
+  for (int64_t nn = 0; nn < ori_shape[kDim0]; nn++) {
+    for (int64_t cc = 0; cc < ori_shape[kDim1]; cc++) {
       int64_t start_d = 0;
-      for (int64_t di = 0; di < grad_shape[kDim2]; di++) {
+      for (int64_t di = 0; di < ori_shape[kDim2]; di++) {
         int64_t start_h = 0;
-        for (int64_t hi = 0; hi < grad_shape[kDim3]; hi++) {
+        for (int64_t hi = 0; hi < ori_shape[kDim3]; hi++) {
           int64_t start_w = 0;
-          for (int64_t wi = 0; wi < grad_shape[kDim4]; wi++) {
+          for (int64_t wi = 0; wi < ori_shape[kDim4]; wi++) {
             int64_t valid_d = 0;
             int64_t valid_h = 0;
             int64_t valid_w = 0;

@@ -43,17 +43,17 @@ void QRCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "mode must be in [full, r, economic], but got [" << mode << "].";
   }
 
-  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   CHECK_KERNEL_INPUTS_NUM(a_shape.size(), kAMatrixDimNum, kernel_name_);
   a_row_ = a_shape[kDim0];
   a_col_ = a_shape[kDim1];
 
-  auto q_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto q_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   CHECK_KERNEL_INPUTS_NUM(q_shape.size(), kAMatrixDimNum, kernel_name_);
   q_row_ = q_shape[kDim0];
   q_col_ = q_shape[kDim1];
 
-  auto r_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
+  auto r_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 1));
   CHECK_KERNEL_INPUTS_NUM(r_shape.size(), kAMatrixDimNum, kernel_name_);
   r_row_ = r_shape[kDim0];
   r_col_ = r_shape[kDim1];

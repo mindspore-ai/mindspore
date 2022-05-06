@@ -32,8 +32,7 @@ class OptimizerInfo {
 
   virtual void Update(const Values &values, const Lengths &lengths) {}
   virtual void Accumulate(const Values &values, const Lengths &lengths) = 0;
-  virtual void ComputeMean(const std::vector<std::vector<size_t>> &shapes, size_t n, size_t server_num,
-                           size_t rank_id) {}
+  virtual void ComputeMean(const std::vector<ShapeVector> &shapes, size_t n, size_t server_num, size_t rank_id) {}
   virtual void Reset() {}
   void AddWorkspace(const AddressPtr &workspace);
 
@@ -63,8 +62,7 @@ class DenseOptimInfo : public OptimizerInfo {
   ~DenseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
-  void ComputeMean(const std::vector<std::vector<size_t>> &shapes, size_t n, size_t server_num,
-                   size_t rank_id) override;
+  void ComputeMean(const std::vector<ShapeVector> &shapes, size_t n, size_t server_num, size_t rank_id) override;
   void Reset() override;
 };
 
@@ -74,8 +72,7 @@ class SparseOptimInfo : public OptimizerInfo {
   ~SparseOptimInfo() override = default;
 
   void Accumulate(const Values &values, const Lengths &lens) override;
-  void ComputeMean(const std::vector<std::vector<size_t>> &shapes, size_t n, size_t server_num,
-                   size_t rank_id) override;
+  void ComputeMean(const std::vector<ShapeVector> &shapes, size_t n, size_t server_num, size_t rank_id) override;
   void Reset() override;
   const size_t indice_size() const override;
 

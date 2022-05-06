@@ -87,17 +87,17 @@ class ClipByNormGpuKernelMod : public NativeGpuKernelMod {
   size_t output_size_{0};
   // variables are used for `l2_norm' calculation
   std::vector<size_t> axis_;
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> l2_norm_output_shape_;
+  ShapeVector x_shape_;
+  ShapeVector l2_norm_output_shape_;
   // variables are used for 'clip_norm' coefficient calculation.
-  std::vector<size_t> clip_norm_shape_;
+  ShapeVector clip_norm_shape_;
   // variables are used for broadcast calculation
-  std::vector<size_t> l2_norm_lhs_shape_;    // broadcast
-  std::vector<size_t> l2_norm_rhs_shape_;    // broadcast
-  std::vector<size_t> l2_norm_ouths_shape_;  // broadcast
-  std::vector<size_t> clip_norm_rhs_shape_;  // broadcast
+  ShapeVector l2_norm_lhs_shape_;    // broadcast
+  ShapeVector l2_norm_rhs_shape_;    // broadcast
+  ShapeVector l2_norm_ouths_shape_;  // broadcast
+  ShapeVector clip_norm_rhs_shape_;  // broadcast
   // final output shape of `ClipByNorm`
-  std::vector<size_t> output_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

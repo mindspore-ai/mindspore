@@ -30,7 +30,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 const size_t kReluV2OutputNum = 2;
-const size_t kBitPerUInt = 32;
+const int64_t kBitPerUInt = 32;
 
 CNodePtr GetRelu(const CNodePtr &relu_grad) {
   MS_EXCEPTION_IF_NULL(relu_grad);
@@ -79,11 +79,10 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
   if (common::AnfAlgo::IsDynamicShape(relu)) {
     return nullptr;
   }
-  std::vector<size_t> output_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
-  auto element_num =
-    std::accumulate(output_shape.begin(), output_shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
+  auto element_num = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
 
-  std::vector<int64_t> mask_shape = {SizeToLong((element_num + kBitPerUInt - 1) / kBitPerUInt)};
+  std::vector<int64_t> mask_shape = {(element_num + kBitPerUInt - 1) / kBitPerUInt};
   std::vector<BaseShapePtr> shapes = {common::AnfAlgo::GetOutputDetailShape(relu, 0),
                                       std::make_shared<abstract::Shape>(mask_shape)};
   auto types = {common::AnfAlgo::GetOutputInferDataType(relu, 0), kNumberTypeUInt32};

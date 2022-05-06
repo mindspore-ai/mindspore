@@ -113,8 +113,11 @@ void BinaryCrossEntropyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   weight_defined_ = (input_num == kBceInputsNumWithWeight);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape})) {
+    return;
+  }
   for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size_ *= input_shape[i];
+    input_size_ *= LongToSize(input_shape[i]);
   }
 
   const std::string reduction = common::AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);

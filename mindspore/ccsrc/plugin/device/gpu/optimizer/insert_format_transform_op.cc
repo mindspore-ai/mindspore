@@ -45,7 +45,7 @@ std::vector<int64_t> TransposeAxis(const std::string &src_format, const std::str
 // 1. out_shape [x, 1, 1, y]
 // 2. out_shape [x, y, 1, 1]
 // 3. out_shape [x, 1, y, 1]
-bool IsFakeTranspose(const std::vector<size_t> &out_shape, const std::vector<int64_t> &transpose_perm) {
+bool IsFakeTranspose(const std::vector<int64_t> &out_shape, const std::vector<int64_t> &transpose_perm) {
   if (out_shape.size() != device::gpu::kFormatTransformDimension) {
     MS_LOG(EXCEPTION) << "Invalid data shape, 4-D data was needed, but get " << out_shape.size() << "-D.";
   }
@@ -105,9 +105,7 @@ CNodePtr InsertTransposeOp(const FuncGraphPtr &graph, const AnfNodePtr &node, co
   auto base_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(used_node, used_node_index);
   common::AnfAlgo::SetOutputTypeAndDetailShape(transpose_type, {base_shape}, transpose_op.get());
   if (is_fake) {
-    std::vector<int64_t> shape;
-    std::transform(transpose_shape.begin(), transpose_shape.end(), std::back_inserter(shape), SizeToLong);
-    common::AnfAlgo::SetNodeAttr("shape", MakeValue(shape), transpose_op);
+    common::AnfAlgo::SetNodeAttr("shape", MakeValue(transpose_shape), transpose_op);
   } else {
     common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(transpose_perm), transpose_op);
   }

@@ -59,13 +59,7 @@ constexpr int64_t kYOneElement = 2;
 constexpr size_t kInputNum = 2;
 constexpr size_t kOutputNum = 1;
 
-size_t get_element_num(const std::vector<size_t> &shape) {
-  size_t size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-  return size;
-}
+int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 }  // namespace
 /** Compute the Lgamma function using Lanczos' approximation from "A Precision
  * Approximation of the Gamma Function". SIAM Journal on Numerical Analysis
@@ -329,9 +323,9 @@ void IgammaCpuKernelMod::NoBcastCompute(const std::vector<kernel::AddressPtr> &i
   auto in0 = reinterpret_cast<T *>(inputs[0]->addr);
   auto in1 = reinterpret_cast<T *>(inputs[1]->addr);
   auto out0 = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t in0_elements_nums = get_element_num(a_shape_);
-  size_t in1_elements_nums = get_element_num(x_shape_);
-  size_t data_num = get_element_num(z_shape_);
+  int64_t in0_elements_nums = get_element_num(a_shape_);
+  int64_t in1_elements_nums = get_element_num(x_shape_);
+  int64_t data_num = get_element_num(z_shape_);
   int64_t type =
     in0_elements_nums == in1_elements_nums ? kSameShape : (in0_elements_nums == 1 ? kXOneElement : kYOneElement);
   if (data_num < kParallelDataNums) {

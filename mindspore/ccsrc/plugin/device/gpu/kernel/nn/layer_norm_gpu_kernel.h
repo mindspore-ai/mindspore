@@ -54,7 +54,7 @@ class LayerNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     epsilon_ = static_cast<T>(GetAttr<float>(kernel_node, "epsilon"));
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(input_shape)) {
       InitSizeLists();
       return true;
     }

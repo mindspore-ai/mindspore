@@ -76,6 +76,9 @@ void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   probs_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_dims_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   labels_dims_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  if (AnfAlgo::IsShapesDynamic({probs_shape_, indices_dims_, labels_dims_})) {
+    return;
+  }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   if (probs_shape_.size() != 3) {
@@ -94,9 +97,9 @@ void CTCLossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   preprocess_collapse_repeated_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, PCR);
   ctc_merge_repeated_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, CTR);
   ignore_longer_outputs_than_inputs_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, ILOTI);
-  max_time_ = probs_shape_[0];
-  batch_size_ = probs_shape_[1];
-  num_class_ = probs_shape_[2];
+  max_time_ = LongToSize(probs_shape_[0]);
+  batch_size_ = LongToSize(probs_shape_[1]);
+  num_class_ = LongToSize(probs_shape_[2]);
   blank_index_ = num_class_ - 1;
 }
 
@@ -294,7 +297,7 @@ void CTCLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                         << max_time_ << " and 'sequence_length': " << sequence_length_addr[b];
     }
   }
-  for (size_t i = 0; i < indices_dims_[0]; ++i) {
+  for (size_t i = 0; i < LongToSize(indices_dims_[0]); ++i) {
     const size_t factor = 2;
     auto index = labels_indices_addr[i * factor];
     if (index >= SizeToUlong(each_label_length.size())) {

@@ -1746,9 +1746,8 @@ bool Receiver::ParseDynamicShapeData(const char *msg_body, size_t msg_len,
   ShapeVector shapes(pb_msg.shape_vector().begin(), pb_msg.shape_vector().end());
   TypeId data_type = static_cast<TypeId>(pb_msg.type_id());
   int64_t expected_data_len = 1;
-  std::vector<size_t> size_t_shapes(shapes.begin(), shapes.end());
-  if (!kernel::GetShapeSize(size_t_shapes, TypeIdToType(data_type), &expected_data_len)) {
-    MS_LOG(ERROR) << "Getting shape size for shape " << size_t_shapes << " failed.";
+  if (!kernel::GetShapeSize(shapes, TypeIdToType(data_type), &expected_data_len)) {
+    MS_LOG(ERROR) << "Getting shape size for shape " << shapes << " failed.";
     return false;
   }
   if (LongToSize(expected_data_len) != received_data_len) {

@@ -36,14 +36,17 @@ void SparseToDenseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << "-D Tensor, but got " << indices_shape.size() << "-D";
   }
   auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape})) {
+    return;
+  }
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
                          "must be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
-  values_size_ = values_shape[0];
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  values_size_ = LongToSize(values_shape[0]);
+  output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

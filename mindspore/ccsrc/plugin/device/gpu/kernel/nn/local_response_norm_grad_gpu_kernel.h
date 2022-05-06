@@ -130,7 +130,11 @@ class LocalResponseNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     InitResource();
 
-    auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    auto shape_signed = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(shape_signed);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

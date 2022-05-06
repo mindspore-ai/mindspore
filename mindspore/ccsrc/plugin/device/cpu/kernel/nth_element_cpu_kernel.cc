@@ -24,13 +24,7 @@ constexpr size_t kNthElementOutputsNum = 1;
 constexpr size_t kParallelDataNums = 32 * 1024;
 }  // namespace
 
-size_t get_nth_element_num(const std::vector<size_t> &shape) {
-  size_t size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-  return size;
-}
+size_t get_nth_element_num(const ShapeVector &shape) { return SizeOf(shape); }
 
 void NthElementCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);

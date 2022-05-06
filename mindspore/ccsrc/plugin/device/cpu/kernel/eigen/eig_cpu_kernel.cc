@@ -61,7 +61,7 @@ void EigCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto expect_output_num = compute_v_ ? kOutputsNumV : kOutputsNumNV;
   CHECK_KERNEL_OUTPUTS_NUM(output_num, expect_output_num, kernel_name_);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   InitMatrixInfo(input_shape);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);

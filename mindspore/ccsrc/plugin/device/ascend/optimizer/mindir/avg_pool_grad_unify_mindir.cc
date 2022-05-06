@@ -40,10 +40,7 @@ constexpr float kKernelMatrixInitNum = 1.0;
 constexpr size_t kFloat32Len = 4;  // size of float32
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<int64_t> shapes;
-  auto shape_size_t = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  std::transform(shape_size_t.begin(), shape_size_t.end(), std::back_inserter(shapes), SizeToLong);
-  return shapes;
+  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
 }
 
 int64_t windowed_output_size(const AnfNodePtr &node, int64_t input_size, int64_t ksize, int64_t stride,

@@ -141,11 +141,9 @@ void CPUKernelRuntime::AssignInputNodeAddress(const session::KernelGraph *kernel
         if (output_type_id == kTypeUnknown) {
           output_type_id = common::AnfAlgo::GetOutputInferDataType(item, index);
         }
-        std::vector<size_t> fmt_shape = AnfAlgo::GetOutputDeviceShape(item, index);
+        auto fmt_shape = AnfAlgo::GetOutputDeviceShape(item, index);
         size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-        size_t tensor_size =
-          fmt_shape.empty() ? type_size
-                            : std::accumulate(fmt_shape.begin(), fmt_shape.end(), type_size, std::multiplies<size_t>());
+        size_t tensor_size = type_size * SizeOf(fmt_shape);
         auto format = AnfAlgo::GetOutputFormat(item, index);
         auto address = CreateDeviceAddress(nullptr, tensor_size, format, output_type_id);
         address->set_from_persistent_mem(true);
@@ -354,9 +352,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
     auto input_param = item->cast<ParameterPtr>();
     if (input_param != nullptr && input_param->IsUsedByRealKernelInGraph(kernel_graph.graph_id())) {
       auto tensor_shape = tensor->shape();
-      std::vector<size_t> shape_tmp;
-      (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), IntToSize);
-      common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(item, 0)}, {shape_tmp},
+      common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(item, 0)}, {tensor_shape},
                                                   item.get());
     }
     address->ref_count_ = INIT_NODE_REF;

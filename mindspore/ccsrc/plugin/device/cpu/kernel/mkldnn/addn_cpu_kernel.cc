@@ -53,9 +53,12 @@ void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   CheckParam(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  std::vector<size_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  std::vector<int64_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({src0_shape, src1_shape, dst_shape})) {
+    return;
+  }
   dnnl::memory::desc src0_mem_desc = GetDefaultMemDesc(src0_shape);
   dnnl::memory::desc src1_mem_desc = GetDefaultMemDesc(src1_shape);
   dnnl::memory::desc dst_mem_desc = GetDefaultMemDesc(dst_shape);
@@ -122,11 +125,17 @@ bool AddNCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
 void AddNCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   auto src0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({src0_shape, dst_shape})) {
+    return;
+  }
   if (src0_shape != dst_shape) {
     MS_LOG(EXCEPTION) << "AddN output shape must be equal to input shape.";
   }
   for (size_t index = 1; index < input_num_; ++index) {
     auto src_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index);
+    if (IsDynamic(src_shape)) {
+      return;
+    }
     if (src0_shape != src_shape) {
       MS_LOG(EXCEPTION) << "AddN input shapes must be equal.";
     }

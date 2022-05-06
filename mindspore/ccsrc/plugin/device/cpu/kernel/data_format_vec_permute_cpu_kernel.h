@@ -52,8 +52,8 @@ class DataFormatVecPermuteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   DataFormatVecPermuteFunc kernel_func_;
   std::string src_format_;
   std::string dst_format_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
   TypeId input_type_{kTypeUnknown};
   TypeId output_type_{kTypeUnknown};
   size_t dim_{0};

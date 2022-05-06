@@ -68,35 +68,32 @@ void MirrorPadGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
   }
 
-  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  shape_size_ = input_shape.size();
-  (void)input_shape.insert(input_shape.begin(), kPadMaxSupportDim - shape_size_, 1);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  shape_size_ = input_shape_.size();
+  (void)input_shape_.insert(input_shape_.begin(), SizeToLong(kPadMaxSupportDim - shape_size_), 1);
   shape_size_ = kPadMaxSupportDim;
 
   for (size_t i = 0; i < shape_size_; ++i) {
-    tensor_size_ *= input_shape[i];
-    input_shape_.push_back(SizeToLong(input_shape[i]));
+    tensor_size_ *= LongToSize(input_shape_[i]);
   }
 
-  std::vector<size_t> padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  num_paddings_ = SizeToLong(padding_shape[0]);
+  auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  num_paddings_ = padding_shape[0];
 
-  std::vector<size_t> output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
-  if (output_shape.size() == 4) {
-  } else if (output_shape.size() == 3) {
-    (void)output_shape.insert(output_shape.begin(), 1);  // batch padding
-  } else if (output_shape.size() == 2) {
-    (void)output_shape.insert(output_shape.begin(), 2, 1);  // channel padding
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  if (output_shape_.size() == 4) {
+  } else if (output_shape_.size() == 3) {
+    (void)output_shape_.insert(output_shape_.begin(), 1);  // batch padding
+  } else if (output_shape_.size() == 2) {
+    (void)output_shape_.insert(output_shape_.begin(), 2, 1);  // channel padding
   }
-  for (auto x : output_shape) {
-    output_size_ *= x;
-    output_shape_.push_back(SizeToLong(x));
+  for (auto x : output_shape_) {
+    output_size_ *= SizeToLong(x);
   }
 
   for (size_t i = 0; i < 2; i++) {
-    workspace_size_ *= output_shape[i];
-    workspace_size_ *= input_shape[i + 2];
+    workspace_size_ *= LongToSize(output_shape_[i]);
+    workspace_size_ *= LongToSize(input_shape_[i + 2]);
   }
 
   int64_t max_width = input_shape_[3];

@@ -47,12 +47,12 @@ class MatrixDiagPartCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   // <Super_matrix_diag_align, Sub_matrix_diag_align>
   std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> alignment_{MatrixDiag::RIGHT, MatrixDiag::LEFT};
-  std::vector<size_t> shapes_{};
+  ShapeVector shapes_{};
   int64_t out_range_size_{1};
   size_t dim_size_{1};
   int64_t m_{1};
   int64_t n_{1};
-  std::vector<size_t> out_shapes_{};
+  ShapeVector out_shapes_{};
   CNodeWeakPtr node_wpt_;
 };
 }  // namespace kernel

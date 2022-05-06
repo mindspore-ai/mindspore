@@ -40,6 +40,9 @@ void TruncatedNormalCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  if (IsDynamic(input_shape)) {
+    return;
+  }
   input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   seed_ = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));

@@ -44,6 +44,7 @@ inline T RealDiv(const T &a, const T &b) {
   return static_cast<T>(a / b);
 }
 }  // namespace
+
 bool ScatterNdArithmeticCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {

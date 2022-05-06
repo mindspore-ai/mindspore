@@ -40,9 +40,9 @@ class SegmentMinCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::vector<size_t> input_x_shape_;
-  std::vector<size_t> segment_ids_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_x_shape_;
+  ShapeVector segment_ids_shape_;
+  ShapeVector output_shape_;
   size_t input_x_num_;
   size_t segment_ids_num_;
   size_t output_num_;

@@ -46,22 +46,22 @@ class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << input_num;
     }
 
-    const std::vector<size_t> &reward_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    const std::vector<size_t> &done_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+    const std::vector<int64_t> &reward_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    const std::vector<int64_t> &done_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     if (reward_shape.size() == 0) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of reward cannot be 0, but got "
                         << reward_shape.size();
     }
 
     // Reshape reward to [timestep, env, else], done to [timestep, env], last_value to [env, else].
-    timestep_ = reward_shape[0];
+    timestep_ = LongToInt(reward_shape[0]);
     for (size_t i = 1; i < done_shape.size(); i++) {
       env_num_ *= i;
     }
 
     int total_elements = 1;
     for (size_t j = 0; j < reward_shape.size(); j++) {
-      total_elements *= reward_shape[j];
+      total_elements *= LongToInt(reward_shape[j]);
     }
     element_per_env_ = total_elements / timestep_ / env_num_;
 

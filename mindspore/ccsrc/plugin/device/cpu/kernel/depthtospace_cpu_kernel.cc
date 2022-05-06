@@ -49,15 +49,15 @@ bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t size = inputs[0]->size / sizeof(T);
-  std::vector<size_t> input_shape = input_shape_;
-  std::vector<size_t> output_shape = output_shape_;
+  auto input_shape = input_shape_;
+  auto output_shape = output_shape_;
   size_t block_size = block_size_;
   size_t input_dimension = input_shape.size();
   size_t output_strides[3] = {1, 1, 1};
 
   for (size_t i = input_dimension - 1; i >= 1; --i) {
     for (size_t j = 0; j < i; ++j) {
-      output_strides[j] *= output_shape[i];
+      output_strides[j] *= static_cast<size_t>(output_shape[i]);
     }
   }
 
@@ -72,11 +72,11 @@ bool DepthToSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       output_pos_array.back() = tmp_pos;
       size_t input_pos = output_pos_array[0];
       input_pos =
-        (input_pos * input_shape[1]) +
-        (output_pos_array[1] +
-         (block_size * (output_pos_array[2] % block_size) + output_pos_array[3] % block_size) * output_shape[1]);
-      input_pos = (input_pos * input_shape[2]) + (output_pos_array[2] / block_size);
-      input_pos = (input_pos * input_shape[3]) + (output_pos_array[3] / block_size);
+        (input_pos * static_cast<size_t>(input_shape[1])) +
+        (output_pos_array[1] + (block_size * (output_pos_array[2] % block_size) + output_pos_array[3] % block_size) *
+                                 static_cast<size_t>(output_shape[1]));
+      input_pos = (input_pos * static_cast<size_t>(input_shape[2])) + (output_pos_array[2] / block_size);
+      input_pos = (input_pos * static_cast<size_t>(input_shape[3])) + (output_pos_array[3] / block_size);
       output_addr[i] = input_addr[input_pos];
     }
   };

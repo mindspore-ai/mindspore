@@ -37,7 +37,7 @@ void MaskedSelectGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   grad_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kIndexGrad);
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
   for (const uint64_t &d : output_shape_) {
-    tensor_size_ *= d;
+    tensor_size_ *= static_cast<uint64_t>(d);
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);

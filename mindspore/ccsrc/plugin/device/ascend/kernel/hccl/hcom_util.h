@@ -25,6 +25,7 @@
 #include "hccl/base.h"
 #include "include/common/utils/contract.h"
 #include "hccl/hccl_types.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 using std::map;
@@ -57,14 +58,14 @@ static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
 
 class HcomUtil {
  public:
-  static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_shape_list);
-  static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_shape_list);
+  static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_shape_list);
+  static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_shape_list);
   static ::HcclDataType ConvertHcclType(TypeId type_id);
   static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list);
-  static bool GetHcclOpSize(const HcclDataType &data_type, const vector<size_t> &shape, size_t *size);
+  static bool GetHcclOpSize(const HcclDataType &data_type, const ShapeVector &shape, size_t *size);
   static bool GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size);
   static bool GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataType> &data_type_list,
-                           const vector<vector<size_t>> &shape_list, uint64_t *total_count);
+                           const vector<ShapeVector> &shape_list, uint64_t *total_count);
   static bool GetHcomOperationType(const AnfNodePtr &anf_node, HcclReduceOp *op_type);
   static bool GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id);
   static bool GetHcomSrcRank(const AnfNodePtr &anf_node, uint32_t *src_rank);

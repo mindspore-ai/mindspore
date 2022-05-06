@@ -38,7 +38,7 @@ class TensorArrayCreateKernelMod : public DeprecatedNativeGpuKernelMod {
  private:
   bool is_dynamic_;
   int64_t size_;
-  std::vector<size_t> shapes_;
+  ShapeVector shapes_;
   TypePtr type_;
   std::string name_;
 };

@@ -51,7 +51,7 @@ template <typename T>
 void CumSumCpuKernelMod::InitWorkspaceSize() {
   input_size_0_ = sizeof(T);
   for (size_t i = 0; i < shape_.size(); i++) {
-    input_size_0_ *= shape_[i];
+    input_size_0_ *= LongToSize(shape_[i]);
   }
   (void)workspace_size_list_.emplace_back(input_size_0_);
 }
@@ -101,13 +101,13 @@ bool CumSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 void CumSumCpuKernelMod::Reshape() {
   dims_[0] = 1;
-  dims_[1] = shape_[IntToSize(axis_)];
+  dims_[1] = LongToSize(shape_[IntToSize(axis_)]);
   dims_[2] = 1;
   for (size_t i = 0; i < IntToSize(axis_); i++) {
-    dims_[0] *= shape_[i];
+    dims_[0] *= LongToSize(shape_[i]);
   }
   for (size_t i = IntToSize(axis_) + 1; i < shape_.size(); i++) {
-    dims_[2] *= shape_[i];
+    dims_[2] *= LongToSize(shape_[i]);
   }
   stride_ = dims_[1] * dims_[2];
   stride2_ = dims_[2];

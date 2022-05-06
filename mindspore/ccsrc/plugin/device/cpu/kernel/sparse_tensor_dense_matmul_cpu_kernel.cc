@@ -43,15 +43,18 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
                       << Vector2Str(indices_shape);
   }
   auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
+  if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape})) {
+    return;
+  }
   if (values_shape.size() != 1 || values_shape[0] != indices_shape[0]) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', it requires 'values' must be a 1-D Tensor and the first dimension length "
                          " must be equal to the first dimension length of 'indices', but got 'values' shape: "
                       << Vector2Str(values_shape) << " and 'indices' shape: " << Vector2Str(indices_shape);
   }
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  values_size_ = values_shape[0];
-  b_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE);
+  output_shape_ = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+  values_size_ = LongToSize(values_shape[0]);
+  b_shape_ = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, DENSE));
   if (b_shape_.size() != kSparseTensorDenseMatmulDenseShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'dense' must be "
                       << kSparseTensorDenseMatmulDenseShapeSize << "-D, but got " << b_shape_.size() << "-D";

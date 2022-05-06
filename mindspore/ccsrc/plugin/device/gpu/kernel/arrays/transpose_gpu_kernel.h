@@ -60,7 +60,7 @@ class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                "cudaMemcpyAsync input_axis failed");
     size_t size = input_size_ / sizeof(T);
 
-    size_t *h_input_shape = &input_shape_[0];
+    size_t *h_input_shape = reinterpret_cast<size_t *>(&input_shape_[0]);
     size_t *h_input_axis = &input_axis_[0];
     if (shape_size_ == kDimSize4 && h_input_axis[kAxisIndexZero] == kAxisZero &&
         h_input_axis[kAxisIndex1st] == kAxis3rd && h_input_axis[kAxisIndex2nd] == kAxis1st &&
@@ -92,24 +92,19 @@ class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
+    input_shape_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
       return true;
     }
-    shape_size_ = input_shape.size();
+    shape_size_ = input_shape_.size();
     if (shape_size_ > TRANSPOSE_MAX_DIMENSION) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output cannot be greater than "
                         << TRANSPOSE_MAX_DIMENSION << ", but got " << shape_size_;
     }
 
-    input_size_ = 1;
-    for (size_t i = 0; i < shape_size_; i++) {
-      input_size_ *= input_shape[i];
-      input_shape_.push_back(input_shape[i]);
-    }
-    input_size_ *= sizeof(T);
+    input_size_ = sizeof(T) * SizeOf(input_shape_);
     output_size_ = input_size_;
     std::vector<int64_t> perm = GetAttr<std::vector<int64_t>>(kernel_node, "perm");
     for (size_t j = 0; j < perm.size(); j++) {
@@ -148,7 +143,7 @@ class TransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   std::vector<size_t> input_axis_;
 
   size_t shape_size_;

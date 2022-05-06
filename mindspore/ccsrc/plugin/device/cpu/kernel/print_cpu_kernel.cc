@@ -31,11 +31,11 @@ void PrintCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 0; i < input_tensor_num; ++i) {
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
     (void)input_shapes_.emplace_back(input_shape);
-    size_t size = input_shape.size() ? 1 : 0;
+    int64_t size = input_shape.size() ? 1 : 0;
     for (size_t j = 0; j < input_shape.size(); ++j) {
       size *= input_shape[j];
     }
-    (void)input_sizes_.emplace_back(size);
+    (void)input_sizes_.emplace_back(LongToSize(size));
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
@@ -61,10 +61,7 @@ bool PrintCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
       auto num = reinterpret_cast<T *>(inputs[i]->addr);
       std::cout << *num << std::endl;
     } else {
-      ShapeVector shape;
-      (void)std::transform(input_shapes_[i].begin(), input_shapes_[i].end(), std::back_inserter(shape),
-                           [](const size_t &value) { return SizeToLong(value); });
-      Tensor tensor(data_type, shape, inputs[i]->addr, input_sizes_[i] * sizeof(T));
+      Tensor tensor(data_type, input_shapes_[i], inputs[i]->addr, input_sizes_[i] * sizeof(T));
       std::cout << tensor.ToStringNoLimit() << std::endl;
     }
   }

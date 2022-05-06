@@ -53,13 +53,11 @@ class PullKernelMod : public DeprecatedNativeCpuKernelMod {
     }
 
     auto key_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    for (size_t i = 0; i < key_shape.size(); i++) {
-      keys_size_ *= key_shape[i];
-    }
+    keys_size_ *= SizeOf(key_shape);
+
     auto var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    for (size_t i = 0; i < var_shape.size(); i++) {
-      var_size_ *= var_shape[i];
-    }
+    var_size_ *= SizeOf(var_shape);
+
     auto param_node = common::AnfAlgo::GetInputNode(kernel_node, 1);
     MS_EXCEPTION_IF_NULL(param_node);
     param_name_ = param_node->fullname_with_scope();

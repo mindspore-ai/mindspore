@@ -35,9 +35,9 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto input_x = cnode->input(kSpaceToDepthInputNum);
   int64_t block_size = common::AnfAlgo::GetNodeAttr<int64_t>(cnode, "block_size");
-  std::vector<size_t> x_shape = common::AnfAlgo::GetOutputInferShape(input_x, 0);
-  int64_t input_channel = SizeToLong(x_shape[kDim1]);
-  int64_t assist_input_channel = SizeToLong(x_shape[kDim1]) * block_size * block_size;
+  auto x_shape = common::AnfAlgo::GetOutputInferShape(input_x, 0);
+  int64_t input_channel = x_shape[kDim1];
+  int64_t assist_input_channel = x_shape[kDim1] * block_size * block_size;
   std::vector<int64_t> assist_input_shape = {assist_input_channel, input_channel, block_size, block_size};
   int64_t dest_size = assist_input_channel * input_channel * block_size * block_size;
   MS_LOG(DEBUG) << "For SpaceToDepth op, assist input shape is: (" << assist_input_channel << ", " << input_channel

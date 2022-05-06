@@ -142,9 +142,12 @@ void LSTMGradCpuKernelMod::AddArgumentOp(const dnnl::memory::desc &src_desc, con
 }
 
 void LSTMGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
-  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  auto src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  if (AnfAlgo::IsShapesDynamic({src_shape, src_h_shape, src_c_shape})) {
+    return;
+  }
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {
     MS_LOG(EXCEPTION) << "Lstm only support 3-D input!";
   }
@@ -153,8 +156,8 @@ void LSTMGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   hidden_size_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size");
   num_layers_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers");
   has_bias_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
-  batch_size_ = SizeToInt(src_shape[1]);
-  seq_len_ = SizeToInt(src_shape[0]);
+  batch_size_ = src_shape[1];
+  seq_len_ = src_shape[0];
   num_directions_ = 1;
   if (bidirectional_) {
     num_directions_ = 2;
@@ -172,7 +175,7 @@ void LSTMGradCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   }
   weight_size_ = weight_size_ * num_directions_;
   weight_h_size_ = weight_h_size_ * num_directions_;
-  if (num_directions_ * num_layers_ != SizeToLong(src_h_shape[0])) {
+  if (num_directions_ * num_layers_ != src_h_shape[0]) {
     MS_LOG(EXCEPTION) << "Error iteration shape!";
   }
 }

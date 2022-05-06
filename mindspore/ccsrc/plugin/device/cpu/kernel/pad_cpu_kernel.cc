@@ -30,8 +30,13 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   paddings_ = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
+    return;
+  }
+
+  input_shape_ = Convert2SizeT(input_shape);
 
   input_rank_ = input_shape_.size();
   if (paddings_.size() != input_rank_) {
@@ -70,7 +75,7 @@ void PadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   strides_[input_rank_ - 1] = 1;
   for (int32_t i = SizeToInt(input_rank_) - 2; i >= 0; i--) {
     size_t ind = IntToSize(i);
-    strides_[ind] = output_shape[ind + 1] * strides_[ind + 1];
+    strides_[ind] = static_cast<size_t>(output_shape[ind + 1]) * strides_[ind + 1];
   }
 }
 

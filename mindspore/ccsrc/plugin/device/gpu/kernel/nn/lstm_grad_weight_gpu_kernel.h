@@ -91,6 +91,9 @@ class LstmGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(input_shape)) {
+      return true;
+    }
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -100,8 +103,8 @@ class LstmGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
                         << input_shape.size();
     }
-    seq_len_ = SizeToInt(input_shape[0]);
-    batch_size_ = SizeToInt(input_shape[1]);
+    seq_len_ = LongToInt(input_shape[0]);
+    batch_size_ = LongToInt(input_shape[1]);
 
     input_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "input_size"));
     hidden_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "hidden_size"));
@@ -139,7 +142,11 @@ class LstmGradWeightGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                                          hidden_size_, hidden_size_, num_layers_, dropout_desc_, 0),
                                 "set rnn_desc failed");
 #endif
-    auto weight_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto weight_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
     if (is_null_input_) {
       InitSizeLists();

@@ -40,8 +40,8 @@ class StridedSliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int> begin_;
   std::vector<int> end_;
   std::vector<int> strides_;
-  std::vector<int> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
   TypeId dtype_{kTypeUnknown};
   StridedSliceParameter *param_{nullptr};
 };

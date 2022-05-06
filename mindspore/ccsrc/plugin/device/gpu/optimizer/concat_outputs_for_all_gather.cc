@@ -24,12 +24,12 @@
 
 namespace mindspore::opt {
 namespace {
-using OutputInfo = std::tuple<std::vector<TypeId>, std::vector<std::vector<size_t>>, std::vector<ShapeVector>,
+using OutputInfo = std::tuple<std::vector<TypeId>, std::vector<ShapeVector>, std::vector<ShapeVector>,
                               std::vector<ShapeVector>, std::vector<std::string>, std::vector<TypeId>>;
 OutputInfo GetNodeOutputInfo(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<TypeId> output_infer_dtype;
-  std::vector<std::vector<size_t>> output_infer_shape;
+  std::vector<ShapeVector> output_infer_shape;
   std::vector<ShapeVector> output_max_shape;
   std::vector<ShapeVector> output_min_shape;
   std::vector<std::string> output_format;
@@ -109,8 +109,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
     const std::vector<TypeId> &dtypes = {std::get<0>(output_info)[i]};
     auto shape = std::get<1>(output_info)[i];
     shape[0] *= LongToSize(rank_size);
-    if (AnfUtils::IsShapeDynamic(shape)) {
-      ShapeVector tensor_shape;
+    if (IsDynamic(shape)) {
       auto min_shape = std::get<kIndex2>(output_info)[i];
       auto max_shape = std::get<kIndex3>(output_info)[i];
       if (!min_shape.empty() && !max_shape.empty()) {
@@ -118,8 +117,7 @@ AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePt
         min_shape[0] *= rank_size;
       }
 
-      std::transform(shape.begin(), shape.end(), std::back_inserter(tensor_shape), SizeToLong);
-      BaseShapePtr base_shape = std::make_shared<abstract::Shape>(tensor_shape, min_shape, max_shape);
+      BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
       common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, {base_shape}, concat.get());
     } else {
       common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {shape}, concat.get());

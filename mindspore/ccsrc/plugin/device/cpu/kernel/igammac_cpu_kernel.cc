@@ -59,13 +59,7 @@ constexpr int64_t kYOneElement = 2;
 constexpr size_t kInputNum = 2;
 constexpr size_t kOutputNum = 1;
 
-size_t get_element_num(const std::vector<size_t> &shape) {
-  size_t size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-  return size;
-}
+int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 }  // namespace
 /** Compute the Lgamma function using Lanczos' approximation from "A Precision
  * Approximation of the Gamma Function". SIAM Journal on Numerical Analysis

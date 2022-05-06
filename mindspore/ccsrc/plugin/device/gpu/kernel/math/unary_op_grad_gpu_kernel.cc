@@ -110,6 +110,7 @@ bool UnaryGradOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
     return false;
   }
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {

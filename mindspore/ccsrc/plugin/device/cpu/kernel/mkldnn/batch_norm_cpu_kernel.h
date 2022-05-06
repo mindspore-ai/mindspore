@@ -51,10 +51,10 @@ class BatchNormCpuKernelMod : public DeprecatedMKLCpuKernelMod {
  private:
   bool is_train{false};
   float momentum{0.9};
-  size_t batch_size{0};
-  size_t channel{0};
-  size_t hw_size{0};
-  size_t nhw_size{0};
+  int64_t batch_size{0};
+  int64_t channel{0};
+  int64_t hw_size{0};
+  int64_t nhw_size{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

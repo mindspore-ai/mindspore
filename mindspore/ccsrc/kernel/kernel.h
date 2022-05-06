@@ -200,13 +200,13 @@ class KernelTensor {
   // If real type is not a list or tuple tensor, it will return kTypeUnknown.
   std::vector<TypeId> GetListOrTupleDtype() const;
   // If real type is not a single shape vector, it will return empty.
-  std::vector<int64_t> GetShapeVector() const;
+  ShapeVector GetShapeVector() const;
   // If real type is not a list or tuple shape vector, it will return empty.
-  std::vector<std::vector<int64_t>> GetListOrTupleShapeVector() const;
+  std::vector<ShapeVector> GetListOrTupleShapeVector() const;
   void SetData(const AddressPtr &data) { data_ = data; }
   void SetDtype(const TypePtr &dtype);
   void SetFormat(mindspore::Format format) { tensor_info_.format = format; }
-  void SetShapeVector(const std::vector<int64_t> &shape);
+  void SetShapeVector(const ShapeVector &shape);
 
   abstract::BaseShapePtr GetBaseShape() const;
   // If the shape need to be List or Tuple, `SetBaseShape` should be called.
@@ -215,8 +215,8 @@ class KernelTensor {
   void SetTensorInfo(const TensorInfo &tensor_info) { tensor_info_ = tensor_info; }
 
   // deprecated field for dynamic shape
-  const std::vector<int64_t> &GetDeviceShapeAdaptively() const;
-  void SetDeviceShapeAdaptively(const std::vector<int64_t> &device_shape_adaptively);
+  const ShapeVector &GetDeviceShapeAdaptively() const;
+  void SetDeviceShapeAdaptively(const ShapeVector &device_shape_adaptively);
 
  private:
   TensorInfo tensor_info_;
@@ -293,7 +293,7 @@ class KernelMod {
  protected:
   virtual void SyncData() {}
   virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
-  bool IsValidShape(const std::vector<int64_t> &shape) {
+  bool IsValidShape(const ShapeVector &shape) {
     if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; })) {
       return false;
     }

@@ -45,7 +45,7 @@ void TensorShapeKernelMod::Execute() {
   auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
   for (size_t i = 0; i < prev_output_shape.size(); ++i) {
     MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
-    *(data_ptr + i) = SizeToLong(prev_output_shape[i]);
+    *(data_ptr + i) = prev_output_shape[i];
   }
 
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
@@ -94,7 +94,7 @@ void TensorShapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const 
   auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
   for (size_t i = 0; i < prev_output_shape.size(); ++i) {
     MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
-    *(data_ptr + i) = SizeToLong(prev_output_shape[i]);
+    *(data_ptr + i) = prev_output_shape[i];
   }
 
   if (outputs.empty()) {

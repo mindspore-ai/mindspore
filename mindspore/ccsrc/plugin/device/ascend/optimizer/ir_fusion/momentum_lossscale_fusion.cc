@@ -33,7 +33,7 @@ bool CheckValueNodeInputOfMul(const AnfNodePtr &node) {
   if (common::AnfAlgo::IsDynamicShape(node)) {
     return false;
   }
-  std::vector<size_t> mul_input_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  auto mul_input_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   return mul_input_shape.empty() || (mul_input_shape.size() == 1 && mul_input_shape[0] == 1);
 }
 }  // namespace

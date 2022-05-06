@@ -113,7 +113,7 @@ GVAR_DEF(std::shared_ptr<NoShape>, kNoShape, std::make_shared<NoShape>());
 /// \brief Shape defines dimensions of tensor.
 class MS_CORE_API Shape final : public BaseShape {
  public:
-  static const int64_t SHP_ANY = -1;
+  static const ShapeValueDType SHP_ANY = -1;
 
   /// \brief Constructor of Shape.
   Shape() : shape_() {}
@@ -121,7 +121,7 @@ class MS_CORE_API Shape final : public BaseShape {
   /// \brief Constructor of Shape.
   ///
   /// \param[in] list Initial shape dimensions.
-  Shape(const std::initializer_list<int64_t> &list) : shape_(list) {}
+  Shape(const std::initializer_list<ShapeValueDType> &list) : shape_(list) {}
 
   /// \brief Constructor of Shape.
   ///
@@ -187,14 +187,12 @@ class MS_CORE_API Shape final : public BaseShape {
   /// \return Maximum shape dimensions.
   const ShapeVector &max_shape() const { return max_shape_; }
 
-  bool IsDynamic() const override {
-    return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < 0; });
-  }
+  bool IsDynamic() const override { return mindspore::IsDynamic(shape_); }
 
   bool IsDimZero() const override { return shape_.empty(); };
 
   bool IsDimUnknown() const override {
-    return std::any_of(shape_.begin(), shape_.end(), [](int64_t s) { return s < -1; });
+    return std::any_of(shape_.begin(), shape_.end(), [](ShapeValueDType s) { return s < -1; });
   }
 
  private:

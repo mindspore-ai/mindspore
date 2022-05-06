@@ -148,8 +148,7 @@ class BACKEND_EXPORT ParameterServer {
   void InitOptimInputsShape(const Keys &keys, const Values &values, const Lengths &lengths);
   void InitWeight(const Key &key, const WeightPtr &weight);
   void InitGrad(const Key &key, const GradPtr &grad);
-  void InitEmbeddingTable(const Key &key,
-                          const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
+  void InitEmbeddingTable(const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &shapes,
                           const ParamInitInfo &param_init_info);
   bool HasWeight(const Key &key);
   void Finalize();
@@ -176,18 +175,18 @@ class BACKEND_EXPORT ParameterServer {
   void PersistParameters();
 
   // Persist sparse network operators when receive init embedding table message.
-  void PersistKernels(const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
+  void PersistKernels(const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &shapes,
                       const ParamInitInfo &param_init_info) const;
 
   // Persist parameters store in parameter server when receive init message.
   void PersistInitParameters(const Key &key, const WeightPtr &param);
 
   // Restore sparse network operators and parameters.
-  void RecoverEmbedding(const std::vector<Key> &keys, const std::vector<std::vector<std::vector<size_t>>> &shapes_list,
+  void RecoverEmbedding(const std::vector<Key> &keys, const std::vector<std::vector<ShapeVector>> &shapes_list,
                         const std::vector<std::string> &param_names);
 
   // Restore sparse network operators.
-  void RecoverKernels(const std::vector<Key> &keys, const std::vector<std::vector<std::vector<size_t>>> &shapes_list,
+  void RecoverKernels(const std::vector<Key> &keys, const std::vector<std::vector<ShapeVector>> &shapes_list,
                       const std::vector<std::string> &param_names);
 
   // Restore parameters store in parameter server.

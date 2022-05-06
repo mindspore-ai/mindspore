@@ -77,7 +77,7 @@ class LinSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of output should be 1, but got "
                         << value_count.size();
     }
-    value_count_ = value_count[0];
+    value_count_ = LongToSizeClipNeg(value_count[0]);
     InitSizeLists();
     return true;
   }

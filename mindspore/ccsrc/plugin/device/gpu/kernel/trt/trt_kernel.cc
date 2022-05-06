@@ -32,7 +32,7 @@ bool TrtKernelMod::Init(const CNodePtr &kernel_node) {
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
     auto type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, i);
     size_t unit_size = UnitSizeInBytes(type_id);
-    auto size_in_byte = std::accumulate(input_shape.begin(), input_shape.end(), unit_size, std::multiplies<size_t>());
+    auto size_in_byte = unit_size * SizeOf(input_shape);
     input_size_list_.push_back(size_in_byte);
   }
 
@@ -41,7 +41,7 @@ bool TrtKernelMod::Init(const CNodePtr &kernel_node) {
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, j);
     auto type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, j);
     size_t unit_size = UnitSizeInBytes(type_id);
-    auto size_in_byte = std::accumulate(output_shape.begin(), output_shape.end(), unit_size, std::multiplies<size_t>());
+    auto size_in_byte = unit_size * SizeOf(output_shape);
     output_size_list_.push_back(size_in_byte);
   }
 

@@ -36,23 +36,23 @@ void GetCargo(std::vector<size_t> *cargo, const std::vector<size_t> &shape, cons
   }
 }
 
-size_t GetTensorLen(const std::vector<size_t> &shape) {
-  size_t len = 1;
+size_t GetTensorLen(const ShapeVector &shape) {
+  int64_t len = 1;
   for (size_t i = 0; i < shape.size(); i++) {
     len *= shape[i];
   }
-  return len;
+  return LongToSize(len);
 }
 
-void GetShape(std::vector<size_t> *shape, const std::vector<size_t> &shape_, const std::vector<size_t> &dout_shape) {
+void GetShape(std::vector<size_t> *shape, const ShapeVector &shape_, const ShapeVector &dout_shape) {
   int k = dout_shape.size() - 1;
   int i = shape_.size() - 1;
   for (; i >= 0; i--, k--) {
-    (*shape)[k] = shape_[i];
+    (*shape)[k] = LongToSize(shape_[i]);
   }
 }
 
-void CheckShape(std::vector<size_t> *shape) {
+void CheckShape(ShapeVector *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->empty()) {
     shape->push_back(1);
@@ -144,16 +144,17 @@ void MinimumGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   std::vector<size_t> x_cargo(dout_shape.size(), 0);
   std::vector<size_t> y_cargo(dout_shape.size(), 0);
   std::vector<size_t> dout_cargo(dout_shape.size(), 0);
+  auto dout_shape_sizet = Convert2SizeT(dout_shape);
 
   GetShape(&x_shape, x_shape_, dout_shape);
   GetShape(&y_shape, y_shape_, dout_shape);
 
-  GetCargo(&x_cargo, x_shape, dout_shape);
-  GetCargo(&y_cargo, y_shape, dout_shape);
-  GetCargo(&dout_cargo, dout_shape, dout_shape);
+  GetCargo(&x_cargo, x_shape, dout_shape_sizet);
+  GetCargo(&y_cargo, y_shape, dout_shape_sizet);
+  GetCargo(&dout_cargo, dout_shape_sizet, dout_shape_sizet);
 
   MinimumGradRecTask<T>(x_addr, y_addr, dout_addr, dx_addr, dy_addr, 0, 0, 0, 0, x_cargo, y_cargo, dout_cargo, x_shape,
-                        y_shape, dout_shape);
+                        y_shape, dout_shape_sizet);
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MinimumGrad, MinimumGradCpuKernelMod);

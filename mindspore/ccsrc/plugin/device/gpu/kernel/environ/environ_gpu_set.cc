@@ -46,7 +46,7 @@ bool EnvironSetGpuKernelMod::Init(const CNodePtr &kernel_node) {
   auto value_shapes = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
   value_size_ = GetTypeByte(TypeIdToType(value_type));
   for (auto &i : value_shapes) {
-    value_size_ *= i;
+    value_size_ *= static_cast<size_t>(i);
   }
 
   InitSizeLists();

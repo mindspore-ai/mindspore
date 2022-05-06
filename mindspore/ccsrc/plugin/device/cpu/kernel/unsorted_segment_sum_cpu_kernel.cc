@@ -30,9 +30,9 @@ void UnsortedSegmentSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   segment_ids_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   auto segment_ids_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto output_shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   if (output_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output must be at least 1, but got shape: " << output_shape;

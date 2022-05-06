@@ -32,24 +32,24 @@ bool IsPyNativeMode() {
 }
 }  // namespace
 
-bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_intput_shape_list) {
+bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_intput_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(hccl_kernel_intput_shape_list);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(anf_node);
   for (size_t i = 0; i < input_num; ++i) {
-    std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
+    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
     hccl_kernel_intput_shape_list->emplace_back(shape_i);
   }
 
   return true;
 }
 
-bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<vector<size_t>> *hccl_kernel_output_shape_list) {
+bool HcomUtil::GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_output_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(hccl_kernel_output_shape_list);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
   for (size_t i = 0; i < output_num; ++i) {
-    std::vector<size_t> shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
+    auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     (void)hccl_kernel_output_shape_list->emplace_back(shape_i);
   }
 
@@ -91,19 +91,19 @@ bool HcomUtil::GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> 
   return true;
 }
 
-bool HcomUtil::GetHcclOpSize(const HcclDataType &data_type, const vector<size_t> &shape, size_t *size) {
+bool HcomUtil::GetHcclOpSize(const HcclDataType &data_type, const ShapeVector &shape, size_t *size) {
   MS_EXCEPTION_IF_NULL(size);
-  size_t tmp_size = 1;
+  int64_t tmp_size = 1;
   uint32_t type_size = 4;
   for (size_t i = 0; i < shape.size(); i++) {
-    tmp_size = SizetMulWithOverflowCheck(tmp_size, shape[i]);
+    tmp_size = LongMulWithOverflowCheck(tmp_size, shape[i]);
   }
 
   if (!GetHcomTypeSize(data_type, &type_size)) {
     return false;
   }
 
-  *size = SizetMulWithOverflowCheck(tmp_size, type_size);
+  *size = SizetMulWithOverflowCheck(LongToSize(tmp_size), type_size);
 
   MS_LOG(DEBUG) << "size[" << *size << "]";
   return true;
@@ -121,7 +121,7 @@ bool HcomUtil::GetHcomTypeSize(const HcclDataType &data_type, uint32_t *size) {
 }
 
 bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataType> &data_type_list,
-                            const vector<vector<size_t>> &shape_list, uint64_t *total_count) {
+                            const vector<ShapeVector> &shape_list, uint64_t *total_count) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(total_count);
   const uint32_t align_size = 512;

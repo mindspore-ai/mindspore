@@ -78,10 +78,10 @@ void OneHotCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   } else {
     axis_ = LongToSize(axis);
   }
-  depth_ = output_shape[axis_];
+  depth_ = LongToSize(output_shape[axis_]);
   stride_ = 1;
   for (size_t i = axis_ + 1; i < output_shape.size(); ++i) {
-    stride_ *= output_shape[i];
+    stride_ *= LongToSize(output_shape[i]);
   }
 }
 

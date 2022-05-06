@@ -78,7 +78,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
       }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
-        size *= IntToSize(shape[j]);
+        size *= LongToSizeClipNeg(shape[j]);
       }
       input_size_list_.push_back(size);
       input_size_ += size;
@@ -92,7 +92,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
       }
       size_t size = sizeof(I);
       for (size_t j = 0; j < shape.size(); j++) {
-        size *= IntToSize(shape[j]);
+        size *= LongToSizeClipNeg(shape[j]);
       }
       output_size_list_.push_back(size);
       output_size_ += size;

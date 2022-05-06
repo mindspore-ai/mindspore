@@ -150,7 +150,7 @@ bool FractionalMaxPoolGradCpuKernelMod::FractionalMaxPoolGradCompute(
         const int64_t input_index =
           (b * tensor_in_shape_[kInputShapeIndexH] + h) * tensor_in_shape_[kInputShapeIndexW] + w;
         // Walk through each channel (depth).
-        for (size_t d = 0; d < tensor_in_shape_[kInputShapeIndexC]; ++d) {
+        for (size_t d = 0; d < LongToSize(tensor_in_shape_[kInputShapeIndexC]); ++d) {
           const T &input_ref = tensor_in_mat.coeffRef(d, input_index);
           T &output_ref = output_mat.coeffRef(d, output_index);
           int64_t &output_index_ref = output_index_mat.coeffRef(d, output_index);

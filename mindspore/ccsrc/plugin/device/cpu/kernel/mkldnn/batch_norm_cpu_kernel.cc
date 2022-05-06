@@ -30,8 +30,8 @@ constexpr size_t kBatchNormInputShapeSize2 = 2;
 void BatchNormCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   size_t type_size = sizeof(float);
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  size_t tensor_size = shape[1] * 2 * type_size;  // [2, c] to store scale and bias
+  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  size_t tensor_size = static_cast<size_t>(shape[1]) * 2 * type_size;  // [2, c] to store scale and bias
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
 
@@ -40,7 +40,7 @@ void BatchNormCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   is_train = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "is_training");
   momentum = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
-  std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   if (x_shape.size() == kBatchNormInputShapeSize2) {
     (void)x_shape.insert(x_shape.end(), kBatchNormInputShapeSize - kBatchNormInputShapeSize2, 1);
   } else if (x_shape.size() != kBatchNormInputShapeSize) {

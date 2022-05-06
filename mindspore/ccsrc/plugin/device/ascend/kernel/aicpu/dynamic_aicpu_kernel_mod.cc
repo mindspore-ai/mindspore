@@ -212,16 +212,14 @@ bool DynamicAicpuOpKernelMod::UpdateOutputShapeFromExtInfo(const CNodePtr &cnode
   MS_EXCEPTION_IF_NULL(ext_info_handler_);
 
   std::vector<TypeId> type_ids;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<ShapeVector> shapes;
   auto output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
   for (size_t i = 0; i < output_num; ++i) {
     std::vector<int64_t> shape;
     TypeId type_id;
     (void)ext_info_handler_->GetOutputShapeAndType(SizeToUint(i), NOT_NULL(&shape), NOT_NULL(&type_id));
     type_ids.emplace_back(type_id);
-    std::vector<size_t> size_t_shape;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(size_t_shape), LongToSize);
-    shapes.emplace_back(size_t_shape);
+    shapes.emplace_back(shape);
   }
 
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());

@@ -60,10 +60,7 @@ class HSigmoidGradKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    input_size_ = 1;
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ = SizeOf(input_shape);
     InitSizeLists();
     return true;
   }

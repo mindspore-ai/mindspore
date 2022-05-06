@@ -59,8 +59,8 @@ class FractionalAvgPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   FractionalAvgPoolGradFunc kernel_func_;
   TypeId output_type_;
   CNodeWeakPtr node_wpt_;
-  std::vector<size_t> orig_input_shape_;
-  std::vector<size_t> out_backprop_shape_;
+  std::vector<int64_t> orig_input_shape_;
+  std::vector<int64_t> out_backprop_shape_;
   bool overlapping_{false};
 };
 }  // namespace kernel

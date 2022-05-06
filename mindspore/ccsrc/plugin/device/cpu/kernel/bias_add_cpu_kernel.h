@@ -36,8 +36,8 @@ class BiasAddCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   size_t data_shape_{0};
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> bias_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> bias_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

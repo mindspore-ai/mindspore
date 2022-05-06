@@ -37,10 +37,7 @@ constexpr size_t kSliceGradCangjieInputTensorNum = 2;
 
 std::vector<int64_t> GetInputXShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<int64_t> shapes;
-  auto shape_size_t = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-  (void)std::transform(shape_size_t.begin(), shape_size_t.end(), std::back_inserter(shapes), SizeToLong);
-  return shapes;
+  return common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
 }
 
 std::vector<int64_t> GetTupleValue(const AnfNodePtr &node) {

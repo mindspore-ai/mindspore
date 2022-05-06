@@ -24,12 +24,12 @@ namespace {
 constexpr size_t kGatherDInputsNum = 3;
 constexpr size_t kGatherDOutputsNum = 1;
 
-size_t get_element_num(const std::vector<size_t> &shape) {
+int64_t get_element_num(const std::vector<size_t> &shape) {
   size_t size = 1;
   for (size_t i = 0; i < shape.size(); i++) {
     size *= shape[i];
   }
-  return size;
+  return SizeToLong(size);
 }
 
 template <typename T, typename I>
@@ -87,11 +87,8 @@ int GatherDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   }
 
   const size_t kIndexIdx = 2;
-  auto input_shape = inputs[0]->GetShapeVector();
-  auto index_shape = inputs[kIndexIdx]->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  (void)std::transform(index_shape.begin(), index_shape.end(), std::back_inserter(index_shape_), LongToSize);
-
+  input_shape_ = Convert2SizeT(inputs[0]->GetShapeVector());
+  index_shape_ = Convert2SizeT(inputs[kIndexIdx]->GetShapeVector());
   if (input_shape_.size() != index_shape_.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', shape size of 'x' must be equal to 'index', but got shape size of 'x': "
@@ -107,10 +104,10 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGatherDInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGatherDOutputsNum, kernel_name_);
-  size_t input_size = get_element_num(input_shape_) * sizeof(T);
-  size_t index_size = get_element_num(index_shape_) * sizeof(I);
+  auto input_size = get_element_num(input_shape_) * sizeof(T);
+  auto index_size = get_element_num(index_shape_) * sizeof(I);
   size_t dim_size = sizeof(int);
-  size_t output_size = get_element_num(output_shape_) * sizeof(T);
+  auto output_size = get_element_num(output_shape_) * sizeof(T);
   if (inputs[0]->size != input_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the address size of 'x' must be " << input_size << ", but got "
                       << inputs[0]->size << ".";
@@ -140,7 +137,7 @@ bool GatherDCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
     dim[0] = static_cast<int>(dim[0] + input_rank);
   }
   // check index
-  int max_index = SizeToInt(input_shape_[dim[0]]);
+  int max_index = input_shape_[dim[0]];
   index_size = get_element_num(index_shape_);
   for (size_t i = 0; i < index_size; ++i) {
     if (index[i] >= max_index || index[i] < -max_index) {

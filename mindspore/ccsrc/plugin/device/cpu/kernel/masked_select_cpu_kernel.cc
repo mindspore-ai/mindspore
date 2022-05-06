@@ -33,7 +33,7 @@ void MaskedSelectCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_b_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = CPUKernelUtils::GetBroadcastShape(input_shape_a_, input_shape_b_);
   for (const uint64_t &d : output_shape_) {
-    tensor_size_ *= d;
+    tensor_size_ *= static_cast<uint64_t>(d);
   }
   node_wpt_ = kernel_node;
 
@@ -76,8 +76,8 @@ bool MaskedSelectCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     if (!node_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
     }
-    std::vector<size_t> out_shape;
-    (void)out_shape.emplace_back(j);
+    ShapeVector out_shape;
+    (void)out_shape.emplace_back(UlongToLong(j));
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
     std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {

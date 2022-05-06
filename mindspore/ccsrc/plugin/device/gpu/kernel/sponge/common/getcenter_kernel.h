@@ -42,8 +42,8 @@ class GetCenterOfGeometryGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_center_atoms = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
-    for (size_t i = 0; i < shape_center_atoms.size(); i++) ele_center_atoms *= shape_center_atoms[i];
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
+    ele_center_atoms *= SizeOf(shape_center_atoms);
+    ele_crd *= SizeOf(shape_crd);
 
     InitSizeLists();
     return true;

@@ -304,9 +304,7 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
   }
 
   auto shape = input_tensor->shape();
-  std::vector<size_t> shape_tmp;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
+  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape},
                                               input_node.get());
 }
 

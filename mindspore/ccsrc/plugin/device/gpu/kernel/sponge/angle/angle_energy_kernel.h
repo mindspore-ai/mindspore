@@ -43,13 +43,14 @@ class AngleEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_angle_k = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
     auto shape_angle_theta0 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
 
-    for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
-    for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    for (size_t i = 0; i < shape_atom_a.size(); i++) ele_atom_a *= shape_atom_a[i];
-    for (size_t i = 0; i < shape_atom_b.size(); i++) ele_atom_b *= shape_atom_b[i];
-    for (size_t i = 0; i < shape_atom_c.size(); i++) ele_atom_c *= shape_atom_c[i];
-    for (size_t i = 0; i < shape_angle_k.size(); i++) ele_angle_k *= shape_angle_k[i];
-    for (size_t i = 0; i < shape_angle_theta0.size(); i++) ele_angle_theta0 *= shape_angle_theta0[i];
+    ele_uint_crd *= SizeOf(shape_uint_crd);
+    ele_scaler *= SizeOf(shape_scaler);
+    ele_atom_a *= SizeOf(shape_atom_a);
+    ele_atom_b *= SizeOf(shape_atom_b);
+    ele_atom_c *= SizeOf(shape_atom_c);
+    ele_angle_k *= SizeOf(shape_angle_k);
+    ele_angle_theta0 *= SizeOf(shape_angle_theta0);
+
     InitSizeLists();
     return true;
   }

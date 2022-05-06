@@ -76,11 +76,11 @@ class GridSampler2DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> grad_shape_;
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> grid_shape_;
-  std::vector<size_t> dx_shape_;
-  std::vector<size_t> dgrid_shape_;
+  ShapeVector grad_shape_;
+  ShapeVector x_shape_;
+  ShapeVector grid_shape_;
+  ShapeVector dx_shape_;
+  ShapeVector dgrid_shape_;
   std::string interpolation_mode_;
   std::string padding_mode_;
   bool align_corners_;
@@ -450,7 +450,7 @@ class TensorAcc {
 };
 
 template <typename T, size_t N>
-TensorAcc<T, N> accessor(T *data_ptr, std::vector<size_t> sizess) {
+TensorAcc<T, N> accessor(T *data_ptr, std::vector<int64_t> sizess) {
   static_assert(N > 0, "accessor is used for indexing tensor, for scalars use *data_ptr<T>()");
   int64_t stride_tmp = 1;
   int64_t *strid = new int64_t[N];

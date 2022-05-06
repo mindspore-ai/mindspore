@@ -48,12 +48,12 @@ class BondForceWithAtomVirialGpuKernelMod : public DeprecatedNativeGpuKernelMod 
     auto shape_bond_k = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
     auto shape_bond_r0 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
 
-    for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
-    for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    for (size_t i = 0; i < shape_atom_a.size(); i++) ele_atom_a *= shape_atom_a[i];
-    for (size_t i = 0; i < shape_atom_b.size(); i++) ele_atom_b *= shape_atom_b[i];
-    for (size_t i = 0; i < shape_bond_k.size(); i++) ele_bond_k *= shape_bond_k[i];
-    for (size_t i = 0; i < shape_bond_r0.size(); i++) ele_bond_r0 *= shape_bond_r0[i];
+    ele_uint_crd *= SizeOf(shape_uint_crd);
+    ele_scaler *= SizeOf(shape_scaler);
+    ele_atom_a *= SizeOf(shape_atom_a);
+    ele_atom_b *= SizeOf(shape_atom_b);
+    ele_bond_k *= SizeOf(shape_bond_k);
+    ele_bond_r0 *= SizeOf(shape_bond_r0);
     InitSizeLists();
     return true;
   }

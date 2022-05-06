@@ -28,10 +28,8 @@ void SigmoidCrossEntropyWithLogitsGradCpuKernelMod::InitKernel(const CNodePtr &k
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  for (const uint64_t &d : x_shape) {
-    tensor_size_ *= d;
-  }
+  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  tensor_size_ = SizeOf(x_shape);
 }
 
 bool SigmoidCrossEntropyWithLogitsGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

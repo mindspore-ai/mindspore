@@ -302,10 +302,10 @@ void ReorderInputsAsFrontGraph(const KernelGraphPtr &kernel_graph, const FuncGra
 }
 
 void UpdateOutputNodeShape(const std::vector<KernelWithIndex> &outputs, const std::vector<TypeId> &outputs_type,
-                           const std::vector<std::vector<size_t>> &shapes) {
+                           const std::vector<ShapeVector> &shapes) {
   AnfNodePtr cur_node = nullptr;
   std::vector<TypeId> cur_types = {};
-  std::vector<std::vector<size_t>> cur_shapes = {};
+  std::vector<ShapeVector> cur_shapes = {};
   for (size_t i = 0; i < outputs.size(); ++i) {
     const auto &node = outputs[i].first;
     if (node != cur_node && cur_node != nullptr) {
@@ -349,7 +349,7 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       continue;
     }
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
-    std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
+    std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(input_node, 0));
     size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     auto device_address_ptr =
@@ -364,7 +364,7 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
   for (const auto &[output_node, i] : outputs) {
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
-    std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(output_node, i);
+    std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(output_node, i));
     size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
     size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     auto device_address_ptr =
@@ -446,7 +446,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     MS_LOG(EXCEPTION) << "Invalid output size, graph's size " << outputs.size() << " tensor size " << ge_outputs.size();
   }
 
-  std::vector<std::vector<size_t>> output_shapes;
+  std::vector<ShapeVector> output_shapes;
   for (size_t i = 0; i < outputs.size(); ++i) {
     const auto &[output_node, idx] = outputs[i];
     const auto &tensor = ge_outputs[i];
@@ -462,9 +462,7 @@ bool GeGraphExecutor::RunGraph(const FuncGraphPtr &graph, const std::vector<tens
     // memcpy_s does not support data that more than 2GB
     (void)memcpy(output_addr->GetMutablePtr(), tensor->GetData(), tensor->GetSize());
     auto actual_shapes = tensor->GetTensorDesc().GetShape().GetDims();
-    std::vector<size_t> u_out_shape;
-    std::transform(actual_shapes.begin(), actual_shapes.end(), std::back_inserter(u_out_shape), LongToSize);
-    output_shapes.emplace_back(std::move(u_out_shape));
+    output_shapes.emplace_back(std::move(actual_shapes));
   }
   UpdateOutputNodeShape(outputs, me_types, output_shapes);
   MS_LOG(INFO) << "GE run graph end.";

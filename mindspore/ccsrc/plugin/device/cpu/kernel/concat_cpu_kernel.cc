@@ -54,7 +54,7 @@ bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), input_num, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConcatOutputsNum, kernel_name_);
 
-  std::vector<std::vector<size_t>> input_flat_shape_list;
+  std::vector<ShapeVector> input_flat_shape_list;
   input_flat_shape_list.reserve(input_num);
   for (size_t i = 0; i < input_num; i++) {
     auto input_shape_i = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
@@ -64,7 +64,7 @@ bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
 
   size_t output_dim_1 = 0;
   for (size_t j = 0; j < input_num; ++j) {
-    output_dim_1 += input_flat_shape_list[j][1];
+    output_dim_1 += LongToSize(input_flat_shape_list[j][1]);
   }
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   std::vector<T *> input_addr_list;
@@ -73,7 +73,7 @@ bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
     (void)input_addr_list.emplace_back(tmp_addr);
   }
   // each input's row of shape after flat are same
-  auto before_axis = input_flat_shape_list[0][0];
+  auto before_axis = LongToSize(input_flat_shape_list[0][0]);
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
       auto output_ptr = output_addr + i * output_dim_1;
@@ -81,7 +81,7 @@ bool ConcatCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
         if (input_flat_shape_list[j][1] == 0) {
           continue;
         }
-        auto copy_num = input_flat_shape_list[j][1];
+        auto copy_num = LongToSize(input_flat_shape_list[j][1]);
         auto copy_size = copy_num * sizeof(T);
         auto offset = copy_num * i;
         auto ret = memcpy_s(output_ptr, copy_size, input_addr_list[j] + offset, copy_size);

@@ -283,7 +283,7 @@ ShapeVector AscendDeviceAddress::GetDeviceShape(ShapeVector *host_shape) const {
   return device_shape;
 }
 
-std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const std::vector<size_t> &host_shape,
+std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const ShapeVector &host_shape,
                                                                          const std::string &ori_format,
                                                                          const std::string &dst_format) const {
   auto runtime_instance = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
@@ -300,8 +300,8 @@ std::shared_ptr<LaunchKernel> AscendDeviceAddress::CreateLaunchTransData(const s
   return launch_trans_data;
 }
 
-bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const std::vector<size_t> &host_shape,
-                                                                           size_t size, mindspore::TypeId type,
+bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const ShapeVector &host_shape, size_t size,
+                                                                           mindspore::TypeId type,
                                                                            void *host_ptr) const {
   bool sync_ok = true;
   const std::string dst_format = kOpFormat_NCHW;
@@ -325,7 +325,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
     auto host = std::vector<uint8_t>(size);
     SyncMemory(host.data(), output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
     auto shape_size = abstract::ShapeSize(host_shape);
-    const trans::TypeIdArgs type_args{host.data(), SizeToLong(shape_size), type_id_, type, size};
+    const trans::TypeIdArgs type_args{host.data(), shape_size, type_id_, type, size};
     sync_ok = trans::TransDataType(type_args, host_ptr);
     if (!sync_ok) {
       MS_LOG(ERROR) << "Trans data type failed.";
@@ -353,9 +353,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
       type_id_name_map.find(type_id_) != type_id_name_map.end()) {
     std::pair<std::string, std::string> type_format = std::make_pair(type_id_name_map.at(type_id_), format_);
     if (use_trans_data.find(type_format) != use_trans_data.end()) {
-      std::vector<size_t> st_shape;
-      (void)std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(st_shape), LongToSize);
-      sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(st_shape, size, type, host_ptr);
+      sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(host_shape, size, type, host_ptr);
       return sync_ok;
     }
   }

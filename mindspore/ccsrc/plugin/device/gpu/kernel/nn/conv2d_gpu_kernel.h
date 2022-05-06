@@ -87,6 +87,11 @@ class Conv2dFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+
+    if (AnfAlgo::IsShapesDynamic({in_shape, filter_shape, output_shape})) {
+      return true;
+    }
+
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "x") ||
                      CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
@@ -129,13 +134,11 @@ class Conv2dFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       int dimA[NBDIMS];
       int strideApadded[NBDIMS];
       if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
-        auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
-                             IntToSize(old_width_ + pad_width_)};
+        ShapeVector padded_shape = {n_, c_, old_height_ + pad_height_, old_width_ + pad_width_};
         SetDimA(padded_shape, dimA, nbDims, data_format_);
         SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
       } else if (data_format_ == kOpFormat_NHWC) {
-        auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
-                             IntToSize(c_)};
+        ShapeVector padded_shape = {n_, old_height_ + pad_height_, old_width_ + pad_width_, c_};
         SetDimA(padded_shape, dimA, nbDims, data_format_);
         SetStrideA(padded_shape, strideApadded, nbDims, data_format_);
       }
@@ -284,8 +287,7 @@ class Conv2dFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void Set4DDesc(const std::vector<size_t> &in_shape, const std::vector<size_t> &filter_shape,
-                 const std::vector<size_t> &output_shape) {
+  void Set4DDesc(const ShapeVector &in_shape, const ShapeVector &filter_shape, const ShapeVector &output_shape) {
     const int nbDims = 4;
     int dimA[NBDIMS];
     int strideAin[NBDIMS];

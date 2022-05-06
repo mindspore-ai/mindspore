@@ -98,34 +98,31 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
  private:
   void Reshape() {
-    size_t dim_before_axis = 1;
+    int64_t dim_before_axis = 1;
     for (size_t i = 0; i < IntToSize(axis_); i++) {
       dim_before_axis *= output_shapes_[i];
     }
-    size_t dim_at_axis_index = index_shapes_[IntToSize(axis_)];
-    size_t dim_at_axis_output = output_shapes_[IntToSize(axis_)];
-    size_t dim_after_axis = 1;
+    size_t dim_at_axis_index = LongToSizeClipNeg(index_shapes_[IntToSize(axis_)]);
+    size_t dim_at_axis_output = LongToSizeClipNeg(output_shapes_[IntToSize(axis_)]);
+    int64_t dim_after_axis = 1;
     for (size_t i = IntToSize(axis_) + 1; i < output_shapes_.size(); i++) {
       dim_after_axis *= output_shapes_[i];
     }
 
-    dims_[0] = dim_before_axis;
+    dims_[0] = LongToSize(dim_before_axis);
     dims_[1] = dim_at_axis_index;
     dims_[2] = dim_at_axis_output;
-    dims_[3] = dim_after_axis;
+    dims_[3] = LongToSize(dim_after_axis);
     return;
   }
-  size_t GetSize(const std::vector<size_t> &shape, const bool flag = true) const {
+  size_t GetSize(const ShapeVector &shape, const bool flag = true) const {
     size_t result = flag ? sizeof(T) : sizeof(S);
-    for (size_t i = 0; i < shape.size(); i++) {
-      result *= shape[i];
-    }
-    return result;
+    return result * SizeOf(shape);
   }
 
-  std::vector<size_t> index_shapes_;
-  std::vector<size_t> grad_shapes_;
-  std::vector<size_t> output_shapes_;
+  ShapeVector index_shapes_;
+  ShapeVector grad_shapes_;
+  ShapeVector output_shapes_;
 
   size_t dims_[4] = {};
   int axis_;

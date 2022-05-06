@@ -257,7 +257,7 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
   }
   MS_EXCEPTION_IF_CHECK_FAIL(data.size() == device_tensors.size(),
                              "The number of data tensor popped from dynamic queue is not correct");
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<ShapeVector> shapes;
   std::vector<TypeId> types;
   std::vector<size_t> output_size_list;
   for (size_t i = 0; i < data.size(); ++i) {
@@ -265,10 +265,8 @@ bool PopDataFromDataQueue(const AnfNodePtr &data_kernel) {
     device_tensors[i]->SetSize(data[i].data_len_);
     device_tensors[i]->set_from_mem_pool(true);
     output_size_list.push_back(data[i].data_len_);
-    std::vector<size_t> shape;
-    std::transform(data[i].shapes_.begin(), data[i].shapes_.end(), std::back_inserter(shape), LongToSize);
     kernel_info->SetOutputAddr(device_tensors[i], i);
-    shapes.push_back(shape);
+    shapes.push_back(data[i].shapes_);
     types.push_back(common::AnfAlgo::GetOutputInferDataType(data_kernel, i));
   }
   auto kernel_mod = kernel_info->MutableKernelMod();

@@ -141,7 +141,7 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     input_size_ = 1;
     for (size_t i = 0; i < input_rank_; i++) {
-      input_size_ *= input_shape_[i];
+      input_size_ *= static_cast<size_t>(input_shape_[i]);
     }
 
     descending_ = GetAttr<bool>(kernel_node, "descending");
@@ -163,7 +163,7 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     transposed_shape_ = input_shape_;
     std::swap(transposed_shape_[input_rank_ - 1], transposed_shape_[axis_]);
 
-    inner_size_ = input_shape_[axis_];
+    inner_size_ = static_cast<size_t>(input_shape_[axis_]);
     outer_size_ = input_size_ / inner_size_;
 
     if (std::is_same<T, half>::value) {
@@ -218,11 +218,11 @@ class SortGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   int64_t axis_;
   bool descending_;
   bool is_null_input_;
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   size_t input_rank_;
 
   // for transpose
-  std::vector<size_t> transposed_shape_;
+  std::vector<int64_t> transposed_shape_;
   std::vector<size_t> perm_;
 
   // for topk

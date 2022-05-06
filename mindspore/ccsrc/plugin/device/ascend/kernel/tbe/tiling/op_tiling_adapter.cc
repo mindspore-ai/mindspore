@@ -108,21 +108,15 @@ void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ::
     auto ms_dtype = AnfAlgo::GetOutputDeviceDataType(input_node, input_index);
 
     // ge info
-    std::vector<int64_t> ge_shape;
-    std::vector<int64_t> ge_ori_shape;
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
     ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
-    std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
-                   [](size_t s) { return static_cast<int64_t>(s); });
-    std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
-                   [](size_t s) { return static_cast<int64_t>(s); });
 
     auto input_name = GetInputName(node, real_index);
     ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetDataType(ge_dtype);
-    ge_tensor_desc.SetShape(::ge::GeShape(ge_shape));
-    ge_tensor_desc.SetOriginShape(::ge::GeShape(ge_ori_shape));
+    ge_tensor_desc.SetShape(::ge::GeShape(ms_shape));
+    ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
     ge_tensor_desc.SetName(input_name);
     (void)(*op_desc)->AddInputDesc(input_name, ge_tensor_desc);
   }
@@ -138,20 +132,15 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
     auto ms_format = AnfAlgo::GetOutputFormat(node, i);
     auto ms_dtype = AnfAlgo::GetOutputDeviceDataType(node, i);
 
-    std::vector<int64_t> ge_shape;
-    std::vector<int64_t> ge_ori_shape;
     ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
     ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
-    std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
-                   [](size_t s) { return static_cast<int64_t>(s); });
-    std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
-                   [](size_t s) { return static_cast<int64_t>(s); });
+
     auto output_name = GetOutputName(node, i);
     ::ge::GeTensorDesc ge_tensor_desc;
     ge_tensor_desc.SetFormat(ge_format);
     ge_tensor_desc.SetDataType(ge_dtype);
-    ge_tensor_desc.SetShape(::ge::GeShape(ge_shape));
-    ge_tensor_desc.SetOriginShape(::ge::GeShape(ge_ori_shape));
+    ge_tensor_desc.SetShape(::ge::GeShape(ms_shape));
+    ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
     ge_tensor_desc.SetName(output_name);
     (void)(*op_desc)->AddOutputDesc(output_name, ge_tensor_desc);
   }
@@ -224,18 +213,12 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
   MS_EXCEPTION_IF_NULL(tensor_data);
   ::ge::OpDescPtr op_desc = std::make_shared<::ge::OpDesc>(name, CONSTANTOP);
   auto ms_format = AnfAlgo::GetPrevNodeOutputFormat(node, index);
-  auto ms_ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
+  auto ge_ori_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
   auto ms_dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(node, index);
-  auto ms_shape = AnfAlgo::GetInputDeviceShape(node, index);
+  auto ge_shape = AnfAlgo::GetInputDeviceShape(node, index);
 
-  std::vector<int64_t> ge_shape;
-  std::vector<int64_t> ge_ori_shape;
-  std::transform(ms_shape.begin(), ms_shape.end(), std::back_inserter(ge_shape),
-                 [](size_t s) { return static_cast<int64_t>(s); });
-  std::transform(ms_ori_shape.begin(), ms_ori_shape.end(), std::back_inserter(ge_ori_shape),
-                 [](size_t s) { return static_cast<int64_t>(s); });
   ::ge::DataType ge_dtype = ascend::GeTypesConvert::TransTypeIdToGeDataType(ms_dtype);
-  ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ms_shape.size());
+  ::ge::Format ge_format = ascend::GeTypesConvert::GetGeFormat(ms_format, ge_shape.size());
   ::ge::GeTensorDesc ge_tensor_desc;
   ge_tensor_desc.SetFormat(ge_format);
   ge_tensor_desc.SetDataType(ge_dtype);

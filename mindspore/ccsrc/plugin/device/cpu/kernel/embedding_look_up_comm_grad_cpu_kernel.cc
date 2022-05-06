@@ -33,6 +33,9 @@ void EmbeddingLookUpCommGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node
   split_num_ = LongToSize(split_num);
   MS_LOG(INFO) << "split_num: " << split_num;
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (IsDynamic(input_shape)) {
+    return;
+  }
   if (split_num <= 0 || split_num_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'split_num' must be greater than 0, but got " << split_num;
   }

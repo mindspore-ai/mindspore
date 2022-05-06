@@ -111,7 +111,7 @@ bool CheckOutputShape(const AnfNodePtr &node) {
     return false;
   }
   auto last_dim = shape[shape.size() - 1];
-  const size_t kMaxFloat16 = 65500;
+  const int64_t kMaxFloat16 = 65500;
   if (last_dim > kMaxFloat16) {
     MS_LOG(INFO) << "The last dim is more than " << kMaxFloat16 << ", switch to aicpu ops.";
     return false;

@@ -134,8 +134,8 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
                       << trace::DumpSourceLines(cnode);
   }
 
-  size_t x_num = shape_x[0];
-  std::vector<int64_t> x{SizeToLong(x_num)};
+  auto x_num = shape_x[0];
+  std::vector<int64_t> x{x_num};
 
   auto x_shape_value = std::make_shared<tensor::Tensor>(type_x, x);
   // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
@@ -208,8 +208,8 @@ void DynamicBroadcastGradientArgsKernelMod::Execute() {
   auto r0_size = SetOutputValue(cnode, grad_reduce_idx, 0, input_shapes[0].size());
   auto r1_size = SetOutputValue(cnode, grad_reduce_idx, 1, input_shapes[1].size());
 
-  std::vector<size_t> r0_shp{r0_size};
-  std::vector<size_t> r1_shp{r1_size};
+  ShapeVector r0_shp{SizeToLong(r0_size)};
+  ShapeVector r1_shp{SizeToLong(r1_size)};
   auto output_type = TypeId::kNumberTypeInt64;
   common::AnfAlgo::SetOutputInferTypeAndShape({output_type, output_type}, {r0_shp, r1_shp}, cnode.get());
   MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel End";

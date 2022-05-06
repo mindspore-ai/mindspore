@@ -31,13 +31,9 @@ constexpr size_t kTensorCopySlicesOutputsNum = 1;
 void TensorCopySlicesCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
-  CastShapeSizeToLong(input_shape, &input_shape_);
-  CastShapeSizeToLong(update_shape, &update_shape_);
-  CastShapeSizeToLong(output_shape, &output_shape_);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  update_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
 
   auto begin = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, BEGIN);
   auto end = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, END);

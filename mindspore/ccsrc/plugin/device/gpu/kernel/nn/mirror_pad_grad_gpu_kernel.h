@@ -87,11 +87,11 @@ class MirrorPadBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input_x") ||
                      CHECK_SHAPE_NULL(padding_shape, kernel_name_, "paddings") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, padding_shape})) {
       InitSizeLists();
       return true;
     }
@@ -109,14 +109,14 @@ class MirrorPadBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     input_size_ = sizeof(T);
     for (auto in_shape : input_shape) {
-      input_size_ *= in_shape;
-      input_shape_.push_back(in_shape);
+      input_size_ *= LongToSizeClipNeg(in_shape);
+      input_shape_.push_back(LongToInt(in_shape));
     }
     num_input_ = input_size_;
 
     // account for paddings in input size -> passed as int64_ts
 
-    num_paddings_ = padding_shape[0];
+    num_paddings_ = LongToSizeClipNeg(padding_shape[0]);
     input_size_ += (IntToSize(kSymmetricCoef) * num_paddings_ * sizeof(int64_t));
 
     if (output_shape.size() == kDimNeedPadBatch) {
@@ -133,7 +133,7 @@ class MirrorPadBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     output_size_ = sizeof(T);
     for (auto x : output_shape) {
       output_size_ *= x;
-      output_shape_.push_back(x);
+      output_shape_.push_back(SizeToInt(x));
     }
 
     // calc workspace size

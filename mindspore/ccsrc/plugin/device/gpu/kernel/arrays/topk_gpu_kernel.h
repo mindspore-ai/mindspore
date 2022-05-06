@@ -91,10 +91,11 @@ class TopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     input_shape_size_ = input_shapes.size();
     for (size_t i = 0; i < input_shapes.size() - 1; i++) {
-      outer_size_ *= input_shapes[i];
+      outer_size_ *= LongToSize(input_shapes[i]);
     }
-    inner_size_ = input_shapes[input_shapes.size() - 1];
-    k_ = output_shapes[output_shapes.size() - 1];
+
+    inner_size_ = LongToSizeClipNeg(input_shapes[input_shapes.size() - 1]);
+    k_ = LongToSizeClipNeg(output_shapes[output_shapes.size() - 1]);
 
     sorted_ = GetAttr<bool>(kernel_node, "sorted");
 

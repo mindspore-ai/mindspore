@@ -46,9 +46,9 @@ class GridSampler2DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> grid_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector x_shape_;
+  ShapeVector grid_shape_;
+  ShapeVector output_shape_;
   std::vector<size_t> x_stride_;
   std::vector<size_t> grid_stride_;
   std::vector<size_t> output_stride_;

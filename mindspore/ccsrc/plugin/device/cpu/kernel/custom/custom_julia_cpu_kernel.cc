@@ -51,11 +51,8 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = 0; i < num_input_; i++) {
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-    std::vector<int64_t> in_shape_tmp;
-    (void)std::for_each(in_shape.begin(), in_shape.end(),
-                        [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-    ndims_.push_back(in_shape_tmp.size());
-    shape_list_.push_back(in_shape_tmp);
+    ndims_.push_back(in_shape.size());
+    shape_list_.push_back(in_shape);
     type_list_.push_back(TypeIdToString(input_type_list[i], true));
   }
 
@@ -67,12 +64,9 @@ void CustomJULIACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   for (size_t i = 0; i < num_output_; i++) {
-    std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-    std::vector<int64_t> out_shape_tmp;
-    (void)std::for_each(out_shape.begin(), out_shape.end(),
-                        [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
-    ndims_.push_back(out_shape_tmp.size());
-    shape_list_.push_back(out_shape_tmp);
+    auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+    ndims_.push_back(out_shape.size());
+    shape_list_.push_back(out_shape);
     type_list_.push_back(TypeIdToString(output_type_list[i], true));
   }
 

@@ -142,18 +142,21 @@ bool ClipByNormGpuKernelMod<T, S>::DoLaunch(const std::vector<AddressPtr> &input
                         l2norm_output_addr),
       kernel_name_ + " running cudnnReduceTensor::cudnnReduceTensorNorm2 failed.");
   }
+  auto l2_norm_lhs_shape_size = Convert2SizeTClipNeg(l2_norm_lhs_shape_);
+  auto l2_norm_rhs_shap_size = Convert2SizeTClipNeg(l2_norm_rhs_shape_);
+  auto l2_norm_ouths_shape_size = Convert2SizeTClipNeg(l2_norm_ouths_shape_);
   // Calculation std::max(l2_norm, epsilon) to keep numerical stability.
   GetMaxWithEpsAndValue(l2_norm_output_size_ / sizeof(float), epsilon_, l2norm_output_addr,
                         reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running `x/l2_norm(x)` and broadcast output shape to `input_x` shape
-  BroadcastArith(l2_norm_lhs_shape_, l2_norm_rhs_shape_, l2_norm_ouths_shape_, BROADCAST_TYPE_REALDIV, x_float_addr,
-                 l2norm_output_addr, div_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+  BroadcastArith(l2_norm_lhs_shape_size, l2_norm_rhs_shap_size, l2_norm_ouths_shape_size, BROADCAST_TYPE_REALDIV,
+                 x_float_addr, l2norm_output_addr, div_output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running `cast(clip_norm)` to the data type of `input_x`
   Cast(clip_norm_size_ / sizeof(S), clip_norm_addr, clip_norm_float_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
   // Running '(x/l2_norm(x)) * clip_norm' and broadcast output shape to `input_x` shape
   if (clip_norm_need_broadcast_) {
-    BroadcastArith(l2_norm_ouths_shape_, clip_norm_rhs_shape_, l2_norm_ouths_shape_, BROADCAST_TYPE_MUL,
-                   div_output_addr, clip_norm_float_addr, clip_norm_mul_output_addr,
+    BroadcastArith(l2_norm_ouths_shape_size, Convert2SizeTClipNeg(clip_norm_rhs_shape_), l2_norm_ouths_shape_size,
+                   BROADCAST_TYPE_MUL, div_output_addr, clip_norm_float_addr, clip_norm_mul_output_addr,
                    reinterpret_cast<cudaStream_t>(stream_ptr));
   } else {
     ElewiseArith(output_size_ / sizeof(float), BROADCAST_TYPE_MUL, div_output_addr, clip_norm_float_addr,
@@ -199,27 +202,23 @@ void ClipByNormGpuKernelMod<T, S>::InitIOShape(const std::vector<KernelTensorPtr
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == 1, "The size of output tensors should be 1.");
   // Get input `x` shape
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  const auto x_origin_shape = inputs[0]->GetShapeVector();
-  if (!IsValidShape(x_origin_shape)) {
+  x_shape_ = inputs[0]->GetShapeVector();
+  if (!IsValidShape(x_shape_)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", input `x` is not supported dynamic shape.";
   }
-  std::transform(x_origin_shape.begin(), x_origin_shape.end(), std::back_inserter(x_shape_), LongToSize);
   x_dim_ = x_shape_.size();
   // Get input `clip_norm` shape
   MS_EXCEPTION_IF_NULL(inputs[1]);
-  const auto clip_norm_origin_shape = inputs[1]->GetShapeVector();
-  if (!IsValidShape(clip_norm_origin_shape)) {
+  clip_norm_shape_ = inputs[1]->GetShapeVector();
+  if (!IsValidShape(clip_norm_shape_)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", input `clip_norm` is not supported dynamic shape.";
   }
-  std::transform(clip_norm_origin_shape.begin(), clip_norm_origin_shape.end(), std::back_inserter(clip_norm_shape_),
-                 LongToSize);
   // Get output shape
   MS_EXCEPTION_IF_NULL(outputs[0]);
-  const auto output_origin_shape = outputs[0]->GetShapeVector();
-  if (!IsValidShape(output_origin_shape)) {
+  output_shape_ = outputs[0]->GetShapeVector();
+  if (!IsValidShape(output_shape_)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", output shape is not supported dynamic shape.";
   }
-  std::transform(output_origin_shape.begin(), output_origin_shape.end(), std::back_inserter(output_shape_), LongToSize);
   MS_EXCEPTION_IF_CHECK_FAIL(output_shape_ == x_shape_, "Output shape should be same with input x shape.");
 }
 
@@ -329,9 +328,7 @@ void ClipByNormGpuKernelMod<T, S>::InitSizeLists() {
   // size for running '(x/l2_norm(x)) * clip_norm'
   workspace_size_list_.emplace_back(x_float_size);
   // Init output size
-  output_size_ =
-    std::accumulate(output_shape_.begin(), output_shape_.end(), float_type_size, std::multiplies<size_t>());
-  output_size_ = std::max(float_type_size, output_size_);
+  output_size_ = float_type_size * SizeOf(output_shape_);
   output_size_list_.emplace_back(output_size_);
 }
 
@@ -342,7 +339,7 @@ void ClipByNormGpuKernelMod<T, S>::DetermineDeviceDataInfoForCudnn(const KernelT
   // Determine device data info for `inputA_descriptor`
   constexpr size_t split_dim = 4;
   if (x_dim_ <= split_dim) {
-    std::vector<size_t> x_4d_shape;
+    ShapeVector x_4d_shape;
     ShapeNdTo4d(x_shape_, &x_4d_shape);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, x_4d_shape[kIndex0],
@@ -353,7 +350,7 @@ void ClipByNormGpuKernelMod<T, S>::DetermineDeviceDataInfoForCudnn(const KernelT
   }
   // Determine device data info for `outputC_descriptor`
   if (l2_norm_output_shape_.size() <= split_dim) {
-    std::vector<size_t> l2_norm_4d_shape;
+    ShapeVector l2_norm_4d_shape;
     ShapeNdTo4d(l2_norm_output_shape_, &l2_norm_4d_shape);
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, l2_norm_4d_shape[kIndex0],

@@ -73,8 +73,8 @@ class CumSumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchCumSum(const T *input_addr, T *output_addr, T *ws_addr, size_t start, size_t end) const;
 
-  std::vector<size_t> shape_;
-  std::vector<size_t> dst_shape;
+  ShapeVector shape_;
+  ShapeVector dst_shape;
   size_t input_size_0_{0};
   size_t stride_{0};
   size_t stride2_{0};

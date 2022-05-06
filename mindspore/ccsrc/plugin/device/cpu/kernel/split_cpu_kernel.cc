@@ -36,7 +36,7 @@ void SplitCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_),
-                       [](const size_t &value) { return SizeToInt(value); });
+                       [](const int64_t &value) { return LongToInt(value); });
   if (input_shape_.size() < 1 || input_shape_.size() > SPLIT_STRIDES_SIZE) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input tensor must be in range [1, "
                       << SPLIT_STRIDES_SIZE << "], but got " << input_shape_.size();

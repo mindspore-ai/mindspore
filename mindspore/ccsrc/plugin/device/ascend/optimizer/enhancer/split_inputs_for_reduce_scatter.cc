@@ -28,7 +28,7 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
   size_t inputs_size = common::AnfAlgo::GetInputTensorNum(node);
   std::vector<AnfNodePtr> split_outputs;
   size_t rank_size_t = LongToSize(rank_size);
-  if (rank_size_t == 0) {
+  if (rank_size == 0) {
     MS_LOG(EXCEPTION) << "The rank size can not be zero.";
   }
   for (size_t i = 0; i < inputs_size; i++) {
@@ -39,23 +39,20 @@ std::vector<AnfNodePtr> SplitInputsForReduceScatter::InsertSplitForInput(const F
     std::vector<TypeId> dtypes(rank_size, common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i));
 
     std::vector<int> size_splits;
-    std::vector<size_t> output_node_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
-    output_node_shape[0] /= rank_size_t;
-    if (AnfUtils::IsShapeDynamic(output_node_shape)) {
+    auto output_node_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, i);
+    output_node_shape[0] /= rank_size;
+    if (IsDynamic(output_node_shape)) {
       auto min_shape = common::AnfAlgo::GetInputMinShape(node, i);
       auto max_shape = common::AnfAlgo::GetInputMaxShape(node, i);
       if (!min_shape.empty() && !max_shape.empty()) {
-        min_shape[0] /= static_cast<int64_t>(rank_size_t);
-        max_shape[0] /= static_cast<int64_t>(rank_size_t);
+        min_shape[0] /= rank_size;
+        max_shape[0] /= rank_size;
       }
-
-      ShapeVector shape_tmp;
-      (void)std::transform(output_node_shape.begin(), output_node_shape.end(), std::back_inserter(shape_tmp),
-                           SizeToLong);
-      std::vector<BaseShapePtr> shapes(rank_size_t, std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape));
+      std::vector<BaseShapePtr> shapes(rank_size_t,
+                                       std::make_shared<abstract::Shape>(output_node_shape, min_shape, max_shape));
       common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split.get());
     } else {
-      std::vector<std::vector<size_t>> shapes(rank_size_t, output_node_shape);
+      std::vector<ShapeVector> shapes(rank_size_t, output_node_shape);
       common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split.get());
     }
 

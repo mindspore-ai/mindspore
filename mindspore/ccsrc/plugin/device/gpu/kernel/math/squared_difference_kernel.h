@@ -53,9 +53,9 @@ class SquaredDifferenceOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape1 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto input_shape2 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape1 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto input_shape2 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto output_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(input_shape1, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(input_shape2, kernel_name, "input") ||
@@ -77,7 +77,7 @@ class SquaredDifferenceOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       if (need_broadcast_) {
         output_shape_[i] = output_shape[i];
       }
-      output_num_ *= output_shape[i];
+      output_num_ *= static_cast<size_t>(output_shape[i]);
     }
     int lhs_offset = output_shape.size() - input_shape1.size();
     for (size_t j = 0; j < input_shape1.size(); j++) {

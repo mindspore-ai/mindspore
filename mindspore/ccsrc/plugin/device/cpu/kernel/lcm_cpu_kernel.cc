@@ -37,21 +37,10 @@ const size_t kLcmOutputsNum = 1;
 bool LcmCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                            const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  std::vector<int64_t> x1_shape = inputs[0]->GetShapeVector();
-  std::vector<int64_t> x2_shape = inputs[1]->GetShapeVector();
-  std::vector<int64_t> y_shape = outputs[0]->GetShapeVector();
-  x1_shape_.resize(x1_shape.size(), 1);
-  x2_shape_.resize(x2_shape.size(), 1);
-  y_shape_.resize(y_shape.size(), 1);
-  for (size_t i = 0; i < x1_shape.size(); i++) {
-    x1_shape_[i] = static_cast<size_t>(x1_shape[i]);
-  }
-  for (size_t i = 0; i < x2_shape.size(); i++) {
-    x2_shape_[i] = static_cast<size_t>(x2_shape[i]);
-  }
-  for (size_t i = 0; i < y_shape.size(); i++) {
-    y_shape_[i] = static_cast<size_t>(y_shape[i]);
-  }
+  x1_shape_ = inputs[0]->GetShapeVector();
+  x2_shape_ = inputs[1]->GetShapeVector();
+  y_shape_ = outputs[0]->GetShapeVector();
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -73,10 +62,8 @@ bool LcmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   if (y_shape_.size() == 0) {
     (void)y_shape_.insert(y_shape_.begin(), 1);
   }
-  int64_t output_size_ = 1;
-  for (size_t i = 0; i < y_shape_.size(); ++i) {
-    output_size_ *= y_shape_[i];
-  }
+  auto output_size = SizeOf(y_shape_);
+
   BroadcastIterator base_iter(x1_shape_, x2_shape_, y_shape_);
   auto task = [this, &x1, &x2, &y, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -86,7 +73,7 @@ bool LcmCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
       iter.GenNextPos();
     }
   };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   return true;
 }
 

@@ -55,14 +55,14 @@ class BatchToSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     (void)CheckParam(kernel_node);
     input_size_ = sizeof(T);
     for (size_t idx = 0; idx < input_shape_.size(); ++idx) {
-      input_size_ *= input_shape_[idx];
+      input_size_ *= static_cast<size_t>(input_shape_[idx]);
     }
     constexpr int IDX_2 = 2;
     constexpr int IDX_3 = 3;
-    in_ = input_shape_[0];
-    ic_ = input_shape_[1];
-    ih_ = input_shape_[IDX_2];
-    iw_ = input_shape_[IDX_3];
+    in_ = static_cast<size_t>(input_shape_[0]);
+    ic_ = static_cast<size_t>(input_shape_[1]);
+    ih_ = static_cast<size_t>(input_shape_[IDX_2]);
+    iw_ = static_cast<size_t>(input_shape_[IDX_3]);
 
     on_ = in_ / (block_size_ * block_size_);
     oc_ = ic_;
@@ -164,7 +164,7 @@ class BatchToSpaceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::vector<size_t> workspace_size_list_;
 
   std::vector<std::vector<int64_t>> crops_;
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   size_t block_size_;
   size_t input_size_;
   size_t output_size_;

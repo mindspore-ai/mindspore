@@ -74,10 +74,7 @@ class CastAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         InitSizeLists();
         return true;
       }
-      size_t s = 1;
-      for (auto x : shape) {
-        s = s * x;
-      }
+      size_t s = SizeOf(shape);
       if (max_ < s) {
         max_ = s;
       }

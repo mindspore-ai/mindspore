@@ -53,9 +53,9 @@ class SearchSortedCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   bool right_{false};
   size_t search_len{0};
-  std::vector<size_t> sequence_shape_;
-  std::vector<size_t> values_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> sequence_shape_;
+  std::vector<int64_t> values_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

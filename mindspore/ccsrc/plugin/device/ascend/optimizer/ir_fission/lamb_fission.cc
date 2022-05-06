@@ -163,7 +163,7 @@ AnfNodePtr CreateLayerNormNode(const FuncGraphPtr &graph, const AnfNodePtr &inpu
   square_sum_node->set_abstract(input_node->abstract());
 
   auto types = {common::AnfAlgo::GetOutputInferDataType(input_node, 0)};
-  std::vector<size_t> shape = {1};
+  ShapeVector shape = {1};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, {shape}, square_sum_node.get());
 
   // Calc sqrt of the sum of square

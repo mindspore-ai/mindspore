@@ -79,19 +79,19 @@ class PReLUGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       per_channel_length_ = 1;
     } else if (x_rank == 1) {
       channel_num = 1;
-      per_channel_length_ = x_shape[0];
+      per_channel_length_ = LongToSizeClipNeg(x_shape[0]);
     } else {
-      channel_num = x_shape[1];
+      channel_num = LongToSizeClipNeg(x_shape[1]);
       per_channel_length_ = std::accumulate(x_shape.begin() + 2, x_shape.end(), size_t(1), std::multiplies<>());
     }
 
-    if (weight_shape.size() != 1 || (weight_shape[0] != 1 && weight_shape[0] != channel_num)) {
+    if (weight_shape.size() != 1 || (weight_shape[0] != 1 && LongToSizeClipNeg(weight_shape[0]) != channel_num)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight must be equal to 1 and "
                         << "weight.shape[0] must be equal to 1 or the channel number, but got the dimension of "
                         << "weight: " << weight_shape.size() << ", weight.shape[0]: " << weight_shape[0]
                         << ", the channel num: " << channel_num;
     }
-    weight_length_ = weight_shape[0];
+    weight_length_ = LongToSizeClipNeg(weight_shape[0]);
     workspace_size_ = weight_length_ * IntToSize(GET_BLOCKS(input_length_) * GET_THREADS) * sizeof(float);
     InitSizeLists();
     return true;

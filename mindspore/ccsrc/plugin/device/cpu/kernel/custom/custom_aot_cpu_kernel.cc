@@ -62,12 +62,9 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   for (size_t i = 0; i < num_input_; i++) {
-    std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-    std::vector<int64_t> in_shape_tmp;
-    std::for_each(in_shape.begin(), in_shape.end(),
-                  [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-    shape_list_.emplace_back(in_shape_tmp);
-    ndims_.push_back(SizeToInt(in_shape_tmp.size()));
+    auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+    shape_list_.emplace_back(in_shape);
+    ndims_.push_back(SizeToInt(in_shape.size()));
     type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
   }
 
@@ -79,12 +76,9 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 
   for (size_t i = 0; i < num_output_; i++) {
-    std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-    std::vector<int64_t> out_shape_tmp;
-    (void)std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(out_shape_tmp),
-                         [](const size_t &c) { return SizeToLong(c); });
-    shape_list_.emplace_back(out_shape_tmp);
-    ndims_.push_back(SizeToInt(out_shape_tmp.size()));
+    auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+    shape_list_.emplace_back(out_shape);
+    ndims_.push_back(SizeToInt(out_shape.size()));
     type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
   }
 

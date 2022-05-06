@@ -81,7 +81,7 @@ bool FillV2CpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, c
   std::vector<int64_t> output_new_shape_;
   auto num = output_shape_.size();
   for (size_t i = 0; i < num; i++) {
-    auto element = static_cast<int64_t>(output_shape_[i]);
+    auto element = output_shape_[i];
     output_new_shape_.emplace_back(element);
   }
   if (output_new_shape_ != dims) {

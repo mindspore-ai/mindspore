@@ -263,8 +263,7 @@ bool IsNeedPadding(const std::string &format, size_t shape_size) {
 
 ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
-  ShapeVector shape;
-  std::vector<size_t> host_shape;
+  ShapeVector host_shape;
   if (node->isa<ValueNode>()) {
     auto value_node = node->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(value_node);
@@ -275,15 +274,15 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
       MS_LOG(EXCEPTION) << " The node[ " << node->DebugString() << "]'s cannot convert ";
     }
     auto shape_temp = tensor->shape();
-    if (AnfUtils::IsShapeDynamic(shape_temp)) {
+    if (IsDynamic(shape_temp)) {
       auto base_shape = tensor->base_shape_ptr();
       MS_EXCEPTION_IF_NULL(base_shape);
       if (base_shape->cast<abstract::ShapePtr>() == nullptr) {
         MS_LOG(EXCEPTION) << "Tensor with dynamic shape should be ShapePtr type.";
       }
-      host_shape = AnfUtils::TransShapeToSizet(base_shape->cast<abstract::ShapePtr>());
+      host_shape = base_shape->cast<abstract::ShapePtr>()->shape();
     } else {
-      (void)std::transform(shape_temp.begin(), shape_temp.end(), std::back_inserter(host_shape), LongToSize);
+      host_shape = shape_temp;
     }
 
     if (host_shape.empty()) {
@@ -296,8 +295,7 @@ ShapeVector GetRuntimePaddingShape(const AnfNodePtr &node, size_t index) {
   if (IsNeedPadding(format, host_shape.size())) {
     host_shape = PaddingShape(host_shape, format, AnfAlgo::GetOutputReshapeType(node, index), node);
   }
-  (void)std::transform(host_shape.begin(), host_shape.end(), std::back_inserter(shape), SizeToLong);
-  return shape;
+  return host_shape;
 }
 
 bool TransDataType(const TypeIdArgs &args, void *result) {

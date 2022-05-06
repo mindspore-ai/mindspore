@@ -39,7 +39,7 @@ void CrossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dim_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "dim");
   int64_t default_dim = -65530;
   if (dim_ == default_dim) {
-    size_t dim_size_value = 3;
+    int64_t dim_size_value = 3;
     for (size_t i = 0; i < input1_shape_.size(); i++) {
       if (input1_shape_[i] == dim_size_value) {
         dim_ = static_cast<int64_t>(i);
@@ -83,7 +83,7 @@ template <typename T>
 bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                      const std::vector<kernel::AddressPtr> &outputs) {
   auto input1_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  size_t tmp = 1;
+  int64_t tmp = 1;
   for (size_t i = 0; i < input1_shape_.size(); i++) {
     tmp = tmp * input1_shape_[i];
   }
@@ -93,7 +93,7 @@ bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   size_t total = input1_data_num / kNumber3;
   const size_t n = input1_shape_.size();
   std::vector<size_t> a_stride(n);
-  size_t stride_tmp = 1;
+  int64_t stride_tmp = 1;
   for (int64_t i = static_cast<int64_t>(n - 1); i >= 0; i--) {
     a_stride[LongToSize(i)] = stride_tmp;
     stride_tmp *= input1_shape_[LongToSize(i)];
@@ -117,11 +117,11 @@ bool CrossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inpu
   auto cross_shard = [this, &a_stride, &b_stride, &r_stride, &output_data_addr, &input1_data_addr, &input2_data_addr,
                       &output_data_stride, &input1_data_stride, &input2_data_stride](size_t start, size_t end) {
     const size_t input1_data_dim = input1_shape_.size();
-    std::vector<size_t> position_in_dims(input1_data_dim);
-    size_t index_in_curr_dim = start;
-    size_t input1_data_start = 0;
-    size_t input2_data_start = 0;
-    size_t output_data_start = 0;
+    std::vector<int64_t> position_in_dims(input1_data_dim);
+    int64_t index_in_curr_dim = start;
+    int64_t input1_data_start = 0;
+    int64_t input2_data_start = 0;
+    int64_t output_data_start = 0;
     for (int64_t i = 0; i < static_cast<int64_t>(input1_data_dim); i++) {
       if (i == static_cast<int64_t>(dim_)) continue;
       position_in_dims[LongToSize(i)] = index_in_curr_dim % input1_shape_[LongToSize(i)];

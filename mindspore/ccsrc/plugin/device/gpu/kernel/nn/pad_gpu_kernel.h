@@ -76,8 +76,8 @@ class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     (void)CheckIONumber(kernel_node);
 
-    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
@@ -123,7 +123,7 @@ class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     strides_.resize(input_rank_);
     strides_[input_rank_ - 1] = 1;
     for (int32_t i = input_rank_ - 2; i >= 0; i--) {
-      strides_[i] = output_shape[i + 1] * strides_[i + 1];
+      strides_[i] = static_cast<size_t>(output_shape[i + 1]) * strides_[i + 1];
     }
 
     InitSizeLists();

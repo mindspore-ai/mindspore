@@ -71,7 +71,7 @@ bool NeedFusion(const AnfNodePtr &sum_anf, const AnfNodePtr &input0, const AnfNo
     return false;
   }
 
-  const size_t last_dim_limit = 30000;
+  const ShapeValueDType last_dim_limit = 30000;
   auto input0_shape = common::AnfAlgo::GetOutputInferShape(input0, 0);
   if (!input0_shape.empty() && input0_shape[input0_shape.size() - 1] > last_dim_limit) {
     MS_LOG(INFO) << "Input shape is too large to optimize, quit fusion, shape: " << input0_shape;

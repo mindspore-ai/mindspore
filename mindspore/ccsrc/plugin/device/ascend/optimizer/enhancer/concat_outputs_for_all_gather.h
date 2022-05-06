@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace opt {
-using OutputInfo = std::tuple<std::vector<TypeId>, std::vector<std::vector<size_t>>, std::vector<std::vector<int64_t>>,
+using OutputInfo = std::tuple<std::vector<TypeId>, std::vector<ShapeVector>, std::vector<std::vector<int64_t>>,
                               std::vector<std::vector<int64_t>>, std::vector<std::string>, std::vector<TypeId>>;
 
 class ConcatOutputsForAllGather : public PatternProcessPass {

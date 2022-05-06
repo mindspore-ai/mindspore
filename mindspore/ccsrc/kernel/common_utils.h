@@ -87,7 +87,7 @@ class KernelMeta {
 
 class MatrixInfo {
  public:
-  explicit MatrixInfo(size_t max_index, const std::vector<size_t> &matrix_shapes)
+  explicit MatrixInfo(size_t max_index, const ShapeVector &matrix_shapes)
       : max_index_(max_index), shapes_(matrix_shapes) {
     current_indexes_.resize(shapes_.size(), 0);
   }
@@ -101,8 +101,8 @@ class MatrixInfo {
     int last_rank = SizeToInt(current_indexes_.size()) - 1;
     for (int i = last_rank; i >= 0; --i) {
       size_t position = IntToSize(i);
-      current_indexes_[position] = start % shapes_.at(position);
-      start = start / shapes_.at(position);
+      current_indexes_[position] = start % LongToSize(shapes_.at(position));
+      start = start / LongToSize(shapes_.at(position));
       if (start == 0) {
         break;
       }
@@ -116,7 +116,7 @@ class MatrixInfo {
     }
     size_t last_rank = current_indexes_.size() - 1;
     current_indexes_[last_rank]++;
-    for (size_t i = last_rank; current_indexes_.at(i) >= shapes_.at(i) && i > 0; --i) {
+    for (size_t i = last_rank; current_indexes_.at(i) >= LongToSize(shapes_.at(i)) && i > 0; --i) {
       current_indexes_[i] = 0;
       current_indexes_[i - 1] += 1;
     }
@@ -128,7 +128,7 @@ class MatrixInfo {
   bool is_first_iterator_{true};
   size_t min_index{0};
   size_t max_index_{1};
-  std::vector<size_t> shapes_;
+  ShapeVector shapes_;
   std::vector<size_t> current_indexes_;
 };
 using MatrixInfoPtr = std::shared_ptr<MatrixInfo>;
@@ -143,14 +143,13 @@ KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &pro
 TypeId DtypeToTypeId(const std::string &dtypes);
 std::string Dtype2ShortType(const std::string &dtypes);
 size_t GetDtypeNbyte(const std::string &dtypes);
-bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int64_t *size_i);
+bool GetShapeSize(const ShapeVector &shape, const TypePtr &type_ptr, int64_t *size_i);
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
 void SaveJsonInfo(const std::string &json_name, const std::string &info, const std::string &base_path);
 std::string GetProcessor(const AnfNodePtr &anf_node);
 Processor GetProcessor(const string &processor);
-bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b);
-bool IsSameShape(const std::vector<int64_t> &shape_a, const std::vector<int64_t> &shape_b);
+bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b);
 std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
                                                           const std::vector<AnfNodePtr> &input_list,
                                                           const std::vector<AnfNodePtr> &output_list);
@@ -170,9 +169,9 @@ FusionType GetFusionTypeByName(const std::string &name);
 std::string GetFusionNameByType(const kernel::FusionType &type);
 std::vector<bool> Dec2Bin(const int64_t &mask);
 void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                   std::vector<int64_t> *stride, std::vector<size_t> *input_shape);
+                   std::vector<int64_t> *stride, ShapeVector *input_shape);
 void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                           std::vector<int64_t> *stride, const std::vector<size_t> &input_shape);
+                           std::vector<int64_t> *stride, const ShapeVector &input_shape);
 struct CachedInterpolation {
   size_t lower;
   size_t upper;
@@ -246,7 +245,6 @@ inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x
   return top + (bottom - top) * y_lerp;
 }
 
-void CastShapeSizeToLong(const std::vector<size_t> &shape, std::vector<int64_t> *long_shape);
 void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
                      const std::vector<int64_t> &step, const std::vector<int64_t> &input_shape);
 size_t CalOffset(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,

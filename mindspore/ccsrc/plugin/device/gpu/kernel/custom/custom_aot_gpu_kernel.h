@@ -121,12 +121,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     for (size_t i = 0; i < num_input_; i++) {
       auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      std::vector<int64_t> in_shape_tmp;
-      std::for_each(in_shape.begin(), in_shape.end(),
-                    [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
       type_list_.emplace_back(TypeIdToString(input_type_list[i], true));
-      ndims_.push_back(SizeToInt(in_shape_tmp.size()));
-      shape_list_.emplace_back(in_shape_tmp);
+      ndims_.push_back(SizeToInt(in_shape.size()));
+      shape_list_.emplace_back(in_shape);
     }
 
     num_output_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -138,12 +135,9 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     for (size_t i = 0; i < num_output_; i++) {
-      std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-      std::vector<int64_t> out_shape_tmp;
-      std::for_each(out_shape.begin(), out_shape.end(),
-                    [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
-      shape_list_.emplace_back(out_shape_tmp);
-      ndims_.push_back(SizeToInt(out_shape_tmp.size()));
+      auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+      shape_list_.emplace_back(out_shape);
+      ndims_.push_back(SizeToInt(out_shape.size()));
       type_list_.emplace_back(TypeIdToString(output_type_list[i], true));
     }
 
@@ -160,13 +154,13 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void InitSizeLists() override {
     for (size_t i = 0; i < num_input_; i++) {
       size_t this_size =
-        LongToSize(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
+        LongToSizeClipNeg(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
       this_size *= GetDtypeNbyte(type_list_[i]);
       input_size_list_.push_back(this_size);
     }
     for (size_t i = num_input_; i < (num_input_ + num_output_); i++) {
       size_t this_size =
-        LongToSize(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
+        LongToSizeClipNeg(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
 
       this_size *= GetDtypeNbyte(type_list_[i]);
       output_size_list_.push_back(this_size);

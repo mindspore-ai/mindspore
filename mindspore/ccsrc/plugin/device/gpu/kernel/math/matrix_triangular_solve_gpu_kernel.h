@@ -203,8 +203,8 @@ class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   void InitShape(const CNodePtr &kernel_node) {
-    auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto b_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
 
     is_null_input_ =
       CHECK_SHAPE_NULL(a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(b_shape, kernel_name_, "input_b");

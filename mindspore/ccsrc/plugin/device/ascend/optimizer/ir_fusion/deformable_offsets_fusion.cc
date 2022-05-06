@@ -31,7 +31,7 @@ constexpr size_t kChannel = 3;
 }  // namespace
 
 ValueNodePtr DeformableOffsetsFusion::CreateHelperNode(
-  const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::vector<size_t> &offset_shape,
+  const FuncGraphPtr &func_graph, const AnfNodePtr &node, const ShapeVector &offset_shape,
   const std::vector<int64_t> &kernel_sizes, const std::vector<int64_t> &strides, const std::vector<int64_t> &pads,
   const std::vector<int64_t> &dilations, const size_t axis_h, const size_t axis_w, const size_t axis_c) const {
   int64_t H_OUT = offset_shape[axis_h];
@@ -47,10 +47,8 @@ ValueNodePtr DeformableOffsetsFusion::CreateHelperNode(
   int64_t pad_left = pads[axis_w];
   int64_t h_index;
   int64_t w_index;
-  std::vector<size_t> out_shape = {1, offset_shape[1], offset_shape[2], offset_shape[3]};
-  std::vector<int64_t> assist_shape;
-  std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(assist_shape), SizeToLong);
-  tensor::TensorPtr helper_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, assist_shape);
+  ShapeVector out_shape = {1, offset_shape[1], offset_shape[2], offset_shape[3]};
+  tensor::TensorPtr helper_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, out_shape);
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat32);
   tensor::DeviceInfo device_info{kOpFormat_NHWC, tensor_type, kOpFormat_NHWC};
   helper_tensor->set_device_info(device_info);
@@ -73,7 +71,7 @@ ValueNodePtr DeformableOffsetsFusion::CreateHelperNode(
       }
     }
   }
-  AbstractBasePtr x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, assist_shape);
+  AbstractBasePtr x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, out_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto assist_value_node = kernel_graph->NewValueNode(x_abstract, helper_tensor);

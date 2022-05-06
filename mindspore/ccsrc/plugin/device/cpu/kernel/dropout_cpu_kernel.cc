@@ -34,13 +34,16 @@ void DropoutCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   mask_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_, mask_shape_})) {
+    return;
+  }
   keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");
   if (keep_prob_ <= 0.0 || keep_prob_ > 1.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'keep_prob' must be in (0.0, 1.0], but got " << keep_prob_;
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  for (const uint64_t &d : input_shape_) {
-    tensor_size_ *= d;
+  for (const auto &d : input_shape_) {
+    tensor_size_ *= LongToSize(d);
   }
 }
 

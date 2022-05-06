@@ -61,8 +61,8 @@ class BroadcastToCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   BroadcastToFunc kernel_func_;
 
   void InitTaskFunc(const CNodePtr &kernel_node);
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
   BroadcastShapeInfo shape_info_{};
   std::string kernel_type_{kUnknown};
 };

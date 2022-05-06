@@ -82,17 +82,10 @@ class BoundingBoxEncodeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < logits_shape.size(); i++) {
-      anchor_size_ *= logits_shape[i];
-    }
 
-    for (size_t i = 0; i < labels_shape.size(); i++) {
-      groundtruth_size_ *= labels_shape[i];
-    }
-
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      deltas_size_ *= output_shape[i];
-    }
+    anchor_size_ *= SizeOf(logits_shape);
+    groundtruth_size_ *= SizeOf(labels_shape);
+    deltas_size_ *= SizeOf(output_shape);
 
     InitSizeLists();
 

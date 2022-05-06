@@ -44,7 +44,7 @@ class MultinomialCpuKernel : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> input_shape_;
+  ShapeVector input_shape_;
   int seed_{0};
   int seed2_{0};
   std::default_random_engine rng_;

@@ -85,7 +85,7 @@ std::shared_ptr<session::KernelGraph> AscendLaunchAtomicClean::ObtainAtomicClean
   }
   auto shape = total_size_ / dtype_size;
   std::vector<std::vector<int64_t>> input_shapes = {{static_cast<int64_t>(shape)}};
-  std::vector<std::vector<size_t>> output_shapes = {};
+  std::vector<ShapeVector> output_shapes = {};
   auto atomic_clean_graph = session::SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
     kAtomicAddrCleanOpName, input_dtypes, input_shapes, output_dtypes, output_shapes);
   MS_EXCEPTION_IF_NULL(atomic_clean_graph);

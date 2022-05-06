@@ -39,11 +39,11 @@ class MinimumGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> y_shape_;
-  std::vector<size_t> dout_shape;
-  std::vector<size_t> dx_shape;
-  std::vector<size_t> dy_shape;
+  ShapeVector x_shape_;
+  ShapeVector y_shape_;
+  ShapeVector dout_shape;
+  ShapeVector dx_shape;
+  ShapeVector dy_shape;
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel

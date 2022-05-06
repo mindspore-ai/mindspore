@@ -63,11 +63,11 @@ bool BlackmanWindowCpuKernelMod::BlackmanWindowKernelFunc(const std::vector<kern
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', input window_length should be >= 0, but got " << *input;
   }
 
-  size_t window_length = static_cast<size_t>(*input);
+  auto window_length = static_cast<int64_t>(*input);
   double pre_window_length = static_cast<double>(window_length);
   const size_t OUTPUTISONE = 1.0;
 
-  std::vector<size_t> out_shape = {window_length};
+  ShapeVector out_shape = {window_length};
   std::vector<TypeId> dtypes = {AnfAlgo::GetOutputDeviceDataType(node_, 0)};
 
   if (*input == 1) {

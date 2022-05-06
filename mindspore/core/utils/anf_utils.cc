@@ -136,16 +136,10 @@ bool AnfUtils::IsDimUnknown(const abstract::ShapePtr &shape) {
 }
 
 bool AnfUtils::IsShapeDynamic(const abstract::ShapePtr &shape) {
-  MS_EXCEPTION_IF_NULL(shape);
+  if (shape == nullptr) {
+    return false;
+  }
   return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
-}
-
-bool AnfUtils::IsShapeDynamic(const std::vector<size_t> &shape) {
-  return std::any_of(shape.begin(), shape.end(), [](int64_t s) { return s < 0; });
-}
-
-bool AnfUtils::IsShapeDynamic(const std::vector<int64_t> &shape) {
-  return std::any_of(shape.begin(), shape.end(), [](int64_t s) { return s < 0; });
 }
 
 bool AnfUtils::IsNodeOutputDynamicShape(const CNodePtr &node) {
@@ -591,22 +585,6 @@ mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &AnfUtils::GetReal
     cnode->set_user_data(real_input_info);
   }
   return real_input_info->real_input_nodes;
-}
-
-std::vector<size_t> AnfUtils::TransShapeToSizet(const abstract::ShapePtr &shape) {
-  MS_EXCEPTION_IF_NULL(shape);
-  std::vector<size_t> shape_size_t;
-  if (AnfUtils::IsShapeDynamic(shape)) {
-    if (std::all_of(shape->max_shape().begin(), shape->max_shape().end(), [](int64_t s) { return s >= 0; })) {
-      std::transform(shape->max_shape().begin(), shape->max_shape().end(), std::back_inserter(shape_size_t),
-                     LongToSize);
-    } else {
-      MS_LOG(EXCEPTION) << "Invalid Max Shape";
-    }
-  } else {
-    std::transform(shape->shape().begin(), shape->shape().end(), std::back_inserter(shape_size_t), LongToSize);
-  }
-  return shape_size_t;
 }
 
 void FlatParameterFinder::AddParameter(const ParameterPtr &param) {

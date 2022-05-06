@@ -153,11 +153,11 @@ void TbeKernelReduceSelecter::AssignSupportFormat(const std::string &support_for
   (void)support_format->output_format.emplace_back(output_support_format);
 }
 
-bool TbeKernelReduceSelecter::Is4DShape(const std::vector<size_t> &shape) const { return shape.size() == kShape4dDims; }
+bool TbeKernelReduceSelecter::Is4DShape(const ShapeVector &shape) const { return shape.size() == kShape4dDims; }
 
-bool TbeKernelReduceSelecter::Is5DShape(const std::vector<size_t> &shape) const { return shape.size() == kShape5dDims; }
+bool TbeKernelReduceSelecter::Is5DShape(const ShapeVector &shape) const { return shape.size() == kShape5dDims; }
 
-void TbeKernelReduceSelecter::PadScalarShape(std::vector<size_t> *shape) const {
+void TbeKernelReduceSelecter::PadScalarShape(ShapeVector *shape) const {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->empty()) {
     (void)shape->emplace_back(1);

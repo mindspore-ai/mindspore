@@ -76,8 +76,11 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     GetMaxWithEpsAndValue(workspace_size_list_[0] / sizeof(T), epsilon_, reduce_workspace_addr,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
-    BroadcastArith(lhs_shape_, rhs_shape_, output_shape_, BROADCAST_TYPE_REALDIV, input_addr, reduce_workspace_addr,
-                   output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
+    auto lhs_shape_size = Convert2SizeTClipNeg(lhs_shape_);
+    auto rhs_shape_size = Convert2SizeTClipNeg(rhs_shape_);
+    auto output_shape_size = Convert2SizeTClipNeg(output_shape_);
+    BroadcastArith(lhs_shape_size, rhs_shape_size, output_shape_size, BROADCAST_TYPE_REALDIV, input_addr,
+                   reduce_workspace_addr, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;
   }
@@ -98,21 +101,19 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(inputA_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({inputA_shape, output_shape})) {
       InitSizeLists();
       return true;
     }
-    output_size_ = sizeof(T);
-    for (auto dim : output_shape) {
-      output_size_ *= dim;
-    }
+    output_size_ = sizeof(T) * SizeOf(output_shape);
+
     CheckTensorSize({inputA_shape, output_shape});
     if (inputA_shape.size() > MAX_DIMS) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS
                         << ", but got " << inputA_shape.size();
     }
 
-    std::vector<size_t> outputC_shape = output_shape;
+    ShapeVector outputC_shape = output_shape;
     if ((size_t)axis_ >= output_shape.size()) {
       MS_LOG(EXCEPTION) << "For 'L2NormalizeGpuKernelMod', axis_ must be less than the rank of output "
                         << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
@@ -200,9 +201,9 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                      reduce_indices_, CUDNN_32BIT_INDICES),
       "cudnnSetReduceTensorDescriptor failed");
   }
-  void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
-    std::vector<size_t> inputA;
-    std::vector<size_t> outputC_shape = output_shape;
+  void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape) {
+    ShapeVector inputA;
+    ShapeVector outputC_shape = output_shape;
     const int split_dim = 4;
 
     if (input_shape.size() <= split_dim) {
@@ -218,7 +219,7 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
     }
 
-    std::vector<size_t> outputC;
+    ShapeVector outputC;
 
     if (outputC_shape.size() <= split_dim) {
       ShapeNdTo4d(outputC_shape, &outputC);
@@ -251,9 +252,9 @@ class L2NormalizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t workspace_size_;
   float epsilon_;
   int axis_;
-  std::vector<size_t> lhs_shape_;
-  std::vector<size_t> rhs_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector lhs_shape_;
+  ShapeVector rhs_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

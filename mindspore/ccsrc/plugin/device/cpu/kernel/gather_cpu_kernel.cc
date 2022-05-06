@@ -103,16 +103,16 @@ bool GatherCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   size_t outer_size = 1, inner_size = 1;
   auto axis = static_cast<size_t>(axis_);
   for (size_t i = 0; i < axis; ++i) {
-    outer_size *= input_shape_.at(i);
+    outer_size *= LongToSize(input_shape_.at(i));
   }
   for (size_t i = axis + 1; i < input_shape_.size(); ++i) {
-    inner_size *= input_shape_.at(i);
+    inner_size *= LongToSize(input_shape_.at(i));
   }
   size_t indices_element_size = 1;
   for (size_t i = 0; i < indices_shape_.size(); i++) {
-    indices_element_size *= indices_shape_.at(i);
+    indices_element_size *= LongToSize(indices_shape_.at(i));
   }
-  auto limit = input_shape_.at(axis);
+  auto limit = LongToSize(input_shape_.at(axis));
   size_t byte_inner_size = inner_size * sizeof(T);
   size_t byte_out_stride = indices_element_size * byte_inner_size;
   auto task = [&](size_t start, size_t end) {

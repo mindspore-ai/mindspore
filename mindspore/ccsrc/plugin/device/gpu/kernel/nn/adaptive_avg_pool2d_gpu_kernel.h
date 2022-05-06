@@ -83,7 +83,7 @@ class AdaptiveAvgPool2DKernelMod : public DeprecatedNativeGpuKernelMod {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
       InitSizeLists();
       return true;
     }
@@ -97,13 +97,8 @@ class AdaptiveAvgPool2DKernelMod : public DeprecatedNativeGpuKernelMod {
     input_height = static_cast<uint>(input_shape[len - 2]);
     input_width = static_cast<uint>(input_shape[len - 1]);
     size = static_cast<uint>(len == 3 ? input_shape[0] : input_shape[0] * input_shape[1]);
-    for (uint i = 0; i < len; i++) {
-      input_size_ *= input_shape[i];
-    }
-
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      output_size_ *= output_shape[i];
-    }
+    input_size_ *= SizeOf(input_shape);
+    output_size_ *= SizeOf(output_shape);
 
     InitSizeLists();
     return true;

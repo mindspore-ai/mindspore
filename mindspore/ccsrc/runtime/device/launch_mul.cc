@@ -32,7 +32,7 @@ std::shared_ptr<session::KernelGraph> LaunchMul::ObtainMulKernelGraph() {
   }
   int64_t shape = SizeToLong(total_size_ / dtype_size);
   std::vector<std::vector<int64_t>> input_shapes = {{shape}, {1}};
-  std::vector<std::vector<size_t>> output_shapes = {{static_cast<size_t>(shape)}};
+  std::vector<ShapeVector> output_shapes = {{shape}};
   auto mul_graph = session::SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
     kMulOpName, input_dtypes, input_shapes, output_dtypes, output_shapes);
   MS_EXCEPTION_IF_NULL(mul_graph);

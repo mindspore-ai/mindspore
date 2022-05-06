@@ -58,9 +58,9 @@ class BroadcastComplexOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     GetOpType(kernel_node);
 
-    auto shape1 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto shape2 = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto shape3 = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto shape1 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto shape2 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto shape3 = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(shape1, shape2);
     if (need_broadcast_ && shape1.size() > MAX_DIMS) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than " << MAX_DIMS

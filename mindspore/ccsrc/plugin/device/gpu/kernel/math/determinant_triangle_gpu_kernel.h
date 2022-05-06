@@ -71,20 +71,15 @@ class DetTriangleGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ *= SizeOf(input_shape);
 
     if (input_shape.size() < 2) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be less than 2, but got "
                         << input_shape.size();
     }
 
-    matrix_n_ = input_shape[input_shape.size() - 1];
-
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      output_size_ *= output_shape[i];
-    }
+    matrix_n_ = LongToSizeClipNeg(input_shape[input_shape.size() - 1]);
+    output_size_ *= SizeOf(output_shape);
     if (matrix_n_ == 0 || output_size_ != input_size_ / matrix_n_ / matrix_n_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of output should be "
                         << (input_size_ / matrix_n_ / matrix_n_) << ", but got " << output_size_;

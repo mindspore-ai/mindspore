@@ -93,11 +93,11 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
 
     const auto &x1_col_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, InputList::X1_COLUMN);
     RETURN_IF_FALSE_WITH_LOG(x1_col_shape.size() == 1, "The rank of column should be 1.");
-    x1_nnz_ = SizeToInt(x1_col_shape[0]);
+    x1_nnz_ = LongToInt(x1_col_shape[0]);
 
     const auto &x2_col_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, InputList::X2_COLUMN);
     RETURN_IF_FALSE_WITH_LOG(x2_col_shape.size() == 1, "The rank of row should be 1.");
-    x2_nnz_ = SizeToInt(x2_col_shape[0]);
+    x2_nnz_ = LongToInt(x2_col_shape[0]);
 
     type_id_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, InputList::X1_VALUE);
 
@@ -169,15 +169,15 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
     types.push_back(kNumberTypeInt32);
     types.push_back(type_id_);
 
-    std::vector<std::vector<size_t>> shapes;
+    std::vector<ShapeVector> shapes;
     shapes.push_back({
-      IntToSize(row_ + 1),
+      row_ + 1,
     });
     shapes.push_back({
-      IntToSize(y_nnz_),
+      y_nnz_,
     });
     shapes.push_back({
-      IntToSize(y_nnz_),
+      y_nnz_,
     });
 
     common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, kernel_node_.lock().get());

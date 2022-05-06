@@ -47,7 +47,7 @@ class L2LossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   L2LossFunc kernel_func_;
   TypeId dtype_{kTypeUnknown};
   size_t tensor_size_ = 1;
-  std::vector<size_t> input_shape_;
+  ShapeVector input_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

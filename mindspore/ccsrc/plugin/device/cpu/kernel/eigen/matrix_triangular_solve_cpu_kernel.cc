@@ -41,8 +41,8 @@ constexpr auto kAMatrixDimNum = 2;
 constexpr size_t kRowIndex = 2;
 constexpr size_t kColIndex = 1;
 void MatrixTriangularSolveCpuKernelMod::InitShape(const CNodePtr &kernel_node) {
-  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto b_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
   // Since the shape check is done in frontend, we can suppose that the shape of a, b here is valid.
   size_t a_dims = a_shape.size();
   size_t aRowIndex = a_dims - kRowIndex;

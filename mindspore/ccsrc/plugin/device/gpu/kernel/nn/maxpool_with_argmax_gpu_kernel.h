@@ -88,29 +88,23 @@ class MaxPoolWithArgmaxFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
       InitSizeLists();
       return true;
     }
-    input_size_ = sizeof(T);
-    for (auto x : input_shape) {
-      input_size_ *= x;
-    }
-    output_size_ = sizeof(T);
-    for (auto x : output_shape) {
-      output_size_ *= x;
-    }
+    input_size_ = sizeof(T) * SizeOf(input_shape);
+    output_size_ = sizeof(T) * SizeOf(output_shape);
     if (input_shape.size() < kInputDimLowerLimit || output_shape.size() < kOutputDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input and output cannot be less than 4, but "
                         << "got the dimension of input: " << input_shape.size()
                         << ", the dimension of output: " << output_shape.size();
     }
-    n_ = SizeToInt(input_shape[kInputIndexForN]);
-    c_ = SizeToInt(input_shape[kInputIndexForC]);
-    input_height_ = SizeToInt(input_shape[kInputIndexForH]);
-    input_width_ = SizeToInt(input_shape[kInputIndexForW]);
-    output_height_ = SizeToInt(output_shape[kOutputIndexForH]);
-    output_width_ = SizeToInt(output_shape[kOutputIndexForW]);
+    n_ = LongToInt(input_shape[kInputIndexForN]);
+    c_ = LongToInt(input_shape[kInputIndexForC]);
+    input_height_ = LongToInt(input_shape[kInputIndexForH]);
+    input_width_ = LongToInt(input_shape[kInputIndexForW]);
+    output_height_ = LongToInt(output_shape[kOutputIndexForH]);
+    output_width_ = LongToInt(output_shape[kOutputIndexForW]);
     std::vector<int> window;
     auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
     MS_EXCEPTION_IF_NULL(prim);

@@ -133,7 +133,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                "cudaStreamSynchronize failed");
 
     std::vector<TypeId> output_type = {common::AnfAlgo::GetOutputInferDataType(kernel_node_.lock(), 0)};
-    std::vector<std::vector<size_t>> output_shape = {{static_cast<size_t>(output_shape_)}};
+    std::vector<ShapeVector> output_shape = {{output_shape_}};
     common::AnfAlgo::SetOutputInferTypeAndShape(output_type, output_shape, kernel_node_.lock().get());
   }
 

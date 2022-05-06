@@ -52,8 +52,8 @@ class MatrixDiagPartV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool DoLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> k_shape_;
+  std::vector<int64_t> x_shape_;
+  std::vector<int64_t> k_shape_;
   TypeId input_dtype_;
   std::string align_;
   int64_t num_diags_ = 1;

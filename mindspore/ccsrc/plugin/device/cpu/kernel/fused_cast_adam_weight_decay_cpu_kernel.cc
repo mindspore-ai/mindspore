@@ -124,7 +124,10 @@ void FusedCastAdamWeightDecayCpuKernelMod::LaunchFusedCastAdamFp16(const std::ve
 void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVarIndex);
+  auto var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVarIndex);
+  if (AnfAlgo::IsShapesDynamic({var_shape})) {
+    return;
+  }
   var_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kVarIndex);
   gradient_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kGradIndex);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
@@ -138,8 +141,8 @@ void FusedCastAdamWeightDecayCpuKernelMod::InitKernel(const CNodePtr &kernel_nod
                       << kFusedCastAdamWeightDecayOutputNum << ", but got: " << output_num;
   }
   elem_num_ = 1;
-  for (size_t i : var_shape) {
-    elem_num_ *= i;
+  for (auto i : var_shape) {
+    elem_num_ *= static_cast<size_t>(i);
   }
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'var' can not be zero.";

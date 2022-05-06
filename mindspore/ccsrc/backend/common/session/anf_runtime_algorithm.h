@@ -71,9 +71,9 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get reshape_type of from the output of input node.
   static std::string GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // get output shapes which will built and run in device
-  static std::vector<size_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx);
+  static std::vector<int64_t> GetOutputDeviceShape(const AnfNodePtr &node, size_t output_idx);
   // get input shapes which will built and run in device
-  static std::vector<size_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
+  static std::vector<int64_t> GetInputDeviceShape(const AnfNodePtr &node, size_t input_idx);
   // get output shapes for tbe build
   static std::vector<int64_t> GetOutputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t output_idx,
                                                               const std::string &format);
@@ -160,8 +160,8 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<KernelGraphPtr> GetCallSwitchKernelGraph(const CNodePtr &cnode);
   static bool IsIndependentNode(const CNodePtr &node);
   static void InferShape(const CNodePtr &node, std::map<uint32_t, tensor::TensorPtr> *depend_tensors = nullptr);
-  static std::vector<size_t> GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
-  static std::vector<size_t> GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
+  static ShapeVector GetInputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
+  static ShapeVector GetOutputDeviceShapeAdaptively(const AnfNodePtr &anf_node, size_t index);
   static KernelGraphPtr FetchKernelGraph(const AnfNodePtr &node);
   static AnfNodePtr FetchFrontNodeByBackendNode(const AnfNodePtr &backend_node, const KernelGraph &graph);
   static void InsertMakeTupleForOutput(const NotNull<KernelGraphPtr> &root_graph);
@@ -180,6 +180,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // Update the shape of internal parameter in the sub graph.
   static void UpdateInternalParameterShape(const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters,
                                            const CNodePtr &cnode);
+  static bool IsShapesDynamic(const std::vector<ShapeVector> &shapes);
 };
 }  // namespace session
 using AnfAlgo = session::AnfRuntimeAlgorithm;

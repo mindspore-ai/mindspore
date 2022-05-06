@@ -62,9 +62,9 @@ std::uint32_t AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const s
   T *input{static_cast<T *>(inputs[0]->addr)};
   std::float_t *contrast_factor{static_cast<std::float_t *>(inputs[1]->addr)};
   T *output{static_cast<T *>(outputs[0]->addr)};
-  std::vector<size_t> x_dim_sizes = images_shape;
+  std::vector<int64_t> x_dim_sizes = images_shape;
   std::size_t n{x_dim_sizes.size()};
-  std::size_t per_batch_elements{x_dim_sizes[n - 1] * x_dim_sizes[n - 2] * x_dim_sizes[n - 3]};
+  std::size_t per_batch_elements{LongToSize(x_dim_sizes[n - 1] * x_dim_sizes[n - 2] * x_dim_sizes[n - 3])};
   std::int64_t input_numelements = static_cast<int64_t>(inputs[0]->size / sizeof(T));
   std::int64_t total{SizeToLong(input_numelements / per_batch_elements)};
   std::int64_t per_unit_size{total / std::min(kAdjustContrastv2ParallelNum - 2L, total)};
@@ -78,8 +78,11 @@ std::uint32_t AdjustContrastv2CpuKernelMod::LaunchAdjustContrastv2Kernel(const s
 
 void AdjustContrastv2CpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   images_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({output_shape, images_shape})) {
+    return;
+  }
   if (images_shape != output_shape) {
     MS_LOG(EXCEPTION) << "For AdjustContrastv2, the data type of the input " << images_shape
                       << "need be the same as the output " << output_shape << ".";

@@ -99,6 +99,9 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     (void)CheckParam(kernel_node);
     auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({in_shape, output_shape})) {
+      return true;
+    }
     is_null_input_ =
       CHECK_SHAPE_NULL(in_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {
@@ -110,10 +113,7 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 4, but got "
                         << in_shape.size();
     }
-    std::vector<int> filter_shape;
-    std::vector<int64_t> filter_shape_me = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
-    (void)std::transform(filter_shape_me.begin(), filter_shape_me.end(), std::back_inserter(filter_shape),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+    auto filter_shape = GetAttr<std::vector<int64_t>>(kernel_node, "kernel_size");
     const size_t kFilterDimSize = 2;
     if (filter_shape.size() < kFilterDimSize) {
       MS_LOG(EXCEPTION) << "For 'Im2ColGpuKernel', the dimension of filter must be greater than or equal to 2, "
@@ -215,7 +215,7 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
   }
-  void SetPad(const std::vector<size_t> &in_shape, const CNodePtr &kernel_node) {
+  void SetPad(const ShapeVector &in_shape, const CNodePtr &kernel_node) {
     std::vector<int> pad_list;
     std::vector<int64_t> pad_list_me = GetAttr<std::vector<int64_t>>(kernel_node, "pad_list");
     (void)std::transform(pad_list_me.begin(), pad_list_me.end(), std::back_inserter(pad_list),
@@ -224,10 +224,10 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const size_t kInIdxForC = 1;
     const size_t kInIdxForH = 2;
     const size_t kInIdxForW = 3;
-    n_ = SizeToInt(in_shape[kInIdxForN]);
-    c_ = SizeToInt(in_shape[kInIdxForC]);
-    old_height_ = SizeToInt(in_shape[kInIdxForH]);
-    old_width_ = SizeToInt(in_shape[kInIdxForW]);
+    n_ = LongToInt(in_shape[kInIdxForN]);
+    c_ = LongToInt(in_shape[kInIdxForC]);
+    old_height_ = LongToInt(in_shape[kInIdxForH]);
+    old_width_ = LongToInt(in_shape[kInIdxForW]);
 
     if (pad_list.size() != kPadSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got " << pad_list.size();
@@ -256,8 +256,7 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "cudnnSetConvolution2dDescriptor failed");
   }
 
-  void Set4DDesc(const std::vector<size_t> &in_shape, const std::vector<int> &filter_shape,
-                 const std::vector<size_t> &output_shape) {
+  void Set4DDesc(const ShapeVector &in_shape, const ShapeVector &filter_shape, const ShapeVector &output_shape) {
     const size_t kIdx0 = 0;
     const size_t kIdx1 = 1;
     const size_t kIdx2 = 2;
@@ -266,20 +265,20 @@ class Im2ColFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const size_t kIdx5 = 5;
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_,
-      cudnnSetTensor4dDescriptor(input_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(in_shape[kIdx0]),
-                                 SizeToInt(in_shape[kIdx1]), SizeToInt(in_shape[kIdx2]), SizeToInt(in_shape[kIdx3])),
+      cudnnSetTensor4dDescriptor(input_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, LongToInt(in_shape[kIdx0]),
+                                 LongToInt(in_shape[kIdx1]), LongToInt(in_shape[kIdx2]), LongToInt(in_shape[kIdx3])),
       "cudnnSetTensor4dDescriptor failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetFilter4dDescriptor(filter_desc_, cudnn_data_type_, CUDNN_TENSOR_NCHW, 1,
-                                                           SizeToInt(in_shape[1]), filter_shape[0], filter_shape[1]),
+                                                           LongToInt(in_shape[1]), filter_shape[0], filter_shape[1]),
                                 "cudnnSetFilter4dDescriptor failed");
 
     auto out_H = output_shape[kIdx0] * output_shape[kIdx1] * output_shape[kIdx2];
     auto out_W = output_shape[kIdx3] * output_shape[kIdx4] * output_shape[kIdx5];
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnSetTensor4dDescriptor(output_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
-                                                           SizeToInt(out_H), SizeToInt(out_W), 1, 1),
+                                                           LongToInt(out_H), LongToInt(out_W), 1, 1),
                                 "cudnnSetTensor4dDescriptor failed");
   }
 

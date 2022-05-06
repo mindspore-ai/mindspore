@@ -308,11 +308,9 @@ size_t UpdateGraphInputAbstract(const AnfNodePtr input_node, const tensor::Tenso
   auto input_param = input_node->cast<ParameterPtr>();
   if (input_param != nullptr && input_param->has_dynamic_shape()) {
     auto tensor_shape = tensor->shape();
-    std::vector<size_t> shape_tmp;
-    (void)std::transform(tensor_shape.begin(), tensor_shape.end(), std::back_inserter(shape_tmp), LongToSize);
-    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)}, {shape_tmp},
-                                                input_node.get());
-    size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(tensor->data_type());
+    common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)},
+                                                {tensor_shape}, input_node.get());
+    size = abstract::ShapeSize(tensor_shape) * abstract::TypeIdSize(tensor->data_type());
   }
   return size;
 }
@@ -631,9 +629,7 @@ void GPUSession::UpdateOutputTensors(const VectorRef *outputs,
 
         if (common::AnfAlgo::IsDynamicShape(node)) {
           const auto &updated_shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
-          ShapeVector int_shape;
-          std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-          tensor->set_shape(int_shape);
+          tensor->set_shape(updated_shape);
         }
       }
       if (tensor->NeedSyncDeviceToHostImmediately()) {

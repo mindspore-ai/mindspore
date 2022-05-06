@@ -38,7 +38,7 @@ class TensorArrayWriteCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   size_t value_size_;
-  std::vector<size_t> shapes_;
+  std::vector<int64_t> shapes_;
   TypeId type_;
   static std::vector<KernelAttr> support_list_;
 };

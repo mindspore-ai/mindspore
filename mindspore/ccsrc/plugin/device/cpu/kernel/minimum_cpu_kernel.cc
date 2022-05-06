@@ -43,7 +43,7 @@ void MinimumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t max_input_shape_size =
     input_x_shape_.size() > input_y_shape_.size() ? input_x_shape_.size() : input_y_shape_.size();
   for (size_t i = 0; i < output_shape_.size(); i++) {
-    output_num_ *= output_shape_[i];
+    output_num_ *= static_cast<size_t>(output_shape_[i]);
   }
   if ((input_x_shape_.size() == 0 && input_y_shape_.size() != 0) ||
       (input_x_shape_.size() != 0 && input_y_shape_.size() == 0)) {
@@ -149,13 +149,13 @@ void MinimumCpuKernelMod::InitTensorBroadcastShape() {
   size_t input_x_dim_offset = output_shape_.size() - input_x_shape_.size();
   for (size_t j = 0; j < input_x_shape_.size(); j++) {
     broadcast_input_x_shape_[j + input_x_dim_offset] = input_x_shape_[j];
-    input_x_num_ *= input_x_shape_[j];
+    input_x_num_ *= static_cast<size_t>(input_x_shape_[j]);
   }
   size_t input_y_dim_offset = output_shape_.size() - input_y_shape_.size();
   for (size_t k = 0; k < input_y_shape_.size(); k++) {
     if (need_broadcast_) {
       broadcast_input_y_shape_[k + input_y_dim_offset] = input_y_shape_[k];
-      input_y_num_ *= input_y_shape_[k];
+      input_y_num_ *= static_cast<size_t>(input_y_shape_[k]);
     }
   }
 }
@@ -165,20 +165,20 @@ size_t MinimumCpuKernelMod::Index(const size_t &index, const size_t &dim) const 
 
 // Broadcast Arithmetic
 template <typename T>
-void MinimumCpuKernelMod::BroadcastArithKernel(const size_t l0, const size_t l1, const size_t l2, const size_t l3,
-                                               const size_t l4, const size_t l5, const size_t l6, const size_t r0,
-                                               const size_t r1, const size_t r2, const size_t r3, const size_t r4,
-                                               const size_t r5, const size_t r6, const size_t d0, const size_t d1,
-                                               const size_t d2, const size_t d3, const size_t d4, const size_t d5,
-                                               const size_t d6, const T *input_x, const T *input_y, T *output) const {
+void MinimumCpuKernelMod::BroadcastArithKernel(const int64_t l0, const int64_t l1, const int64_t l2, const int64_t l3,
+                                               const int64_t l4, const int64_t l5, const int64_t l6, const int64_t r0,
+                                               const int64_t r1, const int64_t r2, const int64_t r3, const int64_t r4,
+                                               const int64_t r5, const int64_t r6, const int64_t d0, const int64_t d1,
+                                               const int64_t d2, const int64_t d3, const int64_t d4, const int64_t d5,
+                                               const int64_t d6, const T *input_x, const T *input_y, T *output) const {
   for (size_t pos = 0; pos < output_num_; pos++) {
-    size_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
-    size_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
-    size_t k = pos / (d3 * d4 * d5 * d6) % d2;
-    size_t l = pos / (d4 * d5 * d6) % d3;
-    size_t m = pos / (d5 * d6) % d4;
-    size_t n = pos / d6 % d5;
-    size_t o = pos % d6;
+    int64_t i = pos / (d1 * d2 * d3 * d4 * d5 * d6) % d0;
+    int64_t j = pos / (d2 * d3 * d4 * d5 * d6) % d1;
+    int64_t k = pos / (d3 * d4 * d5 * d6) % d2;
+    int64_t l = pos / (d4 * d5 * d6) % d3;
+    int64_t m = pos / (d5 * d6) % d4;
+    int64_t n = pos / d6 % d5;
+    int64_t o = pos % d6;
 
     size_t l_index = Index(i, l0) * l1 * l2 * l3 * l4 * l5 * l6;
     l_index += Index(j, l1) * l2 * l3 * l4 * l5 * l6;

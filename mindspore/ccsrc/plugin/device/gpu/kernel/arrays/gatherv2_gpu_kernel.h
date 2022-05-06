@@ -56,7 +56,7 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     MS_EXCEPTION_IF_NULL(input_addr);
     MS_EXCEPTION_IF_NULL(indices_addr);
-    GatherV2(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], input_dim1,
+    GatherV2(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], LongToSize(input_dim1),
              reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -126,15 +126,15 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (axis_ < 0) {
       axis_ = axis_ + SizeToInt(input_shapes_.size());
     }
-    size_t dim_before_axis = 1;
+    int64_t dim_before_axis = 1;
     for (size_t i = 0; i < std::min(IntToSize(axis_), output_shapes_.size()); i++) {
       dim_before_axis *= output_shapes_[i];
     }
-    size_t dim_of_indices = 1;
+    int64_t dim_of_indices = 1;
     for (size_t i = 0; i < indices_shapes_.size(); i++) {
       dim_of_indices *= indices_shapes_[i];
     }
-    size_t dim_after_indices = 1;
+    int64_t dim_after_indices = 1;
     for (size_t i = IntToSize(axis_) + indices_shapes_.size(); i < output_shapes_.size(); i++) {
       dim_after_indices *= output_shapes_[i];
     }
@@ -144,10 +144,10 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return;
   }
 
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> indices_shapes_;
-  std::vector<size_t> output_shapes_;
-  size_t dims_[3] = {};
+  std::vector<int64_t> input_shapes_;
+  std::vector<int64_t> indices_shapes_;
+  std::vector<int64_t> output_shapes_;
+  int64_t dims_[3] = {};
   G axis_;
   bool is_dynamic_shape_;
   bool is_null_input_;

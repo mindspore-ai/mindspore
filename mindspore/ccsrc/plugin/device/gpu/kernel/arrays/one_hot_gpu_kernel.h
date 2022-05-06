@@ -56,8 +56,8 @@ class OneHotFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num == DynamicInputNum) {
       is_dynamic_shape_ = true;

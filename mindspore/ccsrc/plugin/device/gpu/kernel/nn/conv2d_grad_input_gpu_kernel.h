@@ -119,7 +119,7 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool CheckNull(const std::vector<size_t> dy_shape, const std::vector<size_t> filter_shape) {
+  bool CheckNull(const ShapeVector dy_shape, const ShapeVector filter_shape) {
     is_null_input_ =
       CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy") || CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight");
     if (is_null_input_) {
@@ -133,20 +133,14 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     InitResource();
     (void)CheckParam(kernel_node);
-    if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
-      return true;
-    }
-
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-    if (CheckNull(dy_shape, filter_shape)) {
+    if (IsDynamic(dy_shape, filter_shape)) {
       return true;
     }
     auto format_attr = GetAttr<std::string>(kernel_node, "format");
-    if (format_attr == kOpFormat_NHWC) {
-      data_format_ = kOpFormat_NHWC;
-    }
-    std::vector<size_t> input_shape;
+    data_format_ = (format_attr == kOpFormat_NHWC) ? kOpFormat_NHWC : data_format_;
+    ShapeVector input_shape;
     GetInputShape(kernel_node, &input_shape);
     if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
@@ -188,13 +182,11 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       int dimA[k2DPadSize];
       int strideApadded[k2DPadSize];
       if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
-        auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_height_ + pad_height_),
-                             IntToSize(old_width_ + pad_width_)};
+        ShapeVector padded_shape = {n_, c_, old_height_ + pad_height_, old_width_ + pad_width_};
         SetDimA(padded_shape, dimA, k2DPadSize, data_format_);
         SetStrideA(padded_shape, strideApadded, k2DPadSize, data_format_);
       } else if (data_format_ == kOpFormat_NHWC) {
-        auto padded_shape = {IntToSize(n_), IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_),
-                             IntToSize(c_)};
+        ShapeVector padded_shape = {n_, old_height_ + pad_height_, old_width_ + pad_width_, c_};
         SetDimA(padded_shape, dimA, k2DPadSize, data_format_);
         SetStrideA(padded_shape, strideApadded, k2DPadSize, data_format_);
       }
@@ -377,22 +369,21 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       algo_ = CUDNN_CONVOLUTION_BWD_DATA_ALGO_1;
     }
   }
-  void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
+  void GetInputShape(const CNodePtr &kernel_node, ShapeVector *input_shape) {
     if (is_dynamic_attr_ && get_dynamic_attr_value_) {
       (void)std::transform(std::begin(input_shape_), std::end(input_shape_), std::back_inserter(*input_shape),
-                           [](const int64_t &e) -> size_t { return (LongToSize(e)); });
+                           [](const int64_t &e) -> int64_t { return e; });
     } else {
       auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_sizes");
       (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                           [](const ValuePtr &e) -> size_t {
+                           [](const ValuePtr &e) -> int64_t {
                              auto cast_value = e->cast<Int64ImmPtr>();
                              MS_EXCEPTION_IF_NULL(cast_value);
-                             return static_cast<int>(cast_value->value());
+                             return static_cast<int64_t>(cast_value->value());
                            });
     }
   }
-  void Set4DDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &input_shape,
-                 const std::vector<size_t> &filter_shape) {
+  void Set4DDesc(const ShapeVector &dy_shape, const ShapeVector &input_shape, const ShapeVector &filter_shape) {
     const int kNbDims = 4;
     int dimA[kNbDims];
     int strideAin[kNbDims];
@@ -443,6 +434,10 @@ class ConvGradInputBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'dilation' at 0 and 1 axis must be 1, but got "
                         << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
+  }
+  bool IsDynamic(const ShapeVector &dy_shape, const ShapeVector &filter_shape) {
+    return AnfAlgo::IsShapesDynamic({filter_shape, dy_shape}) || CheckNull(dy_shape, filter_shape) ||
+           (is_dynamic_attr_ && !get_dynamic_attr_value_);
   }
   cudnnHandle_t cudnn_handle_;
   cudnnFilterDescriptor_t w_desc_;

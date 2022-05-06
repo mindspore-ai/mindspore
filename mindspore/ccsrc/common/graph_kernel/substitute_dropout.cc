@@ -47,8 +47,6 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   auto func_graph = node->func_graph();
   CheckCNodeInputSize(cnode, kDropoutInputTensorNum);
   auto shape = AnfAlgo::GetInputDeviceShape(cnode, 0);
-  ShapeVector shape_i64;
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_i64), SizeToLong);
   // Get seed from original dropout's attrs, rather than set seed by time.
   // Only seed0 and seed1 are all equal to 0, then set seed = time.
   auto node_prim = GetCNodePrimitive(node);
@@ -69,7 +67,7 @@ AnfNodePtr DropoutExpanderDeco::Run(const AnfNodePtr &node) {
   auto uniform_real_node = func_graph->NewCNode(uniform_real_input);
   SetNodeAttrSafely("seed", MakeValue(seed), uniform_real_node);
   common::AnfAlgo::SetNodeAttr("seed2", MakeValue(static_cast<int64_t>(0)), uniform_real_node);
-  uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_i64));
+  uniform_real_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape));
   // Set kernel_info for uniform_real node
   auto uniform_real_kernel_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   uniform_real_kernel_info_builder->SetInputsFormat({kOpFormat_DEFAULT});

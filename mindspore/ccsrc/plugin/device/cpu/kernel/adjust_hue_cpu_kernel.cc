@@ -269,8 +269,11 @@ bool LaunchAdjustHueKernelHalf(const std::vector<kernel::AddressPtr> &inputs,
 
 void AdjustHueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
-  std::vector<size_t> image_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> image_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({image_shape, output_shape})) {
+    return;
+  }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (image_shape != output_shape) {
     MS_LOG(EXCEPTION) << "For AdjustHue, the data type of the input " << image_shape

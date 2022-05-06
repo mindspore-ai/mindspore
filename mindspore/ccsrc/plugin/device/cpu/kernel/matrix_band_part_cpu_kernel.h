@@ -55,8 +55,8 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   bool LaunchKernelNotBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
   template <typename T, typename LU>
   bool LaunchKernelBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
-  void BroadcastShape(const std::vector<size_t> &x_shape, const std::vector<size_t> &lower_shape,
-                      const std::vector<size_t> &upper_shape, const std::vector<size_t> &output_shape);
+  void BroadcastShape(const ShapeVector &x_shape, const ShapeVector &lower_shape, const ShapeVector &upper_shape,
+                      const ShapeVector &output_shape);
   bool is_null_input_{false};
   size_t dim_size_{1};
   size_t output_element_num_{0};
@@ -66,10 +66,10 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   size_t lower_{0};
   size_t upper_{0};
   bool need_broadcast_;
-  std::vector<size_t> broadcast_x_shape_;
-  std::vector<size_t> broadcast_lower_shape_;
-  std::vector<size_t> broadcast_upper_shape_;
-  std::vector<size_t> broadcast_output_shape_;
+  ShapeVector broadcast_x_shape_;
+  ShapeVector broadcast_lower_shape_;
+  ShapeVector broadcast_upper_shape_;
+  ShapeVector broadcast_output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

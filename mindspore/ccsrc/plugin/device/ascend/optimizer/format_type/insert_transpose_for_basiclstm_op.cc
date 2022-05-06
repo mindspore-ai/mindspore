@@ -47,13 +47,13 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
     auto origin_type = common::AnfAlgo::GetPrevNodeOutputInferDataType(cnode, 1);
     auto origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
     auto dst_shape = {origin_shape[1], origin_shape[0]};
-    auto is_dynamic = AnfUtils::IsShapeDynamic(dst_shape);
+    auto is_dynamic = IsDynamic(dst_shape);
 
     transpose_inputs.push_back(common::AnfAlgo::GetInputNode(cnode, 1));
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
     MS_EXCEPTION_IF_NULL(transpose);
     if (is_dynamic) {
-      auto shape = {SizeToLong(origin_shape[1]), SizeToLong(origin_shape[0])};
+      auto shape = {origin_shape[1], origin_shape[0]};
       auto max_shape = common::AnfAlgo::GetInputMaxShape(cnode, 1);
       auto min_shape = common::AnfAlgo::GetInputMinShape(cnode, 1);
       auto min_shape_tmp = min_shape;
@@ -86,8 +86,8 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
         transpose_inputs.push_back(tuple_getitem);
         CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
         MS_EXCEPTION_IF_NULL(transpose);
-        if (AnfUtils::IsShapeDynamic(origin_shape)) {
-          auto dst_shape = {SizeToLong(origin_shape[0]), SizeToLong(origin_shape[1])};
+        if (IsDynamic(origin_shape)) {
+          auto dst_shape = {origin_shape[0], origin_shape[1]};
           auto min_shape = common::AnfAlgo::GetOutputMinShape(cnode, output_idx);
           auto max_shape = common::AnfAlgo::GetOutputMaxShape(cnode, output_idx);
           auto min_shape_tmp = min_shape;

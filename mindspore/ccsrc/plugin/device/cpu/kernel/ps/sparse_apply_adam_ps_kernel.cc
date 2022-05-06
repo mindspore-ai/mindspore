@@ -25,19 +25,19 @@ namespace kernel {
 namespace ps {
 constexpr size_t kSparseApplyAdamPSInputsShapeSize = 11;
 
-void SparseApplyAdamPSKernelMod::InitKernel(
-  const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
+void SparseApplyAdamPSKernelMod::InitKernel(const CNodePtr &cnode,
+                                            const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &shapes) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(shapes);
-  const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
+  const std::vector<std::shared_ptr<ShapeVector>> &shape_vec = *shapes;
   if (shape_vec.size() < kSparseApplyAdamPSInputsShapeSize) {
     MS_LOG(EXCEPTION) << "SparseApplyAdamPSKernelMod needs 10 input shapes, but got " << shape_vec.size();
   }
-  std::vector<size_t> &var_shape = *(shape_vec[var_index_]);
-  std::vector<size_t> &m_shape = *(shape_vec[m_index_]);
-  std::vector<size_t> &v_shape = *(shape_vec[v_index_]);
-  const std::vector<size_t> &grad_shape = *(shape_vec[grad_index_]);
-  const std::vector<size_t> &indices_shape = *(shape_vec[indices_index_]);
+  ShapeVector &var_shape = *(shape_vec[var_index_]);
+  ShapeVector &m_shape = *(shape_vec[m_index_]);
+  ShapeVector &v_shape = *(shape_vec[v_index_]);
+  const ShapeVector &grad_shape = *(shape_vec[grad_index_]);
+  const ShapeVector &indices_shape = *(shape_vec[indices_index_]);
 
   Shard(&var_shape, 0);
   Shard(&m_shape, 0);
@@ -54,18 +54,18 @@ void SparseApplyAdamPSKernelMod::InitKernel(
   if (var_shape.size() != grad_shape.size()) {
     MS_LOG(EXCEPTION) << "var and grad must have the same shape size";
   }
-  var_first_dim_size_ = var_shape[0];
+  var_first_dim_size_ = LongToSize(var_shape[0]);
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(EXCEPTION) << "The shape of var and grad must be equal in dimension " << i;
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "indices must be 1D";
   }
-  indices_size_ = indices_shape[0];
-  if (grad_shape[0] != indices_size_) {
+  indices_size_ = LongToSize(indices_shape[0]);
+  if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(ERROR) << "The first dimension of grad shape must be equal to indices";
   }
   if (common::AnfAlgo::HasNodeAttr(USE_NESTEROV, cnode)) {
@@ -78,12 +78,12 @@ void SparseApplyAdamPSKernelMod::InitKernel(
   (void)workspace_size_list_.emplace_back(var_first_dim_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_);
 }
 
-void SparseApplyAdamPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+void SparseApplyAdamPSKernelMod::ReInit(const std::vector<ShapeVector> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
     MS_LOG(EXCEPTION) << "Shape is empty";
   }
-  const std::vector<size_t> &indices_shape = shapes[0];
-  indices_size_ = indices_shape[0];
+  const auto &indices_shape = shapes[0];
+  indices_size_ = LongToSize(indices_shape[0]);
   workspace_size_list_[0] = indices_size_ * var_outer_dim_size_ * sizeof(float) * worker_num_;
   workspace_size_list_[1] = indices_size_ * sizeof(int) * worker_num_;
 }

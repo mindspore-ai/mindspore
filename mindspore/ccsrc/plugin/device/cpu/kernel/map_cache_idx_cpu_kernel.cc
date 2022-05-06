@@ -49,8 +49,8 @@ int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
 }
 
 void UpdateShape(size_t miss_count, const CNodePtr &node) {
-  std::vector<size_t> out_shape;
-  (void)out_shape.emplace_back(miss_count);
+  ShapeVector out_shape;
+  (void)out_shape.emplace_back(SizeToLong(miss_count));
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   std::vector<TypeId> dtypes(output_num);
   for (size_t i = 0; i < output_num; i++) {
@@ -75,11 +75,14 @@ void MapCacheIdxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
   auto hashmap_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (IsDynamic(hashmap_shape)) {
+    return;
+  }
   if (hashmap_shape.size() != 2) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'HashMap' must be 2-D, but got "
                       << hashmap_shape.size() << "-D.";
   }
-  hashmap_length_ = hashmap_shape[0];
+  hashmap_length_ = LongToSize(hashmap_shape[0]);
   if (hashmap_length_ == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the first dimension of 'HashMap' must be greater than 0, but got " << hashmap_length_;
@@ -108,10 +111,7 @@ void MapCacheIdxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
                                            const std::vector<kernel::AddressPtr> &outputs) {
   auto node = node_wpt_.lock();
   auto emb_idx_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-  batch_size_ = 1;
-  for (size_t i = 0; i < emb_idx_shape.size(); ++i) {
-    batch_size_ *= emb_idx_shape[i];
-  }
+  batch_size_ = SizeOf(emb_idx_shape);
   HashmapEntry<T> *hashmap = reinterpret_cast<HashmapEntry<T> *>(inputs[0]->addr);
   auto input_indices = reinterpret_cast<T *>(inputs[1]->addr);
   T *step_ = reinterpret_cast<T *>(inputs[2]->addr);

@@ -42,9 +42,9 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     size_t size = input_size_ / sizeof(T);
 
-    CalSpaceToBatch<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_, paddings_[0][0], paddings_[0][1],
-                       paddings_[1][0], paddings_[1][1], block_size_, output,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalSpaceToBatch<T>(size, input, in_, ih_, iw_, ic_, on_, oh_, ow_, oc_, LongToSize(paddings_[0][0]),
+                       LongToSize(paddings_[0][1]), LongToSize(paddings_[1][0]), LongToSize(paddings_[1][1]),
+                       block_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -52,19 +52,16 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
-    input_size_ = sizeof(T);
-    for (size_t idx = 0; idx < input_shape_.size(); ++idx) {
-      input_size_ *= input_shape_[idx];
-    }
-    in_ = input_shape_[0];
-    ic_ = input_shape_[1];
-    ih_ = input_shape_[2];
-    iw_ = input_shape_[3];
+    input_size_ = sizeof(T) * SizeOf(input_shape_);
+    in_ = LongToSizeClipNeg(input_shape_[0]);
+    ic_ = LongToSizeClipNeg(input_shape_[1]);
+    ih_ = LongToSizeClipNeg(input_shape_[2]);
+    iw_ = LongToSizeClipNeg(input_shape_[3]);
 
     on_ = in_ * block_size_ * block_size_;
     oc_ = ic_;
-    oh_ = (ih_ + paddings_[0][0] + paddings_[0][1]) / block_size_;
-    ow_ = (iw_ + paddings_[1][0] + paddings_[1][1]) / block_size_;
+    oh_ = (ih_ + LongToSize(paddings_[0][0] + paddings_[0][1])) / block_size_;
+    ow_ = (iw_ + LongToSize(paddings_[1][0] + paddings_[1][1])) / block_size_;
     output_size_ = on_ * oc_ * oh_ * ow_ * sizeof(T);
     InitSizeLists();
     return true;
@@ -108,12 +105,11 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     // check input_shape
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    if (input_shape.size() != SHAPE_SIZE) {
+    input_shape_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    if (input_shape_.size() != SHAPE_SIZE) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be equal to " << SHAPE_SIZE
-                        << ", but got " << input_shape.size();
+                        << ", but got " << input_shape_.size();
     }
-    input_shape_.assign(input_shape.begin(), input_shape.end());
     // check paddings_
     paddings_ = GetAttr<std::vector<std::vector<int64_t>>>(kernel_node, "paddings");
     if (paddings_.size() != PADDING_SHAPE_0) {
@@ -131,7 +127,7 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                               << "but got paddings[" << idx_i << "][ " << idx_j << "]: " << paddings_[idx_i][idx_j];
           }
         }
-        auto tmp_shape = input_shape[idx_i + PADDING_SHAPE_1] + paddings_[idx_i][0] + paddings_[idx_i][1];
+        auto tmp_shape = input_shape_[idx_i + PADDING_SHAPE_1] + paddings_[idx_i][0] + paddings_[idx_i][1];
         if ((tmp_shape % block_size_) != 0) {
           MS_LOG(EXCEPTION) << "For '" << kernel_name_
                             << "', padded shape must be divisible by block_size, , but got padded shape: " << tmp_shape
@@ -149,7 +145,7 @@ class SpaceToBatchGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::string kernel_name_;
 
   std::vector<std::vector<int64_t>> paddings_;
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   size_t block_size_;
   size_t input_size_;
   size_t output_size_;

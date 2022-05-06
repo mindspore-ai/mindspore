@@ -87,8 +87,8 @@ class TransposeFwdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                      int task_id, int thread_num);
 
   TransposeParameter transpose_param_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
   std::vector<size_t> axes_;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel =

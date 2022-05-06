@@ -25,6 +25,7 @@
 #include <utility>
 #include <memory>
 #include <map>
+#include <functional>
 #include <optional>
 #include "ir/anf.h"
 #include "ir/func_graph.h"
@@ -111,11 +112,11 @@ class COMMON_EXPORT AnfAlgo {
   // from std::vector<size_t> to ShapeVector
   static ShapeVector GetOutputInferShapeSigned(const AnfNodePtr &node, size_t output_idx);
   // get output shapes inferred by ME from input nodes.
-  static std::vector<size_t> GetOutputInferShape(const AnfNodePtr &node, size_t output_idx);
-  static std::vector<size_t> GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
-                                                 size_t output_idx);
+  static ShapeVector GetOutputInferShape(const AnfNodePtr &node, size_t output_idx);
+  static ShapeVector GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
+                                         size_t output_idx);
   // get input shapes inferred by ME from input nodes.
-  static std::vector<size_t> GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx);
+  static ShapeVector GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx);
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
   static TypeId GetOutputInferDataType(const TypePtr &type_ptr, size_t output_idx);
@@ -125,8 +126,8 @@ class COMMON_EXPORT AnfAlgo {
   // get output original data type from prev node,input_index is the input index of current node related to prev node
   static TypeId GetPrevNodeOutputInferDataType(const AnfNodePtr &node, size_t input_idx);
   // set infer shapes and types of anf node
-  static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
-                                         const std::vector<std::vector<size_t>> &shapes, AnfNode *node);
+  static void SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
+                                         AnfNode *node);
   // get and set output shape ptr
   static abstract::BaseShapePtr GetOutputDetailShape(const AnfNodePtr &node, size_t output_idx);
   static abstract::BaseShapePtr GetPrevNodeOutputDetailShape(const AnfNodePtr &node, size_t input_idx);
@@ -184,15 +185,31 @@ class COMMON_EXPORT AnfAlgo {
   // Get node real inputs, skip `MakeTuple`, `TupleGetItem`, `Depend`, `Load`, `UpdateState` etc.
   static void GetRealInputs(const AnfNodePtr &anf_node, std::vector<KernelWithIndex> *inputs);
   // Check whether tensors need broadcast or not.
-  static bool IsTensorBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs);
+  template <typename T>
+  static inline bool IsTensorBroadcast(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    if (lhs.size() != rhs.size()) {
+      return true;
+    }
+    for (size_t i = 0; i < lhs.size(); i++) {
+      if (lhs[i] != rhs[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   // Calc tensor size in byte.
   template <typename T>
+  static size_t TensorSizeInByte(const std::vector<int64_t> &shape) {
+    return sizeof(T) * SizeOf(shape);
+  }
+
+  template <typename T>
   static size_t TensorSizeInByte(const std::vector<size_t> &shape) {
-    size_t result = sizeof(T);
-    for (size_t i = 0; i < shape.size(); i++) {
-      result *= shape[i];
-    }
-    return result;
+    size_t res = sizeof(T);
+    res = std::accumulate(shape.begin(), shape.end(), res, std::multiplies<size_t>());
+
+    return res;
   }
 
   // Judge a control operator need be compiled into kernel graph rather than be cut into single op and

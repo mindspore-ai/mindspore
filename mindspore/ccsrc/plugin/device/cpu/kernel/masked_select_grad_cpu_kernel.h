@@ -48,10 +48,10 @@ class MaskedSelectGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, MaskedSelectGradFunc>> func_list_;
   MaskedSelectGradFunc kernel_func_;
 
-  std::vector<size_t> input_shape_a_;
-  std::vector<size_t> input_shape_b_;
-  std::vector<size_t> grad_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_a_;
+  std::vector<int64_t> input_shape_b_;
+  std::vector<int64_t> grad_shape_;
+  std::vector<int64_t> output_shape_;
   uint64_t tensor_size_ = 1;
 };
 }  // namespace kernel

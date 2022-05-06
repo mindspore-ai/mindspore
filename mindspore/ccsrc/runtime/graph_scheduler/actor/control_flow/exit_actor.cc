@@ -177,9 +177,7 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       // If there is a dynamic shape, the shape in the kernel should be used.
       MS_LOG(DEBUG) << "Update dynamic shape in kernel output:" << node_with_index.first->DebugString()
                     << " for actor:" << GetAID();
-      auto shape_tmp = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
-      host_shape.clear();
-      (void)std::transform(shape_tmp.begin(), shape_tmp.end(), std::back_inserter(host_shape), IntToSize);
+      host_shape = common::AnfAlgo::GetOutputInferShape(node_with_index.first, node_with_index.second);
     }
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
     auto new_device_tensor = device_contexts_[i]->device_res_manager_->CreateDeviceAddress(

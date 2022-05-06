@@ -22,7 +22,7 @@ namespace mindspore {
 namespace session {
 std::shared_ptr<session::KernelGraph> SingleKernelGraph::ConstructKernelGraphBasedOnSingleOp(
   const std::string &op_name, const std::vector<TypeId> &input_dtypes, const std::vector<ShapeVector> &input_shapes,
-  const std::vector<TypeId> &output_dtypes, const std::vector<std::vector<size_t>> &output_shapes) {
+  const std::vector<TypeId> &output_dtypes, const std::vector<ShapeVector> &output_shapes) {
   auto graph = std::make_shared<session::KernelGraph>();
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<AnfNodePtr> inputs;

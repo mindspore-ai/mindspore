@@ -50,7 +50,7 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(anf_node);
 
   for (size_t i = 0; i < input_num; i++) {
-    std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
+    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetInputDeviceDataType(anf_node, i));
     int64_t size_i = 1;
     if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
@@ -60,7 +60,7 @@ bool HostKernelMod::Init(const AnfNodePtr &anf_node) {
   }
 
   for (size_t i = 0; i < output_num; i++) {
-    std::vector<size_t> shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
+    auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, i));
     MS_EXCEPTION_IF_NULL(type_ptr);
     int64_t size_i = 1;

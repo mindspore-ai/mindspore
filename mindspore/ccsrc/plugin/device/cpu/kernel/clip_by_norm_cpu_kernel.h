@@ -69,10 +69,10 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
   size_t x_dim_{0};
   std::pair<TypeId, TypeId> data_type_{kNumberTypeFloat32, kNumberTypeFloat32};
   std::vector<size_t> axis_;
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> clip_norm_shape_;
-  std::vector<size_t> l2_norm_output_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector x_shape_;
+  ShapeVector clip_norm_shape_;
+  ShapeVector l2_norm_output_shape_;
+  ShapeVector output_shape_;
   ParallelSearchInfo parallel_search_info_;
 };
 }  // namespace kernel

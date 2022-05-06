@@ -95,13 +95,16 @@ void SparseApplyProximalAdagradCpuKernelMod::InitInputOutputSize(const CNodePtr 
 void SparseApplyProximalAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kVarIndex);
-  std::vector<size_t> accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kAccIndex);
-  std::vector<size_t> lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLRIndex);
-  std::vector<size_t> l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL1Index);
-  std::vector<size_t> l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL2Index);
-  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kGradIndex);
-  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndicesIndex);
+  ShapeVector var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kVarIndex);
+  ShapeVector accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kAccIndex);
+  ShapeVector lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLRIndex);
+  ShapeVector l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL1Index);
+  ShapeVector l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL2Index);
+  ShapeVector grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kGradIndex);
+  ShapeVector indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndicesIndex);
+  if (AnfAlgo::IsShapesDynamic({var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape})) {
+    return;
+  }
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
@@ -118,21 +121,21 @@ void SparseApplyProximalAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_n
                          "'var', but got the dimension of 'grad': "
                       << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
   }
-  var_first_dim_size_ = var_shape[0];
+  var_first_dim_size_ = LongToSize(var_shape[0]);
   for (size_t i = 1; i < var_shape.size(); ++i) {
     if (var_shape[i] != grad_shape[i]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
                         << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
     }
-    var_outer_dim_size_ *= var_shape[i];
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
   }
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'indices' must be a 1-D vector, but got "
                       << indices_shape.size() << "-D.";
   }
-  indices_size_ = indices_shape[0];
-  if (grad_shape[0] != indices_size_) {
+  indices_size_ = LongToSize(indices_shape[0]);
+  if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the first dimension value of 'grad' must be equal to "
                          "the first dimension value of 'indices', but got the first dimension value of 'grad': "

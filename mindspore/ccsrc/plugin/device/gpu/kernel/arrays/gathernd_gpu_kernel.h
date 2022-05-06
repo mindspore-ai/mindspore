@@ -80,6 +80,11 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+
+    if (AnfAlgo::IsShapesDynamic({input_shapes_, indices_shapes_, output_shapes_})) {
+      return true;
+    }
+
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes_, kernel_name, "input_x") ||
                      CHECK_SHAPE_NULL(indices_shapes_, kernel_name, "indices") ||
                      CHECK_SHAPE_NULL(output_shapes_, kernel_name, "output");
@@ -152,25 +157,25 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
  private:
   void Reshape() {
-    size_t dim_of_indices = 1;
+    int64_t dim_of_indices = 1;
     for (size_t i = 0; i < indices_shapes_.size() - IntToSize(1); i++) {
       dim_of_indices *= indices_shapes_[i];
     }
 
-    size_t dim_after_indices = 1;
+    int64_t dim_after_indices = 1;
     size_t dim_indices_last = indices_shapes_[indices_shapes_.size() - IntToSize(1)];
     for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
       dim_after_indices *= input_shapes_[i];
     }
-    dims_.emplace_back(dim_of_indices);
-    dims_.emplace_back(dim_after_indices);
+    dims_.emplace_back(LongToSize(dim_of_indices));
+    dims_.emplace_back(LongToSize(dim_after_indices));
     dims_.emplace_back(dim_indices_last);
     return;
   }
 
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> indices_shapes_;
-  std::vector<size_t> output_shapes_;
+  ShapeVector input_shapes_;
+  ShapeVector indices_shapes_;
+  ShapeVector output_shapes_;
 
   std::vector<size_t> dims_;
 

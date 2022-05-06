@@ -29,9 +29,9 @@ constexpr size_t kEmbeddingLookUpProxyOutputsNum = 1;
 void EmbeddingLookUpProxyKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   EmbeddingLookUpCpuKernelMod::InitKernel(kernel_node);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto indices_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
+  auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   size_t axis = kShape2dDims - input_shape.size();
   if (input_shape.empty() || input_shape.size() > kShape2dDims) {
     MS_LOG(EXCEPTION) << "Input shape can not empty or greater than " << kShape2dDims << "-D, but got "

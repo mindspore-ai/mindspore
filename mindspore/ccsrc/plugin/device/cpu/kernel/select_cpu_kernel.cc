@@ -33,9 +33,7 @@ void SelectCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  for (size_t x : shape) {
-    element_num_ *= x;
-  }
+  element_num_ = SizeOf(shape);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

@@ -82,7 +82,7 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
     EXC_IF_VEC_IDX_OOB((*inputs_shape), origin_index);
     MS_EXCEPTION_IF_NULL((*inputs_shape)[origin_index]);
     auto shape = *((*inputs_shape)[origin_index]);
-    addr_data_size = std::accumulate(shape.begin(), shape.end(), worker_num_, std::multiplies<size_t>());
+    addr_data_size = SizeOf(shape) * worker_num_;
   } else {
     EXC_IF_VEC_IDX_OOB(ps_lens, ps_index);
     addr_data_size = IntToSize(ps_lens[ps_index]);

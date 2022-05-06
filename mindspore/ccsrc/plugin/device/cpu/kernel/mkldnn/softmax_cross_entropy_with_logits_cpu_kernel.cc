@@ -33,7 +33,7 @@ void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodeP
   DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
@@ -41,14 +41,17 @@ void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const CNodeP
 void SoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({shape})) {
+    return;
+  }
   dnnl::memory::dims mem_dims;
   (void)mem_dims.insert(mem_dims.end(), shape.begin(), shape.end());
   if (mem_dims.size() != 2) {
     MS_LOG(EXCEPTION) << "SoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
   }
-  batch_size_ = shape[0];
-  class_num_ = shape[1];
+  batch_size_ = static_cast<size_t>(shape[0]);
+  class_num_ = static_cast<size_t>(shape[1]);
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }

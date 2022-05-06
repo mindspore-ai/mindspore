@@ -30,7 +30,7 @@ bool CholeskyInverseKernelFunc(const CNodePtr &node_wpt, const std::vector<kerne
   auto input_x0 = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[0]->addr);
   auto inputShape = AnfAlgo::GetInputDeviceShape(node_wpt, 0);
-  int64_t n = SizeToLong(inputShape[0]);
+  int64_t n = inputShape[0];
   using MatrixXd = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
   Eigen::Map<MatrixXd> A(input_x0, n, n);
   MatrixXd result;

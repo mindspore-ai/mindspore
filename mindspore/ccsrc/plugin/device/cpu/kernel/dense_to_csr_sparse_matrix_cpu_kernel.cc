@@ -41,8 +41,8 @@ void DenseToCSRSparseMatrixCpuKernelMod::InitKernel(const CNodePtr &kernel_node)
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex1);
   values_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex0);
-  auto dense_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1);
+  auto dense_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex0));
+  auto indices_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex1));
   rank_ = dense_shape.size();
   total_nnz_ = indices_shape[kZero];
   batch_size_ = (rank_ == kDefaultRank) ? kOne : dense_shape[kZero];

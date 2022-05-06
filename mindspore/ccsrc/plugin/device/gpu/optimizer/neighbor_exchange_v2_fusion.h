@@ -30,14 +30,14 @@ struct SplitvNodeInfo {
   int64_t split_dim = 0;
   int64_t num_split = 0;
   TypeId dtype = kTypeUnknown;
-  std::vector<size_t> base_shape;
+  ShapeVector base_shape;
   std::vector<int64_t> send_lens = {};
-  std::vector<std::vector<size_t>> shapes = {};
+  std::vector<ShapeVector> shapes = {};
   std::vector<int64_t> size_splits = {};
 };
 
 struct SliceNodeInfo {
-  std::vector<size_t> base_shape;
+  ShapeVector base_shape;
   int64_t slice_dim = 0;
   TypeId input_dtype = kTypeUnknown;
   int64_t slice_begin = 0;
@@ -56,8 +56,8 @@ class NeighborExchangeV2Fusion : public PatternProcessPass {
   std::vector<CNodePtr> CreateSplitNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2,
                                          std::vector<int64_t> *split_num) const;
   CNodePtr CreateConcatNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &concat_input,
-                            const std::vector<std::vector<size_t>> &output_shape,
-                            const std::vector<TypeId> &output_dtype, int64_t axis, int64_t input_nums) const;
+                            const std::vector<ShapeVector> &output_shape, const std::vector<TypeId> &output_dtype,
+                            int64_t axis, int64_t input_nums) const;
   CNodePtr CreateLeftRightConcat(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &all_to_all_v_outputs,
                                  const std::vector<int64_t> &recv_rank_ids, const std::vector<int64_t> &recv_lens,
                                  bool is_left) const;
@@ -83,7 +83,7 @@ class NeighborExchangeV2GradFusion : public PatternProcessPass {
   std::vector<CNodePtr> CreateSplitNodesForGrad(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                                 std::vector<int64_t> *split_num) const;
   CNodePtr CreatePadNode(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::vector<int64_t> &begin,
-                         const std::vector<int64_t> &size, const std::vector<size_t> &shape, TypeId dtype) const;
+                         const std::vector<int64_t> &size, const ShapeVector &shape, TypeId dtype) const;
   CNodePtr CreateSplitGradNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                 const CNodePtr &all_to_all_v, const std::vector<CNodePtr> &split_nodes,
                                 const std::vector<int64_t> &split_num) const;

@@ -184,9 +184,9 @@ void DatasetIteratorKernelMod::SyncData() {
   if (dynamic_shape_) {
     return;
   }
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<ShapeVector> shapes;
   for (const auto &item : output_data_) {
-    std::vector<size_t> shape;
+    ShapeVector shape;
     std::transform(item.shapes_.begin(), item.shapes_.end(), std::back_inserter(shape), LongToSize);
     shapes.push_back(shape);
   }

@@ -69,7 +69,7 @@ class RangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_size = input_shape.size();
     input_size_ = 1;
     for (size_t i = 0; i < shape_size; i++) {
-      input_size_ *= input_shape[i];
+      input_size_ *= static_cast<size_t>(input_shape[i]);
     }
     input_size_ *= sizeof(T);
     output_size_ = input_size_;

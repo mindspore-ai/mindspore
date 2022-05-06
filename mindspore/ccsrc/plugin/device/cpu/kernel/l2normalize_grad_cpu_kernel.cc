@@ -36,14 +36,14 @@ class L2NormalizeGradCpuFunc : public DeprecatedCpuKernelFunc {
                const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void CheckInputShape(const std::vector<size_t> &output_shape);
+  void CheckInputShape(const ShapeVector &output_shape);
   std::vector<size_t> OneDimIndexToHighDimIndex(size_t one_dim_index);
   void HighDimIndexToOneDimIndex(size_t *one_dim_index, const std::vector<size_t> &high_dim_index);
   std::vector<T> GetVector(const std::vector<size_t> &high_dim_index, const T *x);
   void GetSumOfProduct(const std::vector<T> &x_vector, const std::vector<T> &y_vector, T *ss);
   void GetOutput(const std::vector<T> &input_x_vector, const std::vector<T> &y_vector,
                  const std::vector<T> &dout_vector, const std::vector<size_t> &high_dim_index, T *output);
-  std::vector<std::vector<size_t>> input_shape_list_;
+  std::vector<ShapeVector> input_shape_list_;
   std::vector<size_t> dim_elem_num_list_;
   int axis_{0};
   T epsilon_{0};
@@ -63,7 +63,7 @@ void L2NormalizeGradCpuFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   int output_dim_length = output_shape.size();
   dim_elem_num_list_.resize(output_dim_length, 1);
   for (int i = output_dim_length - 2; i >= 0; i--) {  // from -2 to 0 dim
-    dim_elem_num_list_[i] = output_shape[i + 1] * dim_elem_num_list_[i + 1];
+    dim_elem_num_list_[i] = LongToSize(output_shape[i + 1]) * dim_elem_num_list_[i + 1];
   }
 
   int axis = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "axis"));
@@ -96,7 +96,7 @@ bool L2NormalizeGradCpuFunc<T>::RunFunc(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-void L2NormalizeGradCpuFunc<T>::CheckInputShape(const std::vector<size_t> &output_shape) {
+void L2NormalizeGradCpuFunc<T>::CheckInputShape(const ShapeVector &output_shape) {
   for (const auto &shape : input_shape_list_) {
     if (output_shape != shape) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -106,7 +106,7 @@ void L2NormalizeGradCpuFunc<T>::CheckInputShape(const std::vector<size_t> &outpu
   }
   auto input_x_shape = input_shape_list_[0];
   if (input_x_shape.size() != 0) {
-    if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](size_t i) { return i == 0; })) {
+    if (std::any_of(input_x_shape.begin(), input_x_shape.end(), [](int64_t i) { return i == 0; })) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input 'x' can not be null.";
     }
   }
@@ -140,7 +140,7 @@ std::vector<T> L2NormalizeGradCpuFunc<T>::GetVector(const std::vector<size_t> &h
   auto x_shape = input_shape_list_[0];
   std::vector<T> x_vector;
   x_vector.reserve(x_shape[axis_]);
-  for (size_t i = 0; i < x_shape[axis_]; i++) {
+  for (size_t i = 0; i < LongToSize(x_shape[axis_]); i++) {
     size_t oneDimIndex = 0;
     std::vector<size_t> tmp_high_dim_index = high_dim_index;
     tmp_high_dim_index[axis_] = i;

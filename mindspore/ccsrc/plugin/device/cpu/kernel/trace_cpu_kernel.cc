@@ -28,7 +28,7 @@ constexpr size_t kOutputNum = 1;
 void TraceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  input_shape_ = Convert2SizeT(AnfAlgo::GetInputDeviceShape(kernel_node, 0));
   values_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (input_shape_.size() != kInputDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension should be " << kInputDim

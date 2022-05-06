@@ -40,7 +40,7 @@ class AdjustContrastv2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   std::uint32_t LaunchAdjustContrastv2Kernel(const std::vector<AddressPtr> &inputs,
                                              const std::vector<AddressPtr> &outputs);
-  std::vector<size_t> images_shape;
+  std::vector<int64_t> images_shape;
   TypeId input_type_{kTypeUnknown};
 };
 }  // namespace kernel

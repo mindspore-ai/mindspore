@@ -30,17 +30,14 @@ void PadAndShiftCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   type_size_ = GetTypeByte(TypeIdToType(input_x_dtype_));
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  batch_size_ = 1;
-  for (size_t i = 0; i < indices_shape.size(); ++i) {
-    batch_size_ *= indices_shape[i];
-  }
+  batch_size_ = SizeOf(indices_shape);
   MS_LOG(INFO) << "PadAndShift batch_size:" << batch_size_;
   auto cum_sum_arr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   if (cum_sum_arr_shape.size() != 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'cum_sum_arr' must be 1, but got "
                   << cum_sum_arr_shape.size() << ".";
   }
-  cum_sum_size_ = cum_sum_arr_shape[0];
+  cum_sum_size_ = LongToSize(cum_sum_arr_shape[0]);
   is_need_retrieve_output_shape_ = true;
 }
 
@@ -95,7 +92,7 @@ void PadAndShiftCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   for (size_t i = 0; i < output_nums; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {out_shape}, node_.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {Convert2Long(out_shape)}, node_.get());
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PadAndShift, PadAndShiftCpuKernelMod);

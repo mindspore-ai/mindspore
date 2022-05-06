@@ -92,10 +92,10 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
     MS_LOG(EXCEPTION) << "MemCpyAsync input size is not 1, got " << input_size;
   }
   size_t type_size = abstract::TypeIdSize(input_type_id_);
-  std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, 0);
+  auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, 0);
   size_t total_size = 1;
   for (size_t i = 0; i < shape_i.size(); i++) {
-    total_size = SizetMulWithOverflowCheck(total_size, shape_i[i]);
+    total_size = SizetMulWithOverflowCheck(total_size, static_cast<size_t>(shape_i[i]));
   }
   total_size = SizetMulWithOverflowCheck(total_size, type_size);
   MS_LOG(INFO) << "MemCpyAsync size[" << total_size << "]";

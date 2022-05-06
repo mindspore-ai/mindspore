@@ -49,9 +49,9 @@ class TensorAddCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, AddFunc>> func_list_;
   AddFunc kernel_func_;
 
-  std::vector<size_t> input_shape_a_;
-  std::vector<size_t> input_shape_b_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_a_;
+  std::vector<int64_t> input_shape_b_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -49,13 +49,13 @@ class LastCrdToDrGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_constant_rs = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 5);
     auto shape_constrain_ks = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
 
-    for (size_t i = 0; i < shape_atom_crd.size(); i++) ele_atom_crd *= shape_atom_crd[i];
-    for (size_t i = 0; i < shape_quater_cof.size(); i++) ele_quater_cof *= shape_quater_cof[i];
-    for (size_t i = 0; i < shape_uint_dr_to_dr.size(); i++) ele_uint_dr_to_dr *= shape_uint_dr_to_dr[i];
-    for (size_t i = 0; i < shape_atom_i_serials.size(); i++) ele_atom_i_serials *= shape_atom_i_serials[i];
-    for (size_t i = 0; i < shape_atom_j_serials.size(); i++) ele_atom_j_serials *= shape_atom_j_serials[i];
-    for (size_t i = 0; i < shape_constant_rs.size(); i++) ele_constant_rs *= shape_constant_rs[i];
-    for (size_t i = 0; i < shape_constrain_ks.size(); i++) ele_constrain_ks *= shape_constrain_ks[i];
+    ele_atom_crd *= SizeOf(shape_atom_crd);
+    ele_quater_cof *= SizeOf(shape_quater_cof);
+    ele_uint_dr_to_dr *= SizeOf(shape_uint_dr_to_dr);
+    ele_atom_i_serials *= SizeOf(shape_atom_i_serials);
+    ele_atom_j_serials *= SizeOf(shape_atom_j_serials);
+    ele_constant_rs *= SizeOf(shape_constant_rs);
+    ele_constrain_ks *= SizeOf(shape_constrain_ks);
 
     InitSizeLists();
     return true;

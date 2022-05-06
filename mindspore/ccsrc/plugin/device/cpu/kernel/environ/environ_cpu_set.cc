@@ -43,7 +43,7 @@ void EnvironSetCpuKernelMod::InitKernel(const CNodePtr &node) {
   auto value_shapes = AnfAlgo::GetInputDeviceShape(node, 2);
   value_size_ = GetTypeByte(TypeIdToType(value_type));
   for (auto &i : value_shapes) {
-    value_size_ *= i;
+    value_size_ *= static_cast<size_t>(i);
   }
 
   input_size_list_.push_back(handle_size_);

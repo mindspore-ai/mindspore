@@ -29,9 +29,8 @@ void HSwishCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   x_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  for (const uint64_t &d : x_shape_) {
-    tensor_size_ *= d;
-  }
+
+  tensor_size_ = SizeOf(x_shape_);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;

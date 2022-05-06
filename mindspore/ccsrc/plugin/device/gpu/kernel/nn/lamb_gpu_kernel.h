@@ -117,41 +117,32 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     InitResource();
     InitParamSizeByType();
 
-    auto covert_int64_shape_to_sizet_shape = [=](std::vector<int64_t> int64_shape) -> std::vector<size_t> {
-      std::vector<size_t> size_t_shape;
-      (void)std::transform(int64_shape.begin(), int64_shape.end(), std::back_inserter(size_t_shape), LongToSize);
-      return size_t_shape;
-    };
-
     auto variable_int64_shape = inputs[kVarIndex]->GetShapeVector();
     auto m_int64_shape = inputs[kMIndex]->GetShapeVector();
     auto v_int64_shape = inputs[kVIndex]->GetShapeVector();
     auto gradient_int64_shape = inputs[kGradIndex]->GetShapeVector();
+    if (AnfAlgo::IsShapesDynamic({variable_int64_shape, m_int64_shape, v_int64_shape, gradient_int64_shape})) {
+      return true;
+    }
 
-    std::vector<size_t> variable_shape = covert_int64_shape_to_sizet_shape(variable_int64_shape);
-    std::vector<size_t> m_shape = covert_int64_shape_to_sizet_shape(m_int64_shape);
-    std::vector<size_t> v_shape = covert_int64_shape_to_sizet_shape(v_int64_shape);
-    std::vector<size_t> gradient_shape = covert_int64_shape_to_sizet_shape(gradient_int64_shape);
-
-    is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
-                     CHECK_SHAPE_NULL(m_shape, kernel_name_, "m") || CHECK_SHAPE_NULL(v_shape, kernel_name_, "v") ||
-                     CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient");
+    is_null_input_ = CHECK_SHAPE_NULL(variable_int64_shape, kernel_name_, "var") ||
+                     CHECK_SHAPE_NULL(m_int64_shape, kernel_name_, "m") ||
+                     CHECK_SHAPE_NULL(v_int64_shape, kernel_name_, "v") ||
+                     CHECK_SHAPE_NULL(gradient_int64_shape, kernel_name_, "gradient");
     if (is_null_input_) {
       InitSizeLists();
       return 0;
     }
 
-    InitParamSizeByShape(variable_shape, m_shape, v_shape, gradient_shape);
+    InitParamSizeByShape(variable_int64_shape, m_int64_shape, v_int64_shape, gradient_int64_shape);
 
     auto output_int64_shape = outputs[0]->GetShapeVector();
-    std::vector<size_t> output_shape = covert_int64_shape_to_sizet_shape(output_int64_shape);
-
-    size_t input_dim = variable_shape.size();
-    if (!CheckValidShape(variable_shape, output_shape, input_dim)) {
+    size_t input_dim = variable_int64_shape.size();
+    if (!CheckValidShape(variable_int64_shape, output_int64_shape, input_dim)) {
       return 0;
     }
 
-    InitShapeInfo(variable_shape, output_shape);
+    InitShapeInfo(variable_int64_shape, output_int64_shape);
     // Determine the reduce operation.
     CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
       cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, CUDNN_REDUCE_TENSOR_NORM2, CUDNN_DATA_FLOAT, nan_prop_,
@@ -220,8 +211,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
                                         "For " + kernel_name_ + " cudnnDestroyTensorDescriptor failed.");
   }
 
-  bool CheckValidShape(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape,
-                       size_t input_dim) {
+  bool CheckValidShape(const ShapeVector &input_shape, const ShapeVector &output_shape, size_t input_dim) {
     is_null_input_ = CHECK_NULL_INPUT(input_shape) || CHECK_NULL_INPUT(output_shape);
     if (is_null_input_) {
       MS_LOG(WARNING) << "For 'LambGpuKernelMod', input or output is null.";
@@ -257,8 +247,8 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     trust_ratio_size_ = sizeof(float);
   }
 
-  void InitParamSizeByShape(const std::vector<size_t> &variable_shape, const std::vector<size_t> &m_shape,
-                            const std::vector<size_t> &v_shape, const std::vector<size_t> &gradient_shape) {
+  void InitParamSizeByShape(const ShapeVector &variable_shape, const ShapeVector &m_shape, const ShapeVector &v_shape,
+                            const ShapeVector &gradient_shape) {
     for (size_t i = 0; i < variable_shape.size(); i++) {
       variable_size_ *= variable_shape[i];
       // save intermediate value
@@ -335,21 +325,21 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
     }
   }
 
-  void InitShapeInfo(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
+  void InitShapeInfo(const ShapeVector &input_shape, const ShapeVector &output_shape) {
     // Determine which dimension will be reduced.
-    std::vector<size_t> reduce_output_shape = output_shape;
+    ShapeVector reduce_output_shape = output_shape;
     std::fill(reduce_output_shape.begin(), reduce_output_shape.end(), 1);
 
     // Infer input and output descriptor.
     InferInAndOutDesc(input_shape, reduce_output_shape);
   }
 
-  void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &reduce_output_shape) {
+  void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &reduce_output_shape) {
     constexpr size_t split_dim = 4;
     constexpr size_t dim_idx_two = 2;
     constexpr size_t dim_idx_three = 3;
     if (input_shape.size() <= split_dim) {
-      std::vector<size_t> new_input_shape;
+      ShapeVector new_input_shape;
       ShapeNdTo4d(input_shape, &new_input_shape);
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
         cudnnSetTensor4dDescriptor(input_descriptor_, CUDNN_TENSOR_NCHW, data_type_, new_input_shape[0],
@@ -359,7 +349,7 @@ class LambGpuKernelMod : public NativeGpuKernelMod {
       CudnnSetTensorNdDescriptor(input_shape, input_descriptor_, data_type_, kernel_name_);
     }
     if (reduce_output_shape.size() <= split_dim) {
-      std::vector<size_t> new_reduce_output_shape;
+      ShapeVector new_reduce_output_shape;
       ShapeNdTo4d(reduce_output_shape, &new_reduce_output_shape);
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
 

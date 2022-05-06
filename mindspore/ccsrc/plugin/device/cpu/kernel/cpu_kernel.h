@@ -241,21 +241,20 @@ class CpuKernelFunc {
 
 class CPUKernelUtils {
  public:
-  static void ExpandDimsTo4(std::vector<size_t> *shape);
-  static size_t CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3);
-  static size_t GetElementNumOnAxis(const std::vector<size_t> &shape, int axis);
-  static void GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num);
+  static void ExpandDimsTo4(ShapeVector *shape);
+  static size_t CalcOffset(const ShapeVector &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3);
+  static size_t GetElementNumOnAxis(const ShapeVector &shape, int axis);
+  static void GetElementNumEveryDim(const ShapeVector &shape, std::vector<size_t> *element_num);
   static void ParallelFor(const CTask &task, size_t count, float block_size = 128.0);
-  static std::vector<size_t> FlatShapeByAxis(const std::vector<size_t> &shape, int axis);
-  static std::vector<size_t> GetBroadcastShape(const std::vector<size_t> &x, const std::vector<size_t> &y);
+  static ShapeVector FlatShapeByAxis(const ShapeVector &shape, int axis);
+  static ShapeVector GetBroadcastShape(const std::vector<int64_t> &x, const std::vector<int64_t> &y);
   static void ParallelForAutoSearch(const CTask &task, size_t count, ParallelSearchInfo *parallel_search_info);
   static size_t CalcElementNum(const std::vector<size_t> &shape);
 };
 
 class BroadcastIterator {
  public:
-  BroadcastIterator(std::vector<size_t> input_shape_a, std::vector<size_t> input_shape_b,
-                    std::vector<size_t> output_shape);
+  BroadcastIterator(ShapeVector input_shape_a, ShapeVector input_shape_b, ShapeVector output_shape);
   virtual ~BroadcastIterator() = default;
   inline size_t GetInputPosA() const { return input_pos_[0]; }
   inline size_t GetInputPosB() const { return input_pos_[1]; }
@@ -266,14 +265,14 @@ class BroadcastIterator {
   void BroadcastShape();
   void InitStrides();
 
-  std::vector<size_t> coordinates_;
-  std::vector<size_t> input_shape_a_;
-  std::vector<size_t> input_shape_b_;
-  std::vector<size_t> output_shape_;
-  std::vector<size_t> input_strides_a_;
-  std::vector<size_t> input_strides_b_;
-  std::vector<size_t> input_back_strides_a_;
-  std::vector<size_t> input_back_strides_b_;
+  ShapeVector coordinates_;
+  ShapeVector input_shape_a_;
+  ShapeVector input_shape_b_;
+  ShapeVector output_shape_;
+  ShapeVector input_strides_a_;
+  ShapeVector input_strides_b_;
+  ShapeVector input_back_strides_a_;
+  ShapeVector input_back_strides_b_;
   std::array<size_t, 2> input_pos_{0};
   int output_dimension_{0};
 };
@@ -281,7 +280,7 @@ class BroadcastIterator {
 // Broadcast for multi_inputs and single output
 class MultipleBroadcastIterator {
  public:
-  using shape_info = std::vector<size_t>;
+  using shape_info = ShapeVector;
   MultipleBroadcastIterator(std::vector<shape_info> multi_inputs, shape_info output_shape);
   virtual ~MultipleBroadcastIterator() = default;
   inline size_t GetInputPos(size_t index) const { return input_pos_[index]; }
@@ -303,7 +302,7 @@ class MultipleBroadcastIterator {
 
 class TransposeIterator {
  public:
-  TransposeIterator(std::vector<size_t> output_shape, std::vector<size_t> axes, const std::vector<size_t> &input_shape);
+  TransposeIterator(ShapeVector output_shape, std::vector<size_t> axes, const ShapeVector &input_shape);
   virtual ~TransposeIterator() = default;
   inline size_t GetPos() const { return pos_; }
   void SetPos(size_t pos);
@@ -311,10 +310,10 @@ class TransposeIterator {
 
  private:
   int dimension_{0};
-  std::vector<size_t> coordinates_;
-  std::vector<size_t> shape_;
-  std::vector<size_t> strides_;
-  std::vector<size_t> back_strides_;
+  ShapeVector coordinates_;
+  ShapeVector shape_;
+  ShapeVector strides_;
+  ShapeVector back_strides_;
   std::vector<size_t> axes_;
   size_t pos_{0};
 };
@@ -331,7 +330,7 @@ class AxisIterator {
  public:
   AxisIterator() = default;
   virtual ~AxisIterator() = default;
-  void Init(const std::vector<size_t> &input_shape, size_t axis);
+  void Init(const ShapeVector &input_shape, size_t axis);
   // Iterate index through outer_size_ * inner_size_, combine inner iteration and outer iteration
   // into one single iteration to fit ParallelLaunchAutoSearch
   // Possible usage:

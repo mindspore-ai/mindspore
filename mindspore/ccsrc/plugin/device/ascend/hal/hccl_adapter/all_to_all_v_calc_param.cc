@@ -65,7 +65,7 @@ void AllToAllvCalcParam::CalcOpParam() {
     if (type_size == 0) {
       MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
     }
-    size_t origin_mem_size = std::accumulate(ms_shape.begin(), ms_shape.end(), type_size, std::multiplies<size_t>());
+    size_t origin_mem_size = type_size * SizeOf(ms_shape);
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
     input_aligned_mem_size[i] = aligned_mem_size / type_size;
     input_real_mem_size[i] = origin_mem_size / type_size;
@@ -76,7 +76,7 @@ void AllToAllvCalcParam::CalcOpParam() {
     if (type_size == 0) {
       MS_LOG(EXCEPTION) << "Invalid type_size 0 of node: " << cnode->fullname_with_scope();
     }
-    size_t origin_mem_size = std::accumulate(ms_shape.begin(), ms_shape.end(), type_size, std::multiplies<size_t>());
+    size_t origin_mem_size = type_size * SizeOf(ms_shape);
     size_t aligned_mem_size = device::MemoryManager::GetCommonAlignSize(origin_mem_size);
     output_aligned_mem_size[i] = aligned_mem_size / type_size;
     output_real_mem_size[i] = origin_mem_size / type_size;

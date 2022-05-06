@@ -93,7 +93,7 @@ bool FractionalAvgPoolGradCpuKernelMod::FractionalAvgPoolGradLaunch(const std::v
   const int64_t in_rows = *(orig_input_tensor_shape + kShapeIndexH);
   const int64_t in_cols = *(orig_input_tensor_shape + kShapeIndexW);
   const int64_t in_depth = *(orig_input_tensor_shape + kShapeIndexC);
-  std::vector<size_t> out_shape;
+  ShapeVector out_shape;
   for (size_t i = 0; i < orig_input_shape_num; i++) {
     if (orig_input_tensor_shape[i] <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_

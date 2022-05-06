@@ -61,8 +61,8 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   MS_EXCEPTION_IF_NULL(input2);
   auto addn = input2->cast<CNodePtr>();
   constexpr size_t kInferShapeIndex = 2;
-  constexpr size_t kShape2Dim1 = 1024;
-  constexpr size_t kShape2Dim2 = 768;
+  constexpr ShapeValueDType kShape2Dim1 = 1024;
+  constexpr ShapeValueDType kShape2Dim2 = 768;
   if (addn == nullptr || common::AnfAlgo::GetCNodeName(addn) != prim::kPrimAddN->name()) {
     MS_LOG(INFO) << "Mul's second input is not Addn, quit fusion";
     return true;
@@ -70,7 +70,7 @@ bool QuitFusion(const FuncGraphPtr &graph, const AnfNodePtr &mul0_anf, const Anf
   if (common::AnfAlgo::IsDynamicShape(addn)) {
     return true;
   }
-  std::vector<size_t> shape = common::AnfAlgo::GetOutputInferShape(addn, 0);
+  auto shape = common::AnfAlgo::GetOutputInferShape(addn, 0);
   if (shape.size() != kInferShapeIndex || !(shape[1] == kShape2Dim1 || shape[1] == kShape2Dim2)) {
     MS_LOG(INFO) << "Addn's infer shape is not equal to [x,1024] or [x,768], quit fusion";
     return true;

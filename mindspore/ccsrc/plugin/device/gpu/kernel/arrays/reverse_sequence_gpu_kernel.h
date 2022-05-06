@@ -87,11 +87,8 @@ class ReverseSequenceFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 1, but got "
                         << input_shape_.size();
     }
-    input_size_ = 1;
     shape_size_ = input_shape_.size();  // required for calls
-    for (size_t i = 0; i < shape_size_; i++) {
-      input_size_ *= input_shape_[i];
-    }
+    input_size_ = SizeOf(input_shape_);
     // get seq len shape
     seq_len_size_ = seq_len_shape.size();
     output_size_ = input_size_;  // size does not change
@@ -122,7 +119,7 @@ class ReverseSequenceFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t total_index_dim_;
   size_t output_size_;
   size_t workspace_size_;
-  std::vector<size_t> input_shape_;
+  ShapeVector input_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

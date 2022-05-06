@@ -44,19 +44,19 @@ bool CheckSupported(const CNodePtr &conv_back_filter) {
                       << y_shape.size() << "-D, x_shape is " << x_shape.size() << "-D, out_shape is "
                       << out_shape.size() << trace::DumpSourceLines(conv_back_filter);
   }
-  const std::set<size_t> kSupportedBatchSize = {32, 256};
+  const std::set<int64_t> kSupportedBatchSize = {32, 256};
   if (kSupportedBatchSize.find(x_shape[0]) == kSupportedBatchSize.end()) {
     return false;
   }
 
-  std::vector<std::vector<size_t>> supported_cases = {
+  std::vector<ShapeVector> supported_cases = {
     // c_in, c_out, x_h, x_w, y_h, y_w, k_h, k_w
     {64, 256, 56, 56, 56, 56, 1, 1},  {256, 64, 56, 56, 56, 56, 1, 1},  {3, 64, 224, 224, 112, 112, 7, 7},
     {512, 128, 28, 28, 28, 28, 1, 1}, {64, 64, 56, 56, 56, 56, 3, 3},   {256, 512, 56, 56, 28, 28, 1, 1},
     {128, 512, 28, 28, 28, 28, 1, 1}, {256, 128, 56, 56, 56, 56, 1, 1}, {64, 64, 56, 56, 56, 56, 1, 1},
   };
   return std::any_of(
-    supported_cases.begin(), supported_cases.end(), [&x_shape, &y_shape, &out_shape](const std::vector<size_t> &c) {
+    supported_cases.begin(), supported_cases.end(), [&x_shape, &y_shape, &out_shape](const ShapeVector &c) {
       return (c[kIndex0] == x_shape[kIndex1] && c[kIndex1] == y_shape[kIndex1] && c[kIndex2] == x_shape[kIndex2] &&
               c[kIndex3] == x_shape[kIndex3] && c[kIndex4] == y_shape[kIndex2] && c[kIndex5] == y_shape[kIndex3] &&
               c[kIndex6] == out_shape[kIndex2] && c[kIndex7] == out_shape[kIndex3]);

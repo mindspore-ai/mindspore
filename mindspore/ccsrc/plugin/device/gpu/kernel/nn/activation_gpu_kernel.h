@@ -50,6 +50,7 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
     if (is_null_input_) {
       return true;
     }
+
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -72,7 +73,7 @@ class ActivationFwdGpuKernelMod : public NativeGpuKernelMod {
     kernel_attr_map_;
   std::string kernel_name_{kUnKnown};
   ActivationFunc kernel_func_;
-  std::vector<size_t> input_shape_{};
+  ShapeVector input_shape_{};
   bool is_null_input_{true};
   cudnnHandle_t cudnn_handle_{nullptr};
   cudnnActivationDescriptor_t activation_desc_{nullptr};

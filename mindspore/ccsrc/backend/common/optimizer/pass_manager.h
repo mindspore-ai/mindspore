@@ -34,11 +34,11 @@ class CacheManager {
   ~CacheManager() = default;
   void Update(const AnfNodePtr &node);
   TypeId GetOutputType(const AnfNodePtr &node, size_t index);
-  std::vector<size_t> GetOutputShape(const AnfNodePtr &node, size_t index);
+  ShapeVector GetOutputShape(const AnfNodePtr &node, size_t index);
 
  private:
   std::map<AnfNodePtr, std::map<size_t, TypeId>> type_map_;
-  std::map<AnfNodePtr, std::map<size_t, std::vector<size_t>>> shape_map_;
+  std::map<AnfNodePtr, std::map<size_t, ShapeVector>> shape_map_;
 };
 
 // @brief For optimization passes management

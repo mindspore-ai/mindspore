@@ -56,10 +56,7 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   MS_EXCEPTION_IF_NULL(node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
 
-  batch_size_ = 1;
-  for (size_t i = 0; i < indices_shape.size(); ++i) {
-    batch_size_ *= indices_shape[i];
-  }
+  batch_size_ = SizeOf(indices_shape);
   MS_LOG(INFO) << "SubAndFilter batch_size:" << batch_size_;
 
   T *input_x = reinterpret_cast<T *>(inputs[0]->addr);
@@ -68,7 +65,7 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   T *filter_res = reinterpret_cast<T *>(outputs[0]->addr);
   T *filter_idx = reinterpret_cast<T *>(outputs[1]->addr);
 
-  size_t count = 0;
+  int64_t count = 0;
   for (size_t i = 0; i < batch_size_; ++i) {
     T temp = input_x[i] - offset;
     if (temp < 0 || temp >= max_num) continue;
@@ -77,7 +74,7 @@ void SubAndFilterCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
     count++;
   }
   MS_LOG(INFO) << "SubAndFilter output count is " << count;
-  std::vector<size_t> out_shape;
+  ShapeVector out_shape;
   (void)out_shape.emplace_back(count);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   std::vector<TypeId> dtypes(output_num);

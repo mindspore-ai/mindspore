@@ -40,9 +40,9 @@ class CrossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::vector<size_t> input1_shape_;
-  std::vector<size_t> input2_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input1_shape_;
+  std::vector<int64_t> input2_shape_;
+  std::vector<int64_t> output_shape_;
   int64_t dim_;
   TypeId input1_dtype_;
 };

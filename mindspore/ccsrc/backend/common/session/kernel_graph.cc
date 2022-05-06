@@ -713,7 +713,7 @@ AnfNodePtr KernelGraph::CreatTupleGetItemNode(const AnfNodePtr &node, size_t out
   AnfNodePtr tuple_getitem = NewCNode({mindspore::NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   tuple_getitem->set_scope(node->scope());
-  std::vector<size_t> origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
+  auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
   TypeId origin_type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
   common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {origin_shape}, tuple_getitem.get());
   return tuple_getitem;
@@ -722,7 +722,7 @@ AnfNodePtr KernelGraph::CreatTupleGetItemNode(const AnfNodePtr &node, size_t out
 AnfNodePtr KernelGraph::TransCNodeTuple(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<TypeId> types;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<ShapeVector> shapes;
   std::vector<AnfNodePtr> make_tuple_inputs_list = {mindspore::NewValueNode(prim::kPrimMakeTuple)};
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(node);
   for (size_t tuple_out_index = 0; tuple_out_index < output_num; ++tuple_out_index) {

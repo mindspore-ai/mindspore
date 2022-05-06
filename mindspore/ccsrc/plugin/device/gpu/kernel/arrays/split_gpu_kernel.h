@@ -54,7 +54,7 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -82,9 +82,9 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     all_size_axis_ = 1;
 
     for (int i = 0; i < SizeToInt(input_shape.size()); i++) {
-      input_size_ *= input_shape[i];
+      input_size_ *= static_cast<size_t>(input_shape[i]);
       if (i > axis_) {
-        all_size_before_axis_ *= input_shape[i];
+        all_size_before_axis_ *= static_cast<size_t>(input_shape[i]);
         all_size_axis_ *= input_shape[i];
       }
       if (i == axis_) {
@@ -103,7 +103,7 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         return true;
       }
       for (size_t j = 0; j < output_shape.size(); j++) {
-        output_size *= output_shape[j];
+        output_size *= static_cast<size_t>(output_shape[j]);
       }
       output_size_list_.push_back(output_size * sizeof(T));
     }
@@ -151,9 +151,9 @@ class SplitFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                         << "), but got " << axis_;
     }
-    if (output_num_ > SizeToInt(input_shape[axis_])) {
+    if (input_shape[axis_] > 0 && output_num_ > input_shape[axis_]) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs cannot be greater than "
-                        << SizeToInt(input_shape[axis_]) << ", but got " << output_num_;
+                        << input_shape[axis_] << ", but got " << output_num_;
     }
     if (output_num_ != output_num) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be " << output_num_ << ", but got "

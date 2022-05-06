@@ -242,9 +242,8 @@ size_t RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, A
 
     // Step 5: get the size of real data as recv's input.
     int64_t real_data_size = 1;
-    std::vector<size_t> size_t_shape(shapes.begin(), shapes.end());
-    if (!kernel::GetShapeSize(size_t_shape, TypeIdToType(data_type), &real_data_size)) {
-      MS_LOG(EXCEPTION) << "Getting shape size for shape " << size_t_shape << " failed.";
+    if (!kernel::GetShapeSize(shapes, TypeIdToType(data_type), &real_data_size)) {
+      MS_LOG(EXCEPTION) << "Getting shape size for shape " << shapes << " failed.";
     }
     data_to_be_parsed += real_data_size;
 

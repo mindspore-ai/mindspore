@@ -121,9 +121,9 @@ void ParameterServer::InitOptimInputsShape(const Keys &keys, const Values &value
     optim_inputs_shape_[key] = inputs_shape;
   }
   for (size_t i = 0; i < keys.size(); i++) {
-    auto shape = std::make_shared<std::vector<size_t>>();
+    auto shape = std::make_shared<ShapeVector>();
     MS_EXCEPTION_IF_NULL(shape);
-    auto original_shape = std::make_shared<std::vector<size_t>>();
+    auto original_shape = std::make_shared<ShapeVector>();
     MS_EXCEPTION_IF_NULL(original_shape);
     inputs_shape->push_back(shape);
     original_inputs_shape->push_back(original_shape);
@@ -136,28 +136,29 @@ void ParameterServer::InitOptimInputsShape(const Keys &keys, const Values &value
   if (weight_key_to_optims_.count(key) > 0) {
     const std::string &optim_name = weight_key_to_optims_[key];
     const std::string &optim_op_name = weight_key_to_optim_op_[key];
+    auto shape_tmp = optim_inputs_shape_[key];
     if (optimizers_.count(key) == 0 && optim_inputs_shape_.count(key) > 0) {
       const CNodePtr cnode = GetCNode(optim_op_name);
       MS_EXCEPTION_IF_NULL(cnode);
       if (optim_name == kSparseAdam) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyAdamPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
-        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, shape_tmp);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseLazyAdam) {
         std::shared_ptr<PServerKernel> optimizer = std::make_shared<kernel::ps::SparseApplyLazyAdamPSKernelMod>(
           server_node_->rank_id(), pserver_num_, worker_num_);
-        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, shape_tmp);
         optimizers_[key] = optimizer;
       } else if (optim_name == kApplyMomentum) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::ApplyMomentumPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
-        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, shape_tmp);
         optimizers_[key] = optimizer;
       } else if (optim_name == kSparseFtrl) {
         std::shared_ptr<PServerKernel> optimizer =
           std::make_shared<kernel::ps::SparseApplyFtrlPSKernelMod>(server_node_->rank_id(), pserver_num_, worker_num_);
-        optimizer->InitKernel(cnode, optim_inputs_shape_[key]);
+        optimizer->InitKernel(cnode, shape_tmp);
         optimizers_[key] = optimizer;
       }
     }
@@ -215,8 +216,8 @@ void InitAccumParallel(float init_value, size_t total_len, float *embedding_data
 void CopyTensorData(void *dest_ptr, size_t tensor_size, const void *src_ptr) {
   MS_EXCEPTION_IF_NULL(dest_ptr);
   MS_EXCEPTION_IF_NULL(src_ptr);
-  char *dest = reinterpret_cast<char *>(dest_ptr);
-  const char *src = reinterpret_cast<const char *>(src_ptr);
+  char *dest = static_cast<char *>(dest_ptr);
+  const char *src = static_cast<const char *>(src_ptr);
 
   // The security memcpy function 'memcpy_s' limits the value of the second parameter 'destMax' not to be greater than
   // SECUREC_MEM_MAX_LEN. If tensor size(buffer length) is greater than SECUREC_MEM_MAX_LEN, the tensor should be cut
@@ -233,7 +234,7 @@ void CopyTensorData(void *dest_ptr, size_t tensor_size, const void *src_ptr) {
 }  // namespace
 
 void ParameterServer::PersistKernels(const Key &key,
-                                     const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
+                                     const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &shapes,
                                      const ParamInitInfo &param_init_info) const {
   if (!EnableRecovery()) {
     return;
@@ -265,16 +266,16 @@ void ParameterServer::PersistKernels(const Key &key,
   }
 
   // Persist kernel input shape
-  std::vector<std::vector<std::vector<size_t>>> shapes_list;
+  std::vector<std::vector<ShapeVector>> shapes_list;
   if (config_storage->Exists(kShapes)) {
-    shapes_list = config_storage->GetValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes);
+    shapes_list = config_storage->GetValue<std::vector<std::vector<ShapeVector>>>(kShapes);
   }
   if (shapes_list.size() < keys.size()) {
-    std::vector<std::vector<size_t>> shape_tmp;
+    std::vector<ShapeVector> shape_tmp;
     (void)std::transform(shapes->begin(), shapes->end(), std::back_inserter(shape_tmp),
-                         [](const std::shared_ptr<std::vector<size_t>> &shape_ptr) { return *shape_ptr; });
+                         [](const std::shared_ptr<ShapeVector> &shape_ptr) { return *shape_ptr; });
     shapes_list.push_back(shape_tmp);
-    config_storage->PutValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes, shapes_list);
+    config_storage->PutValue<std::vector<std::vector<ShapeVector>>>(kShapes, shapes_list);
   }
 
   // Persist parameter name of kernel.
@@ -319,9 +320,9 @@ void ParameterServer::PersistInitParameters(const Key &key, const WeightPtr &par
   MS_LOG(INFO) << "Finish persist initialized parameter, key: " << key;
 }
 
-void ParameterServer::InitEmbeddingTable(
-  const Key &key, const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes,
-  const ParamInitInfo &param_init_info) {
+void ParameterServer::InitEmbeddingTable(const Key &key,
+                                         const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &shapes,
+                                         const ParamInitInfo &param_init_info) {
   if (EnableRecovery()) {
     while (!finish_recovery_) {
       std::this_thread::yield();
@@ -424,17 +425,15 @@ void ParameterServer::UpdateWeights() {
         const std::vector<kernel::AddressPtr> &workspaces = optim_info->workspaces();
         const std::vector<kernel::AddressPtr> &outputs = optim_info->outputs();
 
-        std::vector<std::vector<size_t>> shapes = {};
-        std::vector<size_t> indices_shape = {};
-        indices_shape.emplace_back(optim_info->indice_size());
+        std::vector<ShapeVector> shapes = {};
+        ShapeVector indices_shape = {};
+        indices_shape.emplace_back(SizeToLong(optim_info->indice_size()));
         shapes.push_back(indices_shape);
 
         if (original_optim_inputs_shape_.count(key) != 0) {
           std::transform((*(original_optim_inputs_shape_[key])).begin(), (*(original_optim_inputs_shape_[key])).end(),
                          std::back_inserter(shapes),
-                         [](const std::shared_ptr<std::vector<size_t>> &input_shapes) -> std::vector<size_t> {
-                           return *input_shapes;
-                         });
+                         [](const std::shared_ptr<ShapeVector> &input_shapes) -> ShapeVector { return *input_shapes; });
         }
         optimizer->ReInit(shapes);
         optim_info->ComputeMean(shapes, worker_num_, pserver_num_, server_node_->rank_id());
@@ -517,9 +516,9 @@ void ParameterServer::DoEmbeddingLookup(Key key, const LookupIds &lookup_ids, KV
   MS_EXCEPTION_IF_NULL(table_lookup_op);
 
   // Update shapes of lookup operator
-  std::vector<std::vector<size_t>> shapes = {};
-  std::vector<size_t> indices_shape = {};
-  indices_shape.emplace_back(lookup_ids.size());
+  std::vector<ShapeVector> shapes = {};
+  ShapeVector indices_shape = {};
+  indices_shape.emplace_back(SizeToLong(lookup_ids.size()));
   shapes.push_back(indices_shape);
   table_lookup_op->ReInit(shapes);
 
@@ -702,19 +701,18 @@ void ParameterServer::CacheEmbeddingTableParamPtr() {
 }
 
 void ParameterServer::RecoverKernels(const std::vector<Key> &keys,
-                                     const std::vector<std::vector<std::vector<size_t>>> &shapes_list,
+                                     const std::vector<std::vector<ShapeVector>> &shapes_list,
                                      const std::vector<std::string> &param_names) {
   for (size_t i = 0; i < keys.size(); i++) {
     size_t key = keys.at(i);
     if (weights_.count(key) == 0) {
       // Recover embedding lookup kernels.
-      std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes_ptr =
-        std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
+      std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> shapes_ptr =
+        std::make_shared<std::vector<std::shared_ptr<ShapeVector>>>();
 
       const auto &shapes = shapes_list[i];
       for (const auto &shape : shapes) {
-        std::shared_ptr<std::vector<size_t>> shape_ptr =
-          std::make_shared<std::vector<size_t>>(shape.begin(), shape.end());
+        std::shared_ptr<ShapeVector> shape_ptr = std::make_shared<ShapeVector>(shape.begin(), shape.end());
         shapes_ptr->push_back(shape_ptr);
       }
 
@@ -778,7 +776,7 @@ void ParameterServer::RecoverParameters(const std::vector<Key> &keys) {
 }
 
 void ParameterServer::RecoverEmbedding(const std::vector<Key> &keys,
-                                       const std::vector<std::vector<std::vector<size_t>>> &shapes_list,
+                                       const std::vector<std::vector<ShapeVector>> &shapes_list,
                                        const std::vector<std::string> &param_names) {
   CacheEmbeddingTableParamPtr();
   size_t keys_size = keys.size();
@@ -1029,17 +1027,17 @@ void ParameterServer::ServerHandler::HandleInitEmbeddings(const void *data, size
   CHECK_RETURN_TYPE(embedding_table_meta.ParseFromArray(data, SizeToInt(size)));
   const Key &key = embedding_table_meta.key();
   MS_LOG(INFO) << "Initializing embedding table for key:" << key;
-  std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> shapes =
-    std::make_shared<std::vector<std::shared_ptr<std::vector<size_t>>>>();
+  std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> shapes =
+    std::make_shared<std::vector<std::shared_ptr<ShapeVector>>>();
   MS_EXCEPTION_IF_NULL(shapes);
-  std::shared_ptr<std::vector<size_t>> input_shape = std::make_shared<std::vector<size_t>>(
-    embedding_table_meta.input_shape().begin(), embedding_table_meta.input_shape().end());
+  std::shared_ptr<ShapeVector> input_shape =
+    std::make_shared<ShapeVector>(embedding_table_meta.input_shape().begin(), embedding_table_meta.input_shape().end());
   MS_EXCEPTION_IF_NULL(input_shape);
-  std::shared_ptr<std::vector<size_t>> indices_shape = std::make_shared<std::vector<size_t>>(
+  std::shared_ptr<ShapeVector> indices_shape = std::make_shared<ShapeVector>(
     embedding_table_meta.indices_shape().begin(), embedding_table_meta.indices_shape().end());
   MS_EXCEPTION_IF_NULL(indices_shape);
-  std::shared_ptr<std::vector<size_t>> output_shape = std::make_shared<std::vector<size_t>>(
-    embedding_table_meta.output_shape().begin(), embedding_table_meta.output_shape().end());
+  std::shared_ptr<ShapeVector> output_shape = std::make_shared<ShapeVector>(embedding_table_meta.output_shape().begin(),
+                                                                            embedding_table_meta.output_shape().end());
   MS_EXCEPTION_IF_NULL(output_shape);
   shapes->push_back(input_shape);
   shapes->push_back(indices_shape);
@@ -1174,8 +1172,7 @@ void ParameterServer::RecoverHandler::Recover() {
 void ParameterServer::RecoverHandler::RecoverEmbedding() {
   MS_EXCEPTION_IF_NULL(storage_);
   std::vector<Key> keys = storage_->GetValue<std::vector<Key>>(kKeys);
-  std::vector<std::vector<std::vector<size_t>>> shapes_list =
-    storage_->GetValue<std::vector<std::vector<std::vector<size_t>>>>(kShapes);
+  auto shapes_list = storage_->GetValue<std::vector<std::vector<ShapeVector>>>(kShapes);
   std::vector<std::string> param_names = storage_->GetValue<std::vector<std::string>>(kParamNames);
 
   MS_EXCEPTION_IF_NULL(ps_);

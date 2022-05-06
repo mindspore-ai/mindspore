@@ -35,7 +35,7 @@ void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1D, but got "
                       << input_shape.size() << "D";
   }
-  input_size_ = input_shape[0];
+  input_size_ = static_cast<size_t>(input_shape[0]);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (common::AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
     sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
@@ -70,8 +70,8 @@ bool UniqueCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
     if (!node_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_;
     }
-    std::vector<size_t> out_shape;
-    (void)out_shape.emplace_back(output_size_);
+    ShapeVector out_shape;
+    (void)out_shape.emplace_back(SizeToLong(output_size_));
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
     std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {

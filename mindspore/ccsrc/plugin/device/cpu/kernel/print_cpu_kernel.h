@@ -50,7 +50,7 @@ class PrintCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, PrintFunc>> func_list_;
   PrintFunc kernel_func_;
 
-  std::vector<std::vector<size_t>> input_shapes_;
+  std::vector<ShapeVector> input_shapes_;
   std::vector<size_t> input_sizes_;
 };
 }  // namespace kernel

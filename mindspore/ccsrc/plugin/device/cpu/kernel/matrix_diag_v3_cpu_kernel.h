@@ -52,8 +52,8 @@ class MatrixDiagV3CpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool DoLaunch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
-  std::vector<size_t> diagonal_shape_;
-  std::vector<size_t> k_shape_;
+  std::vector<int64_t> diagonal_shape_;
+  std::vector<int64_t> k_shape_;
   TypeId diagonal_data_type_;
   std::string align_;
   bool align_superdiag_ = true;

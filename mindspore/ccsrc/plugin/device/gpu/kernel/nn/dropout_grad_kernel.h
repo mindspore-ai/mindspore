@@ -56,9 +56,10 @@ class DropoutGradBwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     }
 
-    auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(shape_signed)) {
       InitSizeLists();
       return true;
     }

@@ -61,8 +61,8 @@ class FractionalMaxPoolGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, FractionalMaxPoolGradFunc>> func_list_;
   FractionalMaxPoolGradFunc kernel_func_;
-  std::vector<size_t> tensor_in_shape_;
-  std::vector<size_t> tensor_out_shape_;
+  std::vector<int64_t> tensor_in_shape_;
+  std::vector<int64_t> tensor_out_shape_;
   bool overlapping_{false};
 };
 }  // namespace kernel

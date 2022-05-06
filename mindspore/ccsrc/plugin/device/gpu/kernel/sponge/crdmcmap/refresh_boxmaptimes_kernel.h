@@ -45,10 +45,10 @@ class RefreshBoxmaptimesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_box_length_inverse = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto shape_box_map_times = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_old_crd.size(); i++) ele_old_crd *= shape_old_crd[i];
-    for (size_t i = 0; i < shape_box_length_inverse.size(); i++) ele_box_length_inverse *= shape_box_length_inverse[i];
-    for (size_t i = 0; i < shape_box_map_times.size(); i++) ele_box_map_times *= shape_box_map_times[i];
+    ele_crd *= SizeOf(shape_crd);
+    ele_old_crd *= SizeOf(shape_old_crd);
+    ele_box_length_inverse *= SizeOf(shape_box_length_inverse);
+    ele_box_map_times *= SizeOf(shape_box_map_times);
 
     InitSizeLists();
     return true;

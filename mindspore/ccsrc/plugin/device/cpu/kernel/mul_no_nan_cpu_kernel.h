@@ -61,9 +61,9 @@ class MulNoNanCPUKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> input0_shape_;
-  std::vector<size_t> input1_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input0_shape_;
+  std::vector<int64_t> input1_shape_;
+  std::vector<int64_t> output_shape_;
   TypeId input_dtype_{kTypeUnknown};
   TypeId output_dtype_{kTypeUnknown};
 

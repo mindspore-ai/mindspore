@@ -51,9 +51,7 @@ void UpdateOutputTensorShape(const std::vector<TensorPtr> &output_tensors,
   for (size_t i = 0; i < output_tensors.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_tensors[i]);
     auto shape = common::AnfAlgo::GetOutputInferShape(output_nodes[i].first, output_nodes[i].second);
-    std::vector<int64_t> temp_shape;
-    (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-    (void)output_tensors[i]->set_shape(temp_shape);
+    (void)output_tensors[i]->set_shape(shape);
   }
 }
 
@@ -197,10 +195,8 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   // Create host tensor, the output tensor should use the infer type, it will be handed correctly by tensor data sync
   // when infer type is not equal to device type.
   auto type_id = common::AnfAlgo::GetOutputInferDataType(output_node, output_index);
-  std::vector<int64_t> temp_shape;
   auto shape = common::AnfAlgo::GetOutputInferShape(output_node, output_index);
-  (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-  auto tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+  auto tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(output_node, output_index));
 
   if (output_position >= device_contexts_.size()) {

@@ -75,12 +75,12 @@ void ROIAlignCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'features' must be 4, but got " << x_shape_size;
   }
 
-  channels_ = SizeToInt(x_shape[CHANNEL]);
-  height_ = SizeToInt(x_shape[HEIGHT]);
-  width_ = SizeToInt(x_shape[WIDTH]);
+  channels_ = LongToInt(x_shape[CHANNEL]);
+  height_ = LongToInt(x_shape[HEIGHT]);
+  width_ = LongToInt(x_shape[WIDTH]);
 
-  roi_rows_ = SizeToInt(rois_shape[0]);
-  roi_cols_ = SizeToInt(rois_shape[1]);
+  roi_rows_ = LongToInt(rois_shape[0]);
+  roi_cols_ = LongToInt(rois_shape[1]);
 
   pooled_height_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_height"));
   pooled_width_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "pooled_width"));

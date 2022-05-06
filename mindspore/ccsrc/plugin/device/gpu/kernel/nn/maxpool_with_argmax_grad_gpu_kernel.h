@@ -84,36 +84,24 @@ class MaxPoolWithArgmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") ||
                      CHECK_SHAPE_NULL(index_shape, kernel_name, "index") ||
                      CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({x_shape, dy_shape, index_shape, dx_shape})) {
       InitSizeLists();
       return true;
     }
-    x_size_ = sizeof(T);
-    for (auto x : x_shape) {
-      x_size_ *= x;
-    }
-    dy_size_ = sizeof(T);
-    for (auto x : dy_shape) {
-      dy_size_ *= x;
-    }
-    index_size_ = sizeof(S);
-    for (auto x : index_shape) {
-      index_size_ *= x;
-    }
-    dx_size_ = sizeof(T);
-    for (auto x : dx_shape) {
-      dx_size_ *= x;
-    }
+    x_size_ = sizeof(T) * SizeOf(x_shape);
+    dy_size_ = sizeof(T) * SizeOf(dy_shape);
+    index_size_ = sizeof(S) * SizeOf(index_shape);
+    dx_size_ = sizeof(T) * SizeOf(dx_shape);
     if (x_shape.size() < kXDimLowerLimit || dy_shape.size() < kDyDimLowerLimit) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x and dy cannot be less than 4, but got "
                         << "the dimension of x: " << x_shape.size() << ", the dimension of dy: " << dy_shape.size();
     }
-    n_ = SizeToInt(x_shape[kXIndexForN]);
-    c_ = SizeToInt(x_shape[kXIndexForC]);
-    x_height_ = SizeToInt(x_shape[kXIndexForH]);
-    x_width_ = SizeToInt(x_shape[kXIndexForW]);
-    dy_height_ = SizeToInt(dy_shape[kDyIndexForH]);
-    dy_width_ = SizeToInt(dy_shape[kDyIndexForW]);
+    n_ = LongToSizeClipNeg(x_shape[kXIndexForN]);
+    c_ = LongToSizeClipNeg(x_shape[kXIndexForC]);
+    x_height_ = LongToSizeClipNeg(x_shape[kXIndexForH]);
+    x_width_ = LongToSizeClipNeg(x_shape[kXIndexForW]);
+    dy_height_ = LongToSizeClipNeg(dy_shape[kDyIndexForH]);
+    dy_width_ = LongToSizeClipNeg(dy_shape[kDyIndexForW]);
 
     InitSizeLists();
     return true;

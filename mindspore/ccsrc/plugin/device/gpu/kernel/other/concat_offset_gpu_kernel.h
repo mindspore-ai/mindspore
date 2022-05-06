@@ -63,15 +63,15 @@ class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of input should be greater than 0";
     }
     for (size_t i = 0; i < input_num; i++) {
-      size_t input_size = 1;
+      int64_t input_size = 1;
       auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, i);
       for (size_t j = 0; j < input_shape.size(); j++) {
         input_size *= input_shape[j];
       }
-      input_size_list_.push_back(input_size * sizeof(T));
+      input_size_list_.push_back(LongToSizeClipNeg(input_size) * sizeof(T));
     }
     // cal offset
-    size_t shape_offset = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0)[axis];
+    int64_t shape_offset = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0)[axis];
     std::vector<size_t> offset(input_num, 0);
     for (size_t i = 1; i < input_num; i++) {
       input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
@@ -80,11 +80,11 @@ class ConcatOffsetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                           << " the dimension of the " << i << "'th input: " << input_shape.size()
                           << " and the dimension of the first input:  " << rank;
       }
-      offset[i] = shape_offset;
+      offset[i] = LongToSizeClipNeg(shape_offset);
       shape_offset += input_shape[axis];
     }
     constexpr size_t kConcatOffsetOutputShapeSize = 2;
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
     if (output_shape.size() != kConcatOffsetOutputShapeSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output should be "
                         << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();

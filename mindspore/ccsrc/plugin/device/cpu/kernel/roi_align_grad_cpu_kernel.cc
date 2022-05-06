@@ -133,8 +133,8 @@ void ROIAlignGradCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
 
   auto rois_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  roi_rows_ = SizeToInt(rois_shape[0]);
-  roi_cols_ = SizeToInt(rois_shape[1]);
+  roi_rows_ = LongToInt(rois_shape[0]);
+  roi_cols_ = LongToInt(rois_shape[1]);
 
   std::vector<int64_t> xdiff_shape_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "xdiff_shape");
   (void)std::transform(xdiff_shape_me.begin(), xdiff_shape_me.end(), std::back_inserter(xdiff_shape_),

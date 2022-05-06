@@ -48,7 +48,7 @@ class PoolingCpuKernelMod : public DeprecatedMKLCpuKernelMod {
   dnnl::algorithm algorithm_{dnnl::algorithm::pooling_max};
   bool ceil_mode_{false};
   int64_t divisor_override_{0};
-  std::vector<size_t> dst_shape_;
+  std::vector<int64_t> dst_shape_;
   std::vector<int64_t> kernel_;
   std::vector<int64_t> padding_invalid_;
 

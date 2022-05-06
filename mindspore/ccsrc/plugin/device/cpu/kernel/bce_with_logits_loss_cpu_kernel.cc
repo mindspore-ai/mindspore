@@ -69,20 +69,12 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
 
-  auto input_logits_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_logits_shape.begin(), input_logits_shape.end(), std::back_inserter(input_logits_shape_),
-                       LongToSize);
-  input_size_ = std::accumulate(input_logits_shape_.begin(), input_logits_shape_.end(), 1, std::multiplies<size_t>());
+  input_logits_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  input_size_ = SizeOf(input_logits_shape_);
 
-  auto input_label_shape = inputs.at(kIndex1)->GetShapeVector();
-  (void)std::transform(input_label_shape.begin(), input_label_shape.end(), std::back_inserter(input_label_shape_),
-                       LongToSize);
-  auto input_weight_shape = inputs.at(kIndex2)->GetShapeVector();
-  (void)std::transform(input_weight_shape.begin(), input_weight_shape.end(), std::back_inserter(input_weight_shape_),
-                       LongToSize);
-  auto input_post_weight_shape = inputs.at(kIndex3)->GetShapeVector();
-  (void)std::transform(input_post_weight_shape.begin(), input_post_weight_shape.end(),
-                       std::back_inserter(input_post_weight_shape_), LongToSize);
+  input_label_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  input_weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  input_post_weight_shape_ = inputs.at(kIndex3)->GetShapeVector();
 
   // output_size_list_ should be clear and reset.
   output_size_list_.clear();

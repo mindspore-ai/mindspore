@@ -49,7 +49,7 @@ class FlattenFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
     kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
@@ -86,8 +86,8 @@ class FlattenFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     for (size_t index = 1; index < input_num; ++index) {
       size_t input_size = sizeof(S);
-      for (size_t x : AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, index)) {
-        input_size *= x;
+      for (auto x : AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, index)) {
+        input_size *= LongToSizeClipNeg(x);
       }
       input_size_list_.push_back(input_size);
     }

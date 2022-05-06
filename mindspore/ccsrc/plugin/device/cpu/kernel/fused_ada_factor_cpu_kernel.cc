@@ -63,6 +63,9 @@ void FusedAdaFactorCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   param_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kParamIndex);
   auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, kParamIndex);
+  if (AnfAlgo::IsShapesDynamic({shape})) {
+    return;
+  }
   elem_num_ = std::accumulate(shape.begin(), shape.end(), 1UL, std::multiplies<size_t>());
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the elem num of 'param' can not be zero.";

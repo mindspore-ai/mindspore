@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool CheckShapeDimInfo(const std::vector<size_t> &shape) {
+bool CheckShapeDimInfo(const ShapeVector &shape) {
   constexpr size_t kShape2Dim = 2;
   if (shape.empty()) {
     return false;
@@ -62,8 +62,8 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
       (kernel_graph->IsInternalOutput(reshape_cnode, 0) || kernel_graph->IsInternalOutput(transpose_cnode, 0))) {
     return nullptr;
   }
-  std::vector<size_t> reshape_output0_shape = common::AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
-  std::vector<size_t> transpose_input0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(transpose_cnode, 0);
+  auto reshape_output0_shape = common::AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
+  auto transpose_input0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(transpose_cnode, 0);
   if (!CheckShapeDimInfo(reshape_output0_shape) || !CheckShapeDimInfo(transpose_input0_shape)) {
     return nullptr;
   }
@@ -77,7 +77,7 @@ const AnfNodePtr TransposeReshapeFusion::Process(const FuncGraphPtr &func_graph,
   common::AnfAlgo::CopyNodeAttr(kAttrPerm, transpose_cnode, new_node);
   common::AnfAlgo::SetNodeAttr(kAttrTransposeFirst, MakeValue(true), new_node);
   auto reshape_output_shape = common::AnfAlgo::GetOutputInferShape(reshape_cnode, 0);
-  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(Convert2Long(reshape_output_shape)), new_node);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(reshape_output_shape), new_node);
 
   return new_node;
 }

@@ -41,6 +41,9 @@ void LogMatrixDeterminantCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto shape_sign = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   auto shape_y = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({shape_x, shape_sign, shape_y})) {
+    return;
+  }
   size_t shape_size_x = shape_x.size();
   size_t shape_size_sign = shape_sign.size();
   size_t shape_size_y = shape_y.size();
@@ -98,7 +101,7 @@ void LogMatrixDeterminantCpuKernelMod::LaunchLogMatrixDeterminant(const std::vec
   auto output_sign = reinterpret_cast<T *>(outputs[0]->addr);
   auto output_y = reinterpret_cast<T *>(outputs[1]->addr);
 
-  auto shape_x = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto shape_x = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0));
   size_t shape_size = shape_x.size();
   size_t m = shape_x[shape_size - 1];
   size_t size_mm = m * m;

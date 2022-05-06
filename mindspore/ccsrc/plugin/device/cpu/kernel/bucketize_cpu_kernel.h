@@ -39,8 +39,8 @@ class BucketizeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
   std::vector<float> boundaries_;
   TypeId dtype_{kTypeUnknown};
 };

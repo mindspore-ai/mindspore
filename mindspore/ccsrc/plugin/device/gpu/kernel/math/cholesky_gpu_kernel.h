@@ -68,7 +68,7 @@ class CholeskyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // Get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
 
-    auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
+    auto in_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex));
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

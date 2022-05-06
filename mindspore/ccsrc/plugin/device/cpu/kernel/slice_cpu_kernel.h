@@ -70,7 +70,7 @@ class SliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  void InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
+  void InitSliceParam(const ShapeVector &input_shape, const std::vector<int64_t> &begin,
                       const std::vector<int64_t> &size);
   size_t origin_dim_size_{0};
   int data_size_{4};

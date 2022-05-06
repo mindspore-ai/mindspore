@@ -62,9 +62,7 @@ class FusedWeightDecayScaleMomentumGpuKernelMod : public DeprecatedNativeGpuKern
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < variable_shape.size(); i++) {
-      element_num_ *= variable_shape[i];
-    }
+    element_num_ *= SizeOf(variable_shape);
 
     InitSizeLists();
     return true;

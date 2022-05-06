@@ -50,21 +50,21 @@ inline void matmul_b(const MatrixBase<Derived> &A, double *b_addr, double *outpu
 void MatmulDoubleCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  std::vector<int64_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   if (a_shape.size() != kAMatrixDimNum || b_shape.size() != kAMatrixDimNum || out_shape.size() != kAMatrixDimNum) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be equal to 2.";
   }
   trans_a_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_A);
   trans_b_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, TRANSPOSE_B);
 
-  a_row_ = a_shape[kDim0];
-  a_col_ = a_shape[kDim1];
-  b_row_ = b_shape[kDim0];
-  b_col_ = b_shape[kDim1];
-  out_row_ = out_shape[kDim0];
-  out_col_ = out_shape[kDim1];
+  a_row_ = static_cast<size_t>(a_shape[kDim0]);
+  a_col_ = static_cast<size_t>(a_shape[kDim1]);
+  b_row_ = static_cast<size_t>(b_shape[kDim0]);
+  b_col_ = static_cast<size_t>(b_shape[kDim1]);
+  out_row_ = static_cast<size_t>(out_shape[kDim0]);
+  out_col_ = static_cast<size_t>(out_shape[kDim1]);
 }
 
 bool MatmulDoubleCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> &inputs,

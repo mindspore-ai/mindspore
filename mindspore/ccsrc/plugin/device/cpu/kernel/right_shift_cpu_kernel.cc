@@ -83,10 +83,11 @@ bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, c
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
-  size_t output_size_ = 1;
+  int64_t size_tmp = 1;
   for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ *= output_shape_[i];
+    size_tmp *= output_shape_[i];
   }
+  size_t output_size = LongToSize(size_tmp);
   BroadcastIterator base_iter(input_shape_1_, input_shape_2_, output_shape_);
   auto task = [&input1, &input2, &output, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -104,7 +105,7 @@ bool RightShiftCpuKernelMod::IntCompute(const std::vector<AddressPtr> &inputs, c
       iter.GenNextPos();
     }
   };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   return true;
 }
 
@@ -117,10 +118,11 @@ bool RightShiftCpuKernelMod::UIntCompute(const std::vector<AddressPtr> &inputs,
   if (output_shape_.size() == 0) {
     (void)output_shape_.insert(output_shape_.begin(), 1);
   }
-  size_t output_size_ = 1;
+  int64_t size_tmp = 1;
   for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ *= output_shape_[i];
+    size_tmp *= output_shape_[i];
   }
+  size_t output_size = LongToSize(size_tmp);
   BroadcastIterator base_iter(input_shape_1_, input_shape_2_, output_shape_);
   auto task = [&input1, &input2, &output, &base_iter](size_t start, size_t end) {
     auto iter = base_iter;
@@ -135,7 +137,7 @@ bool RightShiftCpuKernelMod::UIntCompute(const std::vector<AddressPtr> &inputs,
       iter.GenNextPos();
     }
   };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
   return true;
 }
 

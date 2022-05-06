@@ -52,9 +52,7 @@ class SmoothL1LossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ *= SizeOf(input_shape);
 
     beta_ = GetAttr<float>(kernel_node, "beta");
     InitSizeLists();

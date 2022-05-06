@@ -75,9 +75,7 @@ class CumSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     while (axis_ < 0) {
       axis_ += input_dim_length;
     }
-    for (size_t i = 0; i < shape_.size(); i++) {
-      input_size_0_ *= shape_[i];
-    }
+    input_size_0_ *= SizeOf(shape_);
     Reshape();
     InitSizeLists();
     return true;
@@ -113,7 +111,7 @@ class CumSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t stride_;
   size_t stride2_;
   size_t dims_[kMaxDimsSize] = {};
-  std::vector<size_t> shape_;
+  ShapeVector shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

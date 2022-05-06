@@ -36,28 +36,26 @@ namespace {
  *   after: keep_dims=True, axis=(1) ,out_shape=(a,1,b,c)
  */
 void ResetReduceAttrAndShape(const AnfNodePtr &node, const std::vector<TypeId> &target_output_types,
-                             const std::vector<std::vector<size_t>> &target_output_shapes) {
+                             const std::vector<ShapeVector> &target_output_shapes) {
   common::AnfAlgo::SetNodeAttr(kAttrKeepDims, MakeValue(true), node);
   common::AnfAlgo::SetOutputInferTypeAndShape(target_output_types, target_output_shapes, node.get());
 }
 
 size_t ProcessTupleGetItem(const AnfNodePtr &node, const std::vector<TypeId> &target_output_types,
-                           const std::vector<std::vector<size_t>> &target_output_shapes) {
+                           const std::vector<ShapeVector> &target_output_shapes) {
   size_t index = common::AnfAlgo::GetTupleGetItemOutIndex(node->cast<CNodePtr>());
   common::AnfAlgo::SetOutputInferTypeAndShape({target_output_types[index]}, {target_output_shapes[index]}, node.get());
   return index;
 }
 
 void InsertReshape(const FuncGraphPtr &graph, const AnfNodePtr &node, const TypeId &infer_type,
-                   const std::vector<size_t> &infer_shape, const TypeId &device_type) {
+                   const ShapeVector &infer_shape, const TypeId &device_type) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   std::vector<AnfNodePtr> inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimReshape->name())), node};
   auto reshape = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(reshape);
-  std::vector<int64_t> reshape_size;
-  (void)std::transform(infer_shape.begin(), infer_shape.end(), std::back_inserter(reshape_size), SizeToLong);
-  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(reshape_size), reshape);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(infer_shape), reshape);
   common::AnfAlgo::SetOutputInferTypeAndShape({infer_type}, {infer_shape}, reshape.get());
   auto graph_sel_info =
     BuildSelectKernelBuildInfo({kOpFormat_DEFAULT}, {device_type}, {kOpFormat_DEFAULT}, {device_type});
@@ -66,8 +64,8 @@ void InsertReshape(const FuncGraphPtr &graph, const AnfNodePtr &node, const Type
 }
 
 void InsertReshapeForMultiOutputs(const FuncGraphPtr &graph, const AnfNodePtr &node,
-                                  const std::vector<std::vector<size_t>> &origin_output_shapes,
-                                  const std::vector<std::vector<size_t>> &target_output_shapes,
+                                  const std::vector<ShapeVector> &origin_output_shapes,
+                                  const std::vector<ShapeVector> &target_output_shapes,
                                   const std::vector<TypeId> &target_output_types, const AnfNodePtr &target) {
   auto used_node_list = opt::GetRealNodeUsedList(graph, node);
   MS_EXCEPTION_IF_NULL(used_node_list);
@@ -154,12 +152,12 @@ bool ReshapeReduceForCSE::Run(const FuncGraphPtr &graph) {
                             << target_output_num << ".";
         }
 
-        std::vector<std::vector<size_t>> origin_output_shapes;
+        std::vector<ShapeVector> origin_output_shapes;
         for (size_t i = 0; i < output_num; i++) {
           (void)origin_output_shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(node, i));
         }
 
-        std::vector<std::vector<size_t>> target_output_shapes;
+        std::vector<ShapeVector> target_output_shapes;
         std::vector<TypeId> target_output_types;
         for (size_t i = 0; i < target_output_num; i++) {
           (void)target_output_shapes.emplace_back(common::AnfAlgo::GetOutputInferShape(target, i));

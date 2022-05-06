@@ -56,7 +56,7 @@ class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
     kReduceMeanType,
     kReduceProdType
   };
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   std::vector<int64_t> axis_;
   ReduceFuncType reduce_type_{ReduceFuncType::kReduceAllType};
   std::function<void(const T *, size_t, T *)> reduce_func_;
@@ -191,7 +191,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
         axes[k] = i;
         ++k;
       } else {
-        stride *= input_shape_[i];
+        stride *= static_cast<size_t>(input_shape_[i]);
         ++j;
       }
     }
@@ -216,7 +216,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
       }
     }
     // Calculate transpose shape
-    std::vector<size_t> transpose_shape(input_shape_.size());
+    std::vector<int64_t> transpose_shape(input_shape_.size());
     for (int i = 0; i < dimension; ++i) {
       transpose_shape[i] = input_shape_[axes[i]];
     }

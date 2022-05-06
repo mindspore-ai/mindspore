@@ -31,13 +31,16 @@ void GridSampler2DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   grid_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  output_number_ = output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree];
+  if (AnfAlgo::IsShapesDynamic({x_shape_, grid_shape_, output_shape_})) {
+    return;
+  }
+  output_number_ = LongToSize(output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree]);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t stride_tmp = 1;
-  auto stride_compute = [this, &stride_tmp](std::vector<size_t> &stride, std::vector<size_t> shape) {
+  auto stride_compute = [this, &stride_tmp](std::vector<size_t> &stride, ShapeVector shape) {
     for (int32_t i = 3; i > -1; i--) {
       stride.insert(stride.begin(), stride_tmp);
-      stride_tmp *= shape[i];
+      stride_tmp *= LongToSize(shape[i]);
     }
     stride_tmp = 1;
   };
@@ -139,10 +142,10 @@ void GridSampler2DCpuKernelMod::ComputeTask(float16 *x_addr, float16 *grid_addr,
     if (count == 1) {
       count--;
     }
-    out_iter[count] = out_iter[kOne] % output_shape_[count];
-    out_iter[1] /= output_shape_[count--];
+    out_iter[count] = out_iter[kOne] % LongToSize(output_shape_[count]);
+    out_iter[1] /= LongToSize(output_shape_[count--]);
   }
-  const size_t out_c = output_shape_[kOne];
+  const size_t out_c = LongToSize(output_shape_[kOne]);
   int64_t grid_offset =
     out_iter[kZero] * grid_stride_[kZero] + out_iter[kTwo] * grid_stride_[kOne] + out_iter[kThree] * grid_stride_[kTwo];
   float x = static_cast<float>(grid_addr[grid_offset]);
@@ -206,7 +209,7 @@ void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   auto x_data_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto grid_data_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_data_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t loop_count = output_shape_[0] * output_shape_[2] * output_shape_[3];
+  size_t loop_count = LongToSize(output_shape_[0] * output_shape_[2] * output_shape_[3]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       ComputeTask<T>(x_data_addr, grid_data_addr, output_data_addr, i);
@@ -224,7 +227,7 @@ void GridSampler2DCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   auto x_data_addr = reinterpret_cast<float16 *>(inputs[0]->addr);
   auto grid_data_addr = reinterpret_cast<float16 *>(inputs[1]->addr);
   auto output_data_addr = reinterpret_cast<float16 *>(outputs[0]->addr);
-  size_t loop_count = output_shape_[0] * output_shape_[2] * output_shape_[3];
+  size_t loop_count = LongToSize(output_shape_[0] * output_shape_[2] * output_shape_[3]);
   auto task = [this, &x_data_addr, &grid_data_addr, &output_data_addr](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       ComputeTask(x_data_addr, grid_data_addr, output_data_addr, i);

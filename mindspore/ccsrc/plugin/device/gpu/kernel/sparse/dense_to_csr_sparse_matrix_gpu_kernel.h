@@ -128,13 +128,13 @@ class DenseToCSRSparseMatrixKernelMod : public DeprecatedNativeGpuKernelMod {
     InitResource();
     memcpy_flag_ = false;
 
-    input_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, kIndex0);
-    indices_shapes_ = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, kIndex1);
-    dense_shape_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex0);
-    batch_pointers_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex1);
-    row_pointers_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex2);
-    col_indices_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex3);
-    value_shapes_ = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex4);
+    input_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, kIndex0));
+    indices_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, kIndex1));
+    dense_shape_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex0));
+    batch_pointers_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex1));
+    row_pointers_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex2));
+    col_indices_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex3));
+    value_shapes_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, kIndex4));
 
     nnz_ = value_shapes_[kIndex0];
     m_ = input_shapes_[kIndex0];

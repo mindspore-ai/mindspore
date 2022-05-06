@@ -45,7 +45,7 @@ class HSigmoidCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                           const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, HSigmoidFunc>> func_list_;
   HSigmoidFunc kernel_func_;
-  std::vector<size_t> x_shape_;
+  ShapeVector x_shape_;
   uint64_t tensor_size_ = 1;
 };
 }  // namespace kernel

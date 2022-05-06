@@ -49,10 +49,10 @@ class BatchNormGradCpuKernelMod : public DeprecatedMKLCpuKernelMod {
 
  private:
   float momentum{0.9};
-  size_t batch_size{0};
-  size_t channel{0};
-  size_t hw_size{0};
-  size_t nhw_size{0};
+  int64_t batch_size{0};
+  int64_t channel{0};
+  int64_t hw_size{0};
+  int64_t nhw_size{0};
   enum format_ { N, C, H, W };
   enum input_list_ { Y_BACKPROP, X, SCALE, SAVE_MEAN, SAVE_VARIANCE, RESERVE };
   enum workspace_list_ { SCALE_BIAS, DIFF_SCALE_BIAS };

@@ -41,9 +41,8 @@ class CrdToUintCrdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_crd_to_uint_crd_cof = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
-    for (size_t i = 0; i < shape_crd_to_uint_crd_cof.size(); i++)
-      ele_crd_to_uint_crd_cof *= shape_crd_to_uint_crd_cof[i];
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
+    ele_crd_to_uint_crd_cof *= SizeOf(shape_crd_to_uint_crd_cof);
+    ele_crd *= SizeOf(shape_crd);
 
     InitSizeLists();
     return true;

@@ -54,9 +54,7 @@ class GeluGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    for (auto dim : input_shape) {
-      input_size_ *= dim;
-    }
+    input_size_ *= SizeOf(input_shape);
     InitSizeLists();
     return true;
   }

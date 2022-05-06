@@ -409,7 +409,7 @@ void DataDumper::RtLoadDumpData(const aicpu::dump::OpMappingInfo &dump_info, voi
   }
 }
 
-void SetDumpShape(const std::vector<size_t> &ms_shape, NotNull<aicpu::dump::Shape *> dump_shape) {
+void SetDumpShape(const ShapeVector &ms_shape, NotNull<aicpu::dump::Shape *> dump_shape) {
   for (auto &dim : ms_shape) {
     dump_shape->add_dim(dim);
   }

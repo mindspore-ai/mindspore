@@ -43,7 +43,7 @@ bool EnvironGetGpuKernelMod::Init(const CNodePtr &kernel_node) {
   }
   value_size_ = GetTypeByte(TypeIdToType(value_type));
   for (auto &i : value_shapes) {
-    value_size_ *= i;
+    value_size_ *= static_cast<size_t>(i);
   }
 
   InitSizeLists();

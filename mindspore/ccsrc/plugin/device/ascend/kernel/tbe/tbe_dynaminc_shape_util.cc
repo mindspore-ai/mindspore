@@ -121,6 +121,7 @@ RangePair TbeDynamicShapeUtil::GetInputDynamicRange(const AnfNodePtr &anf_node, 
   std::string reshape_type = AnfAlgo::GetInputReshapeType(anf_node, index);
   trans::ShapeRangeTransfer shapeRangeTransfer;
   RangePair ret;
+
   if (input_range_min.empty() && input_range_max.empty()) {
     auto prev_node = common::AnfAlgo::GetPrevNodeOutput(anf_node, index);
     MS_EXCEPTION_IF_NULL(prev_node.first);

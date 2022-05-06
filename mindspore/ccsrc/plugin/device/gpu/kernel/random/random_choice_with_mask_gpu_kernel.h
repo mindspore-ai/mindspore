@@ -105,9 +105,7 @@ class RandomChoiceWithMaskGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     seed2_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "seed2"));
     generator_.seed(time_interval);
     // init memory
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ *= SizeOf(input_shape);
     count_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "count"));
     // upper ceiling for input for ceil_power2
     if (count_ > kSmallK || input_shape_size_ > 1) {

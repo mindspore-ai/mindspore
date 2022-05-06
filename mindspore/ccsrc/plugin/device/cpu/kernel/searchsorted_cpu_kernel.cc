@@ -67,7 +67,7 @@ bool SearchSortedCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t elem_num = inputs[1]->size / sizeof(S);
   size_t seq_dim = sequence_shape_.size();
-  size_t search_repeat = values_shape_.back();
+  size_t search_repeat = static_cast<size_t>(values_shape_.back());
 
   auto task = [this, &sequence, &values, &output, seq_dim, search_repeat](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {

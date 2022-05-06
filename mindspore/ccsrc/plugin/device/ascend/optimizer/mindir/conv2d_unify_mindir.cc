@@ -44,9 +44,9 @@ constexpr auto kAttrChannelMultiplier = "channel_multiplier";
 constexpr auto kAttrInputSizes = "input_sizes";
 constexpr auto kAttrInputSize = "input_size";
 
-bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vector<size_t> out_shape) {
+bool NeedUpdate(const CNodePtr &conv2d, ShapeVector in_shape, ShapeVector out_shape) {
   MS_EXCEPTION_IF_NULL(conv2d);
-  auto group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(conv2d, kAttrGroup));
+  auto group = common::AnfAlgo::GetNodeAttr<int64_t>(conv2d, kAttrGroup);
   if (group == 1) {
     return false;
   }
@@ -124,8 +124,7 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
                         << out_shape.size() << trace::DumpSourceLines(conv2d);
     }
     std::swap(out_shape[kDim0], out_shape[kDim1]);
-    if (AnfUtils::IsShapeDynamic(out_shape)) {
-      ShapeVector new_shape;
+    if (IsDynamic(out_shape)) {
       auto min_shape = common::AnfAlgo::GetOutputMinShape(input_node, 0);
       auto max_shape = common::AnfAlgo::GetOutputMaxShape(input_node, 0);
       if (!min_shape.empty() && !max_shape.empty()) {
@@ -133,9 +132,8 @@ CNodePtr CreateTranspose(const FuncGraphPtr &graph, const CNodePtr &conv2d, cons
         std::swap(max_shape[kDim0], max_shape[kDim1]);
       }
 
-      std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(new_shape), SizeToLong);
       common::AnfAlgo::SetOutputTypeAndDetailShape(
-        types, {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)}, transpose.get());
+        types, {std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape)}, transpose.get());
     } else {
       auto shapes = {out_shape};
       common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, transpose.get());
@@ -326,14 +324,13 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
   depth_conv_backfil->set_scope(conv2d_backfil->scope());
 
   auto types = {common::AnfAlgo::GetOutputInferDataType(conv2d_backfil, 0)};
-  std::vector<size_t> out_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backfil, 0);
+  auto out_shape = common::AnfAlgo::GetOutputInferShape(conv2d_backfil, 0);
   if (out_shape.size() != kConv2DAxisNum) {
     MS_LOG(EXCEPTION) << "Conv2DBackpropFilter's output axis number should be " << kConv2DAxisNum << ", but got "
                       << out_shape.size() << trace::DumpSourceLines(conv2d_backfil);
   }
   std::swap(out_shape[0], out_shape[1]);
-  if (AnfUtils::IsShapeDynamic(out_shape)) {
-    ShapeVector new_shape;
+  if (IsDynamic(out_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(conv2d_backfil, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(conv2d_backfil, 0);
     if (!min_shape.empty() && !max_shape.empty()) {
@@ -341,9 +338,8 @@ CNodePtr Conv2DBackpropFilterUnifyMindIR::CreateDepthwiseConv2DBackpropFilter(co
       std::swap(max_shape[0], max_shape[1]);
     }
 
-    std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(new_shape), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape(
-      types, {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)}, depth_conv_backfil.get());
+      types, {std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape)}, depth_conv_backfil.get());
   } else {
     auto shapes = {out_shape};
     common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, depth_conv_backfil.get());

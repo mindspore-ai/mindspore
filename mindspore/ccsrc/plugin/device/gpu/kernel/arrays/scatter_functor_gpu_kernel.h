@@ -72,7 +72,7 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
     if (input_shape.empty()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the input can not be empty";
     }
@@ -84,10 +84,7 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     input_size_ = input_shape[0] * inner_size_;
     auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    indices_size_ = 1;
-    for (size_t i = 0; i < indices_shape.size(); i++) {
-      indices_size_ *= indices_shape[i];
-    }
+    indices_size_ = SizeOf(indices_shape);
     updates_size_ = indices_size_ * inner_size_;
     InitSizeLists();
     return true;

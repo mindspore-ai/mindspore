@@ -267,7 +267,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   // expand Nd Shape to 4d (N in [0,4])
-  void ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
+  void ShapeNdTo4d(const ShapeVector &src, ShapeVector *dst) {
     const size_t nd_maximum_size = 4;
     if (src.size() > nd_maximum_size) {
       MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
@@ -280,7 +280,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   // expand Nd Shape to 7d (N in [0,7])
-  void ShapeNdTo7d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
+  void ShapeNdTo7d(const ShapeVector &src, ShapeVector *dst) {
     const size_t nd_maximum_size = 7;
     if (src.size() > nd_maximum_size) {
       MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
@@ -308,82 +308,82 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   // transpose shape: NCHW To NHWC
-  void ShapeNCHW2NHWC(std::vector<size_t> *shape) {
+  void ShapeNCHW2NHWC(ShapeVector *shape) {
     std::swap((*shape)[kShapeIndex1st], (*shape)[kShapeIndex3rd]);
     std::swap((*shape)[kShapeIndex2nd], (*shape)[kShapeIndex1st]);
   }
 
   // transpose shape: NCDHW To NDHWC
-  void ShapeNCDHW2NDHWC(std::vector<size_t> *shape) {
+  void ShapeNCDHW2NDHWC(ShapeVector *shape) {
     std::swap((*shape)[kShapeIndex1st], (*shape)[kShapeIndex2nd]);
     std::swap((*shape)[kShapeIndex2nd], (*shape)[kShapeIndex3rd]);
     std::swap((*shape)[kShapeIndex3rd], (*shape)[kShapeIndex4th]);
   }
 
-  void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format) {
+  void SetDimA(const ShapeVector &shape, int *dimA, size_t len, const std::string &format) {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with dimA " << len << "-D.";
     }
     if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
       for (size_t i = 0; i < len; ++i) {
-        dimA[i] = SizeToInt(shape[i]);
+        dimA[i] = LongToInt(shape[i]);
       }
     } else if (format == "NHWC") {
-      dimA[0] = SizeToInt(shape[0]);
-      dimA[kShapeIndex1st] = SizeToInt(shape[kShapeIndex3rd]);
-      dimA[kShapeIndex2nd] = SizeToInt(shape[kShapeIndex1st]);
-      dimA[kShapeIndex3rd] = SizeToInt(shape[kShapeIndex2nd]);
+      dimA[0] = LongToInt(shape[0]);
+      dimA[kShapeIndex1st] = LongToInt(shape[kShapeIndex3rd]);
+      dimA[kShapeIndex2nd] = LongToInt(shape[kShapeIndex1st]);
+      dimA[kShapeIndex3rd] = LongToInt(shape[kShapeIndex2nd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
   }
-  void SetStrideA(const std::vector<size_t> &shape, int *strideA, size_t len, const std::string &format) {
+  void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const std::string &format) {
     if (shape.size() != len) {
       MS_EXCEPTION(ValueError) << "Invalid size of input shape " << shape.size() << "-D with strideA " << len << "-D.";
     }
     if (Anyone(format, "NCHW", "DefaultFormat", "NCDHW")) {
       for (size_t i = 0; i < len; ++i) {
-        strideA[i] = SizeToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<size_t>()));
+        strideA[i] = LongToInt(accumulate(shape.begin() + i + 1, shape.end(), 1, std::multiplies<int64_t>()));
       }
     } else if (format == "NHWC") {
-      strideA[0] = SizeToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+      strideA[0] = LongToInt(shape[kShapeIndex1st] * shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
       strideA[1] = 1;
-      strideA[kShapeIndex2nd] = SizeToInt(shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
-      strideA[kShapeIndex3rd] = SizeToInt(shape[kShapeIndex3rd]);
+      strideA[kShapeIndex2nd] = LongToInt(shape[kShapeIndex2nd] * shape[kShapeIndex3rd]);
+      strideA[kShapeIndex3rd] = LongToInt(shape[kShapeIndex3rd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
   }
 
-  void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format) {
+  void SetNCHW(const ShapeVector &shape, int *n, int *c, int *h, int *w, const std::string &format) {
     if (Anyone(format, "NCHW", "DefaultFormat")) {
-      *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[kShapeIndex1st]);
-      *h = SizeToInt(shape[kShapeIndex2nd]);
-      *w = SizeToInt(shape[kShapeIndex3rd]);
+      *n = LongToInt(shape[0]);
+      *c = LongToInt(shape[kShapeIndex1st]);
+      *h = LongToInt(shape[kShapeIndex2nd]);
+      *w = LongToInt(shape[kShapeIndex3rd]);
     } else if (format == "NHWC") {
-      *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[kShapeIndex3rd]);
-      *h = SizeToInt(shape[kShapeIndex1st]);
-      *w = SizeToInt(shape[kShapeIndex2nd]);
+      *n = LongToInt(shape[0]);
+      *c = LongToInt(shape[kShapeIndex3rd]);
+      *h = LongToInt(shape[kShapeIndex1st]);
+      *w = LongToInt(shape[kShapeIndex2nd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
   }
 
-  void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format) {
+  void SetNCDHW(const ShapeVector &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format) {
     if (Anyone(format, "NCDHW", "DefaultFormat")) {
-      *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[kShapeIndex1st]);
-      *d = SizeToInt(shape[kShapeIndex2nd]);
-      *h = SizeToInt(shape[kShapeIndex3rd]);
-      *w = SizeToInt(shape[kShapeIndex4th]);
+      *n = LongToInt(shape[0]);
+      *c = LongToInt(shape[kShapeIndex1st]);
+      *d = LongToInt(shape[kShapeIndex2nd]);
+      *h = LongToInt(shape[kShapeIndex3rd]);
+      *w = LongToInt(shape[kShapeIndex4th]);
     } else if (format == "NDHWC") {
-      *n = SizeToInt(shape[0]);
-      *c = SizeToInt(shape[kShapeIndex4th]);
-      *d = SizeToInt(shape[kShapeIndex1st]);
-      *h = SizeToInt(shape[kShapeIndex2nd]);
-      *w = SizeToInt(shape[kShapeIndex3rd]);
+      *n = LongToInt(shape[0]);
+      *c = LongToInt(shape[kShapeIndex4th]);
+      *d = LongToInt(shape[kShapeIndex1st]);
+      *h = LongToInt(shape[kShapeIndex2nd]);
+      *w = LongToInt(shape[kShapeIndex3rd]);
     } else {
       MS_LOG(ERROR) << "Unsupported data format " << format;
     }
@@ -401,9 +401,9 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   // The tensor size is limited to 2G by cudnn.
-  inline void CheckTensorSize(const std::initializer_list<std::vector<size_t>> &shapes) {
+  inline void CheckTensorSize(const std::initializer_list<ShapeVector> &shapes) {
     for (auto shape : shapes) {
-      size_t total_size = 1;
+      int64_t total_size = 1;
       for (auto i : shape) {
         total_size *= i;
       }
@@ -415,7 +415,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
   }
 
   // set the tensor descriptor for cudnn/cublas
-  void CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
+  void CudnnSetTensorNdDescriptor(const ShapeVector &shape, cudnnTensorDescriptor_t descriptor,
                                   cudnnDataType_t data_type, const std::weak_ptr<CNode> &node) {
     if (shape.size() < 3) {
       MS_EXCEPTION(ValueError) << "cudnnSetTensorNdDescriptor don't support" << shape.size() << "D.";
@@ -425,12 +425,12 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     std::unique_ptr<int[]> stride = std::make_unique<int[]>(nbDims);
 
     for (int i = 0; i < nbDims; i++) {
-      dim[i] = SizeToInt(shape[i]);
+      dim[i] = LongToInt(shape[i]);
       stride[i] = 1;
     }
 
     for (int i = nbDims - 2; i >= 0; i--) {
-      stride[i] = stride[i + 1] * SizeToInt(shape[i + 1]);
+      stride[i] = stride[i + 1] * LongToInt(shape[i + 1]);
     }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(node,
@@ -454,10 +454,8 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
     return type->second;
   }
 
-  inline bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2) {
-    std::vector<size_t> s2_trans;
-    std::transform(s2.begin(), s2.end(), std::back_inserter(s2_trans), [](const int64_t &e) { return LongToSize(e); });
-    return std::equal(s1.begin(), s1.end(), s2_trans.begin(), s2_trans.end());
+  inline bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2) {
+    return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end());
   }
 
   inline bool GetDynamicAttrIntValue(const CNodePtr &kernel_node, const size_t input_index,
@@ -492,7 +490,7 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
 std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs);
 
 // expand Nd Shape to 4d (N in [0,4])
-bool ShapeNdTo4d(const std::vector<size_t> &src, std::vector<size_t> *dst);
+bool ShapeNdTo4d(const ShapeVector &src, ShapeVector *dst);
 
 template <typename T>
 inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t index) {
@@ -514,27 +512,27 @@ inline T *GetPossiblyNullDeviceAddress(const std::vector<AddressPtr> &addr_list,
 int AxisTransform(const std::string &origin_data_format, const std::string &cal_format, int axis);
 
 // transpose shape: NCHW To NHWC
-void ShapeNCHW2NHWC(std::vector<size_t> *shape);
+void ShapeNCHW2NHWC(ShapeVector *shape);
 
 // transpose shape: NCDHW To NDHWC
-void ShapeNCDHW2NDHWC(std::vector<size_t> *shape);
+void ShapeNCDHW2NDHWC(ShapeVector *shape);
 
-void SetDimA(const std::vector<size_t> &shape, int *dimA, size_t len, const std::string &format);
+void SetDimA(const ShapeVector &shape, int *dimA, size_t len, const std::string &format);
 
-void SetStrideA(const std::vector<size_t> &shape, int *strideA, size_t len, const std::string &format);
+void SetStrideA(const ShapeVector &shape, int *strideA, size_t len, const std::string &format);
 
-void SetNCHW(const std::vector<size_t> &shape, int *n, int *c, int *h, int *w, const std::string &format);
+void SetNCHW(const ShapeVector &shape, int *n, int *c, int *h, int *w, const std::string &format);
 
-void SetNCDHW(const std::vector<size_t> &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format);
+void SetNCDHW(const ShapeVector &shape, int *n, int *c, int *d, int *h, int *w, const std::string &format);
 
 bool CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &B, const std::vector<int> &Out);
 
 // The tensor size is limited to 2G by cudnn.
-bool CheckTensorSize(const std::initializer_list<std::vector<size_t>> &shapes);
+bool CheckTensorSize(const std::initializer_list<ShapeVector> &shapes);
 
 // set the tensor descriptor for cudnn/cublas
-bool CudnnSetTensorNdDescriptor(const std::vector<size_t> &shape, cudnnTensorDescriptor_t descriptor,
-                                cudnnDataType_t data_type, const std::string &node_name);
+bool CudnnSetTensorNdDescriptor(const ShapeVector &shape, cudnnTensorDescriptor_t descriptor, cudnnDataType_t data_type,
+                                const std::string &node_name);
 
 // choose the suitable datatype for cudnn/cublas
 bool GetCudnnDataType(const std::string &Type, cudnnDataType_t *out_type);
@@ -544,7 +542,7 @@ bool GetCudaDataType(const std::string &Type, cudaDataType_t *out_type);
 bool GetTensorIntValue(const tensor::TensorPtr input_tensor, const size_t input_index, const std::string &kernel_name,
                        const std::string &tensor_name, std::vector<int64_t> *tensor_value);
 
-bool ShapeEqual(const std::vector<size_t> &s1, const std::vector<int64_t> &s2);
+bool ShapeEqual(const ShapeVector &s1, const ShapeVector &s2);
 
 // This is necessary for gpu kernels to support uint8 data type. In cuda, an unsigned,
 // 8 bit integral type is represented by an unsigned char, but the MS_REG_GPU_KERNEL

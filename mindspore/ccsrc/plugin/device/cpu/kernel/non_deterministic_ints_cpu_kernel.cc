@@ -41,6 +41,9 @@ void NonDeterministicIntsCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape})) {
+    return;
+  }
   if (input_shape[0] < kInpuSizes) {
     MS_EXCEPTION(ValueError) << "The input tensor shape must >= 2.";
   }
@@ -83,7 +86,7 @@ bool NonDeterministicIntsCPUKernelMod::LaunchKernel(const std::vector<AddressPtr
   auto input = reinterpret_cast<T2 *>(inputs[0]->addr);
   size_t input_elem_num = inputs[0]->size / sizeof(T2);
   size_t output_elem_num = outputs[0]->size / sizeof(T1);
-  std::vector<size_t> out_shape;
+  ShapeVector out_shape;
   for (size_t i = 0; i < input_elem_num; i++) {
     if (input[i] <= 0) {
       MS_EXCEPTION(ValueError) << "Each dimension must be greater than 0.";

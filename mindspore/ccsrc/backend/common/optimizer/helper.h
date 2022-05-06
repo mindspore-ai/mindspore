@@ -127,10 +127,6 @@ enum ConvBn1Output {
   kMean,
 };
 
-std::vector<int64_t> Convert2Int(const std::vector<size_t> &v);
-
-std::vector<int64_t> Convert2Long(const std::vector<size_t> &v);
-
 // check whether node depends on either of nodes or not
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes);
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes,

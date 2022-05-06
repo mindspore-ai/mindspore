@@ -63,8 +63,8 @@ class NeighborExchangeV2GradUnifyMindIR : public PatternProcessPass {
   std::vector<CNodePtr> CreateSplitNodesForGrad(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                                 std::vector<int64_t> *split_num) const;
   CNodePtr CreatePadNode(const FuncGraphPtr &graph, const AnfNodePtr &input, const std::vector<int64_t> &begin,
-                         const std::vector<int64_t> &size,
-                         const std::pair<std::vector<size_t>, BaseShapePtr> &shape_info, TypeId dtype) const;
+                         const std::vector<int64_t> &size, const std::pair<ShapeVector, BaseShapePtr> &shape_info,
+                         TypeId dtype) const;
   CNodePtr CreateSplitGradNodes(const FuncGraphPtr &graph, const CNodePtr &neighbor_exchange_v2_grad,
                                 const CNodePtr &all_to_all_v, const std::vector<CNodePtr> &split_nodes,
                                 const std::vector<int64_t> &split_num) const;

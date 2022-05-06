@@ -32,7 +32,7 @@ constexpr size_t kDim = 2;
 void TrilCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   input_dims_ = input_shape_.size();

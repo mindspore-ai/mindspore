@@ -153,7 +153,7 @@ class FusedPushWeightKernelMod : public DeprecatedNativeCpuKernelMod {
     MS_EXCEPTION_IF_NULL(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; i++) {
-      auto weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      auto weight_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
       size_t weight_size_ = std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(T), std::multiplies<T>());
       input_size_list_.push_back(weight_size_);
     }

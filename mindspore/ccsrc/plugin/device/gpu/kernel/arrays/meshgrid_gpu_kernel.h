@@ -95,7 +95,7 @@ class MeshgridGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     output_count_ = common::AnfAlgo::GetOutputTensorNum(kernel_node);
 
     // inferred shape swaps output shape for us if needed
-    output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    output_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShape(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(output_shape_, kernel_name, "output");
     if (is_null_input_) {
       InitSizeLists();

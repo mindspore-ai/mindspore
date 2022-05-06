@@ -116,17 +116,17 @@ class Conv3dGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "x") ||
                      CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({in_shape, filter_shape, output_shape})) {
       InitSizeLists();
       return true;
     }
     CheckTensorSize({in_shape});
     (void)CheckSize(in_shape.size(), kInputDimSize, "x");
-    n_ = SizeToInt(in_shape[kInDimIdxForN]);
-    c_ = SizeToInt(in_shape[kInDimIdxForC]);
-    old_depth_ = SizeToInt(in_shape[kInDimIdxForD]);
-    old_height_ = SizeToInt(in_shape[kInDimIdxForH]);
-    old_width_ = SizeToInt(in_shape[kInDimIdxForW]);
+    n_ = LongToInt(in_shape[kInDimIdxForN]);
+    c_ = LongToInt(in_shape[kInDimIdxForC]);
+    old_depth_ = LongToInt(in_shape[kInDimIdxForD]);
+    old_height_ = LongToInt(in_shape[kInDimIdxForH]);
+    old_width_ = LongToInt(in_shape[kInDimIdxForW]);
     compute_format_ = CUDNN_TENSOR_NCHW;
     SetNDDesc(in_shape, filter_shape, output_shape);
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
@@ -268,8 +268,7 @@ class Conv3dGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void SetNDDesc(const std::vector<size_t> &in_shape, const std::vector<size_t> &filter_shape,
-                 const std::vector<size_t> &output_shape) {
+  void SetNDDesc(const ShapeVector &in_shape, const ShapeVector &filter_shape, const ShapeVector &output_shape) {
     const int kDims = 5;
     int dimA[kDims];
     int strideAin[kDims];
@@ -359,8 +358,7 @@ class Conv3dGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
                           << ", but got " << data_format_;
       }
-      auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
-                           IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
+      ShapeVector padded_shape = {n_, c_, old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_};
       SetDimA(padded_shape, dimA, kNumDims, data_format_);
       SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
       CHECK_CUDNN_RET_WITH_EXCEPT(

@@ -39,8 +39,10 @@ class StridedSliceGpuCommon {
       end_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
       strides_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
     }
-    FillEmptyDims(kernel_node, &begin_, &end_, &strides_, &input_shape_);
-    ParseStrideSliceMasks(kernel_node, &begin_, &end_, &strides_, input_shape_);
+    auto shape_tmp = Convert2Long(input_shape_);
+    FillEmptyDims(kernel_node, &begin_, &end_, &strides_, &shape_tmp);
+    input_shape_ = Convert2SizeT(shape_tmp);
+    ParseStrideSliceMasks(kernel_node, &begin_, &end_, &strides_, shape_tmp);
     FillOutputDim();
     null_output_ = IsNullOutput();
   }

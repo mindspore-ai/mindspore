@@ -66,14 +66,17 @@ void BroadcastToCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
+    return;
+  }
   size_t input_shape_size = input_shape_.size();
   size_t output_shape_size = output_shape_.size();
 
   for (size_t i = 0; i < input_shape_size; ++i) {
-    shape_info_.input_shape_[i] = SizeToInt(input_shape_[i]);
+    shape_info_.input_shape_[i] = LongToInt(input_shape_[i]);
   }
   for (size_t i = 0; i < output_shape_size; ++i) {
-    shape_info_.output_shape_[i] = SizeToInt(output_shape_[i]);
+    shape_info_.output_shape_[i] = LongToInt(output_shape_[i]);
   }
   shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
   shape_info_.output_shape_size_ = SizeToInt(output_shape_size);

@@ -51,9 +51,9 @@ class GatherCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, GatherFunc>> func_list_;
   GatherFunc kernel_func_;
 
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> indices_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector indices_shape_;
+  ShapeVector output_shape_;
   int64_t axis_{0};
   bool is_dynamic_shape_{false};
   CNodeWeakPtr node_wpt_;

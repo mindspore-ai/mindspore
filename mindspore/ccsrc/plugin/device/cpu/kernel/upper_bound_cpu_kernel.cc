@@ -24,14 +24,17 @@ void UpperBoundCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   sorted_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({sorted_x_shape_, values_shape_, output_shape_})) {
+    return;
+  }
   size_t size_exp = 2;
   if (sorted_x_shape_.size() != values_shape_.size() || sorted_x_shape_.size() != size_exp ||
       sorted_x_shape_[0] != values_shape_[0]) {
     MS_LOG(EXCEPTION) << "The shape of input is invalid.";
   }
-  sorted_x_num_ = sorted_x_shape_[0] * sorted_x_shape_[1];
-  values_num_ = values_shape_[0] * values_shape_[1];
-  output_num_ = output_shape_[0] * output_shape_[1];
+  sorted_x_num_ = static_cast<size_t>(sorted_x_shape_[0] * sorted_x_shape_[1]);
+  values_num_ = static_cast<size_t>(values_shape_[0] * values_shape_[1]);
+  output_num_ = static_cast<size_t>(output_shape_[0] * output_shape_[1]);
   if (values_num_ != output_num_) {
     MS_LOG(EXCEPTION) << "Infer the shape of output error.";
   }
@@ -51,8 +54,8 @@ bool UpperBoundCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   auto sorted_x_data_addr = reinterpret_cast<I *>(inputs[0]->addr);
   auto values_data_addr = reinterpret_cast<I *>(inputs[1]->addr);
   auto output_data_addr = reinterpret_cast<O *>(outputs[0]->addr);
-  size_t sorted_x_data_column = sorted_x_shape_[1];
-  size_t values_data_column = values_shape_[1];
+  size_t sorted_x_data_column = static_cast<size_t>(sorted_x_shape_[1]);
+  size_t values_data_column = static_cast<size_t>(values_shape_[1]);
   auto task = [this, &values_data_addr, &sorted_x_data_addr, &output_data_addr, &sorted_x_data_column,
                &values_data_column](size_t start, size_t end) {
     const size_t kNumber2 = 2;

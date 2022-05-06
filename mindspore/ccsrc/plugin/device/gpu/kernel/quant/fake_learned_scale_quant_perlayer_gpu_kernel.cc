@@ -47,7 +47,7 @@ bool FakeLearnedScaleQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node
   // init size
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   for (size_t i = 0; i < input_shape.size(); ++i) {
-    quant_num_ *= SizeToInt(input_shape[i]);
+    quant_num_ *= LongToInt(input_shape[i]);
   }
   input_size_ = sizeof(float) * quant_num_;
   InitSizeLists();

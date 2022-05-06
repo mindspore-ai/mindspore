@@ -136,27 +136,14 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != 0) {
     return ret;
   }
-  std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
-  std::vector<int64_t> input_shape_2 = inputs[1]->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
-
-  if (output_shape.size() > max_dims_) {
+  input_shape_1_ = inputs[0]->GetShapeVector();
+  input_shape_2_ = inputs[1]->GetShapeVector();
+  output_shape_ = outputs[0]->GetShapeVector();
+  if (output_shape_.size() > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be less than or equal to 7, but got " << output_shape.size()
-                      << ".";
+                      << "', the dimension of output should be less than or equal to 7, but got "
+                      << output_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
-  }
-  input_shape_1_.resize(input_shape_1.size(), 1);
-  input_shape_2_.resize(input_shape_2.size(), 1);
-  output_shape_.resize(output_shape.size(), 1);
-  for (size_t i = 0; i < input_shape_1.size(); i++) {
-    input_shape_1_[i] = static_cast<size_t>(input_shape_1[i]);
-  }
-  for (size_t i = 0; i < input_shape_2.size(); i++) {
-    input_shape_2_[i] = static_cast<size_t>(input_shape_2[i]);
-  }
-  for (size_t i = 0; i < output_shape.size(); i++) {
-    output_shape_[i] = static_cast<size_t>(output_shape[i]);
   }
 
   if (output_shape_.size() == 0) {
