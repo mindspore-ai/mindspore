@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCTION_CPU_KERNEL_H_
+
 #include <memory>
 #include <vector>
 #include <map>
@@ -25,24 +26,28 @@
 
 namespace mindspore {
 namespace kernel {
-class ReductionCpuKernelMod : public DeprecatedMKLCpuKernelMod {
+class ReductionCpuKernelMod : public MKLCpuKernelMod {
  public:
   ReductionCpuKernelMod() = default;
-  explicit ReductionCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ReductionCpuKernelMod() override = default;
-
-  // TO be Deprecated API.
-  void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
 
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  bool GetReductionAttr(const BaseOperatorPtr &base_operator);
+
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using ReductionFunc = std::function<bool(ReductionCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
@@ -51,9 +56,8 @@ class ReductionCpuKernelMod : public DeprecatedMKLCpuKernelMod {
 
   ReductionFunc kernel_func_;
   float p_{2.0};
-  float eps_{1e-12};
+  float epsilon_{1e-12};
   static std::vector<std::pair<KernelAttr, ReductionFunc>> func_list_;
-  std::string kernel_type_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,6 +109,26 @@ AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto infer_shape = LpNormInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+void LpNorm::Init(const int64_t p, const float epsilon) {
+  this->set_p(p);
+  this->set_epsilon(epsilon);
+}
+
+void LpNorm::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
+
+int64_t LpNorm::get_p() const {
+  auto value_ptr = this->GetAttr(kP);
+  return GetValue<int64_t>(value_ptr);
+}
+
+void LpNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
+
+float LpNorm::get_epsilon() const {
+  auto value_ptr = this->GetAttr(kEpsilon);
+  return GetValue<float>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(LpNorm, prim::kPrimLpNorm, LpNormInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
