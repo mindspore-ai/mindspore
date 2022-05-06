@@ -101,7 +101,7 @@ class MS_API Context {
 
   /// \brief Set Delegate to access third-party AI framework. Only valid for Lite.
   ///
-  /// \param[in] Pointer to the custom delegate.
+  /// \param[in] delegate the custom delegate.
   void SetDelegate(const std::shared_ptr<Delegate> &delegate);
 
   /// \brief Get the delegate of the third-party AI framework. Only valid for Lite.
@@ -145,7 +145,6 @@ class MS_API DeviceInfoContext : public std::enable_shared_from_this<DeviceInfoC
   /// \brief A similar function to RTTI is provided when the -fno-rtti compilation option is turned on, which converts
   /// DeviceInfoContext to a shared pointer of type T, and returns nullptr if the conversion fails.
   ///
-  /// \param T Type
   /// \return A pointer of type T after conversion. If the conversion fails, it will be nullptr.
   template <class T>
   std::shared_ptr<T> Cast() {
@@ -393,7 +392,7 @@ class MS_API AscendDeviceInfo : public DeviceInfoContext {
 
   /// \brief Set the dynamic image size of model inputs.
   ///
-  /// \param[in] image size hw e.g. "66,88;32,64" means h1:66,w1:88; h2:32,w2:64.
+  /// \param[in] dynamic_image_size size hw e.g. "66,88;32,64" means h1:66,w1:88; h2:32,w2:64.
   inline void SetDynamicImageSize(const std::string &dynamic_image_size);
 
   /// \brief Get dynamic image size of model inputs.
