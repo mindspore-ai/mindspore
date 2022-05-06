@@ -658,4 +658,10 @@ INPUT_MAP(TensorMove) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(TensorMove) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(TensorMove) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(TensorMove, kNameTensorMove, ADPT_DESC(TensorMove))
+
+// KLDiv
+INPUT_MAP(KLDiv) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(target)}};
+ATTR_MAP(KLDiv) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+OUTPUT_MAP(KLDiv) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(KLDiv, kNameKLDiv, ADPT_DESC(KLDiv))
 }  // namespace mindspore::transform

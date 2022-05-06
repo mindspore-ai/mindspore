@@ -5243,6 +5243,12 @@ class KLDivLoss(Primitive):
     :math:`target` represents `labels`.
     :math:`\ell(x, target)` represents `output`.
 
+    Note:
+        Setting `reduction` to 'mean' is not currently supported on Ascend.
+        On Ascend, float64 dtype is not currently supported.
+        Setting `reduction` to 'batchmean' is not currently supported on GPU.
+        The output aligns with the mathematical definition only when `reduction` is set to 'batchmean'.
+
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
             Its value must be one of 'none', 'mean', 'batchmean' or 'sum'. Default: 'mean'.
@@ -5258,16 +5264,16 @@ class KLDivLoss(Primitive):
     Raises:
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
-        TypeError: If dtype of `logits` or `labels` is not float32.
+        TypeError: If dtype of `logits` or `labels` is not currently supported.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.kldiv_loss = ops.KLDivLoss()
+        ...         self.kldiv_loss = ops.KLDivLoss(reduction='none')
         ...     def construct(self, logits, labels):
         ...         result = self.kldiv_loss(logits, labels)
         ...         return result
@@ -5277,7 +5283,7 @@ class KLDivLoss(Primitive):
         >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> output = net(logits, labels)
         >>> print(output)
-        -0.23333333
+        [ 0.  -0.7  0. ]
     """
 
     @prim_attr_register
@@ -5289,7 +5295,7 @@ class KLDivLoss(Primitive):
         elif device_target == "GPU":
             support_mode = ['none', 'mean', 'sum']
         elif device_target == "Ascend":
-            raise ValueError(f"'{self.name}' does not support Ascend platform currently.")
+            support_mode = ['none', 'batchmean', 'sum']
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
 

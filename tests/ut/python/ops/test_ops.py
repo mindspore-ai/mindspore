@@ -3540,6 +3540,11 @@ test_case_other_ops = [
                                           [562.7321]]]).astype(np.float32))
                         ],
         'desc_bprop': [Tensor(np.random.rand(4, 3, 7, 7).astype(np.float32))]}),
+    ('KLDivLoss', {
+        'block': P.KLDivLoss('none'),
+        'desc_inputs': [Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32)),
+                        Tensor(np.random.rand(2, 4, 8, 16).astype(np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_case_quant_ops = [

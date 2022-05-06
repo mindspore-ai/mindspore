@@ -162,3 +162,59 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.HShrink)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.GeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.FastGeLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSwish)(get_unop_vmap_rule)
+
+
+@vmap_rules_getters.register(P.KLDivLoss)
+def get_kl_div_loss_vmap_rule(prim, axis_size):
+    """VmapRule for `KLDivLoss` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    prim_reduction = prim.reduction
+    if prim_reduction == "mean":
+        kl_div_loss_op = P.KLDivLoss("none")
+        reduce_op = P.ReduceMean()
+    elif prim_reduction == "sum":
+        kl_div_loss_op = P.KLDivLoss("none")
+        reduce_op = P.ReduceSum()
+    elif prim_reduction == "batchmean":
+        kl_div_loss_op = P.KLDivLoss("none")
+        reduce_op = P.ReduceSum()
+        factor_op = P.Div()
+
+    def vmap_rule(x_bdim, target_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, target_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        target, target_dim = target_bdim
+        x_ndim = F.rank(x)
+        target_ndim = F.rank(target)
+        max_rank = max(x_ndim, target_ndim)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        target = _bdim_at_front(target, target_dim, axis_size)
+        reduce_indexes = None
+        factor = 1
+        # if rank is larger than 1, we need to reduce result when reduction != 'none'
+        if max_rank > 1:
+            reduce_indexes = tuple(range(1, max_rank))
+            factor = F.shape(x)[1]
+
+        # elementwise style when reduction='none', otherwise reduce style
+        if prim_reduction == "none":
+            out = prim(x, target)
+        elif prim_reduction in ("mean", "sum"):
+            out = kl_div_loss_op(x, target)
+            if reduce_indexes is not None:
+                out = reduce_op(out, reduce_indexes)
+        elif prim_reduction == "batchmean":
+            out = kl_div_loss_op(x, target)
+            if reduce_indexes is not None:
+                out = reduce_op(out, reduce_indexes)
+                out = factor_op(out, factor)
+        else:
+            raise RuntimeError("For KLDivLoss vmap, reduction should be one of "
+                               "['none', 'mean', 'batchmean', 'sum'], but got '{}'".format(prim_reduction))
+        return (out, 0)
+    return vmap_rule
