@@ -74,3 +74,16 @@ def get_bprop_gpu_convert_to_dynamic_shape(self):
     def bprop(x, out, dout):
         return (dout,)
     return bprop
+
+
+@bprop_getters.register(P._DynamicLossScale) # pylint: disable=W0212
+def get_bprop_dynamic_loss_scale(self):
+    """Get backprop for dynamic_loss_scale."""
+    mul = P.Mul()
+    mul.add_prim_attr('split_overflow', True)
+    mul.add_prim_attr('layer_overflow', self.layer)
+
+    def bprop(x, loss_scale, out, dout):
+        res = mul(dout, loss_scale)
+        return res, zeros_like(loss_scale)
+    return bprop

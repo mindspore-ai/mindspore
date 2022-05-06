@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <queue>
+#include <set>
 
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -41,6 +43,9 @@
 namespace {
 constexpr auto kGradients = "Gradients";
 constexpr auto kSpecifyParameter = "accu_status";
+constexpr auto kSplitOverFlow = "split_overflow";
+constexpr auto kLayerOverFlow = "layer_overflow";
+constexpr auto kMixLayerStatusParameter = "mix_layer_status";
 size_t kNPUShape = 8;
 constexpr size_t kLastHandleDiff = 2;
 }  // namespace
@@ -826,22 +831,57 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
   MS_LOG(INFO) << "Start Insert Overflow Check Operations.";
 
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
-  auto parameters = kernel_graph_ptr->parameters();
-  AnfNodePtr specify_para;
-  bool not_find = true;
-  for (size_t i = 0; i < parameters.size(); i++) {
-    auto para_fullname = parameters[i]->fullname_with_scope();
-    if (para_fullname.find(kSpecifyParameter) != std::string::npos) {
-      not_find = false;
-      specify_para = parameters[i];
-      break;
+  std::vector<std::shared_ptr<session::KernelGraph>> child_graph_list;
+  std::queue<std::shared_ptr<session::KernelGraph>> graph_queue;
+  graph_queue.push(kernel_graph_ptr);
+  while (!graph_queue.empty()) {
+    auto graph = graph_queue.front();
+    (void)child_graph_list.emplace_back(graph);
+    graph_queue.pop();
+    for (auto child_graph : graph->child_graph_order()) {
+      graph_queue.push(child_graph.lock());
     }
   }
 
-  if (not_find) {
-    MS_LOG(INFO) << "Not find parameter named " << kSpecifyParameter;
-    return;
+  AnfNodePtr specify_param = nullptr;
+  std::vector<AnfNodePtr> dynamic_loss_scale_param_list;
+  // find parameter in all child graph.
+  for (auto child_graph : child_graph_list) {
+    auto parameters = child_graph->parameters();
+    for (auto param : parameters) {
+      auto param_fullname = param->fullname_with_scope();
+      if (param_fullname.find(kSpecifyParameter) != std::string::npos) {
+        specify_param = param;
+        continue;
+      }
+      if (param_fullname.find(kMixLayerStatusParameter) != std::string::npos) {
+        (void)dynamic_loss_scale_param_list.emplace_back(param);
+      }
+    }
   }
+
+  // Debug info
+  for (const auto &param : dynamic_loss_scale_param_list) {
+    MS_LOG(INFO) << "dynamic_loss_scale_param_list:" << param->DebugString();
+  }
+
+  if (specify_param != nullptr) {
+    InsertGradientOverflowCheckOperations(specify_param, kernel_graph_ptr);
+  }
+  if (!dynamic_loss_scale_param_list.empty()) {
+    InsertDynamicLossScaleCheckOperations(kernel_graph_ptr, &dynamic_loss_scale_param_list);
+  }
+
+  for (const auto &node : kernel_graph_ptr->execution_order()) {
+    MS_LOG(INFO) << "After insert Overflow Status Order:" << node->DebugString();
+  }
+  MS_LOG(INFO) << "End Insert Overflow Check Operations.";
+}
+
+void KernelAdjust::InsertGradientOverflowCheckOperations(
+  const AnfNodePtr &specify_para, const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+  MS_LOG(INFO) << "Start Insert Gradient Overflow Check Operations.";
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
 
   bool first_grad_op = true;
   CNodePtr npu_alloc_cnode;
@@ -892,8 +932,92 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
       }
     }
   }
-
   kernel_graph_ptr->set_execution_order(new_execution_order);
+  MS_LOG(INFO) << "End Insert Gradient Overflow Check Operations.";
+}
+
+void KernelAdjust::InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                                         std::vector<AnfNodePtr> *dynamic_loss_scale_param_list) {
+  MS_LOG(INFO) << "Start Insert Dynamic Loss Scale Operations.";
+  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+  auto execution_order = kernel_graph_ptr->execution_order();
+  size_t end_gradient_index = 0;
+  for (size_t i = 0; i < execution_order.size(); ++i) {
+    if (execution_order[i]->fullname_with_scope().find(kGradients) != std::string::npos) {
+      end_gradient_index = i;
+    }
+  }
+
+  std::sort(dynamic_loss_scale_param_list->begin(), dynamic_loss_scale_param_list->end(),
+            [](const AnfNodePtr &node_a, const AnfNodePtr &node_b) {
+              const auto &param_name_a = node_a->fullname_with_scope();
+              const auto &param_name_b = node_b->fullname_with_scope();
+              int value_a = -1;
+              int value_b = -1;
+              try {
+                value_a = std::stoi(param_name_a.substr(param_name_a.rfind("_") + 1, param_name_a.size()).data());
+                value_b = std::stoi(param_name_b.substr(param_name_b.rfind("_") + 1, param_name_b.size()).data());
+              } catch (std::invalid_argument &) {
+                MS_LOG(EXCEPTION) << "Invalid param name:" << param_name_a << " and " << param_name_b;
+              }
+              return value_a < value_b;
+            });
+
+  // Manual module
+  // If this mul operator has kSplitOverFlow attr, insert npuallocstatus and npuclearstatus.
+  // If this mul operator has kLayerOverFLow attr, compare it with current dynamic parameter.
+  // insert npugetstatus ans assign value to this param.
+  bool first_layer_op = true;
+  std::vector<CNodePtr> new_execution_order;
+  int64_t cur_param = static_cast<int64_t>(dynamic_loss_scale_param_list->size()) - 1;
+  CNodePtr npu_alloc_cnode;
+  std::set<int64_t> viewed_id;
+  for (size_t i = 0; i < execution_order.size(); ++i) {
+    auto cur_node = execution_order[i];
+    auto cur_stream_id = AnfAlgo::GetStreamId(cur_node);
+    if (common::AnfAlgo::HasNodeAttr(kSplitOverFlow, cur_node) || (i == end_gradient_index)) {
+      if (first_layer_op) {
+        npu_alloc_cnode = CreateNPUAllocStatus(kernel_graph_ptr);
+        AnfAlgo::SetStreamId(cur_stream_id, npu_alloc_cnode.get());
+        (void)new_execution_order.emplace_back(npu_alloc_cnode);
+        for (const auto &param : *dynamic_loss_scale_param_list) {
+          auto assign_cnode = CreateAssign(kernel_graph_ptr, param);
+          AnfAlgo::SetStreamId(cur_stream_id, assign_cnode.get());
+          (void)new_execution_order.emplace_back(assign_cnode);
+        }
+        first_layer_op = false;
+      } else {
+        if (common::AnfAlgo::HasNodeAttr(kLayerOverFlow, cur_node)) {
+          cur_param = common::AnfAlgo::GetNodeAttr<int64_t>(cur_node, kLayerOverFlow);
+        }
+        if (cur_param < 0 || cur_param >= static_cast<int64_t>(dynamic_loss_scale_param_list->size())) {
+          MS_LOG(WARNING) << "Overflow check index is invalid, value is " << cur_param;
+          (void)new_execution_order.emplace_back(cur_node);
+          continue;
+        }
+        if (viewed_id.count(cur_param) != 0) {
+          auto assign_cnode = CreateAssign(kernel_graph_ptr, dynamic_loss_scale_param_list->at(cur_param));
+          AnfAlgo::SetStreamId(cur_stream_id, assign_cnode.get());
+          (void)new_execution_order.emplace_back(assign_cnode);
+        }
+        auto npu_get_cnode = CreateNPUGetFloatStatus(kernel_graph_ptr, npu_alloc_cnode);
+        AnfAlgo::SetStreamId(cur_stream_id, npu_get_cnode.get());
+        (void)new_execution_order.emplace_back(npu_get_cnode);
+        auto assign_add_cnode =
+          CreateAssignAdd(kernel_graph_ptr, npu_alloc_cnode, dynamic_loss_scale_param_list->at(cur_param));
+        AnfAlgo::SetStreamId(cur_stream_id, assign_add_cnode.get());
+        (void)new_execution_order.emplace_back(assign_add_cnode);
+        viewed_id.insert(cur_param);
+        cur_param--;
+      }
+      auto npu_clear_cnode = CreateNPUClearStatus(kernel_graph_ptr, npu_alloc_cnode);
+      AnfAlgo::SetStreamId(cur_stream_id, npu_clear_cnode.get());
+      (void)new_execution_order.emplace_back(npu_clear_cnode);
+    }
+    (void)new_execution_order.emplace_back(cur_node);
+  }
+  kernel_graph_ptr->set_execution_order(new_execution_order);
+  MS_LOG(INFO) << "End Insert Dynamic Loss Scale Operations.";
 }
 
 // device loop control

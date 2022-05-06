@@ -743,6 +743,7 @@ class AdamOffload(Optimizer):
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
 
+        self.params = self.parameters
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
         self.beta1_power = Parameter(initializer(1, [1], mstype.float32), name="beta1_power")

@@ -77,6 +77,35 @@ class Load(PrimitiveWithCheck):
             validator.check_tensors_dtypes_same_and_valid({"variable": variable}, mstype.number_type, self.name)
 
 
+class _DynamicLossScale(PrimitiveWithInfer):
+    """
+    Dynamic multi layer loss scale operator.
+
+    Inputs:
+        - **input_x** (Tensor) - Output of last operator.
+        - **loss_scale** (Tensor) - Dynamic loss scale.
+
+    Outputs:
+        Tensor - The same as `input_x`.
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('input_x', dtype=sig.sig_dtype.T),
+        sig.make_sig('loss_scale', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self, layer=-1):
+        """Initialize DynamicLossScale."""
+        validator.check_value_type('layer', layer, (int,), self.name)
+        self.init_prim_io_names(inputs=['input_x', 'loss_scale'], outputs=['output'])
+
+    def infer_shape(self, input_x, loss_scale):
+        return input_x
+
+    def infer_dtype(self, input_x, loss_scale):
+        return input_x
+
+
 class BoundingBoxEncode(PrimitiveWithInfer):
     """
     Encodes bounding boxes locations.

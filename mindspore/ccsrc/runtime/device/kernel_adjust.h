@@ -159,6 +159,10 @@ class KernelAdjust {
                                int32_t value);
   void AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_graph, KernelRuntime *runtime_instance,
                                const string name);
+  void InsertGradientOverflowCheckOperations(const AnfNodePtr &specify_para,
+                                             const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  void InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                                             std::vector<AnfNodePtr> *dynamic_loss_scale_param_list);
   std::shared_ptr<Tensor> CreateTensor(int32_t initial_value);
   std::shared_ptr<Parameter> CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                              const string parameter_name);

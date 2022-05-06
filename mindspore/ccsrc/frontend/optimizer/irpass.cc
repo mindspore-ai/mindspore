@@ -159,6 +159,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   // branch culling
   switch_simplify_ = MakeSubstitution(std::make_shared<SwitchSimplify>(), "switch_simplify", prim::kPrimSwitch);
+  compare_switch_simplify_ =
+    MakeSubstitution(std::make_shared<CompareSwitchSimplify>(), "compare_switch_simplify", prim::kPrimSwitch);
   float_tuple_getitem_switch_ = MakeSubstitution(std::make_shared<FloatTupleGetItemSwitch>(),
                                                  "float_tuple_getitem_switch", prim::kPrimTupleGetItem);
   float_environ_get_switch_ =

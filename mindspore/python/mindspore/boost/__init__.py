@@ -27,6 +27,7 @@ from .grad_freeze import GradientFreeze, FreezeOpt, freeze_cell
 from .grad_accumulation import GradientAccumulation
 from .adasum import AdaSum
 from .dim_reduce import DimReduce
+from .group_loss_scale_manager import GroupLossScaleManager
 
 
 __all__ = ['AutoBoost',
@@ -35,4 +36,5 @@ __all__ = ['AutoBoost',
            'LessBN',
            'GradientFreeze', 'FreezeOpt', 'freeze_cell',
            'GradientAccumulation',
-           'AdaSum', 'DimReduce']
+           'AdaSum', 'DimReduce',
+           'GroupLossScaleManager']

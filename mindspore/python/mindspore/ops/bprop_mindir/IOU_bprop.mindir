@@ -1,18 +1,16 @@
 
-0.1.0	MindSpore*1.6.0:É
-‹
-
-bprop.64:xbprop.64:[CNode]65:1bprop.64:[CNode]65:1"!S-Prim-hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op45
-‹
-
-bprop.64:ybprop.64:[CNode]66:2bprop.64:[CNode]66:2"!S-Prim-hyper_map[zeros_like_leaf]:.Default/S-Prim-hyper_map[zeros_like_leaf]-op46
-‰
-bprop.64:[CNode]65:1
-bprop.64:[CNode]66:2bprop.64:[CNode]67:3bprop.64:[CNode]67:3"S-Prim-MakeTuple:Default/S-Prim-MakeTuple-op47bprop.64*
-
-bprop.64:x*
-
-bprop.64:y*
-bprop.64:out*
-bprop.64:dout2
-bprop.64:[CNode]67:3:@d600ac5742fbd8dc8b4b041517ce58e1beec6270a8d533616d7cfd5b4b178b15P
+0.1.1	MindSpore*1.7.0:Â
+Œ
+	bprop.4:xbprop.4:[CNode]5:1bprop.4:[CNode]5:1"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:-Default/S-Prim-hyper_map[zeros_like_leaf]-op2
+Œ
+	bprop.4:ybprop.4:[CNode]6:3bprop.4:[CNode]6:3"(REF::S-Prim-hyper_map[zeros_like_leaf]:2:-Default/S-Prim-hyper_map[zeros_like_leaf]-op3
+‡
+bprop.4:[CNode]5:1
+bprop.4:[CNode]6:3bprop.4:[CNode]7:4bprop.4:[CNode]7:4"REF::S-Prim-MakeTuple:5:Default/S-Prim-MakeTuple-op4bprop.4*
+	bprop.4:x*
+	bprop.4:y*
+bprop.4:out*
+bprop.4:dout2
+bprop.4:[CNode]7:4:@7dd1cd68c00464e444752d0c18538ec3eaafde6001adaf9a71ee3997563fb2efPb&
+S-Prim-MakeTuple:5S-Prim-MakeTuplebH
+#S-Prim-hyper_map[zeros_like_leaf]:2!S-Prim-hyper_map[zeros_like_leaf]h

@@ -30,19 +30,23 @@ _boost_config_level = {
         "grad_freeze": False,
         "adasum": False,
         "grad_accumulation": False,
-        "dim_reduce": False},
+        "dim_reduce": False,
+        'loss_scale_group': False},
     "O1": {
         "less_bn": True,
         "grad_freeze": True,
         "adasum": False,
         "grad_accumulation": False,
-        "dim_reduce": False},
+        "dim_reduce": False,
+        'loss_scale_group': False},
     "O2": {
         "less_bn": True,
         "grad_freeze": True,
         "adasum": True,
         "grad_accumulation": False,
-        "dim_reduce": False}}
+        "dim_reduce": False,
+        'loss_scale_group': False}
+    }
 
 
 class AutoBoost:
@@ -62,7 +66,8 @@ class AutoBoost:
                         "grad_freeze": False,
                         "adasum": False,
                         "grad_accumulation": False,
-                        "dim_reduce": False
+                        "dim_reduce": False,
+                        "loss_scale_group": False
                     },
                     "common": {
                         "gradient_split_groups": [50, 100],
@@ -108,6 +113,7 @@ class AutoBoost:
               - adasum (bool): Whether to apply adasum function. Default: False.
               - grad_accumulation (bool): Whether to apply grad_accumulation function. Default: False.
               - dim_reduce (bool): Whether to apply dim_reduce function. Default: False.
+              - loss_scale_group (bool): Whether to apply loss_scale_group function. Default: False.
 
               If set dim_reduce true, other functions will be false.
               If set grad_freeze true and dim_reduce false, other functions will be false.
