@@ -177,11 +177,11 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
     MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
 
     if (!CheckGLContext()) {
-      MS_LOG(ERROR) << "GL Context error";
+      MS_LOG(ERROR) << "GL Context error, please check glcontext config";
       return RET_ERROR;
     }
     if (!CheckGLDisplay()) {
-      MS_LOG(ERROR) << "GL Display error";
+      MS_LOG(ERROR) << "GL Display error, please check gldisplay config";
       return RET_ERROR;
     }
 

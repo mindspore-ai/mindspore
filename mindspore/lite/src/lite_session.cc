@@ -1479,6 +1479,10 @@ int LiteSession::InitGPURuntime() {
     opencl_runtime->SetGLContext(gpu_device_info.gl_context_);
     opencl_runtime->SetGLDisplay(gpu_device_info.gl_display_);
     if (opencl_runtime->Init() != RET_OK) {
+      if (gpu_device_info.enable_gl_texture_) {
+        MS_LOG(ERROR) << "Init OpenCL runtime failed, enable_gl_texture set true, only support GPU mode.";
+        return RET_ERROR;
+      }
       this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
       MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
     } else {
