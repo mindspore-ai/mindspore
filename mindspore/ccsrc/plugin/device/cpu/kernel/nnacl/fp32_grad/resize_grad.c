@@ -42,8 +42,8 @@ int ResizeNearestNeighborGrad(const float *in_addr, float *out_addr, int batch_s
           out_addr[out_offset] += in_addr[in_offset];
         }
       }
-      out_addr += out_hw_size * channel;
-      in_addr += in_hw_size * channel;
+      out_addr += out_hw_size * (size_t)channel;
+      in_addr += in_hw_size * (size_t)channel;
     }
   } else if (format == Format_NCHW) {
     for (int32_t b = 0; b < batch_size; ++b) {
@@ -105,8 +105,8 @@ int ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, in
           out_addr[out_offset_bottom_y_right_x] += in_addr[in_offset] * (float)(y_lerp * x_lerp);
         }
       }
-      out_addr += out_hw_size * channel;
-      in_addr += in_hw_size * channel;
+      out_addr += out_hw_size * (size_t)channel;
+      in_addr += in_hw_size * (size_t)channel;
     }
   } else if (format == Format_NCHW) {
     size_t in_height = param->in_height_;
@@ -116,8 +116,8 @@ int ResizeBiLinearGrad(const float *in_addr, float *out_addr, int batch_size, in
     out_hw_size = out_height * out_width;
     in_hw_size = in_height * in_width;
 
-    for (size_t b = 0; b < batch_size; ++b) {
-      for (size_t c = 0; c < channel; ++c) {
+    for (int32_t b = 0; b < batch_size; ++b) {
+      for (size_t c = 0; c < (size_t)channel; ++c) {
         for (size_t h = 0; h < in_height; ++h) {
           const float in_y = (float)(h)*param->height_scale_;
           const size_t top_y_index = MSMAX((size_t)floorf(in_y), 0);

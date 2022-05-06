@@ -77,7 +77,7 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   int in_shape0[MAX_SHAPE_SIZE] = {0};
   int in_shape1[MAX_SHAPE_SIZE] = {0};
   int output_shape[MAX_SHAPE_SIZE] = {0};
-  int ndim = input_shape0_size;
+  int ndim = (int)input_shape0_size;
   bool has_broad_cast = false;
   if (BroadCastInferShape(input_shape0_size, input_shape1_size, input_shape0, input_shape1, &ndim, in_shape0, in_shape1,
                           output_shape, &has_broad_cast) != NNACL_OK) {
@@ -87,7 +87,7 @@ int ArithmeticInferShape(const TensorC *const *inputs, size_t inputs_size, Tenso
   SetShapeArray(output, output_shape, ndim);
 
   param->broadcasting_ = has_broad_cast;
-  param->ndim_ = ndim;
+  param->ndim_ = (size_t)ndim;
   if (ndim > MAX_SHAPE_SIZE) {
     return NNACL_ERR;
   }

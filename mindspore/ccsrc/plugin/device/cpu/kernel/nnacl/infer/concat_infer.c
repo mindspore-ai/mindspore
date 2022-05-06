@@ -48,7 +48,7 @@ int ConcatInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
 
   ConcatParameter *param = (ConcatParameter *)parameter;
   int axis = param->axis_ < 0 ? param->axis_ + (int)input0_shape_size : param->axis_;
-  if (axis < 0 || axis >= input0_shape_size) {
+  if (axis < 0 || axis >= (int)input0_shape_size) {
     return NNACL_ERR;
   }
   if (input0_shape_size > MAX_SHAPE_SIZE) {

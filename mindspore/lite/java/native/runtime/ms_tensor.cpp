@@ -31,7 +31,11 @@ extern "C" JNIEXPORT jintArray JNICALL Java_com_mindspore_lite_MSTensor_getShape
   auto local_shape = ms_tensor_ptr->shape();
   auto shape_size = local_shape.size();
   jintArray shape = env->NewIntArray(shape_size);
-  auto *tmp = new jint[shape_size];
+  auto *tmp = new (std::nothrow) jint[shape_size];
+  if (tmp == nullptr) {
+    MS_LOGE("pointer from java is nullptr");
+    return env->NewIntArray(0);
+  }
   for (size_t i = 0; i < shape_size; i++) {
     tmp[i] = local_shape.at(i);
   }
@@ -271,7 +275,11 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_MSTensor_createTensor
     MS_LOGE("GetDirectBufferAddress return null");
     return false;
   }
-  char *tensor_data(new char[data_len]);
+  char *tensor_data(new (std::nothrow) char[data_len]);
+  if (tensor_data == nullptr) {
+    MS_LOGE("get null ptr");
+    return false;
+  }
   memcpy(tensor_data, p_data, data_len);
   int tensor_size = static_cast<jint>(data_len / sizeof(float));
   std::vector<int> shape = {tensor_size};
