@@ -3401,7 +3401,7 @@ test_case_other_ops = [
                                           [778.7322],
                                           [562.7321]]]).astype(np.float32))
                         ],
-        'skip': ['backward']}),
+        'desc_bprop': [Tensor(np.random.rand(4, 3, 7, 7).astype(np.float32))]}),
 ]
 
 test_case_quant_ops = [

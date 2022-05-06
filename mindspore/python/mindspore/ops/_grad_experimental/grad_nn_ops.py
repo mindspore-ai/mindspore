@@ -29,6 +29,8 @@ from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from ..operations.nn_ops import FractionalAvgPool
 from ..operations._grad_ops import FractionalAvgPoolGrad
 from ..operations.nn_ops import NthElement
+from ..operations.nn_ops import PSROIPooling
+from ..operations._grad_ops import PSROIPoolingGrad
 
 
 @bprop_getters.register(P.CTCLossV2)
@@ -161,5 +163,21 @@ def get_bprop_fractional_avg_pool(self):
     def bprop(x, out, dout):
         dx = fractional_avg_pool_grad(_create_tensor(x.shape), dout[0], out[1], out[2])
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(PSROIPooling)
+def get_bprop_p_s_r_o_i_pooling(self):
+    """Grad definition for `PSROIPooling` operation."""
+    spatial_scale = self.spatial_scale
+    group_size = self.group_size
+    output_dim = self.output_dim
+
+    def bprop(x, rois, out, dout):
+        shape = P.Shape()(x)
+        p_s_r_o_i_pooling_grad = PSROIPoolingGrad((shape[2:]), spatial_scale, group_size, output_dim)
+        dx = p_s_r_o_i_pooling_grad(dout, rois)
+        return (dx, zeros_like(rois))
 
     return bprop
