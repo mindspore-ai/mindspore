@@ -136,14 +136,14 @@ std::string KernelBuildInfo::ToString() const {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << TypeToShortString(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
+    output_buffer << "<" << TypeIdLabel(GetInputDeviceType(index)) << "x" << GetInputFormat(index) << ">";
   }
   output_buffer << ") -> (";
   for (size_t index = 0; index < GetOutputNum(); ++index) {
     if (index != 0) {
       output_buffer << ", ";
     }
-    output_buffer << "<" << TypeToShortString(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
+    output_buffer << "<" << TypeIdLabel(GetOutputDeviceType(index)) << "x" << GetOutputFormat(index) << ">";
   }
   output_buffer << ")";
   return output_buffer.str();

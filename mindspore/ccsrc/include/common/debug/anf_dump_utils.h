@@ -27,7 +27,6 @@
 
 namespace mindspore {
 COMMON_EXPORT std::string GetNodeFuncStr(const AnfNodePtr &nd);
-COMMON_EXPORT std::string TypeToShortString(const TypeId &typeId);
 COMMON_EXPORT std::string GetKernelNodeName(const AnfNodePtr &anf_node);
 
 class COMMON_EXPORT AnfDumpHandler {

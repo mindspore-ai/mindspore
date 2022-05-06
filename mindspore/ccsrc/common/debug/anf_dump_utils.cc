@@ -73,24 +73,6 @@ std::string GetNodeFuncStr(const AnfNodePtr &nd) {
   return GetAbstractFuncStr(abs_func);
 }
 
-std::string TypeToShortString(const TypeId &typeId) {
-  std::string label = TypeIdLabel(typeId);
-  std::string prefix = "kNumberType";
-  if (prefix.length() > label.length()) {
-    return label;
-  }
-  auto position = label.find(prefix);
-  // Position is 0 when label begins with prefix
-  if (position != 0) {
-    return label;
-  }
-  auto sub_position = position + prefix.length();
-  if (sub_position >= label.length()) {
-    return label;
-  }
-  return label.substr(sub_position);
-}
-
 std::string GetKernelNodeName(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::string kernel_name = anf_node->fullname_with_scope();

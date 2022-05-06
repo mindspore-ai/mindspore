@@ -85,7 +85,7 @@ static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t
 
 std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<size_t> &shape) {
   std::ostringstream buffer;
-  buffer << "<" << TypeToShortString(type);
+  buffer << "<" << TypeIdLabel(type);
   if (!fmt.empty()) {
     buffer << "x" << fmt << shape;
   }
