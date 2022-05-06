@@ -44,8 +44,8 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
     S *indices = GetDeviceAddress<S>(inputs, 1);
     T *updates = GetDeviceAddress<T>(inputs, 2);
     T *output = GetDeviceAddress<T>(outputs, 0);
-
-    ScatterFunc(scatter_functor_type_, inner_size_, indices_size_, indices, updates, input,
+    S size_limit = static_cast<S>(first_dim_size_);
+    ScatterFunc(scatter_functor_type_, size_limit, inner_size_, indices_size_, indices, updates, input,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice,
@@ -73,6 +73,10 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (input_shape.empty()) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the input can not be empty";
+    }
+    first_dim_size_ = input_shape[0];
     input_size_ = 1;
     inner_size_ = 1;
     for (size_t i = 1; i < input_shape.size(); i++) {
@@ -109,6 +113,7 @@ class ScatterFunctorKernelMod : public DeprecatedNativeGpuKernelMod {
 
  private:
   ScatterFunctorType scatter_functor_type_;
+  size_t first_dim_size_;
   size_t input_size_;
   size_t inner_size_;
   size_t indices_size_;
