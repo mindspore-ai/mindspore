@@ -235,7 +235,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   mindspore::Format format_;
   Category category_;
   std::atomic_int ref_count_ = {0};
-  size_t init_ref_count_ = 0;
+  int init_ref_count_ = 0;
   std::vector<LiteQuantParam> quant_params_;
   std::vector<float> quant_clusters_;
   AllocatorPtr allocator_ = nullptr;

@@ -182,7 +182,7 @@ STATUS WeightDecoder::SparseDecompress(const SchemaTensorWrapper &src_tensor, Te
   MS_CHECK_TRUE_MSG((*src_tensor.handler()->quantParams()).size() > 0, RET_ERROR,
                     "quant params size need bigger than 0");
   MS_CHECK_TRUE_MSG(src_tensor.handler()->quantParams()->Get(0) != nullptr, RET_ERROR, "quant param is nullptr");
-  size_t bit_num = src_tensor.handler()->quantParams()->Get(0)->numBits();
+  size_t bit_num = static_cast<size_t>(src_tensor.handler()->quantParams()->Get(0)->numBits());
 
   std::string str(reinterpret_cast<const char *>(src_tensor.data()), src_tensor.length());
   auto bit_vec = StringToBitVector(str);
@@ -317,7 +317,7 @@ STATUS WeightDecoder::IndexingDecompress(const SchemaTensorWrapper &src_tensor, 
   // parse index
   std::vector<size_t> unique_value_index_vec;
   auto elem_cnt = dst_tensor->ElementsNum();
-  size_t unique_value_bit = ceil(log2(unique_value_cnt));
+  size_t unique_value_bit = static_cast<size_t>(ceil(log2(unique_value_cnt)));
   for (int i = 0; i < elem_cnt; i++) {
     size_t unique_value_index = 0;
     for (size_t j = 0; j < unique_value_bit; j++) {
@@ -371,8 +371,8 @@ int WeightDecoder::DequantTensor(Tensor *tensor, int preferred_dim, TypeId dst_d
 
 int WeightDecoder::GetMatMulPreferredDim(const OpParameter *op_parameter, int input_index,
                                          const std::vector<int> &dims) {
-  int last_first_index = dims.size() - 1;
-  int last_second_index = dims.size() - 2;
+  int last_first_index = static_cast<int>(dims.size()) - 1;
+  int last_second_index = static_cast<int>(dims.size()) - 2;
   auto matmul_parameter = reinterpret_cast<const MatMulParameter *>(op_parameter);
   MS_ASSERT(matmul_parameter != nullptr);
   // For MatMul A
@@ -423,11 +423,11 @@ bool WeightDecoder::IsChannelFirst(int index, const OpParameter *op_parameter) {
 int WeightDecoder::GetDataIndex(const std::vector<int> &dims, int preferred_dim, int bucket_index,
                                 int bucket_in_index) {
   int stride_a = 1;
-  for (size_t i = preferred_dim; i < dims.size(); i++) {
+  for (size_t i = static_cast<size_t>(preferred_dim); i < dims.size(); i++) {
     stride_a *= dims[i];
   }
   int stride_b = 1;
-  for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
+  for (size_t i = static_cast<size_t>(preferred_dim) + 1; i < dims.size(); i++) {
     stride_b *= dims[i];
   }
   MS_ASSERT(stride_b > 0);

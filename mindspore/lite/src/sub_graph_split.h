@@ -146,8 +146,8 @@ class SearchSubGraph {
   std::vector<Model::Node *> node_list_;
   DeviceType major_dt_;
   DeviceType minor_dt_;
-  size_t major_thread_;
-  size_t minor_thread_;
+  size_t major_thread_ = 1;
+  size_t minor_thread_ = 1;
   size_t total_cost_ = 0;
   bool offline_parallel_enable_ = false;
 };
