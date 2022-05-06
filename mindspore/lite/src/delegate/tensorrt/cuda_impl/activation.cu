@@ -34,8 +34,8 @@ __global__ void GeluKernel(const T *input_addr, T *output_addr, int size) {
   // y = sqrt(2/pi) * (x + 0.044715 * x^3)
   for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     float x = input_addr[pos];
-    float tanh_res = tanh(0.7978845608 * (x + 0.044715 * x * x * x));
-    output_addr[pos] = 0.5 * x * (1.0 + tanh_res);
+    float tanh_res = tanh(0.7978845608f * (x + 0.044715f * x * x * x));
+    output_addr[pos] = 0.5f * x * (1.0f + tanh_res);
   }
 }
 
