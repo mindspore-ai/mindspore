@@ -146,7 +146,6 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   LOAD_OPENCL_FUNCTION_PTR(clReleaseDevice);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage);
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueFillImage);
-  LOAD_OPENCL_FUNCTION_PTR(clCreateFromGLTexture);
 #endif
 #if CL_TARGET_OPENCL_VERSION >= 200
   LOAD_OPENCL_FUNCTION_PTR(clCreateCommandQueueWithProperties);
