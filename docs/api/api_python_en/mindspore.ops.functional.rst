@@ -253,6 +253,7 @@ Array Operation
     mindspore.ops.size
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_div
+    mindspore.ops.space_to_batch_nd
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unique
@@ -308,6 +309,7 @@ Parameter Operation Oprators
     mindspore.ops.assign
     mindspore.ops.assign_add
     mindspore.ops.assign_sub
+    mindspore.ops.index_add
 
 .. list-table::
    :widths: 50 50

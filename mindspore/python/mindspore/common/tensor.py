@@ -1058,10 +1058,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
@@ -2198,6 +2198,48 @@ class Tensor(Tensor_):
             i = tensor_operator_registry.get('select')(mask, i, mid)
             j = tensor_operator_registry.get('select')(mask, mid, j)
         return j
+
+    def space_to_batch_nd(self, block_shape, paddings):
+        r"""
+        Divides spatial dimensions into blocks and combines the block size with the original batch.
+
+        Args:
+            block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+                than 1.
+            paddings (Union[tuple, list]): The padding values for spatial dimensions, containing 2 subtraction list.
+
+        Inputs:
+            - **input_x** (Tensor) - The input tensor. It must be a 4-D tensor on Ascend.
+
+        Outputs:
+            Tensor, the output tensor with the same data type as input.
+
+        Raises:
+            TypeError: If `block_shape` is not one of list, tuple, int.
+            TypeError: If `paddings` is neither list nor tuple.
+            ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
+            ValueError: If the length of `block_shape` is not 2 on Ascend.
+            ValueError: If shape of `paddings` is not (2, M), where M is the length of `block_shape`.
+            ValueError: If the element of `block_shape` is not an integer larger than 1.
+            ValueError: If the element of `paddings` is not an integer larger than 0.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> block_shape = [2, 2]
+        >>> paddings = [[0, 0], [0, 0]]
+        >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
+        >>> output = input_x.space_to_batch_nd(block_shape, paddings)
+        >>> print(output)
+        [[[[1.]]]
+         [[[2.]]]
+         [[[3.]]]
+         [[[4.]]]]
+        """
+        return tensor_operator_registry.get('space_to_batch_nd')(block_shape, paddings)(self)
 
     def var(self, axis=None, ddof=0, keepdims=False):
         """
