@@ -124,7 +124,7 @@ class MS_API Kernel {
   }
   /// \brief set kernel's config.
   ///
-  /// \param[in] config define the kernel's config.
+  /// \param[in] section define the section of the kernel's config.
   std::map<std::string, std::string> GetConfig(const std::string &section) const {
     if (config_ == nullptr) {
       return std::map<std::string, std::string>();

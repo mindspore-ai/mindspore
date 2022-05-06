@@ -96,6 +96,7 @@ class MS_API NodeParser {
   /// \brief Method to parse node of TFLITE
   ///
   /// \param[in] tflite_op Define the node to be resolved.
+  /// \param[in] tflite_subgraph Define the subgraph to be resolved.
   /// \param[in] tflite_model Define the model, which contains all information abort the graph.
   ///
   /// \return PrimitiveC Attribute storage.
