@@ -1506,7 +1506,7 @@ class Tensor(Tensor_):
             [ 0.4  0.5 -3.2]]
         """
         self._init_check()
-        return tensor_operator_registry.get('tensor_scatter_add')()(self, indices, updates)
+        return tensor_operator_registry.get("tensor_scatter_add")()(self, indices, updates)
 
     def fill(self, value):
         """
@@ -2726,7 +2726,7 @@ class COOTensor(COOTensor_):
             ``GPU``
         """
         zeros_tensor = tensor_operator_registry.get("zeros")(self.shape, self.values.dtype)
-        return tensor_operator_registry.get("tensor_scatter_add")(
+        return tensor_operator_registry.get("tensor_scatter_add")()(
             zeros_tensor, self.indices, self.values)
 
     @property
