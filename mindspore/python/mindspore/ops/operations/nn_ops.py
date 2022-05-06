@@ -35,7 +35,7 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
     """
 
     def _raise_message():
-        raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of two "
+        raise ValueError(f"For '{prim_name}' attr '{arg_name}' must be an positive int number or a tuple of two "
                          f"{'or four ' if allow_four else ''}positive int numbers, but got {arg_value}")
 
     def _get_return_value():
@@ -66,7 +66,7 @@ def _check_shape(arg_name, arg_value, prim_name):
     """
 
     def _raise_message():
-        raise ValueError(f"For '{prim_name}' attr '{arg_name}' dims elements should be positive int numbers, "
+        raise ValueError(f"For '{prim_name}' attr '{arg_name}' dims elements must be positive int numbers, "
                          f"but got {arg_value}")
 
     validator.check_value_type(arg_name, arg_value, (list, tuple), prim_name)
@@ -270,7 +270,7 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         if len(x_shape) <= len(self.output_size):
-            raise ValueError("input_x {} dimension should be larger than output_size {} "
+            raise ValueError("input_x {} dimension must be larger than output_size {} "
                              "dimension".format(x_shape, self.output_size))
         validator.check_int(len(x_shape), 5, Rel.LT, 'input_x_dimensions', self.name)
         for input_x_dimension in x_shape:
@@ -1365,13 +1365,13 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
         if self.stride[0] != self.stride[1]:
-            raise ValueError("The height and width of 'stride' should be equal,"
+            raise ValueError("The height and width of 'stride' must be equal,"
                              f"but got height:{self.stride[0]},  width:{self.stride[1]}")
         self.add_prim_attr('stride', (1, 1, self.stride[0], self.stride[1]))
 
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name)
         if self.dilation[0] != self.dilation[1]:
-            raise ValueError("The height and width of 'dilation' should be equal,"
+            raise ValueError("The height and width of 'dilation' must be equal,"
                              f"but got height:{self.dilation[0]},  width:{self.dilation[1]}")
         self.add_prim_attr('dilation', (1, 1, self.dilation[0], self.dilation[1]))
         validator.check_value_type('pad', pad, (int, tuple), self.name)
@@ -1405,7 +1405,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
         _, _, stride_h, stride_w = self.stride
         _, _, dilation_h, dilation_w = self.dilation
         if kernel_size_n != 1:
-            raise ValueError(f"For '{self.name}', the batch of 'weight' should be 1, but got {kernel_size_n}")
+            raise ValueError(f"For '{self.name}', the batch of 'weight' must be 1, but got {kernel_size_n}")
         if self.pad_mode == "valid":
             h_out = math.ceil((x_shape[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
             w_out = math.ceil((x_shape[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
@@ -1775,7 +1775,7 @@ class MaxPool3D(PrimitiveWithInfer):
         if len(self.pad_list) == 3:
             self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[2])
         if len(self.pad_list) != 3 and len(self.pad_list) != 6:
-            raise ValueError(f"For '{self.name}', attr 'pad_list' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad_list' must be an positive int number or a tuple of "
                              f"three or six positive int numbers, but got {len(self.pad_list)} numbers.")
         if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
             raise ValueError(f"For '{self.name}', the 'pad_list' must be zero or (0, 0, 0, 0, 0, 0) when 'pad_mode' "
@@ -3238,7 +3238,7 @@ class ResizeBilinear(PrimitiveWithInfer):
         self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
                                                              half_pixel_centers, [bool], self.name)
         if half_pixel_centers and align_corners:
-            raise ValueError(f"If half_pixel_centers is True, align_corners should be False, but got {align_corners}")
+            raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
         target = context.get_context("device_target")
         if half_pixel_centers and target.lower() != "ascend":
             raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend device_target, "
@@ -3566,10 +3566,10 @@ class PReLU(PrimitiveWithInfer):
 
         weight_dim = len(weight_shape)
         if weight_dim != 1:
-            raise ValueError(f"For '{self.name}', the dimension of 'weight' should be 1, while got {weight_dim}.")
+            raise ValueError(f"For '{self.name}', the dimension of 'weight' must be 1, while got {weight_dim}.")
         if weight_shape[0] != 1 and weight_shape[0] != channel_num:
-            raise ValueError(f"For '{self.name}', the first dimension of 'weight' should be (1,) or "
-                             f"it should be equal to number of channels: {channel_num}, but got {weight_shape}")
+            raise ValueError(f"For '{self.name}', the first dimension of 'weight' must be (1,) or "
+                             f"it must be equal to number of channels: {channel_num}, but got {weight_shape}")
         return input_x_shape
 
     def infer_dtype(self, input_x_dtype, weight_dtype):
@@ -3990,7 +3990,7 @@ class MirrorPad(PrimitiveWithInfer):
         validator.check_subclass("paddings", paddings['dtype'], mstype.tensor, self.name)
         x_shape = list(input_x['shape'])
         if paddings['value'] is None:
-            raise ValueError(f"For '{self.name}', paddings should be a Tensor with type of int64, "
+            raise ValueError(f"For '{self.name}', paddings must be a Tensor with type of int64, "
                              f"but got {paddings['value']}.")
         paddings_value = paddings['value'].asnumpy()
         paddings_size = paddings_value.size
@@ -4615,7 +4615,7 @@ class FusedSparseAdam(PrimitiveWithInfer):
         validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         if len(var_shape) > 1 and grad_shape != indices_shape + var_shape[1:]:
-            raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
+            raise ValueError(f"For '{self.name}', the shape of updates must be [] or "
                              f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
                              f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
         return var_shape, [1], [1]
@@ -4766,7 +4766,7 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
         validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
         validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
         if len(var_shape) > 1 and grad_shape != indices_shape + var_shape[1:]:
-            raise ValueError(f"For '{self.name}', the shape of updates should be [] or "
+            raise ValueError(f"For '{self.name}', the shape of updates must be [] or "
                              f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
                              f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
         return var_shape, [1], [1]
@@ -7104,14 +7104,14 @@ class DynamicRNN(PrimitiveWithInfer):
         validator.check_int(len(h_shape), 3, Rel.EQ, "h_shape", self.name)
         validator.check_int(len(c_shape), 3, Rel.EQ, "c_shape", self.name)
         if seq_shape is not None:
-            raise ValueError(f"For '{self.name}', the 'seq_length' should be None.")
+            raise ValueError(f"For '{self.name}', the 'seq_length' must be None.")
 
         num_step, batch_size, input_size = x_shape
         hidden_size = w_shape[-1] // 4
 
         validator.check("b_shape[-1]", b_shape[-1], "w_shape[-1]", w_shape[-1], Rel.EQ, self.name)
         if w_shape[-1] % 4 != 0:
-            raise ValueError(f"For '{self.name}', the last dimension of 'w' should be a multiple of 4, "
+            raise ValueError(f"For '{self.name}', the last dimension of 'w' must be a multiple of 4, "
                              f"but got {w_shape[-1]}.")
         validator.check("w_shape[0]", w_shape[0], "input_size + hidden_size",
                         input_size + hidden_size, Rel.EQ, self.name)
@@ -7273,7 +7273,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
         num_step, batch_size, input_size = x_shape
         hidden_size = winput_shape[-1] // 3
         if winput_shape[-1] % 3 != 0:
-            raise ValueError(f"For '{self.name}', the last dimension of 'w' should be a multiple of 3, "
+            raise ValueError(f"For '{self.name}', the last dimension of 'w' must be a multiple of 3, "
                              f"but got {winput_shape[-1]}.")
 
         self.placeholder_index = [3, 4, 5]
@@ -7287,7 +7287,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
                             "3 * hidden_shape", [3 * hidden_size], Rel.EQ, self.name)
             self.placeholder_index.remove(4)
         if seq_shape is not None:
-            raise ValueError(f"For '{self.name}', the dimension of 'seq_length' should be None, "
+            raise ValueError(f"For '{self.name}', the dimension of 'seq_length' must be None, "
                              f"but got {seq_shape}.")
 
         validator.check_int(len(h_shape), 2, Rel.EQ, "init_h shape rank", self.name)
@@ -7533,7 +7533,7 @@ class AvgPool3D(Primitive):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad' must be an positive int number or a tuple of "
                              f"six positive int numbers, but got {self.pad}.")
         self.pad_list = pad
         self.add_prim_attr('pad_list', self.pad_list)
@@ -7678,7 +7678,7 @@ class Conv3D(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad' must be an positive int number or a tuple of "
                              f"six positive int numbers, but got {self.pad}.")
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
@@ -8279,7 +8279,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         if len(pad) != 6:
-            raise ValueError(f"For '{self.name}', attr 'pad' should be an positive int number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'pad' must be an positive int number or a tuple of "
                              f"six positive int numbers, but got {self.pad}.")
         self.pad_list = pad
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
@@ -9160,7 +9160,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         if isinstance(self.ksize, float):
             self.ksize = (ksize, ksize, ksize)
         if len(self.ksize) != 3:
-            raise ValueError(f"For '{self.name}', attr 'ksize' should be an positive float number or a tuple of "
+            raise ValueError(f"For '{self.name}', attr 'ksize' must be an positive float number or a tuple of "
                              f"three float numbers, but got {len(self.ksize)} numbers.")
         for item in self.ksize:
             validator.check_positive_float(item, 'ksize item', self.name)

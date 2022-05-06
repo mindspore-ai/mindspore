@@ -54,11 +54,11 @@ class VAE(Cell):
         self.encoder = encoder
         self.decoder = decoder
         if (not isinstance(encoder, Cell)) or (not isinstance(decoder, Cell)):
-            raise TypeError('The encoder and decoder should be Cell type.')
+            raise TypeError('The encoder and decoder must be Cell type.')
         self.hidden_size = Validator.check_positive_int(hidden_size)
         self.latent_size = Validator.check_positive_int(latent_size)
         if hidden_size < latent_size:
-            raise ValueError('The latent_size should be less than or equal to the hidden_size.')
+            raise ValueError('The latent_size must be less than or equal to the hidden_size.')
         self.normal = C.normal
         self.exp = P.Exp()
         self.reshape = P.Reshape()
@@ -99,7 +99,7 @@ class VAE(Cell):
         """
         generate_nums = Validator.check_positive_int(generate_nums)
         if not isinstance(shape, tuple) or len(shape) != 4 or (shape[0] != -1 and shape[0] != generate_nums):
-            raise ValueError('The shape should be (generate_nums, C, H, W) or (-1, C, H, W).')
+            raise ValueError('The shape must be (generate_nums, C, H, W) or (-1, C, H, W).')
         sample_z = self.normal((generate_nums, self.latent_size), self.to_tensor(0.0), self.to_tensor(1.0), seed=0)
         sample = self._decode(sample_z)
         sample = self.reshape(sample, shape)

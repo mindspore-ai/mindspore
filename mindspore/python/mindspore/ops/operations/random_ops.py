@@ -635,7 +635,7 @@ class RandomCategorical(PrimitiveWithInfer):
         Validator.check_positive_int(num_samples_v, "num_samples", self.name)
         x_shape = list(logits['shape'])
         if len(x_shape) != 2:
-            raise ValueError(f"For '{self.name}', the shape of 'logits' should be 2-dimension, "
+            raise ValueError(f"For '{self.name}', the shape of 'logits' must be 2-dimension, "
                              f"but got {len(x_shape)}.")
         ndim = len(x_shape) - 1
         x_shape[ndim] = num_samples_v

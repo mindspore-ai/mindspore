@@ -80,7 +80,7 @@ class SparseToDense(PrimitiveWithInfer):
                 raise ValueError(f"For '{self.name}', all elements in 'sparse_shape' must be "
                                  f"positive int number, but got 'sparse_shape': {sparse_shape_v}.")
         if len(sparse_shape_v) != indices_shape[1]:
-            raise ValueError(f"For '{self.name}', the length of 'sparse_shape' should be equal to the second dimension "
+            raise ValueError(f"For '{self.name}', the length of 'sparse_shape' must be equal to the second dimension "
                              f"length of 'indices', but got the second dimension length of 'indices': "
                              f"{indices_shape[1]}, length of 'sparse_shape': {len(sparse_shape_v)}.")
         out = {'shape': sparse_shape['value'],
@@ -172,7 +172,7 @@ class SparseTensorDenseMatmul(PrimitiveWithInfer):
                                  f"positive int number, but got 'sparse_shape': {a_shape}.")
         if len(a_shape) != 2 or len(b_shape) != 2:
             raise ValueError(f"For '{self.name}', both the length of 'sparse_shape' and the tensor "
-                             f"rank of 'dense' should be equal to 2, but got the length of "
+                             f"rank of 'dense' must be equal to 2, but got the length of "
                              f"'sparse_shape': {len(a_shape)}, "
                              f"the tensor rank of 'dense': {len(b_shape)}.")
         if a_shape[1] != b_shape[0]:

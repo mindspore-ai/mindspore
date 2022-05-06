@@ -497,7 +497,7 @@ class _TrainPipelineWithLossScaleCell(TrainOneStepCell):
         self.clear_before_grad = P.NPUClearFloatStatus()
         self.reduce_sum = P.ReduceSum(keep_dims=False)
         if self.parallel_mode not in [ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL]:
-            raise ValueError(f"ParallelMode should be one of "
+            raise ValueError(f"ParallelMode must be one of "
                              f"[ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL], but found "
                              f"{self.parallel_mode}.")
         self.allreduce = P.AllReduce()

@@ -28,8 +28,8 @@ def _check_reshape_pos(reshape_pos, inputs_shape, outputs_shape, prim_name=None)
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if reshape_pos >= len(outputs_shape) or inputs_shape[reshape_pos] != outputs_shape[reshape_pos]:
         raise ValueError(f"{msg_prefix} 'reshape_with_axis' is invalid in the input and output. "
-                         f"The 'reshape_pos' should be less than the length of 'outputs_shape', and the "
-                         f"'inputs_shape[reshape_pos]' should be equal to 'outputs_shape[reshape_pos]', but got "
+                         f"The 'reshape_pos' must be less than the length of 'outputs_shape', and the "
+                         f"'inputs_shape[reshape_pos]' must be equal to 'outputs_shape[reshape_pos]', but got "
                          f"'reshape_pos': {reshape_pos}, 'inputs_shape': {inputs_shape}, 'outputs_shape': "
                          f"{outputs_shape}. You may try pass parameters without 'reshape_with_axis'.")
 
@@ -38,7 +38,7 @@ def _check_reshape_pos(reshape_pos, inputs_shape, outputs_shape, prim_name=None)
 def _check_expand_dims_axis(time_axis, ndim, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if time_axis > ndim:
-        raise ValueError(f"{msg_prefix} value of 'time_axis' should be in range of [{-ndim - 1}, {ndim}], "
+        raise ValueError(f"{msg_prefix} value of 'time_axis' must be in range of [{-ndim - 1}, {ndim}], "
                          f"but got {time_axis}.")
 
 
@@ -53,14 +53,14 @@ def _generate_perm(axis_a, axis_b, length):
 def _check_data(flag, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if not flag:
-        raise TypeError(f"{msg_prefix} inputs and outputs should be a Tensor.")
+        raise TypeError(f"{msg_prefix} inputs and outputs must be a Tensor.")
 
 
 @constexpr
 def _check_inputs_dim(shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if len(shape) < 3:
-        raise ValueError(f"{msg_prefix} inputs shape should be at least 3D, but got {len(shape)}.")
+        raise ValueError(f"{msg_prefix} inputs shape must be at least 3D, but got {len(shape)}.")
 
 
 class TimeDistributed(Cell):
@@ -104,7 +104,7 @@ class TimeDistributed(Cell):
     def __init__(self, layer, time_axis, reshape_with_axis=None):
         """Initialize TimeDistributed."""
         if not isinstance(layer, (Cell, Primitive)):
-            raise TypeError(f"For '{self.cls_name}', the 'layer' should be Cell or Primitive instance, "
+            raise TypeError(f"For '{self.cls_name}', the 'layer' must be Cell or Primitive instance, "
                             f"but got type: {type(layer).__name__}.")
         super(TimeDistributed, self).__init__()
         Validator.check_is_int(time_axis, "time_axis", self.cls_name)

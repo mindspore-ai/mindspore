@@ -52,7 +52,7 @@ class LossBase(Cell):
         super(LossBase, self).__init__()
 
         if reduction not in ('mean', 'sum', 'none'):
-            raise ValueError(f"For '{self.cls_name}', the 'reduction' should be in ['mean', 'sum', 'none'], "
+            raise ValueError(f"For '{self.cls_name}', the 'reduction' must be in ['mean', 'sum', 'none'], "
                              f"but got {reduction}.")
 
         self.average = True
@@ -175,7 +175,7 @@ class _Loss(LossBase):
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(F.typeof(input_data), mstype.tensor_type):
-        raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
                         f"but got '{F.typeof(input_data)}'")
 
 
@@ -720,9 +720,9 @@ def _check_ndim_multi(logits_dim, label_dim, prim_name=None):
     """Internal function, used to check whether the dimension of logits and label meets the requirements."""
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if logits_dim < 2:
-        raise ValueError(f"{msg_prefix} 'logits' dimension should be greater than 1, but got {logits_dim}.")
+        raise ValueError(f"{msg_prefix} 'logits' dimension must be greater than 1, but got {logits_dim}.")
     if label_dim < 2:
-        raise ValueError(f"{msg_prefix} 'labels' dimension should be greater than 1, but got {label_dim}.")
+        raise ValueError(f"{msg_prefix} 'labels' dimension must be greater than 1, but got {label_dim}.")
 
 
 @constexpr
@@ -730,7 +730,7 @@ def _check_weights(weight_shape, label_shape, prim_name=None):
     """Internal function, used to check whether the reduced shape meets the requirements."""
     msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
     if weight_shape != label_shape:
-        raise ValueError(f"{msg_prefix} weight_shape[0] should be equal to label_shape[1], "
+        raise ValueError(f"{msg_prefix} weight_shape[0] must be equal to label_shape[1], "
                          f"but got weight_shape[0]: {weight_shape} and label_shape[1]: {label_shape}.")
 
 
@@ -785,7 +785,7 @@ class MultiClassDiceLoss(LossBase):
         self.binarydiceloss = DiceLoss(smooth=1e-5)
         self.weights = weights if weights is None else validator.check_value_type("weights", weights, [Tensor])
         if isinstance(self.weights, Tensor) and self.weights.ndim != 2:
-            raise ValueError(f"For '{self.cls_name}', the dimension of 'weights' should be 2, "
+            raise ValueError(f"For '{self.cls_name}', the dimension of 'weights' must be 2, "
                              f"but got {self.weights.ndim}.")
         self.ignore_indiex = ignore_indiex if ignore_indiex is None else \
             validator.check_value_type("ignore_indiex", ignore_indiex, [int])
@@ -1335,10 +1335,10 @@ def _check_ndim(logits_nidm, labels_ndim, prime_name=None):
     '''Internal function, used to check whether the dimension of logits and labels meets the requirements.'''
     msg_prefix = f'For \'{prime_name}\', the' if prime_name else "The"
     if logits_nidm < 2 or logits_nidm > 4:
-        raise ValueError(f"{msg_prefix} dimensions of 'logits' should be in [2, 4], but got "
+        raise ValueError(f"{msg_prefix} dimensions of 'logits' must be in [2, 4], but got "
                          f"dimension of 'logits' {logits_nidm}.")
     if labels_ndim < 2 or labels_ndim > 4:
-        raise ValueError(f"{msg_prefix} dimensions of 'labels' should be in [2, 4], but got "
+        raise ValueError(f"{msg_prefix} dimensions of 'labels' must be in [2, 4], but got "
                          f"dimension of 'labels' {labels_ndim}.")
     if logits_nidm != labels_ndim:
         raise ValueError(f"{msg_prefix} dimensions of 'logits' and 'labels' must be equal, but got "
@@ -1420,10 +1420,10 @@ class FocalLoss(LossBase):
 
         self.gamma = validator.check_value_type("gamma", gamma, [float])
         if weight is not None and not isinstance(weight, Tensor):
-            raise TypeError(f"For '{self.cls_name}', the type of 'weight' should be a Tensor, "
+            raise TypeError(f"For '{self.cls_name}', the type of 'weight' must be a Tensor, "
                             f"but got {type(weight).__name__}.")
         if isinstance(weight, Tensor) and weight.ndim != 1:
-            raise ValueError(f"For '{self.cls_name}', the dimension of 'weight' should be 1, but got {weight.ndim}.")
+            raise ValueError(f"For '{self.cls_name}', the dimension of 'weight' must be 1, but got {weight.ndim}.")
         self.weight = weight
         self.expand_dims = P.ExpandDims()
         self.gather_d = P.GatherD()

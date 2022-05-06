@@ -89,7 +89,7 @@ def check_greater_equal_zero(value, name):
         value = value.data
     comp = np.less(value.asnumpy(), np.zeros(value.shape))
     if comp.any():
-        raise ValueError(f'{name} should be greater than ot equal to zero.')
+        raise ValueError(f'{name} must be greater than or equal to zero.')
 
 
 def check_greater_zero(value, name):
@@ -112,7 +112,7 @@ def check_greater_zero(value, name):
         value = value.data
     comp = np.less(np.zeros(value.shape), value.asnumpy())
     if not comp.all():
-        raise ValueError(f'{name} should be greater than zero.')
+        raise ValueError(f'{name} must be greater than zero.')
 
 
 def check_greater(a, b, name_a, name_b):
@@ -134,7 +134,7 @@ def check_greater(a, b, name_a, name_b):
         return
     comp = np.less(a.asnumpy(), b.asnumpy())
     if not comp.all():
-        raise ValueError(f'{name_a} should be less than {name_b}')
+        raise ValueError(f'{name_a} must be less than {name_b}')
 
 
 def check_prob(p):
@@ -155,10 +155,10 @@ def check_prob(p):
         p = p.data
     comp = np.less(np.zeros(p.shape), p.asnumpy())
     if not comp.all():
-        raise ValueError('Probabilities should be greater than zero')
+        raise ValueError('Probabilities must be greater than zero')
     comp = np.greater(np.ones(p.shape), p.asnumpy())
     if not comp.all():
-        raise ValueError('Probabilities should be less than one')
+        raise ValueError('Probabilities must be less than one')
 
 
 def check_sum_equal_one(probs):
@@ -232,8 +232,8 @@ def probs_to_logits(probs, is_binary=False):
 
 @constexpr
 def raise_none_error(name):
-    raise TypeError(f"the type {name} should be subclass of Tensor."
-                    f" It should not be None since it is not specified during initialization.")
+    raise TypeError(f"the type {name} must be subclass of Tensor."
+                    f" It can not be None since it is not specified during initialization.")
 
 
 @constexpr
@@ -250,7 +250,7 @@ def raise_broadcast_error(shape_a, shape_b):
 @constexpr
 def raise_not_impl_error(name):
     raise ValueError(
-        f"{name} function should be implemented for non-linear transformation")
+        f"{name} function must be implemented for non-linear transformation")
 
 
 @constexpr
@@ -262,7 +262,7 @@ def raise_not_implemented_util(func_name, obj, *args, **kwargs):
 @constexpr
 def raise_type_error(name, cur_type, required_type):
     raise TypeError(
-        f"For {name} , the type should be or be subclass of {required_type}, but got {cur_type}")
+        f"For {name} , the type must be or be subclass of {required_type}, but got {cur_type}")
 
 
 @constexpr
@@ -275,7 +275,7 @@ def raise_not_defined(func_name, obj, *args, **kwargs):
 def check_distribution_name(name, expected_name):
     if name is None:
         raise ValueError(
-            f"Input dist should be a constant which is not None.")
+            f"Input dist must be a constant which is not None.")
     if name != expected_name:
         raise ValueError(
             f"Expected dist input is {expected_name}, but got {name}.")
@@ -293,7 +293,7 @@ class CheckTuple(PrimitiveWithInfer):
     def __infer__(self, x, name):
         if not isinstance(x['dtype'], tuple):
             raise TypeError(
-                f"For {name['value']}, Input type should b a tuple.")
+                f"For {name['value']}, Input type must b a tuple.")
 
         out = {'shape': None,
                'dtype': None,
@@ -306,7 +306,7 @@ class CheckTuple(PrimitiveWithInfer):
             return x
         if context.get_context("mode") == 0:
             return x["value"]
-        raise TypeError(f"For {name}, input type should be a tuple.")
+        raise TypeError(f"For {name}, input type must be a tuple.")
 
 
 class CheckTensor(PrimitiveWithInfer):
@@ -334,7 +334,7 @@ class CheckTensor(PrimitiveWithInfer):
         if context.get_context("mode") == 0 or isinstance(x, Tensor):
             return x
         raise TypeError(
-            f"For {name}, input type should be a Tensor or Parameter.")
+            f"For {name}, input type must be a Tensor or Parameter.")
 
 
 def set_param_type(args, hint_type):

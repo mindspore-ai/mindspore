@@ -133,7 +133,7 @@ class HausdorffDistance(Metric):
             result = tuple(tup)
 
         if result is None:
-            raise ValueError(f"The sequence length should be {dim}, but got {len(tup)}.")
+            raise ValueError(f"The sequence length must be {dim}, but got {len(tup)}.")
 
         return result
 
@@ -192,7 +192,7 @@ class HausdorffDistance(Metric):
         if 0 <= self.percentile <= 100:
             return np.percentile(surface_distance, self.percentile)
 
-        raise ValueError(f"For 'HausdorffDistance', the value of the argument 'percentile' should be [0, 100], "
+        raise ValueError(f"For 'HausdorffDistance', the value of the argument 'percentile' must be [0, 100], "
                          f"but got {self.percentile}.")
 
     def _get_surface_distance(self, y_pred_edges, y_edges):
@@ -281,12 +281,12 @@ class HausdorffDistance(Metric):
                              f"but got {type(label_idx)}.")
 
         if label_idx not in y_pred and label_idx not in y:
-            raise ValueError("For 'HausdorffDistance.update', the label index (input[2]) should be in predicted "
+            raise ValueError("For 'HausdorffDistance.update', the label index (input[2]) must be in predicted "
                              "value (input[0]) or true value (input[1]), but {} is not.".format(label_idx))
 
         if y_pred.size == 0 or y_pred.shape != y.shape:
             raise ValueError(f"For 'HausdorffDistance.update', the size of predicted value (input[0]) and true value "
-                             f"(input[1]) should be greater than 0, in addition to that, predicted value and true "
+                             f"(input[1]) must be greater than 0, in addition to that, predicted value and true "
                              f"value should have the same shape, but got predicted value size: {y_pred.size}, shape: "
                              f"{y_pred.shape}, true value size: {y.size}, shape: {y.shape}.")
 

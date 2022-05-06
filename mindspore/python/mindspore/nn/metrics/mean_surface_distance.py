@@ -135,13 +135,13 @@ class MeanSurfaceDistance(Metric):
                              f"but got {type(label_idx)}.")
 
         if label_idx not in y_pred and label_idx not in y:
-            raise ValueError("For 'MeanSurfaceDistance.update', the label index (input[2]) should be in predicted "
+            raise ValueError("For 'MeanSurfaceDistance.update', the label index (input[2]) must be in predicted "
                              "value (input[0]) or true value (input[1]), but {} is not.".format(label_idx))
 
         if y_pred.size == 0 or y_pred.shape != y.shape:
             raise ValueError(f"For 'MeanSurfaceDistance.update', the size of predicted value (input[0]) and true "
-                             f"value (input[1]) should be greater than 0, in addition to that, predicted value and "
-                             f"true value should have the same shape, but got predicted value size: {y_pred.size}, "
+                             f"value (input[1]) must be greater than 0, in addition to that, predicted value and "
+                             f"true value must have the same shape, but got predicted value size: {y_pred.size}, "
                              f"shape: {y_pred.shape}, true value size: {y.size}, shape: {y.shape}.")
 
         if y_pred.dtype != bool:

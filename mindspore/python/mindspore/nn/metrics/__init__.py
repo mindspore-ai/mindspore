@@ -161,5 +161,5 @@ def get_metrics(metrics):
             out_metrics[name] = get_metric_fn(name)
         return out_metrics
 
-    raise TypeError("For 'get_metrics', the argument 'metrics' should be None, dict or set, "
+    raise TypeError("For 'get_metrics', the argument 'metrics' must be None, dict or set, "
                     "but got {}".format(metrics))

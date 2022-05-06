@@ -102,8 +102,8 @@ class DenseThor(Cell):
             if weight_init.dim() != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels:
                 raise ValueError(f"For '{self.cls_name}', weight init shape error. The dim of 'weight_init' should "
-                                 f"be equal to 2, and the first dim should be equal to 'out_channels', and the "
-                                 f"second dim should be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
+                                 f"be equal to 2, and the first dim must be equal to 'out_channels', and the "
+                                 f"second dim must be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
                                  f"'out_channels': {out_channels}, 'in_channels': {in_channels}.")
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
         self.bias = None
@@ -111,7 +111,7 @@ class DenseThor(Cell):
             if isinstance(bias_init, Tensor):
                 if bias_init.dim() != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError(f"For '{self.cls_name}', bias init shape error. The dim of 'bias_init' should "
-                                     f"be equal to 1, and the first dim should be equal to 'out_channels'. But got "
+                                     f"be equal to 1, and the first dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
             self.bias_add = P.BiasAdd()
@@ -254,21 +254,21 @@ class _ConvThor(Cell):
         if (not isinstance(kernel_size[0], int)) or (not isinstance(kernel_size[1], int)) or \
                 isinstance(kernel_size[0], bool) or isinstance(kernel_size[1], bool) or \
                 kernel_size[0] < 1 or kernel_size[1] < 1:
-            raise ValueError(f"For '{self.cls_name}', all elements in 'kernel_size' should be int or tuple and "
+            raise ValueError(f"For '{self.cls_name}', all elements in 'kernel_size' must be int or tuple and "
                              f"equal to or greater than 1, but got 'kernel_size': {kernel_size}.")
 
     def __validate_stride(self, stride):
         """validate stride."""
         if (not isinstance(stride[0], int)) or (not isinstance(stride[1], int)) or \
                 isinstance(stride[0], bool) or isinstance(stride[1], bool) or stride[0] < 1 or stride[1] < 1:
-            raise ValueError(f"For '{self.cls_name}', all elements in 'stride' should be int or tuple and "
+            raise ValueError(f"For '{self.cls_name}', all elements in 'stride' must be int or tuple and "
                              f"equal to or greater than 1, but got 'stride': {stride}.")
 
     def __validate_dilation(self, dilation):
         """validate dilation."""
         if (not isinstance(dilation[0], int)) or (not isinstance(dilation[1], int)) or \
                 isinstance(dilation[0], bool) or isinstance(dilation[1], bool) or dilation[0] < 1 or dilation[1] < 1:
-            raise ValueError(f"For '{self.cls_name}', all elements in 'dilation' should be int or tuple and "
+            raise ValueError(f"For '{self.cls_name}', all elements in 'dilation' must be int or tuple and "
                              f"equal to or greater than 1, but got 'dilation': {dilation}.")
 
 
@@ -737,7 +737,7 @@ class EmbeddingLookupThor(Cell):
         self.forward_unique = False
         self.dtype = mstype.float16
         if target not in ('CPU', 'DEVICE'):
-            raise ValueError(f"For '{self.cls_name}', the 'target' should be one of values in ('CPU', 'DEVICE'), "
+            raise ValueError(f"For '{self.cls_name}', the 'target' must be one of values in ('CPU', 'DEVICE'), "
                              f"but got {target}.")
         if not sparse and target == 'CPU':
             raise ValueError(f"For '{self.cls_name}', embedding_lookup must be sparse when 'target' is CPU, but got "
@@ -805,12 +805,12 @@ class EmbeddingLookupThor(Cell):
             self.embeddinglookup.shard(((1, 1), indices_strategy))
         else:
             if is_auto_parallel:
-                raise ValueError(f"For '{self.cls_name}', the 'slice_mode' should be one of values in "
+                raise ValueError(f"For '{self.cls_name}', the 'slice_mode' must be one of values in "
                                  f"['field_slice', 'table_row_slice', 'table_column_slice', 'batch_slice'], "
                                  f"but got 'slice_mode': {slice_mode}")
         if self.cache_enable and not enable_ps:
             if parallel_mode != ParallelMode.STAND_ALONE:
-                raise ValueError(f"For '{self.cls_name}', the 'parallel_mode' should be equal to "
+                raise ValueError(f"For '{self.cls_name}', the 'parallel_mode' must be equal to "
                                  f"'ParallelMode.STAND_ALONE', but got {parallel_mode}.")
             self._set_cache_enable()
         self.embedding_table.unique = self.forward_unique

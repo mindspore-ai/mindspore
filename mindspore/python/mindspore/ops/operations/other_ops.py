@@ -494,7 +494,7 @@ class CheckBprop(PrimitiveWithInfer):
         validator.check_value_type('grads', xshapes, (tuple,), tips)
         validator.check_value_type('params', yshapes, (tuple,), tips)
         if not len(xshapes) == len(yshapes):
-            raise ValueError(f"For {tips} the number of return values(gradients) should be equal to "
+            raise ValueError(f"For {tips} the number of return values(gradients) must be equal to "
                              f"the number of input arguments except 'out' and 'dout', "
                              f"which is:{len(yshapes)} but got {len(xshapes)}.")
         checking_range = len(yshapes)
@@ -514,7 +514,7 @@ class CheckBprop(PrimitiveWithInfer):
         validator.check_value_type('grads', xdtypes, (tuple,), tips)
         validator.check_value_type('params', ydtypes, (tuple,), tips)
         if not len(xdtypes) == len(ydtypes):
-            raise ValueError(f"For {tips}, the number of return values(gradients) should be equal to "
+            raise ValueError(f"For {tips}, the number of return values(gradients) must be equal to "
                              f"the number of input arguments except 'out' and 'dout', "
                              f"which is:{len(ydtypes)} but got {len(xdtypes)}.")
         checking_range = len(ydtypes)

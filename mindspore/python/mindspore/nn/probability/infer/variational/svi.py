@@ -43,10 +43,10 @@ class SVI:
         self.net_with_loss = net_with_loss
         self.loss_fn = getattr(net_with_loss, '_loss_fn')
         if not isinstance(self.loss_fn, ELBO):
-            raise TypeError('The loss function for variational inference should be ELBO.')
+            raise TypeError('The loss function for variational inference must be ELBO.')
         self.optimizer = optimizer
         if not isinstance(optimizer, Cell):
-            raise TypeError('The optimizer should be Cell type.')
+            raise TypeError('The optimizer must be Cell type.')
         self._loss = 0.0
 
     def run(self, train_dataset, epochs=10):

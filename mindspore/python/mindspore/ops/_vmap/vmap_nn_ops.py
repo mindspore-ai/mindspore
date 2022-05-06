@@ -52,7 +52,7 @@ def _get_bias_broadcast_shape(x_shape, bias_shape, bias_dim, data_format):
         # In the 'NHWC' data format ('BN**C' actually), the last dimension is channel axis.
         x_channel = x_shape[-1]
         if x_channel != bias_channel:
-            raise ValueError("For 'BiadAdd, bias_channel should be equal to x_channel, "
+            raise ValueError("For 'BiadAdd, bias_channel must be equal to x_channel, "
                              "but got date format: {}, got bias_channel: {}, "
                              "x_channel: {}.".format(data_format, bias_channel, x_channel))
         if bias_dim is None:
@@ -63,7 +63,7 @@ def _get_bias_broadcast_shape(x_shape, bias_shape, bias_dim, data_format):
         # In the 'NCHW' or 'NCDHW' data format ('BNC**' actually), the third dimension is channel axis.
         x_channel = x_shape[2]
         if x_channel != bias_channel:
-            raise ValueError("For 'BiadAdd, bias_channel should be equal to x_channel, but got date format: "
+            raise ValueError("For 'BiadAdd, bias_channel must be equal to x_channel, but got date format: "
                              "{}, got bias_channel: {}, x_channel: {}.".format(data_format, bias_channel, x_channel))
         bias_broadcast_shape = (bias_batch, 1, bias_channel)
         if x_rank == x_min_rank:

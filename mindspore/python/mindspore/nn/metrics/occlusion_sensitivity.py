@@ -115,13 +115,13 @@ class OcclusionSensitivity(Metric):
 
         if y_pred.shape[0] > 1:
             raise RuntimeError(f"For 'OcclusionSensitivity.update', the shape at index 0 of the predicted value "
-                               f"(input[1]) should be 1, but got {y_pred.shape[0]}.")
+                               f"(input[1]) must be 1, but got {y_pred.shape[0]}.")
 
         if isinstance(label, int):
             label = np.array([[label]], dtype=int)
         # If the label is a tensor, make sure  there's only 1 element
         elif np.prod(label.shape) != y_pred.shape[0]:
-            raise RuntimeError(f"For 'OcclusionSensitivity.update', the number of the label (input[2]) should be "
+            raise RuntimeError(f"For 'OcclusionSensitivity.update', the number of the label (input[2]) must be "
                                f"same as the batches, but got the label number {np.prod(label.shape)}, "
                                f"and batches {y_pred.shape[0]}.")
 
@@ -202,8 +202,8 @@ def _check_input_bounding_box(b_box, im_shape):
         b_box_min = b_box_max = None
     else:
         if len(b_box) != 2 * len(im_shape):
-            raise ValueError(f"For 'OcclusionSensitivity', the bounding box should contain upper and lower for "
-                             f"all dimensions (except batch number), and the length of 'b_box' should be twice "
+            raise ValueError(f"For 'OcclusionSensitivity', the bounding box must contain upper and lower for "
+                             f"all dimensions (except batch number), and the length of 'b_box' must be twice "
                              f"as long as predicted value's (except batch number), but got 'b_box' length "
                              f"{len(b_box)}, predicted value length (except batch number) {len(im_shape)}.")
 
@@ -212,10 +212,10 @@ def _check_input_bounding_box(b_box, im_shape):
         b_box_min[b_box_min < 0] = 0
         b_box_max[b_box_max < 0] = im_shape[b_box_max < 0] - 1
         if np.any(b_box_max >= im_shape):
-            raise ValueError("For 'OcclusionSensitivity', maximum bounding box should be smaller than image size "
+            raise ValueError("For 'OcclusionSensitivity', maximum bounding box must be smaller than image size "
                              "for all values.")
         if np.any(b_box_min > b_box_max):
-            raise ValueError("For 'OcclusionSensitivity', minimum bounding box should be smaller than maximum "
+            raise ValueError("For 'OcclusionSensitivity', minimum bounding box must be smaller than maximum "
                              "bounding box for all values.")
 
     return b_box_min, b_box_max

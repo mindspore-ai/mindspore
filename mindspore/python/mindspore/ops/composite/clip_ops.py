@@ -30,7 +30,7 @@ from mindspore.ops.primitive import constexpr
 def _check_output_shape(input_shape, out_shape, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if input_shape != out_shape:
-        raise ValueError(f"{msg_prefix} input 'x' shape should be equal to the output shape, but got "
+        raise ValueError(f"{msg_prefix} input 'x' shape must be equal to the output shape, but got "
                          f"input 'x' shape {input_shape}, output shape {out_shape}.")
 
 

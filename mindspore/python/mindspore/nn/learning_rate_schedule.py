@@ -318,7 +318,7 @@ class CosineDecayLR(LearningRateSchedule):
         validator.check_is_float(max_lr, 'max_lr', self.cls_name)
         validator.check_positive_int(decay_steps, "decay_steps", self.cls_name)
         if min_lr >= max_lr:
-            raise ValueError("For 'CosineDecayLR', the 'max_lr' should be greater than the 'min_lr', "
+            raise ValueError("For 'CosineDecayLR', the 'max_lr' must be greater than the 'min_lr', "
                              "but got 'max_lr' value: {}, 'min_lr' value: {}.".format(max_lr, min_lr))
         self.min_lr = min_lr
         self.max_lr = max_lr

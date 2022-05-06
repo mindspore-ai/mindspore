@@ -24,9 +24,9 @@ def _valid_index(cell_num, index, op_name=None):
     """Internal function, used to detect the value and type of index."""
     msg_prefix = f"For '{op_name}', the" if op_name else "The"
     if not isinstance(index, int):
-        raise TypeError(f"{msg_prefix} type of 'index' should be int, but got {type(index).__name__}.")
+        raise TypeError(f"{msg_prefix} type of 'index' must be int, but got {type(index).__name__}.")
     if not -cell_num <= index < cell_num:
-        raise IndexError(f"{msg_prefix} value of 'index' should be a number in range [{-cell_num}, {cell_num}), "
+        raise IndexError(f"{msg_prefix} value of 'index' must be a number in range [{-cell_num}, {cell_num}), "
                          f"but got {index}.")
     return index % cell_num
 
@@ -36,7 +36,7 @@ def _valid_cell(cell, op_name=None):
     if issubclass(cell.__class__, Cell):
         return True
     msg_prefix = f"For '{op_name}'," if op_name else ""
-    raise TypeError(f'{msg_prefix} each cell should be subclass of Cell, but got {type(cell).__name__}.')
+    raise TypeError(f'{msg_prefix} each cell must be subclass of Cell, but got {type(cell).__name__}.')
 
 
 def _get_prefix_and_index(cells):
@@ -215,7 +215,7 @@ class SequentialCell(Cell):
                 del self._cells[key]
             del self._is_dynamic_name[index]
         else:
-            raise TypeError(f"For '{cls_name}', the type of index should be int type or slice type, "
+            raise TypeError(f"For '{cls_name}', the type of index must be int type or slice type, "
                             f"but got {type(index).__name__}")
         prefix, key_index = _get_prefix_and_index(self._cells)
         temp_dict = OrderedDict()
@@ -316,13 +316,13 @@ class CellList(_CellListBase, Cell):
         if isinstance(index, int):
             index = _valid_index(len(self), index, cls_name)
             return self._cells[str(index)]
-        raise TypeError(f"For '{cls_name}', the type of 'index' should be int or slice, "
+        raise TypeError(f"For '{cls_name}', the type of 'index' must be int or slice, "
                         f"but got {type(index).__name__}.")
 
     def __setitem__(self, index, cell):
         cls_name = self.__class__.__name__
         if not isinstance(index, int) and _valid_cell(cell, cls_name):
-            raise TypeError(f"For '{cls_name}', the type of 'index' should be int, "
+            raise TypeError(f"For '{cls_name}', the type of 'index' must be int, "
                             f"but got {type(index).__name__}.")
         index = _valid_index(len(self), index, cls_name)
         if self._auto_prefix:
@@ -340,7 +340,7 @@ class CellList(_CellListBase, Cell):
             for key in keys:
                 del self._cells[key]
         else:
-            raise TypeError(f"For '{cls_name}', the type of 'index' should be int or slice, "
+            raise TypeError(f"For '{cls_name}', the type of 'index' must be int or slice, "
                             f"but got {type(index).__name__}.")
         # adjust orderedDict
         prefix, key_index = _get_prefix_and_index(self._cells)

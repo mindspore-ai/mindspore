@@ -1118,7 +1118,7 @@ class Split(PrimitiveWithCheck):
             # only validate when shape fully known
             output_valid_check = x_shape[self.axis] % self.output_num
             if output_valid_check != 0:
-                raise ValueError(f"For '{self.name}', the specified axis of 'input_x' should be divided exactly by "
+                raise ValueError(f"For '{self.name}', the specified axis of 'input_x' must be divided exactly by "
                                  f"'output_num', but got the shape of 'input_x' in 'axis' {self.axis} is "
                                  f"{x_shape[self.axis]}, 'output_num': {self.output_num}.")
         size_splits = [x_shape[self.axis] // self.output_num] * self.output_num
@@ -2092,7 +2092,7 @@ class Tile(PrimitiveWithInfer):
 
     def check_elim(self, base_tensor, multiplier):
         if not isinstance(base_tensor, Tensor):
-            raise TypeError(f"For '{self.name}', the type of 'input_x' should be Tensor, "
+            raise TypeError(f"For '{self.name}', the type of 'input_x' must be Tensor, "
                             f"but got {type(base_tensor).__name__}.")
         if all(v == 1 for v in multiplier) and len(base_tensor.shape) >= len(multiplier):
             ret = Identity()(base_tensor)
@@ -3710,7 +3710,7 @@ class StridedSlice(PrimitiveWithInfer):
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
                         raise IndexError(f"For '{self.name}', the 'strides[{i}]' cannot be negative number and "
-                                         f"'begin[{i}]' should be in [-{x_shape[i]}, {x_shape[i]}) "
+                                         f"'begin[{i}]' must be in [-{x_shape[i]}, {x_shape[i]}) "
                                          f"when 'shrink_axis_mask' is greater than 0, "
                                          f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, "
                                          f"'strides[{i}]': {stride}, 'begin[{i}]': {begin}.")
@@ -3745,8 +3745,8 @@ class StridedSlice(PrimitiveWithInfer):
                     continue
                 if j < len(shrink_axis_pos) and shrink_axis_pos[j] == '1':
                     if (not -x_shape[i] <= begin < x_shape[i]) or stride < 0:
-                        raise IndexError(f"For '{self.name}', the 'strides[{i}]' cannot be negative number and "
-                                         f"'begin[{i}]' should be in [-{x_shape[i]}, {x_shape[i]}) "
+                        raise IndexError(f"For '{self.name}', the 'strides[{i}]' can not be negative number and "
+                                         f"'begin[{i}]' must be in [-{x_shape[i]}, {x_shape[i]}) "
                                          f"when 'shrink_axis_mask' is greater than 0, "
                                          f"but got 'shrink_axis_mask': {self.shrink_axis_mask}, "
                                          f"'strides[{i}]': {stride}, 'begin[{i}]': {begin}.")
@@ -5543,7 +5543,7 @@ class SpaceToBatch(PrimitiveWithInfer):
             padded = out_shape[i + 2] + self.paddings[i][0] + self.paddings[i][1]
             if padded % self.block_size != 0:
                 msg_ndim = "2nd" if i + 2 == 2 else "3rd"
-                raise ValueError(f"For '{self.name}', the shape of the output tensor should be "
+                raise ValueError(f"For '{self.name}', the shape of the output tensor must be "
                                  f"divisible by 'block_size', but got the {msg_ndim} dimension of output: {padded} and "
                                  f"'block_size': {self.block_size}. Please check the official homepage "
                                  f"for more information about the output tensor.")
@@ -5748,7 +5748,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
                 self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
-                raise ValueError(f"For '{self.name}', the padded should be divisible by 'block_shape', "
+                raise ValueError(f"For '{self.name}', the padded must be divisible by 'block_shape', "
                                  f"where padded = input_x_shape[i + 2] + paddings[i][0] + paddings[i][1], "
                                  f"but got input_x_shape[{i + offset}]: {out_shape[i + offset]}, "
                                  f"paddings[{i}][0]: {self.paddings[i][0]} and paddings[{i}][1]: {self.paddings[i][1]}."
@@ -6663,7 +6663,7 @@ class SearchSorted(PrimitiveWithInfer):
 
     def infer_shape(self, sequence_shape, values_shape):
         if len(sequence_shape) != 1 and sequence_shape[:-1] != values_shape[:-1]:
-            raise ValueError(f"For '{self.name}', the 'sequence' should be 1 dimensional or "
+            raise ValueError(f"For '{self.name}', the 'sequence' must be 1 dimensional or "
                              f"all dimensions except the last dimension of 'sequence' "
                              f"must be the same as all dimensions except the last dimension of 'values'. "
                              f"but got shape of 'sequence': {sequence_shape} "

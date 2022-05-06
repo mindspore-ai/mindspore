@@ -66,14 +66,14 @@ class WithBNNLossCell(Cell):
     def __init__(self, backbone, loss_fn, dnn_factor=1, bnn_factor=1):
         super(WithBNNLossCell, self).__init__(auto_prefix=False)
         if isinstance(dnn_factor, bool) or not isinstance(dnn_factor, (int, float)):
-            raise TypeError('The type of `dnn_factor` should be `int` or `float`')
+            raise TypeError('The type of `dnn_factor` must be `int` or `float`')
         if dnn_factor < 0:
             raise ValueError('The value of `dnn_factor` should >= 0')
 
         if isinstance(bnn_factor, bool) or not isinstance(bnn_factor, (int, float)):
-            raise TypeError('The type of `bnn_factor` should be `int` or `float`')
+            raise TypeError('The type of `bnn_factor` must be `int` or `float`')
         if bnn_factor < 0:
-            raise ValueError('The value of `bnn_factor` should >= 0')
+            raise ValueError('The value of `bnn_factor` must >= 0')
 
         self._backbone = backbone
         self._loss_fn = loss_fn

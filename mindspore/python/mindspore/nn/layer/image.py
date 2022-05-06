@@ -117,7 +117,7 @@ def _get_dtype_max(dtype):
 @constexpr
 def _check_input_4d(input_shape, param_name, func_name):
     if len(input_shape) != 4:
-        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' should be 4d, "
+        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 4d, "
                          f"but got {len(input_shape)}.")
     return True
 
@@ -476,7 +476,7 @@ class PSNR(Cell):
 @constexpr
 def _raise_dims_rank_error(input_shape, param_name, func_name):
     """raise error if input is not 3d or 4d"""
-    raise ValueError(f"{func_name} {param_name} should be 3d or 4d, but got shape {input_shape}")
+    raise ValueError(f"{func_name} {param_name} must be 3d or 4d, but got shape {input_shape}")
 
 
 @constexpr

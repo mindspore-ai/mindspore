@@ -108,11 +108,11 @@ def _check_param(momentum, frequency, lr, cls_name):
     """Check param."""
     Validator.check_value_type("momentum", momentum, [float], cls_name)
     if isinstance(momentum, float) and momentum < 0.0:
-        raise ValueError("For 'thor', the argument 'momentum' should be at least 0.0, "
+        raise ValueError("For 'thor', the argument 'momentum' must be at least 0.0, "
                          "but got 'momentum' {}.".format(momentum))
     Validator.check_value_type("frequency", frequency, [int], cls_name)
     if isinstance(frequency, int) and frequency < 2:
-        raise ValueError("For 'thor', the argument 'frequency' should be at least 2, "
+        raise ValueError("For 'thor', the argument 'frequency' must be at least 2, "
                          "but got 'frequency' {}.".format(frequency))
     Validator.check_value_type("learning rate", lr, [Tensor], cls_name)
 

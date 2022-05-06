@@ -147,7 +147,7 @@ class Metric(metaclass=ABCMeta):
             0.3333333333333333
         """
         if not isinstance(indexes, list) or not all(isinstance(i, int) for i in indexes):
-            raise ValueError("For 'set_indexes', the argument 'indexes' should be a list and all its elements should "
+            raise ValueError("For 'set_indexes', the argument 'indexes' must be a list and all its elements must "
                              "be int, please check whether it is correct.")
         self._indexes = indexes
         return self

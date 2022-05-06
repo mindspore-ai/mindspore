@@ -25,7 +25,7 @@ def check_prior(prior_fn, arg_name):
         prior = prior_fn()
     for prior_name, prior_dist in prior.name_cells().items():
         if prior_name != 'normal':
-            raise TypeError(f"The type of distribution of `{arg_name}` should be `normal`")
+            raise TypeError(f"The type of distribution of `{arg_name}` must be `normal`")
         if not (isinstance(getattr(prior_dist, '_mean_value'), Tensor) and
                 isinstance(getattr(prior_dist, '_sd_value'), Tensor)):
             raise TypeError(f"The input form of `{arg_name}` is incorrect")
@@ -37,10 +37,10 @@ def check_posterior(posterior_fn, shape, param_name, arg_name):
     try:
         posterior = posterior_fn(shape=shape, name=param_name)
     except TypeError:
-        raise TypeError(f'The type of `{arg_name}` should be `NormalPosterior`')
+        raise TypeError(f'The type of `{arg_name}` must be `NormalPosterior`')
     finally:
         pass
     for posterior_name, _ in posterior.name_cells().items():
         if posterior_name != 'normal':
-            raise TypeError(f"The type of distribution of `{arg_name}` should be `normal`")
+            raise TypeError(f"The type of distribution of `{arg_name}` must be `normal`")
     return posterior

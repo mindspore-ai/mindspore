@@ -38,7 +38,7 @@ class _PoolNd(Cell):
 
         def _check_int_or_tuple(arg_name, arg_value):
             validator.check_value_type(arg_name, arg_value, [int, tuple], self.cls_name)
-            error_msg = f"For '{self.cls_name}', the '{arg_name}' should be an positive int number or " \
+            error_msg = f"For '{self.cls_name}', the '{arg_name}' must be an positive int number or " \
                         f"a tuple of two positive int numbers, but got {arg_value}"
             if isinstance(arg_value, int):
                 if arg_value <= 0:

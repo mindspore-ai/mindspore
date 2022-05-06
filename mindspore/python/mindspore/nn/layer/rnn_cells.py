@@ -37,7 +37,7 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.tensor_type):
-        raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
                         f"but got '{P.typeof(input_data)}'")
 
 
@@ -45,7 +45,7 @@ def _check_is_tensor(param_name, input_data, cls_name):
 def _check_is_tuple(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.Tuple):
-        raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.Tuple}', "
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.Tuple}', "
                         f"but got '{P.typeof(input_data)}'")
 
 
@@ -53,14 +53,14 @@ def _check_is_tuple(param_name, input_data, cls_name):
 def _check_tuple_length(param_name, input_data, length, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and len(input_data) != length:
-        raise TypeError(f"For '{cls_name}', the length of '{param_name}' should be '{length}', "
+        raise TypeError(f"For '{cls_name}', the length of '{param_name}' must be '{length}', "
                         f"but got '{len(input_data)}'")
 
 
 @constexpr
 def _check_batch_size_equal(batch_size_x, batch_size_hx, cls_name):
     if batch_size_x != batch_size_hx:
-        raise ValueError(f"For '{cls_name}' batch size of x and hx should be equal, but got {batch_size_x} of x "
+        raise ValueError(f"For '{cls_name}' batch size of x and hx must be equal, but got {batch_size_x} of x "
                          f"and {batch_size_hx} of hx.")
 
 

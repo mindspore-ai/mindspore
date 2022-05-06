@@ -108,10 +108,10 @@ class ExtractImagePatches(PrimitiveWithInfer):
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             validator.check_value_type(f"{arg_name}s", arg_val, [tuple, list], self.name)
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
-                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s should be [1, {arg_name}_row, "
+                raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s must be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
             if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s should be "
+                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[2]}, "
                                  f"{arg_name}_col is {arg_val[3]}")
 
@@ -126,7 +126,7 @@ class ExtractImagePatches(PrimitiveWithInfer):
     def infer_shape(self, input_x):
         """infer shape"""
         if len(input_x) != 4:
-            raise ValueError("The `input_x` should be a 4-D tensor, "
+            raise ValueError("The `input_x` must be a 4-D tensor, "
                              f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
 
         in_batch, in_depth, in_row, in_col = input_x
@@ -205,10 +205,10 @@ class Range(PrimitiveWithInfer):
         if self.delta == 0.0:
             raise ValueError("The input of `delta` can not be equal to zero.")
         if self.delta > 0.0 and self.start > self.limit:
-            raise ValueError(f"Limit should be greater than start when delta:{self.delta} is more than zero, "
+            raise ValueError(f"Limit must be greater than start when delta:{self.delta} is more than zero, "
                              f"but got start:{self.start}, limit:{self.limit}")
         if self.delta < 0.0 and self.start < self.limit:
-            raise ValueError(f"Start should be greater than limit when delta:{self.delta} is less than zero, "
+            raise ValueError(f"Start must be greater than limit when delta:{self.delta} is less than zero, "
                              f"but got start:{self.start}, limit:{self.limit}")
 
     def infer_shape(self, x_shape):
@@ -1775,7 +1775,7 @@ class ParallelResizeBilinear(PrimitiveWithInfer):
         x_dtype = x['dtype']
         validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32], self.name)
         if size_val is None:
-            raise ValueError("size should be const input")
+            raise ValueError("size must be const input")
         output_shape = [x_shape[0], x_shape[1], self.split_size[0], self.split_size[1]]
 
         return {'shape': output_shape,
@@ -1884,7 +1884,7 @@ class CellBackwardHook(PrimitiveWithInfer):
             TypeError: If the `hook_fn` is not a function of python.
         """
         if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' should be python "
+            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' must be python "
                             f"function, but got {type(hook_fn)}.")
         key = self.add_backward_hook_fn(hook_fn)
         return key
