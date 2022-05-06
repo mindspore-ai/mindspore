@@ -331,7 +331,7 @@ class CheckTensor(PrimitiveWithInfer):
     def __call__(self, x, name):
         # we skip this check in graph mode as it is checked in the infer stage
         # and in the graph mode x is None if x is not const in the graph
-        if context.get_context("mode") == 0 or isinstance(x, Tensor):
+        if x is None or isinstance(x, Tensor):
             return x
         raise TypeError(
             f"For {name}, input type should be a Tensor or Parameter.")

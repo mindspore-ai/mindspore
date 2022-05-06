@@ -70,6 +70,8 @@ class Distribution(Cell):
         self._seed = seed
         self._dtype = cast_type_for_device(dtype)
         self._parameters = {}
+        self.default_parameters = []
+        self.parameter_names = []
 
         # parsing parameters
         for k in param.keys():
@@ -103,7 +105,8 @@ class Distribution(Cell):
         def _check_tensor(x, name):
             CheckTensor()(x, name)
             return x
-        self.checktensor = _check_tensor
+        # we use constexpr to force CheckTensor to run only once in pynative mode
+        self.checktensor = CheckTensor() if self.context_mode == 0 else _check_tensor
         self.broadcast = broadcast_to
 
         # ops needed for the base class
@@ -161,8 +164,8 @@ class Distribution(Cell):
         # cast value to a tensor if it is not None
         value_t = None if value is None else cast_to_tensor(
             value, self.parameter_type)
-        self.default_parameters += [value_t,]
-        self.parameter_names += [name,]
+        self.default_parameters.append(value_t)
+        self.parameter_names.append(name)
         return value_t
 
     def _check_param_type(self, *args):
