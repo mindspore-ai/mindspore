@@ -33,6 +33,8 @@ int EraseQuotes(std::string *input_string);
 
 std::vector<std::string> SplitStringToVector(const std::string &raw_str, const char &delimiter);
 
+std::vector<std::string> SplitStringToVector(const std::string &raw_str, const std::string &delimiter);
+
 bool ConvertIntNum(const std::string &str, int *value);
 
 bool ConvertDoubleNum(const std::string &str, double *value);

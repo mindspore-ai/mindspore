@@ -69,6 +69,20 @@ std::vector<std::string> SplitStringToVector(const std::string &raw_str, const c
   return res;
 }
 
+std::vector<std::string> SplitStringToVector(const std::string &raw_str, const std::string &delimiter) {
+  size_t pos_start = 0, pos_end, delim_len = delimiter.length();
+  std::string token;
+  std::vector<std::string> res;
+
+  while ((pos_end = raw_str.find(delimiter, pos_start)) != std::string::npos) {
+    token = raw_str.substr(pos_start, pos_end - pos_start);
+    pos_start = pos_end + delim_len;
+    res.push_back(token);
+  }
+  res.push_back(raw_str.substr(pos_start));
+  return res;
+}
+
 bool ConvertIntNum(const std::string &str, int *value) {
   if (value == nullptr) {
     MS_LOG(ERROR) << "value is nullptr";

@@ -169,9 +169,8 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config,
     MS_LOG(ERROR) << "Parse lite model failed";
     return RET_ERROR;
   }
-  auto status = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters,
-                                               config->commonQuantParam.debug_info_save_path,
-                                               config->dataPreProcessParam, origin_lite_model, quant_lite_model);
+  auto status = manager.CompareOriginWithQuant(origin_model, quant_model, op_parameters, *config, *origin_lite_model,
+                                               *quant_lite_model);
   auto free_buffer = [&] {
     for (auto parameter : op_parameters) {
       if (parameter.second != nullptr) {

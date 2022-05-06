@@ -87,28 +87,28 @@ class DebugInfoManager {
  public:
   int CompareOriginWithQuant(const std::shared_ptr<mindspore::Model> &origin,
                              const std::shared_ptr<mindspore::Model> &quant,
-                             const std::map<std::string, OpParameter *> &op_parameters,
-                             const std::string &debug_info_save_path,
-                             const preprocess::DataPreProcessParam &data_preprocess,
-                             const mindspore::lite::Model *origin_lite_model,
-                             const mindspore::lite::Model *quant_lite_model);
+                             const std::map<std::string, OpParameter *> &op_parameters, const converter::Flags &config,
+                             const mindspore::lite::LiteModel &origin_lite_model,
+                             const mindspore::lite::LiteModel &quant_lite_model);
 
  private:
-  int AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, OpParameter *op_parameter, bool is_input,
-                    int tensor_index, mindspore::lite::Tensor *origin_tensor);
+  int AddOriginInfo(const mindspore::MSCallBackParam &call_back_param, bool is_input, int tensor_index,
+                    mindspore::lite::Tensor *origin_tensor, const quant::DebugMode &debug_mode);
 
   int AddComparedInfo(const mindspore::MSCallBackParam &call_back_param,
                       const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter, bool is_input,
-                      int tensor_index, mindspore::lite::Tensor *compared_tensor);
+                      int tensor_index, mindspore::lite::Tensor *compared_tensor, const quant::DebugMode &debug_mode);
 
   void PrintAllDebugInfo();
 
   int SaveInfo(const std::string &file_path);
 
-  int SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor);
+  int SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
+                          const quant::DebugMode &debug_mode);
 
   int SetQuantStaticInfo(const std::vector<mindspore::lite::Tensor *> &inputs, OpParameter *op_parameter,
-                         int tensor_index, QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor);
+                         int tensor_index, QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
+                         const quant::DebugMode &debug_mode);
 
   std::string ParseDataTypeFlagToString(DataTypeFlag data_type_flag);
 
@@ -120,25 +120,29 @@ class DebugInfoManager {
 
   void SaveInfo(std::ofstream &out_file, const QuantDebugInfo &info);
 
-  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const mindspore::lite::Model &model);
+  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const mindspore::lite::LiteModel &model);
 
   std::map<std::string, mindspore::schema::Tensor *> ParseOutputTensorFromModel(const Model &model);
 
   int GetDataFromTensorMap(const mindspore::schema::Tensor &schema_tensor, mindspore::lite::Tensor *dst_tensor);
 
   MSKernelCallBack GetBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                     const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
+                                     const std::map<std::string, OpParameter *> &op_parameters, bool is_origin,
+                                     const quant::DebugMode &debug_mode);
 
   MSKernelCallBack GetOriginBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                           const std::map<std::string, OpParameter *> &op_parameters);
+                                           const std::map<std::string, OpParameter *> &op_parameters,
+                                           const quant::DebugMode &debug_mode);
 
   MSKernelCallBack GetQuantBeforeCallBack(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                                          const std::map<std::string, OpParameter *> &op_parameters);
+                                          const std::map<std::string, OpParameter *> &op_parameters,
+                                          const quant::DebugMode &debug_mode);
 
-  MSKernelCallBack GetAfterCallBack(const std::map<std::string, OpParameter *> &op_parameters, bool is_origin);
+  MSKernelCallBack GetAfterCallBack(const std::map<std::string, OpParameter *> &op_parameters, bool is_origin,
+                                    const quant::DebugMode &debug_mode);
 
   int GetConstTensor(const std::map<std::string, mindspore::schema::Tensor *> &input_tensor_map,
-                     mindspore::tensor::MSTensor *tensor, mindspore::lite::Tensor *new_tensor);
+                     mindspore::lite::Tensor *tensor, mindspore::lite::Tensor *new_tensor);
 
   void FreeBuffer();
 
@@ -146,7 +150,19 @@ class DebugInfoManager {
 
   int SaveQuantParam(const std::string &file_path);
 
-  int GetClipAndCos();
+  int GetClipAndCos(const quant::DebugMode &debug_mode);
+
+  int GetOutputInfo();
+
+  int SaveOutputInfo(const std::string &file_path);
+
+  int StatisticsDataPerRound(const std::shared_ptr<mindspore::Model> &origin,
+                             const std::shared_ptr<mindspore::Model> &quant,
+                             const std::map<std::string, OpParameter *> &op_parameters, const converter::Flags &config,
+                             const std::map<string, schema::Tensor *> &origin_input_tensor_map,
+                             const std::map<string, schema::Tensor *> &quant_input_tensor_map, const int &round);
+
+  std::string CreateFilePath(const std::string &dir_path, const std::string &file_name);
 
   template <typename T>
   void GetStatByTensor(const T *tensor_data, size_t element_num, QuantDebugInfo *infos) {
@@ -176,6 +192,8 @@ class DebugInfoManager {
   // Use vector to preserve ordert, There may be more nodes, such as QuantCast, bias etc.
   std::vector<QuantDebugInfo> compared_info_;
   std::vector<QuantParamExtend> quant_params_;
+  std::vector<std::vector<QuantDebugInfo>> output_infos_;
+  std::map<std::string, MSTensor> origin_outputs_;
   // Mark whether to save quantization parameters. only save 1 round.
   bool save_flag_ = true;
 };
