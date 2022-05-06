@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/broadcast_grad_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
@@ -80,10 +81,10 @@ template <typename T>
 void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0, const int &r1,
                    const int &r2, const int &r3, const int &d0, const int &d1, const int &d2, const int &d3,
                    const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op, const T *x1, const T *x2,
-                   const T *dy, T *dx1, T *dx2, cudaStream_t stream) {
+                   const T *dy, T *dx1, T *dx2, const uint32_t &device_id, cudaStream_t stream) {
   int size = d0 * d1 * d2 * d3;
-  BroadcastGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, stream>>>(l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3,
-                                                                    grad_x1, grad_x2, op, x1, x2, dy, dx1, dx2);
+  BroadcastGradKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, stream>>>(
+    l0, l1, l2, l3, r0, r1, r2, r3, d0, d1, d2, d3, grad_x1, grad_x2, op, x1, x2, dy, dx1, dx2);
 }
 
 template <typename T, typename Func>
@@ -108,52 +109,56 @@ __global__ void NoBroadcastGradKernel(const int nums, const bool grad_x1, const 
 
 template <typename T>
 void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                     const T *x1, const T *x2, const T *dy, T *dx1, T *dx2, cudaStream_t stream) {
-  NoBroadcastGradKernel<<<GET_BLOCKS(nums), GET_THREADS, 0, stream>>>(nums, grad_x1, grad_x2, op, x1, x2, dy, dx1, dx2);
+                     const T *x1, const T *x2, const T *dy, T *dx1, T *dx2, const uint32_t &device_id,
+                     cudaStream_t stream) {
+  NoBroadcastGradKernel<<<CUDA_BLOCKS(device_id, nums), CUDA_THREADS(device_id), 0, stream>>>(nums, grad_x1, grad_x2,
+                                                                                              op, x1, x2, dy, dx1, dx2);
 }
 
 template CUDA_LIB_EXPORT void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2,
                                               enum BroadcastGradOpType op, const double *x1, const double *x2,
-                                              const double *dy, double *dx1, double *dx2, cudaStream_t stream);
+                                              const double *dy, double *dx1, double *dx2, const uint32_t &device_id,
+                                              cudaStream_t stream);
 template CUDA_LIB_EXPORT void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2,
                                               enum BroadcastGradOpType op, const float *x1, const float *x2,
-                                              const float *dy, float *dx1, float *dx2, cudaStream_t stream);
+                                              const float *dy, float *dx1, float *dx2, const uint32_t &device_id,
+                                              cudaStream_t stream);
 template CUDA_LIB_EXPORT void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2,
-                                              enum BroadcastGradOpType op, const int *x1, const int *x2,
-                                              const int *dy, int *dx1, int *dx2, cudaStream_t stream);
+                                              enum BroadcastGradOpType op, const int *x1, const int *x2, const int *dy,
+                                              int *dx1, int *dx2, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2,
                                               enum BroadcastGradOpType op, const half *x1, const half *x2,
-                                              const half *dy, half *dx1, half *dx2, cudaStream_t stream);
+                                              const half *dy, half *dx1, half *dx2, const uint32_t &device_id,
+                                              cudaStream_t stream);
 template CUDA_LIB_EXPORT void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2,
                                               enum BroadcastGradOpType op, const int64_t *x1, const int64_t *x2,
-                                              const int64_t *dy, int64_t *dx1, int64_t *dx2, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3,
-                                            const int &r0, const int &r1, const int &r2, const int &r3,
-                                            const int &d0, const int &d1, const int &d2, const int &d3,
-                                            const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                                            const double *x1, const double *x2, const double *dy,
-                                            double *dx1, double *dx2, cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3,
-                                            const int &r0, const int &r1, const int &r2, const int &r3,
-                                            const int &d0, const int &d1, const int &d2, const int &d3,
-                                            const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                                            const float *x1, const float *x2, const float *dy, float *dx1, float *dx2,
+                                              const int64_t *dy, int64_t *dx1, int64_t *dx2, const uint32_t &device_id,
+                                              cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0,
+                                            const int &r1, const int &r2, const int &r3, const int &d0, const int &d1,
+                                            const int &d2, const int &d3, const bool &grad_x1, const bool &grad_x2,
+                                            enum BroadcastGradOpType op, const double *x1, const double *x2,
+                                            const double *dy, double *dx1, double *dx2, const uint32_t &device_id,
                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3,
-                                            const int &r0, const int &r1, const int &r2, const int &r3,
-                                            const int &d0, const int &d1, const int &d2, const int &d3,
-                                            const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                                            const int *x1, const int *x2, const int *dy, int *dx1, int *dx2,
+template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0,
+                                            const int &r1, const int &r2, const int &r3, const int &d0, const int &d1,
+                                            const int &d2, const int &d3, const bool &grad_x1, const bool &grad_x2,
+                                            enum BroadcastGradOpType op, const float *x1, const float *x2,
+                                            const float *dy, float *dx1, float *dx2, const uint32_t &device_id,
                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3,
-                                            const int &r0, const int &r1, const int &r2, const int &r3,
-                                            const int &d0, const int &d1, const int &d2, const int &d3,
-                                            const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                                            const half *x1, const half *x2, const half *dy, half *dx1, half *dx2,
+template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0,
+                                            const int &r1, const int &r2, const int &r3, const int &d0, const int &d1,
+                                            const int &d2, const int &d3, const bool &grad_x1, const bool &grad_x2,
+                                            enum BroadcastGradOpType op, const int *x1, const int *x2, const int *dy,
+                                            int *dx1, int *dx2, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0,
+                                            const int &r1, const int &r2, const int &r3, const int &d0, const int &d1,
+                                            const int &d2, const int &d3, const bool &grad_x1, const bool &grad_x2,
+                                            enum BroadcastGradOpType op, const half *x1, const half *x2, const half *dy,
+                                            half *dx1, half *dx2, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0,
+                                            const int &r1, const int &r2, const int &r3, const int &d0, const int &d1,
+                                            const int &d2, const int &d3, const bool &grad_x1, const bool &grad_x2,
+                                            enum BroadcastGradOpType op, const int64_t *x1, const int64_t *x2,
+                                            const int64_t *dy, int64_t *dx1, int64_t *dx2, const uint32_t &device_id,
                                             cudaStream_t stream);
-template CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3,
-                                            const int &r0, const int &r1, const int &r2, const int &r3,
-                                            const int &d0, const int &d1, const int &d2, const int &d3,
-                                            const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                                            const int64_t *x1, const int64_t *x2, const int64_t *dy,
-                                            int64_t *dx1, int64_t *dx2, cudaStream_t stream);
