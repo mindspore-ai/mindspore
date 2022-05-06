@@ -731,7 +731,7 @@ void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
   // When reshape(bool), insert cast in the begin and end of op_list to avoid AllGather(bool).
   auto reshape_type_str = node->abstract()->BuildType()->ToString();
   auto replace_op_info = distribute_operator->replace_op_info();
-  if (reshape_type_str.find(BOOL) != std::string::npos) {
+  if (IsPrimitiveCNode(node, prim::kPrimReshape) && reshape_type_str.find(BOOL) != std::string::npos) {
     auto cast_int = CreateCastOp(kInt32);
     auto cast_bool = CreateCastOp(kBool);
     (void)replace_op.insert(replace_op.begin(), cast_int);

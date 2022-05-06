@@ -1009,7 +1009,7 @@ class MultiHeadAttention(Cell):
             self.prob_dropout.shard(
                 ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
             self.softmax = nn.Softmax().to_float(softmax_compute_type)
-            self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1),))
+            self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
             self.expand_dims = P.ExpandDims().shard(((parallel_config.data_parallel, 1, 1),))
 
             # Query
@@ -1261,13 +1261,9 @@ class MultiHeadAttention(Cell):
         adder = self.mul(multiplu_out, self.multiply_data)
         attention_scores = self.add(adder, score)
 
-        shape = F.shape(attention_scores)
         # attention probs
-        attention_probs = self.softmax(
-            F.reshape(attention_scores,
-                      (shape[0], -1, shape[-1])))
+        attention_probs = self.softmax(attention_scores)
         attention_probs = P.Cast()(attention_probs, ori_dtype)
-        attention_probs = F.reshape(attention_probs, shape)
 
         attention_probs = self.prob_dropout(attention_probs)
         # Weighted sum output [bs, num_heads, seq_length, size_per_head]
