@@ -408,11 +408,11 @@ Status ShardColumn::UncompressInt(const uint64_t &column_id, std::unique_ptr<uns
   }
 
   auto data = reinterpret_cast<const unsigned char *>(array_data.get());
-  *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
   // field is none. for example: numpy is null
   if (*num_bytes == 0) {
     return Status::OK();
   }
+  *data_ptr = std::make_unique<unsigned char[]>(*num_bytes);
   CHECK_FAIL_RETURN_UNEXPECTED(memcpy_s(data_ptr->get(), *num_bytes, data, *num_bytes) == 0,
                                "[Internal ERROR] Failed to call securec func [memcpy_s]");
   return Status::OK();

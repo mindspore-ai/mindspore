@@ -197,8 +197,10 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   }
   try {
     TensorShape shape{output_height, output_width};
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
-    if (input_cv->Rank() == DEFAULT_IMAGE_RANK) shape = shape.AppendDim(num_channels);
+    if (input_cv->Rank() == DEFAULT_IMAGE_RANK) {
+      int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
+      shape = shape.AppendDim(num_channels);
+    }
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(shape, input_cv->type(), &output_cv));
 
@@ -751,8 +753,8 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     }
 
     TensorShape shape{target_height, target_width};
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
     if (input_cv->Rank() == DEFAULT_IMAGE_RANK) {
+      int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
       shape = shape.AppendDim(num_channels);
     }
     std::shared_ptr<CVTensor> cvt_out;
@@ -963,24 +965,25 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     mean_v.push_back(mean_c);
     std_v.push_back(std_c);
   }
-  if (is_hwc) {
-    TensorShape new_shape = TensorShape({input->shape()[0], input->shape()[1], input->shape()[2] + 1});
-    Tensor::CreateEmpty(new_shape, DataType(dtype), output);
-    (*output)->Zero();
-  } else {
-    TensorShape new_shape = TensorShape({input->shape()[0] + 1, input->shape()[1], input->shape()[2]});
-    Tensor::CreateEmpty(new_shape, DataType(dtype), output);
-    (*output)->Zero();
-  }
-  if (input->Rank() == MIN_IMAGE_DIMENSION) {
-    RETURN_IF_NOT_OK((*output)->ExpandDim(MIN_IMAGE_DIMENSION));
-  }
-  int64_t channel_index;
+
+  int64_t channel_index = CHANNEL_INDEX_CHW;
   if (is_hwc) {
     channel_index = CHANNEL_INDEX_HWC;
-  } else {
-    channel_index = CHANNEL_INDEX_CHW;
   }
+  int32_t channels = 1;
+  if (input->Rank() == DEFAULT_IMAGE_RANK) {
+    channels = input->shape()[channel_index];
+  }
+  if (is_hwc) {
+    TensorShape new_shape = TensorShape({input->shape()[0], input->shape()[1], channels + 1});
+    Tensor::CreateEmpty(new_shape, DataType(dtype), output);
+    (*output)->Zero();
+  } else {
+    TensorShape new_shape = TensorShape({channels + 1, input->shape()[1], input->shape()[2]});
+    Tensor::CreateEmpty(new_shape, DataType(dtype), output);
+    (*output)->Zero();
+  }
+
   // caller provided 1 mean/std value and there are more than one channel --> duplicate mean/std value
   if (mean_v.size() == 1 && (*output)->shape()[channel_index] != 1) {
     for (int64_t i = 0; i < (*output)->shape()[channel_index] - 1; i++) {
@@ -1506,8 +1509,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateFromMat(out_image, input_cv->Rank(), &output_cv));
     // pad the dimension if shape information is only 2 dimensional, this is grayscale
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
-    if (input_cv->Rank() == DEFAULT_IMAGE_RANK && num_channels == MIN_IMAGE_CHANNELS &&
+    if (input_cv->Rank() == DEFAULT_IMAGE_RANK && input_cv->shape()[CHANNEL_INDEX_HWC] == MIN_IMAGE_CHANNELS &&
         output_cv->Rank() == MIN_IMAGE_DIMENSION)
       RETURN_IF_NOT_OK(output_cv->ExpandDim(CHANNEL_INDEX_HWC));
     *output = std::static_pointer_cast<Tensor>(output_cv);
@@ -1568,11 +1570,11 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
-    if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS || num_channels != 4) {
-      std::string err_msg = "RgbaToRgb: rank of image is not: " + std::to_string(DEFAULT_IMAGE_CHANNELS) +
-                            ", but got: " + std::to_string(input_cv->shape().Size()) +
-                            ", or channels of image should be 4, but got: " + std::to_string(num_channels);
+    if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS || input_cv->shape()[CHANNEL_INDEX_HWC] != 4) {
+      std::string err_msg =
+        "RgbaToRgb: rank of image is not: " + std::to_string(DEFAULT_IMAGE_CHANNELS) +
+        ", but got: " + std::to_string(input_cv->shape().Size()) +
+        ", or channels of image should be 4, but got: " + std::to_string(input_cv->shape()[CHANNEL_INDEX_HWC]);
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
@@ -1589,11 +1591,12 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
-    int num_channels = input_cv->shape()[CHANNEL_INDEX_HWC];
-    if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS || num_channels != MAX_IMAGE_CHANNELS) {
-      std::string err_msg = "RgbaToBgr: rank of image is not: " + std::to_string(DEFAULT_IMAGE_CHANNELS) +
-                            ", but got: " + std::to_string(input_cv->shape().Size()) +
-                            ", or channels of image should be 4, but got: " + std::to_string(num_channels);
+    if (input_cv->shape().Size() != DEFAULT_IMAGE_CHANNELS ||
+        input_cv->shape()[CHANNEL_INDEX_HWC] != MAX_IMAGE_CHANNELS) {
+      std::string err_msg =
+        "RgbaToBgr: rank of image is not: " + std::to_string(DEFAULT_IMAGE_CHANNELS) +
+        ", but got: " + std::to_string(input_cv->shape().Size()) +
+        ", or channels of image should be 4, but got: " + std::to_string(input_cv->shape()[CHANNEL_INDEX_HWC]);
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1], 3});
@@ -1669,9 +1672,8 @@ Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     if (input_cv->Rank() != DEFAULT_IMAGE_RANK || input_cv->shape()[CHANNEL_INDEX_HWC] != DEFAULT_IMAGE_CHANNELS) {
-      RETURN_STATUS_UNEXPECTED(
-        "RgbToGray: image shape is not <H,W,C> or channel is not 3, got rank: " + std::to_string(input_cv->Rank()) +
-        ", and channel: " + std::to_string(input_cv->shape()[2]));
+      RETURN_STATUS_UNEXPECTED("RgbToGray: image shape is not <H,W,C> or channel is not 3, got rank: " +
+                               std::to_string(input_cv->Rank()) + ", and shape: " + input_cv->shape().ToString());
     }
     TensorShape out_shape = TensorShape({input_cv->shape()[0], input_cv->shape()[1]});
     std::shared_ptr<CVTensor> output_cv;
