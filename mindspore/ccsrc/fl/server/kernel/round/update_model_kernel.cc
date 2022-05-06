@@ -642,7 +642,8 @@ void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fb
 void UpdateModelKernel::RecordCompletePeriod(const DeviceMeta &device_meta) {
   std::lock_guard<std::mutex> lock(participation_time_and_num_mtx_);
   uint64_t start_fl_job_time = device_meta.now_time();
-  uint64_t update_model_complete_time = ps::core::CommUtil::GetNowTime().time_stamp;
+  uint64_t update_model_complete_time =
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
   if (start_fl_job_time >= update_model_complete_time) {
     MS_LOG(WARNING) << "start_fl_job_time " << start_fl_job_time << " is larger than update_model_complete_time "
                     << update_model_complete_time;

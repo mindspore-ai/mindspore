@@ -158,6 +158,7 @@ constexpr auto kMaxVal = "max_val";
 constexpr auto kQuant = "QUANT";
 constexpr auto kDiffSparseQuant = "DIFF_SPARSE_QUANT";
 constexpr auto kNoCompress = "NO_COMPRESS";
+constexpr auto kUpdateModel = "updateModel";
 
 // OptimParamNameToIndex represents every inputs/workspace/outputs parameter's offset when an optimizer kernel is
 // launched.

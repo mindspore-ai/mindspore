@@ -69,7 +69,6 @@ bool StartFLJobKernel::VerifyFLJobRequest(const schema::RequestFLJob *start_fl_j
 bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
                               const std::shared_ptr<ps::core::MessageHandler> &message) {
   MS_LOG(DEBUG) << "Launching StartFLJobKernel kernel.";
-  ps::core::Time start_fl_job_time = ps::core::CommUtil::GetNowTime();
   std::shared_ptr<FBBuilder> fbb = std::make_shared<FBBuilder>();
   if (fbb == nullptr || req_data == nullptr) {
     std::string reason = "FBBuilder builder or req_data is nullptr.";
@@ -116,7 +115,9 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   }
 
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
-  device_meta.set_now_time(start_fl_job_time.time_stamp);
+  uint64_t start_fl_job_time =
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  device_meta.set_now_time(start_fl_job_time);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());

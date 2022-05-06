@@ -19,7 +19,7 @@
         "storage_type": 1,
         "storage_file_path": ".."
     },
-    "failEvent": {
+    "failureEvent": {
         "storage_type": 1,
         "storage_file_path": "event.txt"
     },

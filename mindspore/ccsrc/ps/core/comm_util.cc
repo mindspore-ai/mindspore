@@ -603,12 +603,6 @@ Time CommUtil::GetNowTime() {
   std::ostringstream time_mill_oss;
   time_mill_oss << std::put_time(&ptm, "%Y-%m-%d %H:%M:%S");
 
-  std::ostringstream time_minute_oss;
-  time_minute_oss << std::put_time(&ptm, "%Y-%m-%d %H:%M");
-
-  std::ostringstream time_day_oss;
-  time_day_oss << std::put_time(&ptm, "%Y-%m-%d");
-
   // calculate millisecond, the format of time_str_mill is 2022-01-10 20:22:20.067
   auto second_time_stamp = std::chrono::duration_cast<std::chrono::seconds>(time_now.time_since_epoch());
   auto mill_time_stamp = std::chrono::duration_cast<std::chrono::milliseconds>(time_now.time_since_epoch());
@@ -617,8 +611,6 @@ Time CommUtil::GetNowTime() {
 
   time.time_stamp = mill_time_stamp.count();
   time.time_str_mill = time_mill_oss.str();
-  time.time_str_second = time_minute_oss.str();
-  time.time_str_day = time_day_oss.str();
   return time;
 }
 

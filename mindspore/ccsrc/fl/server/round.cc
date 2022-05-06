@@ -146,8 +146,7 @@ void Round::LaunchRoundKernel(const std::shared_ptr<ps::core::MessageHandler> &m
     MS_LOG(DEBUG) << "Launching round kernel of round " + name_ + " failed.";
   }
   (void)(Iteration::GetInstance().running_round_num_--);
-  auto time = ps::core::CommUtil::GetNowTime().time_stamp;
-  kernel_->RecordReceiveData(std::make_pair(time, message->len()));
+  kernel_->CalculateReceiveData(message->len());
   return;
 }
 
@@ -252,7 +251,7 @@ void Round::InitkernelClientUploadLoss() { kernel_->InitClientUploadLoss(); }
 float Round::kernel_upload_loss() const { return kernel_->upload_loss(); }
 
 std::vector<std::pair<uint64_t, uint32_t>> Round::GetUpdateModelCompleteInfo() const {
-  if (name_ == "updateModel") {
+  if (name_ == kUpdateModel) {
     auto update_model_model_ptr = std::dynamic_pointer_cast<fl::server::kernel::UpdateModelKernel>(kernel_);
     MS_EXCEPTION_IF_NULL(update_model_model_ptr);
     return update_model_model_ptr->GetCompletePeriodRecord();
@@ -263,7 +262,7 @@ std::vector<std::pair<uint64_t, uint32_t>> Round::GetUpdateModelCompleteInfo() c
 }
 
 void Round::ResetParticipationTimeAndNum() {
-  if (name_ == "updateModel") {
+  if (name_ == kUpdateModel) {
     auto update_model_kernel_ptr = std::dynamic_pointer_cast<fl::server::kernel::UpdateModelKernel>(kernel_);
     MS_ERROR_IF_NULL_WO_RET_VAL(update_model_kernel_ptr);
     update_model_kernel_ptr->ResetParticipationTimeAndNum();
@@ -271,9 +270,9 @@ void Round::ResetParticipationTimeAndNum() {
   return;
 }
 
-std::multimap<uint64_t, size_t> Round::GetSendData() const { return kernel_->GetSendData(); }
+std::map<uint64_t, size_t> Round::GetSendData() const { return kernel_->GetSendData(); }
 
-std::multimap<uint64_t, size_t> Round::GetReceiveData() const { return kernel_->GetReceiveData(); }
+std::map<uint64_t, size_t> Round::GetReceiveData() const { return kernel_->GetReceiveData(); }
 
 void Round::ClearData() { return kernel_->ClearData(); }
 }  // namespace server
