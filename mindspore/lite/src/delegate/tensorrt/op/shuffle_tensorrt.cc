@@ -270,7 +270,7 @@ int ShuffleTensorRT::AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     } else if (perm.order[kNHWC_H] == kNCHW_H && perm.order[kNHWC_W] == kNCHW_W && perm.order[kNHWC_C] == kNCHW_C) {
       out_format_ = Format::NHWC;
     } else {
-      MS_LOG(WARNING) << "input format and perm order is not NHWC or NCHW: " << op_name_;
+      MS_LOG(INFO) << "input format and perm order is not NHWC or NCHW: " << op_name_;
     }
   }
   shuffler_output_ = shuffle_layer->getOutput(0);
