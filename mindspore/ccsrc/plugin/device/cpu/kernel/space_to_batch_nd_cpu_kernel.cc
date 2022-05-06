@@ -136,20 +136,19 @@ bool SpaceToBatchNDCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                        [](const std::pair<KernelAttr, SpaceToBatchNDFunc> &pair) { return pair.first; });
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
-    MS_LOG(ERROR) << "Maximum does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "SpaceToBatchNd does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
   return true;
 }
 
-bool SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                        const std::vector<KernelTensorPtr> &inputs,
-                                        const std::vector<KernelTensorPtr> &outputs,
-                                        const std::map<uint32_t, tensor::TensorPtr> &others) {
-  if (!NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) {
+int SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost) == KRET_RESIZE_FAILED) {
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
-    return false;
+    return KRET_RESIZE_FAILED;
   }
   // get input_shape
   input_shape_ = inputs.at(kIndex0)->GetShapeVector();
@@ -166,7 +165,7 @@ bool SpaceToBatchNDCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   off_set_ = input_shape_.size() - block_size_.size();
 
-  return true;
+  return 0;
 }
 
 std::vector<std::pair<KernelAttr, SpaceToBatchNDCpuKernelMod::SpaceToBatchNDFunc>>
