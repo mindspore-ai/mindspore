@@ -34,7 +34,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 // {prim::kPrimTaylor, C}
-class ExpandTaylorPrim : public ExpandMetaFGPrim {
+class ExpandTaylorPrim : public ExpandMetaFgPrim {
  public:
   ExpandTaylorPrim() { prim_ = prim::kPrimTaylor; }
   virtual ~ExpandTaylorPrim() = default;

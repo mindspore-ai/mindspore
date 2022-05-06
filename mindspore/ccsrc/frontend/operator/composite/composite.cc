@@ -446,8 +446,9 @@ bool IsTupleAllTensor(const AbstractTuplePtr &tuple_arg) {
   return true;
 }
 
-bool EnableGradFirstForTuple(const AbstractBasePtr &abs, bool enable_tuple_grad) {
-  return abs->isa<AbstractTuple>() && enable_tuple_grad && IsTupleAllTensor(abs->cast<AbstractTuplePtr>());
+bool EnableGradFirstForTuple(const AbstractTuplePtr &tuple_arg, bool enable_tuple_grad) {
+  return tuple_arg->size() > 1 && (*tuple_arg)[1]->isa<AbstractTuple>() && enable_tuple_grad &&
+         IsTupleAllTensor((*tuple_arg)[1]->cast<AbstractTuplePtr>());
 }
 
 bool EnableGradForScalar(const AbstractBasePtr &abs) {
@@ -477,6 +478,9 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
     MS_EXCEPTION_IF_NULL(val);
     auto int_val = LongToSize(dyn_cast<Int64Imm>(val)->value());
     ++int_val;  // Ignore the env position.
+    if (int_val >= tuple_arg->size()) {
+      MS_EXCEPTION(IndexError) << "The index " << (int_val - 1) << " is out of range [0, " << tuple_arg->size() << ").";
+    }
     if (!CanGradArgument(tuple_arg, int_val)) {
       continue;
     }
@@ -551,7 +555,7 @@ FuncGraphPtr Tail::GenerateGradFuncGraph(const AbstractTuplePtr &tuple_arg, cons
   if (tail_type_ == kGradFirst) {
     AnfNodePtr tuple_parameter = fg->add_parameter();
     PrimitivePtr getitem_op = prim::kPrimTupleGetItem;
-    if (CanGradArgument(tuple_arg, 1) || EnableGradFirstForTuple((*tuple_arg)[1], enable_tuple_grad_first_)) {
+    if (CanGradArgument(tuple_arg, 1) || EnableGradFirstForTuple(tuple_arg, enable_tuple_grad_first_)) {
       fg->set_output(fg->NewCNode({NewValueNode(getitem_op), tuple_parameter, NewValueNode(SizeToLong(1))}));
     } else {
       fg->set_output(NewValueNode(std::make_shared<ValueTuple>(ValuePtrList())));

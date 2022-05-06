@@ -106,33 +106,35 @@ AbstractBasePtr InferImplEnvironCreate(const AnalysisEnginePtr &, const Primitiv
 AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   MS_EXCEPTION_IF_NULL(primitive);
-  // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
+  // args: Three objects of a subclass of AbstractBase, env, key, default_value(default).
   CheckArgsSize(primitive->name(), args_spec_list, kSizeThree);
   auto key = args_spec_list[kIndexOne];
-  auto dflt = args_spec_list[kIndexTwo];
+  auto default_value = args_spec_list[kIndexTwo];
   TypePtr type = key->GetTypeTrack();
   MS_EXCEPTION_IF_NULL(type);
   if (type->type_id() != kObjectTypeSymbolicKeyType) {
     MS_LOG(EXCEPTION) << "EnvironGet evaluator args[1] should be a SymbolicKeyInstance but: " << key->ToString();
   }
 
+  MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << default_value->ToString();
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-  if (enable_sparse && dflt->isa<AbstractTensor>()) {
-    auto dflt_tensor = dflt->cast<AbstractTensorPtr>();
-    return std::make_shared<AbstractUndetermined>(dflt_tensor->element()->Clone(), dflt_tensor->shape()->Clone());
+  if (enable_sparse && default_value->isa<AbstractTensor>()) {
+    auto tensor_value = default_value->cast<AbstractTensorPtr>();
+    MS_EXCEPTION_IF_NULL(tensor_value);
+    return std::make_shared<AbstractUndetermined>(tensor_value->element()->Clone(), tensor_value->shape()->Clone());
   }
 
   if (!key->GetValueTrack()->isa<SymbolicKeyInstance>()) {
-    return dflt;
+    return default_value;
   }
   ValuePtr key_value_ptr = key->GetValueTrack();
   MS_EXCEPTION_IF_NULL(key_value_ptr);
   auto key_value_track = key_value_ptr->cast<SymbolicKeyInstancePtr>();
   auto expected = key_value_track->abstract();
   MS_EXCEPTION_IF_NULL(expected);
-  (void)expected->Join(dflt);
+  (void)expected->Join(default_value);
   // If expected is AbstractRef, return it's AbstractTensor as Value type other than Reference type.
   if (expected->isa<AbstractRef>()) {
     const auto &abs_ref = expected->cast<AbstractRefPtr>();
@@ -144,8 +146,8 @@ AbstractBasePtr InferImplEnvironGet(const AnalysisEnginePtr &, const PrimitivePt
 
 AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
-  // args: Three objects of a subclass of AbstractBase, env, key, dflt(default).
-  CheckArgsSize(primitive->name(), args_spec_list, 3);
+  // args: Three objects of a subclass of AbstractBase, env, key, value.
+  CheckArgsSize(primitive->name(), args_spec_list, kSizeThree);
 
   auto key = args_spec_list[1];
   ValuePtr key_value_ptr = key->GetValueTrack();
@@ -157,6 +159,8 @@ AbstractBasePtr InferImplEnvironSet(const AnalysisEnginePtr &, const PrimitivePt
   }
   auto expected = key_value_track->abstract();
   MS_EXCEPTION_IF_NULL(expected);
+
+  MS_LOG(DEBUG) << "key: " << key->ToString() << ", value: " << args_spec_list[kIndexTwo]->ToString();
   return std::make_shared<AbstractScalar>(kAnyValue, std::make_shared<EnvType>());
 }
 

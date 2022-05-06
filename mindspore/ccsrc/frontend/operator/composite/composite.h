@@ -114,7 +114,7 @@ class Tail : public MetaFuncGraph {
 
  private:
   FuncGraphPtr GenerateTailFuncGraph(const abstract::AbstractSequencePtr &sequence_arg) const;
-  FuncGraphPtr GenerateGradFuncGraph(const abstract::AbstractTuplePtr &sequeue,
+  FuncGraphPtr GenerateGradFuncGraph(const abstract::AbstractTuplePtr &sequence,
                                      const abstract::AbstractTuplePtr &position = nullptr) const;
 
   TailType tail_type_;

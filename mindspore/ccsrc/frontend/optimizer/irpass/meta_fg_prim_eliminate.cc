@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-bool ExpandMetaFGPrim::CheckIfEmbedMetaFGPrim(const CNodePtr &node) const {
+bool ExpandMetaFgPrim::CheckIfEmbedMetaFgPrim(const CNodePtr &node) const {
   auto &value_node = node->input(1);
   if (IsValueNode<Primitive>(value_node)) {
     return false;
@@ -33,11 +33,11 @@ bool ExpandMetaFGPrim::CheckIfEmbedMetaFGPrim(const CNodePtr &node) const {
   return func_graph_manager->func_graph_meta_fg_prim_total(func_graph);
 }
 
-void ExpandMetaFGPrim::GetMetaFGPrim(const std::vector<AnfNodePtr> &all_nodes) {
+void ExpandMetaFgPrim::GetMetaFgPrim(const std::vector<AnfNodePtr> &all_nodes) {
   MS_EXCEPTION_IF_NULL(prim_);
   prim_nodes_.clear();
   for (auto &node : all_nodes) {
-    if (IsPrimitiveCNode(node, prim_) && !CheckIfEmbedMetaFGPrim(node->cast<CNodePtr>())) {
+    if (IsPrimitiveCNode(node, prim_) && !CheckIfEmbedMetaFgPrim(node->cast<CNodePtr>())) {
       prim_nodes_.push_back(node->cast<CNodePtr>());
     }
   }

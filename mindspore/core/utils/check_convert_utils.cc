@@ -507,7 +507,7 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
       buffer << "] must be all tensor and those type must be same.";
       for (const auto &type_info : types) {
         if (!type_info.second->isa<TensorType>()) {
-          buffer << "But got input argument[" << type_info.first << "]"
+          buffer << " But got input argument[" << type_info.first << "]"
                  << ":" << type_info.second->ToString() << "\n";
         }
       }

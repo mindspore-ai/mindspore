@@ -119,7 +119,7 @@ EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPt
   auto do_signature_func = dyn_cast<Primitive>(func);
   if (do_signature_func != nullptr) {
     if (prims_to_skip_undetermined_infer.find(do_signature_func->name()) == prims_to_skip_undetermined_infer.end()) {
-      auto ret_abstract = AbstractEval(args_spec_list);
+      auto ret_abstract = EvalUndeterminedArgs(args_spec_list);
       if (ret_abstract != nullptr) {
         MS_LOG(DEBUG) << "DoSignatureEvaluator eval Undetermined for " << do_signature_func->name()
                       << ", ret_abstract: " << ret_abstract->ToString();
@@ -1061,7 +1061,7 @@ EvalResultPtr StandardPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, c
   CheckSequenceArgumentForCppPrimitive(prim_, args);
 
   if (prims_to_skip_undetermined_infer.find(prim_->name()) == prims_to_skip_undetermined_infer.end()) {
-    auto ret_abstract = AbstractEval(args);
+    auto ret_abstract = EvalUndeterminedArgs(args);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "StandardPrimEvaluator eval Undetermined";
       return ret_abstract;
@@ -1105,7 +1105,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   CheckSequenceArgumentForPythonPrimitive(prim_py_, args);
 
   // Ensure input arguments are evaluated.
-  auto ret_abstract = AbstractEval(args);
+  auto ret_abstract = EvalUndeterminedArgs(args);
   if (ret_abstract != nullptr) {
     MS_LOG(DEBUG) << "PythonPrimEvaluator eval Undetermined";
     return ret_abstract;
@@ -1151,7 +1151,7 @@ EvalResultPtr PythonPrimEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
 }
 
 EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) {
-  auto ret_abstract = AbstractEval(args);
+  auto ret_abstract = EvalUndeterminedArgs(args);
   if (ret_abstract != nullptr) {
     MS_LOG(DEBUG) << "UniformPrimEvaluator eval Undetermined";
     return ret_abstract;
@@ -1180,7 +1180,7 @@ EvalResultPtr UniformPrimEvaluator::EvalPrim(const AnalysisEnginePtr &, const Ab
     (void)std::transform(item.second->begin(), item.second->end(), std::back_inserter(selections),
                          [&args](size_t arg_idx) -> TypePtr {
                            if (arg_idx >= args.size()) {
-                             MS_LOG(EXCEPTION) << "Index:" << arg_idx << " out of range:" << args.size();
+                             MS_LOG(EXCEPTION) << "Index: " << arg_idx << " out of range: " << args.size();
                            }
                            MS_EXCEPTION_IF_NULL(args[arg_idx]);
                            return args[arg_idx]->GetTypeTrack();
@@ -1570,7 +1570,7 @@ class GetAttrEvaluator : public TransitionPrimEvaluator {
   EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
                          const ConfigPtr &in_conf0, const AnfNodeConfigPtr &out_conf) override {
     constexpr auto kGetAttrArgSize = 2;
-    auto ret_abstract = AbstractEval(args_spec_list);
+    auto ret_abstract = EvalUndeterminedArgs(args_spec_list);
     if (ret_abstract != nullptr) {
       MS_LOG(DEBUG) << "GetAttrEvaluator eval Undetermined";
       return ret_abstract;

@@ -35,7 +35,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 // {prim::kPrimVmap, C}
-class ExpandVmapPrim : public ExpandMetaFGPrim {
+class ExpandVmapPrim : public ExpandMetaFgPrim {
  public:
   ExpandVmapPrim() { prim_ = prim::kPrimVmap; }
   virtual ~ExpandVmapPrim() = default;

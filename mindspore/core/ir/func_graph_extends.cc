@@ -182,13 +182,13 @@ void FuncGraph::GenerateKwargReplNode(const FuncGraphPtr &specialized_graph,
 }
 
 bool FuncGraph::NeedGenerate(const std::vector<abstract::AbstractKeywordArgPtr> &kwarg_list) {
-  // if the function does not have any vararg/kwarg/kwonly/default value/kw args input
+  // If the function does not have any vararg/kwarg/kwonly/default value/kw args input
   // return the original graph
   if (!has_vararg() && kwonlyargs_count() == 0 && !has_kwarg() && GetDefaultValueCount() == 0 && kwarg_list.empty()) {
     return false;
   }
 
-  // if the graph is generated for specific input, do not need to generate again
+  // If the graph is generated for specific input, do not need to generate again
   return !is_generated();
 }
 

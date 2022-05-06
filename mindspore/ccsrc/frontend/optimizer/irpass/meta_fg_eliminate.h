@@ -31,8 +31,8 @@ namespace irpass {
 class ExpandMetaFg {
  public:
   ExpandMetaFg() {
-    // Register derived class of `ExpandMetaFGPrim` to `ExpandMetaFg`, note that corresponding modifications
-    // need to be made in the `manager.cc` to support `ExpandMetaFGPrim::CheckIfEmbedMetaFGPrim`, analogous
+    // Register derived class of `ExpandMetaFgPrim` to `ExpandMetaFg`, note that corresponding modifications
+    // need to be made in the `manager.cc` to support `ExpandMetaFgPrim::CheckIfEmbedMetaFgPrim`, analogous
     // to the implementation of `kPrimVmap`.
     (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandJPrim>());
     (void)expand_meta_fg_list_.emplace_back(std::make_shared<ExpandVmapPrim>());

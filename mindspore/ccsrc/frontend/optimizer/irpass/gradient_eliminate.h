@@ -33,7 +33,7 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 // {prim::kPrimJ, C}
-class ExpandJPrim : public ExpandMetaFGPrim {
+class ExpandJPrim : public ExpandMetaFgPrim {
  public:
   ExpandJPrim() { prim_ = prim::kPrimJ; }
   virtual ~ExpandJPrim() = default;

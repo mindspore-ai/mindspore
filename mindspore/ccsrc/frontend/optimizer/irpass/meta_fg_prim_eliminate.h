@@ -32,20 +32,20 @@ namespace mindspore {
 namespace opt {
 namespace irpass {
 // {prim::kPrimJ, C}
-class ExpandMetaFGPrim {
+class ExpandMetaFgPrim {
  public:
-  ExpandMetaFGPrim() = default;
-  virtual ~ExpandMetaFGPrim() = default;
-  bool CheckIfEmbedMetaFGPrim(const CNodePtr &node) const;
+  ExpandMetaFgPrim() = default;
+  virtual ~ExpandMetaFgPrim() = default;
+  bool CheckIfEmbedMetaFgPrim(const CNodePtr &node) const;
   const std::vector<CNodePtr> &prim_nodes() const { return prim_nodes_; }
   virtual bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) = 0;
-  void GetMetaFGPrim(const std::vector<AnfNodePtr> &all_nodes);
+  void GetMetaFgPrim(const std::vector<AnfNodePtr> &all_nodes);
 
  protected:
   std::vector<CNodePtr> prim_nodes_;
   PrimitivePtr prim_{nullptr};
 };
-using ExpandMetaFGPrimPtr = std::shared_ptr<ExpandMetaFGPrim>;
+using ExpandMetaFGPrimPtr = std::shared_ptr<ExpandMetaFgPrim>;
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
