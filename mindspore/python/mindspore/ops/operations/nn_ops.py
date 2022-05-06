@@ -433,7 +433,7 @@ class Softsign(Primitive):
 
     .. math::
 
-        \text{SoftSign}(x) = \frac{x}{ 1 + |x|}
+        \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
