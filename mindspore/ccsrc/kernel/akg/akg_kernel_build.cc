@@ -473,6 +473,10 @@ std::vector<std::string> AkgKernelBuilder::GetKernelJsonsByHashId(const std::vec
 }
 
 bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args) {
+  struct timeval start_time, end_time;
+  (void)gettimeofday(&start_time, nullptr);
+  MS_LOG(INFO) << "Akg start parallel build. kernel count: " << build_args.size();
+
   AkgKernelPool kp;
   auto ret = kp.Init(build_args);
   if (ret != 0) {
@@ -521,6 +525,12 @@ bool AkgKernelBuilder::ParallelBuild(const std::vector<JsonNodePair> &build_args
     MS_LOG(ERROR) << "AkgKernelPool release failed.";
     return false;
   }
+
+  (void)gettimeofday(&end_time, nullptr);
+  const uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Akg kernel build time: " << cost << " us.";
 
   return true;
 }
@@ -634,20 +644,10 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
     return true;
   }
 
-  struct timeval start_time, end_time;
-  (void)gettimeofday(&start_time, nullptr);
-
-  MS_LOG(INFO) << "Akg start parallel build. kernel count: " << json_and_node.size();
   bool res = AkgOpParallelBuild(json_and_node);
   if (!res) {
     MS_LOG(ERROR) << "Akg build kernel failed.";
   }
-
-  (void)gettimeofday(&end_time, nullptr);
-  const uint64_t kUSecondInSecond = 1000000;
-  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
-  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
-  MS_LOG(INFO) << "Akg kernel build time: " << cost << " us.";
   return true;
 }
 
