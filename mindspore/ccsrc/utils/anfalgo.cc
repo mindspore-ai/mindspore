@@ -577,6 +577,53 @@ KernelWithIndex AnfAlgo::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t in
   return res;
 }
 
+// This function should be deleted when the return type of GetOutputINferShape is changed
+// from std::vector<size_t> to ShapeVector
+ShapeVector AnfAlgo::GetOutputInferShapeSigned(const AnfNodePtr &node, size_t output_idx) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto base_shape = node->Shape();
+  MS_EXCEPTION_IF_NULL(base_shape);
+  if (base_shape->isa<abstract::Shape>()) {
+    if (output_idx == 0) {
+      auto shape = base_shape->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape);
+      return shape->shape();
+    }
+    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
+                      << trace::DumpSourceLines(node);
+  } else if (base_shape->isa<abstract::TupleShape>()) {
+    auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
+    MS_EXCEPTION_IF_NULL(tuple_shape);
+    if (output_idx >= tuple_shape->size()) {
+      MS_LOG(EXCEPTION) << "Output index " << output_idx << "is larger than output number " << tuple_shape->size()
+                        << node->DebugString() << trace::DumpSourceLines(node);
+    }
+    auto b_shp = (*tuple_shape)[output_idx];
+    if (b_shp->isa<abstract::Shape>()) {
+      auto shape = b_shp->cast<abstract::ShapePtr>();
+      MS_EXCEPTION_IF_NULL(shape);
+      return shape->shape();
+    } else if (b_shp->isa<abstract::NoShape>()) {
+      return ShapeVector();
+    } else if (b_shp->isa<abstract::TupleShape>()) {
+      // Usually there is no tuple in tuple for the shape of the kernel graph parameter, but there will be such a
+      // scenario when dump ir is in the compilation process, here return an empty shape so that dump ir can work
+      // normally.
+      MS_LOG(INFO) << "The output shape of node:" << node->DebugString() << " index:" << output_idx
+                   << " is a TupleShape:" << base_shape->ToString();
+      return ShapeVector();
+    } else {
+      MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
+                        << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
+                        << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node);
+    }
+  } else if (base_shape->isa<abstract::NoShape>()) {
+    return ShapeVector();
+  }
+  MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
+                    << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
+}
+
 std::vector<size_t> AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
                                                  size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
@@ -1279,8 +1326,8 @@ void AnfAlgo::GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std:
   }
 }
 
-std::vector<int64_t> GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index,
-                                               ShapeType type) {
+static std::vector<int64_t> GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index,
+                                                      ShapeType type) {
   MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
   auto shape_list = sequeue_shape_ptr->shape();
   if (index >= shape_list.size()) {
@@ -1289,15 +1336,28 @@ std::vector<int64_t> GetShapeFromSequenceShape(const abstract::SequenceShapePtr 
 
   auto shape = shape_list[index];
   MS_EXCEPTION_IF_NULL(shape);
+  if (!shape->isa<abstract::Shape>()) {
+    MS_LOG(EXCEPTION) << "Invalid Shape Type In Shape List";
+  }
+
+  auto shape_ptr = shape->cast<abstract::ShapePtr>();
+  return type == ShapeType::kMaxShape ? shape_ptr->max_shape() : shape_ptr->min_shape();
+}
+
+static std::vector<int64_t> GetOutputMinOrMaxShape(const AnfNodePtr &anf_node, size_t index, ShapeType type) {
+  MS_EXCEPTION_IF_NULL(anf_node);
+  auto shape = anf_node->Shape();
+  MS_EXCEPTION_IF_NULL(shape);
   if (shape->isa<abstract::Shape>()) {
     auto shape_ptr = shape->cast<abstract::ShapePtr>();
-    if (type == ShapeType::kMaxShape) {
-      return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
-    } else {
-      return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
-    }
+    return type == ShapeType::kMaxShape ? shape_ptr->max_shape() : shape_ptr->min_shape();
+  } else if (shape->isa<abstract::SequenceShape>()) {
+    auto sequeue_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
+    return GetShapeFromSequenceShape(sequeue_shape_ptr, index, type);
+  } else if (shape->isa<abstract::NoShape>()) {
+    return {};
   } else {
-    MS_LOG(EXCEPTION) << "Invalid Shape Type In Shape List";
+    MS_LOG(EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
   }
 }
 
@@ -1312,37 +1372,11 @@ std::vector<int64_t> AnfAlgo::GetInputMinShape(const AnfNodePtr &anf_node, size_
 }
 
 std::vector<int64_t> AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  auto shape = anf_node->Shape();
-  MS_EXCEPTION_IF_NULL(shape);
-  if (shape->isa<abstract::Shape>()) {
-    auto shape_ptr = shape->cast<abstract::ShapePtr>();
-    return shape_ptr->max_shape().empty() ? shape_ptr->shape() : shape_ptr->max_shape();
-  } else if (shape->isa<abstract::SequenceShape>()) {
-    auto sequeue_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
-    return GetShapeFromSequenceShape(sequeue_shape_ptr, index, ShapeType::kMaxShape);
-  } else if (shape->isa<abstract::NoShape>()) {
-    return {};
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
-  }
+  return GetOutputMinOrMaxShape(anf_node, index, ShapeType::kMaxShape);
 }
 
 std::vector<int64_t> AnfAlgo::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  auto shape = anf_node->Shape();
-  MS_EXCEPTION_IF_NULL(shape);
-  if (shape->isa<abstract::Shape>()) {
-    auto shape_ptr = shape->cast<abstract::ShapePtr>();
-    return shape_ptr->min_shape().empty() ? shape_ptr->shape() : shape_ptr->min_shape();
-  } else if (shape->isa<abstract::SequenceShape>()) {
-    auto sequeue_shape_ptr = shape->cast<abstract::SequenceShapePtr>();
-    return GetShapeFromSequenceShape(sequeue_shape_ptr, index, ShapeType::kMinShape);
-  } else if (shape->isa<abstract::NoShape>()) {
-    return {};
-  } else {
-    MS_LOG(EXCEPTION) << "Invalid shape type." << trace::DumpSourceLines(anf_node);
-  }
+  return GetOutputMinOrMaxShape(anf_node, index, ShapeType::kMinShape);
 }
 
 bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {

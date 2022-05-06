@@ -107,6 +107,9 @@ class COMMON_EXPORT AnfAlgo {
   static size_t GetOutputTensorNum(const AnfNodePtr &node);
   // get prev node output width output index
   static KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx, bool skip_nop_node = false);
+  // This function should be deleted when the return type of GetOutputInferShape is changed
+  // from std::vector<size_t> to ShapeVector
+  static ShapeVector GetOutputInferShapeSigned(const AnfNodePtr &node, size_t output_idx);
   // get output shapes inferred by ME from input nodes.
   static std::vector<size_t> GetOutputInferShape(const AnfNodePtr &node, size_t output_idx);
   static std::vector<size_t> GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,

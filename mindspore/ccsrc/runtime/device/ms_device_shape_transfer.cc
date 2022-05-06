@@ -21,6 +21,8 @@
 
 namespace mindspore {
 namespace trans {
+auto SHP_ANY = abstract::Shape::SHP_ANY;
+
 const int b1 = 1;
 const int b2 = 2;
 const int b4 = 4;
@@ -46,7 +48,15 @@ const size_t fz_n0 = 1;
 const size_t fz_ni = 2;
 const size_t fz_c0 = 3;
 bool HasShapeDynamic(const ShapeVector &shape_list) {
-  return std::any_of(shape_list.begin(), shape_list.end(), [](int64_t v) { return v == abstract::Shape::SHP_ANY; });
+  return std::any_of(shape_list.begin(), shape_list.end(), [](int64_t v) { return v == SHP_ANY; });
+}
+
+inline int64_t CalMaxShape(int64_t ori_val, int64_t new_val) {
+  if (ori_val < 0) {
+    return SHP_ANY;
+  }
+
+  return new_val;
 }
 
 template <typename T>
@@ -1818,7 +1828,8 @@ RangePair ShapeRangeTransfer::HWCNRange(const RangePair &ori_range, const TypeId
 RangePair ShapeRangeTransfer::NC1HWC04Range(const RangePair &ori_range, const TypeId &) {
   RangePair dst_range;
   const std::pair<int64_t, int64_t> c0 = {k4, k4};
-  const std::pair<int64_t, int64_t> c1 = {(ori_range[kC].first + k4 - 1) / k4, (ori_range[kC].second + k4 - 1) / k4};
+  auto tmp_max = CalMaxShape(ori_range[kC].second, (ori_range[kC].second + k4 - 1) / k4);
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[kC].first + k4 - 1) / k4, tmp_max};
   dst_range.push_back(ori_range[kN]);
   dst_range.push_back(c1);
   dst_range.push_back(ori_range[kH]);
@@ -1831,11 +1842,14 @@ RangePair ShapeRangeTransfer::FRAC_ZC04Range(const RangePair &ori_range, const T
   RangePair dst_range;
   const std::pair<int64_t, int64_t> c0 = {k4, k4};
   const std::pair<int64_t, int64_t> c16 = {kNiSize, kNiSize};
+
+  auto tmp_max = CalMaxShape(c0.second * ori_range[kH].second * ori_range[kW].second,
+                             (c0.second * ori_range[kH].second * ori_range[kW].second + kNiSize - 1) / kNiSize);
   const std::pair<int64_t, int64_t> first_dim = {
-    (c0.first * ori_range[kH].first * ori_range[kW].first + kNiSize - 1) / kNiSize,
-    (c0.second * ori_range[kH].second * ori_range[kW].second + kNiSize - 1) / kNiSize};
-  const std::pair<int64_t, int64_t> no = {(ori_range[kN].first + kNiSize - 1) / kNiSize,
-                                          (ori_range[kN].second + kNiSize - 1) / kNiSize};
+    (c0.first * ori_range[kH].first * ori_range[kW].first + kNiSize - 1) / kNiSize, tmp_max};
+
+  tmp_max = CalMaxShape(ori_range[kN].second, (ori_range[kN].second + kNiSize - 1) / kNiSize);
+  const std::pair<int64_t, int64_t> no = {(ori_range[kN].first + kNiSize - 1) / kNiSize, tmp_max};
   dst_range.push_back(first_dim);
   dst_range.push_back(no);
   dst_range.push_back(c16);
@@ -1847,13 +1861,20 @@ RangePair ShapeRangeTransfer::FRAC_ZRange(const RangePair &ori_range, const Type
   RangePair dst_range;
   auto cube = GetCubeSizeByType(type);
   const std::pair<int64_t, int64_t> c0 = {cube, cube};
-  const std::pair<int64_t, int64_t> cout16 = {((ori_range[kN].first + kNiSize - 1) / kNiSize) * kNiSize,
-                                              ((ori_range[kN].second + kNiSize - 1) / kNiSize) * kNiSize};
-  const std::pair<int64_t, int64_t> cin16 = {((ori_range[kC].first + cube - 1) / cube) * cube,
-                                             ((ori_range[kC].second + cube - 1) / cube) * cube};
-  const std::pair<int64_t, int64_t> r0 = {ori_range[kH].first * ori_range[kW].first * cin16.first / cube,
-                                          ori_range[kH].second * ori_range[kW].second * cin16.second / cube};
-  const std::pair<int64_t, int64_t> r1 = {cout16.first / kNiSize, cout16.second / kNiSize};
+
+  auto tmp_max = CalMaxShape(ori_range[kN].second, ((ori_range[kN].second + kNiSize - 1) / kNiSize) * kNiSize);
+
+  const std::pair<int64_t, int64_t> cout16 = {((ori_range[kN].first + kNiSize - 1) / kNiSize) * kNiSize, tmp_max};
+
+  tmp_max = CalMaxShape(ori_range[kC].second, ((ori_range[kC].second + cube - 1) / cube) * cube);
+  const std::pair<int64_t, int64_t> cin16 = {((ori_range[kC].first + cube - 1) / cube) * cube, tmp_max};
+
+  tmp_max = CalMaxShape(ori_range[kH].second * ori_range[kW].second * cin16.second,
+                        ori_range[kH].second * ori_range[kW].second * cin16.second / cube);
+  const std::pair<int64_t, int64_t> r0 = {ori_range[kH].first * ori_range[kW].first * cin16.first / cube, tmp_max};
+
+  tmp_max = CalMaxShape(cin16.second, cout16.second / kNiSize);
+  const std::pair<int64_t, int64_t> r1 = {cout16.first / kNiSize, tmp_max};
   const std::pair<int64_t, int64_t> co = {kNiSize, kNiSize};
   dst_range.push_back(r0);
   dst_range.push_back(r1);
@@ -1888,8 +1909,8 @@ RangePair ShapeRangeTransfer::NC1HWC0Range(const RangePair &ori_range, const Typ
   RangePair dst_range;
   auto cube = GetCubeSizeByType(type);
   const std::pair<int64_t, int64_t> c0 = {cube, cube};
-  const std::pair<int64_t, int64_t> c1 = {(ori_range[kC].first + cube - 1) / cube,
-                                          (ori_range[kC].second + cube - 1) / cube};
+  auto tmp_max = CalMaxShape(ori_range[kC].second, (ori_range[kC].second + cube - 1) / cube);
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[kC].first + cube - 1) / cube, tmp_max};
   dst_range.push_back(ori_range[kN]);
   dst_range.push_back(c1);
   dst_range.push_back(ori_range[kH]);
@@ -1902,13 +1923,19 @@ RangePair ShapeRangeTransfer::FRAC_ZN_LSTMRange(const RangePair &ori_range, cons
   RangePair dst_range;
   const std::pair<int64_t, int64_t> c0 = {k4, k4};
   const std::pair<int64_t, int64_t> c16 = {k4, k4};
-  const std::pair<int64_t, int64_t> h = {ori_range[kN].first / c0.first, ori_range[kN].second / c0.second};
-  const std::pair<int64_t, int64_t> i = {ori_range[kC].first - h.first, ori_range[kC].second - h.second};
-  const std::pair<int64_t, int64_t> first_dim = {
-    (i.first + kCube16 - 1) / kCube16 + (h.first + kCube16 - 1) / kCube16,
-    (i.second + kCube16 - 1) / kCube16 + (h.second + kCube16 - 1) / kCube16};
-  const std::pair<int64_t, int64_t> second = {c0.first * ((h.first + kCube16 - 1) / kCube16),
-                                              c0.second * ((h.second + kCube16 - 1) / kCube16)};
+
+  auto tmp_max = CalMaxShape(ori_range[kN].second, ori_range[kN].second / c0.second);
+  const std::pair<int64_t, int64_t> h = {ori_range[kN].first / c0.first, tmp_max};
+
+  tmp_max = CalMaxShape(ori_range[kC].second * h.second, ori_range[kC].second - h.second);
+  const std::pair<int64_t, int64_t> i = {ori_range[kC].first - h.first, tmp_max};
+
+  tmp_max = CalMaxShape(i.second * h.second, (i.second + kCube16 - 1) / kCube16 + (h.second + kCube16 - 1) / kCube16);
+  const std::pair<int64_t, int64_t> first_dim = {(i.first + kCube16 - 1) / kCube16 + (h.first + kCube16 - 1) / kCube16,
+                                                 tmp_max};
+
+  tmp_max = CalMaxShape(h.second, c0.second * ((h.second + kCube16 - 1) / kCube16));
+  const std::pair<int64_t, int64_t> second = {c0.first * ((h.first + kCube16 - 1) / kCube16), tmp_max};
   dst_range.push_back(first_dim);
   dst_range.push_back(second);
   dst_range.push_back(c16);
@@ -1920,8 +1947,8 @@ RangePair ShapeRangeTransfer::NDC1HWC0Range(const RangePair &ori_range, const Ty
   RangePair dst_range;
   auto cube = GetCubeSizeByType(type);
   const std::pair<int64_t, int64_t> c0 = {cube, cube};
-  const std::pair<int64_t, int64_t> c1 = {(ori_range[C_ncdhw].first + cube - 1) / cube,
-                                          (ori_range[C_ncdhw].second + cube - 1) / cube};
+  auto tmp_max = CalMaxShape(ori_range[C_ncdhw].second, (ori_range[C_ncdhw].second + cube - 1) / cube);
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[C_ncdhw].first + cube - 1) / cube, tmp_max};
   dst_range.push_back(ori_range[N_ncdhw]);
   dst_range.push_back(ori_range[D_ncdhw]);
   dst_range.push_back(c1);
@@ -1935,7 +1962,8 @@ RangePair ShapeRangeTransfer::C1HWNCOC0Range(const RangePair &ori_range, const T
   RangePair dst_range;
   auto cube = GetCubeSizeByType(type);
   const std::pair<int64_t, int64_t> c0 = {cube, cube};
-  const std::pair<int64_t, int64_t> r1 = {(ori_range[kC].first - 1) / cube + 1, (ori_range[kC].second - 1) / cube + 1};
+  auto tmp_max = CalMaxShape(ori_range[kC].second, (ori_range[kC].second - 1) / cube + 1);
+  const std::pair<int64_t, int64_t> r1 = {(ori_range[kC].first - 1) / cube + 1, tmp_max};
   dst_range.push_back(r1);
   dst_range.push_back(ori_range[kH]);
   dst_range.push_back(ori_range[kW]);
@@ -1949,12 +1977,16 @@ RangePair ShapeRangeTransfer::FRAC_Z_3DRange(const RangePair &ori_range, const T
   RangePair dst_range;
   auto cube = GetCubeSizeByType(type);
   const std::pair<int64_t, int64_t> c0 = {cube, cube};
-  const std::pair<int64_t, int64_t> c1 = {(ori_range[C_ncdhw].first + cube - 1) / cube,
-                                          (ori_range[C_ncdhw].second + cube - 1) / cube};
-  const std::pair<int64_t, int64_t> n1 = {(ori_range[N_ncdhw].first + kNiSize - 1) / kNiSize,
-                                          (ori_range[N_ncdhw].second + kNiSize - 1) / kNiSize};
+  auto tmp_max = CalMaxShape(ori_range[C_ncdhw].second, (ori_range[C_ncdhw].second + cube - 1) / cube);
+  const std::pair<int64_t, int64_t> c1 = {(ori_range[C_ncdhw].first + cube - 1) / cube, tmp_max};
+
+  tmp_max = CalMaxShape(ori_range[N_ncdhw].second, (ori_range[N_ncdhw].second + kNiSize - 1) / kNiSize);
+  const std::pair<int64_t, int64_t> n1 = {(ori_range[N_ncdhw].first + kNiSize - 1) / kNiSize, tmp_max};
+
   const int64_t r1_0 = ori_range[D_ncdhw].first * c1.first * ori_range[H_ncdhw].first * ori_range[W_ncdhw].first;
-  const int64_t r1_1 = ori_range[D_ncdhw].second * c1.second * ori_range[H_ncdhw].second * ori_range[W_ncdhw].second;
+  const int64_t r1_1 =
+    CalMaxShape(ori_range[D_ncdhw].second * c1.second * ori_range[H_ncdhw].second * ori_range[W_ncdhw].second,
+                ori_range[D_ncdhw].second * c1.second * ori_range[H_ncdhw].second * ori_range[W_ncdhw].second);
   const std::pair<int64_t, int64_t> r1 = {r1_0, r1_1};
   dst_range.push_back(r1);
   dst_range.push_back(n1);

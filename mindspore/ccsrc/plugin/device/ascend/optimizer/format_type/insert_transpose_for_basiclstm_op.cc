@@ -56,9 +56,14 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
       auto shape = {SizeToLong(origin_shape[1]), SizeToLong(origin_shape[0])};
       auto max_shape = common::AnfAlgo::GetInputMaxShape(cnode, 1);
       auto min_shape = common::AnfAlgo::GetInputMinShape(cnode, 1);
-      auto shape_tmp1 = {min_shape[1], min_shape[0]};
-      auto shape_tmp2 = {max_shape[1], max_shape[0]};
-      BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, shape_tmp1, shape_tmp2);
+      auto min_shape_tmp = min_shape;
+      auto max_shape_tmp = max_shape;
+      if (!min_shape.empty() && !max_shape.empty()) {
+        min_shape_tmp = {min_shape[1], min_shape[0]};
+        max_shape_tmp = {max_shape[1], max_shape[0]};
+      }
+
+      BaseShapePtr base_shape = std::make_shared<abstract::Shape>(shape, min_shape_tmp, max_shape_tmp);
       common::AnfAlgo::SetOutputTypeAndDetailShape({origin_type}, {base_shape}, transpose.get());
     } else {
       common::AnfAlgo::SetOutputInferTypeAndShape({origin_type}, {dst_shape}, transpose.get());
@@ -85,9 +90,14 @@ CNodePtr Insert(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const std
           auto dst_shape = {SizeToLong(origin_shape[0]), SizeToLong(origin_shape[1])};
           auto min_shape = common::AnfAlgo::GetOutputMinShape(cnode, output_idx);
           auto max_shape = common::AnfAlgo::GetOutputMaxShape(cnode, output_idx);
-          auto shape_tmp1 = {min_shape[0], min_shape[1]};
-          auto shape_tmp2 = {max_shape[0], max_shape[1]};
-          BaseShapePtr base_shape = std::make_shared<abstract::Shape>(dst_shape, shape_tmp1, shape_tmp2);
+          auto min_shape_tmp = min_shape;
+          auto max_shape_tmp = max_shape;
+          if (!min_shape.empty() && !max_shape.empty()) {
+            min_shape_tmp = {min_shape[0], min_shape[1]};
+            max_shape_tmp = {max_shape[0], max_shape[1]};
+          }
+
+          BaseShapePtr base_shape = std::make_shared<abstract::Shape>(dst_shape, min_shape_tmp, max_shape_tmp);
           common::AnfAlgo::SetOutputTypeAndDetailShape({dtype}, {base_shape}, transpose.get());
         } else {
           auto dst_shape = {origin_shape[0], origin_shape[1]};
