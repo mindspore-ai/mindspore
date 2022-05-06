@@ -1676,8 +1676,6 @@ void SetSharedParameterFlag(const FuncGraphPtr &root, const AnfNodePtr &paramete
   if (user_count > 1) {
     auto tensor_layout = parameter_ptr->user_data<TensorLayout>();
     tensor_layout->set_is_shared_param(true);
-    MS_LOG(WARNING) << "There are multiple users for " << parameter->ToString()
-                    << ". Mixed precision optimization is not valid here.";
   }
 }
 

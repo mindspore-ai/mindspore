@@ -198,11 +198,11 @@ Status AllreduceGraph::set_head_cnode(const CNodePtr &node) {
   cnode_arnode_map_[node] = arnode;
   auto arnode_emplace_return = arnode_set_.insert(arnode);
   if (!arnode_emplace_return.second) {
-    MS_LOG(WARNING) << "node: " << node->DebugString() << "'s arnode has already been added!";
+    MS_LOG(DEBUG) << "node: " << node->DebugString() << "'s arnode has already been added!";
   }
   auto cnode_emplace_return = cnode_set_.emplace(node);
   if (!cnode_emplace_return.second) {
-    MS_LOG(WARNING) << "node: " << node->DebugString() << " has already been added!";
+    MS_LOG(DEBUG) << "node: " << node->DebugString() << " has already been added!";
   }
   return SUCCESS;
 }
