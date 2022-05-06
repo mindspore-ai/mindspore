@@ -38,8 +38,9 @@ constexpr int kOperatorMaxThreadNum = 16;
 
 namespace mindspore::lite {
 size_t CommConvMul(std::vector<int> weight_shape, std::vector<int> output_shape) {
-  size_t cost = output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
-                weight_shape[NHWC_H] * weight_shape[NHWC_W] * weight_shape[NHWC_C];
+  size_t cost =
+    static_cast<size_t>(output_shape[NHWC_N] * output_shape[NHWC_H] * output_shape[NHWC_W] * output_shape[NHWC_C] *
+                        weight_shape[NHWC_H] * weight_shape[NHWC_W] * weight_shape[NHWC_C]);
   return cost;
 }
 
@@ -267,7 +268,7 @@ void SearchSubGraph::ConvertSubGraphToModel(std::vector<Subgraph> *sub_graphs) {
       VectorErase(&main_graphs->node_indices_, node_index);
       VectorErase(&subgraph.nodes_, node_index);
       cur_node->device_type_ = static_cast<int>(device_type);
-      op_parameters_->at(static_cast<int>(cur_node->output_indices_.at(0)))->thread_num_ = thread_num;
+      op_parameters_->at(cur_node->output_indices_.at(0))->thread_num_ = static_cast<int>(thread_num);
     }
 
     for (uint32_t head_index : subgraph.heads_) {
