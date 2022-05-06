@@ -723,8 +723,8 @@ mindspore.Tensor
 
         **异常：**
 
-        **TypeError** - `indices` 的数据类型不是int32，也不是int64。
-        **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+        - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
     .. py:method:: to_tensor(slice_index=None, shape=None, opt_shard_group=None)
 
