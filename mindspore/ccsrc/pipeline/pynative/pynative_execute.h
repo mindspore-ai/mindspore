@@ -414,7 +414,6 @@ class ForwardExecutor {
   void DoSignatureCast(const PrimitivePyPtr &prim, const mindspore::HashMap<SignatureEnumDType, TypeId> &dst_type,
                        const std::vector<SignatureEnumDType> &dtypes, const OpExecInfoPtr &op_exec_info);
   void CheckIfNeedSyncForHeterogeneous(const std::string &cur_target);
-  bool HasDynamicInput(const OpExecInfoPtr &op_exec_info);
   void SaveOutputDynamicShape(const OpExecInfoPtr &op_exec_info, const AbstractBasePtr &real_abs,
                               const py::object &obj);
 
