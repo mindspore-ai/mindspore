@@ -49,6 +49,12 @@ TypePtr CeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 }
 }  // namespace
 
+float CeLU::get_alpha() const {
+  auto value_ptr = this->GetAttr(kAlpha);
+  return GetValue<float>(value_ptr);
+}
+void CeLU::set_alpha(const float alpha) { (void)this->AddAttr(kAlpha, api::MakeValue(alpha)); }
+
 MIND_API_OPERATOR_IMPL(CeLU, BaseOperator);
 AbstractBasePtr CeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {

@@ -36,6 +36,13 @@ class MIND_API CeLU : public BaseOperator {
   CeLU() : BaseOperator(kNameCeLU) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CeLU for the inputs.
   void Init() {}
+
+  /// \brief Set alpha. Defaults to 1.0.
+  void set_alpha(const float alpha);
+  /// \brief Get alpha.
+  ///
+  /// \return alpha.
+  float get_alpha() const;
 };
 
 abstract::AbstractBasePtr CeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
