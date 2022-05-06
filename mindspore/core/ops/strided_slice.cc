@@ -342,11 +342,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   auto max_shape = shape_map[kMaxShape];
   bool x_is_dyn =
     std::any_of(x_shape.begin(), x_shape.end(), [](int64_t value) { return value == abstract::Shape::SHP_ANY; });
-  if (x_is_dyn && (min_shape.size() == 0 || max_shape.size() == 0)) {
-    MS_EXCEPTION(ValueError)
-      << "For '" << prim_name
-      << "', input x dynamic shape is currently not supported if min and max shapes are not given.";
-  }
+
   ShapeVector begin_v;
   ShapeVector end_v;
   ShapeVector strides_v;
@@ -378,6 +374,11 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
   ret_in_shape = DynamicComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape, begin_len);
+
+  if (max_shape.empty() || min_shape.empty()) {
+    return std::make_shared<abstract::Shape>(ret_in_shape);
+  }
+
   ShapeVector ret_min_shape(x_shape.size(), 1);
   ShapeVector ret_max_shape = x_shape;
   for (size_t i = 0; i < ret_in_shape.size(); i++) {
