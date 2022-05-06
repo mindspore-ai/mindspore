@@ -20,6 +20,7 @@ import static com.mindspore.flclient.FLParameter.TIME_OUT;
 import static com.mindspore.flclient.LocalFLParameter.ANDROID;
 import static com.mindspore.flclient.LocalFLParameter.X86;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -56,7 +57,7 @@ public class FLCommunication implements IFLCommunication {
     private static SSLSocketFactory sslSocketFactory;
     private static X509TrustManager x509TrustManager;
     private static final MediaType MEDIA_TYPE_JSON = MediaType.parse("applicatiom/json;charset=utf-8");
-    private static final Logger LOGGER = Logger.getLogger(FLCommunication.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(FLCommunication.class.toString());
     private static volatile FLCommunication communication;
     private static boolean msgDumpFlg = false;
     private static String msgDumpPath;
@@ -108,7 +109,7 @@ public class FLCommunication implements IFLCommunication {
             }
         };
         final TrustManager[] trustAllCerts = new TrustManager[]{trustManager};
-        LOGGER.info(Common.addTag("the set timeOut in OkHttpClient: " + timeOut));
+        LOGGER.info("the set timeOut in OkHttpClient: " + timeOut);
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(timeOut, TimeUnit.SECONDS);
         builder.writeTimeout(timeOut, TimeUnit.SECONDS);
@@ -128,7 +129,7 @@ public class FLCommunication implements IFLCommunication {
                 builder.hostnameVerifier(SSLSocketFactoryTools.getInstance().getHostnameVerifier());
             }
         } else {
-            LOGGER.info(Common.addTag("conducting http communication, do not need SSLSocketFactoryTools"));
+            LOGGER.info("conducting http communication, do not need SSLSocketFactoryTools");
         }
         return builder.build();
     }

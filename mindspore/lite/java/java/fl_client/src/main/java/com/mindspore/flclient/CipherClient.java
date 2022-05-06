@@ -38,6 +38,7 @@ import com.mindspore.flclient.cipher.struct.DecryptShareSecrets;
 import com.mindspore.flclient.cipher.struct.EncryptShare;
 import com.mindspore.flclient.cipher.struct.NewArray;
 import com.mindspore.flclient.cipher.struct.ShareSecret;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.pki.PkiUtil;
 
 import mindspore.schema.ClientShare;
@@ -76,7 +77,7 @@ import java.util.logging.Logger;
  * @since 2021-8-27
  */
 public class CipherClient {
-    private static final Logger LOGGER = Logger.getLogger(CipherClient.class.toString());
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(CipherClient.class.toString());
     private FLCommunication flCommunication;
     private FLParameter flParameter = FLParameter.getInstance();
     private LocalFLParameter localFLParameter = LocalFLParameter.getInstance();
@@ -165,13 +166,13 @@ public class CipherClient {
         byte[] csk = keyAgreement.generatePrivateKey();
         byte[] cpk = keyAgreement.generatePublicKey(csk);
         if (cpk == null || cpk.length == 0) {
-            LOGGER.severe(Common.addTag("[genDHKeyPairs] the return byte[] <cpk> is null, please check!"));
+            LOGGER.severe("[genDHKeyPairs] the return byte[] <cpk> is null, please check!");
             return FLClientStatus.FAILED;
         }
         byte[] ssk = keyAgreement.generatePrivateKey();
         byte[] spk = keyAgreement.generatePublicKey(ssk);
         if (spk == null || spk.length == 0) {
-            LOGGER.severe(Common.addTag("[genDHKeyPairs] the return byte[] <spk> is null, please check!"));
+            LOGGER.severe("[genDHKeyPairs] the return byte[] <spk> is null, please check!");
             return FLClientStatus.FAILED;
         }
         this.cKey.clear();
@@ -187,7 +188,7 @@ public class CipherClient {
         byte[] key = new byte[SEED_SIZE];
         int tag = masking.getRandomBytes(key);
         if (tag == -1) {
-            LOGGER.severe(Common.addTag("[genIndividualSecret] the return value is -1, please check!"));
+            LOGGER.severe("[genIndividualSecret] the return value is -1, please check!");
             return FLClientStatus.FAILED;
         }
         this.bu = key;
@@ -196,20 +197,18 @@ public class CipherClient {
 
     private List<ShareSecret> genSecretShares(byte[] secret) {
         if (secret == null || secret.length == 0) {
-            LOGGER.severe(Common.addTag("[genSecretShares] the input argument <secret> is null"));
+            LOGGER.severe("[genSecretShares] the input argument <secret> is null");
             return new ArrayList<>();
         }
         int size = u1ClientList.size();
         if (size <= 1) {
-            LOGGER.severe(Common.addTag("[genSecretShares] the size of u1ClientList is not valid: <= 1, it should be " +
-                    "> 1"));
+            LOGGER.severe("[genSecretShares] the size of u1ClientList is not valid: <= 1, it should be > 1");
             return new ArrayList<>();
         }
         ShareSecrets shamir = new ShareSecrets(minShareNum, size - 1);
         ShareSecrets.SecretShares[] shares = shamir.split(secret, prime);
         if (shares == null || shares.length == 0) {
-            LOGGER.severe(Common.addTag("[genSecretShares] the return ShareSecrets.SecretShare[] is null, please " +
-                    "check!"));
+            LOGGER.severe("[genSecretShares] the return ShareSecrets.SecretShare[] is null, please check!");
             return new ArrayList<>();
         }
         int shareIndex = 0;
@@ -219,8 +218,7 @@ public class CipherClient {
                 continue;
             }
             if (shareIndex >= shares.length) {
-                LOGGER.severe(Common.addTag("[genSecretShares] the shareIndex is out of range in array <shares>, " +
-                        "please check!"));
+                LOGGER.severe("[genSecretShares] the shareIndex is out of range in array <shares>, please check!");
                 return new ArrayList<>();
             }
             int index = shares[shareIndex].getNumber();
@@ -248,19 +246,19 @@ public class CipherClient {
                 continue;
             }
             if (cKey.size() < 2) {
-                LOGGER.severe(Common.addTag("[genEncryptExchangedKeys] the size of cKey is not valid: < 2, it should " +
-                        "be >= 2, please check!"));
+                LOGGER.severe("[genEncryptExchangedKeys] the size of cKey is not valid: < 2, it should " +
+                        "be >= 2, please check!");
                 return FLClientStatus.FAILED;
             }
             byte[] secret1 = keyAgreement.keyAgreement(cKey.get(1), curPublicKey.getCPK().getArray());
             if (secret1 == null || secret1.length == 0) {
-                LOGGER.severe(Common.addTag("[genEncryptExchangedKeys] the returned secret1 is null, please check!"));
+                LOGGER.severe("[genEncryptExchangedKeys] the returned secret1 is null, please check!");
                 return FLClientStatus.FAILED;
             }
             byte[] salt = new byte[0];
             byte[] secret = keyAgreement.getEncryptedPassword(secret1, salt);
             if (secret == null || secret.length == 0) {
-                LOGGER.severe(Common.addTag("[genEncryptExchangedKeys] the returned secret is null, please check!"));
+                LOGGER.severe("[genEncryptExchangedKeys] the returned secret is null, please check!");
                 return FLClientStatus.FAILED;
             }
             cUVKeys.put(vFlID, secret);
@@ -269,28 +267,28 @@ public class CipherClient {
     }
 
     private FLClientStatus encryptShares() {
-        LOGGER.info(Common.addTag("[PairWiseMask] ************** generate encrypt share secrets for " +
-                "RequestShareSecrets **************"));
+        LOGGER.info("[PairWiseMask] ************** generate encrypt share secrets for " +
+                "RequestShareSecrets **************");
         // connect sSkUv, bUV, sIndex, indexB  and  then Encrypt them
         if (sKey.size() < 2) {
-            LOGGER.severe(Common.addTag("[encryptShares] the size of sKey is not valid: < 2, it should be >= 2, " +
-                    "please check!"));
+            LOGGER.severe("[encryptShares] the size of sKey is not valid: < 2, it should be >= 2, " +
+                    "please check!");
             return FLClientStatus.FAILED;
         }
         List<ShareSecret> sSkUv = genSecretShares(sKey.get(1));
         if (sSkUv.isEmpty()) {
-            LOGGER.severe(Common.addTag("[encryptShares] the returned List<ShareSecret> sSkUv is empty, please " +
-                    "check!"));
+            LOGGER.severe("[encryptShares] the returned List<ShareSecret> sSkUv is empty, please " +
+                    "check!");
             return FLClientStatus.FAILED;
         }
         List<ShareSecret> bUV = genSecretShares(bu);
         if (sSkUv.isEmpty()) {
-            LOGGER.severe(Common.addTag("[encryptShares] the returned List<ShareSecret> bUV is empty, please check!"));
+            LOGGER.severe("[encryptShares] the returned List<ShareSecret> bUV is empty, please check!");
             return FLClientStatus.FAILED;
         }
         if (sSkUv.size() != bUV.size()) {
-            LOGGER.severe(Common.addTag("[encryptShares] the sSkUv.size() should be equal to bUV.size(), please " +
-                    "check!"));
+            LOGGER.severe("[encryptShares] the sSkUv.size() should be equal to bUV.size(), please " +
+                    "check!");
             return FLClientStatus.FAILED;
         }
         List<EncryptShare> encryptShareList = new ArrayList<>();
@@ -311,14 +309,13 @@ public class CipherClient {
             // encrypt:
             String vFlID = bUV.get(i).getFlID();
             if (!cUVKeys.containsKey(vFlID)) {
-                LOGGER.severe(Common.addTag("[encryptShares] the key " + vFlID + " is not in map cUVKeys, please " +
-                        "check!"));
+                LOGGER.severe("[encryptShares] the key " + vFlID + " is not in map cUVKeys, please check!");
                 return FLClientStatus.FAILED;
             }
             AESEncrypt aesEncrypt = new AESEncrypt(cUVKeys.get(vFlID), "CBC");
             byte[] encryptData = aesEncrypt.encrypt(cUVKeys.get(vFlID), allSecret);
             if (encryptData == null || encryptData.length == 0) {
-                LOGGER.severe(Common.addTag("[encryptShares] the return byte[] is null, please check!"));
+                LOGGER.severe("[encryptShares] the return byte[] is null, please check!");
                 return FLClientStatus.FAILED;
             }
             NewArray<byte[]> array = new NewArray<>();
@@ -342,14 +339,14 @@ public class CipherClient {
         List<Float> noiseBu = new ArrayList<>();
         int tag = masking.getMasking(noiseBu, featureSize, bu, individualIv);
         if (tag == -1) {
-            LOGGER.severe(Common.addTag("[doubleMaskingWeight] the return value is -1, please check!"));
+            LOGGER.severe("[doubleMaskingWeight] the return value is -1, please check!");
             return new float[0];
         }
         float[] mask = new float[featureSize];
         for (String vFlID : u2UClientList) {
             if (!clientPublicKeyList.containsKey(vFlID)) {
-                LOGGER.severe(Common.addTag("[doubleMaskingWeight] the key " + vFlID + " is not in map " +
-                        "clientPublicKeyList, please check!"));
+                LOGGER.severe("[doubleMaskingWeight] the key " + vFlID + " is not in map " +
+                        "clientPublicKeyList, please check!");
                 return new float[0];
             }
             ClientPublicKey curPublicKey = clientPublicKeyList.get(vFlID);
@@ -366,25 +363,25 @@ public class CipherClient {
                 iVec = this.pwIVec;
             }
             if (sKey.size() < 2) {
-                LOGGER.severe(Common.addTag("[doubleMaskingWeight] the size of sKey is not valid: < 2, it should be " +
-                        ">= 2, please check!"));
+                LOGGER.severe("[doubleMaskingWeight] the size of sKey is not valid: < 2, it should be " +
+                        ">= 2, please check!");
                 return new float[0];
             }
             byte[] secret1 = keyAgreement.keyAgreement(sKey.get(1), curPublicKey.getSPK().getArray());
             if (secret1 == null || secret1.length == 0) {
-                LOGGER.severe(Common.addTag("[doubleMaskingWeight] the returned secret1 is null, please check!"));
+                LOGGER.severe("[doubleMaskingWeight] the returned secret1 is null, please check!");
                 return new float[0];
             }
             byte[] secret = keyAgreement.getEncryptedPassword(secret1, salt);
             if (secret == null || secret.length == 0) {
-                LOGGER.severe(Common.addTag("[doubleMaskingWeight] the returned secret is null, please check!"));
+                LOGGER.severe("[doubleMaskingWeight] the returned secret is null, please check!");
                 return new float[0];
             }
             sUVKeys.put(vFlID, secret);
             List<Float> noiseSuv = new ArrayList<>();
             tag = masking.getMasking(noiseSuv, featureSize, secret, iVec);
             if (tag == -1) {
-                LOGGER.severe(Common.addTag("[doubleMaskingWeight] the return value is -1, please check!"));
+                LOGGER.severe("[doubleMaskingWeight] the return value is -1, please check!");
                 return new float[0];
             }
             int sign;
@@ -416,25 +413,25 @@ public class CipherClient {
     }
 
     private FLClientStatus requestExchangeKeys() {
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============request flID: " + localFLParameter.getFlID() +
-                "=============="));
+        LOGGER.info("[PairWiseMask] ==============request flID: " + localFLParameter.getFlID() +
+                "==============");
         FLClientStatus status = genDHKeyPairs();
         if (status == FLClientStatus.FAILED) {
-            LOGGER.severe(Common.addTag("[requestExchangeKeys] the return status is FAILED, please check!"));
+            LOGGER.severe("[requestExchangeKeys] the return status is FAILED, please check!");
             return FLClientStatus.FAILED;
         }
         if (cKey.size() <= 0 || sKey.size() <= 0) {
-            LOGGER.severe(Common.addTag("[requestExchangeKeys] the size of cKey or sKey is not valid: <=0."));
+            LOGGER.severe("[requestExchangeKeys] the size of cKey or sKey is not valid: <=0.");
             return FLClientStatus.FAILED;
         }
         if (cKey.size() < 2) {
-            LOGGER.severe(Common.addTag("[requestExchangeKeys] the size of cKey is not valid: < 2, it should be >= 2," +
-                    " please check!"));
+            LOGGER.severe("[requestExchangeKeys] the size of cKey is not valid: < 2, it should be >= 2," +
+                    " please check!");
             return FLClientStatus.FAILED;
         }
         if (sKey.size() < 2) {
-            LOGGER.severe(Common.addTag("[requestExchangeKeys] the size of sKey is not valid: < 2, it should be >= 2," +
-                    " please check!"));
+            LOGGER.severe("[requestExchangeKeys] the size of sKey is not valid: < 2, it should be >= 2," +
+                    " please check!");
             return FLClientStatus.FAILED;
         }
         byte[] indIv = new byte[I_VEC_LEN];
@@ -515,34 +512,34 @@ public class CipherClient {
             ResponseExchangeKeys responseExchangeKeys = ResponseExchangeKeys.getRootAsResponseExchangeKeys(buffer);
             return judgeRequestExchangeKeys(responseExchangeKeys);
         } catch (IOException ex) {
-            LOGGER.severe(Common.addTag("[requestExchangeKeys] catch IOException: " + ex.getMessage()));
+            LOGGER.severe("[requestExchangeKeys] catch IOException: " + ex.getMessage());
             return FLClientStatus.FAILED;
         }
     }
 
     private FLClientStatus judgeRequestExchangeKeys(ResponseExchangeKeys bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of RequestExchangeKeys**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        LOGGER.info("[PairWiseMask] **************the response of RequestExchangeKeys**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] reason: " + bufData.reason());
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] RequestExchangeKeys success"));
+                LOGGER.info("[PairWiseMask] RequestExchangeKeys success");
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] RequestExchangeKeys out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] RequestExchangeKeys out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch RequestError or SystemError in RequestExchangeKeys"));
+                LOGGER.info("[PairWiseMask] catch RequestError or SystemError in RequestExchangeKeys");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ResponseExchangeKeys " +
-                        "is invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ResponseExchangeKeys " +
+                        "is invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -558,7 +555,7 @@ public class CipherClient {
         int getExchangeKeysRoot;
         byte[] signature = signTimeAndIter(dateTime, iteration);
         if (signature == null) {
-            LOGGER.severe(Common.addTag("[getExchangeKeys] get signature is null!"));
+            LOGGER.severe("[getExchangeKeys] get signature is null!");
             return FLClientStatus.FAILED;
         }
         if (signature.length > 0) {
@@ -595,20 +592,20 @@ public class CipherClient {
             ReturnExchangeKeys returnExchangeKeys = ReturnExchangeKeys.getRootAsReturnExchangeKeys(buffer);
             return judgeGetExchangeKeys(returnExchangeKeys);
         } catch (IOException ex) {
-            LOGGER.severe(Common.addTag("[getExchangeKeys] catch IOException: " + ex.getMessage()));
+            LOGGER.severe("[getExchangeKeys] catch IOException: " + ex.getMessage());
             return FLClientStatus.FAILED;
         }
     }
 
     private FLClientStatus judgeGetExchangeKeys(ReturnExchangeKeys bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of GetExchangeKeys**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        LOGGER.info("[PairWiseMask] **************the response of GetExchangeKeys**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetExchangeKeys success"));
+                LOGGER.info("[PairWiseMask] GetExchangeKeys success");
                 clientPublicKeyList.clear();
                 u1ClientList.clear();
                 int length = bufData.remotePublickeysLength();
@@ -655,21 +652,21 @@ public class CipherClient {
                 }
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.SucNotReady):
-                LOGGER.info(Common.addTag("[PairWiseMask] server is not ready now, need wait and request " +
-                        "GetExchangeKeys again!"));
+                LOGGER.info("[PairWiseMask] server is not ready now, need wait and request " +
+                        "GetExchangeKeys again!");
                 return FLClientStatus.WAIT;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetExchangeKeys out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] GetExchangeKeys out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetExchangeKeys"));
+                LOGGER.info("[PairWiseMask] catch SucNotMatch or SystemError in GetExchangeKeys");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnExchangeKeys is" +
-                        " invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ReturnExchangeKeys is" +
+                        " invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -677,7 +674,8 @@ public class CipherClient {
     private FLClientStatus checkSignature(ReturnExchangeKeys bufData, int dataIndex, byte[] cPkByte, byte[] sPkByte) {
         ByteBuffer signature = bufData.remotePublickeys(dataIndex).signatureAsByteBuffer();
         if (signature == null) {
-            LOGGER.severe(Common.addTag("[checkSignature] the signature get from server is null, please confirm that pki_verify mode is open at server."));
+            LOGGER.severe("[checkSignature] the signature get from server is null, " +
+                    "please confirm that pki_verify mode is open at server.");
             return FLClientStatus.FAILED;
         }
         byte[] sigByte = new byte[signature.remaining()];
@@ -690,19 +688,19 @@ public class CipherClient {
 
         X509Certificate[] x509Certificates = CertVerify.transformPemArrayToX509Array(pemCerts);
         if (x509Certificates.length < 2) {
-            LOGGER.severe(Common.addTag("the length of x509Certificates is not valid, should be >= 2"));
+            LOGGER.severe("the length of x509Certificates is not valid, should be >= 2");
             return FLClientStatus.FAILED;
         }
         String certificateHash = PkiUtil.genHashFromCer(x509Certificates[1]);
-        LOGGER.info(Common.addTag("Get certificate hash success!"));
+        LOGGER.info("Get certificate hash success!");
 
         // check srcId
         String srcFlId = bufData.remotePublickeys(dataIndex).flId();
         if (certificateHash.equals(srcFlId)) {
-            LOGGER.info(Common.addTag("Check flID success and source flID is:" + srcFlId));
+            LOGGER.info("Check flID success and source flID is:" + srcFlId);
         } else {
-            LOGGER.severe(Common.addTag("Check flID failed!" + "source flID: " + srcFlId + "Hash ID from certificate:" +
-                    " " + certificateHash.equals(srcFlId)));
+            LOGGER.severe("Check flID failed!" + "source flID: " + srcFlId + "Hash ID from certificate:" +
+                    " " + certificateHash.equals(srcFlId));
             return FLClientStatus.FAILED;
         }
 
@@ -710,11 +708,11 @@ public class CipherClient {
         String timestamp = bufData.remotePublickeys(dataIndex).timestamp();
         String clientID = flParameter.getClientID();
         if (!verifySignature(clientID, x509Certificates, sigByte, cPkByte, sPkByte, timestamp, iteration)) {
-            LOGGER.info(Common.addTag("[PairWiseMask] FlID: " + srcFlId +
-                    ", signature authentication failed"));
+            LOGGER.info("[PairWiseMask] FlID: " + srcFlId +
+                    ", signature authentication failed");
             return FLClientStatus.FAILED;
         } else {
-            LOGGER.info(Common.addTag("[PairWiseMask] Verify signature success!"));
+            LOGGER.info("[PairWiseMask] Verify signature success!");
         }
 
         // check iteration and timestamp
@@ -729,21 +727,21 @@ public class CipherClient {
 
     private FLClientStatus checkIterAndTimestamp(int remoteIter, String timestamp) {
         if (remoteIter != iteration) {
-            LOGGER.severe(Common.addTag("[PairWiseMask] iteration check failed. Remote iteration of client: " + "is "
-                    + remoteIter + ", which is not consistent with current iteration:" + iteration));
+            LOGGER.severe("[PairWiseMask] iteration check failed. Remote iteration of client: " + "is "
+                    + remoteIter + ", which is not consistent with current iteration:" + iteration);
             return FLClientStatus.FAILED;
         }
         Date date = new Date();
         long currentTimeStamp = date.getTime();
         if (timestamp == null) {
-            LOGGER.severe(Common.addTag("[PairWiseMask] Received timeStamp is null,please check it!"));
+            LOGGER.severe("[PairWiseMask] Received timeStamp is null,please check it!");
             return FLClientStatus.FAILED;
         }
         long remoteTimeStamp = Long.parseLong(timestamp);
         long validIterInterval = flParameter.getValidInterval();
         if (Math.abs(currentTimeStamp - remoteTimeStamp) > validIterInterval) {
-            LOGGER.severe(Common.addTag("[PairWiseMask] timeStamp check failed! The difference between" +
-                    " remote timestamp and current timestamp is beyond valid iteration interval!"));
+            LOGGER.severe("[PairWiseMask] timeStamp check failed! The difference between" +
+                    " remote timestamp and current timestamp is beyond valid iteration interval!");
             return FLClientStatus.FAILED;
         }
         return FLClientStatus.SUCCESS;
@@ -761,20 +759,20 @@ public class CipherClient {
     private FLClientStatus requestShareSecrets() {
         FLClientStatus status = genIndividualSecret();
         if (status == FLClientStatus.FAILED) {
-            LOGGER.severe(Common.addTag("[requestShareSecrets] the returned status is FAILED from genIndividualSecret" +
-                    "(), please check!"));
+            LOGGER.severe("[requestShareSecrets] the returned status is FAILED from genIndividualSecret" +
+                    "(), please check!");
             return FLClientStatus.FAILED;
         }
         status = genEncryptExchangedKeys();
         if (status == FLClientStatus.FAILED) {
-            LOGGER.severe(Common.addTag("[requestShareSecrets] the returned status is FAILED from " +
-                    "genEncryptExchangedKeys(), please check!"));
+            LOGGER.severe("[requestShareSecrets] the returned status is FAILED from " +
+                    "genEncryptExchangedKeys(), please check!");
             return FLClientStatus.FAILED;
         }
         status = encryptShares();
         if (status == FLClientStatus.FAILED) {
-            LOGGER.severe(Common.addTag("[requestShareSecrets] the returned status is FAILED from encryptShares(), " +
-                    "please check!"));
+            LOGGER.severe("[requestShareSecrets] the returned status is FAILED from encryptShares(), " +
+                    "please check!");
             return FLClientStatus.FAILED;
         }
         FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
@@ -785,7 +783,7 @@ public class CipherClient {
         int time = fbBuilder.createString(dateTime);
         int clientShareSize = clientShareList.size();
         if (clientShareSize <= 0) {
-            LOGGER.warning(Common.addTag("[PairWiseMask] encrypt shares is not ready now!"));
+            LOGGER.warning("[PairWiseMask] encrypt shares is not ready now!");
             Common.sleep(SLEEP_TIME);
             return requestShareSecrets();
         } else {
@@ -805,7 +803,7 @@ public class CipherClient {
             int requestShareSecretsRoot;
             byte[] signature = signTimeAndIter(dateTime, iteration);
             if (signature == null) {
-                LOGGER.severe(Common.addTag("[PairWiseMask] get signature is null!"));
+                LOGGER.severe("[PairWiseMask] get signature is null!");
                 return FLClientStatus.FAILED;
             }
             if (signature.length > 0) {
@@ -844,7 +842,7 @@ public class CipherClient {
                 ResponseShareSecrets responseShareSecrets = ResponseShareSecrets.getRootAsResponseShareSecrets(buffer);
                 return judgeRequestShareSecrets(responseShareSecrets);
             } catch (IOException ex) {
-                LOGGER.severe(Common.addTag("[requestShareSecrets] catch IOException: " + ex.getMessage()));
+                LOGGER.severe("[requestShareSecrets] catch IOException: " + ex.getMessage());
                 return FLClientStatus.FAILED;
             }
         }
@@ -852,27 +850,27 @@ public class CipherClient {
 
     private FLClientStatus judgeRequestShareSecrets(ResponseShareSecrets bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of RequestShareSecrets**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        LOGGER.info("[PairWiseMask] **************the response of RequestShareSecrets**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] reason: " + bufData.reason());
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] RequestShareSecrets success"));
+                LOGGER.info("[PairWiseMask] RequestShareSecrets success");
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] RequestShareSecrets out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] RequestShareSecrets out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in RequestShareSecrets"));
+                LOGGER.info("[PairWiseMask] catch SucNotMatch or SystemError in RequestShareSecrets");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ResponseShareSecrets " +
-                        "is invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ResponseShareSecrets " +
+                        "is invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -888,7 +886,7 @@ public class CipherClient {
         int getShareSecrets;
         byte[] signature = signTimeAndIter(dateTime, iteration);
         if (signature == null) {
-            LOGGER.severe(Common.addTag("[getShareSecrets] get signature is null!"));
+            LOGGER.severe("[getShareSecrets] get signature is null!");
             return FLClientStatus.FAILED;
         }
         if (signature.length > 0) {
@@ -922,21 +920,21 @@ public class CipherClient {
             ReturnShareSecrets returnShareSecrets = ReturnShareSecrets.getRootAsReturnShareSecrets(buffer);
             return judgeGetShareSecrets(returnShareSecrets);
         } catch (IOException ex) {
-            LOGGER.severe(Common.addTag("[getShareSecrets] catch IOException: " + ex.getMessage()));
+            LOGGER.severe("[getShareSecrets] catch IOException: " + ex.getMessage());
             return FLClientStatus.FAILED;
         }
     }
 
     private FLClientStatus judgeGetShareSecrets(ReturnShareSecrets bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of GetShareSecrets**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
-        LOGGER.info(Common.addTag("[PairWiseMask] the size of encrypted shares: " + bufData.encryptedSharesLength()));
+        LOGGER.info("[PairWiseMask] **************the response of GetShareSecrets**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
+        LOGGER.info("[PairWiseMask] the size of encrypted shares: " + bufData.encryptedSharesLength());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetShareSecrets success"));
+                LOGGER.info("[PairWiseMask] GetShareSecrets success");
                 returnShareList.clear();
                 u2UClientList.clear();
                 int length = bufData.encryptedSharesLength();
@@ -944,7 +942,7 @@ public class CipherClient {
                     EncryptShare shareSecret = new EncryptShare();
                     ClientShare clientShare = bufData.encryptedShares(i);
                     if (clientShare == null) {
-                        LOGGER.severe(Common.addTag("[PairWiseMask] the clientShare returned from server is null"));
+                        LOGGER.severe("[PairWiseMask] the clientShare returned from server is null");
                         return FLClientStatus.FAILED;
                     }
                     shareSecret.setFlID(clientShare.flId());
@@ -956,21 +954,21 @@ public class CipherClient {
                 }
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.SucNotReady):
-                LOGGER.info(Common.addTag("[PairWiseMask] server is not ready now, need wait and request " +
-                        "GetShareSecrets again!"));
+                LOGGER.info("[PairWiseMask] server is not ready now, need wait and request " +
+                        "GetShareSecrets again!");
                 return FLClientStatus.WAIT;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetShareSecrets out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] GetShareSecrets out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetShareSecrets"));
+                LOGGER.info("[PairWiseMask] catch SucNotMatch or SystemError in GetShareSecrets");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnShareSecrets is" +
-                        " invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ReturnShareSecrets is" +
+                        " invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -981,8 +979,8 @@ public class CipherClient {
      * @return round execution result
      */
     public FLClientStatus exchangeKeys() {
-        LOGGER.info(Common.addTag("[PairWiseMask] ==================== round0: RequestExchangeKeys+GetExchangeKeys " +
-                "======================"));
+        LOGGER.info("[PairWiseMask] ==================== round0: RequestExchangeKeys+GetExchangeKeys " +
+                "======================");
         // RequestExchangeKeys
         FLClientStatus curStatus;
         curStatus = requestExchangeKeys();
@@ -1021,8 +1019,8 @@ public class CipherClient {
      * @return round execution result
      */
     public FLClientStatus shareSecrets() {
-        LOGGER.info(Common.addTag(("[PairWiseMask] ==================== round1: RequestShareSecrets+GetShareSecrets " +
-                "======================")));
+        LOGGER.info("[PairWiseMask] ==================== round1: RequestShareSecrets+GetShareSecrets " +
+                "======================");
         FLClientStatus curStatus;
         // RequestShareSecrets
         curStatus = requestShareSecrets();
@@ -1061,8 +1059,8 @@ public class CipherClient {
      * @return round execution result
      */
     public FLClientStatus reconstructSecrets() {
-        LOGGER.info(Common.addTag("[PairWiseMask] =================== round3: GetClientList+SendReconstructSecret " +
-                "========================"));
+        LOGGER.info("[PairWiseMask] =================== round3: GetClientList+SendReconstructSecret " +
+                "========================");
         FLClientStatus curStatus;
         // GetClientList
         curStatus = clientListReq.getClientList(iteration, u3ClientList, decryptShareSecretsList, returnShareList,
@@ -1088,7 +1086,7 @@ public class CipherClient {
 
         // clientListCheck
         if (flParameter.isPkiVerify()) {
-            LOGGER.info(Common.addTag("[PairWiseMask] The mode is pkiVerify mode, start clientList check ..."));
+            LOGGER.info("[PairWiseMask] The mode is pkiVerify mode, start clientList check ...");
             curStatus = clientListCheck();
             waitTryTime = 0;
             while (curStatus == FLClientStatus.WAIT) {
@@ -1135,7 +1133,7 @@ public class CipherClient {
     private static byte[] concatenateData(byte[] cPK, byte[] sPK, String time, int iterNum) {
         // concatenate cPK, sPK and time
         if (time == null) {
-            LOGGER.severe(Common.addTag("[concatenateData] input time is null, please check!"));
+            LOGGER.severe("[concatenateData] input time is null, please check!");
             throw new IllegalArgumentException();
         }
         byte[] byteTime = time.getBytes(StandardCharsets.UTF_8);
@@ -1179,7 +1177,7 @@ public class CipherClient {
     }
 
     private FLClientStatus clientListCheck() {
-        LOGGER.info(Common.addTag("[PairWiseMask] ==================== ClientListCheck ======================"));
+        LOGGER.info("[PairWiseMask] ==================== ClientListCheck ======================");
         FLClientStatus curStatus;
         // send signed clientList
 
@@ -1215,8 +1213,8 @@ public class CipherClient {
     }
 
     private FLClientStatus sendClientListSign() {
-        LOGGER.info(Common.addTag("[PairWiseMask] ==============request flID: " +
-                localFLParameter.getFlID() + "=============="));
+        LOGGER.info("[PairWiseMask] ==============request flID: " +
+                localFLParameter.getFlID() + "==============");
         genDHKeyPairs();
         List<String> clientList = u3ClientList;
         int listSize = u3ClientList.size();
@@ -1231,7 +1229,7 @@ public class CipherClient {
         String clientID = flParameter.getClientID();
         byte[] signature = SignAndVerify.signData(clientID, listHash);
         if (signature == null) {
-            LOGGER.severe(Common.addTag("[sendClientListSign] the returned signature is null"));
+            LOGGER.severe("[sendClientListSign] the returned signature is null");
             return FLClientStatus.FAILED;
         }
         FlatBufferBuilder fbBuilder = new FlatBufferBuilder();
@@ -1278,27 +1276,27 @@ public class CipherClient {
 
     private FLClientStatus judgeRequestClientList(ResponseClientListSign bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of RequestClientListSign**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        LOGGER.info("[PairWiseMask] **************the response of RequestClientListSign**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] reason: " + bufData.reason());
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] RequestClientListSign success"));
+                LOGGER.info("[PairWiseMask] RequestClientListSign success");
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] RequestClientListSign out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] RequestClientListSign out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch RequestError or SystemError in RequestClientListSign"));
+                LOGGER.info("[PairWiseMask] catch RequestError or SystemError in RequestClientListSign");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in RequestClientListSign" +
-                        " is invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in RequestClientListSign" +
+                        " is invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -1347,14 +1345,14 @@ public class CipherClient {
 
     private FLClientStatus judgeAllClientList(ReturnAllClientListSign bufData) {
         retCode = bufData.retcode();
-        LOGGER.info(Common.addTag("[PairWiseMask] **************the response of GetAllClientsList**************"));
-        LOGGER.info(Common.addTag("[PairWiseMask] return code: " + retCode));
-        LOGGER.info(Common.addTag("[PairWiseMask] reason: " + bufData.reason()));
-        LOGGER.info(Common.addTag("[PairWiseMask] current iteration in server: " + bufData.iteration()));
-        LOGGER.info(Common.addTag("[PairWiseMask] next request time: " + bufData.nextReqTime()));
+        LOGGER.info("[PairWiseMask] **************the response of GetAllClientsList**************");
+        LOGGER.info("[PairWiseMask] return code: " + retCode);
+        LOGGER.info("[PairWiseMask] reason: " + bufData.reason());
+        LOGGER.info("[PairWiseMask] current iteration in server: " + bufData.iteration());
+        LOGGER.info("[PairWiseMask] next request time: " + bufData.nextReqTime());
         switch (retCode) {
             case (ResponseCode.SUCCEED):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetAllClientList success"));
+                LOGGER.info("[PairWiseMask] GetAllClientList success");
                 int length = bufData.clientListSignLength();
                 String clientID = flParameter.getClientID();
                 String localFlID = localFLParameter.getFlID();
@@ -1366,7 +1364,7 @@ public class CipherClient {
                     byte[] sigByte = new byte[signature.remaining()];
                     signature.get(sigByte);
                     if (bufData.clientListSign(i).flId() == null) {
-                        LOGGER.severe(Common.addTag("[PairWiseMask] get flID failed!"));
+                        LOGGER.severe("[PairWiseMask] get flID failed!");
                         return FLClientStatus.FAILED;
                     }
                     String srcFlId = bufData.clientListSign(i).flId();
@@ -1375,28 +1373,28 @@ public class CipherClient {
                         continue;
                     }  // Do not verify itself
                     if (!SignAndVerify.verifySignatureByCert(clientID, remoteCertificates, localListHash, sigByte)) {
-                        LOGGER.info(Common.addTag("[PairWiseMask] FlID: " + srcFlId +
-                                ", signature authentication failed"));
+                        LOGGER.info("[PairWiseMask] FlID: " + srcFlId +
+                                ", signature authentication failed");
                         return FLClientStatus.FAILED;
                     }
                 }
                 return FLClientStatus.SUCCESS;
             case (ResponseCode.SucNotReady):
-                LOGGER.info(Common.addTag("[PairWiseMask] server is not ready now, need wait and request " +
-                        "GetAllClientsList again!"));
+                LOGGER.info("[PairWiseMask] server is not ready now, need wait and request " +
+                        "GetAllClientsList again!");
                 return FLClientStatus.WAIT;
             case (ResponseCode.OutOfTime):
-                LOGGER.info(Common.addTag("[PairWiseMask] GetAllClientsList out of time: need wait and request " +
-                        "startFLJob again"));
+                LOGGER.info("[PairWiseMask] GetAllClientsList out of time: need wait and request " +
+                        "startFLJob again");
                 setNextRequestTime(bufData.nextReqTime());
                 return FLClientStatus.RESTART;
             case (ResponseCode.RequestError):
             case (ResponseCode.SystemError):
-                LOGGER.info(Common.addTag("[PairWiseMask] catch SucNotMatch or SystemError in GetAllClientsList"));
+                LOGGER.info("[PairWiseMask] catch SucNotMatch or SystemError in GetAllClientsList");
                 return FLClientStatus.FAILED;
             default:
-                LOGGER.severe(Common.addTag("[PairWiseMask] the return <retCode> from server in ReturnAllClientList " +
-                        "is invalid: " + retCode));
+                LOGGER.severe("[PairWiseMask] the return <retCode> from server in ReturnAllClientList " +
+                        "is invalid: " + retCode);
                 return FLClientStatus.FAILED;
         }
     }
@@ -1431,7 +1429,7 @@ public class CipherClient {
         boolean isPkiVerify = flParameter.isPkiVerify();
         byte[] signature = new byte[0];
         if (isPkiVerify) {
-            LOGGER.info(Common.addTag("ClientID is:" + clientID));
+            LOGGER.info("ClientID is:" + clientID);
             byte[] concatData = concatenateIterAndTime(dateTime, iteration);
             signature = SignAndVerify.signData(clientID, concatData);
         }
@@ -1440,7 +1438,7 @@ public class CipherClient {
 
     private static String transformX509ToPem(X509Certificate x509Certificate) {
         if (x509Certificate == null) {
-            LOGGER.severe(Common.addTag("[CertVerify] x509Certificate is null, please check!"));
+            LOGGER.severe("[CertVerify] x509Certificate is null, please check!");
             return null;
         }
         String pemCert;
@@ -1448,7 +1446,7 @@ public class CipherClient {
             byte[] derCert = x509Certificate.getEncoded();
             pemCert = new String(Base64.getEncoder().encode(derCert));
         } catch (CertificateEncodingException e) {
-            LOGGER.severe(Common.addTag("[CertVerify] catch Exception: " + e.getMessage()));
+            LOGGER.severe("[CertVerify] catch Exception: " + e.getMessage());
             return null;
         }
         return pemCert;
@@ -1456,7 +1454,7 @@ public class CipherClient {
 
     private static String[] transformX509ArrayToPemArray(X509Certificate[] x509Certificates) {
         if (x509Certificates == null || x509Certificates.length == 0) {
-            LOGGER.severe(Common.addTag("[CertVerify] certificateChains is null or empty, please check!"));
+            LOGGER.severe("[CertVerify] certificateChains is null or empty, please check!");
             throw new IllegalArgumentException();
         }
         int nSize = x509Certificates.length;
@@ -1470,22 +1468,22 @@ public class CipherClient {
 
     private Boolean waitTryTimeExceedsLimit() {
         if (waitTryTime > MAX_WAIT_TRY_TIME) {
-            LOGGER.severe(Common.addTag("[waitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
-                    "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME));
+            LOGGER.severe("[waitTryTimeExceedsLimit] the waitTryTime exceeds the limit, current " +
+                    "waitTryTime is: " + waitTryTime + " the limited time is: " + MAX_WAIT_TRY_TIME);
             return true;
         }
         return false;
     }
 
     private FLClientStatus serverNotReady(String logTag) {
-        LOGGER.info(Common.addTag("[" + logTag +"] the server is not ready now, need wait some time and request again"));
+        LOGGER.info("[" + logTag +"] the server is not ready now, need wait some time and request again");
         nextRequestTime = Common.getNextReqTime();
         retCode = ResponseCode.OutOfTime;
         return FLClientStatus.RESTART;
     }
 
     private FLClientStatus serverJobFinished(String logTag) {
-        LOGGER.info(Common.addTag("[" + logTag + "] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist."));
+        LOGGER.info("[" + logTag + "] " + Common.JOB_NOT_AVAILABLE + " will stop the task and exist.");
         retCode = ResponseCode.SystemError;
         return FLClientStatus.FAILED;
     }

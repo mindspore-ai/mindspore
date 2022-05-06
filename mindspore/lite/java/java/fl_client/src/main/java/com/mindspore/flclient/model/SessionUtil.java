@@ -17,6 +17,7 @@
 package com.mindspore.flclient.model;
 
 import com.mindspore.flclient.Common;
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.lite.LiteSession;
 import com.mindspore.lite.MSTensor;
 import com.mindspore.lite.TrainSession;
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
  * @since v1.0
  */
 public class SessionUtil {
-    private static final Logger logger = Logger.getLogger(SessionUtil.class.toString());
+    private static final Logger logger = FLLoggerGenerater.getModelLogger(SessionUtil.class.toString());
 
     /**
      * convert tensor to feature map
@@ -49,13 +50,13 @@ public class SessionUtil {
      */
     public static Map<String, float[]> convertTensorToFeatures(List<MSTensor> tensors) {
         if (tensors == null) {
-            logger.severe(Common.addTag("tensors cannot be null"));
+            logger.severe("tensors cannot be null");
             return new HashMap<>();
         }
         Map<String, float[]> features = new HashMap<>(tensors.size());
         for (MSTensor mstensor : tensors) {
             if (mstensor == null) {
-                logger.severe(Common.addTag("tensors cannot be null"));
+                logger.severe("tensors cannot be null");
                 return new HashMap<>();
             }
             features.put(mstensor.tensorName(), mstensor.getFloatData());
@@ -86,13 +87,13 @@ public class SessionUtil {
      */
     public static int updateFeatures(LiteSession trainSession, String modelName, List<FeatureMap> featureMaps) {
         if (trainSession == null || featureMaps == null || modelName == null || modelName.isEmpty()) {
-            logger.severe(Common.addTag("trainSession,featureMaps modelName cannot be null"));
+            logger.severe("trainSession,featureMaps modelName cannot be null");
             return -1;
         }
         List<MSTensor> tensors = new ArrayList<MSTensor>(featureMaps.size());
         for (FeatureMap newFeature : featureMaps) {
             if (newFeature == null) {
-                logger.severe(Common.addTag("newFeature cannot be null"));
+                logger.severe("newFeature cannot be null");
                 return -1;
             }
             ByteBuffer by = newFeature.dataAsByteBuffer();
@@ -104,7 +105,7 @@ public class SessionUtil {
         boolean isSuccess = trainSession.updateFeatures(tensors);
         for (MSTensor tensor : tensors) {
             if (tensor == null) {
-                logger.severe(Common.addTag("tensor cannot be null"));
+                logger.severe("tensor cannot be null");
                 return -1;
             }
             tensor.free();
@@ -125,7 +126,7 @@ public class SessionUtil {
      */
     public static Optional<LiteSession> initSession(String modelPath) {
         if (modelPath == null) {
-            logger.severe(Common.addTag("modelPath cannot be empty"));
+            logger.severe("modelPath cannot be empty");
             return Optional.empty();
         }
         MSConfig msConfig = new MSConfig();
@@ -136,7 +137,7 @@ public class SessionUtil {
         msConfig.init(0, 1, 0, false);
         LiteSession trainSession = TrainSession.createTrainSession(modelPath, msConfig, false);
         if (trainSession == null) {
-            logger.severe(Common.addTag("init session failed,please check model path:" + modelPath));
+            logger.severe("init session failed,please check model path:" + modelPath);
             return Optional.empty();
         }
         return Optional.of(trainSession);
@@ -149,11 +150,11 @@ public class SessionUtil {
      */
     public static void free(LiteSession trainSession) {
         if (trainSession == null) {
-            logger.severe(Common.addTag("trainSession cannot be null"));
+            logger.severe("trainSession cannot be null");
             return;
         }
         if(trainSession.getSessionPtr() == 0) {
-            logger.warning(Common.addTag("trainSession pointer has already free"));
+            logger.warning("trainSession pointer has already free");
             return;
         }
         trainSession.free();

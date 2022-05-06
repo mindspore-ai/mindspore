@@ -1,5 +1,6 @@
 package com.mindspore.flclient;
 
+import com.mindspore.flclient.common.FLLoggerGenerater;
 import mindspore.schema.RequestFLJob;
 import mindspore.schema.ResponseFLJob;
 import mindspore.schema.ResponseGetModel;
@@ -21,7 +22,7 @@ import java.util.logging.Logger;
  * @since  : 2022/4/14
  */
 class FLMockServer {
-    private static final Logger LOGGER = Logger.getLogger("FL_UT");
+    private static final Logger LOGGER = FLLoggerGenerater.getModelLogger(FLMockServer.class.toString());
     private ArrayList<FLHttpRes> httpRes;
     private int httpResCnt = 0;
     private MockWebServer server = new MockWebServer();
