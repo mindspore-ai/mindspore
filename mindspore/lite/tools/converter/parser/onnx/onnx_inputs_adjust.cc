@@ -118,7 +118,7 @@ STATUS ReplaceTypeParameterNode(const FuncGraphPtr &func_graph, const ParameterP
   } else {
     // set graph input
     if (abstract_tensor->element()->GetTypeTrack()->type_id() == input) {
-      param_node->abstract()->set_type(TypeIdToType(output));
+      abstract_tensor->element()->set_type(TypeIdToType(output));
     }
   }
   return lite::RET_OK;
