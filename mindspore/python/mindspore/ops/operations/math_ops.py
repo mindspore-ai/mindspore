@@ -5105,12 +5105,14 @@ class IndexAdd(Primitive):
 
     Args:
         axis (int): The dimension along which to index.
-        use_lock (bool): If true, use lock mode. If false, don't use lock mode. Default: True.
+        use_lock (bool): Whether to enable a lock to protect the updating process of variable tensors.
+            If true, when updating the value of `x`, this process will be protected by a lock by using atomic operation.
+            If false, the result may be unpredictable. Default: True.
         check_index_bound (bool): If true, check index boundary. If false, don't check index boundary. Default: True.
 
     Inputs:
         - **x** (Parameter) - The input Parameter to add to.
-        - **indices** (Tensor) - Add the  value of `x` and `y` along the dimension of the `axis` according to the
+        - **indices** (Tensor) - Add the value of `x` and `y` along the dimension of the `axis` according to the
           specified index value, with data type int32.
           The `indices` must be 1D with the same size as the size of `y` in the `axis` dimension. The values
           of `indices` should be in [0, b), where the b is the size of `x` in the `axis` dimension.
