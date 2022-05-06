@@ -28,26 +28,16 @@
 namespace mindspore::lite::quant {
 class CLEStrategy {
  public:
-  explicit CLEStrategy(const FuncGraphPtr &func_graph, const std::shared_ptr<Calibrator> &calibrator,
-                       const converter::Flags &flags)
-      : func_graph_(func_graph), calibrator_(calibrator), flags_(flags) {}
+  explicit CLEStrategy(const FuncGraphPtr &func_graph, const converter::Flags &flags)
+      : func_graph_(func_graph), flags_(flags) {}
 
   ~CLEStrategy();
 
   int Run();
 
  private:
-  int ReplaceGraphRelu6ToRelu();
-  int ReplaceCNodeRelu6ToRelu(const CNodePtr &cnode);
   int FindPattern();
   int WeightEqualization();
-  int ClipHighBias();
-  int ClipBackBiasLayer(const CNodePtr &cnode, float absorb_bias);
-  int ClipFrontBiasLayer(const CNodePtr &cnode, float absorb_bias);
-  int ClipHighBiasWithTwoLayer(const CombinationLayer &layer_group, const std::map<std::string, float> &absorb_biases);
-  int ClipHighBiasWithThreeLayer(const CombinationLayer &layer_group,
-                                 const std::map<std::string, float> &absorb_biases);
-  int ReduceWeight(const CNodePtr &cnode, int weight_index, int preferred_dim, std::vector<float> *reduce_weight);
 
   int EqualizationWithTwoLayer(const CombinationLayer &layer_group, const std::vector<double> &scales);
   int EqualizationWithThreeLayer(const CombinationLayer &layer_group, const std::vector<double> &scales12,
@@ -61,17 +51,11 @@ class CLEStrategy {
   int CalcScaleWithTwoLayer(const CombinationLayer &layer_group, std::vector<double> *scales);
   int CalcScaleWithThreeLayer(const CombinationLayer &layer_group, std::vector<double> *scales12,
                               std::vector<double> *scales23);
-  int DoInference();
 
  private:
   FuncGraphPtr func_graph_ = nullptr;
-  std::shared_ptr<Calibrator> calibrator_ = nullptr;
   converter::Flags flags_;
   CLEPattern *cle_pattern_ = nullptr;
-  std::map<std::string, float> total_min_;
-
-  bool replace_relu6_flag_ = false;
-  bool clip_bias_flag_ = false;
 };
 }  // namespace mindspore::lite::quant
 

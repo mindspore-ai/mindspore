@@ -37,7 +37,6 @@
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/bias_correction_strategy.h"
 #include "tools/anf_exporter/anf_exporter.h"
-#include "tools/converter/quantizer/cle_strategy.h"
 
 using std::string;
 using std::vector;
@@ -603,15 +602,6 @@ int FullQuantQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;
-  }
-
-  if (flags_.fullQuantParam.cle) {
-    CLEStrategy cle_strategy(func_graph, calibrator_, flags_);
-    status = cle_strategy.Run();
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "do pre process failed!";
-      return status;
-    }
   }
 
   // anf -- fb

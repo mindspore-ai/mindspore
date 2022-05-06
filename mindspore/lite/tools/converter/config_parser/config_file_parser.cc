@@ -158,7 +158,6 @@ int ConfigFileParser::ParseFullQuantString(const std::map<std::string, std::map<
       {"bias_correction", full_quant_string_.bias_correction},
       {"target_device", full_quant_string_.target_device},
       {"per_channel", full_quant_string_.per_channel},
-      {"cle", full_quant_string_.cle},
     };
     return SetMapData(map, parse_map, kFullQuantParam);
   }
