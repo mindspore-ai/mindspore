@@ -146,7 +146,7 @@ if(ENABLE_GPU)
     cuda_add_library(gpu_cuda_lib STATIC ${GPU_SRC_LIST})
     set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_GPU)
-
+    add_dependencies(gpu_cuda_lib proto_input)
     add_subdirectory(plugin/device/gpu/kernel/cuda_impl/cuda_ops)
 endif()
 
