@@ -275,9 +275,11 @@ class DatasetHelper:
                     elif (context.get_context("device_target") == "Ascend") or \
                          (context.get_context("device_target") == "GPU"):
                         iterclass = _DatasetIterMSLoopSink
-                    elif context.get_context("device_target") == "CPU":
+                    else:
+                        target = context.get_context("device_target")
                         raise RuntimeError("Currently dataset sink mode is not supported when the device "
-                                           "target is CPU, please set dataset sink mode to False.")
+                                           "target is {}, please set dataset_sink_mode to False "
+                                           "in Model.train()".format(target))
                 else:
                     iterclass = _DatasetIterPyNative
             self.iter = iterclass(dataset, sink_size, epoch_num)
