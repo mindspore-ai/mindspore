@@ -394,21 +394,6 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   }
 }
 
-void LiteSession::AdjustModelOutputTensorInitRefCount(const lite::Model *model) {
-  MS_ASSERT(model != nullptr);
-  auto graph_out_size = model->output_indices_.size();
-  for (size_t i = 0; i < graph_out_size; ++i) {
-    size_t graph_out_index = model->output_indices_[i];
-    MS_ASSERT(graph_out_index < this->tensors_.size());
-    auto *out_tensor = this->tensors_.at(graph_out_index);
-    if (out_tensor == nullptr) {
-      MS_LOG(ERROR) << "out_tensor is null!";
-      return;
-    }
-    out_tensor->set_init_ref_count(out_tensor->init_ref_count() + 1);
-  }
-}
-
 void LiteSession::InitGraphInOutTensorsMap(const lite::Model *model) {
   InitGraphInputMSTensors();
   InitGraphInputMap(model);
@@ -674,10 +659,9 @@ int LiteSession::SetTensorInitRefCount(const Model *model) {
       continue;
     }
     if (IsIsolatedSubGraph(kernel)) {
-      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputOutputTensorInitRefCount();
+      static_cast<kernel::SubGraphKernel *>(kernel)->InitInputTensorInitRefCount();
     }
   }
-  AdjustModelOutputTensorInitRefCount(model);
 
   if (!non_tail_call_kernels_.empty()) {
     return SetNonTaiCallSubgraphOutputInitRefCount(non_tail_call_kernels_);

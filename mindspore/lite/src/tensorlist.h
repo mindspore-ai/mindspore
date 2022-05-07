@@ -84,7 +84,7 @@ class TensorList : public Tensor {
 
   int FreeTensorListData();
 
-  void FreeData() override;
+  void FreeData(bool is_force = true) override;
 
   int SetTensor(int index, const Tensor *src_tensor);
 

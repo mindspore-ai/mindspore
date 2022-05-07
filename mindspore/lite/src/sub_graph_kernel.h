@@ -93,7 +93,7 @@ class SubGraphKernel : public KernelExec {
 
   void InitOutTensorInitRefCount(const std::vector<KernelExec *> *mask_kernels) override;
 
-  void InitInputOutputTensorInitRefCount();
+  void InitInputTensorInitRefCount();
 
   virtual int SetFp16Attr() { return mindspore::lite::RET_OK; }
 
