@@ -75,7 +75,7 @@ abstract::ShapePtr LuSolveInferShape(const PrimitivePtr &primitive, const std::v
                              << lu_pivots_shape.size() << ".";
   }
   if (lu_data_shape[lu_data_shape.size() - 1] != lu_data_shape[lu_data_shape.size() - kDimNum]) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name << "', input lu_data should be a square matrix, "
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', input lu_data must be a square matrix, "
                              << "but got row: " << lu_data_shape[lu_data_shape.size() - kDimNum]
                              << ", col: " << lu_data_shape[lu_data_shape.size() - 1] << ".";
   }

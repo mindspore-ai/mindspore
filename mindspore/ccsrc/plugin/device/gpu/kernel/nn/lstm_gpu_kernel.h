@@ -165,7 +165,7 @@ class LstmGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                 cudnnGetRNNParamsSize(handle_, rnn_desc_, x_desc_[0], &weight_size_, cudnn_data_type_),
                                 "get weight_size_ failed");
     if (weight_size != weight_size_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the size of weight should be equal to " << weight_size_
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the size of weight must be equal to " << weight_size_
                         << " but got " << weight_size;
     }
     int w_dims[3] = {SizeToInt(weight_size_ / sizeof(T)), 1, 1};

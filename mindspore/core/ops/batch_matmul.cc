@@ -69,7 +69,7 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   if (!is_ascend && x_shp.size() != y_shp.size()) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
-                             << "' on cpu/gpu, input 'x' should have the same size as input 'y'. But got 'x' size: "
+                             << "' on cpu/gpu, input 'x' must have the same size as input 'y'. But got 'x' size: "
                              << x_shp.size() << "'y' size: " << y_shp.size() << ".";
   }
   constexpr size_t x_dim_limit = 3;
@@ -77,7 +77,7 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
   if (x_shp.size() < x_dim_limit || y_shp.size() < y_dim_limit) {
     MS_EXCEPTION(ValueError)
       << "For '" << prim_name
-      << "', input 'x' should be greater or equal to 3, input 'y' should be greater or equal to 2. But got 'x': "
+      << "', input 'x' must be greater or equal to 3, input 'y' must be greater or equal to 2. But got 'x': "
       << x_shp.size() << ", 'y': " << y_shp.size() << ".";
   }
   constexpr size_t offset = 2;
@@ -119,7 +119,7 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
     auto y_r = y_shp[y_offset + (transpose_b ? 1 : 0)];
     if (x_c != y_r) {
       MS_LOG(EXCEPTION) << "BatchMatMul shape error, got x_col: " << x_c << ", y_row: " << y_r
-                        << ". In BatchMatMul x_col and y_row should be equal.";
+                        << ". In BatchMatMul x_col and y_row must be equal.";
     }
   }
   ShapeVector ret_shape;

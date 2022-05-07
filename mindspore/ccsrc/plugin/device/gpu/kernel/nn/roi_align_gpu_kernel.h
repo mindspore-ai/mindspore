@@ -66,13 +66,13 @@ class ROIAlignFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     // Get the number of input args
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
     }
 
     // Get the number of output args
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
 
     // Get the input shapes
@@ -87,7 +87,7 @@ class ROIAlignFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     auto x_shape_size = x_shape.size();
     if (x_shape_size != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of features should be equal to 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of features must be equal to 4, but got "
                         << x_shape_size;
     }
 

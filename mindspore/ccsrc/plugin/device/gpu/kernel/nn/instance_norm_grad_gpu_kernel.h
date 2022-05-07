@@ -109,12 +109,12 @@ class InstanceNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 5) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 5, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 5, but got " << input_num;
     }
 
     input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     if (input_shape_.size() != 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input should be 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input must be 4, but got "
                         << input_shape_.size();
     }
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");

@@ -37,10 +37,10 @@ abstract::ShapePtr InplaceSubInferShape(const PrimitivePtr &primitive, const std
   auto v_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack());
 
   if (x_shape_map.empty()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input x should be Tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input x must be Tensor.";
   }
   if (v_shape_map.empty()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input v should be Tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input v must be Tensor.";
   }
 
   auto x_in_shape = x_shape_map[kShape];

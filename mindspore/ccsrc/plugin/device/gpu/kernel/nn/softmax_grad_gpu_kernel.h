@@ -107,11 +107,11 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
@@ -121,7 +121,7 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     shape_size_ = input_shape.size();
     if (shape_size_ != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input should be equal to 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be equal to 2, but got "
                         << shape_size_;
     }
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
@@ -191,7 +191,7 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       transpose_axis_.push_back(1);
       transpose_axis_.push_back(0);
     } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' should be in range [-" << shape_size_
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'axis' must be in range [-" << shape_size_
                         << ", " << shape_size_ << "), but got " << axis;
     }
 

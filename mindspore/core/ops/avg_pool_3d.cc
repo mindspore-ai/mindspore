@@ -71,7 +71,7 @@ std::vector<int64_t> GetOutputShape(const PrimitivePtr &primitive, const std::ve
   int64_t out_w = 0;
   if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', stride_d or stride_h or stride_w should be non-zero, but got stride_d: " << stride_d
+                      << "', stride_d or stride_h or stride_w must be non-zero, but got stride_d: " << stride_d
                       << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
   }
   if (ceil_mode) {
@@ -109,7 +109,7 @@ void GetPadsByPadding(const PrimitivePtr &primitive, int64_t in_d, int64_t in_h,
   } else if (pad_mode == PadMode::SAME) {
     if (stride_d == 0 || stride_h == 0 || stride_w == 0) {
       MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                        << "', stride_d or stride_h or stride_w should be non-zero, but got stride_d: " << stride_d
+                        << "', stride_d or stride_h or stride_w must be non-zero, but got stride_d: " << stride_d
                         << ", stride_h: " << stride_h << ", stride_w: " << stride_w << ".";
     }
     int64_t tail_d = in_d % stride_d;
@@ -170,7 +170,7 @@ abstract::ShapePtr AvgPool3DInferShape(const PrimitivePtr &primitive, const std:
                                                   stride_w, new_pad_list, ceil_mode);
   if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
     MS_LOG(EXCEPTION) << "For '" << primitive->name()
-                      << "', output shape's all elements should be positive, but got shape: " << out_shape << ".";
+                      << "', output shape's all elements must be positive, but got shape: " << out_shape << ".";
   }
   return std::make_shared<abstract::Shape>(out_shape);
 }

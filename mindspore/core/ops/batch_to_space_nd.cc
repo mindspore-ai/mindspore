@@ -53,7 +53,7 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   }
   if (out_shape[0] % block_shape_prod != 0) {
     MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << out_shape[0]
-                             << " should be divisible by block_shape_prod " << block_shape_prod;
+                             << " must be divisible by block_shape_prod " << block_shape_prod;
   }
   out_shape[0] = int64_t(floor(out_shape[0] / static_cast<float>(block_shape_prod)));
   if (input_min_shape.size() == 0 || input_max_shape.size() == 0) {
@@ -73,11 +73,11 @@ abstract::ShapePtr BatchToSpaceNDInferShape(const PrimitivePtr &primitive,
   }
   if (output_min_shape[0] % block_shape_prod != 0) {
     MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << output_min_shape[0]
-                             << " should be divisible by block_shape_prod " << block_shape_prod;
+                             << " must be divisible by block_shape_prod " << block_shape_prod;
   }
   if (output_max_shape[0] % block_shape_prod != 0) {
     MS_EXCEPTION(ValueError) << prim_name << " input_x dimension 0 " << output_max_shape[0]
-                             << " should be divisible by block_shape_prod " << block_shape_prod;
+                             << " must be divisible by block_shape_prod " << block_shape_prod;
   }
   output_min_shape[0] = int64_t(floor(output_min_shape[0] / static_cast<float>(block_shape_prod)));
   output_max_shape[0] = int64_t(floor(output_max_shape[0] / static_cast<float>(block_shape_prod)));

@@ -41,7 +41,7 @@ void TrueValueCalAndCheck(const std::vector<AbstractBasePtr> &input_args, int64_
     MS_EXCEPTION(ValueError) << "For MatrixSetDiagV3"
                              << ", the number of elements of output must be less than max length: " << max_value
                              << ", but got " << true_value
-                             << "! The shape of output should be reduced or max_length should be increased.";
+                             << "! The shape of output must be reduced or max_length must be increased.";
   }
 }
 abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
@@ -100,7 +100,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
                                  << ", but got " << k_val[1] << ".";
       }
       if (!(k_val[0] <= k_val[1])) {
-        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] must not be greater than k[1].";
+        MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
       }
       if (SizeToLong(diagonal_rank) != rank) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", diagonal rank size don't match with x rank size.";

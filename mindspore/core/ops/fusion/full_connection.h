@@ -48,7 +48,7 @@ class MIND_API FullConnection : public BaseOperator {
 
   /// \brief Method to set axis attribute.
   ///
-  /// \param[in] axis Define a axis the inner product should be along with
+  /// \param[in] axis Define a axis the inner product must be along with
   void set_axis(const int64_t axis);
 
   /// \brief Method to set use_axis attribute.

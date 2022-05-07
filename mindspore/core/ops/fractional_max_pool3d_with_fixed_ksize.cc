@@ -50,8 +50,7 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<float> *ksize, std::vec
   MS_EXCEPTION_IF_NULL(primitive->GetAttr("ksize"));
   *ksize = GetValue<std::vector<float>>(primitive->GetAttr("ksize"));
   if (ksize->size() != kDimSize1 && ksize->size() != kDimSize3) {
-    MS_EXCEPTION(ValueError) << "ksize of FractionalMaxPool3DWithFixedKsize should be 1 or 3, but got "
-                             << ksize->size();
+    MS_EXCEPTION(ValueError) << "ksize of FractionalMaxPool3DWithFixedKsize must be 1 or 3, but got " << ksize->size();
   }
   if (std::any_of(ksize->begin(), ksize->end(), [](float ksize) { return ksize <= 0; })) {
     MS_EXCEPTION(ValueError) << "invalid ksize, ksize must be all positive.";
@@ -60,7 +59,7 @@ void GetAttrs(const PrimitivePtr &primitive, std::vector<float> *ksize, std::vec
   MS_EXCEPTION_IF_NULL(primitive->GetAttr("output_shape"));
   *output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
   if (output_shape->size() != kDimSize1 && output_shape->size() != kDimSize3) {
-    MS_EXCEPTION(ValueError) << "output_shape of FractionalMaxPool3DWithFixedKsize should be 1 or 3, but got "
+    MS_EXCEPTION(ValueError) << "output_shape of FractionalMaxPool3DWithFixedKsize must be 1 or 3, but got "
                              << output_shape->size();
   }
   if (std::any_of(output_shape->begin(), output_shape->end(), [](int64_t output_shape) { return output_shape <= 0; })) {

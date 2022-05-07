@@ -67,11 +67,11 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != kInputsNum) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 2, but got " << input_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
     std::vector<size_t> dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
@@ -83,15 +83,15 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     if (dy_shape.size() != kDyShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dy should be equal to 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dy must be equal to 4, but got "
                         << dy_shape.size();
     }
     if (x_shape.size() != kxShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x should be equal to 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of x must be equal to 4, but got "
                         << x_shape.size();
     }
     if (dx_shape.size() != kDxShapeSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dx should be equal to 4, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of dx must be equal to 4, but got "
                         << dx_shape.size();
     }
     n_ = SizeToInt(dy_shape[kDyIndexForN]);

@@ -34,7 +34,7 @@ int64_t BNTrainingUpdateGetAndCheckFormat(const PrimitivePtr &primitive, const V
   int64_t data_format;
   bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
   if (!result || (data_format != Format::NHWC && data_format != Format::NCHW && data_format != Format::NCDHW)) {
-    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format should be NCHW, NHWC and NCDHW, but got "
+    MS_LOG(EXCEPTION) << "For '" << primitive->name() << "', data format must be NCHW, NHWC and NCDHW, but got "
                       << data_format << ".";
   }
   return data_format;
@@ -60,32 +60,32 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   if (data_format == Format::NHWC) {
     c_axis = kInputIndex3;
   }
-  // input_x rank should be equal with 4
+  // input_x rank must be equal to 4
   (void)CheckAndConvertUtils::CheckInteger("input_x rank", input_x_shape.size(), kEqual, 4, prim_name);
-  // sum rank should be equal with 1
+  // sum rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("sum rank", sum_shape.size(), kEqual, 1, prim_name);
-  // square_sum rank should be equal with 1
+  // square_sum rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("square_sum rank", square_sum_shape.size(), kEqual, 1, prim_name);
-  // scale rank should be equal with 1
+  // scale rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("scale rank", scale_shape.size(), kEqual, 1, prim_name);
-  // offset rank should be equal with 1
+  // offset rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("offset rank", offset_shape.size(), kEqual, 1, prim_name);
-  // mean rank should be equal with 1
+  // mean rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("mean rank", mean_shape.size(), kEqual, 1, prim_name);
-  // variance rank should be equal with 1
+  // variance rank must be equal to 1
   (void)CheckAndConvertUtils::CheckInteger("variance rank", variance_shape.size(), kEqual, 1, prim_name);
-  // sum shape should be equal with input_x_shape[1]
+  // sum shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("sum shape", sum_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // square_sum shape should be equal with input_x_shape[1]
+  // square_sum shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("square_sum shape", square_sum_shape[0], kEqual, input_x_shape[c_axis], prim_name,
                               TypeError);
-  // scale shape should be equal with input_x_shape[1]
+  // scale shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("scale shape", scale_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // offset shape should be equal with input_x_shape[1]
+  // offset shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("offset shape", offset_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // mean shape should be equal with input_x_shape[1]
+  // mean shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("mean shape", mean_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
-  // variance shape should be equal with input_x_shape[1]
+  // variance shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("variance shape", variance_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
   auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   auto variance_shape_ptr = input_args[kInputIndex6]->BuildShape();

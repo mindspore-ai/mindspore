@@ -113,19 +113,18 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     if (probs_shape.size() != kProbDimSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of x should be 3, but got "
-                        << probs_shape.size();
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of x must be 3, but got " << probs_shape.size();
     }
     probs_dims_[kProbDimsIdxForMaxTime] = probs_shape[kProbDimsIdxForMaxTime];
     probs_dims_[kProbDimsIdxForBatch] = probs_shape[kProbDimsIdxForBatch];
     probs_dims_[kProbDimsIdxForNumClass] = probs_shape[kProbDimsIdxForNumClass];
 
     if (labels_dims.size() != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of labels_values should be 1, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of labels_values must be 1, but got "
                         << labels_dims.size();
     }
     if (indice_dims.size() != kIndicesDimSize) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of labels_indices should be 2, but got "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of labels_indices must be 2, but got "
                         << indice_dims.size();
     }
     label_size_ = sizeof(int);
@@ -220,7 +219,7 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (max_time < max_sequence) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x[0] should be equal to or greater than max_sequence, "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the x[0] must be equal to or greater than max_sequence, "
                         << "but got x[0]: " << max_time << ", max_sequence: " << max_sequence;
     }
     InnerSoftMax(probs, softmax_probs, sequence_length, max_time, batch, numclass, stream);
@@ -233,7 +232,7 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "cudaMemcpyAsync failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (batch != batch_label + 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the batch size of input should be equal to "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the batch size of input must be equal to "
                         << (batch_label + 1) << ", but got " << batch;
     }
     GenLabelValue(label_value_sp, label_indices, label_values, label_squence_length, cum_labels_length,

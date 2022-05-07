@@ -41,14 +41,14 @@ abstract::ShapePtr ReluGradV2InferShape(const PrimitivePtr &primitive, const std
   auto gradient_input_shape = gradient_shape_map[kShape];
   if (gradient_input_shape.size() != kReluGradV2GradientDims) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', The 'gradient' should be a 4-D tensor,but got a " +
+                             << "', The 'gradient' must be a 4-D tensor,but got a " +
                                   std::to_string(gradient_input_shape.size()) + "-D tensor";
   }
   auto mask_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kMaskIndex]->BuildShape());
   auto mask_input_shape = mask_shape_map[kShape];
   if (mask_input_shape.size() < kReluGradV2GradientDims) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', The 'mask' dims should be greater than 4,but got " +
+                             << "', The 'mask' dims must be greater than 4,but got " +
                                   std::to_string(mask_input_shape.size()) + "-D tensor";
   }
   auto gradient_build_shape = input_args[kGradientIndex]->BuildShape();

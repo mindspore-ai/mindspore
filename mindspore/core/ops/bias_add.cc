@@ -68,7 +68,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
                                [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
   if (x_not_dyn && bias_shape[0] != x_channel) {
     auto input_shape_channel = input_shape.size() - 1;
-    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape should be equal to input_x["
+    MS_EXCEPTION(ValueError) << "For '" << prim_name << "', bias[0] shape must be equal to input_x["
                              << input_shape_channel
                              << "] shape when data_format is NHWC or input_x[1] shape, but got bias[0] shape: "
                              << bias_shape[0] << ", input_x[" << input_shape_channel

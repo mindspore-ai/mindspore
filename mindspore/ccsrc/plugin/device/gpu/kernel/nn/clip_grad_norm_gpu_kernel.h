@@ -180,13 +180,13 @@ class ClipGradNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     constexpr size_t input_num_expected = 3;
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != input_num_expected) {
-      MS_LOG(ERROR) << "The input number of kernel node [" << kernel_node->DebugString() << "] should be "
+      MS_LOG(ERROR) << "The input number of kernel node [" << kernel_node->DebugString() << "] must be "
                     << input_num_expected << ", but got " << input_num;
       return false;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
-      MS_LOG(ERROR) << "The output number of kernel node [" << kernel_node->DebugString() << "] should be " << 1
+      MS_LOG(ERROR) << "The output number of kernel node [" << kernel_node->DebugString() << "] must be " << 1
                     << ", but got " << output_num;
       return false;
     }
@@ -239,7 +239,7 @@ class ClipGradNormGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     bool exceed_bound =
       std::any_of(axis_.begin(), axis_.end(), [&input_dim](const int &v) { return v < 0 || v >= input_dim; });
     if (exceed_bound) {
-      MS_LOG(EXCEPTION) << "For 'ClipGradNormGpuKernelMod', the value of axis should be in range of [-" << input_dim
+      MS_LOG(EXCEPTION) << "For 'ClipGradNormGpuKernelMod', the value of axis must be in range of [-" << input_dim
                         << ", " << (input_dim - 1) << "].";
     }
   }

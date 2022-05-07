@@ -59,7 +59,7 @@ std::vector<int64_t> SparseMatrixAdd::get_dense_shape() const {
 void SparseMatrixAdd::Init(const std::vector<int64_t> &csr_a, const std::vector<int64_t> &csr_b) {
   auto op_name = this->name();
   if (csr_a != csr_b) {
-    MS_LOG(EXCEPTION) << "For " << op_name << "A shape and B shape should be same, but got A = " << csr_a
+    MS_LOG(EXCEPTION) << "For " << op_name << "A shape and B shape must be the same, but got A = " << csr_a
                       << ", and B = " << csr_b << ".";
   }
   this->set_dense_shape(csr_a);
@@ -123,12 +123,12 @@ AbstractBasePtr SparseMatrixAddInfer(const abstract::AnalysisEnginePtr &, const 
   }
   auto a_type = a_values->element()->BuildType();
   auto b_type = b_values->element()->BuildType();
-  // Values in A and B should have the same type.
+  // Values in A and B must have the same type.
   if (a_type->type_id() != b_type->type_id()) {
-    MS_LOG(EXCEPTION) << "For " << op_name << ", the two input Matirx A and B should have the same dtype. But get A = "
+    MS_LOG(EXCEPTION) << "For " << op_name << ", the two input Matirx A and B must have the same dtype. But get A = "
                       << TypeIdToString(a_type->type_id()) << ", B = " << TypeIdToString(b_type->type_id());
   }
-  // Indices should be int16, int32 or int64.
+  // Indices must be int16, int32 or int64.
   CheckSparseIndicesDtype(a_indices->element()->BuildType(), op_name);
   CheckSparseIndicesDtype(b_indices->element()->BuildType(), op_name);
 

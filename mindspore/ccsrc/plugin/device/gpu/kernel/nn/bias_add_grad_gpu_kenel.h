@@ -101,7 +101,7 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::string format = GetAttr<std::string>(kernel_node, "format");
     string::size_type pos = format.find("C");
     if (pos == std::string::npos || pos >= num_dims_) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character should be in 'format', but got " << format;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format;
     }
     bias_size_ = dy_shape[pos];
     auto num_dims_fix = std::max(num_dims_, 4UL);

@@ -83,7 +83,7 @@ class LayerNormGradGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     if (IntToSize(begin_norm_axis) > input_shape.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'begin_norm_axis' should be less than or equal "
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the value of 'begin_norm_axis' must be less than or equal "
                         << "to the dimension of input, but got begin_norm_axis: " << IntToSize(begin_norm_axis)
                         << ", the dimension of input: " << input_shape.size();
     }
