@@ -158,18 +158,21 @@ class Profiler:
         if self.start_profile:
             self.start()
 
-    def op_analyse(self, op_name, **kwargs):
+    def op_analyse(self, op_name, device_id=None):
         """
         Profiler users can use this interface to obtain operator performance data.
 
         Args:
             op_name (str, list): The primitive operator name.
-            device_id (int): ID of the target device, operator performance data of a specified card is analyzed using
-                the device_id parameter. Default: 0.
+            device_id (int): ID of the target device, users can use device_id parameter to specify which card operator
+                performance data to parse, Default: 0.
 
         Raises:
             TypeError: If the op_name parameter type is incorrect,
                 Profiler cannot parse the generated operator performance data.
+            TypeError: If the device_id parameter type is incorrect,
+                Profiler cannot parse the generated operator performance data.
+            RunTimeError: If MindSpore runs on Ascend, this interface cannot be used.
 
         Supported Platforms:
             ``GPU`` ``CPU``
@@ -196,8 +199,11 @@ class Profiler:
             ...     profiler = Profiler(output_path="my_profiler_path")
             ...     profiler.op_analyse(op_name="Conv2D")
         """
-
-        device_id = kwargs.pop("device_id", None)
+        if self._device_target == 'ascend':
+            raise RuntimeError("The Interface 'Profiler.op_analyse()' is not supported on Ascend currently.")
+        if device_id and not isinstance(device_id, int):
+            raise TypeError(f"For 'Profiler.op_analyse()', the parameter device_id must be int, "
+                            f"but got type {type(device_id)}")
         self._dev_id = self._dev_id if device_id is None else device_id
         if self._dev_id is None:
             self._dev_id = 0

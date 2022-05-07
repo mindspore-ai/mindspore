@@ -432,7 +432,7 @@ class GpuFrameWorkParser:
             framework_file_path = validate_and_normalize_path(framework_file_path)
             with open(framework_file_path, 'r') as f_obj:
                 framework_info = f_obj.readlines()
-                for line_info in framework_info[1:]:
+                for line_info in framework_info:
                     line_info = line_info.strip(' ').strip('\n').split(';')
                     input_shape = ':'.join(line_info[2:]).split(':')[1::2]
                     # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: input_shape;
@@ -500,7 +500,22 @@ class GpuFrameWorkParser:
 
     def get_device_target_filename(self):
         """Get device target filename."""
-        for file_name in os.listdir(self._output_path):
+        gpu_framework_file = f'gpu_framework_{self._dev_id}.txt'
+        cpu_framework_file = f'cpu_framework_{self._dev_id}.txt'
+        gpu_op_detail_file = f'gpu_op_detail_info_{self._dev_id}.csv'
+        cpu_op_detail_file = f'cpu_op_detail_info_{self._dev_id}.csv'
+        all_file = os.listdir(self._output_path)
+        if not all_file:
+            logger.error(f'No profiler file is found in the path <%s>. '
+                         f'Check whether the profiler path is correct.' % self._output_path)
+        if gpu_op_detail_file in all_file and gpu_framework_file not in all_file:
+            logger.error(f'The output file <%s> is not found.' % gpu_framework_file)
+        if cpu_op_detail_file in all_file and cpu_framework_file not in all_file:
+            logger.error(f'The output file <%s> is not found.' % cpu_framework_file)
+        if gpu_op_detail_file not in all_file and cpu_op_detail_file not in all_file:
+            logger.error(f'The profiling data of this card which device_id is equal to {self._dev_id} does not exist.'
+                         f' Check whether device_id is correct.')
+        for file_name in all_file:
             if file_name.endswith(f'detail_info_{self._dev_id}.csv'):
                 self.detail_info_dir.append(file_name)
             if file_name.endswith(f'framework_{self._dev_id}.txt'):
