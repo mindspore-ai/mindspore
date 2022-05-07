@@ -42,6 +42,7 @@ std::vector<PrimitivePtr> GraphKernelExpanderWithPy::InitOpList() {
     {kAscendDevice, OpLevel_0, prim::kPrimClipByNormNoDivSum},
     {kAscendDevice, OpLevel_1, prim::kSoftmaxGradExt},
     {kAscendDevice, OpLevel_0, prim::kFusedMulAdd},
+    {kGPUDevice, OpLevel_1, prim::kPrimAdamWeightDecay},
     {kGPUDevice, OpLevel_1, prim::kPrimBatchMatMul},
     {kGPUDevice, OpLevel_0, prim::kPrimBiasAdd},
     {kGPUDevice, OpLevel_1, prim::kPrimBiasAddGrad},
