@@ -380,20 +380,11 @@ add_library(mindspore-lite SHARED $<TARGET_OBJECTS:lite_src_mid>)
 set_target_properties(mindspore-lite PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 if(APPLE)
-    set(MINDSPORE_LITE_PUB_HDRS
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/context.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/errorcode.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_session.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_types.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/lite_utils.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/model.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/ms_tensor.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/../include/version.h
-            )
-    set(MINDSPORE_LITE_PUB_HDRS_IR_HDRS
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h
-            )
-    set(MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS
+    file(GLOB_RECURSE MINDSPORE_LITE_PUB_HDRS LIST_DIRECTORIES true
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../../include/api/*.h)
+    file(GLOB MINDSPORE_LITE_PUB_HDRS_IR_HDRS
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../core/ir/dtype/type_id.h)
+    file(GLOB MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/format.h
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/type_id.h
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/types.h
@@ -569,7 +560,7 @@ if(DEFINED ARCHS)
             XCODE_ATTRIBUTE_INSTALL_PAYH "@rpath"
             )
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS})
-        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/)
+        SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/api/)
     ENDFOREACH()
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS})
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/ir/dtype/)
