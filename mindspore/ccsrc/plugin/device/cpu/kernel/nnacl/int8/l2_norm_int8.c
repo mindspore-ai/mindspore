@@ -23,7 +23,7 @@ int L2NormalizationInt8(const int8_t *input_data, int8_t *output_data, const L2N
   const int inner_size = param->shape_[param->shape_num_ - 1];
 
   for (int i = begin; i < end; ++i) {
-    int32_t square_sum = 0.0f;
+    int32_t square_sum = 0;
     for (int j = 0; j < inner_size; ++j) {
       int32_t in = input_data[i * inner_size + j] - quant_param->in_.zp_;
       square_sum += in * in;

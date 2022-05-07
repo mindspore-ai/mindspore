@@ -88,7 +88,7 @@ int PadInt8CPUKernel::SetQuantParam() {
 int PadInt8CPUKernel::InitPadParam() {
   auto in_dims = in_tensors_.at(0)->shape();
   auto out_dims = out_tensors_.at(0)->shape();
-  int ndims = static_cast<size_t>(in_dims.size());
+  int ndims = static_cast<int>(in_dims.size());
 
   int in[] = {1, 1, 1, 1};
   int out[] = {1, 1, 1, 1};
