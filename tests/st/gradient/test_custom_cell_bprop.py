@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test_cell_bprop """
+import platform
 import numpy as np
 import pytest
 
@@ -711,6 +712,9 @@ def test_pynative_forward_with_parameter_in_sub_cell_get_by_list():
     Description: Get the gradients of inputs and Parameters when the forward net using Parameter in the sub-cell.
     Expectation: Get the correct gradients.
     """
+    if platform.system() == 'Windows':
+        return
+
     context.set_context(mode=context.PYNATIVE_MODE)
 
     class Net(nn.Cell):
