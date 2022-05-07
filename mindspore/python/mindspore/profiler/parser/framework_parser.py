@@ -33,7 +33,7 @@ from mindspore.profiler.common.util import combine_stream_task_id
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerFileNotFoundException
 from mindspore.profiler.common.exceptions.exceptions import ProfilerParamValueErrorException
-
+from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 
 FILE_DATA_STRUCT_DICT = {
     FileDataType.STEP_INFO.value: STEP_INFO_STRUCT,
@@ -390,3 +390,118 @@ class FrameworkParser:
         if subgraph_name in ['Default', 'Gradients']:
             return subgraph_name
         return None
+
+
+class GpuFrameWorkParser:
+    """
+    Thr parser for parsing framework files.
+
+    Args:
+        output_path (str): The profiling path which should contain GPU profiling data.
+        dev_id (str): The device ID.
+    """
+    def __init__(self, output_path, dev_id, op_names):
+        """Thr parser for parsing framework files."""
+        self._dev_id = dev_id
+        self._output_path = output_path
+        self.op_names = op_names
+        self.op_name = ''
+        self.framework_list = []
+        self.op_detail = {}
+        self.operation_info = {}
+        self.detail_info_dir = []
+        self.framework_info_dir = []
+
+    def parse(self):
+        """Parse op performance data."""
+        self.get_device_target_filename()
+        self.get_framework_summary()
+        self.get_op_detail_info()
+        if isinstance(self.op_names, str):
+            self.combine_performance_data(self.op_names)
+        elif isinstance(self.op_names, list):
+            for op_name in self.op_names:
+                self.combine_performance_data(op_name)
+        return json.dumps(self.operation_info)
+
+    def get_framework_summary(self):
+        """Get framework data."""
+        for filename in self.framework_info_dir:
+            op_side = filename.split('_')[0]
+            framework_file_path = os.path.join(self._output_path, filename)
+            framework_file_path = validate_and_normalize_path(framework_file_path)
+            with open(framework_file_path, 'r') as f_obj:
+                framework_info = f_obj.readlines()
+                for line_info in framework_info[1:]:
+                    line_info = line_info.strip(' ').strip('\n').split(';')
+                    input_shape = ':'.join(line_info[2:]).split(':')[1::2]
+                    # line_info[0]: op_type, line_info[1]: op_name, line_info[2]: input_shape;
+                    item = [line_info[0], line_info[1], input_shape, op_side]
+                    if item not in self.framework_list:
+                        self.framework_list.append(item)
+
+    def get_op_detail_info(self):
+        """Get op detail data."""
+        for filename in self.detail_info_dir:
+            op_side = filename.split('_')[0]
+            op_detail_file_path = os.path.join(self._output_path, filename)
+            op_detail_file_path = validate_and_normalize_path(op_detail_file_path)
+            with open(op_detail_file_path, 'r') as f_obj:
+                op_detail_info = f_obj.readlines()
+                for line_info in op_detail_info[1:]:
+                    line_info = line_info.strip(' ').strip('\n').split(',')
+                    if not self.op_detail.get(line_info[2]):
+                        # line_info[4]: op_occurrences, line_info[5]: op_detail_time(us), line_info[6]: op_avg_time(us);
+                        self.op_detail[line_info[2]] = [line_info[4], line_info[5], line_info[6], op_side]
+
+    def combine_performance_data(self, op_name):
+        """Combine operator detail info with framework info."""
+        unique_op_info = []
+        op_shape_dict = {}
+        operation_info = {}
+        factor = 1000  # convert time unit from ms to us.
+        for line_info in self.framework_list:
+            op_detail = self.op_detail.get(line_info[1])
+            if op_name in line_info and line_info[3] == op_detail[3]:
+                op_side = line_info[3]
+                op_shape = '{}:{}'.format(op_side, ','.join(line_info[2]))
+                op_occurrences = int(op_detail[0])
+                op_total_time = float(op_detail[1])
+                op_avg_time = float(op_detail[2])
+                if op_shape in op_shape_dict.keys():
+                    # Classify according to the operator information of the same shape.
+                    op_shape_dict.get(op_shape)[0] += op_occurrences
+                    op_shape_dict.get(op_shape)[1] += op_total_time
+                    op_shape_dict.get(op_shape)[2] += op_shape_dict.get(op_shape)[1] / op_shape_dict.get(op_shape)[0]
+                    op_shape_dict[op_shape] = [op_shape_dict.get(op_shape)[0], round(op_shape_dict.get(op_shape)[1], 4),
+                                               round(op_shape_dict.get(op_shape)[2], 4), op_side]
+                else:
+                    op_shape_dict[op_shape] = [op_occurrences, op_total_time, op_avg_time, op_side]
+
+        for input_shape in op_shape_dict:
+            # 0: op_occurrences, 1: op_total_time, 2: op_avg_time, 3: op_side
+            operation_info['op_side'] = op_shape_dict.get(input_shape)[3]
+            operation_info['input_shape'] = input_shape.split(':')[-1]
+            operation_info['op_occurrences'] = op_shape_dict.get(input_shape)[0]
+            if operation_info.get('op_side') == 'cpu':
+                operation_info['op_total_time(us)'] = round(op_shape_dict.get(input_shape)[1] * factor, 4)
+                operation_info['op_avg_time(us)'] = round(op_shape_dict.get(input_shape)[2] * factor, 4)
+            else:
+                operation_info['op_total_time(us)'] = op_shape_dict.get(input_shape)[1]
+                operation_info['op_avg_time(us)'] = op_shape_dict.get(input_shape)[2]
+            unique_op_info.append(operation_info)
+            operation_info = dict()
+
+        if unique_op_info:
+            self.operation_info[op_name] = unique_op_info
+        else:
+            logger.warning(f'The information of {op_name} is not found. Please verify that the operator name is correct'
+                           f' or the operator is used in the network.')
+
+    def get_device_target_filename(self):
+        """Get device target filename."""
+        for file_name in os.listdir(self._output_path):
+            if file_name.endswith(f'detail_info_{self._dev_id}.csv'):
+                self.detail_info_dir.append(file_name)
+            if file_name.endswith(f'framework_{self._dev_id}.txt'):
+                self.framework_info_dir.append(file_name)
