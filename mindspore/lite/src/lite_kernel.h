@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_INNER_KERNEL_H_
-#define MINDSPORE_LITE_SRC_INNER_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_LITE_KERNEL_H_
+#define MINDSPORE_LITE_SRC_LITE_KERNEL_H_
 #include <string>
 #include <vector>
 #include <memory>
@@ -32,9 +32,12 @@
 #include "include/api/context.h"
 #include "include/api/kernel.h"
 #include "src/thread_cost_model.h"
+#include "model_loader/abstract_kernel.h"
+
+using mindspore::infer::Abstractkernel;
 
 namespace mindspore::kernel {
-class LiteKernel : public Kernel {
+class LiteKernel : public Abstractkernel {
  public:
   LiteKernel() = default;
 
@@ -129,9 +132,9 @@ class LiteKernel : public Kernel {
     return outputs_;
   }
 
-  void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) { this->in_tensors_ = in_tensors; }
+  void set_in_tensors(const std::vector<lite::Tensor *> &in_tensors) override { this->in_tensors_ = in_tensors; }
 
-  virtual void set_in_tensor(lite::Tensor *in_tensor, size_t index) {
+  void set_in_tensor(lite::Tensor *in_tensor, size_t index) override {
     if (index >= in_tensors_.size()) {
       MS_LOG(ERROR) << "index: " << index << " larger than in_tensors size: " << in_tensors_.size();
       return;
@@ -139,9 +142,9 @@ class LiteKernel : public Kernel {
     this->in_tensors_[index] = in_tensor;
   }
 
-  void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) { this->out_tensors_ = out_tensors; }
+  void set_out_tensors(const std::vector<lite::Tensor *> &out_tensors) override { this->out_tensors_ = out_tensors; }
 
-  virtual void set_out_tensor(lite::Tensor *out_tensor, size_t index) {
+  void set_out_tensor(lite::Tensor *out_tensor, size_t index) override {
     if (index >= out_tensors_.size()) {
       MS_LOG(ERROR) << "index: " << index << " larger than out_tensors size: " << out_tensors_.size();
       return;
@@ -149,29 +152,29 @@ class LiteKernel : public Kernel {
     this->out_tensors_[index] = out_tensor;
   }
 
-  const std::vector<lite::Tensor *> &in_tensors() const { return in_tensors_; }
+  const std::vector<lite::Tensor *> &in_tensors() const override { return in_tensors_; }
 
-  const std::vector<lite::Tensor *> &out_tensors() const { return out_tensors_; }
+  const std::vector<lite::Tensor *> &out_tensors() const override { return out_tensors_; }
 
-  virtual int Train() {
+  int Train() override {
     this->train_mode_ = true;
     return mindspore::lite::RET_OK;
   }
 
-  virtual bool IsTrain() const { return this->train_mode_; }
+  bool IsTrain() const override { return this->train_mode_; }
 
-  virtual int Eval() {
+  int Eval() override {
     this->train_mode_ = false;
     return mindspore::lite::RET_OK;
   }
 
   virtual int SetupVirtualBatch(int virtual_batch_multiplier, int param) { return mindspore::lite::RET_OK; }
 
-  virtual bool IsEval() const { return !this->train_mode_; }
+  bool IsEval() const override { return !this->train_mode_; }
 
-  virtual void SetTrainable(bool trainable = true) { this->trainable_ = trainable; }
+  void SetTrainable(bool trainable = true) override { this->trainable_ = trainable; }
 
-  virtual bool IsTrainable() const { return this->trainable_; }
+  bool IsTrainable() const override { return this->trainable_; }
 
   TypeId registry_data_type(void) const { return registry_data_type_; }
 
@@ -206,4 +209,4 @@ class LiteKernel : public Kernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_INNER_KERNEL_H_
+#endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_

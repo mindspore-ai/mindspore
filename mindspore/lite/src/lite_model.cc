@@ -28,6 +28,7 @@
 #include "src/common/graph_util.h"
 #include "src/common/file_utils.h"
 #include "src/tensor.h"
+#include "model_loader/model_loader.h"
 
 namespace mindspore::lite {
 namespace {
@@ -501,7 +502,18 @@ bool LiteModel::CheckQuantAllInit(
 
 Model *ImportFromPath(const char *model_path) { return LiteImportFromPath(model_path); }
 
-Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, mindspore::ModelType model_type) {
+  auto model_loader = mindspore::infer::ModelLoaderRegistry::GetInstance()->GetModelLoader(model_type);
+  if (model_loader != nullptr) {
+    MS_LOG(INFO) << "import model from model loader";
+    // return nullptr;
+    auto model = model_loader->ImportModel(model_buf, size, true);
+    if (model != nullptr) {
+      return model;
+    }
+  }
+
+  MS_LOG(INFO) << "import model from lite model";
   auto *model = new (std::nothrow) LiteModel();
   if (model == nullptr) {
     MS_LOG(ERROR) << "new model fail!";

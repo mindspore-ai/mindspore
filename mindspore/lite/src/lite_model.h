@@ -33,6 +33,7 @@
 #ifdef ENABLE_MODEL_OBF
 #include "tools/obfuscator/include/deobfuscator.h"
 #endif
+#include "include/api/types.h"
 
 namespace mindspore {
 namespace lite {
@@ -319,7 +320,8 @@ class LiteModel : public Model {
   const std::string model_path_;
 };
 
-Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf,
+                        mindspore::ModelType model_type = mindspore::ModelType::kMindIR_Lite);
 LiteModel *LiteImportFromPath(const char *model_path);
 Model *ImportFromPath(const char *model_path);
 }  // namespace lite

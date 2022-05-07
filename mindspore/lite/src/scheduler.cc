@@ -51,6 +51,9 @@
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
 #include "include/registry/register_kernel_interface.h"
+#include "model_loader/abstract_base_model.h"
+
+using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
 
 namespace mindspore::lite {
 namespace {
@@ -251,7 +254,13 @@ int Scheduler::SchedulePreProcess() {
   schema_version_ = reinterpret_cast<LiteModel *>(src_model_)->GetSchemaVersion();
 
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
-  *is_infershape_ = InferSubGraphShape(kMainSubGraphIndex);
+
+  if (src_model_->model_type_ != ModelType_MSLite) {
+    // TODO(liulili): call abstract model infer interface
+    *is_infershape_ = RET_OK;
+  } else {
+    *is_infershape_ = InferSubGraphShape(kMainSubGraphIndex);
+  }
   if (*is_infershape_ != RET_OK && *is_infershape_ != RET_INFER_INVALID) {
     MS_LOG(ERROR) << "op infer shape failed.";
     return *is_infershape_;
@@ -1410,11 +1419,25 @@ kernel::KernelExec *Scheduler::ScheduleNodeToKernel(const lite::Model::Node *src
 
   ResetByExecutionPlan(src_node->name_, &prefer_data_type);
 
-  auto *kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
-                  << ", type: " << GetPrimitiveTypeName(src_node->primitive_, schema_version_);
-    return nullptr;
+  mindspore::kernel::KernelExec *kernel = nullptr;
+  if (src_model_->model_type_ != mindspore::lite::ModelType_MSLite) {
+    auto abstract_model_ptr = reinterpret_cast<AbstractBaseModel *>(src_model_);
+    if (abstract_model_ptr == nullptr) {
+      MS_LOG(ERROR) << "src model is not abstract base model return nullptr.";
+      return nullptr;
+    }
+    kernel = abstract_model_ptr->FindBackendKernel(inputs, outputs, src_node, context_, prefer_data_type);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_;
+      return nullptr;
+    }
+  } else {
+    kernel = this->FindBackendKernel(inputs, outputs, src_node, prefer_data_type);
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "FindBackendKernel return nullptr, name: " << src_node->name_
+                    << ", type: " << GetPrimitiveTypeName(src_node->primitive_, schema_version_);
+      return nullptr;
+    }
   }
   op_parameters_[src_node->output_indices_.at(0)] = nullptr;
   auto ret = kernel::KernelExecUtil::SetKernelTensorDataType(kernel);
@@ -1478,7 +1501,7 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
     MS_ASSERT(primitive != nullptr);
     kernel::KernelExec *kernel = nullptr;
 
-    if (IsPartialNode(primitive, schema_version_)) {
+    if (src_model_->model_type_ == ModelType_MSLite && IsPartialNode(primitive, schema_version_)) {
       if (IsControlFlowPattern(*node)) {
         kernel = ScheduleNodeToKernel(node, prefer_data_type);
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);

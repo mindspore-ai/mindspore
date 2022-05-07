@@ -160,6 +160,40 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         )
+
+set(MODEL_LOADER_FRAMEWORK_SRC
+        ${MODEL_LOADER_FRAMEWORK_SRC}
+        ${SRC_DIR}/model_loader/model_loader.cc
+)
+
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
+
+string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+
+set(MINDIR_MODEL_SRC
+        ${MINDIR_MODEL_SRC}
+        ${SRC_DIR}/model_loader/mindir_model/mindir_model.cc
+        ${SRC_DIR}/model_loader/mindir_model/mindir_model_util.cc
+        ${SRC_DIR}/model_loader/mindir_model/mindir_model_convertor.cc
+        ${SRC_DIR}/model_loader/mindir_model/mindir_model_loader.cc
+        ${SRC_DIR}/model_loader/mindir_model/kernel_mod_util.cc
+        )
+
+set(MINDIR_KERNEL_SRC
+        ${MINDIR_KERNEL_SRC}
+        ${SRC_DIR}/model_loader/mindir_model/inner_kernel.cc)
+endif()
+
+set(LITE_SRC
+        ${LITE_SRC}
+        ${MODEL_LOADER_FRAMEWORK_SRC}
+        ${MINDIR_MODEL_SRC}
+        ${MINDIR_KERNEL_SRC}
+        )
+
+
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
