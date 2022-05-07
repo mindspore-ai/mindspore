@@ -52,11 +52,11 @@ function linux_release_package()
     mkdir -p ${output_path}/release/linux/x86_64/server/
     mkdir -p ${output_path}/release/linux/aarch64/server/
 
-    cp ${input_path}/centos_x86/avx/*.tar.gz* ${output_path}/release/linux/x86_64/
-    cp ${input_path}/linux_aarch64/*.tar.gz* ${output_path}/release/linux/aarch64/
-    cp ${input_path}/centos_x86/ascend/*.tar.gz* ${output_path}/release/linux/x86_64/ascend/
-    cp ${input_path}/linux_aarch64/ascend/*.tar.gz* ${output_path}/release/linux/aarch64/ascend/
-    cp ${input_path}/centos_x86/tensorrt/*.tar.gz* ${output_path}/release/linux/x86_64/tensorrt/
+    cp ${input_path}/centos_x86/avx/mindspore-lite-* ${output_path}/release/linux/x86_64/
+    cp ${input_path}/linux_aarch64/mindspore-lite-* ${output_path}/release/linux/aarch64/
+    cp ${input_path}/centos_x86/ascend/mindspore-lite-* ${output_path}/release/linux/x86_64/ascend/
+    cp ${input_path}/linux_aarch64/ascend/mindspore-lite-* ${output_path}/release/linux/aarch64/ascend/
+    cp ${input_path}/centos_x86/tensorrt/mindspore-lite-* ${output_path}/release/linux/x86_64/tensorrt/
     cp -r ${input_path}/centos_x86/server/* ${output_path}/release/linux/x86_64/server/
     cp -r ${input_path}/linux_aarch64/server/* ${output_path}/release/linux/aarch64/server/
 
