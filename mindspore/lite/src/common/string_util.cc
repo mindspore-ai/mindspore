@@ -59,7 +59,8 @@ int WriteStringsToTensor(Tensor *tensor, const std::vector<StringPack> &string_b
   }
   size_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
-  offset[0] = 4 * (num + 2);
+  const size_t extra_offset_num = 2;
+  offset[0] = static_cast<int32_t>(sizeof(int32_t) * (num + extra_offset_num));
   for (size_t i = 0; i < num; i++) {
     offset[i + 1] = offset[i] + string_buffer[i].len;
   }
@@ -92,7 +93,8 @@ int WriteSeperatedStringsToTensor(Tensor *tensor, const std::vector<std::vector<
   }
   size_t num = string_buffer.size();
   std::vector<int32_t> offset(num + 1);
-  offset[0] = 4 * (num + 2);
+  const size_t extra_offset_num = 2;
+  offset[0] = static_cast<int32_t>(sizeof(int32_t) * (num + extra_offset_num));
   std::vector<int> len(num);
   for (size_t i = 0; i < num; i++) {
     len[i] = 0;
