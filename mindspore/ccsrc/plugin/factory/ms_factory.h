@@ -54,8 +54,6 @@ class Factory {
     if (iter != kernel_mod_creators_.end()) {
       return (iter->second)();
     }
-
-    MS_LOG(WARNING) << "Unsupported kernel type " << name;
     return nullptr;
   }
 
