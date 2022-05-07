@@ -6693,7 +6693,7 @@ class _TensorScatterOp(PrimitiveWithInfer):
                              f"{len(input_x_shape)}.")
 
         updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:]
-        if updates_shape_check != updates_shape:
+        if self._check_shape(updates_shape_check, updates_shape) is False:
             raise ValueError(f"For '{self.name}', the shape of 'update' must be equal to updates_shape_check, "
                              f"where updates_shape_check = indices_shape[:-1] + input_x_shape[indices_shape[-1]:] "
                              f"but got the shape of 'update': {updates_shape}, "
@@ -6707,6 +6707,16 @@ class _TensorScatterOp(PrimitiveWithInfer):
         args = {"input_x": input_x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
         return input_x_dtype
+
+    def _check_shape(self, expect, real):
+        if len(expect) != len(real):
+            return False
+        for a, b in zip(expect, real):
+            if a == -1 or b == -1:
+                continue
+            if a != b:
+                return False
+        return True
 
 
 class TensorScatterUpdate(_TensorScatterOp):
