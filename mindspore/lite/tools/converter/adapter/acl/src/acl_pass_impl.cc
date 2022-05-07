@@ -416,13 +416,20 @@ STATUS AclPassImpl::BuildGraph(const FuncGraphPtr &func_graph) {
 STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
   static size_t iter = 0;
   CHECK_NULL_RETURN(node);
+  if (node->isa<ValueNode>()) {
+    MS_LOG(INFO) << "Name of graph output value node is : " << node->fullname_with_scope();
+    graph_output_names_.emplace_back(node->fullname_with_scope());
+    graph_output_dims_.emplace_back(std::vector<int64_t>());
+    graph_outputs_.emplace_back(node);
+    return lite::RET_OK;
+  }
   AnfNodePtr cur_node = node;
   while (cur_node->isa<CNode>() && IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
     auto tmp = cur_node->cast<CNodePtr>();
     CHECK_NULL_RETURN(tmp);
     cur_node = tmp->input(kTupleGetItemFirstInputIdx);
+    CHECK_NULL_RETURN(cur_node);
   }
-  CHECK_NULL_RETURN(cur_node);
   auto cnode = cur_node->cast<CNodePtr>();
   CHECK_NULL_RETURN(cnode);
   std::string name = lite::acl::GetCNodeTargetFuncName(cnode);
@@ -446,7 +453,7 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
       return lite::RET_ERROR;
     }
   } else {
-    MS_LOG(INFO) << "Graph out name: " << cnode->fullname_with_scope();
+    MS_LOG(INFO) << "Name of graph output node is " << cnode->fullname_with_scope();
     graph_output_names_.emplace_back(cnode->fullname_with_scope());
     std::vector<int64_t> dims;
     if (lite::acl::GetShapeVectorFromCNode(cnode, &dims) != lite::RET_OK) {
