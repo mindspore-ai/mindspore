@@ -40,7 +40,7 @@ void UniqueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (common::AnfAlgo::HasNodeAttr(SORTED, kernel_node)) {
     sorted_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, SORTED);
   }
-  is_need_retrieve_output_shape = true;
+  is_need_retrieve_output_shape_ = true;
 }
 
 void UniqueCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {

@@ -48,9 +48,9 @@ bool AscendKernelMod::IsNeedRetrieveOutputShape() {
 
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
-    is_need_retrieve_output_shape = true;
+    is_need_retrieve_output_shape_ = true;
   }
-  return is_need_retrieve_output_shape;
+  return is_need_retrieve_output_shape_;
 }
 }  // namespace kernel
 }  // namespace mindspore

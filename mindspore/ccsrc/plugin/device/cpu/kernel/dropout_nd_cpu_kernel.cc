@@ -104,7 +104,6 @@ int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   int ret = KRET_OK;
   ResetResource();
   if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' NativeCpuKernelMod::Resize failed.";
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

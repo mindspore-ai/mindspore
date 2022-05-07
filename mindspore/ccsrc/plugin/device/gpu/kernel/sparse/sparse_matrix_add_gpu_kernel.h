@@ -112,7 +112,7 @@ class SparseMatrixAddGpuKernel : public DeprecatedNativeGpuKernelMod {
                                    "Set descriptor base index failed.");
 
     InitSizeLists();
-    is_need_retrieve_output_shape = true;
+    is_need_retrieve_output_shape_ = true;
     return true;
   }
 

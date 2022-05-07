@@ -111,7 +111,7 @@ class DynamicRangeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     max_output_length_ = GetAttr<int64_t>(kernel_node, "maxlen");
     kernel_node_ = kernel_node;
     InitSizeLists();
-    is_need_retrieve_output_shape = true;
+    is_need_retrieve_output_shape_ = true;
     return true;
   }
 

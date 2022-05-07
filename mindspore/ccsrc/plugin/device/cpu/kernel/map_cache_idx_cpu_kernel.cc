@@ -85,7 +85,7 @@ void MapCacheIdxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << "', the first dimension of 'HashMap' must be greater than 0, but got " << hashmap_length_;
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  is_need_retrieve_output_shape = true;
+  is_need_retrieve_output_shape_ = true;
 }
 
 bool MapCacheIdxCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,

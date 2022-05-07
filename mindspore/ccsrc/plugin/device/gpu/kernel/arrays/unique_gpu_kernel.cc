@@ -71,7 +71,7 @@ bool UniqueGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   input_shapes.emplace_back(inputs[0]->GetDeviceShapeAdaptively());
   helper_ptr_->CalMemSize(input_shapes, output_shapes);
   InitSizeLists();
-  is_need_retrieve_output_shape = true;
+  is_need_retrieve_output_shape_ = true;
   if (!is_input_dynamic_shape_.has_value()) {
     bool is_input_dynamic_shape = false;
     for (const auto &input : inputs) {

@@ -42,7 +42,7 @@ void MaskedSelectCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "MaskedSelect does not support this kernel data type: " << kernel_attr;
   }
   kernel_func_ = func_list_[index].second;
-  is_need_retrieve_output_shape = true;
+  is_need_retrieve_output_shape_ = true;
 }
 
 template <typename T>
