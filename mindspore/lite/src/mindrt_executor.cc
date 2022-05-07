@@ -220,7 +220,7 @@ int MindrtExecutor::TransferGraphOutput() {
         dst_tensor->set_allocator(src_tensor->allocator());
       }
       if (src_tensor->allocator() != nullptr) {
-        src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
+        src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());  // refcount of dst must be 1
         dst_tensor->set_data(src_tensor->data());
         dst_tensor->set_own_data(src_tensor->own_data());
       } else {
@@ -240,7 +240,7 @@ void MindrtExecutor::FreeOutputTensor() {
     auto src_tensor = tensor_map.first;
     auto dst_tensor = tensor_map.second;
     if (dst_tensor->allocator() != nullptr) {
-      dst_tensor->FreeData();
+      dst_tensor->FreeData(false);
     } else {
       if (dst_tensor->data_type() == src_tensor->data_type()) {
         /* user set graph-output-tensor from outside */

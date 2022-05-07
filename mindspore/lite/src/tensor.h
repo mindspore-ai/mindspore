@@ -110,7 +110,11 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual int MallocData(const AllocatorPtr allocator = nullptr);
 
-  virtual void FreeData();
+  // is_force: The reference-count of data is bound with that of tensor. However, when calling the interface,
+  // sometimes, we hope the data can be released anyway, e.g, "Op Reshape" the owner of the data is only the current
+  // tensor regardless of its reference-count. And sometimes, we hope the data can be released based on its
+  // reference-count, e.g, delete the tensor or call the class interface "DecRefCount".
+  virtual void FreeData(bool is_force = true);
 
   void *MutableData() override;
 

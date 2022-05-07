@@ -78,6 +78,7 @@ int HashtableLookupCPUKernel::Run() {
     }
   }
   WriteStringsToTensor(output_tensor, output_string_pack);
+  output_tensor->ResetRefCount();  // ref-count of data will be lost due to "WriteStringsToTensor"
   return RET_OK;
 }
 

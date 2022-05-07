@@ -39,7 +39,7 @@ bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
 void LiteKernel::InitOutTensorInitRefCount(const std::vector<LiteKernel *> *mask_kernels) {
   for (auto *tensor : this->out_tensors()) {
     MS_ASSERT(tensor != nullptr);
-    int init_ref_count = 0;
+    int init_ref_count = tensor->IsGraphOutput() ? 1 : 0;  // persistent graph output
     for (auto *post_kernel : this->out_kernels_) {
       if ((mask_kernels == nullptr) ||
           std::find(mask_kernels->begin(), mask_kernels->end(), post_kernel) != mask_kernels->end()) {
