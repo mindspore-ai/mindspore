@@ -29,7 +29,7 @@ static auto kNodeBase = "/sys/devices/system/node/node";
 
 NUMAAdapter::NUMAAdapter() {
   available_ = false;
-  handle_ = dlopen("libnuma.so.1.0.0", RTLD_LAZY | RTLD_LOCAL);
+  handle_ = dlopen("libnuma.so", RTLD_LAZY | RTLD_LOCAL);
   if (handle_ == nullptr) {
     MS_LOG(WARNING) << "Does not support NUMA.";
     return;
