@@ -843,7 +843,7 @@ class LayerNorm(Cell):
                                       epsilon=self.epsilon)
 
     def construct(self, input_x):
-        y, _, _ = self.layer_norm(input_x, self.gamma, self.beta)
+        y, _, _ = self.layer_norm(input_x, self.gamma.astype(input_x.dtype), self.beta.astype(input_x.dtype))
         return y
 
     def extend_repr(self):
