@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,18 @@
 #include "common/common_test.h"
 
 #include "ir/anf.h"
+#include "ir/tensor.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "utils/anf_utils.h"
 
 namespace mindspore {
 
 using Named = Named;
+using tensor::Tensor;
+using tensor::TensorPtr;
+using tensor::TensorPtrList;
 
 class TestAnf : public UT::Common {
  public:
@@ -73,4 +78,61 @@ TEST_F(TestAnf, is_exception) {
   assert(!a.isa<ValueNode>());
 }
 
+/// Feature: anf_utils
+/// Description: Test FlatParameterFinder
+/// Expectation: FlatParameterFinder works as expected.
+TEST_F(TestAnf, test_FlatParameterFinder) {
+  auto t1 = std::make_shared<Tensor>(0.1f);
+  auto t2 = std::make_shared<Tensor>(0.2f);
+  auto t3 = std::make_shared<Tensor>(0.3f);
+  auto t4 = std::make_shared<Tensor>(0.4f);
+  auto flat_tensors = Tensor::FlattenTensors(TensorPtrList{t1, t2, t3});
+  assert(flat_tensors.size() == 1);
+  auto t5 = flat_tensors[0];
+
+  auto fg = std::make_shared<FuncGraph>();
+  auto p1 = std::make_shared<Parameter>(fg);
+  auto p2 = std::make_shared<Parameter>(fg);
+  auto p3 = std::make_shared<Parameter>(fg);
+  auto p4 = std::make_shared<Parameter>(fg);
+  auto p5 = std::make_shared<Parameter>(fg);
+  auto p6 = std::make_shared<Parameter>(fg);
+  p1->set_default_param(t1);
+  p2->set_default_param(t2);
+  p3->set_default_param(t3);
+  p4->set_default_param(t4);
+  p5->set_default_param(t5);
+
+  FlatParameterFinder finder;
+  finder.AddParameter(p1);
+  std::vector<AnfNodePtr> nodes{p2, p3, p4, p5, p6};
+  finder.AddNodes(nodes);
+  auto flat_params = finder.GetFlatParameters();
+  assert(flat_params.size() == 1);
+  assert(*(flat_params.begin()) == p5);
+
+  auto [flat_param1, offset1] = finder.FindFlatParameter(p1);
+  assert(flat_param1 == p5);
+  assert(offset1 == 0);
+
+  auto [flat_param2, offset2] = finder.FindFlatParameter(p2);
+  assert(flat_param2 == p5);
+  assert(offset2 == sizeof(float));
+
+  auto [flat_param3, offset3] = finder.FindFlatParameter(p3);
+  assert(flat_param3 == p5);
+  assert(offset3 == offset2 + sizeof(float));
+
+  auto [flat_param4, offset4] = finder.FindFlatParameter(p4);
+  assert(flat_param4 == nullptr);
+  assert(offset4 == 0);
+
+  auto [flat_param5, offset5] = finder.FindFlatParameter(p5);
+  assert(flat_param5 == nullptr);
+  assert(offset5 == 0);
+
+  auto [flat_param6, offset6] = finder.FindFlatParameter(p6);
+  assert(flat_param6 == nullptr);
+  assert(offset6 == 0);
+}
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include <list>
 #include "mindspore/core/ops/core_ops.h"
 #include "utils/trace_base.h"
+#include "utils/hash_map.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
@@ -577,5 +578,65 @@ mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &AnfUtils::GetReal
     cnode->set_user_data(real_input_info);
   }
   return real_input_info->real_input_nodes;
+}
+
+void FlatParameterFinder::AddParameter(const ParameterPtr &param) {
+  auto tensor = dyn_cast<tensor::Tensor>(param->default_param());
+  if (tensor == nullptr) {
+    return;
+  }
+  auto [chunk, offset] = tensor->GetChunkOffset();
+  if (chunk != nullptr) {
+    (void)param_to_flat_param_.emplace(param, FlatParamInfo{nullptr, chunk, offset});
+    return;
+  }
+  if (tensor->shape_c().size() == 1) {
+    (void)candidate_flat_params_.emplace(tensor->data_c(), param);
+  }
+}
+
+void FlatParameterFinder::AddNodes(const std::vector<AnfNodePtr> &nodes) {
+  for (auto &node : nodes) {
+    auto param = dyn_cast<Parameter>(node);
+    if (param != nullptr) {
+      AddParameter(param);
+    }
+  }
+}
+
+void FlatParameterFinder::UpdateFlatParameters() {
+  if (candidate_flat_params_.empty()) {
+    return;
+  }
+  for (auto &entry : param_to_flat_param_) {
+    auto &info = entry.second;
+    if (info.flat_param == nullptr) {
+      auto iter = candidate_flat_params_.find(info.chunk);
+      if (iter != candidate_flat_params_.end()) {
+        (void)flat_params_.emplace(iter->second);
+        info.flat_param = iter->second;
+      }
+    }
+  }
+  candidate_flat_params_.clear();
+}
+
+std::pair<ParameterPtr, size_t> FlatParameterFinder::FindFlatParameter(const ParameterPtr &param) {
+  UpdateFlatParameters();
+  auto iter = param_to_flat_param_.find(param);
+  if (iter == param_to_flat_param_.end()) {
+    return {nullptr, 0};
+  }
+  auto &flat_param = iter->second.flat_param;
+  if (flat_param == nullptr) {
+    MS_LOG(WARNING) << "Find flat Parameter for " << param->ToString() << " failed";
+    return {nullptr, 0};
+  }
+  return {flat_param, iter->second.offset};
+}
+
+const std::set<ParameterPtr> &FlatParameterFinder::GetFlatParameters() {
+  UpdateFlatParameters();
+  return flat_params_;
 }
 }  // namespace mindspore

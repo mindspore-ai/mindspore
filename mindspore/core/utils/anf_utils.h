@@ -17,13 +17,16 @@
 #ifndef MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #define MINDSPORE_CORE_UTILS_ANF_UTILS_H_
 #include <functional>
+#include <set>
 #include <vector>
 #include <string>
 #include <utility>
+#include <memory>
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "base/base.h"
 #include "ir/primitive.h"
+#include "utils/hash_map.h"
 
 namespace mindspore {
 constexpr auto kInfer = "DS_Infer";
@@ -113,6 +116,41 @@ class MS_CORE_API AnfUtils {
                                       const AnfNodePtr &initop);
   static AnfNodePtr GetCustomInferopNode(const AnfNodePtr &base_cnode);
   static mindspore::HashMap<size_t, std::pair<AnfNodeWeakPtr, size_t>> &GetRealInputNodes(const CNodePtr &cnode);
+};
+
+//
+// FlatParameterFinder finds flat parameters from parameters.
+//
+class MS_CORE_API FlatParameterFinder {
+ public:
+  FlatParameterFinder() = default;
+  ~FlatParameterFinder() = default;
+
+  // Add a parameter for search.
+  void AddParameter(const ParameterPtr &param);
+
+  // Add nodes for search, parameter nodes will be added.
+  void AddNodes(const std::vector<AnfNodePtr> &nodes);
+
+  // Get the flat parameter and data offset for the given parameter.
+  // return (nullptr, 0) when flat parameter not found.
+  std::pair<ParameterPtr, size_t> FindFlatParameter(const ParameterPtr &param);
+
+  // Get all flat parameters.
+  const std::set<ParameterPtr> &GetFlatParameters();
+
+ private:
+  struct FlatParamInfo {
+    ParameterPtr flat_param = nullptr;
+    void *chunk = nullptr;
+    size_t offset = 0;
+  };
+
+  void UpdateFlatParameters();
+
+  mindspore::HashMap<void *, ParameterPtr> candidate_flat_params_;
+  mindspore::HashMap<ParameterPtr, FlatParamInfo> param_to_flat_param_;
+  std::set<ParameterPtr> flat_params_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_UTILS_ANF_UTILS_H_
