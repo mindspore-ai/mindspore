@@ -48,6 +48,10 @@ Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     output_h = size1_;
     output_w = size2_;
   }
+  if (input_h == output_h && input_w == output_w) {
+    *output = input;
+    return Status::OK();
+  }
   return Resize(input, output, output_h, output_w, 0, 0, interpolation_);
 }
 
