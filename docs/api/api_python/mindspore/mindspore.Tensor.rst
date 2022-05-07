@@ -755,6 +755,9 @@ mindspore.Tensor
 
         根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
 
+        .. note::
+            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。
+
         **参数：**
 
         - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
