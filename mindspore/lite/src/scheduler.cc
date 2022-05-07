@@ -73,7 +73,7 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
   auto origin_own_data = tensor->own_data();
   auto origin_dt = tensor->data_type();
   auto origin_data = tensor->data();
-  MS_ASSERT(origin_data != nullptr);
+  MS_CHECK_TRUE_RET(origin_data != nullptr, RET_ERROR);
   tensor->set_data(nullptr);
   tensor->set_data_type(dst_data_type);
   auto ret = tensor->MallocData();
@@ -92,7 +92,7 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
   } else {  // dst_data_type == kNumberTypeFloat16
     Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
   }
-  if (origin_data != nullptr && origin_own_data) {
+  if (origin_own_data) {
     if (tensor->allocator() == nullptr) {
       free(origin_data);
     } else {
@@ -1507,12 +1507,12 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
         auto partial_subgraph_index = GetPartialGraphIndex(primitive, schema_version_);
         control_flow_scheduler_->RecordSubgraphCaller(partial_subgraph_index, kernel);
         if (SubGraphHasScheduled(partial_subgraph_index)) {
-          partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
+          partial_kernel_subgraph_index_map_[kernel] = static_cast<size_t>(partial_subgraph_index);
           MS_CHECK_TRUE_MSG(control_flow_scheduler_ != nullptr, RET_ERROR, "control flow scheduler is nullptr.");
           MS_LOG(INFO) << "subgraph has scheduled. ";
         } else {
           SubGraphMarkScheduled(partial_subgraph_index);
-          partial_kernel_subgraph_index_map_[kernel] = partial_subgraph_index;
+          partial_kernel_subgraph_index_map_[kernel] = static_cast<size_t>(partial_subgraph_index);
           subgraphs_to_schedule_.push_back(partial_subgraph_index);
         }
       } else {

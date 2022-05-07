@@ -228,7 +228,7 @@ class WeightDecoder {
         uint_result = (static_cast<size_t>(bit_tmp) << static_cast<unsigned int>(k)) + uint_result;
         unpack_bit_data->pop();
       }
-      result = uint_result - static_cast<T2>(pow(base, origin_bit - 1));
+      result = static_cast<T1>(uint_result - static_cast<T2>(pow(base, origin_bit - 1)));
       (static_cast<T1 *>(unpack_int))[*count] = result;
       uint_result = 0;
       (*count)++;
