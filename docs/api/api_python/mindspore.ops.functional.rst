@@ -310,6 +310,7 @@ Parameter操作算子
     mindspore.ops.assign_add
     mindspore.ops.assign_sub
     mindspore.ops.index_add
+    mindspore.ops.scatter_min
 
 .. list-table::
    :widths: 50 50
