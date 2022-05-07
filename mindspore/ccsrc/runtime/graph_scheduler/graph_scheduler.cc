@@ -32,7 +32,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "utils/ms_context.h"
 #include "utils/profile.h"
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
 #endif
 #ifndef ENABLE_SECURITY
@@ -48,7 +48,7 @@
 #include "include/common/debug/common.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
 #include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
@@ -138,7 +138,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
   }
 }
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 void IntHandler(int, siginfo_t *, void *) {
   int this_pid = getpid();
   MS_LOG(WARNING) << "Process " << this_pid << " receive KeyboardInterrupt signal.";
@@ -146,7 +146,7 @@ void IntHandler(int, siginfo_t *, void *) {
 }
 #endif
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
 bool SendFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
@@ -470,7 +470,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   }
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_ << ") transforms actor end.";
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
   if (ClusterContext::instance()->initialized() && RecoveryContext::GetInstance()->enable_recovery()) {
     while (!SendFinishTransform(graph_compiler_info.name_)) {
       MS_LOG(WARNING) << "Send finish transform graph failed.";
@@ -506,7 +506,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
                          const std::vector<TensorPtr> &input_tensors_with_value_node, GraphExecutionStrategy strategy) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   SignalGuard sg(IntHandler);
 #endif
 
@@ -568,7 +568,7 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   const size_t kSecondsToMilliseconds = 1000;
   SetActorExecutionStrategy(actor_set, strategy, (end_time - start_time) * kSecondsToMilliseconds);
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && (!defined _WIN64) && !defined(__APPLE__))
   DoDisasterRecovery(actor_set->name_);
 #endif
 }
@@ -580,7 +580,7 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
   ++actor_set->execution_count_;
   MS_LOG(DEBUG) << "Execution count: " << actor_set->execution_count_ << ", execution time cost: " << execution_time
                 << " ms in multi thread or not: " << actor_set->is_multi_thread_execution_ << ".";
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64) || defined(__APPLE__)
   return;
 #endif
 

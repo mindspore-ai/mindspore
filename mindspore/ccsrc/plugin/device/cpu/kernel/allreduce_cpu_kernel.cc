@@ -20,19 +20,24 @@
 #include <functional>
 #include <memory>
 
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
+#endif
 
 namespace mindspore {
 namespace kernel {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 using device::CollectiveOpReduceType::Reduce_Sum;
 using device::cpu::kMCCLGlobalGroupName;
 using device::cpu::MsCollectiveCommLib;
+#endif
 
 namespace {
 constexpr char kSupportedReduceOp[] = "sum";
 }  // namespace
 
 void AllReduceCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
@@ -48,6 +53,9 @@ void AllReduceCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (reduce_op != kSupportedReduceOp) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only support reduce sum on CPU, but got " << reduce_op;
   }
+#else
+  MS_LOG(EXCEPTION) << "The CPU kernel allreduce is only supported on linux platform.";
+#endif
 }
 
 std::vector<KernelAttr> AllReduceCPUKernelMod::GetOpSupport() {
@@ -59,6 +67,7 @@ std::vector<KernelAttr> AllReduceCPUKernelMod::GetOpSupport() {
 bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                    const std::vector<kernel::AddressPtr> &,
                                    const std::vector<kernel::AddressPtr> &outputs) {
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << kernel_name_ << " has at least one input and one output, but got 0.";
   }
@@ -72,6 +81,9 @@ bool AllReduceCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs
     MS_LOG(ERROR) << "AllReduceCPUKernelMod launch failed.";
   }
   return ret;
+#else
+  MS_LOG(EXCEPTION) << "The CPU kernel allreduce is only supported on linux platform.";
+#endif
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, AllReduce, AllReduceCPUKernelMod);

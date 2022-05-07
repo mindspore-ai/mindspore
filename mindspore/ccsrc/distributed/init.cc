@@ -29,7 +29,7 @@ bool Initialize() {
     return false;
   }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (cluster::ClusterContext::instance()->initialized() && !collective::CollectiveManager::instance()->initialized()) {
     // Server and Scheduler don't use collective communication library.
     auto node = cluster::ClusterContext::instance()->node();

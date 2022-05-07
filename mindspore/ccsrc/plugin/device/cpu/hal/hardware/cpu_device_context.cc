@@ -40,7 +40,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "profiler/device/cpu/cpu_profiling.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 #endif
 #ifndef ENABLE_SECURITY
@@ -394,7 +394,7 @@ bool CPUDeviceContext::LoadCollectiveCommLib() {
     collective_comm_lib_ = instance_func();
     MS_EXCEPTION_IF_NULL(collective_comm_lib_);
   } else {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
     collective_comm_lib_ = &MsCollectiveCommLib::GetInstance();
     MS_EXCEPTION_IF_NULL(collective_comm_lib_);
 #endif
