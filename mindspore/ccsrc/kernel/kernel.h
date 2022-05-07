@@ -267,7 +267,7 @@ class KernelMod {
     return KernelErrorCode::KRET_OK;
   }
   // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
-  virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape; }
+  virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape_; }
   virtual std::vector<KernelTensorPtr> RetrieveOutputShape() {
     SyncData();
     return GetOutputs();
@@ -308,7 +308,7 @@ class KernelMod {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  bool is_need_retrieve_output_shape = false;
+  bool is_need_retrieve_output_shape_ = false;
 
  private:
   std::vector<AddressPtr> inputs_addr_;

@@ -68,7 +68,7 @@ class GpuConvertToDynamicShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod
     }
 
     InitSizeLists();
-    is_need_retrieve_output_shape = true;
+    is_need_retrieve_output_shape_ = true;
     return true;
   }
 

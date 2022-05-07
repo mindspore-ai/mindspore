@@ -66,7 +66,7 @@ class MatrixDiagPartGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitSizeLists();
     alignment_ = GetAlignments(common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAlignment));
     kernel_node_ = kernel_node;
-    is_need_retrieve_output_shape = true;
+    is_need_retrieve_output_shape_ = true;
     return true;
   }
 

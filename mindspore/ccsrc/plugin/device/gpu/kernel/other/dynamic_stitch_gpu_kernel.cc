@@ -56,7 +56,7 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   workspace_size_list_.push_back(index_type_size);
   // One output
   output_size_list_.push_back(output_size);
-  is_need_retrieve_output_shape = true;
+  is_need_retrieve_output_shape_ = true;
   return true;
 }
 

@@ -62,7 +62,7 @@ bool DatasetIteratorKernelMod::Init(const CNodePtr &kernel_node) {
     output_size_list_.push_back(bytes);
   }
 
-  is_need_retrieve_output_shape = true;
+  is_need_retrieve_output_shape_ = true;
 
 #ifndef ENABLE_SECURITY
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
