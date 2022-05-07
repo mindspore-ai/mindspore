@@ -64,7 +64,7 @@ void ApplyPowerSignCpuKernelMod::LaunchPowerSign(const std::vector<kernel::Addre
       m[i] = gradient[i] * (one - beta[0]) + m[i] * beta[0];
       T sign_value = static_cast<T>(Sgn(gradient[i]) * Sgn(m[i]));
       T update = exp(logbase[0] * sign_decay[0] * sign_value) * gradient[i];
-      var[i] = var[i] - lr[i] * update;
+      var[i] = var[i] - lr[0] * update;
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
