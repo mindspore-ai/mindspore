@@ -29,11 +29,11 @@
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
-struct ModelPoolContext {
+struct WorkerConfig {
   std::shared_ptr<Context> context = nullptr;
   int numa_id = 0;
 };
-using ModelPoolContextVec = std::vector<std::shared_ptr<ModelPoolContext>>;
+using ModelPoolConfig = std::vector<std::shared_ptr<WorkerConfig>>;
 
 class ModelPool {
  public:
@@ -51,10 +51,12 @@ class ModelPool {
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
  private:
-  ModelPoolContextVec CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  ModelPoolConfig CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config);
   std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
 
-  Status InitDefaultContext(const std::shared_ptr<mindspore::Context> &context);
+  Status SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_config, const std::shared_ptr<Context> &context);
+
+  std::shared_ptr<mindspore::Context> GetDefaultContext();
   std::shared_ptr<Context> InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
   Status SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context);
 
@@ -79,7 +81,7 @@ class ModelPool {
                              const MSKernelCallBack &before, const MSKernelCallBack &after,
                              int max_wait_worker_node_id);
 
-  std::vector<std::thread> model_worker_vec_;
+  std::vector<std::thread> worker_thread_vec_;
   std::vector<MSTensor> model_pool_inputs_;
   std::vector<MSTensor> model_pool_outputs_;
   size_t workers_num_ = 1;
