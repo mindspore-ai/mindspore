@@ -53,6 +53,10 @@
 #include "src/delegate/tensorrt/tensorrt_delegate.h"
 #endif
 #include "src/runtime/runtime_convert.h"
+#include "model_loader/model_loader.h"
+
+using AbstractBaseModel = mindspore::infer::AbstractBaseModel;
+
 namespace mindspore {
 #ifdef USE_GLOG
 extern "C" {
@@ -527,7 +531,12 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
 
-  ret = ConvertTensors(model);
+  if (model->model_type_ != ModelType_MSLite) {
+    ret = reinterpret_cast<AbstractBaseModel *>(model)->ConvertTensors(&this->tensors_);
+  } else {
+    // TODO(liulili): Convert to abstract base model interface
+    ret = ConvertTensors(model);
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvertTensors failed: " << ret;
     is_running_.store(false);
@@ -1227,9 +1236,18 @@ int LiteSession::PreCheck(Model *model) {
     MS_LOG(ERROR) << "The input model buf is nullptr.";
     return RET_PARAM_INVALID;
   }
-  if (!reinterpret_cast<LiteModel *>(model)->ModelVerify()) {
-    MS_LOG(ERROR) << "wrong model input, please check";
-    return RET_ERROR;
+  if (model->model_type_ != ModelType_MSLite) {
+    // abstract base model
+    if (!reinterpret_cast<AbstractBaseModel *>(model)->ModelVerify()) {
+      MS_LOG(ERROR) << "wrong model input, please check";
+      return RET_ERROR;
+    }
+  } else {
+    // TODO(liulili): old routine, convert to abstract base model
+    if (!reinterpret_cast<LiteModel *>(model)->ModelVerify()) {
+      MS_LOG(ERROR) << "wrong model input, please check";
+      return RET_ERROR;
+    }
   }
 
 #ifndef ENABLE_FP16
@@ -1612,7 +1630,11 @@ mindspore::ModelType lite::LiteSession::LoadModelByBuff(const char *model_buf, c
 #ifdef RUNTIME_CONVERT
   *lite_buf = RuntimeConvert(model_buf, buf_size, size, ms_context);
 #else
-  MS_LOG(ERROR) << "Please enable runtime convert.";
+  MS_LOG(WARNING) << "Please enable runtime convert.";
+#endif
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+  *size = buf_size;
+  *lite_buf = const_cast<char *>(model_buf);
 #endif
   return mindspore::ModelType::kMindIR;
 }
@@ -1651,10 +1673,7 @@ const char *lite::LiteSession::LoadModelByPath(const std::string &file, mindspor
   if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
     return nullptr;
   }
-  if (buf_model_type == mindspore::ModelType::kMindIR) {
-    delete[] model_buf;
-    model_buf = nullptr;
-  }
+
   return lite_buf;
 }
 
@@ -1667,7 +1686,19 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
+
+  mindspore::lite::Model *model = nullptr;
+  // if (model_type == kMindIR_Lite) {
+  model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type);
+  // } else {
+  //   auto *model_loader = ModelLoaderRegistry::GetInstance()->GetModelLoader(model_type);
+  //   if (model_loader == nullptr) {
+  //     MS_LOG(ERROR) << "Invalid model type";
+  //     return RET_ERROR;
+  //   }
+  //   model_loader->ImportModel(model_buf, buf_size, true);
+  // }
+  // auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
@@ -1697,7 +1728,7 @@ int lite::LiteSession::LoadModelAndCompileByBuf(const char *model_buf, mindspore
     MS_LOG(ERROR) << "Invalid model_buf";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true);
+  auto *model = lite::ImportFromBuffer(lite_buf, lite_buf_size, true, model_type);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
@@ -1724,7 +1755,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
+  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     return RET_ERROR;
@@ -1749,7 +1780,7 @@ int lite::LiteSession::LoadModelAndCompileByPath(const std::string &model_path, 
     MS_LOG(ERROR) << "Read model file failed";
     return RET_ERROR;
   }
-  auto *model = lite::ImportFromBuffer(model_buf, model_size, true);
+  auto *model = lite::ImportFromBuffer(model_buf, model_size, true, model_type);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
     delete[] model_buf;

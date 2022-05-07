@@ -16,14 +16,24 @@
 #ifndef MINDSPORE_LITE_INCLUDE_MODEL_H_
 #define MINDSPORE_LITE_INCLUDE_MODEL_H_
 
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+#include <any>
+#endif
+
 #include "include/lite_utils.h"
 
 namespace mindspore::lite {
+typedef enum { ModelType_MSLite, ModelType_MindIR } LiteModelType;
+
 struct MS_API Model {
   struct Node {
     String name_;
+    String op_type_;
     int node_type_;
     const void *primitive_ = nullptr;
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+    std::any base_operators_ = nullptr;
+#endif
     Uint32Vector input_indices_;
     Uint32Vector output_indices_;
     int quant_type_;
@@ -45,6 +55,7 @@ struct MS_API Model {
   TensorPtrVector all_tensors_;
   NodePtrVector all_nodes_;
   char *buf = nullptr;
+  size_t buf_size_ = 0;
   SubGraphPtrVector sub_graphs_;
 #ifdef ENABLE_MODEL_OBF
   using NodeStatVector = Vector<uint32_t>;
@@ -55,6 +66,7 @@ struct MS_API Model {
   bool model_obfuscated_ = false;
   PrimVector deobf_prims_;
 #endif
+  LiteModelType model_type_ = mindspore::lite::ModelType_MSLite;
 
   /// \brief Static method to create a Model pointer.
   static Model *Import(const char *model_buf, size_t size);
