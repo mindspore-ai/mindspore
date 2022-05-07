@@ -179,3 +179,83 @@ def test_bessel_y1(dtype, eps):
     output = F.bessel_y1(x)
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
+def test_bessel_i1(dtype, eps):
+    """
+    Feature: bessel i1 function
+    Description: test cases for BesselI1
+    Expectation: the result matches scipy
+    """
+    x = Tensor(np.array([-1, -0.5, 0.5, 1]).astype(dtype))
+    expect = np.array([-0.5651591, -0.25789431, 0.25789431, 0.5651591]).astype(dtype)
+    error = np.ones(shape=[4]) * eps
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    output = F.bessel_i1(x)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
+def test_bessel_i1e(dtype, eps):
+    """
+    Feature: bessel i1e function
+    Description: test cases for BesselI1e
+    Expectation: the result matches scipy
+    """
+    x = Tensor(np.array([-1, -0.5, 0.5, 1]).astype(dtype))
+    expect = np.array([-0.20791042, -0.15642083, 0.15642083, 0.20791042]).astype(dtype)
+    error = np.ones(shape=[4]) * eps
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    output = F.bessel_i1e(x)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
+def test_bessel_k1(dtype, eps):
+    """
+    Feature: bessel k1 function
+    Description: test cases for BesselK1
+    Expectation: the result matches scipy
+    """
+    x = Tensor(np.array([0.5, 1., 2., 4.]).astype(dtype))
+    expect = np.array([1.65644112, 0.60190723, 0.13986588, 0.0124835]).astype(dtype)
+    error = np.ones(shape=[4]) * eps
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    output = F.bessel_k1(x)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype, eps', [(np.float16, 1.0e-3), (np.float32, 1.0e-6), (np.float64, 1.0e-6)])
+def test_bessel_k1e(dtype, eps):
+    """
+    Feature: bessel k1e function
+    Description: test cases for BesselK1e
+    Expectation: the result matches scipy
+    """
+    x = Tensor(np.array([0.5, 1., 2., 4.]).astype(dtype))
+    expect = np.array([2.73100971, 1.63615349, 1.03347685, 0.68157595]).astype(dtype)
+    error = np.ones(shape=[4]) * eps
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    output = F.bessel_k1e(x)
+    diff = output.asnumpy() - expect
+    assert np.all(diff < error)
