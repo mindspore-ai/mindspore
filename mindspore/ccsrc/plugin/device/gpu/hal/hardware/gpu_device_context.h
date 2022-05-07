@@ -56,9 +56,6 @@ class GPUDeviceContext : public DeviceContext {
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
-  // Infer kernel shape and update abstract info for dynamic shape kernel.
-  void UpdateDynamicShape(const CNodePtr &kernel) const override;
-
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
                     bool is_dynamic_shape) const override;

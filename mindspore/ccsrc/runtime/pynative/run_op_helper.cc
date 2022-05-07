@@ -22,6 +22,7 @@
 #include <algorithm>
 #include "utils/log_adapter.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
+#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "include/common/utils/convert_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "runtime/pynative/op_runtime_info.h"
@@ -420,6 +421,31 @@ void ChangeInputDynamicAbsToActualAbs(const CNodePtr &cnode) {
   }
 }
 
+void UpdateDynamicShape(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+  MS_EXCEPTION_IF_NULL(kernel_mod);
+  if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
+    MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
+  }
+  opt::dynamic_shape::InferOp(kernel);
+  auto args = kernel::GetArgsFromCNode(kernel);
+  if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
+      kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
+    auto update = kernel::AbstractArgsFromCNode(kernel);
+    if (args == nullptr) {
+      args = std::make_shared<kernel::KernelArgs>();
+    }
+    args->op = update.op;
+    update.depend_tensor_map = args->depend_tensor_map;
+    kernel::SetArgsToCNode(kernel, update);
+  }
+  if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
+      kernel::KRET_RESIZE_FAILED) {
+    MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
+  }
+}
+
 // kernel_mode launch
 void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
@@ -441,7 +467,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
 
     if (is_dynamic_shape) {
       ChangeInputDynamicAbsToActualAbs(node);
-      device_context->UpdateDynamicShape(node);
+      UpdateDynamicShape(node);
     }
 
     auto workspaces = CreateKernelWorkspaceAddress(runtime_info, device_context, node, is_dynamic_shape);

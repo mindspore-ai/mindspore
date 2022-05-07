@@ -570,8 +570,6 @@ constexpr auto kActualAbstract = "actual_abstract";
 
 // TODO(dsj): for ms_function running in graph_mode. should be delete later
 constexpr auto kAttrMSFunction = "ms_function_graph";
-// mark func_graph for the dynamic shape customop pass
-constexpr auto kAttrHasCustomOp = "graph_has_custom_op";
 
 // custom operator func type
 constexpr auto kCustomTypeAOT = "aot";

@@ -69,9 +69,6 @@ class AscendDeviceContext : public DeviceContext {
   // Adjust single op kernel graph before run graph, used in PyNative Mode.
   void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const override;
 
-  // Infer kernel shape and update abstract info for dynamic shape kernel.
-  void UpdateDynamicShape(const CNodePtr &kernel) const override;
-
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;

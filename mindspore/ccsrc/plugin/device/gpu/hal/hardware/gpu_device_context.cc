@@ -442,35 +442,6 @@ void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   CreateGPUKernel(nodes);
 }
 
-void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) == KernelType::AKG_KERNEL) {
-    MS_LOG(EXCEPTION) << "Akg kernel do not support dynamic shape: " << kernel->fullname_with_scope();
-  }
-
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-  auto func_graph = kernel->func_graph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (!(func_graph->has_attr(kAttrHasCustomOp) && GetValue<bool>(func_graph->get_attr(kAttrHasCustomOp)))) {
-    opt::dynamic_shape::InferOp(kernel);
-    auto args = kernel::GetArgsFromCNode(kernel);
-    if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod) {
-      auto update = kernel::AbstractArgsFromCNode(kernel);
-      if (args == nullptr) {
-        args = std::make_shared<kernel::KernelArgs>();
-      }
-      args->op = update.op;
-      update.depend_tensor_map = args->depend_tensor_map;
-      kernel::SetArgsToCNode(kernel, update);
-    }
-    if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
-        kernel::KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
-    }
-  }
-}
-
 bool GPUDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(kernel);
   auto custom_func = AnfUtils::GetCustomFunc(kernel);
