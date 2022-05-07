@@ -221,9 +221,9 @@ int CopyTensorDataFromTensorInfo(const tensor::TensorPtr &tensor_info,
     }
     auto *origin_data = reinterpret_cast<double_t *>(tensor_info->data_c());
     for (size_t i = 0; i < data_count; ++i) {
-      if (origin_data[i] > static_cast<double_t>(FLT_MAX) || origin_data[i] < static_cast<double_t>(FLT_MIN)) {
+      if (origin_data[i] > static_cast<double_t>(FLT_MAX) || origin_data[i] < static_cast<double_t>(-FLT_MAX)) {
         MS_LOG(WARNING) << "float64 data " << origin_data[i] << " cannot fit into float32";
-        tensor_data[i] = origin_data[i] > 0 ? FLT_MAX : FLT_MIN;
+        tensor_data[i] = origin_data[i] > 0 ? FLT_MAX : -FLT_MAX;
       } else {
         tensor_data[i] = static_cast<float>(origin_data[i]);
       }
