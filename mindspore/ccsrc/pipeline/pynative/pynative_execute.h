@@ -60,10 +60,14 @@ struct GraphInfo {
 using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 
 struct DynamicShapeInfo {
-  py::object dynamic_input = py::none();  // Used in feed mode
-  bool HasUserDynamicInput() const { return !py::isinstance<py::none>(dynamic_input); }
+  bool HasFeedDynamicInput() const { return !feed_dynamic_input.empty(); }
   OrderedMap<std::string, abstract::AbstractBasePtr> obj_id_with_dynamic_output_abs;
-  void reset() { obj_id_with_dynamic_output_abs.clear(); }
+  void reset() {
+    obj_id_with_dynamic_output_abs.clear();
+    feed_dynamic_input_abs.clear();
+  }
+  mindspore::HashMap<std::string, std::vector<abstract::AbstractBasePtr>> feed_dynamic_input;
+  mindspore::HashMap<std::string, abstract::AbstractBasePtr> feed_dynamic_input_abs;
 };
 using DynamicShapeInfoPtr = std::shared_ptr<DynamicShapeInfo>;
 
@@ -229,10 +233,8 @@ class GradExecutor {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
-  bool GradFirstCell() const { return grad_cell_count_ == 0; }
   std::set<std::string> &forward_op_output_id() const { return top_cell()->forward_op_output_id(); }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask);
-  std::string GetCellInputArgsId(const py::object &cell, const py::args &args);
   std::string GetCellId(const py::object &cell, const py::args &args);
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
@@ -322,8 +324,6 @@ class GradExecutor {
     graph_info->node_map[id] = std::make_pair(node, index);
   }
   void MarkMsFunctionNodes(const pipeline::ResourcePtr &resource);
-  void IncreaseCellCount() { ++grad_cell_count_; }
-  void DecreaseCellCount() { --grad_cell_count_; }
 
  private:
   bool grad_flag_{false};
@@ -335,7 +335,6 @@ class GradExecutor {
   size_t cell_order_{0};
   size_t grad_order_{0};
   size_t top_cell_switch_counts_{0};
-  size_t grad_cell_count_{0};  // Record numbers of cell need grad
 
   // The graph phase is used to obtain backend graph that is complied by ms_function
   std::string graph_phase_;
@@ -378,7 +377,8 @@ class ForwardExecutor {
   // Replace input hook node with its input node when not in its own cell scope.
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node);
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
-  void SetDynamicInput(const py::object &dynamic_input);
+  void SetDynamicInput(const py::object &cell, const py::args &args);
+  void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
   DynamicShapeInfoPtr dynamic_shape_info_ptr();
   bool IsFirstCell() const { return cell_depth_ == 0; }
   void IncreaseCellDepth() { ++cell_depth_; }
@@ -449,7 +449,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
 
   bool grad_flag() const;
   void set_grad_flag(bool flag);
-  void SetDynamicInput(const py::object &dynamic_input);
+  void SetDynamicInput(const py::object &cell, const py::args &args);
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);

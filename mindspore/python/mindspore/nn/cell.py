@@ -599,6 +599,12 @@ class Cell(Cell_):
                 raise TypeError("For 'Cell', inputs should not be numpy array.")
         if self.requires_grad:
             _pynative_executor.set_grad_flag(True)
+
+        # PyNative feed dynamic shape inputs
+        if self._dynamic_shape_inputs is not None:
+            self._check_compile_dynamic_shape(*args)
+            _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
+
         cast_inputs = self.auto_cast_inputs(args)
 
         with self._CellGuard():

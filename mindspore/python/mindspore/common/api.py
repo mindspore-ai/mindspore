@@ -877,17 +877,18 @@ class _PynativeExecutor:
         """
         self._executor.set_grad_flag(flag)
 
-    def set_dynamic_input(self, *args):
+    def set_dynamic_input(self, obj, *args):
         """
         Set dynamic shape tensor of input arguments.
 
         Args:
+            obj (Function/Cell): The function or cell instance.
             args (tuple): Function or cell dynamic input arguments.
 
         Return:
-            None
+            None.
         """
-        self._executor.set_dynamic_input(*args)
+        self._executor.set_dynamic_input(obj, *args)
 
     def is_first_cell(self):
         """
