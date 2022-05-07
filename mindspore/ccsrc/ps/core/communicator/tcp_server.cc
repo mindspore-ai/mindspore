@@ -213,7 +213,7 @@ void TcpServer::Start() {
 }
 
 void TcpServer::Stop() {
-  MS_EXCEPTION_IF_NULL(base_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(base_);
   std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp server!";
   if (event_base_got_break(base_)) {

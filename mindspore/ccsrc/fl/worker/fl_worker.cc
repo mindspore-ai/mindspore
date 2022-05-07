@@ -51,6 +51,12 @@ void FLWorker::Run() {
 
   worker_node_ = std::make_shared<ps::core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
+  constexpr size_t kExecutorThreadPoolSize = 32;
+  task_executor_ = std::make_shared<ps::core::TaskExecutor>(kExecutorThreadPoolSize);
+  communicator_ = worker_node_->GetOrCreateTcpComm(scheduler_ip_, static_cast<int16_t>(scheduler_port_), worker_num_,
+                                                   server_num_, task_executor_);
+  communicator_->RegisterMsgCallBack(
+    "queryNodeScaleState", std::bind(&FLWorker::HandleQueryNodeScaleStateRequest, this, std::placeholders::_1));
 
   worker_node_->SetCancelSafeModeCallBack([this]() -> void { safemode_ = false; });
   worker_node_->RegisterEventCallback(ps::core::ClusterEvent::SCHEDULER_TIMEOUT, [this]() {
@@ -76,8 +82,8 @@ void FLWorker::Run() {
   });
 
   InitializeFollowerScaler();
-  if (!worker_node_->Start()) {
-    MS_LOG(EXCEPTION) << "Starting worker node failed.";
+  if (!communicator_->Start()) {
+    MS_LOG(EXCEPTION) << "Starting communicator failed.";
     return;
   }
   rank_id_ = worker_node_->rank_id();
@@ -266,6 +272,22 @@ void FLWorker::ProcessAfterScalingIn() {
                << ". Exit safemode.";
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
   safemode_ = false;
+}
+
+void FLWorker::HandleQueryNodeScaleStateRequest(const std::shared_ptr<ps::core::MessageHandler> &message) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(message);
+
+  nlohmann::basic_json<std::map, std::vector, std::string> response;
+  response["node_scale_state"] = worker_node_->node_scale_state_str();
+
+  auto tcp_comm = std::dynamic_pointer_cast<ps::core::TcpCommunicator>(communicator_);
+  MS_ERROR_IF_NULL_WO_RET_VAL(tcp_comm);
+  if (!tcp_comm->SendResponse(response.dump().c_str(), response.dump().size(), message)) {
+    MS_LOG(ERROR) << "Sending response failed.";
+    return;
+  }
+
+  MS_LOG(INFO) << "Response query node scale state success, response data is " << response.dump().c_str();
 }
 }  // namespace worker
 }  // namespace fl
