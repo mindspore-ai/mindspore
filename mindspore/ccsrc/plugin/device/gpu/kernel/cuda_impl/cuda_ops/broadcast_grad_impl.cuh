@@ -16,7 +16,8 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BROADCAST_GRAD_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BROADCAST_GRAD_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 enum BroadcastGradOpType {
   BROADCAST_GRAD_TYPE_MAXIMUM = 0,
@@ -25,15 +26,15 @@ enum BroadcastGradOpType {
 };
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3,
-                                   const int &r0, const int &r1, const int &r2, const int &r3,
-                                   const int &d0, const int &d1, const int &d2, const int &d3,
-                                   const bool &grad_x1, const bool &grad_x2, enum BroadcastGradOpType op,
-                                   const T *x1, const T *x2, const T *dy, T *dx1, T *dx2, cudaStream_t stream);
+CUDA_LIB_EXPORT void BroadcastGrad(const int &l0, const int &l1, const int &l2, const int &l3, const int &r0,
+                                   const int &r1, const int &r2, const int &r3, const int &d0, const int &d1,
+                                   const int &d2, const int &d3, const bool &grad_x1, const bool &grad_x2,
+                                   enum BroadcastGradOpType op, const T *x1, const T *x2, const T *dy, T *dx1, T *dx2,
+                                   const uint32_t &device_id, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void NoBroadcastGrad(const int &nums, const bool &grad_x1, const bool &grad_x2,
-                                     enum BroadcastGradOpType op,
-                                     const T *x1, const T *x2, const T *dy, T *dx1, T *dx2, cudaStream_t stream);
+                                     enum BroadcastGradOpType op, const T *x1, const T *x2, const T *dy, T *dx1, T *dx2,
+                                     const uint32_t &device_id, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_BROADCAST_GRAD_IMPL_CUH_
