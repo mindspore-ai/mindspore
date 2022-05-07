@@ -3109,6 +3109,18 @@ test_case_other_ops = [
                         Tensor(np.array([[0, 1], [1, 2]], np.int32)),
                         Tensor(np.ones([2, 5], np.float32) * 99)),
         'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
+    ('TensorScatterAdd', {
+        'block': P.TensorScatterAdd(),
+        'desc_inputs': (Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
+                        Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.ones([2, 5], np.float32) * 99)),
+        'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
+    ('TensorScatterSub', {
+        'block': P.TensorScatterSub(),
+        'desc_inputs': (Tensor(np.arange(3 * 4 * 5).reshape((3, 4, 5)), mstype.float32),
+                        Tensor(np.array([[0, 1], [1, 2]], np.int32)),
+                        Tensor(np.ones([2, 5], np.float32) * 99)),
+        'desc_bprop': [([3, 4, 5], {'dtype': np.float32})]}),
     ('ScatterMaxUseLocking', {
         'block': ScatterMax(use_locking=True),
         'desc_inputs': (Tensor(np.array([1, 0], np.int32)),
