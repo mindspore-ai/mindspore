@@ -60,11 +60,6 @@ class AscendDeviceContext : public DeviceContext {
   // Optimize the single operator graph for PyNative mode.
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
-  // Select the matching backend kernels according to the data type and format of input and output for all
-  // execution operators, and set final device data type and format information for backend kernels, device
-  // data type and format which replace original data type and format will use for executing kernels.
-  void SetOperatorInfo(const KernelGraphPtr &graph) const override;
-
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
@@ -161,9 +156,6 @@ class AscendDeviceContext : public DeviceContext {
   // The ExecuteGraph is not thread safety specifically, it is not recommended that multiple threads access the same
   // func at the same time, so need the launch mutex when multiple threads launch the graph.
   mutable std::mutex launch_mutex_;
-  // The graphs has been traversed when the graph id traversed recursively.
-  // Note: Please clean the set before each use.
-  mutable std::set<KernelGraphPtr> memo_;
   // Using node to get it's atomics
   mutable std::map<CNodePtr, std::vector<CNodePtr>> node_atomics_;
   // Persistent cache for single op execution.

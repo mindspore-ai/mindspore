@@ -53,7 +53,6 @@ class CPUDeviceContext : public DeviceContext {
   void OptimizeGraph(const KernelGraphPtr &graph) const override;
   void OptimizeSingleOpGraph(const KernelGraphPtr &graph) const override;
 
-  void SetOperatorInfo(const KernelGraphPtr &graph) const override;
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
   void UpdateDynamicShape(const CNodePtr &kernel) const override;
 
@@ -69,6 +68,11 @@ class CPUDeviceContext : public DeviceContext {
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
+
+  // Select the matching backend kernels according to the data type and format of input and output for all
+  // execution operators, and set final device data type and format information for backend kernels, device
+  // data type and format which replace original data type and format will use for executing kernels.
+  void SetOperatorInfo(const KernelGraphPtr &graph) const;
 
   void OptimizeGraphImpl(const KernelGraphPtr &graph) const;
 #ifndef ENABLE_SECURITY
