@@ -5626,3 +5626,36 @@ class RaggedRange(Primitive):
         validator.check_value_type("Tsplits", Tsplits, [mstype.Type], self.name)
         valid_values = (mstype.int64, mstype.int32)
         validator.check_type_name("Tsplits", Tsplits, valid_values, self.name)
+
+
+class Trace(Primitive):
+    """
+    Returns a new tensor that is the sum of the input trace.
+
+    Note:
+        Input must be matrix, and complex number is nor supported at present.
+
+    Inputs:
+        - **x**(Tensor) - A matrix to be calculated. The matrix must be two dimensional.
+
+    Output:
+        Tensor, with the same data type as input 'x', and size equals to 1.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the dimension of `x` is not equal to 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> trace = ops.Trace()
+        >>> output = trace(x)
+        >>> print(output)
+        15.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
