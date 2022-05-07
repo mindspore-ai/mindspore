@@ -174,8 +174,8 @@ float KLDivergence(std::vector<T> p, std::vector<T> q) {
   std::for_each(q.begin(), q.end(), [sum](T &item) { item /= sum; });
 
   float result = 0.0f;
-  const int size = p.size();
-  for (int i = 0; i < size; ++i) {
+  const size_t size = p.size();
+  for (size_t i = 0; i < size; ++i) {
     if (p[i] != 0) {
       if (q[i] == 0) {
         result += 1.0f;

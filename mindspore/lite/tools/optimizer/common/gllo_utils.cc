@@ -79,7 +79,7 @@ void TransposeData(const ShapeVector &origin_shape, const ShapeVector &cur_shape
   }
   ShapeVector post_multiply(cur_shape.size());
   std::unordered_map<int, int> dim_map;
-  for (int i = cur_shape.size() - 1; i >= 0; --i) {
+  for (int i = static_cast<int>(cur_shape.size()) - 1; i >= 0; --i) {
     if (i == static_cast<int>(cur_shape.size() - 1)) {
       post_multiply[i] = 1;
     } else {

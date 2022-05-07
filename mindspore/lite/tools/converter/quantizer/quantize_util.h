@@ -331,15 +331,15 @@ size_t CalCoorBestBit(const std::vector<T> &quant_data, size_t elem_cnt,
   size_t min_len_in_bit = std::numeric_limits<size_t>::max();
   for (size_t bit = k2Bit; bit <= k10Bit; bit++) {
     // search
-    size_t nn_cnt = 0;
-    size_t prev_index = -1;
+    int nn_cnt = 0;
+    int prev_index = -1;
     auto channel_cnt = quant_params.size();
     MS_ASSERT(channel_cnt > 0);
     auto elem_perchannel = elem_cnt / channel_cnt;
     for (size_t i = 0; i < elem_cnt; i++) {
       auto cur_channel = i / elem_perchannel;
       auto zp = quant_params[cur_channel]->zeroPoint;
-      if (quant_data[i] != zp || (i - prev_index) >= static_cast<size_t>((1 << bit))) {
+      if (quant_data[i] != zp || (static_cast<int>(i) - prev_index) >= ((1 << bit))) {
         nn_cnt++;
         prev_index = i;
       }
