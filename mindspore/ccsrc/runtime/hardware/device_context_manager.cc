@@ -33,6 +33,7 @@ void DeviceContextManager::ClearDeviceContexts() {
   for (auto &iter : device_contexts_) {
     MS_LOG(INFO) << "Release device " << iter.first;
     MS_EXCEPTION_IF_NULL(iter.second);
+    (void)iter.second->DestroyAllStreams();
     iter.second->Destroy();
   }
   device_contexts_.clear();
