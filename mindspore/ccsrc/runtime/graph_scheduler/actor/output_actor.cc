@@ -37,9 +37,9 @@ bool IsOutputAddressPersisted(const DeviceTensor *output_device_tensor, const An
     return true;
   }
 
-  // In the input as output scenario.
-  // If the input node is the weight of graph, its output device tensor does not need to be replaced.
-  if (output_node->isa<Parameter>() && common::AnfAlgo::IsParameterWeight(output_node->cast<ParameterPtr>())) {
+  // The device address of parameter may come from the device address of input tensor.
+  // In order to avoid mistakenly cleaning up the device data of input tensor, return it as persisted address.
+  if (output_node->isa<Parameter>()) {
     return true;
   }
 

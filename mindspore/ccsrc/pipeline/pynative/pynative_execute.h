@@ -240,6 +240,7 @@ class GradExecutor {
   py::object GradMsFunction(const py::object &out, const py::args &args);
   void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
                            const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph);
+  void SaveDynShapeAbsForMsFunction(const py::object &forward_out, const FuncGraphPtr &ms_func_graph);
   void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value);
   void MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
                                 const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
@@ -373,9 +374,10 @@ class ForwardExecutor {
   // Replace input hook node with its input node when not in its own cell scope.
   AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node);
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
+  DynamicShapeInfoPtr dynamic_shape_info_ptr();
   void SetDynamicInput(const py::object &cell, const py::args &args);
   void SetFeedDynamicInputAbs(const py::object &cell, const py::args &args);
-  DynamicShapeInfoPtr dynamic_shape_info_ptr();
+  py::object GetDynamicInput(const py::object &actual_input);
   bool IsFirstCell() const { return cell_depth_ == 0; }
   void IncreaseCellDepth() { ++cell_depth_; }
   void DecreaseCellDepth() { --cell_depth_; }
@@ -445,6 +447,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool grad_flag() const;
   void set_grad_flag(bool flag);
   void SetDynamicInput(const py::object &cell, const py::args &args);
+  py::object GetDynamicInput(const py::object &actual_input);
   void set_graph_phase(const std::string &graph_phase);
   void set_py_exe_path(const py::object &py_exe_path);
   void set_kernel_build_server_dir(const py::object &kernel_build_server_dir);

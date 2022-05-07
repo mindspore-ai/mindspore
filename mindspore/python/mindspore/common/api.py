@@ -371,25 +371,22 @@ class _MindsporeFunctionExecutor:
 
     def _generate_compile_args(self, args_list):
         """Chose dynamic shape tensors or actual input tensors as compile args."""
-        compile_args = args_list
+        # Case: If the shape of input args is dynamic, get dynamic shape tensor from context and use it to compile.
+        compile_args = _pynative_executor.get_dynamic_input(args_list)
         # Case: The `set_inputs()` of Cell object has been set, using these dynamic shape args as compile args.
         if isinstance(self.obj, ms.nn.Cell) and self.obj.get_inputs():
             compile_args = self.obj.get_inputs()
             for args in compile_args:
-                if not isinstance(args, MsTensor):
-                    raise TypeError(f"The args in `set_inputs()` of Cell object should be a Tensor, "
-                                    f"but got {type(args)}.")
+                Validator.check_isinstance("args set in `set_inputs()` of Cell", args, MsTensor)
             Validator.check_dynamic_shape(compile_args, args_list)
-        # Case: The dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
+        # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
         if self.input_signature is not None:
             if not isinstance(self.input_signature, (tuple, list)):
                 self.input_signature = (self.input_signature,)
             self.input_signature = list(self.input_signature)
             dyn_shape = False
             for sig_args in self.input_signature:
-                if not isinstance(sig_args, (MetaTensor, MsTensor)):
-                    raise TypeError(f"The args in `input_signature` of `ms_function` should be a Tensor, "
-                                    f"but got {type(sig_args)}.")
+                Validator.check_isinstance("args in `input_signature` of `ms_function`", sig_args, MetaTensor)
                 if -1 in sig_args.shape:
                     dyn_shape = True
             if not dyn_shape:
@@ -399,12 +396,12 @@ class _MindsporeFunctionExecutor:
                 # Checkout whether the `sens` has been added to args_list.
                 if len(self.input_signature) == len(args_list) - 1:
                     logger.warning(f"The number of actual input args `{len(args_list)}` is one more than the number "
-                                   f"of dynamic shape args `{len(self.input_signature)}`. The last actual args may be "
-                                   f" `sens` and added to compile args.")
+                                   f"of input_signature args `{len(self.input_signature)}`. The last actual args may "
+                                   f"be `sens` and added it to compile args.")
                     self.input_signature.append(args_list[-1])
                 Validator.check_dynamic_shape(self.input_signature, args_list)
-                compile_args = self.input_signature
-        return tuple(compile_args)
+                compile_args = tuple(self.input_signature)
+        return compile_args
 
 
 # The attributes used to identify a given object.
@@ -885,6 +882,18 @@ class _PynativeExecutor:
             None.
         """
         self._executor.set_dynamic_input(obj, *args)
+
+    def get_dynamic_input(self, *actual_args):
+        """
+        Get dynamic shape arguments according to actual input arguments.
+
+        Args:
+            actual_args(tuple): Actual input arguments of Function or Cell.
+
+        Return:
+            dynamic_shape_args(tuple): Dynamic shape arguments of Function or Cell.
+        """
+        return self._executor.get_dynamic_input(*actual_args)
 
     def is_first_cell(self):
         """

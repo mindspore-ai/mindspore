@@ -40,44 +40,41 @@ ValueNodePtr PynativeDFunctor::GenNewTensor(const CNodePtr &cnode_morph) {
     out_vnode->set_abstract(std::make_shared<abstract::AbstractUMonad>());
     return out_vnode;
   }
-
+  // Function used to generate value node
+  auto gen_output_value_node = [](const ValuePtr &value) -> ValueNodePtr {
+    MS_EXCEPTION_IF_NULL(value);
+    auto v_node = NewValueNode(value);
+    v_node->set_abstract(value->ToAbstract()->Broaden());
+    return v_node;
+  };
+  // Create output value node for CNode
   auto cnode_shape = cnode_morph->Shape();
   MS_EXCEPTION_IF_NULL(cnode_shape);
   auto cnode_type = cnode_morph->Type();
   MS_EXCEPTION_IF_NULL(cnode_type);
-  // Create output values.
   if (cnode_type->isa<Tuple>()) {
     auto tuple_shape = cnode_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
     auto tuple_type = cnode_type->cast<TuplePtr>();
     MS_EXCEPTION_IF_NULL(tuple_type);
     size_t output_num = tuple_type->elements().size();
+    MS_EXCEPTION_IF_CHECK_FAIL(output_num != 0, "No output value.");
     std::vector<ValuePtr> output_values;
     for (size_t i = 0; i < output_num; ++i) {
       auto shape_elem = tuple_shape->shape()[i];
       auto type_elem = tuple_type->elements()[i];
       output_values.push_back(GenNewTensorInner(type_elem, shape_elem));
     }
-    if (output_values.empty()) {
-      MS_LOG(EXCEPTION) << "The output values is empty, cnode morph: " << cnode_morph->DebugString();
-    }
     auto value_tuple = std::make_shared<ValueTuple>(output_values);
-    auto value_node = NewValueNode(value_tuple);
-    value_node->set_abstract(value_tuple->ToAbstract()->Broaden());
-    return value_node;
+    return gen_output_value_node(value_tuple);
   } else if (cnode_type->isa<TensorType>()) {
     auto tensor_value = GenNewTensorInner(cnode_type, cnode_shape);
-    auto value_node = NewValueNode(tensor_value);
-    value_node->set_abstract(tensor_value->ToAbstract()->Broaden());
-    return value_node;
+    return gen_output_value_node(tensor_value);
   } else if (cnode_shape->isa<abstract::NoShape>()) {
     ShapeVector NoShape;
     auto tensor_value = std::make_shared<tensor::Tensor>(cnode_type->type_id(), NoShape);
-    auto value_node = NewValueNode(tensor_value);
-    value_node->set_abstract(tensor_value->ToAbstract()->Broaden());
-    return value_node;
+    return gen_output_value_node(tensor_value);
   }
-
   MS_LOG(EXCEPTION) << "Unknown shape: " << cnode_shape->ToString() << ", type: " << cnode_type->ToString();
 }
 
