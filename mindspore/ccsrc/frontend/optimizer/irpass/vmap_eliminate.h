@@ -43,6 +43,8 @@ class ExpandVmapPrim : public ExpandMetaFGPrim {
 };
 using ExpandVmapPrimPtr = std::shared_ptr<ExpandVmapPrim>;
 namespace internal {
+int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes);
+
 FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
                                mindspore::HashSet<FuncGraphPtr> *visited_graph,
                                mindspore::HashSet<AnfNodePtr> *visited_node, int axis_size);
