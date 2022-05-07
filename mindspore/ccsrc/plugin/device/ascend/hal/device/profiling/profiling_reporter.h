@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ class ProfilingReporter {
   vector<uint32_t> stream_ids_;
   vector<uint32_t> task_ids_;
   map<string, int> node_name_index_map_;
+  const uint32_t MSPROF_DIFFERENCE = 200;
 
   bool CheckStreamTaskValid() const;
   static uint32_t GetBlockDim(const CNodePtr &node);
@@ -88,14 +89,14 @@ class ProfilingReporter {
   void SetAlternativeValue(T *property, const size_t property_size, const string &value, const int32_t &device_id) {
     MS_EXCEPTION_IF_NULL(property);
     if (value.size() < property_size) {
-      property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_HASH_ID);
+      property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
       const auto ret = strncpy_s(property->data.dataStr, property_size, value.c_str(), value.size());
       if (ret != 0) {
         MS_LOG(ERROR) << "[Profiling] strncpy_s value " << value.c_str() << " error!";
         return;
       }
     } else {
-      property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_STRING);
+      property->type = static_cast<uint8_t>(MSPROF_MIX_DATA_HASH_ID);
       uint64_t hash_id;
       ProfilingManager::GetInstance().QueryHashId(device_id, value, &hash_id);
       property->data.hashId = hash_id;

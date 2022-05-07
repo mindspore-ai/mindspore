@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ irpb::ProfilingParallel GetProfilingParallel(const FuncGraphPtr &func_graph) {
 }
 
 void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
-  if (!IsProfilingParallelStrategyEnabled()) {
+  if (has_save_parallel_strategy || !IsProfilingParallelStrategyEnabled()) {
     return;
   }
 

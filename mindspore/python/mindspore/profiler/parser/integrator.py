@@ -587,6 +587,7 @@ class BaseTimelineGenerator:
         }
         self._device_target = str(device_target).lower()
         self._model = model
+        self._step_start_op_name = ""
         self._step_end_op_name = ""
 
     def get_thread_label_name(self):
@@ -660,8 +661,8 @@ class BaseTimelineGenerator:
         the merged result is [[1,6], [7,8]].
         """
         time_merged_segment_list = []
-        tid = self._tid_dict[display_name][0]
-        pid = self._tid_dict[display_name][1]
+        tid = self._tid_dict.get(display_name, (0, 0))[0]
+        pid = self._tid_dict.get(display_name, (0, 0))[1]
         for time_item in time_list:
             time_segment = list(map(float, time_item[self._start_time_idx:self._duration_idx + 1]))
             time_segment[1] = time_segment[0] + time_segment[1] / factor
@@ -1887,6 +1888,22 @@ class AscendTimelineGenerator(BaseTimelineGenerator):
             timeline_list[idx][self._start_time_idx] = int(time_item[self._start_time_idx]) + time_diff
             timeline_list[idx][self._start_time_idx] = timeline_list[idx][self._start_time_idx] / 1000000
             timeline_list[idx][self._duration_idx] = timeline_list[idx][self._duration_idx] / 1000
+
+    def _set_step_start_and_end_op_name(self, timeline_list):
+        """Set the start and end operator full name of each step."""
+        if not timeline_list or len(timeline_list) < 2:
+            return
+
+        start_op_idx = 0
+        self._step_end_op_name = timeline_list[-1][self._op_name_idx]
+        for i, timeline in enumerate(timeline_list):
+            if timeline[self._op_name_idx] == self._step_end_op_name:
+                start_op_idx = i + 1
+                break
+
+        if start_op_idx >= len(timeline_list):
+            start_op_idx = 0
+        self._step_start_op_name = timeline_list[start_op_idx][self._op_name_idx]
 
 
 class CpuTimelineGenerator(GpuTimelineGenerator):
