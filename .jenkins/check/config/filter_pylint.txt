@@ -126,3 +126,8 @@
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experiment/HPC-generator/generator.py"                                         "redefined-builtin"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experiment/HPC-generator/generator.py"                                         "exec-used"
 "mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experiment/HPC-generator/generator.py"                                         "global-variable-undefined"
+"mindspore/mindspore/lite/python/api/context.py"                                                        "protected-access"
+"mindspore/mindspore/lite/python/api/model.py"                                                          "protected-access"
+"mindspore/mindspore/lite/python/api/tensor.py"                                                         "protected-access"
+"mindspore/mindspore/lite/test"                                                                         "missing-docstring"
+"mindspore/mindspore/lite/test"                                                                         "unused-variable"

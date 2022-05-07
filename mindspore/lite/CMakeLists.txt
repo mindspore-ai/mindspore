@@ -706,4 +706,8 @@ endif()
 if(NOT APPLE)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/file_list.cmake)
     include(${TOP_DIR}/cmake/package_lite.cmake)
+
+    if(PLATFORM_X86_64)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/python)
+    endif()
 endif()
