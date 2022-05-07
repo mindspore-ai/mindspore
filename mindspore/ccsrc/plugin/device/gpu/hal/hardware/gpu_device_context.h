@@ -98,6 +98,9 @@ class GPUDeviceContext : public DeviceContext {
   // Operator fusion optimization.
   void FuseOperators(const KernelGraphPtr &graph) const;
 
+  // Update kernel ref info before create kernel
+  void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;
+
 #ifndef ENABLE_SECURITY
   // Launch a kernel and record the elapsed time end to end.
   bool LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,

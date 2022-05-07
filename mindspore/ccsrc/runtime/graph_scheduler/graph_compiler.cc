@@ -29,6 +29,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
+#include "kernel/common_utils.h"
 #include "backend/common/optimizer/helper.h"
 #include "base/base_ref_utils.h"
 #include "include/common/debug/dump_proto.h"
@@ -597,6 +598,8 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   // Select kernel and optimize
   device_context->OptimizeSingleOpGraph(graph);
 
+  UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
+
   // Set dynamic shape actual abstract
   SetGraphInputNodeActualAbstract(op_run_info, graph);
 
@@ -616,6 +619,18 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   UpdateRefCountForGraphOutput(outputs_with_index);
   AnfAlgo::UpdateGraphValidRefPair(graph);
   return graph->graph_id();
+}
+
+void GraphCompiler::UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info,
+                                                    const KernelGraphPtr &graph) {
+  // Building Graph and Create Kernel is async, under pynative mode.Ref info is bind with kernel.
+  // So need to get ref info to generate output addr, before create kernel.
+  if (op_run_info.device_target != kCPUDevice && op_run_info.device_target != kGPUDevice) {
+    // just ascend ref mode is diff with cpu and gpu
+    return;
+  }
+
+  AddOutInRefToGraph(graph);
 }
 
 void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graphs,

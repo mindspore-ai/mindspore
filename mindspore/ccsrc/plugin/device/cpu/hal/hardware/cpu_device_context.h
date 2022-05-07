@@ -85,6 +85,8 @@ class CPUDeviceContext : public DeviceContext {
   bool DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
 
+  void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;
+
   mutable std::mutex launch_mutex_;
   std::shared_ptr<MemoryManager> mem_manager_;
   bool initialized_;

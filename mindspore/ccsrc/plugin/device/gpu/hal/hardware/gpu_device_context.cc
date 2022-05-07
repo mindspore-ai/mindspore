@@ -37,6 +37,7 @@
 #include "profiler/device/gpu/gpu_profiling_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
+#include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #ifdef ENABLE_DUMP_IR
@@ -409,6 +410,27 @@ void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const 
 
   RunOpHideNopNode(graph);
   RunOpRemoveNopNode(graph);
+  UpdateKernelRefInfo(graph);
+}
+
+void GPUDeviceContext::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
+  MS_EXCEPTION_IF_NULL(graph);
+  const std::vector<CNodePtr> &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel);
+
+    auto kernel_attr_list = kernel::NativeGpuKernelModFactory::GetInstance().GetGpuSupportedList(op_name);
+    if (kernel_attr_list.empty()) {
+      MS_LOG(DEBUG) << "kernel_attr_list is empty";
+      return;
+    }
+
+    auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
+    MS_EXCEPTION_IF_NULL(kernel_info);
+    // For the same kernel, there are currently no multiple Ref info.
+    kernel_info->set_ref_map(kernel_attr_list[0].GetAllOutInRef(), kernel_attr_list[0].GetOutInRefMap());
+  }
 }
 
 void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
