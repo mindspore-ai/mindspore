@@ -40,9 +40,9 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
   for (int sym = 0; sym < symbol_frequency_count; sym++) {
     for (uint32_t i = 0; i < symbol_frequency[sym]; i++) {
       symbol_table[pos] = sym;
-      pos = (pos + step) & table_mask;
+      pos = static_cast<size_t>(pos + step) & table_mask;
       while (pos > table_mask) {
-        pos = (pos + step) & table_mask;
+        pos = static_cast<size_t>(pos + step) & table_mask;
       }
     }
   }
@@ -56,7 +56,7 @@ int FSEDecoder::FSECreateStatesForDecoding(const uint32_t *symbol_frequency, int
     uint16_t sym = symbol_table[i];
     uint32_t x = frequency[sym];
     frequency[sym] += 1;
-    bit_count[i] = table_log - FSEBitStream::CountBits(x);
+    bit_count[i] = static_cast<uint8_t>(table_log - FSEBitStream::CountBits(x));
     new_state[i] = (x << bit_count[i]) - table_size;
   }
   return RET_OK;
@@ -79,13 +79,13 @@ int FSEDecoder::FSEDecode(FSEBitStream *bs, float *buff, int buff_count, uint32_
     return RET_ERROR;
   }
 
-  uint16_t state = bs->Pop(table_log);
+  uint16_t state = static_cast<uint16_t>(bs->Pop(table_log));
   while ((bs->GetCurrChunkIndex() >= 0) || (bit_count_table[state] == 0) || (bs->GetCurrBitCount() > 0)) {
     if (buff_count == 0) {
       return RET_OK;
     }
     buff[--buff_count] = centroids[symbol_table[state]];
-    state = states_table[state] + bs->Pop(bit_count_table[state]);
+    state = states_table[state] + static_cast<size_t>(bs->Pop(bit_count_table[state]));
   }
 
   int remaining_buff_count = buff_count;
