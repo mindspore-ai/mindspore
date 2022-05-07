@@ -56,13 +56,12 @@ static constexpr float kSignedMinFloat = -3.402823466e+38F;
 
 // Used by mixprecision, cudnn dtype select
 static std::map<std::string, cudnnDataType_t> kCudnnDtypeMap = {
-  {"kNumberTypeFloat32", CUDNN_DATA_FLOAT},  {"kNumberTypeFloat16", CUDNN_DATA_HALF},
-  {"kNumberTypeFloat64", CUDNN_DATA_DOUBLE}, {"kNumberTypeInt32", CUDNN_DATA_INT32},
-  {"kNumberTypeBool", CUDNN_DATA_INT8},      {"kNumberTypeInt8", CUDNN_DATA_INT8},
-  {"kNumberTypeUInt8", CUDNN_DATA_UINT8}};
+  {"Float32", CUDNN_DATA_FLOAT}, {"Float16", CUDNN_DATA_HALF}, {"Float64", CUDNN_DATA_DOUBLE},
+  {"Int32", CUDNN_DATA_INT32},   {"Bool", CUDNN_DATA_INT8},    {"Int8", CUDNN_DATA_INT8},
+  {"UInt8", CUDNN_DATA_UINT8}};
 // Used by mixprecision, cuda dtype select
 static std::map<std::string, cudaDataType_t> kCudaDtypeMap = {
-  {"kNumberTypeFloat64", CUDA_R_64F}, {"kNumberTypeFloat32", CUDA_R_32F}, {"kNumberTypeFloat16", CUDA_R_16F}};
+  {"Float64", CUDA_R_64F}, {"Float32", CUDA_R_32F}, {"Float16", CUDA_R_16F}};
 }  // namespace kernel
 }  // namespace mindspore
 
