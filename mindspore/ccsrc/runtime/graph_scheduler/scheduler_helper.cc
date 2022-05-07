@@ -15,6 +15,7 @@
  */
 
 #include "runtime/graph_scheduler/scheduler_helper.h"
+#include "runtime/graph_scheduler/actor/actor_dump.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/anf_utils.h"
@@ -437,6 +438,23 @@ void SchedulerHelper::CheckActorValid(const ActorSet *actor_set) {
   }
 
   CheckControlActorValid(actor_set);
+}
+
+void SchedulerHelper::DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  DumpDataPrepareActor(actor_set->data_prepare_actor_, ofs);
+  DumpDSActors(actor_set->data_source_actors_, ofs);
+  DumpKernelActors(actor_set->kernel_actors_, ofs);
+  DumpSuperKernelActors(actor_set->super_kernel_actors_, ofs);
+  // The on input kernel actors are taken over by control actor in the control flow scene.
+  if (actor_set->control_actors_ == nullptr) {
+    DumpNoInputKernelActors(actor_set->no_input_kernel_actors_, ofs);
+  }
+  DumpCopyActors(actor_set->copy_actors_, ofs);
+  DumpLoopCountActor(actor_set->loop_count_actor_, ofs);
+  DumpOutputActor(actor_set->output_actor_, ofs);
+  DumpControlActors(actor_set->control_actors_, ofs);
+  DumpCustomActors(actor_set->custom_actors_, ofs);
 }
 }  // namespace runtime
 }  // namespace mindspore

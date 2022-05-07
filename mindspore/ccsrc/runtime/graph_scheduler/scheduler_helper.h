@@ -66,6 +66,8 @@ class SchedulerHelper {
 
   // Check whether the actor set is valid.
   static void CheckActorValid(const ActorSet *actor_set);
+
+  static void DumpActorSet(const ActorSet *actor_set, std::ofstream &ofs);
 };
 }  // namespace runtime
 }  // namespace mindspore
