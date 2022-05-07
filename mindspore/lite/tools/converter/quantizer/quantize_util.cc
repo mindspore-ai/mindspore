@@ -540,7 +540,7 @@ int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
     }
   }
   std::vector<schema::QuantParamT> quant_params;
-  size_t elem_count = weight->DataSize();
+  int elem_count = weight->DataSize();
   auto *raw_data = static_cast<float *>(weight->data_c());
   if (raw_data == nullptr) {
     MS_LOG(ERROR) << "rawDatas is nullptr";
@@ -595,7 +595,7 @@ bool CheckNodeInSet(const CNodePtr &cnode, const std::set<PrimitivePtr> &support
 }
 
 std::string BoolVectorToString(const std::vector<bool> &bool_vec) {
-  size_t size_in_byte = ceil(bool_vec.size() / kBitNumPerByte);
+  size_t size_in_byte = static_cast<size_t>(ceil(bool_vec.size() / kBitNumPerByte));
   std::string str(size_in_byte, '\0');
   auto iter = str.begin();
   size_t shift = kBitNumPerByte;

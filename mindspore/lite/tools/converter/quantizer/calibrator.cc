@@ -178,7 +178,7 @@ int Calibrator::CollectDataDistribution(
       MS_LOG(ERROR) << tensor.Name() << " tensor_data is nullptr.";
       return RET_ERROR;
     }
-    size_t elem_count = tensor.ElementNum();
+    size_t elem_count = static_cast<size_t>(tensor.ElementNum());
     MS_CHECK_GT(elem_count, 0, RET_ERROR);
     std::vector<float> data(tensor_data, tensor_data + elem_count);
     if (collect_type == MIN_MAX) {

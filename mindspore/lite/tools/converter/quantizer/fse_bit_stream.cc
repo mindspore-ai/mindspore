@@ -60,7 +60,7 @@ int64_t FSEBitStream::Pop(uint8_t bit_count) {
   MS_ASSERT(curr_bit_count_ <= kCurrentBitCount);
   int64_t right = curr_chunk_ >> (kCurrentBitCount - curr_bit_count_);
   int64_t res = right & ((1 << bit_count) - 1);
-  curr_bit_count_ -= bit_count;
+  curr_bit_count_ -= static_cast<int8_t>(bit_count);
   if (curr_bit_count_ > 0) {
     // most likely branch
     return res;
@@ -75,18 +75,18 @@ int64_t FSEBitStream::Pop(uint8_t bit_count) {
     return res;
   }
   // sad path :(
-  curr_bit_count_ += bit_count;
+  curr_bit_count_ += static_cast<int8_t>(bit_count);
   curr_chunk_ = chunks_[curr_chunk_index_--];
-  right |= (curr_chunk_ & ((1 << (bit_count - curr_bit_count_)) - 1)) << curr_bit_count_;
-  curr_bit_count_ = kCurrentBitCount - (bit_count - curr_bit_count_);
+  right |= (curr_chunk_ & ((1 << (static_cast<int8_t>(bit_count) - curr_bit_count_)) - 1)) << curr_bit_count_;
+  curr_bit_count_ = kCurrentBitCount - (static_cast<int8_t>(bit_count) - curr_bit_count_);
   return right;
 }
 
 void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
-  curr_bit_count_ += bit_count;
+  curr_bit_count_ += static_cast<int8_t>(bit_count);
   if (curr_bit_count_ <= kCurrentBitCount) {
     // happy path, no split
-    curr_chunk_ = (curr_chunk_ << bit_count) | (state & ((1 << bit_count) - 1));
+    curr_chunk_ = (curr_chunk_ << bit_count) | (static_cast<size_t>(state) & ((1 << bit_count) - 1));
     if (curr_bit_count_ == kCurrentBitCount) {
       // flush (rare)
       chunks_[++curr_chunk_index_] = curr_chunk_;
@@ -97,10 +97,10 @@ void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
     // split, rare
     int left_bits = curr_bit_count_ - kCurrentBitCount;
     int right_bits = bit_count - left_bits;
-    curr_chunk_ = (curr_chunk_ << right_bits) | ((state >> left_bits) & ((1 << right_bits) - 1));
+    curr_chunk_ = (curr_chunk_ << right_bits) | ((static_cast<size_t>(state) >> left_bits) & ((1 << right_bits) - 1));
     // flush left
     chunks_[++curr_chunk_index_] = curr_chunk_;
-    curr_chunk_ = state & ((1 << left_bits) - 1);
+    curr_chunk_ = static_cast<size_t>(state) & ((1 << left_bits) - 1);
     curr_bit_count_ = left_bits;
   }
 }
