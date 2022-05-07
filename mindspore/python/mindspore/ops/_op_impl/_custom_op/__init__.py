@@ -21,6 +21,8 @@ from .batchnorm_fold2_grad_reduce import _batchnorm_fold2_grad_reduce_tbe
 from .batchnorm_fold_grad import _batchnorm_fold_grad_tbe
 from .bessel_i0 import _bessel_i0_tbe
 from .bessel_i1 import _bessel_i1_tbe
+from .bessel_j0 import _bessel_j0_tbe
+from .bessel_j1 import _bessel_j1_tbe
 from .bessel_k0 import _bessel_k0_tbe
 from .bessel_k1 import _bessel_k1_tbe
 from .bessel_k0e import _bessel_k0e_tbe
