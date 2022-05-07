@@ -72,7 +72,8 @@ def test_gpu_fp32():
     basic_test(np.float32)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ascend_graph_mode_fp32():
@@ -85,7 +86,8 @@ def test_ascend_graph_mode_fp32():
     basic_test(np.float32)
 
 
-@pytest.mark.level2
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_ascend_pynative_mode_fp32():

@@ -252,7 +252,37 @@ std::string CallbackImplWithInferShape::GetOutputFormat(const AnfNodePtr &node, 
 
 void CallbackImplWithInferShape::SetBasicNodeKernelInfo(const AnfNodePtr &node,
                                                         const std::vector<inner::NodeBase> &outputs_info) {
-  return CallbackImpl::SetEmptyKernelInfo(node);
+  node->set_kernel_info(std::make_shared<device::KernelInfo>());
+  if (node->cast<CNodePtr>() != nullptr) return;
+  std::vector<std::string> output_formats;
+  std::vector<TypeId> output_types;
+  AbstractBasePtrList abs_list;
+  bool has_fake_abstract = false;
+  for (size_t i = 0; i < outputs_info.size(); ++i) {
+    output_formats.push_back(outputs_info[i].format);
+    output_types.push_back(outputs_info[i].type);
+    ShapeVector abs_shape;
+    if (outputs_info[i].format != kOpFormat_DEFAULT) {
+      abs_shape = GetFakeAbstractShape(outputs_info[i].shape, outputs_info[i].format);
+      has_fake_abstract = true;
+    } else {
+      abs_shape = outputs_info[i].shape;
+    }
+    auto abs_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(outputs_info[i].type), abs_shape);
+    abs_list.push_back(abs_tensor);
+  }
+  if (has_fake_abstract) {
+    if (abs_list.size() == 1) {
+      node->set_abstract(abs_list[0]);
+    } else {
+      node->set_abstract(std::make_shared<abstract::AbstractTuple>(abs_list));
+    }
+  }
+
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
+  info_builder.SetOutputsFormat(output_formats);
+  info_builder.SetOutputsDeviceType(output_types);
+  AnfAlgo::SetSelectKernelBuildInfo(info_builder.Build(), node.get());
 }
 
 std::string CallbackImplWithInferShape::GetProcessor(const AnfNodePtr &node) {
