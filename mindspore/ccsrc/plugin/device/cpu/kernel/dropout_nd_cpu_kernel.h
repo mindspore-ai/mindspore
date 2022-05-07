@@ -42,14 +42,12 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; }
-
-  void ResetResource() noexcept;
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  void ResetResource() noexcept;
+
   bool CheckDropOutNdShape();
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,

@@ -16,10 +16,11 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT_ND_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT_ND_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
 CUDA_LIB_EXPORT void DropoutNDForward(const T *input, bool *mask, T *output, float *rand_f, const size_t num_count,
-                                      const float keep_prob, const size_t num_per_chan, cudaStream_t cuda_stream);
+                                      const float keep_prob, const size_t num_per_chan, const uint32_t &device_id,
+                                      cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT3D_IMPL_CUH_
