@@ -7065,31 +7065,10 @@ class TensorScatterDiv(_TensorScatterOp):
     """
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
-    index, the result of the update will be to divided these values respectively. This operation is almost
-    equivalent to using ScatterNdDiv, except that the updates are applied on output `Tensor`
-    instead of input `Parameter`.
+    index, the result of the update will be to divided these values respectively. Except that
+    the updates are applied on output `Tensor` instead of input `Parameter`.
 
-    The last axis of `indices` is the depth of each index vectors. For each index vector,
-    there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
-
-    Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-          The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+    Refer to :func:`mindspore.ops.tensor_scatter_div` for more detail.
 
     Supported Platforms:
         ``GPU`` ``CPU``
