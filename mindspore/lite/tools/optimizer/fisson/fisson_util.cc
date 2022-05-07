@@ -214,6 +214,7 @@ api::SharedPtr<ops::Conv2DFusion> CopyConvPrim(const api::SharedPtr<ops::Conv2DF
 bool UpdateSplitInfo(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &conv_nodes, SplitInfo *split_info) {
   MS_CHECK_TRUE_MSG(func_graph != nullptr, false, "input FuncGraphPtr is nullptr");
   MS_CHECK_TRUE_MSG(split_info != nullptr, false, "input SplitInfo is nullptr");
+  MS_CHECK_TRUE_MSG(conv_nodes.size() >= 1, false, "conv_nodes is empty");
   if (split_info->axis != CuttingStragedy::CUT_H) {
     return false;
   }
@@ -416,6 +417,7 @@ bool CreateOutputsOfSplitWithOverlap(const FuncGraphPtr &func_graph, const AnfNo
 
 bool UpdateRatioWithPadStride(int64_t *ratio, size_t ratio_len, size_t split_size, int split_dim_size) {
   MS_CHECK_TRUE_MSG(ratio != nullptr, false, "input ratio is nullptr");
+  MS_CHECK_TRUE_MSG(split_size > 0, false, "split_size is zero");
   int64_t total_block_count = 0;
   for (size_t i = 0; i < split_size; i++) {
     total_block_count += ratio[i];

@@ -61,8 +61,11 @@ class TfliteNodeParser {
       return RET_NULL_PTR;
     }
 
-    int32_t count = 1;
-    std::for_each(tensor->shape.begin(), tensor->shape.end(), [&](int32_t sha) { count *= sha; });
+    size_t count = 1;
+    std::for_each(tensor->shape.begin(), tensor->shape.end(), [&](int32_t sha) {
+      MS_ASSERT(sha >= 0);
+      count *= static_cast<size_t>(sha);
+    });
     CHECK_LESS_RETURN(tflite_model_buffer.size(), static_cast<size_t>(tensor->buffer + 1));
     auto &buf_data = tflite_model_buffer[tensor->buffer];
     if (buf_data == nullptr) {
@@ -77,8 +80,8 @@ class TfliteNodeParser {
     switch (tensor->type) {
       case tflite::TensorType_UINT8: {
         CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(uint8_t));
-        for (int i = 0; i < count; i++) {
-          uint8_t data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr)));
+        for (size_t i = 0; i < count; i++) {
+          auto data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(uint8_t);
         }
@@ -86,8 +89,8 @@ class TfliteNodeParser {
       }
       case tflite::TensorType_INT8: {
         CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int8_t));
-        for (int i = 0; i < count; i++) {
-          int8_t data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr)));
+        for (size_t i = 0; i < count; i++) {
+          auto data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int8_t);
         }
@@ -95,8 +98,8 @@ class TfliteNodeParser {
       }
       case tflite::TensorType_INT16: {
         CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int16_t));
-        for (int i = 0; i < count; i++) {
-          int16_t data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr)));
+        for (size_t i = 0; i < count; i++) {
+          auto data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int16_t);
         }
@@ -104,8 +107,8 @@ class TfliteNodeParser {
       }
       case tflite::TensorType_INT32: {
         CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int32_t));
-        for (int i = 0; i < count; i++) {
-          int32_t data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
+        for (size_t i = 0; i < count; i++) {
+          auto data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int32_t);
         }
@@ -113,8 +116,8 @@ class TfliteNodeParser {
       }
       case tflite::TensorType_INT64: {
         CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(int64_t));
-        for (int i = 0; i < count; i++) {
-          int64_t data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr)));
+        for (size_t i = 0; i < count; i++) {
+          auto data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(int64_t);
         }
@@ -122,8 +125,8 @@ class TfliteNodeParser {
       }
       case tflite::TensorType_FLOAT32: {
         CHECK_LESS_RETURN(buf_data->data.size(), count * sizeof(float));
-        for (int i = 0; i < count; i++) {
-          float data = *(static_cast<float *>(static_cast<void *>(data_ptr)));
+        for (size_t i = 0; i < count; i++) {
+          auto data = *(static_cast<float *>(static_cast<void *>(data_ptr)));
           attr_data->emplace_back(static_cast<T>(data));
           data_ptr += sizeof(float);
         }
@@ -150,8 +153,11 @@ class TfliteNodeParser {
       return RET_NULL_PTR;
     }
 
-    int32_t count = 1;
-    std::for_each(tensor->shape.begin(), tensor->shape.end(), [&](int32_t sha) { count *= sha; });
+    size_t count = 1;
+    std::for_each(tensor->shape.begin(), tensor->shape.end(), [&](int32_t sha) {
+      MS_ASSERT(sha >= 0);
+      count *= static_cast<size_t>(sha);
+    });
     CHECK_LESS_RETURN(tflite_model_buffer.size(), static_cast<size_t>(tensor->buffer + 1));
     auto &buf_data = tflite_model_buffer[tensor->buffer];
     if (buf_data == nullptr) {
@@ -167,8 +173,8 @@ class TfliteNodeParser {
     (*vec).resize(count / 2, std::vector<T>(2));
     switch (tensor->type) {
       case tflite::TensorType_UINT8: {
-        for (int i = 0; i < count / 2; i++) {
-          uint8_t data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(uint8_t))));
+        for (size_t i = 0; i < count / 2; i++) {
+          auto data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(uint8_t))));
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<uint8_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(uint8_t))));
           (*vec)[i][1] = static_cast<T>(data);
@@ -177,8 +183,8 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT8: {
-        for (int i = 0; i < count / 2; i++) {
-          uint8_t data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int8_t))));
+        for (size_t i = 0; i < count / 2; i++) {
+          auto data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int8_t))));
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int8_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int8_t))));
           (*vec)[i][1] = static_cast<T>(data);
@@ -186,8 +192,8 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT16: {
-        for (int i = 0; i < count / 2; i++) {
-          uint8_t data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int16_t))));
+        for (size_t i = 0; i < count / 2; i++) {
+          auto data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int16_t))));
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int16_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int16_t))));
           (*vec)[i][1] = static_cast<T>(data);
@@ -195,8 +201,8 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT32: {
-        for (int i = 0; i < count / 2; i++) {
-          uint8_t data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int32_t))));
+        for (size_t i = 0; i < count / 2; i++) {
+          auto data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int32_t))));
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int32_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int32_t))));
           (*vec)[i][1] = static_cast<T>(data);
@@ -204,8 +210,8 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_INT64: {
-        for (int i = 0; i < count / 2; i++) {
-          uint8_t data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int64_t))));
+        for (size_t i = 0; i < count / 2; i++) {
+          auto data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr + 2 * i * sizeof(int64_t))));
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<int64_t *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(int64_t))));
           (*vec)[i][1] = static_cast<T>(data);
@@ -213,8 +219,8 @@ class TfliteNodeParser {
         break;
       }
       case tflite::TensorType_FLOAT32: {
-        for (int i = 0; i < count / 2; i++) {
-          uint8_t data = *(static_cast<float *>(static_cast<void *>(data_ptr + 2 * i * sizeof(float))));
+        for (size_t i = 0; i < count / 2; i++) {
+          auto data = *(static_cast<float *>(static_cast<void *>(data_ptr + 2 * i * sizeof(float))));
           (*vec)[i][0] = static_cast<T>(data);
           data = *(static_cast<float *>(static_cast<void *>(data_ptr + (2 * i + 1) * sizeof(float))));
           (*vec)[i][1] = static_cast<T>(data);
