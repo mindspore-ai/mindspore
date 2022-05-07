@@ -29,6 +29,16 @@ class MIND_API LpNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LpNorm);
   LpNorm() : BaseOperator(kNameLpNorm) { InitIOName({"input"}, {"output"}); }
+
+  void Init(const int64_t p = 2, const float epsilon = 1e-12);
+
+  void set_p(const int64_t p);
+
+  void set_epsilon(const float epsilon);
+
+  int64_t get_p() const;
+
+  float get_epsilon() const;
 };
 
 abstract::AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
