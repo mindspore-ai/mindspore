@@ -83,9 +83,13 @@ void SSLHTTP::InitSSL() {
   X509 *cert = nullptr;
   STACK_OF(X509) *ca_stack = nullptr;
   BIO *bio = BIO_new_file(server_cert.c_str(), "rb");
-  MS_EXCEPTION_IF_NULL(bio);
+  if (bio == nullptr) {
+    MS_LOG(EXCEPTION) << "Read server cert file failed.";
+  }
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
-  MS_EXCEPTION_IF_NULL(p12);
+  if (p12 == nullptr) {
+    MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
+  }
   BIO_free_all(bio);
   if (!PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack)) {
     MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
