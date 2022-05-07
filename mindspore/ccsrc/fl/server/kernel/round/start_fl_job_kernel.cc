@@ -115,6 +115,9 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
   }
 
   DeviceMeta device_meta = CreateDeviceMetadata(start_fl_job_req);
+  uint64_t start_fl_job_time =
+    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  device_meta.set_now_time(start_fl_job_time);
   result_code = ReadyForStartFLJob(fbb, device_meta);
   if (result_code != ResultCode::kSuccess) {
     SendResponseMsg(message, fbb->GetBufferPointer(), fbb->GetSize());

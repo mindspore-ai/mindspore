@@ -18,21 +18,23 @@
 #define MINDSPORE_CCSRC_FL_SERVER_KERNEL_UPDATE_MODEL_KERNEL_H_
 
 #include <map>
-#include <unordered_map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
+#include <utility>
+
 #include "fl/server/common.h"
+#include "fl/server/executor.h"
 #include "fl/server/kernel/round/round_kernel.h"
 #include "fl/server/kernel/round/round_kernel_factory.h"
-#include "fl/server/executor.h"
 #include "fl/server/model_store.h"
 #ifdef ENABLE_ARMOUR
 #include "fl/armour/cipher/cipher_meta_storage.h"
 #endif
 #include "fl/compression/decode_executor.h"
-#include "schema/fl_job_generated.h"
 #include "schema/cipher_generated.h"
+#include "schema/fl_job_generated.h"
 
 namespace mindspore {
 namespace fl {
@@ -54,6 +56,12 @@ class UpdateModelKernel : public RoundKernel {
 
   // In some cases, the last updateModel message means this server iteration is finished.
   void OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &message) override;
+
+  // Get participation_time_and_num_
+  const std::vector<std::pair<uint64_t, uint32_t>> &GetCompletePeriodRecord();
+
+  // Reset participation_time_and_num_
+  void ResetParticipationTimeAndNum();
 
  private:
   ResultCode ReachThresholdForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
@@ -82,6 +90,12 @@ class UpdateModelKernel : public RoundKernel {
                                const std::shared_ptr<FBBuilder> &fbb, DeviceMeta *device_meta);
   bool VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req);
 
+  // Record complete update model number according to participation_time_level
+  void RecordCompletePeriod(const DeviceMeta &device_meta);
+
+  // Check and transform participation time level parament
+  void CheckAndTransPara(const std::string &participation_time_level);
+
   // The executor is for updating the model for updateModel request.
   Executor *executor_{nullptr};
 
@@ -95,6 +109,12 @@ class UpdateModelKernel : public RoundKernel {
 
   // Check upload mode
   bool IsCompress(const schema::RequestUpdateModel *update_model_req);
+
+  // From StartFlJob to UpdateModel complete time and number
+  std::vector<std::pair<uint64_t, uint32_t>> participation_time_and_num_{};
+
+  // The mutex for participation_time_and_num_
+  std::mutex participation_time_and_num_mtx_;
 };
 }  // namespace kernel
 }  // namespace server
