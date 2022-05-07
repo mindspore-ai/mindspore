@@ -388,7 +388,7 @@ def test_func_with_yield_manifest_dataset_01():
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
     except RuntimeError as e:
-        assert "Can not pickle <class 'generator'> object, " in str(e)
+        assert "can't pickle generator objects" in str(e)
 
 
 def test_func_mixed_with_ops():
