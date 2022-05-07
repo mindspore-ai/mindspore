@@ -62,13 +62,13 @@ mindspore.dataset.CelebADataset
 
     **关于CelebA数据集：**
 
-    CelebFaces Attributes Dataset（CelebA）数据集是一个大规模的人脸属性数据集，拥有超过20万张名人图像，每个图像都有40个属性标注。此数据集包含了大量不同姿态、各种背景的人脸图像，种类丰富、数量庞大、标注充分。数据集总体包含：
+    CelebFaces Attributes Dataset（CelebA）数据集是一个大规模数据集，拥有超过20万张名人图像，每个图像都有40个属性标注。此数据集包含了大量不同姿态、各种背景的图像，种类丰富、数量庞大、标注充分。数据集总体包含：
 
     - 10177个不同的身份
-    - 202599张人脸图像
+    - 202599张图像
     - 每张图像拥有5个五官位置标注，40个属性标签
 
-    此数据集可用于各种计算机视觉任务的训练和测试，包括人脸识别、人脸检测、五官定位、人脸编辑和合成等。
+    此数据集可用于各种计算机视觉任务的训练和测试，包括属性识别、检测和五官定位等。
 
     原始CelebA数据集结构：
 
@@ -108,7 +108,7 @@ mindspore.dataset.CelebADataset
 
         @article{DBLP:journals/corr/LiuLWT14,
         author        = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
-        title         = {Deep Learning Face Attributes in the Wild},
+        title         = {Deep Learning Attributes in the Wild},
         journal       = {CoRR},
         volume        = {abs/1411.7766},
         year          = {2014},

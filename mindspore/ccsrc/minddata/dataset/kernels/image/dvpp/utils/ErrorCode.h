@@ -133,10 +133,10 @@ enum {
   // define the idrecognition web error code
   APP_ERROR_FACE_WEB_USE_BASE = 10000,
   APP_ERROR_FACE_WEB_USE_SYSTEM_ERROR = APP_ERROR_FACE_WEB_USE_BASE + 1,  // Web: system error
-  APP_ERROR_FACE_WEB_USE_MUL_FACE = APP_ERROR_FACE_WEB_USE_BASE + 2,      // Web: multiple faces
+  APP_ERROR_FACE_WEB_USE_MUL_FACE = APP_ERROR_FACE_WEB_USE_BASE + 2,      // Web: multiple cheeks
   APP_ERROR_FACE_WEB_USE_REPEAT_REG = APP_ERROR_FACE_WEB_USE_BASE + 3,    // Web: repeat registration
   APP_ERROR_FACE_WEB_USE_PART_SUCCESS = APP_ERROR_FACE_WEB_USE_BASE + 4,  // Web: partial search succeeded
-  APP_ERROR_FACE_WEB_USE_NO_FACE = APP_ERROR_FACE_WEB_USE_BASE + 5,       // Web: no face detected
+  APP_ERROR_FACE_WEB_USE_NO_FACE = APP_ERROR_FACE_WEB_USE_BASE + 5,       // Web: no cheek detected
   APP_ERR_QUEUE_END,  // Not an error code, define the range of blocking queue
   // error code
 };
