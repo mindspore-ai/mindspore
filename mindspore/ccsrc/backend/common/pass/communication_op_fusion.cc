@@ -195,7 +195,7 @@ void CommunicationOpFusion::GetAllReduceSplitSegment(const std::vector<CNodePtr>
                                                      std::vector<size_t> *segment_index) const {
   MS_EXCEPTION_IF_NULL(segment_index);
   if (threshold <= 0) {
-    MS_LOG(WARNING) << "Split threshold is " << threshold << ". AllReduce nodes will take default fusion strategy.";
+    MS_LOG(INFO) << "Split threshold is " << threshold << ". AllReduce nodes will take default fusion strategy.";
     return;
   }
   threshold *= kDefaultThresholdMb2Byte;
