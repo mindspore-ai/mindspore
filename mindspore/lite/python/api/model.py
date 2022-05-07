@@ -250,7 +250,14 @@ class RunnerConfig:
             raise TypeError("context must be Context, but got {}.".format(type(context)))
         if not isinstance(workers_num, int):
             raise TypeError("workers_num must be int, but got {}.".format(type(workers_num)))
-        self._runner_config = _c_lite_wrapper.RunnerConfigBind(context._context, workers_num)
+        self._runner_config = _c_lite_wrapper.RunnerConfigBind()
+        self._runner_config.set_workers_num(workers_num)
+        self._runner_config.set_context(context)
+
+    def __str__(self):
+        res = f"workers num: {self._runner_config.get_workers_num()}, " \
+              f"context: {self._runner_config.get_context_info()}."
+        return res
 
 
 class ModelParallelRunner:

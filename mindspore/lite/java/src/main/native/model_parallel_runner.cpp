@@ -36,11 +36,14 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     }
   } else {
     auto *c_runner_config = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
-    auto origin_context = c_runner_config->context;
+    auto origin_context = c_runner_config->GetContext();
     if (origin_context == nullptr) {
-      MS_LOGE("context is nullptr.");
-      delete runner;
-      return (jlong) nullptr;
+      auto ret = runner->Init(model_path_str);
+      if (ret != mindspore::kSuccess) {
+        delete runner;
+        return (jlong) nullptr;
+      }
+      return (jlong)runner;
     }
     auto copy_context = std::make_shared<mindspore::Context>();
     if (copy_context == nullptr) {
@@ -85,8 +88,8 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
       MS_LOGE("Make RunnerConfig failed");
       return (jlong) nullptr;
     }
-    runner_config->context = copy_context;
-    runner_config->workers_num = c_runner_config->workers_num;
+    runner_config->SetContext(copy_context);
+    runner_config->SetWorkersNum(c_runner_config->GetWorkersNum());
     auto ret = runner->Init(model_path_str, runner_config);
     if (ret != mindspore::kSuccess) {
       delete runner;

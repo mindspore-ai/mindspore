@@ -139,7 +139,7 @@ Status ModelPool::InitDefaultContext(const std::shared_ptr<mindspore::Context> &
 }
 
 std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
-  auto context = runner_config->context;
+  auto context = runner_config->GetContext();
   if (context == nullptr) {
     MS_LOG(ERROR) << "user set config context nullptr.";
     return nullptr;
@@ -169,18 +169,18 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
         MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
         return nullptr;
       }
-      if (runner_config->workers_num == 0) {
+      if (runner_config->GetWorkersNum() == 0) {
         // the user does not define the number of models, the default optimal number of models is used
         auto status = SetDefaultOptimalModelNum(context);
         if (status != kSuccess) {
           MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
           return nullptr;
         }
-      } else if (runner_config->workers_num > 0) {
+      } else if (runner_config->GetWorkersNum() > 0) {
         // User defined number of models
-        workers_num_ = runner_config->workers_num;
+        workers_num_ = runner_config->GetWorkersNum();
       } else {
-        MS_LOG(ERROR) << "user set worker num" << runner_config->workers_num << " < 0";
+        MS_LOG(ERROR) << "user set worker num" << runner_config->GetWorkersNum() << " < 0";
         return nullptr;
       }
     }
@@ -194,9 +194,9 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
     MS_LOG(ERROR) << "New context failed in ModelPool.";
     return nullptr;
   }
-  if (runner_config != nullptr) {
+  if (runner_config != nullptr && runner_config->GetContext() != nullptr) {
     use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available() &&
-                          runner_config->context->GetThreadAffinityMode() == lite::HIGHER_CPU;
+                          runner_config->GetContext()->GetThreadAffinityMode() == lite::HIGHER_CPU;
     numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
     context = InitUserDefineContext(runner_config);
   } else {

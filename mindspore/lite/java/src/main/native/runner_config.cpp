@@ -18,8 +18,18 @@
 #include "common/ms_log.h"
 #include "include/api/model_parallel_runner.h"
 
-extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_createRunnerConfig(JNIEnv *env, jobject thiz,
-                                                                                             jlong context_ptr) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_createRunnerConfig(JNIEnv *env,
+                                                                                             jobject thiz) {
+  auto runner_config = new (std::nothrow) mindspore::RunnerConfig();
+  if (runner_config == nullptr) {
+    MS_LOGE("new RunnerConfig fail!");
+    return (jlong) nullptr;
+  }
+  return (jlong)runner_config;
+}
+
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_mindspore_config_RunnerConfig_createRunnerConfigWithContext(JNIEnv *env, jobject thiz, jlong context_ptr) {
   auto runner_config = new (std::nothrow) mindspore::RunnerConfig();
   if (runner_config == nullptr) {
     MS_LOGE("new RunnerConfig fail!");
@@ -38,7 +48,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_config_RunnerConfig_create
     return (jlong) nullptr;
   }
   context.reset(c_context_ptr);
-  runner_config->context = context;
+  runner_config->SetContext(context);
   return (jlong)runner_config;
 }
 
@@ -50,5 +60,16 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setWork
     MS_LOGE("runner config pointer from java is nullptr");
     return;
   }
-  pointer->workers_num = workers_num;
+  pointer->SetWorkersNum(workers_num);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_free(JNIEnv *env, jobject thiz,
+                                                                              jlong runner_config_ptr) {
+  auto *pointer = reinterpret_cast<void *>(runner_config_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Model pointer from java is nullptr");
+    return;
+  }
+  auto *runner_config = static_cast<mindspore::RunnerConfig *>(pointer);
+  delete (runner_config);
 }
