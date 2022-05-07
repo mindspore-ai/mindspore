@@ -256,7 +256,7 @@ int Scheduler::SchedulePreProcess() {
   this->graph_output_node_indexes_ = GetGraphOutputNodes(src_model_);
 
   if (src_model_->model_type_ != ModelType_MSLite) {
-    // TODO(liulili): call abstract model infer interface
+    // call abstract model infer interface
     *is_infershape_ = RET_OK;
   } else {
     *is_infershape_ = InferSubGraphShape(kMainSubGraphIndex);

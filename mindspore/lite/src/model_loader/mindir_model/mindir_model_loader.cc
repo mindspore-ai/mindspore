@@ -119,23 +119,6 @@ bool MindirModelLoader::ConvertPrimitives(const mind_ir::ModelProto &model_proto
                         "MindirModelLoader: convert primitives failed, parse prim: "
                           << prim->ToString() << " attributes error: " << attr_proto.DebugString());
       (void)prim->AddAttr(attr_proto.name(), value_ptr);
-      // TODO(lliulili): solve follow special case
-      /*
-      const std::string prim_name = prim->name();
-      if (!IsLite()) {
-          CHeckAndConvertUtils::ConvertAttrValueInLoad(prim_name, attr_name, &value);
-      }
-      if (prim_name == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
-          auto str_dtype = GetValue<std::string>(value);
-          if (str_dtype == "int32") {
-              int64_t index = 3;
-              (void)prim->AddAttr(attr_name, MakeValue<int64_t>(index));
-              break;
-          }
-          MS_EXCEPTION(NotSupportError) << "The primitive[HistogramFixedWidth] not supported. only support
-      attribute[dtype] is 'int32', but got" << value->ToString();
-      }
-      */
     }
     static auto operator_fns = ops::OperatorRegister::GetInstance().GetOperatorMap();
     auto op_it = operator_fns.find(op_type);

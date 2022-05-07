@@ -40,7 +40,7 @@ int InnerKernel::Execute() {
 }
 
 int InnerKernel::ReSize() {
-  // TODO(liulili): use InitOp instead
+  // use InitOp instead
   auto inputs = LiteTensorToKernelTensorPtrVec(this->in_tensors_);
   auto outputs = LiteTensorToKernelTensorPtrVec(this->out_tensors_);
 
