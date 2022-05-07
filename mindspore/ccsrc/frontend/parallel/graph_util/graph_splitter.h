@@ -29,7 +29,7 @@
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 #include "distributed/constants.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"

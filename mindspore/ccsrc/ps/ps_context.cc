@@ -19,7 +19,7 @@
 #include "kernel/kernel.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "distributed/cluster/cluster_context.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
@@ -95,7 +95,7 @@ void PSContext::Reset() {
   is_worker_ = false;
   is_pserver_ = false;
   is_sched_ = false;
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps_cache_instance.Finalize();
     set_cache_enable(false);
@@ -160,51 +160,51 @@ uint32_t PSContext::ps_rank_id() const { return rank_id_; }
 
 void PSContext::InsertHashTableSize(const std::string &param_name, size_t cache_vocab_size, size_t embedding_size,
                                     size_t vocab_size) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   ps_cache_instance.InsertHashTableSize(param_name, cache_vocab_size, embedding_size, vocab_size);
 #endif
 }
 
 void PSContext::ReInsertHashTableSize(const std::string &new_param_name, const std::string &cur_param_name,
                                       size_t cache_vocab_size, size_t embedding_size) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   ps_cache_instance.ReInsertHashTableSize(new_param_name, cur_param_name, cache_vocab_size, embedding_size);
 #endif
 }
 
 void PSContext::InsertWeightInitInfo(const std::string &param_name, size_t global_seed, size_t op_seed) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   ps_cache_instance.InsertWeightInitInfo(param_name, global_seed, op_seed);
 #endif
 }
 
 void PSContext::InsertAccumuInitInfo(const std::string &param_name, float init_val) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   ps_cache_instance.InsertAccumuInitInfo(param_name, init_val);
 #endif
 }
 
 void PSContext::CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   ps_cache_instance.CloneHashTable(dest_param_name, src_param_name);
 #endif
 }
 
 void PSContext::set_cache_enable(bool cache_enable) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   PsDataPrefetch::GetInstance().set_cache_enable(cache_enable);
 #endif
 }
 
 bool PSContext::cache_enable() const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32)) && !defined(__APPLE__)
   return PsDataPrefetch::GetInstance().cache_enable();
 #endif
   return false;
 }
 
 void PSContext::set_rank_id(uint32_t rank_id) const {
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   ps_cache_instance.set_rank_id(rank_id);
 #endif
 }

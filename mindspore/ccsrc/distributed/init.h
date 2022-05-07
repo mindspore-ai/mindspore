@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include "distributed/collective/collective_manager.h"
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
 #include "distributed/cluster/cluster_context.h"
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
