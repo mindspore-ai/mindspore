@@ -43,6 +43,15 @@ public class RunnerConfig {
         this.runnerConfigPtr = 0L;
     }
 
+    /**
+     * Init RunnerConfig
+     *
+     * @return init status.
+     */
+    public boolean init() {
+        this.runnerConfigPtr = createRunnerConfig();
+        return this.runnerConfigPtr != 0L;
+    }
 
     /**
      * Init RunnerConfig
@@ -54,7 +63,7 @@ public class RunnerConfig {
         if (msContext == null) {
             return false;
         }
-        this.runnerConfigPtr = createRunnerConfig(msContext.getMSContextPtr());
+        this.runnerConfigPtr = createRunnerConfigWithContext(msContext.getMSContextPtr());
         return this.runnerConfigPtr != 0L;
     }
 
@@ -76,8 +85,19 @@ public class RunnerConfig {
         return runnerConfigPtr;
     }
 
-    private native long createRunnerConfig(long msContextPtr);
+    /**
+     * Fre RunnerConfig pointer.
+     */
+    public void free() {
+        this.free(runnerConfigPtr);
+        runnerConfigPtr = 0;
+    }
+
+    private native long createRunnerConfig();
+
+    private native long createRunnerConfigWithContext(long msContextPtr);
 
     private native void setWorkersNum(long runnerConfigPtr, int workersNum);
 
+    private native boolean free(long runnerConfigPtr);
 }

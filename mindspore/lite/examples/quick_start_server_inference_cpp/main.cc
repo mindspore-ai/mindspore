@@ -156,8 +156,8 @@ int QuickStart(int argc, const char **argv) {
     std::cerr << "runner config is nullptr." << std::endl;
     return -1;
   }
-  runner_config->context = context;
-  runner_config->workers_num = kNumWorkers;
+  runner_config->SetContext(context);
+  runner_config->SetWorkersNum(kNumWorkers);
   // Build model
   auto build_ret = model_runner->Init(model_path, runner_config);
   if (build_ret != mindspore::kSuccess) {
