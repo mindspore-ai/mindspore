@@ -1539,10 +1539,10 @@ void InitPipeline() {
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  (void)context::InitGe(ms_context);
   if (!context::OpenTsd(ms_context)) {
     MS_LOG(EXCEPTION) << "Open tsd failed";
   }
-  (void)context::InitGe(ms_context);
 }
 
 void FinalizeBackend() {

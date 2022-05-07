@@ -51,6 +51,8 @@ class COMMON_EXPORT GraphRunner {
   ~GraphRunner() { sess_ = nullptr; }
   Status RunGraph(const RunOptions &options, const std::vector<MeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs);
   Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
+  Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs,
+                  const std::vector<TypeId> &me_types);
   static std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);
 
  private:

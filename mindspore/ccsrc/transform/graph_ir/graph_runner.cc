@@ -29,6 +29,7 @@
 #include "include/common/utils/callbacks.h"
 #ifdef ENABLE_D
 #include "include/common/utils/callbacks_ge.h"
+#include "common/ge_inner_error_codes.h"
 #endif
 #include "utils/ms_context.h"
 
@@ -165,6 +166,98 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
 
   (void)std::transform(ge_outputs.begin(), ge_outputs.end(), std::back_inserter(*outputs),
                        [](const GeTensor &ge_tensor) { return std::make_shared<GeTensor>(ge_tensor); });
+
+  return Status::SUCCESS;
+}
+
+Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
+                             std::vector<MeTensorPtr> *outputs, const std::vector<TypeId> &me_types) {
+  std::string name = options.name;
+  if (name.empty()) {
+    MS_LOG(ERROR) << "The graph name is null";
+    return Status::INVALID_ARGUMENT;
+  }
+
+  DfGraphWrapperPtr wrap_ptr = graph_manager_.GetGraphByName(name);
+  if (wrap_ptr == nullptr) {
+    MS_LOG(ERROR) << "Get graph form DfGraphManager failed!";
+    return Status::NOT_FOUND;
+  }
+
+  if (wrap_ptr->graph_ptr_ == nullptr) {
+    MS_LOG(WARNING) << "The graph is null";
+    return Status::NOT_FOUND;
+  }
+
+  // call ge::RunGraphAsync() to exec a graph;
+  std::vector<GeTensor> ge_inputs;
+
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(ge_inputs),
+                       [](const GeTensorPtr &i) { return *i; });
+
+  MS_LOG(INFO) << "Run the graph in GE with " << ge_inputs.size() << " inputs";
+
+  struct timeval start_time, end_time;
+  (void)gettimeofday(&start_time, nullptr);
+
+#ifdef ENABLE_D
+  std::mutex mutex;
+  std::condition_variable condition;
+  bool is_finished = false;
+  bool end_of_sequence = false;
+  std::unique_lock<std::mutex> lock(mutex);
+  auto call_back = [=, &is_finished, &end_of_sequence, &condition](ge::Status ge_status,
+                                                                   std::vector<ge::Tensor> &ge_outputs) {
+    if (ge_status == Status::SUCCESS) {
+      if (me_types.size() != ge_outputs.size()) {
+        MS_LOG(EXCEPTION) << "Convert output ge tensor to me tensor failed.";
+      }
+      for (size_t i = 0; i < ge_outputs.size(); ++i) {
+        std::shared_ptr<ge::Tensor> ge_tensor_ptr = std::make_shared<ge::Tensor>(ge_outputs[i]);
+        auto me_tensor = TransformUtil::ConvertGeTensor(ge_tensor_ptr, me_types[i]);
+        if (me_tensor != nullptr) {
+          outputs->emplace_back(me_tensor);
+        }
+      }
+      is_finished = true;
+    } else if (ge_status == ge::END_OF_SEQUENCE) {
+      MS_LOG(WARNING) << "RunAsync out of range: End of sequence.";
+      end_of_sequence = true;
+    } else {
+      MS_LOG(ERROR) << "RunAsync failed.";
+    }
+    condition.notify_all();
+    return;
+  };
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    if (sess_ == nullptr) {
+      MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
+      return Status::FAILED;
+    }
+    ge::Status ret = sess_->RunGraphAsync(static_cast<uint32_t>(wrap_ptr->id_), ge_inputs, call_back);
+    if (ret != ge::GRAPH_SUCCESS) {
+      MS_LOG(ERROR) << "Call GE RunGraphAsync Failed, ret is: " << ret;
+      return Status::FAILED;
+    }
+    if (!is_finished) {
+      condition.wait(lock);
+    }
+    if (end_of_sequence) {
+      throw(std::runtime_error("End of sequence."));
+    }
+    if (!is_finished) {
+      MS_LOG(ERROR) << "Call GE RunGraphAsync failed.";
+      return Status::FAILED;
+    }
+  }
+#endif
+  (void)gettimeofday(&end_time, nullptr);
+  const uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost = kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec - start_time.tv_sec);
+  cost += static_cast<uint64_t>(end_time.tv_usec - start_time.tv_usec);
+  MS_LOG(INFO) << "Call GE RunGraph Success in " << cost << " us, the GE outputs num is: " << outputs->size();
 
   return Status::SUCCESS;
 }

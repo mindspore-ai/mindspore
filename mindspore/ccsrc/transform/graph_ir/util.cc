@@ -384,6 +384,18 @@ MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor) {
   return GenerateMeTensor(ge_tensor, me_dims, type_id);
 }
 
+MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr &ge_tensor, const TypeId &me_type) {
+  MS_EXCEPTION_IF_NULL(ge_tensor);
+  GeShape ge_shape = ge_tensor->GetTensorDesc().GetShape();
+  vector<int64_t> me_dims = ConvertGeShape(ge_shape);
+
+  if (me_type == MeDataType::kTypeUnknown) {
+    MS_LOG(ERROR) << "Unsupported data type: " << static_cast<int>(me_type);
+    return nullptr;
+  }
+  return GenerateMeTensor(ge_tensor, me_dims, me_type);
+}
+
 // if request_dims is empty, use ge tensor's shape,otherwise convert to request shape
 MeTensorPtr TransformUtil::ConvertGeTensor(const GeTensorPtr ge_tensor, const ShapeVector &request_dims) {
   MS_EXCEPTION_IF_NULL(ge_tensor);
