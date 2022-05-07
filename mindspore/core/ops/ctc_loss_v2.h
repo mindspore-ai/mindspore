@@ -38,6 +38,16 @@ class MIND_API CTCLossV2 : public BaseOperator {
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CTCLossV2 for the inputs.
   void Init() const {}
+
+  /// \brief Get blank.
+  ///
+  /// \return blank.
+  int64_t get_blank() const;
+
+  /// \brief Get reduction.
+  ///
+  /// \return reduction.
+  std::string get_reduction() const;
 };
 
 abstract::AbstractBasePtr CTCLossV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

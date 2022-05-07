@@ -344,6 +344,58 @@ class AxisIterator {
   size_t axis_offset_{0};
 };
 
+template <size_t Ndim>
+class NdTensorIterator {
+ public:
+  template <typename... Indexes>
+  NdTensorIterator(int64_t first_dim, Indexes... rest_dims)
+      : dims_{{first_dim, rest_dims...}}, size_{(first_dim * ... * rest_dims)} {
+    static_assert(sizeof...(rest_dims) + 1 == Ndim, "Input dimensions should match Ndim");
+  }
+
+  template <typename... Indexes>
+  int64_t operator()(const Indexes... dims) const {
+    static_assert(sizeof...(dims) == Ndim, "Input dimensions should match Ndim");
+    return CalIndex(0, dims...);
+  }
+
+  template <typename... Indexes>
+  int64_t at(const Indexes... dims) const {
+    static_assert(sizeof...(dims) == Ndim, "Input dimensions should match Ndim");
+    const int64_t index = CalIndex<true>(0, dims...);
+    if (index > size_) {
+      MS_LOG(ERROR) << "Pos " << index << " is larger than array size " << size_;
+    }
+    return index;
+  }
+
+ private:
+  template <bool CheckParam = false, typename... Indexes>
+  int64_t CalIndex(const int64_t sum, const int64_t first_dim, const Indexes... rest_dims) const {
+    constexpr auto n = Ndim - sizeof...(rest_dims);
+    if constexpr (CheckParam) {
+      if (first_dim >= std::get<n - 1>(dims_)) {
+        MS_LOG(ERROR) << "Error on index " << (n - 1) << ", " << first_dim << " should be lower than "
+                      << std::get<n - 1>(dims_);
+      }
+    }
+    return CalIndex<CheckParam>((sum + first_dim) * std::get<n>(dims_), rest_dims...);
+  }
+
+  template <bool CheckParam = false>
+  int64_t CalIndex(const int64_t sum, const int64_t first_dim) const {
+    if constexpr (CheckParam) {
+      if (first_dim >= std::get<Ndim - 1>(dims_)) {
+        MS_LOG(ERROR) << "Error on index " << (Ndim - 1) << ", " << first_dim << " should be lower than "
+                      << std::get<Ndim - 1>(dims_);
+      }
+    }
+    return sum + first_dim;
+  }
+
+  const std::array<int64_t, Ndim> dims_;
+  const int64_t size_;
+};
 int Sign(float x);
 }  // namespace kernel
 }  // namespace mindspore
