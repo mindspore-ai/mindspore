@@ -74,7 +74,7 @@ bool ParseEncryptData(const Byte *encrypt_data, size_t encrypt_len, std::vector<
   }
   int_buf.assign(encrypt_data, encrypt_data + sizeof(int32_t));
   auto iv_len = ByteToInt(int_buf.data(), int_buf.size());
-  if (iv_len <= 0 || iv_len + sizeof(int32_t) + sizeof(int32_t) > encrypt_len) {
+  if (iv_len <= 0 || static_cast<size_t>(iv_len) + sizeof(int32_t) + sizeof(int32_t) > encrypt_len) {
     MS_LOG(ERROR) << "assign len is invalid.";
     return false;
   }
@@ -87,7 +87,8 @@ bool ParseEncryptData(const Byte *encrypt_data, size_t encrypt_len, std::vector<
   }
 
   (*iv).assign(encrypt_data + sizeof(int32_t), encrypt_data + sizeof(int32_t) + iv_len);
-  if (cipher_len <= 0 || sizeof(int32_t) + iv_len + sizeof(int32_t) + cipher_len > encrypt_len) {
+  if (cipher_len <= 0 ||
+      sizeof(int32_t) + static_cast<size_t>(iv_len) + sizeof(int32_t) + static_cast<size_t>(cipher_len) > encrypt_len) {
     MS_LOG(ERROR) << "assign len is invalid.";
     return false;
   }
@@ -300,7 +301,7 @@ std::unique_ptr<Byte[]> Decrypt(const std::string &lib_path, size_t *decrypt_len
       MS_LOG(ERROR) << "The block_size read from the cipher data must be not negative, but got " << block_size;
       return nullptr;
     }
-    if (offset + block_size > data_size) {
+    if (offset + static_cast<size_t>(block_size) > data_size) {
       MS_LOG(ERROR) << "assign len is invalid.";
       return nullptr;
     }

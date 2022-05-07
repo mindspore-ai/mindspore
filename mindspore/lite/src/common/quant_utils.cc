@@ -103,7 +103,7 @@ int CalQuantizationParams(schema::QuantParamT *quant_param, double real_min, dou
 int GetBucketIndex(const std::vector<int> &dims, int preferred_dim, int data_index) {
   int stride = 1;
   int bucket_count = dims[preferred_dim];
-  for (size_t i = preferred_dim + 1; i < dims.size(); i++) {
+  for (size_t i = static_cast<size_t>(preferred_dim + 1); i < dims.size(); i++) {
     stride *= dims[i];
   }
   if (stride == 0 || bucket_count == 0) {
@@ -134,8 +134,11 @@ int CalPerChannelGain(size_t bit_num, const std::vector<int> &dims, int preferre
   const int bits_per_byte = 8;
   const int quant_param_size = 32;
   int channels = dims.at(preferred_dim);
-  CHECK_LESS_RETURN(channels, 1);
-  size_t bucket_size = elem_count / channels;
+  if (channels < 1) {
+    MS_LOG(ERROR) << "channels must not less 1";
+    return RET_ERROR;
+  }
+  size_t bucket_size = static_cast<size_t>(elem_count / channels);
   bool do_quant = (quant_param_size * bits_per_byte) / (sizeof(float) * bits_per_byte - bit_num) < bucket_size;
   if (do_quant) {
     return RET_OK;
@@ -157,7 +160,7 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
   std::map<int, double> var_raws;
   std::map<int, double> var_dequants;
   size_t bucket_size = quant_params->size();
-  int bucket_volume = elem_count / dims[preferred_dim];
+  int bucket_volume = static_cast<size_t>(elem_count / dims[preferred_dim]);
   // Init Map
   for (size_t i = 0; i < bucket_size; i++) {
     total_raws[i] = 0;
