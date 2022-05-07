@@ -102,6 +102,8 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   int64_t ElementsC4Num() const;
 
+  int64_t ElementsC8Num() const;
+
   size_t Size() const override;
 
   void set_allocator(AllocatorPtr allocator) override { allocator_ = allocator; }
@@ -237,7 +239,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   mindspore::Format format_;
   Category category_;
   std::atomic_int ref_count_ = {0};
-  size_t init_ref_count_ = 0;
+  int init_ref_count_ = 0;
   std::vector<LiteQuantParam> quant_params_;
   std::vector<float> quant_clusters_;
   AllocatorPtr allocator_ = nullptr;
