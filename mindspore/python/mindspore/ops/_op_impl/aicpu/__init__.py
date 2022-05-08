@@ -161,3 +161,4 @@ from .nth_element import _nth_element_aicpu
 from .transpose import _transpose_aicpu
 from .trace import _trace_aicpu
 from .tracegrad import _tracegrad_aicpu
+from .zeta import _zeta_aicpu

@@ -92,6 +92,7 @@ constexpr auto kReal = "Real";
 constexpr auto kImag = "Imag";
 constexpr auto kConj = "Conj";
 constexpr auto kGer = "Ger";
+constexpr auto kZeta = "Zeta";
 
 // Math
 constexpr auto kCross = "Cross";
@@ -802,6 +803,8 @@ GVAR_DEF(PrimitivePtr, kPrimEinsum, std::make_shared<Primitive>("Einsum"));
 GVAR_DEF(PrimitivePtr, kPrimEinsumGrad, std::make_shared<Primitive>("EinsumGrad"));
 GVAR_DEF(PrimitivePtr, kPrimTrace, std::make_shared<Primitive>("Trace"));
 GVAR_DEF(PrimitivePtr, kPrimTraceGrad, std::make_shared<Primitive>("TraceGrad"));
+GVAR_DEF(PrimitivePtr, kPrimZeta, std::make_shared<Primitive>("Zeta"));
+
 // Image
 GVAR_DEF(PrimitivePtr, kPrimNonMaxSuppressionV3, std::make_shared<Primitive>("NonMaxSuppressionV3"));
 
