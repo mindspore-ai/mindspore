@@ -152,7 +152,7 @@ class Ger(Primitive):
     Refer to :func:`mindspore.ops.ger` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)

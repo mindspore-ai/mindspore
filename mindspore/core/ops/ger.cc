@@ -52,13 +52,23 @@ abstract::ShapePtr GerInferShape(const PrimitivePtr &primitive, const std::vecto
   }
   out_shape[shape_index] = first_input_shape[first_input_shape.size() - 1];
   out_shape[shape_index + 1] = second_input_shape[second_input_shape.size() - 1];
-  return std::make_shared<abstract::Shape>(out_shape);
+  auto first_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
+  auto first_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
+  auto second_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kMinShape];
+  auto second_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kMaxShape];
+  if (first_input_shape_min.empty() || first_input_shape_min.empty() || second_input_shape_min.empty() ||
+      second_input_shape_max.empty()) {
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+  ShapeVector min_shape = {first_input_shape_min[0], second_input_shape_min[0]};
+  ShapeVector max_shape = {first_input_shape_max[0], second_input_shape_max[0]};
+  return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
 }
 
 TypePtr GerInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
