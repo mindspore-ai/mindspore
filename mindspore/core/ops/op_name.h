@@ -264,6 +264,8 @@ constexpr auto kBegin = "begin";
 constexpr auto kSrcFormat = "src_format";
 constexpr auto kDstFormat = "dst_format";
 constexpr auto kLambd = "lambd";
+constexpr auto kAffine = "affine";
+constexpr auto kNumGroups = "num_groups";
 
 enum Index : size_t {
   kInputIndex0 = 0,

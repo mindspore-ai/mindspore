@@ -173,7 +173,7 @@ class TrainSession : virtual public lite::LiteSession {
   SchedCallBack sched_mix_precision_callback_;
   bool train_mode_ = false;
   void *tensors_data_ = nullptr;
-  unsigned int tensors_data_size_ = 0;
+  size_t tensors_data_size_ = 0;
   std::shared_ptr<Allocator> allocator_;
 };
 

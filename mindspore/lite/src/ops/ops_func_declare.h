@@ -228,6 +228,7 @@
 #include "ops/fusion/sub_fusion.h"
 #include "ops/fusion/tile_fusion.h"
 #include "ops/fusion/topk_fusion.h"
+#include "ops/fusion/groupnorm_fusion.h"
 #include "ops/gru.h"
 #include "ops/non_zero.h"
 #include "ops/invert_permutation.h"
@@ -483,6 +484,7 @@ FUNC_MSOP2SCHEMAOP_DECLARE(NLLLoss)
 FUNC_MSOP2SCHEMAOP_DECLARE(NLLLossGrad)
 FUNC_MSOP2SCHEMAOP_DECLARE(FormatTranspose)
 FUNC_MSOP2SCHEMAOP_DECLARE(GatherD)
+FUNC_MSOP2SCHEMAOP_DECLARE(GroupNormFusion)
 #endif
 }  // namespace mindspore::lite::ops
 #else
