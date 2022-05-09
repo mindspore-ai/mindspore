@@ -148,11 +148,13 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   workspace_size_list_.clear();
   input_size_list_.clear();
   for (auto &input : inputs) {
-    size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
     auto shape = input->GetShapeVector();
+    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     if (!IsValidShape(shape)) {
-      ret = KRET_INVALID_SHAPE;
+      input_size_list_.clear();
+      return KRET_UNKNOWN_SHAPE;
     }
+    size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);
@@ -160,8 +162,14 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
   }
   output_size_list_.clear();
   for (auto &output : outputs) {
-    size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
     auto shape = output->GetShapeVector();
+    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
+    if (!IsValidShape(shape)) {
+      input_size_list_.clear();
+      output_size_list_.clear();
+      return KRET_UNKNOWN_SHAPE;
+    }
+    size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);

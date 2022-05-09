@@ -64,7 +64,7 @@ int CumMinMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();

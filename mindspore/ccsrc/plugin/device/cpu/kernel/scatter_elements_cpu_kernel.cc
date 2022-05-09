@@ -42,7 +42,7 @@ int ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                         const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
   kernel_name_ = base_operator->name();

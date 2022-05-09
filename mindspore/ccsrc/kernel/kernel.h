@@ -235,7 +235,7 @@ enum class KernelModType {
   DeprecatedNativeCpuKernelMod,
 };
 
-enum KernelErrorCode { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_INVALID_SHAPE = 2 };
+enum KernelErrorCode { KRET_OK = 0, KRET_RESIZE_FAILED = 1, KRET_UNKNOWN_SHAPE = 2 };
 
 class KernelMod {
  public:

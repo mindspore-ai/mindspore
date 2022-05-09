@@ -70,7 +70,7 @@ int LrnCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
                             const std::vector<KernelTensorPtr> &outputs,
                             const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
     return ret;
   }
   TypeId ms_type_id = inputs.at(kIndex0)->GetDtype();

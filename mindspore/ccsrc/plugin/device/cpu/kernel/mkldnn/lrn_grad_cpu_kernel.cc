@@ -64,7 +64,7 @@ int LrnGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KRET_OK;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
     return ret;
   }
   std::vector<size_t> input_shape_;

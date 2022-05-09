@@ -60,7 +60,6 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
  private:
-  size_t unit_size_{1};
   bool is_null_input_{false};
   bool states_init_{false};
   std::vector<size_t> input_shape_;

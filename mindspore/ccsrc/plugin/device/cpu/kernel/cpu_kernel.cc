@@ -27,12 +27,6 @@
 
 namespace mindspore {
 namespace kernel {
-int NativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                               const std::vector<KernelTensorPtr> &outputs,
-                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
-}
-
 std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {
   if (initialize_.count(kernel_name) == 0) {
     std::vector<KernelAttr> kernel_attrs;

@@ -65,7 +65,7 @@ int HShrinkGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
-      return KRET_INVALID_SHAPE;
+      return KRET_UNKNOWN_SHAPE;
     }
   }
 
