@@ -1,14 +1,9 @@
 mindspore.profiler
 ========================
 
-本模块提供Python API，用于启用MindSpore神经网络性能数据的分析。
-用户可以通过导入 `mindspore.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集和分析。
-用户可通过Mindinsight工具可视化分析结果。
-目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
-
 .. py:class:: mindspore.Profiler(**kwargs)
 
-    MindSpore用户能够通过该类对神经网络的性能进行采集。
+    MindSpore用户能够通过该类对神经网络的性能进行采集。可以通过导入 `mindspore.Profiler` 然后初始化Profiler对象以开始分析，使用 `Profiler.analyse()` 停止收集和分析。可通过Mindinsight工具可视化分析结果。目前，Profiler支持AICORE算子、AICPU算子、HostCPU算子、内存、设备通信、集群等数据的分析。
 
     **参数：**
     
