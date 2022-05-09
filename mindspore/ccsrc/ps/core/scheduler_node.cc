@@ -991,7 +991,7 @@ void SchedulerNode::ProcessScaleOutRollback(const std::shared_ptr<HttpMessageHan
 
 bool SchedulerNode::QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler> &resp) {
   ClusterConfig &clusterConfig = PSContext::instance()->cluster_config();
-  uint64_t request_id = AddMessageTrack(clusterConfig.initial_server_num);
+  uint64_t request_id = AddMessageTrack(clusterConfig.initial_total_node_num);
   std::unordered_map<uint32_t, VectorPtr> outputs;
 
   set_message_callback(request_id, [&]() {
@@ -1003,12 +1003,10 @@ bool SchedulerNode::QueryNodeScaleState(const std::shared_ptr<HttpMessageHandler
 
   auto node_infos = node_manager_.nodes_info();
   for (const auto &kvs : node_infos) {
-    if (kvs.second.node_role_ == NodeRole::SERVER) {
-      auto client = GetOrCreateClient(kvs.second);
-      MS_EXCEPTION_IF_NULL(client);
-      MS_EXCEPTION_IF_NULL(instance_manager_);
-      instance_manager_->QueryNodeScaleState(client, node_manager_, request_id, kvs.second);
-    }
+    auto client = GetOrCreateClient(kvs.second);
+    MS_EXCEPTION_IF_NULL(client);
+    MS_EXCEPTION_IF_NULL(instance_manager_);
+    instance_manager_->QueryNodeScaleState(client, node_manager_, request_id, kvs.second);
   }
 
   bool res = Wait(request_id);

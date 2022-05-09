@@ -90,23 +90,18 @@ void SSLWrapper::InitSSL() {
   X509 *cert = nullptr;
   STACK_OF(X509) *ca_stack = nullptr;
   BIO *bio = BIO_new_file(server_cert.c_str(), "rb");
-  MS_EXCEPTION_IF_NULL(bio);
+  if (bio == nullptr) {
+    MS_LOG(EXCEPTION) << "Read server cert file failed.";
+  }
   PKCS12 *p12 = d2i_PKCS12_bio(bio, nullptr);
-  MS_EXCEPTION_IF_NULL(p12);
+  if (p12 == nullptr) {
+    MS_LOG(EXCEPTION) << "Create PKCS12 cert failed, please check whether the certificate is correct.";
+  }
   BIO_free_all(bio);
   if (!PKCS12_parse(p12, server_password.c_str(), &pkey, &cert, &ca_stack)) {
     MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
   }
   PKCS12_free(p12);
-  std::string default_cipher_list = CommUtil::ParseConfig(*config_, kCipherList);
-  std::vector<std::string> ciphers = CommUtil::Split(default_cipher_list, kColon);
-  if (!CommUtil::VerifyCipherList(ciphers)) {
-    MS_LOG(EXCEPTION) << "The cipher is wrong.";
-  }
-  if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
-    MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
-  }
-
   std::string crl_path = CommUtil::ParseConfig(*(config_), kCrlPath);
   if (crl_path.empty()) {
     MS_LOG(INFO) << "The crl path is empty.";
@@ -121,7 +116,9 @@ void SSLWrapper::InitSSL() {
     MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";
   }
   BIO *ca_bio = BIO_new_file(ca_path.c_str(), "r");
-  MS_EXCEPTION_IF_NULL(ca_bio);
+  if (ca_bio == nullptr) {
+    MS_LOG(EXCEPTION) << "Read CA cert file failed.";
+  }
   X509 *caCert = PEM_read_bio_X509(ca_bio, nullptr, nullptr, nullptr);
 
   CommUtil::verifyCertPipeline(caCert, cert);
@@ -131,14 +128,22 @@ void SSLWrapper::InitSSL() {
     MS_LOG(EXCEPTION) << "SSL load ca location failed!";
   }
 
-  InitSSLCtx(cert, pkey);
+  InitSSLCtx(*config_, cert, pkey);
   StartCheckCertTime(*config_, cert, ca_path);
 
   EVP_PKEY_free(pkey);
   (void)BIO_free(ca_bio);
 }
 
-void SSLWrapper::InitSSLCtx(const X509 *cert, const EVP_PKEY *pkey) {
+void SSLWrapper::InitSSLCtx(const Configuration &config, const X509 *cert, const EVP_PKEY *pkey) {
+  std::string default_cipher_list = CommUtil::ParseConfig(config, kCipherList);
+  std::vector<std::string> ciphers = CommUtil::Split(default_cipher_list, kColon);
+  if (!CommUtil::VerifyCipherList(ciphers)) {
+    MS_LOG(EXCEPTION) << "The cipher is wrong.";
+  }
+  if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
+    MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
+  }
   if (!SSL_CTX_use_certificate(ssl_ctx_, const_cast<X509 *>(cert))) {
     MS_LOG(EXCEPTION) << "SSL use certificate chain file failed!";
   }
