@@ -1418,7 +1418,6 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
   bool async_exec_disabled = is_dynamic_shape || graph_compiler_info->need_erase_ || !op_run_info->lazy_build ||
                              OpInBlackList(*op_run_info) || GetExecutionMode() == kGraphMode ||
                              EnablePyNativeSyncRunning();
-  MS_LOG(DEBUG) << "Pynative async_exec_disabled " << async_exec_disabled;
   if (!async_exec_disabled) {
     MS_LOG(DEBUG) << "Async exec enabled, op:" << op_run_info->op_name;
     DispatchOpTask(single_op_cache_hit, outputs, graph_compiler_info, op_run_info);
@@ -1426,7 +1425,7 @@ void MindRTBackend::RunOpImpl(bool single_op_cache_hit, GraphCompilerInfo *graph
   }
 
   MS_LOG(DEBUG) << "Async exec disabled, op:" << op_run_info->op_name;
-  if (!op_executor.BuildQueueEmpty()) {
+  if (!op_executor.RunQueueEmpty()) {
     WaitTaskFinish();
   }
   if (!single_op_cache_hit) {

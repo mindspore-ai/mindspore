@@ -82,7 +82,6 @@ const std::set<std::string> kAxisNone = {"ReduceSum"};
 const std::set<std::string> kSummaryOperators = {"ScalarSummary", "ImageSummary", "TensorSummary", "HistogramSummary"};
 const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 const char kGrad[] = "grad";
-const int64_t kUnknowShape = -1;
 std::map<std::string, std::shared_ptr<session::SessionBasic>> kSessionBackends;
 std::map<std::string, std::shared_ptr<compile::MindRTBackend>> kMindRtBackends;
 PyObjectIdCache g_pyobj_id_cache;
@@ -627,24 +626,40 @@ bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, const Primiti
     need_convert_input_to_attr =
       opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, reg);
   }
+  // No reg info for this op, return false right away
+  if (!need_convert_input_to_attr) {
+    return false;
+  }
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   const auto &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   bool is_dynamic_shape = IsDynamicShape(op_run_info);
-  if (device_target == kGPUDevice) {
-    is_dynamic_shape = op_run_info->has_dynamic_input && op_run_info->has_dynamic_output;
-  }
-  if (is_dynamic_shape &&
-      dynamic_shape_const_input_to_attr.find(op_run_info->op_name) == dynamic_shape_const_input_to_attr.end()) {
-    MS_LOG(DEBUG) << "Current node is dynamic shape " << op_run_info->op_name;
-    need_convert_input_to_attr = false;
+  if (is_dynamic_shape) {
+    if (device_target == kGPUDevice) {
+      if (DynamicShapeConstInputToAttrGPU.find(op_run_info->op_name) == DynamicShapeConstInputToAttrGPU.end()) {
+        need_convert_input_to_attr = false;
+      }
+    } else if (device_target == kCPUDevice) {
+      if (DynamicShapeConstInputToAttrCPU.find(op_run_info->op_name) == DynamicShapeConstInputToAttrCPU.end()) {
+        need_convert_input_to_attr = false;
+      }
+    } else {
+      if (DynamicShapeConstInputToAttr.find(op_run_info->op_name) == DynamicShapeConstInputToAttr.end()) {
+        need_convert_input_to_attr = false;
+      }
+    }
+    // Dynamic shape
+    if (!need_convert_input_to_attr) {
+      MS_LOG(DEBUG) << "Current node is dynamic shape " << op_run_info->op_name;
+      return false;
+    }
   }
 
   if (device_target != kCPUDevice && op_run_info->op_name == prim::kPrimEmbeddingLookup->name()) {
     auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
     if (cur_target != kCPUDevice) {
-      need_convert_input_to_attr = false;
+      return false;
     }
   }
   // Gather op needs converting const input to attr on GPU device
@@ -1003,9 +1018,14 @@ void SaveIdWithDynamicAbstract(const py::object &obj, const AbstractBasePtr &abs
     if (obj_tuple.size() != 1) {
       MS_LOG(EXCEPTION) << "Not match: obj " << py::str(obj) << " and abs " << abs->ToString();
     }
-    obj_id_with_dynamic_abs->emplace(std::make_pair(GetId(obj_tuple[0]), abs));
+    // Like Unique, has two outputs, but one output is static shape, and should not be stored
+    if (abs->BuildShape()->IsDynamic()) {
+      obj_id_with_dynamic_abs->emplace(std::make_pair(GetId(obj_tuple[0]), abs));
+    }
   } else if (!py::isinstance<py::tuple>(obj) && !abs->isa<abstract::AbstractTuple>()) {
-    obj_id_with_dynamic_abs->emplace(std::make_pair(GetId(obj), abs));
+    if (abs->BuildShape()->IsDynamic()) {
+      obj_id_with_dynamic_abs->emplace(std::make_pair(GetId(obj), abs));
+    }
   } else {
     MS_LOG(EXCEPTION) << "Not match: obj " << py::str(obj) << " and abs " << abs->ToString();
   }
@@ -1063,10 +1083,9 @@ void UpdateOutputTensorToDynamicShape(
   if (value->isa<mindspore::tensor::Tensor>()) {
     auto tensor_value = value->cast<tensor::TensorPtr>();
     auto it = obj_id_with_dynamic_abs.find(tensor_value->id());
-    if (it == obj_id_with_dynamic_abs.end()) {
-      MS_LOG(EXCEPTION) << "Can not find out tensor " << tensor_value->id() << " in obj_id_with_dynamic_output_abs";
+    if (it != obj_id_with_dynamic_abs.end()) {
+      tensor_value->set_base_shape(GetShapeFromAbstract(it->second));
     }
-    tensor_value->set_base_shape(GetShapeFromAbstract(it->second));
   } else if (value->isa<ValueTuple>()) {
     auto value_tuple = value->cast<ValueTuplePtr>();
     for (const auto &v : value_tuple->value()) {
@@ -1352,19 +1371,6 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
   for (size_t i = 0; i < op_exec_info->op_inputs.size(); i++) {
     const auto &obj = op_exec_info->op_inputs[i];
     const auto &id = GetId(obj);
-
-    // Feed mode of dynamic shape
-    if (!dynamic_shape_info_ptr()->feed_dynamic_input_abs.empty()) {
-      auto it = dynamic_shape_info_ptr()->feed_dynamic_input_abs.find(id);
-      if (it != dynamic_shape_info_ptr()->feed_dynamic_input_abs.end()) {
-        MS_LOG(DEBUG) << "Input " << i << " get set input dynamic shape";
-        op_exec_info->has_dynamic_input = true;
-        args_spec_list->emplace_back(it->second);
-        SaveIdWithDynamicShape(op_exec_info, id, obj, it->second);
-        continue;
-      }
-    }
-
     // Get tuple or list abs
     if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
       auto abs = GetTupleInputAbstract(op_exec_info, obj, id, i);
@@ -2489,7 +2495,7 @@ void ForwardExecutor::SetFeedDynamicInputAbs(const py::object &cell, const py::a
       auto shape = abs->BuildShape();
       MS_EXCEPTION_IF_NULL(shape);
       if (shape->IsDynamic()) {
-        dynamic_shape_info_ptr()->feed_dynamic_input_abs[GetId(args[i])] = abs;
+        dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs[GetId(args[i])] = abs;
       }
     }
   }
@@ -2661,15 +2667,6 @@ std::string GradExecutor::GetCellId(const py::object &cell, const py::args &args
       MS_LOG(DEBUG) << "Input " << i << " get dynamic input";
       fn(item->second);
       continue;
-    }
-    // Get dynamic input of set inputs of feed mode
-    if (!forward()->dynamic_shape_info_ptr()->feed_dynamic_input_abs.empty()) {
-      auto it = forward()->dynamic_shape_info_ptr()->feed_dynamic_input_abs.find(arg_id);
-      if (it != forward()->dynamic_shape_info_ptr()->feed_dynamic_input_abs.end()) {
-        MS_LOG(DEBUG) << "Input " << i << " get set input dynamic shape";
-        fn(it->second);
-        continue;
-      }
     }
 
     // Find in step process
@@ -3320,26 +3317,28 @@ void GradExecutor::UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr
         if (param_tensor_abs->isa<abstract::AbstractRef>()) {
           param_tensor_abs = param_tensor_abs->cast<abstract::AbstractRefPtr>()->CloneAsTensor();
         }
-        auto ir_shape = param_tensor_abs->BuildShape()->ToString();
-        // Sens is special because it is determined by the user's input
-        if (param_node->debug_info()->name() == "sens") {
-          if (ir_shape != input_shape) {
-            need_renormalize_ = true;
-          }
-        } else {
-          // Exclude const input
-          if (input_shape != "()" && ir_shape != "()") {
-            if (input_shape != ir_shape) {
+        auto ir_base_shape = param_tensor_abs->BuildShape();
+        MS_EXCEPTION_IF_NULL(ir_base_shape);
+        auto ir_shape = ir_base_shape->ToString();
+        // Exclude const input
+        if (input_shape != "()" && ir_shape != "()") {
+          if (input_shape != ir_shape) {
+            // Sens shape in ir graph is determined by graph output, so it can be dynamic shape; But input shape is
+            // determined by user input, which could not be dynamic shape.
+            if (param_node->debug_info()->name() != "sens" || !ir_base_shape->IsDynamic()) {
               MS_EXCEPTION(ValueError) << "The shape should be " << ir_shape << ", but got " << input_shape << ", "
                                        << param->DebugString();
             }
-            auto ir_dtype = param_tensor_abs->BuildType()->ToString();
-            auto input_dtype = input_abs->BuildType()->ToString();
-            if (input_dtype != ir_dtype) {
-              MS_EXCEPTION(TypeError) << "The dtype should be " << ir_dtype << ", but got " << input_dtype << ", "
-                                      << param->DebugString();
-            }
           }
+          auto ir_dtype = param_tensor_abs->BuildType()->ToString();
+          auto input_dtype = input_abs->BuildType()->ToString();
+          if (input_dtype != ir_dtype) {
+            MS_EXCEPTION(TypeError) << "The dtype should be " << ir_dtype << ", but got " << input_dtype << ", "
+                                    << param->DebugString();
+          }
+        }
+        if (param_node->debug_info()->name() == "sens" && ir_shape != input_shape) {
+          need_renormalize_ = true;
         }
       }
       param_node->set_abstract(input_abs->Broaden());

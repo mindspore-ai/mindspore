@@ -107,6 +107,11 @@ bool OpExecutor::BuildQueueEmpty() {
   return op_build_tasks_.empty();
 }
 
+bool OpExecutor::RunQueueEmpty() {
+  std::lock_guard<std::mutex> lock(task_mutex_);
+  return op_run_tasks_.empty();
+}
+
 bool OpExecutor::BuildQueueFull() {
   std::lock_guard<std::mutex> lock(task_mutex_);
   return op_build_tasks_.size() > kMaxQueueSize;

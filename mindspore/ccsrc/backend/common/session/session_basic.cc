@@ -1432,16 +1432,19 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
       // Check shape of input and parameter
       const auto &input_shape = input->shape();
       const auto &param_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
-      if (!is_parallel_forward_ms_function && input_shape.size() != param_shape.size()) {
-        MS_LOG(EXCEPTION) << "Shape size of input tensor(" << input_shape << ") and parameter(" << param_shape
-                          << ") are different, input index: " << index << ", parameter: " << param->DebugString();
-      }
       bool is_dynamic = param->Shape()->IsDynamic();
-      for (size_t i = 0; i < input_shape.size(); i += 1) {
-        if (input_shape[i] < 0 || (!is_parallel_forward_ms_function &&
-                                   static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
-          MS_LOG(EXCEPTION) << "Input tensor shape(" << input_shape << ") and parameter shape(" << param_shape
+      // Dynamic shape feed mode, shape is dynamic but max shape is ()
+      if (!is_dynamic || !param_shape.empty()) {
+        if (!is_parallel_forward_ms_function && input_shape.size() != param_shape.size()) {
+          MS_LOG(EXCEPTION) << "Shape size of input tensor(" << input_shape << ") and parameter(" << param_shape
                             << ") are different, input index: " << index << ", parameter: " << param->DebugString();
+        }
+        for (size_t i = 0; i < input_shape.size(); i += 1) {
+          if (input_shape[i] < 0 || (!is_parallel_forward_ms_function &&
+                                     static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
+            MS_LOG(EXCEPTION) << "Input tensor shape(" << input_shape << ") and parameter shape(" << param_shape
+                              << ") are different, input index: " << index << ", parameter: " << param->DebugString();
+          }
         }
       }
       parameter_index->emplace(param, index++);
