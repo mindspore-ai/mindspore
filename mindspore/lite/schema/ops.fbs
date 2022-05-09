@@ -228,6 +228,7 @@ union PrimitiveType {
     NLLLossGrad,
     FormatTranspose,
     GatherD,
+    GroupNormFusion,
 }
 
 table Abs {
@@ -1275,4 +1276,10 @@ table FormatTranspose {
 }
 
 table GatherD {
+}
+
+table GroupNormFusion {
+    num_groups: long;
+    epsilon: float = 1e-5;
+    affine: bool = true;
 }

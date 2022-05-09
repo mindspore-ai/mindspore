@@ -161,4 +161,9 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SpliceWrappe
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransFuncStr trans_func_str) {
   CodeBaseStruct("TransFuncList", name, trans_func_str.in_func_, nullptr, nullptr, trans_func_str.out_func_);
 }
+
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const GroupNormParameter &gn_param) {
+  CodeBaseStruct("GroupNormParameter", name, gn_param.op_parameter_, gn_param.epsilon_, gn_param.num_groups_,
+                 gn_param.channel_, gn_param.unit_, gn_param.batch_, gn_param.affine_);
+}
 }  // namespace mindspore::lite::micro::nnacl

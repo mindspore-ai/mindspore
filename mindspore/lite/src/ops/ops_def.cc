@@ -228,6 +228,7 @@ OP_TYPE(NLLLoss)
 OP_TYPE(NLLLossGrad)
 OP_TYPE(FormatTranspose)
 OP_TYPE(GatherD)
+OP_TYPE(GroupNormFusion)
 OP_TYPE_DEF_END(PrimitiveType)
 
 OP_SCHEMA_DEF(Abs)
@@ -1276,3 +1277,9 @@ OP_SCHEMA_DEF_END(FormatTranspose)
 
 OP_SCHEMA_DEF(GatherD)
 OP_SCHEMA_DEF_END(GatherD)
+
+OP_SCHEMA_DEF(GroupNormFusion)
+OP_ATTR(num_groups, long)
+OP_ATTR_WITH_VALUE(epsilon, float, 1e-5)
+OP_ATTR_WITH_VALUE(affine, bool, true)
+OP_SCHEMA_DEF_END(GroupNormFusion)

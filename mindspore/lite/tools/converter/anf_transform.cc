@@ -90,6 +90,7 @@
 #include "tools/optimizer/format/to_nhwc_format.h"
 #include "tools/converter/adapter/acl/acl_pass.h"
 #include "src/common/log_util.h"
+#include "tools/optimizer/fusion/groupnorm_fusion.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -190,6 +191,7 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const converter::
   fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
   fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(config->fmk));
   fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(config->fmk));
+  fusion_pm->AddPass(std::make_shared<opt::GroupNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
   fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion2>());

@@ -94,6 +94,7 @@ static inline float32x4_t vrecp(float32x4_t v) {
 
 #ifdef ENABLE_ARM64
 #define MS_GET_MAX128_F32 vmaxvq_f32
+static inline float MS_GET_SUM128_F32(MS_FLOAT32X4 src) { return vaddvq_f32(src); }
 #else
 static inline float MS_GET_MAX128_F32(MS_FLOAT32X4 src) {
   float result = MS_F32X4_GETI(src, 0);
@@ -102,7 +103,6 @@ static inline float MS_GET_MAX128_F32(MS_FLOAT32X4 src) {
   }
   return result;
 }
-#endif
 
 static inline float MS_GET_SUM128_F32(MS_FLOAT32X4 src) {
   float result = MS_F32X4_GETI(src, 0);
@@ -111,6 +111,7 @@ static inline float MS_GET_SUM128_F32(MS_FLOAT32X4 src) {
   }
   return result;
 }
+#endif
 
 static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {
   int32x4_t result;
