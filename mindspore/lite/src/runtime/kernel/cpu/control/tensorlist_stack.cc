@@ -105,7 +105,8 @@ int TensorListStackCPUKernel::MergeElementShape() {
       }
     }
   }
-  TypeUnknownSize = std::accumulate(output_shape_.begin(), output_shape_.end(), 1LL, std::multiplies<int>());
+  TypeUnknownSize =
+    static_cast<size_t>(std::accumulate(output_shape_.begin(), output_shape_.end(), 1LL, std::multiplies<int>()));
   return RET_OK;
 }
 
@@ -145,7 +146,7 @@ int TensorListStackCPUKernel::Run() {
     MS_LOG(ERROR) << "CheckParam failed!";
     return RET_ERROR;
   }
-  size_t out_ele_num = output0_->ElementsNum();
+  size_t out_ele_num = static_cast<size_t>(output0_->ElementsNum());
   if (out_ele_num == 0) {
     return RET_OK;
   }

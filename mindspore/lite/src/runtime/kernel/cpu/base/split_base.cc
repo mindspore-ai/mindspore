@@ -45,9 +45,9 @@ int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, Sp
   CHECK_LESS_RETURN(input_shape.size(), 1);
   CHECK_LESS_RETURN(SPLIT_STRIDES_SIZE - 1, input_shape.size());
   auto split_dim = param->split_dim_;
-  param->split_dim_ = split_dim >= 0 ? split_dim : input_shape.size() + split_dim;
+  param->split_dim_ = split_dim >= 0 ? split_dim : static_cast<int>(input_shape.size()) + split_dim;
   param->strides_[input_shape.size() - 1] = 1;
-  for (int i = input_shape.size() - 2; i >= 0; i--) {
+  for (int i = static_cast<int>(input_shape.size()) - 2; i >= 0; i--) {
     MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->strides_[i + 1], input_shape.at(i + 1)), RET_ERROR);
     param->strides_[i] = param->strides_[i + 1] * input_shape.at(i + 1);
   }
@@ -66,7 +66,7 @@ int SplitBaseCPUKernel::CheckAndInitSplitParam(const lite::Tensor &in_tensor, Sp
   MS_CHECK_FALSE(INT_MUL_OVERFLOW(param->strides_[0], input_shape.at(0)), RET_ERROR);
   param->split_count_ =
     param->strides_[0] * input_shape.at(0) / (input_shape.at(param->split_dim_) * param->strides_[param->split_dim_]);
-  param->n_dims_ = input_shape.size();
+  param->n_dims_ = static_cast<int>(input_shape.size());
   CHECK_LESS_RETURN(param->num_split_, 1);
   CHECK_LESS_RETURN(input_shape[param->split_dim_], static_cast<int>(param->num_split_));
   if (param->split_sizes_[0] == 0) {
