@@ -95,6 +95,7 @@ constexpr auto kGer = "Ger";
 
 // Math
 constexpr auto kCross = "Cross";
+constexpr auto kEditDistance = "EditDistance";
 
 // Arrays
 constexpr auto kDynamicShape = "DynamicShape";
@@ -692,6 +693,7 @@ GVAR_DEF(PrimitivePtr, kPrimTensorListSetItem, std::make_shared<Primitive>("Tens
 
 // Maths
 GVAR_DEF(PrimitivePtr, kPrimCross, std::make_shared<Primitive>(kCross));
+GVAR_DEF(PrimitivePtr, kPrimEditDistance, std::make_shared<Primitive>(kEditDistance));
 GVAR_DEF(PrimitivePtr, kPrimBesselI0, std::make_shared<Primitive>("BesselI0"));
 GVAR_DEF(PrimitivePtr, kPrimBesselI1, std::make_shared<Primitive>("BesselI1"));
 GVAR_DEF(PrimitivePtr, kPrimBesselK0, std::make_shared<Primitive>("BesselK0"));
