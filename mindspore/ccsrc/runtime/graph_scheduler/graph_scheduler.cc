@@ -2119,7 +2119,7 @@ void GraphScheduler::DumpActor(const ActorSet *actor_set, const GraphCompilerInf
   if (execution_order_running_) {
     strategy = "pipeline_with_excution_order";
   }
-  std::string save_name = "actor_set/0_actor_set_" + strategy + actor_set->name_;
+  std::string save_name = "actor_set/0_actor_set_" + strategy + "_" + actor_set->name_;
   std::string path_name = GetSaveGraphsPathName(save_name + ".ir");
   auto realpath = Common::CreatePrefixPath(path_name);
   if (!realpath.has_value()) {
