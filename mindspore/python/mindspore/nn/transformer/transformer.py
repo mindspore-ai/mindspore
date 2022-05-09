@@ -1010,6 +1010,8 @@ class MultiHeadAttention(Cell):
                 ((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
             self.softmax = nn.Softmax().to_float(softmax_compute_type)
             self.softmax.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1, 1),))
+            self.softmax_3d = nn.Softmax().to_float(softmax_compute_type)
+            self.softmax_3d.softmax.shard(((parallel_config.data_parallel, parallel_config.model_parallel, 1),))
             self.expand_dims = P.ExpandDims().shard(((parallel_config.data_parallel, 1, 1),))
 
             # Query
@@ -1036,6 +1038,7 @@ class MultiHeadAttention(Cell):
                                              (parallel_config.model_parallel,)))
             self.dtype = compute_dtype
             self.softmax_dtype = softmax_compute_type
+            self._is_ascend = context.get_context('device_target') in ["Ascend"]
             if self.use_past:
                 # operators used for state reuse
                 seq_range = np.arange(src_seq_length).reshape(1, 1, -1)
@@ -1215,6 +1218,24 @@ class MultiHeadAttention(Cell):
         x_merge = self.reshape(x, new_shape)
         return x_merge
 
+    def _softmax(self, attention_scores):
+        """
+        For the consideration of the performance, do softmax according to different situations
+        :param attention_scores: a 3d tensor before softmax
+        :return: the attention scores.
+        """
+
+        if self._is_ascend and self.softmax_dtype == mstype.float16 or not self._is_ascend:
+            attention_probs = self.softmax(attention_scores)
+        else:
+            shape = F.shape(attention_scores)
+            # attention probs
+            attention_probs = self.softmax_3d(
+                F.reshape(attention_scores,
+                          (shape[0], -1, shape[-1])))
+            attention_probs = F.reshape(attention_probs, shape)
+        return attention_probs
+
     def _attn(self, query, key, value, attention_mask):
         """
         Get the weighted score along the seq_length
@@ -1262,7 +1283,7 @@ class MultiHeadAttention(Cell):
         attention_scores = self.add(adder, score)
 
         # attention probs
-        attention_probs = self.softmax(attention_scores)
+        attention_probs = self._softmax(attention_scores)
         attention_probs = P.Cast()(attention_probs, ori_dtype)
 
         attention_probs = self.prob_dropout(attention_probs)
