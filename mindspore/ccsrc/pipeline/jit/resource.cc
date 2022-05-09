@@ -190,6 +190,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"swapaxes", std::string("swapaxes")},                      // P.transpose()
        {"narrow", std::string("narrow")},                          // narrow()
        {"masked_fill", std::string("masked_fill")},                // masked_fill()
+       {"nonzero", std::string("nonzero")},                        // nonzero()
        {"expand_dims", std::string("expand_dims")},                // P.expand_dims()
        {"squeeze", std::string("squeeze")},                        // P.squeeze()
        {"astype", std::string("astype")},                          // P.cast()

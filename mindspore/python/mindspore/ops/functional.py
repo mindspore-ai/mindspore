@@ -984,6 +984,7 @@ tensor_operator_registry.register('index_add', P.IndexAdd)
 tensor_operator_registry.register('scatter_max', P.ScatterMax)
 tensor_operator_registry.register('scatter_min', P.ScatterMin)
 tensor_operator_registry.register('space_to_batch_nd', P.SpaceToBatchND)
+tensor_operator_registry.register('nonzero', nonzero)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
 tensor_operator_registry.register('__ne__', not_equal)

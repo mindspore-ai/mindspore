@@ -1578,6 +1578,13 @@ def tensor_sactter_div(input_x, indices, updates):
     return F.tensor_scatter_div(input_x, indices, updates)
 
 
+def nonzero(x):
+    """
+    Return a tensor of the positions of all non-zero values.
+    """
+    return F.nonzero(x)
+
+
 def coo_to_csr(x):
     """convert coo to csr."""
     row_indices = x.indices[:, 0]
