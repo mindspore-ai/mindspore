@@ -472,7 +472,7 @@ function Run_CodeExamples() {
         should_run=1
       fi
       if [[ "$should_run" == "1" ]]; then
-        cd ${basepath}/../../examples/unified_api || exit 1
+        cd ${basepath}/../../examples/train_lenet_cpp || exit 1
         chmod 777 ./prepare_and_run.sh
         chmod 777 ./*/*.sh
         ./prepare_and_run.sh -D ${datasets_path}/mnist -r ${tarball_path} -t ${target} -m ${models_path}/code_example.mindir -e 1 ${expression_flag} >> ${run_code_examples_log_file}
@@ -483,10 +483,10 @@ function Run_CodeExamples() {
         accurate=$(tail -20 ${run_code_examples_log_file} | awk 'NF==3 && /Accuracy is/ { sum += $3} END { print (sum > 1.6) }')
         if [ $accurate -eq 1 ]; then
           echo "Unified API Trained and reached accuracy" >> ${run_code_examples_log_file}
-          echo 'code_examples: unified_api pass' >> ${run_benchmark_train_result_file}
+          echo 'code_examples: train_lenet_cpp pass' >> ${run_benchmark_train_result_file}
         else
           echo "Unified API demo failure" >> ${run_code_examples_log_file}
-          echo 'code_examples: unified_api failed' >> ${run_benchmark_train_result_file}
+          echo 'code_examples: train_lenet_cpp failed' >> ${run_benchmark_train_result_file}
           fail=1
         fi
         rm -rf package*/dataset
