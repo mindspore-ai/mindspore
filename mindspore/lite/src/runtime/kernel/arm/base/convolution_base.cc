@@ -342,7 +342,7 @@ int ConvolutionBaseCPUKernel::SetQuantMultiplier() {
   // now only support weight tensor is per channel, others are per tensor.
   int weight_arg_num = kPerTensor;
   if (conv_quant_arg_->per_channel_ & FILTER_PER_CHANNEL) {
-    weight_arg_num = conv_quant_arg_->filter_arg_num_;
+    weight_arg_num = static_cast<int>(conv_quant_arg_->filter_arg_num_);
   }
   conv_quant_arg_->real_multiplier_ = reinterpret_cast<double *>(malloc(weight_arg_num * sizeof(double)));
   if (conv_quant_arg_->real_multiplier_ == nullptr) {

@@ -83,7 +83,7 @@ int ReduceBaseCPUKernel::CheckParameters() {
 
   if (num_axes_ == 0) {
     for (size_t i = 0; i < input_rank; i++) {
-      axes_[i] = i;
+      axes_[i] = static_cast<int>(i);
     }
     num_axes_ = static_cast<int>(input_rank);
   }
@@ -112,7 +112,7 @@ int ReduceBaseCPUKernel::Prepare() {
       return RET_ERROR;
     }
     if (axes_tensor->data() == nullptr) {
-      num_axes_ = in_tensors_.at(0)->shape().size();
+      num_axes_ = static_cast<int>(in_tensors_.at(0)->shape().size());
       for (auto i = 0; i < num_axes_; i++) {
         axes_[i] = i;
       }
@@ -161,7 +161,7 @@ void ReduceBaseCPUKernel::CalculateTmpBufferSize() {
     size_t size = 1;
     for (size_t j = 0; j < input_shape.size(); j++) {
       if (axis != static_cast<int>(j)) {
-        size *= input_shape.at(j);
+        size *= static_cast<size_t>(input_shape.at(j));
       }
     }
     buffer_sizes_.emplace_back(size);

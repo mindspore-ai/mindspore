@@ -105,7 +105,8 @@ int TensorListStackCPUKernel::MergeElementShape() {
       }
     }
   }
-  TypeUnknownSize = std::accumulate(output_shape_.begin(), output_shape_.end(), 1LL, std::multiplies<int>());
+  TypeUnknownSize =
+    static_cast<size_t>(std::accumulate(output_shape_.begin(), output_shape_.end(), 1LL, std::multiplies<int>()));
   return RET_OK;
 }
 

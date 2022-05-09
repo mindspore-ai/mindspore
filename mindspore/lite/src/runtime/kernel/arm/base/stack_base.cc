@@ -53,7 +53,8 @@ static inline int GetOuterSize(const std::vector<int> &in_shape, int axis) {
 int StackBaseCPUKernel::ReSize() {
   CHECK_NULL_RETURN(in_tensors_.front());
   auto input0_shape = in_tensors_.front()->shape();
-  axis_ = stack_param_->axis_ < 0 ? stack_param_->axis_ + input0_shape.size() + 1 : stack_param_->axis_;
+  axis_ =
+    stack_param_->axis_ < 0 ? stack_param_->axis_ + static_cast<int>(input0_shape.size()) + 1 : stack_param_->axis_;
   auto input_nums = in_tensors_.size();
   if (input_nums == 1) {
     MS_CHECK_GT(in_tensors_.front()->ElementsNum(), 0, RET_ERROR);
@@ -61,7 +62,7 @@ int StackBaseCPUKernel::ReSize() {
   } else {
     CHECK_LESS_RETURN(input_nums, THIRD_INPUT);
     CHECK_LESS_RETURN(input0_shape.size(), static_cast<size_t>(axis_));
-    copy_size_ = GetCopyNum(input0_shape, axis_, input0_shape.size()) * data_type_size_;
+    copy_size_ = static_cast<size_t>(GetCopyNum(input0_shape, axis_, input0_shape.size())) * data_type_size_;
     outer_size_ = GetOuterSize(input0_shape, axis_);
   }
 
@@ -95,7 +96,7 @@ int StackBaseCPUKernel::StackExecute(int task_id) {
   auto start = task_id * step;
   auto end = MSMIN(start + step, outer_size_);
   auto input_num = in_tensors_.size();
-  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_num * start, copy_size_), RET_ERROR);
+  MS_CHECK_FALSE(INT_MUL_OVERFLOW(input_num * static_cast<size_t>(start), copy_size_), RET_ERROR);
   auto output = reinterpret_cast<char *>(output_data) + input_num * start * copy_size_;
   Stack(all_inputs_, reinterpret_cast<void *>(output), input_num, copy_size_, start, end);
   return RET_OK;
