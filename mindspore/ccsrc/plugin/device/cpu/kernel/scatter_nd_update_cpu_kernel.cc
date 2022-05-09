@@ -140,6 +140,9 @@ bool ScatterUpdateCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &in
     case kNumberTypeInt64:
       LaunchKernel<int64_t>(inputs, outputs);
       break;
+    case kNumberTypeBool:
+      LaunchKernel<bool>(inputs, outputs);
+      break;
     default:
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dtype of 'input_x' must be float16, float32, float64, int32 or int64, but got "
