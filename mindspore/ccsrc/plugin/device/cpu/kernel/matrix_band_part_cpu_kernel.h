@@ -19,16 +19,23 @@
 #include <vector>
 #include <complex>
 #include <utility>
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MatrixBandPartCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixBandPartCpuKernelMod() = default;
   ~MatrixBandPartCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  void ResetResource() noexcept;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -38,7 +45,7 @@ class MatrixBandPartCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
+  template <typename T, typename LU>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   using MatrixBandPartFunc = std::function<bool(MatrixBandPartCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                                 const std::vector<kernel::AddressPtr> &)>;
@@ -46,11 +53,12 @@ class MatrixBandPartCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   MatrixBandPartFunc kernel_func_;
   std::vector<size_t> shapes_{};
   size_t dim_size_{1};
-  size_t matrix_size_{0};
-  size_t out_range_size_{1};
+  size_t output_element_num_{0};
+  size_t output_outer_size_{1};
   size_t m_{1};
   size_t n_{1};
-  TypeId dtype_{kNumberTypeFloat32};
+  size_t lower_{0};
+  size_t upper_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

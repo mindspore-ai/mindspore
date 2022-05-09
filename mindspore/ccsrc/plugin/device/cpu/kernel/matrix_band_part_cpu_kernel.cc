@@ -21,94 +21,165 @@
 
 namespace mindspore {
 namespace kernel {
-void MatrixBandPartCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "MatrixBandPart does not support this kernel data type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  return true;
+}
+
+int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+    return ret;
+  }
+
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(shapes_), LongToSize);
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
-    MS_LOG(EXCEPTION) << "Wrong array shape, A must be a matrix max than 2.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input dims must be a matrix greater than or equal to 2D, "
+                  << "but got " << shapes_.size() << "D.";
+    return KRET_RESIZE_FAILED;
   }
   m_ = shapes_[dim_size_ - kDim2];
   n_ = shapes_[dim_size_ - kDim1];
+  if (m_ == 0 || n_ == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the size of -2 axis or -1 axis can not be 0, "
+                  << "but got m_=" << m_ << ", n_=" << n_;
+    return KRET_RESIZE_FAILED;
+  }
   for (size_t i = 0; i < shapes_.size() - kDim2; i++) {
-    out_range_size_ *= shapes_[i];
+    output_outer_size_ *= shapes_[i];
   }
-  matrix_size_ = out_range_size_ * m_ * n_;
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "MatrixBandPart does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
+  output_element_num_ = output_outer_size_ * m_ * n_;
+  return KRET_OK;
 }
 
-template <typename T>
+void MatrixBandPartCpuKernelMod::ResetResource() noexcept {
+  shapes_.clear();
+  dim_size_ = 1;
+  output_element_num_ = 0;
+  output_outer_size_ = 1;
+  m_ = 1;
+  n_ = 1;
+  lower_ = 0;
+  upper_ = 0;
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
+
+template <typename T, typename LU>
 bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  T *in_value = reinterpret_cast<T *>(inputs[0]->addr);
-  const int64_t *lower = reinterpret_cast<int64_t *>(inputs[1]->addr);
-  const int64_t *upper = reinterpret_cast<int64_t *>(inputs[2]->addr);
-  T *out_value = reinterpret_cast<T *>(outputs[0]->addr);
+  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
+  // Both the lower and upper have done the type check in C++ primitive.
+  const auto lower = reinterpret_cast<LU *>(inputs[1]->addr)[0];
+  const auto upper = reinterpret_cast<LU *>(inputs[2]->addr)[0];
+  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  const size_t l = (*lower < 0 || *lower > static_cast<int64_t>(m_)) ? m_ : static_cast<size_t>(*lower);
-  const size_t u = (*upper < 0 || *upper > static_cast<int64_t>(n_)) ? n_ : static_cast<size_t>(*upper);
-  auto ret_s1 = memset_s(out_value, matrix_size_ * sizeof(T), 0, matrix_size_ * sizeof(T));
-  if (ret_s1 != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output to 0 failed. Error no: " << ret_s1;
-  }
-  if (l >= m_ && u >= n_) {
-    auto ret_s2 = memcpy_s(out_value, matrix_size_ * sizeof(T), in_value, matrix_size_ * sizeof(T));
+  lower_ = (lower < 0 || lower > static_cast<int64_t>(m_)) ? m_ : static_cast<size_t>(lower);
+  upper_ = (upper < 0 || upper > static_cast<int64_t>(n_)) ? n_ : static_cast<size_t>(upper);
+  if (lower_ >= m_ && upper_ >= n_) {
+    auto ret_s2 = memcpy_s(output_ptr, output_element_num_ * sizeof(T), input_ptr, output_element_num_ * sizeof(T));
     if (ret_s2 != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy to output failed. Error no: " << ret_s2;
     }
     return true;
   }
-  size_t diag_len = std::min(m_, l + n_);
-  auto func = [matrix_size = matrix_size_, m = m_, n = n_, diag_len, l, u, in_value, out_value](size_t spos,
-                                                                                                size_t epos) {
-    for (size_t t = spos; t < epos; t++) {
-      const size_t i = t / diag_len;
-      const size_t j = t % diag_len;
-      const size_t s = j < l ? 0 : j - l;
-      // When i = n - u, end is n -1, because end pos is start from 0
-      const size_t e = j >= n - u ? n - 1 : j + u;
-      const size_t offset = i * m * n + j * n;
-      auto ret_s3 =
-        memcpy_s(out_value + offset + s, matrix_size * sizeof(T), in_value + offset + s, (e - s + 1) * sizeof(T));
-      if (ret_s3 != EOK) {
-        MS_LOG(EXCEPTION) << "memcpy in loop failed. Error no: " << ret_s3;
+  auto ret_s1 = memset_s(output_ptr, output_element_num_ * sizeof(T), 0, output_element_num_ * sizeof(T));
+  if (ret_s1 != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output to 0 failed. Error no: " << ret_s1;
+  }
+  // The non_zero_len is the length of the non zero element along the -2 axis, so it can skip the position with 0.
+  size_t non_zero_len = std::min(m_, lower_ + n_);
+  int errno_t = EOK;
+  auto task = [this, &errno_t, non_zero_len, input_ptr, output_ptr](size_t start, size_t end) {
+    for (size_t t = start; t < end; t++) {
+      // The non_zero_len can not be 0.
+      const auto i = t / non_zero_len;
+      const auto j = t % non_zero_len;
+      const auto s = j < lower_ ? 0 : j - lower_;
+      // When j + upper_ >= n_, the e is n - 1.
+      const auto e = j >= n_ - upper_ ? n_ - 1 : j + upper_;
+      const auto offset = i * m_ * n_ + j * n_;
+      errno_t = memcpy_s(output_ptr + offset + s, output_element_num_ * sizeof(T), input_ptr + offset + s,
+                         (e - s + 1) * sizeof(T));
+      if (errno_t != EOK) {
+        // In multi-thread, it can not throw exception.
+        break;
       }
     }
   };
-  ParallelLaunch(func, out_range_size_ * diag_len);
+  ParallelLaunchAutoSearch(task, output_outer_size_ * non_zero_len, this, &parallel_search_info_, pool_);
+  if (errno_t != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy in loop failed. Error no: " << errno_t;
+  }
   return true;
 }
 
 std::vector<std::pair<KernelAttr, MatrixBandPartCpuKernelMod::MatrixBandPartFunc>>
   MatrixBandPartCpuKernelMod::func_list_ = {{KernelAttr()
                                                .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeFloat32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<float, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeFloat64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<double, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt32)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddOutputAttr(kNumberTypeInt32),
-                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t>},
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t, int64_t>},
                                             {KernelAttr()
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddOutputAttr(kNumberTypeInt64),
-                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t>},
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t, int64_t>},
                                             {KernelAttr()
                                                .AddInputAttr(kNumberTypeFloat32)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddOutputAttr(kNumberTypeFloat32),
-                                             &MatrixBandPartCpuKernelMod::LaunchKernel<float>},
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<float, int64_t>},
                                             {KernelAttr()
                                                .AddInputAttr(kNumberTypeFloat64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddOutputAttr(kNumberTypeFloat64),
-                                             &MatrixBandPartCpuKernelMod::LaunchKernel<double>}};
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<double, int64_t>}};
 
 std::vector<KernelAttr> MatrixBandPartCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

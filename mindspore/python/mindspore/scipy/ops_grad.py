@@ -14,7 +14,7 @@
 # ============================================================================
 """Grad implementation of operators for scipy submodule"""
 from .. import numpy as mnp
-from .ops import Eigh, Eig, Cholesky, MatrixBandPart, SolveTriangular
+from .ops import Eigh, Eig, Cholesky, SolveTriangular
 from .utils_const import _raise_type_error
 from .ops_wrapper import matrix_set_diag
 from ..ops import operations as P
@@ -25,7 +25,6 @@ from ..common import dtype as mstype
 _matmul = P.MatMul(False, False)
 _real = P.Real()
 _conj = P.Conj()
-_matrix_band_part = MatrixBandPart()
 
 
 def _compute_f(w, epsilon=1E-20):
@@ -66,13 +65,13 @@ def get_bprop_cholesky(self):
     def bprop(a, out, dout):
         l = out
         if not clean:
-            l = _matrix_band_part(out, -1, 0)
+            l = F.matrix_band_part(out, -1, 0)
         eyes = _batch_eyes(l)
         l_inverse = solve_triangular(l, eyes)
         dout_middle = matmul(_adjoint(l), dout)
         middle_diag = 0.5 * dout_middle.diagonal(0, -2, -1)
         dout_middle = matrix_set_diag(dout_middle, middle_diag)
-        dout_middle = _matrix_band_part(dout_middle, -1, 0)
+        dout_middle = F.matrix_band_part(dout_middle, -1, 0)
         grad_a = matmul(matmul(_adjoint(l_inverse), dout_middle), l_inverse)
         grad_a = 0.5 * (grad_a + _adjoint(grad_a))
         return (grad_a,)
@@ -131,7 +130,7 @@ def get_bprpo_eigh(self):
         # The forward implementation only focus on lower part or upper part,
         # so we only retain the corresponding part.
         grad_a = grad_a + _adjoint(grad_a)
-        grad_a = _matrix_band_part(grad_a, 0 - lower, lower - 1)
+        grad_a = F.matrix_band_part(grad_a, 0 - lower, lower - 1)
         middle_diag = 0.5 * grad_a.diagonal(0, -2, -1)
         grad_a = matrix_set_diag(grad_a, middle_diag)
         return (grad_a,)
@@ -160,7 +159,7 @@ def get_bprpo_trsm(self):
         else:
             grad_a = _matmul(x_align, _adjoint(grad_b_align))
 
-        grad_a = -1 * _matrix_band_part(grad_a, 0 - lower, lower - 1)
+        grad_a = -1 * F.matrix_band_part(grad_a, 0 - lower, lower - 1)
         if is_unit_diagonal:
             grad_a = matrix_set_diag(grad_a, F.fill(grad_a.dtype, (row_size,), 0))
         return grad_a, grad_b
