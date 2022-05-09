@@ -241,8 +241,12 @@ class MS_API ComplexNorm final : public TensorTransform {
 class MS_API ComputeDeltas final : public TensorTransform {
  public:
   /// \brief Construct a new Compute Deltas object.
+  /// \f[
+  /// d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
+  /// \f]
   /// \param[in] win_length The window length used for computing delta, must be no less than 3 (Default: 5).
-  /// \param[in] pad_mode Mode parameter passed to padding (Default: BorderType::kEdge).
+  /// \param[in] pad_mode Padding mode. Can be one of BorderType::kConstant, BorderType::kEdge,
+  ///     BorderType::kReflect or BorderType::kSymmetric (Default: BorderType::kEdge).
   explicit ComputeDeltas(int32_t win_length = 5, BorderType pad_mode = BorderType::kEdge);
 
   /// \brief Destructor.

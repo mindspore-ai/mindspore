@@ -492,8 +492,11 @@ DE_C_BORDER_TYPE = {
 
 
 class ComputeDeltas(AudioTensorOperation):
-    """
+    r"""
     Compute delta coefficients of a spectrogram.
+
+    .. math::
+        d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}
 
     Args:
         win_length (int): The window length used for computing delta, must be no less than 3 (default=5).
