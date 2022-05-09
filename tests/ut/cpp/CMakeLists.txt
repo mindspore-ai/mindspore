@@ -69,11 +69,6 @@ if(ENABLE_MINDDATA)
             ./vm/*.cc
             ./ps/*.cc
             ./fl/*.cc
-            ./distributed/persistent/*.cc
-            ./distributed/rpc/tcp/*.cc
-            ./distributed/cluster/*.cc
-            ./distributed/cluster/topology/*.cc
-            ./distributed/recovery/*.cc
             ./cxx_api/*.cc
             ./tbe/*.cc
             ./mindapi/*.cc
@@ -84,6 +79,15 @@ if(ENABLE_MINDDATA)
         file(GLOB_RECURSE UT_SRCS_DEBUG RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
                 ./debug/*.cc)
         list(APPEND UT_SRCS ${UT_SRCS_DEBUG})
+    endif()
+    if(NOT ENABLE_CPU OR WIN32 OR APPLE)
+        file(GLOB_RECURSE UT_DISTRIBUTED_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+                ./distributed/persistent/*.cc
+                ./distributed/rpc/tcp/*.cc
+                ./distributed/cluster/*.cc
+                ./distributed/cluster/topology/*.cc
+                ./distributed/recovery/*.cc)
+        list(APPEND UT_SRCS ${UT_DISTRIBUTED_SRCS})
     endif()
     if(NOT ENABLE_PYTHON)
         set(PYTHON_RELATED_SRCS
