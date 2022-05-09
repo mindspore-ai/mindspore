@@ -153,6 +153,24 @@ Seed
     mindspore.set_seed
     mindspore.get_seed
 
+Context
+--------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.get_auto_parallel_context
+    mindspore.get_context
+    mindspore.get_ps_context
+    mindspore.reset_auto_parallel_context
+    mindspore.reset_ps_context
+    mindspore.set_auto_parallel_context
+    mindspore.set_context
+    mindspore.set_ps_context
+    mindspore.ParallelMode
+
 Model
 -----
 
@@ -267,4 +285,3 @@ Memory Recycle
     :template: classtemplate.rst
 
     mindspore.ms_memory_recycle
-    
