@@ -30,8 +30,13 @@ using mindspore::schema::PrimitiveType_SGD;
 namespace mindspore::kernel {
 int SgdCPUKernel::ReSize() { return RET_OK; }
 
-int DoSgd(float *weight, float *accumulate, const float *gradient, float learning_rate, float dampening, float moment,
-          bool nesterov, int start, int end) {
+int DoSgd(float *weight, float *accumulate, float *gradient, float learning_rate, float dampening, float moment,
+          bool nesterov, float weight_decay, int start, int end) {
+  if (weight_decay > 0.f) {
+    for (int i = start; i < end; ++i) {
+      gradient[i] += weight[i] * weight_decay;
+    }
+  }
   if (moment > 0.f) {
     if (nesterov) {
       for (int i = start; i < end; ++i) {
@@ -53,18 +58,29 @@ int DoSgd(float *weight, float *accumulate, const float *gradient, float learnin
 }
 
 int DoSgdInit(float *weight, float *accumulate, float *gradient, float *stat, float learning_rate, float moment,
-              bool nesterov, int start, int end) {
+              bool nesterov, float weight_decay, int start, int end) {
   std::copy(&(gradient[start]), &(gradient[end]), &(accumulate[start]));
-  if (nesterov) {
+  if (weight_decay > 0.f) {
     for (int i = start; i < end; ++i) {
-      weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
+      accumulate[i] += weight[i] * weight_decay;
     }
+  }
+  if (moment > 0.f) {
+    if (nesterov) {
+      for (int i = start; i < end; ++i) {
+        weight[i] -= (accumulate[i] * moment + accumulate[i]) * learning_rate;
+      }
+    } else {
+      for (int i = start; i < end; ++i) {
+        weight[i] -= accumulate[i] * learning_rate;
+      }
+    }
+    *stat = 0.0f;
   } else {
     for (int i = start; i < end; ++i) {
       weight[i] -= accumulate[i] * learning_rate;
     }
   }
-  *stat = 0.0f;
   return RET_OK;
 }
 
@@ -86,8 +102,8 @@ int SgdCPUKernel::DoExecute(int task_id) {
   int start = stride * task_id;
   int end = start + count;
 
-  DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_, start,
-        end);
+  DoSgd(weight, accumulate, gradient, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
+        sgd_param_->weight_decay_, start, end);
 
   return RET_OK;
 }
@@ -113,7 +129,8 @@ int SgdCPUKernel::ExecuteInit(int task_id) {
   int end = start + count;
 
   if (count > 0) {
-    DoSgdInit(weight, accumulate, gradient, stat, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
+    DoSgdInit(weight, accumulate, gradient, stat, learning_rate, moment, sgd_param_->use_nesterov_,
+              sgd_param_->weight_decay_, start, end);
   }
   return RET_OK;
 }
@@ -216,9 +233,10 @@ int SgdCPUKernel::OptimizerStep() {
     size_t end = length;
     if (*stat > 0) {
       DoSgd(weight, accumulate, grad_sum_, learning_rate, sgd_param_->dampening_, moment, sgd_param_->use_nesterov_,
-            start, end);
+            sgd_param_->weight_decay_, start, end);
     } else {
-      DoSgdInit(weight, accumulate, grad_sum_, stat, learning_rate, moment, sgd_param_->use_nesterov_, start, end);
+      DoSgdInit(weight, accumulate, grad_sum_, stat, learning_rate, moment, sgd_param_->use_nesterov_,
+                sgd_param_->weight_decay_, start, end);
     }
     std::fill(grad_sum_, grad_sum_ + length, 0);
     OptimizerKernel::OptimizerStep();
