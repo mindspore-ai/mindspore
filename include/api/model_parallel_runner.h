@@ -22,10 +22,38 @@
 #include "include/api/status.h"
 #include "include/api/context.h"
 namespace mindspore {
-struct RunnerConfig {
-  std::shared_ptr<Context> context = nullptr;
-  int workers_num = 0;
+/// \brief The RunnerConfig class  is used to store environment variables during execution
+/// management.
+class RunnerConfig {
+ public:
+  struct Data;
+  RunnerConfig();
+  ~RunnerConfig() = default;
+
+  /// \brief Set the number of workers at runtime. Only valid for ModelParallelRunner.
+  ///
+  /// \param[in] workers_num the number of workers at runtime.
+  void SetWorkersNum(int32_t workers_num);
+
+  /// \brief Set the context at runtime. Only valid for ModelParallelRunner.
+  ///
+  /// \param[in] context store environment variables at runtime.
+  void SetContext(const std::shared_ptr<Context> &context);
+
+  /// \brief Get the current operators parallel workers number setting. Only valid for ModelParallelRunner.
+  ///
+  /// \return The current operators parallel workers number setting.
+  int32_t GetWorkersNum() const;
+
+  /// \brief Get the current context setting. Only valid for ModelParallelRunner.
+  ///
+  /// \return The current operators context setting.
+  std::shared_ptr<Context> GetContext() const;
+
+ private:
+  std::shared_ptr<Data> data_ = nullptr;
 };
+
 class ModelPool;
 
 /// \brief The ModelParallelRunner class is used to define a MindSpore ModelParallelRunner, facilitating Model
