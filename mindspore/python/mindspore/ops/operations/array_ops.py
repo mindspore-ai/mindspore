@@ -108,7 +108,7 @@ class _ScatterOpDynamic(PrimitiveWithCheck):
         self._check_scatter_shape(x_shape, indices_shape, updates_shape, self.name)
 
     def check_dtype(self, x_dtype, indices_dtype, updates_dtype):
-        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
         args = {"x": x_dtype, "updates": updates_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
 
@@ -4130,7 +4130,7 @@ class ScatterUpdate(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index of input tensor. With int32 data type.
+        - **indices** (Tensor) - The index of input tensor. With int32 or int64 data type.
           If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and updates.shape = indices.shape + input_x.shape[1:].
@@ -4140,7 +4140,7 @@ class ScatterUpdate(_ScatterOpDynamic):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
@@ -4259,7 +4259,8 @@ class ScatterMax(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32.
+        - **indices** (Tensor) - The index to do max operation whose data type must be mindspore.int32 or
+          mindspore.int64.
         - **updates** (Tensor) - The tensor that performs the maximum operation with `input_x`,
           the data type is the same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
 
@@ -4268,7 +4269,7 @@ class ScatterMax(_ScatterOpDynamic):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -4296,7 +4297,7 @@ class ScatterMin(_ScatterOpDynamic):
     Using given values to update tensor value through the min operation, along with the input indices.
     This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
 
-    for each `i, ..., j` in `indices.shape`:
+    for each :math:`i, ..., j` in `indices.shape`:
 
     .. math::
 
@@ -4313,17 +4314,18 @@ class ScatterMin(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
+          mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
-          the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+          the data type is same as `input_x`, the shape is `indices.shape + input_x.shape[1:]`.
 
     Outputs:
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
-        ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
+        TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
 
@@ -4371,7 +4373,8 @@ class ScatterAdd(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
+          mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
 
@@ -4380,7 +4383,7 @@ class ScatterAdd(_ScatterOpDynamic):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -4481,7 +4484,8 @@ class ScatterSub(_ScatterOpDynamic):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
+          mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
@@ -4490,7 +4494,7 @@ class ScatterSub(_ScatterOpDynamic):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32.
+        TypeError: If `indices` is not an int32 or an int64.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
