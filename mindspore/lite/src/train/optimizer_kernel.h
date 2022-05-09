@@ -70,7 +70,7 @@ class OptimizerKernel : public LiteKernel {
     indices.push_back(lr_idx_);
     for (size_t ix = 0; ix < indices.size(); ix++) {
       auto param = in_tensors_.at(indices[ix]);
-      if (param->data() == nullptr) {
+      if (!param->IsConst()) {
         continue;
       }
       params.push_back(param);
