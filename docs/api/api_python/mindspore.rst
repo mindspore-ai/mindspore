@@ -145,7 +145,7 @@ mindspore
 .. mscnautosummary::
     :toctree: mindspore
 
-    mindspore.profiler
+    mindspore.Profiler
     mindspore.set_dump
 
 内存回收
