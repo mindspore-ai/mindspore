@@ -895,22 +895,20 @@ class Validator:
     @staticmethod
     def check_csr_tensor_shape(indptr_shp, indices_shp, values_shp, csr_shp):
         """Checks input tensors' shapes for CSRTensor."""
-        if len(csr_shp) != 2:
-            raise ValueError(f"For CSRTensor, currently only supports 2-dimensional csr tensor, "
-                             f"but got shape length={len(csr_shp)}.")
         shape_size = 1
+        val_shp_size = 1
         for item in csr_shp:
             if item <= 0:
                 raise ValueError(f"For CSRTensor, the element of shape must be positive, but got {item}")
             if not isinstance(item, int):
                 raise TypeError(f"For CSRTensor, the element type of shape must be int, but got {type(item)}")
             shape_size *= item
-        if shape_size < values_shp[0]:
-            raise ValueError(f"For CSRTensor, shape total size: {shape_size} is too small"
-                             f" to hold {values_shp[0]} non-zero values.")
-        if len(values_shp) != 1:
-            raise ValueError(f"For CSRTensor, values must be a 1-dimensional tensor, "
-                             f"but got a {len(values_shp)} dimension tensor.")
+        for item in values_shp:
+            if item <= 0:
+                raise ValueError(f"The element of shape must be positive, but got {item}")
+            val_shp_size *= item
+        if shape_size < val_shp_size:
+            raise ValueError(f"Shape total size: {shape_size} is too small to hold {val_shp_size} non-zero values.")
         if len(indices_shp) != 1:
             raise ValueError(f"For CSRTensor, indices must be a 1-dimensional tensor, "
                              f"but got a {len(indices_shp)} dimension tensor.")
@@ -924,6 +922,10 @@ class Validator:
             err_msg1 = "For CSRTensor, indices and values must equal in their shape, "
             err_msg2 = f"but got indices shape: {indices_shp[0]}, values shape: {values_shp[0]}."
             raise ValueError(err_msg1 + err_msg2)
+        if values_shp[1: ] != csr_shp[2: ]:
+            raise ValueError(f"csr_tensor's shape[1: ] must be equal to  value's shape[2: ],"\
+                            f"but csr_tensor's shape[1: ] got: {values_shp[1: ]} and value's shape[2: ]"\
+                            f"got: {csr_shp[2: ]}")
 
     @staticmethod
     def check_csr_tensor_dtype(indptr_dtype, indices_dtype):

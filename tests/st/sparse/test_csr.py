@@ -259,6 +259,71 @@ def test_csr_tensor_in_while_cpu():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_batch_csr_ops():
+    """
+    Feature: Test Batch CSR-related Ops.
+    Description: Test CSRReduceSum, CSRMul, CSRGather.
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+    csr_reducesum = _csr_ops.CSRReduceSum()
+    csr_gather = _csr_ops.CSRGather()
+
+    indptr = Tensor([0, 1, 1, 2, 2], dtype=mstype.int32)
+    indices = Tensor([0, 1], dtype=mstype.int32)
+    values = Tensor([[2, 1, 3], [2, 1, 3]], dtype=mstype.float32)
+    dense_shape = (4, 2, 3)
+    dense_tensor = Tensor(
+        [[[1, 1, 1], [2, 2, 2]], [[1, 1, 1], [2, 2, 2]], [[1, 1, 1], [2, 2, 2]], [[1, 1, 1], [2, 2, 2]]],
+        dtype=mstype.float32)
+    csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
+
+    def test_ops_pynative_gather():
+        dense = csr_gather(indptr, indices, dense_tensor, dense_shape)
+        return dense
+
+    def test_ops_pynative_reducesum():
+        dense = csr_reducesum(csr_tensor, 1)
+        return dense
+
+    def test_ops_pynative_sparse_elemwise():
+        sparse1 = csr_tensor * dense_tensor
+        sparse2 = csr_tensor / dense_tensor
+        return sparse1, sparse2
+
+    res_reducesum = test_ops_pynative_reducesum()
+    test_ops_graph_reducesum = ms_function(test_ops_pynative_reducesum)
+    graph_res_reducesum = test_ops_graph_reducesum()
+    expect1 = np.array([[2., 1., 3.]], dtype=np.float32)
+    expect2 = np.array([[2., 1., 3.]], dtype=np.float32)
+    assert np.allclose(res_reducesum[0].asnumpy(), expect1)
+    assert np.allclose(res_reducesum[2].asnumpy(), expect2)
+    assert np.allclose(graph_res_reducesum[0].asnumpy(), expect1)
+    assert np.allclose(graph_res_reducesum[2].asnumpy(), expect2)
+
+    res_elemwise = test_ops_pynative_sparse_elemwise()
+    test_ops_graph_elemwise = ms_function(test_ops_pynative_sparse_elemwise)
+    graph_res_elemwise = test_ops_graph_elemwise()
+    expect3 = np.array([[2., 1., 3.], [4., 2., 6.]], dtype=np.float32)
+    expect4 = np.array([[2., 1., 3.], [1., 0.5, 1.5]], dtype=np.float32)
+    assert np.allclose(res_elemwise[0].values.asnumpy(), expect3)
+    assert np.allclose(res_elemwise[1].values.asnumpy(), expect4)
+    assert np.allclose(graph_res_elemwise[0].values.asnumpy(), expect3)
+    assert np.allclose(graph_res_elemwise[1].values.asnumpy(), expect4)
+
+    expect5 = np.array([1., 1.], dtype=np.float32)
+    res_gather = test_ops_pynative_gather()
+    test_ops_graph_gather = ms_function(test_ops_pynative_gather)
+    graph_res_gather = test_ops_graph_gather()
+    assert np.allclose(res_gather.asnumpy(), expect5)
+    assert np.allclose(graph_res_gather.asnumpy(), expect5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_csr_ops():
     """
     Feature: Test CSR-related Ops.

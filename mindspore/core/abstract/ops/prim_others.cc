@@ -504,7 +504,6 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
                                       const AbstractBasePtrList &args_spec_list) {
   // Inputs: a sparse tensor and an axis.
   constexpr auto kCSRReduceSumInputsNum = 2;
-  constexpr auto kCSRReduceSumShapeSize = 2;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kCSRReduceSumInputsNum);
   auto sparse = CheckArg<AbstractCSRTensor>(op_name, args_spec_list, 0);
@@ -522,17 +521,14 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
   CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
 
   auto sparse_shape = sparse->shape()->shape();
-  if (sparse_shape.size() != kCSRReduceSumShapeSize) {
-    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRReduceSumShapeSize << "-D inputs!"
-                             << "but sparse tensor has " << sparse_shape.size() << " dimensions.";
-  }
   ShapeVector out_shape = sparse_shape;
   MS_EXCEPTION_IF_NULL(axis->BuildValue());
   if (axis->BuildValue()->isa<Int32Imm>() || axis->BuildValue()->isa<Int64Imm>()) {
     int64_t axis_value = GetValue<int64_t>(axis->BuildValue());
     int64_t dim = static_cast<int64_t>(sparse_shape.size());
-    if (axis_value < -dim || axis_value >= dim || (axis_value != 1 && axis_value != -1)) {
-      MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be -1 or 1. But got `axis`: " << axis_value;
+    if (axis_value != 1 && axis_value != 1 - dim) {
+      MS_EXCEPTION(ValueError) << "For CSRReduceSum, `axis` should be 1 or 1-dim. But got `axis`: " << axis_value
+                               << "and `1- dim`: " << 1 - dim;
     }
     if (axis_value < 0) {
       axis_value += dim;
@@ -559,7 +555,6 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
 AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
   // Inputs: the indptr and indices of a sparse csr tensor, a dense tensor, and the shape of the sparse tensor.
-  constexpr auto kCSRShapeSize = 2;
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, kSizeFour);
   auto indptr = CheckArg<AbstractTensor>(op_name, args_spec_list, kIndexZero);
@@ -573,11 +568,6 @@ AbstractBasePtr InferImplCSRGather(const AnalysisEnginePtr &, const PrimitivePtr
 
   CheckSparseIndicesDtypeInt32(indptr->element()->BuildType(), "Indptr");
   CheckSparseIndicesDtypeInt32(indices->element()->BuildType(), "Indices");
-
-  if (sparse_shape->size() != kCSRShapeSize) {
-    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRShapeSize << "-D inputs!"
-                             << "But sparse tensor has " << sparse_shape->size() << " dimensions.";
-  }
 
   auto shape_value = sparse_shape->BuildValue()->cast<ValueTuplePtr>();
   MS_EXCEPTION_IF_NULL(shape_value);
@@ -673,8 +663,6 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
   CheckSparseShape(indices_shp.size(), kSizeOne, "Indices");
 
   auto values_shp = values->shape()->shape();
-  CheckSparseShape(values_shp.size(), kSizeOne, "Values");
-
   if (indices_shp[kIndexZero] != values_shp[kIndexZero]) {
     MS_EXCEPTION(ValueError) << "Indices and values must have same size, but got: values length: "
                              << values_shp[kIndexZero] << ", indices length " << indices_shp[kIndexZero];
@@ -688,10 +676,6 @@ AbstractBasePtr InferImplMakeCSRTensor(const AnalysisEnginePtr &, const Primitiv
     auto elem = GetValue<int64_t>(e);
     return elem;
   });
-  if (shape_vec.size() != kSizeTwo) {
-    MS_EXCEPTION(ValueError) << "Currently only supports 2-dimensional csr tensor, but got shape length = "
-                             << shape_vec.size() << ".";
-  }
   if (values_shp.size() + 1 != shape_vec.size()) {
     MS_EXCEPTION(ValueError) << "Values' dimension should equal to csr_tensor's dimension - 1, but got"
                              << "Values' dimension: " << values_shp.size()
