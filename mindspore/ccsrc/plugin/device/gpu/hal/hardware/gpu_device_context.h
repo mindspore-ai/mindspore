@@ -41,16 +41,13 @@ class GPUDeviceContext : public DeviceContext {
 
   bool BindDeviceToCurrentThread() const override;
 
-  bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
-  void FreeMemory(DeviceAddress *const &address) const override;
-  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
-  void FreeMemory(void *const ptr) const override;
+  void FreeMemory(void *ptr) const override;
+  std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
-  DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
 
   // Optimize the kernel graph for graph mode.
   void OptimizeGraph(const KernelGraphPtr &graph) const override;

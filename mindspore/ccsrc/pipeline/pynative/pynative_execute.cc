@@ -881,7 +881,7 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
     pre_tensor->set_data_type(new_tensor->data_type());
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(new_tensor->device_address());
     MS_EXCEPTION_IF_NULL(device_address);
-    if (device_target != kCPUDevice && device_address->DeviceType() != device::DeviceAddressType::kCPU) {
+    if (device_target != kCPUDevice && device_address->GetDeviceType() != device::DeviceType::kCPU) {
       pre_tensor->set_device_address(new_tensor->device_address());
       continue;
     }

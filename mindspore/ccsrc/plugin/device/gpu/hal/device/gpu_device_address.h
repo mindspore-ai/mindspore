@@ -51,7 +51,7 @@ class GPUDeviceAddress : public DeviceAddress {
   void ClearDeviceMemory() override;
   void set_status(DeviceAddressStatus status) { status_ = status; }
   DeviceAddressStatus status() const { return status_; }
-  DeviceAddressType DeviceType() const override { return DeviceAddressType::kGPU; }
+  DeviceType GetDeviceType() const override { return DeviceType::kGPU; }
 
 #ifdef ENABLE_DEBUGGER
   bool LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,

@@ -25,6 +25,7 @@
 #include "ir/dtype.h"
 #include "ir/device_sync.h"
 #include "utils/shape_utils.h"
+#include "runtime/hardware/device_type.h"
 
 namespace mindspore {
 namespace device {
@@ -58,11 +59,6 @@ namespace mindspore {
 namespace device {
 using KernelWithIndex = std::pair<AnfNodePtr, size_t>;
 enum class DeviceAddressStatus { kInDevice, kInHost, kInDeviceToHost, kInHostToDevice };
-enum class DeviceAddressType { kUnknown, kCPU, kAscend, kGPU };
-static const std::map<DeviceAddressType, std::string> kDeviceTypeToName = {{DeviceAddressType::kUnknown, "Unknown"},
-                                                                           {DeviceAddressType::kAscend, "Ascend"},
-                                                                           {DeviceAddressType::kCPU, "CPU"},
-                                                                           {DeviceAddressType::kGPU, "GPU"}};
 
 class DeviceAddress : public mindspore::DeviceSync {
  public:
@@ -106,7 +102,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   void set_from_persistent_mem(bool from_persistent_mem) { from_persistent_mem_ = from_persistent_mem; }
   virtual void set_status(DeviceAddressStatus status) {}
   virtual DeviceAddressStatus status() const { return DeviceAddressStatus::kInDevice; }
-  virtual DeviceAddressType DeviceType() const { return DeviceAddressType::kUnknown; }
+  virtual DeviceType GetDeviceType() const { return DeviceType::kUnknown; }
   void *GetMutablePtr() const override { return ptr_; }
   std::string device_name() const { return device_name_; }
   uint32_t device_id() const { return device_id_; }

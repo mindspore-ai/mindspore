@@ -48,14 +48,14 @@ namespace runtime {
 namespace {
 // Whether device address of anf node is valid and device address type
 // is consistent with device type, for example, device address type
-// DeviceAddressType::kGPU should be used on GPU device
+// DeviceType::kGPU should be used on GPU device
 bool NodeDeviceAddressExist(const DeviceContext *device_context, const AnfNodePtr &kernel, size_t index) {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(device_context);
   if (AnfAlgo::OutputAddrExist(kernel, index)) {
     const auto &address = AnfAlgo::GetOutputAddr(kernel, index, false);
     MS_EXCEPTION_IF_NULL(address);
-    return address->DeviceType() == device_context->GetDeviceAddressType();
+    return address->GetDeviceType() == device_context->GetDeviceType();
   }
   return false;
 }
@@ -160,7 +160,7 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
       return;
     }
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    if (output_address != nullptr && output_address->DeviceType() == device_context->GetDeviceAddressType()) {
+    if (output_address != nullptr && output_address->GetDeviceType() == device_context->GetDeviceType()) {
       // The input of PyNative bprop graph is ValueNode.
       // Setting the address to the ValueNode will lead to memory leak.
       if (!graph->is_bprop()) {
@@ -413,7 +413,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   MS_EXCEPTION_IF_NULL(segment);
   MS_LOG(INFO) << "Status record: start compile graph.";
   auto nodes = segment->nodes_;
-  auto device_terget = device_context->GetDeviceAddressType();
+  auto device_terget = device_context->GetDeviceType();
   // Generate kernel graph.
   KernelGraphPtr graph = session_->ConstructKernelGraph(nodes, outputs, device_terget);
   MS_EXCEPTION_IF_NULL(graph);
@@ -470,7 +470,7 @@ GraphId GraphCompiler::CompileGraph(const FuncGraphPtr &func_graph, const Device
   MS_LOG(INFO) << "Status record: start compile graph.";
   // Generate kernel graph.
   std::vector<KernelGraphPtr> all_graphs;
-  auto device_target = device_context->GetDeviceAddressType();
+  auto device_target = device_context->GetDeviceType();
   KernelGraphPtr root_graph = session_->ConstructKernelGraph(func_graph, &all_graphs, device_target);
   MS_EXCEPTION_IF_NULL(root_graph);
   for (const auto &graph : all_graphs) {
@@ -588,7 +588,7 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   MS_EXCEPTION_IF_NULL(session_);
   KernelGraphPtr graph =
     session_->ConstructSingleOpGraph(op_run_info, op_run_info.input_tensors, op_run_info.tensor_mask,
-                                     device_context->GetDeviceAddressType() == device::DeviceAddressType::kAscend);
+                                     device_context->GetDeviceType() == device::DeviceType::kAscend);
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
 

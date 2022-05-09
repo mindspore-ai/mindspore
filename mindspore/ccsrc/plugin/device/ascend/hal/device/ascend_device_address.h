@@ -54,7 +54,7 @@ class AscendDeviceAddress : public DeviceAddress {
                            const std::string &format) const override;
   bool SyncDeviceToDevice(const DeviceSync *src_device_addr) const override;
   void ClearDeviceMemory() override;
-  DeviceAddressType DeviceType() const override { return DeviceAddressType::kAscend; }
+  DeviceType GetDeviceType() const override { return DeviceType::kAscend; }
 #ifndef ENABLE_SECURITY
   bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                      TypeId host_type, bool trans_flag) const override;

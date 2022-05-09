@@ -173,17 +173,17 @@ bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_
   // Exist the size alignment in some device, so get the min device size.
   size_t copy_size = std::min(src_device_tensor->GetSize(), dst_device_tensor->GetSize());
 
-  if (dst_device_tensor->DeviceType() == src_device_tensor->DeviceType()) {
+  if (dst_device_tensor->GetDeviceType() == src_device_tensor->GetDeviceType()) {
     return dst_device_tensor->SyncDeviceToDevice(src_device_tensor);
-  } else if (src_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
+  } else if (src_device_tensor->GetDeviceType() == device::DeviceType::kCPU) {
     // CPU device tensor copy to other device tensor.
     return dst_device_tensor->SyncHostToDevice(copy_size, src_device_tensor->GetPtr());
-  } else if (dst_device_tensor->DeviceType() == device::DeviceAddressType::kCPU) {
+  } else if (dst_device_tensor->GetDeviceType() == device::DeviceType::kCPU) {
     // Other device tensor copy to CPU device tensor.
     return src_device_tensor->SyncDeviceToHost(copy_size, dst_device_tensor->GetMutablePtr());
   } else {
-    MS_LOG(ERROR) << "Invalid device type, src device type: " << src_device_tensor->DeviceType()
-                  << ", dst device type: " << dst_device_tensor->DeviceType();
+    MS_LOG(ERROR) << "Invalid device type, src device type: " << src_device_tensor->GetDeviceType()
+                  << ", dst device type: " << dst_device_tensor->GetDeviceType();
     return false;
   }
 }
@@ -207,7 +207,7 @@ void UpdateRefCount(const AnfNodePtr &node, size_t output_idx, bool is_max_ref_c
 void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(device_tensor);
   // The device context may be not accurate in the control flow scene, so need fetch by device name and device id.
-  if ((device_context == nullptr) || (device_context->GetDeviceAddressType() != device_tensor->DeviceType())) {
+  if ((device_context == nullptr) || (device_context->GetDeviceType() != device_tensor->GetDeviceType())) {
     const auto &new_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {device_tensor->device_name(), device_tensor->device_id()});
     MS_EXCEPTION_IF_NULL(new_device_context);

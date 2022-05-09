@@ -429,7 +429,7 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
       // In order to avoid the device ptr_ being hold by the input tensor and the output tensor, the tensor address
       // cannot be directly set to the passthrough input node. The 'ptr_' of passthrough input node is re-malloced and
       // device to device copy by input tensor address.
-      if ((tensor_address != nullptr) && (tensor_address->DeviceType() == device_address->DeviceType()) &&
+      if ((tensor_address != nullptr) && (tensor_address->GetDeviceType() == device_address->GetDeviceType()) &&
           !device_address->is_ptr_persisted() && tensor_address->format() == device_address->format() &&
           !passthrough_inp_node) {
         AnfAlgo::SetOutputAddr(tensor_address, 0, input_node.get());
@@ -482,7 +482,7 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
 
       auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
       if (host_tensor_address != nullptr) {
-        if (host_tensor_address->DeviceType() != device_context->GetDeviceAddressType()) {
+        if (host_tensor_address->GetDeviceType() != device_context->GetDeviceType()) {
           input_tensor->data_sync();
           input_tensor->set_device_address(nullptr);
         } else {
@@ -664,9 +664,9 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
   if (device_tensors.size() > 1) {
     auto another_device_tensor = (device_tensors[0] == host_tensor_address) ? device_tensors[1] : device_tensors[0];
     MS_EXCEPTION_IF_NULL(another_device_tensor);
-    auto another_device_type = another_device_tensor->DeviceType();
+    auto another_device_name = device::GetDeviceNameByType(another_device_tensor->GetDeviceType());
     const auto &another_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {device::kDeviceTypeToName.at(another_device_type), device_context->device_context_key().device_id_});
+      {another_device_name, device_context->device_context_key().device_id_});
     MS_EXCEPTION_IF_NULL(another_device_context);
     auto type = backend_node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(backend_node->fullname_with_scope(), type, 0);
@@ -678,7 +678,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
     }
 
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->fullname_with_scope()
-                 << ", device type:" << another_device_type;
+                 << ", device name:" << another_device_name;
     if (!Copy(another_device_tensor.get(), host_tensor_address.get())) {
       std::string error_info = "Sync data error.";
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
@@ -707,7 +707,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     if (host_tensor_address == nullptr) {
       // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
       if ((strategy_ == GraphExecutionStrategy::kStep) ||
-          (device_tensor->DeviceType() != device_context->GetDeviceAddressType())) {
+          (device_tensor->GetDeviceType() != device_context->GetDeviceType())) {
         host_tensor_address =
           device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
                                               device_tensor->type_id(), device_tensor->host_shape());
@@ -721,7 +721,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
     }
     MS_EXCEPTION_IF_NULL(host_tensor_address);
 
-    if (host_tensor_address->DeviceType() == device_tensor->DeviceType() &&
+    if (host_tensor_address->GetDeviceType() == device_tensor->GetDeviceType() &&
         !(host_tensor_address->format() != device_tensor->format() && strategy_ == GraphExecutionStrategy::kStep)) {
       // In the scenario of training + inference , the device address of the weight node can not be changed when
       // multi-graphs sink mode is set.
@@ -738,9 +738,10 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
         host_tensor_address->SetNodeIndex(backend_node, 0);
       }
     } else {
-      MS_LOG(INFO) << "The device type or format is not equal, host tensor type:" << host_tensor_address->DeviceType()
-                   << " format:" << host_tensor_address->format()
-                   << ", device tensor type:" << device_tensor->DeviceType() << " format:" << device_tensor->format();
+      MS_LOG(INFO) << "The device type or format is not equal, host tensor type:"
+                   << host_tensor_address->GetDeviceType() << " format:" << host_tensor_address->format()
+                   << ", device tensor type:" << device_tensor->GetDeviceType()
+                   << " format:" << device_tensor->format();
       if (strategy_ == GraphExecutionStrategy::kStep) {
         tensor->data_sync();
         host_tensor_address = device_tensor;
@@ -763,7 +764,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(host_tensor_address);
   if (is_need_sync || (host_tensor_address->GetPtr() == nullptr)) {
     MS_LOG(INFO) << "Prepare device data for weight node:" << backend_node->DebugString()
-                 << ", device type:" << host_tensor_address->DeviceType();
+                 << ", device type:" << host_tensor_address->GetDeviceType();
     SyncTensorData(tensor, host_tensor_address, backend_node, device_context, context, real_strategy_);
   }
 
@@ -816,7 +817,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(INFO) << "Prepare device data for weight node by root graph parameter:"
                  << front_parameter->fullname_with_scope() << ", backend node:" << node->DebugString()
-                 << ", device type:" << device_tensors[0]->DeviceType();
+                 << ", device type:" << device_tensors[0]->GetDeviceType();
     if (host_tensor_address == nullptr) {
       tensor->set_device_address(device_tensors[0]);
       auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(

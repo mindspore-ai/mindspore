@@ -184,53 +184,6 @@ void GPUDeviceContext::Destroy() {
   }
 }
 
-bool GPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
-  MS_EXCEPTION_IF_NULL(address);
-  if (address->DeviceType() != DeviceAddressType::kGPU) {
-    MS_LOG(ERROR) << "The device address type is wrong: " << address->DeviceType();
-    return false;
-  }
-
-  if (address->GetPtr() != nullptr) {
-    MS_LOG(ERROR) << "Memory leak detected!";
-    return false;
-  }
-
-  if (!BindDeviceToCurrentThread()) {
-    return false;
-  }
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem_);
-  if (!device_ptr) {
-    return false;
-  }
-  address->ptr_ = device_ptr;
-  address->size_ = size;
-  address->from_mem_pool_ = true;
-  return true;
-}
-
-void GPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
-  MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  if (address->DeviceType() != DeviceAddressType::kGPU) {
-    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
-  }
-
-  if (!address->from_mem_pool()) {
-    return;
-  }
-  mem_manager_->FreeMemFromMemPool(address->ptr_);
-  address->ptr_ = nullptr;
-}
-
-std::vector<void *> GPUDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
-  if (!BindDeviceToCurrentThread()) {
-    std::vector<void *> ptr_list;
-    return ptr_list;
-  }
-  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
-}
-
 void *GPUDeviceContext::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread()) {
@@ -239,10 +192,18 @@ void *GPUDeviceContext::AllocateMemory(size_t size) const {
   return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
-void GPUDeviceContext::FreeMemory(void *const ptr) const {
+void GPUDeviceContext::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   MS_EXCEPTION_IF_NULL(ptr);
   mem_manager_->FreeMemFromMemPool(ptr);
+}
+
+std::vector<void *> GPUDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+  if (!BindDeviceToCurrentThread()) {
+    std::vector<void *> ptr_list;
+    return ptr_list;
+  }
+  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
 DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,

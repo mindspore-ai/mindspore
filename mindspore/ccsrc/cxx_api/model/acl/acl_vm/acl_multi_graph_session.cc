@@ -47,7 +47,7 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
   };
   MS_LOG(INFO) << "Start MultiGraph Compile.";
   // construct kernel graph
-  auto kernel_graph = SessionBasic::ConstructKernelGraph(lst, outputs, device::DeviceAddressType::kUnknown, false);
+  auto kernel_graph = SessionBasic::ConstructKernelGraph(lst, outputs, device::DeviceType::kUnknown, false);
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("310_multi_graph_pm");

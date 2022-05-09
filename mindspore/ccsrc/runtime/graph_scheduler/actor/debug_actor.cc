@@ -54,7 +54,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
   }
   const auto &cnode = node->cast<CNodePtr>();
   MS_LOG(DEBUG) << "kernel by kernel debug for node: " << cnode->fullname_with_scope() << ".";
-  if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
+  if (device_context->GetDeviceType() == device::DeviceType::kCPU) {
 #ifndef ENABLE_SECURITY
     if (DumpJsonParser::GetInstance().GetIterDumpFlag()) {
       auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(cnode->func_graph());
@@ -63,7 +63,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
       CPUE2eDump::DumpRunIter(kernel_graph);
     }
 #endif
-  } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kGPU) {
+  } else if (device_context->GetDeviceType() == device::DeviceType::kGPU) {
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
@@ -78,7 +78,7 @@ void DebugActor::Debug(const AnfNodePtr &node, const KernelLaunchInfo *launch_in
     }
     exec_order_ += 1;
 #endif
-  } else if (device_context->GetDeviceAddressType() == device::DeviceAddressType::kAscend) {
+  } else if (device_context->GetDeviceType() == device::DeviceType::kAscend) {
 #ifdef ENABLE_DEBUGGER
     auto debugger = Debugger::GetInstance();
     if (debugger != nullptr) {
@@ -159,7 +159,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
     DumpJsonParser::GetInstance().ClearGraph();
     for (size_t i = 0; i < graphs.size(); ++i) {
       MS_EXCEPTION_IF_NULL(device_contexts[i]);
-      if (device_contexts[i]->GetDeviceAddressType() == device::DeviceAddressType::kCPU) {
+      if (device_contexts[i]->GetDeviceType() == device::DeviceType::kCPU) {
         DumpJsonParser::GetInstance().SaveGraph(graphs[i].get());
       }
     }

@@ -208,9 +208,9 @@ void ControlActor::FetchInput(OpContext<DeviceTensor> *const context) {
     if (device_tensors.empty()) {
       auto &device_context = device_contexts_[device_tensor_store_key.first];
       MS_EXCEPTION_IF_NULL(device_context);
-      std::string error_info =
-        GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
-        ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceAddressType()));
+      std::string error_info = GetAID().Name() +
+                               " get device tensor store failed: " + device_tensor_store_key.second->DebugString() +
+                               ", device type:" + std::to_string(static_cast<int>(device_context->GetDeviceType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
     }
 
@@ -383,11 +383,11 @@ void ControlActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, con
     }
 
     // Copy from the real parameter to formal parameter and insert the device tensor copy store.
-    if ((device_tensor->format() != data->format()) || (device_tensor->DeviceType() != data->DeviceType())) {
+    if ((device_tensor->format() != data->format()) || (device_tensor->GetDeviceType() != data->GetDeviceType())) {
       MS_LOG(INFO) << GetAID().Name() << " the input position:" << formal_parameter_position
-                   << " copy from real parameter address:" << data << ", type:" << data->DeviceType()
+                   << " copy from real parameter address:" << data << ", type:" << data->GetDeviceType()
                    << ", format:" << data->format() << " to formal parameter address:" << device_tensor.get()
-                   << ", type:" << device_tensor->DeviceType() << ", format:" << device_tensor->format()
+                   << ", type:" << device_tensor->GetDeviceType() << ", format:" << device_tensor->format()
                    << ", formal parameter name:" << formal_parameter.first->DebugString();
       const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {device_tensor->device_name(), device_tensor->device_id()});

@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include "runtime/hardware/device_type.h"
 #include "runtime/device/device_address.h"
 #include "runtime/device/bucket.h"
 #include "runtime/collective/collective_communication_lib.h"
@@ -71,12 +72,9 @@ class DeviceContext {
     return default_partition_segments;
   }
 
-  // Relevant function to allocate and free device memory of DeviceAddress.
-  virtual bool AllocateMemory(DeviceAddress *const &address, size_t size) const = 0;
-  virtual void FreeMemory(DeviceAddress *const &address) const = 0;
   // Relevant function to allocate and free device memory of raw ptr.
   virtual void *AllocateMemory(size_t size) const = 0;
-  virtual void FreeMemory(void *const ptr) const = 0;
+  virtual void FreeMemory(void *ptr) const = 0;
 
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
@@ -89,9 +87,6 @@ class DeviceContext {
   // Create concrete device address according different device type.
   virtual DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
                                                TypeId type_id, const ShapeVector &shape) const = 0;
-
-  // Get device address type according different device type, such GPU, Ascend.
-  virtual DeviceAddressType GetDeviceAddressType() const = 0;
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   virtual void UnifyMindIR(const KernelGraphPtr &graph) const { opt::CommonUnifyMindIR(graph); }
@@ -148,9 +143,6 @@ class DeviceContext {
   // Destroy all streams created by 'CreateStream'.
   bool DestroyAllStreams();
 
-  // Get device_context_key_ to obtain device name and device id.
-  const DeviceContextKey &device_context_key() const { return device_context_key_; }
-
   // Get rank id for distributed training.
   // It is deprecated and will be removed in a future version
   virtual uint32_t GetRankID() const { return 0; }
@@ -160,12 +152,22 @@ class DeviceContext {
   // It is deprecated and will be removed in a future version
   virtual std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const { return nullptr; }
 
-  // Dynamically load collecitve communication library.
-  // Currently four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
+  // Dynamically load collective communication library.
+  // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
   virtual bool LoadCollectiveCommLib() { return true; }
 
   // Return collective communication object for caller to access
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
+
+  // Get device_context_key_ to obtain device name and device id.
+  const DeviceContextKey &device_context_key() const { return device_context_key_; }
+
+  // Get device address type according different device type, such GPU, Ascend.
+  DeviceType GetDeviceType() const { return GetDeviceTypeByName(device_context_key_.device_name_); }
+
+  // Relevant function to allocate and free device memory of DeviceAddress.
+  bool AllocateMemory(DeviceAddress *const &address, size_t size) const;
+  void FreeMemory(DeviceAddress *const &address) const;
 
  protected:
   // Create a stream on the device of this device context.

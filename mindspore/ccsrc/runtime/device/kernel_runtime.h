@@ -119,7 +119,7 @@ class KernelRuntime {
   virtual void GenKernelEvents(const session::KernelGraph &graph);
   virtual std::shared_ptr<DeviceEvent> CreateDeviceEvent() { return nullptr; }
   virtual std::shared_ptr<DeviceEvent> CreateDeviceTimeEvent() { return nullptr; }
-  virtual DeviceAddressType GetTargetDeviceAddressType() const = 0;
+  virtual DeviceType GetTargetDeviceType() const = 0;
   virtual void *compute_stream() const { return nullptr; }
   virtual void *communication_stream() const { return nullptr; }
   void UpdateRefNodeOutputMem(const session::KernelGraph &graph);

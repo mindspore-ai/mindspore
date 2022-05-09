@@ -72,12 +72,9 @@ class AscendDeviceContext : public DeviceContext {
   // Infer kernel shape and update abstract info for dynamic shape kernel.
   void UpdateDynamicShape(const CNodePtr &kernel) const override;
 
-  // Relevant function to allocate and free device memory.
-  bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
-  void FreeMemory(DeviceAddress *const &address) const override;
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
-  void FreeMemory(void *const ptr) const override;
+  void FreeMemory(void *ptr) const override;
 
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
@@ -87,9 +84,6 @@ class AscendDeviceContext : public DeviceContext {
   // Create concrete device address according different device type.
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
-
-  // Get device address type according different device type, such GPU, Ascend.
-  DeviceAddressType GetDeviceAddressType() const override { return DeviceAddressType::kAscend; }
 
   // Launch graph, device such as Ascend support the whole graph sink to the device executing.
   bool LaunchGraph(const KernelGraphPtr &graph) const override;

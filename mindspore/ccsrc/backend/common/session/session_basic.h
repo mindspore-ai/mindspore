@@ -127,11 +127,11 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   bool CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph *graph);
 
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                    DeviceAddressType device_target = DeviceAddressType::kUnknown,
+                                                    DeviceType device_target = DeviceType::kUnknown,
                                                     bool common_opt = true);
   std::shared_ptr<KernelGraph> ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                     std::vector<KernelGraphPtr> *all_out_graph,
-                                                    DeviceAddressType device_target);
+                                                    DeviceType device_target);
 
   void SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGraphManagerPtr &manager);
 

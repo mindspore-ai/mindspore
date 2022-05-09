@@ -1014,7 +1014,7 @@ bool SkipDataSync(const CNodePtr &node, const std::map<uint32_t, tensor::TensorP
     if (iter_tensor != depend_tensors.end()) {
       auto output_addr = AnfAlgo::GetOutputAddr(real_input, 0);
       MS_EXCEPTION_IF_NULL(output_addr);
-      if (output_addr->DeviceType() != device::DeviceAddressType::kCPU) {
+      if (output_addr->GetDeviceType() != device::DeviceType::kCPU) {
         return false;
       }
     }

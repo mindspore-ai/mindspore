@@ -51,7 +51,7 @@ void TensorShapeKernelMod::Execute() {
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0);
   MS_EXCEPTION_IF_NULL(output_addr);
 
-  if (output_addr->DeviceType() == device::DeviceAddressType::kCPU) {
+  if (output_addr->GetDeviceType() == device::DeviceType::kCPU) {
     auto ret = memcpy_s(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(),
                         output_tensor_for_sync->data_c(), LongToSize(output_tensor_for_sync->data().nbytes()));
     if (ret != EOK) {

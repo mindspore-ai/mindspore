@@ -80,50 +80,12 @@ void CPUDeviceContext::Destroy() {
   }
 }
 
-bool CPUDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
-  MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (address->DeviceType() != DeviceAddressType::kCPU) {
-    MS_LOG(ERROR) << "The device address type is wrong: " << address->DeviceType();
-    return false;
-  }
-
-  if (address->GetPtr() != nullptr) {
-    MS_LOG(ERROR) << "Memory leak detected!";
-    return false;
-  }
-
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(size, 0);
-  if (!device_ptr) {
-    return false;
-  }
-  address->ptr_ = device_ptr;
-  address->size_ = size;
-  address->from_mem_pool_ = true;
-  return true;
-}
-
-void CPUDeviceContext::FreeMemory(DeviceAddress *const &address) const {
-  MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  if (address->DeviceType() != DeviceAddressType::kCPU) {
-    MS_LOG(EXCEPTION) << "The device address type is wrong: " << address->DeviceType();
-  }
-
-  if (!address->from_mem_pool()) {
-    return;
-  }
-  mem_manager_->FreeMemFromMemPool(address->ptr_);
-  address->ptr_ = nullptr;
-}
-
 void *CPUDeviceContext::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
-void CPUDeviceContext::FreeMemory(void *const ptr) const {
+void CPUDeviceContext::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(ptr);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->FreeMemFromMemPool(ptr);

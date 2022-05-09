@@ -351,7 +351,7 @@ bool CheckControlActorValid(const ActorSet *actor_set) {
       auto &device_tensors = ref_node_formal_parameter_device_tensor.second;
       for (auto iter = device_tensors.begin(); iter != device_tensors.end(); ++iter) {
         if (((*device_tensors.begin())->format() != (*iter)->format()) ||
-            ((*device_tensors.begin())->DeviceType() != (*iter)->DeviceType()) ||
+            ((*device_tensors.begin())->GetDeviceType() != (*iter)->GetDeviceType()) ||
             ((*device_tensors.begin())->type_id() != (*iter)->type_id())) {
           MS_LOG(EXCEPTION) << control_actor->GetAID().Name()
                             << " does not support the ref node formal parameters that are different format.";
