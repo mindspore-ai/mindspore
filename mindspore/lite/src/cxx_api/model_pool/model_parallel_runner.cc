@@ -15,6 +15,7 @@
  */
 #include "include/api/model_parallel_runner.h"
 #include "src/cxx_api/model_pool/model_pool.h"
+#include "src/cxx_api/model_pool/runner_config.h"
 #include "src/common/log_adapter.h"
 #include "src/cpu_info.h"
 namespace mindspore {
@@ -23,6 +24,16 @@ extern "C" {
 extern void mindspore_log_init();
 }
 #endif
+
+RunnerConfig::RunnerConfig() : data_(std::make_shared<Data>()) {}
+
+void RunnerConfig::SetWorkersNum(int32_t workers_num) { data_->workers_num = workers_num; }
+
+void RunnerConfig::SetContext(const std::shared_ptr<Context> &context) { data_->context = context; }
+
+int32_t RunnerConfig::GetWorkersNum() const { return data_->workers_num; }
+
+std::shared_ptr<Context> RunnerConfig::GetContext() const { return data_->context; }
 
 Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
   if (!PlatformInstructionSetSupportCheck()) {

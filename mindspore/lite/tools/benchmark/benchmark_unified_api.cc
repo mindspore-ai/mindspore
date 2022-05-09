@@ -999,8 +999,8 @@ int BenchmarkUnifiedApi::ParallelInference(std::shared_ptr<mindspore::Context> c
   }
   // model runner init
   auto runner_config = std::make_shared<RunnerConfig>();
-  runner_config->context = context;
-  runner_config->workers_num = flags_->workers_num_;
+  runner_config->SetContext(context);
+  runner_config->SetWorkersNum(flags_->workers_num_);
   auto model_init_start = GetTimeUs();
   auto ret = model_runner_.Init(flags_->model_file_, runner_config);
   MS_CHECK_FALSE_MSG(ret != kSuccess, RET_ERROR, "model pool init failed.");
