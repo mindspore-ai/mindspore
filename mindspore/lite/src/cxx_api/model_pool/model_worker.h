@@ -42,11 +42,17 @@ class ModelWorker {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
-  void Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue);
+  void WaitCreateWorkerDone();
 
   bool IsAvailable();
 
+  void CreateThreadWorker(const char *model_buf, size_t size, int node_id,
+                          const std::shared_ptr<Context> &model_context,
+                          const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
+
  private:
+  void Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue);
+
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
   Status ResizeInit();
@@ -62,6 +68,9 @@ class ModelWorker {
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::vector<MSTensor> origin_worker_inputs_;
   std::vector<MSTensor> origin_worker_outputs_;
+  bool create_work_done_ = false;
+  std::condition_variable create_work_done_condition_;
+  std::mutex create_work_done_mutex_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_WORKER_H_

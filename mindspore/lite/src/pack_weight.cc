@@ -15,7 +15,6 @@
  */
 #include "src/pack_weight.h"
 namespace mindspore::lite {
-
 STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, RET_ERROR, "model buf is nullptr in pack weight manager.");
   if (model_buf_map_.find(model_buf) != model_buf_map_.end() &&
@@ -60,6 +59,7 @@ char *PackWeight::GetNumaModelBuf(const char *model_buf, int numa_id) {
 }
 
 STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
   if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
     MS_LOG(ERROR) << "can not find model buf in store origin Tensor";
     return RET_ERROR;
@@ -114,6 +114,7 @@ void PackWeight::FreePackedWeight(ModelConstWeight *weight) {
 }
 
 PackWeight::~PackWeight() {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
   for (auto &item : buf_model_weight_) {
     FreePackedWeight(item.second);
   }
