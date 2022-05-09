@@ -26,6 +26,7 @@
 #include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/adapter/callback_impl.h"
 #include "kernel/common_utils.h"
+#include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
@@ -84,22 +85,7 @@ bool PyExpander::CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_j
   return json_generator.CollectJson(node, kernel_json);
 }
 
-FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
-  auto op_name = AnfUtils::GetCNodeName(node);
-  // use cpp OpDesc in priority
-  auto use_py = common::GetEnv("PYEXPANDER");
-  if (use_py.empty()) {
-    if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
-      return DefaultExpander::ExpandToGraph(node);
-    }
-  }
-  // Acquire Python GIL
-  py::gil_scoped_acquire gil;
-  if (Py_IsInitialized() == 0) {
-    MS_LOG(ERROR) << "Python Interpreter is finalized";
-    return nullptr;
-  }
-
+FuncGraphPtr PyExpander::ExpandToGraphByCallPyFn(const CNodePtr &node) {
   MS_LOG(DEBUG) << "CallPyFn: [" << kGetGraphKernelExpanderOpList << "].";
   auto res = python_adapter::CallPyFn(kGraphKernelModule, kGetGraphKernelExpanderOpList);
   // parse result.
@@ -109,6 +95,7 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
   }
 
   std::string expander_op_list = py::cast<std::string>(res);
+  auto op_name = AnfUtils::GetCNodeName(node);
   if (expander_op_list.find(op_name) == std::string::npos) {
     MS_LOG(DEBUG) << "Do not support to expand: " << op_name;
     return nullptr;
@@ -137,6 +124,31 @@ FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
   }
   // decode json to func_graph.
   return JsonDescToAnf(kernel_desc_str);
+}
+
+FuncGraphPtr PyExpander::ExpandToGraph(const CNodePtr &node) {
+  auto op_name = AnfUtils::GetCNodeName(node);
+  // use cpp OpDesc in priority
+  auto use_py = common::GetEnv("PYEXPANDER");
+  if (use_py.empty()) {
+    if (expanders::OpDescFactory::Instance().HasOp(op_name)) {
+      return DefaultExpander::ExpandToGraph(node);
+    }
+  }
+  auto ms_context = MsContext::GetInstance();
+  const bool pynative_mode = (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode);
+  if (pynative_mode && PyGILState_Check() == 0) {
+    // Acquire Python GIL
+    py::gil_scoped_acquire gil;
+    if (PyGILState_Check() == 0) {
+      MS_LOG(ERROR) << "Can not acquire python GIL.";
+      return nullptr;
+    }
+    auto fg = ExpandToGraphByCallPyFn(node);
+    py::gil_scoped_release rel;
+    return fg;
+  }
+  return ExpandToGraphByCallPyFn(node);
 }
 
 AnfNodePtr ComplexOpDecorator::Run(const AnfNodePtr &node) {

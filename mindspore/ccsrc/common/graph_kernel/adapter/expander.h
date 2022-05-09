@@ -31,6 +31,7 @@ class PyExpander : public DefaultExpander {
  protected:
   virtual bool CreateJsonInfo(const AnfNodePtr &node, nlohmann::json *kernel_json);
   FuncGraphPtr ExpandToGraph(const CNodePtr &node) override;
+  FuncGraphPtr ExpandToGraphByCallPyFn(const CNodePtr &node);
 };
 
 class ComplexOpDecorator : public ExpanderDecorator {
