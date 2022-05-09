@@ -56,7 +56,7 @@ class SymbolTree:
         Get all nodes of corresponding network.
 
         Returns:
-            A dict mapping from name of node to node.
+            A generator for node of current `SymbolTree`.
         """
         for node in self._symbol_tree.nodes():
             yield Node(node)
@@ -76,20 +76,14 @@ class SymbolTree:
             return None
         return Node(node_impl)
 
-    def get_return_node(self) -> Node:
+    def get_inputs(self) -> [Node]:
         """
-        Get return node of current `SymbolTree`.
-
-        A `SymbolTree` can and should have one return node corresponding to return statement of forward method of
-        network.
+        Get 'input' nodes of current `SymbolTree`.
 
         Returns:
-            An instance of node represents return node.
+            [Node]: The node list of the current 'Symboltree'.
         """
-        ret = self._symbol_tree.get_return_node()
-        if ret is None:
-            raise RuntimeError("SymbolTree is not well inited, can not find return node.")
-        return Node(ret)
+        return [Node(node_impl) for node_impl in self._symbol_tree.get_inputs()]
 
     def before(self, node: Node):
         """

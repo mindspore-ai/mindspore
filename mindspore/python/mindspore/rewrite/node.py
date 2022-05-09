@@ -361,46 +361,6 @@ class Node:
             normalized_args[sorted_kwarg[0]] = sorted_kwarg[1]
             normalized_args_keys.append(sorted_kwarg[0])
 
-    def _get_normalized_args(self, args: [ScopedValue], kwargs: {str: ScopedValue}) -> dict:
-        """
-        Merge args and kwargs to normalized args.
-        The keys of args are obtained from the construct function of type(self._instance).
-
-        Args:
-            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
-            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
-
-        Raises:
-            RuntimeError: Input args are invalid.
-            RuntimeError: Arg name already exist in kwargs.
-
-        Returns:
-            The normalized args.
-        """
-        if not args:
-            args = []
-        if not kwargs:
-            kwargs = {}
-        normalized_args: dict = dict()
-        if self._instance and hasattr(type(self._instance), "construct"):
-            parameters = inspect.signature(type(self._instance).construct).parameters
-            names = Node._get_construct_arg_names(parameters)
-            Node._map_args_names(names, args, kwargs, self._normalized_args_keys, normalized_args)
-        else:
-            logger.debug("fail to get arg name from op, using arg_xx for args' name")
-            arg_temp_name, suffix = "arg", 0
-            for arg in args:
-                arg_key = "{}_{}".format(arg_temp_name, suffix)
-                while arg_key in kwargs.keys() or arg_key in normalized_args.keys():
-                    suffix += 1
-                    arg_key = "{}_{}".format(arg_temp_name, suffix)
-                normalized_args[arg_key] = arg
-                self._normalized_args_keys.append(arg_key)
-            for arg_key, value in kwargs.items():
-                normalized_args[arg_key] = value
-                self._normalized_args_keys.append(arg_key)
-        return normalized_args
-
     @staticmethod
     def _handle_custom_obj_in_args(args: [ScopedValue]) -> [ScopedValue]:
         """
@@ -468,6 +428,27 @@ class Node:
                 raise RuntimeError("Invalid symbol type: ", target)
         return results
 
+    @staticmethod
+    def _get_cell_or_prim_op_attribute(obj) -> dict:
+        """
+        Find attributes of cell-op or primitive-op.
+
+        Args:
+            obj: A cell-op or a primitive-op.
+
+        Returns:
+            A dict represents attributes of input 'obj'.
+        """
+        attributes = {}
+        if obj is None:
+            return attributes
+        for k, v in obj.__dict__.items():
+            if k.startswith("_"):
+                continue
+            attributes[k] = v
+        attributes["cls"] = obj.__class__
+        return attributes
+
     def get_prev(self) -> 'Node':
         """
         Get previous node of current node in source code order.
@@ -477,10 +458,6 @@ class Node:
         """
         return self._prev
 
-    def set_prev(self, prev):
-        """Set previous node of current node in source code order. """
-        self._prev = prev
-
     def get_next(self) -> 'Node':
         """
         Get next node of current node in source code order.
@@ -489,10 +466,6 @@ class Node:
             An instance of Node as next node.
         """
         return self._next
-
-    def set_next(self, _next):
-        """Set next node of current node in source code order."""
-        self._next = _next
 
     def has_same_ast(self, node: Union['Node', ast.AST]) -> bool:
         """
@@ -505,7 +478,7 @@ class Node:
             A bool.
         """
         if isinstance(node, Node):
-            return self.has_same_ast(node.get_ast())
+            return self.has_same_ast(node._ast_node)
         if isinstance(node, ast.AST):
             return id(self._ast_node) == id(node)
         return False
@@ -536,165 +509,14 @@ class Node:
     def set_belong_symbol_tree(self, symbol_tree):
         self._belong_tree = symbol_tree
 
-    def _sync_assign_func_to_ast(self):
-        """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
-        if self._ast_node is None:
-            return
-        assign_ast = self._ast_node
-        if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
-        call_ast = assign_ast.value
-        if not isinstance(call_ast, ast.Call):
-            raise TypeError("call_ast should be ast.Call, got: ", type(call_ast))
-        func_ast = call_ast.func
-        if not self._func.value:
-            if isinstance(func_ast, ast.Name):
-                func_ast.id = self._func.value
-            else:
-                call_ast.func = ast.Name(self._func.value, ast.Store())
-        else:
-            if isinstance(func_ast, ast.Attribute):
-                func_value = func_ast.value
-                if not isinstance(func_value, ast.Name):
-                    raise RuntimeError("Only support ast.Name as value of attribute ", type(func_ast.value))
-                func_value.id = self._func.scope
-                func_ast.attr = self._func.value
-            else:
-                call_ast.func = ast.Attribute(ast.Name(self._func.scope, ast.Load()), self._func.value, ast.Store())
-        ast.fix_missing_locations(assign_ast)
-
-    def _sync_assign_targets_to_ast(self):
-        """Sync targets of ast.Assign from self._targets when NodeType is CallCell, CallPrimitive or CallMethod."""
-        if self._ast_node is None:
-            return
-        assign_ast = self._ast_node
-        if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
-        # update targets
-        targets_ast = assign_ast.targets
-        if isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast[0].elts):
-            raise RuntimeError("self._targets should have the same length as targets_ast's elts")
-        if not isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast):
-            raise RuntimeError("self._targets should have targets_ast same length")
-        for i in range(0, len(self._targets)):
-            target = self._targets[i]
-            target_ast = targets_ast[0]
-            if isinstance(target_ast, ast.Name):
-                target_ast.id = target.value
-            elif isinstance(target_ast, ast.Tuple):
-                if not isinstance(target_ast.elts[i], ast.Name):
-                    raise TypeError("target should be ast.Name, got:", type(target_ast.elts[i]))
-                target_ast.elts[i].id = target.value
-            else:
-                raise TypeError("target_ast should be ast.Name or ast.Tuple, got: ", type(target_ast))
-            target_ast.id = target.value
-        ast.fix_missing_locations(assign_ast)
-
-    def _sync_call_cell_args_to_ast(self):
-        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallCell or CallPrimitive."""
-        if self._ast_node is None:
-            return
-        assign_ast = self._ast_node
-        if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
-        assign_value = assign_ast.value
-        if not isinstance(assign_value, ast.Call):
-            return
-        keywords_ast = assign_value.keywords
-        args_ast = assign_value.args
-        if len(self._normalized_args_keys) != (len(keywords_ast) + len(args_ast)):
-            raise RuntimeError("ast keywords plus args len is not equal to self._normalized_args value")
-
-        for arg_index in range(self._args_num):
-            arg_ast = args_ast[arg_index]
-            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[arg_index]), arg_ast)
-
-        # the order of kwargs may not the same as that in keywords_ast
-        keyword_map_index = {}
-        for index, keyword_ast in enumerate(keywords_ast):
-            keyword_map_index[keyword_ast.arg] = index
-        for keyword_index in range(self._kwargs_num):
-            key = self._normalized_args_keys[keyword_index + self._args_num]
-            AstModifier.update_arg_value(self._normalized_args.get(key),
-                                         keywords_ast[keyword_map_index.get(key)].value)
-
-    def _sync_call_method_args_to_ast(self):
-        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallMethod."""
-        if self._ast_node is None:
-            return
-        assign_ast = self._ast_node
-        if not isinstance(assign_ast, ast.Assign):
-            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
-        assign_value = assign_ast.value
-        if self._func == PASS_THROUGH_METHOD:
-            if isinstance(assign_value, ast.Name):
-                if len(self._normalized_args_keys) != 1:
-                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
-                arg = self._normalized_args.get(self._normalized_args_keys[0])
-                if arg.type != ValueType.NamingValue:
-                    raise RuntimeError("arg.type should equal to ValueType.NamingValue")
-                if arg.scope != "":
-                    raise RuntimeError("arg.scope should be empty")
-                assign_value.id = arg.value
-            elif isinstance(assign_value, ast.Attribute):
-                if len(self._normalized_args_keys) != 1:
-                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
-                arg = self._normalized_args.get(self._normalized_args_keys[0])
-                if arg.type != ValueType.NamingValue:
-                    raise RuntimeError("arg.type should equal to ValueType.NamingValue")
-                assign_value.attr = arg.value
-                assign_value_value = assign_value.value
-                if not isinstance(assign_value_value, ast.Name):
-                    raise RuntimeError("Only support ast.Name as value of attribute ", type(assign_value_value))
-                assign_value_value.id = arg.scope
-            else:
-                if len(self._normalized_args_keys) != 1:
-                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
-                arg = self._normalized_args.get(self._normalized_args_keys[0])
-                if arg.type not in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
-                    raise RuntimeError("arg should be an IntValue, FloatValue or StringValue")
-                if arg.scope != "":
-                    raise RuntimeError("arg.scope should be empty")
-                assign_value.value = arg.value
-        else:
-            raise RuntimeError("Only support pass_through method as call_method now, ", self._func.value)
-
-    def _sync_return_node_to_ast(self):
-        """Sync return value of ast.Return from self._normalized_args when NodeType is Output."""
-        if self._ast_node is None:
-            return
-        return_ast = self._ast_node
-        if not isinstance(return_ast, ast.Return):
-            raise TypeError("return_ast should be ast.Return, got: ", type(return_ast))
-        # update args
-        return_value_ast = return_ast.value
-        if isinstance(return_value_ast, ast.Name):
-            if len(self._normalized_args_keys) != 1:
-                raise RuntimeError("self._normalized_args_keys should have 1 elements")
-            return_value_ast.id = self._normalized_args.get(self._normalized_args_keys[0]).value
-        elif isinstance(return_value_ast, ast.Tuple):
-            elements = return_value_ast.elts
-            if len(self._normalized_args.values()) != len(elements):
-                raise RuntimeError("self._normalized_args.values() should have elements same length")
-            for elt_index, elt in enumerate(elements):
-                if not isinstance(elt, ast.Name):
-                    raise RuntimeError("Only support ast.Name as return value: ", elt)
-                arg = self._normalized_args.get(self._normalized_args_keys[elt_index])
-                if not isinstance(arg, ScopedValue):
-                    raise TypeError("arg should be ScopedValue, got: ", type(arg))
-                elt.id = arg.value
-        else:
-            raise RuntimeError("Unsupported return value type: ", return_value_ast)
-        ast.fix_missing_locations(return_ast)
-
     def isolate(self):
         """Link prev node to next node and isolate node from source code order list."""
         origin_prev: Optional[Node] = self._prev
         origin_next: Optional[Node] = self._next
         if origin_prev is not None:
-            origin_prev.set_next(origin_next)
+            origin_prev._next = origin_next
         if origin_next is not None:
-            origin_next.set_prev(origin_prev)
+            origin_next._prev = origin_prev
         self._prev = None
         self._next = None
 
@@ -708,9 +530,9 @@ class Node:
         node.isolate()
         origin_prev: Optional[Node] = self._prev
         if origin_prev is not None:
-            origin_prev.set_next(node)
-        node.set_prev(origin_prev)
-        node.set_next(self)
+            origin_prev._next = node
+        node._prev = origin_prev
+        node._next = self
         self._prev = node
 
     def insert_after(self, node: 'Node'):
@@ -723,10 +545,10 @@ class Node:
         node.isolate()
         origin_next: Optional[Node] = self._next
         self._next = node
-        node.set_prev(self)
-        node.set_next(origin_next)
+        node._prev = self
+        node._next = origin_next
         if origin_next is not None:
-            origin_next.set_prev(node)
+            origin_next._prev = node
 
     def get_inputs(self) -> ['Node']:
         """
@@ -867,15 +689,6 @@ class Node:
         """
         return self._instance
 
-    def _sync_arg(self):
-        """Sync _normalized_args to corresponding ast node when updated."""
-        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
-            self._sync_call_cell_args_to_ast()
-        elif self._node_type == NodeType.Output:
-            self._sync_return_node_to_ast()
-        elif self._node_type == NodeType.CallMethod:
-            self._sync_call_method_args_to_ast()
-
     def set_arg_by_node(self, arg_idx: int, node: 'Node', out_idx: Optional[int] = None):
         """
         Set argument by another Node.
@@ -896,12 +709,12 @@ class Node:
         if arg_idx >= self._args_num or arg_idx < 0:
             raise RuntimeError("arg_idx out of range: ", arg_idx)
         if out_idx is None:
-            if len(node.get_targets()) != 1:
+            if len(node._targets) != 1:
                 raise RuntimeError("node should has one output when out_idx is not provided")
             out_idx = 0
-        if out_idx >= len(node.get_targets()):
+        if out_idx >= len(node._targets):
             raise RuntimeError("out_idx out of range: ", out_idx)
-        new_arg = node.get_targets()[out_idx]
+        new_arg = node._targets[out_idx]
         self._normalized_args[self._normalized_args_keys[arg_idx]] = new_arg
         self._sync_arg()
 
@@ -1091,26 +904,205 @@ class Node:
         """
         return self._attribute.get(key)
 
-    @staticmethod
-    def _get_cell_or_prim_op_attribute(obj) -> dict:
+    def _get_normalized_args(self, args: [ScopedValue], kwargs: {str: ScopedValue}) -> dict:
         """
-        Find attributes of cell-op or primitive-op.
+        Merge args and kwargs to normalized args.
+        The keys of args are obtained from the construct function of type(self._instance).
 
         Args:
-            obj: A cell-op or a primitive-op.
+            args (list[ScopedValue]): A list of instance of ScopedValue. See detail in docstring of Node class.
+            kwargs (dict{str: ScopedValue}): A list of instance of ScopedValue. See detail in docstring of Node class.
+
+        Raises:
+            RuntimeError: Input args are invalid.
+            RuntimeError: Arg name already exist in kwargs.
 
         Returns:
-            A dict represents attributes of input 'obj'.
+            The normalized args.
         """
-        attributes = {}
-        if obj is None:
-            return attributes
-        for k, v in obj.__dict__.items():
-            if k.startswith("_"):
-                continue
-            attributes[k] = v
-        attributes["cls"] = obj.__class__
-        return attributes
+        if not args:
+            args = []
+        if not kwargs:
+            kwargs = {}
+        normalized_args: dict = dict()
+        if self._instance and hasattr(type(self._instance), "construct"):
+            parameters = inspect.signature(type(self._instance).construct).parameters
+            names = Node._get_construct_arg_names(parameters)
+            Node._map_args_names(names, args, kwargs, self._normalized_args_keys, normalized_args)
+        else:
+            logger.debug("fail to get arg name from op, using arg_xx for args' name")
+            arg_temp_name, suffix = "arg", 0
+            for arg in args:
+                arg_key = "{}_{}".format(arg_temp_name, suffix)
+                while arg_key in kwargs.keys() or arg_key in normalized_args.keys():
+                    suffix += 1
+                    arg_key = "{}_{}".format(arg_temp_name, suffix)
+                normalized_args[arg_key] = arg
+                self._normalized_args_keys.append(arg_key)
+            for arg_key, value in kwargs.items():
+                normalized_args[arg_key] = value
+                self._normalized_args_keys.append(arg_key)
+        return normalized_args
+
+    def _sync_assign_func_to_ast(self):
+        """Sync func of ast.Call of ast.Assign from self._name when NodeType is CallCell or CallPrimitive."""
+        if self._ast_node is None:
+            return
+        assign_ast = self._ast_node
+        if not isinstance(assign_ast, ast.Assign):
+            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+        call_ast = assign_ast.value
+        if not isinstance(call_ast, ast.Call):
+            raise TypeError("call_ast should be ast.Call, got: ", type(call_ast))
+        func_ast = call_ast.func
+        if not self._func.value:
+            if isinstance(func_ast, ast.Name):
+                func_ast.id = self._func.value
+            else:
+                call_ast.func = ast.Name(self._func.value, ast.Store())
+        else:
+            if isinstance(func_ast, ast.Attribute):
+                func_value = func_ast.value
+                if not isinstance(func_value, ast.Name):
+                    raise RuntimeError("Only support ast.Name as value of attribute ", type(func_ast.value))
+                func_value.id = self._func.scope
+                func_ast.attr = self._func.value
+            else:
+                call_ast.func = ast.Attribute(ast.Name(self._func.scope, ast.Load()), self._func.value, ast.Store())
+        ast.fix_missing_locations(assign_ast)
+
+    def _sync_assign_targets_to_ast(self):
+        """Sync targets of ast.Assign from self._targets when NodeType is CallCell, CallPrimitive or CallMethod."""
+        if self._ast_node is None:
+            return
+        assign_ast = self._ast_node
+        if not isinstance(assign_ast, ast.Assign):
+            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+        # update targets
+        targets_ast = assign_ast.targets
+        if isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast[0].elts):
+            raise RuntimeError("self._targets should have the same length as targets_ast's elts")
+        if not isinstance(targets_ast[0], ast.Tuple) and len(self._targets) != len(targets_ast):
+            raise RuntimeError("self._targets should have targets_ast same length")
+        for i in range(0, len(self._targets)):
+            target = self._targets[i]
+            target_ast = targets_ast[0]
+            if isinstance(target_ast, ast.Name):
+                target_ast.id = target.value
+            elif isinstance(target_ast, ast.Tuple):
+                if not isinstance(target_ast.elts[i], ast.Name):
+                    raise TypeError("target should be ast.Name, got:", type(target_ast.elts[i]))
+                target_ast.elts[i].id = target.value
+            else:
+                raise TypeError("target_ast should be ast.Name or ast.Tuple, got: ", type(target_ast))
+            target_ast.id = target.value
+        ast.fix_missing_locations(assign_ast)
+
+    def _sync_call_cell_args_to_ast(self):
+        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallCell or CallPrimitive."""
+        if self._ast_node is None:
+            return
+        assign_ast = self._ast_node
+        if not isinstance(assign_ast, ast.Assign):
+            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+        assign_value = assign_ast.value
+        if not isinstance(assign_value, ast.Call):
+            return
+        keywords_ast = assign_value.keywords
+        args_ast = assign_value.args
+        if len(self._normalized_args_keys) != (len(keywords_ast) + len(args_ast)):
+            raise RuntimeError("ast keywords plus args len is not equal to self._normalized_args value")
+
+        for arg_index in range(self._args_num):
+            arg_ast = args_ast[arg_index]
+            AstModifier.update_arg_value(self._normalized_args.get(self._normalized_args_keys[arg_index]), arg_ast)
+
+        # the order of kwargs may not the same as that in keywords_ast
+        keyword_map_index = {}
+        for index, keyword_ast in enumerate(keywords_ast):
+            keyword_map_index[keyword_ast.arg] = index
+        for keyword_index in range(self._kwargs_num):
+            key = self._normalized_args_keys[keyword_index + self._args_num]
+            AstModifier.update_arg_value(self._normalized_args.get(key),
+                                         keywords_ast[keyword_map_index.get(key)].value)
+
+    def _sync_call_method_args_to_ast(self):
+        """Sync args of ast.Cell of ast.Assign from self._normalized_args when NodeType is CallMethod."""
+        if self._ast_node is None:
+            return
+        assign_ast = self._ast_node
+        if not isinstance(assign_ast, ast.Assign):
+            raise TypeError("assign_ast should be ast.Assign, got: ", type(assign_ast))
+        assign_value = assign_ast.value
+        if self._func == PASS_THROUGH_METHOD:
+            if isinstance(assign_value, ast.Name):
+                if len(self._normalized_args_keys) != 1:
+                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
+                arg = self._normalized_args.get(self._normalized_args_keys[0])
+                if arg.type != ValueType.NamingValue:
+                    raise RuntimeError("arg.type should equal to ValueType.NamingValue")
+                if arg.scope != "":
+                    raise RuntimeError("arg.scope should be empty")
+                assign_value.id = arg.value
+            elif isinstance(assign_value, ast.Attribute):
+                if len(self._normalized_args_keys) != 1:
+                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
+                arg = self._normalized_args.get(self._normalized_args_keys[0])
+                if arg.type != ValueType.NamingValue:
+                    raise RuntimeError("arg.type should equal to ValueType.NamingValue")
+                assign_value.attr = arg.value
+                assign_value_value = assign_value.value
+                if not isinstance(assign_value_value, ast.Name):
+                    raise RuntimeError("Only support ast.Name as value of attribute ", type(assign_value_value))
+                assign_value_value.id = arg.scope
+            else:
+                if len(self._normalized_args_keys) != 1:
+                    raise RuntimeError("self._normalized_args_keys should have 1 elements")
+                arg = self._normalized_args.get(self._normalized_args_keys[0])
+                if arg.type not in (ValueType.IntValue, ValueType.FloatValue, ValueType.StringValue):
+                    raise RuntimeError("arg should be an IntValue, FloatValue or StringValue")
+                if arg.scope != "":
+                    raise RuntimeError("arg.scope should be empty")
+                assign_value.value = arg.value
+        else:
+            raise RuntimeError("Only support pass_through method as call_method now, ", self._func.value)
+
+    def _sync_return_node_to_ast(self):
+        """Sync return value of ast.Return from self._normalized_args when NodeType is Output."""
+        if self._ast_node is None:
+            return
+        return_ast = self._ast_node
+        if not isinstance(return_ast, ast.Return):
+            raise TypeError("return_ast should be ast.Return, got: ", type(return_ast))
+        # update args
+        return_value_ast = return_ast.value
+        if isinstance(return_value_ast, ast.Name):
+            if len(self._normalized_args_keys) != 1:
+                raise RuntimeError("self._normalized_args_keys should have 1 elements")
+            return_value_ast.id = self._normalized_args.get(self._normalized_args_keys[0]).value
+        elif isinstance(return_value_ast, ast.Tuple):
+            elements = return_value_ast.elts
+            if len(self._normalized_args.values()) != len(elements):
+                raise RuntimeError("self._normalized_args.values() should have elements same length")
+            for elt_index, elt in enumerate(elements):
+                if not isinstance(elt, ast.Name):
+                    raise RuntimeError("Only support ast.Name as return value: ", elt)
+                arg = self._normalized_args.get(self._normalized_args_keys[elt_index])
+                if not isinstance(arg, ScopedValue):
+                    raise TypeError("arg should be ScopedValue, got: ", type(arg))
+                elt.id = arg.value
+        else:
+            raise RuntimeError("Unsupported return value type: ", return_value_ast)
+        ast.fix_missing_locations(return_ast)
+
+    def _sync_arg(self):
+        """Sync _normalized_args to corresponding ast node when updated."""
+        if self._node_type in (NodeType.CallCell, NodeType.CallPrimitive, NodeType.Tree):
+            self._sync_call_cell_args_to_ast()
+        elif self._node_type == NodeType.Output:
+            self._sync_return_node_to_ast()
+        elif self._node_type == NodeType.CallMethod:
+            self._sync_call_method_args_to_ast()
 
 
 class TreeNode(Node):
