@@ -121,7 +121,19 @@ class TensorScatterUpdateCpuKernelMod : public ScatterUpdateCpuKernelMod {
                                                      .AddInputAttr(kNumberTypeInt64)
                                                      .AddInputAttr(kNumberTypeInt32)
                                                      .AddInputAttr(kNumberTypeInt64)
-                                                     .AddOutputAttr(kNumberTypeInt64)};
+                                                     .AddOutputAttr(kNumberTypeInt64),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddOutputAttr(kNumberTypeBool),
+
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeBool)
+                                                     .AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
 };
