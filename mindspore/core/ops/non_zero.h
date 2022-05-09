@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 
 #ifndef MINDSPORE_CORE_OPS_NON_ZERO_H_
 #define MINDSPORE_CORE_OPS_NON_ZERO_H_
+
+#include <vector>
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "ops/primitive_c.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,8 +33,11 @@ class MIND_API NonZero : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NonZero);
   /// \brief Constructor.
-  NonZero() : BaseOperator(kNameNonZero) {}
+  NonZero() : BaseOperator(kNameNonZero) { InitIOName({"x"}, {"output"}); }
 };
+AbstractBasePtr NonZeroInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const std::vector<AbstractBasePtr> &input_args);
+using PrimNonZeroPtr = std::shared_ptr<NonZero>;
 }  // namespace ops
 }  // namespace mindspore
 

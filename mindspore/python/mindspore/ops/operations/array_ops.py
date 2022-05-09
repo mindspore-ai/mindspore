@@ -7636,6 +7636,41 @@ class RightShift(Primitive):
         self.init_prim_io_names(inputs=['input_x', 'input_y'], outputs=['output'])
 
 
+class NonZero(Primitive):
+    """
+    Return a tensor of the positions of all non-zero values.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+
+    Outputs:
+        - **y** (Tensor), The shape of tensor is 2-D. The data type is int64.
+
+    Raises:
+       TypeError: If `x` is not Tensor.
+       ValueError: If 'x' dim equal to 0.
+
+    Supported Platforms:
+       ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
+        >>> nonzero = ops.NonZero()
+        >>> output = nonzero(x)
+        >>> print(output)
+        [[0 0 0]
+         [0 1 0]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class Tril(Primitive):
     """
     Returns the lower triangular part of the matrix (2-D tensor) or batch of matrices input,
