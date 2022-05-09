@@ -23,6 +23,160 @@ from ...common import dtype as mstype
 from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 
 
+class SparseDenseCwiseAdd(Primitive):
+    """
+    The dense tensor is broadcast into the shape of SparseTensor, and then the corresponding
+    positions of the two matrices are added element by element according to the `x1_indices`, then output.
+    Note: only dense tensor can be broadcast to SparseTensor.
+
+    Inputs:
+        - **x1_indices** (Tensor) -  A 2-D Tensor,N x R matrix with the indices of non-empty values in a SparseTensor,
+          possibly not in canonical ordering.Support int64, each element value should be a non-negative number.
+          The shape is :math:`(N, R)`.
+        - **x1_values** (Tensor) - A 1-D Tensor, N non-empty values corresponding to `x1_indices`.
+          The shape should be :math:`(N,)`.
+        - **x1_shape**(Tensor) - A Tensor of type int64. 1-D. Shape of the input SparseTensor.
+        - **x2** (Tensor) - A R-D tensor, must have the same type as `x1_values`. The dense tensor operand.
+
+    Returns:
+        Tensor, a new instance of SparseDenseCwiseAdd. The dtype is same as `x1_values`, and the shape is same with
+        the shape of `x1_values`.
+
+    Raises:
+        TypeError: If the dtype of `x1_indices` and  dtype of `x1_shape` is not int64.
+        TypeError: If the dtype of `x1_values` and  dtype of `x2` is not same.
+        ValueError: If the dims of `x1_indices` is not 2.
+        ValueError: If the dims of `x1_values` is not 1.
+        ValueError: If the dims of `x1_shape` is not 1.
+        ValueError: If dense tensor cannot be broabcast to SparseTensor. The size of the trailing axes for `x2` and
+             sparse in an operation must either be the same size or size of the trailing axes for `x2` must be 1.
+        ValueError: If shape[0] of `x1_indices` is not equal to shape[0] of `x1_values`.
+        ValueError: If shape[1] of `x1_indices` is not equal to shape[0] of `x1_shape`.
+        ValueError: If `x1_indices` proceed to cross the border the interview.
+
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
+        >>> x1_values = Tensor([1, 2], dtype=ms.int32)
+        >>> x1_shape = Tensor([3, 3], dtype=ms.int64)
+        >>> x2=Tensor([1,2,3],dtype=ms.int32)
+        >>> sparse_dense_cwise_add = ops.SparseDenseCwiseAdd()
+        >>> y = sparse_dense_cwise_add(x1_indices, x1_values, x1_shape, x2)
+        >>> print(y)
+        [2 5]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseDenseCwiseAdd."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+
+
+class SparseDenseCwiseMul(Primitive):
+    """
+    The dense tensor is broadcast into the shape of SparseTensor, and then the corresponding
+    positions of the two matrices are multiplied element by element according to the `x1_indices`, then output.
+    Note: only dense tensor can be broadcast to SparseTensor.
+
+    Inputs:
+        - **x1_indices** (Tensor) -  A 2-D Tensor,N x R matrix with the indices of non-empty values in a SparseTensor,
+          possibly not in canonical ordering.Support int64, each element value should be a non-negative number.
+          The shape is :math:`(N, R)`.
+        - **x1_values** (Tensor) - A 1-D Tensor, N non-empty values corresponding to `x1_indices`.
+          The shape should be :math:`(N,)`.
+        - **x1_shape**(Tensor) - A Tensor of type int64. 1-D. Shape of the input SparseTensor.
+        - **x2** (Tensor) - A R-D tensor, must have the same type as `x1_values`. The dense tensor operand.
+
+    Returns:
+        Tensor, a new instance of SparseDenseCwiseMul. The dtype is same as `x1_values`, and the shape is same with the
+        shape of `x1_values`.
+
+    Raises:
+        TypeError: If the dtype of `x1_indices` and  dtype of `x1_shape` is not int64.
+        TypeError: If the dtype of `x1_values` and  dtype of `x2` is not same.
+        ValueError: If the dims of `x1_indices` is not 2.
+        ValueError: If the dims of `x1_values` is not 1.
+        ValueError: If the dims of `x1_shape` is not 1.
+        ValueError: If dense tensor cannot be broabcast to SparseTensor. The size of the trailing axes for `x2` and
+             sparse in an operation must either be the same size or size of the trailing axes for `x2` must be 1.
+        ValueError: If shape[0] of `x1_indices` is not equal to shape[0] of `x1_values`.
+        ValueError: If shape[1] of `x1_indices` is not equal to shape[0] of `x1_shape`.
+        ValueError: If `x1_indices` proceed to cross the border the interview.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
+        >>> x1_values = Tensor([1, 2], dtype=ms.int32)
+        >>> x1_shape = Tensor([3, 3], dtype=ms.int64)
+        >>> x2=Tensor([1,2,3],dtype=ms.int32)
+        >>> sparse_dense_cwise_mul = ops.SparseDenseCwiseMul()
+        >>> y = sparse_dense_cwise_mul(x1_indices, x1_values, x1_shape, x2)
+        >>> print(y)
+        [1 6]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseDenseCwiseMul."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+
+
+class SparseDenseCwiseDiv(Primitive):
+    """
+    The dense tensor is broadcast into the shape of SparseTensor, and then the corresponding positions elements of
+    the dense tensor which non-zeros are divided by SparseTensor element by element according to the `x1_indices`,
+    then output.Note: only dense tensor can be broadcast to SparseTensor.
+
+    Inputs:
+        - **x1_indices** (Tensor) -  A 2-D Tensor,N x R matrix with the indices of non-empty values in a SparseTensor,
+          possibly not in canonical ordering.Support int64, each element value should be a non-negative number.
+          The shape is :math:`(N, R)`.
+        - **x1_values** (Tensor) - A 1-D Tensor, N non-empty values corresponding to `x1_indices`.
+          The shape should be :math:`(N,)`.
+        - **x1_shape**(Tensor) - A Tensor of type int64. 1-D. Shape of the input SparseTensor.
+        - **x2** (Tensor) - A R-D tensor, must have the same type as `x1_values`. The dense tensor operand.
+
+    Returns:
+        Tensor, a new instance of SparseDenseCwiseDiv. The dtype is same as `x1_values`, and the shape is same with
+        the shape of `x1_values`.
+
+    Raises:
+        TypeError: If the dtype of `x1_indices` and  dtype of `x1_shape` is not int64.
+        TypeError: If the dtype of `x1_values` and  dtype of `x2` is not same.
+        ValueError: If the dims of `x1_indices` is not 2.
+        ValueError: If the dims of `x1_values` is not 1.
+        ValueError: If the dims of `x1_shape` is not 1.
+        ValueError: If dense tensor cannot be broabcast to SparseTensor. The size of the trailing axes for `x2` and
+             sparse in an operation must either be the same size or size of the trailing axes for `x2` must be 1.
+        ValueError: If shape[0] of `x1_indices` is not equal to shape[0] of `x1_values`.
+        ValueError: If shape[1] of `x1_indices` is not equal to shape[0] of `x1_shape`.
+        ValueError: If `x1_indices` proceed to cross the border the interview.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+      >>> x1_indices = Tensor([[0, 0], [2, 2]], dtype=ms.int64)
+      >>> x1_values = Tensor([4, 2], dtype=ms.int32)
+      >>> x1_shape = Tensor([3, 3], dtype=ms.int64)
+      >>> x2=Tensor([1,2,2],dtype=ms.int32)
+      >>> sparse_dense_cwise_div = ops.SparseDenseCwiseDiv()
+      >>> y = sparse_dense_cwise_div(x1_indices, x1_values, x1_shape, x2)
+      >>> print(y)
+      [4 1]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseDenseCwiseDiv."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2'], outputs=['y'])
+
+
 class SparseToDense(PrimitiveWithInfer):
     """
     Converts a sparse representation into a dense tensor.

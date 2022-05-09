@@ -126,6 +126,9 @@ from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+from mindspore.ops.operations.sparse_ops import SparseDenseCwiseAdd
+from mindspore.ops.operations.sparse_ops import SparseDenseCwiseMul
+from mindspore.ops.operations.sparse_ops import SparseDenseCwiseDiv
 from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
 from mindspore.ops.operations.sparse_ops import SparseAddmm
@@ -2849,6 +2852,30 @@ test_case_nn_ops = [
     ('ApplyProximalAdagrad', {
         'block': ApplyProximalAdagradNet(),
         'desc_inputs': [[3, 3]],
+        'skip': ['backward']}),
+    ('SparseDenseCwiseAdd', {
+        'block': SparseDenseCwiseAdd(),
+        'desc_inputs': [
+            Tensor(np.array([[0, 0]]).astype(np.int64)),
+            Tensor(np.array([6]).astype(np.int64)),
+            Tensor(np.array([3, 3]).astype(np.int64)),
+            Tensor(np.array([1, 2, 3]).astype(np.int64))],
+        'skip': ['backward']}),
+    ('SparseDenseCwiseMul', {
+        'block': SparseDenseCwiseMul(),
+        'desc_inputs': [
+            Tensor(np.array([[0, 0]]).astype(np.int64)),
+            Tensor(np.array([6]).astype(np.int64)),
+            Tensor(np.array([3, 3]).astype(np.int64)),
+            Tensor(np.array([1, 2, 3]).astype(np.int64))],
+        'skip': ['backward']}),
+    ('SparseDenseCwiseDiv', {
+        'block': SparseDenseCwiseDiv(),
+        'desc_inputs': [
+            Tensor(np.array([[0, 0]]).astype(np.int64)),
+            Tensor(np.array([6]).astype(np.int64)),
+            Tensor(np.array([3, 3]).astype(np.int64)),
+            Tensor(np.array([1, 2, 3]).astype(np.int64))],
         'skip': ['backward']}),
     ('SparseApplyProximalAdagrad', {
         'block': SparseApplyProximalAdagradNet(),
