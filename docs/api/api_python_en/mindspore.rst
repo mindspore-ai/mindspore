@@ -274,6 +274,7 @@ Debugging
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.profiler
     mindspore.set_dump
 
 Memory Recycle
