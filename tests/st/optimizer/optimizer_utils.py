@@ -19,6 +19,7 @@ from mindspore import nn, Tensor
 from mindspore.ops import operations as P
 from mindspore.nn.optim import ASGD
 from mindspore.nn.optim import Rprop
+from mindspore.nn.optim import AdaMax
 np.random.seed(1024)
 
 fc1_weight = np.array([[0.72346634, 0.95608497, 0.4084163, 0.18627149,
@@ -52,10 +53,10 @@ class NetWithLoss(nn.Cell):
     """
     build net with loss
     """
-    def __init__(self, network):
+    def __init__(self, network, loss_fn):
         super(NetWithLoss, self).__init__()
         self.network = network
-        self.loss = nn.MSELoss(reduction='sum')
+        self.loss = loss_fn
 
     def construct(self, x, label):
         out = self.network(x)
@@ -93,14 +94,13 @@ class FakeNet(nn.Cell):
                 m.bias.set_data(Tensor(fc2_bias))
 
 
-def build_network(opt_config, is_group=False):
+def build_network(opt_config, is_group=False, net=FakeNet(), loss_fn=nn.MSELoss(reduction='sum')):
     """
     Construct training
     """
     losses = []
-    net = FakeNet()
 
-    networkwithloss = NetWithLoss(net)
+    networkwithloss = NetWithLoss(net, loss_fn)
     networkwithloss.set_train()
 
     if is_group:
@@ -108,6 +108,8 @@ def build_network(opt_config, is_group=False):
         fc2_params = list(filter(lambda x: 'fc1' not in x.name, networkwithloss.trainable_params()))
         if opt_config['name'] == 'ASGD':
             params = [{'params': fc1_params, 'weight_decay': 0.01, 'lr': 0.001}, {'params': fc2_params, 'lr': 0.1}]
+        elif opt_config['name'] == 'adamax':
+            params = [{'params': fc1_params, 'lr': 0.0018}, {'params': fc2_params, 'lr': 0.0022}]
         else:
             params = [{'params': fc1_params, 'lr': 0.001}, {'params': fc2_params, 'lr': 0.1}]
     else:
@@ -120,6 +122,10 @@ def build_network(opt_config, is_group=False):
     elif opt_config['name'] == 'Rprop':
         net_opt = Rprop(params, learning_rate=opt_config['lr'], etas=opt_config['etas'],
                         step_sizes=opt_config['step_sizes'], weight_decay=0.0)
+
+    elif opt_config['name'] == 'adamax':
+        net_opt = AdaMax(params, learning_rate=opt_config['lr'], beta1=opt_config['beta1'],
+                         beta2=opt_config['beta2'], eps=opt_config['eps'], weight_decay=0.0)
 
     trainonestepcell = mindspore.nn.TrainOneStepCell(networkwithloss, net_opt)
     data, label = make_fake_data()
@@ -167,6 +173,21 @@ loss_group_rprop = np.array([3.0124679e-01, 7.1360558e+01, 4.8910957e+01, 2.1730
                              2.0539343e+02, 2.2993685e+01, 2.6194101e+02, 2.8772815e+02,
                              2.4236647e+01, 3.9299741e+02, 3.5600668e+02, 1.4759110e+01,
                              7.2244568e+02, 8.1952783e+02, 9.8913864e+01, 1.1141744e+03], dtype=np.float32)
+
+loss_default_adamax = np.array([1.0, 4.542382, 10.5303135, 18.87176, 29.475002,
+                                42.2471, 57.09358, 73.917595, 92.62038, 113.10096,
+                                135.25633, 158.9815, 184.16951, 210.71207, 238.49873,
+                                267.41818, 297.35782, 328.20422, 359.84293, 392.15878], dtype=np.float32)
+
+loss_not_default_adamax = np.array([1.0, 4.5040994, 9.420462, 14.951918, 20.390736,
+                                    25.111732, 28.57695, 30.347034, 30.098299, 27.647425,
+                                    22.994541, 16.402872, 8.979612, 2.7966619, 0.025522191,
+                                    1.9826386, 8.12521, 15.100327, 18.94126, 19.657328], dtype=np.float32)
+
+loss_group_adamax = np.array([1.0, 4.537268, 10.415594, 18.463926, 28.51337,
+                              40.394474, 53.936195, 68.9657, 85.307945, 102.78646,
+                              121.22308, 140.4386, 160.25333, 180.48737, 200.96124,
+                              221.49626, 241.91531, 262.0436, 281.70914, 300.7426], dtype=np.float32)
 
 
 default_fc1_weight_asgd = np.array([[-0.9451941, -0.71258026, -1.2602371, -1.4823773,
