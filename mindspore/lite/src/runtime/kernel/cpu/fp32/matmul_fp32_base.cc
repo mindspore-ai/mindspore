@@ -230,7 +230,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunIsNotPackByBatch(int task_id) const {
     const float *a = matrix_a_.pack_ptr + a_offset_[index] * params_->row_ * params_->deep_;
     const float *b = matrix_b_.pack_ptr + b_offset_[index] * params_->deep_ * params_->col_;
     float *c = output_data_ + index * params_->row_ * params_->col_;
-    gemmIsNotPackFun(a, b, c, &bias, params_->row_, params_->deep_);
+    gemmIsNotPackFun(a, b, c, &bias, params_->row_, params_->deep_, params_->act_type_);
   }
   return RET_OK;
 }
@@ -246,6 +246,11 @@ int MatmulFp32BaseCPUKernel::Prepare() {
     MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->IsConst(), RET_ERROR, "matrix-c must be const when existing.");
     MS_CHECK_TRUE_MSG(in_tensors_[THIRD_INPUT]->data_type() == kNumberTypeFloat32, RET_ERROR,
                       "matrix-c's data type is invalid.");
+  }
+  auto act_type = params_->act_type_;
+  if (act_type != ActType_No && act_type != ActType_Relu && act_type != ActType_Relu6) {
+    MS_LOG(ERROR) << "matmul don't support the act-type: " << act_type;
+    return RET_ERROR;
   }
   auto ret = InitParameter();
   MS_CHECK_TRUE_MSG(ret == RET_OK, RET_ERROR, "Init parameters failed.");

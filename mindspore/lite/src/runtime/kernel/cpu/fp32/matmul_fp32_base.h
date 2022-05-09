@@ -30,7 +30,8 @@ using mindspore::lite::RET_OK;
 
 namespace mindspore::kernel {
 using MatrixPackFun = void (*)(const float *src_ptr, float *dst_ptr, int row, int col);
-using GemmIsNotPackFun = void (*)(const float *a, const float *b, float *c, const float *bias, int m, int k);
+using GemmIsNotPackFun = void (*)(const float *a, const float *b, float *c, const float *bias, int m, int k,
+                                  int act_type);
 
 class MatmulFp32BaseCPUKernel : public LiteKernel {
  public:
@@ -79,6 +80,7 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
 
  protected:
   MatMulParameter *params_ = nullptr;
+  GemmIsNotPackFun gemmIsNotPackFun = nullptr;
   int a_batch_ = 1;
   int b_batch_ = 1;
   std::vector<int> a_offset_;
@@ -95,7 +97,6 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   float *output_data_ = nullptr;
   bool out_need_aligned_ = false;
   int col_step_ = 0;
-  GemmIsNotPackFun gemmIsNotPackFun = nullptr;
   std::vector<int> split_points_;
   MatrixInfo matrix_a_;
   MatrixInfo matrix_b_;

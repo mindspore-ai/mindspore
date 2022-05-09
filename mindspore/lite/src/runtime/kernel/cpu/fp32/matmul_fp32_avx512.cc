@@ -70,8 +70,16 @@ int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
   }
   const float *input = matrix_a_.pack_ptr + start_row * params_->deep_;
   float *output = output_data_ + start_row * params_->col_align_;
-  MatMulAvx512Fp32(input, matrix_b_.pack_ptr, output, matrix_c_.pack_ptr, params_->act_type_, params_->deep_,
-                   params_->col_align_, params_->col_align_, row_num);
+  if (params_->col_ == 1) {
+    float bias = 0;
+    if (matrix_c_.pack_ptr != nullptr) {
+      bias = matrix_c_.pack_ptr[0];
+    }
+    gemmIsNotPackFun(input, matrix_b_.pack_ptr, output, &bias, row_num, params_->deep_, params_->act_type_);
+  } else {
+    MatMulAvx512Fp32(input, matrix_b_.pack_ptr, output, matrix_c_.pack_ptr, params_->act_type_, params_->deep_,
+                     params_->col_align_, params_->col_align_, row_num);
+  }
   return RET_OK;
 }
 
@@ -104,11 +112,12 @@ bool MatmulFp32BaseCPUKernel::CheckThreadCuttingByRow() {
   if (b_batch_ != C1NUM) {
     return false;
   }
-  if (params_->batch >= op_parameter_->thread_num_ || params_->col_ == 1) {
-    return false;
-  }
   if (row_num_ < op_parameter_->thread_num_) {
     return false;
+  }
+  if (params_->col_ == 1) {
+    row_min_unit_ = C8NUM;
+    return true;
   }
   row_min_unit_ = C6NUM;
   if (col_step_ < C48NUM) {
