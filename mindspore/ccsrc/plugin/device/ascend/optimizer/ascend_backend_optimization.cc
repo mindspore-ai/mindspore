@@ -376,6 +376,9 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
 #endif
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
+  ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
+  ir_fusion_pm->AddPass(std::make_shared<BatchNormGradInferFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
