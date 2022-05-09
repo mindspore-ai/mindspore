@@ -112,7 +112,7 @@ float FusedAdaFactorCpuKernelMod::CalcRMS(T *input, size_t elem_num) {
     };
     (void)tasks.emplace_back(block);
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
   auto rms = std::accumulate(block_sum.begin(), block_sum.end(), 0.0f);
   rms = rms / elem_num;
   return std::sqrt(rms);
