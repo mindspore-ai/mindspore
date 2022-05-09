@@ -47,9 +47,9 @@ class DropoutNDGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
+ private:
   void ResetResource() noexcept;
 
- private:
   bool CheckDropOutNdShape();
 
   template <typename T>

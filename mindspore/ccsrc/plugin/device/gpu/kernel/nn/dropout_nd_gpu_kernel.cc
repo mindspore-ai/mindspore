@@ -172,7 +172,7 @@ bool DropoutNDGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // To generate random float data for every channel.
   CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(cu_rand_generator_, rand_f, channels_),
                                "For DropoutNDGpuKernelMod failed to generate uniform");
-  DropoutNDForward(input, mask, output, rand_f, input_elements_, keep_prob_, num_per_channel_,
+  DropoutNDForward(input, mask, output, rand_f, input_elements_, keep_prob_, num_per_channel_, device_id_,
                    reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
