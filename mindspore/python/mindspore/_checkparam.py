@@ -153,7 +153,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     - number = check_number(number, 0, Rel.GE, "number", None)
     """
     rel_fn = Rel.get_fns(rel)
-    prim_name = f"For \'{prim_name}\', the" if prim_name else 'The'
+    prim_name = f"For \'{prim_name}\', the " if prim_name else 'The '
     arg_name = f"\'{arg_name}\'" if arg_name else 'input value'
     prim_info = f'{prim_name}' + f'{arg_name}'
     if isinstance(arg_value, arg_type):
