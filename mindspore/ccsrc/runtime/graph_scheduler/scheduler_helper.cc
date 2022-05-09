@@ -151,6 +151,20 @@ void SchedulerHelper::AddResultArrow(AbstractActor *const from_actor, OutputActo
 void SchedulerHelper::AddControlArrow(AbstractActor *const from_actor, AbstractActor *const to_actor) {
   MS_EXCEPTION_IF_NULL(from_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
+
+  // Check the control arrow whether exists.
+  auto iter = std::find_if(
+    from_actor->output_control_arrows_.begin(), from_actor->output_control_arrows_.end(),
+    [&to_actor](const auto &output_control_arrow) { return output_control_arrow.Name() == to_actor->GetAID().Name(); });
+  if (iter != from_actor->output_control_arrows_.end()) {
+    // The stack actor can only link the single control arrow.
+    if (to_actor->type_ == KernelTransformType::kStackActor) {
+      MS_LOG(EXCEPTION) << "The control arrow between " << from_actor->GetAID().Name() << " and "
+                        << to_actor->GetAID().Name() << " is repeat.";
+    }
+    return;
+  }
+
   (void)from_actor->output_control_arrows_.emplace_back(to_actor->GetAID());
   to_actor->input_controls_num_++;
   (void)to_actor->input_control_arrow_aids_.emplace_back(from_actor->GetAID());
