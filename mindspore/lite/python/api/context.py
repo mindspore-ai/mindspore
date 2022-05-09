@@ -15,7 +15,10 @@
 """
 Context API.
 """
+from ._checkparam import check_isinstance, check_list_of_element, check_input_shape
 from .lib import _c_lite_wrapper
+
+__all__ = ['Context', 'DeviceInfo', 'CPUDeviceInfo', 'GPUDeviceInfo', 'AscendDeviceInfo']
 
 
 class Context:
@@ -34,25 +37,15 @@ class Context:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> context = mslite.context.Context(thread_num=1, thread_affinity_core_list=[1,2], enable_parallel=False)
-        >>> context.append_device_info(mslite.context.CPUDeviceInfo())
+        >>> context = mslite.Context(thread_num=1, thread_affinity_core_list=[1,2], enable_parallel=False)
+        >>> context.append_device_info(mslite.CPUDeviceInfo())
     """
 
     def __init__(self, thread_num=2, thread_affinity_mode=1, thread_affinity_core_list=None, enable_parallel=False):
-        if not isinstance(thread_num, int):
-            raise TypeError("thread_num must be int, but got {}.".format(type(thread_num)))
-        if not isinstance(thread_affinity_mode, int):
-            raise TypeError("thread_affinity_mode must be int, but got {}.".format(type(thread_affinity_mode)))
-        if thread_affinity_core_list is not None:
-            if not isinstance(thread_affinity_core_list, list):
-                raise TypeError(
-                    "thread_affinity_core_list must be list, but got {}.".format(type(thread_affinity_core_list)))
-            for i, element in enumerate(thread_affinity_core_list):
-                if not isinstance(element, int):
-                    raise TypeError(f"thread_affinity_core_list element must be int, but got "
-                                    f"{type(element)} at index {i}.")
-        if not isinstance(enable_parallel, bool):
-            raise TypeError("enable_parallel must be bool, but got {}.".format(type(enable_parallel)))
+        check_isinstance("thread_num", thread_num, int)
+        check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
+        check_list_of_element("thread_affinity_core_list", thread_affinity_core_list, int, enable_none=True)
+        check_isinstance("enable_parallel", enable_parallel, bool)
         core_list = [] if thread_affinity_core_list is None else thread_affinity_core_list
         self._context = _c_lite_wrapper.ContextBind()
         self._context.set_thread_num(thread_num)
@@ -80,8 +73,8 @@ class Context:
 
         Examples:
             >>> import mindspore_lite as mslite
-            >>> context = mslite.context.Context()
-            >>> context.append_device_info(mslite.context.CPUDeviceInfo())
+            >>> context = mslite.Context()
+            >>> context.append_device_info(mslite.CPUDeviceInfo())
         """
         if not isinstance(device_info, DeviceInfo):
             raise TypeError("device_info must be CPUDeviceInfo, GPUDeviceInfo or AscendDeviceInfo, but got {}.".format(
@@ -110,13 +103,12 @@ class CPUDeviceInfo(DeviceInfo):
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.context.CPUDeviceInfo()
+        >>> device_info = mslite.CPUDeviceInfo()
     """
 
     def __init__(self, enable_fp16=False):
         super(CPUDeviceInfo, self).__init__()
-        if not isinstance(enable_fp16, bool):
-            raise TypeError("enable_fp16 must be bool, but got {}.".format(type(enable_fp16)))
+        check_isinstance("enable_fp16", enable_fp16, bool)
         self._device_info = _c_lite_wrapper.CPUDeviceInfoBind()
         self._device_info.set_enable_fp16(enable_fp16)
 
@@ -139,15 +131,13 @@ class GPUDeviceInfo(DeviceInfo):
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.context.GPUDeviceInfo(enable_fp16=True)
+        >>> device_info = mslite.GPUDeviceInfo(enable_fp16=True)
     """
 
     def __init__(self, device_id=0, enable_fp16=False):
         super(GPUDeviceInfo, self).__init__()
-        if not isinstance(device_id, int):
-            raise TypeError("device_id must be int, but got {}.".format(type(device_id)))
-        if not isinstance(enable_fp16, bool):
-            raise TypeError("enable_fp16 must be bool, but got {}.".format(type(enable_fp16)))
+        check_isinstance("device_id", device_id, int)
+        check_isinstance("enable_fp16", enable_fp16, bool)
         self._device_info = _c_lite_wrapper.GPUDeviceInfoBind()
         self._device_info.set_device_id(device_id)
         self._device_info.set_enable_fp16(enable_fp16)
@@ -190,14 +180,13 @@ class AscendDeviceInfo(DeviceInfo):
     Args:
         device_id(int, optional): The device id.
         input_format (str, optional): Manually specify the model input format, the value can be "NCHW", "NHWC", etc.
-        input_shape (list[list[int]], optional): Set shape of model inputs. e.g. [[1,2,3,4], [4,3,2,1]].
+        input_shape (dict{int:list[int]}, optional): Set shape of model inputs. e.g. {1: [1, 2, 3, 4], 2: [4, 3, 2, 1]}.
         precision_mode (str, optional): Model precision mode, the value can be "force_fp16", "allow_fp32_to_fp16",
             "must_keep_origin_dtype" or "allow_mix_precision". Default: "force_fp16".
         op_select_impl_mode (str, optional): The operator selection mode, the value can be "high_performance" or
             "high_precision". Default: "high_performance".
-        dynamic_batch_size (list[int], optional): the dynamic image size of model inputs. e.g. [2,4]
-        dynamic_image_size (list[list[int]], optional): image size hw
-             e.g. [[66,88], [32,64]] means h1:66,w1:88; h2:32,w2:64.
+        dynamic_batch_size (list[int], optional): the dynamic image size of model inputs. e.g. [2, 4]
+        dynamic_image_size (str, optional): image size hw e.g. "66,88;32,64" means h1:66,w1:88; h2:32,w2:64.
         fusion_switch_config_path (str, optional): Configuration file path of the convergence rule, including graph
              convergence and UB convergence. The system has built-in graph convergence and UB convergence rules, which
              are enableed by default. You can disable the reuls specified in the file by setting this parameter.
@@ -208,20 +197,32 @@ class AscendDeviceInfo(DeviceInfo):
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> device_info = mslite.context.AscendDeviceInfo(input_format="NHWC")
+        >>> device_info = mslite.AscendDeviceInfo(input_format="NHWC")
     """
 
     def __init__(self, device_id=0, input_format=None, input_shape=None, precision_mode="force_fp16",
-                 op_select_impl_mode="high_performance", dynamic_batch_size=None, dynamic_image_size=None,
-                 fusion_switch_config_path=None, insert_op_cfg_path=None):
+                 op_select_impl_mode="high_performance", dynamic_batch_size=None, dynamic_image_size="",
+                 fusion_switch_config_path="", insert_op_cfg_path=""):
         super(AscendDeviceInfo, self).__init__()
+        check_isinstance("device_id", device_id, int)
+        check_isinstance("input_format", input_format, str, enable_none=True)
+        check_input_shape("input_shape", input_shape, enable_none=True)
+        check_isinstance("precision_mode", precision_mode, str)
+        check_isinstance("op_select_impl_mode", op_select_impl_mode, str)
+        check_list_of_element("dynamic_batch_size", dynamic_batch_size, int, enable_none=True)
+        check_isinstance("dynamic_image_size", dynamic_image_size, str)
+        check_isinstance("fusion_switch_config_path", fusion_switch_config_path, str)
+        check_isinstance("insert_op_cfg_path", insert_op_cfg_path, str)
+        input_format_list = "" if input_format is None else input_format
+        input_shape_list = {} if input_shape is None else input_shape
+        batch_size_list = [] if dynamic_batch_size is None else dynamic_batch_size
         self._device_info = _c_lite_wrapper.AscendDeviceInfoBind()
         self._device_info.set_device_id(device_id)
-        self._device_info.set_input_format(input_format)
-        self._device_info.set_input_shape(input_shape)
+        self._device_info.set_input_format(input_format_list)
+        self._device_info.set_input_shape(input_shape_list)
         self._device_info.set_precision_mode(precision_mode)
         self._device_info.set_op_select_impl_mode(op_select_impl_mode)
-        self._device_info.set_dynamic_batch_size(dynamic_batch_size)
+        self._device_info.set_dynamic_batch_size(batch_size_list)
         self._device_info.set_dynamic_image_size(dynamic_image_size)
         self._device_info.set_fusion_switch_config_path(fusion_switch_config_path)
         self._device_info.set_insert_op_cfg_path(insert_op_cfg_path)
