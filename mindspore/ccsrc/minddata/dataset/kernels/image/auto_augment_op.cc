@@ -139,11 +139,33 @@ void AutoAugmentOp::GetParams(int transform_num, int *transform_id, std::vector<
   (*signs)[1] = sign_dist(rnd_);
 }
 
-std::vector<float> Linspace(float start, float end, int n, float scale = 1.0, float offset = 0) {
+// round half to even
+float Round(float value) {
+  const float kHalf = 0.5;
+  const int32_t kEven = 2;
+  float rnd = round(value);
+  float rnd_l = floor(value);
+  float rnd_h = ceil(value);
+  if (value - rnd_l == kHalf) {
+    if (fmod(rnd, kEven) == 0) {
+      return rnd;
+    } else if (value > 0) {
+      return rnd_l;
+    } else {
+      return rnd_h;
+    }
+  }
+  return rnd;
+}
+
+std::vector<float> Linspace(float start, float end, int n, float scale = 1.0, float offset = 0, bool round = false) {
   std::vector<float> linear(n);
   float step = (n == 1) ? 0 : ((end - start) / (n - 1));
   for (auto i = 0; i < linear.size(); ++i) {
     linear[i] = (start + i * step) * scale + offset;
+    if (round) {
+      linear[i] = Round(linear[i]);
+    }
   }
   return linear;
 }
@@ -151,14 +173,14 @@ std::vector<float> Linspace(float start, float end, int n, float scale = 1.0, fl
 Space AutoAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size) {
   Space space = {{"ShearX", {Linspace(0.0, 0.3, num_bins), true}},
                  {"ShearY", {Linspace(0.0, 0.3, num_bins), true}},
-                 {"TranslateX", {Linspace(0.0, 150.0 / 331 * image_size[1], num_bins), true}},
-                 {"TranslateY", {Linspace(0.0, 150.0 / 331 * image_size[0], num_bins), true}},
+                 {"TranslateX", {Linspace(0.0, 150.0f / 331 * image_size[1], num_bins), true}},
+                 {"TranslateY", {Linspace(0.0, 150.0f / 331 * image_size[0], num_bins), true}},
                  {"Rotate", {Linspace(0.0, 30, num_bins), true}},
                  {"Brightness", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Color", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Contrast", {Linspace(0.0, 0.9, num_bins), true}},
                  {"Sharpness", {Linspace(0.0, 0.9, num_bins), true}},
-                 {"Posterize", {Linspace(0.0, num_bins - 1, num_bins, -4 / (num_bins - 1), 8), false}},
+                 {"Posterize", {Linspace(0.0, num_bins - 1.f, num_bins, -4.0f / (num_bins - 1.f), 8, true), false}},
                  {"Solarize", {Linspace(256.0, 0.0, num_bins), false}},
                  {"AutoContrast", {{0}, false}},
                  {"Equalize", {{0}, false}},
