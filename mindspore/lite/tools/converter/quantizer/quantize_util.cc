@@ -71,8 +71,8 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
         return RET_ERROR;
       }
       if (std::abs(raw_datas[i] / bias_scale_tmp) >= quanted_bias_abs_limit) {
-        MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[i].scale
-                      << " is too small, need to update";
+        MS_LOG(WARNING) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[i].scale
+                        << " is too small, need to update";
         // update filter scale and zp
         double activate_scale = input_scales[0];
         double filter_scale = std::abs(raw_datas[i]) / (activate_scale * quanted_bias_abs_limit);
@@ -101,8 +101,8 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
       return RET_ERROR;
     }
     if (std::abs(max_raw_data / bias_scale_tmp) >= quanted_bias_abs_limit) {
-      MS_LOG(DEBUG) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[0].scale
-                    << " is too small, need to update";
+      MS_LOG(WARNING) << "quanted bias over flow, maybe the scale of weight: " << weight_quant_params[0].scale
+                      << " is too small, need to update";
       double activate_scale = input_scales[0];
       MS_CHECK_TRUE_MSG(activate_scale != 0, RET_ERROR, "activate_scale == 0");
       double filter_scale = std::abs(max_raw_data) / (activate_scale * quanted_bias_abs_limit);
@@ -314,17 +314,16 @@ mindspore::lite::Tensor *MSTensorToLiteTensor(const MSTensor &tensor) {
   return static_cast<mindspore::lite::Tensor *>(lite_impl->lite_tensor());
 }
 
-std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<mindspore::MSTensor> &srcTensors) {
-  std::vector<mindspore::lite::Tensor *> dstTensors;
-  dstTensors.reserve(srcTensors.size());
-  for (auto inTensor : srcTensors) {
-    auto tensor = MSTensorToLiteTensor(inTensor);
+std::vector<mindspore::lite::Tensor *> MSTensorToLiteTensors(const std::vector<mindspore::MSTensor> &src_tensors) {
+  std::vector<mindspore::lite::Tensor *> dst_tensors(src_tensors.size());
+  for (const auto &src_tensor : src_tensors) {
+    auto tensor = MSTensorToLiteTensor(src_tensor);
     if (tensor == nullptr) {
       return {};
     }
-    dstTensors.emplace_back(tensor);
+    dst_tensors.emplace_back(tensor);
   }
-  return dstTensors;
+  return dst_tensors;
 }
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, tensor::TensorPtr *tensor_info) {

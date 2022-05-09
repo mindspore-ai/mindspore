@@ -119,7 +119,7 @@ void GetAllChannelMinMax(const float *raw_datas, int elem_count, const std::vect
   MS_ASSERT(per_channel_min_max != nullptr);
   // the key is bucket_index
   for (int i = 0; i < dims[preferred_dim]; ++i) {
-    per_channel_min_max->insert({i, {FLT_MAX, FLT_MIN}});
+    per_channel_min_max->insert({i, {FLT_MAX, -FLT_MAX}});
   }
   for (int i = 0; i < elem_count; ++i) {
     auto bucket_index = GetBucketIndex(dims, preferred_dim, i);

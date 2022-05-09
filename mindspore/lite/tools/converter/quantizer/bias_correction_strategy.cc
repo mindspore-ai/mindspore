@@ -470,11 +470,9 @@ int BiasCorrectionStrategy::AddBiasToInt32Tensor(const CNodePtr &cnode, const te
     if (after_correct > corrected_bias_abs_limit) {
       MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too large: " << after_correct
                       << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
-      bias_datas[i] = static_cast<int>(corrected_bias_abs_limit);
     } else if (after_correct < -corrected_bias_abs_limit) {
       MS_LOG(WARNING) << op_name << " ch: " << i << " bias after_corrected too small: " << after_correct
                       << " origin value: " << bias_datas[i] << " bias_diff: " << bias_diff[i] << " scale: " << scale;
-      bias_datas[i] = static_cast<int>(-corrected_bias_abs_limit);
     } else {
       auto diff = static_cast<int>(std::round(bias_diff[i] / scale));
       bias_datas[i] += diff;

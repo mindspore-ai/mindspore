@@ -60,13 +60,13 @@ class FullQuantQuantizer : public Quantizer {
   int QuantNode(const FuncGraphPtr &func_graph);
 
   int SetInOutQuantParam(const AnfNodePtr &input_node, const std::unique_ptr<DataDistribution> &info,
-                         const PrimitivePtr &primitive, bool is_input, size_t index) const;
+                         const PrimitivePtr &primitive, size_t index, bool is_input = true) const;
 
   int DoParameterWeightQuant(const CNodePtr &cnode, const ParameterPtr &weight, const PrimitivePtr &primitive,
-                             bool per_channel, int input_index) const;
+                             int input_index, bool per_channel = true) const;
 
-  int DoValueNodeWeightQuant(const ValueNodePtr &weight, const PrimitivePtr &primitive, bool per_channel,
-                             int input_index) const;
+  int DoValueNodeWeightQuant(const CNodePtr &cnode, const ValueNodePtr &weight, const PrimitivePtr &primitive,
+                             int input_index, bool per_channel = true) const;
 
   int DoParameterNodeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index);
 
@@ -92,13 +92,16 @@ class FullQuantQuantizer : public Quantizer {
   TypeId activation_target_data_type_{kNumberTypeInt8};
   // quant and export are same data type.
   TypeId weight_data_type_{kNumberTypeInt8};
-  size_t bit_num_{8};
+  size_t bit_num_{k8Bit};
   int activation_q_min_{INT8_MIN};
   int activation_q_max_{INT8_MAX};
-  int weight_q_min_{INT8_MIN};
-  int weight_q_max_{INT8_MAX};
+  int weight_channel_q_min_{-INT8_MAX};
+  int weight_channel_q_max_{INT8_MAX};
+  int weight_layer_q_min_{INT8_MIN};
+  int weight_layer_q_max_{INT8_MAX};
   bool activation_symmetric_{false};
-  bool weight_symmetric_{true};
+  bool weight_channel_symmetric_{true};
+  bool weight_layer_symmetric_{false};
   std::set<PrimitivePtr> support_int8_ops_;
   std::set<PrimitivePtr> skip_check_dtype_ops_;
   std::set<PrimitivePtr> per_channel_ops_;
@@ -109,7 +112,7 @@ class FullQuantQuantizer : public Quantizer {
   std::shared_ptr<mindspore::Model> fp32_ms_model_{nullptr};
 
   // key is tensor_name
-  std::map<std::string, std::vector<schema::QuantParamT>> weight_quant_params_bak;
+  std::map<std::string, std::vector<schema::QuantParamT>> weight_quant_params_bak_;
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FULL_QUANT_QUANTIZER_H
