@@ -28,12 +28,7 @@
 namespace mindspore {
 namespace dataset {
 NormalizeOp::NormalizeOp(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc)
-    : mean_(mean), std_(std), is_hwc_(is_hwc) {
-  // pre-calculate normalized mean to be used later in each Compute
-  for (int64_t i = 0; i < mean.size(); i++) {
-    mean_[i] = mean_[i] / std_[i];
-  }
-}
+    : mean_(mean), std_(std), is_hwc_(is_hwc) {}
 
 Status NormalizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);

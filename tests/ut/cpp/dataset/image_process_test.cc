@@ -273,6 +273,29 @@ TEST_F(MindDataImageProcess, TestRGBA2GRAY) {
   EXPECT_EQ(distance, 0.0f);
 }
 
+/// Feature: Test SubStractMeanNormalize
+/// Description: Test lite cv normalize and expect result normally
+/// Expectation: (4 - 3) / 2 = 0.5
+TEST_F(MindDataImageProcess, TestNormalize) {
+  // construct a fake 3D image
+  std::vector<uint8_t> mat1 = {4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+  LiteMat lite_mat_src;
+  lite_mat_src.Init(2, 2, 3, mat1.data(), LDataType::UINT8);
+
+  // apply normalize directly
+  LiteMat lite_mat_dst;
+  std::vector<float> means = {3., 3., 3.};
+  std::vector<float> stds = {2., 2., 2.};
+  SubStractMeanNormalize(lite_mat_src, lite_mat_dst, means, stds);
+
+  for (int i = 0; i < lite_mat_dst.height_; i++) {
+    for (int j = 0; j < lite_mat_dst.width_; j++) {
+      float element = lite_mat_dst.ptr<float>(i)[j];
+      EXPECT_EQ(element, 0.5f);
+    }
+  }
+}
+
 TEST_F(MindDataImageProcess, testNV21ToBGR) {
   //  ffmpeg -i ./data/dataset/apple.jpg  -s 1024*800 -pix_fmt nv21 ./data/dataset/yuv/test_nv21.yuv
   const char *filename = "data/dataset/yuv/test_nv21.yuv";
