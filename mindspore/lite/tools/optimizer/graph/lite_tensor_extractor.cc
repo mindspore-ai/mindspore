@@ -64,7 +64,7 @@ bool CheckTensorListIsValid(const std::vector<uint8_t> &tensorlist_data) {
     MS_LOG(ERROR) << "tensorlist data length is too big, INT add overflow.";
     return false;
   }
-  size_t real_data_size = shape_info_size + kElementNumOffset;
+  size_t real_data_size = static_cast<size_t>(shape_info_size + kElementNumOffset);
   if (real_data_size != basic_data_size) {
     MS_LOG(ERROR) << "current tensorlist data length should be " << real_data_size << ", but now is "
                   << basic_data_size;

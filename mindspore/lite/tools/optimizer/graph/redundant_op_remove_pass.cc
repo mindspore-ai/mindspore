@@ -220,7 +220,7 @@ int RemoveRedundantOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const
   }
   MS_CHECK_TRUE_MSG(!CastToInt(index_vnode->cast<ValueNodePtr>()->value()).empty(), RET_ERROR, "value is empty");
   int index = CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
-  int input_cnode_inputs_size = get_item_input_cnode->inputs().size();
+  int input_cnode_inputs_size = static_cast<int>(get_item_input_cnode->inputs().size());
   if ((index + 1) >= input_cnode_inputs_size) {
     MS_LOG(ERROR) << "value node index is out of range.";
     return lite::RET_ERROR;
