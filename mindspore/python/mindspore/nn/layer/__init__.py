@@ -18,7 +18,7 @@ Layer.
 The high-level components(Cells) used to construct the neural network.
 """
 from . import activation, normalization, container, conv, basic, embedding, pooling, image, quant, math, \
-    combined, timedistributed, thor_layer, rnns, rnn_cells
+    combined, timedistributed, thor_layer, rnns, rnn_cells, padding
 from .activation import *
 from .normalization import *
 from .container import *
@@ -34,6 +34,7 @@ from .math import *
 from .combined import *
 from .timedistributed import *
 from .thor_layer import DenseThor, Conv2dThor, EmbeddingThor, EmbeddingLookupThor
+from .padding import ConstantPad1d, ConstantPad2d, ConstantPad3d, ZeroPad2d
 
 __all__ = []
 __all__.extend(activation.__all__)
@@ -51,3 +52,4 @@ __all__.extend(math.__all__)
 __all__.extend(combined.__all__)
 __all__.extend(timedistributed.__all__)
 __all__.extend(thor_layer.__all__)
+__all__.extend(padding.__all__)

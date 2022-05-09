@@ -182,6 +182,10 @@ Dropout层
     :template: classtemplate.rst
 
     mindspore.nn.Pad
+    mindspore.nn.ConstantPad1d
+    mindspore.nn.ConstantPad2d
+    mindspore.nn.ConstantPad3d
+    mindspore.nn.ZeroPad2d
 
 损失函数
 --------
