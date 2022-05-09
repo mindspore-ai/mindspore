@@ -519,7 +519,7 @@ int LiteSession::CompileGraph(Model *model) {
   if (model->model_type_ != ModelType_MSLite) {
     ret = reinterpret_cast<AbstractBaseModel *>(model)->ConvertTensors(&this->tensors_);
   } else {
-    // TODO(liulili): Convert to abstract base model interface
+    // Convert to abstract base model interface
     ret = ConvertTensors(model);
   }
   if (ret != RET_OK) {
@@ -1227,7 +1227,7 @@ int LiteSession::PreCheck(Model *model) {
       return RET_ERROR;
     }
   } else {
-    // TODO(liulili): old routine, convert to abstract base model
+    // old routine, convert to abstract base model
     if (!reinterpret_cast<LiteModel *>(model)->ModelVerify()) {
       MS_LOG(ERROR) << "wrong model input, please check";
       return RET_ERROR;
