@@ -50,7 +50,7 @@ bool HcclCollectiveGroup::InitCollective() {
       << "Loading libascend_collective.so failed. Many reasons could cause this:\n1.libascend_collective.so is not "
          "installed.\n2.hccl is not "
          "installed or found.\n3.mpi is not installed or found, please check if lib files of OpenMPI is added to "
-         "LD_LIBRARY_PATH.";
+         "LD_LIBRARY_PATH or have the version specified in MindSpore document installed.";
   }
   init_mpi_ = DlsymFuncObj(InitMPI, collective_handle_);
   finalize_mpi_ = DlsymFuncObj(FinalizeMPI, collective_handle_);
