@@ -67,16 +67,17 @@ namespace lite {
 namespace {
 bool ExistCustomCpuKernel() {
 #ifndef CUSTOM_KERNEL_REGISTRY_CLIP
-  constexpr auto kArchCPU = "CPU";
+  const std::string kArchCPU = "CPU";
   auto custom_kernel_creators = registry::RegistryKernelImpl::GetInstance()->GetCustomKernelCreators();
   for (const auto &custom_kernel_creator : custom_kernel_creators) {  // <provider, <arch, <type, CreateKernel*>>>
     if (custom_kernel_creator.second.empty()) {
       continue;
     }
-    if (std::any_of(custom_kernel_creator.second.begin(), custom_kernel_creator.second.end(),
-                    [](const std::pair<std::string, std::unordered_map<std::string, registry::CreateKernel *>> &pair) {
-                      return pair.first == kArchCPU && !pair.second.empty();
-                    })) {
+    if (std::any_of(
+          custom_kernel_creator.second.begin(), custom_kernel_creator.second.end(),
+          [kArchCPU](const std::pair<std::string, std::unordered_map<std::string, registry::CreateKernel *>> &pair) {
+            return pair.first == kArchCPU && !pair.second.empty();
+          })) {
       return true;
     }
   }
