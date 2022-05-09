@@ -524,7 +524,7 @@ int64_t SlicePreposePass::GetReshapeAbnormalIndexOut(const CNodePtr &slice_cnode
     int index = -1;
     for (size_t i = 0; i < slice_axes.size(); ++i) {
       if (slice_axes[i] == static_cast<int64_t>(j)) {
-        index = i;
+        index = static_cast<int>(i);
         break;
       }
     }
@@ -537,7 +537,7 @@ int64_t SlicePreposePass::GetReshapeAbnormalIndexOut(const CNodePtr &slice_cnode
       if (mapped_axe[j] == -1) {
         if (is_normal_mode) {
           *is_normal_mode = false;
-          abnormal_index_out = index;
+          abnormal_index_out = static_cast<int64_t>(index);
         } else {
           *support_abnormal_mode = false;
         }
@@ -859,7 +859,7 @@ bool SlicePreposePass::PreposeWithSoftmax(const FuncGraphPtr &graph, const CNode
     if (shape.empty()) {  // when softmax axis == -1, shape info is needed to determine whether slice can be preposed
       return false;
     }
-    softmax_axis[0] += shape.size();
+    softmax_axis[0] += static_cast<int64_t>(shape.size());
   }
 
   auto slice_node = GetSlice(slice_cnode);
@@ -970,7 +970,7 @@ bool SlicePreposePass::PreposeWithMatmul(const FuncGraphPtr &graph, const CNodeP
                                          const CNodePtr &matmul_cnode) {
   MS_ASSERT(graph != nullptr && slice_cnode != nullptr && matmul_cnode != nullptr);
   auto matmul_shape = GetCNodeInputShape(slice_cnode, 1);
-  const int dims = matmul_shape.size();
+  int dims = static_cast<int>(matmul_shape.size());
   if (dims == 0) {
     // if Matmul's output shape is unknown, can't do prepose, cause we can't determine last two axes
     return false;
@@ -1114,7 +1114,7 @@ bool SlicePreposePass::PreposeWithFullConnection(const FuncGraphPtr &graph, cons
     for (size_t j = 0; j < shape_out.size(); ++j) {
       inner_size_out *= shape_out[j];
       if (shape_out[j] == shape_in[i] && inner_size_out == inner_size_in) {
-        mapped_axe[j] = i;
+        mapped_axe[j] = static_cast<int64_t>(i);
         break;
       }
     }

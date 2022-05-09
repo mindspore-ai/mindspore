@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 namespace mindspore {
 namespace opt {
 int MultiConvSplit::GenSplitInfo() {
-  split_info_.out_num = this->strategy_.dev_num;
+  split_info_.out_num = static_cast<int64_t>(this->strategy_.dev_num);
   for (const auto &dev_type : this->strategy_.dev_types) {
     for (const auto &support_split_device : kSupportSplitedDevices) {
       if (dev_type == support_split_device.first) {
@@ -48,7 +48,7 @@ int MultiConvSplit::GenSplitInfo() {
     if (this->strategy_.strategys[0][i] == tmp) {
       continue;
     }
-    split_info_.axis = i;  // NHWC
+    split_info_.axis = static_cast<int64_t>(i);  // NHWC
     split_info_.size_splits.clear();
     split_info_.size_splits = this->strategy_.strategys[0][i];  // cal base on compute_cap
     break;

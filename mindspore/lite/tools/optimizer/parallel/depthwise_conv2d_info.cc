@@ -109,7 +109,7 @@ void CreateSplitConstantTensors(const tensor::TensorPtr &constant_tensor, const 
   int64_t element_bytes = static_cast<int64_t>(lite::DataTypeSize(constant_tensor->data_type()));
   std::vector<char *> split_constant_tensors_ptr;
   std::transform(
-    split_constant_tensors->begin(), split_constant_tensors->end(), split_constant_tensors_ptr.end(),
+    split_constant_tensors->begin(), split_constant_tensors->end(), std::back_inserter(split_constant_tensors_ptr),
     [&](const tensor::TensorPtr &constant_tensor) { return (reinterpret_cast<char *>(constant_tensor->data_c())); });
   int64_t outer_total_dim = 1;
   for (int64_t i = 0; i < split_dim; i++) {
