@@ -327,6 +327,7 @@ void Iteration::StartNewInstance() {
   }
 
   instance_state_ = InstanceState::kRunning;
+  instance_name_ = ps::PSContext::instance()->instance_name();
   MS_LOG(INFO) << "Process iteration new instance successful.";
 }
 
@@ -884,6 +885,10 @@ bool Iteration::UpdateHyperParams(const nlohmann::json &json) {
       ps::PSContext::instance()->set_global_iteration_time_window(item.value().get<uint64_t>());
       continue;
     }
+    if (key == "instance_name") {
+      ps::PSContext::instance()->set_instance_name(item.value().get<std::string>());
+      continue;
+    }
   }
 
   MS_LOG(INFO) << "start_fl_job_threshold: " << ps::PSContext::instance()->start_fl_job_threshold();
@@ -895,6 +900,7 @@ bool Iteration::UpdateHyperParams(const nlohmann::json &json) {
   MS_LOG(INFO) << "client_batch_size: " << ps::PSContext::instance()->client_batch_size();
   MS_LOG(INFO) << "client_learning_rate: " << ps::PSContext::instance()->client_learning_rate();
   MS_LOG(INFO) << "global_iteration_time_window: " << ps::PSContext::instance()->global_iteration_time_window();
+  MS_LOG(INFO) << "instance_name: " << ps::PSContext::instance()->instance_name();
   return true;
 }
 
