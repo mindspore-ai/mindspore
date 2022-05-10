@@ -96,7 +96,7 @@ def _set_fusion_strategy_by_idx(idx_list, group="hccl_world_group"):
     c_array_idx_list = _c_array(ctypes.c_uint, idx_list)
     c_idx_num = ctypes.c_uint(len(idx_list))
     c_group = _c_str(group)
-    ret = lib_ctype.hcom_set_split_strategy_by_index(c_group, c_idx_num, c_array_idx_list)
+    ret = lib_ctype.HcomSetGradFusionByIndex(c_group, c_idx_num, c_array_idx_list)
     if ret != 0:
         raise RuntimeError('Allreduce split error')
 
