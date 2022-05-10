@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.train_thor.ConvertModelUtils
+mindspore.ConvertModelUtils
+================================
+
+.. py:class:: mindspore.ConvertModelUtils
 
     该接口用于增加计算图，提升二阶算法THOR运行时的性能。
 

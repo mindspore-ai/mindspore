@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.callback.SummaryCollector(summary_dir, collect_freq=10, collect_specified_data=None, keep_default_action=True, custom_lineage_data=None, collect_tensor_freq=None, max_file_size=None, export_options=None)
+mindspore.SummaryCollector
+================================
+
+.. py:class:: mindspore.SummaryCollector(summary_dir, collect_freq=10, collect_specified_data=None, keep_default_action=True, custom_lineage_data=None, collect_tensor_freq=None, max_file_size=None, export_options=None)
 
     SummaryCollector可以收集一些常用信息。
 

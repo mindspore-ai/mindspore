@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.callback.History
+mindspore.History
+===========================
+
+.. py:class:: mindspore.History
 
     将网络输出的相关信息记录到 `History` 对象中。
 

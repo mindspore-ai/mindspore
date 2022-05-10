@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.callback.SummaryLandscape(summary_dir)
+mindspore.SummaryLandscape
+================================
+
+.. py:class:: mindspore.SummaryLandscape(summary_dir)
 
     SummaryLandscape可以帮助您收集loss地形图的信息。通过计算loss，可以在PCA（Principal Component Analysis）方向或者随机方向创建地形图。
 

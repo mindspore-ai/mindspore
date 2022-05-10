@@ -161,15 +161,15 @@ Context
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.get_auto_parallel_context
-    mindspore.get_context
-    mindspore.get_ps_context
-    mindspore.reset_auto_parallel_context
-    mindspore.reset_ps_context
-    mindspore.set_auto_parallel_context
     mindspore.set_context
-    mindspore.set_ps_context
+    mindspore.get_context
+    mindspore.set_auto_parallel_context
+    mindspore.get_auto_parallel_context
+    mindspore.reset_auto_parallel_context
     mindspore.ParallelMode
+    mindspore.set_ps_context
+    mindspore.get_ps_context
+    mindspore.reset_ps_context
 
 Model
 -----
@@ -180,6 +180,24 @@ Model
     :template: classtemplate.rst
 
     mindspore.Model
+
+Callback
+--------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.Callback
+    mindspore.CheckpointConfig
+    mindspore.History
+    mindspore.LambdaCallback
+    mindspore.LearningRateScheduler
+    mindspore.LossMonitor
+    mindspore.ModelCheckpoint
+    mindspore.RunContext
+    mindspore.TimeMonitor
 
 Dataset Helper
 ---------------
@@ -192,8 +210,8 @@ Dataset Helper
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
 
-Loss Scale Manager
--------------------
+Loss Scale
+-------------
 
 .. autosummary::
     :toctree: mindspore
@@ -203,6 +221,7 @@ Loss Scale Manager
     mindspore.LossScaleManager
     mindspore.FixedLossScaleManager
     mindspore.DynamicLossScaleManager
+    mindspore.build_train_network
 
 Serialization
 -------------
@@ -246,16 +265,6 @@ Log
     mindspore.get_level
     mindspore.get_log_config
 
-Automatic Mixed Precision
--------------------------
-
-.. autosummary::
-    :toctree: mindspore
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.build_train_network
-
 Installation Verification
 --------------------------
 
@@ -266,7 +275,7 @@ Installation Verification
 
     mindspore.run_check
 
-Debugging
+Debugging and Tuning
 --------------------------
 
 .. autosummary::
@@ -275,6 +284,9 @@ Debugging
     :template: classtemplate.rst
 
     mindspore.Profiler
+    mindspore.SummaryCollector
+    mindspore.SummaryLandscape
+    mindspore.SummaryRecord
     mindspore.set_dump
 
 Memory Recycle
@@ -286,3 +298,14 @@ Memory Recycle
     :template: classtemplate.rst
 
     mindspore.ms_memory_recycle
+
+Thor
+---------------
+
+.. autosummary::
+    :toctree: mindspore
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ConvertModelUtils
+    mindspore.ConvertNetUtils

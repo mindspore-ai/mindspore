@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.callback.LambdaCallback(epoch_begin=None, epoch_end=None, step_begin=None, step_end=None, begin=None, end=None)
+mindspore.LambdaCallback
+===========================
+
+.. py:class:: mindspore.LambdaCallback(epoch_begin=None, epoch_end=None, step_begin=None, step_end=None, begin=None, end=None)
 
     用于自定义简单的callback。
 
