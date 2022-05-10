@@ -18,6 +18,7 @@
 
 #include <vector>
 #include "utils/hashing.h"
+#include "ops/core_ops.h"
 
 namespace mindspore {
 namespace abstract {

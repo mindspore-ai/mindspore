@@ -540,6 +540,41 @@ void ConvertAbstractTensorToPython(const AbstractBasePtr &abs_base, bool only_co
   (*dic)[ATTR_DTYPE] = arg_tensor->BuildType();
   (*dic)[ATTR_VALUE] = BuildValue(arg_tensor->BuildValue());
 }
+namespace {
+py::object GetPyObjForPrimitiveAbstract(const PrimitiveAbstractClosurePtr &prim_abs) {
+  auto prim = prim_abs->BuildValue();
+  if (prim == nullptr) {
+    return py::none();
+  }
+  if (prim->isa<prim::DoSignaturePrimitive>()) {
+    auto do_sig_prim = prim->cast<prim::DoSignaturePrimitivePtr>();
+    auto value = do_sig_prim->function();
+    if (!value->isa<PrimitivePy>()) {
+      return py::none();
+    }
+    auto prim_py = value->cast<PrimitivePyPtr>();
+    return prim_py->GetPyObj();
+  }
+  if (prim->isa<PrimitivePy>()) {
+    auto prim_py = prim->cast<PrimitivePyPtr>();
+    return prim_py->GetPyObj();
+  }
+  return py::none();
+}
+
+bool IsCallInstance(const PartialAbstractClosurePtr &partial_abs) {
+  auto fn = partial_abs->fn();
+  if (!fn->isa<PrimitiveAbstractClosure>()) {
+    return false;
+  }
+  auto abs_prim = fn->cast<PrimitiveAbstractClosurePtr>();
+  auto prim = abs_prim->prim();
+  if (prim->name() == prim::kPrimCallInstance->name()) {
+    return true;
+  }
+  return false;
+}
+}  // namespace
 
 void ConvertAbstractFunctionToPython(const AbstractBasePtr &abs_base, py::dict *dic) {
   MS_EXCEPTION_IF_NULL(dic);
@@ -548,15 +583,28 @@ void ConvertAbstractFunctionToPython(const AbstractBasePtr &abs_base, py::dict *
   (*dic)[ATTR_DTYPE] = abs_base->BuildType();
   (*dic)[ATTR_VALUE] = py::none();
   if (abs_base->isa<PartialAbstractClosure>()) {
-    AbstractBasePtrList args = abs_base->cast<PartialAbstractClosurePtr>()->args();
+    auto partial_abs = abs_base->cast<PartialAbstractClosurePtr>();
+    AbstractBasePtrList args = partial_abs->args();
     if (!args.empty()) {
-      MS_EXCEPTION_IF_NULL(args[0]->BuildValue());
-      auto value = args[0]->BuildValue()->cast<parse::ClassTypePtr>();
-      if (value != nullptr) {
+      auto value = args[0]->BuildValue();
+      MS_EXCEPTION_IF_NULL(value);
+      if (IsCallInstance(partial_abs)) {
+        auto value_obj = value->cast<parse::MsClassObjectPtr>();
+        if (value_obj != nullptr) {
+          (*dic)[ATTR_DTYPE] = std::make_shared<MsClassType>();
+          (*dic)[ATTR_VALUE] = value_obj->obj();
+          return;
+        }
+      }
+      auto value_obj = value->cast<parse::ClassTypePtr>();
+      if (value_obj != nullptr) {
         (*dic)[ATTR_DTYPE] = std::make_shared<TypeType>();
-        (*dic)[ATTR_VALUE] = value->obj();
+        (*dic)[ATTR_VALUE] = value_obj->obj();
       }
     }
+  }
+  if (abs_base->isa<PrimitiveAbstractClosure>()) {
+    (*dic)[ATTR_VALUE] = GetPyObjForPrimitiveAbstract(abs_base->cast<PrimitiveAbstractClosurePtr>());
   }
 }
 

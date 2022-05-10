@@ -113,6 +113,7 @@ Dict = typing.Dict
 Slice = typing.Slice
 function_type = typing.Function
 Ellipsis_ = typing.TypeEllipsis
+MsClassType = typing.TypeMsClassType
 none_type = typing.TypeNone
 env_type_type = typing.EnvType
 tensor_type = typing.TensorType
