@@ -62,8 +62,6 @@ class IndexFillGpuKernelMod : public NativeGpuKernelMod {
   IndexFillLaunchFunc kernel_func_;
   int64_t x_num_;
   int64_t index_num_;
-  size_t data_size_;  // That is, sizeof(DataType).
-  size_t dim_size_;   // That is, sizeof(DimType)
   std::vector<int64_t> x_shape_{};
 };
 }  // namespace kernel
