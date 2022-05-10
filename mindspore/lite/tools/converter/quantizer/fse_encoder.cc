@@ -42,10 +42,10 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   CHECK_NULL_RETURN(delta_state);
   CHECK_NULL_RETURN(symbol_table);
   CHECK_NULL_RETURN(coding_table);
-  const int tablesize = 1 << table_log;
-  int tablemask = tablesize - 1;
-  int step = ((tablesize >> 1) + (tablesize >> kFseTableExtendSize) + kFseTableExtendSize);
-  int pos = 0;
+  const size_t tablesize = 1 << table_log;
+  size_t tablemask = tablesize - 1;
+  size_t step = ((tablesize >> 1) + (tablesize >> kFseTableExtendSize) + kFseTableExtendSize);
+  size_t pos = 0;
   // Separate the same symbols, coding will be better if the same characters are distributed evenly across the table.
   for (int sym = 0; sym < frequency_count; sym++) {
     for (uint32_t i = 0; i < frequency[sym]; i++) {
@@ -64,7 +64,7 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
     cfreqs[i] = cfreqs[i - 1] + frequency[i - 1];
   }
   cfreqs[frequency_count + 1] = cfreqs[frequency_count] + 1;
-  for (int i = 0; i < tablesize; i++) {
+  for (size_t i = 0; i < tablesize; i++) {
     uint16_t sym = symbol_table[i];
     coding_table[cfreqs[sym]] = tablesize + i;
     cfreqs[sym] += 1;
@@ -75,9 +75,9 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
     if (frequency[sym] >= kFrenqTableExtendSize) {
       int max_bits_out = table_log - FSEBitStream::CountBits(frequency[sym] - 1);
       int min_state_plus = frequency[sym] << max_bits_out;
-      delta_bit_count[sym] = (max_bits_out << kInt16) - min_state_plus;
-      delta_state[sym] = total - frequency[sym];
-      total += frequency[sym];
+      delta_bit_count[sym] = (static_cast<size_t>(max_bits_out) << kInt16) - min_state_plus;
+      delta_state[sym] = total - static_cast<int>(frequency[sym]);
+      total += static_cast<int>(frequency[sym]);
     } else {
       // we assume minimum `frequency` is 1
       delta_bit_count[sym] = (table_log << kInt16) - (1 << table_log);
@@ -403,7 +403,11 @@ int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs
     return ret;
   }
   tensor_input->data.resize(out_size);
-  MSLITE_CHECK_PTR(tensor_input->data.data());
+  if (tensor_input->data.data() == nullptr) {
+    MS_LOG(ERROR) << "the pointer is null.";
+    free(out8);
+    return RET_ERROR;
+  }
   if (memcpy_s(tensor_input->data.data(), out_size, out8, out_size) != EOK) {
     MS_LOG(ERROR) << "memcpy failed.";
     free(out8);

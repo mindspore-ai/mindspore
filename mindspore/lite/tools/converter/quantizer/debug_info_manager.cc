@@ -196,7 +196,7 @@ int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, cons
   }
   quant_debug_info->tensor_data.data_type = tensor.data_type();
   quant_debug_info->tensor_data.size = tensor.Size();
-  quant_debug_info->tensor_data.elements_num = tensor.ElementsNum();
+  quant_debug_info->tensor_data.elements_num = static_cast<size_t>(tensor.ElementsNum());
   return RET_OK;
 }
 
@@ -236,7 +236,7 @@ int DebugInfoManager::SetQuantStaticInfo(const std::vector<mindspore::lite::Tens
   }
   quant_debug_info->tensor_data.data_type = kNumberTypeFloat32;
   quant_debug_info->tensor_data.size = buf_size;
-  quant_debug_info->tensor_data.elements_num = tensor.ElementsNum();
+  quant_debug_info->tensor_data.elements_num = static_cast<size_t>(tensor.ElementsNum());
   return RET_OK;
 }
 

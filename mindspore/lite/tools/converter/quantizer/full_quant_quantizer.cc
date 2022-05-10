@@ -329,7 +329,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
         MS_LOG(WARNING) << "index value node is null";
         continue;
       }
-      size_t index = opt::CastToInt(index_value_node->value()).front();
+      size_t index = static_cast<size_t>(opt::CastToInt(index_value_node->value()).front());
       auto input_node = cnode->input(SECOND_INPUT);
       MS_CHECK_TRUE_MSG(input_node != nullptr, RET_ERROR, "input_node == nullptr");
       auto input_cnode = input_node->cast<mindspore::CNodePtr>();
