@@ -13,27 +13,42 @@
 # limitations under the License.
 # ============================================================================
 
+# cpu gpu ascend lite
 MS_ALL:
     include/api
     mindspore/core
     mindspore/ccsrc/cxx_api
     mindspore/ccsrc/transform
     mindspore/ccsrc/backend/common
-    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl
     mindspore/ccsrc/minddata
     mindspore/ccsrc/CMakeLists.txt
-    mindspore/lite/java
-    mindspore/lite/src/train
-    mindspore/lite/src/runtime/kernel/cpu/fp32
-    mindspore/lite/src/runtime/kernel/cpu/fp32_grad
     mindspore/ccsrc/backend/kernel_compiler
+# fl: cpu gpu lite
+MS_FL:
+    mindspore/lite/java
     mindspore/ccsrc/fl
     mindspore/ccsrc/ps
     tests/st/fl
+# cpu lite
+MS_CLOUD_CPU_AND_LITE:
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl
+# cpu gpu ascend
 MS_CLOUD:
     mindspore/python
     mindspore/ccsrc
     tests/st
+MS_CLOUD_CPU:
+    mindspore/ccsrc/plugin/device/cpu
+    mindspore/ccsrc/profiler/device/cpu
+    tests/st/ops/cpu
+MS_CLOUD_GPU:
+    mindspore/ccsrc/plugin/device/gpu
+    mindspore/ccsrc/profiler/device/gpu
+    tests/st/ops/gpu
+MS_CLOUD_ASCEND:
+    mindspore/ccsrc/plugin/device/ascend
+    mindspore/ccsrc/profiler/device/ascend
+    tests/st/ops/ascend
 MS_LITE:
     include/c_api
     include/api/allocator.h
@@ -48,12 +63,6 @@ MS_CLOUD_UT_CPP:
     tests/ut/cpp
 MS_CLOUD_UT_PYTHON:
     tests/ut/python
-MS_CLOUD_ST_ASCEND:
-    tests/st/ops/ascend
-MS_CLOUD_ST_GPU:
-    tests/st/ops/gpu
-MS_CLOUD_ST_CPU:
-    tests/st/ops/cpu
 MS_CI:
     .jenkins
     .clang-format
