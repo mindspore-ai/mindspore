@@ -15,6 +15,8 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
 
+    fail=0
+
     # parallel processing
     fifo_file="fifo_file.txt"
     mkfifo ${fifo_file}
@@ -58,13 +60,15 @@ function Run_Converter() {
               converter_result='converter CAFFE '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
           else
               rm -rf ${x86_path}/mindspore-lite-${version}-linux-x64/${model_name}
-              converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+              converter_result='converter CAFFE '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};
+              fail=1
           fi
           echo >&6
         } &
     done < ${models_nnie_config}
     wait
     exec 6>&-
+    return ${fail}
 }
 
 # Run benchmark on hi3516:
