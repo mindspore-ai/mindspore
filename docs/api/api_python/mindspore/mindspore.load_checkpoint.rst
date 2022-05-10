@@ -6,7 +6,7 @@ mindspore.load_checkpoint
     加载checkpoint文件。
 
     .. note::
-        - `specify_prefix` 和 `filter_prefix`的功能相互之间没有影响。
+        - `specify_prefix` 和 `filter_prefix` 的功能相互之间没有影响。
         - 如果发现没有参数被成功加载，将会报ValueError.
 
     **参数：**

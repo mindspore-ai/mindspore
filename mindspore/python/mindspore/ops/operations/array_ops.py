@@ -714,28 +714,6 @@ class Transpose(Primitive):
     Permutes the dimensions of the input tensor according to input permutation.
 
     Refer to :func:`mindspore.ops.transpose` for more detail.
-    For a 1-D array this has no effect, as a transposed vector is simply the same vector.
-    To convert a 1-D array into a 2D column vector please refer the class: mindspore.ops.ExpandDims.
-    For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
-    their order indicates how the axes are permuted (see Examples).
-    If axes are not provided and a.shape = (i[0], i[1], ... i[n-2], i[n-1]),
-    then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        - **input_perm** (tuple[int]) - The permutation to be converted. The elements in `input_perm` are composed of
-          the indexes of each dimension of `input_x`. The length of `input_perm` and the shape of `input_x` must be
-          the same. Only constant value is allowed. Must be in the range [0, rank(input_x)).
-
-    Outputs:
-        Tensor, the type of output tensor is the same as `input_x` and the shape of output tensor is decided by the
-        shape of `input_x` and the value of `input_perm`.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If `input_perm` is not a tuple.
-        ValueError: If length of shape of `input_x` is not equal to length of shape of `input_perm`.
-        ValueError: If the same element exists in `input_perm`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
