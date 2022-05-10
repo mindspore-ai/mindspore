@@ -25,14 +25,14 @@ context.set_context(mode=context.GRAPH_MODE)
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_if_in_if_tensor():
+def test_if_after_if_tensor():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_if_in_while():
+    def control_flow_if_after_if():
         x = Tensor(1)
         y = Tensor(0)
         if x < Tensor(5):
@@ -40,7 +40,7 @@ def test_if_in_if_tensor():
         if y > Tensor(3):
             x += Tensor(3)
         return x + y
-    res = control_flow_if_in_while()
+    res = control_flow_if_after_if()
     assert res == 8
 
 
@@ -49,14 +49,14 @@ def test_if_in_if_tensor():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_if_in_if_tensor_2():
+def test_if_after_if_tensor_2():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_if_in_while():
+    def control_flow_if_after_if():
         x = Tensor(1)
         y = Tensor(0)
         if x > Tensor(5):
@@ -70,7 +70,7 @@ def test_if_in_if_tensor_2():
         else:
             x += y
         return x + y
-    res = control_flow_if_in_while()
+    res = control_flow_if_after_if()
     assert res == 9
 
 
@@ -79,14 +79,14 @@ def test_if_in_if_tensor_2():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_if_in_if_tensor_3():
+def test_if_after_if_tensor_3():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_if_in_while(a):
+    def control_flow_if_after_if(a):
         if a > 15:
             y = Tensor(1)
         else:
@@ -94,7 +94,7 @@ def test_if_in_if_tensor_3():
         if a == Tensor(10):
             a = Tensor(11)
         return a
-    res = control_flow_if_in_while(Tensor(10))
+    res = control_flow_if_after_if(Tensor(10))
     assert res == 11
 
 
@@ -103,14 +103,14 @@ def test_if_in_if_tensor_3():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_if_in_if_numpy():
+def test_if_after_if_numpy():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_if_in_while():
+    def control_flow_if_after_if():
         x = np.array([1, 2, 3, 4])
         a = sum(x)
         if a > 15:
@@ -122,5 +122,5 @@ def test_if_in_if_numpy():
         else:
             ret = Tensor(2)
         return ret
-    res = control_flow_if_in_while()
+    res = control_flow_if_after_if()
     assert res == 2
