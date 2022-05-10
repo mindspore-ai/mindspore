@@ -205,6 +205,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
     EVP_DecryptUpdate(ctx, plain_data, plain_len, cipher_data.data(), static_cast<int32_t>(cipher_data.size()));
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_DecryptUpdate failed";
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -212,6 +213,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
     (int (*)(EVP_CIPHER_CTX *, int, int, void *))loader.GetFunc("EVP_CIPHER_CTX_ctrl");
   if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Byte16, tag)) {
     MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
 
@@ -221,6 +223,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   ret = EVP_DecryptFinal_ex(ctx, plain_data + *plain_len, &mlen);
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_DecryptFinal_ex failed";
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
   *plain_len += mlen;
