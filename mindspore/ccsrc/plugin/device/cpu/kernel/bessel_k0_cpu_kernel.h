@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_I0_CPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_I0_CPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_K0_CPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_K0_CPU_KERNEL_H
 
 #include <vector>
 #include <memory>
@@ -25,10 +25,10 @@
 
 namespace mindspore {
 namespace kernel {
-class BesselI0CpuKernelMod : public NativeCpuKernelMod {
+class BesselK0CpuKernelMod : public NativeCpuKernelMod {
  public:
-  BesselI0CpuKernelMod() = default;
-  ~BesselI0CpuKernelMod() override = default;
+  BesselK0CpuKernelMod() = default;
+  ~BesselK0CpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -39,10 +39,9 @@ class BesselI0CpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double chbevl(double x, const double array[], int n);
-  static double bessel_i0_func(double x);
+  static double k0(double x);
   template <typename T>
-  static void BesselI0Func(const T *input, T *output, size_t start, size_t end);
+  static void BesselK0Func(const T *input, T *output, size_t start, size_t end);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -50,7 +49,7 @@ class BesselI0CpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using BesselKernel = std::function<bool(BesselI0CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using BesselKernel = std::function<bool(BesselK0CpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
   BesselKernel kernel_func_;
 
@@ -60,10 +59,10 @@ class BesselI0CpuKernelMod : public NativeCpuKernelMod {
   TypeId input_dtype_;
 };
 
-class BesselI0eCpuKernelMod : public NativeCpuKernelMod {
+class BesselK0eCpuKernelMod : public NativeCpuKernelMod {
  public:
-  BesselI0eCpuKernelMod() = default;
-  ~BesselI0eCpuKernelMod() override = default;
+  BesselK0eCpuKernelMod() = default;
+  ~BesselK0eCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -74,9 +73,9 @@ class BesselI0eCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
-  static double bessel_i0e_func(double x);
+  static double k0e(double x);
   template <typename T>
-  static void BesselI0eFunc(const T *input, T *output, size_t start, size_t end);
+  static void BesselK0eFunc(const T *input, T *output, size_t start, size_t end);
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -84,7 +83,7 @@ class BesselI0eCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using BesselKernel = std::function<bool(BesselI0eCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using BesselKernel = std::function<bool(BesselK0eCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &)>;
   BesselKernel kernel_func_;
 
@@ -96,4 +95,4 @@ class BesselI0eCpuKernelMod : public NativeCpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_I0_CPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BESSEL_K0_CPU_KERNEL_H
