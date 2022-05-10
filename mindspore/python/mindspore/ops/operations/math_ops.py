@@ -5659,3 +5659,43 @@ class Trace(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
+
+
+class Zeta(Primitive):
+    """
+    Compute the Hurwitz zeta function ζ(x,q).
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    .. math::
+
+        \\zeta \\left ( x,q \\right )=  \\textstyle \\sum_{n=0} ^ {\\infty} \\left (  q+n\\right )^{-x}
+
+    Inputs:
+        - **x** (Tensor) - A Tensor, types: float32, float64.
+        - **q** (Tensor) - A Tensor, must have the same type as x.
+
+    Outputs:
+        Tensor, has the same dtype and shape as the x.
+
+    Raises:
+        TypeError: If either of `x` and `q` is not tensor.
+        TypeError: If dtype of `x` is neither float32 nor float64.
+        TypeError: If dtype of `q` is neither float32 nor float64.
+        ValueError: If shape of `x` is not same as the `q`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Example:
+        >>> x = Tensor(np.array([10.]), mindspore.float32)
+        >>> q = Tensor(np.array([1.]), mindspore.float32)
+        >>> zeta = P.Zeta()
+        >>> z = zeta(x, q)
+        >>> print(z)
+        [1.0009946]
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Zeta"""
