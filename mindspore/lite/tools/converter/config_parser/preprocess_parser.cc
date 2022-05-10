@@ -24,6 +24,7 @@
 #include "src/common/log_adapter.h"
 #include "mindspore/lite/tools/common/string_util.h"
 #include "include/errorcode.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -193,42 +194,29 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
   };
 
   for (const auto &image_path : calibrate_data_path) {
-    DIR *root = opendir(image_path.second.c_str());
-    if (root == nullptr) {
-      MS_LOG(ERROR) << "cant open dir: " << image_path.second.c_str();
-      return RET_PARAM_INVALID;
+    std::vector<std::string> file_names;
+    auto ret = ReadDirectory(image_path.second.c_str(), &file_names);
+    if (ret != RET_OK) {
+      return ret;
     }
-    struct dirent *image_dir = readdir(root);
-    size_t count = 0;
-    while (image_dir != nullptr && count < limited_count) {
-      std::string file_name(image_dir->d_name);
-      if (file_name != "." && file_name != "..") {
-        const std::string file_path = image_path.second + "/" + file_name;
-        AddImage(file_path, image_path.first);
-        count++;
+    MS_ASSERT(file_names.size() >= kDotDirCount);
+    if (file_names.size() < (limited_count + kDotDirCount)) {
+      MS_LOG(ERROR) << "file count less than calibrate size, file count: " << file_names.size()
+                    << " limited_count: " << limited_count << " kDotDirCount: " << kDotDirCount;
+      return RET_ERROR;
+    }
+    for (size_t index = 0; index < (limited_count + kDotDirCount); index++) {
+      if (file_names[index] == "." || file_names[index] == "..") {
+        continue;
       }
-      image_dir = readdir(root);
-    }
-    auto ret = closedir(root);
-    if (ret != 0) {
-      MS_LOG(ERROR) << " close dir failed.";
-      return RET_ERROR;
-    }
-    if (inputs->find(image_path.first) != inputs->end()) {
-      auto &cur_inputs = inputs->at(image_path.first);
-      std::sort(cur_inputs.begin(), cur_inputs.end());
-    } else {
-      MS_LOG(ERROR) << "cant find " << image_path.first << " at input maps.";
-      return RET_ERROR;
-    }
-    if (count != limited_count) {
-      MS_LOG(ERROR) << " data path: " << image_path.second << " data count:" << count
-                    << " < limited_count:" << limited_count;
-      return RET_ERROR;
+      const std::string file_path = image_path.second + "/" + file_names[index];
+      MS_LOG(DEBUG) << "calibrate file_path: " << file_path;
+      AddImage(file_path, image_path.first);
     }
   }
   return RET_OK;
 }
+
 int PreprocessParser::ParseImageNormalize(const DataPreProcessString &data_pre_process_str,
                                           preprocess::ImagePreProcessParam *image_pre_process) {
   if (!data_pre_process_str.normalize_mean.empty() &&
@@ -245,6 +233,7 @@ int PreprocessParser::ParseImageNormalize(const DataPreProcessString &data_pre_p
 
   return RET_OK;
 }
+
 int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_process_str,
                                        preprocess::ImagePreProcessParam *image_pre_process) {
   if (!data_pre_process_str.resize_width.empty()) {
@@ -277,6 +266,7 @@ int PreprocessParser::ParseImageResize(const DataPreProcessString &data_pre_proc
   }
   return RET_OK;
 }
+
 int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_process_str,
                                            preprocess::ImagePreProcessParam *image_pre_process) {
   if (!data_pre_process_str.center_crop_width.empty()) {
@@ -299,6 +289,44 @@ int PreprocessParser::ParseImageCenterCrop(const DataPreProcessString &data_pre_
       return RET_INPUT_PARAM_INVALID;
     }
   }
+  return RET_OK;
+}
+
+int PreprocessParser::ReadDirectory(const std::string &path, std::vector<std::string> *file_names) {
+  if (file_names == nullptr) {
+    MS_LOG(ERROR) << "file_names is null";
+    return RET_ERROR;
+  }
+
+  DIR *dp = opendir(path.empty() ? "." : RealPath(path.c_str()).c_str());
+  if (dp == nullptr) {
+    MS_LOG(ERROR) << "cant open dir: " << path;
+    return RET_PARAM_INVALID;
+  }
+  size_t file_count = 0;
+  while (true) {
+    if (file_count >= kFileCountLimit) {
+      break;
+    }
+    struct dirent *de = readdir(dp);
+    if (de == NULL) {
+      break;
+    }
+    file_names->push_back(std::string(de->d_name));
+    file_count++;
+  }
+
+  auto ret = closedir(dp);
+  if (ret != 0) {
+    MS_LOG(ERROR) << " close dir failed.";
+    return RET_ERROR;
+  }
+
+  if (file_count >= kFileCountLimit) {
+    MS_LOG(ERROR) << " read calibrate directory failed, files count exceed limit: " << kFileCountLimit;
+    return RET_ERROR;
+  }
+  std::sort(file_names->begin(), file_names->end());
   return RET_OK;
 }
 }  // namespace lite

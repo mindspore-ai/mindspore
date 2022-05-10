@@ -171,11 +171,12 @@ int DebugInfoManager::SaveInfo(const std::string &file_path) {
 int DebugInfoManager::SetOriginStaticInfo(QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
                                           const quant::DebugMode &debug_mode) {
   if (debug_mode == quant::DETAIL) {
-    if (tensor.data_type() == kNumberTypeFloat32) {
+    TypeId data_type = tensor.data_type();
+    if (data_type == kNumberTypeFloat32) {
       GetStatByTensor<float>(static_cast<float *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
-    } else if (tensor.data_type() == kNumberTypeInt32) {
+    } else if (data_type == kNumberTypeInt32) {
       GetStatByTensor<int>(static_cast<int *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
-    } else if (tensor.data_type() == kNumberTypeInt8) {
+    } else if (data_type == kNumberTypeInt8) {
       GetStatByTensor<int8_t>(static_cast<int8_t *>(tensor.data()), tensor.ElementsNum(), quant_debug_info);
     } else {
       MS_LOG(ERROR) << tensor.tensor_name() << " unsupported data type " << tensor.data_type();
@@ -312,8 +313,8 @@ int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_bac
 std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseInputTensors(
   const mindspore::lite::LiteModel &model) {
   std::map<std::string, mindspore::schema::Tensor *> maps;
-  for (auto node : model.all_nodes_) {
-    for (auto index : node->input_indices_) {
+  for (auto &node : model.all_nodes_) {
+    for (auto &index : node->input_indices_) {
       auto tensor_name = model.all_tensors_[index]->name()->str();
       maps[tensor_name] = model.all_tensors_[index];
     }
@@ -323,8 +324,8 @@ std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseInputT
 
 std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseOutputTensorFromModel(const Model &model) {
   std::map<std::string, mindspore::schema::Tensor *> maps;
-  for (auto node : model.all_nodes_) {
-    for (auto index : node->output_indices_) {
+  for (auto &node : model.all_nodes_) {
+    for (auto &index : node->output_indices_) {
       auto tensor_name = model.all_tensors_[index]->name()->str();
       maps[tensor_name] = model.all_tensors_[index];
     }
@@ -549,7 +550,7 @@ void DebugInfoManager::PrintQuantParam() {
       std::cout << quant_param.node_type << ",";
       std::cout << quant_param.tensor_name << ",";
       std::cout << quant_param.element_num << ",";
-      for (auto dim : quant_param.dims) {
+      for (auto &dim : quant_param.dims) {
         std::cout << dim << " ";
       }
       std::cout << ",";
@@ -581,7 +582,7 @@ int DebugInfoManager::SaveQuantParam(const std::string &file_path) {
       out_file << quant_param.node_type << ",";
       out_file << quant_param.tensor_name << ",";
       out_file << quant_param.element_num << ",";
-      for (auto dim : quant_param.dims) {
+      for (auto &dim : quant_param.dims) {
         out_file << dim << " ";
       }
       out_file << ",";
@@ -692,7 +693,7 @@ int DebugInfoManager::StatisticsDataPerRound(
   auto quant_before_callBack =
     GetBeforeCallBack(quant_input_tensor_map, op_parameters, false, config.commonQuantParam.debug_mode);
   auto quant_after_callBack = GetAfterCallBack(op_parameters, false, config.commonQuantParam.debug_mode);
-  for (auto tensor : quant->GetInputs()) {
+  for (auto &tensor : quant->GetInputs()) {
     auto tensor_data = tensor.MutableData();
     CHECK_NULL_RETURN(tensor_data);
     ret = memcpy_s(tensor_data, tensor.DataSize(), origin->GetInputByTensorName(tensor.Name()).Data().get(),
@@ -713,12 +714,7 @@ int DebugInfoManager::StatisticsDataPerRound(
 
 std::string DebugInfoManager::CreateFilePath(const std::string &dir_path, const std::string &file_name) {
   auto real_path = RealPath(dir_path.c_str());
-  std::string file_path{};
-#ifdef _WIN32
-  file_path = real_path + "\\" + file_name;
-#else
-  file_path = real_path + "/" + file_name;
-#endif
+  std::string file_path = real_path + FILE_SEPARATOR + file_name;
   return file_path;
 }
 
@@ -731,7 +727,7 @@ int DebugInfoManager::CompareOriginWithQuant(const std::shared_ptr<mindspore::Mo
   auto begin = GetTimeUs();
   auto origin_input_tensor_map = ParseInputTensors(origin_lite_model);
   auto quant_input_tensor_map = ParseInputTensors(quant_lite_model);
-  for (auto tensor : origin->GetOutputs()) {
+  for (auto &tensor : origin->GetOutputs()) {
     origin_outputs_[tensor.Name()] = tensor;
   }
   int ret;
