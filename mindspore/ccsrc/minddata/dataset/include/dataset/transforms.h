@@ -328,7 +328,7 @@ class MS_API Mask final : public TensorTransform {
   /// \param[in] op One of the relational operators: EQ, NE LT, GT, LE or GE.
   /// \param[in] constant Constant to be compared to. It can only be MSTensor of the following types
   ///                from mindspore::DataType: String, Int, Float, Bool.
-  /// \param[in] de_type Type of the generated mask. It can only be numeric or boolean datatype.
+  /// \param[in] ms_type Type of the generated mask. It can only be numeric or boolean datatype.
   ///               (default=mindspore::DataType::kNumberTypeBool)
   /// \par Example
   /// \code
