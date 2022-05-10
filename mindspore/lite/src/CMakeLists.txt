@@ -147,9 +147,10 @@ set(MODEL_LOADER_FRAMEWORK_SRC
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
+remove_definitions(-DBUILD_LITE_INFERENCE)
 
-string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+# string(REPLACE "-Werror" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+# string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wno-error=return-type")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wno-error=return-type")
 
@@ -168,7 +169,8 @@ set(MINDIR_KERNEL_SRC
 
 set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/less_test_kernel_mod.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/less_test_kernel_mod.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/kernel_mod_mock.cc)
 endif()
 
 set(LITE_SRC
