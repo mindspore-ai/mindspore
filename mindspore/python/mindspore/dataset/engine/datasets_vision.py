@@ -418,7 +418,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
         usage (str, optional): Specify the 'train', 'valid', 'test' part or 'all' parts of dataset
             (default= 'all', will read all samples).
         sampler (Sampler, optional): Object used to choose samples from the dataset (default=None).
-        decode (bool, optional): decode the images after reading (default=False).
+        decode (bool, optional): Whether to decode the images after reading (default=False).
         extensions (list[str], optional): List of file extensions to be included in the dataset (default=None).
         num_samples (int, optional): The number of images to be included in the dataset
             (default=None, will include all images).
@@ -480,19 +480,19 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
     About CelebA dataset:
 
-    CelebFaces Attributes Dataset (CelebA) is a large-scale face attributes dataset
+    CelebFaces Attributes Dataset (CelebA) is a large-scale dataset
     with more than 200K celebrity images, each with 40 attribute annotations.
 
     The images in this dataset cover large pose variations and background clutter.
     CelebA has large diversities, large quantities, and rich annotations, including
 
     * 10,177 number of identities,
-    * 202,599 number of face images,
+    * 202,599 number of images,
     * 5 landmark locations, 40 binary attributes annotations per image.
 
     The dataset can be employed as the training and test sets for the following computer
-    vision tasks: face attribute recognition, face detection, landmark (or facial part)
-    localization, and face editing & synthesis.
+    vision tasks: attribute recognition, detection, landmark (or facial part) and
+    localization.
 
     Original CelebA dataset structure:
 
@@ -532,7 +532,7 @@ class CelebADataset(MappableDataset, VisionBaseDataset):
 
         @article{DBLP:journals/corr/LiuLWT14,
         author        = {Ziwei Liu and Ping Luo and Xiaogang Wang and Xiaoou Tang},
-        title         = {Deep Learning Face Attributes in the Wild},
+        title         = {Deep Learning Attributes in the Wild},
         journal       = {CoRR},
         volume        = {abs/1411.7766},
         year          = {2014},
@@ -2648,10 +2648,10 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
 
     About LFW dataset:
 
-    Labeled Faces in the Wild (LFW) is a database of face photographs designed for studying the problem of
-    unconstrained face recognition. This database was created and maintained by researchers at the University
+    LFW is a database of photographs designed for studying the problem of
+    unconstrained recognition. This database was created and maintained by researchers at the University
     of Massachusetts, Amherst (specific references are in Acknowledgments section). 13,233 images of 5,749
-    people were detected and centered by the Viola Jones face detector and collected from the web. 1,680 of the
+    people were detected and centered by the Viola Jones detector and collected from the web. 1,680 of the
     people pictured have two or more distinct photos in the dataset.
 
     You can unzip the original LFW dataset files into this directory structure and read by MindSpore's API.
@@ -2696,7 +2696,7 @@ class LFWDataset(MappableDataset, VisionBaseDataset):
     .. code-block::
 
         @TechReport{LFWTech,
-            title={Labeled Faces in the Wild: A Database for Studying Face Recognition in Unconstrained Environments},
+            title={LFW: A Database for Studying Recognition in Unconstrained Environments},
             author={Gary B. Huang and Manu Ramesh and Tamara Berg and Erik Learned-Miller},
             institution ={University of Massachusetts, Amherst},
             year={2007}
@@ -4785,7 +4785,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
 
     About WIDERFace dataset:
 
-    The WIDERFace database of people faces has a training set of 12,880 samples, a testing set of 16,097 examples
+    The WIDERFace database has a training set of 12,880 samples, a testing set of 16,097 examples
     and a validating set of 3,226 examples. It is a subset of a larger set available from WIDER. The digits have
     been size-normalized and centered in a fixed-size image.
 
@@ -4827,7 +4827,7 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
     .. code-block::
 
         @inproceedings{2016WIDER,
-          title={WIDER FACE: A Face Detection Benchmark},
+          title={WIDERFACE: A Detection Benchmark},
           author={Yang, S. and Luo, P. and Loy, C. C. and Tang, X.},
           booktitle={IEEE},
           pages={5525-5533},
