@@ -606,6 +606,40 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
+
+    def cdist(self, input_y, p=2.0):
+        """
+        Computes batched the p-norm distance between each pair of the two collections of row vectors.
+
+        Args:
+            input_y (Tensor) - as the same dtype as `self`, Input tensor of shape :math:`(B, R, M)`.
+            p (float): P value for the p-norm distance to calculate between each vector pair, P ∈ [0,∞]. Default: 2.0.
+
+        Returns:
+            ensor, has the same dtype as `input_y`, which shape is :math:`(B, P, R)`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Raises:
+            TypeError: If `input_y` is not a Tensor.
+            TypeError: If dtype of `self` or `input_y` is neither float16 nor float32.
+            TypeError: If `p` is not a float.
+            ValueError: If `p` is a negative float.
+            ValueError: If dimension of `self` is not the same as `input_y`.
+            ValueError: If dimension of `self` or `input_y` is neither 2 nor 3.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
+            >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
+            >>> output = a.cdist(y)
+            >>> print(output)
+        """
+
+        self._init_check()
+        return tensor_operator_registry.get('cdist')(p)(self, input_y)
+
     def view(self, *shape):
         """
         Reshape the tensor according to the input shape. It's the same as :func:`mindspore.Tensor.reshape`,

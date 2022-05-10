@@ -37,7 +37,6 @@ class MIND_API Cdist : public BaseOperator {
   Cdist() : BaseOperator(kNameCdist) { InitIOName({"input_x", "input_y"}, {"output"}); }
 
   /// \brief Set p, An optional float >= 0 or inf. Defaults to 2.0.
-
   void set_p(const float p);
   /// \brief Get p.
   ///

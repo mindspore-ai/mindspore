@@ -202,7 +202,8 @@ Reduction算子
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.matmul 
+    mindspore.ops.matmul
+    mindspore.ops.cdist
 
 Tensor操作算子
 ----------------
