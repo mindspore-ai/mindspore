@@ -257,7 +257,7 @@ void CPUKernelUtils::ParallelFor(const CTask &task, size_t count, float block_si
     (void)tasks.emplace_back(block);
     start += once_compute_size;
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
 }
 
 // Search for best block_size to get best thread num : 1 2 4 8 16 23(32)

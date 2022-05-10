@@ -396,7 +396,7 @@ void TransposeFwdCpuKernelMod::ParallelRun(const T *input_addr, T *output_addr, 
     };
     (void)tasks.emplace_back(task);
   }
-  (void)common::ThreadPool::GetInstance().SyncRun(tasks);
+  ParallelLaunch(tasks);
 }
 
 template <typename T>
