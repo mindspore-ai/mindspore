@@ -543,8 +543,9 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
     real_div_node = CreateRealDiv(graph, sparse_softmax_node_grad, tile_node, *this);
   }
   auto expand_dims_node = CreateExpandDims(graph, real_div_node, *this);
-  std::vector<AnfNodePtr> new_mul_inputs = {NewValueNode(std::make_shared<Primitive>(kMulOpName)),
-                                            softmax_node_outputs[1], expand_dims_node};
+  auto mul_primitive = common::AnfAlgo::GetCNodePrimitive(mul_node);
+  MS_EXCEPTION_IF_NULL(mul_primitive);
+  std::vector<AnfNodePtr> new_mul_inputs = {NewValueNode(mul_primitive), softmax_node_outputs[1], expand_dims_node};
   auto new_mul_node = NewCNode(new_mul_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_mul_node);
   new_mul_node->set_scope(mul_node->scope());

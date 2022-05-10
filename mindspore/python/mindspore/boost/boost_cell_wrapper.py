@@ -13,12 +13,14 @@
 # limitations under the License.
 # ============================================================================
 """Boost Mode Cell Wrapper."""
+import numpy as np
 from mindspore.nn.wrap import TrainOneStepCell
 import mindspore.context as context
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_gradients_mean
 from mindspore.communication.management import get_group_size, create_group
 from mindspore.nn.cell import Cell
+from mindspore.nn import SequentialCell
 from mindspore.common import Tensor, RowTensor
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
@@ -84,6 +86,17 @@ def _tensor_grad_overflow_row_tensor(grad):
     return grad_overflow(grad.values)
 
 
+class _OutputToFloat16(Cell):
+    "Wrap cell for amp. Cast network output back to float16"
+
+    def __init__(self, op):
+        super(_OutputToFloat16, self).__init__(auto_prefix=False)
+        self._op = op
+
+    def construct(self, *inputs):
+        return F.cast(self._op(*inputs), mstype.float16)
+
+
 class BoostTrainOneStepCell(TrainOneStepCell):
     r"""
     Boost Network training package class.
@@ -145,12 +158,13 @@ class BoostTrainOneStepCell(TrainOneStepCell):
             self.weights = self.optimizer.parameters
         self.train_strategy = getattr(self.optimizer, 'train_strategy', None)
 
-        auto_boost = AutoBoost()
+        self.auto_boost = AutoBoost()
         self.use_grad_accumulation = self.parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.STAND_ALONE)
-        self.use_grad_accumulation = self.use_grad_accumulation & auto_boost.boost_config["grad_accumulation"]
+        self.use_grad_accumulation = self.use_grad_accumulation & \
+                                     self.auto_boost.boost_config.get("grad_accumulation", False)
         self.max_accumulation_step = 1
         if self.use_grad_accumulation:
-            self.max_accumulation_step = auto_boost.grad_accumulation_step
+            self.max_accumulation_step = self.auto_boost.grad_accumulation_step
             if self.max_accumulation_step <= 1:
                 self.max_accumulation_step = 1
                 self.use_grad_accumulation = False
@@ -160,16 +174,16 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
         self.enable_dim_reduce = self.check_dim_reduce_enable()
         if self.enable_dim_reduce:
-            local_pca_mat_path = auto_boost.local_pca_mat_path
-            rho = auto_boost.rho
-            gamma = auto_boost.gamma
-            alpha = auto_boost.alpha
-            sigma = auto_boost.sigma
+            local_pca_mat_path = self.auto_boost.local_pca_mat_path
+            rho = self.auto_boost.rho
+            gamma = self.auto_boost.gamma
+            alpha = self.auto_boost.alpha
+            sigma = self.auto_boost.sigma
             _rank = _get_global_rank()
             _rank_size = 1 if self.parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
-            _device_number = auto_boost.device_number
-            n_components = auto_boost.n_components
-            timeout = auto_boost.timeout
+            _device_number = self.auto_boost.device_number
+            n_components = self.auto_boost.n_components
+            timeout = self.auto_boost.timeout
             pca_mat = _load_local_pca_mat(local_pca_mat_path, timeout)
             self.weights_clone = ParameterTuple(self.weights).clone(prefix="weights_clone", init="same")
             self.dim_reduce = DimReduce(self.network, self.optimizer, self.weights, pca_mat, n_components, rho, gamma,
@@ -193,7 +207,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         if self.enable_adasum:
             _rank = _get_global_rank()
             _rank_size = get_group_size()
-            _device_number = auto_boost.device_number
+            _device_number = self.auto_boost.device_number
             self.device_number = _device_number
             group_number = _rank_size // _device_number
 
@@ -422,45 +436,114 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         self.is_distributed = (self.parallel_mode != ParallelMode.STAND_ALONE)
         self.gpu_target = (context.get_context("device_target") == "GPU")
         self.loss_scaling_manager = None
-        if isinstance(scale_sense, Cell):
+
+        print(self.auto_boost.boost_config, flush=True)
+        if self.auto_boost.boost_config.get("loss_scale_group", False):
+            self.enable_enhanced_amp = True
+            if not isinstance(scale_sense, Cell) or not hasattr(scale_sense, "set_loss_scale_status"):
+                raise TypeError("The scale_sense must be enhanced amp Cell, bug got {}".format(type(scale_sense)))
             self.loss_scaling_manager = scale_sense
-            self.scale_sense = Parameter(Tensor(scale_sense.get_loss_scale(), dtype=mstype.float32),
-                                         name="scale_sense")
-        elif isinstance(scale_sense, Tensor):
-            if scale_sense.shape == (1,) or scale_sense.shape == ():
-                self.scale_sense = Parameter(scale_sense, name='scale_sense')
-            else:
-                raise ValueError("The shape of scale_sense must be (1,) or (), but got {}".format(scale_sense.shape))
+            self.loss_scale_groups = scale_sense.loss_scale_groups
+            self._init_enhanced_amp()
+            self._do_keep_mix_fp32(self.network)
         else:
-            raise TypeError("The scale_sense must be Cell or Tensor, but got {}".format(type(scale_sense)))
+            self.enable_enhanced_amp = False
+            if isinstance(scale_sense, Cell):
+                self.loss_scaling_manager = scale_sense
+                self.scale_sense = Parameter(Tensor(scale_sense.get_loss_scale(), dtype=mstype.float32),
+                                             name="scale_sense")
+            elif isinstance(scale_sense, Tensor):
+                if scale_sense.shape == (1,) or scale_sense.shape == ():
+                    self.scale_sense = Parameter(scale_sense, name='scale_sense')
+                else:
+                    raise ValueError("The shape of scale_sense must be (1,) or (), \
+                                     but got {}".format(scale_sense.shape))
+            else:
+                raise TypeError("The scale_sense must be Cell or Tensor, but got {}".format(type(scale_sense)))
 
     def construct(self, *inputs):
         weights = self.weights
         loss = self.network(*inputs)
-        scaling_sens = self.scale_sense
 
-        status, scaling_sens = self._start_overflow_check(loss, scaling_sens)
+        if self.enable_enhanced_amp:
+            scaling_sens = F.fill(loss.dtype, loss.shape, 1)
+            grads = self.grad(self.network, weights)(*inputs, scaling_sens)
+            grads = self.grad_reducer(grads)
+            cond, scaling_sens = self._enhanced_amp_process_overflow_status(grads)
+        else:
+            scaling_sens = self.scale_sense
+            status, scaling_sens = self._start_overflow_check(loss, scaling_sens)
+            scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
 
-        scaling_sens_filled = C.ones_like(loss) * F.cast(scaling_sens, F.dtype(loss))
-        grads = self.grad(self.network, weights)(*inputs, scaling_sens_filled)
-        grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
+            grads = self.grad(self.network, weights)(*inputs, scaling_sens_filled)
+            grads = self.hyper_map(F.partial(_grad_scale, scaling_sens), grads)
+            grads = self.grad_reducer(grads)
 
-        # get the overflow buffer
-        cond = self._get_overflow_status(status, grads)
-        overflow = self._process_loss_scale(cond)
-        # if there is no overflow, do optimize
-        if not overflow:
-            if self.use_grad_accumulation:
-                loss = self.gradient_accumulation_process(loss, grads, scaling_sens_filled, *inputs)
-            else:
-                if self.enable_dim_reduce:
-                    loss = F.depend(loss, self.dim_reduce(loss, grads, scaling_sens_filled, self.weights,
-                                                          self.weights_clone, *inputs))
-                elif self.enable_adasum:
-                    loss = F.depend(loss, self.adasum_process(loss, grads))
+            # get the overflow buffer
+            cond = self._get_overflow_status(status, grads)
+            overflow = self._process_loss_scale(cond)
+            # if there is no overflow, do optimize
+            if not overflow:
+                if self.use_grad_accumulation:
+                    loss = self.gradient_accumulation_process(loss, grads, scaling_sens_filled, *inputs)
                 else:
-                    loss = F.depend(loss, self.optimizer(grads))
+                    if self.enable_dim_reduce:
+                        loss = F.depend(loss, self.dim_reduce(loss, grads, scaling_sens_filled, self.weights,
+                                                              self.weights_clone, *inputs))
+                    elif self.enable_adasum:
+                        loss = F.depend(loss, self.adasum_process(loss, grads))
+                    else:
+                        loss = F.depend(loss, self.optimizer(grads))
         return loss, cond, scaling_sens
+
+    def _get_dynamic_overflow_status(self, param):
+        """
+        Judge whether the current network overflows.
+
+        Inputs:
+            - **param** (Tensor) - Whether the overflow occurs or not.
+
+        Outputs:
+            bool, overflow value.
+            float, update ratio.
+        """
+        flag_sum = self.reduce_sum(param, (0,))
+        if self.reducer_flag:
+            flag_reduce = self.allreduce(flag_sum)
+            overflow = self.less_equal(self.base, flag_reduce)
+        else:
+            overflow = self.less_equal(self.base, flag_sum)
+        if overflow:
+            update_ratio = self.reduce_ratio
+        else:
+            update_ratio = self.growth_ratio
+        return overflow, update_ratio
+
+    def _enhanced_amp_process_overflow_status(self, grads):
+        """
+        Enhanced hybrid precision update loss scale and update weights.
+
+        Inputs:
+            - **grads** (Tuple(Tensor)) - Tuple of gradients.
+
+        Outputs:
+            bool, overflow value.
+            float, loss scale value.
+        """
+        overflow_global_flag = 0
+        layer = 0
+        loss_scale_temp = ()
+        for param in self.overflow_status_list:
+            overflow, update_ratio = self._get_dynamic_overflow_status(param)
+            if overflow:
+                overflow_global_flag += 1
+            new_loss_scale_value = self.loss_scaling_manager.update_loss_scale_status(layer, update_ratio)
+            loss_scale_temp += (new_loss_scale_value,) * self.optimizer_loss_scale[layer]
+            layer += 1
+        if P.Less()(overflow_global_flag, self.base):
+            grads = self.hyper_map(F.partial(_grad_scale), loss_scale_temp, grads)
+            overflow_global_flag = F.depend(overflow_global_flag, self.optimizer(grads))
+        return overflow_global_flag, loss_scale_temp[0]
 
     def _set_sense_scale(self, sens):
         """
@@ -556,3 +639,82 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         if self.loss_scaling_manager is not None:
             return self.loss_scaling_manager(self.scale_sense, overflow)
         return overflow
+
+    def _init_enhanced_amp(self):
+        """
+        Init enhanced hybrid precision.
+        """
+        self.params_len = len(self.optimizer.params)
+        self.parent = list(range(self.params_len))
+        self.layer_rank = [0 for _ in range(self.params_len)]
+        index = 0
+        loss_scale_number = len(self.loss_scale_groups)
+        for loss_scale_group in self.loss_scale_groups:
+            for i, _ in enumerate(loss_scale_group):
+                if i == 0:
+                    index += 1
+                    continue
+                self._union(index - 1, index)
+                index += 1
+        parent_set = list(set(self.parent))
+        self.optimizer_loss_scale = [self.parent.count(x) for x in parent_set]
+        self.reduce_ratio = Tensor(1.0 / (2 ** 0.5), mstype.float32)
+        self.growth_ratio = Tensor(2 ** (1.0 / 1000.0), mstype.float32)
+        self.overflow_status_list = ParameterTuple(Parameter(Tensor(np.zeros(shape=[8]), mstype.float32),
+                                                             name='mix_layer_status_{}'.format(x), requires_grad=False)
+                                                   for x in range(loss_scale_number))
+        self.loss_scaling_manager.set_loss_scale_status(loss_scale_number, self.loss_scaling_manager.get_loss_scale())
+
+    def _get_root(self, i):
+        """
+        Get parent id.
+
+        Args:
+            i (int): the current parameters's id.
+
+        Returns:
+            Number, the parent id.
+        """
+        if self.parent[i] != self.parent[self.parent[i]]:
+            self.parent[i] = self.get_root(self.parent[i])
+        return self.parent[i]
+
+    def _union(self, i, j):
+        """
+        Aggregate parameters of the same category.
+
+        Args:
+            i (int): the last parameters's id.
+            j (int): the current parameters's id.
+        """
+        i_root = self._get_root(i)
+        j_root = self._get_root(j)
+
+        if self.layer_rank[i_root] == self.layer_rank[j_root]:
+            self.parent[j_root] = i_root
+            self.layer_rank[i_root] += 1
+        elif self.layer_rank[i_root] > self.layer_rank[j_root]:
+            self.parent[j_root] = i_root
+        else:
+            self.parent[i_root] = j_root
+
+    def _do_keep_mix_fp32(self, network):
+        """
+        Keep enhanced amp cell of type float32.
+
+        Args:
+            network (Cell): The training network.
+        """
+        cells = network.name_cells()
+        change = False
+        for name in cells:
+            subcell = cells[name]
+            if subcell == network:
+                continue
+            elif "GroupLossScaleManager" in subcell.cls_name:
+                network._cells[name] = _OutputToFloat16(subcell.to_float(mstype.float32)) # pylint: disable=W0212
+                change = True
+            else:
+                self._do_keep_mix_fp32(subcell)
+        if isinstance(network, SequentialCell) and change:
+            network.cell_list = list(network.cells())

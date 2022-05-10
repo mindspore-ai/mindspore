@@ -83,6 +83,7 @@ class OptimizeIRPassLib {
 
   // Branch culling
   SubstitutionPtr switch_simplify_;
+  SubstitutionPtr compare_switch_simplify_;
   SubstitutionPtr float_tuple_getitem_switch_;
   SubstitutionPtr float_environ_get_switch_;
   SubstitutionPtr exchange_switch_depend_value_;

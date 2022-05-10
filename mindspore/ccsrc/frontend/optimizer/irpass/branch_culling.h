@@ -92,6 +92,68 @@ class SwitchSimplify : public OptimizerCaller {
   }
 };
 
+// {prim::kPrimLess, Value1, Value2}
+// {prim::kPrimSwitch, Less, X, Y}
+// {prim::kPrimGreater, Value1, Value2}
+// {prim::kPrimSwitch, Greater, X, Y}
+class CompareSwitchSimplify : public OptimizerCaller {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    PatternNode<AnfNodePtr> cond, true_br, false_br;
+    auto CompareSwitchSimplifyLambda = [&node, &cond, &true_br, &false_br]() -> AnfNodePtr {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto compare_cnode = cnode->input(kIndex1)->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(compare_cnode);
+      auto cond_tensor1 = GetValue<tensor::TensorPtr>(GetValueNode(compare_cnode->input(kIndex1)));
+      auto cond_tensor2 = GetValue<tensor::TensorPtr>(GetValueNode(compare_cnode->input(kIndex2)));
+      auto cond_value1 = reinterpret_cast<float *>(cond_tensor1->data_c());
+      auto cond_value2 = reinterpret_cast<float *>(cond_tensor2->data_c());
+      bool flag = false;
+      if (IsPrimitiveCNode(compare_cnode, prim::kPrimLess) && (*cond_value1 < *cond_value2)) {
+        flag = true;
+      } else if (IsPrimitiveCNode(compare_cnode, prim::kPrimGreater) && (*cond_value1 > *cond_value2)) {
+        flag = true;
+      }
+      if (flag) {
+        return true_br.GetNode(node);
+      }
+      return false_br.GetNode(node);
+    };
+
+    auto ConstantCompareLambda = [](const AnfNodePtr &node) -> bool {
+      if (!node->isa<CNode>()) {
+        return false;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      if (!IsPrimitiveCNode(cnode, prim::kPrimLess) && !IsPrimitiveCNode(cnode, prim::kPrimGreater)) {
+        return false;
+      }
+      bool has_no_value =
+        std::any_of(cnode->inputs().begin() + kIndex1, cnode->inputs().end(), [](const AnfNodePtr &node) {
+          if (!IsValueNode<tensor::Tensor>(node)) {
+            return true;
+          }
+          auto value = GetValue<tensor::TensorPtr>(GetValueNode(node));
+          if (value->DataSize() > 1) {
+            return true;
+          }
+          auto type_id = value->Dtype()->type_id();
+          if (type_id != TypeId::kNumberTypeFloat32 && type_id != TypeId::kNumberTypeFloat) {
+            return true;
+          }
+          return false;
+        });
+      return !has_no_value;
+    };
+
+    MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), CompareSwitchSimplifyLambda,
+                            cond.CheckFunc(ConstantCompareLambda, node));
+
+    return nullptr;
+  }
+};
+
 // {prim::kPrimTupleGetItem, {prim::kPrimSwitch, X0, X1, X2}, C} =>
 // {prim::kPrimSwitch, X0, {prim::kPrimTupleGetItem, X1, C}, {prim::kPrimTupleGetItem, X2, C}}
 class FloatTupleGetItemSwitch : public OptimizerCaller {

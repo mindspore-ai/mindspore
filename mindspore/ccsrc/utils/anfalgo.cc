@@ -319,7 +319,7 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
   if (AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimUpdateState)) {
     return VisitKernelWithReturnType(cnode->input(kUpdateStateStateInput), index, skip_nop_node, return_types);
   }
-  const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad};
+  const PrimitiveSet follow_first_input_prims = {prim::kPrimDepend, prim::kPrimLoad, prim::kPrimDynamicLossScale};
   if (IsOneOfPrimitiveCNode(cnode, follow_first_input_prims)) {
     return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, skip_nop_node, return_types);
   }

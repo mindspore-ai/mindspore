@@ -83,7 +83,8 @@ def _check_kwargs(key_words):
     if 'loss_scale_manager' in key_words:
         loss_scale_manager = key_words['loss_scale_manager']
         if loss_scale_manager:
-            validator.check_value_type('loss_scale_manager', loss_scale_manager, LossScaleManager)
+            validator.check_value_type('loss_scale_manager', loss_scale_manager,
+                                       [LossScaleManager, boost.GroupLossScaleManager])
 
 
 def _check_level(level, boost_level):
