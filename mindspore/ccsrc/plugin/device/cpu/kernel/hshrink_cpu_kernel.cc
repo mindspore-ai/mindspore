@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/hshrink_cpu_kernel.h"
 #include <algorithm>
 #include "mindspore/core/ops/hshrink.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,15 +35,16 @@ std::vector<KernelAttr> HShrinkCpuKernelMod::GetOpSupport() {
 
 bool HShrinkCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrink>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast HShrink ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+  kernel_name_ = base_operator->name();
   if (inputs.size() != kHShrinkInputsNum || outputs.size() != kHShrinkOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kHShrinkInputsNum << " and "
                   << kHShrinkOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrink>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "Cast HShrink ops failed!";
     return false;
   }
   lambd_ = kernel_ptr->get_lambd();
@@ -70,13 +71,13 @@ bool HShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
-  auto task = [input, output, this](size_t start, size_t end) {
+  const float &lambd = this->lambd_;
+  auto task = [input, output, &lambd](size_t start, size_t end) {
+    const T positive_lambd = static_cast<T>(lambd);
+    const T negative_lambd = static_cast<T>(-1 * lambd);
+    const T zero = static_cast<T>(0);
     for (size_t i = start; i < end; i++) {
-      if (input[i] >= static_cast<T>(-1 * this->lambd_) && input[i] <= static_cast<T>(this->lambd_)) {
-        output[i] = static_cast<T>(0);
-      } else {
-        output[i] = input[i];
-      }
+      output[i] = (input[i] >= negative_lambd && input[i] <= positive_lambd) ? zero : input[i];
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);

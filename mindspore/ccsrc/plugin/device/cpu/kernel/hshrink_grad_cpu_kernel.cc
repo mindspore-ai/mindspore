@@ -17,7 +17,7 @@
 #include "plugin/device/cpu/kernel/hshrink_grad_cpu_kernel.h"
 #include <algorithm>
 #include "mindspore/core/ops/grad/hshrink_grad.h"
-#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,15 +35,16 @@ std::vector<KernelAttr> HShrinkGradCpuKernelMod::GetOpSupport() {
 
 bool HShrinkGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
-  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrinkGrad>(base_operator);
-  if (!kernel_ptr) {
-    MS_LOG(ERROR) << "Cast HShrinkGrad ops failed!";
-    return false;
-  }
-  kernel_name_ = kernel_ptr->name();
+  kernel_name_ = base_operator->name();
   if (inputs.size() != kHShrinkGradInputsNum || outputs.size() != kHShrinkGradOutputsNum) {
     MS_LOG(ERROR) << kernel_name_ << ": input and output size should be " << kHShrinkGradInputsNum << " and "
                   << kHShrinkGradOutputsNum << ", but get " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::HShrinkGrad>(base_operator);
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "Cast HShrinkGrad ops failed!";
     return false;
   }
   lambd_ = kernel_ptr->get_lambd();
@@ -72,13 +73,13 @@ bool HShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   MS_ERROR_IF_NULL_W_RET_VAL(dx, false);
 
   size_t lens = inputs[0]->size > 0 ? static_cast<size_t>(inputs[0]->size / sizeof(T)) : 1;
-  auto task = [dy, x, dx, this](size_t start, size_t end) {
+  const float &lambd = this->lambd_;
+  auto task = [dy, x, dx, &lambd](size_t start, size_t end) {
+    const T positive_lambd = static_cast<T>(lambd);
+    const T negative_lambd = static_cast<T>(-1 * lambd);
+    const T zero = static_cast<T>(0);
     for (size_t i = start; i < end; i++) {
-      if (x[i] >= static_cast<T>(-1 * this->lambd_) && x[i] <= static_cast<T>(this->lambd_)) {
-        dx[i] = static_cast<T>(0);
-      } else {
-        dx[i] = dy[i];
-      }
+      dx[i] = (x[i] >= negative_lambd && x[i] <= positive_lambd) ? zero : dy[i];
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
