@@ -188,6 +188,7 @@ class SentencePieceVocab {
   ///              - SentencePieceModel.kChar, refers to char based sentencePiece Model type.
   ///              - SentencePieceModel.kWord, refers to word based sentencePiece Model type.
   /// \param[in] params A dictionary with no incoming parameters(The parameters are derived from SentencePiece library).
+  /// \param[out] vocab A SentencePieceVocab object.
   /// \return SentencePieceVocab, vocab built from the file.
   /// \par Example
   /// \code

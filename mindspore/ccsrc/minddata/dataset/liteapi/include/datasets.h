@@ -176,9 +176,9 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///        with random attribute in map operator.
   ///     4. Mindrecord does not support bool, uint64, multi-dimensional uint8(drop dimension) nor
   ///        multi-dimensional string.
-  /// \param[in] file_name Path to dataset file
+  /// \param[in] dataset_path Path to dataset file
   /// \param[in] num_files Number of dataset files (default=1)
-  /// \param[in] file_type Dataset format (default="mindrecord")
+  /// \param[in] dataset_type Dataset format (default="mindrecord")
   /// \return Returns true if no error encountered else false
   /// \par Example
   /// \code
@@ -223,6 +223,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     name as the input columns, i.e., the columns will be replaced
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+  /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current MapDataset
   /// \par Example
   /// \code
@@ -288,6 +289,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     name as the input columns, i.e., the columns will be replaced
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+  /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(const std::vector<std::shared_ptr<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},
@@ -320,6 +322,7 @@ class MS_API Dataset : public std::enable_shared_from_this<Dataset> {
   ///     name as the input columns, i.e., the columns will be replaced
   /// \param[in] project_columns A list of column names to project
   /// \param[in] cache Tensor cache to use. (default=nullptr which means no cache is used).
+  /// \param[in] callbacks List of Dataset callbacks to be called.
   /// \return Shared pointer to the current MapDataset
   std::shared_ptr<MapDataset> Map(const std::vector<std::reference_wrapper<TensorTransform>> &operations,
                                   const std::vector<std::string> &input_columns = {},

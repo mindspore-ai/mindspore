@@ -381,6 +381,7 @@ class MS_API DataHelper {
   /// \note This function will return okay even if key not found
   /// \param[in] in_file Json file to remove key from
   /// \param[in] key The key to remove
+  /// \param out_file Optional parameter for output file path, will write to input file if not specified
   /// \return Status The status code returned
   Status RemoveKey(const std::string &in_file, const std::string &key, const std::string &out_file = "") {
     return RemoveKeyIF(StringToChar(in_file), StringToChar(key), StringToChar(out_file));
