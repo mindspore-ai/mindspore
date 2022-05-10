@@ -22,6 +22,7 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+constexpr int kInvalidAxisSize = -1;
 namespace internal {
 // White list of primitives consistent before and after transformation.
 mindspore::HashSet<std::string> throughtout_op{prim::kPrimMakeTuple->name(),   prim::kPrimMakeList->name(),
@@ -115,29 +116,73 @@ AnfNodePtr BindInAxis(const CNodePtr &vmap_app, const pipeline::ResourceBasePtr 
   return vmap_fg->NewCNode(outputs);
 }
 
-int GetAxisSizeByAbs(const AbstractBasePtr &abs, const ValuePtr &in_axes) {
-  MS_EXCEPTION_IF_NULL(abs);
-  MS_EXCEPTION_IF_NULL(in_axes);
-  int axis_size = -1;
-  auto abs_sequence = dyn_cast<abstract::AbstractSequence>(abs);
-  if (abs_sequence != nullptr) {
-    AbstractBasePtrList abs_list = abs_sequence->elements();
-    auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
-    int index = 0;
-    for (auto sub_abs : abs_list) {
-      ValuePtr sub_in_axes = in_axes;
-      if (in_axes->isa<ValueSequeue>()) {
-        sub_in_axes = (*in_axes_seq)[index];
-        index++;
-      }
-      axis_size = GetAxisSizeByAbs(sub_abs, sub_in_axes);
-      if (axis_size != -1) {
-        return axis_size;
-      }
-    }
+ValueSequencePtr GetInAxesSeq(const ValuePtr &in_axes, size_t parameters_size) {
+  auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
+  if (in_axes_seq != nullptr || parameters_size <= 1) {
+    return in_axes_seq;
   }
 
+  // Even if the input parameter matches the same negative axis index, it may correspond to different positive indexes.
+  // eg. ([A, B, C], -1) equivalent to ([A, B, C], 2), but ([A, B, C, D], -1) equivalent to ([A, B, C, D], 3) in vmap.
+  // Therefore, when the in_axes is a negative integer, with multiple inputs, 'ValuePtr' need to be copied multi-times
+  // to carry different positive index later.
   auto in_axes_int = dyn_cast<Int64Imm>(in_axes);
+
+  // sub in_axes maybe a 'None'
+  if (in_axes_int == nullptr) {
+    return nullptr;
+  }
+  auto axis_nb = in_axes_int->value();
+  if (axis_nb >= 0) {
+    return nullptr;
+  }
+  std::vector<ValuePtr> elements;
+  for (size_t i = 0; i < parameters_size; i++) {
+    ValuePtr in_axis_copy = std::make_shared<Int64Imm>(axis_nb);
+    elements.push_back(in_axis_copy);
+  }
+  return std::make_shared<ValueSequence>(elements);
+}
+
+void GetSubAxisSize(const AbstractBasePtr &sub_abs, ValuePtr *const sub_in_axes, int *axis_size,
+                    std::vector<ValuePtr> *corrected_in_axes) {
+  int sub_axis_size = GetAxisSizeByAbs(sub_abs, sub_in_axes);
+  corrected_in_axes->push_back(*sub_in_axes);
+  if (sub_axis_size == kInvalidAxisSize) {
+    return;
+  }
+  if (*axis_size == kInvalidAxisSize) {
+    *axis_size = sub_axis_size;
+  } else if (*axis_size != sub_axis_size) {
+    MS_LOG(EXCEPTION) << "The 'axis_size' of each argument in the scope of 'vmap' should be equal, but got "
+                      << *axis_size << " and " << sub_axis_size << ".";
+  }
+}
+
+int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes) {
+  MS_EXCEPTION_IF_NULL(abs);
+  MS_EXCEPTION_IF_NULL(*in_axes);
+  int axis_size = kInvalidAxisSize;
+  auto abs_sequence = dyn_cast<abstract::AbstractSequence>(abs);
+  if (abs_sequence != nullptr) {
+    std::vector<ValuePtr> corrected_in_axes;
+    AbstractBasePtrList abs_list = abs_sequence->elements();
+    size_t parameters_size = abs_sequence->size();
+    auto in_axes_seq = GetInAxesSeq(*in_axes, parameters_size);
+    int index = 0;
+    for (auto sub_abs : abs_list) {
+      if (sub_abs->isa<abstract::AbstractMonad>()) {
+        break;
+      }
+      ValuePtr sub_in_axes = in_axes_seq != nullptr ? (*in_axes_seq)[index] : *in_axes;
+      GetSubAxisSize(sub_abs, &sub_in_axes, &axis_size, &corrected_in_axes);
+      index++;
+    }
+    *in_axes = std::make_shared<ValueSequence>(corrected_in_axes);
+    return axis_size;
+  }
+
+  auto in_axes_int = dyn_cast<Int64Imm>(*in_axes);
   if (in_axes_int != nullptr) {
     int axis = in_axes_int->value();
     ShapeVector orig_shape = dyn_cast<abstract::Shape>(abs->BuildShape())->shape();
@@ -147,26 +192,32 @@ int GetAxisSizeByAbs(const AbstractBasePtr &abs, const ValuePtr &in_axes) {
                         << "," << shape_len << ").";
     }
     axis = axis < 0 ? shape_len + axis : axis;
+    auto positive_axis = std::make_shared<Int64Imm>(axis);
+    *in_axes_int = *positive_axis;
     axis_size = orig_shape[axis];
     return axis_size;
   }
   return axis_size;
 }
 
-int GetAxisSize(const ValuePtr &in_axes, const CNodePtr &cnode) {
+// get the axis size of currently vmap scope, at the same time, the negative indexes in in_axes are converted to
+// corresponding positive indexes.
+int GetAxisSize(const CNodePtr &cnode, ValuePtr *const in_axes) {
   MS_EXCEPTION_IF_NULL(cnode);
   // `axis_size` is unique within the scope of vmap, so we just need to get one of them.
-  int axis_size = -1;
-  auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
+  int axis_size = kInvalidAxisSize;
   size_t parameters_size = cnode->size() - 1;
+  auto in_axes_seq = GetInAxesSeq(*in_axes, parameters_size);
+  std::vector<ValuePtr> corrected_in_axes;
   for (size_t i = 0; i < parameters_size; ++i) {
-    ValuePtr sub_in_axes = (in_axes->isa<ValueSequeue>()) ? (*in_axes_seq)[i] : in_axes;
     auto sub_abs = cnode->input(i + 1)->abstract();
-    axis_size = GetAxisSizeByAbs(sub_abs, sub_in_axes);
-    if (axis_size != -1) {
-      return axis_size;
+    if (sub_abs->isa<abstract::AbstractMonad>()) {
+      break;
     }
+    ValuePtr sub_in_axes = in_axes_seq != nullptr ? (*in_axes_seq)[i] : *in_axes;
+    GetSubAxisSize(sub_abs, &sub_in_axes, &axis_size, &corrected_in_axes);
   }
+  *in_axes = std::make_shared<ValueSequence>(corrected_in_axes);
   return axis_size;
 }
 
@@ -479,12 +530,12 @@ bool ExpandVmapPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerP
         vmap_fn_node = NewValueNode(vmap_fg);
       }
 
-      // get axis size
+      // get axis size, simultaneous correction the negative in_axes.
       auto vmap_app = user.first->cast<CNodePtr>();
       int user_index = user.second;
       int parameters_size = SizeToInt(vmap_app->size() - 1);
-      int axis_size = internal::GetAxisSize(in_axes, vmap_app);
-      if (axis_size == -1) {
+      int axis_size = internal::GetAxisSize(vmap_app, &in_axes);
+      if (axis_size == kInvalidAxisSize) {
         MS_LOG(EXCEPTION) << "Failed to get 'axis_size' within the scope of vmap.";
       }
       MS_LOG(DEBUG) << "The axis size corresponding to the current level vmap scope is " << axis_size << ".";
