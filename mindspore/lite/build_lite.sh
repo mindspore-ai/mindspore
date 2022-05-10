@@ -241,9 +241,13 @@ build_lite_aarch64_jni_and_jar() {
 }
 
 build_python_wheel_package() {
-  local python_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'`
+  local python_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $1}'`
   if [[ "${python_version}" == "3" ]]; then
     cd ${BASEPATH}/mindspore/lite/build/
+    local lite_wrapper_so=`ls python/*.so`
+    if [ ! -f "${lite_wrapper_so}" ]; then
+      return 0
+    fi
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
     cp src/*.so package/mindspore_lite/lib/
@@ -264,7 +268,7 @@ build_python_wheel_package() {
     export TOP_DIR=${BASEPATH}
     cd package
     python setup.py bdist_wheel
-    local minor_version=`python3 -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'`
+    local minor_version=`python -V 2>&1 | awk '{print $2}' | awk -F '.' '{print $2}'`
     local py_tags="cp${python_version}${minor_version}-cp${python_version}${minor_version}"
     if [[ "${minor_version}" == "7" ]]; then
       py_tags="cp37-cp37m"
@@ -448,6 +452,7 @@ build_lite() {
             echo -e "\e[31mIf you want to compile the JAR package, please set $JAVA_HOME. For example: export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64 \e[0m"
         fi
       elif [[ "${local_lite_platform}" == "arm64" ]] && [[ "${machine}" == "aarch64" ]]; then
+        build_python_wheel_package "aarch64"
         if [ "${JAVA_HOME}" ]; then
             echo -e "\e[31mJAVA_HOME=$JAVA_HOME  \e[0m"
             build_lite_aarch64_jni_and_jar "${CMAKE_ARGS}"

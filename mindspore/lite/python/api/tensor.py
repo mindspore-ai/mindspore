@@ -348,6 +348,7 @@ class Tensor:
         if numpy_obj.nbytes != self.get_data_size():
             raise RuntimeError(
                 f"data size not equal! Numpy size: {numpy_obj.nbytes}, Tensor size: {self.get_data_size()}")
+        numpy_obj.flatten()
         self._tensor.set_data_from_numpy(numpy_obj)
         self._numpy_obj = numpy_obj  # keep reference count of numpy objects
 
