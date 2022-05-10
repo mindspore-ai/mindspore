@@ -31,6 +31,7 @@
 #include "tools/converter/quantizer/parameter_tunner.h"
 #include "tools/converter/quantizer/dynamic_quantizer.h"
 #include "tools/anf_exporter/anf_exporter.h"
+#include "tools/converter/quantizer/cle_strategy.h"
 
 namespace mindspore::lite::quant {
 void GetFuncGraphs(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *all_func_graphs) {
@@ -190,10 +191,22 @@ int DoQuantDebug(const FuncGraphPtr &old_graph, const converter::Flags *config,
 }
 
 int DoSingleGraphQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+  CHECK_NULL_RETURN(config);
   if (config->commonQuantParam.quant_type == schema::QuantType_QUANT_NONE) {
     return RET_OK;
   }
   int status;
+
+  bool per_layer =
+    config->commonQuantParam.quant_type == schema::QuantType_QUANT_ALL && !config->fullQuantParam.per_channel;
+  if (per_layer) {
+    CLEStrategy cle_strategy(old_graph, *config);
+    status = cle_strategy.Run();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "do pre process failed!";
+      return status;
+    }
+  }
 
   std::shared_ptr<mindspore::Model> origin;
   lite::LiteModel *origin_lite_model = nullptr;
