@@ -1,0 +1,105 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "ops/lamb.h"
+#include <set>
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "mindapi/src/helper.h"
+
+namespace mindspore {
+namespace ops {
+namespace {
+TuplePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  auto var_type = input_args[kInputIndex0]->BuildType();
+  auto m_type = input_args[kInputIndex1]->BuildType();
+  auto v_type = input_args[kInputIndex2]->BuildType();
+  auto lr_type = input_args[kInputIndex3]->BuildType();
+  auto beta1_type = input_args[kInputIndex4]->BuildType();
+  auto beta2_type = input_args[kInputIndex5]->BuildType();
+  auto epsilon_type = input_args[kInputIndex6]->BuildType();
+  auto decay_type = input_args[kInputIndex7]->BuildType();
+  auto global_step_type = input_args[kInputIndex8]->BuildType();
+  auto grad_type = input_args[kInputIndex9]->BuildType();
+  auto decay_flag_type = input_args[kInputIndex10]->BuildType();
+
+  std::map<std::string, TypePtr> type_dict;
+  type_dict.emplace("var", var_type);
+  type_dict.emplace("m", m_type);
+  type_dict.emplace("v", v_type);
+  type_dict.emplace("grad", grad_type);
+  type_dict.emplace("lr", lr_type);
+  type_dict.emplace("decay", decay_type);
+  std::set<TypePtr> num_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
+                                kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(type_dict, num_type, prim_name);
+  std::map<std::string, TypePtr> type_dict1;
+  type_dict1.emplace("beta1", beta1_type);
+  type_dict1.emplace("beta2", beta2_type);
+  type_dict1.emplace("epsilon", epsilon_type);
+  std::set<TypePtr> float_set = {kFloat16, kFloat32};
+  (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(type_dict1, float_set, prim_name, true);
+
+  std::set<TypePtr> bool_set = {kBool};
+  (void)CheckAndConvertUtils::CheckTypeValid("global_step", global_step_type, num_type, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("decay_flag", decay_flag_type, bool_set, prim_name);
+
+  return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, m_type, v_type});
+}
+abstract::TupleShapePtr LambInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  auto var_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto m_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto v_shape_ptr = input_args[kInputIndex2]->BuildShape();
+  auto grad_shape_ptr = input_args[kInputIndex9]->BuildShape();
+  if (var_shape_ptr->IsDynamic() || m_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic() ||
+      grad_shape_ptr->IsDynamic()) {
+    MS_LOG(WARNING) << "var is dynamic" << var_shape_ptr->IsDynamic() << "m is dynamic" << m_shape_ptr->IsDynamic()
+                    << "v is dynamic" << v_shape_ptr->IsDynamic() << "grad is dynamic" << grad_shape_ptr->IsDynamic();
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
+  }
+  auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto m_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto v_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex9]->BuildShape())[kShape];
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, m_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, v_shape, prim_name);
+  CheckAndConvertUtils::Check("var_shape", var_shape, kEqual, grad_shape, prim_name);
+  return std::make_shared<abstract::TupleShape>(
+    std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
+}
+}  // namespace
+
+MIND_API_OPERATOR_IMPL(Lamb, BaseOperator);
+
+AbstractBasePtr LambInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                          const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  for (auto item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  const int64_t kInputNum = 11;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
+  auto infer_type = LambInferType(primitive, input_args);
+  auto infer_shape = LambInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(Lamb, prim::kPrimLamb, LambInfer, nullptr, true);
+}  // namespace ops
+}  // namespace mindspore
