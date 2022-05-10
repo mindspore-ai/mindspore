@@ -592,6 +592,10 @@ test_cases = [
         'block': nn.LGamma(),
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32))],
         'skip': ['backward']}),
+    ('Identity', {
+        'block': nn.Identity(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3, 4]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([1, 2, 3, 4]).astype(np.int64))]}),
     ('IGamma', {
         'block': nn.IGamma(),
         'desc_inputs': [Tensor(np.array([3, 4, 5, 6]).astype(np.float32)),
@@ -734,6 +738,13 @@ test_cases_for_verify_exception = [
             {'exception': TypeError},
         ),
         'desc_inputs': [Tensor(np.random.randn(32, 3, 112, 112).astype(np.float32).transpose(0, 3, 1, 2))],
+    }),
+    ('Identity_TypeError_1', {
+        'block': (
+            lambda _: nn.Identity(),
+            {'exception': TypeError},
+        ),
+        'desc_inputs': [np.array([3, 4, 5, 6]).astype(np.int64)],
     }),
     ('ReduceLogsumexp_TypeError_1', {
         'block': (
