@@ -187,6 +187,7 @@ class TestProfiler:
 
         model.train(1, ds_train, dataset_sink_mode=True)
         profiler.analyse()
+        profiler.op_analyse(op_name="Conv2D")
 
     def _check_gpu_profiling_file(self):
         op_detail_file = self.profiler_path + f'gpu_op_detail_info_{self.device_id}.csv'
@@ -195,9 +196,10 @@ class TestProfiler:
         timeline_file = self.profiler_path + f'gpu_timeline_display_{self.device_id}.json'
         getnext_file = self.profiler_path + f'minddata_getnext_profiling_{self.device_id}.txt'
         pipeline_file = self.profiler_path + f'minddata_pipeline_raw_{self.device_id}.csv'
+        framework_file = self.profiler_path + f'gpu_framework_{self.device_id}.txt'
 
         gpu_profiler_files = (op_detail_file, op_type_file, activity_file,
-                              timeline_file, getnext_file, pipeline_file)
+                              timeline_file, getnext_file, pipeline_file, framework_file)
         for file in gpu_profiler_files:
             assert os.path.isfile(file)
 
