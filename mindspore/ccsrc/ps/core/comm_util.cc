@@ -436,7 +436,7 @@ bool CommUtil::verifyCertKeyID(const X509 *caCert, const X509 *subCert) {
     size_t base = keyidLen;
     (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)skid->data[i]);
     int ret = strcat_s(subject_keyid, base, keyid);
-    if (ret == -1) {
+    if (ret != 0) {
       return false;
     }
   }
@@ -451,7 +451,7 @@ bool CommUtil::verifyCertKeyID(const X509 *caCert, const X509 *subCert) {
     size_t base = keyidLen;
     (void)sprintf_s(keyid, sizeof(keyid), "%x ", (uint32_t)(akeyid->keyid->data[i]));
     int ret = strcat_s(issuer_keyid, base, keyid);
-    if (ret == -1) {
+    if (ret != 0) {
       return false;
     }
   }
