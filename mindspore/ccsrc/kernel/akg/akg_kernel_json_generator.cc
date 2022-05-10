@@ -702,9 +702,6 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   }
   auto process_target = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyProcess] = process_target;
-  if (process_target == "cpu") {
-    (*kernel_json)[kJsonKeyTargetOption] = kCPUTargetOption;
-  }
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = op_name + "_";
   (void)kernel_name_.append(std::to_string(hash_id));
@@ -781,9 +778,6 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
 
   auto process_target = GetProcessorByTarget();
   (*kernel_json)[kJsonKeyProcess] = process_target;
-  if (process_target == "cpu") {
-    (*kernel_json)[kJsonKeyTargetOption] = kCPUTargetOption;
-  }
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = "Fused_";
   auto fg = anf_nodes[0]->func_graph();

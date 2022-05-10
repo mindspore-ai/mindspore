@@ -174,6 +174,22 @@ def ms_hybrid_grid():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
+def ms_hybrid_grid_cpu():
+    """
+    test case Custom Op with functions written in Hybrid DSL about grid
+    """
+    np.random.seed(10)
+    input_x = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+    input_y = np.random.normal(0, 1, [4, 4]).astype(np.float32)
+
+    test = TestMsHybridDSL(grid_example, "hybrid", lambda x, _: x, lambda x, _: x)
+    output = test(Tensor(input_x), Tensor(input_y))
+    expect = grid_example(input_x, input_y)
+    compare_res = np.allclose(expect, output.asnumpy(), 0.001, 0.001)
+    if not compare_res:
+        raise ValueError("Precision error, compare result: {}".format(compare_res))
+
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -250,19 +266,16 @@ def test_ms_hybrid_gpu_pynative_mode():
 def test_ms_hybrid_cpu_graph_mode():
     """
     Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: gpu test case, Python DSL with ms_hybrid decorator in GRAPH_MODE.
+    Description: cpu test case, Python DSL with ms_hybrid decorator in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
-    sys = platform.system()
-    if sys == 'Windows':
-        # skip window, same for pynative below
+    if platform.system().lower() in {"windows", "darwin"}:
+        # skip window and mac, same for pynative below
         pass
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-        ms_hybrid_cast_with_infer()
-        ms_hybrid_cast_without_infer()
-        ms_hybrid_allocate()
-        ms_hybrid_grid()
+        ms_hybrid_allocate_cpu()
+        ms_hybrid_grid_cpu()
 
 
 @pytest.mark.level0
@@ -271,15 +284,12 @@ def test_ms_hybrid_cpu_graph_mode():
 def test_ms_hybrid_cpu_pynative_mode():
     """
     Feature: test case for Custom op with func_type="ms_hybrid"
-    Description: gpu test case, Python DSL with ms_hybrid decorator in PYNATIVE_MODE.
+    Description: cpu test case, Python DSL with ms_hybrid decorator in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
-    sys = platform.system()
-    if sys == 'Windows':
+    if platform.system().lower() in {"windows", "darwin"}:
         pass
     else:
         context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-        ms_hybrid_cast_with_infer()
-        ms_hybrid_cast_without_infer()
-        ms_hybrid_allocate()
-        ms_hybrid_grid()
+        ms_hybrid_allocate_cpu()
+        ms_hybrid_grid_cpu()
