@@ -109,7 +109,7 @@ void SSLClient::InitSSL() {
   }
 
   CommUtil::verifyCertPipeline(caCert, cert);
-  InitSSLCtx(cert, pkey, crl);
+  InitSSLCtx(*config_, cert, pkey, crl, ca_path);
   StartCheckCertTime(*config_, cert);
 
   EVP_PKEY_free(pkey);
@@ -121,7 +121,7 @@ void SSLClient::InitSSL() {
 
 void SSLClient::InitSSLCtx(const Configuration &config, const X509 *cert, const EVP_PKEY *pkey, X509_CRL *crl,
                            std::string ca_path) {
-                             SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
+  SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, 0);
   if (!SSL_CTX_load_verify_locations(ssl_ctx_, ca_path.c_str(), nullptr)) {
     MS_LOG(EXCEPTION) << "SSL load ca location failed!";
   }

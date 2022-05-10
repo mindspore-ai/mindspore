@@ -89,25 +89,6 @@ void SSLWrapper::InitSSL() {
     MS_LOG(EXCEPTION) << "PKCS12_parse failed.";
   }
   PKCS12_free(p12);
-  std::string default_cipher_list = CommUtil::ParseConfig(*config_, kCipherList);
-  std::vector<std::string> ciphers = CommUtil::Split(default_cipher_list, kColon);
-  if (!CommUtil::VerifyCipherList(ciphers)) {
-    MS_LOG(EXCEPTION) << "The cipher is wrong.";
-  }
-  if (!SSL_CTX_set_cipher_list(ssl_ctx_, default_cipher_list.c_str())) {
-    MS_LOG(EXCEPTION) << "SSL use set cipher list failed!";
-  }
-
-  // 3. load ca cert.
-  std::string crl_path = CommUtil::ParseConfig(*(config_), kCrlPath);
-  if (crl_path.empty()) {
-    MS_LOG(INFO) << "The crl path is empty.";
-  } else if (!CommUtil::checkCRLTime(crl_path)) {
-    MS_LOG(EXCEPTION) << "check crl time failed";
-  } else if (!CommUtil::VerifyCRL(cert, crl_path)) {
-    MS_LOG(EXCEPTION) << "Verify crl failed.";
-  }
-
   std::string ca_path = CommUtil::ParseConfig(*config_, kCaCertPath);
   if (!CommUtil::IsFileExists(ca_path)) {
     MS_LOG(WARNING) << "The key:" << kCaCertPath << "'s value is not exist.";

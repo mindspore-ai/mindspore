@@ -35,26 +35,17 @@ void FLWorker::Run() {
     return;
   }
   running_ = true;
-  worker_num_ = ps::PSContext::instance()->worker_num();
-  server_num_ = ps::PSContext::instance()->server_num();
   scheduler_ip_ = ps::PSContext::instance()->scheduler_ip();
   scheduler_port_ = ps::PSContext::instance()->scheduler_port();
   worker_step_num_per_iteration_ = ps::PSContext::instance()->worker_step_num_per_iteration();
-  ps::PSContext::instance()->cluster_config().scheduler_host = scheduler_ip_;
-  ps::PSContext::instance()->cluster_config().scheduler_port = scheduler_port_;
-  ps::PSContext::instance()->cluster_config().initial_worker_num = worker_num_;
-  ps::PSContext::instance()->cluster_config().initial_server_num = server_num_;
-  MS_LOG(INFO) << "Initialize cluster config for worker. Worker number:" << worker_num_
-               << ", Server number:" << server_num_ << ", Scheduler ip:" << scheduler_ip_
-               << ", Scheduler port:" << scheduler_port_
-               << ", Worker training step per iteration:" << worker_step_num_per_iteration_;
 
   worker_node_ = std::make_shared<ps::core::WorkerNode>();
   MS_EXCEPTION_IF_NULL(worker_node_);
   constexpr size_t kExecutorThreadPoolSize = 32;
   task_executor_ = std::make_shared<ps::core::TaskExecutor>(kExecutorThreadPoolSize);
-  communicator_ = worker_node_->GetOrCreateTcpComm(scheduler_ip_, static_cast<int16_t>(scheduler_port_), worker_num_,
-                                                   server_num_, task_executor_);
+  communicator_ = worker_node_->GetOrCreateTcpComm(scheduler_ip_, static_cast<int16_t>(scheduler_port_),
+                                                   ps::PSContext::instance()->worker_num(),
+                                                   ps::PSContext::instance()->server_num(), task_executor_);
   communicator_->RegisterMsgCallBack(
     "queryNodeScaleState", std::bind(&FLWorker::HandleQueryNodeScaleStateRequest, this, std::placeholders::_1));
 
@@ -86,6 +77,9 @@ void FLWorker::Run() {
     MS_LOG(EXCEPTION) << "Starting communicator failed.";
     return;
   }
+
+  server_num_ = worker_node_->server_num();
+  worker_num_ = worker_node_->worker_num();
   rank_id_ = worker_node_->rank_id();
 
   std::this_thread::sleep_for(std::chrono::milliseconds(kWorkerSleepTimeForNetworking));
