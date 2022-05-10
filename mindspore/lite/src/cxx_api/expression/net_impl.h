@@ -57,7 +57,7 @@ class NetWithLoss : public Net {
 
 class MS_API NetImpl {
  public:
-  ~NetImpl();
+  virtual ~NetImpl() {}
   explicit NetImpl(std::shared_ptr<Net> p);
   explicit NetImpl(Graph *g);
   NetImpl() = default;

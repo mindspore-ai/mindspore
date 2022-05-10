@@ -83,8 +83,6 @@ std::vector<Expr *> NetWithLoss::construct(const std::vector<Expr *> &inputs) {
   return x;
 }
 
-NetImpl::~NetImpl() {}
-
 NetImpl::NetImpl(std::shared_ptr<Net> p) { pnet_ = p; }
 
 NetImpl::NetImpl(Graph *g) { pnet_ = g->net_data_->net(); }
