@@ -30,6 +30,9 @@ namespace {
 constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
 constexpr int kNumMaxTaskQueueSize = 1000;
+constexpr int kNumBindMode = lite::HIGHER_CPU;
+constexpr int32_t kNumInterOpParallel = 0;
+constexpr bool is_enable_parallel = true;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -115,27 +118,22 @@ Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Con
   return kSuccess;
 }
 
-Status ModelPool::InitDefaultContext(const std::shared_ptr<mindspore::Context> &context) {
+std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   MS_LOG(DEBUG) << "use default config.";
+  auto context = std::make_shared<Context>();
   context->SetThreadNum(kNumThreads);
-  context->SetEnableParallel(true);
-  context->SetThreadAffinity(lite::HIGHER_CPU);
+  context->SetEnableParallel(is_enable_parallel);
+  context->SetInterOpParallelNum(kNumInterOpParallel);
+  context->SetThreadAffinity(kNumBindMode);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<CPUDeviceInfo>();
   if (device_info == nullptr) {
     MS_LOG(ERROR) << "device_info is nullptr.";
-    return kLiteNullptr;
+    return nullptr;
   }
   device_info->SetEnableFP16(false);
   device_list.push_back(device_info);
-
-  // set model num
-  auto status = SetDefaultOptimalModelNum(context);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
-    return kLiteError;
-  }
-  return kSuccess;
+  return context;
 }
 
 std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
@@ -156,7 +154,6 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
       return nullptr;
     }
     if (device->GetDeviceType() == kGPU) {
-      workers_num_ = 1;
       return context;
     } else if (device->GetDeviceType() == kCPU) {
       auto cpu_context = device->Cast<CPUDeviceInfo>();
@@ -169,31 +166,13 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
         MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
         return nullptr;
       }
-      if (runner_config->GetWorkersNum() == 0) {
-        // the user does not define the number of models, the default optimal number of models is used
-        auto status = SetDefaultOptimalModelNum(context);
-        if (status != kSuccess) {
-          MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
-          return nullptr;
-        }
-      } else if (runner_config->GetWorkersNum() > 0) {
-        // User defined number of models
-        workers_num_ = runner_config->GetWorkersNum();
-      } else {
-        MS_LOG(ERROR) << "user set worker num" << runner_config->GetWorkersNum() << " < 0";
-        return nullptr;
-      }
     }
   }
   return context;
 }
 
 std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConfig> &runner_config) {
-  auto context = std::make_shared<mindspore::Context>();
-  if (context == nullptr) {
-    MS_LOG(ERROR) << "New context failed in ModelPool.";
-    return nullptr;
-  }
+  std::shared_ptr<mindspore::Context> context = nullptr;
   if (runner_config != nullptr && runner_config->GetContext() != nullptr) {
     use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available() &&
                           runner_config->GetContext()->GetThreadAffinityMode() == lite::HIGHER_CPU;
@@ -202,11 +181,11 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
   } else {
     use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available();
     numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
-    auto status = InitDefaultContext(context);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "use default context failed.";
-      return nullptr;
-    }
+    context = GetDefaultContext();
+  }
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "Init context failed. status=" << kLiteNullptr;
+    return nullptr;
   }
   return context;
 }
@@ -226,31 +205,57 @@ Status ModelPool::SetModelBindMode(std::vector<std::vector<int>> *all_model_bind
   return kSuccess;
 }
 
-ModelPoolContextVec ModelPool::CreateModelContext(const std::shared_ptr<RunnerConfig> &runner_config) {
+Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_config,
+                                const std::shared_ptr<Context> &context) {
+  if ((runner_config != nullptr && runner_config->GetWorkersNum() == 0) || runner_config == nullptr) {
+    // the user does not define the number of models, the default optimal number of models is used
+    auto status = SetDefaultOptimalModelNum(context);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
+      return kLiteError;
+    }
+  } else if (runner_config != nullptr && runner_config->GetWorkersNum() > 0) {
+    // User defined number of models
+    workers_num_ = runner_config->GetWorkersNum();
+  } else {
+    MS_LOG(ERROR) << "user set worker num" << runner_config->GetWorkersNum() << " < 0";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
+ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config) {
+  ModelPoolConfig model_pool_config;
   auto init_context = InitContext(runner_config);
   if (init_context == nullptr) {
     MS_LOG(ERROR) << "context is nullptr.";
-    return {};
+    return model_pool_config;
   }
-
+  auto status = SetWorkersNum(runner_config, init_context);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "set worker num failed.";
+    return model_pool_config;
+  }
   auto device_num = init_context->MutableDeviceInfo().size();
   if (device_num > 1) {
     // GPU
-    auto model_pool_context = std::make_shared<ModelPoolContext>();
-    if (model_pool_context == nullptr) {
-      MS_LOG(ERROR) << "model pool context is nullptr.";
-      return {};
+    auto worker_config = std::make_shared<WorkerConfig>();
+    if (worker_config == nullptr) {
+      MS_LOG(ERROR) << "new worker config failed.";
+      return model_pool_config;
     }
-    model_pool_context->context = init_context;
-    model_pool_context->numa_id = -1;
+    worker_config->context = init_context;
+    worker_config->numa_id = -1;
     used_numa_node_num_ = 1;
-    return {model_pool_context};
+    workers_num_ = 1;
+    model_pool_config.push_back(worker_config);
+    return model_pool_config;
   }
   // init all bind list
   std::vector<std::vector<int>> all_model_bind_list;
   std::vector<int> numa_node_id;
   if (init_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
-    auto status = SetModelBindMode(&all_model_bind_list, &numa_node_id, init_context);
+    status = SetModelBindMode(&all_model_bind_list, &numa_node_id, init_context);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "SetModelBindMode failed.";
       return {};
@@ -261,23 +266,27 @@ ModelPoolContextVec ModelPool::CreateModelContext(const std::shared_ptr<RunnerCo
   }
 
   // create all model context
-  ModelPoolContextVec model_pool_contexts;
   for (size_t i = 0; i < workers_num_; i++) {
     auto context = std::make_shared<Context>();
-    auto model_pool_context = std::make_shared<ModelPoolContext>();
     if (context == nullptr) {
       MS_LOG(ERROR) << "New Context failed.";
       return {};
     }
+    auto worker_config = std::make_shared<WorkerConfig>();
+    if (worker_config == nullptr) {
+      MS_LOG(ERROR) << "new worker config failed.";
+      return {};
+    }
     context->SetThreadNum(init_context->GetThreadNum());
     context->SetEnableParallel(init_context->GetEnableParallel());
+    context->SetInterOpParallelNum(init_context->GetInterOpParallelNum());
     if (init_context->GetThreadAffinityMode() != lite::NO_BIND) {
       // bind by core id
-      model_pool_context->numa_id = numa_node_id[i];
+      worker_config->numa_id = numa_node_id[i];
       context->SetThreadAffinity(all_model_bind_list[i]);
     } else {
       // not bind core , not use numa
-      model_pool_context->numa_id = -1;
+      worker_config->numa_id = -1;
       context->SetThreadAffinity(init_context->GetThreadAffinityMode());
     }
     auto &new_device_list = context->MutableDeviceInfo();
@@ -288,20 +297,20 @@ ModelPoolContextVec ModelPool::CreateModelContext(const std::shared_ptr<RunnerCo
     }
     std::shared_ptr<Allocator> allocator = nullptr;
     if (init_context->MutableDeviceInfo().front()->GetAllocator() == nullptr) {
-      allocator = std::make_shared<DynamicMemAllocator>(model_pool_context->numa_id);
+      allocator = std::make_shared<DynamicMemAllocator>(worker_config->numa_id);
     } else {
-      allocator = std::make_shared<DefaultAllocator>();
+      allocator = init_context->MutableDeviceInfo().front()->GetAllocator();
     }
-    if (numa_allocator_.find(model_pool_context->numa_id) == numa_allocator_.end()) {
-      numa_allocator_.insert(std::make_pair(model_pool_context->numa_id, allocator));
+    if (numa_allocator_.find(worker_config->numa_id) == numa_allocator_.end()) {
+      numa_allocator_.insert(std::make_pair(worker_config->numa_id, allocator));
     }
     device_info->SetAllocator(allocator);
     device_info->SetEnableFP16(false);
     new_device_list.push_back(device_info);
-    model_pool_context->context = context;
-    model_pool_contexts.push_back(model_pool_context);
+    worker_config->context = context;
+    model_pool_config.push_back(worker_config);
   }
-  return model_pool_contexts;
+  return model_pool_config;
 }
 
 std::vector<MSTensor> ModelPool::GetInputs() {
@@ -311,9 +320,13 @@ std::vector<MSTensor> ModelPool::GetInputs() {
     return {};
   }
   for (size_t i = 0; i < model_pool_inputs_.size(); i++) {
-    auto tensor =
-      mindspore::MSTensor::CreateTensor(model_pool_inputs_.at(i).Name(), model_pool_inputs_.at(i).DataType(),
-                                        model_pool_inputs_.at(i).Shape(), nullptr, 0);
+    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_inputs_.at(i).Name(),
+                                                    model_pool_inputs_.at(i).DataType(), {}, nullptr, 0);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "create tensor failed.";
+      return {};
+    }
+    tensor->SetShape(model_pool_inputs_.at(i).Shape());
     inputs.push_back(*tensor);
     delete tensor;
   }
@@ -330,6 +343,10 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
     auto tensor =
       mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(), model_pool_outputs_.at(i).DataType(),
                                         model_pool_outputs_.at(i).Shape(), nullptr, 0);
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "create tensor failed.";
+      return {};
+    }
     outputs.push_back(*tensor);
     delete tensor;
   }
@@ -337,10 +354,10 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
-  // create model pool context
-  auto model_pool_context = CreateModelContext(runner_config);
-  if (model_pool_context.empty()) {
-    MS_LOG(ERROR) << "CreateModelContext failed, context is empty.";
+  // create model pool config
+  auto model_pool_config = CreateModelPoolConfig(runner_config);
+  if (model_pool_config.empty()) {
+    MS_LOG(ERROR) << "CreateModelPoolConfig failed, context is empty.";
     return kLiteError;
   }
   // create task queue for model pool
@@ -359,12 +376,16 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   auto graph_buf = lite::ReadFile(model_path.c_str(), &size);
   if (graph_buf == nullptr) {
     MS_LOG(ERROR) << "read file failed.";
-    return kLiteError;
+    return kLiteNullptr;
   }
   // create worker
   std::shared_ptr<ModelWorker> model_worker = nullptr;
+  if (model_pool_config.size() != workers_num_) {
+    MS_LOG(ERROR) << "model pool config size is wrong.";
+    return kLiteError;
+  }
   for (size_t i = 0; i < workers_num_; i++) {
-    int numa_node_id = model_pool_context[i]->numa_id;
+    int numa_node_id = model_pool_config[i]->numa_id;
     auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
     MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
     auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
@@ -372,13 +393,13 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     model_worker = std::make_shared<ModelWorker>();
     if (model_worker == nullptr) {
       MS_LOG(ERROR) << "model worker is nullptr.";
-      return kLiteError;
+      return kLiteNullptr;
     }
     int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
-    model_worker_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
-                                            task_queue_id, model_pool_context[i]->context, predict_task_queue_,
-                                            &create_worker_success_));
+    worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
+                                             task_queue_id, model_pool_config[i]->context, predict_task_queue_,
+                                             &create_worker_success_));
     all_model_worker_.push_back(model_worker);
   }
   for (size_t i = 0; i < workers_num_; i++) {
@@ -686,7 +707,7 @@ ModelPool::~ModelPool() {
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
   }
-  for (auto &th : model_worker_vec_) {
+  for (auto &th : worker_thread_vec_) {
     if (th.joinable()) {
       th.join();
     }
