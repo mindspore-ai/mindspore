@@ -15,14 +15,17 @@
 
 """Defines math operators with functional form."""
 
+import math
 import numpy as np
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from ..operations.math_ops import (BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
+from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
+from ..._checkparam import Validator as validator
 
 
 @constexpr
@@ -2485,6 +2488,50 @@ def bessel_k1e(x):
     """
     return bessel_k1e_(x)
 
+
+@constexpr
+def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
+    validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
+
+def deg2rad(x):
+    """
+    Calculates a new tensor with each of the elements of `x` converted from angles in degrees to radians.
+
+    Args:
+        - **x** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
+          With float16, float32 or float64 data type.
+
+    Outputs:
+        Tensor, has the same dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` isn't float16, float32 or float64.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]]).astype(np.float32))
+        >>> op = nn.Deg2Rad()
+        >>> output = op(x)
+        >>> print(output)
+        [[ 1.5707964 -1.5707964]
+         [ 3.1415927 -3.1415927]
+         [ 4.712389  -4.712389 ]]
+    """
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("The input x must be tensor")
+    dtype_op = P.DType()
+    x_dtype = dtype_op(x)
+    _check_input_dtype("x", x_dtype, [mstype.float16, mstype.float32, mstype.float64], "")
+    if x_dtype == mstype.float16:
+        out = x * (Tensor(math.pi / 180.0).astype(mstype.float16))
+    else:
+        out = x * math.pi / 180.0
+    return out
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -2618,6 +2665,7 @@ __all__ = [
     'bessel_i1e',
     'bessel_k1',
     'bessel_k1e',
-    'exp2'
+    'exp2',
+    'deg2rad'
 ]
 __all__.sort()

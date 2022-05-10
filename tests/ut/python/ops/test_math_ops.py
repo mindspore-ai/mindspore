@@ -417,6 +417,15 @@ class Exp2Func(nn.Cell):
         return y
 
 
+class Deg2radNet(nn.Cell):
+    def __init__(self):
+        super(Deg2radNet, self).__init__()
+        self.deg2rad = ops.deg2rad
+
+    def construct(self, x):
+        return self.deg2rad(x)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -486,6 +495,11 @@ test_case_math_ops = [
         'block': Exp2Func(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16))],
     }),
+    ('Deg2rad', {
+        'block': Deg2radNet(),
+        'desc_inputs': [Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]], np.float32))],
+        'desc_bprop': [Tensor(np.array([[90.0, -90.0], [180.0, -180.0], [270.0, -270.0]], np.float32))],
+    }),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -544,6 +558,12 @@ raise_set = [
         'desc_inputs': [Tensor(np.array([1.1, 2.2, 8.1, 2.1], np.float32)),
                         Tensor(np.array([0.2, 1.2, 2.1, 3.4], np.float32))],
         'skip': ['backward']}),
+    ('Deg2rad_1_Error', {
+        'block': (lambda x: Deg2radNet(), {'exception': TypeError}),
+        'desc_inputs': [0]}),
+    ('Deg2rad_2_Error', {
+        'block': (lambda x: Deg2radNet(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.array([[90, -90], [180, -180], [270, -270]], np.int32))]}),
 ]
 
 
