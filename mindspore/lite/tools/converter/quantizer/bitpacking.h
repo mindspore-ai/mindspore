@@ -51,7 +51,7 @@ class BitPack {
     uint32_t result = 0;
     for (size_t i = 0; i < sizeof(T2) * 8; i++) {
       bool bit_tmp = ans->top();
-      result = (result << 1) + static_cast<int>(bit_tmp);
+      result = (result << 1) + static_cast<size_t>(bit_tmp);
       ans->pop();
     }
     packed_data_vec->push_back(result);

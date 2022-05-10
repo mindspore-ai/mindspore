@@ -31,7 +31,7 @@ int HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const Primit
   }
   auto *raw_datas = static_cast<int8_t *>(quant_datas);
   size_t elem_count = weight->DataSize();
-  int packed_size = elem_count * bit_num;
+  size_t packed_size = elem_count * bit_num;
 
   HuffmanPriorityQueue pq;
   auto status = GetHuffmanPriorityQueue(raw_datas, elem_count, &pq);
@@ -49,9 +49,9 @@ int HuffmanEncode::DoHuffmanEncode(const tensor::TensorPtr &weight, const Primit
     MS_LOG(ERROR) << "DoHuffmanCompress failed";
     return status;
   }
-  int ch_size = huffman_encoded_str_.length();
+  size_t ch_size = huffman_encoded_str_.length();
   if (ch_size < packed_size) {
-    if (ch_size != weight->data().nbytes()) {
+    if (ch_size != static_cast<size_t>(weight->data().nbytes())) {
       MS_LOG(ERROR) << "Data size of weight is error.";
       return RET_ERROR;
     }

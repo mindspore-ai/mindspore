@@ -132,30 +132,41 @@ QuantHelperRegister::QuantHelperRegister() {
   auto only_need_inputs_determiner = std::make_shared<OnlyNeedInputsQuantTypeDeterminer>();
   auto matmul_determiner = std::make_shared<MatmulQuantTypeDeterminer>();
 
-  register_map_[schema::PrimitiveType_BiasAdd] = new QuantNodeHelper(bias_add_propogator, base_determiner);
+  register_map_[schema::PrimitiveType_BiasAdd] =
+    new (std::nothrow) QuantNodeHelper(bias_add_propogator, base_determiner);
 
   register_map_[schema::PrimitiveType_MaxPoolFusion] =
-    new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_Resize] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_Reshape] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_StridedSlice] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_Transpose] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_PadFusion] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_ReduceFusion] = new QuantNodeHelper(base_propogator, carry_data_determiner);
-  register_map_[schema::PrimitiveType_Gather] = new QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_Resize] =
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_Reshape] =
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_StridedSlice] =
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_Transpose] =
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_PadFusion] =
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_ReduceFusion] =
+    new (std::nothrow) QuantNodeHelper(base_propogator, carry_data_determiner);
+  register_map_[schema::PrimitiveType_Gather] =
+    new (std::nothrow) QuantNodeHelper(carry_data_propogator, carry_data_determiner);
 
-  register_map_[schema::PrimitiveType_Concat] = new QuantNodeHelper(concat_propogator, base_determiner);
+  register_map_[schema::PrimitiveType_Concat] = new (std::nothrow) QuantNodeHelper(concat_propogator, base_determiner);
 
-  register_map_[schema::PrimitiveType_Conv2DFusion] = new QuantNodeHelper(conv_propogator, conv_determiner);
-  register_map_[schema::PrimitiveType_MatMulFusion] = new QuantNodeHelper(conv_propogator, matmul_determiner);
-  register_map_[schema::PrimitiveType_FullConnection] = new QuantNodeHelper(conv_propogator, matmul_determiner);
+  register_map_[schema::PrimitiveType_Conv2DFusion] =
+    new (std::nothrow) QuantNodeHelper(conv_propogator, conv_determiner);
+  register_map_[schema::PrimitiveType_MatMulFusion] =
+    new (std::nothrow) QuantNodeHelper(conv_propogator, matmul_determiner);
+  register_map_[schema::PrimitiveType_FullConnection] =
+    new (std::nothrow) QuantNodeHelper(conv_propogator, matmul_determiner);
 
   register_map_[schema::PrimitiveType_QuantDTypeCast] =
-    new QuantNodeHelper(quant_dtype_cast_propogator, default_quant_all_determiner);
+    new (std::nothrow) QuantNodeHelper(quant_dtype_cast_propogator, default_quant_all_determiner);
 
   register_map_[schema::PrimitiveType_DetectionPostProcess] =
-    new QuantNodeHelper(base_propogator, only_need_inputs_determiner);
-  register_map_[schema::PrimitiveType_NONE] = new QuantNodeHelper(base_propogator, base_determiner);
+    new (std::nothrow) QuantNodeHelper(base_propogator, only_need_inputs_determiner);
+  register_map_[schema::PrimitiveType_NONE] = new (std::nothrow) QuantNodeHelper(base_propogator, base_determiner);
 }
 
 QuantHelperRegister::~QuantHelperRegister() {
