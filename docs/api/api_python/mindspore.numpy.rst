@@ -630,9 +630,9 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
   .. code-block:: python
 
-      from mindspore import ms_function, context
+      from mindspore import ms_function, set_context, GRAPH_MODE
 
-      context.set_context(mode=context.GRAPH_MODE)
+      set_context(mode=GRAPH_MODE)
       grad_all = ops.composite.GradOperation(get_all=True)
       print(grad_all(ms_function(forward))(x, w1, b1, w2, b2, w3, b3))
 
@@ -659,22 +659,22 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
 
   .. code-block:: python
 
-      from mindspore import context
+      from mindspore import set_context, GRAPH_MODE, PYNATIVE_MODE
 
       # Execucation in static graph mode
-      context.set_context(mode=context.GRAPH_MODE)
+      set_context(mode=GRAPH_MODE)
 
       # Execucation in PyNative mode
-      context.set_context(mode=context.PYNATIVE_MODE)
+      set_context(mode=PYNATIVE_MODE)
 
       # Execucation on CPU backend
-      context.set_context(device_target="CPU")
+      set_context(device_target="CPU")
 
       # Execucation on GPU backend
-      context.set_context(device_target="GPU")
+      set_context(device_target="GPU")
 
       # Execucation on Ascend backend
-      context.set_context(device_target="Ascend")
+      set_context(device_target="Ascend")
       ...
 
   更多细节可参考 `API mindspore.context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.context.html>`_ 。
@@ -688,10 +688,10 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
   .. code-block:: python
 
       import mindspore.numpy as np
-      from mindspore import context
+      from mindspore import set_context, GRAPH_MODE
       from mindspore.nn import Cell
 
-      context.set_context(mode=context.GRAPH_MODE)
+      set_context(mode=GRAPH_MODE)
 
       x = np.arange(8).reshape(2, 4).astype('float32')
       w1 = np.ones((4, 8))
