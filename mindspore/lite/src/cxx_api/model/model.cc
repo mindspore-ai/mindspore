@@ -245,6 +245,14 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
   return impl_->Predict(inputs, outputs, before, after);
 }
 
+Status Model::Predict(const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "Model implement is null.";
+    return kLiteNullptr;
+  }
+  return impl_->Predict(before, after);
+}
+
 Status Model::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs,
                                     const MSKernelCallBack &before, const MSKernelCallBack &after) {
   MS_LOG(ERROR) << "Unsupported Feature.";

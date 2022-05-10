@@ -51,6 +51,14 @@ function Run_Hi3516() {
         else
             run_result='hi3516: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
+
+        echo './benchmark --modelFile='${basepath}'/'${model_name}'.ms --inputShapes='${input_shapes}'  --warmUpLoopCount=0 --loopCount=2 --configFile='${NNIE_CONFIG_FILE} >> "${run_hi3516_log_file}"
+        ./benchmark --modelFile=${basepath}/${model_name}.ms --inputShapes=${input_shapes} --warmUpLoopCount=0 --loopCount=2 --configFile=${NNIE_CONFIG_FILE}>> "${run_hi3516_log_file}"
+        if [ $? = 0 ]; then
+            run_result='hi3516: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='hi3516: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
     done < ${models_nnie_config}
 }
 
@@ -97,6 +105,7 @@ else
     echo "Run benchmark failed"
     MS_PRINT_TESTCASE_END_MSG
     cat ${run_benchmark_result_file}
+    cat ${run_hi3516_log_file}
     MS_PRINT_TESTCASE_END_MSG
     rm -rf ${basepath}/*.ms
     rm -rf ${basepath}/libmslite_nnie.so

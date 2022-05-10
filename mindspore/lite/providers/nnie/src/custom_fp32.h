@@ -19,10 +19,16 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include "include/schema/model_generated.h"
 #include "include/context.h"
 #include "include/api/kernel.h"
 #include "src/custom_infer.h"
+#include "include/hi_type.h"
+#include "src/nnie_cfg_parser.h"
+#include "src/nnie_manager.h"
+#include "src/nnie_print.h"
+#include "src/custom_allocator.h"
 
 using mindspore::kernel::Kernel;
 using mindspore::tensor::MSTensor;
@@ -30,12 +36,14 @@ namespace mindspore {
 namespace nnie {
 class CustomCPUKernel : public Kernel {
  public:
-  CustomCPUKernel(int seg_id, bool forward_bbox, const std::vector<MSTensor> &inputs,
+  CustomCPUKernel(nnie::NNIEManager *manager, int seg_id, bool forward_bbox, const std::vector<MSTensor> &inputs,
                   const std::vector<MSTensor> &outputs, const mindspore::schema::Primitive *primitive,
                   const mindspore::Context *ctx)
-      : Kernel(inputs, outputs, primitive, ctx), seg_id_(seg_id), forward_bbox_(forward_bbox) {
-    if (forward_bbox) {
-      roi_used_ = true;
+      : Kernel(inputs, outputs, primitive, ctx), manager_(manager), seg_id_(seg_id), forward_bbox_(forward_bbox) {
+    if ((manager_) == nullptr) {
+      LOGE("manager_ is nullptr.");
+    } else {
+      manager_->SetMaxSegId(seg_id);
     }
   }
 
@@ -54,9 +62,7 @@ class CustomCPUKernel : public Kernel {
   void set_forward_bbox(bool flag) { forward_bbox_ = flag; }
 
  private:
-  static bool load_model_;
-  static int run_seg_;
-  static bool roi_used_;
+  nnie::NNIEManager *manager_ = nullptr;
   int seg_id_ = 0;
   bool forward_bbox_ = false;
   std::vector<std::vector<int64_t>> outputs_shapes_;

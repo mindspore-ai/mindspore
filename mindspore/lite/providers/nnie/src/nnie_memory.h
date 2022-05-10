@@ -43,6 +43,8 @@ HI_S32 NnieMemMalloc(const HI_CHAR *mmb, HI_CHAR *zone, HI_U64 *pu_phy_addr, HI_
 HI_S32 NnieMemMallocCached(const HI_CHAR *mmb, HI_CHAR *zone, HI_U64 *pu_phy_addr, HI_VOID **ppv_vir_addr, HI_U32 size);
 
 HI_S32 NnieMemFlushCache(HI_U64 phy_addr, HI_VOID *pv_vir_addr, HI_U32 size);
+
+HI_S32 NnieGetVirMemInfo(HI_U64 pv_vir_addr, HI_U64 *phy_addr);
 }  // namespace nnie
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_MEMORY_H_

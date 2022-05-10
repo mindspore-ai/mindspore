@@ -26,6 +26,7 @@ using mindspore::lite::RET_OK;
 namespace mindspore {
 namespace nnie {
 constexpr int kSleepUs = 100;
+constexpr int kCompressionWidth = 2;
 static void NnieParamRelease(NnieParam *nnie_param) {
   if (nnie_param == nullptr) {
     return;
@@ -141,7 +142,8 @@ static void FillForwardInfo(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
 }
 
 static void GetBlobMemSize(SVP_NNIE_NODE_S nnie_node[], HI_U32 node_num, HI_U32 total_step, SVP_BLOB_S blob[],
-                           HI_U32 align32, HI_U32 *total_size, HI_U32 blob_size[], bool *mem_alloc = nullptr) {
+                           HI_U32 align32, HI_U32 *total_size, HI_U32 blob_size[], bool malloc_allow,
+                           bool *mem_alloc = nullptr) {
   HI_U32 i = 0;
   HI_U32 size;
   HI_U32 stride;
@@ -173,7 +175,9 @@ static void GetBlobMemSize(SVP_NNIE_NODE_S nnie_node[], HI_U32 node_num, HI_U32 
         blob_size[i] = 0;
       }
     }
-    *total_size += blob_size[i];
+    if (malloc_allow) {
+      *total_size += blob_size[i];
+    }
     blob[i].u32Stride = stride;
   }
 }
@@ -208,18 +212,71 @@ static int GetTaskAndBlobBufSize(NnieCfg *nnie_cfg, NnieParam *nnie_param, HI_U3
                         j);
       }
     }
+    bool malloc_allow = (!nnie_cfg->pass_align16_io_) || i != 0;
     GetBlobMemSize(&(nnie_param->model_->astSeg[i].astSrcNode[0]), nnie_param->model_->astSeg[i].u16SrcNum, total_step,
                    &(nnie_param->seg_data_[i].src_[0]), NNIE_ALIGN_16, total_size, &(blob_size[i].src_size_[0]),
-                   &(nnie_param->mem_cfg_.seg_[i].src_node_[0]));
+                   malloc_allow, &(nnie_param->mem_cfg_.seg_[i].src_node_[0]));
 
+    malloc_allow = (!nnie_cfg->pass_align16_io_) || (i + 1) != nnie_param->model_->u32NetSegNum;
     GetBlobMemSize(&(nnie_param->model_->astSeg[i].astDstNode[0]), nnie_param->model_->astSeg[i].u16DstNum, total_step,
-                   &(nnie_param->seg_data_[i].dst_[0]), NNIE_ALIGN_16, total_size, &(blob_size[i].dst_size_[0]));
+                   &(nnie_param->seg_data_[i].dst_[0]), NNIE_ALIGN_16, total_size, &(blob_size[i].dst_size_[0]),
+                   malloc_allow);
+  }
+  return RET_OK;
+}
+
+static int NnieSetBlobAddr(HI_U64 *phy_addr, HI_U8 **vir_addr, NnieParam *nnie_param, NnieBlobSize *blob_size,
+                           bool pass_align16_io) {
+  HI_U32 i, j;
+  for (i = 0; i < nnie_param->model_->u32NetSegNum; i++) {
+    if ((!pass_align16_io) || i != 0) {
+      for (j = 0; j < nnie_param->model_->astSeg[i].u16SrcNum; j++) {
+        if (j != 0) {
+          *phy_addr += blob_size[i].src_size_[j - 1];
+          *vir_addr += blob_size[i].src_size_[j - 1];
+        }
+        if (nnie_param->mem_cfg_.seg_[i].src_node_[j]) {
+          if (!ConnectNnieInnerNode(nnie_param->model_->astSeg[i].astSrcNode[j].szName, nnie_param,
+                                    &(nnie_param->seg_data_[i].src_[j]))) {
+            LOGE("ConnectNnieInnerNode failed! ");
+            return RET_ERROR;
+          }
+        } else {
+          nnie_param->seg_data_[i].src_[j].u64PhyAddr = *phy_addr;
+          nnie_param->seg_data_[i].src_[j].u64VirAddr = (HI_U64)(HI_UL)*vir_addr;
+        }
+      }
+      *phy_addr += blob_size[i].src_size_[j - 1];
+      *vir_addr += blob_size[i].src_size_[j - 1];
+    } else {
+      for (j = 0; j < nnie_param->model_->astSeg[i].u16SrcNum; j++) {
+        nnie_param->seg_data_[i].src_[j].u64PhyAddr = 0;
+        nnie_param->seg_data_[i].src_[j].u64VirAddr = 0;
+      }
+    }
+    if ((!pass_align16_io) || (i + 1) != nnie_param->model_->u32NetSegNum) {
+      for (j = 0; j < nnie_param->model_->astSeg[i].u16DstNum; j++) {
+        if (j != 0) {
+          *phy_addr += blob_size[i].dst_size_[j - 1];
+          *vir_addr += blob_size[i].dst_size_[j - 1];
+        }
+        nnie_param->seg_data_[i].dst_[j].u64PhyAddr = *phy_addr;
+        nnie_param->seg_data_[i].dst_[j].u64VirAddr = (HI_U64)(HI_UL)*vir_addr;
+      }
+      *phy_addr += blob_size[i].dst_size_[j - 1];
+      *vir_addr += blob_size[i].dst_size_[j - 1];
+    } else {
+      for (j = 0; j < nnie_param->model_->astSeg[i].u16SrcNum; j++) {
+        nnie_param->seg_data_[i].dst_[j].u64PhyAddr = 0;
+        nnie_param->seg_data_[i].dst_[j].u64VirAddr = 0;
+      }
+    }
   }
   return RET_OK;
 }
 
 static int NnieParamInit(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
-  HI_U32 i, j;
+  HI_U32 i;
   HI_U32 total_size = 0, total_task_buf_size = 0, tmp_buf_size_ = 0;
   HI_S32 ret = HI_SUCCESS;
   HI_U32 off_set = 0;
@@ -288,36 +345,9 @@ static int NnieParamInit(NnieCfg *nnie_cfg, NnieParam *nnie_param) {
 
   phy_addr = phy_addr + total_task_buf_size + tmp_buf_size_;
   vir_addr = vir_addr + total_task_buf_size + tmp_buf_size_;
-  for (i = 0; i < nnie_param->model_->u32NetSegNum; i++) {
-    for (j = 0; j < nnie_param->model_->astSeg[i].u16SrcNum; j++) {
-      if (j != 0) {
-        phy_addr += blob_size[i].src_size_[j - 1];
-        vir_addr += blob_size[i].src_size_[j - 1];
-      }
-      if (nnie_param->mem_cfg_.seg_[i].src_node_[j]) {
-        if (!ConnectNnieInnerNode(nnie_param->model_->astSeg[i].astSrcNode[j].szName, nnie_param,
-                                  &(nnie_param->seg_data_[i].src_[j]))) {
-          LOGE("ConnectNnieInnerNode failed! ");
-          return RET_ERROR;
-        }
-      } else {
-        nnie_param->seg_data_[i].src_[j].u64PhyAddr = phy_addr;
-        nnie_param->seg_data_[i].src_[j].u64VirAddr = (HI_U64)(HI_UL)vir_addr;
-      }
-    }
-    phy_addr += blob_size[i].src_size_[j - 1];
-    vir_addr += blob_size[i].src_size_[j - 1];
-
-    for (j = 0; j < nnie_param->model_->astSeg[i].u16DstNum; j++) {
-      if (j != 0) {
-        phy_addr += blob_size[i].dst_size_[j - 1];
-        vir_addr += blob_size[i].dst_size_[j - 1];
-      }
-      nnie_param->seg_data_[i].dst_[j].u64PhyAddr = phy_addr;
-      nnie_param->seg_data_[i].dst_[j].u64VirAddr = (HI_U64)(HI_UL)vir_addr;
-    }
-    phy_addr += blob_size[i].dst_size_[j - 1];
-    vir_addr += blob_size[i].dst_size_[j - 1];
+  if (NnieSetBlobAddr(&phy_addr, &vir_addr, nnie_param, blob_size, nnie_cfg->pass_align16_io_) != RET_OK) {
+    LOGE("SetBlobAddr failed!");
+    return RET_ERROR;
   }
   if (has_roi) {
     nnie_param->rpn_bbox_.u64PhyAddr = phy_addr;
@@ -536,70 +566,108 @@ int FillByFloat(HI_U32 input_size, HI_U32 num, HI_U32 width, HI_U32 stride, HI_F
   return RET_OK;
 }
 
-static int NnieFillSrcData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, int64_t *shape,
-                           int size) {
-  HI_U32 i, j, n, ret;
-  HI_U32 height, width, channel, stride, dim;
-  HI_U8 *input_addr_u8 = nullptr;
-  HI_S32 *input_addr_s32 = nullptr;
-  HI_U32 *step_addr_u32 = nullptr;
-  HI_FLOAT *float_src_data = nullptr;
-  HI_U8 *u8_src_data = nullptr;
+static int NnieFillSrcDataSeq(NnieCfg *nnie_cfg, SVP_SRC_BLOB_S *blob, HI_U32 input_size) {
+  HI_U32 *step_addr_u32 = NNIE_CONVERT_64BIT_ADDR(HI_U32, blob->unShape.stSeq.u64VirAddrStep);
+  HI_U32 dim = blob->unShape.stSeq.u32Dim;
+  HI_U32 stride = blob->u32Stride;
+  HI_U32 i, j, n;
   HI_U32 total_step_num = 0;
-  HI_U32 input_size = 1;
-  SVP_SRC_BLOB_S *blob = &nnie_param->seg_data_[input_data_idx->seg_idx_].src_[input_data_idx->node_idx_];
-  for (n = 0; n < (HI_U32)size; n++) {
-    input_size *= shape[n];
-  }
-  input_addr_u8 = NNIE_CONVERT_64BIT_ADDR(HI_U8, blob->u64VirAddr);
-  input_addr_s32 = NNIE_CONVERT_64BIT_ADDR(HI_S32, blob->u64VirAddr);
-  float_src_data = reinterpret_cast<float *>(nnie_cfg->data_ptr_);
-  u8_src_data = reinterpret_cast<unsigned char *>(nnie_cfg->data_ptr_);
-  if (SVP_BLOB_TYPE_SEQ_S32 == blob->enType) {
-    step_addr_u32 = NNIE_CONVERT_64BIT_ADDR(HI_U32, blob->unShape.stSeq.u64VirAddrStep);
-    dim = blob->unShape.stSeq.u32Dim;
-    stride = blob->u32Stride;
+  HI_U8 *input_addr_u8 = NNIE_CONVERT_64BIT_ADDR(HI_U8, blob->u64VirAddr);
+  HI_S32 *input_addr_s32 = NNIE_CONVERT_64BIT_ADDR(HI_S32, blob->u64VirAddr);
+  HI_FLOAT *float_src_data = reinterpret_cast<float *>(nnie_cfg->data_ptr_);
 
-    for (n = 0; n < blob->u32Num; n++) {
+  for (n = 0; n < blob->u32Num; n++) {
+    total_step_num += *(step_addr_u32 + n);
+  }
+
+  if (input_size != total_step_num * dim) {
+    LOGE("input size error:%d <-> %d.", input_size, total_step_num * dim);
+    return RET_ERROR;
+  }
+  for (n = 0; n < blob->u32Num; n++) {
+    for (i = 0; i < *(step_addr_u32 + n); i++) {
+      for (j = 0; j < dim; j++) {
+        input_addr_s32[j] = (float_src_data[j] * NNIE_QUANT_BASE);
+      }
+      input_addr_u8 += stride;
+      input_addr_s32 = reinterpret_cast<HI_S32 *>(input_addr_u8);
+      float_src_data += dim;
+    }
+  }
+  NnieMemFlushCache(blob->u64PhyAddr, NNIE_CONVERT_64BIT_ADDR(HI_VOID, blob->u64VirAddr), total_step_num * stride);
+  return RET_OK;
+}
+
+HI_U32 GetBlobSize(const SVP_SRC_BLOB_S &blob) {
+  if (SVP_BLOB_TYPE_SEQ_S32 == blob.enType) {
+    HI_U32 stride = blob.u32Stride;
+    HI_U32 total_step_num = 0;
+    HI_U32 *step_addr_u32 = NNIE_CONVERT_64BIT_ADDR(HI_U32, blob.unShape.stSeq.u64VirAddrStep);
+    size_t n;
+    for (n = 0; n < blob.u32Num; n++) {
       total_step_num += *(step_addr_u32 + n);
     }
+    return total_step_num * stride;
+  }
 
-    if (input_size != total_step_num * dim) {
-      LOGE("input size error:%d <-> %d.", input_size, total_step_num * dim);
-      return RET_ERROR;
-    }
-    for (n = 0; n < blob->u32Num; n++) {
-      for (i = 0; i < *(step_addr_u32 + n); i++) {
-        for (j = 0; j < dim; j++) {
-          input_addr_s32[j] = (float_src_data[j] * NNIE_QUANT_BASE);
-        }
-        input_addr_u8 += stride;
-        input_addr_s32 = reinterpret_cast<HI_S32 *>(input_addr_u8);
-        float_src_data += dim;
-      }
-    }
-    NnieMemFlushCache(blob->u64PhyAddr, NNIE_CONVERT_64BIT_ADDR(HI_VOID, blob->u64VirAddr), total_step_num * stride);
+  HI_U32 stride = blob.u32Stride;
+  HI_U32 height = blob.unShape.stWhc.u32Height;
+  HI_U32 channel = blob.unShape.stWhc.u32Chn;
+  if (SVP_BLOB_TYPE_YVU420SP == blob.enType) {
+    return blob.u32Num * static_cast<HI_U32>(channel * height / kCompressionWidth) * stride;
+  } else if (SVP_BLOB_TYPE_YVU422SP == blob.enType) {
+    return blob.u32Num * height * kCompressionWidth * stride;
   } else {
-    height = blob->unShape.stWhc.u32Height;
-    width = blob->unShape.stWhc.u32Width;
-    channel = blob->unShape.stWhc.u32Chn;
-    stride = blob->u32Stride;
-    if (SVP_BLOB_TYPE_YVU420SP == blob->enType) {
-      ret = FillByUnsignedChar(input_size, blob->u32Num * static_cast<HI_U32>(channel * height / 2), width, stride,
-                               u8_src_data, input_addr_u8);
-    } else if (SVP_BLOB_TYPE_YVU422SP == blob->enType) {
-      ret = FillByUnsignedChar(input_size, blob->u32Num * height * 2, width, stride, u8_src_data, input_addr_u8);
-    } else {
-      if (SVP_BLOB_TYPE_U8 == blob->enType) {
-        ret =
-          FillByUnsignedChar(input_size, blob->u32Num * channel * height, width, stride, u8_src_data, input_addr_u8);
+    return blob.u32Num * channel * height * stride;
+  }
+}
+
+static int NnieFillSrcData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, int64_t *shape,
+                           int size) {
+  HI_U32 i, ret;
+  HI_U32 input_size = 1;
+  SVP_SRC_BLOB_S *blob = &nnie_param->seg_data_[input_data_idx->seg_idx_].src_[input_data_idx->node_idx_];
+  for (i = 0; i < (HI_U32)size; i++) {
+    input_size *= shape[i];
+  }
+
+  if (SVP_BLOB_TYPE_SEQ_S32 == blob->enType) {
+    return NnieFillSrcDataSeq(nnie_cfg, blob, input_size);
+  } else {
+    HI_U8 *input_addr_u8 = NNIE_CONVERT_64BIT_ADDR(HI_U8, blob->u64VirAddr);
+    HI_S32 *input_addr_s32 = NNIE_CONVERT_64BIT_ADDR(HI_S32, blob->u64VirAddr);
+    HI_FLOAT *float_src_data = reinterpret_cast<float *>(nnie_cfg->data_ptr_);
+    HI_U8 *u8_src_data = reinterpret_cast<unsigned char *>(nnie_cfg->data_ptr_);
+    HI_U32 height = blob->unShape.stWhc.u32Height;
+    HI_U32 width = blob->unShape.stWhc.u32Width;
+    HI_U32 channel = blob->unShape.stWhc.u32Chn;
+    HI_U32 stride = blob->u32Stride;
+    if (input_addr_u8 == u8_src_data) {
+      if (blob->enType == SVP_BLOB_TYPE_S32) {
+        for (i = 0; i < input_size; i++) {
+          input_addr_s32[i] = float_src_data[i] * NNIE_QUANT_BASE;
+        }
       } else {
-        ret = FillByFloat(input_size, blob->u32Num * channel * height, width, stride, float_src_data, input_addr_s32,
-                          input_addr_u8);
+        LOGI("\ninput no memcpy");
       }
-    }
-    if (ret != RET_OK) {
-      return ret;
+    } else {
+      if (SVP_BLOB_TYPE_YVU420SP == blob->enType) {
+        ret = FillByUnsignedChar(input_size, blob->u32Num * static_cast<HI_U32>(channel * height / 2), width, stride,
+                                 u8_src_data, input_addr_u8);
+      } else if (SVP_BLOB_TYPE_YVU422SP == blob->enType) {
+        ret = FillByUnsignedChar(input_size, blob->u32Num * height * 2, width, stride, u8_src_data, input_addr_u8);
+      } else {
+        if (SVP_BLOB_TYPE_U8 == blob->enType) {
+          ret =
+            FillByUnsignedChar(input_size, blob->u32Num * channel * height, width, stride, u8_src_data, input_addr_u8);
+        } else {
+          ret = FillByFloat(input_size, blob->u32Num * channel * height, width, stride, float_src_data, input_addr_s32,
+                            input_addr_u8);
+        }
+      }
+      if (ret != RET_OK) {
+        return ret;
+      }
     }
     NnieMemFlushCache(blob->u64PhyAddr, NNIE_CONVERT_64BIT_ADDR(HI_VOID, blob->u64VirAddr),
                       blob->u32Num * channel * height * stride);
@@ -608,42 +676,32 @@ static int NnieFillSrcData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataInd
   return RET_OK;
 }
 
-static int NnieGetDstData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, int64_t *shape,
-                          int size) {
+static int NnieGetDstDataSEQ(SVP_SRC_BLOB_S *blob, HI_U32 input_num, NnieDataIndex *input_data_idx,
+                             HI_FLOAT *float_dst_data) {
   HI_U32 i, j, n;
-  HI_U32 height, width, channel, stride, dim;
-  HI_U8 *output_addr_u8 = nullptr;
-  HI_S32 *output_addr_s32 = nullptr;
-  HI_U32 *step_addr_u32 = nullptr;
-  HI_FLOAT *float_dst_data = nullptr;
+  HI_U32 dim = blob->unShape.stSeq.u32Dim;
+  HI_U32 stride = blob->u32Stride;
+  HI_U32 *step_addr_u32 = NNIE_CONVERT_64BIT_ADDR(HI_U32, blob->unShape.stSeq.u64VirAddrStep);
   HI_U32 total_step_num = 0;
-  HI_U32 input_num = 1;
-  SVP_SRC_BLOB_S *blob = &nnie_param->seg_data_[input_data_idx->seg_idx_ - 1].dst_[input_data_idx->node_idx_];
-  for (n = 0; n < (HI_U32)size; n++) {
-    input_num *= shape[n];
-  }
+  HI_U8 *output_addr_u8 = NNIE_CONVERT_64BIT_ADDR(HI_U8, blob->u64VirAddr);
+  HI_S32 *output_addr_s32 = NNIE_CONVERT_64BIT_ADDR(HI_S32, blob->u64VirAddr);
 
-  if (SVP_BLOB_TYPE_U8 <= blob->enType && SVP_BLOB_TYPE_YVU422SP >= blob->enType) {
-    LOGE("Nnie output type error");
+  for (n = 0; n < blob->u32Num; n++) {
+    total_step_num += *(step_addr_u32 + n);
+  }
+  if (input_num != total_step_num * dim) {
+    LOGE("input shape");
     return RET_ERROR;
   }
-
-  output_addr_u8 = NNIE_CONVERT_64BIT_ADDR(HI_U8, blob->u64VirAddr);
-  output_addr_s32 = NNIE_CONVERT_64BIT_ADDR(HI_S32, blob->u64VirAddr);
-  float_dst_data = reinterpret_cast<float *>(nnie_cfg->data_ptr_);
-
-  if (SVP_BLOB_TYPE_SEQ_S32 == blob->enType) {
-    dim = blob->unShape.stSeq.u32Dim;
-    stride = blob->u32Stride;
-    step_addr_u32 = NNIE_CONVERT_64BIT_ADDR(HI_U32, blob->unShape.stSeq.u64VirAddrStep);
-
+  if (input_data_idx->seg_idx_ == input_data_idx->max_seg_id_) {
     for (n = 0; n < blob->u32Num; n++) {
-      total_step_num += *(step_addr_u32 + n);
+      for (i = 0; i < *(step_addr_u32 + n); i++) {
+        memcpy(float_dst_data, output_addr_u8, dim * sizeof(float));
+        float_dst_data += dim;
+        output_addr_u8 += stride;
+      }
     }
-    if (input_num != total_step_num * dim) {
-      LOGE("input shape");
-      return RET_ERROR;
-    }
+  } else {
     for (n = 0; n < blob->u32Num; n++) {
       for (i = 0; i < *(step_addr_u32 + n); i++) {
         for (j = 0; j < dim; j++) {
@@ -654,23 +712,67 @@ static int NnieGetDstData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataInde
         float_dst_data += dim;
       }
     }
-  } else {
-    height = blob->unShape.stWhc.u32Height;
-    width = blob->unShape.stWhc.u32Width;
-    channel = blob->unShape.stWhc.u32Chn;
-    stride = blob->u32Stride;
-    if (input_num != height * channel * width * blob->u32Num) {
-      LOGE("output shape diff:%d<->%d.", input_num, height * channel * width * blob->u32Num);
+  }
+  return RET_OK;
+}
+static int NnieGetDstData(NnieCfg *nnie_cfg, NnieParam *nnie_param, NnieDataIndex *input_data_idx, int64_t *shape,
+                          int size) {
+  SVP_SRC_BLOB_S *blob = &nnie_param->seg_data_[input_data_idx->seg_idx_ - 1].dst_[input_data_idx->node_idx_];
+  HI_U32 input_num = 1;
+  for (HI_U32 i = 0; i < (HI_U32)size; i++) {
+    input_num *= shape[i];
+  }
+  if (SVP_BLOB_TYPE_U8 <= blob->enType && SVP_BLOB_TYPE_YVU422SP >= blob->enType) {
+    LOGE("Nnie output type error");
+    return RET_ERROR;
+  }
+  HI_FLOAT *float_dst_data = reinterpret_cast<float *>(nnie_cfg->data_ptr_);
+  if (SVP_BLOB_TYPE_SEQ_S32 == blob->enType) {
+    if (NnieGetDstDataSEQ(blob, input_num, input_data_idx, float_dst_data) != RET_OK) {
+      LOGE("NnieGetDstDataSEQ error.");
       return RET_ERROR;
     }
-    for (n = 0; n < blob->u32Num; n++) {
-      for (i = 0; i < channel * height; i++) {
-        for (j = 0; j < width; j++) {
-          float_dst_data[j] = (HI_FLOAT)output_addr_s32[j] / NNIE_QUANT_BASE;
+  } else {
+    HI_U8 *output_addr_u8 = NNIE_CONVERT_64BIT_ADDR(HI_U8, blob->u64VirAddr);
+    HI_S32 *output_addr_s32 = NNIE_CONVERT_64BIT_ADDR(HI_S32, blob->u64VirAddr);
+    if (float_dst_data == reinterpret_cast<float *>(output_addr_s32)) {
+      if (input_data_idx->seg_idx_ != input_data_idx->max_seg_id_) {
+        for (HI_U32 i = 0; i < input_num; i++) {
+          float_dst_data[i] = (HI_FLOAT)output_addr_s32[i] / NNIE_QUANT_BASE;
         }
-        output_addr_u8 += stride;
-        output_addr_s32 = reinterpret_cast<HI_S32 *>(output_addr_u8);
-        float_dst_data += width;
+      } else {
+        LOGI("\noutput no memcpy");
+      }
+    } else {
+      HI_U32 height = blob->unShape.stWhc.u32Height;
+      HI_U32 width = blob->unShape.stWhc.u32Width;
+      HI_U32 channel = blob->unShape.stWhc.u32Chn;
+      HI_U32 stride = blob->u32Stride;
+      if (input_num != height * channel * width * blob->u32Num) {
+        LOGE("output shape diff:%d<->%d.", input_num, height * channel * width * blob->u32Num);
+        return RET_ERROR;
+      }
+      if (input_data_idx->seg_idx_ == input_data_idx->max_seg_id_) {
+        if (nnie_cfg->pass_align16_io_) {
+          memcpy(float_dst_data, output_addr_u8, blob->u32Num * channel * height * stride);
+        } else {
+          for (HI_U32 i = 0; i < (blob->u32Num * channel * height); i++) {
+            memcpy(float_dst_data, output_addr_u8, width * sizeof(float));
+            float_dst_data += width;
+            output_addr_u8 += stride;
+          }
+        }
+      } else {
+        for (HI_U32 n = 0; n < blob->u32Num; n++) {
+          for (HI_U32 i = 0; i < channel * height; i++) {
+            for (HI_U32 j = 0; j < width; j++) {
+              float_dst_data[j] = (HI_FLOAT)output_addr_s32[j] / NNIE_QUANT_BASE;
+            }
+            output_addr_u8 += stride;
+            output_addr_s32 = reinterpret_cast<HI_S32 *>(output_addr_u8);
+            float_dst_data += width;
+          }
+        }
       }
     }
   }

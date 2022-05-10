@@ -19,12 +19,14 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include "include/api/types.h"
 #include "include/mpi_vb.h"
 #include "include/hi_comm_svp.h"
 #include "include/hi_nnie.h"
 #include "include/mpi_nnie.h"
 #include "include/ir/dtype/type_id.h"
+#include "src/nnie_cfg_parser.h"
 
 namespace mindspore {
 namespace nnie {
@@ -70,9 +72,11 @@ typedef struct {
   SVP_NNIE_FORWARD_CTRL_S forward_ctrl_[SVP_NNIE_MAX_NET_SEG_NUM];
   SVP_NNIE_FORWARD_WITHBBOX_CTRL_S forward_with_bbox_ctrl_[SVP_NNIE_MAX_NET_SEG_NUM];
   NNIEMemCfg mem_cfg_;
+  bool get_mem_strong;
 } NnieParam;
 
 typedef struct {
+  bool pass_align16_io_;
   HI_VOID *data_ptr_;
   HI_U32 max_input_num_;
   HI_U32 max_roi_num_;
@@ -85,6 +89,7 @@ typedef struct {
 typedef struct {
   HI_U32 seg_idx_;
   HI_U32 node_idx_;
+  HI_U32 max_seg_id_;
 } NnieDataIndex;
 
 typedef struct {
@@ -110,6 +115,8 @@ int NnieCommRun(NnieRunCfg *nnie_run_cfg, bool run_box);
 int NnieCommFillData(NnieRunCfg *nnie_run_cfg, void *data, mindspore::DataType dtype, int64_t *shape, int size, int id);
 
 int NnieCommGetOutputData(NnieRunCfg *nnie_run_cfg, float *data, int64_t *shape, int size, int tensor_index);
+
+HI_U32 GetBlobSize(const SVP_SRC_BLOB_S &blob);
 }  // namespace nnie
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NNIE_NNIE_COMMON_H_

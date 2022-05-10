@@ -34,6 +34,7 @@ namespace {
 constexpr auto kTimeStep = "TimeStep";
 constexpr auto kMazRoiNum = "MaxROINum";
 constexpr auto kCoreIds = "CoreIds";
+constexpr auto kKeepOrigin = "KeepOriginalOutput";
 constexpr auto DELIM = ",";
 constexpr int MAX_CORE_ID = 7;
 }  // namespace
@@ -46,24 +47,48 @@ void PrintInvalidChar(const std::string &key, const std::string &dat) {
   LOGE(message.c_str());
 }
 
-int Flags::Init(const kernel::Kernel &kernel) {
-  auto nnie_arg = kernel.GetConfig("nnie");
-  if (nnie_arg.find(kTimeStep) != nnie_arg.end()) {
-    if (IsValidUnsignedNum(nnie_arg.at(kTimeStep)) == true) {
-      this->time_step_ = stoi(nnie_arg.at(kTimeStep));
+int Flags::ParserInt(const std::map<std::string, std::string> &nnie_arg, const std::string key, int *val) {
+  auto iter = nnie_arg.find(key);
+  if (iter != nnie_arg.end()) {
+    auto str = iter->second;
+    if (IsValidUnsignedNum(str) == true) {
+      *val = stoi(str);
     } else {
-      PrintInvalidChar(kTimeStep, nnie_arg.at(kTimeStep));
+      PrintInvalidChar(key, str);
       return RET_ERROR;
     }
   }
+  return RET_OK;
+}
 
-  if (nnie_arg.find(kMazRoiNum) != nnie_arg.end()) {
-    if (IsValidUnsignedNum(nnie_arg.at(kMazRoiNum)) == true) {
-      this->max_roi_num_ = stoi(nnie_arg.at(kMazRoiNum));
+int Flags::ParserBool(const std::map<std::string, std::string> &nnie_arg, const std::string key, bool *val) {
+  auto iter = nnie_arg.find(key);
+  if (iter != nnie_arg.end()) {
+    auto str = iter->second;
+    if (str.find("on") != std::string::npos) {
+      *val = true;
+    } else if (str.find("off") != std::string::npos) {
+      *val = false;
     } else {
-      PrintInvalidChar(kMazRoiNum, nnie_arg.at(kMazRoiNum));
+      PrintInvalidChar(key, str);
       return RET_ERROR;
     }
+  }
+  return RET_OK;
+}
+
+int Flags::Init(const kernel::Kernel &kernel) {
+  auto nnie_arg = kernel.GetConfig("nnie");
+  if (ParserInt(nnie_arg, kTimeStep, &this->time_step_) != RET_OK) {
+    return RET_ERROR;
+  }
+
+  if (ParserInt(nnie_arg, kMazRoiNum, &this->max_roi_num_) != RET_OK) {
+    return RET_ERROR;
+  }
+
+  if (ParserBool(nnie_arg, kKeepOrigin, &this->keep_origin_output_) != RET_OK) {
+    return RET_ERROR;
   }
 
   if (nnie_arg.find(kCoreIds) != nnie_arg.end()) {
@@ -85,6 +110,7 @@ int Flags::Init(const kernel::Kernel &kernel) {
       return RET_ERROR;
     }
   }
+
   return RET_OK;
 }
 }  // namespace nnie

@@ -16,10 +16,17 @@
 #ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_NNIE_CFG_PARSER_H_
 #define MINDSPORE_LITE_TOOLS_BENCHMARK_NNIE_NNIE_CFG_PARSER_H_
 #include <vector>
+#include <map>
+#include <string>
 #include "include/api/kernel.h"
+#include "include/hi_type.h"
 
 namespace mindspore {
 namespace nnie {
+typedef struct {
+  HI_U64 phy_;
+  HI_U32 size_;
+} MEM_ITEM;
 /**
  * Flags is a config container.
  * Member objects:
@@ -39,6 +46,11 @@ class Flags {
   int time_step_{1};
   int max_roi_num_{300};
   std::vector<int> core_ids_{0};
+  bool keep_origin_output_{false};
+
+ private:
+  int ParserInt(const std::map<std::string, std::string> &nnie_arg, const std::string key, int *val);
+  int ParserBool(const std::map<std::string, std::string> &nnie_arg, const std::string key, bool *val);
 };
 }  // namespace nnie
 }  // namespace mindspore

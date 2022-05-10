@@ -161,6 +161,14 @@ class MS_API Model {
   Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                  const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
 
+  /// \brief Inference model.
+  ///
+  /// \param[in] before CallBack before predict.
+  /// \param[in] after CallBack after predict.
+  ///
+  /// \return Status.
+  Status Predict(const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr);
+
   /// \brief Train model by step.
   ///
   /// \param[in] before CallBack before predict.

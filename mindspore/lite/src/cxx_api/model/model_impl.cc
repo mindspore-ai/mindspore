@@ -341,6 +341,32 @@ Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   return kSuccess;
 }
 
+Status ModelImpl::Predict(const MSKernelCallBack &before, const MSKernelCallBack &after) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Run graph failed.";
+    return kLiteError;
+  }
+  auto input_tensors = session_->GetInputs();
+  if (input_tensors.empty()) {
+    MS_LOG(ERROR) << "Failed to get input tensor.";
+    return kLiteError;
+  }
+
+  for (auto &input : input_tensors) {
+    if (input->data() == nullptr) {
+      MS_LOG(ERROR) << "Tensor " << input->tensor_name() << " has no data.";
+      return kLiteInputTensorError;
+    }
+  }
+  auto ret = RunGraph(before, after);
+  if (ret != kSuccess) {
+    MS_LOG(ERROR) << "Run graph failed : " << ret;
+    return ret;
+  }
+  MS_LOG(DEBUG) << "Run graph success.";
+  return kSuccess;
+}
+
 std::vector<MSTensor> ModelImpl::GetInputs() {
   std::vector<MSTensor> empty;
   if (session_ == nullptr) {
