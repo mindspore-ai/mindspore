@@ -16,11 +16,14 @@
 #ifndef MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
 #define MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_
 #include <memory>
+#include <string>
+#include <map>
 #include "include/api/model_parallel_runner.h"
 namespace mindspore {
 struct RunnerConfig::Data {
   int workers_num = 0;
   std::shared_ptr<Context> context = nullptr;
+  std::map<std::string, std::map<std::string, std::string>> config_info;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_RUNNER_CONFIG_H_

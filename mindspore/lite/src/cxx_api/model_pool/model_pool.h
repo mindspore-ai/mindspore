@@ -29,10 +29,6 @@
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
-struct WorkerConfig {
-  std::shared_ptr<Context> context = nullptr;
-  int numa_id = 0;
-};
 using ModelPoolConfig = std::vector<std::shared_ptr<WorkerConfig>>;
 
 class ModelPool {
@@ -42,6 +38,8 @@ class ModelPool {
   ~ModelPool();
 
   Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
+
+  Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
 
   std::vector<MSTensor> GetInputs();
 

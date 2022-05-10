@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <map>
 #include <string>
 #include "include/api/status.h"
 #include "include/api/context.h"
@@ -39,6 +40,16 @@ class RunnerConfig {
   ///
   /// \param[in] context store environment variables at runtime.
   void SetContext(const std::shared_ptr<Context> &context);
+
+  /// \brief Set the config before runtime. Only valid for ModelParallelRunner.
+  ///
+  /// \param[in] config store environment variables before runtime.
+  void SetConfigInfo(const std::string &key, const std::map<std::string, std::string> &config);
+
+  /// \brief Get the current config setting. Only valid for ModelParallelRunner.
+  ///
+  /// \return The current config setting.
+  std::map<std::string, std::map<std::string, std::string>> GetConfigInfo() const;
 
   /// \brief Get the current operators parallel workers number setting. Only valid for ModelParallelRunner.
   ///
