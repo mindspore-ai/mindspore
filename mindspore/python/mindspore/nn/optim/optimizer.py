@@ -269,8 +269,8 @@ class Optimizer(Cell):
 
         if self.use_parallel:
             if not self._support_parallel_optimizer:
-                raise RuntimeError("For 'Optimizer', parallel optimizer shard doest not support "
-                                   "optimizer {}.".format(self.cls_name))
+                raise RuntimeError("For 'Optimizer', parallel optimizer only support optimizer 'Lamb' and "
+                                   "'AdamWeightDecay' and 'AdaFactor', but got {}.".format(self.cls_name))
             self.dev_num = _get_device_num()
             if self.dev_num > self.param_length:
                 raise RuntimeError("Parallel optimizer can not be applied when the number of parameters {} is"
