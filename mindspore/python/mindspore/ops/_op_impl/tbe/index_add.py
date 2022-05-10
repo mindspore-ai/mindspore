@@ -24,6 +24,7 @@ index_add_op_info = TBERegOp("IndexAdd") \
     .kernel_name("inplace_index_add") \
     .partial_flag(True) \
     .dynamic_compile_static(True) \
+    .dynamic_shape(True) \
     .attr("axis", "required", "int", "all") \
     .input(0, "input_x", False, "required", "all") \
     .input(1, "indices", False, "required", "all") \

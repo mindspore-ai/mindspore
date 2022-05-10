@@ -5186,6 +5186,7 @@ class IndexAdd(Primitive):
         self.init_prim_io_names(inputs=['input_x', 'indices', 'input_y'], outputs=['output'])
         self.axis = axis
         validator.check_value_type('axis', axis, [int], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class Erfinv(Primitive):
