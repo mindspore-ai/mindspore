@@ -677,7 +677,7 @@ mindspore.numpy能够充分利用MindSpore的强大功能，实现算子的自�
       context.set_context(device_target="Ascend")
       ...
 
-  更多细节可参考 `API mindspore.context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.context.html>`_ 。
+  更多细节可参考 `API mindspore.set_context <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ 。
 
 - mindspore.numpy使用示例
 

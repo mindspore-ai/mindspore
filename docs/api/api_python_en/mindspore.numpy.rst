@@ -683,7 +683,7 @@ The following are examples:
       context.set_context(device_target="Ascend")
       ...
 
-  For more details, see `API mindspore.context <https://www.mindspore.cn/docs/en/master/api_python/mindspore.context.html>`_ .
+  For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
 
 - Use mindspore.numpy in MindSpore Deep Learning Models
 
