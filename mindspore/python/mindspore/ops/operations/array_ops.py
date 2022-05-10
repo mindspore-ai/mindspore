@@ -7687,3 +7687,50 @@ class Tril(Primitive):
         """Initialize Tril."""
         self.init_prim_io_names(inputs=["x"], outputs=["y"])
         validator.check_value_type("diagonal", diagonal, [int], self.name)
+
+
+class IndexFill(Primitive):
+    """
+    Fill self tensor with input values.
+
+    Fills the elements under the dim dimension of the self tensor with the input value
+    by selecting the indices in the order given in index.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **dim** (Union[int, Tensor]) - Dimension along which to fill the input tensor. Only supports
+          a 0-dimensional tensor or an int number.
+        - **index** (Tensor) - Indices of the input tensor to fill in.
+        - **value** (Tensor) - Value to fill the returned tensor.
+
+    Outputs:
+        Tensor, has the same type and shape as input tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `dim` is neither int number nor tensor.
+        TypeError: If `index` is not a Tensor.
+        TypeError: If `value` is not a Tensor.
+        TypeError: If dtype of `index` is not int32.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops as ops
+        >>> index_fill = ops.IndexFill()
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
+        >>> index = Tensor([0, 2], mindspore.int32)
+        >>> value = Tensor(-2.0, mindspore.float32)
+        >>> y = index_fill(x, 1, index, value)
+        >>> print(y)
+        [[-2. 2. -2.]
+         [-2. 5. -2.]
+         [-2. 8. -2.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'dim', 'index', 'value'], outputs=['y'])
