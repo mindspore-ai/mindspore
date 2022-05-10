@@ -17,13 +17,14 @@
 
 from mindspore.ops import operations as P
 
-
 #####################################
 # Element-wise Operation Functions.
 #####################################
 
 
 addn_ = P.AddN()
+
+
 def addn(x):
     """
     Computes addition of all input tensors element-wise.
@@ -56,6 +57,8 @@ def addn(x):
 
 
 absolute = P.Abs()
+
+
 def abs(x):
     r"""
     Returns absolute value of a tensor element-wise.
@@ -87,6 +90,8 @@ def abs(x):
 
 
 tensor_add = P.Add()
+
+
 def add(x, y):
     r"""
     Adds two input tensors element-wise.
@@ -143,6 +148,8 @@ def add(x, y):
 
 
 neg_tensor = P.Neg()
+
+
 def neg(x):
     """
     Returns a tensor with negative values of the input tensor element-wise.
@@ -174,6 +181,8 @@ def neg(x):
 
 
 tensor_sub = P.Sub()
+
+
 def sub(x, y):
     r"""
     Subtracts the second input tensor from the first input tensor element-wise.
@@ -219,6 +228,8 @@ def sub(x, y):
 
 
 tensor_mul = P.Mul()
+
+
 def mul(x, y):
     r"""
     Multiplies two tensors element-wise.
@@ -264,6 +275,8 @@ def mul(x, y):
 
 
 tensor_div = P.RealDiv()
+
+
 def div(x, y):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
@@ -307,6 +320,8 @@ def div(x, y):
 
 tensor_floordiv = P.FloorDiv()
 floordiv = tensor_floordiv
+
+
 def floor_div(x, y):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
@@ -352,6 +367,8 @@ def floor_div(x, y):
 
 tensor_pow = P.Pow()
 pows = tensor_pow
+
+
 def pow(x, y):
     r"""
     Calculates the `y` power of each element in `x`.
@@ -405,6 +422,8 @@ def pow(x, y):
 
 tensor_mod = P.FloorMod()
 floormod = tensor_mod
+
+
 def floor_mod(x, y):
     r"""
     Computes the remainder of division element-wise. It's a flooring divide.
@@ -457,6 +476,8 @@ def floor_mod(x, y):
 
 
 tensor_exp = P.Exp()
+
+
 def exp(x):
     r"""
     Returns exponential of a tensor element-wise.
@@ -488,6 +509,8 @@ def exp(x):
 
 
 tensor_expm1 = P.Expm1()
+
+
 def expm1(x):
     r"""
     Returns exponential then minus 1 of a tensor element-wise.
@@ -520,6 +543,8 @@ def expm1(x):
 
 
 log_ = P.Log()
+
+
 def log(x):
     """
     Returns the natural logarithm of a tensor element-wise.
@@ -559,6 +584,8 @@ def log(x):
 
 
 floor_ = P.Floor()
+
+
 def floor(x):
     r"""
     Rounds a tensor down to the closest integer element-wise.
@@ -591,6 +618,8 @@ def floor(x):
 
 
 logical_not_ = P.LogicalNot()
+
+
 def logical_not(x):
     """
     Computes the "logical NOT" of a tensor element-wise.
@@ -623,6 +652,8 @@ def logical_not(x):
 
 
 logical_or_ = P.LogicalOr()
+
+
 def logical_or(x):
     """
     Computes the "logical OR" of two tensors element-wise.
@@ -666,6 +697,8 @@ def logical_or(x):
 
 
 logical_and_ = P.LogicalAnd()
+
+
 def logical_and(x):
     r"""
     Computes the "logical AND" of two tensors element-wise.
@@ -709,6 +742,8 @@ def logical_and(x):
 
 
 sin_ = P.Sin()
+
+
 def sin(x):
     r"""
     Computes sine of the input element-wise.
@@ -740,6 +775,8 @@ def sin(x):
 
 
 cos_ = P.Cos()
+
+
 def cos(x):
     r"""
     Computes cosine of input element-wise.
@@ -774,6 +811,8 @@ def cos(x):
 
 
 tan_ = P.Tan()
+
+
 def tan(x):
     r"""
     Computes tangent of `x` element-wise.
@@ -807,6 +846,8 @@ def tan(x):
 
 
 asin_ = P.Asin()
+
+
 def asin(x):
     r"""
     Computes arcsine of input tensors element-wise.
@@ -840,6 +881,8 @@ def asin(x):
 
 
 acos_ = P.ACos()
+
+
 def acos(x):
     r"""
     Computes arccosine of input tensors element-wise.
@@ -873,6 +916,8 @@ def acos(x):
 
 
 atan_ = P.Atan()
+
+
 def atan(x):
     r"""
     Computes the trigonometric inverse tangent of the input element-wise.
@@ -906,6 +951,8 @@ def atan(x):
 
 
 sinh_ = P.Sinh()
+
+
 def sinh(x):
     r"""
     Computes hyperbolic sine of the input element-wise.
@@ -937,6 +984,8 @@ def sinh(x):
 
 
 cosh_ = P.Cosh()
+
+
 def cosh(x):
     r"""
     Computes hyperbolic cosine of input element-wise.
@@ -968,6 +1017,8 @@ def cosh(x):
 
 
 tanh_ = P.Tanh()
+
+
 def tanh(input_x):
     r"""
     Tanh activation function.
@@ -1004,6 +1055,8 @@ def tanh(input_x):
 
 
 asinh_ = P.Asinh()
+
+
 def asinh(x):
     r"""
     Computes inverse hyperbolic sine of the input element-wise.
@@ -1035,6 +1088,8 @@ def asinh(x):
 
 
 acosh_ = P.Acosh()
+
+
 def acosh(x):
     r"""
     Computes inverse hyperbolic cosine of the inputs element-wise.
@@ -1070,6 +1125,8 @@ def acosh(x):
 
 
 atanh_ = P.Atanh()
+
+
 def atanh(x):
     r"""
     Computes inverse hyperbolic tangent of the input element-wise.
@@ -1106,6 +1163,8 @@ def atanh(x):
 
 
 atan2_ = P.Atan2()
+
+
 def atan2(x, y):
     r"""
     Returns arctangent of x/y element-wise.
@@ -1144,6 +1203,8 @@ def atan2(x, y):
 
 
 bitwise_and_ = P.BitwiseAnd()
+
+
 def bitwise_and(x, y):
     r"""
     Returns bitwise `and` of two tensors element-wise.
@@ -1184,6 +1245,8 @@ def bitwise_and(x, y):
 
 
 bitwise_or_ = P.BitwiseOr()
+
+
 def bitwise_or(x, y):
     r"""
     Returns bitwise `or` of two tensors element-wise.
@@ -1223,6 +1286,8 @@ def bitwise_or(x, y):
 
 
 bitwise_xor_ = P.BitwiseXor()
+
+
 def bitwise_xor(x, y):
     r"""
     Returns bitwise `xor` of two tensors element-wise.
@@ -1262,6 +1327,8 @@ def bitwise_xor(x, y):
 
 
 invert_ = P.Invert()
+
+
 def invert(x):
     r"""
     Flips all bits of input tensor element-wise.
@@ -1293,6 +1360,8 @@ def invert(x):
 
 
 erf_ = P.Erf()
+
+
 def erf(x):
     r"""
     Computes the Gauss error function of `x` element-wise.
@@ -1325,6 +1394,8 @@ def erf(x):
 
 
 erfc_ = P.Erfc()
+
+
 def erfc(x):
     r"""
     Computes the complementary error function of `x` element-wise.
@@ -1362,6 +1433,8 @@ def erfc(x):
 
 
 tensor_lt = P.Less()
+
+
 def less(x, y):
     r"""
     Computes the boolean value of :math:`x < y` element-wise.
@@ -1406,6 +1479,8 @@ def less(x, y):
 
 
 tensor_le = P.LessEqual()
+
+
 def le(x, y):
     r"""
     Computes the boolean value of :math:`x <= y` element-wise.
@@ -1453,6 +1528,8 @@ def le(x, y):
 
 
 tensor_gt = P.Greater()
+
+
 def gt(x, y):
     r"""
     Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
@@ -1503,6 +1580,8 @@ def gt(x, y):
 
 
 tensor_ge = P.GreaterEqual()
+
+
 def ge(x, y):
     r"""
     Computes the boolean value of :math:`x >= y` element-wise.
@@ -1547,6 +1626,8 @@ def ge(x, y):
 
 
 equal_ = P.Equal()
+
+
 def equal(x, y):
     r"""
     Computes the equivalence between two tensors element-wise.
@@ -1596,6 +1677,8 @@ def equal(x, y):
 
 
 not_equal = P.NotEqual()
+
+
 def ne(x, y):
     r"""
     Computes the non-equivalence of two tensors element-wise.
@@ -1644,6 +1727,8 @@ def ne(x, y):
 
 
 isfinite_ = P.IsFinite()
+
+
 def isfinite(x):
     r"""
     Determines which elements are finite for each position.
@@ -1678,6 +1763,8 @@ def isfinite(x):
 
 
 isnan_ = P.IsNan()
+
+
 def isnan(x):
     r"""
     Determines which elements are NaN for each position.
@@ -1714,6 +1801,8 @@ def isnan(x):
 
 
 same_type_shape_ = P.SameTypeShape()
+
+
 def same_type_shape(input_x, input_y):
     """
     Checks whether the data type and shape of two tensors are the same.
@@ -1745,6 +1834,8 @@ def same_type_shape(input_x, input_y):
 
 
 maximum_ = P.Maximum()
+
+
 def maximum(x, y):
     """
     Computes the maximum of input tensors element-wise.
@@ -1795,6 +1886,8 @@ def maximum(x, y):
 
 
 minimum_ = P.Minimum()
+
+
 def minimum(x, y):
     r"""
     Computes the minimum of input tensors element-wise.
@@ -1865,6 +1958,53 @@ def cdist(x, y, p=2.0):
     cdist_ = P.Cdist(p)
     return cdist_(x, y)
 
+
+lerp_ = P.Lerp()
+
+
+def lerp(start, end, weight):
+    """
+    Does a linear interpolation of two tensors start and end based on a float or tensor weight.
+
+    If `weight` is a tensor, the shapes of three inputs need to be broadcast;
+    If `weight` is a float, the shapes of `start` and `end` need to be broadcast.
+
+    .. math::
+
+        output_{i} = start_{i} + weight_{i} * (end_{i} - start_{i})
+
+    Args:
+        start (Tensor) - The tensor with the starting points. Data type must be float16 or float32.
+        end (Tensor) - The tensor with the ending points. Data type must be float16 or float32.
+        weight (Union[float, Tensor]) – The weight for the interpolation formula. Must be a float
+            or a scalar tensor with float16 or float32 data type.
+
+    Returns:
+        Tensor, has the same type and shape as input `start`.
+
+    Raises:
+        TypeError: If `start` or `end` is not a tensor.
+        TypeError: If `weight` is neither float nor tensor.
+        TypeError: If dtype of `start` or `end` is neither float16 nor float32.
+        TypeError: If dtype of `weight` is neither float16 nor float32 when it is a tensor.
+        TypeError: If `start` and `end` have different data types.
+        TypeError: If `start`, `end` and `weight` have different data types when `weight` is a tensor.
+        ValueError: If `end` could not be broadcast to a tensor with shape of `start`.
+        ValueError: If `weight` could not be broadcast to tensors with shapes of `start` and `end` when it is a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+        >>> end = Tensor(np.array([10., 10., 10., 10.]), mindspore.float32)
+        >>> output = ops.lerp(start, end, 0.5)
+        >>> print(output)
+        [5.5 6. 6.5 7. ]
+    """
+    return lerp_(start, end, weight)
+
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -1882,6 +2022,7 @@ __all__ = [
     'less',
     'tensor_le',
     'le',
+    'lerp',
     'tensor_gt',
     'gt',
     'tensor_ge',

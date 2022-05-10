@@ -606,7 +606,6 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
-
     def cdist(self, input_y, p=2.0):
         """
         Computes batched the p-norm distance between each pair of the two collections of row vectors.
@@ -833,6 +832,44 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('abs')()(self)
+
+    def lerp(self, end, weight):
+        """
+        Does a linear interpolation of two tensors start and end based on a float or tensor weight.
+
+        If `weight` is a tensor, the shapes of two inputs need to be broadcast;
+        If `weight` is a float, the shapes of `end` need to be broadcast.
+
+        Args:
+            end (Tensor) - The tensor with the ending points. Data type must be float16 or float32.
+            weight (Union[float, Tensor]) – The weight for the interpolation formula. Must be a float
+            or a scalar tensor with float16 or float32 data type.
+
+        Returns:
+            Tensor, has the same type and shape as self tensor.
+
+        Raises:
+            TypeError: If `end` is not a tensor.
+            TypeError: If `weight` is neither float nor tensor.
+            TypeError: If dtype of `end` is neither float16 nor float32.
+            TypeError: If dtype of `weight` is neither float16 nor float32 when it is a tensor.
+            TypeError: If self tensor and `end` have different data types.
+            TypeError: If self tensor `end` and `weight` have different data types when `weight` is a tensor.
+            ValueError: If `end` could not be broadcast to a tensor with shape of self tensor.
+            ValueError: If `weight` could not be broadcast to tensors with shapes of and `end` when it is a tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> start = Tensor(np.array([1., 2., 3., 4.]), mindspore.float32)
+            >>> end = Tensor(np.array([10., 10., 10., 10.]), mindspore.float32)
+            >>> output = start.lerp( end, 0.5)
+            >>> print(output)
+            [5.5 6. 6.5 7. ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('lerp')(self, end, weight)
 
     def mean(self, axis=(), keep_dims=False):
         """
@@ -1092,10 +1129,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
