@@ -229,7 +229,6 @@ class Tensor:
         if not isinstance(tensor_format, Format):
             raise TypeError(f"tensor_format must be Format, but got {type(tensor_format)}.")
         format_map = {
-            Format.DEFAULT: _c_lite_wrapper.Format.DEFAULT_FORMAT,
             Format.NCHW: _c_lite_wrapper.Format.NCHW,
             Format.NHWC: _c_lite_wrapper.Format.NHWC,
             Format.NHWC4: _c_lite_wrapper.Format.NHWC4,
@@ -247,8 +246,6 @@ class Tensor:
             Format.NCDHW: _c_lite_wrapper.Format.NCDHW,
             Format.NWC: _c_lite_wrapper.Format.NWC,
             Format.NCW: _c_lite_wrapper.Format.NCW,
-            Format.NDHWC: _c_lite_wrapper.Format.NDHWC,
-            Format.NC8HW8: _c_lite_wrapper.Format.NC8HW8,
         }
         self._tensor.set_format(format_map.get(tensor_format))
 
@@ -263,7 +260,6 @@ class Tensor:
             >>> tensor_format = tensor.get_format()
         """
         format_map = {
-            _c_lite_wrapper.Format.DEFAULT_FORMAT: Format.DEFAULT,
             _c_lite_wrapper.Format.NCHW: Format.NCHW,
             _c_lite_wrapper.Format.NHWC: Format.NHWC,
             _c_lite_wrapper.Format.NHWC4: Format.NHWC4,
@@ -281,8 +277,6 @@ class Tensor:
             _c_lite_wrapper.Format.NCDHW: Format.NCDHW,
             _c_lite_wrapper.Format.NWC: Format.NWC,
             _c_lite_wrapper.Format.NCW: Format.NCW,
-            _c_lite_wrapper.Format.NDHWC: Format.NDHWC,
-            _c_lite_wrapper.Format.NC8HW8: Format.NC8HW8,
         }
         return format_map.get(self._tensor.get_format())
 

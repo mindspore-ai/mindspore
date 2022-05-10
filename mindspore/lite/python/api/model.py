@@ -252,7 +252,7 @@ class RunnerConfig:
             raise TypeError("workers_num must be int, but got {}.".format(type(workers_num)))
         self._runner_config = _c_lite_wrapper.RunnerConfigBind()
         self._runner_config.set_workers_num(workers_num)
-        self._runner_config.set_context(context)
+        self._runner_config.set_context(context._context)
 
     def __str__(self):
         res = f"workers num: {self._runner_config.get_workers_num()}, " \
