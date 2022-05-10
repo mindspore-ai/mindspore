@@ -68,7 +68,7 @@ STATUS GetShapeVectorFromStringTensor(const tensor::TensorPtr &tensor_info, Shap
     return RET_ERROR;
   }
   constexpr int kBase = 10;
-  size_t shape_size = std::strtol(shape_size_str.c_str(), nullptr, kBase);
+  size_t shape_size = static_cast<size_t>(std::strtol(shape_size_str.c_str(), nullptr, kBase));
   MS_CHECK_TRUE_RET(shape_size != 0, RET_ERROR);
   for (; *offset < tensor_info->Size(); (*offset)++) {
     if (tensor_data[*offset] == ',') {

@@ -790,7 +790,7 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
   }
   schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
 
-  node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
+  node_id_map_[key] = meta_graphT->allTensors.size();
   op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
   return RET_OK;
@@ -818,7 +818,7 @@ int AnfExporter::ConvertInputValueNode(const CNodePtr &cnode, size_t index, cons
   schema_tensor->data = data_info.data_;
 
   auto key = std::make_pair(cnode->input(index), 0);
-  node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
+  node_id_map_[key] = meta_graphT->allTensors.size();
   op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
   return RET_OK;
@@ -890,7 +890,7 @@ int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<sc
       fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
       auto key = std::make_pair(cnode, i);
       if (train_flag_) {
-        node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
+        node_id_map_[key] = meta_graphT->allTensors.size();
         meta_graphT->allTensors.emplace_back(ms_tensor);
       } else {
         auto val_ptr = cnode->GetAttr("outputs_names");
@@ -898,16 +898,16 @@ int AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<sc
           auto outputs_names = GetValue<std::vector<std::string>>(val_ptr);
           if (elements.size() == 1) {
             key = std::make_pair(cnode, 0);
-            node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
+            node_id_map_[key] = meta_graphT->allTensors.size();
             ms_tensor->name = outputs_names[0];
           } else {
-            node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
+            node_id_map_[key] = meta_graphT->allTensors.size();
             ms_tensor->name = outputs_names[i];
           }
         } else {
           if (elements.size() == 1) {
             key = std::make_pair(cnode, 0);
-            node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
+            node_id_map_[key] = meta_graphT->allTensors.size();
             ms_tensor->name = cnode_name;
           } else {
             node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());

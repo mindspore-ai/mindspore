@@ -37,7 +37,7 @@ int ROIPooling(const float *in_ptr, float *out_ptr, const float *roi, float *max
   int height_ = param->input_h_;
   int width_ = param->input_w_;
   int channels_ = param->input_c_;
-  int scale = param->scale_;
+  float scale = param->scale_;
   int pooled_height = param->pooledH_;
   int pooled_width = param->pooledW_;
   const int roi_stride = 5;
