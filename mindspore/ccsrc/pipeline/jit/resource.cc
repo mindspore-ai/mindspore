@@ -199,6 +199,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"lerp", std::string("lerp")},                              // lerp()
        {"max", std::string("max")},                                // P.reduce_max()
        {"min", std::string("min")},                                // P.reduce_min()
+       {"round", std::string("round")},                            // P.Round()
        {"fill", std::string("fill")},                              // P.fill()
        {"ptp", std::string("ptp")},                                // P.reduce_max() - P.reduce_min()
        {"clip", std::string("clip")},                              // P.maximum(P.minimum)

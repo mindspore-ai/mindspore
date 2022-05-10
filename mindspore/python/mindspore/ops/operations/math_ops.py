@@ -4207,18 +4207,7 @@ class Round(Primitive):
     r"""
     Returns half to even of a tensor element-wise.
 
-    .. math::
-
-        out_i \approx x_i
-
-    Inputs:
-        - **x** (Tensor) - The input tensor.
-
-    Outputs:
-        Tensor, has the same shape and type as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
+    Refer to :func"`mindspore.ops.round` for more detailed.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

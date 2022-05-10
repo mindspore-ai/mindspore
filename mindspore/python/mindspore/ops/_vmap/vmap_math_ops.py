@@ -288,6 +288,7 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.LogicalNot)(get_unop_vmap_rul
 get_unop_vmap_rule = vmap_rules_getters.register(P.Neg)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Reciprocal)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Rint)(get_unop_vmap_rule)
+get_unop_vmap_rule = vmap_rules_getters.register(P.Round)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Rsqrt)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sigmoid)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.Sqrt)(get_unop_vmap_rule)

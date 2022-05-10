@@ -616,6 +616,14 @@ mindspore.Tensor
 
         Tensor。
 
+    .. py:method:: round()
+
+        将Tensor进行四舍五入到最接近的整数数值。
+
+        **返回：**
+
+        Tensor，shape和数据类型与原Tensor相同。
+
     .. py:method:: searchsorted(v, side='left', sorter=None)
 
         查找应插入元素以保存顺序的位置索引。

@@ -16,9 +16,10 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor, ops
+from mindspore import Tensor, ops, ms_function
 
 
 class Net(nn.Cell):
@@ -58,3 +59,71 @@ def test_round_float32():
 @pytest.mark.env_onecard
 def test_round_float16():
     generate_testcases(np.float16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_round_functional():
+    """
+    Feature: functional round.
+    Description: Test functional interface round.
+    Expectation: success.
+    """
+    x = Tensor(np.array([1.1, 2.6, 4.5]), mindspore.float32)
+    output = ops.round(x)
+    assert np.all(output.asnumpy() == np.array([1, 3, 4]))
+
+
+@ms_function
+def round_fn_graph(x):
+    return x.round()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_round_graph():
+    """
+    Feature: tensor round interface.
+    Description: Test tensor round interface in graph mode.
+    Expectation: success
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(np.array([1.1, 2.6, 4.5]), mindspore.float32)
+    output = round_fn_graph(x)
+    assert np.all(output.asnumpy() == np.array([1, 3, 4]))
+
+
+def round_fn_pynative(x):
+    return x.round()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_round_pynative():
+    """
+    Feature: tensor round interface.
+    Description: Test tensor round interface in pynative mode.
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x = Tensor(np.array([1.1, 2.6, 4.5]), mindspore.float32)
+    output = round_fn_pynative(x)
+    assert np.all(output.asnumpy() == np.array([1, 3, 4]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_round_vmap():
+    """
+    Feature: vmap for ops Round.
+    Description: Test operation Round with vmap.
+    Expectation: success
+    """
+    x = Tensor(np.array([[1.1, 2.2], [3.3, 4.4]]), mindspore.float32)
+    vmap_round = ops.vmap(round_fn_graph, 0, 1)
+    output = vmap_round(x)
+    assert np.all(output.asnumpy() == np.array([[1, 3], [2, 4]]))
