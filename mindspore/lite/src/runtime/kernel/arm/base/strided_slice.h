@@ -45,8 +45,8 @@ class StridedSliceCPUKernel : public InnerKernel {
   uint8_t *input_ptr_ = nullptr;
   uint8_t *output_ptr_ = nullptr;
   int split_axis_{-1};
-  int inner_{1};
-  int outer_{1};
+  size_t inner_{1};
+  size_t outer_{1};
   int cal_num_per_thread_{1};
   size_t inner_size_{1};
   bool fast_run_{false};

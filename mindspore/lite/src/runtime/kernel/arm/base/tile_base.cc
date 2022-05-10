@@ -65,7 +65,7 @@ int TileCPUKernel::ReSize() {
 
   CHECK_NULL_RETURN(in_tensors_.at(0));
   CHECK_NULL_RETURN(out_tensors_.at(0));
-  tile_parameter_->in_dim_ = in_tensors_.at(0)->shape().size();
+  tile_parameter_->in_dim_ = static_cast<int>(in_tensors_.at(0)->shape().size());
   MS_CHECK_TRUE_RET(tile_parameter_->in_dim_ > 0 && tile_parameter_->in_dim_ <= MAX_TILE_DIM_SIZE, RET_ERROR);
   CHECK_LESS_RETURN((int)(out_tensors_.at(0)->shape().size()), tile_parameter_->in_dim_);
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {

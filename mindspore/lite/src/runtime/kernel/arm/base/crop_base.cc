@@ -46,7 +46,7 @@ int CropBaseCPUKernel::ReSize() {
   crop_para_->in_shape_ = input_shape_.data();
   crop_para_->out_shape_ = output_shape_.data();
   MS_CHECK_LE(input_dim, CROP_OFFSET_MAX_SIZE, RET_ERROR);
-  crop_para_->input_dim_ = input_dim;
+  crop_para_->input_dim_ = static_cast<int>(input_dim);
   if (PadOffset(input_dim, crop_para_) != RET_OK) {
     MS_LOG(ERROR) << "Pad offset failed.";
     return RET_ERROR;
