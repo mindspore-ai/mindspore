@@ -17,7 +17,7 @@
 #include <map>
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/cl/gl_to_cl.cl.inc"
 
 namespace mindspore::kernel {

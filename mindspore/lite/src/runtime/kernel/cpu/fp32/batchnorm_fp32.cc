@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/batchnorm_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

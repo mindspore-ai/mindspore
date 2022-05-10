@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "src/lite_mindrt.h"
+#include "src/runtime/lite_mindrt.h"
 
 namespace mindspore::lite {
 class LiteEntranceOpActor : public LiteOpActor {

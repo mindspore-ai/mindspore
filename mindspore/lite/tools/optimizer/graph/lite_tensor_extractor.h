@@ -21,7 +21,7 @@
 #include "include/registry/converter_context.h"
 #include "ir/anf.h"
 #include "src/tensor.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 
 namespace mindspore {
 namespace opt {

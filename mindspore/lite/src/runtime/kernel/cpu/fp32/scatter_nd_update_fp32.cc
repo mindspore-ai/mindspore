@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32/scatter_nd_update_fp32.h"
 #include <cstring>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

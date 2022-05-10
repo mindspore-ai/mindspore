@@ -19,8 +19,8 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "nnacl/crop_parameter.h"
-#include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
 
 namespace mindspore {

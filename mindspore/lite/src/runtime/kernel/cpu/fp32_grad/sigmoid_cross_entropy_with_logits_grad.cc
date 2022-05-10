@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32_grad/sigmoid_cross_entropy_with_logits_grad.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

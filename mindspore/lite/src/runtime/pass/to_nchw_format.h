@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <set>
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 #include "src/runtime/pass/runtime_optimizer.h"
 #include "schema/ops_generated.h"
 

@@ -30,7 +30,7 @@
 #include "src/common/log_adapter.h"
 #include "schema/model_generated.h"
 #include "src/common/utils.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 #include "nnacl/tensor_c.h"
 
 namespace mindspore {

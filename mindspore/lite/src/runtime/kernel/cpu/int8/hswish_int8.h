@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_INT8_HSWISH_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/int8/hswish_int8.h"
 #include "nnacl/int8/quantize.h"
 

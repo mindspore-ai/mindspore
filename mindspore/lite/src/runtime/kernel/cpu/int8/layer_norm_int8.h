@@ -19,7 +19,7 @@
 #include <limits>
 #include <vector>
 #include "nnacl/int8/layer_norm_int8.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 namespace mindspore::kernel {

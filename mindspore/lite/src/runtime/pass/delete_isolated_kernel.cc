@@ -17,7 +17,7 @@
 #include "src/runtime/pass/delete_isolated_kernel.h"
 #include <set>
 #include <queue>
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 
 namespace mindspore::lite::pass {
 int DeleteIsolatedKernel::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors) {

@@ -18,7 +18,7 @@
 #include <memory>
 #include "utils/ms_utils.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/lstm_fp32.h"
 
 namespace mindspore {

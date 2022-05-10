@@ -18,7 +18,7 @@
 #include <cmath>
 #include "src/runtime/kernel/cpu/base/prior_box.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "include/context.h"
 

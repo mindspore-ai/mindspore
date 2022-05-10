@@ -26,7 +26,7 @@
 #include "include/errorcode.h"
 #include "include/version.h"
 #include "ir/func_graph.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/graphdef_transform.h"
 #include "tools/converter/optimizer_manager.h"
 #include "tools/converter/parser/parser_utils.h"

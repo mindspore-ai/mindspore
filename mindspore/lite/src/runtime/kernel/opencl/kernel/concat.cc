@@ -18,7 +18,7 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/concat.cl.inc"
 

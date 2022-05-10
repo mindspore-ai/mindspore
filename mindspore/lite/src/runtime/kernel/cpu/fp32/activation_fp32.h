@@ -20,7 +20,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/fp32/activation_fp32.h"
 
 namespace mindspore::kernel {

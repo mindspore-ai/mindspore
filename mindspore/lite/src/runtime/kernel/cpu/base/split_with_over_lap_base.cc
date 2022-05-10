@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/cpu/base/split_with_over_lap_base.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/tensor.h"
 #include "nnacl/errorcode.h"
 

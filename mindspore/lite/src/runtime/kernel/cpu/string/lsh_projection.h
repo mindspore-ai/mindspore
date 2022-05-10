@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "nnacl/lsh_projection_parameter.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class LshProjectionCPUKernel : public LiteKernel {

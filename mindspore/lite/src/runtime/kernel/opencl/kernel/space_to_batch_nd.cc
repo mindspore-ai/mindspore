@@ -15,7 +15,7 @@
  */
 #include <cstring>
 #include <string>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/space_to_batch_nd.h"
 #include "src/runtime/kernel/opencl/cl/space_to_batch_nd.cl.inc"
 

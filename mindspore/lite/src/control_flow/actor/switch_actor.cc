@@ -18,7 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include "mindrt/include/mindrt.hpp"
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 #include "src/runtime/inner_allocator.h"
 #ifdef ENABLE_FP16

@@ -23,7 +23,7 @@
 #include <map>
 #include "include/train/train_cfg.h"
 #include "include/train/train_session.h"
-#include "src/lite_session.h"
+#include "src/runtime/lite_session.h"
 
 /*
        Inheritance Diagram

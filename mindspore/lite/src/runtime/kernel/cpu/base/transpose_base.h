@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "nnacl/transpose.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class TransposeBaseCPUKernel : public LiteKernel {

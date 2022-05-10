@@ -19,7 +19,7 @@
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/int8/slice_int8.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "mindspore/lite/include/context.h"
 
 namespace mindspore {

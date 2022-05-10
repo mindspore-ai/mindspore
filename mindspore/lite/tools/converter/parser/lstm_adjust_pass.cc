@@ -19,7 +19,7 @@
 #include "ops/reshape.h"
 #include "ops/transpose.h"
 #include "src/common/utils.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "tools/common/tensor_util.h"
 #include "utils/check_convert_utils.h"
 #include "nnacl/op_base.h"

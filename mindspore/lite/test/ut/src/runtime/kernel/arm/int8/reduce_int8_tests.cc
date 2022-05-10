@@ -18,7 +18,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "src/tensor.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "nnacl/fp32/reduce_fp32.h"
 
 namespace mindspore {

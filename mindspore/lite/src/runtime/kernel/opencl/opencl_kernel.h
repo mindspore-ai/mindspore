@@ -23,10 +23,11 @@
 #include <memory>
 #include <string>
 #include <cfloat>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
+#include "src/runtime/kernel_exec.h"
 #include "include/errorcode.h"
-#include "src/runtime/gpu/opencl/opencl_runtime.h"
-#include "mindspore/lite/src/weight_decoder.h"
+#include "src/runtime/kernel/gpu/opencl/opencl_runtime.h"
+#include "mindspore/lite/src/runtime/tensor_category.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "nnacl/resize_parameter.h"
 

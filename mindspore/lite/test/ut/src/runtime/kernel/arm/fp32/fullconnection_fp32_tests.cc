@@ -19,11 +19,11 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "src/common/file_utils.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/kernel/cpu/fp32/fullconnection_fp32.h"
 #include "src/runtime/infer_manager.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;

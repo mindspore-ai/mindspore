@@ -19,7 +19,7 @@
 
 #include <cstring>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"

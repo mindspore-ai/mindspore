@@ -19,7 +19,7 @@
 #include <vector>
 
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/nllloss_fp32.h"
 

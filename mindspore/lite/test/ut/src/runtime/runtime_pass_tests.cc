@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 #include "common/common_test.h"
-#include "src/kernel_exec.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
 

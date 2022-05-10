@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
 #include "src/common/utils.h"
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 #ifdef ENABLE_FP16
 #include "src/runtime/kernel/cpu/fp16/fp16_op_handler.h"
 #endif

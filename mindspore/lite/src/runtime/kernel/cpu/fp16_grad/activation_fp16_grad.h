@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRAD_ACTIVATION_FP16_GRAD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/fp16_grad/activation_grad.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 

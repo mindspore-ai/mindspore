@@ -17,7 +17,7 @@
 #include <set>
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/reshape.h"
 #include "src/runtime/kernel/opencl/cl/reshape.cl.inc"
 

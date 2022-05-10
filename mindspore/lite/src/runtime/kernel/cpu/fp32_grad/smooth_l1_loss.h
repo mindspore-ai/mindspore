@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SMOOTH_L1_LOSS_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/fp32_grad/smooth_l1_loss.h"
 
 namespace mindspore::kernel {

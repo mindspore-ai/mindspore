@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp16/slice_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/base/slice_base.h"
 #include "nnacl/fp16/cast_fp16.h"
 

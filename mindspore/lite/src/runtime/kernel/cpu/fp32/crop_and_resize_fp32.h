@@ -19,7 +19,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/resize_parameter.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class CropAndResizeCPUKernel : public LiteKernel {

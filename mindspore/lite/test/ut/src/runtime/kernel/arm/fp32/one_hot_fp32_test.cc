@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include <vector>
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
 #include "common/common_test.h"
 #include "nnacl/fp32/one_hot_fp32.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "schema/ops_generated.h"
 
 namespace mindspore {

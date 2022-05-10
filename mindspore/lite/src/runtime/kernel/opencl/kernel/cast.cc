@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <map>
 #include <string>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/cast.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/cast.cl.inc"

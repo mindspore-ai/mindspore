@@ -17,7 +17,7 @@
 #include "src/control_flow/actor/exit_actor.h"
 #include <algorithm>
 #include "src/control_flow/kernel/exit_subgraph_kernel.h"
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 #include "src/common/tensor_util.h"
 
 namespace {

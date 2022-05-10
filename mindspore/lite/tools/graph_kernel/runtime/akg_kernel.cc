@@ -18,9 +18,10 @@
 #include <dlfcn.h>
 #include <algorithm>
 #include <numeric>
+#include <functional>
 #include "src/tensor.h"
 #include "src/common/utils.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 
 namespace mindspore::kernel {

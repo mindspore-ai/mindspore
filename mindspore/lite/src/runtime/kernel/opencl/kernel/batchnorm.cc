@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/batchnorm.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/batchnorm.cl.inc"

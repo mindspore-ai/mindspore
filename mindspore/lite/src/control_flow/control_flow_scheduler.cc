@@ -18,7 +18,7 @@
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include <algorithm>
 #include <set>
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 #include "src/runtime/kernel/cpu/base/partial_fusion.h"
 #include "nnacl/call_parameter.h"
 #include "src/control_flow/kernel/exit_subgraph_kernel.h"

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CROP_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/crop_parameter.h"
 
 namespace mindspore::kernel {

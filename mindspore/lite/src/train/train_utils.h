@@ -20,7 +20,7 @@
 #include <string>
 #include "include/ms_tensor.h"
 #include "src/tensor.h"
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 
 namespace mindspore {
 namespace kernel {

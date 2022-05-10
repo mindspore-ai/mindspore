@@ -19,7 +19,7 @@
 
 #include <float.h>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/reduce_scatter_parameter.h"
 
 namespace mindspore::kernel {

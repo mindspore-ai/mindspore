@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/int8/squeeze_int8.h"
 #include "nnacl/squeeze_parameter.h"
 

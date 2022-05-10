@@ -19,7 +19,7 @@
 #include "nnacl/fp32/conv_common_fp32.h"
 #include "nnacl/fp32/conv_1x1_x86_fp32.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;

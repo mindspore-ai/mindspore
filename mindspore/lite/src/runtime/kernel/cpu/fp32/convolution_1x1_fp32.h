@@ -19,7 +19,7 @@
 
 #include <float.h>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/cpu/base/convolution_base.h"

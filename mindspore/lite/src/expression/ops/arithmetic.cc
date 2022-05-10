@@ -23,7 +23,7 @@
 #include "src/expression/ops.h"
 #include "nnacl/arithmetic.h"
 #include "src/expression/import.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 
 namespace mindspore {
 namespace lite {

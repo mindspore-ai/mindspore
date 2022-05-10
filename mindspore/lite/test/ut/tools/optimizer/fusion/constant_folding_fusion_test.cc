@@ -25,7 +25,7 @@
 #include "src/common/log_adapter.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/optimizer/const_fold/constant_folding_fusion.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/lite_exporter/anf_exporter.h"
 #include "test/common/import_from_meta_graphT.h"
 
 namespace mindspore {

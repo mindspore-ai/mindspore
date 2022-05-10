@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp16_grad/neg_fp16_grad.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 

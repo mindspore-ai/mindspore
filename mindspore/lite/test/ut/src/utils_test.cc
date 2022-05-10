@@ -23,8 +23,8 @@
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
-#include "mindspore/lite/src/kernel_exec.h"
-#include "mindspore/lite/src/kernel_exec_util.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_exec_util.h"
 
 namespace mindspore {
 class UtilsTest : public mindspore::CommonTest {

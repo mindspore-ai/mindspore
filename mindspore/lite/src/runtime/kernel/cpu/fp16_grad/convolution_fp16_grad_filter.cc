@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp16_grad/convolution_fp16_grad_filter.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/pack.h"
 #include "nnacl/fp16_grad/convolution_grad_filter.h"
 #include "nnacl/fp16_grad/pack_fp16_ext.h"

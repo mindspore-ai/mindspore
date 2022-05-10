@@ -26,7 +26,7 @@
 #include "nnacl/op_base.h"
 #include "ir/dtype/type_id.h"
 #include "src/tensor.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 #include "schema/ops_generated.h"

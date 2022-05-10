@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "nnacl/matmul_parameter.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/fp32/transpose_fp32.h"
 
 namespace mindspore::kernel {

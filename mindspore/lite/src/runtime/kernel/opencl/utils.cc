@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/common/file_utils.h"
 
 using mindspore::schema::ActivationType_LEAKY_RELU;

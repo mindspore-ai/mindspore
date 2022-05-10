@@ -18,7 +18,7 @@
 
 #include <random>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class DropoutCPUKernel : public LiteKernel {

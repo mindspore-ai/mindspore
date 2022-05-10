@@ -21,7 +21,7 @@
 #include "backend/common/optimizer/pass.h"
 #include "tools/converter/converter_flags.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 
 using mindspore::converter::FmkType;
 namespace mindspore::opt {

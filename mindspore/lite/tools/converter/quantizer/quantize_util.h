@@ -49,7 +49,7 @@
 #include "tools/converter/quantizer/huffman_encode.h"
 #include "tools/converter/quantizer/bitpacking.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
-#include "src/lite_session.h"
+#include "src/runtime/lite_session.h"
 #include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"

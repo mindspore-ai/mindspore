@@ -18,9 +18,9 @@
 #include "include/errorcode.h"
 #include "src/runtime/kernel/cpu/control/tensor_array.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/tensorlist.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 #include "src/common/log_util.h"
 
 using mindspore::kernel::KERNEL_ARCH;

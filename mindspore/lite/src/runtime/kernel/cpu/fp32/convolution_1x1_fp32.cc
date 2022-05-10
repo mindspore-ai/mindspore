@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/convolution_1x1_fp32.h"
-#include "src/pack_weight_manager.h"
+#include "src/runtime/pack_weight_manager.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;

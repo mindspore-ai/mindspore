@@ -18,7 +18,7 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 

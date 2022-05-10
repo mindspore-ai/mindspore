@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp16_grad/arithmetic_fp16_self_grad.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/cpu/int8/argminmax_int8.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;

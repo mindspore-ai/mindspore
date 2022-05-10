@@ -23,7 +23,7 @@
 #include "src/common/file_utils.h"
 #include "nnacl/fp32_grad/pooling_grad.h"
 #include "src/runtime/kernel/cpu/fp32_grad/pooling_grad.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 
 namespace mindspore {
 class TestPoolingGradFp32 : public mindspore::CommonTest {

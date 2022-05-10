@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/fp32/arithmetic_self_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
 using mindspore::lite::KernelRegistrar;

@@ -17,7 +17,7 @@
 #include "src/expression/ops/pooling.h"
 #include "src/expression/ops.h"
 #include "src/expression/import.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 #include "src/expression/ops/transpose.h"
 
 namespace mindspore {

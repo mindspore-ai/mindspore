@@ -22,7 +22,7 @@
 #include "src/expression/ops/reduce.h"
 #include "src/expression/ops/arithmetic.h"
 #include "src/expression/ops/transpose.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 #include "src/expression/ops.h"
 
 namespace mindspore {

@@ -19,10 +19,10 @@
 #include "include/errorcode.h"
 #include "src/common/config_file.h"
 #include "schema/inner/model_generated.h"
-#include "src/kernel_exec.h"
-#include "src/lite_session.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/lite_session.h"
 #include "include/api/model.h"
-#include "src/cxx_api/model/model_impl.h"
+#include "src/runtime/cxx_api/model/model_impl.h"
 
 namespace mindspore {
 class MixDataTypeTest : public mindspore::CommonTest {

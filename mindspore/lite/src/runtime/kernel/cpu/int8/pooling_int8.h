@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_POOLING_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 #include "include/context.h"
 #include "src/runtime/kernel/cpu/base/pooling_base.h"

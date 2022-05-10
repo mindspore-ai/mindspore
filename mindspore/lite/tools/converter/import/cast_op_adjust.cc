@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "tools/converter/import/cast_op_adjust.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "mindspore/lite/include/errorcode.h"
 
 namespace mindspore::lite {

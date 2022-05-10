@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

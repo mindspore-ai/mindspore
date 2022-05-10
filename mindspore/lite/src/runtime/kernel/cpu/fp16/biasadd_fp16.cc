@@ -18,7 +18,7 @@
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/runtime/kernel/cpu/fp16/biasadd_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

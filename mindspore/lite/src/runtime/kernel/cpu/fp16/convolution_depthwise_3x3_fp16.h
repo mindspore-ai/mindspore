@@ -19,7 +19,7 @@
 
 #ifdef ENABLE_ARM
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/runtime/kernel/cpu/base/convolution_base.h"
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 

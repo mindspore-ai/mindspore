@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/opencl/kernel/fill.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;

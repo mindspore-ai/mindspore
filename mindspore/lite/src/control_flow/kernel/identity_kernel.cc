@@ -16,7 +16,7 @@
 
 #include "src/control_flow/kernel/identity_kernel.h"
 #include "src/tensor.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/common/tensor_util.h"
 #include "src/common/prim_inner.h"
 

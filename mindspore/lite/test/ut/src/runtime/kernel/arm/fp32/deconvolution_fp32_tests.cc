@@ -21,7 +21,7 @@
 #include "mindspore/lite/src/runtime/kernel/cpu/fp32/deconvolution_fp32.h"
 #include "nnacl/fp32/deconv_fp32.h"
 #include "nnacl/op_base.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore {
 class TestDeConvolutionFp32 : public mindspore::CommonTest {

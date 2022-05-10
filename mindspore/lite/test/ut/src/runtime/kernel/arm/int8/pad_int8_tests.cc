@@ -18,7 +18,7 @@
 #include "schema/inner/model_generated.h"
 #include "include/context.h"
 #include "src/tensor.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "nnacl/pad_parameter.h"

@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <string>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 #include "src/common/string_utils.h"
 

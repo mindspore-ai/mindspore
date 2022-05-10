@@ -19,7 +19,7 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class QuantDTypeCastFp16CPUKernel : public LiteKernel {

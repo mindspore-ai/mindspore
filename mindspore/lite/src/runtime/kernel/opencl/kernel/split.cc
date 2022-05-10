@@ -18,7 +18,7 @@
 #include <cstring>
 #include <string>
 #include <algorithm>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/cl/split.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;

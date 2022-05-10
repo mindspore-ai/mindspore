@@ -18,7 +18,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"

@@ -18,7 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16_grad/unsorted_segment_sum.h"
 #include "include/errorcode.h"
 

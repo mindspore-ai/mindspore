@@ -27,11 +27,11 @@
 #include <android/log.h>
 #endif
 #endif
-#include "src/lite_kernel.h"
-#include "src/pack_weight_manager.h"
+#include "src/runtime/lite_kernel.h"
+#include "src/runtime/pack_weight_manager.h"
 #include "include/context.h"
 #include "src/runtime/kernel/cpu/base/layout_transform.h"
-#include "src/weight_decoder.h"
+#include "src/runtime/weight_decoder.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::InnerContext;

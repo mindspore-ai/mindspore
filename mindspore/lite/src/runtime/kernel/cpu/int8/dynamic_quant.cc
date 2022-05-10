@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/int8/dynamic_quant.h"
 #include <vector>
 #include <algorithm>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/dynamic_quant_parameter.h"

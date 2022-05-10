@@ -18,9 +18,9 @@
 #include <vector>
 #include <algorithm>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16_grad/strided_slice_grad.h"
-#include "src/ops/populate/strided_slice_populate.h"
+#include "src/common/ops/populate/strided_slice_populate.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

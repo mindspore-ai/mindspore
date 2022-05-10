@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/cpu/fp16/arithmetic_self_fp16.h"
 #include "src/runtime/kernel/cpu/fp16/common_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 
 using mindspore::lite::KernelRegistrar;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/int8/l2_norm_int8.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

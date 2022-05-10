@@ -19,8 +19,8 @@
 
 #include <float.h>
 #include <vector>
-#include "src/lite_kernel.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/lite_kernel.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "nnacl/fp32/matmul_fp32.h"

@@ -17,7 +17,7 @@
 #include <cstring>
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/reverse_fp32.h"
 #include "include/errorcode.h"
 

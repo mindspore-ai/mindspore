@@ -19,7 +19,7 @@
 #include "tools/converter/micro/coder/allocator/allocator.h"
 #include "src/common/prim_util.h"
 #include "src/common/version_manager.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/common/ops/populate/populate_register.h"
 #include "tools/converter/micro/coder/opcoders/parallel.h"
 
 namespace mindspore::lite::micro {

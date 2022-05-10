@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp16/arithmetic_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/cpu/fp16/common_fp16.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"

@@ -15,8 +15,8 @@
  */
 #include "src/train/train_populate_parameter.h"
 #include <algorithm>
-#include "src/ops/populate/populate_register.h"
-#include "src/ops/populate/default_populate.h"
+#include "src/common/ops/populate/populate_register.h"
+#include "src/common/ops/populate/default_populate.h"
 #include "nnacl/strided_slice_parameter.h"
 #include "nnacl/arithmetic.h"
 #include "nnacl/conv_parameter.h"

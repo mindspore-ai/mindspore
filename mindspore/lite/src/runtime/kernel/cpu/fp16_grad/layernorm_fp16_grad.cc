@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16_grad/layernorm_grad.h"
 #include "nnacl/fp32_grad/layernormgrad_parameter.h"
 #include "include/errorcode.h"

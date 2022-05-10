@@ -22,7 +22,7 @@
 #include "include/errorcode.h"
 #include "nnacl/crop_parameter.h"
 #include "nnacl/fp16/crop_fp16.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/runtime/kernel/cpu/base/crop_base.h"
 #include "src/runtime/kernel/cpu/fp16/common_fp16.h"
 

@@ -17,7 +17,7 @@
 #include <set>
 #include <string>
 #include <map>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 #include "src/runtime/kernel/opencl/kernel/strassen.h"
 #include "src/runtime/kernel/opencl/cl/matmul.cl.inc"

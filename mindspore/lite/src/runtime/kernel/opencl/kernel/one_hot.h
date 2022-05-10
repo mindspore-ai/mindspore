@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <string>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/fp32/one_hot_fp32.h"
 

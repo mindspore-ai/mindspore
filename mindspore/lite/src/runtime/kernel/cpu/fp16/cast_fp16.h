@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CAST_FP16_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/base/cast_base.h"

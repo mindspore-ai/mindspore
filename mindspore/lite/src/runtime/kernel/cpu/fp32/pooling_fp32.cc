@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32/pooling_fp32.h"
 #include <cfloat>
 #include "nnacl/fp32/pooling_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
 

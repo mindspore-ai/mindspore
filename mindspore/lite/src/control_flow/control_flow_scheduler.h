@@ -27,9 +27,9 @@
 #include "src/common/utils.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
-#include "src/inner_context.h"
+#include "src/runtime/inner_context.h"
 #include "src/tensor.h"
-#include "src/sub_graph_kernel.h"
+#include "src/runtime/sub_graph_kernel.h"
 #include "include/model.h"
 
 namespace mindspore::lite {

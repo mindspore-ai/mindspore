@@ -17,7 +17,7 @@
 #include <limits>
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/base/space_to_depth_base.h"
 #include "include/errorcode.h"
 

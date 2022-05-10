@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32_grad/activation_grad.h"
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

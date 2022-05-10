@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp32/convolution_depthwise_fp32.h"
 #include "include/errorcode.h"
-#include "src/pack_weight_manager.h"
+#include "src/runtime/pack_weight_manager.h"
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;

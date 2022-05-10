@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <set>
 #include <utility>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/gather.h"
 #include "src/runtime/kernel/opencl/cl/gather.cl.inc"
 #include "src/runtime/kernel/opencl/utils.h"

@@ -60,7 +60,7 @@
 "mindspore/mindspore/lite/src/runtime/thread_pool.c"                                               "readability/casting"
 "mindspore/mindspore/lite/src/runtime/thread_pool.c"                                               "runtime/arrays"
 "mindspore/mindspore/lite/src/runtime/thread_pool.c"                                               "runtime/int"
-"mindspore/mindspore/lite/src/ops/ops_def.cc"                                                      "runtime/int"
+"mindspore/mindspore/lite/src/common/ops/ops_def.cc"                                                      "runtime/int"
 "mindspore/mindspore/lite/examples/runtime_gpu_extend/src/cl"                                      "legal/copyright"
 "mindspore/mindspore/lite/examples/runtime_gpu_extend/src/cl"                                      "readability/casting"
 "mindspore/mindspore/lite/examples/runtime_gpu_extend/src/cl"                                      "readability/fn_size"

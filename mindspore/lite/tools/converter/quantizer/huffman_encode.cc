@@ -16,7 +16,7 @@
 
 #define USE_DEPRECATED_API
 #include "tools/converter/quantizer/huffman_encode.h"
-#include "src/weight_decoder.h"
+#include "src/runtime/tensor_category.h"
 #include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore {

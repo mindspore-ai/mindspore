@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/base/convolution_base.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 
 namespace mindspore {
 class TestConvolutionDwFp32 : public mindspore::CommonTest {

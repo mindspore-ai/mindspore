@@ -21,9 +21,9 @@
 #include <set>
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/gpu/opencl/opencl_allocator.h"
-#include "src/runtime/gpu/opencl/opencl_executor.h"
-#include "src/sub_graph_kernel.h"
+#include "src/runtime/kernel/gpu/opencl/opencl_allocator.h"
+#include "src/runtime/kernel/gpu/opencl/opencl_executor.h"
+#include "src/runtime/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 class OpenCLSubGraph : public SubGraphKernel {

@@ -19,7 +19,7 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/format_transpose_parameter.h"
 
 namespace mindspore::lite::pass {

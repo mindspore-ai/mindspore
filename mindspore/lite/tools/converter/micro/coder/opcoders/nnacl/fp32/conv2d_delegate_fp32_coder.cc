@@ -16,7 +16,7 @@
 
 #include "coder/opcoders/nnacl/fp32/conv2d_delegate_fp32_coder.h"
 #include "src/common/version_manager.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/common/ops/populate/populate_register.h"
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/base/conv_common_base.h"
 #include "coder/opcoders/nnacl/fp32/convolution_fp32_coder.h"

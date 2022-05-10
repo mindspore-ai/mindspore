@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp32_grad/pooling_grad.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/pooling_fp32.h"
 #include "nnacl/fp32_grad/pooling_grad.h"
 #include "include/errorcode.h"

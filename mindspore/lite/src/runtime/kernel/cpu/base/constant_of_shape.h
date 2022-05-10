@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/constant_of_shape_parameter.h"
 #include "nnacl/fp32/constant_of_shape_fp32.h"

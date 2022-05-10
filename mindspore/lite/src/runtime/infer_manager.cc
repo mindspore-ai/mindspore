@@ -20,13 +20,13 @@
 #include <memory>
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
-#include "src/cxx_api/tensor/tensor_impl.h"
+#include "src/runtime/cxx_api/tensor/tensor_impl.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"
 #include "src/tensorlist.h"
 #include "include/registry/register_kernel_interface.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore {
 namespace lite {

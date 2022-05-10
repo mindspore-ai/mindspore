@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/size_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 
 using mindspore::kernel::KERNEL_ARCH;

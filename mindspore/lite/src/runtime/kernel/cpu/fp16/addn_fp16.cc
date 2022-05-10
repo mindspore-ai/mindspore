@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/fp16/addn_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16/arithmetic_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH;

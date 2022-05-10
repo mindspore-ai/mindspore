@@ -22,7 +22,7 @@
 #include "src/expression/export.h"
 #include "src/runtime/infer_manager.h"
 #include "src/common/utils.h"
-#include "src/cxx_api/expression/net_impl.h"
+#include "src/runtime/cxx_api/expression/net_impl.h"
 
 namespace mindspore {
 namespace lite {

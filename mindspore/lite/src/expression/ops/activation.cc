@@ -17,7 +17,7 @@
 #include "nnacl/fp32/activation_fp32.h"
 #include "src/expression/import.h"
 #include "src/expression/ops.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 
 namespace mindspore {
 namespace lite {

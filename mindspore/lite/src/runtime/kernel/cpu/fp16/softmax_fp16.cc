@@ -21,7 +21,7 @@
 #include "nnacl/fp16/softmax_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

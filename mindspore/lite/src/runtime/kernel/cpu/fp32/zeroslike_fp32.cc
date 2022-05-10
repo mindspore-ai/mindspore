@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32/zeroslike_fp32.h"
 #include "schema/model_generated.h"
 #include "nnacl/base/zeroslike_base.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

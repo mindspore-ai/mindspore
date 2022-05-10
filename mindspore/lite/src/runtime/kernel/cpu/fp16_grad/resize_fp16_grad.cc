@@ -19,7 +19,7 @@
 #include "nnacl/fp16_grad/resize_grad.h"
 #include "nnacl/errorcode.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;

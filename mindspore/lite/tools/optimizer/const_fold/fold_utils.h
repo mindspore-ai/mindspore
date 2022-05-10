@@ -21,7 +21,7 @@
 #include "ir/anf.h"
 #include "include/api/context.h"
 #include "include/registry/converter_context.h"
-#include "src/inner_context.h"
+#include "src/runtime/inner_context.h"
 
 namespace mindspore {
 namespace opt {

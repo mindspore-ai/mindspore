@@ -20,7 +20,7 @@
 #include <string.h>
 #include <vector>
 #include "nnacl/fp32/gatherNd_fp32.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/op_base.h"
 

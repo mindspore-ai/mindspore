@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONVOLUTION_1x1_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/errorcode.h"
 #include "schema/model_generated.h"
 #include "src/runtime/kernel/cpu/base/convolution_base.h"

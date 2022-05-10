@@ -19,7 +19,7 @@
 #include "include/context.h"
 #include "src/tensor.h"
 #include "common/common_test.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/int8/resize_int8.h"
 
 namespace mindspore {

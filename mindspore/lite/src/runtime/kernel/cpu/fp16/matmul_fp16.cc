@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp16/matmul_fp16.h"
 #include <algorithm>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::KernelRegistrar;

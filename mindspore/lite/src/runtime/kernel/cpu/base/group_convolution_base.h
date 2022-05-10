@@ -19,7 +19,7 @@
 
 #include <utility>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/op_base.h"
 #include "src/runtime/kernel/cpu/base/convolution_base.h"
 #include "nnacl/fp32/conv_common_fp32.h"

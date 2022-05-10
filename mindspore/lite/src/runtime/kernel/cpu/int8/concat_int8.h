@@ -21,7 +21,7 @@
 #include <limits>
 #include "nnacl/int8/concat_int8.h"
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 
 namespace mindspore::kernel {

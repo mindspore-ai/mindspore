@@ -29,7 +29,7 @@
 #include "src/runtime/inner_allocator.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore {
 namespace lite {

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/base/reduce_base.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/runtime/kernel/cpu/fp32/reduce_fp32.h"

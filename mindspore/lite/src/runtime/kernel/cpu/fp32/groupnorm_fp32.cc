@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/groupnorm_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/common/tensor_util.h"
 
 using mindspore::lite::KernelRegistrar;

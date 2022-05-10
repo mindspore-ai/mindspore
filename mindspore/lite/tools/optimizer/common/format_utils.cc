@@ -65,7 +65,7 @@
 #include "ops/space_to_depth.h"
 #include "ops/split.h"
 #include "ops/strided_slice.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {

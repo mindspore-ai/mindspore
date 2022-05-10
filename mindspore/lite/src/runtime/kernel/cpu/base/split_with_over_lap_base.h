@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/context.h"
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 #include "nnacl/split_parameter.h"
 #include "nnacl/base/split_with_over_lap_base.h"
 

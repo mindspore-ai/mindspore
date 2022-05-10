@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/base/slice_base.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/base/slice_base.h"
 #include "src/tensor.h"
 

@@ -17,7 +17,7 @@
 #include <iostream>
 #include "common/common_test.h"
 #include "nnacl/cumsum_parameter.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 
 namespace mindspore {
 class TestCumsum : public mindspore::CommonTest {

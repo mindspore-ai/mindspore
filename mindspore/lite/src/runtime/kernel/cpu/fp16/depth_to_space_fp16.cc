@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/cpu/fp16/depth_to_space_fp16.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_OK;

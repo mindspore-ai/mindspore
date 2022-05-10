@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/base/partial_fusion.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/common/utils.h"
 
