@@ -7427,25 +7427,27 @@ class RightShift(Primitive):
 
 class LogSpace(Primitive):
     r"""
-    Creates a one-dimensional tensor of size steps whose values are evenly spaced from base**start to base**end,
+    Returns a one-dimensional tensor of size steps whose values are evenly spaced from base**start to base**end,
     inclusive, on a logarithmic scale with base.
 
-    .. math::s
+    .. math::
         \begin{aligned}
         &step = (end - start)/(steps - 1)\\
-        &output = [base**start,base**(start + (end-start)/(steps-1)),
-                   base**(start + (steps-2)(end-start)/(steps-1)),
-                    ... , base**end]
+        &output = [base^{start}, base^{start + 1 * step}, ... , base^{start + (steps-2) * step}, base^{end}]
         \end{aligned}
 
     Args:
-        steps (int): The steps must be a non-negative integer.
-        base (int): The base must be a non-negative integer.
-        dtype (mindspore.dtype): The dtype of output, mindspore.float16 or mindspore.float32.
+        steps (int): The steps must be a non-negative integer. default: 10
+        base (int): The base must be a non-negative integer. default: 10
+        dtype (mindspore.dtype): The dtype of output,
+          include mindspore.float16, mindspore.float32 or mindspore.float64(for GPU).
+
 
     Inputs:
-        - **start** (Tensor) - Start value of interval, with shape of 0-D, dtype is float16 or float32.
-        - **end** (Tensor) - End value of interval, with shape of 0-D, dtype is float16 or float32.
+        - **start** (Tensor) - Start value of interval, with shape of 0-D,
+          dtype is float16, float32 or float64(for GPU).
+        - **end** (Tensor) - End value of interval, with shape of 0-D,
+          dtype is float16, float32 or float64(for GPU).
 
     Outputs:
         Tensor has the shape as (step, ). Its datatype is set by the attr 'dtype'.
@@ -7454,12 +7456,12 @@ class LogSpace(Primitive):
         TypeError: If `input` is not a Tensor.
         TypeError: If `steps` is not an int.
         TypeError: If `base` is not an int.
-        TypeError: If `dtype` is not mindspore.float16 or mindspore.float32.
+        TypeError: If `dtype` is not mindspore.float16, mindspore.float32 or mindspore.float64(for GPU).
         ValueError: If `steps` is not a non-negative integer.
         ValueError: If `base` is not a non-negative integer.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> logspace = ops.LogSpace(steps = 10, base = 10, dtype=mindspore.float32)
@@ -7471,14 +7473,14 @@ class LogSpace(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, steps, base, dtype):
+    def __init__(self, steps=10, base=10, dtype=mstype.float32):
         """Initialize Logspace."""
         validator.check_value_type("steps", steps, [int], self.name)
         validator.check_value_type("base", base, [int], self.name)
         validator.check_non_negative_int(steps, "steps", self.name)
         validator.check_non_negative_int(base, "base", self.name)
         validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
-        valid_values = (mstype.float16, mstype.float32)
+        valid_values = (mstype.float16, mstype.float32, mstype.float64)
         validator.check_type_name("dtype", dtype, valid_values, self.name)
         self.init_prim_io_names(inputs=['start', 'end'], outputs=['y'])
 

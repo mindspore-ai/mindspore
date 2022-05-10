@@ -16,6 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_LOG_SPACE_H_
 #define MINDSPORE_CORE_OPS_LOG_SPACE_H_
+#include <stdint.h>
 #include <map>
 #include <memory>
 #include <set>
@@ -37,6 +38,18 @@ class MIND_API LogSpace : public BaseOperator {
   LogSpace() : BaseOperator(kNameLogSpace) { InitIOName({"start", "end"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.LogSpace for the inputs.
   void Init() const {}
+
+  void Init(int64_t steps, int64_t base);
+  /// \brief Set steps.
+  void set_steps(int64_t steps);
+  /// \brief Set base.
+  void set_base(int64_t base);
+
+  /// \return base.
+  int64_t get_base() const;
+
+  /// \return steps.
+  int64_t get_steps() const;
 };
 abstract::AbstractBasePtr LogSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const std::vector<abstract::AbstractBasePtr> &input_args);
