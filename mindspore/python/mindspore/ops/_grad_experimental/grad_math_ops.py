@@ -342,6 +342,33 @@ def get_bprop_bessel_i1(self):
     return bprop
 
 
+@bprop_getters.register(math.BesselJ0)
+def get_bprop_bessel_j0(self):
+    """Generate bprop for BesselJ0"""
+    bessel_j1 = math.BesselJ1()
+
+    def bprop(x, out, dout):
+        dx = -dout * bessel_j1(x)
+        return (dx,)
+    return bprop
+
+
+@bprop_getters.register(math.BesselJ1)
+def get_bprop_bessel_j1(self):
+    """Generate bprop for BesselJ1"""
+    equal = P.Equal()
+    div = P.Div()
+    cast = P.Cast()
+    dtype = P.DType()
+    bessel_j0 = math.BesselJ0()
+
+    def bprop(x, out, dout):
+        dout_dx = mnp.where(equal(x, 0.), cast(0.5, dtype(x)), bessel_j0(x) - div(out, x))
+        dx = dout * dout_dx
+        return (dx,)
+    return bprop
+
+
 @bprop_getters.register(math.BesselK0)
 def get_bprop_bessel_k0(self):
     """Generate bprop for BesselK0"""

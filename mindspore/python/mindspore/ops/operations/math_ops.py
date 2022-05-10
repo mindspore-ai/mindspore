@@ -4761,7 +4761,7 @@ class BesselJ0(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
         ``CPU``
@@ -4793,7 +4793,7 @@ class BesselJ1(Primitive):
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor of float16, float32.
+        TypeError: If `x` is not a Tensor of float16, float32 or float64.
 
     Supported Platforms:
         ``CPU``
