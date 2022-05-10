@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.summary.SummaryRecord(log_dir, file_prefix='events', file_suffix='_MS', network=None, max_file_size=None, raise_exception=False, export_options=None)
+mindspore.SummaryRecord
+================================
+
+.. py:class:: mindspore.SummaryRecord(log_dir, file_prefix='events', file_suffix='_MS', network=None, max_file_size=None, raise_exception=False, export_options=None)
 
     SummaryRecord用于记录summary数据和lineage数据。
 

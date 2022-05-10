@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.callback.Callback
+mindspore.Callback
+===================
+
+.. py:class:: mindspore.Callback
 
     用于构建Callback函数的基类。Callback函数是一个上下文管理器，在运行模型时被调用。
     可以使用此机制进行一些自定义操作。

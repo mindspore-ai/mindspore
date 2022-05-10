@@ -50,15 +50,15 @@ mindspore
 .. mscnautosummary::
     :toctree: mindspore
 
-    mindspore.get_auto_parallel_context
-    mindspore.get_context
-    mindspore.get_ps_context
-    mindspore.reset_auto_parallel_context
-    mindspore.reset_ps_context
-    mindspore.set_auto_parallel_context
     mindspore.set_context
-    mindspore.set_ps_context
+    mindspore.get_context
+    mindspore.set_auto_parallel_context
+    mindspore.get_auto_parallel_context
+    mindspore.reset_auto_parallel_context
     mindspore.ParallelMode
+    mindspore.set_ps_context
+    mindspore.get_ps_context
+    mindspore.reset_ps_context
 
 模型
 -----
@@ -67,6 +67,22 @@ mindspore
     :toctree: mindspore
 
     mindspore.Model
+
+回调函数
+---------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.Callback
+    mindspore.CheckpointConfig
+    mindspore.History
+    mindspore.LambdaCallback
+    mindspore.LearningRateScheduler
+    mindspore.LossMonitor
+    mindspore.ModelCheckpoint
+    mindspore.RunContext
+    mindspore.TimeMonitor
 
 数据处理工具
 -------------------
@@ -77,7 +93,7 @@ mindspore
     mindspore.DatasetHelper
     mindspore.connect_network_with_dataset
 
-混合精度管理
+混合精度
 --------------
 
 .. mscnautosummary::
@@ -86,6 +102,7 @@ mindspore
     mindspore.LossScaleManager
     mindspore.FixedLossScaleManager
     mindspore.DynamicLossScaleManager
+    mindspore.build_train_network
 
 序列化
 -------
@@ -105,6 +122,18 @@ mindspore
     mindspore.async_ckpt_thread_status
     mindspore.restore_group_info_list
 
+调试调优
+----------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.Profiler
+    mindspore.SummaryCollector
+    mindspore.SummaryLandscape
+    mindspore.SummaryRecord
+    mindspore.set_dump
+
 即时编译
 --------
 
@@ -123,13 +152,6 @@ mindspore
     mindspore.get_level
     mindspore.get_log_config
 
-自动混合精度
-------------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.build_train_network
 
 安装验证
 --------
@@ -139,15 +161,6 @@ mindspore
 
     mindspore.run_check
 
-调试
-------
-
-.. mscnautosummary::
-    :toctree: mindspore
-
-    mindspore.Profiler
-    mindspore.set_dump
-
 内存回收
 ----------
 
@@ -155,3 +168,12 @@ mindspore
     :toctree: mindspore
 
     mindspore.ms_memory_recycle
+
+二阶优化
+----------
+
+.. mscnautosummary::
+    :toctree: mindspore
+
+    mindspore.ConvertModelUtils
+    mindspore.ConvertNetUtils

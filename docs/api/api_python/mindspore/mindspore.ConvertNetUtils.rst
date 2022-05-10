@@ -1,4 +1,7 @@
-.. py:class:: mindspore.train.train_thor.ConvertNetUtils
+mindspore.ConvertNetUtils
+================================
+
+.. py:class:: mindspore.ConvertNetUtils
 
     将网络转换为thor层网络，用于计算并存储二阶信息矩阵。
 
