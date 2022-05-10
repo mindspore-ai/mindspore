@@ -36,12 +36,12 @@ int AssignCPUKernel::DoExecute(int task_id) {
   CHECK_NULL_RETURN(y);
   int length = in_tensors_.at(0)->ElementsNum();
   int stride = UP_DIV(length, thread_count_);
-  size_t count = MSMIN(stride, length - stride * task_id);
+  int count = MSMIN(stride, length - stride * task_id);
 
   int start = stride * task_id;
 
   if (count > 0) {
-    memcpy(&(x[start]), &(y[start]), count * sizeof(float));
+    memcpy(&(x[start]), &(y[start]), static_cast<size_t>(count) * sizeof(float));
   }
   return RET_OK;
 }
