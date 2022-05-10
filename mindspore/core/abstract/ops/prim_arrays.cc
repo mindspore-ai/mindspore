@@ -819,6 +819,12 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());
+  // padding_axis_value is for the condition that the number of -1 in shape > 1, , but just paddingshape
+  std::vector<int> padding_axis_value;
+  ValuePtr padding_axis = primitive->GetAttr("reshape_padding_axis");
+  if (padding_axis != nullptr) {
+    padding_axis_value = GetValue<std::vector<int>>(padding_axis);
+  }
 
   ShapeVector shape = GetShape(primitive, args_spec_list, op_name);
   ShapeVector x_shape = x->shape()->shape();
@@ -848,25 +854,34 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
 
   auto it_first = find(shape.begin(), shape.end(), -1);
   if (it_first != shape.end()) {
-    auto it_second = find(it_first + 1, shape.end(), -1);
-    if (it_second != shape.end()) {
-      MS_LOG(EXCEPTION) << "At most one component of input shape can be -1, but got " << shape;
-    }
-    auto index = LongToSize(std::distance(shape.begin(), it_first));
-    int64_t infer_value = x_num;
-    int64_t infer_min_value = x_min_num;
-    int64_t infer_max_value = x_max_num;
-    for (size_t i = 0; i < shape.size(); ++i) {
-      int64_t value = shape[i];
-      if (value != -1 && value != 0) {
-        infer_value = infer_value / value;
-        infer_min_value = infer_min_value / value;
-        infer_max_value = infer_max_value / value;
+    if (!padding_axis_value.empty()) {
+      // the condition that the number of -1 in shape is > 1, but just paddingshape
+      for (size_t index = 0; index < padding_axis_value.size(); ++index) {
+        shape[padding_axis_value[index]] = x_shape[index];
+        min_shape[padding_axis_value[index]] = x_min_shape[index];
+        max_shape[padding_axis_value[index]] = x_max_shape[index];
       }
+    } else {
+      auto it_second = find(it_first + 1, shape.end(), -1);
+      if (it_second != shape.end()) {
+        MS_LOG(EXCEPTION) << "At most one component of input shape can be -1, but got " << shape;
+      }
+      auto index = LongToSize(std::distance(shape.begin(), it_first));
+      int64_t infer_value = x_num;
+      int64_t infer_min_value = x_min_num;
+      int64_t infer_max_value = x_max_num;
+      for (size_t i = 0; i < shape.size(); ++i) {
+        int64_t value = shape[i];
+        if (value != -1 && value != 0) {
+          infer_value = infer_value / value;
+          infer_min_value = infer_min_value / value;
+          infer_max_value = infer_max_value / value;
+        }
+      }
+      shape[index] = infer_value;
+      min_shape[index] = infer_min_value;
+      max_shape[index] = infer_max_value;
     }
-    shape[index] = infer_value;
-    min_shape[index] = infer_min_value;
-    max_shape[index] = infer_max_value;
   }
 
   int64_t shape_num = 1;

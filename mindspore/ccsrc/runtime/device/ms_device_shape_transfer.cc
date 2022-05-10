@@ -99,7 +99,7 @@ int64_t GetCubeSizeByType(const TypeId &data_type) {
   return kCube16;
 }
 
-RangePair PaddingRangeTo5D(const RangePair &ori_range) {
+RangePair PaddingRangeTo5dDefault(const RangePair &ori_range) {
   RangePair dst_range(kNcdhw, std::pair<int64_t, int64_t>(1, 1));
   switch (ori_range.size()) {
     case N_ncdhw:
@@ -128,7 +128,21 @@ RangePair PaddingRangeTo5D(const RangePair &ori_range) {
   return dst_range;
 }
 
-RangePair PaddingRangeTo4D(const RangePair &ori_range) {
+RangePair PaddingRangeTo5D(const RangePair &ori_range, const std::string &padding_str = {""}) {
+  std::vector<Axis5D> padding_axis;
+  StringToAxisVector5D(padding_str, &padding_axis);
+  if (padding_axis.empty() || ori_range.size() != padding_axis.size()) {
+    return PaddingRangeTo5dDefault(ori_range);
+  }
+
+  RangePair dst_range(kNcdhw, std::pair<int64_t, int64_t>(1, 1));
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    dst_range[padding_axis[index]] = ori_range[index];
+  }
+  return dst_range;
+}
+
+RangePair PaddingRangeTo4dDefault(const RangePair &ori_range) {
   RangePair dst_range(kNchwDims, std::pair<int64_t, int64_t>(1, 1));
   switch (ori_range.size()) {
     case kN:
@@ -150,6 +164,20 @@ RangePair PaddingRangeTo4D(const RangePair &ori_range) {
       break;
     default:
       MS_LOG(EXCEPTION) << "Unexpected range size: " << ori_range.size();
+  }
+  return dst_range;
+}
+
+RangePair PaddingRangeTo4D(const RangePair &ori_range, const std::string &padding_str = {""}) {
+  std::vector<Axis> padding_axis;
+  StringToAxisVector4D(padding_str, &padding_axis);
+  if (padding_axis.empty() || ori_range.size() != padding_axis.size()) {
+    return PaddingRangeTo4dDefault(ori_range);
+  }
+
+  RangePair dst_range(kNchwDims, std::pair<int64_t, int64_t>(1, 1));
+  for (size_t index = 0; index < padding_axis.size(); index++) {
+    dst_range[padding_axis[index]] = ori_range[index];
   }
   return dst_range;
 }
@@ -1729,7 +1757,8 @@ int64_t FormatTransfer::Common4DCheck(const FormatArgs &args) {
 }
 
 // ########################  RANGE TRANS ########################
-RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std::string &format, const TypeId &type) {
+RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std::string &format, const TypeId &type,
+                                           const std::string &padding_str) {
   const std::set<std::string> no_need_change = {kOpFormat_ND, kOpFormat_DEFAULT, kOpFormat_NCHW, kOpFormat_NCDHW};
   using RangeTransfer = std::function<RangePair(const RangePair &, const TypeId &)>;
   const std::map<std::string, RangeTransfer> format_range_map = {{kOpFormat_NHWC, NHWCRange},
@@ -1754,11 +1783,11 @@ RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std
   auto temp_range = ori_range;
   if (ori_range.size() < kDim4 && k3DFormatSet.find(format) == k3DFormatSet.end()) {
     MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 4, so padding the range firstly";
-    temp_range = PaddingRangeTo4D(ori_range);
+    temp_range = PaddingRangeTo4D(ori_range, padding_str);
   }
   if (ori_range.size() < kDim5 && k3DFormatSet.find(format) != k3DFormatSet.end()) {
     MS_LOG(DEBUG) << "A special format:" << format << " with a range size less than 5, so padding the range firstly";
-    temp_range = PaddingRangeTo5D(ori_range);
+    temp_range = PaddingRangeTo5D(ori_range, padding_str);
   }
   auto iter = format_range_map.find(format);
   if (iter == format_range_map.end()) {

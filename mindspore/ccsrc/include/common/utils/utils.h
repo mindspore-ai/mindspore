@@ -383,6 +383,7 @@ constexpr auto kAttrOutputNames = "output_names";
 constexpr auto kAttrAsync = "async";
 constexpr auto kAttrOffload = "offload";
 constexpr auto kAttrVisited = "visited";
+constexpr auto kAttrReshapePaddingAxis = "reshape_padding_axis";
 constexpr auto kAttrShape = "shape";
 constexpr auto kAttrMomentum = "momentum";
 constexpr auto kAttrEps = "eps";
