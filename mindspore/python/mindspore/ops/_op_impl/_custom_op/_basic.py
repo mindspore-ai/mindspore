@@ -55,14 +55,14 @@ def _check_mn_shape(m_shape, n_shape, km_shape, kn_shape):
 
     if m_shape != 1:
         if n_shape == 1 and km_shape % (cce.BLOCK_IN * cce.BLOCK_IN) != 0:
-            raise RuntimeError("input shape K1 should be multiple of %d"
+            raise RuntimeError("input shape K1 must be multiple of %d"
                                % (cce.BLOCK_IN * cce.BLOCK_IN))
         if km_shape % cce.BLOCK_REDUCE != 0:
             raise RuntimeError(
                 "input shape K1 should be multiple of %d" % cce.BLOCK_IN)
     else:
         if km_shape % (cce.BLOCK_IN * cce.BLOCK_IN) != 0:
-            raise RuntimeError("input shape K1 should be multiple of %d"
+            raise RuntimeError("input shape K1 must be multiple of %d"
                                % (cce.BLOCK_IN * cce.BLOCK_IN))
 
 
@@ -117,12 +117,12 @@ def _shape_check(shape_a, shape_b, shape_bias, src_dtype, trans_a, trans_b):
 
     if shape_len != 2:
         raise RuntimeError(
-            "length of shape must be 2, more than 2 dimensions should use batch_matmul now!")
+            "length of shape must be 2, more than 2 dimensions must use batch_matmul now!")
 
     m_shape, km_shape, n_shape, kn_shape = _get_km_kn_shape(shape_a, shape_b, trans_a, trans_b)
 
     if n_shape % cce.BLOCK_IN != 0 and n_shape != 1:
-        raise RuntimeError("input shape N should be 1 or multiple of %d" % cce.BLOCK_IN)
+        raise RuntimeError("input shape N must be 1 or multiple of %d" % cce.BLOCK_IN)
     _check_mn_shape(m_shape, n_shape, km_shape, kn_shape)
     _check_bias(shape_bias, shape_a, shape_b, m_shape, n_shape)
 

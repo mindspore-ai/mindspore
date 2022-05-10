@@ -152,7 +152,7 @@ def _convert_grad_position_type(grad_position):
     if isinstance(grad_position, tuple):
         for gp in grad_position:
             if not isinstance(gp, int):
-                raise TypeError(f"For 'F.grad', the element in 'grad_position' should be int, "
+                raise TypeError(f"For 'F.grad', the element in 'grad_position' must be int, "
                                 f"but got {type(gp).__name__}")
             if gp < 0:
                 raise ValueError("The element in grad_position must be >= 0.")
@@ -161,7 +161,7 @@ def _convert_grad_position_type(grad_position):
             raise ValueError("grad_position must be >= 0.")
         grad_position = (grad_position,)
     else:
-        raise TypeError(f"For 'F.grad', the 'grad_position' should be int or tuple, "
+        raise TypeError(f"For 'F.grad', the 'grad_position' must be int or tuple, "
                         f"but got {type(grad_position).__name__}")
     return grad_position
 
@@ -220,7 +220,7 @@ def _trans_jet_inputs(primals_item, series_item):
     """Trans inputs of jet"""
     value_type = [mstype.int32, mstype.int64, mstype.float32, mstype.float64]
     if not dtype(primals_item) in value_type or dtype(primals_item) != dtype(series_item):
-        raise TypeError(f"For `F.jet`, the elements' types of primals and series should be the same and belong to "
+        raise TypeError(f"For `F.jet`, the elements' types of primals and series must be the same and belong to "
                         f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got"
                         f" {dtype(primals_item).__name__} and {dtype(series_item).__name__}.")
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
@@ -232,15 +232,15 @@ def _trans_jet_inputs(primals_item, series_item):
 def _check_jet_inputs(primals, series):
     """Check inputs of jet"""
     if not isinstance(primals, type(series)) or not isinstance(primals, (Tensor, tuple)):
-        raise TypeError(f"For 'F.jet', the 'primals' and `series` should be both Tensor or tuple, "
+        raise TypeError(f"For 'F.jet', the 'primals' and `series` must be both Tensor or tuple, "
                         f"but got {type(primals).__name__} and {type(series).__name__}.")
     if isinstance(primals, Tensor):
         if primals.shape != series.shape[1:]:
-            raise ValueError("The shape of each element should be the same as the primals.")
+            raise ValueError("The shape of each element must be the same as the primals.")
         return _trans_jet_inputs(primals, series)
     if isinstance(primals, tuple):
         if len(primals) != len(series):
-            raise ValueError("The lengths of primals and series should be the same.")
+            raise ValueError("The lengths of primals and series must be the same.")
         check_primals = []
         check_series = []
         for i, j in zip(primals, series):
@@ -323,7 +323,7 @@ def _trans_derivative_inputs(primals_item):
     """Trans inputs of derivative"""
     value_type = [mstype.int32, mstype.int64, mstype.float32, mstype.float64]
     if not dtype(primals_item) in value_type:
-        raise TypeError(f"For `F.derivative`, the elements of primals should belong to "
+        raise TypeError(f"For `F.derivative`, the elements of primals must belong to "
                         f"`mstype.int32, mstype.int64, mstype.float32, mstype.float64`, but got"
                         f" {dtype(primals_item).__name__}.")
     if dtype(primals_item) in [mstype.int32, mstype.int64]:
@@ -661,7 +661,7 @@ def narrow(inputs, axis, start, length):
 
 @constexpr
 def _raise_type_error():
-    raise TypeError("The inputs type should be a Tensor, tuple or list of Tensors.")
+    raise TypeError("The inputs type must be a Tensor, tuple or list of Tensors.")
 
 
 @constexpr

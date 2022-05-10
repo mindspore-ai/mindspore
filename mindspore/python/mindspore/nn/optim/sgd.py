@@ -149,21 +149,21 @@ class SGD(Optimizer):
         if isinstance(momentum, int):
             momentum = float(momentum)
         if not isinstance(momentum, float):
-            raise TypeError("For 'SGD', the argument 'momentum' should be float type, "
+            raise TypeError("For 'SGD', the argument 'momentum' must be float type, "
                             "but got {}.".format(type(momentum)))
 
         if isinstance(momentum, float) and momentum < 0.0:
-            raise ValueError("For 'SGD', the argument 'momentum' should be at least 0.0, "
+            raise ValueError("For 'SGD', the argument 'momentum' must be at least 0.0, "
                              "but got {}".format(momentum))
 
         if isinstance(dampening, int):
             dampening = float(dampening)
         if not isinstance(dampening, float):
-            raise TypeError("For 'SGD', the argument 'dampening' should be float type, "
+            raise TypeError("For 'SGD', the argument 'dampening' must be float type, "
                             "but got {}.".format(type(dampening)))
 
         if dampening < 0.0:
-            raise ValueError("For 'SGD', the argument 'dampening' should be at least 0.0, "
+            raise ValueError("For 'SGD', the argument 'dampening' must be at least 0.0, "
                              "but got 'dampening' {}".format(dampening))
         self.dampening = dampening
 

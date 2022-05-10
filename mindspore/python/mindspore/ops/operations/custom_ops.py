@@ -398,9 +398,9 @@ class Custom(ops.PrimitiveWithInfer):
     def _check_julia_func(self):
         """Check the validity of julia func"""
         if not isinstance(self.func, str):
-            raise TypeError("{}, 'func' should be of type str, but got {}".format(self.log_prefix, type(self.func)))
+            raise TypeError("{}, 'func' must be of type str, but got {}".format(self.log_prefix, type(self.func)))
         if self.func.count(':') != 2:
-            raise ValueError("{}, the format of 'func' should be file:module:func".format(self.log_prefix))
+            raise ValueError("{}, the format of 'func' must be file:module:func".format(self.log_prefix))
         source_file, module, func = self.func.split(':')
         with open(source_file, 'r') as f:
             jl = f.read()
@@ -414,17 +414,17 @@ class Custom(ops.PrimitiveWithInfer):
     def _check_func(self):
         """Check the validity of func_type and type of func"""
         if self.func_type not in self.supported_func_type:
-            raise ValueError("{}, 'func_type' should be one of {}, but got {}"
+            raise ValueError("{}, 'func_type' must be one of {}, but got {}"
                              .format(self.log_prefix, self.supported_func_type, self.func_type))
         if self.func_type == "aot":
             if not isinstance(self.func, str):
-                raise TypeError("{}, 'func' should be of type str, but got {}".format(
+                raise TypeError("{}, 'func' must be of type str, but got {}".format(
                     self.log_prefix, type(self.func)))
         elif self.func_type == "julia":
             self._check_julia_func()
         elif self.func_type == "hybrid":
             if not hasattr(self.func, "ms_hybrid_flag"):
-                raise TypeError("{}, 'func' should a function decorated by ms_hybrid".format(self.log_prefix))
+                raise TypeError("{}, 'func' must a function decorated by ms_hybrid".format(self.log_prefix))
             self._is_ms_hybrid = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
@@ -440,7 +440,7 @@ class Custom(ops.PrimitiveWithInfer):
                                .format(self.log_prefix))
         else:
             if not callable(self.func):
-                raise TypeError("{}, 'func' should be of type function, but got {}"
+                raise TypeError("{}, 'func' must be of type function, but got {}"
                                 .format(self.log_prefix, type(self.func)))
 
     def _update_func_info(self):
@@ -480,7 +480,7 @@ class Custom(ops.PrimitiveWithInfer):
             # uniq func name
             self.uniq_name = self.name + "_" + self.func_name
         else:
-            raise TypeError("For '{}', 'func' should be of type function or str, but got {}"
+            raise TypeError("For '{}', 'func' must be of type function or str, but got {}"
                             .format(self.name, type(self.func)))
 
     def _register_info(self, info):
@@ -569,7 +569,7 @@ class Custom(ops.PrimitiveWithInfer):
     def _reformat_reg_info(self, reg_info, target):
         """Reformat registration information."""
         if not isinstance(reg_info, dict):
-            raise TypeError("{}, the registration information should be of type dict, but got {} with type {}. Use "
+            raise TypeError("{}, the registration information must be of type dict, but got {} with type {}. Use "
                             "'CustomRegOp' to generate the registration information, then pass it to 'reg_info' or "
                             "use 'custom_info_register' to bind it to 'func' if 'func' is a function."
                             .format(self.log_prefix, reg_info, type(reg_info)))
@@ -615,7 +615,7 @@ class Custom(ops.PrimitiveWithInfer):
             func_type_to_target = {"tbe": "Ascend", "pyfunc": "CPU"}
             target = func_type_to_target.get(self.func_type)
         if target not in self.supported_targets:
-            raise ValueError("{}, target set in registration information should be one of {}, but got {}"
+            raise ValueError("{}, target set in registration information must be one of {}, but got {}"
                              .format(self.log_prefix, self.supported_targets, target))
         return target
 
@@ -836,11 +836,11 @@ class Custom(ops.PrimitiveWithInfer):
 
         # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None
         if not isinstance(infer_shape, (tuple, list)):
-            raise TypeError("{}, 'out_shape' should be one of [tuple, list, function], but got {}"
+            raise TypeError("{}, 'out_shape' must be one of [tuple, list, function], but got {}"
                             .format(self.log_prefix, type(infer_shape)))
 
         if not isinstance(infer_dtype, (typing.Type, tuple, list)):
-            raise TypeError("{}, 'out_dtype' should be one of [mindspore.dtype, tuple, list, function], but got {}"
+            raise TypeError("{}, 'out_dtype' must be one of [mindspore.dtype, tuple, list, function], but got {}"
                             .format(self.log_prefix, type(infer_dtype)))
 
         out = {

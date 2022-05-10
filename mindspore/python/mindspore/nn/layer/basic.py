@@ -83,7 +83,7 @@ class L1Regularizer(Cell):
         super(L1Regularizer, self).__init__()
         Validator.check_value_type("scale", scale, [int, float], self.cls_name)
         if scale <= 0:
-            raise ValueError(f"For '{self.cls_name}', the 'scale' should be greater than 0, but got {scale}.")
+            raise ValueError(f"For '{self.cls_name}', the 'scale' must be greater than 0, but got {scale}.")
         if math.isinf(scale) or math.isnan(scale):
             raise ValueError(f"For '{self.cls_name}', the 'scale' can not be INF or NAN, but got {scale}.")
         self.abs = P.Abs()
@@ -152,7 +152,7 @@ class Dropout(Cell):
         super(Dropout, self).__init__()
         Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
         if keep_prob <= 0 or keep_prob > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'keep_prob' should be a number in range (0, 1], "
+            raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range (0, 1], "
                              f"but got {keep_prob}.")
         Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
         self.keep_prob = keep_prob
@@ -294,9 +294,9 @@ class Dense(Cell):
         if isinstance(weight_init, Tensor):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels:
-                raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' should "
-                                 f"be equal to 2, and the first dim should be equal to 'out_channels', and the "
-                                 f"second dim should be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
+                raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' must "
+                                 f"be equal to 2, and the first dim must be equal to 'out_channels', and the "
+                                 f"second dim must be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
                                  f"'out_channels': {out_channels}, 'in_channels': {in_channels}.")
         self.weight = Parameter(initializer(weight_init, [out_channels, in_channels]), name="weight")
 
@@ -305,7 +305,7 @@ class Dense(Cell):
             if isinstance(bias_init, Tensor):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' should "
-                                     f"be equal to 1, and the first dim should be equal to 'out_channels'. But got "
+                                     f"be equal to 1, and the first dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
             self.bias_add = P.BiasAdd()
@@ -831,7 +831,7 @@ def bilinear(shape, size, scale, align_corners, prim_name=None):
     """Check input and calculate shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if not isinstance(align_corners, bool):
-        raise TypeError(f"{msg_prefix} type of 'align_corners' should be boolean, "
+        raise TypeError(f"{msg_prefix} type of 'align_corners' must be boolean, "
                         f"but got {type(align_corners).__name__}.")
     if size is None and scale is None:
         raise ValueError(f"{msg_prefix} 'size' and 'scale' both none.")
@@ -984,10 +984,10 @@ class Unfold(Cell):
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             Validator.check_value_type(f"{arg_name}s", ksizes, [tuple, list], self.cls_name)
             if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[3] != 1:
-                raise ValueError(f"For '{prim_name}' the format of '{arg_name}s' should be [1, {arg_name}_row, "
+                raise ValueError(f"For '{prim_name}' the format of '{arg_name}s' must be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
             if not isinstance(arg_val[1], int) or not isinstance(arg_val[2], int) or arg_val[1] < 1 or arg_val[2] < 1:
-                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in '{arg_name}s' should be "
+                raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in '{arg_name}s' must be "
                                  f"an positive integer number, but got {arg_name}_row is {arg_val[1]}, "
                                  f"{arg_name}_col is {arg_val[2]}")
 

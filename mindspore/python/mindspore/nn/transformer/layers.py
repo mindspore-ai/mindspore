@@ -109,7 +109,7 @@ class _LayerInputCheck:
             if len(input_shape) == item:
                 matched = True
         if not matched:
-            raise ValueError(f"{func_name} {param_name} shape length should be one of {target_len} dimension, "
+            raise ValueError(f"{func_name} {param_name} shape length must be one of {target_len} dimension, "
                              f"but got shape {input_shape}")
         return True
 
@@ -136,7 +136,7 @@ class _LayerInputCheck:
                 break
 
         if not matched:
-            raise ValueError(f"{func_name} {param_name} shape should be one of {target_shape},"
+            raise ValueError(f"{func_name} {param_name} shape must be one of {target_shape},"
                              f"but got {input_shape}")
         return True
 
@@ -144,7 +144,7 @@ class _LayerInputCheck:
     def check_shape_value_on_axis(input_shape, dim, param_name, cls_name, target_value):
         """ Check whether the input_shape[dim] is equal to target value"""
         if input_shape[dim] != target_value:
-            raise ValueError(f"{cls_name} {param_name} at {dim} shape should be {target_value},"
+            raise ValueError(f"{cls_name} {param_name} at {dim} shape must be {target_value},"
                              f"but got {input_shape[dim]}")
         return True
 
@@ -155,13 +155,13 @@ def _check_past_none_input_none(use_past, param_name, func_name, default_value, 
     """ If the past is True, check whether the inputs is None"""
     if not use_past:
         if is_tensor:
-            raise TypeError(f"{func_name} {param_name} should be {default_value}, if use_pat is False, but found "
+            raise TypeError(f"{func_name} {param_name} must be {default_value}, if use_pat is False, but found "
                             f"a tensor")
         if not is_default:
-            raise TypeError(f"{func_name} {param_name} should be {default_value}, if use_pat is False.")
+            raise TypeError(f"{func_name} {param_name} must be {default_value}, if use_pat is False.")
     else:
         if not is_tensor:
-            raise TypeError(f"{func_name} {param_name} should be tensor, if use_pat is True")
+            raise TypeError(f"{func_name} {param_name} must be tensor, if use_pat is True")
     return True
 
 

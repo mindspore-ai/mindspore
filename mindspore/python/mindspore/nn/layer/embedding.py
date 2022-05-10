@@ -39,7 +39,7 @@ __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 @constexpr
 def _check_input_2d(input_shape, param_name, func_name):
     if len(input_shape) != 2:
-        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' should be 2d, but got {len(input_shape)}")
+        raise ValueError(f"For '{func_name}', the dimension of '{param_name}' must be 2d, but got {len(input_shape)}")
     return True
 
 
@@ -331,8 +331,8 @@ class EmbeddingLookup(Cell):
                 full_batch = _get_full_batch()
                 if rank_size > 1 and not (full_batch and slice_mode == "table_row_slice"):
                     raise ValueError(f"For '{self.cls_name}', the cache of parameter server parallel should only be "
-                                     f"used in \"full_batch\" and the value of \"full_batch\" should be True. "
-                                     f"Meanwhile, the value of 'slice_mode' should be \"table_row_slice\"."
+                                     f"used in \"full_batch\" and the value of \"full_batch\" must be True. "
+                                     f"Meanwhile, the value of 'slice_mode' must be \"table_row_slice\"."
                                      f"But got full_batch: {full_batch} and 'slice_mode': \"{slice_mode}\".")
                 self.vocab_cache_size = self.vocab_cache_size * rank_size
                 _set_rank_id(rank_id)
@@ -576,7 +576,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
                 self.inf_add.shard(((1, 1, get_group_size()), (1, 1, 1)))
         else:
             if is_auto_parallel:
-                raise ValueError("For '{}', the 'slice_mode' should be in ['table_row_slice', 'batch_slice' and \
+                raise ValueError("For '{}', the 'slice_mode' must be in ['table_row_slice', 'batch_slice' and \
                                        'table_column_slice'], but got {}".format(self.cls_name, str(slice_mode)))
 
         # Min value for fp32

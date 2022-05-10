@@ -70,7 +70,7 @@ def auc(x, y, reorder=False):
             if np.all(dx <= 0):
                 direction = -1
             else:
-                raise ValueError("For 'auc', if the argument is False, the argument 'x' array should be increasing "
+                raise ValueError("For 'auc', if the argument is False, the argument 'x' array must be increasing "
                                  "or decreasing, but got 'x': {}".format(x))
 
     area = direction * np.trapz(y, x)

@@ -408,7 +408,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         min_array = self._get_init_array(self.min_init)
         max_array = self._get_init_array(self.max_init)
         if not np.greater(max_array, min_array).all():
-            raise ValueError(f"For '{self.cls_name}', the 'max_init' should be greater than 'min_init', "
+            raise ValueError(f"For '{self.cls_name}', the 'max_init' must be greater than 'min_init', "
                              f"but got 'max_init': {max_init}, 'min_init': {min_init}.")
         if self.mode == "DEFAULT":
             self._default_init(min_array, max_array)
@@ -440,7 +440,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
             min_array = self._get_init_array(self.min_init)
             max_array = self._get_init_array(self.max_init)
             if not np.greater(max_array, min_array).all():
-                raise ValueError(f"For '{self.cls_name}', the 'max_init' should be greater than 'min_init', "
+                raise ValueError(f"For '{self.cls_name}', the 'max_init' must be greater than 'min_init', "
                                  f"but got 'max_init': {max_init}, 'min_init': {min_init}.")
 
             self.minq.set_data(Tensor(min_array))
@@ -525,11 +525,11 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         Convert the initial value to array.
         """
         if isinstance(init_date, list) and self.per_channel and len(init_date) != self.num_channels:
-            raise ValueError(f"For '{self.cls_name}', the length of 'min_init/max_init' list should be equal to "
+            raise ValueError(f"For '{self.cls_name}', the length of 'min_init/max_init' list must be equal to "
                              f"'num_channels' for perchannel quant scenario, but got 'min_init/max_init': {init_date} "
                              f"and num_channels: {self.num_channels}.")
         if isinstance(init_date, list) and not self.per_channel and len(init_date) != 1:
-            raise ValueError(f"For '{self.cls_name}', the length of the 'min_init/max_init' list should be 1 for "
+            raise ValueError(f"For '{self.cls_name}', the length of the 'min_init/max_init' list must be 1 for "
                              f"perlayer quant scenario, but got {len(init_date)}.")
 
         if isinstance(init_date, list):
@@ -702,7 +702,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values "
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' must be one of values "
                              f"in ('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
@@ -942,7 +942,7 @@ class Conv2dBnFoldQuant(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values in "
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' must be one of values in "
                              f"('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
@@ -1154,7 +1154,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values in "
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' must be one of values in "
                              f"('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
@@ -1298,7 +1298,7 @@ class Conv2dQuant(Cell):
         for dilation_elem in self.dilation:
             Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
         if pad_mode not in ('valid', 'same', 'pad'):
-            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' should be one of values "
+            raise ValueError(f"For '{self.cls_name}', the 'pad_mode' must be one of values "
                              f"in ('valid', 'same', 'pad'), but got {pad_mode}.")
         self.pad_mode = pad_mode
         if isinstance(padding, int):
@@ -1429,8 +1429,8 @@ class DenseQuant(Cell):
             if weight_init.ndim != 2 or weight_init.shape[0] != out_channels or \
                     weight_init.shape[1] != in_channels:
                 raise ValueError(f"For '{self.cls_name}', weight init shape error. The ndim of 'weight_init' should "
-                                 f"be equal to 2, and the first dim should be equal to 'out_channels', and the "
-                                 f"second dim should be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
+                                 f"be equal to 2, and the first dim must be equal to 'out_channels', and the "
+                                 f"second dim must be equal to 'in_channels'. But got 'weight_init': {weight_init}, "
                                  f"'out_channels': {out_channels}, 'in_channels': {in_channels}.")
 
         self.weight = Parameter(initializer(
@@ -1440,7 +1440,7 @@ class DenseQuant(Cell):
             if isinstance(bias_init, Tensor):
                 if bias_init.ndim != 1 or bias_init.shape[0] != out_channels:
                     raise ValueError(f"For '{self.cls_name}', bias init shape error. The ndim of 'bias_init' should "
-                                     f"be equal to 1, and the first dim should be equal to 'out_channels'. But got "
+                                     f"be equal to 1, and the first dim must be equal to 'out_channels'. But got "
                                      f"'bias_init': {bias_init}, 'out_channels': {out_channels}.")
 
             self.bias = Parameter(initializer(

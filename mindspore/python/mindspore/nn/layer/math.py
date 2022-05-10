@@ -754,7 +754,7 @@ def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
     """get broadcast_matmul shape"""
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if (len(x_shape) < 2) or (len(y_shape) < 2):
-        raise ValueError(f"{msg_prefix} length of 'x_shape' and 'y_shape' should be equal to or greater than 2, "
+        raise ValueError(f"{msg_prefix} length of 'x_shape' and 'y_shape' must be equal to or greater than 2, "
                          f"but got the length of 'x_shape': {len(x_shape)} and the length of 'y_shape': "
                          f"{len(y_shape)}.")
     x_shape_batch = x_shape[:-2]
@@ -773,8 +773,8 @@ def get_broadcast_matmul_shape(x_shape, y_shape, prim_name=None):
         elif x_shape[i] == y_shape[i]:
             broadcast_shape_back.append(x_shape[i])
         else:
-            raise ValueError(f"{msg_prefix} 'x_shape[{i}]' should be equal to 1, or the 'y_shape[{i}]' should be equal "
-                             f"to 1, or the 'x_shape[{i}]' should be equal to 'y_shape[{i}]', but got "
+            raise ValueError(f"{msg_prefix} 'x_shape[{i}]' must be equal to 1, or the 'y_shape[{i}]' must be equal "
+                             f"to 1, or the 'x_shape[{i}]' must be equal to 'y_shape[{i}]', but got "
                              f"'x_shape[{i}]': {x_shape[i]}, 'y_shape[{i}]': {y_shape[i]}.")
 
     broadcast_shape_front = y_shape[0: y_len - length] if length == x_len else x_shape[0: x_len - length]
@@ -798,7 +798,7 @@ def check_col_row_equal(x1_shape, x2_shape, transpose_x1, transpose_x2, prim_nam
     x1_col = x1_last[not transpose_x1]  # x1_col = x1_last[1] if (not transpose_a) else x1_last[0]
     x2_row = x2_last[transpose_x2]  # x2_row = x2_last[0] if (not transpose_b) else x2_last[1]
     if x1_col != x2_row:
-        raise ValueError(f"{msg_prefix} column of matrix dimensions of 'x1' should be equal to "
+        raise ValueError(f"{msg_prefix} column of matrix dimensions of 'x1' must be equal to "
                          f"the row of matrix dimensions of 'x2', but got 'x1_col' {x1_col} and 'x2_row' {x2_row}.")
 
 

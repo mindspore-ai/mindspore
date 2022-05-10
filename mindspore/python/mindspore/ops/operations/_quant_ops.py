@@ -164,7 +164,7 @@ class MinMaxUpdatePerChannel(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         if self.is_ascend and len(x_shape) not in self.ascend_support_x_rank:
-            raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
+            raise ValueError(f"For '{self.name}' x rank must be in '{self.ascend_support_x_rank}'")
         if not self.is_ascend:
             validator.check_int(len(x_shape), 1, Rel.GE, "x rank", self.name)
         validator.check("min shape", min_shape, "max shape",
@@ -382,7 +382,7 @@ class FakeLearnedScaleQuantPerChannel(PrimitiveWithInfer):
 
     def infer_shape(self, input_x_shape, alpha_shape, quant_max_shape):
         if self.is_ascend and len(input_x_shape) not in self.ascend_support_x_rank:
-            raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
+            raise ValueError(f"For '{self.name}' x rank must be in '{self.ascend_support_x_rank}'")
         if not self.is_ascend:
             validator.check_int(len(input_x_shape), 1, Rel.GE, "input_x rank", self.name)
         if len(input_x_shape) == 1:
@@ -943,7 +943,7 @@ class FakeQuantPerChannel(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape, min_shape, max_shape):
         if self.is_ascend and len(x_shape) not in self.ascend_support_x_rank:
-            raise ValueError(f"For '{self.name}' x rank should be in '{self.ascend_support_x_rank}'")
+            raise ValueError(f"For '{self.name}' x rank must be in '{self.ascend_support_x_rank}'")
         if not self.is_ascend:
             validator.check_int(len(x_shape), 1, Rel.GE, "x rank", self.name)
         if len(x_shape) == 1:

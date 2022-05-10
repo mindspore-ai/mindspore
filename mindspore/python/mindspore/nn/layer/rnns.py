@@ -61,7 +61,7 @@ def _check_input_dtype_same_and_valid(args_name, args_value, valid_values, cls_n
 def _check_is_tensor(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.tensor_type):
-        raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.tensor_type}', "
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.tensor_type}', "
                         f"but got '{P.typeof(input_data)}'")
 
 
@@ -69,7 +69,7 @@ def _check_is_tensor(param_name, input_data, cls_name):
 def _check_is_tuple(param_name, input_data, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and not isinstance(P.typeof(input_data), mstype.Tuple):
-        raise TypeError(f"For '{cls_name}', the '{param_name}' should be '{mstype.Tuple}', "
+        raise TypeError(f"For '{cls_name}', the '{param_name}' must be '{mstype.Tuple}', "
                         f"but got '{P.typeof(input_data)}'")
 
 
@@ -77,14 +77,14 @@ def _check_is_tuple(param_name, input_data, cls_name):
 def _check_tuple_length(param_name, input_data, length, cls_name):
     """Internal function, used to check whether the input data is Tensor."""
     if input_data is not None and len(input_data) != length:
-        raise TypeError(f"For '{cls_name}', the length of '{param_name}' should be '{length}', "
+        raise TypeError(f"For '{cls_name}', the length of '{param_name}' must be '{length}', "
                         f"but got '{len(input_data)}'")
 
 
 @constexpr
 def _check_seq_length_size(batch_size_x, seq_length_size, cls_name):
     if batch_size_x != seq_length_size:
-        raise ValueError(f"For '{cls_name}' batch size of x and seq_length should be equal, "
+        raise ValueError(f"For '{cls_name}' batch size of x and seq_length must be equal, "
                          f"but got {batch_size_x} of x and {seq_length_size} of seq_length.")
 
 
@@ -378,7 +378,7 @@ class _RNNBase(Cell):
         validator.check_value_type("bidirectional", bidirectional, [bool], self.cls_name)
 
         if not 0 <= dropout < 1:
-            raise ValueError(f"For '{self.cls_name}', the 'dropout' should be a number in range [0, 1) "
+            raise ValueError(f"For '{self.cls_name}', the 'dropout' must be a number in range [0, 1) "
                              f"representing the probability of an element being zeroed, but got {dropout}.")
 
         if dropout > 0 and num_layers == 1:
@@ -404,7 +404,7 @@ class _RNNBase(Cell):
             gate_size = hidden_size
             self.rnn = _DynamicRNNRelu()
         else:
-            raise ValueError(f"For '{self.cls_name}', the 'mode' should be in ['RNN_RELU', 'RNN_TANH', 'LSTM', 'GRU'], "
+            raise ValueError(f"For '{self.cls_name}', the 'mode' must be in ['RNN_RELU', 'RNN_TANH', 'LSTM', 'GRU'], "
                              f"but got {mode}.")
 
         if context.get_context("device_target") == "CPU":
@@ -644,7 +644,7 @@ class RNN(_RNNBase):
             elif kwargs['nonlinearity'] == 'relu':
                 mode = 'RNN_RELU'
             else:
-                raise ValueError(f"For '{self.cls_name}', the 'nonlinearity' should be in ['tanh', 'relu'], "
+                raise ValueError(f"For '{self.cls_name}', the 'nonlinearity' must be in ['tanh', 'relu'], "
                                  f"but got {kwargs['nonlinearity']}.")
             del kwargs['nonlinearity']
         else:

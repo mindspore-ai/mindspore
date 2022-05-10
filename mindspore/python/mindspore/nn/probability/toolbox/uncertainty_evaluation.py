@@ -99,7 +99,7 @@ class UncertaintyEvaluation:
         self.sum = P.ReduceSum()
         self.pow = P.Pow()
         if not isinstance(model, Cell):
-            raise TypeError('The model should be Cell type.')
+            raise TypeError('The model must be Cell type.')
         if task_type not in ('regression', 'classification'):
             raise ValueError(
                 'The task should be regression or classification.')

@@ -241,7 +241,7 @@ class TransformerOpParallelConfig(_Config):
     @recompute.setter
     def recompute(self, value):
         if not isinstance(value, TransformerRecomputeConfig) and not isinstance(value, bool):
-            raise TypeError(f"recompute should be a TransformerRecomputeConfig/bool, but got {type(value).__name__}.")
+            raise TypeError(f"recompute must be a TransformerRecomputeConfig/bool, but got {type(value).__name__}.")
         if isinstance(value, bool):
             logger.warning(f"TransformerRecomputeConfig is recommended as the recompute configuration type.")
         self._recompute = value
@@ -858,7 +858,7 @@ class MultiHeadAttention(Cell):
                 raise ValueError("For 'MultiHeadAttention', the class variable 'attention_dropout_rate' must be "
                                  "in range [0, 1.0), but got the value : {}.".format(attention_dropout_rate))
             if hidden_size % num_heads != 0:
-                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' should be a multiple "
+                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' must be a multiple "
                                  "of 'num_heads', but got the hidden_size is {} and the num_heads is {}."
                                  .format(hidden_size, num_heads))
             if num_heads % parallel_config.model_parallel != 0:
@@ -952,7 +952,7 @@ class MultiHeadAttention(Cell):
                 raise ValueError("For 'MultiHeadAttention', the class variable 'attention_dropout_rate' must be "
                                  "in range [0, 1.0), but got the value : {}.".format(attention_dropout_rate))
             if hidden_size % num_heads != 0:
-                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' should be a multiple "
+                raise ValueError("For 'MultiHeadAttention', the class variable 'hidden_size' must be a multiple "
                                  "of 'num_heads', but got the hidden_size is {} and the num_heads is {}."
                                  .format(hidden_size, num_heads))
             if num_heads % parallel_config.model_parallel != 0:

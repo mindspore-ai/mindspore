@@ -163,9 +163,9 @@ class AllReduce(PrimitiveWithInfer):
     def __init__(self, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         """Initialize AllReduce."""
         if not isinstance(op, type(ReduceOp.SUM)):
-            raise TypeError(f"For '{self.name}', the 'op' should be str, but got {type(op).__name__}.")
+            raise TypeError(f"For '{self.name}', the 'op' must be str, but got {type(op).__name__}.")
         if not isinstance(_get_group(group), str):
-            raise TypeError(f"For '{self.name}', the 'group' should be str, "
+            raise TypeError(f"For '{self.name}', the 'group' must be str, "
                             f"but got {type(_get_group(group)).__name__}.")
         check_hcom_group_valid(group, prim_name=self.name)
         self.op = op
@@ -453,9 +453,9 @@ class ReduceScatter(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         if self.rank_size == 0:
-            raise ValueError(f"For '{self.name}', the 'rank_size' cannot be zero, but got {self.rank_size}.")
+            raise ValueError(f"For '{self.name}', the 'rank_size' can not be zero, but got {self.rank_size}.")
         if x_shape[0] % self.rank_size != 0:
-            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' should be divided by 'rank_size', "
+            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' must be divided by 'rank_size', "
                              f"but got 'x_shape[0]': {x_shape[0]}, 'rank_size': {self.rank_size}.")
         x_shape[0] = int(x_shape[0] / self.rank_size)
         return x_shape
@@ -509,7 +509,7 @@ class _HostReduceScatter(PrimitiveWithInfer):
 
     def infer_shape(self, x_shape):
         if x_shape[0] % self.group_size != 0:
-            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' should be divided by 'group_size', "
+            raise ValueError(f"For '{self.name}', the first dimension of 'x_shape' must be divided by 'group_size', "
                              f"but got 'x_shape[0]': {x_shape[0]}, 'rank_size': {self.group_size}.")
         x_shape[0] = int(x_shape[0] / self.group_size)
         return x_shape
@@ -595,7 +595,7 @@ class Broadcast(PrimitiveWithInfer):
 
     def infer_dtype(self, x_dtype):
         if not isinstance(x_dtype, tuple):
-            raise TypeError(f"For '{self.name}', the 'input_x' should be a tuple, but got {type(x_dtype).__name__}!")
+            raise TypeError(f"For '{self.name}', the 'input_x' must be a tuple, but got {type(x_dtype).__name__}!")
         for _ele in x_dtype:
             check_collective_target_dtype('x', _ele, self.name)
         return x_dtype

@@ -152,14 +152,14 @@ class Rprop(Optimizer):
 
         super(Rprop, self).__init__(learning_rate, params, weight_decay)
         if not isinstance(etas, tuple):
-            raise TypeError("For Rprop, etas should be a tuple, but got {}.".format(type(etas)))
+            raise TypeError("For Rprop, etas must be a tuple, but got {}.".format(type(etas)))
         if len(etas) != 2:
-            raise ValueError("For Rprop, etas should be a tuple with the size of 2, but got {}.".format(len(etas)))
+            raise ValueError("For Rprop, etas must be a tuple with the size of 2, but got {}.".format(len(etas)))
 
         if not isinstance(step_sizes, tuple):
-            raise TypeError("For Rprop, step_sizes should be a tuple, but got {}.".format(type(etas)))
+            raise TypeError("For Rprop, step_sizes must be a tuple, but got {}.".format(type(etas)))
         if len(step_sizes) != 2:
-            raise ValueError("For Rprop, step_sizes should be a tuple with the size of 2, "
+            raise ValueError("For Rprop, step_sizes must be a tuple with the size of 2, "
                              "but got {}.".format(len(step_sizes)))
 
         if step_sizes[0] > step_sizes[1]:
@@ -169,7 +169,7 @@ class Rprop(Optimizer):
         validator.check_float_range(etas[0], 0.0, 1.0, Rel.INC_NEITHER, "etaminus", self.cls_name)
         validator.check_value_type("etaplus", etas[1], [float], self.cls_name)
         if etas[1] <= 1.0:
-            raise ValueError("For Rprop, etaplus should be greater than 1.0, but got etaplus {}.".format(etas[1]))
+            raise ValueError("For Rprop, etaplus must be greater than 1.0, but got etaplus {}.".format(etas[1]))
 
         validator.check_value_type("min_step_sizes", step_sizes[0], [float], self.cls_name)
         validator.check_value_type("max_step_sizes", step_sizes[1], [float], self.cls_name)

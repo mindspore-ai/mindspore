@@ -544,12 +544,12 @@ def ms_hybrid(fn=None, reg_info=None, compile_attrs=None):
         compile_attrs = {}
 
     if not isinstance(compile_attrs, dict):
-        raise TypeError("The input 'compile_attrs' of @ms_hybrid should be a dict, "
+        raise TypeError("The input 'compile_attrs' of @ms_hybrid must be a dict, "
                         "but get a {}".format(type(compile_attrs)))
 
     for key in compile_attrs.keys():
         if not isinstance(key, str):
-            raise TypeError("The key of 'compile_attrs' of @ms_hybrid should be a str, "
+            raise TypeError("The key of 'compile_attrs' of @ms_hybrid must be a str, "
                             "but get a {}".format(type(key)))
 
     if reg_info is not None and not isinstance(reg_info, (str, dict, tuple)):

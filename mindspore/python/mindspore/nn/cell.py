@@ -662,7 +662,7 @@ class Cell(Cell_):
                 raise TypeError(f"For 'Cell', the {name} should not be Parameter.")
             del self.__dict__[name]
         if cells and name in cells:
-            raise TypeError(f"For 'Cell', the {name} should be Cell, but got Parameter.")
+            raise TypeError(f"For 'Cell', the {name} must be Cell, but got Parameter.")
         self.insert_param_to_cell(name, value)
 
     def _set_attr_for_parameter_tuple(self, name, value):
@@ -723,7 +723,7 @@ class Cell(Cell_):
         if name in self.__dict__:
             del self.__dict__[name]
         if params and name in params:
-            raise TypeError(f"For 'Cell', the {name} should be Parameter, but got Cell.")
+            raise TypeError(f"For 'Cell', the {name} must be Parameter, but got Cell.")
         if self._auto_prefix:
             value.update_parameters_name(name + '.')
         cells[name] = value
@@ -734,7 +734,7 @@ class Cell(Cell_):
         if isinstance(value, Tensor) and self._params[name] is not None:
             self._params[name].set_data(value)
         elif value is not None:
-            raise TypeError(f"For 'Cell', the type of {name} should be Parameter or ParameterTuple, "
+            raise TypeError(f"For 'Cell', the type of {name} must be Parameter or ParameterTuple, "
                             f"but got {type(value).__name__}.")
         else:
             self.insert_param_to_cell(name, None)
@@ -763,7 +763,7 @@ class Cell(Cell_):
             self._set_attr_for_params(name, value)
         elif cells and name in cells:
             if value is not None:
-                raise TypeError(f"For 'Cell', the type of {name} should be cell, but got {type(value).__name__}.")
+                raise TypeError(f"For 'Cell', the type of {name} must be cell, but got {type(value).__name__}.")
             self._cells[name] = None
         elif isinstance(value, Tensor):
             self._set_attr_for_tensor(name, value)
@@ -825,7 +825,7 @@ class Cell(Cell_):
                 new_tensor = _load_tensor_by_layout(tensor, layout)
                 params[key].set_data(new_tensor, True)
         else:
-            raise TypeError("For 'load_parameter_slice', the argument 'params' should be OrderedDict type, "
+            raise TypeError("For 'load_parameter_slice', the argument 'params' must be OrderedDict type, "
                             "but got {}.".format(type(params)))
 
     def _load_inputs(self, *inputs):
@@ -1031,7 +1031,7 @@ class Cell(Cell_):
             raise KeyError("For 'insert_param_to_cell', the {} parameter already exists in the network. Cannot "
                            "insert another parameter with the same name.".format(param_name))
         if not isinstance(param, Parameter) and param is not None:
-            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' should be 'Parameter' if not None, "
+            raise TypeError(f"For 'insert_param_to_cell', the argument 'param' must be 'Parameter' if not None, "
                             f"but got {type(param)}.")
         if isinstance(param, Parameter) and param.name == PARAMETER_NAME_DEFAULT:
             param.name = param_name
@@ -1079,7 +1079,7 @@ class Cell(Cell_):
             raise KeyError("For 'insert_child_to_cell', the {} child cell already exists in the network. Cannot "
                            "insert another child cell with the same name.".format(child_name))
         if not isinstance(child_cell, Cell) and child_cell is not None:
-            raise TypeError(f"For 'insert_child_to_cell', the argument 'child_cell' should be 'Cell' if not None, "
+            raise TypeError(f"For 'insert_child_to_cell', the argument 'child_cell' must be 'Cell' if not None, "
                             f"but got type {type(child_cell)}.")
         self._cells[child_name] = child_cell
 
@@ -1553,7 +1553,7 @@ class Cell(Cell_):
             >>> net.to_float(mstype.float16)
         """
         if dst_type not in (mstype.float16, mstype.float32):
-            raise ValueError("For 'to_float', the argument 'dst_type' should be float32 or float16, "
+            raise ValueError("For 'to_float', the argument 'dst_type' must be float32 or float16, "
                              "but got {}.".format(dst_type))
         if dst_type == mstype.float16:
             self._set_mixed_precision_type_recursive(MixedPrecisionType.FP16)
@@ -1584,7 +1584,7 @@ class Cell(Cell_):
             ValueError: If boost_type is not in the algorithm library.
         """
         if boost_type not in ("less_bn",):
-            raise ValueError("For 'set_boost', the argument 'boost_type' should be 'less_bn', "
+            raise ValueError("For 'set_boost', the argument 'boost_type' must be 'less_bn', "
                              "but got {}.".format(boost_type))
         flags = {"less_bn": boost_type == "less_bn"}
         self.add_flags_recursive(**flags)
@@ -1744,7 +1744,7 @@ class Cell(Cell_):
             return HookHandle()
 
         if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' should be python "
+            raise TypeError(f"When using 'register_forward_pre_hook(hook_fn)', the type of 'hook_fn' must be python "
                             f"function, but got {type(hook_fn)}.")
         if hook_fn.__code__.co_name == "staging_specialize":
             raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@ms_function' is not supported.")
@@ -1847,7 +1847,7 @@ class Cell(Cell_):
             return HookHandle()
 
         if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' should be python "
+            raise TypeError(f"When using 'register_forward_hook(hook_fn)', the type of 'hook_fn' must be python "
                             f"function, but got {type(hook_fn)}.")
         if hook_fn.__code__.co_name == "staging_specialize":
             raise TypeError(f"Decorating hook function {hook_fn.__name__} with '@ms_function' is not supported.")
@@ -1951,7 +1951,7 @@ class Cell(Cell_):
             return HookHandle()
 
         if not isinstance(hook_fn, (FunctionType, MethodType)):
-            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' should be python "
+            raise TypeError(f"When using 'register_backward_hook(hook_fn)', the type of 'hook_fn' must be python "
                             f"function, but got {type(hook_fn)}.")
         if self._cell_backward_hook is None:
             self._enable_backward_hook = True
@@ -2163,14 +2163,14 @@ class Cell(Cell_):
         len_dynamic_shape_inputs = len(self._dynamic_shape_inputs)
         if len_dynamic_shape_inputs != len_inputs:
             raise ValueError(
-                f"For 'set_inputs', the Length of Tensor should be {len_inputs}, but got {len_dynamic_shape_inputs}."
+                f"For 'set_inputs', the Length of Tensor must be {len_inputs}, but got {len_dynamic_shape_inputs}."
             )
         for tensor_index in range(len_dynamic_shape_inputs):
             i_dynamic_shape_inputs = self._dynamic_shape_inputs[tensor_index]
             i_inputs = inputs[tensor_index]
             if i_dynamic_shape_inputs.dtype is not i_inputs.dtype:
                 raise TypeError(
-                    f"For 'set_inputs', the DataType of Tensor should be {i_inputs.dtype}, but got "
+                    f"For 'set_inputs', the DataType of Tensor must be {i_inputs.dtype}, but got "
                     f"{i_dynamic_shape_inputs.dtype}."
                 )
             set_inputs_shape = list(i_dynamic_shape_inputs.shape)

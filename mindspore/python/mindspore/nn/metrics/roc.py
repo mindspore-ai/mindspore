@@ -188,7 +188,7 @@ class ROC(Metric):
 def _precision_recall_curve_update(y_pred, y, class_num, pos_label):
     """update curve"""
     if not (len(y_pred.shape) == len(y.shape) or len(y_pred.shape) == len(y.shape) + 1):
-        raise ValueError(f"For 'ROC', predicted value (input[0]) and true value (input[1]) should have same "
+        raise ValueError(f"For 'ROC', predicted value (input[0]) and true value (input[1]) must have same "
                          f"dimensions, or the dimension of predicted value equal the dimension of true value add "
                          f"1, but got predicted value ndim: {len(y_pred.shape)}, true value ndim: {len(y.shape)}.")
 
@@ -196,7 +196,7 @@ def _precision_recall_curve_update(y_pred, y, class_num, pos_label):
     if len(y_pred.shape) == len(y.shape):
         if class_num is not None and class_num != 1:
             raise ValueError(f"For 'ROC', when predicted value (input[0]) and true value (input[1]) have the same "
-                             f"shape, the 'class_num' should be 1, but got {class_num}.")
+                             f"shape, the 'class_num' must be 1, but got {class_num}.")
         class_num = 1
         if pos_label is None:
             pos_label = 1
@@ -207,10 +207,10 @@ def _precision_recall_curve_update(y_pred, y, class_num, pos_label):
     elif len(y_pred.shape) == len(y.shape) + 1:
         if pos_label is not None:
             raise ValueError(f"For 'ROC', when the dimension of predicted value (input[0]) equals the dimension "
-                             f"of true value (input[1]) add 1, the 'pos_label' should be None, "
+                             f"of true value (input[1]) add 1, the 'pos_label' must be None, "
                              f"but got {pos_label}.")
         if class_num != y_pred.shape[1]:
-            raise ValueError("For 'ROC', the 'class_num' should equal the number of classes from predicted value "
+            raise ValueError("For 'ROC', the 'class_num' must equal the number of classes from predicted value "
                              "(input[0]), but got 'class_num' {}, the number of classes from predicted value {}."
                              .format(class_num, y_pred.shape[1]))
         y_pred = y_pred.transpose(0, 1).reshape(class_num, -1).transpose(0, 1)

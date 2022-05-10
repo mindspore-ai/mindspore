@@ -676,20 +676,20 @@ class PReLU(Cell):
             w = Tensor(tmp, dtype=mstype.float32)
         elif isinstance(w, list):
             if len(w) != channel:
-                raise ValueError(f"For '{self.cls_name}', the length of 'w' should be equal to the 'channel' when "
+                raise ValueError(f"For '{self.cls_name}', the length of 'w' must be equal to the 'channel' when "
                                  f"the 'w' is a list, but got the length of 'w': {len(w)}, the 'channel': {channel}.")
 
             for i in w:
                 if not isinstance(i, (float, np.float32)):
-                    raise ValueError(f"For '{self.cls_name}', all elements in 'w' should be "
+                    raise ValueError(f"For '{self.cls_name}', all elements in 'w' must be "
                                      f"float when the 'w' is a list, but got {i}.")
             w = Tensor(w, dtype=mstype.float32)
         elif isinstance(w, Tensor):
             if w.dtype not in (mstype.float16, mstype.float32):
-                raise ValueError(f"For '{self.cls_name}', the dtype of 'w' should be float16 or "
+                raise ValueError(f"For '{self.cls_name}', the dtype of 'w' must be float16 or "
                                  f"float32 when the 'w' is a tensor, but got {w.dtype}.")
             if len(w.shape) != 1 or w.shape[0] != channel:
-                raise ValueError(f"For '{self.cls_name}', the dimension of 'w' should be 1, and the elements number "
+                raise ValueError(f"For '{self.cls_name}', the dimension of 'w' must be 1, and the elements number "
                                  f"should be equal to the 'channel' when the 'w' is a tensor, "
                                  f"but got 'w' shape {w.shape}, the 'channel' {channel}.")
         else:
@@ -986,5 +986,5 @@ def get_activation(name, prim_name=None):
         return None
 
     if name not in _activation:
-        raise KeyError(f"{msg_prefix} 'name' should be in {list(_activation.keys())}, but got {name}.")
+        raise KeyError(f"{msg_prefix} 'name' must be in {list(_activation.keys())}, but got {name}.")
     return _activation[name]()

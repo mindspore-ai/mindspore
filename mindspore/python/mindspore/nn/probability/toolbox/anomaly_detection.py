@@ -73,7 +73,7 @@ class VAEAnomalyDetection:
             float, the predicted outlier score of the sample.
         """
         if not isinstance(sample_x, Tensor):
-            raise TypeError("The sample_x should be Tensor type.")
+            raise TypeError("The sample_x must be Tensor type.")
         reconstructed_sample = self.vae.reconstruct_sample(sample_x)
         return self._calculate_euclidean_distance(sample_x.asnumpy(), reconstructed_sample.asnumpy())
 

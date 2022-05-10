@@ -320,7 +320,7 @@ class Optimizer(Cell):
     @staticmethod
     def _preprocess_grad_centralization(grad_centralization):
         if not isinstance(grad_centralization, bool):
-            raise TypeError("For 'Optimizer', the 'gradients_centralization' should be bool type, "
+            raise TypeError("For 'Optimizer', the 'gradients_centralization' must be bool type, "
                             "but got {}.".format(type(grad_centralization)))
         return grad_centralization
 
@@ -461,7 +461,7 @@ class Optimizer(Cell):
             self.dynamic_weight_decay = True
             weight_decay = _WrappedWeightDecay(weight_decay, self.loss_scale)
         else:
-            raise TypeError("For 'Optimizer', the argument 'Weight_decay' should be int, "
+            raise TypeError("For 'Optimizer', the argument 'Weight_decay' must be int, "
                             "float or Cell.but got {}".format(type(weight_decay)))
         return weight_decay
 
@@ -489,7 +489,7 @@ class Optimizer(Cell):
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
             return learning_rate
-        raise TypeError("For 'Optimizer', the argument 'learning_rate' should be int, float, Tensor, Iterable or "
+        raise TypeError("For 'Optimizer', the argument 'learning_rate' must be int, float, Tensor, Iterable or "
                         "LearningRateSchedule, but got {}.".format(type(learning_rate)))
 
     def _build_single_lr(self, learning_rate, name):
@@ -514,7 +514,7 @@ class Optimizer(Cell):
         for group_param in parameters:
             invalid_key = list(filter(lambda x: x not in parse_keys, group_param.keys()))
             if invalid_key:
-                raise KeyError(f"For 'Optimizer', the key in group params should be one of in {parse_keys}, "
+                raise KeyError(f"For 'Optimizer', the key in group params must be one of in {parse_keys}, "
                                f"but got {invalid_key}.")
 
             if 'order_params' in group_param.keys():
@@ -546,7 +546,7 @@ class Optimizer(Cell):
                     raise ValueError(f"For 'Optimizer', the order params dict in group parameters should only include "
                                      f"the 'order_params' key, but got {group_param.keys()}.")
                 if not isinstance(group_param['order_params'], Iterable):
-                    raise TypeError("For 'Optimizer', the value of 'order_params' in group parameters should be "
+                    raise TypeError("For 'Optimizer', the value of 'order_params' in group parameters must be "
                                     "Iterable type, but got {}.".format(type(group_param['order_params'])))
                 self.is_group_params_ordered = True
                 continue
@@ -560,7 +560,7 @@ class Optimizer(Cell):
                     if tensor_lr_length == 0:
                         tensor_lr_length = group_lr_length
                     elif group_lr_length != tensor_lr_length:
-                        raise ValueError("For 'Optimizer', the Tensor type dynamic learning rate in group should be "
+                        raise ValueError("For 'Optimizer', the Tensor type dynamic learning rate in group must be "
                                          "the same size as the argument 'learning_rate'.")
 
     def _init_group_params(self, parameters, learning_rate, weight_decay, grad_centralization):
@@ -623,7 +623,7 @@ class Optimizer(Cell):
         params_length = len(self.group_params)
         if len(ordered_parameters) != len(self.group_params):
             raise ValueError(f"For 'Optimizer',"
-                             f"the length of order parameters should be the same as the length of group parameters, "
+                             f"the length of order parameters must be the same as the length of group parameters, "
                              f"but got order parameters' length {len(ordered_parameters)}, "
                              f"group parameters' length {len(self.group_params)}.")
 
@@ -926,7 +926,7 @@ class _IteratorLearningRate(LearningRateSchedule):
                 raise ValueError(f"For 'Optimizer', the dimension of the argument 'learning_rate' should "
                                  f"be 1, but got {learning_rate.ndim}.")
         else:
-            raise TypeError("For 'Optimizer', the argument 'learning_rate' should be Tensor, "
+            raise TypeError("For 'Optimizer', the argument 'learning_rate' must be Tensor, "
                             "but got {}.".format(type(learning_rate)))
 
         self.learning_rate = Parameter(learning_rate, name)

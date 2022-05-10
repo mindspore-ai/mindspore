@@ -46,7 +46,7 @@ class BayesianNet(nn.Cell):
         """ Normal distribution wrapper """
 
         if not isinstance(name, str):
-            raise TypeError("The type of `name` should be string")
+            raise TypeError("The type of `name` must be string")
 
         if observation is None:
             if reparameterize:
@@ -72,7 +72,7 @@ class BayesianNet(nn.Cell):
         """ Bernoulli distribution wrapper """
 
         if not isinstance(name, str):
-            raise TypeError("The type of `name` should be string")
+            raise TypeError("The type of `name` must be string")
 
         if observation is None:
             sample = self.bernoulli_dist('sample', shape, probs)

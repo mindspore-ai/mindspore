@@ -61,13 +61,13 @@ class MoEConfig:
         Validator.check_positive_float(aux_loss_factor, "aux_loss_factor")
         Validator.check_positive_int(num_experts_chosen, "num_experts_chosen")
         if capacity_factor < 1.0:
-            raise ValueError(f"'capacity_factor' should be equal to or greater than 1.0, "
+            raise ValueError(f"'capacity_factor' must be equal to or greater than 1.0, "
                              f"but got {capacity_factor}.")
         if aux_loss_factor >= 1.0:
-            raise ValueError(f"'aux_loss_factor' should be less than 1.0, "
+            raise ValueError(f"'aux_loss_factor' must be less than 1.0, "
                              f"but got {aux_loss_factor}.")
         if num_experts_chosen > expert_num:
-            raise ValueError(f"'num_experts_chosen' should not be larger than 'expert_num', "
+            raise ValueError(f"'num_experts_chosen' must not be larger than 'expert_num', "
                              f"but got {num_experts_chosen}.")
         self.expert_num = expert_num
         self.capacity_factor = capacity_factor
@@ -83,7 +83,7 @@ def _check_moe_config(moe_config=None, parallel_config=None):
         check if MoE with right configuration.
     """
     if not isinstance(moe_config, MoEConfig):
-        raise TypeError(f"'moe_config' should be an instance of MoEConfig, but got {type(moe_config).__name__}.")
+        raise TypeError(f"'moe_config' must be an instance of MoEConfig, but got {type(moe_config).__name__}.")
     use_moe = (moe_config.expert_num > 1)
     if use_moe is False:
         return
@@ -95,10 +95,10 @@ def _check_moe_config(moe_config=None, parallel_config=None):
 
     device_num = D.get_group_size()
     if device_num % parallel_config.expert_parallel != 0:
-        raise ValueError(f"device_num: {device_num} should be a multiple of expert_parallel: "
+        raise ValueError(f"device_num: {device_num} must be a multiple of expert_parallel: "
                          f"{parallel_config.expert_parallel}.")
     if parallel_config.data_parallel % parallel_config.expert_parallel != 0:
-        raise ValueError(f"data parallel: {parallel_config.data_parallel} should be a multiple of "
+        raise ValueError(f"data parallel: {parallel_config.data_parallel} must be a multiple of "
                          f"expert_parallel: {parallel_config.expert_parallel} when using MoE.")
     if parallel_config.data_parallel * parallel_config.model_parallel > device_num:
         raise ValueError(f"The product of the data parallel: {parallel_config.data_parallel} and "

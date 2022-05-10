@@ -133,7 +133,7 @@ def _check_axes(axes, prim_name=None):
     if not isinstance(axes, int):
         axes = list(axes)  # to avoid immutability issues
         if len(axes) != 2:
-            raise ValueError(f"{msg_prefix} dimension of 'axes' should be 2, but got 'axes': {axes}.")
+            raise ValueError(f"{msg_prefix} dimension of 'axes' must be 2, but got 'axes': {axes}.")
         axes = _int_to_tuple_conv(axes)  # convert before length checks
         if len(axes[0]) != len(axes[1]):
             raise ValueError(f"{msg_prefix} first and second dim of 'axes' have to be the same size/length, "
@@ -193,7 +193,7 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
         axes_len = len(x_axes)
         shape_dim_len = len(shapes[ix_input])
         if axes_len > shape_dim_len:
-            raise ValueError(f"{msg_prefix} length of element {x_axes} in 'axes' should be less than or equal to "
+            raise ValueError(f"{msg_prefix} length of element {x_axes} in 'axes' must be less than or equal to "
                              f"{shape_dim_len}, but got {axes_len}.")
 
     # axis values range check
@@ -203,7 +203,7 @@ def _validate_axes(x1_shape, x2_shape, axes, prim_name=None):
         min_val = -1 * len(comp_shape)
         for _, x_value in enumerate(x_axes):
             if not min_val <= x_value <= max_val:
-                raise ValueError(f"{msg_prefix} value in 'axes' should be in range: [{min_val}, {max_val}], "
+                raise ValueError(f"{msg_prefix} value in 'axes' must be in range: [{min_val}, {max_val}], "
                                  f"but got {x_value}.")
 
     # check axis value with input shape - both ways for axis valid
@@ -705,7 +705,7 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
         raise ValueError(f"{msg_prefix} dimension of input operands must be at least 1, but got "
                          f"the length of shape1: {ndim1}, the length of shape2: {ndim2}.")
     if ndim2 >= 2 and shape1[-1] != shape2[-2]:
-        raise ValueError(f"{msg_prefix} shape1[-1] should be equal to shape2[-2] when the length of shape2 "
+        raise ValueError(f"{msg_prefix} shape1[-1] must be equal to shape2[-2] when the length of shape2 "
                          f"is greater than or equal to 2, but got shape1[-1]: {shape1[-1]}, "
                          f"shape2[-2]: {shape2[-2]}.")
     shape_out = deque()
@@ -845,9 +845,9 @@ def _create_cummin_perm(axis, x_shape):
     """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
     len_axis = len(x_shape)
     if not isinstance(axis, int):
-        raise TypeError(f"The date type of 'axis' should be Int, but got {axis}.")
+        raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
     if axis < -len_axis or axis > len_axis:
-        raise ValueError(f"The value of axis should be in [{-len_axis}, {len_axis}], but got {axis}.")
+        raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
     prem = [i for i in range(len_axis)]
     if axis < 0:
         axis = axis + len_axis

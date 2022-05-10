@@ -533,10 +533,10 @@ def _judge_order_continuous(order_sequence):
 def scalar_in_sequence(x, y):
     """Determine whether the scalar in the sequence."""
     if x is None:
-        raise ValueError("Judge scalar in tuple or list require scalar and sequence should be constant, "
+        raise ValueError("Judge scalar in tuple or list require scalar and sequence must be constant, "
                          "but the scalar is not.")
     if y is None:
-        raise ValueError("Judge scalar in tuple or list require scalar and sequence should be constant, "
+        raise ValueError("Judge scalar in tuple or list require scalar and sequence must be constant, "
                          "but the sequence is not.")
     return x in y
 

@@ -172,7 +172,7 @@ class Momentum(Optimizer):
         super(Momentum, self).__init__(learning_rate, params, weight_decay, loss_scale)
         Validator.check_value_type("momentum", momentum, [float], self.cls_name)
         if isinstance(momentum, float) and momentum < 0.0:
-            raise ValueError("For 'Momentum', the argument 'momentum' should be at least 0.0, "
+            raise ValueError("For 'Momentum', the argument 'momentum' must be at least 0.0, "
                              "but got {}".format(momentum))
         self.momentum = Parameter(Tensor(momentum, mstype.float32), name="momentum")
         self.params = self._parameters

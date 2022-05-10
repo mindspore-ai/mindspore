@@ -396,7 +396,7 @@ def _parallel_check():
         raise RuntimeError("Currently, the pipeline parallel is not supported with applying adasum.")
     stage_device_num = _get_stage_device_num()
     if stage_device_num < 16 or (stage_device_num & (stage_device_num - 1) != 0):
-        raise RuntimeError("The device_num should be at least 16 and should be the power of 2 when applying adasum.")
+        raise RuntimeError("The device_num must be at least 16 and must be the power of 2 when applying adasum.")
 
 
 class AdaSumByGradWrapCell(Cell):

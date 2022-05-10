@@ -59,7 +59,7 @@ class ConfusionMatrix(Metric):
 
         self.num_classes = validator.check_value_type("num_classes", num_classes, [int])
         if normalize not in ["target", "prediction", "all", "no_norm"]:
-            raise ValueError("For 'ConfusionMatrix', the argument 'normalize' should be in "
+            raise ValueError("For 'ConfusionMatrix', the argument 'normalize' must be in "
                              "['all', 'prediction', 'label', 'no_norm'(None)], but got {}.".format(normalize))
 
         self.normalize = normalize
@@ -305,11 +305,11 @@ class _ConfusionMatrix:
             ValueError: when `y_pred` has less than two dimensions.
         """
         if not np.all(y.astype(np.uint8) == y):
-            raise ValueError("For 'ConfusionMatrix.update', the true value (input[1]) should be a binarized ndarray.")
+            raise ValueError("For 'ConfusionMatrix.update', the true value (input[1]) must be a binarized ndarray.")
 
         dims = y_pred.ndim
         if dims < 2:
-            raise ValueError(f"For 'ConfusionMatrix.update', the predicted value (input[0]) should have at least 2 "
+            raise ValueError(f"For 'ConfusionMatrix.update', the predicted value (input[0]) must have at least 2 "
                              f"dimensions, but got {dims}.")
 
         if dims == 2 or (dims == 3 and y_pred.shape[-1] == 1):
@@ -587,7 +587,7 @@ def _compute_confusion_matrix_metric(metric_name, confusion_matrix):
     if input_dim == 1:
         confusion_matrix = np.expand_dims(confusion_matrix, 0)
     if confusion_matrix.shape[-1] != 4:
-        raise ValueError(f"For 'ConfusionMatrix', the size of the last dimension of confusion_matrix should be 4, "
+        raise ValueError(f"For 'ConfusionMatrix', the size of the last dimension of confusion_matrix must be 4, "
                          f"but got {confusion_matrix.shape[-1]}.")
 
     tp = confusion_matrix[..., 0]

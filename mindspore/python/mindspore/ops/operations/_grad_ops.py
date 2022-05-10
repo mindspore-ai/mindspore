@@ -136,7 +136,7 @@ class SyncBatchNormGrad(PrimitiveWithInfer):
     def __init__(self, epsilon=1e-5, group="group0", device_num=2):
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
         if not isinstance(group, str):
-            raise TypeError("The group attr of SyncBatchNormGrad should be str.")
+            raise TypeError("The group attr of SyncBatchNormGrad must be str.")
         validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
 
     def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape):
@@ -313,7 +313,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         validator.check_value_type('pad_mode', pad_mode, [str], self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if self.pad_mode != 'pad' and self.pad_list != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', when pad is not 0, pad_mode must be set as 'pad'.")
         if self.pad_mode == 'pad':
             for item in pad:
                 validator.check_non_negative_int(item, 'pad item', self.name)
@@ -755,7 +755,7 @@ class _PoolGrad(PrimitiveWithInfer):
 
         def _grad_check_int_or_tuple(arg_name, arg_val, is_argmax):
             validator.check_value_type(arg_name, arg_val, (int, tuple), self.name)
-            error_msg = ValueError(f"For '{self.name}' the '{arg_name}' should be an positive int number "
+            error_msg = ValueError(f"For '{self.name}' the '{arg_name}' must be an positive int number "
                                    f"or a tuple of two or four positive int numbers, but got {arg_val}")
             if isinstance(arg_val, int):
                 ret = (1, arg_val, arg_val, 1) if is_argmax else (1, 1, arg_val, arg_val)
@@ -963,10 +963,10 @@ class MaxPool3DGrad(PrimitiveWithInfer):
         if len(self.pad_list) == 3:
             self.pad_list = (pad_list[0], pad_list[0], pad_list[1], pad_list[1], pad_list[2], pad_list[3])
         if len(self.pad_list) != 3 and len(self.pad_list) != 6:
-            raise ValueError(f"For `maxpool3d` attr 'pad_list' should be an positive int number or a tuple of "
+            raise ValueError(f"For `maxpool3d` attr 'pad_list' must be an positive int number or a tuple of "
                              f"three or six positive int numbers, but got `{len(self.pad_list)}` numbers.")
         if self.pad_mode != 'CALCULATED' and self.pad_list != (0, 0, 0, 0, 0, 0):
-            raise ValueError(f"For '{self.name}', when pad_list is not 0, pad_mode should be set as 'pad'.")
+            raise ValueError(f"For '{self.name}', when pad_list is not 0, pad_mode must be set as 'pad'.")
         if self.pad_mode == 'CALCULATED':
             for item in self.pad_list:
                 validator.check_non_negative_int(item, 'pad_list item', self.name)
@@ -1036,7 +1036,7 @@ class MaxPoolGradWithArgmax(_PoolGrad):
 
     def infer_shape(self, x_shape, grad_shape, argmax_shape):
         if not grad_shape:
-            raise TypeError("The dout of MaxPoolGradWithArgmax should be a Tensor.")
+            raise TypeError("The dout of MaxPoolGradWithArgmax must be a Tensor.")
         return x_shape
 
     def infer_dtype(self, x_dtype, grad_dtype, argmax_dtype):
@@ -1082,7 +1082,7 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
 
     def infer_shape(self, x_shape, grad_shape, argmax_shape):
         if not grad_shape:
-            raise TypeError("The dout of MaxPoolGradGradWithArgmax should be a Tensor.")
+            raise TypeError("The dout of MaxPoolGradGradWithArgmax must be a Tensor.")
         return x_shape
 
     def infer_dtype(self, x_dtype, grad_dtype, argmax_dtype):
@@ -1703,7 +1703,7 @@ class ResizeBilinearGrad(PrimitiveWithInfer):
         self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
                                                              half_pixel_centers, [bool], self.name)
         if half_pixel_centers and align_corners:
-            raise ValueError(f"If half_pixel_centers is True, align_corners should be False, but got {align_corners}")
+            raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
         target = context.get_context("device_target")
         if half_pixel_centers and target.lower() != "ascend":
             raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend device_target, "
@@ -2334,7 +2334,7 @@ class ParallelResizeBilinearGrad(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("grad_dtype", grad_dtype, [mstype.float16, mstype.float32], self.name)
         validator.check_tensor_dtype_valid("x_dtype", x_dtype, [mstype.float16, mstype.float32], self.name)
         if size_val is None:
-            raise ValueError("size should be const input")
+            raise ValueError("size must be const input")
         output_shape = [grad_shape[0], grad_shape[1], x_shape[2], x_shape[3]]
 
         return {'shape': output_shape,

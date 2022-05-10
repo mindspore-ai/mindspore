@@ -65,7 +65,7 @@ class _BatchNorm(Cell):
             raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
 
         if momentum < 0 or momentum > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'momentum' should be a number in range [0, 1], "
+            raise ValueError(f"For '{self.cls_name}', the 'momentum' must be a number in range [0, 1], "
                              f"but got {momentum}.")
         self.input_dims = input_dims
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
@@ -74,7 +74,7 @@ class _BatchNorm(Cell):
                              f"target {context.get_context('device_target')}.")
         self.use_batch_statistics = use_batch_statistics
         if self.use_batch_statistics is not None and not isinstance(self.use_batch_statistics, bool):
-            raise ValueError(f"For '{self.cls_name}', the 'use_batch_statistics' should be a boolean value or None,"
+            raise ValueError(f"For '{self.cls_name}', the 'use_batch_statistics' must be a boolean value or None,"
                              f" but got {use_batch_statistics}.")
         self.num_features = num_features
         self.eps = eps
@@ -169,7 +169,7 @@ class _BatchNorm(Cell):
                              f"local rank size, but got 'device_num_each_group': {group_size}, "
                              f"local rank size: {get_group_size()}.")
         if len(world_rank) % group_size != 0:
-            raise ValueError(f"For '{self.cls_name}', the dimension of device_list should be divisible by "
+            raise ValueError(f"For '{self.cls_name}', the dimension of device_list must be divisible by "
                              f"'device_num_each_group', but got the length of device_list: {len(world_rank)}, "
                              f"'device_num_each_group': {group_size}.")
         world_rank_list = zip(*(iter(world_rank),) * group_size)
@@ -181,7 +181,7 @@ class _BatchNorm(Cell):
         for rid in itertools.chain(*process_groups):
             validator.check_int_range(rid, 0, rank_size, Rel.INC_LEFT, "rank id in process_groups", self.cls_name)
             if rid in seen:
-                raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' should not be duplicated, "
+                raise ValueError(f"For '{self.cls_name}', rank id in 'process_groups' must not be duplicated, "
                                  f"but got {process_groups}.")
             seen.add(rid)
 
@@ -243,7 +243,7 @@ class _BatchNorm(Cell):
 def _channel_check(channel, num_channel, prim_name=None):
     msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
     if channel != num_channel:
-        raise ValueError(f"{msg_prefix} channel(the second dim of the input 'x') should be equal to num_channels, "
+        raise ValueError(f"{msg_prefix} channel(the second dim of the input 'x') must be equal to num_channels, "
                          f"but got channel: {channel}, num_channels: {num_channel}.")
 
 
@@ -828,7 +828,7 @@ class LayerNorm(Cell):
         """Initialize LayerNorm."""
         super(LayerNorm, self).__init__()
         if not isinstance(normalized_shape, (tuple, list)):
-            raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' should be tuple[int] or list[int], "
+            raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' must be tuple[int] or list[int], "
                             f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
         self.normalized_shape = normalized_shape
         self.begin_norm_axis = begin_norm_axis
@@ -941,7 +941,7 @@ class InstanceNorm2d(Cell):
             raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
 
         if momentum < 0 or momentum > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'momentum' should be a number in range [0, 1], "
+            raise ValueError(f"For '{self.cls_name}', the 'momentum' must be a number in range [0, 1], "
                              f"but got {momentum}.")
         self.num_features = num_features
         self.eps = eps
@@ -976,10 +976,10 @@ class InstanceNorm2d(Cell):
         for key, _ in args_dict.items():
             val = args_dict[key]
             if not isinstance(val, (Tensor, numbers.Number, str, Initializer)):
-                raise TypeError(f"For '{self.cls_name}', the type of '{key}' should be in "
+                raise TypeError(f"For '{self.cls_name}', the type of '{key}' must be in "
                                 f"[Tensor, numbers.Number, str, Initializer], but got type {type(val).__name__}.")
             if isinstance(val, Tensor) and val.dtype != mstype.float32:
-                raise TypeError(f"For '{self.cls_name}', the type of '{key}' should be float32, "
+                raise TypeError(f"For '{self.cls_name}', the type of '{key}' must be float32, "
                                 f"but got {val.dtype}.")
 
 
@@ -1045,7 +1045,7 @@ class GroupNorm(Cell):
         self.num_groups = validator.check_positive_int(num_groups, "num_groups", self.cls_name)
         self.num_channels = validator.check_positive_int(num_channels, "num_channels", self.cls_name)
         if num_channels % num_groups != 0:
-            raise ValueError(f"For '{self.cls_name}', the 'num_channels' should be divided by 'num_groups', "
+            raise ValueError(f"For '{self.cls_name}', the 'num_channels' must be divided by 'num_groups', "
                              f"but got 'num_channels': {num_channels}, 'num_groups': {num_groups}.")
         self.eps = validator.check_value_type('eps', eps, (float,), type(self).__name__)
         self.affine = validator.check_bool(affine, arg_name="affine", prim_name=self.cls_name)

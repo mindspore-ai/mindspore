@@ -79,24 +79,24 @@ class NormalPosterior(Cell):
                  untransformed_scale_std=0.1):
         super(NormalPosterior, self).__init__()
         if not isinstance(name, str):
-            raise TypeError('The type of `name` should be `str`')
+            raise TypeError('The type of `name` must be `str`')
 
         if not isinstance(shape, (tuple, list)):
-            raise TypeError('The type of `shape` should be `tuple` or `list`')
+            raise TypeError('The type of `shape` must be `tuple` or `list`')
 
         if isinstance(loc_mean, bool) or not isinstance(loc_mean, (int, float)):
-            raise TypeError('The type of `loc_mean` should be `int` or `float`')
+            raise TypeError('The type of `loc_mean` must be `int` or `float`')
 
         if isinstance(untransformed_scale_mean, bool) or not isinstance(untransformed_scale_mean, (int, float)):
-            raise TypeError('The type of `untransformed_scale_mean` should be `int` or `float`')
+            raise TypeError('The type of `untransformed_scale_mean` must be `int` or `float`')
 
         if isinstance(loc_std, bool) or not (isinstance(loc_std, (int, float)) and loc_std >= 0):
-            raise TypeError('The type of `loc_std` should be `int` or `float` and its value should > 0')
+            raise TypeError('The type of `loc_std` must be `int` or `float` and its value must > 0')
 
         if isinstance(loc_std, bool) or not (isinstance(untransformed_scale_std, (int, float)) and
                                              untransformed_scale_std >= 0):
-            raise TypeError('The type of `untransformed_scale_std` should be `int` or `float` and '
-                            'its value should > 0')
+            raise TypeError('The type of `untransformed_scale_std` must be `int` or `float` and '
+                            'its value must > 0')
 
         self.mean = Parameter(
             Tensor(np.random.normal(loc_mean, loc_std, shape), dtype=dtype), name=name + '_mean')

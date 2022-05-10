@@ -256,17 +256,17 @@ class ForwardValueAndGrad(Cell):
         super(ForwardValueAndGrad, self).__init__(auto_prefix=False)
         if not isinstance(network, (Cell, FunctionType, MethodType)):
             raise TypeError(f"For 'ForwardValueAndGrad', "
-                            f"the argument 'network' should be cell, function type or method type, "
+                            f"the argument 'network' must be cell, function type or method type, "
                             f"but got '{type(network)}'")
         if not isinstance(get_all, bool):
             raise TypeError(f"For 'ForwardValueAndGrad', "
-                            f"the type of 'get_all' should be bool, but got '{type(get_all)}'")
+                            f"the type of 'get_all' must be bool, but got '{type(get_all)}'")
         if not isinstance(get_by_list, bool):
             raise TypeError(f"For 'ForwardValueAndGrad', "
-                            f"the type of 'get_by_list' should be bool, but got '{type(get_by_list)}'")
+                            f"the type of 'get_by_list' must be bool, but got '{type(get_by_list)}'")
         if get_by_list and not isinstance(weights, ParameterTuple):
             raise TypeError(f"For 'ForwardValueAndGrad', "
-                            f"when 'get_by_list' is set to True, the argument 'weights' should be "
+                            f"when 'get_by_list' is set to True, the argument 'weights' must be "
                             f"ParameterTuple type, but got '{type(weights)}'")
         self.network = network
         if isinstance(network, Cell):
@@ -456,7 +456,7 @@ class _VirtualDatasetCell(Cell):
 def _check_shape_value_on_axis_divided_by_target_value(input_shape, dim, param_name, cls_name, target_value):
     if input_shape[dim] % target_value != 0:
         raise ValueError(f"For MicroBatchInterleaved initialization, "
-                         f"{cls_name} {param_name} at {dim} shape should be divided by {target_value},"
+                         f"{cls_name} {param_name} at {dim} shape must be divided by {target_value},"
                          f"but got {input_shape[dim]}")
     return True
 
@@ -512,10 +512,10 @@ class MicroBatchInterleaved(Cell):
     def __init__(self, network, interleave_num=2):
         super(MicroBatchInterleaved, self).__init__(auto_prefix=False)
         if not isinstance(interleave_num, int):
-            raise TypeError("For 'MicroBatchInterleaved', the argument 'interleave_num' should be integer, "
+            raise TypeError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be integer, "
                             "but got the type : {}.".format(type(interleave_num)))
         if interleave_num <= 0:
-            raise ValueError("For 'MicroBatchInterleaved', the argument 'interleave_num' should be greater than 0, "
+            raise ValueError("For 'MicroBatchInterleaved', the argument 'interleave_num' must be greater than 0, "
                              "but got {}.".format(interleave_num))
         self.network = network
         self.interleave_num = interleave_num

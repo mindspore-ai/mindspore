@@ -1441,7 +1441,7 @@ class BatchMatMul(MatMul):
 
     def check_shape_size(self, x, y):
         if len(x) < 3 or len(y) < 2:
-            raise ValueError(f"For '{self.name}', input 'x' should be greater than or equal to 3, input 'y' should "
+            raise ValueError(f"For '{self.name}', input 'x' must be greater than or equal to 3, input 'y' should "
                              f"be greater than or equal to 2, but got 'x' size: {len(x)}, 'y' size: {len(y)}.")
 
 
@@ -1566,7 +1566,7 @@ class AddN(Primitive):
             return False, None
         if isinstance(inputs[0], Tensor):
             return True, inputs[0]
-        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' should be a tensor, but "
+        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' must be a tensor, but "
                         f"got {type(inputs[0]).__name__}, "
                         f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
 
@@ -1624,7 +1624,7 @@ class AccumulateNV2(Primitive):
             return False, None
         if isinstance(inputs[0], Tensor):
             return True, inputs[0]
-        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' should be a tensor, "
+        raise TypeError(f"For '{self.name}', the type of 'inputs[0]' must be a tensor, "
                         f"but got {type(inputs[0]).__name__}, "
                         f"or the length of 'inputs' should not be equal to 1, but got ({len(inputs)}).")
 

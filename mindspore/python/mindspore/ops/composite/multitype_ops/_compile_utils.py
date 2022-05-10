@@ -1108,7 +1108,7 @@ def reduce_(a, reduce_fn, cmp_fn=None, axis=None, keepdims=False, initial=None, 
     if initial is not None:
         if ((isinstance(initial, Tensor) and F.rank(initial) > 0) or
                 not isinstance(initial, (int, float, bool, Tensor))):
-            const_utils.raise_type_error('initial should be scalar')
+            const_utils.raise_type_error('initial must be scalar')
 
     if F.shape_mul(shape) == 0:
         const_utils.raise_value_error('zero-size tensors are not supported.')
