@@ -72,8 +72,13 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
     return RET_OK;
   }
 
-  size_t pre_inputs_size = pre_cnode->inputs().size();
-  auto pre_inputs_node_size = static_cast<int64_t>(pre_inputs_size - 1);
+  size_t pre_inputs_size_unsigned = pre_cnode->inputs().size();
+  if (pre_inputs_size_unsigned > static_cast<size_t>(INT64_MAX)) {
+    MS_LOG(ERROR) << "Size of inputs of pre_cnode out of range of int64:" << pre_inputs_size_unsigned;
+    return RET_ERROR;
+  }
+  int64_t pre_inputs_size = static_cast<int64_t>(pre_inputs_size_unsigned);
+  int64_t pre_inputs_node_size = pre_inputs_size - 1;
   auto pre_prim = ops::GetOperator<mindspore::ops::Concat>(pre_cnode->input(kAnfPrimitiveIndex));
   MS_CHECK_TRUE_MSG(pre_prim != nullptr, lite::RET_ERROR, "pre_cnode is not a ops::Concat");
   auto prim = ops::GetOperator<mindspore::ops::SplitWithOverlap>(cnode->input(kAnfPrimitiveIndex));
@@ -99,7 +104,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
   }
 
   std::vector<CNodePtr> inputs_node;
-  for (size_t i = 0; i < static_cast<size_t>(out_num); i++) {
+  for (int64_t i = 0; i < out_num; i++) {
     auto tmp = it->second[i];
     auto tmp_cnode = tmp->cast<CNodePtr>();
     if (tmp_cnode == nullptr) {
@@ -127,7 +132,7 @@ int ConcatSplitEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) 
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return RET_OK;
   }
-  for (size_t i = 1; i < pre_inputs_size; i++) {
+  for (int64_t i = 1; i < pre_inputs_size; i++) {
     if (!manager->Replace((inputs_node[i - 1])->input(1), pre_cnode->input(i))) {
       MS_LOG(DEBUG) << "Replace failed";
       return RET_ERROR;

@@ -100,10 +100,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     auto old_nodes = GetGraphNodes(*graph_defT_);
     Optimizer unused_op_remove_optimizer;
     if (!ctx.trainModel) {
-      unused_op_remove_optimizer.AddPass(new DropoutNodeRemovePass());
+      unused_op_remove_optimizer.AddPass(new (std::nothrow) DropoutNodeRemovePass());
     }
-    unused_op_remove_optimizer.AddPass(new IsolatedNodeRemovePass());
-    unused_op_remove_optimizer.AddPass(new SubgraphNodePass(old_nodes));
+    unused_op_remove_optimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    unused_op_remove_optimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     status = unused_op_remove_optimizer.Run(graph_defT_);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run unused_op_remove_optimizer graphPasses Failed";
