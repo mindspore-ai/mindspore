@@ -140,7 +140,6 @@ class AscendDeviceContext : public DeviceContext {
   static bool IsGraphMode();
   bool PySyncRuning() const;
   bool MemoryCopyAsync(const CNodePtr &node, const vector<AddressPtr> &inputs, const vector<AddressPtr> &outputs) const;
-  void GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const;
   void InsertEventBeforeRunTask(const KernelGraphPtr &graph) const;
   void SetAtomicCleanToNodes(const KernelGraphPtr &graph,
                              const std::map<CNodePtr, std::vector<CNodePtr>> &atomics_node) const;

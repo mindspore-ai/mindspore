@@ -222,11 +222,11 @@ void CacheSendRecvCNodesForAllReduce(const std::shared_ptr<session::KernelGraph>
   MS_EXCEPTION_IF_NULL(kernel_graph);
   std::pair<CNodePtr, CNodePtr> send_recv_nodes(send_node, recv_node);
   if (common::AnfAlgo::GetCNodeName(mock_send_node) == kAllReduceOpName) {
-    kernel_graph->InsertToSendRecvPair(mock_send_node, send_recv_nodes);
+    kernel_graph->InsertSendRecvPairForParallelOpOutputs(mock_send_node, send_recv_nodes);
   }
 
   if (common::AnfAlgo::GetCNodeName(mock_recv_node) == kAllReduceOpName) {
-    kernel_graph->InsertFromSendRecvPair(mock_recv_node, send_recv_nodes);
+    kernel_graph->InsertSendRecvPairForParallelOpInputs(mock_recv_node, send_recv_nodes);
   }
 }
 }  // namespace gpu

@@ -106,8 +106,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     input_nodes_ = graph.input_nodes_;
     pre_graphs_ = graph.pre_graphs_;
     post_graphs_ = graph.post_graphs_;
-    allreduce_from_send_recv_pairs_ = graph.allreduce_from_send_recv_pairs_;
-    allreduce_to_send_recv_pairs_ = graph.allreduce_to_send_recv_pairs_;
+    send_recv_pairs_for_parallel_op_inputs_ = graph.send_recv_pairs_for_parallel_op_inputs_;
+    send_recv_pairs_for_parallel_op_outputs_ = graph.send_recv_pairs_for_parallel_op_outputs_;
     size_t pre_graph_finished_count = graph.pre_graph_finished_count_;
     pre_graph_finished_count_ = pre_graph_finished_count;
     size_t post_graph_finished_count = graph.post_graph_finished_count_;
@@ -375,18 +375,34 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   }
   // end of handle graph dependency
 
-  // The interface of allreduce send/recv pairs map.
-  void InsertFromSendRecvPair(const CNodePtr &allreduce, const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
-    allreduce_from_send_recv_pairs_[allreduce] = send_recv_pair;
+  // The interface of parallel op send/recv pairs map.
+  void InsertSendRecvPairForParallelOpInputs(const CNodePtr &parallel_op,
+                                             const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
+    auto iter = send_recv_pairs_for_parallel_op_inputs_.find(parallel_op);
+    if (iter == send_recv_pairs_for_parallel_op_inputs_.end()) {
+      send_recv_pairs_for_parallel_op_inputs_[parallel_op] = {send_recv_pair};
+    } else {
+      iter->second.emplace_back(send_recv_pair);
+    }
   }
-  void InsertToSendRecvPair(const CNodePtr &allreduce, const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
-    allreduce_to_send_recv_pairs_[allreduce] = send_recv_pair;
+
+  void InsertSendRecvPairForParallelOpOutputs(const CNodePtr &parallel_op,
+                                              const std::pair<CNodePtr, CNodePtr> &send_recv_pair) {
+    auto iter = send_recv_pairs_for_parallel_op_outputs_.find(parallel_op);
+    if (iter == send_recv_pairs_for_parallel_op_outputs_.end()) {
+      send_recv_pairs_for_parallel_op_outputs_[parallel_op] = {send_recv_pair};
+    } else {
+      iter->second.emplace_back(send_recv_pair);
+    }
   }
-  const mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_from_send_recv_pairs() const {
-    return allreduce_from_send_recv_pairs_;
+
+  const mindspore::HashMap<CNodePtr, std::vector<std::pair<CNodePtr, CNodePtr>>>
+    &send_recv_pairs_for_parallel_op_inputs() const {
+    return send_recv_pairs_for_parallel_op_inputs_;
   }
-  const mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> &allreduce_to_send_recv_pairs() const {
-    return allreduce_to_send_recv_pairs_;
+  const mindspore::HashMap<CNodePtr, std::vector<std::pair<CNodePtr, CNodePtr>>>
+    &send_recv_pairs_for_parallel_op_outputs() const {
+    return send_recv_pairs_for_parallel_op_outputs_;
   }
 
   uint32_t label_num() const { return label_num_; }
@@ -521,10 +537,11 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::map<session::KernelWithIndex, session::KernelWithIndex, session::KernelWithIndexCmp> nop_node_output_map_;
   mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> pre_graphs_;
   mindspore::HashMap<uint32_t, std::weak_ptr<session::KernelGraph>> post_graphs_;
-  // The send/recv pairs inserted for allreduce, the key is allreduce kernel, the first of pair is send node, the second
-  // of pair is recv node.
-  mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_from_send_recv_pairs_;
-  mindspore::HashMap<CNodePtr, std::pair<CNodePtr, CNodePtr>> allreduce_to_send_recv_pairs_;
+
+  // key:parallel op ptr, value:vector of <send op receive op > pairs
+  mindspore::HashMap<CNodePtr, std::vector<std::pair<CNodePtr, CNodePtr>>> send_recv_pairs_for_parallel_op_inputs_;
+  // key:parallel op ptr, value:vector of <send op receive op > pairs
+  mindspore::HashMap<CNodePtr, std::vector<std::pair<CNodePtr, CNodePtr>>> send_recv_pairs_for_parallel_op_outputs_;
   std::atomic<size_t> pre_graph_finished_count_{0};
   std::atomic<size_t> post_graph_finished_count_{0};
   bool first_step_{true};

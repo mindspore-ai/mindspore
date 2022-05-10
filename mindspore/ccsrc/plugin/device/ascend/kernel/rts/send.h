@@ -20,6 +20,7 @@
 #include <vector>
 #include "plugin/device/ascend/kernel/rts/rt_kernel.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_info.h"
+#include "plugin/device/ascend/hal/device/ascend_event.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,6 +36,7 @@ class SendKernel : public RtKernel {
 
  private:
   uint32_t event_id_;
+  rtEvent_t event_;
 };
 
 MS_REG_RTKERNEL(streamsend, SendKernel);

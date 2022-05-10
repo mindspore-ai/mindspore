@@ -367,13 +367,6 @@ void AscendDeviceContext::UpdateExecOrder(const KernelGraphPtr &graph) const {
   node_atomics_.clear();
 }
 
-void AscendDeviceContext::GenKernelEvents(const NotNull<KernelGraphPtr> &root_graph) const {
-  MS_LOG(INFO) << "Start GenKernelEvents for graph " << root_graph->graph_id();
-  MS_EXCEPTION_IF_NULL(runtime_instance_);
-  runtime_instance_->GenKernelEventsForMindRT(*root_graph.get());
-  MS_LOG(INFO) << "Finish!";
-}
-
 void AscendDeviceContext::SetAtomicCleanToNodes(const KernelGraphPtr &graph,
                                                 const std::map<CNodePtr, std::vector<CNodePtr>> &atomics_node) const {
   // don't clear node_atomics_ in the end, since atomic_clean_nodes_ in kernel.h is weakptr
@@ -422,6 +415,9 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
     } else {
       PreprocessBeforeRunSingleOpGraph(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
+      CreateKernel(graph->execution_order());
+      MS_EXCEPTION_IF_NULL(runtime_instance_);
+      runtime_instance_->SetKernelModRtStream(NOT_NULL(graph));
     }
   } catch (const std::exception &e) {
     ReportErrorMessage();
@@ -825,7 +821,7 @@ void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
     auto stream = kernel_mod->stream();
     if (stream == nullptr) {
       stream = compute_stream_;
-      MS_LOG(INFO) << "Assign default compute stream for node " << node->fullname_with_scope();
+      MS_LOG(ERROR) << "Assign default compute stream for node " << node->fullname_with_scope();
     }
     return stream;
   }
@@ -945,7 +941,7 @@ bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vec
   // Launch Atomic Node
   auto kernel_mod = AnfAlgo::GetKernelMod(atomic_node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(atomic_inputs, {}, {}, compute_stream_);
+  return kernel_mod->Launch(atomic_inputs, {}, {}, GetKernelStream(node));
 }
 
 void AscendDeviceContext::InsertEventBeforeRunTask(const KernelGraphPtr &graph) const {
