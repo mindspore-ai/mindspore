@@ -134,14 +134,19 @@ class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
  private:
   ActorThreadPool *tp_;
   int thread_num_{8};
+  bool first_parallel{true};
 
  public:
   explicit mkl_threadpool(ActorThreadPool *tp) { tp_ = tp; }
   void set_num_threads(int num) { thread_num_ = num; }
   int get_num_threads() const override { return std::min(SizeToInt(tp_->GetKernelThreadNum()), thread_num_); }
-  bool get_in_parallel() const override { return false; }
+  bool get_in_parallel() const override { return !first_parallel; }
   uint64_t get_flags() const override { return 0; }
   void parallel_for(int n, const std::function<void(int, int)> &fn) override {
+    bool need_change_flag = first_parallel ? true : false;
+    if (need_change_flag) {
+      first_parallel = false;
+    }
     int nthr = get_num_threads();
     int n_jobs = std::min(n, nthr);
     auto func = [&, n_jobs](void *, int i, float, float) {
@@ -149,6 +154,9 @@ class mkl_threadpool : public dnnl::threadpool_interop::threadpool_iface {
       return 0;
     };
     (void)tp_->ParallelLaunch(func, nullptr, n_jobs);
+    if (need_change_flag) {
+      first_parallel = true;
+    }
   }
 };
 #endif

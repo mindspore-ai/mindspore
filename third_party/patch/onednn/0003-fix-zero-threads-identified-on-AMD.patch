@@ -6,7 +6,7 @@ index 1397073ba..041a3436f 100644
  // function supports process affinity.
  unsigned get_max_threads_to_use() {
      int num_cores_per_socket = (int)dnnl::impl::cpu::platform::get_num_cores();
-+    if (num_cores_per_socket == 0)
++    if (num_cores_per_socket <= 1)
 +        num_cores_per_socket = std::thread::hardware_concurrency();
  #if defined(_WIN32)
      DWORD_PTR proc_affinity_mask;

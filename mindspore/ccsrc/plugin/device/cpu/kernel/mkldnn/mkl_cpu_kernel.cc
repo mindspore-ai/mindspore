@@ -183,34 +183,44 @@ void MKLCpuKernelMod::ExecutePrimitive() {
   MS_EXCEPTION_IF_NULL(primitive_);
 #ifdef USE_MS_THREADPOOL_FOR_DNNL
   // add auto search
-  const size_t MAX_POW = 6;
-  const size_t AVG_COUNT = 5;
-  const size_t DIFF = 2;
-  size_t current_pow = parallel_search_info_.search_count / AVG_COUNT;
-  int current_thread_nums = static_cast<int>(std::pow(2.0f, current_pow));
+  const std::vector<size_t> kSearchThreadList{4, 8, 16, 24, 32};
+  const size_t kAvgCount = 5;
+  const size_t kDiff = 2;
+  size_t current_pow = parallel_search_info_.search_count / kAvgCount;
   auto mkl_pool = dynamic_cast<mkl_threadpool *>(mkl_threadpool_.get());
-  if (current_pow < MAX_POW) {
-    if (parallel_search_info_.search_count % AVG_COUNT == 0) {
+  if (current_pow < kSearchThreadList.size()) {
+    if (parallel_search_info_.search_count % kAvgCount == 0) {
       parallel_search_info_.tmp_sum_cost_time = 0;
     }
     double start_time = GetTime();
+    int current_thread_nums = kSearchThreadList[current_pow];
     mkl_pool->set_num_threads(current_thread_nums);
     MS_LOG(DEBUG) << "begin to invoke primitive::execute";
     primitive_->execute(stream_, arguments_);
     MS_LOG(DEBUG) << "end to invoke primitive::execute";
     double cost_time = GetTime() - start_time;
-    parallel_search_info_.tmp_sum_cost_time += cost_time;
+    // skip the first step to warm up.
+    if (parallel_search_info_.search_count != 0) {
+      parallel_search_info_.tmp_sum_cost_time += cost_time;
+    }
     parallel_search_info_.search_count++;
-    if (parallel_search_info_.search_count % AVG_COUNT == 0) {
-      if (parallel_search_info_.min_cost_time > parallel_search_info_.tmp_sum_cost_time) {
-        parallel_search_info_.min_cost_time = parallel_search_info_.tmp_sum_cost_time;
+    if (parallel_search_info_.search_count % kAvgCount == 0) {
+      double avg_time = 0;
+      // first avg will skip the first step
+      if (parallel_search_info_.search_count / kAvgCount == 0) {
+        avg_time = parallel_search_info_.tmp_sum_cost_time / (kAvgCount - 1);
+      } else {
+        avg_time = parallel_search_info_.tmp_sum_cost_time / kAvgCount;
+      }
+      if (parallel_search_info_.min_cost_time > avg_time) {
+        parallel_search_info_.min_cost_time = avg_time;
         parallel_search_info_.best_pow = current_pow;
-      } else if (current_pow - parallel_search_info_.best_pow >= DIFF) {
-        parallel_search_info_.search_count = AVG_COUNT * MAX_POW;
+      } else if (current_pow - parallel_search_info_.best_pow >= kDiff) {
+        parallel_search_info_.search_count = kAvgCount * kSearchThreadList.size();
       }
     }
   } else {
-    int best_thread_nums = static_cast<int>(std::pow(2.0f, parallel_search_info_.best_pow));
+    int best_thread_nums = kSearchThreadList[parallel_search_info_.best_pow];
     mkl_pool->set_num_threads(best_thread_nums);
     MS_LOG(DEBUG) << "begin to invoke primitive::execute";
     primitive_->execute(stream_, arguments_);

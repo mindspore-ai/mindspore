@@ -106,10 +106,13 @@ bool Worker::RunLocalKernelTask() {
   if (task == nullptr) {
     return false;
   }
-  int task_id = task_id_.load(std::memory_order_consume);
-  task->status |= task->func(task->content, task_id, lhs_scale_, rhs_scale_);
+  int task_id_start = task_id_start_.load(std::memory_order_consume);
+  int task_id_end = task_id_end_.load(std::memory_order_consume);
+  for (int i = task_id_start; i < task_id_end; ++i) {
+    task->status |= task->func(task->content, i, lhs_scale_, rhs_scale_);
+  }
   task_.store(nullptr, std::memory_order_relaxed);
-  (void)++task->finished;
+  task->finished += task_id_end - task_id_start;
   return true;
 }
 
@@ -134,11 +137,12 @@ void Worker::set_scale(float lhs_scale, float rhs_scale) {
   rhs_scale_ = rhs_scale;
 }
 
-void Worker::Active(Task *task, int task_id) {
+void Worker::Active(Task *task, int task_id_start, int task_id_end) {
   {
     std::lock_guard<std::mutex> _l(mutex_);
     THREAD_TEST_TRUE(task_ == nullptr);
-    task_id_.store(task_id, std::memory_order_relaxed);
+    task_id_start_.store(task_id_start, std::memory_order_relaxed);
+    task_id_end_.store(task_id_end, std::memory_order_relaxed);
     task_.store(task, std::memory_order_release);
     status_ = kThreadBusy;
   }
@@ -236,6 +240,7 @@ int ThreadPool::SyncRunFunc(const Func &func, Content content, int start, int en
 void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
   int sum_frequency = 0;
   std::vector<Worker *> assigned;
+  assigned.reserve(task_num);
   int num = static_cast<int>(workers_.size()) - 1;
   int offset = 0;
   bool use_curr = (curr != nullptr) ? curr->get_task_free() : false;
@@ -256,13 +261,9 @@ void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
     }
   }
 
-  // when there are not enough free threads,
-  // distribute other tasks to the master thread
   if (use_curr) {
-    for (; count < task_num; ++count) {
-      assigned.push_back(curr);
-      sum_frequency += curr->frequency();
-    }
+    assigned.push_back(curr);
+    sum_frequency += curr->frequency();
   } else if (assigned.size() != static_cast<size_t>(task_num)) {
     CalculateScales(assigned, sum_frequency);
     ActiveWorkers(assigned, task, assigned.size(), curr);
@@ -271,7 +272,7 @@ void ThreadPool::DistributeTask(Task *task, int task_num, Worker *curr) const {
   }
 
   CalculateScales(assigned, sum_frequency);
-  ActiveWorkers(assigned, task, assigned.size(), curr);
+  ActiveWorkers(assigned, task, task_num, curr);
 }
 
 void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_frequency) const {
@@ -292,12 +293,26 @@ void ThreadPool::CalculateScales(const std::vector<Worker *> &assigned, int sum_
 
 void ThreadPool::ActiveWorkers(const std::vector<Worker *> &workers, Task *task, int task_num,
                                const Worker *curr) const {
-  for (int i = 0; i < task_num; ++i) {
-    Worker *worker = workers[i];
-    THREAD_RETURN_IF_NULL(worker);
-    worker->Active(task, i);
-    if (worker == curr) {
-      (void)worker->RunLocalKernelTask();
+  // recalculate task num for each worker.
+  int worker_num = static_cast<int>(workers.size());
+  if (worker_num > 0) {
+    int each_worker_task_num = task_num / worker_num;
+    int rest_task_num = task_num % worker_num;
+    int start = 0;
+    int end;
+    for (int i = 0; i < worker_num; ++i) {
+      Worker *worker = workers[i];
+      THREAD_RETURN_IF_NULL(worker);
+      if (i < rest_task_num) {
+        end = start + each_worker_task_num + 1;
+      } else {
+        end = start + each_worker_task_num;
+      }
+      worker->Active(task, start, end);
+      if (worker == curr) {
+        (void)worker->RunLocalKernelTask();
+      }
+      start = end;
     }
   }
 }
