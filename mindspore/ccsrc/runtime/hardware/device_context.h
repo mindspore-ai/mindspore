@@ -132,6 +132,9 @@ class DeviceContext {
 
   virtual bool LaunchCustomFunc(const AnfNodePtr &kernel) const { return true; }
 
+  // Bind device to current thread to gain device control privileges
+  virtual bool BindDeviceToCurrentThread() const { return true; }
+
   // Create a stream with assigning a stream id, the assigned stream id will be written to the variable '*stream_id';
   bool CreateStream(size_t *stream_id);
 
@@ -149,10 +152,12 @@ class DeviceContext {
   const DeviceContextKey &device_context_key() const { return device_context_key_; }
 
   // Get rank id for distributed training.
+  // It is deprecated and will be removed in a future version
   virtual uint32_t GetRankID() const { return 0; }
 
   // Create and initialize bucket for every allreduce operator. Bucket is used in PyNative distributed training mode,
   // one bucket handles all resource to launch and sync allreduce operator.
+  // It is deprecated and will be removed in a future version
   virtual std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const { return nullptr; }
 
   // Dynamically load collecitve communication library.

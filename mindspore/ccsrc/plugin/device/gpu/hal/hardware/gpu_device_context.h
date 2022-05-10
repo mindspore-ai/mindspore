@@ -39,7 +39,7 @@ class GPUDeviceContext : public DeviceContext {
   // Release device memory, stream, cudnn and cublas handle, etc.
   void Destroy() override;
 
-  bool BindDeviceToCurrentThread() const;
+  bool BindDeviceToCurrentThread() const override;
 
   bool AllocateMemory(DeviceAddress *const &address, size_t size) const override;
   void FreeMemory(DeviceAddress *const &address) const override;
