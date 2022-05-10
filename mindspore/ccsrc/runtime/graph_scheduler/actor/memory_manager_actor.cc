@@ -71,14 +71,23 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
   for (size_t i = 0; i < (*alloc_list_list).size(); ++i) {
     auto &alloc_list = (*alloc_list_list)[i];
     auto &size_list = (*size_list_list)[i];
-    auto &total_size = (*total_size_list)[i];
     auto &device_context = (*device_contexts)[i];
     MS_EXCEPTION_IF_NULL(device_context);
     // Allocate memory through the device context.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-    if (!device_context->AllocateContinuousMemory(alloc_list, total_size, size_list)) {
+    auto dev_ptr_list = device_context->AllocateContinuousMemory(size_list);
+    if (dev_ptr_list.empty() || dev_ptr_list.size() != alloc_list.size()) {
+      MS_LOG(ERROR) << "Allocate continuous memory failed, device ptr list size: " << dev_ptr_list.size()
+                    << ", address list size:" << alloc_list.size();
+      auto &total_size = (*total_size_list)[i];
       SetOpContextMemoryAllocFail(from_aid.Name(), device_context, total_size, op_context);
       return;
+    }
+
+    for (size_t index = 0; index < alloc_list.size(); index++) {
+      alloc_list[index]->set_ptr(dev_ptr_list[index]);
+      alloc_list[index]->SetSize(size_list[index]);
+      alloc_list[index]->set_from_mem_pool(true);
     }
   }
 

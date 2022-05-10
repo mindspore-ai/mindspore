@@ -78,12 +78,12 @@ class DeviceContext {
   virtual void *AllocateMemory(size_t size) const = 0;
   virtual void FreeMemory(void *const ptr) const = 0;
 
-  // Allocate continuous device memory end to end into 'addr_list'.
+  // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output
   // to optimize the communication performance.
-  virtual bool AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
-                                        const std::vector<size_t> &size_list) const {
-    return true;
+  virtual std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+    std::vector<void *> ptr_list;
+    return ptr_list;
   }
 
   // Create concrete device address according different device type.

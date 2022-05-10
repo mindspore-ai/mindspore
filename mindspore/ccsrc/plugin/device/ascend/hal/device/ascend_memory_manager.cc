@@ -136,7 +136,7 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
 
 bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
                                                          std::vector<size_t> size_list) {
-  auto device_ptr_list = MallocContinuousMemFromMemPool(total_size, size_list);
+  auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
   if (device_ptr_list.empty()) {
     return false;
   }

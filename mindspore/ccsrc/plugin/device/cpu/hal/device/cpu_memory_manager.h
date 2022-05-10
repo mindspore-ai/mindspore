@@ -50,8 +50,8 @@ class CPUMemoryManager : public MemoryManager {
     return CPUMemoryPool::GetInstance().AllocTensorMem(size, from_persistent_mem);
   }
   void FreeMemFromMemPool(void *device_ptr) override { CPUMemoryPool::GetInstance().FreeTensorMem(device_ptr); }
-  std::vector<void *> MallocContinuousMemFromMemPool(size_t total_size, std::vector<size_t> size_list) override {
-    return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(total_size, size_list);
+  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) override {
+    return CPUMemoryPool::GetInstance().AllocContinuousTensorMem(size_list);
   }
 
  protected:

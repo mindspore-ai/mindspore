@@ -51,13 +51,21 @@ DeviceAddressPtr GPUBucket::CreateDeviceAddress(size_t size, TypeId type_id, con
 
 size_t GPUBucket::GetAlignSize(size_t size) const { return AlignMemorySize(size); }
 
-void GPUBucket::AllocateContinousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
-                                        const std::vector<size_t> &size_list) const {
+void GPUBucket::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to_allocate_address, size_t total_size,
+                                         const std::vector<size_t> &size_list) const {
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
-  if (!device_context->AllocateContinuousMemory(to_allocate_address, total_size, size_list)) {
-    MS_LOG(EXCEPTION) << "Allocate memory for AllReduce input failed";
+  std::vector<void *> dev_ptr_list = device_context->AllocateContinuousMemory(size_list);
+  if (dev_ptr_list.empty() || dev_ptr_list.size() != to_allocate_address.size()) {
+    MS_LOG(EXCEPTION) << "Allocate continuous memory failed, device ptr list size: " << dev_ptr_list.size()
+                      << ", address list size:" << to_allocate_address.size();
+  }
+
+  for (size_t i = 0; i < to_allocate_address.size(); i++) {
+    to_allocate_address[i]->set_ptr(dev_ptr_list[i]);
+    to_allocate_address[i]->SetSize(size_list[i]);
+    to_allocate_address[i]->set_from_mem_pool(true);
   }
 }
 

@@ -129,9 +129,8 @@ void CPUDeviceContext::FreeMemory(void *const ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
-bool CPUDeviceContext::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &addr_list, size_t total_size,
-                                                const std::vector<size_t> &size_list) const {
-  return mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
+std::vector<void *> CPUDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+  return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
 DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
