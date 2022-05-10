@@ -60,7 +60,7 @@ function MS_PRINT_TESTCASE_END_MSG() {
 }
 
 basepath=$(pwd)
-echo "on hi3516, bashpath is ${basepath}"
+echo "on hi3516, basepath is ${basepath}"
 
 # Set models config filepath
 models_nnie_config=${basepath}/models_nnie.cfg
@@ -87,11 +87,21 @@ if [[ ${Run_benchmark_status} = 0 ]];then
     MS_PRINT_TESTCASE_END_MSG
     cat ${run_benchmark_result_file}
     MS_PRINT_TESTCASE_END_MSG
+    rm -rf ${basepath}/*.ms
+    rm -rf ${basepath}/libmslite_nnie.so
+    rm -rf ${basepath}/libmslite_proposal.so
+    rm -rf ${basepath}/libmindspore-lite.so
+    rm -rf ${basepath}/benchmark
     exit 0
 else
     echo "Run benchmark failed"
     MS_PRINT_TESTCASE_END_MSG
     cat ${run_benchmark_result_file}
     MS_PRINT_TESTCASE_END_MSG
+    rm -rf ${basepath}/*.ms
+    rm -rf ${basepath}/libmslite_nnie.so
+    rm -rf ${basepath}/libmslite_proposal.so
+    rm -rf ${basepath}/libmindspore-lite.so
+    rm -rf ${basepath}/benchmark
     exit 1
 fi
