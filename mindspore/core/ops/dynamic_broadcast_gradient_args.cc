@@ -52,7 +52,7 @@ int64_t CheckInputsAndGetShape(const AbstractBasePtr &input_arg, const string &p
     auto x_shape_data = x_shape->elements();
     return SizeToLong(x_shape_data.size());
   } else {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name << "',the input type must be a tuple or Tensor.";
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', the input type must be a tuple or Tensor.";
   }
 }
 
