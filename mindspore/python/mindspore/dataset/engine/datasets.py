@@ -52,7 +52,7 @@ import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 
 from mindspore import log as logger
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _get_ps_context, _enable_distributed_mindrt
 from mindspore.dataset.engine.offload import GetOffloadModel
 
 import mindspore.dataset.transforms.c_transforms as c_transforms
@@ -1899,6 +1899,19 @@ class Dataset:
     def parse(self, children=None):
         raise NotImplementedError("Dataset has to implement parse method.")
 
+    @staticmethod
+    def _update_data_shard(num_shards, shard_id):
+        """
+        Update the shard number and shard id if necessary.
+        This is normally used in distributed training mode like Parameter Server training.
+        """
+        # If this is in distributed execution mode,
+        # the shard number and shard id might need to be updated according to the process's rank or role.
+        if _enable_distributed_mindrt() and _is_role_pserver():
+            num_shards = _get_ps_context("worker_num")
+            shard_id = 0
+        return num_shards, shard_id
+
     def post_parse(self, ir_node):
         if self.cache:
             ir_node = ir_node.set_cache_client(self.cache.cache_client)
@@ -2163,6 +2176,7 @@ class MappableDataset(SourceDataset):
 
     def __init__(self, num_parallel_workers=None, sampler=None, num_samples=None, shuffle=None, num_shards=None,
                  shard_id=None, cache=None):
+        num_shards, shard_id = self._update_data_shard(num_shards, shard_id)
         super().__init__(num_parallel_workers=num_parallel_workers, num_samples=num_samples, shuffle=shuffle,
                          num_shards=num_shards, shard_id=shard_id, cache=cache)
         self.shuffle_flag = replace_none(shuffle, True)

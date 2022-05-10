@@ -253,6 +253,9 @@ class BACKEND_EXPORT PSContext {
   void set_continuous_failure_times(uint32_t continuous_failure_times);
   uint32_t continuous_failure_times();
 
+  // Whether distributed MindRT is enabled.
+  bool enable_distributed_mindrt() const;
+
  private:
   PSContext()
       : ps_enabled_(false),

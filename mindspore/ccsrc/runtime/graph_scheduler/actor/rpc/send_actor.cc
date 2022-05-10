@@ -20,6 +20,13 @@
 
 namespace mindspore {
 namespace runtime {
+SendActor::~SendActor() {
+  if (client_) {
+    client_->Disconnect(server_url_);
+    client_->Finalize();
+  }
+}
+
 void SendActor::SetRouteInfo(uint32_t, const std::string &, const std::string &send_src_node_name,
                              const std::string &send_dst_node_name) {
   auto peer_actor_id = inter_process_edge_name_;
@@ -38,12 +45,12 @@ bool SendActor::ConnectServer() {
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy_);
     auto peer_actor_address = actor_route_table_proxy_->LookupRoute(peer_actor_id);
     // If route is successfully looked up, peer_actor_address is not empty.
-    std::string server_url = peer_actor_address.ip() + ":" + std::to_string(peer_actor_address.port());
-    if (!client_->Connect(server_url)) {
-      MS_LOG(EXCEPTION) << "Failed to connect to server of actor " << peer_actor_id << ", server_url: " << server_url;
+    server_url_ = peer_actor_address.ip() + ":" + std::to_string(peer_actor_address.port());
+    if (!client_->Connect(server_url_)) {
+      MS_LOG(EXCEPTION) << "Failed to connect to server of actor " << peer_actor_id << ", server_url: " << server_url_;
     }
-    MS_LOG(INFO) << "Successfully connect to server " << server_url << ", inter-process edge name: " << peer_actor_id;
-    peer_actor_urls_[peer_actor_id] = server_url;
+    MS_LOG(INFO) << "Successfully connect to server " << server_url_ << ", inter-process edge name: " << peer_actor_id;
+    peer_actor_urls_[peer_actor_id] = server_url_;
   }
   return true;
 }

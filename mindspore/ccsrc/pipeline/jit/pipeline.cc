@@ -735,18 +735,6 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   std::string backend = MsContext::GetInstance()->backend_policy();
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-  const std::string &server_mode = ps::PSContext::instance()->server_mode();
-  if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
-      ps::PSContext::instance()->is_server()) {
-    return ServerPipeline(resource);
-  }
-  if (ps::PSContext::instance()->is_server()) {
-    resource->SetResult(kBackend, compile::CreateBackend());
-    return PServerPipeline(resource);
-  }
-  if (ps::PSContext::instance()->is_scheduler()) {
-    return PSchedulerPipeline(resource);
-  }
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     auto node = distributed::cluster::ClusterContext::instance()->node();
     MS_EXCEPTION_IF_NULL(node);
@@ -756,6 +744,19 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     if (cluster_ctx->node_role() == distributed::kEnvRoleOfServer) {
       return PServerPipeline(resource);
     } else if (cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
+      return PSchedulerPipeline(resource);
+    }
+  } else {
+    const std::string &server_mode = ps::PSContext::instance()->server_mode();
+    if ((server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) &&
+        ps::PSContext::instance()->is_server()) {
+      return ServerPipeline(resource);
+    }
+    if (ps::PSContext::instance()->is_server()) {
+      resource->SetResult(kBackend, compile::CreateBackend());
+      return PServerPipeline(resource);
+    }
+    if (ps::PSContext::instance()->is_scheduler()) {
       return PSchedulerPipeline(resource);
     }
   }

@@ -33,8 +33,10 @@ class SendActor : public RpcActor {
                      GraphExecutionStrategy strategy, const std::set<size_t> &modifiable_ref_input_indexes,
                      const std::set<size_t> &modifiable_ref_output_indexes)
       : RpcActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
-                 modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kSendActor) {}
-  ~SendActor() override = default;
+                 modifiable_ref_input_indexes, modifiable_ref_output_indexes, KernelTransformType::kSendActor),
+        server_url_(""),
+        client_(nullptr) {}
+  ~SendActor() override;
 
   // Set send actor's destination peer info, in another word, send actor's output.
   void SetRouteInfo(uint32_t dst_rank, const std::string &dst_role, const std::string &send_src_node_name,
@@ -56,6 +58,9 @@ class SendActor : public RpcActor {
   // This send actor's destination peers' actor ids and route table.
   std::vector<std::string> peer_actor_ids_;
   mindspore::HashMap<std::string, std::string> peer_actor_urls_;
+
+  // The url of the peer recv actor's tcp server.
+  std::string server_url_;
 
   std::unique_ptr<TCPClient> client_;
 };
