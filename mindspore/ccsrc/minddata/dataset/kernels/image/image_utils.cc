@@ -823,7 +823,7 @@ void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 
   while (itr != end) {
     for (int64_t i = 0; i < num_channels; i++) {
-      *itr_out = static_cast<float>(*itr) / std[i] - mean[i];
+      *itr_out = (static_cast<float>(*itr) - mean[i]) / std[i];
       ++itr_out;
       ++itr;
     }

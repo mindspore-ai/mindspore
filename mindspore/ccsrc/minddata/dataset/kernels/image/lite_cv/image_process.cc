@@ -708,7 +708,7 @@ static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const
   if (mean.empty() && std.empty()) {
     return false;
   }
-  if (src.data_type_ != LDataType::FLOAT32) {
+  if (src.data_type_ != LDataType::FLOAT32 && src.data_type_ != LDataType::UINT8) {
     return false;
   }
   if (mean.size() > 0) {
@@ -739,36 +739,42 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
   if (!CheckMeanAndStd(src, dst, src.channel_, mean, std)) {
     return false;
   }
+  LiteMat src_f;
+  if (src.data_type_ == LDataType::UINT8) {
+    ConvertTo(src, src_f, 1.0);
+  } else {
+    src_f = src;
+  }
 
-  const float *src_start_p = src;
+  const float *src_start_p = src_f;
   float *dst_start_p = dst;
   if ((!mean.empty()) && std.empty()) {
-    for (int h = 0; h < src.height_; h++) {
-      for (int w = 0; w < src.width_; w++) {
-        uint32_t src_start = (h * src.width_ + w) * src.channel_;
-        for (int c = 0; c < src.channel_; c++) {
+    for (int h = 0; h < src_f.height_; h++) {
+      for (int w = 0; w < src_f.width_; w++) {
+        uint32_t src_start = (h * src_f.width_ + w) * src_f.channel_;
+        for (int c = 0; c < src_f.channel_; c++) {
           uint32_t index = src_start + c;
           dst_start_p[index] = src_start_p[index] - mean[c];
         }
       }
     }
   } else if (mean.empty() && (!std.empty())) {
-    for (int h = 0; h < src.height_; h++) {
-      for (int w = 0; w < src.width_; w++) {
-        uint32_t src_start = (h * src.width_ + w) * src.channel_;
-        for (int c = 0; c < src.channel_; c++) {
+    for (int h = 0; h < src_f.height_; h++) {
+      for (int w = 0; w < src_f.width_; w++) {
+        uint32_t src_start = (h * src_f.width_ + w) * src_f.channel_;
+        for (int c = 0; c < src_f.channel_; c++) {
           uint32_t index = src_start + c;
           dst_start_p[index] = src_start_p[index] / std[c];
         }
       }
     }
   } else if ((!mean.empty()) && (!std.empty())) {
-    for (int h = 0; h < src.height_; h++) {
-      for (int w = 0; w < src.width_; w++) {
-        uint32_t src_start = (h * src.width_ + w) * src.channel_;
-        for (int c = 0; c < src.channel_; c++) {
+    for (int h = 0; h < src_f.height_; h++) {
+      for (int w = 0; w < src_f.width_; w++) {
+        uint32_t src_start = (h * src_f.width_ + w) * src_f.channel_;
+        for (int c = 0; c < src_f.channel_; c++) {
           uint32_t index = src_start + c;
-          dst_start_p[index] = (src_start_p[index] / std[c]) - mean[c];
+          dst_start_p[index] = (src_start_p[index] - mean[c]) / std[c];
         }
       }
     }
