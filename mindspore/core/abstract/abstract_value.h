@@ -1233,55 +1233,6 @@ class MS_CORE_API AbstractEllipsis final : public AbstractBase {
 };
 using AbstractEllipsisPtr = std::shared_ptr<AbstractEllipsis>;
 
-/// \brief Class AbstractRefKey describes a RefKey node's abstract value.
-class MS_CORE_API AbstractRefKey final : public AbstractBase {
- public:
-  /// \brief Constructor of AbstractRefKey.
-  AbstractRefKey() : AbstractBase(), ref_key_value_(nullptr) { set_type(std::make_shared<RefKeyType>()); }
-
-  /// \brief Destructor of AbstractRefKey.
-  ~AbstractRefKey() override = default;
-  MS_DECLARE_PARENT(AbstractRefKey, AbstractBase)
-
-  TypePtr BuildType() const override { return std::make_shared<RefKeyType>(); }
-
-  /// \brief Overwrite the operator '==' to compare other v.
-  ///
-  /// \param[in] other The other instance of AbstractTimeOut.
-  ///
-  /// \return A boolean, which indicates whether the other abstract is same.
-  bool operator==(const AbstractRefKey &other) const;
-
-  bool operator==(const AbstractBase &other) const override;
-
-  AbstractBasePtr Clone() const override {
-    auto cloned = std::make_shared<AbstractRefKey>();
-    cloned->set_value(GetValueTrack());
-    return cloned;
-  }
-
-  inline void set_value(const ValuePtr &value) {
-    AbstractBase::set_value(value);
-    if (value != nullptr) {
-      ref_key_value_ = value->cast<RefKeyPtr>();
-    }
-  }
-
-  /// \brief Get the ref key.
-  ///
-  /// \return The pointer to RefKey.
-  RefKeyPtr ref_key_value() const { return ref_key_value_; }
-
-  AbstractBasePtr Join(const AbstractBasePtr &other) override;
-
-  std::string ToString() const override;
-
- private:
-  // cache for ref_key after build value, when value is null, return nullptr.
-  RefKeyPtr ref_key_value_{nullptr};
-};
-using AbstractRefKeyPtr = std::shared_ptr<AbstractRefKey>;
-
 /// \brief Class AbstractRef describes a RefTensor's abstract value.
 class MS_CORE_API AbstractRef final : public AbstractTensor {
  public:
@@ -1289,7 +1240,7 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
   ///
   /// \param[in] ref_key The ref key of tensor.
   /// \param[in] ref_value The tensor.
-  AbstractRef(const AbstractBasePtr &ref_key, const AbstractTensorPtr &ref_value);
+  AbstractRef(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value);
 
   /// \brief Destructor of AbstractEllipsis.
   ~AbstractRef() override = default;
@@ -1306,13 +1257,7 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
 
   bool operator==(const AbstractBase &other) const override;
 
-  AbstractBasePtr Clone() const override {
-    auto abs_tensor = AbstractTensor::Clone()->cast<AbstractTensorPtr>();
-    if (abs_tensor == nullptr) {
-      return nullptr;
-    }
-    return std::make_shared<AbstractRef>(ref_key_->Clone(), abs_tensor);
-  }
+  AbstractBasePtr Clone() const override;
 
   /// \brief Use parent's AbstractTensor::Clone() to clone an abstract.
   ///
@@ -1326,33 +1271,21 @@ class MS_CORE_API AbstractRef final : public AbstractTensor {
   /// \return A pointer to the abstract tensor.
   inline AbstractTensorPtr ref() { return shared_from_base<AbstractTensor>(); }
 
-  /// \brief Get the ref key.
-  ///
-  /// \return A pointer to the abstract key.
-  inline AbstractBasePtr ref_key() const { return ref_key_; }
-
   /// \brief Get the ref key value.
   ///
   /// \return A point to the RefKey.
-  inline RefKeyPtr ref_key_value() const { return ref_key_value_; }
+  inline ValuePtr ref_key_value() const { return ref_key_value_; }
 
-  AbstractBasePtr Broaden() const override {
-    // always broaden for ref
-    auto abs_tensor = AbstractTensor::Broaden()->cast<AbstractTensorPtr>();
-    if (abs_tensor == nullptr) {
-      return nullptr;
-    }
-    return std::make_shared<AbstractRef>(ref_key_->Broaden(), abs_tensor);
-  }
+  AbstractBasePtr Broaden() const override;
 
+  virtual AbstractBasePtr Join(const std::shared_ptr<AbstractRef> &other);
   AbstractBasePtr Join(const AbstractBasePtr &other) override;
 
   AbstractBasePtr PartialBroaden() const override;
 
  private:
-  AbstractBasePtr ref_key_;
-  // cache for ref_key after build value, when value is null, return nullptr.
-  RefKeyPtr ref_key_value_;
+  // ref_key_value is the reference key of AbstractRef, the value can be a string value or kAnyValue
+  ValuePtr ref_key_value_;
 };
 using AbstractRefPtr = std::shared_ptr<AbstractRef>;
 

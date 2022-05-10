@@ -603,7 +603,7 @@ bool IrExportBuilder::SetTensorProto(const AbstractBasePtr &abstract, mind_ir::T
     MS_LOG(ERROR) << "The abstract " << abstract->ToString() << " should be AbstractRef.";
     return false;
   }
-  auto ref_key_value = abs_ref->ref_key_value();
+  auto ref_key_value = abs_ref->ref_key_value()->cast<RefKeyPtr>();
   if (ref_key_value == nullptr) {
     MS_LOG(INFO) << "The ref_key_value of abstract ref " << abstract->ToString() << " is nullptr";
     return true;

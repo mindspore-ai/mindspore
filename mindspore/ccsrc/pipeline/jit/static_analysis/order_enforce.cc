@@ -413,7 +413,7 @@ class OrderEnforcer {
     if (abs_ref == nullptr) {
       return "";
     }
-    auto ref_key = abs_ref->ref_key_value();
+    auto ref_key = abs_ref->ref_key_value()->cast<RefKeyPtr>();
     if (ref_key == nullptr) {
       return "";
     }
@@ -433,7 +433,8 @@ class OrderEnforcer {
 
   std::vector<CNodePtr> GetSpecialLoads(const std::map<std::string, std::vector<CNodePtr>> &loads_map1,
                                         const std::map<std::string, std::vector<CNodePtr>> &loads_map2,
-                                        const std::map<std::string, std::vector<CNodePtr>> &loads_map3) {
+                                        const std::map<std::string, std::vector<CNodePtr>> &loads_map3,
+                                        const std::set<CNodePtr> &call_lodes) {
     std::vector<CNodePtr> need_insert_loads;
     for (auto &refkey_load : loads_map1) {
       auto &loads = refkey_load.second;
@@ -456,6 +457,12 @@ class OrderEnforcer {
         (void)need_insert_loads.emplace_back(loads[0]);
       }
     }
+    // Add call node will output is a AbstractRef and ref_key is kAnyValue.
+    for (const auto &call_lode : call_lodes) {
+      if (std::find(need_insert_loads.begin(), need_insert_loads.end(), call_lode) == need_insert_loads.end()) {
+        need_insert_loads.push_back(call_lode);
+      }
+    }
     return need_insert_loads;
   }
 
@@ -476,11 +483,15 @@ class OrderEnforcer {
     std::map<std::string, std::vector<CNodePtr>> refkey_loads;
     std::map<std::string, std::vector<CNodePtr>> refkey_loads_in_call_or_partial;
     std::map<std::string, std::vector<CNodePtr>> refkey_loads_input_is_call_or_partial;
+    std::set<CNodePtr> ref_call_lodes;
     for (auto &node : check_nodes) {
       // Record load refkey
       if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
         auto load = node->cast<CNodePtr>();
         auto input = load->input(1);
+        if (CheckLoadInput(input)) {
+          (void)ref_call_lodes.insert(load);
+        }
         auto refkey = GetRefKey(input);
         if (refkey == "") {
           MS_LOG(INFO) << "Load without ref key:" << load->DebugString();
@@ -517,7 +528,8 @@ class OrderEnforcer {
         }
       }
     }
-    return GetSpecialLoads(refkey_loads, refkey_loads_in_call_or_partial, refkey_loads_input_is_call_or_partial);
+    return GetSpecialLoads(refkey_loads, refkey_loads_in_call_or_partial, refkey_loads_input_is_call_or_partial,
+                           ref_call_lodes);
   }
 
   void InsertTensorMoveForLoad(const CNodePtr &node) {

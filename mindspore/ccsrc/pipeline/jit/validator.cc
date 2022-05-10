@@ -118,12 +118,11 @@ void ValidateAbstract(const AnfNodePtr &node) {
     MS_LOG(DEBUG) << "AbstractError in the graph: " << abstract->ToString();
     return;
   }
-  bool is_legal_abstract = abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() ||
-                           abstract->isa<AbstractTuple>() || abstract->isa<AbstractList>() ||
-                           abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
-                           abstract->isa<AbstractCOOTensor>() || abstract->isa<AbstractCSRTensor>() ||
-                           abstract->isa<abstract::AbstractRefKey>() || abstract->isa<AbstractRef>() ||
-                           abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>();
+  bool is_legal_abstract =
+    abstract->isa<AbstractType>() || abstract->isa<AbstractFunction>() || abstract->isa<AbstractTuple>() ||
+    abstract->isa<AbstractList>() || abstract->isa<AbstractTensor>() || abstract->isa<AbstractRowTensor>() ||
+    abstract->isa<AbstractCOOTensor>() || abstract->isa<AbstractCSRTensor>() || abstract->isa<AbstractRef>() ||
+    abstract->isa<abstract::AbstractNone>() || abstract->isa<abstract::AbstractMonad>();
   if (is_legal_abstract) {
     return;
   }

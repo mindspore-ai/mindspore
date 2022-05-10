@@ -36,14 +36,6 @@ AnfNodePtr ExpandJPrimitive(const ValueNodePtr &vnode, const pipeline::ResourceB
   return nullptr;
 }
 
-bool IsSideEffectOp(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  auto effect_info = GetPrimEffectInfo(GetCNodePrimitive(node));
-  return effect_info.memory || effect_info.io;
-}
-
 AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const OptimizerPtr &optimizer) {
   AnfNodePtr expanded_node = nullptr;
   if (IsValueNode<FuncGraph>(vnode)) {

@@ -816,7 +816,7 @@ bool NeedWaitForBranches(const AbstractBasePtr &abstract) {
   if (abstract->isa<AbstractSequence>()) {
     auto elements = abstract->cast<AbstractSequencePtr>()->elements();
     if (std::any_of(elements.begin(), elements.end(),
-                    [](const AbstractBasePtr &item) { return item->isa<AbstractFunction>(); })) {
+                    [](const AbstractBasePtr &item) { return NeedWaitForBranches(item); })) {
       return true;
     }
   }
