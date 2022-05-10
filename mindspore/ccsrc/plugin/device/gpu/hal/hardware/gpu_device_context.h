@@ -108,8 +108,14 @@ class GPUDeviceContext : public DeviceContext {
                                  const std::vector<AddressPtr> &outputs) const;
 #endif
   // Launch a kernel by 'KernelMod' of the kernel.
-  bool DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+  bool DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const;
+
+  // Really create a cuda stream.
+  bool CreateStream(void **stream) const override;
+
+  // Really destroy a cuda stream.
+  bool DestroyStream(void *stream) const override;
 
   // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
   // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.

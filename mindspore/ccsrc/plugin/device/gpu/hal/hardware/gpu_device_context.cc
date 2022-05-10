@@ -507,9 +507,6 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   if (!BindDeviceToCurrentThread()) {
     return false;
   }
-
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
   bool ret = true;
 
 #ifndef ENABLE_SECURITY
@@ -520,7 +517,7 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
 #endif
     std::lock_guard<std::mutex> locker(launch_mutex_);
     MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
-    ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+    ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
 #ifndef ENABLE_SECURITY
   } else {
     std::lock_guard<std::mutex> locker(launch_mutex_);
@@ -561,11 +558,8 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
     profiler_inst->SetStepTraceOpName(profiling_trace);
   }
 
-  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-  MS_EXCEPTION_IF_NULL(kernel_mod);
-
   profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), streams_.front());
-  bool ret = DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
+  bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs);
   profiler_inst->OpDataProducerEnd();
   profiler_inst->RecordFrameWorkInfo(kernel);
 
@@ -579,18 +573,41 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   return ret;
 }
 #endif
-bool GPUDeviceContext::DoLaunchKernel(KernelMod *kernel_mod, const std::vector<AddressPtr> &inputs,
+bool GPUDeviceContext::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                                       const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) const {
+  void *stream = nullptr;
+  if (common::AnfAlgo::HasNodeAttr(kAttrStream, kernel)) {
+    auto stream_id = common::AnfAlgo::GetNodeAttr<size_t>(kernel, kAttrStream);
+    auto iter = stream_ids_.find(stream_id);
+    if (iter == stream_ids_.end()) {
+      MS_LOG(EXCEPTION) << "Can not find stream for stream id: " << stream_id;
+    }
+    stream = iter->second;
+  } else {
+    stream = streams_.front();
+  }
+
+  MS_EXCEPTION_IF_NULL(stream);
+  auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  return kernel_mod->Launch(inputs, workspace, outputs, streams_.front());
+  return kernel_mod->Launch(inputs, workspace, outputs, stream);
 }
 
 bool GPUDeviceContext::SyncStream(size_t stream_id) const {
-  if (stream_id >= streams_.size()) {
-    MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
+  void *stream = nullptr;
+  auto iter = stream_ids_.find(stream_id);
+  if (iter != stream_ids_.end()) {
+    stream = iter->second;
+  } else {
+    if (stream_id >= streams_.size()) {
+      MS_LOG(EXCEPTION) << "The stream_id: " << stream_id << " is greater than stream array size: " << streams_.size();
+    }
+    stream = streams_[stream_id];
   }
-  bool result = GPUDeviceManager::GetInstance().SyncStream(streams_[stream_id]);
+
+  MS_EXCEPTION_IF_NULL(stream);
+  bool result = GPUDeviceManager::GetInstance().SyncStream(stream);
 #ifdef ENABLE_DUMP_IR
   if (!result) {
     mindspore::RDR::TriggerAll();
@@ -599,6 +616,24 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
   mindspore::RDR::ClearMemAddressInfo();
 #endif
   return result;
+}
+
+bool GPUDeviceContext::CreateStream(void **stream) const {
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!CudaDriver::CreateStream(stream)) {
+    MS_LOG(ERROR) << "Failed to create CUDA stream.";
+    return false;
+  }
+  return true;
+}
+
+bool GPUDeviceContext::DestroyStream(void *stream) const {
+  MS_EXCEPTION_IF_NULL(stream);
+  if (!CudaDriver::DestroyStream(stream)) {
+    MS_LOG(ERROR) << "Failed to destroy CUDA stream.";
+    return false;
+  }
+  return true;
 }
 
 uint32_t GPUDeviceContext::GetRankID() const {

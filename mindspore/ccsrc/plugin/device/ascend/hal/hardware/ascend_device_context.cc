@@ -674,8 +674,39 @@ void AscendDeviceContext::ReportWarningMessage() const {
 }
 
 bool AscendDeviceContext::SyncStream(size_t stream_id) const {
+  auto iter = stream_ids_.find(stream_id);
+  if (iter != stream_ids_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    auto ret = rtStreamSynchronize(iter->second);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "Failed to synchronize ascend stream, ret[" << ret << "]";
+      return false;
+    }
+    return true;
+  }
+
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   return runtime_instance_->SyncStream();
+}
+
+bool AscendDeviceContext::CreateStream(void **stream) const {
+  MS_EXCEPTION_IF_NULL(stream);
+  auto ret = rtStreamCreate(stream, 0);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Failed to create ascend stream, ret[" << ret << "]";
+    return false;
+  }
+  return true;
+}
+
+bool AscendDeviceContext::DestroyStream(void *stream) const {
+  MS_EXCEPTION_IF_NULL(stream);
+  auto ret = rtStreamDestroy(stream);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(ERROR) << "Failed to destroy ascend stream, ret[" << ret << "]";
+    return false;
+  }
+  return true;
 }
 
 bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const {
@@ -820,6 +851,15 @@ void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     return compute_stream_;
+  } else if (common::AnfAlgo::HasNodeAttr(kAttrStream, node)) {
+    auto stream_id = common::AnfAlgo::GetNodeAttr<size_t>(node, kAttrStream);
+    auto iter = stream_ids_.find(stream_id);
+    if (iter == stream_ids_.end()) {
+      MS_LOG(EXCEPTION) << "Can not find stream for stream id: " << stream_id;
+    }
+    void *stream = iter->second;
+    MS_EXCEPTION_IF_NULL(stream);
+    return stream;
   } else {
     auto stream = kernel_mod->stream();
     if (stream == nullptr) {

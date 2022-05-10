@@ -132,10 +132,18 @@ class DeviceContext {
 
   virtual bool LaunchCustomFunc(const AnfNodePtr &kernel) const { return true; }
 
+  // Create a stream with assigning a stream id, the assigned stream id will be written to the variable '*stream_id';
+  bool CreateStream(size_t *stream_id);
+
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.
   // Devices that do not need stream could ignore the implementation of this function.
+  // Since the current entry for creating streams is not unified, the implementation of the 'SyncStream'
+  // interface is implemented by subclasses.
   virtual bool SyncStream(size_t stream_id = 0) const { return true; }
+
+  // Destroy all streams created by 'CreateStream'.
+  bool DestroyAllStreams();
 
   // Get device_context_key_ to obtain device name and device id.
   const DeviceContextKey &device_context_key() const { return device_context_key_; }
@@ -155,7 +163,19 @@ class DeviceContext {
   CollectiveCommunicationLib *collective_comm_lib() const { return collective_comm_lib_; }
 
  protected:
+  // Create a stream on the device of this device context.
+  virtual bool CreateStream(void **stream) const { return true; }
+
+  // Destroy a stream on the device of this device context.
+  virtual bool DestroyStream(void *stream) const { return true; }
+
   DeviceContextKey device_context_key_;
+
+  // Record stream ids to stream address, key: stream id, value: address of stream.
+  std::map<size_t, void *> stream_ids_;
+
+  // Ensure the thread safety for creating stream.
+  std::mutex stream_mutex_;
 
   // The collective communication library.
   CollectiveCommunicationLib *collective_comm_lib_;

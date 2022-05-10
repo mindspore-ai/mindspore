@@ -460,6 +460,7 @@ constexpr auto kAttrRecordEvent = "record_event";
 constexpr auto kAttrWaitEvent = "wait_event";
 constexpr auto kAttrRecordEventStream = "record_event_stream";
 constexpr auto kAttrWaitEventStream = "wait_event_stream";
+constexpr auto kAttrStream = "stream";
 constexpr auto kAttrIndex = "index";
 constexpr auto kAttrSplitDim = "split_dim";
 constexpr auto kAttrNumSplit = "num_split";

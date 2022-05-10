@@ -144,6 +144,12 @@ class AscendDeviceContext : public DeviceContext {
   void ReportWarningMessage() const;
   void SetErrorManagerContext() const;
 
+  // Really create an ascend stream.
+  bool CreateStream(void **stream) const override;
+
+  // Really destroy an ascend stream.
+  bool DestroyStream(void *stream) const override;
+
   // Kernel Runtime  --- only for task sink
   AscendKernelRuntime *runtime_instance_{nullptr};
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};
