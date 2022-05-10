@@ -53,7 +53,7 @@ int SliceCPUKernel::ReSize() {
   auto size = reinterpret_cast<int32_t *>(size_tensor->data());
   CHECK_NULL_RETURN(size);
 
-  param_->param_length_ = in_tensor->shape().size();
+  param_->param_length_ = static_cast<int>(in_tensor->shape().size());
   if (param_->param_length_ > DIMENSION_8D) {
     MS_LOG(ERROR) << "input dimension num should <= " << DIMENSION_8D;
     return RET_ERROR;

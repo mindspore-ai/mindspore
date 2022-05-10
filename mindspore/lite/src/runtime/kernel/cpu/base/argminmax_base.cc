@@ -44,7 +44,7 @@ int ArgMinMaxCPUKernel::ReSize() {
   auto dims_size = in_shape.size();
   int axis = arg_param_->axis_ < 0 ? arg_param_->axis_ + dims_size : arg_param_->axis_;
   arg_param_->axis_ = axis;
-  arg_param_->dims_size_ = dims_size;
+  arg_param_->dims_size_ = static_cast<int>(dims_size);
   if (arg_param_->topk_ <= 0) {
     MS_LOG(ERROR) << "Invalid topk " << arg_param_->topk_;
     return RET_ERROR;

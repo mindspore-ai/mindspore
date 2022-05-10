@@ -53,7 +53,7 @@ void StridedSliceCPUKernel::InitFastRunParam() {
   for (int i = 0; i < split_axis_; ++i) {
     outer_ *= in_shape[i];
   }
-  for (size_t i = split_axis_ + 1; i < in_shape.size(); i++) {
+  for (size_t i = static_cast<size_t>(split_axis_ + 1); i < in_shape.size(); i++) {
     inner_ *= in_shape[i];
   }
   outer_ == 1 ? (parallel_on_split_axis_ = true) : (parallel_on_outer_ = true);

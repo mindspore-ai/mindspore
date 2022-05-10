@@ -35,6 +35,7 @@ int SplitWithOverlapBaseCPUKernel::CalculateSplitedShapes(const std::vector<int>
   for (auto i = 0; i < param_->num_split_; i++) {
     total_block_count += param_->ratio_[i];
   }
+  NNACL_CHECK_ZERO_RETURN_ERR(total_block_count);
   CHECK_LESS_RETURN(static_cast<int>(shape.size()), param_->split_dim_ + 1);
   auto split_dim_size = shape[param_->split_dim_];
 
