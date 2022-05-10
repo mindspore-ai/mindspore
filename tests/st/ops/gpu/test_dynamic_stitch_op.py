@@ -55,3 +55,50 @@ def test_net_int32():
     net = Net()
     output = net(indices, data)
     assert np.array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_net_1():
+    """
+    Feature: Test dynamicstitch op.
+    Description: An index corresponds to a number
+    Expectation: the result match expected array.
+    """
+    x1 = Tensor(np.array([0, 1]), mindspore.int32)
+    x2 = Tensor([1], mindspore.int32)
+    y1 = Tensor(np.array([1, 3]), mindspore.int32)
+    y2 = Tensor(np.array([2]), mindspore.int32)
+    expected = np.array([1, 2]).astype(np.int32)
+
+    indices = [x1, x2]
+    data = [y1, y2]
+    net = Net()
+    output = net(indices, data)
+    assert np.array_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_net_2():
+    """
+    Feature: Test dynamicstitch op.
+    Description: An index corresponds to a multidimensional array.
+    Expectation: the result match expected array.
+    """
+    x1 = Tensor(np.array([0, 2]), mindspore.int32)
+    x2 = Tensor([1], mindspore.int32)
+    y1 = Tensor(np.array([[[1, 2, 3], [4, 5, 6]],
+                          [[13, 14, 15], [16, 17, 18]]]), mindspore.int32)
+    y2 = Tensor(np.array([[[7, 8, 9], [10, 11, 12]]]), mindspore.int32)
+    expected = np.array([[[1, 2, 3], [4, 5, 6]],
+                         [[7, 8, 9], [10, 11, 12]],
+                         [[13, 14, 15], [16, 17, 18]]]).astype(np.int32)
+
+    indices = [x1, x2]
+    data = [y1, y2]
+    net = Net()
+    output = net(indices, data)
+    assert np.array_equal(output.asnumpy(), expected)
