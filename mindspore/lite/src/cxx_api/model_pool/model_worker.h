@@ -23,17 +23,27 @@
 #include <vector>
 #include <utility>
 #include <memory>
+#include <map>
 #include "include/api/model.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
 class PredictTaskQueue;
+
+struct WorkerConfig {
+  std::map<std::string, std::map<std::string, std::string>> config_info;
+  std::shared_ptr<Context> context = nullptr;
+  int numa_id = 0;
+};
+
 class ModelWorker {
  public:
   ModelWorker() = default;
 
   ~ModelWorker() = default;
 
-  Status Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context);
+  Status Init(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config);
+
+  Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
 
   std::vector<MSTensor> GetInputs();
 
@@ -46,8 +56,7 @@ class ModelWorker {
 
   bool IsAvailable();
 
-  void CreateThreadWorker(const char *model_buf, size_t size, int node_id,
-                          const std::shared_ptr<Context> &model_context,
+  void CreateThreadWorker(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config,
                           const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
 
  private:

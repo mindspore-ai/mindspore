@@ -35,18 +35,20 @@ void ModelWorker::WaitCreateWorkerDone() {
   return;
 }
 
-void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size, int node_id,
-                                     const std::shared_ptr<Context> &model_context,
+void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
+                                     const std::shared_ptr<WorkerConfig> &worker_config,
                                      const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
                                      bool *create_success) {
-  auto status = Init(model_buf, size, model_context);
+  auto status = Init(model_buf, size, worker_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "init failed in model worker.";
     *create_success = false;
     create_work_done_ = true;
     create_work_done_condition_.notify_one();
   }
-  Run(node_id, predict_task_queue);
+  auto numa_node_id = worker_config->numa_id;
+  int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
+  Run(task_queue_id, predict_task_queue);
 }
 
 void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue) {
@@ -106,16 +108,25 @@ Status ModelWorker::ResizeInit() {
   return kSuccess;
 }
 
-Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context) {
+Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
-  MS_CHECK_TRUE_MSG(model_context != nullptr, kLiteError, "model_context is nullptr in model worker.");
+  MS_CHECK_TRUE_MSG(worker_config != nullptr, kLiteError, "worker_config is nullptr in model worker.");
   model_ = std::make_shared<Model>();
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
   }
   mindspore::ModelType model_type = kMindIR_Lite;
-  auto status = model_->Build(model_buf, size, model_type, model_context);
+  for (auto &section : worker_config->config_info) {
+    for (auto &config : section.second) {
+      auto status = model_->UpdateConfig(section.first, std::make_pair(config.first, config.second));
+      if (status != kSuccess) {
+        MS_LOG(ERROR) << "Update Config failed, status=" << status;
+        return status;
+      }
+    }
+  }
+  auto status = model_->Build(model_buf, size, model_type, worker_config->context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
@@ -134,6 +145,12 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
     }
   }
   return kSuccess;
+}
+
+Status ModelWorker::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  std::lock_guard<std::mutex> worker_lock(mtx_worker_);
+  MS_LOG(DEBUG) << "UpdateConfig now.";
+  return model_->UpdateConfig(section, config);
 }
 
 std::vector<MSTensor> ModelWorker::GetInputs() { return origin_worker_inputs_; }

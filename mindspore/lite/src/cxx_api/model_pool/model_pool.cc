@@ -307,6 +307,9 @@ ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerCon
     device_info->SetAllocator(allocator);
     device_info->SetEnableFP16(false);
     new_device_list.push_back(device_info);
+    if (runner_config != nullptr) {
+      worker_config->config_info = runner_config->GetConfigInfo();
+    }
     worker_config->context = context;
     model_pool_config.push_back(worker_config);
   }
@@ -398,8 +401,7 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
     predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
     worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
-                                             task_queue_id, model_pool_config[i]->context, predict_task_queue_,
-                                             &create_worker_success_));
+                                             model_pool_config[i], predict_task_queue_, &create_worker_success_));
     all_model_worker_.push_back(model_worker);
   }
   for (size_t i = 0; i < workers_num_; i++) {
@@ -418,6 +420,17 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
   if (graph_buf != nullptr) {
     delete[] graph_buf;
     graph_buf = nullptr;
+  }
+  return kSuccess;
+}
+
+Status ModelPool::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  for (auto &worker : all_model_worker_) {
+    auto status = worker->UpdateConfig(section, config);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "model pool update config failed, status=" << status;
+      return status;
+    }
   }
   return kSuccess;
 }
