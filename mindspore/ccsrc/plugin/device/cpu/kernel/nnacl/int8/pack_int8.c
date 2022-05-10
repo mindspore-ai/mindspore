@@ -120,9 +120,9 @@ void PackInputSum16x4PerLayer(const int8_t *src, int32_t *dst, int32_t filter_zp
 #ifdef ENABLE_ARM
   PreSum4x16Int8Pert(src, dst, row4, col16, filter_zp);
 #else
-  for (int r = 0; r < row4; r++) {
+  for (size_t r = 0; r < row4; r++) {
     int32_t tmp_value = 0;
-    for (int c = 0; c < col16; c++) {
+    for (size_t c = 0; c < col16; c++) {
       int r4div = r / C4NUM, r4mod = r % C4NUM, c16div = c / C16NUM, c16mod = c % C16NUM;
       int src_index = r4div * C4NUM * col16 + c16div * C16NUM * C4NUM + r4mod * C16NUM + c16mod;
       tmp_value += src[src_index];
