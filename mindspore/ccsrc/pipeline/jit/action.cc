@@ -927,11 +927,6 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
   // GRAPH | normal network and if/for/switch scenario etc : MultiGraph path in MindRT.
   MS_LOG(INFO) << "Run graph mode with multigraph sink.";
   set_ctx(true, true, true);
-  auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
-  if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseMPI()) {
-    MS_LOG(EXCEPTION) << "current execute mode mush launch process with OpenMPI";
-  }
   return;
 }
 
@@ -969,29 +964,10 @@ void OriginSetRunMode(const ResourcePtr &res) {
   }
 }
 
-bool TaskEmitAction(const ResourcePtr &res) {
+void SetRunMode(const ResourcePtr &res, bool pynative_switch_to_graph_mode) {
   MS_EXCEPTION_IF_NULL(res);
-  FuncGraphPtr func_graph = res->func_graph();
-  if (func_graph == nullptr) {
-    MS_LOG(EXCEPTION) << "TaskEmit args error";
-  }
-  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode &&
-      CheckGraphOutputConstOrParameter(func_graph)) {
-    return true;
-  }
-
-  func_graph->SetMultiTarget();
-  if (DumpJsonParser::GetInstance().IsDumpEnabled() && func_graph->exist_multi_target()) {
-    MS_LOG(WARNING) << "Multi device target is detected, CPU data is dumped in rank_0 directory";
-  }
-  DisableMindRT(res);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
-  auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
-  bool pynative_switch_to_graph_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
-                                       (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1) &&
-                                       !is_parallel;
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) && common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
     // Run in GRAPH_MODE if the func_graph is ms_function or the func_graph contain multi-subgraph.
     if (pynative_switch_to_graph_mode) {
@@ -1002,7 +978,38 @@ bool TaskEmitAction(const ResourcePtr &res) {
   } else {
     OriginSetRunMode(res);
   }
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
+  auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
+  if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseMPI()) {
+    MS_LOG(EXCEPTION) << "Current execute mode must launch process with OpenMPI";
+  }
+}
 
+bool TaskEmitAction(const ResourcePtr &res) {
+  MS_EXCEPTION_IF_NULL(res);
+  FuncGraphPtr func_graph = res->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(EXCEPTION) << "TaskEmit args error";
+  }
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
+  if (mode == kGraphMode && CheckGraphOutputConstOrParameter(func_graph)) {
+    return true;
+  }
+
+  func_graph->SetMultiTarget();
+  if (DumpJsonParser::GetInstance().IsDumpEnabled() && func_graph->exist_multi_target()) {
+    MS_LOG(WARNING) << "Multi device target is detected, CPU data is dumped in rank_0 directory";
+  }
+  DisableMindRT(res);
+  auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  auto is_parallel = (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel);
+  bool pynative_switch_to_graph_mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+                                       (!func_graph->is_bprop() || func_graph->manager()->func_graphs().size() > 1) &&
+                                       !is_parallel;
+  SetRunMode(res, pynative_switch_to_graph_mode);
   auto bc_ptr = res->GetResult(kBackend).cast<compile::BackendPtr>();
   MS_EXCEPTION_IF_NULL(bc_ptr);
   std::string backend = context_ptr->backend_policy();
