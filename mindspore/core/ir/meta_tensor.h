@@ -269,7 +269,9 @@ class MS_CORE_API MetaSparseTensor : public Value {
   ///
   /// \param[in] meta_sparse_tensor The MetaSparseTensor object to be compared.
   /// \return Return true if having same type and shape, otherwise return false.
-  virtual bool operator==(const MetaSparseTensor &meta_sparse_tensor) const;
+  virtual bool operator==(const MetaSparseTensor &meta_sparse_tensor) const {
+    return data_type_ == meta_sparse_tensor.data_type() && shape_ == meta_sparse_tensor.shape();
+  }
 
   /// \brief Get the data type of the sparse tensor.
   /// All the types are defined in "ir/dtype.h".
@@ -296,6 +298,11 @@ class MS_CORE_API MetaSparseTensor : public Value {
   ///
   /// \param[in] shape The shape of the tensor.
   void set_shape(const ShapeVector &shape) { this->shape_ = shape; }
+
+  /// \brief Get display information of this Tensor.
+  ///
+  /// \return The display information of this Tensor.
+  virtual std::string ToString() const = 0;
 
  protected:
   // Data type of the sparsetensor.

@@ -477,8 +477,8 @@ AbstractBasePtr InferImplCSRMV(const AnalysisEnginePtr &, const PrimitivePtr &pr
   auto sparse_shape = sparse->shape()->shape();
   auto dense_shape = dense->shape()->shape();
   if (sparse_shape.size() != kCSRMVShapeSize || dense_shape.size() != kCSRMVShapeSize) {
-    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMVShapeSize << "-D inputs!"
-                             << "but sparse tensor has " << sparse_shape.size() << " dimensions, "
+    MS_EXCEPTION(ValueError) << "Currently, only support " << kCSRMVShapeSize << "-D inputs! "
+                             << "But csr tensor has " << sparse_shape.size() << " dimensions, "
                              << "and dense tensor has " << dense_shape.size() << " dimensions, ";
   }
   if (dense_shape[kIndexZero] != sparse_shape[kIndexOne] || dense_shape[kIndexOne] != 1) {
@@ -537,7 +537,7 @@ AbstractBasePtr InferImplCSRReduceSum(const AnalysisEnginePtr &, const Primitive
     primitive->set_attr(kCSRAxis, MakeValue(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For CSRReduceSum, `axis` should be int32 or int64, but got "
-                            << axis->BuildValue()->ToString();
+                            << axis->BuildType()->ToString();
   }
 
   MS_EXCEPTION_IF_NULL(sparse->values()->element());

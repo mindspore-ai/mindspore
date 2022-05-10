@@ -930,8 +930,6 @@ TensorPtrList Tensor::GetFlattenedTensors(const TensorPtrList &tensors) {
 CSRTensor::CSRTensor(const TensorPtr indptr, const TensorPtr indices, const TensorPtr values, const ShapeVector &shape)
     : MetaSparseTensor(values->data_type(), shape), indptr_(indptr), indices_(indices), values_(values) {}
 
-bool CSRTensor::operator==(const CSRTensor &csr_tensor) const { return (&csr_tensor == this); }
-
 std::string CSRTensor::ToString() const {
   std::ostringstream buf;
   MS_EXCEPTION_IF_NULL(values_);
@@ -997,6 +995,35 @@ abstract::AbstractBasePtr COOTensor::ToAbstract() {
     MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
   }
   auto abs_sparse_tensor = std::make_shared<abstract::AbstractCOOTensor>(dtype, shape_);
+
+  abs_sparse_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+  abs_sparse_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
+
+  std::vector<abstract::AbstractBasePtr> abstract_shape;
+  (void)std::transform(
+    shape_.begin(), shape_.end(), std::back_inserter(abstract_shape),
+    [](auto shp) -> abstract::AbstractScalarPtr { return std::make_shared<abstract::AbstractScalar>(shp); });
+  abs_sparse_tensor->set_dense_shape(std::make_shared<abstract::AbstractTuple>(abstract_shape));
+
+  return abs_sparse_tensor;
+}
+
+std::string RowTensor::ToString() const {
+  std::ostringstream buf;
+  MS_EXCEPTION_IF_NULL(indices_);
+  MS_EXCEPTION_IF_NULL(values_);
+  auto dtype = values_->Dtype();
+  buf << "RowTensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString()
+      << ", indices=" << indices_->ToString() << ", values=" << values_->ToString() << ")";
+  return buf.str();
+}
+
+abstract::AbstractBasePtr RowTensor::ToAbstract() {
+  auto dtype = values_->Dtype();
+  if (!IsSubType(dtype, kNumber) && !IsSubType(dtype, kString) && !IsSubType(dtype, kTensorType)) {
+    MS_LOG(EXCEPTION) << "Expect tensor type kNumber or kString or kTensor but got: " << dtype->ToString() << ".";
+  }
+  auto abs_sparse_tensor = std::make_shared<abstract::AbstractRowTensor>(dtype, shape_);
 
   abs_sparse_tensor->set_indices(indices_->ToAbstract()->cast<abstract::AbstractTensorPtr>());
   abs_sparse_tensor->set_values(values_->ToAbstract()->cast<abstract::AbstractTensorPtr>());

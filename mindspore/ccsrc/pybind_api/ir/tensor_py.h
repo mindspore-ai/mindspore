@@ -130,6 +130,12 @@ class COOTensorPy {
  public:
   static py::tuple GetPyTupleShape(const COOTensor &coo_tensor);
 };
+
+// RowTensor python wrapper and adapter class.
+class RowTensorPy {
+ public:
+  static py::tuple GetPyTupleShape(const RowTensor &row_tensor);
+};
 }  // namespace tensor
 }  // namespace mindspore
 

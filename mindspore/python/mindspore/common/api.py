@@ -32,8 +32,9 @@ from mindspore._extends.remote import kernel_build_server
 from .tensor import Tensor as MsTensor
 from .tensor import CSRTensor as MsCSRTensor
 from .tensor import COOTensor as MsCOOTensor
+from .tensor import RowTensor as MsRowTensor
 from .initializer import initializer
-from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, COOTensor, PynativeExecutor_
+from .._c_expression import GraphExecutor_, Tensor, MetaTensor, CSRTensor, RowTensor, COOTensor, PynativeExecutor_
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._tensor import _load_tensor_by_layout
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
@@ -65,6 +66,8 @@ def _convert_python_data(data):
         return MsCSRTensor(csr_tensor=data)
     if isinstance(data, COOTensor) and not isinstance(data, MsCOOTensor):
         return MsCOOTensor(coo_tensor=data)
+    if isinstance(data, RowTensor) and not isinstance(data, MsRowTensor):
+        return MsRowTensor(row_tensor=data)
     if isinstance(data, tuple):
         return tuple(_convert_python_data(x) for x in data)
     if isinstance(data, list):

@@ -653,14 +653,17 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                              }));
                        }));
 
-py::tuple CSRTensorPy::GetPyTupleShape(const CSRTensor &csr_tensor) {
-  auto &shape = csr_tensor.shape();
+template <typename T>
+py::tuple GetSparseTensorShape(const T &sparse_tensor) {
+  auto &shape = sparse_tensor.shape();
   py::tuple dims(shape.size());
   for (size_t i = 0; i < dims.size(); ++i) {
     dims[i] = py::int_(shape[i]);
   }
   return dims;
 }
+
+py::tuple CSRTensorPy::GetPyTupleShape(const CSRTensor &csr_tensor) { return GetSparseTensorShape(csr_tensor); }
 
 REGISTER_PYBIND_DEFINE(
   CSRTensor, ([](const py::module *m) {
@@ -682,14 +685,7 @@ REGISTER_PYBIND_DEFINE(
       .def("__repr__", &CSRTensor::ToString);
   }));
 
-py::tuple COOTensorPy::GetPyTupleShape(const COOTensor &coo_tensor) {
-  auto &shape = coo_tensor.shape();
-  py::tuple dims(shape.size());
-  for (size_t i = 0; i < dims.size(); ++i) {
-    dims[i] = py::int_(shape[i]);
-  }
-  return dims;
-}
+py::tuple COOTensorPy::GetPyTupleShape(const COOTensor &coo_tensor) { return GetSparseTensorShape(coo_tensor); }
 
 REGISTER_PYBIND_DEFINE(COOTensor, ([](const py::module *m) {
                          // Define python COOTensor class.
@@ -709,6 +705,28 @@ REGISTER_PYBIND_DEFINE(COOTensor, ([](const py::module *m) {
                            .def_property_readonly("_values", &COOTensor::GetValues)
                            .def("__str__", &COOTensor::ToString)
                            .def("__repr__", &COOTensor::ToString);
+                       }));
+
+py::tuple RowTensorPy::GetPyTupleShape(const RowTensor &row_tensor) { return GetSparseTensorShape(row_tensor); }
+
+REGISTER_PYBIND_DEFINE(RowTensor, ([](const py::module *m) {
+                         // Define python RowTensor class.
+                         (void)py::class_<RowTensor, std::shared_ptr<RowTensor>>(*m, "RowTensor")
+                           .def(py::init([](const Tensor &indices, const Tensor &values, const py::tuple &shape) {
+                                  return std::make_shared<RowTensor>(std::make_shared<Tensor>(indices),
+                                                                     std::make_shared<Tensor>(values),
+                                                                     GetShapeFromTuple(shape));
+                                }),
+                                py::arg("indices"), py::arg("values"), py::arg("shape"))
+                           .def(py::init(
+                                  [](const RowTensor &row_tensor) { return std::make_shared<RowTensor>(row_tensor); }),
+                                py::arg("input"))
+                           .def_property_readonly("_shape", RowTensorPy::GetPyTupleShape)
+                           .def_property_readonly("_dtype", &RowTensor::Dtype)
+                           .def_property_readonly("_indices", &RowTensor::GetIndices)
+                           .def_property_readonly("_values", &RowTensor::GetValues)
+                           .def("__str__", &RowTensor::ToString)
+                           .def("__repr__", &RowTensor::ToString);
                        }));
 }  // namespace tensor
 }  // namespace mindspore

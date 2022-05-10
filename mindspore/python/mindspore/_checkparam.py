@@ -954,10 +954,10 @@ class Validator:
                 raise TypeError(f"For COOTensor, the element type of 'shape' must be int, but got {type(sh)}")
         if len(indices_shp) != 2:
             raise ValueError(f"For COOTensor, 'indices' must be a 2-dimensional tensor, but got a {len(indices_shp)}"
-                             f"dimension tensor.")
+                             f"-dimensional tensor.")
         if len(values_shp) != 1:
             raise ValueError(f"For COOTensor, 'values' must be a 1-dimensional tensor, but got a {len(values_shp)}"
-                             f"dimension tensor.")
+                             f"-dimensional tensor.")
         if indices_shp[0] != values_shp[0]:
             raise ValueError(f"For COOTensor, 'indices.shape[0]' must be euqal to 'values.shape[0]', but got "
                              f"'indices.shape[0]' = {indices_shp[0]} and 'values.shape[0]' = {values_shp[0]}.")
