@@ -44,12 +44,12 @@ bool DropoutNDGpuKernelMod::CheckDropOutNdShape() {
     expected_dims = k5d;
     last_remain_dim = k5d_remain_dim;
   } else {
-    MS_LOG(ERROR) << "For 'DropoutNd' should only support Dropout2D or Dropout3D, right now, but got " << kernel_name_;
+    MS_LOG(ERROR) << "For 'DropoutNd', it only support Dropout2D or Dropout3D, right now, but got " << kernel_name_;
     return false;
   }
   if (nd_dims < expected_dims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << " input dims should larger than " << expected_dims << "D, but got  "
-                  << nd_dims << "D.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's input dims should larger than " << expected_dims
+                  << "D, but got  " << nd_dims << "D.";
     return false;
   }
   // Flatten input shape to [batch, channels, XHW] for VMap.
@@ -68,7 +68,7 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
   if (kernel_name_ == prim::kPrimDropout2D->name()) {
@@ -78,7 +78,7 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     auto kernel_ptr = std::make_shared<ops::Dropout3D>(base_operator->GetPrim());
     keep_prob_ = kernel_ptr->get_keep_prob();
   } else {
-    MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod' should get Dropout2D or Dropout3D but get invalid kernel name : "
+    MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod', it's must be Dropout2D or Dropout3D but get invalid kernel name : "
                   << kernel_name_;
     return false;
   }
@@ -90,11 +90,10 @@ bool DropoutNDGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
-  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   if (!states_init_) {
     CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&cu_rand_generator_, CURAND_RNG_PSEUDO_DEFAULT),
                                  "Failed to create generator");
@@ -111,27 +110,17 @@ int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
   ResetResource();
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_INVALID_SHAPE;
-    }
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+    return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   if (!CheckDropOutNdShape() || channels_ == 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, must be 4D or 5D "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's input dims is invalid, must be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";
     return KRET_RESIZE_FAILED;
   }
-  size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.emplace_back(input_size);
-  size_t output_size = input_elements_ * unit_size_;
-  size_t output_mask_size = input_elements_ * sizeof(bool);
-  output_size_list_.emplace_back(output_size);
-  output_size_list_.emplace_back(output_mask_size);
   // The number of elements per channel
   num_per_channel_ = input_elements_ / channels_ / batches_;
   size_t workspace_size = channels_ * sizeof(float);

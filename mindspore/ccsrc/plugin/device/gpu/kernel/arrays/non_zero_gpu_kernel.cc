@@ -67,7 +67,7 @@ int NonZeroGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   rank_ = input_shape_.size();
   input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
   if (input_size_ == 0) {
-    return KRET_INVALID_SHAPE;
+    return KRET_UNKNOWN_SHAPE;
   }
 
   input_size_list_.push_back(input_size_ * data_size_);

@@ -88,7 +88,7 @@ int BroadcastOpGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   for (const auto &input : inputs) {
     auto input_shape = input->GetShapeVector();
     if (!IsValidShape(input_shape)) {
-      return KRET_INVALID_SHAPE;
+      return KRET_UNKNOWN_SHAPE;
     }
   }
 

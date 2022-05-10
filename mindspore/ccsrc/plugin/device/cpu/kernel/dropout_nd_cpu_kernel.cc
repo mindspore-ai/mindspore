@@ -44,11 +44,11 @@ bool DropoutNdCpuKernelMod::CheckDropOutNdShape() {
     expected_dims = k5d;
     last_remain_dim = k5d_remain_dim;
   } else {
-    MS_LOG(ERROR) << "For 'DropoutNd' should only support Dropout2D or Dropout3D, right now, but got " << kernel_name_;
+    MS_LOG(ERROR) << "For 'DropoutNd', it only support Dropout2D or Dropout3D, right now, but got " << kernel_name_;
     return false;
   }
   if (nd_dims < expected_dims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << " input dims should larger than " << expected_dims << "D, but got  "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << ", it's input dims must larger than " << expected_dims << "D, but got  "
                   << nd_dims << "D.";
     return false;
   }
@@ -68,7 +68,7 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                                  const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
   // Get Self primitive attribute by primitive.
@@ -79,7 +79,7 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     auto kernel_ptr = std::make_shared<ops::Dropout3D>(base_operator->GetPrim());
     keep_prob_ = kernel_ptr->get_keep_prob();
   } else {
-    MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod' should get Dropout2D or Dropout3D but get invalid kernel name : "
+    MS_LOG(ERROR) << "For 'DropoutNDGpuKernelMod', it's must be Dropout2D or Dropout3D, but get invalid kernel name : "
                   << kernel_name_;
     return false;
   }
@@ -91,7 +91,7 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -101,16 +101,15 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  int ret = KRET_OK;
   ResetResource();
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   if (!CheckDropOutNdShape() || channels_ == 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input dims is invalid, should be 4D or 5D "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input dims is invalid, should be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";
     return KRET_RESIZE_FAILED;
   }
@@ -144,11 +143,11 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   if (keep_prob_ == 0.0) {
     auto ret = memset_s(output, outputs.at(kIndex0)->size, 0, outputs.at(kIndex0)->size);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " memset_s error.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error.";
     }
     ret = memset_s(mask, outputs.at(kIndex1)->size, 0, outputs.at(kIndex1)->size);
     if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << " memset_s error.";
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error.";
     }
     return true;
   }

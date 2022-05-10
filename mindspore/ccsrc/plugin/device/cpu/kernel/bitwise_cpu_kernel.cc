@@ -67,7 +67,7 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = 0;
-  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
   std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
