@@ -58,7 +58,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
       auto re_idx = std::find(temp.begin(), temp.end(), axis[i]);
       if (re_idx != temp.end()) {
         MS_EXCEPTION(ValueError) << "For '" << prim_name
-                                 << "', The element of the axis must be different, but got axis: " << axis << ".";
+                                 << "', the element of the axis must be different, but got axis: " << axis << ".";
       }
       if (keep_dims == false) {
         output_shape[axis[i]] = -1;

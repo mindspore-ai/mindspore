@@ -118,8 +118,8 @@ abstract::ShapePtr BatchMatmulInferShape(const PrimitivePtr &primitive,
     auto x_c = x_shp[x_offset + (transpose_a ? 0 : 1)];
     auto y_r = y_shp[y_offset + (transpose_b ? 1 : 0)];
     if (x_c != y_r) {
-      MS_LOG(EXCEPTION) << "BatchMatMul shape error, got x_col: " << x_c << ", y_row: " << y_r
-                        << ". In BatchMatMul x_col and y_row must be equal.";
+      MS_LOG(EXCEPTION) << "For '" << prim_name << "',  x_col must be equal to y_row. But got x_col: " << x_c
+                        << ", y_row: " << y_r << ".";
     }
   }
   ShapeVector ret_shape;
