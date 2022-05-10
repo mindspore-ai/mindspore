@@ -3929,10 +3929,13 @@ void PynativeExecutor::ClearRes() {
 }
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
-  forward_executor()->SetFeedDynamicInputAbs(cell, args);
   if (py::isinstance<Cell>(cell)) {
     forward_executor()->IncreaseCellDepth();
   }
+
+  // Do some initing work before new graph
+  forward_executor()->SetFeedDynamicInputAbs(cell, args);
+
   if (!grad_flag()) {
     MS_LOG(DEBUG) << "Grad flag is false";
     return;
@@ -3945,9 +3948,15 @@ void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, c
   if (py::isinstance<Cell>(cell)) {
     forward_executor()->DecreaseCellDepth();
   }
+
+  // Do some finishing work after end graph
   if (forward_executor()->IsFirstCell()) {
     // Clean up some resources for dynamic shape
     forward_executor()->dynamic_shape_info_ptr()->reset();
+    // Reset lazy build
+    SetLazyBuild(false);
+    // Finish lazy task
+    ExecuteLazyTask();
   }
 
   if (!grad_flag()) {
@@ -4019,7 +4028,6 @@ REGISTER_PYBIND_DEFINE(PynativeExecutor_, ([](const py::module *m) {
                            .def("clear_grad", &PynativeExecutor::ClearGrad, "pynative clear grad status.")
                            .def("sync", &PynativeExecutor::Sync, "pynative sync stream.")
                            .def("set_lazy_build", &PynativeExecutor::SetLazyBuild, "pynative build kernel async")
-                           .def("execute_lazy_task", &PynativeExecutor::ExecuteLazyTask, "clear all task")
                            .def("__call__", &PynativeExecutor::Run, "pynative executor run grad graph.")
                            .def("set_graph_phase", &PynativeExecutor::set_graph_phase, "pynative set graph phase")
                            .def("grad_flag", &PynativeExecutor::grad_flag, "pynative grad flag")

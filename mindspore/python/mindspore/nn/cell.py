@@ -82,17 +82,6 @@ class Cell(Cell_):
         [Parameter (name=weight, shape=(240, 120, 4, 4), dtype=Float32, requires_grad=True)]
     """
 
-    class _CellGuard:
-        """Detecting whether the cell is a top-level cell with the 'with statement'."""
-        def __enter__(self):
-            """Enter cell and increase recursion depth count."""
-            _pynative_executor.set_lazy_build(True)
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            """Exit cell and decrease recursion depth count."""
-            if _pynative_executor.is_first_cell():
-                _pynative_executor.set_lazy_build(False)
-
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
                    '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
                    '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase', '_auto_parallel_mode',
@@ -605,19 +594,14 @@ class Cell(Cell_):
             self._check_compile_dynamic_shape(*args)
             _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
 
-        cast_inputs = self.auto_cast_inputs(args)
-
-        with self._CellGuard():
-            try:
-                _pynative_executor.new_graph(self, *args, **kwargs)
-                output = self._run_construct(cast_inputs, kwargs)
-                _pynative_executor.end_graph(self, output, *args, **kwargs)
-            except Exception as err:
-                _pynative_executor.clear_res()
-                raise err
-
-        if _pynative_executor.is_first_cell():
-            _pynative_executor.execute_lazy_task()
+        try:
+            _pynative_executor.new_graph(self, *args, **kwargs)
+            cast_inputs = self.auto_cast_inputs(args)
+            output = self._run_construct(cast_inputs, kwargs)
+            _pynative_executor.end_graph(self, output, *args, **kwargs)
+        except Exception as err:
+            _pynative_executor.clear_res()
+            raise err
 
         if isinstance(output, Parameter):
             output = output.data

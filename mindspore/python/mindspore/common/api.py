@@ -825,15 +825,6 @@ class _PynativeExecutor:
         """
         self._executor.set_lazy_build(enable)
 
-    def execute_lazy_task(self):
-        """
-        Executing lazy task.
-
-        Return:
-            None.
-        """
-        self._executor.execute_lazy_task()
-
     def grad_ms_function(self, output, *args):
         """
         Building grad graph decorated by ms_function.
