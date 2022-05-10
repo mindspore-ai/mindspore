@@ -30,30 +30,7 @@ namespace kernel {
 int NativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs,
                                const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KRET_OK;
-  workspace_size_list_.clear();
-  input_size_list_.clear();
-  for (auto &input : inputs) {
-    size_t type_size = GetTypeByte(TypeIdToType(input->GetDtype()));
-    auto shape = input->GetShapeVector();
-    if (!IsValidShape(shape)) {
-      ret = KRET_INVALID_SHAPE;
-    }
-    size_t tensor_size =
-      shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    tensor_size = std::max(tensor_size, type_size);
-    input_size_list_.emplace_back(tensor_size);
-  }
-  output_size_list_.clear();
-  for (auto &output : outputs) {
-    size_t type_size = GetTypeByte(TypeIdToType(output->GetDtype()));
-    auto shape = output->GetShapeVector();
-    size_t tensor_size =
-      shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    tensor_size = std::max(tensor_size, type_size);
-    output_size_list_.emplace_back(tensor_size);
-  }
-  return ret;
+  return KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
 }
 
 std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {

@@ -342,3 +342,26 @@ int Elu(const float *src, int length, float *dst, float alpha) {
   }
   return NNACL_OK;
 }
+
+// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
+#define SimdCeluCoreCalc(block_size, block_num, src, length, dst, alpha, i)                             \
+  for (int block_max_size = length - block_num + 1; i < block_max_size; i += block_num) {               \
+    MS_FLOAT_32xN(block_num) src_tmp = MS_LD_F32(block_size, src + i);                                  \
+    MS_FLOAT_32xN(block_num) div_tmp = MS_DIV_N_F32(block_size, src_tmp, alpha);                        \
+    MS_FLOAT_32xN(block_num) exp_tmp = simd_exp##block_size##_f32(div_tmp);                             \
+    exp_tmp = MS_SUB_N_F32(block_size, exp_tmp, 1.0f);                                                  \
+    MS_FLOAT_32xN(block_num) celu_tmp = MS_MUL_N_F32(block_size, exp_tmp, alpha);                       \
+    MS_MASK##block_size##_TYPE mask = MS_CMPLE_F32(block_size, src_tmp, MS_MOVN_F32(block_size, 0.0f)); \
+    MS_ST_F32(block_size, dst + i, MS_BLEND_F32(block_size, src_tmp, celu_tmp, mask));                  \
+  }
+
+void Celu(const float *src, int length, float *dst, float alpha) {
+  int i = 0;
+
+  MS_SIMD_RUN_NO_SCALAR(SimdCeluCoreCalc, src, length, dst, alpha, i);
+
+  for (; i < length; ++i) {
+    dst[i] = src[i] > 0 ? src[i] : (expm1(src[i] / alpha) * alpha);
+  }
+  return;
+}

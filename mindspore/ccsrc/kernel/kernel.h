@@ -256,6 +256,7 @@ class KernelMod {
                     const std::vector<KernelTensorPtr> &outputs) {
     return true;
   }
+
   // Resize is for updating shape related information and performing shape related operation(e.g., calculate output
   // tensor size and allocate output tensor memory).
   // sometimes resize need the input tensor data, framework will sync and retain these tensor data from device to host
@@ -263,9 +264,8 @@ class KernelMod {
   virtual int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
-    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) {
-    return KernelErrorCode::KRET_OK;
-  }
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>());
+
   // Some kernels, e.g., Unique, can only get its output shape after its computing finished.
   virtual bool IsNeedRetrieveOutputShape() { return is_need_retrieve_output_shape_; }
   virtual std::vector<KernelTensorPtr> RetrieveOutputShape() {
