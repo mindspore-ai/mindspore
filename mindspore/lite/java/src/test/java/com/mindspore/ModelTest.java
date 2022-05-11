@@ -17,7 +17,6 @@
 package com.mindspore;
 
 import com.mindspore.config.*;
-import com.mindspore.lite.NativeLibrary;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -32,23 +31,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @RunWith(JUnit4.class)
 public class ModelTest {
 
     @Test
     public void testBuildByGraphSuccess() {
-        try {
-            NativeLibrary.load();
-            System.err.println("System: NativeLibrary load success.");
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-        }
         System.out.println(Version.version());
         Graph g = new Graph();
         assertTrue(g.load("../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train.ms"));

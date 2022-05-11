@@ -16,8 +16,6 @@
 
 package com.mindspore.config;
 
-import com.mindspore.lite.NativeLibrary;
-
 /**
  * Configuration for ModelParallelRunner.
  *
@@ -25,13 +23,7 @@ import com.mindspore.lite.NativeLibrary;
  */
 public class RunnerConfig {
     static {
-        try {
-            NativeLibrary.load();
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
-        }
+        MindsporeLite.init();
     }
 
     private long runnerConfigPtr;
