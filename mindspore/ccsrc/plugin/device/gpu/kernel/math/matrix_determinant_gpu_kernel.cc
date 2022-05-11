@@ -29,32 +29,27 @@ namespace kernel {
 bool MatrixDeterminantGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs) {
-  // A Code Block For getting launch_kernel function.
-  {
-    kernel_name_ = base_operator->name();
-    if (kernel_name_ == prim::kPrimMatrixDeterminant->name()) {
-      is_sign_log_determinant_ = false;
-    } else if (kernel_name_ == prim::kPrimLogMatrixDeterminant->name()) {
-      is_sign_log_determinant_ = true;
-    } else {
-      MS_LOG(ERROR) << "For 'MatrixDeterminant' or 'LogMatrixDeterminant' does not support, but got kernel name: "
-                    << kernel_name_;
-      return false;
-    }
-    auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-    auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-    if (!is_match) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
-      return false;
-    }
-    kernel_func_ = func_list_[index].second;
-    unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  }
-
+  kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
+  if (kernel_name_ == prim::kPrimMatrixDeterminant->name()) {
+    is_sign_log_determinant_ = false;
+  } else if (kernel_name_ == prim::kPrimLogMatrixDeterminant->name()) {
+    is_sign_log_determinant_ = true;
+  } else {
+    MS_LOG(ERROR) << "For 'MatrixDeterminant' or 'LogMatrixDeterminant', it does not support, but got kernel name: "
+                  << kernel_name_;
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
   cublas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
   return true;
 }
@@ -63,31 +58,36 @@ int MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  DestroyResource();
-  ResetResource();
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
+    return ret;
+  }
+  unit_size_ = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
   // For input shape and output shape's rationality have been checked in core/ops/matrix_determinant or
   // core/ops/log_matrix_determinant , we ignore shape's checking.
-  input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                     inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  input_shape_.clear();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
   is_null_input_ = (input_elements_ == 0);
   if (is_null_input_) {
-    InitSizeLists();
-    return 0;
+    return KRET_OK;
   }
+
   // For log_matrix_determinant, there are two outputs, but shapes are equal.
-  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  output_shape_.clear();
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
   output_elements_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
   constexpr size_t last_two_dims = 2;
+
   // Ignore last two dims <--> Inner [M, M]
+  batch_size_ = 1;
   for (size_t i = 0; i < (input_shape_.size() - last_two_dims); ++i) {
     batch_size_ *= input_shape_.at(i);
   }
   m_ = input_shape_.back();
-  InitSizeLists();
-  outputs_ = outputs;
-  return 0;
+  InitWorkSpaceSizeList();
+  return KRET_OK;
 }
 
 template <typename T>
@@ -116,11 +116,11 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(device_input_shape, host_input_shape.data(), sizeof(size_t) * input_shape_length,
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "For MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
+    "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(device_input_axis, host_input_axis.data(), sizeof(size_t) * input_shape_length,
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "For MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
+    "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
   CalTranspose(input_elements_, input, device_input_shape, device_input_axis, input_shape_length, middle_lu_output,
                reinterpret_cast<cudaStream_t>(cuda_stream_));
 
@@ -133,29 +133,31 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(batch_lu_device_address, batch_lu_address_data.data(), sizeof(T *) * batch_size_,
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "For MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
+    "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "For MatrixDeterminantGpuKernelMod cublasSetStream Fail");
   if (std::is_same<T, float>::value) {
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasSgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<float **>(batch_lu_device_address),
                           SizeToInt(m_), pivot, info, SizeToInt(batch_size_)),
-      "For MatrixDeterminantGpuKernelMod cublasSgetrfBatched Fail");
+      "MatrixDeterminantGpuKernelMod cublasSgetrfBatched Fail");
   } else if (std::is_same<T, double>::value) {
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasDgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<double **>(batch_lu_device_address),
                           SizeToInt(m_), pivot, info, SizeToInt(batch_size_)),
-      "For MatrixDeterminantGpuKernelMod cublasDgetrfBatched Fail");
+      "MatrixDeterminantGpuKernelMod cublasDgetrfBatched Fail");
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input data type must be float or double.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's the input data type must be float or double.";
+    return false;
   }
   int host_info;
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&host_info, info, sizeof(int), cudaMemcpyDeviceToHost,
                                                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                     "For MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
   if (host_info > 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' " << host_info
-                      << "-th parameter is wrong, please check your input data info.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's " << host_info
+                  << "-th parameter is wrong, please check your input data info.";
+    return false;
   }
   // Compute the determinant (-1)^s * prod(diag(U)), s is the order of the permutation in pivots and U is the result of
   // LU factorization.
@@ -165,13 +167,14 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
     auto log_determinant_output = reinterpret_cast<T *>(outputs.at(kIndex1)->addr);
     // For LogMatrixDeterminant, only one output -->(determinant)
     CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_), is_sign_log_determinant_,
-                             log_determinant_output, sign_output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+                             log_determinant_output, sign_output, device_id_,
+                             reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
     // For MatrixDeterminant, only one output -->(determinant)
     auto determinant_output = sign_output;
     sign_output = nullptr;
     CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_), is_sign_log_determinant_,
-                             determinant_output, sign_output, reinterpret_cast<cudaStream_t>(cuda_stream_));
+                             determinant_output, sign_output, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;
 }
@@ -189,6 +192,25 @@ std::vector<std::pair<KernelAttr, MatrixDeterminantGpuKernelMod::MatrixDetermina
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      &MatrixDeterminantGpuKernelMod::LaunchKernel<double>},
 };
+
+void MatrixDeterminantGpuKernelMod::InitWorkSpaceSizeList() {
+  // The workspace for device middle lu output size.
+  const size_t middle_output_size = input_elements_ * unit_size_;
+  // The workspace for device batch lu device address.
+  const size_t batch_lu_address_size = batch_size_ * sizeof(void *);
+  // The workspace for device lu pivot size.
+  const size_t pivot_size = batch_size_ * m_ * sizeof(int);
+  // The workspace for device return info.
+  const size_t info_size = batch_size_ * sizeof(int);
+  // The workspace for device transpose row <--> col.
+  // The input will flatten into (batch_size, m, m) for matrix_determinant.
+  constexpr size_t three_dims = 3;
+  const size_t device_input_shape_size = three_dims * sizeof(size_t);
+  const size_t device_input_axis_size = device_input_shape_size;
+  workspace_size_list_.clear();
+  workspace_size_list_ = {middle_output_size, batch_lu_address_size,   pivot_size,
+                          info_size,          device_input_shape_size, device_input_axis_size};
+}
 
 std::vector<KernelAttr> MatrixDeterminantGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

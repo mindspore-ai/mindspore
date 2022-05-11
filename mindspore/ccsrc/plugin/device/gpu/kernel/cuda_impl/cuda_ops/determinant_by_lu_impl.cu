@@ -59,18 +59,18 @@ __global__ void CalculateDeterminantByLuKernel(const T *lu_input, const int *piv
 template <typename T>
 CUDA_LIB_EXPORT void CalculateDeterminantByLu(const T *lu_input, const int *pivot, int m, int batch_size,
                                               bool is_sign_log_determinant, T *determinant_output, T *sign_output,
-                                              cudaStream_t cuda_stream) {
+                                              const uint32_t &device_id, cudaStream_t cuda_stream) {
   // Parallelization by batch_size.
-  CalculateDeterminantByLuKernel<<<GET_BLOCKS(batch_size), GET_THREADS, 0, cuda_stream>>>(
+  CalculateDeterminantByLuKernel<<<CUDA_BLOCKS(device_id, batch_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     lu_input, pivot, m, batch_size, is_sign_log_determinant, determinant_output, sign_output);
 }
 
 template CUDA_LIB_EXPORT void CalculateDeterminantByLu<float>(const float *lu_input, const int *pivot, int m,
                                                               int batch_size, bool is_sign_log_determinant,
                                                               float *determinant_output, float *sign_output,
-                                                              cudaStream_t cuda_stream);
+                                                              const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalculateDeterminantByLu<double>(const double *lu_input, const int *pivot, int m,
                                                                int batch_size, bool is_sign_log_determinant,
                                                                double *determinant_output, double *sign_output,
-                                                               cudaStream_t cuda_stream);
+                                                               const uint32_t &device_id, cudaStream_t cuda_stream);
