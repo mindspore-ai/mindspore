@@ -297,10 +297,10 @@ class Addcmul(Primitive):
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
 
     Inputs:
-        - **input_data** (Tensor) - The tensor to be added, with data type float16, float32 and int32.
-        - **x1** (Tensor) - The tensor to be multiplied, with data type float16, float32 and int32.
-        - **x2** (Tensor) - The tensor to be multiplied, with data type float16, float32 and int32.
-        - **value** (Tensor) - The multiplier for tensor x1*x2, with data type float16, float32 and int32.
+        - **input_data**(Tensor) - The tensor to be added.
+        - **x1** (Tensor) - The tensor to be multiplied.
+        - **x2** (Tensor) - The tensor to be multiplied.
+        - **value** (Tensor) - The multiplier for tensor x1*x2.
 
     Outputs:
         Tensor, has the same shape and dtype as x1*x2.
@@ -315,7 +315,7 @@ class Addcmul(Primitive):
         ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
