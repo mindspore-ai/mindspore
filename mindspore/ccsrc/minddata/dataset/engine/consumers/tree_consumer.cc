@@ -786,7 +786,7 @@ Status TreeGetters::GetBatchSize(int64_t *batch_size) {
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   RETURN_UNEXPECTED_IF_NULL(root);
   *batch_size = root->GetTreeBatchSize();
-  CHECK_FAIL_RETURN_UNEXPECTED(*batch_size != -1, "GetBatchSize: Failed to find the batch size in Dataset pipeline.");
+  CHECK_FAIL_RETURN_UNEXPECTED(*batch_size != 0, "GetBatchSize: Failed to find the batch size in Dataset pipeline.");
   return Status::OK();
 }
 
