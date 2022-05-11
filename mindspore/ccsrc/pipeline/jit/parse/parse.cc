@@ -1852,18 +1852,16 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   block->Jump(header_block, {});
 
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
-  AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
-  condition_node = header_block->ForceToWhileCond(condition_node);
-  body_block->Mature();
-  header_block->ConditionalJump(condition_node, body_block, after_block);
-
   static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
     UpdateBlockPyParams(header_block, block);
     UpdateBlockPyParams(body_block, block);
     UpdateBlockPyParams(after_block, block);
   }
-
+  AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
+  condition_node = header_block->ForceToWhileCond(condition_node);
+  body_block->Mature();
+  header_block->ConditionalJump(condition_node, body_block, after_block);
   // Parse loop body statements with loop context.
   LoopContext loop_context{&loops_, header_block, nullptr};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
@@ -1947,6 +1945,11 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   // Create 'x = xs[i]'
   auto body_func_graph = body_block->func_graph();
   CNodePtr target_var = body_func_graph->NewCNodeInOrder({op_getitem, iter_node, loop_var});
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback) {
+    UpdateBlockPyParams(header_block, block);
+    UpdateBlockPyParams(body_block, block);
+  }
   WriteAssignVars(body_block, target_node, target_var);
 
   // Create 'i = i + 1'
@@ -1969,6 +1972,9 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   after_block->AddPrevBlock(header_block);
   block->Jump(header_block, {NewValueNode(static_cast<int64_t>(0))});
   body_block->Mature();
+  if (use_fallback) {
+    UpdateBlockPyParams(after_block, block);
+  }
 
   header_block->ConditionalJump(cond_node, body_block, after_block);
 
@@ -1976,6 +1982,9 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   LoopContext loop_context{&loops_, header_block, loop_var_inc};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(body_block, body_node);
+  if (use_fallback) {
+    UpdateBlockPyParams(after_body_block, block);
+  }
   if (after_body_block->func_graph()->get_return() == nullptr) {
     after_body_block->Jump(header_block, {loop_var_inc});
   }
@@ -2025,6 +2034,12 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   AnfNodePtr body_getitem = body_block->MakeResolveOperation(NAMED_PRIMITIVE_GETITEM);
   CNodePtr target_var = body_func_graph->NewCNodeInOrder({body_getitem, header_iter_param, loop_var});
 
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback) {
+    UpdateBlockPyParams(header_block, block);
+    UpdateBlockPyParams(body_block, block);
+  }
+
   // Get variable name of 'x' in statement 'for x in xs'
   py::object target_node = python_adapter::GetPyObjAttr(node, "target");
   WriteAssignVars(body_block, target_node, target_var);
@@ -2049,6 +2064,9 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   after_block->AddPrevBlock(header_block);
   block->Jump(header_block, {iter_node, NewValueNode(static_cast<int64_t>(0))});
   body_block->Mature();
+  if (use_fallback) {
+    UpdateBlockPyParams(after_block, block);
+  }
   header_block->ConditionalJump(cond_node, body_block, after_block);
 
   // Generate the body of the for statement
@@ -2060,11 +2078,17 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   rolled_body_block->Mature();
   body_block->Jump(rolled_body_block, {});
   auto rolled_body_call = dyn_cast<CNode>(body_block->func_graph()->output());
+  if (use_fallback) {
+    UpdateBlockPyParams(rolled_body_block, block);
+  }
 
   // Parse loop body statements with loop context.
   LoopContext loop_context{&loops_, header_block, loop_var_inc};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   FunctionBlockPtr after_body_block = ParseStatements(rolled_body_block, body_node);
+  if (use_fallback) {
+    UpdateBlockPyParams(after_body_block, block);
+  }
   MS_LOG(DEBUG) << "Finish rolled block, after_body_block: " << after_body_block->ToString()
                 << ", rolled_body_block: " << rolled_body_block->ToString();
   if (after_body_block->func_graph()->get_return() == nullptr) {
