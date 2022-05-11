@@ -59,6 +59,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
   static const auto &kReduceSum = prim::kPrimReduceSum->name();
+  static const auto &kRandomPoisson = prim::kPrimRandomPoisson->name();
   static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
   static const auto &kMatrixDiagPartV3 = prim::kPrimMatrixDiagPartV3->name();
   static const auto &kMatrixSetDiagV3 = prim::kPrimMatrixSetDiagV3->name();
@@ -105,6 +106,7 @@ std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_n
                                                         {kSlice, ShapeSet{1, 2}},
                                                         {kSliceGrad, ShapeSet{2, 3}},
                                                         {kFillV2, ShapeSet{0}},
+                                                        {kRandomPoisson, ShapeSet{0}},
                                                         {kDynamicBroadcastTo, ShapeSet{1}},
                                                         {kNonDeterministicInts, ShapeSet{0}},
                                                         {kReduceSum, ShapeSet{1}},
