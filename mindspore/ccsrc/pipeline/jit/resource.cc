@@ -195,6 +195,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"astype", std::string("astype")},                          // P.cast()
        {"cumsum", std::string("cumsum")},                          // P.cumsum()
        {"copy", std::string("copy")},                              // copy()
+       {"lerp", std::string("lerp")},                              // lerp()
        {"max", std::string("max")},                                // P.reduce_max()
        {"min", std::string("min")},                                // P.reduce_min()
        {"fill", std::string("fill")},                              // P.fill()

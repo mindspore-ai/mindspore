@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,8 +71,9 @@ TypePtr LerpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
 MIND_API_OPERATOR_IMPL(Lerp, BaseOperator);
 AbstractBasePtr LerpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(LerpInferType(primitive, input_args),
-                                                    LerpInferShape(primitive, input_args)->shape());
+  auto lerp_output_data_type = LerpInferType(primitive, input_args);
+  auto lerp_output_shape = LerpInferShape(primitive, input_args)->shape();
+  return std::make_shared<abstract::AbstractTensor>(lerp_output_data_type, lerp_output_shape);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Lerp, prim::kPrimLerp, LerpInfer, nullptr, true);
 }  // namespace ops

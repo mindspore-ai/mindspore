@@ -1746,6 +1746,11 @@ def str_bool(x):
     return True
 
 
+def lerp(start, end, weight):
+    """Does a linear interpolation of two tensors start and end based on a float or tensor weight."""
+    return F.lerp(start, end, weight)
+
+
 def list_bool(x):
     """Implementation of `tuple_bool`."""
     return len(x) != 0
@@ -1781,6 +1786,7 @@ def cdist(x, y, p=2.0):
     Computes batched the p-norm distance between each pair of the two collections of row vectors.
     """
     return F.cdist(x, y, p)
+
 
 #############
 # Iteration #
