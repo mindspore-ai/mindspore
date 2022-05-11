@@ -37,7 +37,7 @@ __attribute__((unused)) static bool IsEnableRecovery() {
   return common::GetEnv(kEnvEnableRecovery) == std::string("1");
 }
 
-__attribute__((unused)) static std::string RecoveryFullPath() { return common::GetEnv(kEnvRecoveryPath); }
+__attribute__((unused)) static std::string RecoveryPath() { return common::GetEnv(kEnvRecoveryPath); }
 
 using distributed::storage::FileIOUtils;
 using distributed::storage::JsonUtils;

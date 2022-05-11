@@ -82,7 +82,7 @@ void RecoveryContext::Initialize() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   context_ptr->set_param<bool>(MS_CTX_ENABLE_RECOVERY, true);
 
-  recovery_path_ = RecoveryFullPath();
+  recovery_path_ = RecoveryPath();
   if (recovery_path_.empty()) {
     MS_LOG(EXCEPTION) << "The recovery path is empty, please export MS_RECOVERY_PATH correctly.";
   }
