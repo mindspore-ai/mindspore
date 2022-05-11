@@ -180,7 +180,7 @@ INTRIN_GENERAL_UNARY_OP = {
     'round': numpy.round,
 }
 
-INTRIN_CPU_NOT_SUPPORT = ["atan2", "expm1"]
+INTRIN_CPU_NOT_SUPPORT = ["atan2", "expm1", "float16"]
 
 INTRIN_GENERAL_BINARY_OP = {
     'ceil_div': lambda a, b: (a + b - 1) // b,
