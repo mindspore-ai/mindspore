@@ -1236,35 +1236,15 @@ class LpNorm(Primitive):
     .. math::
         output = sum(abs(input)**p)**(1/p)
 
-    Args:
-        axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
-        p(int): The order of norm. Default: 2.
-        keep_dims(bool): Whether the output tensors have dim retained or not. Default: False.
-        epsilon(float): A value added to the denominator for numerical stability. Default: 1e-12.
-
-    Inputs:
-        - **input** (Tensor) - Input tensor.
-
-    Outputs:
-        Tensor, has the same dtype as `input`, which shape depends on the args axis. For example, if the size of input
-        is (2, 3, 4), axis is [0, 1], Outputs' shape will be (4,).
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not one of: float16, float32.
-        TypeError: If `p` is not an int.
-        TypeError: If `axis` is not an int, a tuple or a list.
-        TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
-        TypeError: If `keep_dims` is not a bool.
-        ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input.shape)).
-        ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
+    Refer to :func: `mindspore.ops.lp_norm` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.math_ops import LpNorm
         >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-        >>> op = ops.LpNorm(axis=[0, 1], p=2, keep_dims=False)
+        >>> op = LpNorm(axis=[0, 1], p=2, keep_dims=False)
         >>> output = op(input_x)
         >>> print(output)
         [ 9.165152 10.954452]

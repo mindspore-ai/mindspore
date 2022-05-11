@@ -1751,6 +1751,11 @@ def lerp(start, end, weight):
     return F.lerp(start, end, weight)
 
 
+def lp_norm(input_x, p, dims, keep_dims=False, epsilon=1e-12):
+    """Returns the matrix norm or vector norm of a given tensor."""
+    return F.lp_norm(input_x, p, dims, keep_dims, epsilon)
+
+
 def list_bool(x):
     """Implementation of `tuple_bool`."""
     return len(x) != 0

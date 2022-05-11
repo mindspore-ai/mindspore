@@ -1024,5 +1024,6 @@ tensor_operator_registry.register('zeros', zeros)
 tensor_operator_registry.register('tensor_scatter_update', tensor_scatter_update)
 tensor_operator_registry.register('tensor_scatter_div', tensor_scatter_div)
 tensor_operator_registry.register('tensor_scatter_add', P.TensorScatterAdd)
+tensor_operator_registry.register('lp_norm', lp_norm)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')
