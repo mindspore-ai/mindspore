@@ -1976,3 +1976,83 @@ class FlattenConcat(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize FlattenConcat"""
+
+class KMeansCentroids(PrimitiveWithInfer):
+    """
+    Calculate the segment_sum, segment_count, kmean_total_sum that are clustering results
+
+    Args:
+        use_actual_distance (bool): A bool value to decide whether do complete calculation of distance.
+
+    Inputs:
+        - **x** (Tensor(float32)) - Input data used for clustering
+        - **y** (Tensor(float32)) - Initial centroids of clutering
+        - **sum_square_y** (Tensor(float32)) - The result of preprocessing such as square, reduce and transpose of y
+        - **sum_square_x** (Tensor(float32)) - The result of preprocessing such as square and reduce of x
+
+    Outputs:
+        - **segment_sum** (Tensor(float32)) - Clustering result w.r.t. each centroid
+        - **segment_count** (Tensor(float32)) - Clustering count w.r.t. each centroid
+        - **kmean_total_sum** (Tensor(float32)) - The sum of the distances from all vectors to ther nearest centroid
+
+    Supported Platforms:
+        ''Ascend''
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore.context as context
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import operations as P
+        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+
+        >>> class Net(nn.Cell):
+        >>>    def __init__(self):
+        >>>        super(Net, self).__init__()
+        >>>        self.reduce_sum = P.ReduceSUm(keep_dims=True)
+        >>>        self.square = P.Square()
+        >>>        self.transpose = P.Transpose()
+        >>>        self.k_means_centroids = P.KMeansCentroids(True)
+
+        >>>    def construct(self, x, y):
+        >>>        p1 = self.reduce_sum(self.square(x), -1)
+        >>>        p2 = self.transpose(self.reduce_sum(self.square(y), -1), (1, 0))
+        >>>        return self.k_means_centroids(x, y, p2, p1)
+
+        >>> def test_net():
+        >>>    data_type = np.float32
+        >>>    x = Tensor(np.random.uniform(-10, 10, (65536, 128)).astype(data_type))
+        >>>    y = P.Ones()((1048576, 128), mstype.float32)
+        >>>    net = Net()
+        >>>    local_sum, local_count, local_avg_distance = net(x, y)
+    """
+
+    @prim_attr_register
+    def __init__(self, use_actual_distance):
+        validator.check_value_type('use_actual_distance', use_actual_distance, [bool], self.name)
+        self.init_prim_io_names(inputs=['x', 'y', 'sum_square_y', 'sum_square_x'],
+                                outputs=['segment_sum', 'segment_count', 'kmean_total_sum'])
+
+    def infer_shape(self, x_shape, y_shape, sum_square_y_shape, sum_square_x_shape):
+        """infer shape of primitive"""
+        expected_shape_size = 2
+        validator.check_int(len(x_shape), expected_shape_size, Rel.EQ, "dims of x", self.name)
+        validator.check_int(len(y_shape), expected_shape_size, Rel.EQ, "dims of y", self.name)
+        validator.check_int(len(sum_square_y_shape), expected_shape_size, Rel.EQ, "dims of sum_square_y", self.name)
+        validator.check_int(len(sum_square_x_shape), expected_shape_size, Rel.EQ, "dims of sum_square_x", self.name)
+
+        validator.check_int(x_shape[1], y_shape[1], Rel.EQ,
+                            "the second dim of x and the second dim of y", self.name)
+        validator.check_int(y_shape[0], sum_square_y_shape[1], Rel.EQ,
+                            "the first dim of y and the second dim of sum_square_y", self.name)
+        validator.check_int(x_shape[0], sum_square_x_shape[0], Rel.EQ,
+                            "the first dim of x and the first dim of sum_square_x", self.name)
+        validator.check_int(sum_square_y_shape[0], sum_square_x_shape[1], Rel.EQ,
+                            "the first dim of sum_square_y and the first dim of sum_square_x", self.name)
+        validator.check_int(sum_square_y_shape[0], 1, Rel.EQ,
+                            "the first dim of sum_square_y must be 1", self.name)
+
+        k = y_shape[0]
+        em_size = x_shape[1]
+        return (k, em_size), (k, 1), (1)

@@ -573,3 +573,4 @@ from .parallel_resize_bilinear import _parallel_resize_bilinear_op_info_tbe
 from .parallel_resize_bilinear_grad import _parallel_resize_bilinear_grad_op_info_tbe
 from .p_s_r_o_i_pooling import _p_s_r_o_i_pooling_tbe
 from .p_s_r_o_i_pooling_grad import _p_s_r_o_i_pooling_grad_tbe
+from .k_means_centroids import _k_means_centroids_tbe
