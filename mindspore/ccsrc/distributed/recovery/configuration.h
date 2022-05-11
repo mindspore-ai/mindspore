@@ -44,6 +44,9 @@ class Configuration {
   // Check whether the specified configuration key exists.
   virtual bool Exists(const std::string &key) const = 0;
 
+  // Check whether the configuration contains any key-value pairs.
+  virtual bool Empty() const = 0;
+
   // Flush all the key-value pairs in memory into the specific sub-class's storage.
   virtual bool Flush() = 0;
 };

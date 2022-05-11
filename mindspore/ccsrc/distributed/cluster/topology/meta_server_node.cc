@@ -20,12 +20,19 @@
 #include "proto/topology.pb.h"
 #include "distributed/rpc/tcp/constants.h"
 #include "distributed/cluster/topology/utils.h"
+#include "distributed/recovery/recovery_context.h"
+#include "distributed/recovery/file_configuration.h"
 #include "distributed/cluster/topology/meta_server_node.h"
 
 namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
+// The keys for the persisted metadata of compute node states.
+constexpr char kComputeNodeStates[] = "compute_node_states";
+constexpr char kNodeId[] = "node_id";
+constexpr char kRecoveryFileName[] = "recovery.dat";
+
 bool MetaServerNode::Initialize() {
   // Init the address of meta server node.
   RETURN_IF_FALSE_WITH_LOG(FillMetaServerAddress(&meta_server_addr_),
@@ -33,6 +40,11 @@ bool MetaServerNode::Initialize() {
 
   // Init the TCP server.
   RETURN_IF_FALSE_WITH_LOG(InitTCPServer(), "Failed to create the TCP server.");
+
+  // The meta server node is restarted and the metadata of cluster needs to be recovered.
+  if (recovery::IsEnableRecovery()) {
+    RETURN_IF_FALSE_WITH_LOG(Recovery(), "Failed to recover from configuration.");
+  }
 
   start_time_ = Now();
 
@@ -46,7 +58,6 @@ bool MetaServerNode::Initialized() {
 }
 
 bool MetaServerNode::Finalize() {
-  std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (topo_state_ != TopoState::kFinished) {
     MS_LOG(WARNING) << "The meta server node can not be finalized because there are still " << nodes_.size()
                     << " alive nodes.";
@@ -127,10 +138,8 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   if (nodes_.find(node_id) == nodes_.end()) {
     std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
     nodes_[node_id] = node_state;
-    if (nodes_.size() == total_node_num_) {
-      topo_state_ = TopoState::kInitialized;
-    }
     MS_LOG(INFO) << "The new node: " << node_id << " is registered successfully.";
+    TransitionToInitialized();
 
     RegistrationRespMessage reg_resp_msg;
     reg_resp_msg.set_success(true);
@@ -251,9 +260,7 @@ void MetaServerNode::UpdateTopoState() {
       }
 
       std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
-      if (nodes_.size() == total_node_num_) {
-        MS_LOG(INFO) << "The cluster topology has been constructed successfully";
-        topo_state_ = TopoState::kInitialized;
+      if (TransitionToInitialized()) {
         continue;
       }
       MS_LOG(INFO) << "The cluster topology is in the process of constructing, current alive node num: ("
@@ -267,6 +274,83 @@ void MetaServerNode::UpdateTopoState() {
     static const size_t interval = 3;
     sleep(interval);
   }
+}
+
+bool MetaServerNode::TransitionToInitialized() {
+  if (nodes_.size() == total_node_num_) {
+    // Persist the cluster metadata into storage through configuration.
+    if (recovery::IsEnableRecovery() && configuration_->Empty()) {
+      if (!Persist()) {
+        MS_LOG(EXCEPTION) << "Failed to persist the metadata of the cluster.";
+      }
+    }
+    topo_state_ = TopoState::kInitialized;
+    MS_LOG(INFO) << "The cluster topology has been constructed successfully";
+    return true;
+  }
+  return false;
+}
+
+bool MetaServerNode::Recovery() {
+  std::string recovery_path = recovery::RecoveryFullPath();
+  configuration_ = std::make_unique<recovery::FileConfiguration>(recovery_path + "/" + kRecoveryFileName);
+
+  RETURN_IF_FALSE_WITH_LOG(configuration_->Initialize(),
+                           "Failed to initialize the recovery file configuration from file path: " << recovery_path);
+
+  if (configuration_->Empty()) {
+    MS_LOG(INFO) << "The meta server node is started for the first time.";
+    return true;
+
+    // The meta server node is restarted and the metadata of cluster needs to be recovered.
+  } else {
+    std::string states_key = kComputeNodeStates;
+    RETURN_IF_FALSE_WITH_LOG(configuration_->Exists(states_key),
+                             "Can not find the key " + states_key + " in configuration.");
+
+    // Check the validation of the previous metadata.
+    const auto &states = configuration_->Get(states_key, "");
+    nlohmann::json node_states = nlohmann::json::parse(states);
+    RETURN_IF_FALSE_WITH_LOG(node_states.size() == total_node_num_,
+                             "Invalid number of node in configuration: " + std::to_string(node_states.size()) +
+                               ", expected total number of node: " + std::to_string(total_node_num_));
+
+    // Restore the nodes state.
+    for (auto iter = node_states.begin(); iter != node_states.end(); ++iter) {
+      const auto &node_id = iter.key();
+      std::shared_ptr<ComputeGraphNodeState> node_state = std::make_shared<ComputeGraphNodeState>(node_id);
+      time(&(node_state->last_update));
+      nodes_[node_id] = node_state;
+    }
+
+    std::shared_lock<std::shared_mutex> lock(nodes_mutex_);
+    if (nodes_.size() == total_node_num_) {
+      topo_state_ = TopoState::kInitialized;
+    }
+  }
+  return true;
+}
+
+bool MetaServerNode::Persist() {
+  MS_EXCEPTION_IF_NULL(configuration_);
+  if (total_node_num_ != nodes_.size()) {
+    MS_LOG(ERROR) << "Invalid number of alive node: " << nodes_.size()
+                  << ", the expected total number of node is: " << total_node_num_;
+    return false;
+  }
+
+  nlohmann::json node_states;
+  for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+    const auto &node_id = iter->first;
+
+    nlohmann::json node_state;
+    node_state[kNodeId] = node_id;
+    node_states[node_id] = node_state.dump();
+  }
+
+  configuration_->Put(kComputeNodeStates, node_states.dump());
+  configuration_->Flush();
+  return true;
 }
 
 TopoState MetaServerNode::TopologyState() { return topo_state_; }
