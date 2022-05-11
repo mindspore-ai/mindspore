@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/kernel/rts/send.h"
 #include "runtime/event.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -37,14 +38,19 @@ bool SendKernel::Init(const AnfNodePtr &anf_node) {
     MS_LOG(EXCEPTION) << "SendKernel has no attr kAttrEventId";
   }
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
+
+  if (common::AnfAlgo::HasNodeAttr(kAttrRecordEvent, anf_node->cast<CNodePtr>())) {
+    event_ = reinterpret_cast<rtEvent_t>(GetValue<uintptr_t>(primitive->GetAttr(kAttrRecordEvent)));
+  }
   MS_LOG(INFO) << "send op event id:" << event_id_;
   return true;
 }
 
 bool SendKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                         const std::vector<AddressPtr> &, void *stream_ptr) {
-  rtEvent_t event{};
-  rtError_t status = rtEventRecord(event, stream_ptr);
+  MS_EXCEPTION_IF_NULL(event_);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  rtError_t status = rtEventRecord(event_, stream_ptr);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Send op rtEventRecord failed!";
     return false;

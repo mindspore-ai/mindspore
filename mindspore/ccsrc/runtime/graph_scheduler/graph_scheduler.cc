@@ -1523,68 +1523,82 @@ void GraphScheduler::LinkControlArrowBySkippedNode(AbstractActor *to_actor, cons
 
 void GraphScheduler::LinkControlArrowBySendRecvNodes(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  for (auto &from_iter : graph->allreduce_from_send_recv_pairs()) {
-    auto to_allreduce_node = from_iter.first;
-    auto from_send_node = from_iter.second.first;
-    auto from_recv_node = from_iter.second.second;
-    MS_EXCEPTION_IF_NULL(to_allreduce_node);
-    MS_EXCEPTION_IF_NULL(from_send_node);
-    MS_EXCEPTION_IF_NULL(from_recv_node);
-    MS_LOG(INFO) << "Link control arrow for to_allreduce_node: " << to_allreduce_node->fullname_with_scope();
-    auto to_allreduce_actor = FetchActor(to_allreduce_node->fullname_with_scope());
-    auto from_send_actor = FetchActor(from_send_node->fullname_with_scope());
-    auto from_recv_actor = FetchActor(from_recv_node->fullname_with_scope());
-    MS_EXCEPTION_IF_NULL(to_allreduce_actor);
-    MS_EXCEPTION_IF_NULL(from_send_actor);
-    MS_EXCEPTION_IF_NULL(from_recv_actor);
+  for (auto &from_iter : graph->send_recv_pairs_for_parallel_op_inputs()) {
+    auto parallel_node = from_iter.first;
+    for (auto pair : from_iter.second) {
+      auto send_node = pair.first;
+      auto recv_node = pair.second;
+      MS_EXCEPTION_IF_NULL(parallel_node);
+      MS_EXCEPTION_IF_NULL(send_node);
+      MS_EXCEPTION_IF_NULL(recv_node);
+      MS_LOG(INFO) << "Link control arrow for parallel node input: " << parallel_node->fullname_with_scope();
+      auto parallel_actor = FetchActor(parallel_node->fullname_with_scope());
+      auto send_actor = FetchActor(send_node->fullname_with_scope());
+      auto recv_actor = FetchActor(recv_node->fullname_with_scope());
+      MS_EXCEPTION_IF_NULL(parallel_actor);
+      MS_EXCEPTION_IF_NULL(send_actor);
+      MS_EXCEPTION_IF_NULL(recv_actor);
 
-    // inputs of to_allreduce_actor  --> from_send_actor
-    for (auto &input_aid : to_allreduce_actor->input_data_arrow_aids_) {
-      auto input_actor = dynamic_cast<KernelActor *>(FetchActor(input_aid.Name()));
-      if (input_actor != nullptr) {
-        SchedulerHelper::AddControlArrow(input_actor, from_send_actor);
+      // inputs of to_allreduce_actor  --> from_send_actor
+      for (auto &input_aid : parallel_actor->input_data_arrow_aids_) {
+        auto input_actor = dynamic_cast<KernelActor *>(FetchActor(input_aid.Name()));
+        if (input_actor != nullptr) {
+          SchedulerHelper::AddControlArrow(input_actor, send_actor);
+        }
       }
+      // from_send_actor --> from_recv_actor
+      SchedulerHelper::AddControlArrow(send_actor, recv_actor);
+      // from_recv_actor --> to_allreduce_actor
+      SchedulerHelper::AddControlArrow(recv_actor, parallel_actor);
     }
-    // from_send_actor --> from_recv_actor
-    SchedulerHelper::AddControlArrow(from_send_actor, from_recv_actor);
-    // from_recv_actor --> to_allreduce_actor
-    SchedulerHelper::AddControlArrow(from_recv_actor, to_allreduce_actor);
   }
 
-  for (auto &to_iter : graph->allreduce_to_send_recv_pairs()) {
-    auto from_allreduce_node = to_iter.first;
-    auto to_send_node = to_iter.second.first;
-    auto to_recv_node = to_iter.second.second;
-    MS_EXCEPTION_IF_NULL(from_allreduce_node);
-    MS_EXCEPTION_IF_NULL(to_send_node);
-    MS_EXCEPTION_IF_NULL(to_recv_node);
-    MS_LOG(INFO) << "Link control arrow for from_allreduce_node: " << from_allreduce_node->fullname_with_scope();
-    auto from_allreduce_actor = FetchActor(from_allreduce_node->fullname_with_scope());
-    auto to_send_actor = FetchActor(to_send_node->fullname_with_scope());
-    auto to_recv_actor = dynamic_cast<KernelActor *>(FetchActor(to_recv_node->fullname_with_scope()));
-    MS_EXCEPTION_IF_NULL(from_allreduce_actor);
-    MS_EXCEPTION_IF_NULL(to_send_actor);
-    MS_EXCEPTION_IF_NULL(to_recv_actor);
+  for (auto &to_iter : graph->send_recv_pairs_for_parallel_op_outputs()) {
+    auto parallel_node = to_iter.first;
+    for (auto pair : to_iter.second) {
+      auto send_node = pair.first;
+      auto recv_node = pair.second;
+      MS_EXCEPTION_IF_NULL(parallel_node);
+      MS_EXCEPTION_IF_NULL(send_node);
+      MS_EXCEPTION_IF_NULL(recv_node);
+      MS_LOG(INFO) << "Link control arrow for parallel node output: " << parallel_node->fullname_with_scope();
+      auto parallel_actor = FetchActor(parallel_node->fullname_with_scope());
+      auto send_actor = FetchActor(send_node->fullname_with_scope());
+      auto recv_actor = dynamic_cast<KernelActor *>(FetchActor(recv_node->fullname_with_scope()));
+      MS_EXCEPTION_IF_NULL(parallel_actor);
+      MS_EXCEPTION_IF_NULL(send_actor);
+      MS_EXCEPTION_IF_NULL(recv_actor);
 
-    // from_allreduce_actor  --> to_send_actor
-    SchedulerHelper::AddControlArrow(from_allreduce_actor, to_send_actor);
-    // to_send_actor --> to_recv_actor
-    SchedulerHelper::AddControlArrow(to_send_actor, to_recv_actor);
-    // to_recv_actor --> outputs of from_allreduce_actor
-    for (auto &output_data_arrow : from_allreduce_actor->output_data_arrows_) {
-      auto output_actor = FetchActor(output_data_arrow->to_op_id_.Name());
-      if (output_actor != nullptr) {
-        SchedulerHelper::AddControlArrow(to_recv_actor, output_actor);
+      // from_allreduce_actor  --> to_send_actor
+      SchedulerHelper::AddControlArrow(parallel_actor, send_actor);
+      // to_send_actor --> to_recv_actor
+      SchedulerHelper::AddControlArrow(send_actor, recv_actor);
+      // to_recv_actor --> outputs of from_allreduce_actor
+      for (auto &output_data_arrow : parallel_actor->output_data_arrows_) {
+        auto output_actor = FetchActor(output_data_arrow->to_op_id_.Name());
+        if (output_actor != nullptr) {
+          SchedulerHelper::AddControlArrow(recv_actor, output_actor);
+        }
       }
-    }
 
-    // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be
-    // reused only when the recv node runs finished, which is expressed by the reference count increased.
-    for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(from_allreduce_node); ++i) {
-      auto device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(from_allreduce_node, i, false);
-      MS_EXCEPTION_IF_NULL(device_tensor);
-      UpdateRefCount(device_tensor.get());
-      (void)to_recv_actor->external_reference_tensors_.emplace_back(device_tensor.get());
+      // In the scene of allreduce op and computing op parallel multi stream, the input memory of allreduce can be
+      // reused only when the recv node runs finished, which is expressed by the reference count increased.
+      for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(parallel_node); ++i) {
+        auto device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(parallel_node, i, false);
+        MS_EXCEPTION_IF_NULL(device_tensor);
+        UpdateRefCount(device_tensor.get());
+        (void)recv_actor->external_reference_tensors_.emplace_back(device_tensor.get());
+      }
+
+      auto kernel_mod = AnfAlgo::GetKernelMod(parallel_node);
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      auto workspace_num = kernel_mod->GetWorkspaceSizeList().size();
+      for (size_t i = 0; i < workspace_num; ++i) {
+        auto device_tensor = AnfAlgo::GetMutableWorkspaceAddr(parallel_node, i);
+        MS_EXCEPTION_IF_NULL(device_tensor);
+        UpdateRefCount(device_tensor.get());
+        (void)recv_actor->external_reference_tensors_.emplace_back(device_tensor.get());
+      }
     }
   }
 }

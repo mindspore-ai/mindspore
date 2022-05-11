@@ -47,6 +47,21 @@ using GroupGraphMap = std::map<std::string, std::map<uint32_t, std::vector<CNode
 const uint32_t kInvalidStreamId = UINT32_MAX;
 const uint32_t kInvalidEventId = UINT32_MAX;
 enum StreamActiveKind { kInvalid = 0, kHead, kMiddle, kTail };
+
+struct NodeExecInfo {
+  CNodePtr node;
+  uint32_t stream_id;
+  size_t execution_order_index;
+};
+using NodeExecInfoPtr = std::shared_ptr<NodeExecInfo>;
+
+struct NodeIoExecInfo {
+  NodeExecInfoPtr node_exec_info;
+  std::vector<NodeExecInfoPtr> inputs;
+  std::vector<NodeExecInfoPtr> outputs;
+};
+using NodeIoExecInfoPtr = std::shared_ptr<NodeIoExecInfo>;
+
 class AscendStreamAssign {
  public:
   static AscendStreamAssign &GetInstance() {
@@ -191,6 +206,27 @@ class AscendStreamAssign {
 
   uint32_t max_stream_count_ = 0;
   uint32_t max_task_count_ = 0;
+
+  // insert event for kernel by kernel
+  void InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph);
+  void GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kernel_graph,
+                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
+                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
+  void UpdateEventsToExecutionOrder(const NotNull<KernelGraphPtr> &kernel_graph,
+                                    const HashMap<AnfNodePtr, vector<CNodePtr>> &recv_before_node,
+                                    const HashMap<AnfNodePtr, vector<CNodePtr>> &send_after_node) const;
+
+  void InsertEventsForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
+                             const NodeIoExecInfoPtr &io_exec_info, HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
+                             HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
+
+  void InsertEventsForOutputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
+                              const NodeIoExecInfoPtr &io_exec_info, HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
+                              HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
+
+  void InsertEvents(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &parallel_cnode,
+                    const AnfNodePtr &node_before_send, HashMap<mindspore::AnfNodePtr, vector<CNodePtr>> *kernel_send,
+                    HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv, const AnfNodePtr &node_after_recv);
 };
 }  // namespace ascend
 }  // namespace device

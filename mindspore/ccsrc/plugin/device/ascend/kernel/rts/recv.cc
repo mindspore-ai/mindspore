@@ -18,6 +18,7 @@
 #include "runtime/stream.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
+#include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 
@@ -38,17 +39,27 @@ bool RecvKernel::Init(const AnfNodePtr &anf_node) {
     MS_LOG(EXCEPTION) << "RecvKernel has no attr kAttrEventId";
   }
   event_id_ = GetValue<uint32_t>(primitive->GetAttr(kAttrEventId));
+
+  if (common::AnfAlgo::HasNodeAttr(kAttrWaitEvent, anf_node->cast<CNodePtr>())) {
+    event_ = reinterpret_cast<rtEvent_t>(GetValue<uintptr_t>(primitive->GetAttr(kAttrWaitEvent)));
+  }
   MS_LOG(INFO) << "recv op event_id_:" << event_id_;
   return true;
 }
 
 bool RecvKernel::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
                         const std::vector<AddressPtr> &, void *stream_ptr) {
-  rtEvent_t stream_event{};
-  auto status = rtStreamWaitEvent(stream_ptr, stream_event);
+  MS_EXCEPTION_IF_NULL(event_);
+  MS_EXCEPTION_IF_NULL(stream_ptr);
+  auto status = rtStreamWaitEvent(stream_ptr, event_);
   if (status != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Recv rtStreamWaitEvent failed!";
     return false;
+  }
+
+  status = rtEventReset(event_, stream_ptr);
+  if (status != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "rtEventReset failed, ret:" << status;
   }
   return true;
 }

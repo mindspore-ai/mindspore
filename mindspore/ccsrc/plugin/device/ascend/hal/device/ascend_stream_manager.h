@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_STREAM_MANAGER_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_STREAM_MANAGER_H_
 
+#include <memory>
+#include "utils/hash_map.h"
+#include "runtime/event.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -35,6 +39,16 @@ class AscendStreamMng {
   uint32_t ApplyNewStream() { return cur_stream_num_++; }
 
   uint32_t ApplyNewEvent() { return cur_event_num_++; }
+
+  rtEvent_t ApplyRtEvent() {
+    auto rt_resource = std::make_shared<rtEvent_t>();
+    auto ret = rtEventCreate(rt_resource.get());
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "rtEventCreate failed, ret:" << ret;
+      *rt_resource = nullptr;
+    }
+    return *rt_resource;
+  }
 
   void DeleteEvent() {
     if (!cur_event_num_) {

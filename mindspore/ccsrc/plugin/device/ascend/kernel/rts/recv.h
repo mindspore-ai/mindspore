@@ -37,6 +37,7 @@ class RecvKernel : public RtKernel {
 
  private:
   uint32_t event_id_;
+  rtEvent_t event_;
 };
 
 MS_REG_RTKERNEL(streamrecv, RecvKernel);
