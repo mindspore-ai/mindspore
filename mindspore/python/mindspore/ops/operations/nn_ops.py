@@ -8561,31 +8561,12 @@ class SoftShrink(Primitive):
 
 class HShrink(Primitive):
     r"""
-    Applies the hard shrinkage function element-wise, each element complies with the following function:
+    Hard Shrink activation function.
 
-    .. math::
-        \text{HardShrink}(x) =
-        \begin{cases}
-        x, & \text{ if } x > \lambda \\
-        x, & \text{ if } x < -\lambda \\
-        0, & \text{ otherwise }
-        \end{cases}
-
-    Args:
-        lambd (float): The value for the HardShrink formulation. Default: 0.5
-
-    Inputs:
-        - **input_x** (Tensor) - The input of HardShrink with data type of float16 or float32.
-
-    Outputs:
-        Tensor, the same shape and data type as the input.
+    Refer to :func:`mindspore.ops.hardshrink` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
-
-    Raises:
-        TypeError: If `lambd` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Examples:
         >>> import mindspore as ms

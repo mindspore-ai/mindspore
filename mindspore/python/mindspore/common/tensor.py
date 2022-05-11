@@ -2676,6 +2676,46 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('nonzero')(self)
 
 
+    def hardshrink(self, lambd=0.5):
+        r"""
+        Apply the Hard Shrink function for tensor. Calculates the output according to the input elements.
+
+        The formula is defined as follows:
+
+        .. math::
+            \text{HardShrink}(x) =
+            \begin{cases}
+            x, & \text{ if } x > \lambda \\
+            x, & \text{ if } x < -\lambda \\
+            0, & \text{ otherwise }
+            \end{cases}
+
+        Args:
+            lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+
+        Returns:
+            Tensor, has the same shape and data type as self.
+
+        Raises:
+            TypeError: If `lambd` is not a float.
+            TypeError: If dtype of the input tensor is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), ms.float32)
+            >>> print(x.hardshrink())
+            [[ 0.      1.      2.    ]
+            [ 0.      0.     -2.1233]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('hardshrink')(lambd)(self)
+
+
 class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.

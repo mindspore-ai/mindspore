@@ -221,6 +221,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"sum", std::string("sum")},                                // P.ReduceSum
        {"repeat", std::string("repeat")},                          // C.repeat_elements
        {"cdist", std::string("cdist")},                            // P.cdist
+       {"hardshrink", std::string("hardshrink")},                  // P.hshrink
      }},
     {kObjectTypeRowTensorType,
      {

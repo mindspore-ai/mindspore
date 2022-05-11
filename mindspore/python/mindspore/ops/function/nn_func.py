@@ -19,8 +19,6 @@ from mindspore.ops import operations as P
 
 
 fast_gelu_ = P.FastGeLU()
-
-
 def fast_gelu(x):
     r"""
     Fast Gaussian Error Linear Units activation function.
@@ -54,7 +52,46 @@ def fast_gelu(x):
     return fast_gelu_(x)
 
 
+def hardshrink(x, lambd=0.5):
+    r"""
+    Hard Shrink activation function. Calculates the output according to the input elements.
+
+    The formula is defined as follows:
+
+    .. math::
+        \text{HardShrink}(x) =
+        \begin{cases}
+        x, & \text{ if } x > \lambda \\
+        x, & \text{ if } x < -\lambda \\
+        0, & \text{ otherwise }
+        \end{cases}
+
+    Args:
+        x (Tensor): The input of Hard Shrink with data type of float16 or float32.
+        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+
+    Returns:
+        Tensor, has the same data type and shape as the input.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Raises:
+        TypeError: If `lambd` is not a float.
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Examples:
+        >>> x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
+        >>> output = ops.hardshrink(x)
+        >>> print(output)
+        [[ 0.      1.      2.    ]
+        [ 0.      0.     -2.1233]]
+    """
+    return P.HShrink(lambd)(x)
+
+
 __all__ = [
-    'fast_gelu'
+    'fast_gelu',
+    'hardshrink'
 ]
 __all__.sort()

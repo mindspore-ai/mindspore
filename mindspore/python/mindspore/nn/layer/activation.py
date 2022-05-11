@@ -1034,7 +1034,7 @@ class HShrink(Cell):
         Tensor, the same shape and data type as the input.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Raises:
         TypeError: If `lambd` is not a float.
@@ -1044,7 +1044,7 @@ class HShrink(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0],[0.0533,0.0776,-2.1233]]),mindspore.float32)
+        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
         >>> hshrink = nn.HShrink()
         >>> output = hshrink(input_x)
         >>> print(output)

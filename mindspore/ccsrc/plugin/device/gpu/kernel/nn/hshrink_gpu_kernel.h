@@ -25,7 +25,7 @@ namespace mindspore {
 namespace kernel {
 class HShrinkGpuKernelMod : public NativeGpuKernelMod {
  public:
-  HShrinkGpuKernelMod() { ResetResource(); }
+  HShrinkGpuKernelMod() {}
   ~HShrinkGpuKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
@@ -42,16 +42,11 @@ class HShrinkGpuKernelMod : public NativeGpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void ResetResource() noexcept;
-
-  void InitSizeLists();
-
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   using HShrinkFunc = std::function<bool(HShrinkGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &)>;
 
-  std::vector<size_t> input_shape_;
   size_t unit_size_{1};
   size_t input_elements_{};
   void *cuda_stream_{nullptr};
