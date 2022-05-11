@@ -23,6 +23,7 @@ import mindspore.nn as nn
 import mindspore.ops.composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
+from mindspore import log as logger
 
 
 def check_add_offload_sink_mode(dataset, dataset_helper, network):
@@ -515,6 +516,14 @@ class GetModelFromJson2Col(nn.Cell):
         self.col_idxs = col_idxs
         self.me_ops = []
         self.input_cols = []
+
+        # Check if input_culmns attr is empty in Map op.
+        if not self.col_idxs:
+            self.col_idxs = [0]
+            logger.warning(
+                "input_columns attr in map op is not defined, "
+                "so offload op will be applied to first column of dataset.")
+
         if json_offload is not None:
             offload_ops = json_offload["operations"]
             for op in offload_ops:
