@@ -16,16 +16,7 @@
 
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
-#ifdef ENABLE_SSE
-#ifdef _MSC_VER
-#include <immintrin.h>
-#else
-#include <x86intrin.h>
-#endif
-#endif
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 #ifndef ENABLE_ARM
 void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col) {

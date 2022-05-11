@@ -17,6 +17,7 @@
 #include "nnacl/fp32/div_fp32.h"
 #include <math.h>
 #include "nnacl/fp32/arithmetic_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
 #define SimdElementOptDivCoreCalc1(block_size, block_num, in0, in1, out, size, index)             \

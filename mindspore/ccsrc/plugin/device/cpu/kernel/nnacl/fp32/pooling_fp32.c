@@ -18,6 +18,7 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
 #define SimdFp32AvgPoolingBatchCoreCalc(block_size, block_num, src_plane_ptr, channel, dst_plane_ptr, ci,   \

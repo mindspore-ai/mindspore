@@ -15,9 +15,8 @@
  */
 
 #include "nnacl/fp32/scale_fp32.h"
-#ifdef ENABLE_ARM
-#include <arm_neon.h>
-#endif
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+
 void ScaleInner(const float *in_data, float *out_data, const float *scale, const float *offset, int outer_start,
                 int outer_end, int axis_size, int inner_size) {
   for (int out = outer_start; out < outer_end; out++) {

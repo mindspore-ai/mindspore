@@ -19,6 +19,7 @@
 #include "nnacl/group_norm_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 static void GroupNormFp32MeanVar(const float *input, float *run_mean, float *run_var, int completed_group,
                                  int cur_groups, const GroupNormParameter *param);

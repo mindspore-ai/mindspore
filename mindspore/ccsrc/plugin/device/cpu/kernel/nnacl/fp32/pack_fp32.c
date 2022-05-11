@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/fp32/pack_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void PackWeightKHWToHWKFp32(const void *src, void *dst, int plane, int channel) {
   PackNCHWToNHWCFp32(src, dst, 1, plane, channel, 0, 0);

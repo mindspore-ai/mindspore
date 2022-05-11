@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/cumsum_fp32.h"
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
 // (a, b, c) -> (0, a,   a+b)    exclusive == true

@@ -18,6 +18,7 @@
 #include <math.h>
 #include "nnacl/fp32/winograd_utils.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void Polynomial(const float *interval, float *m, int degree) {
   for (int i = 0; i < degree; ++i) {
