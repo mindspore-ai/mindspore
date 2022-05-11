@@ -397,6 +397,23 @@ void RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) {
     opt::RemoveNopNode(kernel_graph.get());
   }
 }
+
+// Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
+// selection needs to be performed to set kernel info.
+void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
+  // Check whether the node has completed operator selection.
+  for (const auto &node : nodes) {
+    if (AnfAlgo::GetSelectKernelBuildInfo(node) != nullptr) {
+      continue;
+    }
+
+    // Kernel selection process.
+    auto [msg, etype] = SetKernelInfoWithMsg(node);
+    if (!msg.empty()) {
+      MS_EXCEPTION(etype) << msg;
+    }
+  }
+}
 }  // namespace
 
 void GPUDeviceContext::OptimizeSingleOpGraph(const KernelGraphPtr &graph) const {
@@ -459,7 +476,10 @@ void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
   }
 }
 
-void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const { CreateGPUKernel(nodes); }
+void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+  SetKernelInfoBeforeCreateKernel(nodes);
+  CreateGPUKernel(nodes);
+}
 
 void GPUDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
   MS_EXCEPTION_IF_NULL(kernel);

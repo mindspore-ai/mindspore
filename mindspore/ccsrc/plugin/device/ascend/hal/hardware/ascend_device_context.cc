@@ -207,6 +207,23 @@ void InitMemReuseExecOrder(KernelGraph *kernel_graph) {
   kernel_graph->set_mem_reuse_exec_order(mem_reuse_order);
   UnfoldRecursiveExecOrder(kernel_graph);
 }
+
+// Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
+// selection needs to be performed to set kernel info.
+void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
+  // Check whether the node has completed kernel selection.
+  for (const auto &node : nodes) {
+    if (AnfAlgo::GetSelectKernelBuildInfo(node) != nullptr) {
+      continue;
+    }
+
+    // Kernel selection process.
+    auto [status, msg, etype] = SelectKernelInfoWithMsg(node);
+    if (status == device::ascend::kNoMatched) {
+      MS_EXCEPTION(etype) << msg;
+    }
+  }
+}
 }  // namespace
 
 /*
@@ -329,6 +346,8 @@ void AscendDeviceContext::OptimizeGraph(const KernelGraphPtr &graph) const {
 }
 
 void AscendDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+  SetKernelInfoBeforeCreateKernel(nodes);
+
   MS_LOG(INFO) << "Status record: start create kernel.";
   PROF_START(create_kernel);
   auto ret = device::ascend::KernelBuild(nodes);
