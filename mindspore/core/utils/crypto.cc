@@ -167,12 +167,14 @@ int InitCipherCtx(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *(*funcPtr)(), const std
 
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_EncryptInit_ex/EVP_DecryptInit_ex failed";
+    EVP_CIPHER_CTX_free(ctx);
     return 1;
   }
   if (work_mode == "CBC") {
     ret = EVP_CIPHER_CTX_set_padding(ctx, 1);
     if (ret != 1) {
       MS_LOG(ERROR) << "EVP_CIPHER_CTX_set_padding failed";
+      EVP_CIPHER_CTX_free(ctx);
       return 1;
     }
   }
@@ -223,6 +225,7 @@ EVP_CIPHER_CTX *GetEvpCipherCtx(const std::string &work_mode, const Byte *key, i
   auto ctx = EVP_CIPHER_CTX_new();
   if (InitCipherCtx(ctx, funcPtr, work_mode, key, key_len, iv, iv_len, is_encrypt) != 0) {
     MS_LOG(ERROR) << "InitCipherCtx failed.";
+    EVP_CIPHER_CTX_free(ctx);
     return nullptr;
   }
   return ctx;
@@ -271,6 +274,7 @@ bool BlockEncrypt(Byte *encrypt_data, size_t *encrypt_data_len, const std::vecto
   if (enc_mode == "AES-GCM") {
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, Byte16, tag) != 1) {
       MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
   }
@@ -344,6 +348,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   if (dec_mode == "AES-GCM") {
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, Byte16, tag)) {
       MS_LOG(ERROR) << "EVP_CIPHER_CTX_ctrl failed";
+      EVP_CIPHER_CTX_free(ctx);
       return false;
     }
   }
@@ -352,6 +357,7 @@ bool BlockDecrypt(Byte *plain_data, int32_t *plain_len, const Byte *encrypt_data
   ret = EVP_DecryptFinal_ex(ctx, plain_data + *plain_len, &mlen);
   if (ret != 1) {
     MS_LOG(ERROR) << "EVP_DecryptFinal_ex failed";
+    EVP_CIPHER_CTX_free(ctx);
     return false;
   }
   *plain_len += mlen;
