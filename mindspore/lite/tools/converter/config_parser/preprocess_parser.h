@@ -24,6 +24,8 @@
 
 namespace mindspore {
 namespace lite {
+constexpr int kDotDirCount = 2;
+constexpr int kFileCountLimit = 100000;
 class PreprocessParser {
  public:
   static int ParsePreprocess(const DataPreProcessString &data_pre_process_str,
@@ -50,6 +52,8 @@ class PreprocessParser {
 
   static int CollectCalibInputs(const std::map<std::string, std::string> &calibrate_data_path, size_t limited_count,
                                 std::map<std::string, std::vector<std::string>> *inputs);
+
+  static int ReadDirectory(const std::string &path, std::vector<std::string> *file_names);
 };
 }  // namespace lite
 }  // namespace mindspore
