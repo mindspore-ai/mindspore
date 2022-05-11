@@ -31,7 +31,8 @@ int GatherInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   const TensorC *indices = inputs[1];
   TensorC *output = outputs[0];
   output->data_type_ = input->data_type_;
-  if (parameter->quant_type_ == QuantType_QUANT_WEIGHT || parameter->quant_type_ == QuantType_QUANT_DYNAMIC) {
+  if ((input->data_type_ == kNumberTypeInt8 || input->data_type_ == kNumberTypeInt16) &&
+      (parameter->quant_type_ == QuantType_QUANT_WEIGHT || parameter->quant_type_ == QuantType_QUANT_DYNAMIC)) {
     output->data_type_ = kNumberTypeFloat32;
   }
   output->format_ = input->format_;
