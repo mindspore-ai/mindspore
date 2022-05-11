@@ -66,9 +66,9 @@ size_t GetElementSize(const TensorT &tensor);
 
 size_t GetElementSize(const TypeId &dataType);
 
-int GetShapeSize(const TensorT &tensor);
+size_t GetShapeSize(const TensorT &tensor);
 
-int GetShapeSize(const std::vector<int32_t> &shape);
+size_t GetShapeSize(const std::vector<int32_t> &shape);
 
 std::unique_ptr<TensorT> CopyTensorDefT(const std::unique_ptr<TensorT> &);
 

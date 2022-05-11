@@ -238,11 +238,15 @@ size_t GetElementSize(const TypeId &dataType) {
   }
 }
 
-int GetShapeSize(const TensorT &tensor) {
+size_t GetShapeSize(const TensorT &tensor) {
   auto shape = tensor.dims;
-  int shapeSize = 1;
+  size_t shapeSize = 1;
   for (auto dim : shape) {
-    shapeSize *= dim;
+    if (dim <= 0) {
+      MS_LOG(WARNING) << "Dim value less than or equal to 0 found in tensor's shape.";
+      return 0;
+    }
+    shapeSize *= static_cast<size_t>(dim);
   }
   return shapeSize;
 }
@@ -277,10 +281,15 @@ size_t GetRefCount(MetaGraphT *graphT, uint32_t tensorIdx) {
   }
   return refCount;
 }
-int GetShapeSize(const std::vector<int32_t> &shape) {
-  int shapeSize = 1;
+
+size_t GetShapeSize(const std::vector<int32_t> &shape) {
+  size_t shapeSize = 1;
   for (auto dim : shape) {
-    shapeSize *= dim;
+    if (dim <= 0) {
+      MS_LOG(WARNING) << "Dim value less than or equal to 0 found in tensor's shape.";
+      return 0;
+    }
+    shapeSize *= static_cast<size_t>(dim);
   }
   return shapeSize;
 }

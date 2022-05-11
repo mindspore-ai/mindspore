@@ -48,11 +48,7 @@ constexpr int kHalfUInt = 128;
 
 STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor) {
   MS_ASSERT(tensor != nullptr);
-  int wShapeSize = tensor->data.empty() ? 0 : GetShapeSize(*(tensor.get()));
-  if (wShapeSize < 0) {
-    MS_LOG(ERROR) << "Invalid shape.";
-    return RET_ERROR;
-  }
+  size_t wShapeSize = tensor->data.empty() ? 0 : GetShapeSize(*(tensor.get()));
   void *oriWeightData = tensor->data.data();
   if (oriWeightData == nullptr) {
     return RET_OK;
@@ -62,12 +58,12 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor) {
   if (tensor->dataType == TypeId::kNumberTypeFloat ||
       tensor->dataType == TypeId::kNumberTypeFloat32) {  // normal awareing quant
     auto *weightData = static_cast<float *>(oriWeightData);
-    for (int j = 0; j < wShapeSize; j++) {
+    for (size_t j = 0; j < wShapeSize; j++) {
       qDatas[j] = QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
     }
   } else {  // convert uint8 to int8
     auto *weightData = static_cast<uint8_t *>(oriWeightData);
-    for (int j = 0; j < wShapeSize; j++) {
+    for (size_t j = 0; j < wShapeSize; j++) {
       qDatas[j] = static_cast<int8_t>(static_cast<int32_t>(weightData[j]) - kHalfUInt);
     }
     weightQauntParam->zeroPoint -= kHalfUInt;
@@ -90,11 +86,7 @@ STATUS ComputeDataToInt8(const std::unique_ptr<TensorT> &tensor) {
 
 STATUS ComputeDataToInt32(const std::unique_ptr<TensorT> &tensor) {
   MS_ASSERT(tensor != nullptr);
-  int bShapeSize = GetShapeSize(*(tensor));
-  if (bShapeSize < 0) {
-    MS_LOG(ERROR) << "Invalid shape.";
-    return RET_ERROR;
-  }
+  size_t bShapeSize = GetShapeSize(*(tensor));
   auto qDatas = std::make_unique<int32_t[]>(bShapeSize);
   if (qDatas == nullptr) {
     MS_LOG(ERROR) << "new qDatas failed";
@@ -106,7 +98,7 @@ STATUS ComputeDataToInt32(const std::unique_ptr<TensorT> &tensor) {
     MS_LOG(ERROR) << "divisor 'scale' cannot be 0";
     return RET_ERROR;
   }
-  for (int i = 0; i < bShapeSize; ++i) {
+  for (size_t i = 0; i < bShapeSize; ++i) {
     qDatas[i] = (int32_t)std::round(rawDatas[i] / tensor->quantParams.front()->scale);
   }
   tensor->dataType = TypeId::kNumberTypeInt32;
