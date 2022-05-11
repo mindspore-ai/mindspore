@@ -105,3 +105,23 @@ def test_compile_leaky_relu():
     net = NetLeakyReLU(alpha=0.1)
     input_data = Tensor(np.array([[1.6, 0, 0.6], [6, 0, -6]], dtype=np.float32))
     _cell_graph_executor.compile(net, input_data)
+
+
+class NetSoftsign(nn.Cell):
+    def __init__(self):
+        super(NetSoftsign, self).__init__()
+        self.softsign = nn.Softsign()
+
+    def construct(self, x):
+        return self.softsign(x)
+
+
+def test_compile_softsign():
+    """
+    Feature: ALL To ALL
+    Description: test cases for Softsign
+    Expectation: no exception
+    """
+    net = NetSoftsign()
+    x = np.array([0, -1, 2, 30, -30], dtype=np.float32)
+    _cell_graph_executor.compile(net, Tensor(x))

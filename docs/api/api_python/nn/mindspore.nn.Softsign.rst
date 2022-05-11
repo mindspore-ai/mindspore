@@ -1,0 +1,26 @@
+mindspore.nn.Softsign
+=====================
+
+.. py:class:: mindspore.nn.Softsign
+
+    Softsign激活函数。
+
+    按元素计算Softsign激活函数。
+
+    Softsign函数定义为：
+
+    .. math::
+        \text{SoftSign}(x) = \frac{x}{1 + |x|}
+
+    **输入：**
+
+    **input_x** (Tensor) - shape为 :math:`(N, *)` 的Tensor, 其中 :math:`*` 表示任意个数的维度。它的数据类型必须为float16或float32。
+
+    **输出：**
+
+    Tensor，数据类型和shape与 `input_x` 相同。
+
+    **异常：**
+
+    - **TypeError** - `input_x` 不是Tensor。
+    - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
