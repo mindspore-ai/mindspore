@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -82,15 +82,24 @@ build_lite_x86_64_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
     cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
-    cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
-    cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
-    if [ -f "${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so.0" ]; then
+    cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/*.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
+    LIB_GLOG="libglog.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
       cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/libglog.so
+    fi
+    LIB_JPEG="libjpeg.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG}`" ]; then
+      cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
+    fi
+    LIB_TURBOJPEG="libturbojpeg.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_TURBOJPEG}`" ]; then
+      cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_TURBOJPEG} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
     fi
     if [[ "X$is_train" = "Xon" ]]; then
       cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_x86/libs/
       cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_x86/
       cp ./libmindspore-lite-train-jni.so ${INSTALL_PREFIX}/${pkg_name}/runtime/lib/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_x86_64/
     fi
 
     cd ${LITE_JAVA_PATH}/java
@@ -181,14 +190,25 @@ build_lite_aarch64_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     cp ./libmindspore-lite-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
-    cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
-    if [ -f "${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so.0" ]; then
+
+    cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/*.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
+    LIB_GLOG="libglog.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
       cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/libglog.so
+    fi
+    LIB_JPEG="libjpeg.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG}`" ]; then
+      cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
+    fi
+    LIB_TURBOJPEG="libturbojpeg.so*"
+    if [ -f "`echo ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_TURBOJPEG}`" ]; then
+      cp ${BASEPATH}/output/tmp/${pkg_name}/runtime/third_party/libjpeg-turbo/lib/${LIB_TURBOJPEG} ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     fi
     if [[ "X$is_train" = "Xon" ]]; then
       cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/java/linux_aarch64/libs/
       cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/native/libs/linux_aarch64/
       cp ./libmindspore-lite-train-jni.so ${BASEPATH}/output/tmp/${pkg_name}/runtime/lib/
+      cp ./libmindspore-lite-train-jni.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/linux_aarch64/
     fi
 
     cd ${LITE_JAVA_PATH}/java

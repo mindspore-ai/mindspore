@@ -122,7 +122,6 @@ function Run_x86_java() {
     cp ${x86_path}/avx/mindspore-lite-${version}-linux-x64.tar.gz ./java/ || exit 1
     cd ./java || exit 1
     tar -zxf mindspore-lite-${version}-linux-x64.tar.gz || exit 1
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib:${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/third_party/libjpeg-turbo/lib
     # compile benchmark
     echo "javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d ."
     javac -cp ${x86_path}/java/mindspore-lite-${version}-linux-x64/runtime/lib/mindspore-lite-java.jar ${basepath}/java/src/main/java/Benchmark.java -d .
