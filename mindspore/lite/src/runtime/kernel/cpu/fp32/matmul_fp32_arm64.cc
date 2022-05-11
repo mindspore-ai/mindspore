@@ -110,7 +110,7 @@ int MatmulFp32BaseCPUKernel::ParallelRunByRow(int task_id) const {
     return RET_OK;
   }
   GemmIsNotPackByRow(matrix_a_.pack_ptr, matrix_b_.pack_ptr, output_data_, matrix_c_.pack_ptr, start_row, end_row,
-                     params_->deep_);
+                     params_->deep_, params_->act_type_);
   return RET_OK;
 }
 
