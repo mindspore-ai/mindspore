@@ -31,8 +31,12 @@ NUMAAdapter::NUMAAdapter() {
   available_ = false;
   handle_ = dlopen("libnuma.so", RTLD_LAZY | RTLD_LOCAL);
   if (handle_ == nullptr) {
-    MS_LOG(WARNING) << "Does not support NUMA.";
-    return;
+    MS_LOG(WARNING) << "Open libnuma.so failed!try libnuma.so.1 again.";
+    handle_ = dlopen("libnuma.so.1", RTLD_LAZY | RTLD_LOCAL);
+    if (handle_ == nullptr) {
+      MS_LOG(WARNING) << "Open numa so failed!";
+      return;
+    }
   }
 
   numa_interfaces_.numa_available = reinterpret_cast<int (*)(void)>(dlsym(handle_, "numa_available"));
