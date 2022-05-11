@@ -75,6 +75,49 @@ def eye(n, m, t):
     return eye_(n, m, t)
 
 
+matrix_band_part_ = P.array_ops.MatrixBandPart()
+def matrix_band_part(x, lower, upper):
+    r"""
+    Copy a tensor setting everything outside a central band in each innermost matrix to zero.
+
+    Inputs:
+        - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
+          The data type must be float16, float32, float64, int32 or int64.
+        - **lower** (int) - Number of subdiagonals to keep. It must be int32 or int64.
+          If negative, keep entire lower triangle.
+        - **upper** (int) - Number of superdiagonals to keep. It must be int32 or int64.
+          If negative, keep entire upper triangle.
+
+    Outputs:
+        Tensor, has the same type and shape as input shape value.
+
+    Raises:
+        TypeError: If dtype of `x` is not one of float16, float32, float64, int32 or int64.
+        TypeError: If dtype of `lower` is not int32 or int64.
+        TypeError: If dtype of `upper` is not int32 or int64.
+        ValueError: If the shape of `x` is not greater than or equal to 2D.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> x = np.ones([2, 4, 4]).astype(np.float32)
+        >>> output = F.matrix_band_part(Tensor(x), 2, 1)
+        >>> print(output)
+        [[[1. 1. 0. 0.]
+          [1. 1. 1. 0.]
+          [1. 1. 1. 1.]
+          [0. 1. 1. 1.]]
+
+         [[1. 1. 0. 0.]
+          [1. 1. 1. 0.]
+          [1. 1. 1. 1.]
+          [0. 1. 1. 1.]]]
+    """
+    return matrix_band_part_(x, lower, upper)
+
+
 fill_ = P.Fill()
 def fill(type, shape, value):
     """
@@ -1268,6 +1311,7 @@ def masked_fill(x, mask, value):
 __all__ = [
     'unique',
     'eye',
+    'matrix_band_part',
     'fill',
     'fill_',
     'tile',

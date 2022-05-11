@@ -14,7 +14,7 @@
 # ============================================================================
 """Linear algebra submodule"""
 from .. import numpy as mnp
-from .ops import MatrixSetDiag, MatrixBandPart, MatrixDiagPartV3
+from .ops import MatrixSetDiag, MatrixDiagPartV3
 from ..common import dtype as mstype
 from .utils import _to_tensor
 from .utils_const import _raise_value_error
@@ -73,14 +73,6 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
     k_vec = _to_tensor(k_vec, dtype=mstype.int32)
     output = matrix_set_diag_net(input_x, diagonal, k_vec)
     return output
-
-
-def matrix_band_part(a, lower, upper):
-    """
-    MatrixBandPart
-    """
-    msp_matrixbandpart = MatrixBandPart()
-    return msp_matrixbandpart(a, lower, upper)
 
 
 def matrix_diag_part(a, k=0, padding_value=0, align="RIGHT_LEFT"):
