@@ -3288,7 +3288,7 @@ class Sinh(Primitive):
     Refer to :func:`mindspore.ops.sinh` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> sinh = ops.Sinh()
