@@ -636,9 +636,9 @@ The following are examples:
 
   .. code-block:: python
 
-      from mindspore import ms_function, context
+      from mindspore import ms_function, set_context, GRAPH_MODE
 
-      context.set_context(mode=context.GRAPH_MODE)
+      set_context(mode=GRAPH_MODE)
       grad_all = ops.composite.GradOperation(get_all=True)
       print(grad_all(ms_function(forward))(x, w1, b1, w2, b2, w3, b3))
 
@@ -665,22 +665,22 @@ The following are examples:
 
   .. code-block:: python
 
-      from mindspore import context
+      from mindspore import set_context, GRAPH_MODE, PYNATIVE_MODE
 
       # Execucation in static graph mode
-      context.set_context(mode=context.GRAPH_MODE)
+      set_context(mode=GRAPH_MODE)
 
       # Execucation in PyNative mode
-      context.set_context(mode=context.PYNATIVE_MODE)
+      set_context(mode=PYNATIVE_MODE)
 
       # Execucation on CPU backend
-      context.set_context(device_target="CPU")
+      set_context(device_target="CPU")
 
       # Execucation on GPU backend
-      context.set_context(device_target="GPU")
+      set_context(device_target="GPU")
 
       # Execucation on Ascend backend
-      context.set_context(device_target="Ascend")
+      set_context(device_target="Ascend")
       ...
 
   For more details, see `API mindspore.set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html#mindspore.set_context>`_ .
@@ -692,10 +692,10 @@ The following are examples:
   .. code-block:: python
 
       import mindspore.numpy as np
-      from mindspore import context
+      from mindspore import set_context, GRAPH_MODE
       from mindspore.nn import Cell
 
-      context.set_context(mode=context.GRAPH_MODE)
+      set_context(mode=GRAPH_MODE)
 
       x = np.arange(8).reshape(2, 4).astype('float32')
       w1 = np.ones((4, 8))
