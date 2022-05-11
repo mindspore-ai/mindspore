@@ -17,13 +17,68 @@
 
 from mindspore.ops import operations as P
 
+addn_ = P.AddN()
+absolute = P.Abs()
+tensor_add = P.Add()
+neg_tensor = P.Neg()
+tensor_sub = P.Sub()
+tensor_mul = P.Mul()
+tensor_div = P.RealDiv()
+tensor_floordiv = P.FloorDiv()
+floordiv = tensor_floordiv
+tensor_pow = P.Pow()
+pows = tensor_pow
+tensor_mod = P.FloorMod()
+floormod = tensor_mod
+tensor_exp = P.Exp()
+tensor_expm1 = P.Expm1()
+log_ = P.Log()
+floor_ = P.Floor()
+logical_not_ = P.LogicalNot()
+logical_or_ = P.LogicalOr()
+logical_and_ = P.LogicalAnd()
+sin_ = P.Sin()
+cos_ = P.Cos()
+tan_ = P.Tan()
+asin_ = P.Asin()
+acos_ = P.ACos()
+atan_ = P.Atan()
+sinh_ = P.Sinh()
+cosh_ = P.Cosh()
+tanh_ = P.Tanh()
+asinh_ = P.Asinh()
+acosh_ = P.Acosh()
+atanh_ = P.Atanh()
+atan2_ = P.Atan2()
+bitwise_and_ = P.BitwiseAnd()
+bitwise_or_ = P.BitwiseOr()
+bitwise_xor_ = P.BitwiseXor()
+invert_ = P.Invert()
+erf_ = P.Erf()
+erfc_ = P.Erfc()
+bessel_j1_ = P.BesselJ1()
+bessel_j0_ = P.BesselJ0()
+bessel_i0_ = P.BesselI0()
+bessel_i0e_ = P.BesselI0e()
+bessel_k0_ = P.BesselK0()
+bessel_k0e_ = P.BesselK0e()
+tensor_lt = P.Less()
+tensor_le = P.LessEqual()
+tensor_gt = P.Greater()
+tensor_ge = P.GreaterEqual()
+equal_ = P.Equal()
+not_equal = P.NotEqual()
+isfinite_ = P.IsFinite()
+isnan_ = P.IsNan()
+same_type_shape_ = P.SameTypeShape()
+maximum_ = P.Maximum()
+minimum_ = P.Minimum()
+lerp_ = P.Lerp()
+
+
 #####################################
 # Element-wise Operation Functions.
 #####################################
-
-
-addn_ = P.AddN()
-
 
 def addn(x):
     """
@@ -56,9 +111,6 @@ def addn(x):
     return addn_(x)
 
 
-absolute = P.Abs()
-
-
 def abs(x):
     r"""
     Returns absolute value of a tensor element-wise.
@@ -87,9 +139,6 @@ def abs(x):
         [1. 1. 0.]
     """
     return absolute(x)
-
-
-tensor_add = P.Add()
 
 
 def add(x, y):
@@ -147,9 +196,6 @@ def add(x, y):
     return tensor_add(x, y)
 
 
-neg_tensor = P.Neg()
-
-
 def neg(x):
     """
     Returns a tensor with negative values of the input tensor element-wise.
@@ -178,9 +224,6 @@ def neg(x):
         [-1.  -2.   1.  -2.   0.   3.5]
     """
     return neg_tensor(x)
-
-
-tensor_sub = P.Sub()
 
 
 def sub(x, y):
@@ -227,9 +270,6 @@ def sub(x, y):
     return tensor_sub(x, y)
 
 
-tensor_mul = P.Mul()
-
-
 def mul(x, y):
     r"""
     Multiplies two tensors element-wise.
@@ -274,9 +314,6 @@ def mul(x, y):
     return tensor_mul(x, y)
 
 
-tensor_div = P.RealDiv()
-
-
 def div(x, y):
     """
     Divides the first input tensor by the second input tensor in floating-point type element-wise.
@@ -316,10 +353,6 @@ def div(x, y):
         [0.25 0.4  0.5 ]
     """
     return tensor_div(x, y)
-
-
-tensor_floordiv = P.FloorDiv()
-floordiv = tensor_floordiv
 
 
 def floor_div(x, y):
@@ -363,10 +396,6 @@ def floor_div(x, y):
         [ 0  1 -1]
     """
     return tensor_floordiv(x, y)
-
-
-tensor_pow = P.Pow()
-pows = tensor_pow
 
 
 def pow(x, y):
@@ -420,10 +449,6 @@ def pow(x, y):
     return tensor_pow(x, y)
 
 
-tensor_mod = P.FloorMod()
-floormod = tensor_mod
-
-
 def floor_mod(x, y):
     r"""
     Computes the remainder of division element-wise. It's a flooring divide.
@@ -475,9 +500,6 @@ def floor_mod(x, y):
     return tensor_mod(x, y)
 
 
-tensor_exp = P.Exp()
-
-
 def exp(x):
     r"""
     Returns exponential of a tensor element-wise.
@@ -506,9 +528,6 @@ def exp(x):
         [ 2.718282  7.389056 54.598152]
     """
     return tensor_exp(x)
-
-
-tensor_expm1 = P.Expm1()
 
 
 def expm1(x):
@@ -540,9 +559,6 @@ def expm1(x):
         [ 0.        1.718282  6.389056 53.598152]
     """
     return tensor_expm1(x)
-
-
-log_ = P.Log()
 
 
 def log(x):
@@ -583,9 +599,6 @@ def log(x):
     return log_(x)
 
 
-floor_ = P.Floor()
-
-
 def floor(x):
     r"""
     Rounds a tensor down to the closest integer element-wise.
@@ -617,9 +630,6 @@ def floor(x):
     return floor_(x)
 
 
-logical_not_ = P.LogicalNot()
-
-
 def logical_not(x):
     """
     Computes the "logical NOT" of a tensor element-wise.
@@ -649,9 +659,6 @@ def logical_not(x):
         [False  True False]
     """
     return logical_not_(x)
-
-
-logical_or_ = P.LogicalOr()
 
 
 def logical_or(x):
@@ -696,9 +703,6 @@ def logical_or(x):
     return logical_or_(x)
 
 
-logical_and_ = P.LogicalAnd()
-
-
 def logical_and(x):
     r"""
     Computes the "logical AND" of two tensors element-wise.
@@ -741,9 +745,6 @@ def logical_and(x):
     return logical_and_(x)
 
 
-sin_ = P.Sin()
-
-
 def sin(x):
     r"""
     Computes sine of the input element-wise.
@@ -772,9 +773,6 @@ def sin(x):
         [0.5810352 0.27635565 0.41687083 0.5810352]
     """
     return sin_(x)
-
-
-cos_ = P.Cos()
 
 
 def cos(x):
@@ -810,9 +808,6 @@ def cos(x):
     return cos_(x)
 
 
-tan_ = P.Tan()
-
-
 def tan(x):
     r"""
     Computes tangent of `x` element-wise.
@@ -843,9 +838,6 @@ def tan(x):
         [-1.5574081 0. 1.5574081]
     """
     return tan_(x)
-
-
-asin_ = P.Asin()
 
 
 def asin(x):
@@ -880,9 +872,6 @@ def asin(x):
     return asin_(x)
 
 
-acos_ = P.ACos()
-
-
 def acos(x):
     r"""
     Computes arccosine of input tensors element-wise.
@@ -913,9 +902,6 @@ def acos(x):
         [0.737726  1.5307857 1.2661036 0.9764105]
     """
     return acos_(x)
-
-
-atan_ = P.Atan()
 
 
 def atan(x):
@@ -950,9 +936,6 @@ def atan(x):
     return atan_(x)
 
 
-sinh_ = P.Sinh()
-
-
 def sinh(x):
     r"""
     Computes hyperbolic sine of the input element-wise.
@@ -983,9 +966,6 @@ def sinh(x):
     return sinh_(x)
 
 
-cosh_ = P.Cosh()
-
-
 def cosh(x):
     r"""
     Computes hyperbolic cosine of input element-wise.
@@ -1014,9 +994,6 @@ def cosh(x):
         [1.0289385 1.364684 1.048436 1.0040528]
     """
     return cosh_(x)
-
-
-tanh_ = P.Tanh()
 
 
 def tanh(input_x):
@@ -1054,9 +1031,6 @@ def tanh(input_x):
     return tanh_(input_x)
 
 
-asinh_ = P.Asinh()
-
-
 def asinh(x):
     r"""
     Computes inverse hyperbolic sine of the input element-wise.
@@ -1085,9 +1059,6 @@ def asinh(x):
         [-2.3124382  1.1947632  1.8184465  5.298342 ]
     """
     return asinh_(x)
-
-
-acosh_ = P.Acosh()
 
 
 def acosh(x):
@@ -1122,9 +1093,6 @@ def acosh(x):
         [0.        0.9624237 1.7627472 5.298292 ]
     """
     return acosh_(x)
-
-
-atanh_ = P.Atanh()
 
 
 def atanh(x):
@@ -1162,9 +1130,6 @@ def atanh(x):
     return atanh_(x)
 
 
-atan2_ = P.Atan2()
-
-
 def atan2(x, y):
     r"""
     Returns arctangent of x/y element-wise.
@@ -1200,9 +1165,6 @@ def atan2(x, y):
         [0.        0.7853982]
     """
     return atan2_(x, y)
-
-
-bitwise_and_ = P.BitwiseAnd()
 
 
 def bitwise_and(x, y):
@@ -1244,9 +1206,6 @@ def bitwise_and(x, y):
     return bitwise_and_(x, y)
 
 
-bitwise_or_ = P.BitwiseOr()
-
-
 def bitwise_or(x, y):
     r"""
     Returns bitwise `or` of two tensors element-wise.
@@ -1283,9 +1242,6 @@ def bitwise_or(x, y):
         [ 0  1  1 -1 -1  3  3]
     """
     return bitwise_or_(x, y)
-
-
-bitwise_xor_ = P.BitwiseXor()
 
 
 def bitwise_xor(x, y):
@@ -1326,9 +1282,6 @@ def bitwise_xor(x, y):
     return bitwise_xor_(x, y)
 
 
-invert_ = P.Invert()
-
-
 def invert(x):
     r"""
     Flips all bits of input tensor element-wise.
@@ -1357,9 +1310,6 @@ def invert(x):
         [-26 -5 -14 -10]
     """
     return invert_(x)
-
-
-erf_ = P.Erf()
 
 
 def erf(x):
@@ -1393,9 +1343,6 @@ def erf(x):
     return erf_(x)
 
 
-erfc_ = P.Erfc()
-
-
 def erfc(x):
     r"""
     Computes the complementary error function of `x` element-wise.
@@ -1427,7 +1374,6 @@ def erfc(x):
     return erfc_(x)
 
 
-bessel_j0_ = P.BesselJ0()
 def bessel_j0(x):
     r"""
     Computes the Bessel j0 function of x element-wise.
@@ -1455,7 +1401,6 @@ def bessel_j0(x):
     return bessel_j0_(x)
 
 
-bessel_j1_ = P.BesselJ1()
 def bessel_j1(x):
     r"""
     Computes the Bessel j1 function of x element-wise.
@@ -1483,7 +1428,6 @@ def bessel_j1(x):
     return bessel_j1_(x)
 
 
-bessel_i0_ = P.BesselI0()
 def bessel_i0(x):
     r"""
     Computes the Bessel i0 function of x element-wise.
@@ -1511,7 +1455,6 @@ def bessel_i0(x):
     return bessel_i0_(x)
 
 
-bessel_i0e_ = P.BesselI0e()
 def bessel_i0e(x):
     r"""
     Computes the Bessel i0e function of x element-wise.
@@ -1539,7 +1482,6 @@ def bessel_i0e(x):
     return bessel_i0e_(x)
 
 
-bessel_k0_ = P.BesselK0()
 def bessel_k0(x):
     r"""
     Computes the Bessel k0 function of x element-wise.
@@ -1567,7 +1509,6 @@ def bessel_k0(x):
     return bessel_k0_(x)
 
 
-bessel_k0e_ = P.BesselK0e()
 def bessel_k0e(x):
     r"""
     Computes the Bessel k0e function of x element-wise.
@@ -1598,9 +1539,6 @@ def bessel_k0e(x):
 #####################################
 # Comparison Operation Functions.
 #####################################
-
-
-tensor_lt = P.Less()
 
 
 def less(x, y):
@@ -1644,9 +1582,6 @@ def less(x, y):
         [False False True]
     """
     return tensor_lt(x, y)
-
-
-tensor_le = P.LessEqual()
 
 
 def le(x, y):
@@ -1693,9 +1628,6 @@ def le(x, y):
         [ True False  True]
     """
     return tensor_le(x, y)
-
-
-tensor_gt = P.Greater()
 
 
 def gt(x, y):
@@ -1747,9 +1679,6 @@ def gt(x, y):
     return tensor_gt(x, y)
 
 
-tensor_ge = P.GreaterEqual()
-
-
 def ge(x, y):
     r"""
     Computes the boolean value of :math:`x >= y` element-wise.
@@ -1791,9 +1720,6 @@ def ge(x, y):
         [True True False]
     """
     return tensor_ge(x, y)
-
-
-equal_ = P.Equal()
 
 
 def equal(x, y):
@@ -1844,9 +1770,6 @@ def equal(x, y):
     return equal_(x, y)
 
 
-not_equal = P.NotEqual()
-
-
 def ne(x, y):
     r"""
     Computes the non-equivalence of two tensors element-wise.
@@ -1894,9 +1817,6 @@ def ne(x, y):
     return not_equal(x, y)
 
 
-isfinite_ = P.IsFinite()
-
-
 def isfinite(x):
     r"""
     Determines which elements are finite for each position.
@@ -1928,9 +1848,6 @@ def isfinite(x):
         [False  True False]
     """
     return isfinite_(x)
-
-
-isnan_ = P.IsNan()
 
 
 def isnan(x):
@@ -1968,9 +1885,6 @@ def isnan(x):
     return isnan_(x)
 
 
-same_type_shape_ = P.SameTypeShape()
-
-
 def same_type_shape(input_x, input_y):
     """
     Checks whether the data type and shape of two tensors are the same.
@@ -1999,9 +1913,6 @@ def same_type_shape(input_x, input_y):
          [2. 2.]]
     """
     return same_type_shape_(input_x, input_y)
-
-
-maximum_ = P.Maximum()
 
 
 def maximum(x, y):
@@ -2051,9 +1962,6 @@ def maximum(x, y):
         Float32
     """
     return maximum_(x, y)
-
-
-minimum_ = P.Minimum()
 
 
 def minimum(x, y):
@@ -2127,9 +2035,6 @@ def cdist(x, y, p=2.0):
     return cdist_(x, y)
 
 
-lerp_ = P.Lerp()
-
-
 def lerp(start, end, weight):
     """
     Does a linear interpolation of two tensors start and end based on a float or tensor weight.
@@ -2177,6 +2082,46 @@ def lerp(start, end, weight):
 # Reduction Operation Functions.
 #####################################
 
+def lp_norm(input_x, p, axis, keep_dims=False, epsilon=1e-12):
+    r"""
+    Returns the matrix norm or vector norm of a given tensor.
+
+    .. math::
+        output = sum(abs(input)**p)**(1/p)
+
+    Args:
+        input_x (Tensor): Input tensor.
+        p(int): The order of norm. Default: 2.
+        axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
+        keep_dims(bool): Whether the output tensors have dim retained or not. Default: False.
+        epsilon(float): A value added to the denominator for numerical stability. Default: 1e-12.
+
+    Returns:
+        Tensor, has the same dtype as `input`, which shape depends on the args axis. For example, if the size of input
+        is (2, 3, 4), axis is [0, 1], Outputs' shape will be (4,).
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not one of: float16, float32.
+        TypeError: If `p` is not an int.
+        TypeError: If `axis` is not an int, a tuple or a list.
+        TypeError: If `axis` is a tuple or a list, but the element of `axis` is not an int.
+        TypeError: If `keep_dims` is not a bool.
+        ValueError: If the element of `axis` is out of the range [-len(input.shape), len(input.shape)).
+        ValueError: If the length of shape of `axis` is bigger than the length of shape of `input`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
+        >>> output = ops.lp_norm(input_x, 2, [0, 1])
+        >>> print(output)
+        [ 9.165152 10.954452]
+    """
+    lp_norm_ = P.LpNorm(axis, p, keep_dims, epsilon)
+    return lp_norm_(input_x)
+
 
 __all__ = [
     'addn',
@@ -2191,6 +2136,7 @@ __all__ = [
     'tensor_le',
     'le',
     'lerp',
+    'lp_norm',
     'tensor_gt',
     'gt',
     'tensor_ge',
