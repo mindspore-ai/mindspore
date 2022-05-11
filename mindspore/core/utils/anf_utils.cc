@@ -142,6 +142,10 @@ bool AnfUtils::IsShapeDynamic(const std::vector<size_t> &shape) {
   return std::any_of(shape.begin(), shape.end(), [](int64_t s) { return s < 0; });
 }
 
+bool AnfUtils::IsShapeDynamic(const std::vector<int64_t> &shape) {
+  return std::any_of(shape.begin(), shape.end(), [](int64_t s) { return s < 0; });
+}
+
 bool AnfUtils::IsNodeOutputDynamicShape(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto base_shape = node->Shape();

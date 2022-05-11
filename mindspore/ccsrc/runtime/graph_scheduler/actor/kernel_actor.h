@@ -39,6 +39,15 @@ using mindspore::kernel::Address;
 using mindspore::kernel::KernelLaunchInfo;
 using mindspore::tensor::TensorPtr;
 
+struct InputDataInfo {
+  InputDataInfo(const std::string &format, const ShapeVector &shape, size_t size, TypeId type_id)
+      : format_(format), shape_(shape), size_(size), type_id_(type_id) {}
+  std::string format_;
+  ShapeVector shape_;
+  size_t size_;
+  TypeId type_id_;
+};
+
 // The kernel actor is used to receive the device tensors and control info to luanch kernel.
 // The processing flow is RunOpData/RunOpControl -> CheckRunningCondition -> SendMemoryAllocReq
 // -> OnMemoryAllocFinish -> LaunchKernel -> SendMemoryFreeReq -> SendOutput.
@@ -129,8 +138,8 @@ class KernelActor : public DebugAwareActor {
   // The received input device type and format may be different from the formal parameter in the control flow scenarios,
   // so it needs to be copied from the input data to real data that kernel launch needs.
   std::vector<DeviceTensorPtr> copy_input_device_tensors_;
-  // Real data info <format, host_shape> that kernel launch needs, used to check the consistency of received input data.
-  std::vector<std::pair<std::string, ShapeVector>> real_input_data_infos_;
+  // Real data info that kernel launch needs, used to check the consistency of received input data.
+  std::vector<std::shared_ptr<InputDataInfo>> real_input_data_infos_;
 
   // The device tensors for memory alloc and free.
   // output + workspace

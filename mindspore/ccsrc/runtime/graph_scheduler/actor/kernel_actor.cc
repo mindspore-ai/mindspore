@@ -48,7 +48,8 @@ void KernelActor::Init() {
     const auto &input_device_tensor = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel_, i, false);
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     (void)real_input_data_infos_.emplace_back(
-      std::make_pair(input_device_tensor->format(), input_device_tensor->host_shape()));
+      std::make_shared<InputDataInfo>(input_device_tensor->format(), input_device_tensor->host_shape(),
+                                      input_device_tensor->GetSize(), input_device_tensor->type_id()));
   }
 
   // Init the device tensors and kernel launch info.
@@ -311,8 +312,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
   auto &real_input_info = real_input_data_infos_[input_data->index_];
+  MS_EXCEPTION_IF_NULL(real_input_info);
   if ((input_data->data_->DeviceType() == device_contexts_[0]->GetDeviceAddressType()) &&
-      (input_data->data_->format() == real_input_info.first)) {
+      (input_data->data_->format() == real_input_info->format_)) {
     return;
   }
 
@@ -320,14 +322,15 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
   if (copy_input_device_tensors_[input_data->index_] == nullptr) {
-    copy_input_device_tensors_[input_data->index_] =
-      device_contexts_[0]->CreateDeviceAddress(nullptr, input_data->data_->GetSize(), real_input_info.first,
-                                               input_data->data_->type_id(), real_input_info.second);
+    copy_input_device_tensors_[input_data->index_] = device_contexts_[0]->CreateDeviceAddress(
+      nullptr, real_input_info->size_, real_input_info->format_, real_input_info->type_id_, real_input_info->shape_);
   }
   auto &new_device_tensor = copy_input_device_tensors_[input_data->index_];
   MS_EXCEPTION_IF_NULL(new_device_tensor);
   // Dynamic shape need update size.
-  new_device_tensor->SetSize(input_data->data_->GetSize());
+  if (AnfUtils::IsShapeDynamic(real_input_info->shape_)) {
+    new_device_tensor->SetSize(input_data->data_->GetSize());
+  }
   // Update the input device tensor.
   input_device_tensors_[input_data->index_] = new_device_tensor.get();
 
