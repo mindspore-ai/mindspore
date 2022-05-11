@@ -29,7 +29,6 @@
 #include "utils/hash_map.h"
 #include "pybind_api/pybind_patch.h"
 #include "ir/param_info.h"
-#include "ir/variable.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
@@ -148,9 +147,9 @@ bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
   return true;
 }
 
-AbstractBasePtr ArgsToAbstract(const ValuePtr &value, bool enable_tuple_broaden = false) {
+AbstractBasePtr ArgsToAbstract(const ValuePtr &value, bool enable_tuple_broaden = false, bool set_mutable = false) {
   MS_EXCEPTION_IF_NULL(value);
-  bool broaden = value->isa<MetaTensor>() || value->isa<Variable>() ||
+  bool broaden = value->isa<MetaTensor>() || set_mutable ||
                  (enable_tuple_broaden && value->isa<ValueTuple>() && CheckAllTensor(value->cast<ValueTuplePtr>())) ||
                  (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>());
 
@@ -166,14 +165,6 @@ bool CheckArgValid(const py::handle &arg) {
   if (py::isinstance<py::dict>(arg)) {
     auto dict_arg = py::cast<py::dict>(arg);
     return std::all_of(dict_arg.begin(), dict_arg.end(), [](const auto &pair) { return CheckArgValid(pair.second); });
-  }
-
-  if (py::isinstance<Variable>(arg)) {
-    if (py::hasattr(arg, "value")) {
-      return CheckArgValid(arg.attr("value"));
-    }
-    MS_LOG(ERROR) << "There should be a python object value stored in the Variable " << py::str(arg);
-    return false;
   }
 
   if (py::isinstance<Tensor>(arg)) {
@@ -235,6 +226,33 @@ void RecordInitStatus() {
 }
 
 void RecordExitStatus() { MS_LOG(INFO) << "Status record: system exit."; }
+
+void SetValueMutable(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractTensor>()) {
+    return;
+  }
+
+  auto abs_sequence = abs->cast<abstract::AbstractSequencePtr>();
+  if (abs_sequence != nullptr) {
+    const auto &elements = abs_sequence->elements();
+    for (auto &ele : elements) {
+      SetValueMutable(ele);
+    }
+    return;
+  }
+
+  auto abs_dict = abs->cast<abstract::AbstractDictionaryPtr>();
+  if (abs_dict != nullptr) {
+    const auto &elements = abs_dict->elements();
+    for (auto &ele : elements) {
+      SetValueMutable(ele.second);
+    }
+    return;
+  }
+
+  abs->set_value_mutable(true);
+}
 }  // namespace
 
 void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
@@ -271,7 +289,13 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
       MS_EXCEPTION(TypeError) << "parse::ConvertData for " << i << "th argument failed, the argument type is "
                               << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
-    AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden);
+    constexpr char mutable_attr[] = "__ms_mutable__";
+    bool set_mutable = false;
+    if (py::hasattr(args[i], mutable_attr) && py::cast<bool>(py::getattr(args[i], mutable_attr))) {
+      SetValueMutable(converted->ToAbstract());
+      set_mutable = true;
+    }
+    AbstractBasePtr ptr = ArgsToAbstract(converted, enable_tuple_broaden, set_mutable);
     args_spec.push_back(ptr);
     (void)cur_convert_input_.emplace(args[i].ptr(), ptr);
   }

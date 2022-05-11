@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test variable"""
+"""test mutable"""
 
 import numpy as np
 import pytest
 from mindspore.ops.composite import GradOperation
-from mindspore.common.variable import Variable
+from mindspore.common import mutable
 from mindspore.common.api import _CellGraphExecutor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
@@ -27,7 +27,7 @@ from mindspore import Parameter
 
 
 @pytest.mark.skip(reason="No runtime support")
-def test_variable_scalar_mul_grad_first():
+def test_mutable_scalar_mul_grad_first():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to the first scalar input.
@@ -48,13 +48,13 @@ def test_variable_scalar_mul_grad_first():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
-    x = Variable(2)
+    x = mutable(2)
     output = GradNet(Net())(x, 3)
     assert output == 3
 
 
 @pytest.mark.skip(reason="No runtime support")
-def test_variable_scalar_mul_grad_all():
+def test_mutable_scalar_mul_grad_all():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to all scalar inputs.
@@ -75,14 +75,14 @@ def test_variable_scalar_mul_grad_all():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
-    x = Variable(2)
-    y = Variable(3)
+    x = mutable(2)
+    y = mutable(3)
     output = GradNet(Net())(x, y)
     assert output == (3, 2)
 
 
 @pytest.mark.skip(reason="No runtime support")
-def test_variable_tuple_or_list_scalar_mul_grad():
+def test_mutable_tuple_or_list_scalar_mul_grad():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to the tuple or list scalar input.
@@ -103,17 +103,17 @@ def test_variable_tuple_or_list_scalar_mul_grad():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x)
 
-    x = Variable((2, 3))
+    x = mutable((2, 3))
     output = GradNet(Net())(x)
     assert output == (3, 2)
 
-    x = Variable([2, 3])
+    x = mutable([2, 3])
     output = GradNet(Net())(x)
     assert output == (3, 2)
 
 
 @pytest.mark.skip(reason="No runtime support")
-def test_variable_dict_scalar_mul_grad():
+def test_mutable_dict_scalar_mul_grad():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to the dict scalar input.
@@ -134,13 +134,13 @@ def test_variable_dict_scalar_mul_grad():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x)
 
-    x = Variable({'a': 2, 'b': 3})
+    x = mutable({'a': 2, 'b': 3})
     output = GradNet(Net())(x)
     assert output == (3, 2)
 
 
 @pytest.mark.skip(reason="No runtime support")
-def test_variable_mix_scalar_mul_grad_all():
+def test_mutable_mix_scalar_mul_grad_all():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to the mix scalar input including dict and tuple.
@@ -161,8 +161,8 @@ def test_variable_mix_scalar_mul_grad_all():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
-    x = Variable({'a': 2, 'b': 3})
-    y = Variable((4, 5))
+    x = mutable({'a': 2, 'b': 3})
+    y = mutable((4, 5))
     output = GradNet(Net())(x, y)
     assert output == ((12, 8), (6, 0))
 
@@ -197,15 +197,15 @@ def test_tuple_inputs_compile_phase():
     phase1, _ = _cell_graph_executor.compile(net, (x, y))
     phase2, _ = _cell_graph_executor.compile(net, (p, q))
     assert phase1 != phase2
-    phase1, _ = _cell_graph_executor.compile(net, Variable((x, y)))
-    phase2, _ = _cell_graph_executor.compile(net, Variable((p, q)))
+    phase1, _ = _cell_graph_executor.compile(net, mutable((x, y)))
+    phase2, _ = _cell_graph_executor.compile(net, mutable((p, q)))
     assert phase1 == phase2
     # list of Tensor
     phase1, _ = _cell_graph_executor.compile(net, [x, y])
     phase2, _ = _cell_graph_executor.compile(net, [p, q])
     assert phase1 != phase2
-    phase1, _ = _cell_graph_executor.compile(net, Variable([x, y]))
-    phase2, _ = _cell_graph_executor.compile(net, Variable([p, q]))
+    phase1, _ = _cell_graph_executor.compile(net, mutable([x, y]))
+    phase2, _ = _cell_graph_executor.compile(net, mutable([p, q]))
     assert phase1 == phase2
 
 
@@ -238,38 +238,32 @@ def test_dict_inputs_compile_phase():
     phase1, _ = _cell_graph_executor.compile(net, {'a': x, 'b': y})
     phase2, _ = _cell_graph_executor.compile(net, {'a': p, 'b': q})
     assert phase1 != phase2
-    phase1, _ = _cell_graph_executor.compile(net, Variable({'a': x, 'b': y}))
-    phase2, _ = _cell_graph_executor.compile(net, Variable({'a': p, 'b': q}))
+    phase1, _ = _cell_graph_executor.compile(net, mutable({'a': x, 'b': y}))
+    phase2, _ = _cell_graph_executor.compile(net, mutable({'a': p, 'b': q}))
     assert phase1 == phase2
 
 
-def test_check_variable_value():
+def test_check_mutable_value():
     """
     Feature: Set Constants mutable.
-    Description: Check the illegal variable value.
+    Description: Check the illegal mutable value.
     Expectation: Raise the correct error log.
     """
 
     try:
-        Variable(1)
+        mutable(1)
     except TypeError as e:
-        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
-               "their nested structures, but got" in str(e)
+        assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
+               "or their nested structures, but got" in str(e)
 
     try:
-        Variable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), {'a': 2}))
+        mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (2,)])
     except TypeError as e:
-        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
-               "their nested structures, but got" in str(e)
+        assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
+               "or their nested structures, but got" in str(e)
 
     try:
-        Variable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), (2,)])
+        mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), 'b': (2,)})
     except TypeError as e:
-        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
-               "their nested structures, but got" in str(e)
-
-    try:
-        Variable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), 'b': (2,)})
-    except TypeError as e:
-        assert "For 'Varibale', the 'value' should be one of (tuple[Tensor], list[Tensor], dict[Tensor]) or " \
-               "their nested structures, but got" in str(e)
+        assert "For 'mutable', the 'input_data' should be one of (Tensor, tuple[Tensor], list[Tensor], dict[Tensor]) " \
+               "or their nested structures, but got" in str(e)

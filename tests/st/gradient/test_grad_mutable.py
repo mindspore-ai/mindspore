@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""test getting gradient of Variable"""
+"""test getting gradient of mutable input"""
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -20,7 +20,9 @@ from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-from mindspore import Parameter, Variable
+from mindspore.common import mutable
+from mindspore import Parameter
+from mindspore import ms_function
 
 
 def compare(a, b):
@@ -36,7 +38,7 @@ def compare(a, b):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_tuple_tensor():
+def test_grad_mutable_tuple_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to tuple tensor input.
@@ -66,8 +68,8 @@ def test_grad_variable_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+    t = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
@@ -81,7 +83,7 @@ def test_grad_variable_tuple_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_list_tensor():
+def test_grad_mutable_list_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to list tensor input.
@@ -111,8 +113,8 @@ def test_grad_variable_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
+    t = mutable([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
@@ -126,7 +128,7 @@ def test_grad_variable_list_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_dict_tensor():
+def test_grad_mutable_dict_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to dict tensor input.
@@ -156,8 +158,8 @@ def test_grad_variable_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
+    t = mutable({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                 'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [np.array([[1.4100001, 1.5999999, 6.6],
@@ -171,7 +173,7 @@ def test_grad_variable_dict_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_tuple_tuple_tensor():
+def test_grad_mutable_tuple_tuple_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested tuple tensor input.
@@ -201,9 +203,9 @@ def test_grad_variable_tuple_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable(((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+    t = mutable(((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                  Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
@@ -218,7 +220,7 @@ def test_grad_variable_tuple_tuple_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_tuple_list_tensor():
+def test_grad_mutable_tuple_list_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested tuple and list tensor input.
@@ -248,9 +250,9 @@ def test_grad_variable_tuple_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable(([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+    t = mutable(([Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                  Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
@@ -265,7 +267,7 @@ def test_grad_variable_tuple_list_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_list_tuple_tensor():
+def test_grad_mutable_list_tuple_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested list and tuple tensor input.
@@ -295,9 +297,9 @@ def test_grad_variable_list_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable([(Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                   Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
+    t = mutable([(Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                  Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
@@ -312,7 +314,7 @@ def test_grad_variable_list_tuple_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_tuple_dict_tensor():
+def test_grad_mutable_tuple_dict_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested tuple and dict tensor input.
@@ -342,9 +344,9 @@ def test_grad_variable_tuple_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable(({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                   'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+    t = mutable(({'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                  'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
@@ -359,7 +361,7 @@ def test_grad_variable_tuple_dict_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_dict_tuple_tensor():
+def test_grad_mutable_dict_tuple_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested dict and tuple tensor input.
@@ -389,9 +391,9 @@ def test_grad_variable_dict_tuple_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable({'a': (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                        Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
-                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
+    t = mutable({'a': (Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                       Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)),
+                 'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
@@ -406,7 +408,7 @@ def test_grad_variable_dict_tuple_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_list_dict_tensor():
+def test_grad_mutable_list_dict_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested list and dict tensor input.
@@ -436,9 +438,9 @@ def test_grad_variable_list_dict_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable([{'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                   'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
-                  Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
+    t = mutable([{'a': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                  'b': Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)},
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)])
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
@@ -453,7 +455,7 @@ def test_grad_variable_list_dict_tensor():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_variable_dict_list_tensor():
+def test_grad_mutable_dict_list_tensor():
     """
     Feature: Set Constants mutable.
     Description: Get gradient with respect to nested dict and list tensor input.
@@ -483,14 +485,44 @@ def test_grad_variable_dict_list_tensor():
             gradient_function = self.grad_op(self.net)
             return gradient_function(z)
 
-    t = Variable({'a': [Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
-                        Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
-                  'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
+    t = mutable({'a': [Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                       Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)],
+                 'b': Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)})
     output = GradNetWrtX(Net())(t)
     assert isinstance(output, tuple)
     expect = [[np.array([[1.4100001, 1.5999999, 6.6],
                          [1.4100001, 1.5999999, 6.6]]).astype(np.float32), np.array([[0, 0, 0],
                                                                                      [0, 0, 0]]).astype(np.float32)],
+              np.array([[1.7, 1.7, 1.7],
+                        [1.9, 1.9, 1.9],
+                        [1.5, 1.5, 1.5]]).astype(np.float32)]
+    assert compare(output, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_mutable_tuple_tensor_ms_function():
+    """
+    Feature: Set Constants mutable.
+    Description: Get gradient with respect to tuple tensor input.
+    Expectation: Get the correct gradients.
+    """
+
+    @ms_function
+    def net(t):
+        x = t[0]
+        y = t[1]
+        out = P.MatMul()(x, y)
+        return out
+
+    z = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+                 Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+
+    output = GradOperation()(net)(z)
+    assert isinstance(output, tuple)
+    expect = [np.array([[1.4100001, 1.5999999, 6.6],
+                        [1.4100001, 1.5999999, 6.6]]).astype(np.float32),
               np.array([[1.7, 1.7, 1.7],
                         [1.9, 1.9, 1.9],
                         [1.5, 1.5, 1.5]]).astype(np.float32)]

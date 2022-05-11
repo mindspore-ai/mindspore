@@ -33,7 +33,6 @@ from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _cell_graph_executor, _pynative_executor, _check_all_tensor, cells_compile_cache
 from ..common.parameter import Parameter, ParameterTuple
-from ..common.variable import Variable
 from ..common.tensor import Tensor, CSRTensor, COOTensor
 from ..ops.operations import Cast
 from ..ops.primitive import Primitive
@@ -959,8 +958,8 @@ class Cell(Cell_):
                 new_inputs.append(i)
             elif isinstance(i, (COOTensor, CSRTensor)):
                 new_inputs.append(i)
-            elif isinstance(i, Variable):
-                new_inputs.append(i.value)
+            elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
+                new_inputs.append(i)
             elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
                 new_inputs.append(i)
             elif hasattr(self, "enable_tuple_broaden") and self.enable_tuple_broaden and isinstance(i, tuple) and \
