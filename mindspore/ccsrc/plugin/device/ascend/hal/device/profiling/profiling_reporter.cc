@@ -254,20 +254,21 @@ void ProfilingReporter::BuildTensorData(MsprofGeTensorData *tensor_data, const C
   tensor_data->tensorType = tensor_type;
   std::vector<size_t> shape;
   string data_format;
+  uint32_t vm_data_type;
   if (tensor_type == MSPROF_GE_TENSOR_TYPE_INPUT) {
     auto input_node_with_index = common::AnfAlgo::GetPrevNodeOutput(node, index);
     auto input_node = input_node_with_index.first;
     auto input_index = input_node_with_index.second;
     shape = AnfAlgo::GetOutputDeviceShape(input_node, input_index);
     data_format = AnfAlgo::GetOutputFormat(input_node, input_index);
-    tensor_data->dataType = static_cast<uint32_t>(AnfAlgo::GetOutputDeviceDataType(input_node, input_index));
+    vm_data_type = static_cast<uint32_t>(AnfAlgo::GetOutputDeviceDataType(input_node, input_index));
   } else {
     shape = AnfAlgo::GetOutputDeviceShape(node, index);
     data_format = AnfAlgo::GetOutputFormat(node, index);
-    tensor_data->dataType = static_cast<uint32_t>(AnfAlgo::GetOutputDeviceDataType(node, index));
+    vm_data_type = static_cast<uint32_t>(AnfAlgo::GetOutputDeviceDataType(node, index));
   }
-
-  tensor_data->format = OpFormat2Index[data_format];
+  tensor_data->dataType = vm_data_type + MSPROF_DIFFERENCE;
+  tensor_data->format = OpFormat2Index[data_format] + MSPROF_DIFFERENCE;
   auto shape_size = std::min(static_cast<uint64_t>(MSPROF_GE_TENSOR_DATA_SHAPE_LEN), shape.size());
   (void)std::copy(shape.begin(), shape.begin() + shape_size, tensor_data->shape);
 }

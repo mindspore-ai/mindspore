@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ from mindspore import log as logger
 from mindspore.profiler.parser.framework_struct import TASK_DESC_STRUCT
 from mindspore.profiler.parser.framework_struct import TENSOR_DATA_STRUCT
 from mindspore.profiler.parser.framework_struct import STEP_INFO_STRUCT
-from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType
+from mindspore.profiler.parser.framework_enum import VmDataType, VmFormat, FileDataType, MSPROF_DIFFERENCE
 from mindspore.profiler.common.struct_type import StructType
 from mindspore.profiler.common.util import combine_stream_task_id
 from mindspore.profiler.common.exceptions.exceptions import ProfilerDirNotFoundException
@@ -253,7 +253,7 @@ class FrameworkParser:
         # skip rsv data, rsv has 7 bytes
         skip_size = 8
         remain_size = data_size - skip_size
-        if flag == 0:
+        if flag == 1:
             unpack_data = struct.unpack(StructType.CHAR.value * remain_size,
                                         item_binary_data[cursor + skip_size:cursor + data_size])
             unpack_data = ''.join(list(map(lambda c: c.decode(), filter(lambda c: c != b'\x00', unpack_data))))
@@ -316,6 +316,20 @@ class FrameworkParser:
         return point_info
 
     @staticmethod
+    def _get_vm_data_type(msprof_data_type):
+        """Get the mapped vm data type of msprof."""
+        if msprof_data_type >= MSPROF_DIFFERENCE:
+            return msprof_data_type - MSPROF_DIFFERENCE
+        return msprof_data_type
+
+    @staticmethod
+    def _get_vm_op_format(msprof_op_format):
+        """Get the mapped op format type of msprof."""
+        if msprof_op_format >= MSPROF_DIFFERENCE:
+            return msprof_op_format - MSPROF_DIFFERENCE
+        return msprof_op_format
+
+    @staticmethod
     def _construct_task_id_op_attr_dict(prof_tensor_data):
         """prof_tensor_data is a list[tensor_data], tensor_data is a dict, key is same as TENSOR_DATA_STRUCT."""
         task_id_op_attr_dict = defaultdict(list)
@@ -323,11 +337,11 @@ class FrameworkParser:
             task_id = combine_stream_task_id(tensor_data['streamId'], tensor_data['taskId'])
             for tensor_attr in tensor_data['tensorData']:
                 tensor_type = 'input' if tensor_attr['tensorType'] == 0 else 'output'
-                tensor_format = VmFormat.get_format_name(tensor_attr['format'])
+                tensor_format = VmFormat.get_format_name(FrameworkParser._get_vm_data_type(tensor_attr['format']))
                 op_attr = dict(
                     tensor_type=tensor_type,
                     format=tensor_format,
-                    data_type=VmDataType.get_data_type_name(tensor_attr['dataType']),
+                    data_type=VmDataType.get_data_type_name(FrameworkParser._get_vm_op_format(tensor_attr['dataType'])),
                     shape=tensor_attr['shape']
                 )
                 task_id_op_attr_dict[task_id].append(op_attr)
