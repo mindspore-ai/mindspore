@@ -34,7 +34,7 @@ struct MsAtomicBinaryOpImpl;
 
 template <typename Func, typename T>
 struct MsAtomicBinaryOpImpl<Func, T, OneByte> {
-  __device__ __forceinline__ T operator()(T *address, const T val) {
+  __device__ __forceinline__ T operator()(T *address, T val) {
     // We use cuda's atomicCAS(unsigned int*, unsigned int, unsigned int) to
     // implement MsAtomicAdd. An unsigned char may not be 4 byte aligned, but
     // unsigned int* must be 4 byte aligned. This variable contains the offset,
@@ -85,7 +85,7 @@ struct MsAtomicBinaryOpImpl<Func, T, OneByte> {
 
 template <typename Func, typename T>
 struct MsAtomicBinaryOpImpl<Func, T, TwoByte> {
-  __device__ __forceinline__ T operator()(T *address, const T val) {
+  __device__ __forceinline__ T operator()(T *address, T val) {
     bool is_4_byte_aligned = (reinterpret_cast<size_t>(address) & 2) == 0;
     unsigned int *aligned = reinterpret_cast<unsigned int *>(reinterpret_cast<size_t>(address) & ~2);
     unsigned int old = *aligned;
@@ -119,7 +119,7 @@ struct MsAtomicBinaryOpImpl<Func, T, TwoByte> {
 
 template <typename Func, typename T>
 struct MsAtomicBinaryOpImpl<Func, T, FourByte> {
-  __device__ __forceinline__ T operator()(T *address, const T val) {
+  __device__ __forceinline__ T operator()(T *address, T val) {
     unsigned int *address_as_uint32 = reinterpret_cast<unsigned int *>(address);
     unsigned int old = *address_as_uint32;
     unsigned int assumed;
@@ -139,7 +139,7 @@ struct MsAtomicBinaryOpImpl<Func, T, FourByte> {
 
 template <typename Func, typename T>
 struct MsAtomicBinaryOpImpl<Func, T, EightByte> {
-  __device__ __forceinline__ T operator()(T *address, const T val) {
+  __device__ __forceinline__ T operator()(T *address, T val) {
     unsigned long long int *address_as_uint64 = reinterpret_cast<unsigned long long int *>(address);  // NOLINT
     unsigned long long int old = *address_as_uint64;                                                  // NOLINT
     unsigned long long int assumed;                                                                   // NOLINT
@@ -202,7 +202,7 @@ struct Max {
 
 // atomic add
 template <typename T>
-__device__ __forceinline__ T MsAtomicAdd(T *address, const T val) {
+__device__ __forceinline__ T MsAtomicAdd(T *address, T val) {
   return atomic::MsAtomicBinaryOpImpl<atomic::Add, T>()(address, val);
 }
 
@@ -224,7 +224,7 @@ __device__ __forceinline__ unsigned long long int MsAtomicAdd(unsigned long long
 }
 
 template <>
-__device__ __forceinline__ float MsAtomicAdd(float *address, const float val) {
+__device__ __forceinline__ float MsAtomicAdd(float *address, float val) {
   return atomicAdd(address, val);
 }
 
@@ -236,7 +236,7 @@ __device__ __forceinline__ bool MsAtomicAdd(bool *address, bool val) {
 
 // atomic sub
 template <typename T>
-__device__ __forceinline__ T MsAtomicSub(T *address, const T val) {
+__device__ __forceinline__ T MsAtomicSub(T *address, T val) {
   return atomic::MsAtomicBinaryOpImpl<atomic::Sub, T>()(address, val);
 }
 
@@ -248,7 +248,7 @@ __device__ __forceinline__ unsigned int MsAtomicSub(unsigned int *address, unsig
 
 // atomic min
 template <typename T>
-__device__ __forceinline__ T MsAtomicMin(T *address, const T val) {
+__device__ __forceinline__ T MsAtomicMin(T *address, T val) {
   return atomic::MsAtomicBinaryOpImpl<atomic::Min, T>()(address, val);
 }
 
@@ -276,7 +276,7 @@ __device__ __forceinline__ long long int MsAtomicMin(long long int *address, lon
 
 // atomic max
 template <typename T>
-__device__ __forceinline__ T MsAtomicMax(T *address, const T val) {
+__device__ __forceinline__ T MsAtomicMax(T *address, T val) {
   return atomic::MsAtomicBinaryOpImpl<atomic::Max, T>()(address, val);
 }
 
@@ -304,7 +304,7 @@ __device__ __forceinline__ long long int MsAtomicMax(long long int *address, lon
 
 // atomic mul
 template <typename T>
-__device__ __forceinline__ T MsAtomicMul(T *address, const T val) {
+__device__ __forceinline__ T MsAtomicMul(T *address, T val) {
   return atomic::MsAtomicBinaryOpImpl<atomic::Mul, T>()(address, val);
 }
 
@@ -316,7 +316,7 @@ __device__ __forceinline__ bool MsAtomicMul(bool *address, bool val) {
 
 // atomic div
 template <typename T>
-__device__ __forceinline__ T MsAtomicDiv(T *address, const T val) {
+__device__ __forceinline__ T MsAtomicDiv(T *address, T val) {
   return atomic::MsAtomicBinaryOpImpl<atomic::Div, T>()(address, val);
 }
 
