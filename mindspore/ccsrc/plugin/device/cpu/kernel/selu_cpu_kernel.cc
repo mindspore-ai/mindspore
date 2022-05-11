@@ -44,32 +44,14 @@ bool SeluCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
 int SeluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                              const std::vector<KernelTensorPtr> &outputs,
                              const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
-  int ret = KRET_OK;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != KRET_OK) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
-
-  if (input_shape_ != output_shape_) {
-    MS_LOG(ERROR) << kernel_name_ << " input shape does not match to output_shape " << input_shape_ << " vs "
-                  << output_shape_;
-    return KRET_RESIZE_FAILED;
-  }
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
-  return ret;
-}
-
-void SeluCpuKernelMod::ResetResource() noexcept {
-  input_shape_.clear();
   output_shape_.clear();
-  output_size_ = 0;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  return KRET_OK;
 }
 
 template <typename T>
@@ -94,10 +76,15 @@ bool SeluCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &input
 }
 
 std::vector<std::pair<KernelAttr, SeluCpuKernelMod::SeluFunc>> SeluCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8), &SeluCpuKernelMod::LaunchKernel<int8_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &SeluCpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &SeluCpuKernelMod::LaunchKernel<float16>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &SeluCpuKernelMod::LaunchKernel<float>}};
+   &SeluCpuKernelMod::LaunchKernel<float>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+   &SeluCpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> SeluCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
