@@ -13,6 +13,6 @@ mindspore_add_pkg(ompi
         URL ${REQ_URL}
         MD5 ${MD5}
         PRE_CONFIGURE_COMMAND ./autogen.pl
-        CONFIGURE_COMMAND ./configure)
+        CONFIGURE_COMMAND ./configure --disable-mpi-fortran)
 include_directories(${ompi_INC})
 add_library(mindspore::ompi ALIAS ompi::mpi)
