@@ -243,3 +243,51 @@ def test_index_add_grad_uint8():
     index_add_grad_with_type(np.uint8)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     index_add_grad_with_type(np.uint8)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_index_add_dynamic_y():
+    """
+    Feature: test IndexAdd dynamic shape.
+    Description: input y is dynamic shape.
+    Expectation: the result match with numpy result
+    """
+    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)
+    y = np.ones((2, 2, 4), dtype=np.float32)
+    idx = np.array([0, 2]).astype(np.int32)
+    axis = 1
+    expect = np.copy(x)
+    expect[:, idx, :] = expect[:, idx, :] + y
+    y_dyn = Tensor(shape=[2, None, 4], dtype=mindspore.float32)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    net = NetIndexAdd(x, axis)
+    net.set_inputs(Tensor(idx), y_dyn)
+    output = net(Tensor(idx), Tensor(y))
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_index_add_dynamic_indices():
+    """
+    Feature: test IndexAdd dynamic shape.
+    Description: input indices is dynamic shape.
+    Expectation: the result match with numpy result
+    """
+    x = np.arange(2 * 3 * 4).reshape(2, 3, 4).astype(np.float32)
+    y = np.ones((2, 2, 4), dtype=np.float32)
+    idx = np.array([0, 2]).astype(np.int32)
+    axis = 1
+    expect = np.copy(x)
+    expect[:, idx, :] = expect[:, idx, :] + y
+    idx_dyn = Tensor(shape=[None], dtype=mindspore.int32)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    net = NetIndexAdd(x, axis)
+    net.set_inputs(idx_dyn, Tensor(y))
+    output = net(Tensor(idx), Tensor(y))
+    assert (output.asnumpy() == expect).all()
