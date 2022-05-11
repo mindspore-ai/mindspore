@@ -52,6 +52,7 @@ struct GraphProfilingData {
   std::vector<uint32_t> task_ids_;
   std::vector<uint32_t> stream_ids_;
   uint32_t graph_id_;
+  uint32_t rt_model_id;
 };
 
 class ProfilingUtils {
@@ -75,7 +76,7 @@ class ProfilingUtils {
   static void SetGraphKernelName(uint32_t graph_id, const std::vector<std::string> &kernel_names);
   // Save graph information to Framework file
   static void ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
-                                  uint32_t graph_id);
+                                  uint32_t graph_id, uint32_t rt_model_id);
   // Generate profiling trace
   static ProfilingTraceInfo GenerateProfilingTrace(const session::KernelGraph &kernel_graph);
 
@@ -88,7 +89,7 @@ class ProfilingUtils {
   static std::map<uint32_t, std::vector<std::string>> graph_kernel_name() { return graph_kernel_name_; }
 
   static void SetReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
-                                     uint32_t graph_id);
+                                     uint32_t graph_id, uint32_t rt_model_id);
   static void ReportAllGraphProfilingData();
   static bool ValidComputeGraph(const session::KernelGraph &kernel_graph);
 

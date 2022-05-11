@@ -393,12 +393,12 @@ bool ProfilingUtils::ValidComputeGraph(const session::KernelGraph &kernel_graph)
 
 void ProfilingUtils::ReportAllGraphProfilingData() {
   for (auto data : report_data_) {
-    ReportProfilingData(data.task_ids_, data.stream_ids_, data.graph_id_);
+    ReportProfilingData(data.task_ids_, data.stream_ids_, data.graph_id_, data.rt_model_id);
   }
 }
 
 void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, const std::vector<uint32_t> &stream_ids,
-                                         uint32_t graph_id) {
+                                         uint32_t graph_id, uint32_t rt_model_id) {
   auto ret = graph_profiling_cnode_.find(graph_id);
   if (ret == graph_profiling_cnode_.end()) {
     MS_LOG(WARNING) << "Graph id not found in graph_profiling_cnode_, graph id is " << graph_id
@@ -410,7 +410,7 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
   MS_EXCEPTION_IF_NULL(context);
 
   auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  ProfilingReporter reporter(device_id, graph_id, ret->second, stream_ids, task_ids);
+  ProfilingReporter reporter(device_id, graph_id, rt_model_id, ret->second, stream_ids, task_ids);
   reporter.ReportTasks();
 
   // Report profiling point
@@ -424,8 +424,9 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
 }
 
 void ProfilingUtils::SetReportProfilingData(const std::vector<uint32_t> &task_ids,
-                                            const std::vector<uint32_t> &stream_ids, uint32_t graph_id) {
-  GraphProfilingData report_data = {task_ids, stream_ids, graph_id};
+                                            const std::vector<uint32_t> &stream_ids, uint32_t graph_id,
+                                            uint32_t rt_model_id) {
+  GraphProfilingData report_data = {task_ids, stream_ids, graph_id, rt_model_id};
   (void)report_data_.emplace_back(report_data);
 }
 }  // namespace ascend

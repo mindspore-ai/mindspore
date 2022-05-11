@@ -51,10 +51,11 @@ class StepPointDesc {
 
 class ProfilingReporter {
  public:
-  ProfilingReporter(int device_id, uint32_t graph_id, vector<CNodePtr> cnode_list, const vector<uint32_t> &stream_ids,
-                    const vector<uint32_t> &task_ids)
+  ProfilingReporter(int device_id, uint32_t graph_id, uint32_t rt_model_id, vector<CNodePtr> cnode_list,
+                    const vector<uint32_t> &stream_ids, const vector<uint32_t> &task_ids)
       : device_id_(device_id),
         graph_id_(graph_id),
+        rt_model_id_(rt_model_id),
         cnode_list_(std::move(cnode_list)),
         stream_ids_(stream_ids),
         task_ids_(task_ids) {}
@@ -66,6 +67,7 @@ class ProfilingReporter {
  private:
   uint32_t device_id_;
   uint32_t graph_id_;
+  uint32_t rt_model_id_;
   vector<CNodePtr> cnode_list_;
   vector<uint32_t> stream_ids_;
   vector<uint32_t> task_ids_;
