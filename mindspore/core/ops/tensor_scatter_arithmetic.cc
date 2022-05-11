@@ -24,6 +24,9 @@
 #include "ops/tensor_scatter_sub.h"
 #include "ops/tensor_scatter_max.h"
 #include "ops/tensor_scatter_min.h"
+#include "ops/tensor_scatter_mul.h"
+#include "ops/tensor_scatter_div.h"
+#include "ops/tensor_scatter_update.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -98,6 +101,9 @@ MIND_API_BASE_IMPL(TensorScatterAdd, PrimitiveC, BaseOperator);
 MIND_API_BASE_IMPL(TensorScatterSub, PrimitiveC, BaseOperator);
 MIND_API_BASE_IMPL(TensorScatterMax, PrimitiveC, BaseOperator);
 MIND_API_BASE_IMPL(TensorScatterMin, PrimitiveC, BaseOperator);
+MIND_API_BASE_IMPL(TensorScatterDiv, PrimitiveC, BaseOperator);
+MIND_API_BASE_IMPL(TensorScatterMul, PrimitiveC, BaseOperator);
+MIND_API_BASE_IMPL(TensorScatterUpdate, PrimitiveC, BaseOperator);
 
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterAdd, prim::kPrimTensorScatterAdd, TensorScatterArithmeticInfer, nullptr,
                              true);
@@ -106,6 +112,12 @@ REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterSub, prim::kPrimTensorScatterSub, Tens
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMax, prim::kPrimTensorScatterMax, TensorScatterArithmeticInfer, nullptr,
                              true);
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMin, prim::kPrimTensorScatterMin, TensorScatterArithmeticInfer, nullptr,
+                             true);
+REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterDiv, prim::kPrimTensorScatterDiv, TensorScatterArithmeticInfer, nullptr,
+                             true);
+REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterMul, prim::kPrimTensorScatterMul, TensorScatterArithmeticInfer, nullptr,
+                             true);
+REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterUpdate, prim::kPrimTensorScatterUpdate, TensorScatterArithmeticInfer, nullptr,
                              true);
 }  // namespace ops
 }  // namespace mindspore

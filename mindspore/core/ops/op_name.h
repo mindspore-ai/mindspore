@@ -247,6 +247,7 @@ constexpr auto kSplitStride = "split_stride";
 constexpr auto kExtendTop = "extend_top";
 constexpr auto kExtendBottom = "extend_bottom";
 constexpr auto kNumberSplit = "number_split";
+constexpr auto kNumSegments = "num_segments";
 constexpr auto kSplitDim = "split_dim";
 constexpr auto kPadTop = "pad_top";
 constexpr auto kTransFormat = "trans_format";
