@@ -26,7 +26,7 @@ from mindspore import ms_function
 from mindspore.common import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes
+from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
@@ -3071,6 +3071,16 @@ test_case_array_ops = [
 ]
 
 test_case_image_ops = [
+    ('AdjustHue', {
+        'block': AdjustHue(),
+        'desc_inputs': [Tensor(np.array([[[1, 2, 3],
+                                          [4, 5, 6]],
+                                         [[7, 8, 9],
+                                          [10, 11, 12]],
+                                         [[13, 14, 15],
+                                          [16, 17, 18]]]).astype(np.float32)),
+                        Tensor(0.2, mstype.float32)],
+        'skip': ['backward']}),
     ('NonMaxSuppressionV3', {
         'block': P.NonMaxSuppressionV3(),
         'desc_inputs': [Tensor(np.array([[20, 5, 200, 100],
