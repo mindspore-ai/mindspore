@@ -249,8 +249,8 @@ bool AbstractNode::Send(const NodeRole &node_role, const uint32_t &rank_id, cons
   MS_EXCEPTION_IF_NULL(message);
   if (!CommUtil::ValidateRankId(node_role, rank_id, worker_num_, server_num_)) {
     MS_LOG(ERROR) << "The node role or rank_id is illegal, the worker num:" << worker_num_
-                      << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
-    return False;
+                  << ", the server num:" << server_num_ << ", the rank id:" << rank_id;
+    return false;
   }
 
   uint64_t request_id = AddMessageTrack(1);
