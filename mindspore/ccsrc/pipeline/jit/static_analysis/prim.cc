@@ -1015,7 +1015,7 @@ void CheckSequenceArgumentForCppPrimitive(const PrimitivePtr &prim, const Abstra
       if (args[i]->isa<abstract::AbstractSequence>()) {
         MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
                       << "]: " << args[i]->ToString();
-        SetSequenceElementsUseFlags(args[i], true);
+        SetSequenceElementsUseFlagsRecursively(args[i], true);
       }
     }
     return;
@@ -1039,7 +1039,7 @@ void CheckSequenceArgumentForCppPrimitive(const PrimitivePtr &prim, const Abstra
       // For current tuple/list argument, it's not a primitive of total transparent pass or partial element use.
       MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming specific tuple/list arguments[" << i
                     << "]: " << args[i]->ToString();
-      SetSequenceElementsUseFlags(args[i], true);
+      SetSequenceElementsUseFlagsRecursively(args[i], true);
     }
   }
 }
@@ -1050,7 +1050,7 @@ void CheckSequenceArgumentForPythonPrimitive(const PrimitivePtr &prim, const Abs
     if (args[i]->isa<abstract::AbstractSequence>()) {
       MS_LOG(DEBUG) << "Primitive \'" << prim->name() << "\' is consuming tuple/list arguments[" << i
                     << "]: " << args[i]->ToString();
-      SetSequenceElementsUseFlags(args[i], true);
+      SetSequenceElementsUseFlagsRecursively(args[i], true);
     }
   }
 }
