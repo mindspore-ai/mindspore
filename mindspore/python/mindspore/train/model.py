@@ -31,7 +31,8 @@ from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Call
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
     _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, _cache_enable
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _is_ps_mode, _cache_enable, \
+                                   _enable_distributed_mindrt
 from ..nn.metrics import Loss
 from .. import nn
 from ..boost import AutoBoost
@@ -530,7 +531,7 @@ class Model:
             callbacks = cb_params.list_callback
         cb_params.train_dataset_element = None
         cb_params.network = self._network
-        if _is_role_pserver() or _is_role_sched():
+        if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
             epoch = 1
         cb_params.last_save_ckpt_step = None
         cb_params.latest_ckpt_file = None
@@ -632,7 +633,7 @@ class Model:
                 if need_exec_callback_step_end:
                     list_callback.step_end(run_context)
 
-                if _is_role_pserver() or _is_role_sched():
+                if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
                     os._exit(0)
 
             dataset_helper.continue_send()
@@ -799,7 +800,7 @@ class Model:
                     self._loss_scale_manager.update_loss_scale(overflow)
 
                 list_callback.step_end(run_context)
-                if _is_role_pserver() or _is_role_sched():
+                if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
                     os._exit(0)
                 should_stop = should_stop or run_context.get_stop_requested()
                 if should_stop:

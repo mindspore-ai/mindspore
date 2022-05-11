@@ -40,7 +40,8 @@ CollectiveManager::CollectiveManager()
       global_rank_id_(0),
       local_rank_id_(0),
       global_rank_size_(0),
-      global_group_ranks_({}) {}
+      global_group_ranks_({}),
+      device_lib_supported_(true) {}
 
 CollectiveManager::~CollectiveManager() {
   if (!finalized_) {
@@ -140,6 +141,12 @@ bool CollectiveManager::Initialize() {
 
   device_type_ = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type_ << "...";
+
+  if (device_type_ == kAscendDevice) {
+    MS_LOG(WARNING) << "The Ascend backend is not supported by CollectiveManager for now. So the collcetive "
+                       "communication lib will be replaced by library on host side.";
+    device_lib_supported_ = false;
+  }
 
   // Step 1: Initialize host side collective communication.
   if (!InitHostCommlib()) {
@@ -343,6 +350,10 @@ bool CollectiveManager::InitHostCommlib() {
 }
 
 bool CollectiveManager::InitDeviceCommLib() {
+  // If library on device side is not supported, replace it with host library.
+  if (!device_lib_supported_) {
+    device_type_ = kCPUDevice;
+  }
   device::DeviceContextKey device_key = {device_type_, local_rank_id_};
   device_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
   MS_EXCEPTION_IF_NULL(device_ctx_);
@@ -406,9 +417,13 @@ bool CollectiveManager::AssignLocalRank() {
     }
   }
 
-  MsContext::GetInstance()->set_param<uint32_t>(MS_CTX_DEVICE_ID, local_rank_id_);
-  MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_
-               << ". device_id of ms_context is set.";
+  // No need to reset device_id if library on device side is not supported, e.g., ascend.
+  if (device_lib_supported_) {
+    MsContext::GetInstance()->set_param<uint32_t>(MS_CTX_DEVICE_ID, local_rank_id_);
+    MS_LOG(INFO) << "The local rank id assigned for this process is " << local_rank_id_
+                 << ". device_id of ms_context is set.";
+  }
+
   return true;
 }
 }  // namespace collective

@@ -457,7 +457,7 @@ class Dataset:
 
     @staticmethod
     def _noop_mode():
-        if _is_role_sched() or _is_role_pserver():
+        if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
             return True
         return False
 
@@ -1907,7 +1907,7 @@ class Dataset:
         """
         # If this is in distributed execution mode,
         # the shard number and shard id might need to be updated according to the process's rank or role.
-        if _enable_distributed_mindrt() and _is_role_pserver():
+        if _is_role_pserver() and _enable_distributed_mindrt():
             num_shards = _get_ps_context("worker_num")
             shard_id = 0
         return num_shards, shard_id

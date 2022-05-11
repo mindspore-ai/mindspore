@@ -741,9 +741,8 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
     const auto &cluster_ctx = distributed::cluster::ClusterContext::instance();
     MS_EXCEPTION_IF_NULL(cluster_ctx);
     MS_LOG(INFO) << "Cluster is initialized. This node role is " << cluster_ctx->node_role();
-    if (cluster_ctx->node_role() == distributed::kEnvRoleOfServer) {
-      return PServerPipeline(resource);
-    } else if (cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
+    // If this process is not scheduler, it should be a computing graph node so common pipeline is returned.
+    if (cluster_ctx->node_role() == distributed::kEnvRoleOfScheduler) {
       return PSchedulerPipeline(resource);
     }
   } else {
@@ -1581,7 +1580,9 @@ void ClearResAtexit() {
 
   RecordExitStatus();
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
-  if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    (void)distributed::cluster::ClusterContext::instance()->Finalize();
+  } else if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
     }
@@ -1593,9 +1594,7 @@ void ClearResAtexit() {
       ps::Worker::GetInstance().Finalize();
     }
   }
-  if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    (void)distributed::cluster::ClusterContext::instance()->Finalize();
-  }
+
 #endif
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();

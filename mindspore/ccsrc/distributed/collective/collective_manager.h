@@ -127,6 +127,10 @@ class BACKEND_EXPORT CollectiveManager {
   // The global group name on the host side. This is used for Creating global group on host side for AllGather
   // operation of host name while assigning local rank.
   std::string host_global_group_name_;
+
+  // This member is represents whether the collective communication library is supported on the device side. If not, the
+  // device side library will be replace by library on the host side.
+  bool device_lib_supported_;
 };
 }  // namespace collective
 }  // namespace distributed

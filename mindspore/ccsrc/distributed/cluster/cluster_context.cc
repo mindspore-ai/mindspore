@@ -173,7 +173,7 @@ bool ClusterContext::BuildCluster() {
   // Create node according to different role.
   if (node_role_ == kEnvRoleOfWorker) {
     node_ = std::make_shared<ps::core::PSWorkerNode>();
-  } else if (node_role_ == kEnvRoleOfServer) {
+  } else if (node_role_ == kEnvRoleOfServer || node_role_ == kEnvRoleOfPServer) {
     node_ = std::make_shared<ps::core::PSServerNode>();
   } else if (node_role_ == kEnvRoleOfScheduler) {
     ps::PSContext::instance()->set_scheduler_manage_port(0);
@@ -228,11 +228,16 @@ void ClusterContext::InitNodeRole() {
       "The environment variable MS_WORKER_NUM is invalid.");
   }
 
+  // MS_PSERVER is supported for now. It should be deprecated after we use cluster for distributed training.
   if (common::GetEnv(kEnvServerNum).empty()) {
     node_num_each_role_[kEnvRoleOfServer] = 0;
+    node_num_each_role_[kEnvRoleOfPServer] = 0;
   } else {
     TRY_AND_CATCH_WITH_EXCEPTION(
       (node_num_each_role_[kEnvRoleOfServer] = IntToUint(std::stoi(common::GetEnv(kEnvServerNum)))),
+      "The environment variable MS_SERVER_NUM is invalid.");
+    TRY_AND_CATCH_WITH_EXCEPTION(
+      (node_num_each_role_[kEnvRoleOfPServer] = IntToUint(std::stoi(common::GetEnv(kEnvServerNum)))),
       "The environment variable MS_SERVER_NUM is invalid.");
   }
 }
