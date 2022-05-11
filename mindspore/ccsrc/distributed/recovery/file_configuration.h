@@ -38,6 +38,8 @@ class FileConfiguration : public Configuration {
 
   bool Exists(const std::string &key) const override;
 
+  bool Empty() const override;
+
   bool Flush() override;
 
  private:

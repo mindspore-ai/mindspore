@@ -29,6 +29,16 @@
 namespace mindspore {
 namespace distributed {
 namespace recovery {
+constexpr char kEnvEnableRecovery[] = "MS_ENABLE_RECOVERY";
+constexpr char kEnvRecoveryPath[] = "MS_RECOVERY_PATH";
+constexpr char kEnvRecoveryInterval[] = "MS_RECOVERY_INTERVAL";
+
+__attribute__((unused)) static bool IsEnableRecovery() {
+  return common::GetEnv(kEnvEnableRecovery) == std::string("1");
+}
+
+__attribute__((unused)) static std::string RecoveryFullPath() { return common::GetEnv(kEnvRecoveryPath); }
+
 using distributed::storage::FileIOUtils;
 using distributed::storage::JsonUtils;
 

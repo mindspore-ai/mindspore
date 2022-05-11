@@ -33,10 +33,6 @@
 namespace mindspore {
 namespace distributed {
 namespace recovery {
-constexpr char kEnvEnableRecovery[] = "MS_ENABLE_RECOVERY";
-constexpr char kEnvRecoveryPath[] = "MS_RECOVERY_PATH";
-constexpr char kEnvRecoveryInterval[] = "MS_RECOVERY_INTERVAL";
-
 constexpr char kCkptSuffix[] = ".ckpt";
 constexpr char kCkptPath[] = "ckpt_path";
 constexpr char kJsonSuffix[] = ".json";
@@ -77,7 +73,7 @@ void RecoveryContext::Initialize() {
   }
 
   // 1. Read environment variable.
-  enable_recovery_ = (common::GetEnv(kEnvEnableRecovery) == std::string("1"));
+  enable_recovery_ = IsEnableRecovery();
   if (!enable_recovery_) {
     return;
   }
@@ -86,7 +82,7 @@ void RecoveryContext::Initialize() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   context_ptr->set_param<bool>(MS_CTX_ENABLE_RECOVERY, true);
 
-  recovery_path_ = common::GetEnv(kEnvRecoveryPath);
+  recovery_path_ = RecoveryFullPath();
   if (recovery_path_.empty()) {
     MS_LOG(EXCEPTION) << "The recovery path is empty, please export MS_RECOVERY_PATH correctly.";
   }

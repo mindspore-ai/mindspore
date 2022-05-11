@@ -55,6 +55,8 @@ void FileConfiguration::Put(const std::string &key, const std::string &value) { 
 
 bool FileConfiguration::Exists(const std::string &key) const { return values_.contains(key); }
 
+bool FileConfiguration::Empty() const { return values_.size() == 0; }
+
 bool FileConfiguration::Flush() {
   if (!storage::FileIOUtils::IsFileOrDirExist(file_)) {
     MS_LOG(EXCEPTION) << "The local configuration file : " << file_ << " does not exist.";

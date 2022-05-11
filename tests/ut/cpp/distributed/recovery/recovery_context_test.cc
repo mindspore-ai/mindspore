@@ -23,9 +23,6 @@
 namespace mindspore {
 namespace distributed {
 namespace recovery {
-constexpr char kEnvEnableRecovery[] = "MS_ENABLE_RECOVERY";
-constexpr char kEnvRecoveryPath[] = "MS_RECOVERY_PATH";
-constexpr char kEnvRecoveryInterval[] = "MS_RECOVERY_INTERVAL";
 constexpr char kEnvMSRole[] = "MS_ROLE";
 
 class TestRecoveryContext : public UT::Common {
