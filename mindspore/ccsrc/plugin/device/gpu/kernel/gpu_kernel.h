@@ -129,8 +129,7 @@ class NativeGpuKernelMod : public GpuKernelMod {
  protected:
   virtual void InitResource() {}
   uint32_t device_id_;
-  static std::map<std::string, std::vector<KernelAttr>> support_map_;
-  static std::set<std::string> initialize_;
+  static mindspore::HashMap<std::string, std::vector<KernelAttr>> support_map_;
 };
 
 class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {

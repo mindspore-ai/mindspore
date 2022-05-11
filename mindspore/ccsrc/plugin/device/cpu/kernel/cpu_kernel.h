@@ -166,8 +166,7 @@ class BACKEND_EXPORT NativeCpuKernelMod : public CpuKernelMod {
  private:
   std::vector<KernelAttr> GetAllSupportedList(const std::string &kernel_name);
   std::vector<KernelAttr> GetSupportFromOpLib(const std::string &kernel_name);
-  static std::map<std::string, std::vector<KernelAttr>> support_map_;
-  static std::set<std::string> initialize_;
+  static mindspore::HashMap<std::string, std::vector<KernelAttr>> support_map_;
 };
 
 class BACKEND_EXPORT DeprecatedNativeCpuKernelMod : public NativeCpuKernelMod {

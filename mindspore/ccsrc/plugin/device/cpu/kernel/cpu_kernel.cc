@@ -28,13 +28,13 @@
 namespace mindspore {
 namespace kernel {
 std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {
-  if (initialize_.count(kernel_name) == 0) {
+  auto iter = support_map_.find(kernel_name);
+  if (iter == support_map_.end()) {
     std::vector<KernelAttr> kernel_attrs;
     auto kernel_support = GetOpSupport();
     (void)kernel_attrs.insert(kernel_attrs.end(), kernel_support.begin(), kernel_support.end());
     if (!kernel_attrs.empty() && kernel_attrs[0].GetSkipCheck()) {
       (void)support_map_.emplace(kernel_name, kernel_attrs);
-      (void)initialize_.insert(kernel_name);
       return support_map_[kernel_name];
     }
     if (kernel_attrs.empty()) {
@@ -42,7 +42,6 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetAllSupportedList(const std::strin
       (void)kernel_attrs.insert(kernel_attrs.end(), oplib_support.begin(), oplib_support.end());
     }
     (void)support_map_.emplace(kernel_name, kernel_attrs);
-    (void)initialize_.insert(kernel_name);
   }
 
   return support_map_[kernel_name];
@@ -88,8 +87,7 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   return support_kernel_attrs;
 }
 
-std::map<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
-std::set<std::string> NativeCpuKernelMod::initialize_{};
+mindspore::HashMap<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
 
 int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
