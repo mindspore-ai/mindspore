@@ -225,6 +225,28 @@ void SetControlOpInfo(const CNodePtr &kernel_node) {
 
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
 }
+
+// Before creating the kernel, check whether the node has completed the operator selection. If not, the operator
+// selection needs to be performed to set kernel info.
+void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
+  // Check whether the node has completed operator selection.
+  for (const auto &node : nodes) {
+    if (AnfAlgo::GetSelectKernelBuildInfo(node) != nullptr) {
+      continue;
+    }
+
+    // Kernel selection process for non control op.
+    if (!common::AnfAlgo::IsControlOpExecInBackend(node)) {
+      auto [msg, etype] = SetKernelInfoWithMsg(node);
+      if (!msg.empty()) {
+        MS_EXCEPTION(etype) << msg;
+      }
+    } else {
+      // Kernel selection process for control op.
+      SetControlOpInfo(node);
+    }
+  }
+}
 }  // namespace
 
 void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
@@ -265,6 +287,8 @@ void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
 #endif
 }
 void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+  SetKernelInfoBeforeCreateKernel(nodes);
+
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
   MS_EXCEPTION_IF_NULL(bin_map);
   std::vector<AnfNodePtr> akg_nodes;
