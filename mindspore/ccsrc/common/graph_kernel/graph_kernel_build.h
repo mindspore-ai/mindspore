@@ -72,7 +72,7 @@ class GraphKernelBuild : public opt::Pass {
 
  private:
   void Init();
-  bool Process(const FuncGraphPtr &func_graph);
+  bool Process(const FuncGraphPtr &func_graph, int iter);
   kernel::JsonNodePair CollectNode(const AnfNodePtr &node) const;
   // Collect graph kernel nodes in main graph.
   void CollectNodes(const FuncGraphPtr &func_graph, std::vector<kernel::JsonNodePair> *nodes);

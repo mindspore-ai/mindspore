@@ -168,17 +168,21 @@ void GraphKernelBuild::Init() {
 #endif
 }
 
-bool GraphKernelBuild::Process(const FuncGraphPtr &func_graph) {
+bool GraphKernelBuild::Process(const FuncGraphPtr &func_graph, int iter) {
   bool changed = false;
   std::vector<kernel::JsonNodePair> nodes;
   CollectNodes(func_graph, &nodes);
   // No nodes need to be compiled.
   if (nodes.empty()) {
+    MS_LOG(DEBUG) << "There are no Akg kernel to be compiled.";
     return changed;
   }
   // Update cache before compiling. Some nodes may already have compiled cache(e.g. compiled from previous network
   // running), these nodes do not need to be compiled again.
   auto need_compile_nodes = CollectNotCachedNodes(nodes);
+  MS_LOG(INFO) << "Iter " << iter << ": Total Akg kernel number is " << nodes.size() << ", "
+               << need_compile_nodes.size() << " of them need to be compiled, and "
+               << (nodes.size() - need_compile_nodes.size()) << " of them use the compilation cache.";
   // Parallel compile.
   ParallelBuild(need_compile_nodes);
   // Update cache after compiling. Nodes that still not have compile cache means they compiled failed.
@@ -242,6 +246,8 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
     // Skip node that already has cache.
     if (kernel_pack_.find(kernel_name) != kernel_pack_.end()) {
       kernel_builder_->AkgSetKernelMod(kernel_pack_[kernel_name], json_generator, node);
+      MS_LOG(DEBUG) << "Set cached kernel for node [" << node->fullname_with_scope() << "] with kernel name ["
+                    << kernel_name << "]";
       continue;
     }
     std::string json_path = bin_map_->kernel_meta_path() + kernel_name + kernel::kJsonSuffix;
@@ -259,6 +265,8 @@ std::vector<kernel::JsonNodePair> GraphKernelBuild::CollectNotCachedNodes(
     if (cached_kernel_pack != nullptr) {
       kernel_pack_[kernel_name] = cached_kernel_pack;
       kernel_builder_->AkgSetKernelMod(cached_kernel_pack, json_generator, node);
+      MS_LOG(DEBUG) << "Set cached kernel for node [" << node->fullname_with_scope() << "] with kernel name ["
+                    << kernel_name << "]";
       continue;
     }
     // Node cache not found.
@@ -320,8 +328,10 @@ bool GraphKernelBuild::Run(const FuncGraphPtr &func_graph) {
 
   bool changed = false;
   bool need_traverse = true;
+  int iter = 1;
   while (need_traverse) {
-    need_traverse = Process(func_graph);
+    need_traverse = Process(func_graph, iter);
+    iter++;
     changed = need_traverse || changed;
     if (need_traverse) {
       mng->RemoveRoots();
