@@ -95,10 +95,8 @@ function Run_TensorRT() {
             if [[ ${mode} == "fp16" ]]; then
                 enableFp16="true"
             fi
-
-            # different tensorrt run mode use different cuda command
-            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --device=GPU --enableParallelPredict=true' >> "${run_benchmark_result_file}"
-            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --device=GPU --enableParallelPredict=true >> ${run_benchmark_result_file}
+            echo 'CUDA_VISILE_DEVICE='${cuda_device_id}' ./benchmark --modelFile='${model_file}' --inputShapes='${input_shapes}' --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --enableFp16='${enableFp16}' --accuracyThreshold='${acc_limit}' --enableParallelPredict=true --device=GPU'
+            CUDA_VISILE_DEVICE=${cuda_device_id} ./benchmark --modelFile=${model_file} --inputShapes=${input_shapes} --inDataFile=${input_files} --benchmarkDataFile=${output_file} --enableFp16=${enableFp16} --accuracyThreshold=${acc_limit} --enableParallelPredict=true --device=GPU
 
             if [ $? = 0 ]; then
                 run_result='TensorRT: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -108,6 +106,28 @@ function Run_TensorRT() {
 
         done < ${cfg_file}
     done
+}
+
+# Print start msg before run testcase
+function MS_PRINT_TESTCASE_START_MSG() {
+    echo ""
+    echo -e "-------------------------------------------------------------------------------------------------------------------------"
+    echo -e "env                    Testcase                                                                                 Result   "
+    echo -e "---                    --------                                                                                 ------   "
+}
+
+# Print start msg after run testcase
+function MS_PRINT_TESTCASE_END_MSG() {
+    echo -e "-------------------------------------------------------------------------------------------------------------------------"
+}
+
+function Print_Benchmark_Result() {
+    MS_PRINT_TESTCASE_START_MSG
+    while read line; do
+        arr=("${line}")
+        printf "%-20s %-90s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
+    done < $1
+    MS_PRINT_TESTCASE_END_MSG
 }
 
 # Example:sh run_benchmark_gpu.sh -r /home/temp_test -m /home/temp_test/models -d "8KE5T19620002408" -e arm_cpu
@@ -142,6 +162,7 @@ done
 
 run_fail_not_return="OFF"
 basepath=$(pwd)
+echo "NVIDIA TensorRT, bashpath is ${basepath}"
 x86_path=${release_path}/centos_x86  # ../release_pkg/lite
 tensorrt_path=${x86_path}/server/tensorrt/cuda-11.1
 
@@ -154,13 +175,15 @@ fi
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
 cd ${basepath}
+rm -rf ./*
 
 # Set models config filepath
 config_folder="config_level0"
 if [[ ${level} == "level1" ]]; then
     config_folder="config_level1"
 fi
-models_server_inference_config=${basepath}/../${config_folder}/models_server_inference_tensorrt.cfg
+cp ${basepath}/../${config_folder}/models_server_inference_tensorrt.cfg ./
+models_server_inference_config=${basepath}/models_server_inference_tensorrt.cfg
 
 ms_models_path=${basepath}/ms_models
 
@@ -183,11 +206,9 @@ Print_Converter_Result $run_converter_result_file
 
 if [[ ${Run_converter_status} = 0 ]];then
     echo "Run converter success"
-    Print_Converter_Result $run_converter_result_file
 else
     echo "Run converter failed"
     cat ${run_converter_log_file}
-    Print_Converter_Result $run_converter_result_file
     exit 1
 fi
 # Empty config file is allowed, but warning message will be shown
@@ -197,10 +218,9 @@ if [[ $(Exist_File_In_Path ${ms_models_path} ".ms") != "true" ]]; then
 fi
 
 # Write benchmark result to temp file
+export GLOG_logtostderr=0
 run_benchmark_result_file=${basepath}/run_benchmark_result.txt
 echo ' ' > ${run_benchmark_result_file}
-
-echo 'run server inference x86 logs: ' > ${run_benchmark_result_file}
 
 # Copy the MindSpore models:
 echo "Push files and run benchmark"
@@ -220,7 +240,6 @@ fi
 if [[ $backend == "all" || $backend == "server_inference_x86_gpu" ]]; then
     if [[ ${Run_x86_status} != 0 ]];then
         echo "run x86 server inference failed"
-        cat ${run_benchmark_result_file}
         isFailed=1
     fi
 fi

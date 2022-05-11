@@ -33,6 +33,11 @@ int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
+  mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
+  hidden_init_name_ = hidden_in_init.Name() + "_hidden_init";
+  mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
+  cell_init_name_ = cell_in_init.Name() + "_cell_init";
+
   dynamic_shape_params_.support_dynamic_ = false;
   dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
@@ -108,11 +113,10 @@ int LSTMTensorRT::PreProcess() {
 }
 
 int LSTMTensorRT::AddLSTMLayers() {
-  nvinfer1::ITensor *data_out{nullptr};
   mindspore::MSTensor &hidden_in_init = in_tensors_[HIDDEN_IN_TENSOR_INIT];
-  hidden_init_name_ = hidden_in_init.Name() + "_hidden_init";
   mindspore::MSTensor &cell_in_init = in_tensors_[CELL_IN_TENSOR_INIT];
-  cell_init_name_ = cell_in_init.Name() + "_cell_init";
+
+  nvinfer1::ITensor *data_out{nullptr};
   nvinfer1::ITensor *hidden_init = network_->addInput(
     hidden_init_name_.c_str(), nvinfer1::DataType::kFLOAT,
     nvinfer1::Dims3(params_.layer_count_ * params_.directional_cnt_, params_.batch_size_, params_.hidden_size_));
