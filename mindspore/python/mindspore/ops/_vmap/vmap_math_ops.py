@@ -432,6 +432,46 @@ def get_lp_norm_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Renorm)
+def get_renorm_rule(prim, axis_size):
+    """VmapRule for Renorm"""
+    pnorm = prim.p
+    axis = prim.dim
+    maxnorm = prim.maxnorm
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, batch_dim = x_bdim
+        batch_dim = batch_dim if batch_dim >= 0 else batch_dim + F.rank(x)
+        src_dim = batch_dim
+        origin_axis = axis if axis >= 0 else axis + F.rank(x) - 1
+        if batch_dim <= origin_axis:
+            actual_axis = origin_axis + 1
+            des_dim = actual_axis - 1
+            x = mnp.moveaxis(x, src_dim, des_dim)
+            from_shape = F.shape(x)
+            to_shape = from_shape[:actual_axis-1] + \
+                       (from_shape[actual_axis-1]*from_shape[actual_axis],) + from_shape[actual_axis+1:]
+        else:
+            actual_axis = origin_axis
+            des_dim = actual_axis + 1
+            x = mnp.moveaxis(x, src_dim, des_dim)
+            from_shape = F.shape(x)
+            to_shape = from_shape[:actual_axis] + \
+                       (from_shape[actual_axis]*from_shape[actual_axis+1],) + from_shape[actual_axis+2:]
+        x = F.reshape(x, to_shape)
+        op = P.Renorm(int(pnorm), origin_axis, maxnorm)
+        out = op(x)
+        out = F.reshape(out, from_shape)
+        out = mnp.moveaxis(out, des_dim, src_dim)
+        return (out, batch_dim)
+
+    return vmap_rule
+
+
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
 # Unary vmap
