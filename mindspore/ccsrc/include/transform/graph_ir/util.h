@@ -108,6 +108,15 @@ class COMMON_EXPORT TransformUtil {
   /*
    * Parameters:
    *     tensor: [GeTensor] the data tensor in GE
+   *     me_type: [TypeId] the type of created Me tensor
+   * Return：
+   *     [MeTensor] the data tensor in ME
+   * */
+  static MeTensorPtr ConvertGeTensor(const GeTensorPtr &tensor, const TypeId &me_type);
+
+  /*
+   * Parameters:
+   *     tensor: [GeTensor] the data tensor in GE
    *     request_dims [ShapeVector] the output Me tensors must adjust to this shapes
    * Return：
    *     [MeTensor] the data tensor in ME

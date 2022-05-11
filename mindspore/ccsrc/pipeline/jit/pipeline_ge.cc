@@ -38,6 +38,7 @@ namespace pipeline {
 using Tensor = mindspore::tensor::Tensor;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<Tensor>>;
+using mindspore::abstract::AbstractScalar;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 using mindspore::abstract::AbstractTuplePtr;
@@ -397,14 +398,36 @@ py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data,
   return ExtractGeneralCnodeRet(output_c->abstract(), data, count);
 }
 
-std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr &graph, const std::vector<MeTensorPtr> &inputs,
-                                        const std::string &phase) {
+void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me_types) {
+  MS_EXCEPTION_IF_NULL(cnode_data);
+
+  if (cnode_data->isa<AbstractTensor>()) {
+    TypeId me_type = cnode_data->BuildType()->type_id();
+    if (me_type == kObjectTypeTensorType) {
+      me_type = dyn_cast<TensorType>(cnode_data->BuildType())->element()->type_id();
+      me_types->emplace_back(me_type);
+    }
+    return;
+  }
+  if (cnode_data->isa<AbstractScalar>()) {
+    TypeId me_type = cnode_data->BuildType()->type_id();
+    me_types->emplace_back(me_type);
+  }
+  auto abstract_tuple = cnode_data->cast<AbstractTuplePtr>();
+  MS_EXCEPTION_IF_NULL(abstract_tuple);
+  auto elements = abstract_tuple->elements();
+  for (size_t i = 0; i < abstract_tuple->size(); ++i) {
+    GetMeRetDataType(elements[i], me_types);
+  }
+}
+
+std::shared_ptr<py::object> DoExecGraphAsync(const FuncGraphPtr &graph, const std::vector<MeTensorPtr> &inputs,
+                                             const std::string &phase) {
   std::vector<GeTensorPtr> ge_tensors = TransformUtil::ConvertInputTensors(inputs, kOpFormat_NCHW);
   if (ge_tensors.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Convert me args to ge tensor error.";
   }
 
-  std::vector<GeTensorPtr> ge_outputs;
   transform::RunOptions run_options;
   run_options.name = phase;
   auto graph_runner = DfGraphManager::GetInstance().GetGraphRunner();
@@ -412,20 +435,31 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr &graph, const std::ve
     MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
   }
 
+  AnfNodePtr output_node = graph->get_return()->input(1);
+  MS_EXCEPTION_IF_NULL(output_node);
+  std::vector<TypeId> me_types;
+  auto output_c = output_node->cast<CNodePtr>()->abstract();
+  // get output node data types
+  GetMeRetDataType(output_c, &me_types);
+
+  std::vector<MeTensorPtr> me_outputs;
   {
     // Release GIL before calling into (potentially long-running) C++ code
     py::gil_scoped_release release;
     MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size();
-    Status ret = graph_runner->RunGraph(run_options, ge_tensors, &ge_outputs);
-    MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << ge_outputs.size();
-    if (ret != Status::SUCCESS) {
-      MS_LOG(ERROR) << "Exec graph failed";
-      return nullptr;
+    try {
+      Status ret = graph_runner->RunGraph(run_options, ge_tensors, &me_outputs, me_types);
+      MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << me_outputs.size();
+      if (ret != Status::SUCCESS) {
+        MS_LOG(ERROR) << "Exec graph failed";
+        return nullptr;
+      }
+    } catch (const std::exception &ex) {
+      throw(ex);
     }
   }
 
-  std::vector<MeTensorPtr> me_outputs = TransformUtil::ConvertGeTensors(ge_outputs);
-  if (me_outputs.size() != ge_outputs.size()) {
+  if (me_outputs.size() != me_types.size()) {
     MS_LOG(WARNING) << "Convert output Ge tensor to Me tensor failed";
   }
 
@@ -435,9 +469,6 @@ std::shared_ptr<py::object> DoExecGraph(const FuncGraphPtr &graph, const std::ve
   }
 
   std::shared_ptr<py::object> ret = nullptr;
-
-  AnfNodePtr output_node = graph->get_return()->input(1);
-  MS_EXCEPTION_IF_NULL(output_node);
   size_t count = 0;
   py::object oj = StructureOutput(output_node, outputs, &count);
   ret = std::make_shared<py::object>(oj);
@@ -501,7 +532,7 @@ py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const
   std::vector<tensor::TensorPtr> inputs;
   ProcessGeArg(info, args, phase, &inputs);
 
-  std::shared_ptr<py::object> ret = DoExecGraph(anf_graph, inputs, phase);
+  std::shared_ptr<py::object> ret = DoExecGraphAsync(anf_graph, inputs, phase);
   ConfigManager::GetInstance().ResetConfig();
   if (ret != nullptr) {
     return *ret;
