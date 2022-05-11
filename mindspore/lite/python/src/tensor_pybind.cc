@@ -86,6 +86,7 @@ void TensorPyBind(const py::module &m) {
     .def("get_data_size", &MSTensor::DataSize)
     .def("set_data", &MSTensor::SetData)
     .def("get_data", &MSTensor::MutableData)
+    .def("is_null", [](const MSTensor &tensor) { return tensor == nullptr; })
     .def("set_data_from_numpy",
          [](MSTensor &tensor, const py::array &input) {
            PyArrayObject *darray = PyArray_GETCONTIGUOUS(reinterpret_cast<PyArrayObject *>(input.ptr()));
