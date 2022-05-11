@@ -120,7 +120,7 @@ class AscendDeviceContext : public DeviceContext {
   bool IsLoopCountSink(const KernelGraphPtr &graph) const override;
 
   // set rt_context_ to this thread to control device
-  void BindDeviceToCurrentThread() const;
+  bool BindDeviceToCurrentThread() const override;
 
   // Launch device aicpu library
   void LaunchDeviceLibrary() const;

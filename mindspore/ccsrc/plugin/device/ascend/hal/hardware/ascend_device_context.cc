@@ -934,10 +934,11 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
   return PySyncRuning();
 }
 
-void AscendDeviceContext::BindDeviceToCurrentThread() const {
+bool AscendDeviceContext::BindDeviceToCurrentThread() const {
   if (initialized_) {
     runtime_instance_->SetContext();
   }
+  return true;
 }
 
 bool AscendDeviceContext::LaunchAtomicClean(const CNodePtr &node, const std::vector<AddressPtr> &workspace,
