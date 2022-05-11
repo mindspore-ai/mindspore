@@ -72,21 +72,22 @@ template <>
 void CalLpNorm<float>(const float *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
                       const size_t *output_axis, const size_t *output_stride, size_t output_shape_length,
                       size_t output_elements, float p, float eps, float *middle_output, float *output,
-                      cudaStream_t cuda_stream) {
-  LpCalKernel<<<GET_BLOCKS(input_elements), GET_THREADS, 0, cuda_stream>>>(input, input_shape, input_shape_length,
-                                                                           input_elements, output_axis, output_stride,
-                                                                           output_shape_length, p, eps, output);
-  NormCalKernel<<<GET_BLOCKS(output_elements), GET_THREADS, 0, cuda_stream>>>(output, output_elements, p, eps);
+                      const uint32_t &device_id, cudaStream_t cuda_stream) {
+  LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, eps,
+    output);
+  NormCalKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    output, output_elements, p, eps);
 }
 
 template <>
 void CalLpNorm<half>(const half *input, const size_t *input_shape, size_t input_shape_length, size_t input_elements,
                      const size_t *output_axis, const size_t *output_stride, size_t output_shape_length,
                      size_t output_elements, float p, float eps, float *middle_output, half *output,
-                     cudaStream_t cuda_stream) {
-  LpCalKernel<<<GET_BLOCKS(input_elements), GET_THREADS, 0, cuda_stream>>>(input, input_shape, input_shape_length,
-                                                                           input_elements, output_axis, output_stride,
-                                                                           output_shape_length, p, eps, middle_output);
-  NormCalHighPrecisionKernel<<<GET_BLOCKS(output_elements), GET_THREADS, 0, cuda_stream>>>(middle_output, output,
-                                                                                           output_elements, p, eps);
+                     const uint32_t &device_id, cudaStream_t cuda_stream) {
+  LpCalKernel<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, input_shape, input_shape_length, input_elements, output_axis, output_stride, output_shape_length, p, eps,
+    middle_output);
+  NormCalHighPrecisionKernel<<<CUDA_BLOCKS(device_id, output_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    middle_output, output, output_elements, p, eps);
 }

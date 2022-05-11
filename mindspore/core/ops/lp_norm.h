@@ -30,13 +30,22 @@ class MIND_API LpNorm : public BaseOperator {
   MIND_API_BASE_MEMBER(LpNorm);
   LpNorm() : BaseOperator(kNameLpNorm) { InitIOName({"input"}, {"output"}); }
 
-  void Init(const int64_t p = 2, const float epsilon = 1e-12);
+  void Init(const std::vector<int64_t> &axis, const int64_t p = 2, const bool keep_dims = false,
+            const float epsilon = 1e-12);
+
+  void set_axis(const std::vector<int64_t> &axis);
+
+  void set_keep_dims(const bool keep_dims);
 
   void set_p(const int64_t p);
 
   void set_epsilon(const float epsilon);
 
+  std::vector<int64_t> get_axis() const;
+
   int64_t get_p() const;
+
+  bool get_keep_dims() const;
 
   float get_epsilon() const;
 };
