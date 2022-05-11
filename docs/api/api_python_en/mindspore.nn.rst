@@ -109,6 +109,7 @@ Nonlinear Activation Function Layer
     mindspore.nn.ELU
     mindspore.nn.FastGelu
     mindspore.nn.GELU
+    mindspore.nn.Hardtanh
     mindspore.nn.HShrink
     mindspore.nn.HSigmoid
     mindspore.nn.HSwish

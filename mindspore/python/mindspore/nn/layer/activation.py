@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
 """activation"""
 import numpy as np
 
-from mindspore._checkparam import Validator as validator
+from mindspore._checkparam import Rel, Validator as validator
 from mindspore._extends import cell_attr_register
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.primitive import constexpr
 from ..cell import Cell
 
 __all__ = ['Softmax',
@@ -29,6 +30,7 @@ __all__ = ['Softmax',
            'ReLU',
            'ReLU6',
            'Tanh',
+           'Hardtanh',
            'GELU',
            'FastGelu',
            'Sigmoid',
@@ -439,6 +441,77 @@ class Tanh(Cell):
 
     def construct(self, x):
         return self.tanh(x)
+
+
+@constexpr
+def _dtype_check(x_dtype, prim_name):
+    """Check dtype."""
+    if x_dtype not in [mstype.float32, mstype.float16]:
+        raise TypeError("For {}, the x_dtype must be float32 or float16, but got {}.".format(prim_name, x_dtype))
+
+
+class Hardtanh(Cell):
+    r"""
+    HardTanh activation function.
+
+    Applies the HardTanh function element-wise. The activation function is defined as:
+
+    .. math::
+        \text{HardTanh}(x) = \begin{cases}
+            1, & \text{ if } x > 1; \\
+            -1, & \text{ if } x < -1; \\
+            x, & \text{ otherwise. }
+        \end{cases}
+
+    Linear region range :math:`[-1, 1]` can be adjusted using `min_val` and `max_val`.
+
+    Args:
+        min_val (Union[int, float]): Minimum value of the linear region range. Default: -1.0.
+        max_val (Union[int, float]): Maximum value of the linear region range. Default: 1.0.
+
+    Inputs:
+        - **x** (Tensor) - The input of Hardtanh with data type of float16 or float32.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+        Tensor, which has the same type as `x`.
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `min_val` is neither float nor int.
+        TypeError: If dtype of `max_val` is neither float nor int.
+        ValueError: If `max_val` is less than `min_val`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hardtanh = nn.Hardtanh(min_val=-1.0, max_val=1.0)
+        >>> output = hardtanh(x)
+        >>> print(output)
+        [-1. -1.  0.  1.  1.]
+    """
+
+    def __init__(self, min_val=-1.0, max_val=1.0):
+        """Initialize Hardtanh."""
+        super(Hardtanh, self).__init__()
+        validator.check_value_type('min_val', min_val, [float, int], self.cls_name)
+        validator.check_value_type('max_val', max_val, [float, int], self.cls_name)
+        validator.check_number("max_val", max_val, min_val, Rel.GE, self.cls_name)
+
+        self.max = P.Maximum()
+        self.min = P.Minimum()
+        self.min_val = min_val
+        self.max_val = max_val
+        self.dtype = P.DType()
+
+    def construct(self, x):
+        _dtype_check(self.dtype(x), self.cls_name)
+
+        x = self.max(x, self.min_val)
+        x = self.min(x, self.max_val)
+        return x
 
 
 class GELU(Cell):
@@ -993,6 +1066,7 @@ _activation = {
     'relu': ReLU,
     'relu6': ReLU6,
     'tanh': Tanh,
+    'hardtanh': Hardtanh,
     'gelu': GELU,
     'fast_gelu': FastGelu,
     'elu': ELU,
