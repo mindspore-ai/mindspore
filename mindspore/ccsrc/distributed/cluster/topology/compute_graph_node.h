@@ -36,7 +36,7 @@ class ComputeGraphNode : public NodeBase {
   bool Initialize() override;
   bool Initialized() override;
 
-  bool Finalize() override;
+  bool Finalize(bool force = false) override;
 
   // Send the specified message to the meta server node.
   bool SendMessageToMSN(const std::string msg_name, const std::string &msg_body);

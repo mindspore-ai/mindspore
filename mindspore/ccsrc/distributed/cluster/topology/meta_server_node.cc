@@ -57,8 +57,8 @@ bool MetaServerNode::Initialized() {
   return topo_state_ == TopoState::kInitialized || topo_state_ == TopoState::kFinished;
 }
 
-bool MetaServerNode::Finalize() {
-  if (topo_state_ != TopoState::kFinished) {
+bool MetaServerNode::Finalize(bool force) {
+  if (topo_state_ != TopoState::kFinished && !force) {
     MS_LOG(WARNING) << "The meta server node can not be finalized because there are still " << nodes_.size()
                     << " alive nodes.";
     return false;
@@ -72,6 +72,9 @@ bool MetaServerNode::Finalize() {
     // Stop the topo monitor thread.
     enable_monitor_ = false;
     topo_monitor_.join();
+    if (force) {
+      MS_LOG(INFO) << "The meta server node is forced to finalized.";
+    }
     return true;
   }
 }
