@@ -3632,11 +3632,9 @@ class StridedSlice(PrimitiveWithInfer):
             rets = {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': None}
-
-            if max_shape is not None and min_shape is not None:
-                rets = self._compute_max_min_shape(rets, x_shape, max_shape, min_shape, ret_shape)
-
-            return rets
+            if -1 in x_shape and (max_shape is None or min_shape is None):
+                return rets
+            return self._compute_max_min_shape(rets, x_shape, max_shape, min_shape, ret_shape)
 
         ret_shape = self._compute_slicing_shape(x_shape, begin_v['value'], end_v['value'], strides_v['value'])
         if all(ret_shape):

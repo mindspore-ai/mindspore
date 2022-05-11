@@ -375,7 +375,7 @@ abstract::ShapePtr StridedSliceInferShape(const PrimitivePtr &primitive,
   }
   ret_in_shape = DynamicComputeInferShape(primitive, begin_v, end_v, strides_v, x_shape, begin_len);
 
-  if (max_shape.empty() || min_shape.empty()) {
+  if (x_is_dyn && (max_shape.empty() || min_shape.empty())) {
     return std::make_shared<abstract::Shape>(ret_in_shape);
   }
 
