@@ -2600,6 +2600,28 @@ class Tensor(Tensor_):
                 repeated_subs.append(tensor_operator_registry.get('repeat_elements')(sub, rep, axis))
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
+    def nonzero(self):
+        """
+        Return a tensor of the positions of all non-zero values.
+
+        Returns:
+            Tensor, a 2-D tensor, containing the positions of all non-zero values of the input.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
+            >>> output = x.nonzero()
+            >>> print(output)
+            [[0 0 0]
+             [0 1 0]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('nonzero')(self)
+
 
 class RowTensor(RowTensor_):
     """

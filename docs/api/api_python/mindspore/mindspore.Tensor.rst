@@ -530,6 +530,14 @@ mindspore.Tensor
 
         返回Tensor维度的数量。
 
+    .. py:method:: nonzero()
+
+        计算x中非零元素的下标。
+
+        **返回：**
+
+        Tensor，维度为2，类型为int64。
+
     .. py:method:: ptp(axis=None, keepdims=False)
 
         该函数名称是"peak to peak"的缩写。计算沿着axis的最大值与最小值的差值。

@@ -7648,15 +7648,7 @@ class NonZero(Primitive):
     """
     Return a tensor of the positions of all non-zero values.
 
-    Inputs:
-        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
-
-    Outputs:
-        - **y** (Tensor), The shape of tensor is 2-D. The data type is int64.
-
-    Raises:
-       TypeError: If `x` is not Tensor.
-       ValueError: If 'x' dim equal to 0.
+    Refer to :func:`mindspore.ops.expand_dims` for more detail.
 
     Supported Platforms:
        ``GPU``
@@ -7665,9 +7657,9 @@ class NonZero(Primitive):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore.ops.operations.array_ops import NonZero
         >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-        >>> nonzero = ops.NonZero()
+        >>> nonzero = NonZero()
         >>> output = nonzero(x)
         >>> print(output)
         [[0 0 0]
