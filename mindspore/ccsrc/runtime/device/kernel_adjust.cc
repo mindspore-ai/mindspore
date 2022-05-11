@@ -860,9 +860,8 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
     }
   }
 
-  // Debug info
   for (const auto &param : dynamic_loss_scale_param_list) {
-    MS_LOG(INFO) << "dynamic_loss_scale_param_list:" << param->DebugString();
+    MS_LOG(DEBUG) << "dynamic_loss_scale_param_list:" << param->DebugString();
   }
 
   if (specify_param != nullptr) {
@@ -873,7 +872,7 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
   }
 
   for (const auto &node : kernel_graph_ptr->execution_order()) {
-    MS_LOG(INFO) << "After insert Overflow Status Order:" << node->DebugString();
+    MS_LOG(DEBUG) << "After insert Overflow Status Order:" << node->DebugString();
   }
   MS_LOG(INFO) << "End Insert Overflow Check Operations.";
 }
