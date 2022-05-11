@@ -170,6 +170,9 @@ Context
     mindspore.set_ps_context
     mindspore.get_ps_context
     mindspore.reset_ps_context
+    mindspore.set_algo_parameters
+    mindspore.get_algo_parameters
+    mindspore.reset_algo_parameters
 
 Model
 -----
