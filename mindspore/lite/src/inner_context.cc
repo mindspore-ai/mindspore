@@ -206,6 +206,12 @@ int InnerContext::IsValid() const {
     MS_LOG(ERROR) << "Thread num smaller than 1 is not allowed.";
     return RET_NOT_SUPPORT;
   }
+
+  if (inter_op_parallel_num_ < 1) {
+    MS_LOG(ERROR) << "InterOpParallelNum smaller than 1 is not allowed.";
+    return RET_NOT_SUPPORT;
+  }
+
   if (!IsAllDeviceTypeValid()) {
     MS_LOG(ERROR) << "Device type should be one of DT_CPU, DT_GPU or DT_NPU.";
     return RET_NOT_SUPPORT;

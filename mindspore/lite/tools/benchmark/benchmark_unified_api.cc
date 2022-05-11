@@ -1150,52 +1150,107 @@ int BenchmarkUnifiedApi::RunBenchmark() {
 }
 
 int BenchmarkUnifiedApi::InitTimeProfilingCallbackParameter() {
-  // before callback
-  ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
-                             const std::vector<mindspore::MSTensor> &before_outputs,
-                             const MSCallBackParam &call_param) {
-    if (before_inputs.empty()) {
-      MS_LOG(INFO) << "The num of beforeInputs is empty";
-    }
-    if (before_outputs.empty()) {
-      MS_LOG(INFO) << "The num of beforeOutputs is empty";
-    }
-    if (op_times_by_type_.find(call_param.node_type) == op_times_by_type_.end()) {
-      op_times_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, 0.0f)));
-    }
-    if (op_times_by_name_.find(call_param.node_name) == op_times_by_name_.end()) {
-      op_times_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, 0.0f)));
-    }
+  if (flags_->inter_op_parallel_num_ > 1) {
+    // before callback
+    ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                               const std::vector<mindspore::MSTensor> &before_outputs,
+                               const MSCallBackParam &call_param) {
+      if (before_inputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeInputs is empty";
+      }
+      if (before_outputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeOutputs is empty";
+      }
+      {
+        std::lock_guard<std::mutex> _l(op_times_mutex_);
+        if (op_times_by_type_.find(call_param.node_type) == op_times_by_type_.end()) {
+          op_times_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, 0.0f)));
+        }
+        if (op_times_by_name_.find(call_param.node_name) == op_times_by_name_.end()) {
+          op_times_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, 0.0f)));
+        }
+        op_start_times_by_name_[call_param.node_name] = GetTimeUs();
+        op_call_times_total_++;
+      }
+      return true;
+    };
 
-    op_call_times_total_++;
-    op_begin_ = GetTimeUs();
-    return true;
-  };
+    // after callback
+    ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                              const std::vector<mindspore::MSTensor> &after_outputs,
+                              const MSCallBackParam &call_param) {
+      uint64_t opEnd = GetTimeUs();
 
-  // after callback
-  ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
-                            const std::vector<mindspore::MSTensor> &after_outputs, const MSCallBackParam &call_param) {
-    uint64_t opEnd = GetTimeUs();
+      if (after_inputs.empty()) {
+        MS_LOG(INFO) << "The num of after inputs is empty";
+      }
+      if (after_outputs.empty()) {
+        MS_LOG(INFO) << "The num of after outputs is empty";
+      }
+      {
+        std::lock_guard<std::mutex> _l(op_times_mutex_);
+        float cost = static_cast<float>(opEnd - op_start_times_by_name_[call_param.node_name]) / kFloatMSEC;
+        if (flags_->device_ == "GPU") {
+          auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
+          cost = static_cast<float>(gpu_param.execute_time);
+        }
+        op_cost_total_ += cost;
+        op_times_by_type_[call_param.node_type].first++;
+        op_times_by_type_[call_param.node_type].second += cost;
+        op_times_by_name_[call_param.node_name].first++;
+        op_times_by_name_[call_param.node_name].second += cost;
+      }
+      return true;
+    };
+  } else {
+    // before callback
+    ms_before_call_back_ = [&](const std::vector<mindspore::MSTensor> &before_inputs,
+                               const std::vector<mindspore::MSTensor> &before_outputs,
+                               const MSCallBackParam &call_param) {
+      if (before_inputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeInputs is empty";
+      }
+      if (before_outputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeOutputs is empty";
+      }
+      if (op_times_by_type_.find(call_param.node_type) == op_times_by_type_.end()) {
+        op_times_by_type_.insert(std::make_pair(call_param.node_type, std::make_pair(0, 0.0f)));
+      }
+      if (op_times_by_name_.find(call_param.node_name) == op_times_by_name_.end()) {
+        op_times_by_name_.insert(std::make_pair(call_param.node_name, std::make_pair(0, 0.0f)));
+      }
 
-    if (after_inputs.empty()) {
-      MS_LOG(INFO) << "The num of after inputs is empty";
-    }
-    if (after_outputs.empty()) {
-      MS_LOG(INFO) << "The num of after outputs is empty";
-    }
+      op_call_times_total_++;
+      op_begin_ = GetTimeUs();
+      return true;
+    };
 
-    float cost = static_cast<float>(opEnd - op_begin_) / kFloatMSEC;
-    if (flags_->device_ == "GPU") {
-      auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
-      cost = static_cast<float>(gpu_param.execute_time);
-    }
-    op_cost_total_ += cost;
-    op_times_by_type_[call_param.node_type].first++;
-    op_times_by_type_[call_param.node_type].second += cost;
-    op_times_by_name_[call_param.node_name].first++;
-    op_times_by_name_[call_param.node_name].second += cost;
-    return true;
-  };
+    // after callback
+    ms_after_call_back_ = [&](const std::vector<mindspore::MSTensor> &after_inputs,
+                              const std::vector<mindspore::MSTensor> &after_outputs,
+                              const MSCallBackParam &call_param) {
+      uint64_t opEnd = GetTimeUs();
+
+      if (after_inputs.empty()) {
+        MS_LOG(INFO) << "The num of after inputs is empty";
+      }
+      if (after_outputs.empty()) {
+        MS_LOG(INFO) << "The num of after outputs is empty";
+      }
+
+      float cost = static_cast<float>(opEnd - op_begin_) / kFloatMSEC;
+      if (flags_->device_ == "GPU") {
+        auto gpu_param = reinterpret_cast<const GPUCallBackParam &>(call_param);
+        cost = static_cast<float>(gpu_param.execute_time);
+      }
+      op_cost_total_ += cost;
+      op_times_by_type_[call_param.node_type].first++;
+      op_times_by_type_[call_param.node_type].second += cost;
+      op_times_by_name_[call_param.node_name].first++;
+      op_times_by_name_[call_param.node_name].second += cost;
+      return true;
+    };
+  }
   return RET_OK;
 }
 
