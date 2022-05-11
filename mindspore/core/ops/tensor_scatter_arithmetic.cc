@@ -97,13 +97,13 @@ AbstractBasePtr TensorScatterArithmeticInfer(const abstract::AnalysisEnginePtr &
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-MIND_API_BASE_IMPL(TensorScatterAdd, PrimitiveC, BaseOperator);
-MIND_API_BASE_IMPL(TensorScatterSub, PrimitiveC, BaseOperator);
-MIND_API_BASE_IMPL(TensorScatterMax, PrimitiveC, BaseOperator);
-MIND_API_BASE_IMPL(TensorScatterMin, PrimitiveC, BaseOperator);
-MIND_API_BASE_IMPL(TensorScatterDiv, PrimitiveC, BaseOperator);
-MIND_API_BASE_IMPL(TensorScatterMul, PrimitiveC, BaseOperator);
-MIND_API_BASE_IMPL(TensorScatterUpdate, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterAdd, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterSub, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterMax, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterMin, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterDiv, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterMul, BaseOperator);
+MIND_API_OPERATOR_IMPL(TensorScatterUpdate, BaseOperator);
 
 REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterAdd, prim::kPrimTensorScatterAdd, TensorScatterArithmeticInfer, nullptr,
                              true);
