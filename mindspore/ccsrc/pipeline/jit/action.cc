@@ -578,8 +578,7 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
       MS_EXCEPTION_IF_NULL(value);
       auto abs_value = value->ToAbstract()->cast<abstract::AbstractTensorPtr>();
       auto ref_key = std::make_shared<RefKey>(param_node->name());
-      auto abs_ref_key = ref_key->ToAbstract();
-      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
+      auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_value, ref_key);
       context->ParallelParameterContextRestoreShape(func_graph, param_node, abs_ref);
       args_spec.push_back(abs_ref);
       context->ParallelParameterContextCkptShape(func_graph, param_node, abs_ref);

@@ -509,17 +509,10 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &) {
   AbstractBasePtrList args_spec_list;
-  auto is_py_eval = (identifier_ == "PythonPrimEvaluator");
   (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
-                       [is_py_eval](const ConfigPtr &conf) -> AbstractBasePtr {
+                       [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          auto abstract = conf->ObtainEvalResult()->abstract();
-                         MS_EXCEPTION_IF_NULL(abstract);
-                         // Broaden the ref_key, while infer python prim for cache
-                         if (is_py_eval && abstract->isa<AbstractRef>()) {
-                           auto abs_ref = abstract->cast<AbstractRefPtr>();
-                           abstract = std::make_shared<AbstractRef>(abs_ref->ref_key()->Broaden(), abs_ref);
-                         }
                          return abstract;
                        });
   return EvalPrim(engine, args_spec_list);

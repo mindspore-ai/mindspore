@@ -50,7 +50,7 @@ std::optional<std::string> GetRefKey(const AnfNodePtr &node) {
   if (abs_ref == nullptr) {
     return std::nullopt;
   }
-  auto ref_key = abs_ref->ref_key_value();
+  auto ref_key = abs_ref->ref_key_value()->cast<RefKeyPtr>();
   if (ref_key == nullptr) {
     return std::nullopt;
   }

@@ -77,13 +77,6 @@ TEST_F(TestValue, testToAbstract) {
   ret = tv->ToAbstract();
   ASSERT_TRUE(ret);
   ASSERT_EQ(*(ret), *(ta));
-
-  ValuePtr rv = std::make_shared<RefKey>("net.weight");
-  abstract::AbstractRefKeyPtr ra = std::make_shared<abstract::AbstractRefKey>();
-  ra->set_value(rv);
-  ret = rv->ToAbstract();
-  ASSERT_TRUE(ret);
-  ASSERT_EQ(*(ret), *(ra));
 }
 
 TEST_F(TestValue, GetValue) {

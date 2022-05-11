@@ -644,7 +644,7 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base, bool only_conv
   auto dic = py::dict();
   if (abs_base->isa<AbstractTensor>()) {
     ConvertAbstractTensorToPython(abs_base, only_convert_value, &dic);
-  } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>() || abs_base->isa<AbstractRefKey>()) {
+  } else if (abs_base->isa<AbstractScalar>() || abs_base->isa<AbstractType>()) {
     ShapeVector shape;
     dic[ATTR_SHAPE] = shape;
     dic[ATTR_DTYPE] = abs_base->BuildType();
@@ -1523,16 +1523,6 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_LOG(ERROR) << "The first parameter of RefToEmbed should be Ref, but " << abs->ToString();
       return nullptr;
     }
-    auto key_abs = ref_abs->ref_key();
-    if (key_abs == nullptr) {
-      MS_LOG(ERROR) << "RefToEmbed input Ref key is nullptr.";
-      return nullptr;
-    }
-    auto key_value = key_abs->BuildValue();
-    if (key_value == nullptr) {
-      MS_LOG(ERROR) << "RefToEmbed input Ref key value is nullptr.";
-      return nullptr;
-    }
     // Check if the input of RefEmbed is a weight parameter, if not, don't create the
     // specific SymbolicKey.
     // Notes: when different weight parameter have same type and shape passed as parameter to same funcgraph
@@ -1545,7 +1535,7 @@ class RefToEmbedEvaluator : public SymbolicPrimEvaluator {
       MS_EXCEPTION_IF_NULL(param);
       ifEmbedIsWeight = param->has_default();
     }
-    auto refkey = key_value->cast<RefKeyPtr>();
+    auto refkey = ref_abs->ref_key_value()->cast<RefKeyPtr>();
     if (refkey == nullptr || !ifEmbedIsWeight) {
       auto ret = std::make_shared<AbstractScalar>(type);
       auto ref_value = ref_abs->ref();

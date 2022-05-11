@@ -32,9 +32,7 @@ abstract::AbstractBasePtr StringImm::ToAbstract() {
 }
 
 abstract::AbstractBasePtr RefKey::ToAbstract() {
-  auto refkey = std::make_shared<abstract::AbstractRefKey>();
-  refkey->set_value(shared_from_base<Value>());
-  return refkey;
+  MS_LOG(EXCEPTION) << "Ref key can't convert to abstract, ref_key:" << ToString();
 }
 
 abstract::AbstractBasePtr AnyValue::ToAbstract() { return std::make_shared<abstract::AbstractScalar>(); }

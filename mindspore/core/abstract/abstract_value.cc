@@ -1153,11 +1153,12 @@ std::string AbstractJTagged::ToString() const {
   return buffer.str();
 }
 
-AbstractRef::AbstractRef(const AbstractBasePtr &ref_key, const AbstractTensorPtr &ref_value)
-    : AbstractTensor(*ref_value), ref_key_(ref_key), ref_key_value_(nullptr) {
+AbstractRef::AbstractRef(const AbstractTensorPtr &ref_value, const ValuePtr &ref_key_value)
+    : AbstractTensor(*ref_value), ref_key_value_(ref_key_value) {
   set_type(std::make_shared<RefType>());
-  if (ref_key && ref_key->isa<AbstractRefKey>()) {
-    ref_key_value_ = ref_key->cast<AbstractRefKeyPtr>()->ref_key_value();
+  MS_EXCEPTION_IF_NULL(ref_key_value);
+  if (ref_key_value != kAnyValue && !ref_key_value->isa<RefKey>()) {
+    MS_LOG(EXCEPTION) << "ref_key_value must be kAnyValue or RefKey, but got:" << ref_key_value->ToString();
   }
 }
 
@@ -1172,65 +1173,66 @@ bool AbstractRef::operator==(const AbstractRef &other) const {
   if (this == &other) {
     return true;
   }
-  return IsEqual(ref_key_, other.ref_key_) && AbstractTensor::equal_to(other);
+  // Check whether the ref_key_value is equal.
+  if (!IsEqual(ref_key_value_, other.ref_key_value_)) {
+    return false;
+  }
+  // Check whether Tensor value is equal.
+  return AbstractTensor::equal_to(other);
 }
 
 bool AbstractRef::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
   if (!other.isa<AbstractRef>()) {
     return false;
   }
   return *this == static_cast<const AbstractRef &>(other);
 }
 
-AbstractBasePtr AbstractRefKey::Join(const AbstractBasePtr &other) {
-  MS_EXCEPTION_IF_NULL(other);
+AbstractBasePtr AbstractRef::Join(const std::shared_ptr<AbstractRef> &other) {
   if (*this == *other) {
-    auto ret = shared_from_base<AbstractBase>();
-    return ret;
+    return shared_from_base<AbstractRef>();
   }
-  auto value_self = GetValueTrack();
-  MS_EXCEPTION_IF_NULL(value_self);
-  ValuePtr res_value = ValueJoin(value_self, other->GetValueTrack());
-  if (res_value == value_self) {
-    auto ret = shared_from_base<AbstractBase>();
-    return ret;
-  }
-  auto ret = std::make_shared<AbstractRefKey>();
-  ret->set_value(res_value);
-  return ret;
+  // Firstly, join the ref_key_value.
+  auto joined_ref_key = ValueJoin(ref_key_value_, other->ref_key_value_);
+  // Secondly , join the tensor value.
+  auto joined_tensor = AbstractTensor::Join(other)->cast<AbstractTensorPtr>();
+  MS_EXCEPTION_IF_NULL(joined_tensor);
+  return std::make_shared<AbstractRef>(joined_tensor, joined_ref_key);
 }
 
 AbstractBasePtr AbstractRef::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  auto other_ref = other->cast<AbstractRefPtr>();
-  if (other_ref == nullptr) {
-    auto join_abs = AbstractTensor::Join(other);
-    MS_EXCEPTION_IF_NULL(join_abs);
-    return join_abs->cast<AbstractTensorPtr>();
+  // Abstract ref join abstract ref
+  if (other->isa<AbstractRef>()) {
+    return AbstractRef::Join(other->cast<AbstractRefPtr>());
   }
-  MS_EXCEPTION_IF_NULL(ref_key_);
-  MS_EXCEPTION_IF_NULL(other_ref->ref_key_);
-  if ((*this == *other) && (*ref_key_ == *other_ref->ref_key_)) {
-    return shared_from_base<AbstractBase>();
+  // Abstract ref join other abstract are same to AbstractTensor::Join.
+  auto joined_tensor = AbstractTensor::Join(other);
+  if (!joined_tensor->isa<AbstractTensor>()) {
+    MS_LOG(EXCEPTION) << "Expect an AbstractTensor, but got:" << joined_tensor->ToString()
+                      << ", other:" << other->ToString();
   }
-  auto ref_key = ref_key_->Join(other_ref->ref_key_);
-  auto joined_abs_tensor = other_ref->ref();
-  MS_EXCEPTION_IF_NULL(joined_abs_tensor);
-  auto ref = AbstractTensor::Join(joined_abs_tensor);
-  MS_EXCEPTION_IF_NULL(ref);
-  auto ref_tensor = ref->cast<AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(ref_tensor);
-  return std::make_shared<AbstractRef>(ref_key, ref_tensor);
+  return joined_tensor;
+}
+
+AbstractBasePtr AbstractRef::Clone() const {
+  auto abs_tensor = AbstractTensor::Clone()->cast<AbstractTensorPtr>();
+  return std::make_shared<AbstractRef>(abs_tensor, ref_key_value_);
+}
+
+AbstractBasePtr AbstractRef::Broaden() const {
+  // always broaden for ref
+  auto abs_tensor = AbstractTensor::Broaden()->cast<AbstractTensorPtr>();
+  // Broaden the tensor value and keep the ref_key_value.
+  auto ret = std::make_shared<AbstractRef>(abs_tensor, ref_key_value_);
+  return ret;
 }
 
 std::string AbstractRef::ToString() const {
   std::ostringstream buffer;
-  MS_EXCEPTION_IF_NULL(ref_key_);
+  MS_EXCEPTION_IF_NULL(ref_key_value_);
   buffer << type_name() << "("
-         << "key: " << ref_key_->ToString() << " ref_value: " << AbstractTensor::ToString();
+         << "key: " << ref_key_value_->ToString() << " ref_value: " << AbstractTensor::ToString();
   auto value = GetValueTrack();
   if (value != nullptr) {
     buffer << ", value: " << value->ToString();
@@ -1257,41 +1259,6 @@ std::string AbstractNone::ToString() const {
 }
 
 ValuePtr AbstractNone::RealBuildValue() const { return kNone; }
-
-bool AbstractRefKey::operator==(const AbstractRefKey &other) const {
-  ValuePtr v1 = GetValueTrack();
-  ValuePtr v2 = other.GetValueTrack();
-  if (v1 == v2) {
-    return true;
-  }
-  if (v1 == nullptr || v2 == nullptr) {
-    return false;
-  }
-  if (v1->isa<AnyValue>() && v2->isa<AnyValue>()) {
-    return true;
-  }
-  return IsEqual(dyn_cast<RefKey>(v1), dyn_cast<RefKey>(v2));
-}
-
-bool AbstractRefKey::operator==(const AbstractBase &other) const {
-  if (this == &other) {
-    return true;
-  }
-  if (!other.isa<AbstractRefKey>()) {
-    return false;
-  }
-  return *this == static_cast<const AbstractRefKey &>(other);
-}
-
-std::string AbstractRefKey::ToString() const {
-  std::ostringstream buffer;
-  buffer << type_name();
-  auto value = GetValueTrack();
-  if (value != nullptr) {
-    buffer << "(value: " << value->ToString() << ")";
-  }
-  return buffer.str();
-}
 
 bool AbstractNull::operator==(const AbstractNull &) const { return true; }
 
