@@ -237,8 +237,8 @@ std::vector<std::tuple<std::size_t, ::ge::NodePtr>> OpTilingCalculateAdapter::Co
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto depends_list_me = abstract::GetDependsFormMap(node);
-  if (depends_list_me.empty()) {
-    MS_LOG(INFO) << "The node " << op_name_ << " has no infer depend ";
+  if (depends_list_me.empty() || AnfAlgo::IsDynamicShapeSkipExecute(node)) {
+    MS_LOG(INFO) << "The node " << op_name_ << " has no infer depend.";
     return {};
   }
   auto has_input_name_attr = common::AnfAlgo::HasNodeAttr("input_names", node);
