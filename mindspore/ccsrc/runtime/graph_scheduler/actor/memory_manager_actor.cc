@@ -85,6 +85,14 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     }
 
     for (size_t index = 0; index < alloc_list.size(); index++) {
+      if (alloc_list[index]->GetPtr() != nullptr) {
+        auto old_dev_addr = alloc_list[index];
+        auto new_dev_addr =
+          device_context->CreateDeviceAddress(dev_ptr_list[index], size_list[index], old_dev_addr->format(),
+                                              old_dev_addr->type_id(), old_dev_addr->host_shape());
+        new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
+        device_context->FreeMemory(old_dev_addr.get());
+      }
       alloc_list[index]->set_ptr(dev_ptr_list[index]);
       alloc_list[index]->SetSize(size_list[index]);
       alloc_list[index]->set_from_mem_pool(true);

@@ -63,6 +63,13 @@ void GPUBucket::AllocateContinuousMemory(const std::vector<DeviceAddressPtr> &to
   }
 
   for (size_t i = 0; i < to_allocate_address.size(); i++) {
+    if (to_allocate_address[i]->GetPtr() != nullptr) {
+      auto old_dev_addr = to_allocate_address[i];
+      auto new_dev_addr = device_context->CreateDeviceAddress(dev_ptr_list[i], size_list[i], old_dev_addr->format(),
+                                                              old_dev_addr->type_id(), old_dev_addr->host_shape());
+      new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
+      device_context->FreeMemory(old_dev_addr.get());
+    }
     to_allocate_address[i]->set_ptr(dev_ptr_list[i]);
     to_allocate_address[i]->SetSize(size_list[i]);
     to_allocate_address[i]->set_from_mem_pool(true);
