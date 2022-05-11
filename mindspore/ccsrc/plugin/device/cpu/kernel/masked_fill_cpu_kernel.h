@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MASKED_FILL_CPU_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -25,17 +26,19 @@
 
 namespace mindspore {
 namespace kernel {
-class MaskedFillCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class MaskedFillCpuKernelMod : public NativeCpuKernelMod {
  public:
   MaskedFillCpuKernelMod() = default;
   ~MaskedFillCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
@@ -47,7 +50,8 @@ class MaskedFillCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                             const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MaskedFillFunc>> func_list_;
   MaskedFillFunc kernel_func_;
-  size_t shape_size_{1};
+  size_t output_size_{1};
+  size_t inner_size_{1};
   std::vector<size_t> input_shape_;
   std::vector<size_t> mask_shape_;
   std::vector<size_t> output_shape_;

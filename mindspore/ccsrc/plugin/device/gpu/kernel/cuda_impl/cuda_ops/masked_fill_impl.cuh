@@ -20,11 +20,11 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void ElewiseMaskedFill(const size_t input_size, const T *input, const bool *mask, T value, T *output,
-                                       cudaStream_t stream);
+CUDA_LIB_EXPORT void ElewiseMaskedFill(size_t inner_size, size_t output_size, const T *input, const bool *mask,
+                                       T *value, T *output, cudaStream_t stream);
 
 template <typename T>
-CUDA_LIB_EXPORT void BroadcastMaskedFill(const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
-                                         const std::vector<size_t> &output_shape, const T *input, const bool *mask,
-                                         T value, T *output, cudaStream_t stream);
+CUDA_LIB_EXPORT void BroadcastMaskedFill(size_t inner_size, const std::vector<size_t> &input_shape,
+                                         const std::vector<size_t> &mask_shape, const std::vector<size_t> &output_shape,
+                                         const T *input, const bool *mask, T *value, T *output, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MASKED_FILL_CUH_
