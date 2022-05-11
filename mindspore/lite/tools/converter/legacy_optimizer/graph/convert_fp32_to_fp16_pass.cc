@@ -43,10 +43,6 @@ STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
       continue;
     }
     auto ele_num = lite::GetShapeSize(tensor->dims);
-    if (ele_num < 0) {
-      MS_LOG(ERROR) << "Tensor data length error.";
-      return RET_ERROR;
-    }
     auto origin_data = tensor->data;
     if (origin_data.size() != ele_num * sizeof(float) || origin_data.size() % kFp16ToFp32Multiply != 0) {
       MS_LOG(ERROR) << "Tensor data length error.";
@@ -58,7 +54,7 @@ STATUS ConvertFP32ToFP16Pass::Run(schema::MetaGraphT *graph) {
     auto fp16_data = reinterpret_cast<float16 *>(new_data.data());
     CHECK_NULL_RETURN(fp32_data);
     CHECK_NULL_RETURN(fp16_data);
-    for (int i = 0; i < ele_num; i++) {
+    for (size_t i = 0; i < ele_num; i++) {
       fp16_data[i] = float16(fp32_data[i]);
     }
     tensor->data.swap(new_data);
