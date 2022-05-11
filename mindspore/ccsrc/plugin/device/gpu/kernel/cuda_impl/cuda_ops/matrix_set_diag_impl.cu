@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "matrix_set_diag_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_set_diag_impl.cuh"
 #include <stdint.h>
 #include <cuda_runtime.h>
 #include <algorithm>
@@ -38,7 +38,7 @@ __global__ void MatrixSetDiagKernel(const int outer_batch, const int inner_row, 
     int batch = i / (inner_row * inner_col);
     int row = (i - batch * inner_row * inner_col) / inner_col;
     int col = (i - batch * inner_row * inner_col) % inner_col;
-    int d = static_cast<int>(col - row);
+    int d = col - row;
     if (is_single_diag) {
       if (d == upper_index) {
         output_addr[i] = diag_addr[batch * max_diag_len + col - max(upper_index, 0)];
@@ -59,37 +59,90 @@ template <typename T>
 void MatrixSetDiag(const int outer_batch, const int inner_row, const int inner_col, const int num_diags,
                    const int max_diag_len, const int lower_index, const int upper_index,
                    const bool right_align_super_diagonal, const bool right_align_sub_diagonal,
-                   const bool is_single_diag, const T *diag_addr, T *output_addr, cudaStream_t cuda_stream) {
+                   const bool is_single_diag, const T *diag_addr, T *output_addr, const uint32_t &device_id,
+                   cudaStream_t cuda_stream) {
   int count = outer_batch * inner_row * inner_col;
-  MatrixSetDiagKernel<<<GET_BLOCKS(count), GET_THREADS_MAXSIZE(count), 0, cuda_stream>>>(
+  MatrixSetDiagKernel<<<CUDA_BLOCKS(device_id, count), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     outer_batch, inner_row, inner_col, num_diags, max_diag_len, lower_index, upper_index, right_align_super_diagonal,
     right_align_sub_diagonal, is_single_diag, diag_addr, output_addr);
-  return;
 }
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<uint8_t>(const int outer_batch, const int inner_row, const int inner_col,
+                                                     const int num_diags, const int max_diag_len, const int lower_index,
+                                                     const int upper_index, const bool right_align_super_diagonal,
+                                                     const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                     const uint8_t *diag_addr, uint8_t *output_addr,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<uint16_t>(const int outer_batch, const int inner_row, const int inner_col,
+                                                      const int num_diags, const int max_diag_len,
+                                                      const int lower_index, const int upper_index,
+                                                      const bool right_align_super_diagonal,
+                                                      const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                      const uint16_t *diag_addr, uint16_t *output_addr,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<uint32_t>(const int outer_batch, const int inner_row, const int inner_col,
+                                                      const int num_diags, const int max_diag_len,
+                                                      const int lower_index, const int upper_index,
+                                                      const bool right_align_super_diagonal,
+                                                      const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                      const uint32_t *diag_addr, uint32_t *output_addr,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<uint64_t>(const int outer_batch, const int inner_row, const int inner_col,
+                                                      const int num_diags, const int max_diag_len,
+                                                      const int lower_index, const int upper_index,
+                                                      const bool right_align_super_diagonal,
+                                                      const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                      const uint64_t *diag_addr, uint64_t *output_addr,
+                                                      const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<int8_t>(const int outer_batch, const int inner_row, const int inner_col,
+                                                    const int num_diags, const int max_diag_len, const int lower_index,
+                                                    const int upper_index, const bool right_align_super_diagonal,
+                                                    const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                    const int8_t *diag_addr, int8_t *output_addr,
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<int16_t>(const int outer_batch, const int inner_row, const int inner_col,
+                                                     const int num_diags, const int max_diag_len, const int lower_index,
+                                                     const int upper_index, const bool right_align_super_diagonal,
+                                                     const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                     const int16_t *diag_addr, int16_t *output_addr,
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void MatrixSetDiag<int>(const int outer_batch, const int inner_row, const int inner_col,
                                                  const int num_diags, const int max_diag_len, const int lower_index,
                                                  const int upper_index, const bool right_align_super_diagonal,
                                                  const bool right_align_sub_diagonal, const bool is_single_diag,
-                                                 const int *diag_addr, int *output_addr, cudaStream_t cuda_stream);
+                                                 const int *diag_addr, int *output_addr, const uint32_t &device_id,
+                                                 cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void MatrixSetDiag<int64_t>(const int outer_batch, const int inner_row, const int inner_col,
                                                      const int num_diags, const int max_diag_len, const int lower_index,
                                                      const int upper_index, const bool right_align_super_diagonal,
                                                      const bool right_align_sub_diagonal, const bool is_single_diag,
                                                      const int64_t *diag_addr, int64_t *output_addr,
-                                                     cudaStream_t cuda_stream);
+                                                     const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void MatrixSetDiag<half>(const int outer_batch, const int inner_row, const int inner_col,
+                                                  const int num_diags, const int max_diag_len, const int lower_index,
+                                                  const int upper_index, const bool right_align_super_diagonal,
+                                                  const bool right_align_sub_diagonal, const bool is_single_diag,
+                                                  const half *diag_addr, half *output_addr, const uint32_t &device_id,
+                                                  cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void MatrixSetDiag<float>(const int outer_batch, const int inner_row, const int inner_col,
                                                    const int num_diags, const int max_diag_len, const int lower_index,
                                                    const int upper_index, const bool right_align_super_diagonal,
                                                    const bool right_align_sub_diagonal, const bool is_single_diag,
                                                    const float *diag_addr, float *output_addr,
-                                                   cudaStream_t cuda_stream);
+                                                   const uint32_t &device_id, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void MatrixSetDiag<double>(const int outer_batch, const int inner_row, const int inner_col,
                                                     const int num_diags, const int max_diag_len, const int lower_index,
                                                     const int upper_index, const bool right_align_super_diagonal,
                                                     const bool right_align_sub_diagonal, const bool is_single_diag,
                                                     const double *diag_addr, double *output_addr,
-                                                    cudaStream_t cuda_stream);
+                                                    const uint32_t &device_id, cudaStream_t cuda_stream);

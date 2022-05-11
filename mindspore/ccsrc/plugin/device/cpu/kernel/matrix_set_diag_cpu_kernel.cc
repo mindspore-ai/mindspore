@@ -132,7 +132,9 @@ void MatrixSetDiagCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   max_diag_len_ = std::min(inner_rows_ + std::min(upper_diag_index_, 0), inner_cols_ - std::max(lower_diag_index_, 0));
 
   // Copy input to output first, then set diagonal value to output.
-  (void)memcpy_s(output_addr, output->size, input_addr, input->size);
+  if (memcpy_s(output_addr, output->size, input_addr, input->size) != EOK) {
+    MS_LOG(EXCEPTION) << "MatrixSetDiagCpuKernelMod memcpy failed.";
+  }
   size_t max_index = IntToSize(outer_batch_ * inner_rows_ * inner_cols_);
   auto task = [this, max_index, diag_addr, output_addr](size_t start, size_t end) {
     MatrixInfoPtr matrix_info = std::make_shared<MatrixInfo>(max_index, input_shape_);

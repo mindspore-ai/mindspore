@@ -14,11 +14,12 @@
 # ============================================================================
 """Linear algebra submodule"""
 from .. import numpy as mnp
-from .ops import MatrixSetDiag, MatrixDiagPartV3
+from .ops import MatrixDiagPartV3
 from ..common import dtype as mstype
 from .utils import _to_tensor
 from .utils_const import _raise_value_error
 from ..ops import functional as F
+from ..ops.operations.array_ops import MatrixSetDiagV3
 
 
 def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
@@ -62,7 +63,7 @@ def matrix_set_diag(input_x, diagonal, k=0, alignment="RIGHT_LEFT"):
                [7 5 7 7]
                [7 7 6 7]]
     """
-    matrix_set_diag_net = MatrixSetDiag(alignment)
+    matrix_set_diag_net = MatrixSetDiagV3(alignment)
     k_vec = mnp.zeros((2,), dtype=mstype.int32)
     if isinstance(k, int):
         k_vec += k

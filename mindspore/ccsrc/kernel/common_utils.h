@@ -93,16 +93,19 @@ class MatrixInfo {
   }
   ~MatrixInfo() = default;
   bool SetIndex(size_t start, size_t end) {
-    // check data from start to end whether valid.
+    // Check data from start to end whether valid.
     if (start < min_index || end > max_index_ || start >= end) {
       return false;
     }
-    // initial current indexes.
+    // Initial current indexes.
     int last_rank = SizeToInt(current_indexes_.size()) - 1;
-    for (int i = last_rank; start != 0 && i >= 0; --i) {
+    for (int i = last_rank; i >= 0; --i) {
       size_t position = IntToSize(i);
       current_indexes_[position] = start % shapes_.at(position);
       start = start / shapes_.at(position);
+      if (start == 0) {
+        break;
+      }
     }
     return true;
   }
