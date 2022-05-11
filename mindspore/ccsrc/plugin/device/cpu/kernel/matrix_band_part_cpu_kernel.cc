@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/matrix_band_part_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <memory>
 #include "utils/ms_utils.h"
 
 namespace mindspore {

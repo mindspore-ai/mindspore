@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_BAND_PART_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_BAND_PART_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PADDING_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PADDING_CPU_KERNEL_H_
 #include <vector>
 #include <complex>
 #include <utility>
@@ -25,17 +25,16 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
+class PaddingCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MatrixBandPartCpuKernelMod() = default;
-  ~MatrixBandPartCpuKernelMod() override = default;
+  PaddingCpuKernelMod() = default;
+  ~PaddingCpuKernelMod() override = default;
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  void ResetResource() noexcept;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
@@ -45,21 +44,18 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T, typename LU>
+  template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using MatrixBandPartFunc = std::function<bool(MatrixBandPartCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                                const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, MatrixBandPartFunc>> func_list_;
-  MatrixBandPartFunc kernel_func_;
+  using PaddingFunc = std::function<bool(PaddingCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                         const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, PaddingFunc>> func_list_;
+  PaddingFunc kernel_func_;
   std::vector<size_t> shapes_{};
-  size_t dim_size_{1};
   size_t output_element_num_{0};
   size_t output_outer_size_{1};
-  size_t m_{1};
-  size_t n_{1};
-  size_t lower_{0};
-  size_t upper_{0};
+  size_t x_last_dim_{1};
+  size_t pad_dim_size_{8};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_BAND_PART_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_PADDING_CPU_KERNEL_H_
