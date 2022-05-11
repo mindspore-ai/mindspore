@@ -87,6 +87,9 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
     MS_LOG(WARNING) << "Init slog failed, ret = " << log_ret;
   }
 
+  if (!ErrorManager::GetInstance().Init()) {
+    MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
+  }
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   auto ret = rtSetDevice(static_cast<int32_t>(device_id));
   if (ret != RT_ERROR_NONE) {
@@ -121,6 +124,9 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     py::gil_scoped_release gil_release;
     ms_context_ptr->DestroyTensorPrintThread();
 #endif
+    if (!ErrorManager::GetInstance().Init()) {
+      MS_LOG(WARNING) << "Init ascend error manager failed, some ascend error log may be left out.";
+    }
     uint32_t device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto ret = rtDeviceReset(static_cast<int32_t>(device_id));
     if (ret != RT_ERROR_NONE) {
