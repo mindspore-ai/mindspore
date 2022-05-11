@@ -6806,31 +6806,10 @@ class TensorScatterSub(_TensorScatterOp):
     index, the result of the update will be to subtract these values respectively. This operation is almost
     equivalent to using :class:`mindspore.ops.ScatterNdSub` , except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
-
-    The last axis of `indices` is the depth of each index vectors. For each index vector,
-    there must be a corresponding value in `updates`. The shape of `updates` should be
-    equal to the shape of `input_x[indices]`. For more details, see use cases.
-
-    Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
-
-    Inputs:
-        - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        - **indices** (Tensor) - The index of input tensor whose data type is int32 or int64.
-          The rank must be at least 2.
-        - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
-          and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
-
-    Outputs:
-        Tensor, has the same shape and type as `input_x`.
-
-    Raises:
-        TypeError: If dtype of `indices` is neither int32 nor int64.
-        ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+    Refer to :func:`mindspore.ops.tensor_scatter_sub` for more detail.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
