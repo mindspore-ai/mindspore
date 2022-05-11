@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1469,5 +1469,121 @@ class FocalLoss(LossBase):
             loss = (-1 * weight * log_probability).mean(axis=1)
         else:
             loss = (-1 * weight * labelss * log_probability).mean(axis=-1)
+
+        return self.get_loss(loss)
+
+
+@constexpr
+def _dtype_check(logits_dtype, labels_dtype, prim_name):
+    """Check dtype."""
+    if logits_dtype not in [mstype.float32, mstype.float16]:
+        raise TypeError("For {}, the logits_dtype must be float32 or float16, but got {}.".format(prim_name,
+                                                                                                  logits_dtype))
+    if logits_dtype != labels_dtype:
+        raise TypeError("For {}, the labels_dtype must equal to logits_dtype {}, but got {}".format(prim_name,
+                                                                                                    logits_dtype,
+                                                                                                    labels_dtype))
+
+
+class HuberLoss(LossBase):
+    r"""
+    HuberLoss calculate the error between the predicted value and the target value.
+    It has the advantages of both L1Loss and MSELoss.
+
+    Assuming that the :math:`x` and :math:`y` are 1-D Tensor, length :math:`N`, then calculate the loss of :math:`x` and
+    :math:`y` without dimensionality reduction (the reduction parameter is set to "none"). The formula is as follows:
+
+    .. math::
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top
+
+    with
+
+    .. math::
+        l_n = \begin{cases}
+            0.5 * (x_n - y_n)^2, & \text{if } |x_n - y_n| < delta; \\
+            delta * (|x_n - y_n| - 0.5 * delta), & \text{otherwise. }
+        \end{cases}
+
+    where :math:`N` is the batch size. If `reduction` is not 'none', then:
+
+    .. math::
+        \ell(x, y) =
+        \begin{cases}
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    Args:
+        reduction (str): Type of reduction to be applied to loss. The optional values are "mean", "sum", and "none".
+            Default: "mean". If `reduction` is "mean" or "sum", then output a scalar Tensor, if `reduction` is "none",
+            the shape of the output Tensor is the broadcasted shape.
+        delta (Union[int, float]): The threshold to change between two type of loss.
+            The value must be positive. Default: 1.0.
+
+    Inputs:
+        - **logits** (Tensor) - Input logits with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)`, same dtype as `logits`.
+          It supports the shape of `logits` is different from the shape of `labels` and they should be
+          broadcasted to each other.
+
+    Outputs:
+        Tensor or Scalar, if `reduction` is "none", its shape is the same as `logits`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If data type of `logits` or `labels` is neither float16 nor float32.
+        TypeError: If dtype of `delta` is neither float nor int.
+        ValueError: If `delta` is less than or equal to 0.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If `logits` and `labels` have different shapes and cannot be broadcasted to each other.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> # Case 1: logits.shape = labels.shape = (3,)
+        >>> loss = nn.HuberLoss()
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        0.16666667
+        >>> # Case 2: logits.shape = (3,), labels.shape = (2, 3)
+        >>> loss = nn.HuberLoss(reduction='none')
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([[1, 1, 1], [1, 2, 2]]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [[0.  0.5 1.5]
+         [0.  0.  0.5]]
+    """
+
+    def __init__(self, reduction='mean', delta=1.0):
+        """Initialize HuberLoss."""
+        super(HuberLoss, self).__init__(reduction=reduction)
+        validator.check_value_type('delta', delta, [float, int], self.cls_name)
+        validator.check_number("delta", delta, 0.0, Rel.GT, self.cls_name)
+        self.sub = P.Sub()
+        self.mul = P.Mul()
+        self.abs = P.Abs()
+        self.less = P.Less()
+        self.square = P.Square()
+        self.select = P.Select()
+        self.dtype = P.DType()
+        self.delta = delta
+        self.delta_half = 0.5 * self.delta
+
+    def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
+        logits_dtype = self.dtype(logits)
+        labels_dtype = self.dtype(labels)
+        _dtype_check(logits_dtype, labels_dtype, self.cls_name)
+        z = self.abs(self.sub(logits, labels))
+        condition = self.less(z, self.delta)
+        l1 = self.mul(0.5, self.square(z))
+        l2 = self.mul(self.delta, self.sub(z, self.delta_half))
+        loss = self.select(condition, l1, l2)
 
         return self.get_loss(loss)

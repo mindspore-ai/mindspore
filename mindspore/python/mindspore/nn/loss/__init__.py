@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ It shows how well the model works on a dataset and the optimization target which
 from .loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, SoftMarginLoss, FocalLoss,\
     SoftmaxCrossEntropyWithLogits, BCELoss, CosineEmbeddingLoss, \
     SampledSoftmaxLoss, DiceLoss, BCEWithLogitsLoss, MultiClassDiceLoss,\
-    RMSELoss, MAELoss
+    RMSELoss, MAELoss, HuberLoss
 
 
 __all__ = ['LossBase', 'L1Loss', 'MSELoss', 'SmoothL1Loss', 'SoftMarginLoss', 'FocalLoss',
            'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss',
            'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'DiceLoss', 'MultiClassDiceLoss',
-           'RMSELoss', 'MAELoss']
+           'RMSELoss', 'MAELoss', 'HuberLoss']
