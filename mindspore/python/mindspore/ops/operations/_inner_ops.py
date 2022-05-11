@@ -1977,6 +1977,7 @@ class FlattenConcat(Primitive):
     def __init__(self):
         """Initialize FlattenConcat"""
 
+
 class KMeansCentroids(PrimitiveWithInfer):
     """
     Calculate the segment_sum, segment_count, kmean_total_sum that are clustering results
@@ -2049,9 +2050,10 @@ class KMeansCentroids(PrimitiveWithInfer):
         validator.check_int(x_shape[0], sum_square_x_shape[0], Rel.EQ,
                             "the first dim of x and the first dim of sum_square_x", self.name)
         validator.check_int(sum_square_y_shape[0], sum_square_x_shape[1], Rel.EQ,
-                            "the first dim of sum_square_y and the first dim of sum_square_x", self.name)
+                            "the first dim of sum_square_y and the first dim of sum_square_x",
+                            self.name)
         validator.check_int(sum_square_y_shape[0], 1, Rel.EQ,
-                            "the first dim of sum_square_y must be 1", self.name)
+                            "the first dim of sum_square_y", self.name)
 
         k = y_shape[0]
         em_size = x_shape[1]

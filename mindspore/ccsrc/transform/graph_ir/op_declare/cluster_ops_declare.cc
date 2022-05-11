@@ -22,6 +22,7 @@ INPUT_MAP(KMeansCentroids) = {
   {1, INPUT_DESC(x)}, {2, INPUT_DESC(y)}, {3, INPUT_DESC(sum_square_y)}, {4, INPUT_DESC(sum_square_x)}};
 ATTR_MAP(KMeansCentroids) = {
   {"use_actual_distance", ATTR_DESC(use_actual_distance, AnyTraits<bool>(), AnyTraits<bool>())}};
-OUTPUT_MAP() = {{0, OUTPUT_DESC(segment_sum)}, {1, OUTPUT_DESC(segment_count)}, {2, OUTPUT_DESC(kmean_total_sum)}};
+OUTPUT_MAP(KMeansCentroids) = {
+  {0, OUTPUT_DESC(segment_sum)}, {1, OUTPUT_DESC(segment_count)}, {2, OUTPUT_DESC(kmean_total_sum)}};
 REG_ADPT_DESC(KMeansCentroids, prim::kPrimKMeansCentroids->name(), ADPT_DESC(KMeansCentroids))
 }  // namespace mindspore::transform

@@ -229,7 +229,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // Others
     {prim::kPrimIdentity, R{InferImplIdentity, nullptr, true}},
     {prim::kPrimLoad, R{InferImplLoad, nullptr, true}},
-    {prim::kPrimKMeansCentroids, R{InferImplKMeansCentroids, nullptr, false}},
     // Set impl to null as it will use PartialEvaluator;
     {prim::kPrimPartial, R{nullptr, nullptr, true}},
     {prim::kPrimEnvironCreate, R{InferImplEnvironCreate, nullptr, true}},
@@ -275,6 +274,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimFusedPullWeight, R{nullptr, nullptr, true}},
     // RL Ops
     {prim::kPrimTensorArrayStack, R{InferImplTensorArrayStack, nullptr, true}},
+    {prim::kPrimKMeansCentroids, R{InferImplKMeansCentroids, nullptr, true}},
   };
   return prim_eval_implement_map;
 }
