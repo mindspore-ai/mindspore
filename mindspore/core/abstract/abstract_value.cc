@@ -628,10 +628,10 @@ bool AbstractSequence::PurifyElements() {
 
   // Purify the elements.
   auto &elements_use_flags = *elements_use_flags_ptr;
-  if (elements_use_flags.size() != elements_.size()) {
-    MS_LOG(EXCEPTION) << "Elements size should be equal to elements use flags size. " << ToString();
+  if (elements_use_flags.size() < elements_.size()) {
+    MS_LOG(EXCEPTION) << "Elements size should not be greater to elements use flags size. " << ToString();
   }
-  for (size_t i = 0; i < elements_use_flags.size(); ++i) {
+  for (size_t i = 0; i < elements_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(elements_[i]);
     if (!elements_use_flags[i]) {
       const auto unuse_node_none = std::make_shared<AbstractScalar>(std::make_shared<Int32Imm>(0));
