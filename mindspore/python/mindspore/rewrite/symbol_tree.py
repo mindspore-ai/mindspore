@@ -116,12 +116,76 @@ class SymbolTree(Observer, Observable):
         self._modified = False
         self._node_visitor = None
 
+    @staticmethod
+    def _link_nodes_and_find_root(nodes: [Node]) -> Node:
+        """
+        Find inputs for all nodes created by Replacement according to their targets and arguments.
+
+        Find root node of all nodes created by Replacement. One and Only one root should be found.
+
+        Args:
+            nodes (list[Node]): A list of instance of Node created by Replacement.
+
+        Returns:
+            An instance of Node represents root of input nodes.
+        """
+        consumers: [ScopedValue] = []
+        target_dict: {ScopedValue: Node} = {}
+        for node in nodes:
+            consumers.extend(node.get_args())
+            for _, arg in node.get_kwargs():
+                consumers.append(arg)
+            for target in node.get_targets():
+                if target_dict.get(target) is not None:
+                    raise RuntimeError("Target of node duplicated")
+                target_dict[target] = node
+        # find root node
+        root = None
+        for node in nodes:
+            used = 0
+            for target in node.get_targets():
+                if target in consumers:
+                    used += 1
+                    break
+            if used == 0:
+                if root is not None:
+                    raise RuntimeError("Replacement should only has one root")
+                root = node
+        if root is None:
+            raise RuntimeError("No root node found in replacement nodes")
+        # link node's input
+        for node in nodes:
+            inputs = []
+            for _, arg in node.get_normalized_args().items():
+                node_input: Node = target_dict.get(arg)
+                inputs.append(node_input)
+            node.set_inputs(inputs)
+        return root
+
+    @staticmethod
+    def _find_all_class_in_symboltree(stree: 'SymbolTree', seen_class: {type, str}, allow_class_name: [], replacers):
+        """Find all non-duplicated class name of SymbolTree recursively."""
+        replacer = AstReplacer(stree._class_ast)
+        replacers.append(replacer)
+        for node in stree.nodes():
+            if not isinstance(node, TreeNode):
+                continue
+            sub_stree: SymbolTree = node.symbol_tree
+            SymbolTree._find_all_class_in_symboltree(sub_stree, seen_class, allow_class_name, replacers)
+            # all modified ast.ClassDef should export to code
+            if sub_stree._modified:
+                allow_class_name.append(sub_stree._class_ast.name)
+                continue
+            # all un-modified ast.ClassDef only keep one instance
+            seen_cls_name = seen_class.get(type(sub_stree.get_origin_network()))
+            if seen_cls_name is not None:
+                replacer.replace_all(sub_stree._class_ast.name, seen_cls_name)
+            else:
+                seen_class[type(sub_stree.get_origin_network())] = sub_stree._class_ast.name
+                allow_class_name.append(sub_stree._class_ast.name)
+
     def finish_build(self):
         self.add_event(Event.TopologicalChangeEvent)
-
-    def _on_change(self, event: Event):
-        self._modified = True
-        self.changed(event)
 
     def get_ori_cls_name(self) -> str:
         """
@@ -234,15 +298,6 @@ class SymbolTree(Observer, Observable):
         """
         return self._head
 
-    def get_return_node(self):
-        """
-        Getter of `_return` which represents return statement of forward method of network.
-
-        Returns:
-            An instance of node.
-        """
-        return self._return
-
     def get_origin_network(self):
         """
         Getter of `_origin_network`.
@@ -295,14 +350,6 @@ class SymbolTree(Observer, Observable):
 
         return self._nodes.get(node_name)
 
-    def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
-        if isinstance(node_or_name, Node):
-            result = self.get_node(node_or_name.get_name())
-            return result if result is node_or_name else None
-        if isinstance(node_or_name, str):
-            return self.get_node(node_or_name)
-        return None
-
     def get_node_inputs(self, node_or_name: Union[Node, str]) -> [Node]:
         """
         Getter of inputs in topological relation of current 'node_or_name'.
@@ -336,6 +383,8 @@ class SymbolTree(Observer, Observable):
         real_node: Optional[Node] = self._get_real_node(node_or_name)
         if real_node is None:
             logger.info("Node(%s) is not belong to current SymbolTree", node_or_name)
+            return []
+        if real_node.get_node_type() == NodeType.Output:
             return []
         return self._topo_mgr.get_node_users(node_or_name)
 
@@ -628,104 +677,6 @@ class SymbolTree(Observer, Observable):
             self._node_visitor.remove_node(node)
         return node
 
-    def _insert_tree(self, position: Position, root: Node, insert_to_ast: bool = True) -> Node:
-        """
-        Insert a node-tree into SymbolTree.
-        Note:
-            Inputs of intra sub-tree nodes need to be welly set.
-
-            Inputs of inter sub-tree nodes will be updated by Rewrite automatically.
-
-        Args:
-            position (Position): A Position indicates an insert position point.
-            root (Node): An instance of node as root of node-tree to be inserted in.
-            insert_to_ast (bool): A bool indicates whether to update corresponding ast node at same time, default is
-                True.
-
-        Returns:
-            An instance of node as root node of node-tree which has been inserted into SymbolTree.
-
-        Raises:
-            RuntimeError: If 'position' is not in current SymbolTree.
-        """
-
-        # if position not in current SymbolTree
-        if position.symbol_tree is not self:
-            raise RuntimeError("Position is not in current SymbolTree: ", position)
-
-        queue: [Node] = [root]
-        todos: [] = []
-        inputs_list: [] = []
-        while queue:
-            cur_node = queue.pop(0)
-            if cur_node in todos:
-                continue
-            todos.append(cur_node)
-            node_inputs = cur_node.get_inputs()
-            inputs_list.append(node_inputs)
-            for node_input in node_inputs:
-                if node_input is not None:
-                    queue.append(node_input)
-        todos.reverse()
-        inputs_list.reverse()
-        for index, todo in enumerate(todos):
-            self.insert_node(position, todo, insert_to_ast)
-            position = self.after(todo)
-            # relink input of node
-            original_inputs = inputs_list[index]
-            for arg_idx, original_input in enumerate(original_inputs):
-                if original_input is not None:
-                    self.set_node_arg_by_node(todo, arg_idx, original_input)
-        return root
-
-    @staticmethod
-    def _link_nodes_and_find_root(nodes: [Node]) -> Node:
-        """
-        Find inputs for all nodes created by Replacement according to their targets and arguments.
-
-        Find root node of all nodes created by Replacement. One and Only one root should be found.
-
-        Args:
-            nodes (list[Node]): A list of instance of Node created by Replacement.
-
-        Returns:
-            An instance of Node represents root of input nodes.
-        """
-        consumers: [ScopedValue] = []
-        target_dict: {ScopedValue: Node} = {}
-        for node in nodes:
-            consumers.extend(node.get_args())
-            for _, arg in node.get_kwargs():
-                consumers.append(arg)
-            for target in node.get_targets():
-                if target_dict.get(target) is not None:
-                    raise RuntimeError("Target of node duplicated")
-                target_dict[target] = node
-        # find root node
-        root = None
-        for node in nodes:
-            used = 0
-            for target in node.get_targets():
-                if target in consumers:
-                    used += 1
-            if used == 0:
-                if root is not None:
-                    raise RuntimeError("Replacement should only has one root")
-                root = node
-        if root is None:
-            raise RuntimeError("No root node found in replacement nodes")
-        # link node's input
-        for node in nodes:
-            inputs = []
-            for _, arg in node.get_normalized_args().items():
-                node_input: Node = target_dict.get(arg)
-                if node_input is None:
-                    inputs.append(None)
-                else:
-                    inputs.append(node_input)
-            node.set_inputs(inputs)
-        return root
-
     def replace(self, old_node: Node, new_nodes: [Node]) -> Node:
         """
         Replace an old_node with a node_tree. 'new_node' is the root node of the node_tree.
@@ -834,28 +785,6 @@ class SymbolTree(Observer, Observable):
         dump_st = SymbolTreeDumper(self)
         dump_st.dump()
 
-    @staticmethod
-    def _find_all_class_in_symboltree(stree: 'SymbolTree', seen_class: {type, str}, allow_class_name: [], replacers):
-        """Find all non-duplicated class name of SymbolTree recursively."""
-        replacer = AstReplacer(stree._class_ast)
-        replacers.append(replacer)
-        for node in stree.nodes():
-            if not isinstance(node, TreeNode):
-                continue
-            sub_stree: SymbolTree = node.symbol_tree
-            SymbolTree._find_all_class_in_symboltree(sub_stree, seen_class, allow_class_name, replacers)
-            # all modified ast.ClassDef should export to code
-            if sub_stree._modified:
-                allow_class_name.append(sub_stree._class_ast.name)
-                continue
-            # all un-modified ast.ClassDef only keep one instance
-            seen_cls_name = seen_class.get(type(sub_stree.get_origin_network()))
-            if seen_cls_name is not None:
-                replacer.replace_all(sub_stree._class_ast.name, seen_cls_name)
-            else:
-                seen_class[type(sub_stree.get_origin_network())] = sub_stree._class_ast.name
-                allow_class_name.append(sub_stree._class_ast.name)
-
     def get_code(self) -> str:
         """
         Get source code of modified network.
@@ -896,6 +825,64 @@ class SymbolTree(Observer, Observable):
         """
         cls = self._get_cls_through_file()
         return cls(self._global_vars)
+
+    def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
+        if isinstance(node_or_name, Node):
+            result = self.get_node(node_or_name.get_name())
+            return result if result is node_or_name else None
+        if isinstance(node_or_name, str):
+            return self.get_node(node_or_name)
+        return None
+
+    def _insert_tree(self, position: Position, root: Node, insert_to_ast: bool = True) -> Node:
+        """
+        Insert a node-tree into SymbolTree.
+        Note:
+            Inputs of intra sub-tree nodes need to be welly set.
+
+            Inputs of inter sub-tree nodes will be updated by Rewrite automatically.
+
+        Args:
+            position (Position): A Position indicates an insert position point.
+            root (Node): An instance of node as root of node-tree to be inserted in.
+            insert_to_ast (bool): A bool indicates whether to update corresponding ast node at same time, default is
+                True.
+
+        Returns:
+            An instance of node as root node of node-tree which has been inserted into SymbolTree.
+
+        Raises:
+            RuntimeError: If 'position' is not in current SymbolTree.
+        """
+
+        # if position not in current SymbolTree
+        if position.symbol_tree is not self:
+            raise RuntimeError("Position is not in current SymbolTree: ", position)
+
+        queue: [Node] = [root]
+        todos: [] = []
+        inputs_list: [] = []
+        while queue:
+            cur_node = queue.pop(0)
+            if cur_node in todos:
+                continue
+            todos.append(cur_node)
+            node_inputs = cur_node.get_inputs()
+            inputs_list.append(node_inputs)
+            for node_input in node_inputs:
+                if node_input is not None:
+                    queue.append(node_input)
+        todos.reverse()
+        inputs_list.reverse()
+        for index, todo in enumerate(todos):
+            self.insert_node(position, todo, insert_to_ast)
+            position = self.after(todo)
+            # relink input of node
+            original_inputs = inputs_list[index]
+            for arg_idx, original_input in enumerate(original_inputs):
+                if original_input is not None:
+                    self.set_node_arg_by_node(todo, arg_idx, original_input)
+        return root
 
     def _unique_targets(self, node: Node):
         """
@@ -1025,3 +1012,7 @@ class SymbolTree(Observer, Observable):
         if network_cls is None:
             raise RuntimeError("Can not find network class:", self._opt_cls_name)
         return network_cls
+
+    def _on_change(self, event: Event):
+        self._modified = True
+        self.changed(event)

@@ -279,12 +279,9 @@ class PatternEngine:
             RuntimeError: If `SymbolTree` has no return node.
         """
 
-        root: Node = stree.get_return_node()
-        if root is None:
-            raise RuntimeError("SymbolTree should be inited and has return node")
         changed = False
         # IR match
-        queue: [Node] = [root]
+        queue: [Node] = stree.get_inputs()
         # Why need visited: we don't need or should not to visit same node multi-times because pre-visited node may
         # already been erased from SymbolTree.
         # When will we visit same node multi-times:
@@ -314,20 +311,20 @@ class PatternEngine:
                 subtree = TreeNodeHelper.get_sub_tree(cur_node)
                 self.apply(subtree)
                 visited.append(cur_node)
-                queue.extend(cur_node.get_inputs())
+                queue.extend(cur_node.get_users())
                 continue
             visited.append(cur_node)
             matched, matched_dict = self._match(self._pattern, cur_node)
             # not matched
             if not matched or not PatternEngine._check_match(self._pattern, matched_dict):
-                queue.extend(cur_node.get_inputs())
+                queue.extend(cur_node.get_users())
                 continue
             # matched
             new_nodes: [Node] = []
             if self._replacement is not None:
                 new_nodes: [Node] = self._replacement(self._pattern, self._is_chain, matched_dict)
             if not new_nodes:  # if replacement is empty, do nothing
-                queue.extend(cur_node.get_inputs())
+                queue.extend(cur_node.get_users())
             else:  # replace cur_node with new_nodes
                 changed = True
                 root = PatternEngine._multi_to_multi_replace(stree, cur_node, matched_dict, new_nodes)
