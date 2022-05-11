@@ -44,6 +44,21 @@ def get_cast_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@constexpr
+def _get_transpose_batch_perm(dim, perm, x_rank):
+    """Generate batch_perm based on the original perm of transpose operation and dim of the input."""
+    if dim < 0:
+        dim = dim + x_rank
+    batch_perm = (dim,)
+    for i in perm:
+        if i < dim:
+            batch_perm = batch_perm + (i,)
+        else:
+            index = i + 1
+            batch_perm = batch_perm + (index,)
+    return batch_perm
+
+
 @vmap_rules_getters.register(P.Transpose)
 def get_transpose_vmap_rule(prim, axis_size):
     """VmapRule for `Transpose` operation."""
@@ -60,14 +75,8 @@ def get_transpose_vmap_rule(prim, axis_size):
         if perm_dim is not None:
             _raise_value_error("The source axis of perm in `Transpose` must be None, "
                                "but got {}.".format(perm_dim))
-        batch_perm = (dim,)
-        for i in perm:
-            if i < dim:
-                batch_perm = batch_perm + (i,)
-            else:
-                index = i + 1
-                batch_perm = batch_perm + (index,)
-
+        x_rank = F.rank(x)
+        batch_perm = _get_transpose_batch_perm(dim, perm, x_rank)
         out = prim(x, batch_perm)
         return (out, 0)
 
