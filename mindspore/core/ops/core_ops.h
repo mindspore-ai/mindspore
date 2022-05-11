@@ -155,6 +155,7 @@ constexpr auto kFractionalAvgPoolGrad = "FractionalAvgPoolGrad";
 constexpr auto kCTCLoss = "CTCLoss";
 constexpr auto kLayerNorm = "LayerNorm";
 constexpr auto kLayerNormGrad = "LayerNormGrad";
+constexpr auto kDataFormatVecPermute = "DataFormatVecPermute";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kDropoutDoMask = "DropoutDoMask";
 constexpr auto kDropoutDoMaskV3 = "DropoutDoMaskV3";
@@ -499,6 +500,7 @@ GVAR_DEF(PrimitivePtr, kPrimCustomNormalize, std::make_shared<Primitive>("Custom
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNative, std::make_shared<Primitive>("DepthwiseConv2dNative"));
 GVAR_DEF(PrimitivePtr, kPrimCTCGreedyDecoder, std::make_shared<Primitive>("CTCGreedyDecoder"));
 GVAR_DEF(PrimitivePtr, kPrimDataFormatDimMap, std::make_shared<Primitive>("DataFormatDimMap"));
+GVAR_DEF(PrimitivePtr, kPrimDataFormatVecPermute, std::make_shared<Primitive>("DataFormatVecPermute"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicStitch, std::make_shared<Primitive>("DynamicStitch"));
 GVAR_DEF(PrimitivePtr, kPrimDepthwiseConv2dNativeBackpropFilter,
          std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropFilter"));
