@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ops/matrix_set_diag_v3.h"
 #include <algorithm>
 #include <map>
@@ -44,9 +45,9 @@ void TrueValueCalAndCheck(const std::vector<AbstractBasePtr> &input_args, int64_
                              << "! The shape of output must be reduced or max_length must be increased.";
   }
 }
+
 abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kNumber2 = 2;
   const int64_t kNumber1 = 1;
@@ -142,29 +143,33 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-
-  auto x = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
-  auto diagonal = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
-
-  (void)abstract::CheckDtypeSame(prim_name, x, diagonal);
-
-  auto x_type = input_args[kInputIndex0]->BuildType();
+  auto x_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
+  auto diagonal_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
+  auto k_arg = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
+  (void)abstract::CheckDtypeSame(prim_name, x_arg, diagonal_arg);
+  auto x_type = x_arg->BuildType();
   MS_EXCEPTION_IF_NULL(x_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types, prim_name);
-
   const std::set<TypePtr> valid_type = {kInt32};
-  auto k_type = input_args[kInputIndex2]->BuildType();
+  auto k_type = k_arg->BuildType();
   MS_EXCEPTION_IF_NULL(k_type);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("k", k_type, valid_type, prim_name);
-
   return x_type;
 }
 }  // namespace
 
+void MatrixSetDiagV3::Init(const std::string &align) { this->set_align(align); }
+
+void MatrixSetDiagV3::set_align(const std::string &align) { (void)this->AddAttr(kAlign, api::MakeValue(align)); }
+
+std::string MatrixSetDiagV3::get_align() const {
+  auto value_ptr = GetAttr(kAlign);
+  return GetValue<std::string>(value_ptr);
+}
+
 MIND_API_OPERATOR_IMPL(MatrixSetDiagV3, BaseOperator);
+
 AbstractBasePtr MatrixSetDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

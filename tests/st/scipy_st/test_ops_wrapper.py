@@ -18,8 +18,7 @@ import pytest
 import mindspore.scipy.ops_wrapper as ops_wrapper
 from mindspore import context, Tensor
 from mindspore.ops import functional as F
-
-from tests.st.scipy_st.utils import match_matrix, match_array
+from tests.st.scipy_st.utils import match_array
 
 DEFAULT_ALIGNMENT = "LEFT_LEFT"
 ALIGNMENT_LIST = ["RIGHT_LEFT", "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT"]
@@ -298,7 +297,7 @@ def test_matrix_set_diag(data_type):
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
                 output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
-                match_matrix(output.astype(onp.float64), Tensor(expected_diag_matrix))
+                match_array(output.asnumpy(), expected_diag_matrix)
 
     context.set_context(mode=context.GRAPH_MODE)
     for align in ALIGNMENT_LIST:
@@ -309,7 +308,7 @@ def test_matrix_set_diag(data_type):
                 expected_diag_matrix = input_mat * mask + banded_mat[0]
                 output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
-                match_matrix(output.astype(onp.float64), Tensor(expected_diag_matrix))
+                match_array(output.asnumpy(), expected_diag_matrix)
 
 
 @pytest.mark.level0

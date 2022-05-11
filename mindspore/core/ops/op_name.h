@@ -32,6 +32,7 @@ constexpr auto kAspectRatios = "aspect_ratios";
 constexpr auto kAxes = "axes";
 constexpr auto kAxis = "axis";
 constexpr auto kAxisType = "axis_type";
+constexpr auto kAlign = "align";
 constexpr auto kBaseSize = "base_size";
 constexpr auto kBatchDim = "batch_dim";
 constexpr auto kBeginMask = "begin_mask";

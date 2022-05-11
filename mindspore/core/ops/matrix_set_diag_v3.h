@@ -35,6 +35,12 @@ class MIND_API MatrixSetDiagV3 : public BaseOperator {
   MIND_API_BASE_MEMBER(MatrixSetDiagV3);
   /// \brief Constructor.
   MatrixSetDiagV3() : BaseOperator(kNameMatrixSetDiagV3) { InitIOName({"x", "diagonal", "k"}, {"y"}); }
+
+  void Init(const std::string &align = "RIGHT_LEFT");
+
+  void set_align(const std::string &align);
+
+  std::string get_align() const;
 };
 
 abstract::AbstractBasePtr MatrixSetDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
