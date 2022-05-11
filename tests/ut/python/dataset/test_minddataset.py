@@ -2639,6 +2639,18 @@ def test_field_is_null_numpy():
     assert data_set.output_types()[2] == np.int64
     assert data_set.output_types()[3] == np.int64
 
+    count = 0
+    for item in data_set.create_dict_iterator(output_numpy=True):
+        assert item["label"] == np.array(count)
+        assert (item["array_a"] == np.array([0, 1, -1, 127, -128, 128, -129, 255, 256, -32768,
+                                             32767, -32769, 32768, -2147483648, 2147483647])).all()
+        assert (item["array_b"] == np.array([0, 1, -1, 127, -128, 128, -129, 255, 256, -32768,
+                                             32767, -32769, 32768, -2147483648, 2147483647,
+                                             -2147483649, 2147483649, -922337036854775808,
+                                             9223372036854775807])).all()
+        assert (item["array_d"] == np.array([])).all()
+        count += 1
+
     for x in paths:
         os.remove("{}".format(x))
         os.remove("{}.db".format(x))
