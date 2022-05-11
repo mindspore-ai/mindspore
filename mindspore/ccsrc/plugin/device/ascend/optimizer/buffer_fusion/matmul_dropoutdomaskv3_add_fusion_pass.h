@@ -30,7 +30,9 @@ namespace opt {
 class MatmulDropoutDoMaskV3AddFusionPass : public FusionBasePass {
  public:
   explicit MatmulDropoutDoMaskV3AddFusionPass(FusionIdAllocatorPtr idAllocator)
-      : FusionBasePass("MatmulDropoutDoMaskV3AddFusionPass", idAllocator) {}
+      : FusionBasePass("MatmulDropoutDoMaskV3AddFusionPass", idAllocator) {
+    PassSwitchManager::GetInstance().RegistLicPass(name(), OptPassEnum::MatMulDropOutDoMaskV3DFusionPass);
+  }
   ~MatmulDropoutDoMaskV3AddFusionPass() override = default;
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
