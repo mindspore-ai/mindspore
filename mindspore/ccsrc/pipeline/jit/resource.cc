@@ -112,7 +112,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__lt__", prim::kPrimScalarLt},                  // P.scalar_lt,
        {"__gt__", prim::kPrimScalarGt},                  // P.scalar_gt,
        {"__le__", prim::kPrimScalarLe},                  // P.scalar_le,
-       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,
+       {"__ge__", prim::kPrimScalarGe},                  // P.scalar_ge,mindspore/ccsrc/pipeline/jit/resource.cc
        {"__bool__", std::string("float_bool")},          // C.float_bool
        {"__ms_to_array__", prim::kPrimScalarToArray},    // P.scalar_to_array,
      }},
@@ -210,6 +210,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"argmax", std::string("argmax")},                                  // P.Argmax()
        {"argmin", std::string("argmin")},                                  // P.Argmax()
        {"resize", std::string("resize")},                                  // P.Reshape()
+       {"select", std::string("select")},                                  // P.Select()
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()

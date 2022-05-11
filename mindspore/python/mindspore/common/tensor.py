@@ -1029,6 +1029,81 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
+
+    def select(self, condition, y):
+        r"""
+        Returns the selected elements, either from Tensor or input :math:`y`, depending on the condition `condition`.
+
+        The conditional tensor acts as an optional compensation (mask), which
+        determines whether the corresponding element in the output must be
+        selected from  the Tensor (if true) or :math:`y` (if false) based on the value of each
+        element.
+
+        It can be defined as:
+
+        .. math::
+            out_i = \begin{cases}
+            tensor_i, & \text{if } condition_i \\
+            y_i, & \text{otherwise}
+            \end{cases}
+
+        Args:
+            cond (Tensor[bool]): The condition tensor, decides which element is chosen.
+              The shape is the same as the current Tensor.
+            y (Union[Tensor, int, float]): If y is Tensor, the shape is the same as the current Tensor.
+              If y is an int or a float, it will be cast to the type of int32 or float32, and broadcast to the same
+              shape as the Tensor.
+
+        Returns:
+            Tensor, has the same shape as the Tensor.
+
+        Raises:
+            TypeError: If `y` is not a Tensor, an int or a float.
+            ValueError: The shapes of inputs are different.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> # 1) y is Tensor
+            >>>
+            >>> cond = Tensor([True, False])
+            >>> x = Tensor([2,3], mindspore.float32)
+            >>> y = Tensor([1,2], mindspore.float32)
+            >>> output = x.select(cond, y)
+            >>> print(output)
+            [2. 2.]
+            >>> # 2) y is a float
+            >>> cond = Tensor([True, False])
+            >>> x = Tensor([2,3], mindspore.float32)
+            >>> y = 2.0
+            >>> output = x.select(cond, y)
+            >>> print(output)
+            [2. 2.]
+        """
+        self._init_check()
+        if not isinstance(condition, Tensor):
+            raise TypeError(f"For 'Tensor.select', the argument 'condition' should be Tensor,"
+                            f" but got {type(condition)}.")
+        if not isinstance(y, (Tensor, int, float)):
+            raise TypeError(f"For 'Tensor.select', the argument 'y' should be Tensor, int or float,"
+                            f" but got {type(y)}.")
+        if isinstance(y, int) and self.dtype != mstype.int32:
+            raise TypeError(f"For 'Tensor.select', if the argument 'y' is int,"
+                            f" then the tensor type should be int32 but got {self.dtype}")
+        if isinstance(y, float) and self.dtype != mstype.float32:
+            raise TypeError(f"For 'Tensor.select', if the argument 'y' is float,"
+                            f" then the tensor type should be float32 but got {self.dtype}")
+        input_y = y
+        if isinstance(y, (int, float)):
+            input_y = tensor_operator_registry.get('zeros_like')()(self) + y
+            if isinstance(y, int):
+                input_y = tensor_operator_registry.get('cast')(input_y, mstype.int32)
+            else:
+                input_y = tensor_operator_registry.get('cast')(input_y, mstype.float32)
+        return tensor_operator_registry.get('select')(condition, self, input_y)
+
+
     def transpose(self, *axes):
         r"""
         Return a tensor with axes transposed.

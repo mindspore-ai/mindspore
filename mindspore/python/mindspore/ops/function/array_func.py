@@ -18,6 +18,7 @@
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
+from ...common import Tensor
 from ..operations.array_ops import NonZero
 
 
@@ -593,6 +594,125 @@ def reshape(input_x, input_shape):
          [ 0.5 -3.2]]
     """
     return reshape_(input_x, input_shape)
+
+
+zeros_like = P.ZerosLike()
+cast = P.Cast()
+tensor_select = P.Select()
+
+
+@constexpr
+def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
+    if isinstance(scalar, int) and tensor_type != mstype.int32:
+        raise TypeError(f"For functional operator[select], the input[{scalar_name}] is int, "
+                        f"then the input[{tensor_name}] must be a Tensor of int32.")
+    if isinstance(scalar, float) and tensor_type != mstype.float32:
+        raise TypeError(f"For functional operator[select], the input[{scalar_name}] is float, "
+                        f"then the input[{tensor_name}] must be a Tensor of float32.")
+
+
+@constexpr
+def _check_select_shape_match(input_shape, cond_shape, tensor_name):
+    if input_shape != cond_shape:
+        raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
+
+
+
+@constexpr
+def _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor):
+    if not is_cond_tensor:
+        raise TypeError(f"For functional operator[select], the input[cond] must be a Tensor.")
+    if is_x_scalar and not is_y_tensor:
+        raise TypeError(f"For functional operator[select], the input[x] is int or float, "
+                        f"then the input[y] must be a Tensor.")
+    if is_y_scalar and not is_x_tensor:
+        raise TypeError(f"For functional operator[select], the input[y] is int or float, "
+                        f"then the input[x] must be a Tensor.")
+
+
+def select(cond, x, y):
+    r"""
+    Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the condition `cond`.
+
+    The conditional tensor acts as an optional compensation (mask), which
+    determines whether the corresponding element / row in the output must be
+    selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each
+    element.
+
+    It can be defined as:
+
+    .. math::
+        out_i = \begin{cases}
+        x_i, & \text{if } condition_i \\
+        y_i, & \text{otherwise}
+        \end{cases}
+
+    The condition has the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
+    and :math:`y`.
+
+    Args:
+        cond (Tensor[bool]): The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          The condition tensor, decides which element is chosen.
+        x (Union[Tensor, int, float]): The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          The first input tensor. If x is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as y. One of x and y must be a Tensor.
+        y (Union[Tensor, int, float]): The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+          The second input tensor. If y is an int or a float, it will be cast to the type of int32 or float32,
+          and broadcast to the same shape as x. One of x and y must be a Tensor.
+
+    Returns:
+        Tensor, has the same shape as `cond`. The shape is :math:`(x_1, x_2, ..., x_N, ..., x_R)`.
+
+    Raises:
+        TypeError: If `x` or `y` is not a Tensor, int or float.
+        ValueError: The shapes of inputs are different.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> # 1) Both inputs are Tensor
+        >>>
+        >>> cond = Tensor([True, False])
+        >>> x = Tensor([2,3], mindspore.float32)
+        >>> y = Tensor([1,2], mindspore.float32)
+        >>> output = ops.select(cond, x, y)
+        >>> print(output)
+        [2. 2.]
+        >>> # 2) y is a float
+        >>> cond = Tensor([True, False])
+        >>> x = Tensor([2,3], mindspore.float32)
+        >>> y = 2.0
+        >>> output = ops.select(cond, x, y)
+        >>> print(output)
+        [2. 2.]
+    """
+    is_x_scalar = isinstance(x, (int, float))
+    is_y_scalar = isinstance(y, (int, float))
+    is_x_tensor = isinstance(x, Tensor)
+    is_y_tensor = isinstance(y, Tensor)
+    is_cond_tensor = isinstance(cond, Tensor)
+    _check_select_type(is_cond_tensor, is_x_scalar, is_y_scalar, is_x_tensor, is_y_tensor)
+    input_x = x
+    input_y = y
+    if is_x_scalar:
+        _check_select_shape_match(y.shape, cond.shape, "y")
+        _check_select_type_match(x, y.dtype, "x", "y")
+        input_x = zeros_like(y) + x
+        if isinstance(x, int):
+            input_x = cast(input_x, mstype.int32)
+        else:
+            input_x = cast(input_x, mstype.float32)
+
+    if is_y_scalar:
+        _check_select_shape_match(x.shape, cond.shape, "x")
+        _check_select_type_match(y, x.dtype, "y", "x")
+        input_y = zeros_like(x) + y
+        if isinstance(y, int):
+            input_y = cast(input_y, mstype.int32)
+        else:
+            input_y = cast(input_y, mstype.float32)
+    return tensor_select(cond, input_x, input_y)
 
 
 def slice(input_x, begin, size):
@@ -1459,6 +1579,7 @@ __all__ = [
     'tensor_scatter_div',
     'scatter_max',
     'scatter_min',
-    'nonzero',
+    'select',
+    'nonzero'
 ]
 __all__.sort()
