@@ -30,6 +30,7 @@
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
 #include "coder/utils/common.h"
+#include "coder/wrapper/int8/conv_init_int8_wrapper.h"
 
 using mindspore::schema::PrimitiveType_Conv2DFusion;
 
@@ -164,16 +165,16 @@ int Conv2DINT8Coder::InitWeightBias(CoderContext *const context) {
     w_init_size_code << context->weight_size_name() << " += ";
     w_init_size_code.CodeFunction("ConvPackWeightSize", input_channel, output_channel, kernel_h * kernel_w,
                                   "GetSupportOptFlag()");
+    context->AppendInitWeightSizeCode(w_init_size_code.str());
   } else {
     code.CodeFunctionWithCheck("ConvInit", filter_tensor_str, bias_tensor_str, filter_zp_str, kernel_h, kernel_w,
                                input_channel, output_channel, input_zp, filter_peroc_, support_optimize_,
                                packed_weight_str, bias_data_str, context->weight_name(),
                                ("&" + context->weight_offset_name()), context->weight_size_name());
     w_init_size_code << context->weight_size_name() << " += ";
-    w_init_size_code.CodeFunction("ConvPackWeightSize", input_channel, output_channel, kernel_h * kernel_w,
-                                  support_optimize_);
+    size_t w_buf_size = ConvPackWeightSize(input_channel, output_channel, kernel_h * kernel_w, support_optimize_);
+    context->AppendInitWeightSizeCode(w_buf_size);
   }
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
   context->AppendInitCode(code.str());
   return RET_OK;
 }

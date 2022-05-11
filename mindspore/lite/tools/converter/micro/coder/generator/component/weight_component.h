@@ -32,9 +32,10 @@ void CodeModelParamsState(std::ofstream &ofs, const std::map<std::string, Tensor
 void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor *> &weights);
 
 void SaveDataToNet(const std::map<std::string, Tensor *> &saved_weights, const std::string &net_file);
-void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx,
+                           Configurator *config);
 
 void CodeInitWeightState(std::ofstream &ofs);
-void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, Configurator *config);
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_GENERATOR_WEIGHT_COMPONENT_H_

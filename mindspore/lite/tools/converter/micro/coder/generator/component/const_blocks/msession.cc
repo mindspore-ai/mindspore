@@ -42,30 +42,6 @@ void MSTensorHandleArrayDestroy(MSTensorHandleArray inputs) {
   inputs.handle_list = NULL;
 }
 
-MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,
-                        const MSKernelCallBackC before, const MSKernelCallBackC after) {
-  MicroModel *micro_model = (MicroModel *)model;
-  if (micro_model == NULL) {
-    return kMSStatusLiteNullptr;
-  }
-  int inputs_num = inputs.handle_num;
-  const void *inputs_data_array[inputs_num];
-  for (int i = 0; i < inputs_num; i++) {
-    inputs_data_array[i] = ((MicroTensor *)inputs.handle_list[i])->data;
-  }
-  SetInputs(inputs_data_array, inputs_num);
-
-  Inference();
-
-  int outputs_num = outputs->handle_num;
-  void *outputs_data_array[outputs_num];
-  for (int i = 0; i < outputs_num; i++) {
-    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);
-  }
-  CopyOutputsData(outputs_data_array, outputs_num);
-  return kMSStatusSuccess;
-}
-
 MSTensorHandleArray MSModelGetInputs(const MSModelHandle model) {
   MicroModel *micro_model = (MicroModel *)model;
   return micro_model->inputs;
@@ -116,6 +92,7 @@ MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inputs, MS
 }
 
 )RAW";
+
 const char model_runtime_init_source[] = R"RAW(
 typedef struct {
   void *runtime_buffer;

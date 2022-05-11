@@ -79,6 +79,8 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
   ofs << "  int ret = RET_OK;\n";
   if (config->target() != kARM32M) {
     ofs << "  ret = Init((void*)model_data, data_size);\n";
+  } else {
+    ofs << "  ret = Init(NULL, 0);\n";
   }
   if (config->support_parallel()) {
     ofs << "  MicroContext *micro_context = (MicroContext *)model_context;\n"
@@ -112,6 +114,40 @@ void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
     ofs << "  ClearThreadPool();\n";
   }
   ofs << "}\n";
+}
+
+void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
+  auto inputs_num = ctx->graph_inputs().size();
+  auto outputs_num = ctx->graph_outputs().size();
+  ofs << R"RAW(
+MSStatus MSModelPredict(MSModelHandle model, const MSTensorHandleArray inputs, MSTensorHandleArray *outputs,
+                          const MSKernelCallBackC before, const MSKernelCallBackC after) {
+  MicroModel *micro_model = (MicroModel *)model;
+  if (micro_model == NULL) {
+    return kMSStatusLiteNullptr;
+  }
+)RAW";
+  ofs << "  if (inputs.handle_num != " << inputs_num << ") {\n";
+  ofs << "    return kMSStatusLiteParamInvalid;\n";
+  ofs << "  }\n";
+  ofs << "  if (outputs->handle_num != " << outputs_num << ") {\n";
+  ofs << "    return kMSStatusLiteParamInvalid;\n";
+  ofs << "  }\n";
+  ofs << "  const void *inputs_data_array[" << inputs_num << "];\n";
+  ofs << "  for (int i = 0; i < " << inputs_num << "; i++) {\n";
+  ofs << "    inputs_data_array[i] = ((MicroTensor *)inputs.handle_list[i])->data;\n";
+  ofs << "  }\n";
+  ofs << "  SetInputs(inputs_data_array, " << inputs_num << ");\n";
+  ofs << "\n";
+  ofs << "  Inference();\n";
+  ofs << "\n";
+  ofs << "  void *outputs_data_array[" << outputs_num << "];\n";
+  ofs << "  for (int i = 0; i < " << outputs_num << "; i++) {\n";
+  ofs << "    outputs_data_array[i] = MSTensorGetMutableData(outputs->handle_list[i]);\n";
+  ofs << "  }\n";
+  ofs << "  CopyOutputsData(outputs_data_array, " << outputs_num << ");\n";
+  ofs << "  return kMSStatusSuccess;\n";
+  ofs << "}\n\n";
 }
 
 void CodeCopyOutputsState(std::ofstream &ofs) { ofs << "int CopyOutputsData(void **outputs, int num);\n\n"; }

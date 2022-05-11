@@ -173,7 +173,7 @@ int MatMulFP32BaseCoder::CollectFilesForTarget(CoderContext *const context) {
 
 int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   CollectFilesForTarget(context);
-  NNaclFp32Serializer code, init_code, w_init_size_code;
+  NNaclFp32Serializer code, init_code;
   size_t w_buf_size = 0;
 
   code.CodeStruct("mat_mul_parameter", *params_);
@@ -248,24 +248,24 @@ int MatMulFP32BaseCoder::DoCode(CoderContext *const context) {
   if (cur_oc <= 0) return RET_OK;
   code << "for (int i = 0; i < " << params_->batch << "; ++i) {\n";
   if (vec_matmul_) {
-    code << "\t\tfloat *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
-    code << "\t\tfloat *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
+    code << "\t\tconst float *batch_a_ptr = " << a_pack_str << " + i * " << params_->deep_ << ";\n";
+    code << "\t\tconst float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_ << ";\n";
     code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
-  } else {
-    code << "\t\tfloat *batch_a_ptr = " << a_pack_str << " + i * " << params_->row_align_ * params_->deep_ << ";\n";
-    code << "\t\tfloat *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_ << ";\n";
-    code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
-  }
-  if (vec_matmul_) {
+
     code.CodeFunction("MatVecMulFp32", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, cur_oc);
   } else {
+    code << "\t\tconst float *batch_a_ptr = " << a_pack_str << " + i * " << params_->row_align_ * params_->deep_
+         << ";\n";
+    code << "\t\tconst float *batch_b_ptr = " << b_pack_str << " + i * " << params_->deep_ * params_->col_align_
+         << ";\n";
+    code << "\t\tfloat *batch_c_ptr = " << c_str << " + i * " << params_->row_ * params_->col_ << ";\n";
+
     code.CodeFunction("MatMulOpt", "batch_a_ptr", "batch_b_ptr", "batch_c_ptr", bias_ptr_, params_->act_type_,
                       params_->deep_, params_->row_, cur_oc, params_->col_, "OutType_Nhwc");
   }
   code << "\t\t}\n";
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendCode(code.str());
   context->AppendInitCode(init_code.str());
   return RET_OK;

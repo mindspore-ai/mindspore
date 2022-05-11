@@ -36,6 +36,8 @@ set(CODER_GENERATOR_SRC
         )
 
 set(CODER_OPCODERS_SRC
+        ${MICRO_DIR}/coder/wrapper/int8/conv1x1_init_int8_wrapper.c
+        ${MICRO_DIR}/coder/wrapper/int8/conv_init_int8_wrapper.c
         ${MICRO_DIR}/coder/opcoders/file_collector.cc
         ${MICRO_DIR}/coder/opcoders/op_coder.cc
         ${MICRO_DIR}/coder/opcoders/op_coder_builder.cc

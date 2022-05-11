@@ -135,6 +135,7 @@ int Generator::CodeMSModelImplement() {
   CodeMSModelCreate(ofs, ctx_);
   CodeMSModelBuild(ofs, config_);
   ofs << model_runtime_other_source;
+  CodeMSModelPredict(ofs, ctx_);
   CodeMSModelDestory(ofs, config_);
   return RET_OK;
 }
@@ -156,17 +157,24 @@ int Generator::CodeWeightFile() {
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
   cofs << "int  " << gThreadNum << " = 1; \n";
   cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
-  cofs << "unsigned char * " << ctx_->weight_name() << " = 0; \n";
 
   if (config_->target() != kARM32M) {
+    cofs << "unsigned char * " << ctx_->weight_name() << " = 0; \n";
     std::string net_file = net_src_file_path_ + "net.bin";
     SaveDataToNet(ctx_->saved_weights(), net_file);
-    CodeModelParamsForNet(hofs, cofs, ctx_);
-    CodeWeightInitFunc(cofs, ctx_);
   } else {
-    CodeModelParamsState(hofs, ctx_->saved_weights());
+    if (!ctx_->weight_buffer_size_code_blocks().empty()) {
+      MS_LOG(ERROR) << "Weight init code generation error ";
+      return RET_ERROR;
+    }
+    cofs << "unsigned char " << ctx_->weight_name() << "[" << ctx_->weight_buffer_size() << "]; \n";
+    // CodeModelParamsState(hofs, ctx_->saved_weights());
     CodeModelParamsData(cofs, ctx_->saved_weights());
   }
+  CodeModelParamsForNet(hofs, cofs, ctx_, config_);
+  CodeInitWeightState(hofs);
+
+  CodeWeightInitFunc(cofs, ctx_, config_);
   hofs.close();
   cofs.close();
   return RET_OK;

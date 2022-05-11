@@ -75,7 +75,6 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   auto out_channel_size = static_cast<size_t>(out_channel);
 
   NNaclFp32Serializer init_code;
-  NNaclFp32Serializer w_init_size_code;
 
   std::string ori_weight_addr = allocator_->GetRuntimeAddr(filter_tensor_);
   std::string init_weight_str = ori_weight_addr;
@@ -106,9 +105,8 @@ int ConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
     w_buf_size += bias_data_size;
     init_code.CodeFunction("memcpy", bias_data_, bias_tensor_str, out_channel_size * sizeof(float));
   }
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }

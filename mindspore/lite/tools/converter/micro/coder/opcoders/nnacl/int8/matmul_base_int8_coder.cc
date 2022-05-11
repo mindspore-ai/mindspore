@@ -194,7 +194,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
             "matmul_int8_wrapper.c",
           });
   std::string value_str_end = ";\n";
-  NNaclInt8Serializer init_code, code, w_init_size_code;
+  NNaclInt8Serializer init_code, code;
   size_t w_buf_size = 0;
   auto filter_tensor_name = MemoryAllocator::GetInstance()->GetRuntimeAddr(filter_tensor_);
   std::string bias_ptr_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_tensor_);
@@ -216,7 +216,6 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
                       param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
                       "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
   }
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
   std::string a_ptr_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string c_ptr_str = allocator_->GetRuntimeAddr(output_tensor_);
   std::string pack_b_ptr_str = allocator_->GetRuntimeAddr(pack_b_ptr_);
@@ -270,7 +269,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   MS_LOG(DEBUG) << "FullConnectionInt8Coder has been called";
   context->AppendInitCode(init_code.str());
   context->AppendCode(code.str());
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   return RET_OK;
 }
 }  // namespace mindspore::lite::micro::nnacl
