@@ -1,5 +1,5 @@
 mindspore.ops.bessel_k0e
-=====================
+========================
 
 .. py:class:: mindspore.ops.bessel_k0e()
 
@@ -15,5 +15,5 @@ mindspore.ops.bessel_k0e
 
     **异常：**
 
-    - **TypeError** - `x`不是Tensor。
-    - **TypeError** - `x`的数据类型不是float16，float32或float64。
+    - **TypeError** - `x` 不是Tensor。
+    - **TypeError** - `x` 的数据类型不是float16，float32或float64。
