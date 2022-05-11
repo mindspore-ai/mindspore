@@ -817,7 +817,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
 
     Args:
         net (Cell): MindSpore network.
-        inputs (Union[Tensor, Dataset]): While the input type is Tensor, it represents the inputs
+        inputs (Union[Tensor, Dataset, List, Tuple, Number, Bool]): It represents the inputs
              of the `net`, if the network has multiple inputs, set them together. While its type is Dataset,
              it represents the preprocess behavior of the `net`, data preprocess operations will be serialized.
              In second situation, you should adjust batch size of dataset script manually which will impact on
@@ -868,8 +868,7 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
             raise RuntimeError(f"Only supports parse \"image\" column from dataset now, given dataset has columns: "
                                + str(columns))
         inputs = tuple(inputs)
-    else:
-        check_input_data(*inputs, data_class=Tensor)
+
     Validator.check_file_name_by_regular(file_name)
     file_name = os.path.realpath(file_name)
     net = _quant_export(net, *inputs, file_format=file_format, **kwargs)
@@ -893,7 +892,6 @@ def _export(net, file_name, file_format, *inputs, **kwargs):
     It is an internal conversion function. Export the MindSpore prediction model to a file in the specified format.
     """
     logger.info("exporting model file:%s format:%s.", file_name, file_format)
-    check_input_data(*inputs, data_class=Tensor)
 
     if file_format == 'GEIR':
         logger.warning(f"For 'export', format 'GEIR' is deprecated, "
@@ -1269,9 +1267,9 @@ def parse_print(print_file_name):
                 dims = print_.tensor.dims
                 data_type = print_.tensor.tensor_type
                 data = print_.tensor.tensor_content
-                np_type = tensor_to_np_type[data_type]
+                np_type = tensor_to_np_type.get(data_type)
                 param_data = np.fromstring(data, np_type)
-                ms_type = tensor_to_ms_type[data_type]
+                ms_type = tensor_to_ms_type.get(data_type)
                 if dims and dims != [0]:
                     param_value = param_data.reshape(dims)
                     tensor_list.append(Tensor(param_value, ms_type))
