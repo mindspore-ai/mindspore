@@ -40,6 +40,7 @@ constexpr auto kSub = "Sub";
 constexpr auto kMul = "Mul";
 constexpr auto kRealDiv = "RealDiv";
 constexpr auto kAssignAdd = "AssignAdd";
+constexpr auto kAssignSub = "AssignSub";
 
 template <typename T>
 void ElementRealDiv(const T *input1, const T *input2, T *out, size_t size, size_t delta_1, size_t delta_2) {
@@ -145,6 +146,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
   void FloorMod(const T *input1, const T *input2, T *out);
   void Pow(const T *input1, const T *input2, T *out);
   void AssignAdd(T *input1, const T *input2, T *out);
+  void AssignSub(T *input1, const T *input2, T *out);
   void Atan2(const T *input1, const T *input2, T *out);
   void SquaredDifference(const T *input1, const T *input2, T *out);
   void SquaredDifferenceComplex(const T *input1, const T *input2, T *out);
@@ -161,6 +163,8 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
     }
     if (kernel_name_ == prim::kPrimAssignAdd->name()) {
       AssignAdd(input1, input2, output);
+    } else if (kernel_name_ == prim::kPrimAssignSub->name()) {
+      AssignSub(input1, input2, output);
     } else {
       compute_func_(this, input1, input2, output);
     }
@@ -169,7 +173,7 @@ class ArithmeticCpuTypeFunc : public CpuKernelFunc {
 
  private:
   void InitComputeFunc() {
-    if (kernel_name_ == prim::kPrimAssignAdd->name()) {
+    if (kernel_name_ == prim::kPrimAssignAdd->name() || kernel_name_ == prim::kPrimAssignSub->name()) {
       return;
     }
     string dtype_desc;
@@ -223,6 +227,17 @@ void ArithmeticCpuTypeFunc<T>::AssignAdd(T *input1, const T *input2, T *out) {
   auto task = [&input1, &input2, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       out[i] = input1[i] + input2[i];
+      input1[i] = out[i];
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
+void ArithmeticCpuTypeFunc<T>::AssignSub(T *input1, const T *input2, T *out) {
+  auto task = [&input1, &input2, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = input1[i] - input2[i];
       input1[i] = out[i];
     }
   };
@@ -794,6 +809,27 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
      SpecializeArithFunc<int64_t>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>}}},
+  {kAssignSub,
+   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+     SpecializeArithFunc<int8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+     SpecializeArithFunc<uint8_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+     SpecializeArithFunc<int16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+     SpecializeArithFunc<uint16_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+     SpecializeArithFunc<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+     SpecializeArithFunc<uint32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+     SpecializeArithFunc<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     SpecializeArithFunc<int64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeArithFunc<double>}}},
   {prim::kPrimSquaredDifference->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
@@ -870,6 +906,9 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, FloorMod, []() {
 });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AssignAdd,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kAssignAdd); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, AssignSub,
+                                 []() { return std::make_shared<ArithmeticCpuKernelMod>(kAssignSub); });
+
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, SquaredDifference, []() {
   return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimSquaredDifference->name());
 });
