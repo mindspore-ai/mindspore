@@ -961,18 +961,6 @@ class Padding(PrimitiveWithInfer):
         validator.check_positive_int(pad_dim_size, "pad_dim_size", self.name)
         self.pad_dim_size = pad_dim_size
 
-    def __infer__(self, x):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        x_shape = list(x['shape'])
-        validator.check_int(len(x_shape), 1, Rel.GT, "rank of x", self.name)
-        validator.check_int(x_shape[-1], 1, Rel.EQ, "last dim of x", self.name)
-        out_shape = x_shape
-        out_shape[-1] = self.pad_dim_size
-        out = {'shape': out_shape,
-               'dtype': x['dtype'],
-               'value': None}
-        return out
-
 
 class UniqueWithPad(PrimitiveWithInfer):
     """

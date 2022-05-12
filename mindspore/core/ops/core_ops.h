@@ -165,6 +165,7 @@ constexpr auto kDropout = "Dropout";
 constexpr auto kDropoutGrad = "DropoutGrad";
 constexpr auto kDropout2D = "Dropout2D";
 constexpr auto kDropout3D = "Dropout3D";
+constexpr auto kPadding = "Padding";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
 constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
 constexpr auto kRoll = "Roll";
@@ -342,6 +343,7 @@ GVAR_DEF(PrimitivePtr, kPrimTransData, std::make_shared<Primitive>("TransData"))
 GVAR_DEF(PrimitivePtr, kPrimTransDataRNN, std::make_shared<Primitive>("TransDataRNN"));
 GVAR_DEF(PrimitivePtr, kPrimNMSWithMask, std::make_shared<Primitive>("NMSWithMask"));
 GVAR_DEF(PrimitivePtr, kPrimPad, std::make_shared<Primitive>("Pad"));
+GVAR_DEF(PrimitivePtr, kPrimPadding, std::make_shared<Primitive>(kPadding));
 GVAR_DEF(PrimitivePtr, kPrimArgMaxWithValue, std::make_shared<Primitive>("ArgMaxWithValue"));
 GVAR_DEF(PrimitivePtr, kPrimUnique, std::make_shared<Primitive>("Unique"));
 GVAR_DEF(PrimitivePtr, kPrimUniqueGrad, std::make_shared<Primitive>("UniqueGrad"));
