@@ -39,7 +39,6 @@
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
-#include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #include "toolchain/adx_datadump_server.h"
@@ -746,20 +745,6 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
   SetAtomicCleanToNodes(graph, node_atomics_persistent_cache_);
   CreateKernel(atomic_nodes);
   LaunchDeviceLibrary();
-}
-
-void AscendDeviceContext::UpdateDynamicShape(const CNodePtr &kernel) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  if (!(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
-    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
-    MS_EXCEPTION_IF_NULL(kernel_mod);
-    opt::dynamic_shape::InferOp(kernel);
-    auto args = kernel->user_data<kernel::KernelArgs>();
-    if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
-        kernel::KRET_RESIZE_FAILED) {
-      MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
-    }
-  }
 }
 
 std::shared_ptr<Bucket> AscendDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {

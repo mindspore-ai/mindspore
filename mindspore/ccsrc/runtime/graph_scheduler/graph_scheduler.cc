@@ -523,13 +523,6 @@ void GraphScheduler::Run(ActorSet *const actor_set, const std::vector<DeviceCont
   MS_EXCEPTION_IF_NULL(op_context_setter);
 #endif
 
-  if ((strategy == GraphExecutionStrategy::kStep) && IsSingleOpActorSet(actor_set)) {
-    actor_set->data_prepare_actor_->PrepareData(input_tensors, &op_context, GraphExecutionStrategy::kStep);
-    MS_EXCEPTION_IF_NULL(actor_set->kernel_actors_[0]);
-    actor_set->kernel_actors_[0]->RunOpControlWithInputTensor(nullptr, &op_context, &input_tensors_with_value_node);
-    return;
-  }
-
   // Trigger data prepare actor running.
   MS_EXCEPTION_IF_NULL(ActorMgr::GetActorMgrRef());
   auto thread_pool = ActorMgr::GetActorMgrRef()->GetActorThreadPool();

@@ -105,10 +105,6 @@ class DeviceContext {
   virtual void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {}
   // Adjust single op kernel graph before run graph, used in PyNative Mode.
   virtual void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {}
-
-  // Infer kernel shape and update abstract info for dynamic shape kernel.
-  virtual void UpdateDynamicShape(const CNodePtr &kernel) const { AnfAlgo::InferShape(kernel); }
-
   // Whether the graph sink executing through the device capability, the default behavior is not sink and return false.
   virtual bool IsExecutingSink(const KernelGraphPtr &graph) const { return false; }
   // Whether the graph loop sink executing through the device capability, the default behavior is not loop sink and

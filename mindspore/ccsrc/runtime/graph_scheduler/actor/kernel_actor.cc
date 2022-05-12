@@ -147,28 +147,6 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
   }
 }
 
-void KernelActor::RunOpControlWithInputTensor(AID *const input_control, OpContext<DeviceTensor> *const context,
-                                              const std::vector<TensorPtr> *input_tensors) {
-  MS_EXCEPTION_IF_NULL(context);
-  MS_EXCEPTION_IF_NULL(input_tensors);
-  auto &sequential_num = context->sequential_num_;
-  (void)input_op_controls_[sequential_num].emplace_back(input_control);
-
-  PushInputDeviceTensor(input_tensors);
-  // When all the inputs are collected, then allocate memory and callback launch.
-  if (CheckRunningCondition(context)) {
-    if (is_dynamic_shape_) {
-      device_contexts_[0]->UpdateDynamicShape(kernel_);
-    }
-
-    FetchOutputDeviceTensor(context);
-    if (memory_alloc_list_.size() > 0) {
-      SendMemoryAllocReq(context);
-    }
-    OnMemoryAllocFinish(context);
-  }
-}
-
 namespace {
 void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceContext *device_context,
                     OpContext<DeviceTensor> *const context, const std::string &actor_name) {
