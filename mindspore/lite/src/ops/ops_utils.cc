@@ -889,6 +889,11 @@ std::unique_ptr<schema::PrimitiveT> CustomPrimitiveCreator(const AnfNodePtr &nod
   return prim;
 }
 
+std::unique_ptr<schema::PrimitiveT> GatherDPrimitiveCreator(const AnfNodePtr &node) {
+  auto ms_primc = GetOperator<mindspore::ops::GatherD>(node);
+  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
+}
+
 RegistryMSOps g_absPrimitiveCreatorRegistry("Abs", AbsPrimitiveCreator);
 RegistryMSOps g_absGradPrimitiveCreatorRegistry("AbsGrad", AbsGradPrimitiveCreator);
 RegistryMSOps g_activationPrimitiveCreatorRegistry("Activation", ActivationPrimitiveCreator);
@@ -1125,6 +1130,7 @@ RegistryMSOps g_RandomNormalCreatorRegistry("RandomNormal", RandomNormalPrimitiv
 RegistryMSOps g_NLLLossCreatorRegistry("NLLLoss", NLLLossPrimitiveCreator);
 RegistryMSOps g_NLLLossGradCreatorRegistry("NLLLossGrad", NLLLossGradPrimitiveCreator);
 RegistryMSOps g_CustomPrimitiveCreatorRegistry("Custom", CustomPrimitiveCreator);
+RegistryMSOps g_GatherDPrimitiveCreatorRegistry("GatherD", GatherDPrimitiveCreator);
 }  // namespace lite
 }  // namespace mindspore
 

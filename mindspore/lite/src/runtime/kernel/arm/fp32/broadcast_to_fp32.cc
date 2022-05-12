@@ -69,6 +69,9 @@ int BroadcastToCPUKernel::Run() {
     case kNumberTypeInt:
       return BROADCAST_TO(int, reinterpret_cast<const int *>(input_data), &shape_info_,
                           reinterpret_cast<int *>(output_data));
+    case kNumberTypeBool:
+      return BROADCAST_TO(bool, reinterpret_cast<const bool *>(input_data), &shape_info_,
+                          reinterpret_cast<bool *>(output_data));
     default:
       MS_LOG(ERROR) << "UnSupported data type: " << data_type;
       return RET_ERROR;
@@ -77,6 +80,7 @@ int BroadcastToCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 #ifdef ENABLE_FP16
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BroadcastTo, LiteKernelCreator<BroadcastToCPUKernel>)
 #endif
