@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
-    get_unop_vmap_rule, _raise_value_error, _bdim_at_front
+    get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis
 
 
 @constexpr
@@ -256,6 +256,56 @@ def get_reducer_vmap_rule(prim, axis_size):
         out = prim(x, batch_axis)
         out_dim = _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis)
         return (out, out_dim)
+
+    return vmap_rule
+
+
+@constexpr
+def _get_index_add_batch_axis(axis, x_dim, x_ndim):
+    """get batch_axis for IndexAdd."""
+    # case1: batch not exists
+    if x_dim is None:
+        return axis
+    # case2: batch exists
+    if axis < -x_ndim or x_dim >= x_ndim:
+        raise ValueError("'axis' of 'IndexAdd' should be in range [{}, {}), but got {}".format(-x_ndim, x_ndim, axis))
+    if axis < 0:
+        axis = axis + x_ndim
+    if x_dim > axis:
+        return axis
+    return axis + 1
+
+
+@vmap_rules_getters.register(P.IndexAdd)
+def get_index_add_vmap_rule(prim, axis_size):
+    """VmapRule for IndexAdd."""
+    axis = prim.axis
+
+    def vmap_rule(x_bdim, indices_bdim, y_bdim, u_monad):
+        x, x_dim = x_bdim
+        indices, indices_dim = indices_bdim
+        y, y_dim = y_bdim
+
+        if indices_dim is not None:
+            _raise_value_error("The batch dimension of 'indices' in 'IndexAdd' must be None, but got {}."
+                               .format(indices_dim))
+        if x_dim is None and y_dim is not None:
+            _raise_value_error("The batch dimension of 'x' in 'IndexAdd' is None, so the batch dimension of 'y' "
+                               "must be None, but got {}. ".format(y_dim))
+
+        # update axis
+        new_axis = _get_index_add_batch_axis(axis, x_dim, F.rank(x))
+        op = P.IndexAdd(new_axis)
+
+        if x_dim == y_dim:
+            out = op(x, indices, y, u_monad)
+            return (out, x_dim)
+        if y_dim is None:
+            y = _broadcast_by_axis(y, x_dim, axis_size)
+        else:
+            y = mnp.moveaxis(y, y_dim, x_dim)
+        out = op(x, indices, y, u_monad)
+        return (out, x_dim)
 
     return vmap_rule
 
