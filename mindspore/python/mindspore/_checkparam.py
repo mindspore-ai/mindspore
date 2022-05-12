@@ -150,7 +150,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     Check argument integer.
 
     Usage:
-    - number = check_number(number, 0, Rel.GE, "number", None)
+    - arg_value = check_number(arg_value, 2, Rel.GT, int, "value", None)
     """
     rel_fn = Rel.get_fns(rel)
     prim_name = f"For \'{prim_name}\', the " if prim_name else 'The '
@@ -435,7 +435,7 @@ class Validator:
         if isinstance(arg_value, str) and arg_value in valid_values:
             return arg_value
         arg_name = arg_name if arg_name else "parameter"
-        msg_prefix = f'For \'{prim_name}\' the' if prim_name else "The"
+        msg_prefix = f'For \'{prim_name}\', the' if prim_name else "The"
         raise ValueError(f"{msg_prefix} '{arg_name}' must be str and must be in '{valid_values}',"
                          f" but got '{arg_value}'.")
 
@@ -595,7 +595,7 @@ class Validator:
             msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
             raise TypeError(f'{msg_prefix} type of \'{arg_name}\' should be {"one of " if num_types > 1 else ""}'
                             f'\'{type_names if num_types > 1 else type_names[0]}\', '
-                            f'but got \'{arg_value}\' with type \'{type(arg_value).__name__}\'.')
+                            f'but got \'{arg_value}\' with type {type(arg_value).__name__}.')
 
         # Notice: bool is subclass of int, so `check_value_type('x', True, [int])` will check fail, and
         #         `check_value_type('x', True, [bool, int])` will check pass
@@ -617,7 +617,7 @@ class Validator:
             msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
             raise TypeError(f"{msg_prefix} '{arg_name}' should be {'one of ' if num_types > 1 else ''}"
                             f"{type_names if num_types > 1 else type_names[0]}, "
-                            f"but got {arg_type.__name__ if hasattr(arg_type, '__name__') else repr(arg_type)}.")
+                            f"but got '{arg_type.__name__ if hasattr(arg_type, '__name__') else repr(arg_type)}'.")
 
         if isinstance(arg_type, type(mstype.tensor)):
             arg_type = arg_type.element_type()
@@ -784,7 +784,7 @@ class Validator:
                 Validator.check_axis_in_range(axis, ndim)
             axes = tuple(map(lambda x: x % ndim, axes))
             if any(axes.count(el) > 1 for el in axes):
-                raise ValueError("The element of parameter 'axis' can not be duplicate, but got {axes}.")
+                raise ValueError(f"The element of parameter 'axis' can not be duplicate, but got {axes}.")
             return axes
         Validator.check_axis_in_range(axes, ndim)
         return (axes % ndim,)
@@ -879,17 +879,17 @@ class Validator:
     def check_sparse_tensor_input(indices, values, shape):
         """Common input check for SparseTensors."""
         if not isinstance(indices, Tensor_):
-            raise TypeError(f"For SparseTensors, indices must be Tensor, but got {type(indices)}.")
+            raise TypeError(f"For SparseTensors, 'indices' must be Tensor, but got {type(indices)}.")
         if not isinstance(values, Tensor_):
-            raise TypeError(f"For SparseTensors, values must be Tensor, but got {type(values)}.")
+            raise TypeError(f"For SparseTensors, 'values' must be Tensor, but got {type(values)}.")
         if not isinstance(shape, tuple):
-            raise TypeError(f"For SparseTensors, shape must be tuple, but got {type(shape)}.")
+            raise TypeError(f"For SparseTensors, 'shape' must be tuple, but got {type(shape)}.")
 
     @staticmethod
     def check_csr_tensor_input(indptr, indices, values, shape):
         """Checks inputs type for CSRTensor."""
         if not isinstance(indptr, Tensor_):
-            raise TypeError(f"For CSRTensor, indptr must be Tensor, but got {type(indptr)}.")
+            raise TypeError(f"For CSRTensor, 'indptr' must be Tensor, but got {type(indptr)}.")
         Validator.check_sparse_tensor_input(indices, values, shape)
 
     @staticmethod
@@ -1109,7 +1109,7 @@ def args_type_check(*type_args, **type_kwargs):
             for name, value in argument_dict.items():
                 if name in bound_types:
                     if value is not None and not isinstance(value, bound_types[name]):
-                        raise TypeError("The parameter {} must be {}, but got {}"
+                        raise TypeError("The parameter '{}' must be {}, but got {}"
                                         .format(name, bound_types[name], type(value)))
             return func(*args, **kwargs)
 
