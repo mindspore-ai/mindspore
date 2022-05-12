@@ -1174,7 +1174,8 @@ bool AbstractRef::operator==(const AbstractRef &other) const {
     return true;
   }
   // Check whether the ref_key_value is equal.
-  if (!IsEqual(ref_key_value_, other.ref_key_value_)) {
+  if (ref_key_value_ != kAnyValue && other.ref_key_value_ != kAnyValue &&
+      !IsEqual(ref_key_value_, other.ref_key_value_)) {
     return false;
   }
   // Check whether Tensor value is equal.
@@ -1224,7 +1225,7 @@ AbstractBasePtr AbstractRef::Broaden() const {
   // always broaden for ref
   auto abs_tensor = AbstractTensor::Broaden()->cast<AbstractTensorPtr>();
   // Broaden the tensor value and keep the ref_key_value.
-  auto ret = std::make_shared<AbstractRef>(abs_tensor, ref_key_value_);
+  auto ret = std::make_shared<AbstractRef>(abs_tensor, kAnyValue);
   return ret;
 }
 
