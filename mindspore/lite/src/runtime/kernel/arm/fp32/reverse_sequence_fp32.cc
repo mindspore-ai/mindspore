@@ -53,7 +53,7 @@ int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int
 int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) const {
   int count = 1;
   for (int i = axis + 1; i < static_cast<int>(shape.size()); ++i) {
-    count *= shape.at(i);
+    count *= static_cast<int>(shape.at(i));
   }
   return count;
 }
