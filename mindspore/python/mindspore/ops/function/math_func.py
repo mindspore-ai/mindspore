@@ -238,7 +238,7 @@ def round(x):
         out_i \approx x_i
 
     Args:
-        x (Tensor): - The input tensor.
+        x (Tensor): The input tensor.
 
     Returns:
         Tensor, has the same shape and type as the `x`.
