@@ -6170,7 +6170,7 @@ class ReverseSequence(PrimitiveWithInfer):
         return x
 
 
-class EditDistance(PrimitiveWithInfer):
+class EditDistance(Primitive):
     r"""
     Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences. The inputs are
     variable-length sequences provided by SparseTensors (hypothesis_indices, hypothesis_values, hypothesis_shape)
@@ -6250,41 +6250,6 @@ class EditDistance(PrimitiveWithInfer):
         """Initialize EditDistance"""
         self.normalize = validator.check_value_type("normalize", normalize, [bool], self.name)
         self.set_const_input_indexes([2, 5])
-
-    def __infer__(self, h_indices, h_values, h_shape, truth_indices, truth_values, truth_shape):
-        validator.check_valid_input('hypothesis_shape', h_shape['value'], self.name)
-        validator.check_valid_input('truth_shape', truth_shape['value'], self.name)
-        args_int = {"hypothesis_indices": h_indices['dtype'], "hypothesis_shape": h_shape['dtype'],
-                    "truth_indices": truth_indices['dtype'], "truth_shape": truth_shape['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args_int, [mstype.int64], self.name)
-        args = {"hypothesis_values": h_values['dtype'], "truth_values": truth_values['dtype']}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-
-        hypothesis_indices_shp, truth_indices_shp = h_indices['shape'], truth_indices['shape']
-        validator.check("hypothesis_indices rank", len(hypothesis_indices_shp), "expected", 2, Rel.EQ, self.name)
-        validator.check("truth_indices rank", len(truth_indices_shp), "expected", 2, Rel.EQ, self.name)
-        validator.check("hypothesis_values rank", len(h_values['shape']), "expected", 1, Rel.EQ, self.name)
-        validator.check("hypothesis_shape rank", len(h_shape['shape']), "expected", 1, Rel.EQ, self.name)
-        validator.check("truth_values rank", len(truth_values['shape']), "expected", 1, Rel.EQ, self.name)
-        validator.check("truth_shape rank", len(truth_shape['shape']), "expected", 1, Rel.EQ, self.name)
-        validator.check("hypothesis_values shape", h_values['shape'][0],
-                        "hypothesis_indices shape[0]", hypothesis_indices_shp[0], Rel.EQ, self.name)
-        validator.check("hypothesis_shape", h_shape['shape'][0],
-                        "hypothesis_indices shape[1]", hypothesis_indices_shp[1], Rel.EQ, self.name)
-        validator.check("truth_values shape", truth_values['shape'][0],
-                        "truth_indices shape[0]", truth_indices_shp[0], Rel.EQ, self.name)
-        validator.check("hypothesis_shape", h_shape['shape'][0],
-                        "truth_shape", truth_shape['shape'][0], Rel.EQ, self.name)
-        hypothesis_shape_v = h_shape['value'].asnumpy()
-        truth_shape_v = truth_shape['value'].asnumpy()
-        out_shape_rank = len(hypothesis_shape_v) - 1
-        out_shape = []
-        for i in range(out_shape_rank):
-            out_shape.append(max(hypothesis_shape_v[i], truth_shape_v[i]))
-
-        return {'shape': tuple(out_shape),
-                'dtype': mstype.tensor_type(mstype.float32),
-                'value': None}
 
 
 class TransShape(PrimitiveWithInfer):
