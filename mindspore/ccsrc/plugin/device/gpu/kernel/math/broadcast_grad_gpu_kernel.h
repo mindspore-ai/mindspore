@@ -64,7 +64,6 @@ class BroadcastOpGradGpuKernelMod : public NativeGpuKernelMod {
   using BroadCastFunc = std::function<bool(BroadcastOpGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &)>;
 
- private:
   BroadcastGradOpType op_type_{BROADCAST_GRAD_TYPE_INVALID};
   bool need_broadcast_{false};
   bool is_null_input_{false};
