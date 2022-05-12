@@ -54,12 +54,9 @@ class CPUDeviceContext : public DeviceContext {
   void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                    bool is_dynamic_shape) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
   bool LoadCollectiveCommLib() override;
-
-  bool LaunchCustomFunc(const AnfNodePtr &kernel) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);

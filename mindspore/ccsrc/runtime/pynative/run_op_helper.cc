@@ -476,7 +476,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
-    if (!device_context->LaunchKernel(node, inputs, workspaces, outputs, is_dynamic_shape)) {
+    if (!device_context->LaunchKernel(node, inputs, workspaces, outputs)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
 

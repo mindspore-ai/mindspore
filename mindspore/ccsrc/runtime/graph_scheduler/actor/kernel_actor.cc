@@ -227,7 +227,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
                       << kernel_->fullname_with_scope();
     } else {
       auto ret = device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                   launch_info_.outputs_, is_dynamic_shape_);
+                                                   launch_info_.outputs_);
       if (!ret) {
         std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
