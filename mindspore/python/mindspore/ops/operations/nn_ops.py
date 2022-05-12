@@ -3501,6 +3501,40 @@ class ResizeBilinear(PrimitiveWithInfer):
         return input_dtype
 
 
+class ResizeBilinearV2(Primitive):
+    r"""
+    Resizes an image to a certain size using the bilinear interpolation.
+
+    Refer to :func:`mindspore.ops.resize_bilinear` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
+        >>> output = ResizeBilinearV2(x, (5, 5))
+        >>> print(output)
+        [[[[1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, align_corners=False, half_pixel_centers=False):
+        """Initialize ResizeBilinear."""
+        self.init_prim_io_names(inputs=['x', 'size'], outputs=['y'])
+        self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
+                                                             half_pixel_centers, [bool], self.name)
+        if half_pixel_centers and align_corners:
+            raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
+        target = context.get_context("device_target")
+        if target.lower() == "cpu":
+            raise ValueError(f"Currently, for ResizeBilinearV2 CPU device is not supported!")
+
+
 class OneHot(Primitive):
     r"""
     Computes a one-hot tensor.

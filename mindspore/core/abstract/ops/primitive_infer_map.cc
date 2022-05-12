@@ -49,6 +49,8 @@
 namespace mindspore {
 namespace abstract {
 PrimShapeDependMap &GetHostDependsMap() {
+  // Registration directly by the host_depends map will be deprecated and
+  // should be registered by the REGISTER_HOST_DEPENDS
   using ShapeSet = std::set<int64_t>;
   static const auto &kOneHot = prim::kPrimOneHot->name();
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();

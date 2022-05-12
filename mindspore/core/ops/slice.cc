@@ -151,7 +151,7 @@ std::vector<int64_t> Slice::get_size() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-REGISTER_HOST_DEPENDS(kNameSlice, (std::set<int64_t>{1, 2}));
+REGISTER_HOST_DEPENDS(kNameSlice, {1, 2});
 REGISTER_PRIMITIVE_EVAL_IMPL(Slice, prim::kPrimSlice, SliceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

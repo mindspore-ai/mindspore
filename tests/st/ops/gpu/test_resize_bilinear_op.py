@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 from mindspore import context, Tensor
+import mindspore.ops as ops
 from mindspore.ops import operations as P
 from mindspore import nn
 
@@ -570,3 +571,30 @@ def test_resize_nn_grayscale_align_corners_float(datatype=np.float32):
     diff = output.asnumpy() - expected_output.asnumpy()
     assert np.all(abs(diff) < error)
     assert np.all(abs(diff_align) < error)
+
+
+class NetResizeBilinearFunc(nn.Cell):
+    def construct(self, inputs, size, align_corner=False, half_pixel_centers=False):
+        return ops.resize_bilinear(inputs, size, align_corner, half_pixel_centers)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_resize_nn_func_half_pixel_centers(datatype=np.float32):
+    """
+    Feature: Test resize_bilinear on GPU.
+    Description:  The half_pixel_centers is True.
+    Expectation: Assert that results are consistent with expect.
+    """
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(datatype))
+    resize_nn_func = NetResizeBilinearFunc()
+    output = resize_nn_func(input_tensor, (3, 7), align_corner=False, half_pixel_centers=True)
+    expected_output = np.array([[[[0.1, 0.13571429, 0.19285715, 0.25, 0.30714288,
+                                   0.36428574, 0.4],
+                                  [0.3, 0.3357143, 0.39285716, 0.45, 0.5071429,
+                                   0.56428576, 0.6],
+                                  [0.5, 0.5357143, 0.5928572, 0.65, 0.7071429,
+                                   0.76428574, 0.8]]]], dtype=datatype)
+    assert np.allclose(output.asnumpy(), expected_output)

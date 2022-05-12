@@ -39,8 +39,8 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *output = GetDeviceAddress<T>(outputs, 0);
     float h_scale = Scaling(input_h_, output_h_, align_corners_);
     float w_scale = Scaling(input_w_, output_w_, align_corners_);
-    CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale, output,
-                      reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalResizeBilinear(input, n_, c_, input_h_, input_w_, output_h_, output_w_, h_scale, w_scale, half_pixel_centers_,
+                      output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
@@ -48,15 +48,17 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
+    constexpr size_t kDynamicSizeInputNum = 2;
+    if (input_num != 1 && input_num != kDynamicSizeInputNum) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1 or " << kDynamicSizeInputNum
+                        << ", but got " << input_num;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    std::vector<size_t> output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    std::vector<size_t> input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
@@ -83,12 +85,14 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       output_size_ *= x;
     }
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
+    half_pixel_centers_ = GetAttr<bool>(kernel_node, "half_pixel_centers");
     InitSizeLists();
     return true;
   }
 
   void ResetResource() noexcept override {
     align_corners_ = false;
+    half_pixel_centers_ = false;
     is_null_input_ = false;
     n_ = 0;
     c_ = 0;
@@ -117,6 +121,7 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   bool align_corners_;
+  bool half_pixel_centers_;
   bool is_null_input_;
   int n_;
   int c_;
