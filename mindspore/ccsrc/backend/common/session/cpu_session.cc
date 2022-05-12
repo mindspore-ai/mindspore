@@ -119,7 +119,7 @@ void CPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
 
 GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   auto graph_id = graph_sum_;
-  auto graph = ConstructKernelGraph(lst, outputs, DeviceAddressType::kCPU);
+  auto graph = ConstructKernelGraph(lst, outputs, DeviceType::kCPU);
   MS_EXCEPTION_IF_NULL(graph);
   opt::AddDynamicShapeAttrPass(graph);
   MS_LOG(INFO) << "Set kernel info";
@@ -184,8 +184,7 @@ void CPUSession::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_graph,
     if (common::AnfAlgo::IsParameterWeight(input_param) && !tensor->IsUpdatedByDevice()) {
       continue;
     }
-    if (std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address)->DeviceType() !=
-        device::DeviceAddressType::kCPU) {
+    if (std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address)->GetDeviceType() != device::DeviceType::kCPU) {
       tensor->data_sync(false);
     }
   }

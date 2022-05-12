@@ -313,7 +313,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
   }
   auto &real_input_info = real_input_data_infos_[input_data->index_];
   MS_EXCEPTION_IF_NULL(real_input_info);
-  if ((input_data->data_->DeviceType() == device_contexts_[0]->GetDeviceAddressType()) &&
+  if ((input_data->data_->GetDeviceType() == device_contexts_[0]->GetDeviceType()) &&
       (input_data->data_->format() == real_input_info->format_)) {
     return;
   }
@@ -342,9 +342,9 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
                                                 new_device_tensor->GetSize());
   }
   MS_LOG(INFO) << GetAID().Name() << " the input position:" << input_data->index_
-               << " copy from device address:" << input_data->data_ << ", type:" << input_data->data_->DeviceType()
+               << " copy from device address:" << input_data->data_ << ", type:" << input_data->data_->GetDeviceType()
                << ", format:" << input_data->data_->format() << " to device address:" << new_device_tensor.get()
-               << ", type:" << new_device_tensor->DeviceType() << ", format:" << new_device_tensor->format();
+               << ", type:" << new_device_tensor->GetDeviceType() << ", format:" << new_device_tensor->format();
   // Copy from the real parameter to formal parameter and insert the device tensor copy store.
   if (!Copy(new_device_tensor.get(), input_data->data_)) {
     std::string error_info = "Copy device tensor failed: " + GetAID().Name();
@@ -377,11 +377,11 @@ void KernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const context)
 
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
     auto device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                device_contexts_[0]->GetDeviceAddressType());
+                                                                device_contexts_[0]->GetDeviceType());
     if (device_tensor == nullptr) {
       std::string error_info =
         GetAID().Name() + " get device tensor store failed: " + device_tensor_store_key.second->fullname_with_scope() +
-        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceAddressType()));
+        ", device type:" + std::to_string(static_cast<int>(device_contexts_[0]->GetDeviceType()));
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
     }
 
@@ -502,8 +502,8 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
       MS_EXCEPTION_IF_NULL(new_device_tensor);
       MS_LOG(INFO) << GetAID().Name() << " the input position:" << ref_input_index
                    << " refresh from device address:" << input_device_tensor
-                   << ", type:" << input_device_tensor->DeviceType() << ", format:" << input_device_tensor->format()
-                   << " to device address:" << new_device_tensor << ", type:" << new_device_tensor->DeviceType()
+                   << ", type:" << input_device_tensor->GetDeviceType() << ", format:" << input_device_tensor->format()
+                   << " to device address:" << new_device_tensor << ", type:" << new_device_tensor->GetDeviceType()
                    << ", format:" << new_device_tensor->format();
       if (!Copy(new_device_tensor, input_device_tensor)) {
         std::string error_info = "Copy input device tensor failed: " + GetAID().Name();
@@ -523,9 +523,9 @@ void KernelActor::RefreshDeviceTensorCopyStore(OpContext<DeviceTensor> *const co
       MS_EXCEPTION_IF_NULL(new_device_tensor);
       MS_LOG(INFO) << GetAID().Name() << " the output position:" << ref_output_index
                    << " refresh from device address:" << output_device_tensor
-                   << ", type:" << output_device_tensor->DeviceType() << ", format:" << output_device_tensor->format()
-                   << " to device address:" << new_device_tensor << ", type:" << new_device_tensor->DeviceType()
-                   << ", format:" << new_device_tensor->format();
+                   << ", type:" << output_device_tensor->GetDeviceType()
+                   << ", format:" << output_device_tensor->format() << " to device address:" << new_device_tensor
+                   << ", type:" << new_device_tensor->GetDeviceType() << ", format:" << new_device_tensor->format();
       if (!Copy(new_device_tensor, output_device_tensor)) {
         std::string error_info = "Copy output device tensor failed: " + GetAID().Name();
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, error_info);

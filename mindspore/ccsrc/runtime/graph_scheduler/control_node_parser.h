@@ -71,7 +71,7 @@ constexpr size_t kMakeCOOTensorInputNum = 3;
 using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
 struct NodeWithContextCmp {
   bool operator()(const NodeWithContext &node1, const NodeWithContext &node2) const {
-    return node1.second->GetDeviceAddressType() < node2.second->GetDeviceAddressType();
+    return node1.second->GetDeviceType() < node2.second->GetDeviceType();
   }
 };
 

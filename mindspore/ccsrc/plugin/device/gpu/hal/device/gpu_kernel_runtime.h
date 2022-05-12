@@ -47,7 +47,7 @@ class GPUKernelRuntime : public KernelRuntime {
   void AssignMemory(const session::KernelGraph &graph) override;
   bool Run(const session::KernelGraph &graph, bool is_task_sink) override;
   bool RunDynamicKernelAsync(const session::KernelGraph &graph) override { return true; }
-  DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kGPU; }
+  DeviceType GetTargetDeviceType() const override { return DeviceType::kGPU; }
   std::shared_ptr<DeviceEvent> CreateDeviceEvent() override;
   void *compute_stream() const override { return stream_; }
   void *communication_stream() const override { return communication_stream_; }

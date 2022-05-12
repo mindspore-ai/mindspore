@@ -318,9 +318,8 @@ bool NeedDiscardTensorProperties(const std::string &op_device_target,
   if (tensor_device_address == nullptr) {
     return true;
   }
-  auto tensor_device_address_type = tensor_device_address->DeviceType();
-  auto tensor_device_address_type_str = device::kDeviceTypeToName.at(tensor_device_address_type);
-  if (op_device_target == tensor_device_address_type_str) {
+
+  if (op_device_target == device::GetDeviceNameByType(tensor_device_address->GetDeviceType())) {
     return false;
   }
   return true;
@@ -707,7 +706,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   ParameterPtr new_parameter = nullptr;
   auto func_graph = anf->func_graph();
   if (func_graph->manager() != nullptr && func_graph->exist_multi_target() &&
-      graph->device_target() == device::DeviceAddressType::kCPU) {
+      graph->device_target() == device::DeviceType::kCPU) {
     auto iter = default_param_map_.find(anf);
     if (iter != default_param_map_.end()) {
       new_parameter = iter->second;
@@ -1225,7 +1224,7 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
 }
 
 KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, const AnfNodePtrList &outputs,
-                                                  DeviceAddressType device_target, bool common_opt) {
+                                                  DeviceType device_target, bool common_opt) {
   mindspore::HashMap<AnfNodePtr, AnfNodePtr> other_graph_cnode;
   auto graph = NewKernelGraph();
   MS_EXCEPTION_IF_NULL(graph);
@@ -1796,7 +1795,7 @@ bool SessionBasic::CreateCNodeOfKernelGraph(const AnfNodePtr &node, KernelGraph 
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                                 std::vector<KernelGraphPtr> *all_out_graph,
-                                                                DeviceAddressType device_target) {
+                                                                DeviceType device_target) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
@@ -2563,26 +2562,12 @@ void SessionBasic::RunGraphImpl(const GraphId &graph_id, const std::vector<tenso
   MS_LOG(INFO) << "Status record: end run graph. graph id: " << graph_id;
 }
 
-device::DeviceAddressType DeviceTargetToDeviceType(const std::string &device_target) {
-  static const std::unordered_map<std::string, device::DeviceAddressType> target_type = {
-    {"Unknown", device::DeviceAddressType::kUnknown},
-    {"Ascend", device::DeviceAddressType::kAscend},
-    {"CPU", device::DeviceAddressType::kCPU},
-    {"GPU", device::DeviceAddressType::kGPU},
-    {"Davinci", device::DeviceAddressType::kAscend}};
-  auto iter = target_type.find(device_target);
-  if (iter == target_type.end()) {
-    MS_LOG(EXCEPTION) << "Not support device target: " << device_target;
-  }
-  return iter->second;
-}
-
 void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_target,
                                                        const std::vector<tensor::TensorPtr> &input_tensors) {
   for (auto &tensor : input_tensors) {
     auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     if (device_address != nullptr) {
-      if (device_address->DeviceType() != DeviceTargetToDeviceType(cur_target)) {
+      if (device_address->GetDeviceType() != device::GetDeviceTypeByName(cur_target)) {
         tensor->data_sync();
         tensor->set_device_address(nullptr);
       }

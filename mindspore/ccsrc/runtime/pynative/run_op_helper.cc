@@ -47,7 +47,7 @@ void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
     // node_address can't be null
     MS_EXCEPTION_IF_NULL(node_address);
     if (tensor_address != nullptr) {
-      if (tensor_address->DeviceType() != device_context->GetDeviceAddressType() ||
+      if (tensor_address->GetDeviceType() != device_context->GetDeviceType() ||
           tensor_address->format() != node_address->format()) {
         // Need wait for OpExecutor task finish
         tensor->data_sync();

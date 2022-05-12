@@ -50,7 +50,7 @@ struct KernelWithIndexCmp {
   }
 };
 
-using DeviceAddressType = device::DeviceAddressType;
+using DeviceType = device::DeviceType;
 using KernelMapTensor = std::map<session::KernelWithIndex, BaseRef, session::KernelWithIndexCmp>;
 
 class BACKEND_EXPORT KernelGraph : public FuncGraph {
@@ -62,7 +62,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
     executable_ = true;
     summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
-    device_target_ = DeviceAddressType::kUnknown;
+    device_target_ = DeviceType::kUnknown;
   }
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
@@ -152,8 +152,8 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   void set_graph_id(uint32_t graph_id) { graph_id_ = graph_id; }
   uint32_t root_graph_id() const { return root_graph_id_; }
   void set_root_graph_id(uint32_t root_graph_id) { root_graph_id_ = root_graph_id; }
-  DeviceAddressType device_target() const { return device_target_; }
-  void set_device_target(DeviceAddressType target) { device_target_ = target; }
+  DeviceType device_target() const { return device_target_; }
+  void set_device_target(DeviceType target) { device_target_ = target; }
 
   // and a new front to backend anf relation to maop
   void FrontBackendMapAdd(const AnfNodePtr &front_anf, const AnfNodePtr &backend_anf);
@@ -473,7 +473,7 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   std::vector<CNodePtr> mem_reuse_exec_order_;
   uint32_t graph_id_;
   uint32_t stream_distinction_label_;
-  DeviceAddressType device_target_;
+  DeviceType device_target_;
   uint32_t root_graph_id_{0};
 
   // record map bettween front anf and backend anf,use two map implement bidirectional map

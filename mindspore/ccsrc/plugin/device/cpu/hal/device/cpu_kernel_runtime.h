@@ -46,7 +46,7 @@ class CPUKernelRuntime : public KernelRuntime {
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   bool RunDynamicKernelAsync(const session::KernelGraph &graph) override { return true; }
-  DeviceAddressType GetTargetDeviceAddressType() const override { return DeviceAddressType::kCPU; };
+  DeviceType GetTargetDeviceType() const override { return DeviceType::kCPU; };
 
  protected:
   bool SyncStream() override { return true; };

@@ -99,7 +99,7 @@ bool KernelRuntime::NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_
   if (AnfAlgo::OutputAddrExist(kernel, index)) {
     const auto &address = AnfAlgo::GetOutputAddr(kernel, index);
     MS_EXCEPTION_IF_NULL(address);
-    return address->DeviceType() == GetTargetDeviceAddressType();
+    return address->GetDeviceType() == GetTargetDeviceType();
   }
   return false;
 }
@@ -255,7 +255,7 @@ void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
       auto current_tensor = input_tensors[input_index];
       MS_EXCEPTION_IF_NULL(current_tensor);
       auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(current_tensor->device_address());
-      if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
+      if (output_address != nullptr && output_address->GetDeviceType() == GetTargetDeviceType()) {
         AnfAlgo::SetOutputAddr(output_address, index, item.get());
         continue;
       }
@@ -410,7 +410,7 @@ void KernelRuntime::RunOpAssignInputMemory(const std::vector<tensor::TensorPtr> 
       MS_EXCEPTION_IF_NULL(current_tensor);
       auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(current_tensor->device_address());
       // Device address have already create
-      if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
+      if (output_address != nullptr && output_address->GetDeviceType() == GetTargetDeviceType()) {
         if (output_address->ptr_ == nullptr) {
           if (!mem_manager_->MallocMemFromMemPool(output_address, output_address->size())) {
             MS_LOG(EXCEPTION) << "Allocate memory failed, size:" << output_address->size();
@@ -651,7 +651,7 @@ void KernelRuntime::GetDeviceAddress(const AnfNodePtr &item,
   }
   if (*device_address == nullptr && shadow_node != nullptr) {
     auto conj_device_address = AnfAlgo::GetMutableOutputAddr(shadow_node, index);
-    if (conj_device_address != nullptr && conj_device_address->DeviceType() == DeviceAddressType::kAscend) {
+    if (conj_device_address != nullptr && conj_device_address->GetDeviceType() == DeviceType::kAscend) {
       *device_address = conj_device_address;
     }
   } else if (*device_address == nullptr) {
@@ -978,7 +978,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
       return;
     }
     auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    if (output_address != nullptr && output_address->DeviceType() == GetTargetDeviceAddressType()) {
+    if (output_address != nullptr && output_address->GetDeviceType() == GetTargetDeviceType()) {
       AnfAlgo::SetOutputAddr(std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address()), output_idx++,
                              value_node.get());
       continue;

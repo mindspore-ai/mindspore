@@ -48,7 +48,7 @@ class CPUDeviceAddress : public DeviceAddress {
   bool DumpMemToFile(const std::string &filepath, const std::string &host_fmt, const ShapeVector &host_shape,
                      TypeId host_type, bool trans_flag) const override;
   void ClearDeviceMemory() override;
-  DeviceAddressType DeviceType() const override { return DeviceAddressType::kCPU; }
+  DeviceType GetDeviceType() const override { return DeviceType::kCPU; }
 };
 }  // namespace cpu
 }  // namespace device

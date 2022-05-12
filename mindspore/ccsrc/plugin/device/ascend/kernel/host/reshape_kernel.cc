@@ -143,7 +143,7 @@ void ReshapeKernelMod::Execute() {
   // At execute reshape is noOpNode as all shapes are known so set skipNoOpNode false
   auto output_addr = AnfAlgo::GetOutputAddr(cnode, 0, false);
   MS_EXCEPTION_IF_NULL(output_addr);
-  if (address_x->DeviceType() == device::DeviceAddressType::kCPU) {
+  if (address_x->GetDeviceType() == device::DeviceType::kCPU) {
     auto ret =
       memcpy_s(const_cast<void *>(output_addr->GetPtr()), output_addr->GetSize(), address_x->GetPtr(), input_size_byte);
     if (ret != EOK) {

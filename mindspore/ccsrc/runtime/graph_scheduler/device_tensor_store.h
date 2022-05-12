@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace runtime {
 using DeviceTensor = mindspore::device::DeviceAddress;
-using DeviceTensorType = mindspore::device::DeviceAddressType;
+using DeviceTensorType = mindspore::device::DeviceType;
 using DeviceTensorPtr = std::shared_ptr<DeviceTensor>;
 
 // The device tensor mainly includes address ptr, size and reference count,
@@ -50,7 +50,7 @@ class DeviceTensorStore {
     }
 
     for (size_t i = 0; i < iter->second.size(); ++i) {
-      if (iter->second[i]->DeviceType() == value->DeviceType()) {
+      if (iter->second[i]->GetDeviceType() == value->GetDeviceType()) {
         iter->second[i] = value;
         return;
       }
@@ -83,7 +83,7 @@ class DeviceTensorStore {
     if (iter != device_tensors_.end()) {
       for (const auto &device_tensor : iter->second) {
         MS_EXCEPTION_IF_NULL(device_tensor);
-        if (device_tensor->DeviceType() == value_type) {
+        if (device_tensor->GetDeviceType() == value_type) {
           return device_tensor.get();
         }
       }

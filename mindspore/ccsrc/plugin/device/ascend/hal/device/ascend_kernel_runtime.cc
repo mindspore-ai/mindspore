@@ -830,7 +830,7 @@ DeviceAddressPtr AscendKernelRuntime::GetInternalDeviceAddress(const session::Ke
     }
     auto output_device_address = AnfAlgo::GetMutableOutputAddr(graph_output.first, graph_output.second);
     MS_EXCEPTION_IF_NULL(output_device_address);
-    if (output_device_address->DeviceType() == DeviceAddressType::kAscend) {
+    if (output_device_address->GetDeviceType() == DeviceType::kAscend) {
       return output_device_address;
     }
   }

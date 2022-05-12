@@ -552,38 +552,17 @@ void AscendDeviceContext::LoadModel(const NotNull<KernelGraphPtr> &root_graph) c
   MS_LOG(INFO) << "Status record: end load model. graph id: " << root_graph->graph_id();
 }
 
-bool AscendDeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
-  MS_EXCEPTION_IF_NULL(address);
+void *AscendDeviceContext::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
-  if (address->DeviceType() != DeviceAddressType::kAscend) {
-    MS_LOG(ERROR) << "The device address type is wrong: " << address->DeviceType();
-    return false;
-  }
-
-  if (address->GetPtr() != nullptr) {
-    MS_LOG(ERROR) << "Memory leak detected!";
-    return false;
-  }
-
+  MS_EXCEPTION_IF_NULL(mem_manager_);
   runtime_instance_->SetContext();
-  auto device_ptr = mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem_);
-  if (!device_ptr) {
-    return false;
-  }
-  address->ptr_ = device_ptr;
-  address->size_ = size;
-  address->from_mem_pool_ = true;
-  return true;
+  return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
-void AscendDeviceContext::FreeMemory(DeviceAddress *const &address) const {
-  MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(address->ptr_);
-  if (!address->from_mem_pool()) {
-    return;
-  }
-  mem_manager_->FreeMemFromMemPool(address->ptr_);
-  address->ptr_ = nullptr;
+void AscendDeviceContext::FreeMemory(void *ptr) const {
+  MS_EXCEPTION_IF_NULL(ptr);
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  mem_manager_->FreeMemFromMemPool(ptr);
 }
 
 std::vector<void *> AscendDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
@@ -595,19 +574,6 @@ std::vector<void *> AscendDeviceContext::AllocateContinuousMemory(const std::vec
     align_size_list.emplace_back(align_size);
   }
   return mem_manager_->MallocContinuousMemFromMemPool(align_size_list);
-}
-
-void *AscendDeviceContext::AllocateMemory(size_t size) const {
-  MS_EXCEPTION_IF_NULL(runtime_instance_);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  runtime_instance_->SetContext();
-  return mem_manager_->MallocMemFromMemPool(size, false);
-}
-
-void AscendDeviceContext::FreeMemory(void *const ptr) const {
-  MS_EXCEPTION_IF_NULL(ptr);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeMemFromMemPool(ptr);
 }
 
 bool AscendDeviceContext::ExecuteGraph(const KernelGraphPtr &graph) const {

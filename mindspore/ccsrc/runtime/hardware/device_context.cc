@@ -52,5 +52,48 @@ bool DeviceContext::DestroyAllStreams() {
   stream_ids_.clear();
   return true;
 }
+
+bool DeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
+  MS_EXCEPTION_IF_NULL(address);
+  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
+  if (device_name_in_address != device_context_key_.device_name_) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
+                      << ", type name in context:" << device_context_key_.device_name_;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(EXCEPTION) << "Memory leak detected!";
+  }
+
+  auto device_ptr = AllocateMemory(size);
+  if (!device_ptr) {
+    return false;
+  }
+  address->set_ptr(device_ptr);
+  address->SetSize(size);
+  address->set_from_mem_pool(true);
+  return true;
+}
+
+void DeviceContext::FreeMemory(DeviceAddress *const &address) const {
+  MS_EXCEPTION_IF_NULL(address);
+  if (address->GetPtr() == nullptr) {
+    MS_LOG(EXCEPTION) << "Device ptr is null in device address to release!";
+  }
+
+  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
+  if (device_name_in_address != device_context_key_.device_name_) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
+                      << ", type name in context:" << device_context_key_.device_name_;
+  }
+
+  if (!address->from_mem_pool()) {
+    return;
+  }
+
+  void *ptr = const_cast<void *>(address->GetPtr());
+  FreeMemory(ptr);
+  address->set_ptr(nullptr);
+}
 }  // namespace device
 }  // namespace mindspore

@@ -26,7 +26,7 @@ using AnalysisContext = abstract::AnalysisContext;
 using DeviceContextKey = device::DeviceContextKey;
 using DeviceAddress = device::DeviceAddress;
 using DeviceAddressPtr = device::DeviceAddressPtr;
-using DeviceAddressType = device::DeviceAddressType;
+using DeviceType = device::DeviceType;
 class ControlNodeParserTest : public UT::Common {
  public:
   ControlNodeParserTest() {}
@@ -73,7 +73,7 @@ class TestDeviceContext : public DeviceContext {
                                                TypeId type_id, const ShapeVector &shape) const {
     return std::make_shared<TestDeviceAddress>(nullptr, 0);
   }
-  virtual DeviceAddressType GetDeviceAddressType() const { return DeviceAddressType::kCPU; }
+  virtual DeviceType GetDeviceType() const { return DeviceType::kCPU; }
   virtual void SetOperatorInfo(const KernelGraphPtr &graph) const {}
   virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
 };

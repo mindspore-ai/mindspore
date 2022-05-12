@@ -65,7 +65,7 @@ bool IsNeedInsertCopyActor(const DeviceContext *from_device_context, const Devic
   MS_EXCEPTION_IF_NULL(from_device_context);
   MS_EXCEPTION_IF_NULL(to_device_context);
 
-  if (from_device_context->GetDeviceAddressType() == to_device_context->GetDeviceAddressType()) {
+  if (from_device_context->GetDeviceType() == to_device_context->GetDeviceType()) {
     return false;
   } else {
     return true;
@@ -1386,9 +1386,9 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
           .get();
     }
     MS_EXCEPTION_IF_NULL(copy_actor->output_);
-    if (copy_actor->output_->DeviceType() != to_device_context->GetDeviceAddressType()) {
-      MS_LOG(EXCEPTION) << "The device type is not equal, output device type:" << copy_actor->output_->DeviceType()
-                        << ", to device context type:" << to_device_context->GetDeviceAddressType();
+    if (copy_actor->output_->GetDeviceType() != to_device_context->GetDeviceType()) {
+      MS_LOG(EXCEPTION) << "The device type is not equal, output device type:" << copy_actor->output_->GetDeviceType()
+                        << ", to device context type:" << to_device_context->GetDeviceType();
     }
     copy_actor->is_need_update_output_size_ = common::AnfAlgo::IsDynamicShape(to_kernel_with_input_idx.first);
 
@@ -1989,13 +1989,13 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
       (void)copy_actor->device_tensor_store_keys_.emplace_back(0, device_tensor_store_key.second);
       auto input_device_context = auto_monad_actor->device_contexts_[0];
       (void)copy_actor->device_contexts_.emplace_back(input_device_context);
-      auto another_device_tensor = (device_tensors[0]->DeviceType() == input_device_context->GetDeviceAddressType())
+      auto another_device_tensor = (device_tensors[0]->GetDeviceType() == input_device_context->GetDeviceType())
                                      ? device_tensors[1]
                                      : device_tensors[0];
       MS_EXCEPTION_IF_NULL(another_device_tensor);
-      auto another_device_type = another_device_tensor->DeviceType();
       const auto &another_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-        {device::kDeviceTypeToName.at(another_device_type), input_device_context->device_context_key().device_id_});
+        {device::GetDeviceNameByType(another_device_tensor->GetDeviceType()),
+         input_device_context->device_context_key().device_id_});
       MS_EXCEPTION_IF_NULL(another_device_context);
       (void)copy_actor->device_contexts_.emplace_back(another_device_context);
 
@@ -2058,9 +2058,9 @@ void GraphScheduler::PersistDeviceTensor(const GraphCompilerInfo &graph_compiler
       }
 
       // If the device tensor store of this device type is not exist, then create the new device tensor of this type.
-      if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceAddressType()) == nullptr) {
+      if (DeviceTensorStore::GetInstance().Fetch(front_node.get(), device_context->GetDeviceType()) == nullptr) {
         MS_LOG(WARNING) << "Fetch no device tensor store by:" << front_node->fullname_with_scope()
-                        << ", type:" << device_context->GetDeviceAddressType();
+                        << ", type:" << device_context->GetDeviceType();
         auto other_type_device_tensor =
           device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
                                               device_tensor->type_id(), device_tensor->host_shape());
@@ -2114,8 +2114,7 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     new_device_tensor->set_from_persistent_mem(true);
     SchedulerHelper::AddDeviceTensorStore(root_graph_parameter.get(), new_device_tensor);
     MS_LOG(INFO) << "Add device tensor store by root graph parameter:" << root_graph_parameter->fullname_with_scope()
-                 << ", backend node:" << backend_node->DebugString()
-                 << ", type:" << device_context->GetDeviceAddressType();
+                 << ", backend node:" << backend_node->DebugString() << ", type:" << device_context->GetDeviceType();
   }
 }
 
@@ -2176,7 +2175,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
             << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
-            << "\tdevice_type:" << device_tensor->DeviceType()
+            << "\tdevice_type:" << device_tensor->GetDeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";
       }
     }
@@ -2201,7 +2200,7 @@ void GraphScheduler::DumpDeviceTensorStore(const GraphCompilerInfo &graph_compil
         ofs << "\t\t\tdevice tensor value:" << device_tensor << "\tptr:" << device_tensor->GetPtr()
             << "\tsize:" << device_tensor->GetSize() << "\toriginal_ref_count:" << device_tensor->original_ref_count()
             << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count()
-            << "\tdevice_type:" << device_tensor->DeviceType()
+            << "\tdevice_type:" << device_tensor->GetDeviceType()
             << "\tis_ptr_persisted:" << device_tensor->is_ptr_persisted() << "\n ";
       }
     }

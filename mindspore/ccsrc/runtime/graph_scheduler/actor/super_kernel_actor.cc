@@ -146,8 +146,8 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
 
     MS_LOG(INFO) << "The input data of node:" << input_node->DebugString()
                  << " need copy from address:" << input_device_tensor->GetPtr()
-                 << ", type:" << input_device_tensor->DeviceType() << " to address:" << device_address->GetPtr()
-                 << ", type:" << device_address->DeviceType() << ".";
+                 << ", type:" << input_device_tensor->GetDeviceType() << " to address:" << device_address->GetPtr()
+                 << ", type:" << device_address->GetDeviceType() << ".";
     if (!Copy(device_address.get(), input_device_tensor)) {
       MS_LOG(ERROR) << "Copy data failed.";
       return false;
@@ -160,7 +160,7 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   // Check device tensor store.
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
     auto input_device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
-                                                                      device_contexts_[0]->GetDeviceAddressType());
+                                                                      device_contexts_[0]->GetDeviceType());
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     if (device_tensor_store_key.first >= input_nodes.size()) {
       MS_LOG(ERROR) << "The input index:" << device_tensor_store_key.first << "is out of range:" << input_nodes.size();
@@ -179,9 +179,9 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
     if (input_device_tensor->GetPtr() != device_address->GetPtr()) {
       MS_LOG(ERROR) << "The input data of node:" << input_node->DebugString()
                     << " device address:" << input_device_tensor->GetPtr()
-                    << ", type:" << input_device_tensor->DeviceType()
+                    << ", type:" << input_device_tensor->GetDeviceType()
                     << " is not equal to the graph node device address:" << device_address->GetPtr()
-                    << ", type:" << device_address->DeviceType() << ".";
+                    << ", type:" << device_address->GetDeviceType() << ".";
       return false;
     }
   }

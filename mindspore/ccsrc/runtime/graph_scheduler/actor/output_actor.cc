@@ -205,12 +205,12 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(output_node, output_index, false);
   MS_EXCEPTION_IF_NULL(device_tensor);
-  if (device_context->GetDeviceAddressType() != device_tensor->DeviceType()) {
+  if (device_context->GetDeviceType() != device_tensor->GetDeviceType()) {
     auto old_device_context = device_context;
     device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {device_tensor->device_name(), device_tensor->device_id()});
-    MS_LOG(INFO) << "Update device context from:" << old_device_context->GetDeviceAddressType()
-                 << " to:" << device_context->GetDeviceAddressType();
+    MS_LOG(INFO) << "Update device context from:" << old_device_context->GetDeviceType()
+                 << " to:" << device_context->GetDeviceType();
   }
 
   // Create the device address and put it into host tensor.
@@ -272,7 +272,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
                           << "B.";
       }
       if (!tensor_device_address->SyncDeviceToDevice(device_tensor)) {
-        MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->DeviceType();
+        MS_LOG(EXCEPTION) << "Sync device to device failed, device type: " << tensor_device_address->GetDeviceType();
       }
     } else {
       // Move the device ptr from device_tensor to tensor_device_address.
