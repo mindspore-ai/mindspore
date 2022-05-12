@@ -78,6 +78,8 @@ class ModuleParser(Parser):
         module.body.insert(1, ast.ImportFrom(module='mindspore', names=[ast.alias(name='nn', asname=None)], level=0))
         module.body.insert(2, ast.ImportFrom(module='mindspore.nn', names=[ast.alias(name='Cell', asname=None)],
                                              level=0))
+        module.body.insert(3, ast.ImportFrom(module='mindspore.ops', names=[ast.alias(name='functional', asname='F')],
+                                             level=0))
         origin_net_source_code_file = inspect.getfile(type(origin_net))
         if not os.path.exists(origin_net_source_code_file):
             raise RuntimeError("File ", origin_net_source_code_file, " not exist")

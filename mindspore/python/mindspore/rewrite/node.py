@@ -226,9 +226,9 @@ class Node:
                    name, None)
 
     @staticmethod
-    def create_call_op(op: Union[Cell, Primitive], ast_node: Optional[ast.AST],
-                       targets: [Union[ScopedValue, str]], func: Union[ScopedValue, str],
-                       args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = ""):
+    def create_call_op(op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
+                       func: Union[ScopedValue, str], args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None,
+                       name: str = "", is_sub_net: bool = False):
         """
         Static method of Node. Instantiate an instance of node whose type is `CallCell` or `CallPrimitive`.
         If op is custom defined, it is treated by TreeNode.
@@ -245,10 +245,12 @@ class Node:
                 class.
             name (str): A string represents name of node. Name of node will be unique when inserted into `SymbolTree`.
                 Name of node also used as field name in network class.
+            is_sub_net (bool): Indicate that is `cell` a network. If `is_sub_net` is true, Rewrite will try to parse the
+                `cell` to a TreeNode, else a CallCell Node. Default is a False.
         """
         cls_name = type(op).__name__
 
-        if is_subtree(cls_name):
+        if is_sub_net and is_subtree(cls_name):
             from .symbol_tree_builder import SymbolTreeBuilder
             stb = SymbolTreeBuilder(op)
             stree = stb.build()

@@ -31,6 +31,9 @@ from .activation import get_activation
 from ..cell import Cell
 from ... import nn
 from ...ops.operations import _quant_ops as Q
+from .combined import Conv2dBnAct
+from .conv import Conv2d
+from .basic import Dense
 
 __all__ = [
     'FakeQuantWithMinMaxObserver',
@@ -721,7 +724,6 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.has_bias = has_bias
         self.fake = Validator.check_bool(fake, "fake", self.cls_name)
         self.quant_config = quant_config
-        self.quant_dtype = quant_dtype
         data_format = 'NCHW'
         self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
         self._target = context.get_context("device_target")
@@ -759,11 +761,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
         # initialize fake ops
         self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
-                                                     num_channels=out_channels,
-                                                     quant_dtype=quant_dtype)
-        self.freeze_bn = False
-        if self.fake_quant_weight.mode == "LEARNED_SCALE":
-            self.freeze_bn = True
+                                                     num_channels=out_channels)
+        self.freeze_bn = True
         self.bn_train = P.BatchNorm(is_training=True, epsilon=self.eps,
                                     momentum=self.momentum, data_format=self.format)
 
@@ -775,6 +774,33 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.assign_sub_mean = P.AssignSub()
         self.assign_sub_var = P.AssignSub()
         self.reshape = P.Reshape()
+
+    @classmethod
+    def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig):
+        """A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`"""
+
+        kwargs = {'in_channels': convbn.conv.in_channels,
+                  'out_channels': convbn.conv.out_channels,
+                  'kernel_size': convbn.conv.kernel_size,
+                  'stride': convbn.conv.stride,
+                  'pad_mode': convbn.conv.pad_mode,
+                  'padding': convbn.conv.padding,
+                  'dilation': convbn.conv.dilation,
+                  'group': convbn.conv.group,
+                  'has_bias': convbn.conv.has_bias,
+                  'bias_init': convbn.conv.bias_init,
+                  'weight_init': convbn.conv.weight_init,
+                  'quant_config': quant_config,
+                  'fake': True,
+                  }
+        if hasattr(convbn, 'batchnorm'):
+            kwargs['eps'] = convbn.batchnorm.eps
+            kwargs['momentum'] = convbn.batchnorm.momentum
+            kwargs['beta_init'] = convbn.batchnorm.beta_init
+            kwargs['gamma_init'] = convbn.batchnorm.gamma_init
+            kwargs['mean_init'] = convbn.batchnorm.moving_mean_init
+            kwargs['var_init'] = convbn.batchnorm.moving_var_init
+        return cls(**kwargs)
 
     def extend_repr(self):
         """Display instance object as string."""
@@ -1333,8 +1359,25 @@ class Conv2dQuant(Cell):
         channel_axis = 0
         self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=channel_axis,
-                                                     num_channels=out_channels,
-                                                     quant_dtype=quant_dtype)
+                                                     num_channels=out_channels)
+
+    @classmethod
+    def from_float(cls, conv: Conv2d, quant_config: QuantConfig):
+        """A class method to create `Conv2dQuant` from a `Conv2d`"""
+        conv_quant = cls(
+            conv.in_channels,
+            conv.out_channels,
+            kernel_size=conv.kernel_size,
+            stride=conv.stride,
+            pad_mode=conv.pad_mode,
+            padding=conv.padding,
+            dilation=conv.dilation,
+            group=conv.group,
+            has_bias=conv.has_bias,
+            bias_init=conv.bias_init,
+            weight_init=conv.weight_init,
+            quant_config=quant_config)
+        return conv_quant
 
     def construct(self, x):
         weight = self.fake_quant_weight(self.weight)
@@ -1457,8 +1500,20 @@ class DenseQuant(Cell):
         self.activation_flag = self.activation is not None
         self.fake_quant_weight = quant_config.weight(ema=False,
                                                      channel_axis=0,
-                                                     num_channels=out_channels,
-                                                     quant_dtype=quant_dtype)
+                                                     num_channels=out_channels)
+
+    @classmethod
+    def from_float(cls, dense: Dense, quant_config: QuantConfig):
+        """A class method to create `DenseQuant` from a `Dense`"""
+        dense_quant = cls(
+            dense.in_channels,
+            dense.out_channels,
+            dense.weight,
+            dense.bias,
+            dense.has_bias,
+            dense.activation,
+            quant_config=quant_config)
+        return dense_quant
 
     def construct(self, x):
         """Use operators to construct the Dense layer.
