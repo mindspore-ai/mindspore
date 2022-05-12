@@ -1,5 +1,5 @@
 mindspore.ops.BitwiseOr
-==================
+=======================
 
 .. py:class:: mindspore.ops.BitwiseOr()
 

@@ -297,7 +297,7 @@ class Addcmul(Primitive):
         output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
 
     Inputs:
-        - **input_data**(Tensor) - The tensor to be added.
+        - **input_data** (Tensor) - The tensor to be added.
         - **x1** (Tensor) - The tensor to be multiplied.
         - **x2** (Tensor) - The tensor to be multiplied.
         - **value** (Tensor) - The multiplier for tensor x1*x2.

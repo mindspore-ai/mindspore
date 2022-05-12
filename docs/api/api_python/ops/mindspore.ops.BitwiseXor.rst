@@ -1,5 +1,5 @@
 mindspore.ops.BitwiseXor
-==================
+========================
 
 .. py:class:: mindspore.ops.BitwiseXor()
 
