@@ -92,12 +92,11 @@ bool NativeGpuKernelMod::GpuCheckSupport(const std::string &kernel_name, const K
 }
 
 std::vector<KernelAttr> NativeGpuKernelMod::GetAllSupportedList(const std::string &kernel_name) {
-  if (initialize_.count(kernel_name) == 0) {
+  auto iter = support_map_.find(kernel_name);
+  if (iter == support_map_.end()) {
     auto kernel_support = GetOpSupport();
     (void)support_map_.emplace(kernel_name, kernel_support);
-    (void)initialize_.insert(kernel_name);
   }
-
   return support_map_[kernel_name];
 }
 
@@ -146,8 +145,7 @@ NativeGpuKernelMod::ReducePrecisonRes NativeGpuKernelMod::ReducePrecisionCheck(c
   return std::make_tuple(CheckSupport(kernel_name, reduce_kernel_attr), input_reduce_index, output_reduce_index);
 }
 
-std::map<std::string, std::vector<KernelAttr>> NativeGpuKernelMod::support_map_{};
-std::set<std::string> NativeGpuKernelMod::initialize_{};
+mindspore::HashMap<std::string, std::vector<KernelAttr>> NativeGpuKernelMod::support_map_{};
 
 std::vector<void *> ConvertPtrs(const std::vector<AddressPtr> &input_ptrs) {
   std::vector<void *> out_ptrs;
