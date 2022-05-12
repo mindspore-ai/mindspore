@@ -26,6 +26,7 @@
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace kernel {
@@ -146,8 +147,12 @@ class GetModelKernelMod : public DeprecatedNativeCpuKernelMod {
   bool BuildGetModelReq(const std::shared_ptr<fl::FBBuilder> &fbb, const std::vector<AddressPtr> &weights) {
     MS_EXCEPTION_IF_NULL(fbb_);
     auto fbs_fl_name = fbb->CreateString(fl_name_);
+    auto time = ps::core::CommUtil::GetNowTime();
+    MS_LOG(INFO) << "now time: " << time.time_str_mill;
+    auto fbs_timestamp = fbb->CreateString(std::to_string(time.time_stamp));
     schema::RequestGetModelBuilder req_get_model_builder(*(fbb.get()));
     req_get_model_builder.add_fl_name(fbs_fl_name);
+    req_get_model_builder.add_timestamp(fbs_timestamp);
     iteration_ = fl::worker::FLWorker::GetInstance().fl_iteration_num();
     req_get_model_builder.add_iteration(SizeToInt(iteration_));
     auto req_get_model = req_get_model_builder.Finish();
