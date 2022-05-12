@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,4 +15,12 @@
 """
 MindSpore Lite Python API.
 """
-from . import context, model, tensor
+
+from .context import Context, DeviceInfo, CPUDeviceInfo, GPUDeviceInfo, AscendDeviceInfo
+from .model import ModelType, Model, RunnerConfig, ModelParallelRunner
+from .tensor import DataType, Format, Tensor
+
+__all__ = []
+__all__.extend(context.__all__)
+__all__.extend(model.__all__)
+__all__.extend(tensor.__all__)

@@ -16,8 +16,12 @@
 Tensor API.
 """
 from enum import Enum
+
 import numpy
+
 from .lib import _c_lite_wrapper
+
+__all__ = ['DataType', 'Format', 'Tensor']
 
 
 class DataType(Enum):
@@ -76,7 +80,7 @@ class Tensor:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> tensor = mslite.tensor.Tensor()
+        >>> tensor = mslite.Tensor()
     """
 
     def __init__(self, tensor=None):
@@ -98,7 +102,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> tensor = mslite.tensor.Tensor()
+            >>> tensor = mslite.Tensor()
             >>> tensor.set_tensor_name("tensor0")
         """
         if not isinstance(tensor_name, str):
@@ -128,8 +132,8 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> tensor = mslite.tensor.Tensor()
-            >>> tensor.set_data_type(mslite.tensor.DataType.FLOAT32)
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_data_type(mslite.DataType.FLOAT32)
         """
         if not isinstance(data_type, DataType):
             raise TypeError(f"data_type must be DataType, but got {type(data_type)}.")
@@ -190,7 +194,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> tensor = mslite.tensor.Tensor()
+            >>> tensor = mslite.Tensor()
             >>> tensor.set_shape([1, 112, 112, 3])
         """
         if not isinstance(shape, list):
@@ -223,8 +227,8 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> tensor = mslite.tensor.Tensor()
-            >>> tensor.set_format(mslite.tensor.Format.NHWC)
+            >>> tensor = mslite.Tensor()
+            >>> tensor.set_format(mslite.Format.NHWC)
         """
         if not isinstance(tensor_format, Format):
             raise TypeError(f"tensor_format must be Format, but got {type(tensor_format)}.")
@@ -315,7 +319,7 @@ class Tensor:
             TypeError: type of input parameters are invalid.
 
         Examples:
-            >>> in_data = numpy.fromfile("model.ms.bin", dtype=np.float32)
+            >>> in_data = numpy.fromfile("mnist.tflite.ms.bin", dtype=np.float32)
             >>> tensor.set_data_from_numpy(in_data)
         """
         if not isinstance(numpy_obj, numpy.ndarray):

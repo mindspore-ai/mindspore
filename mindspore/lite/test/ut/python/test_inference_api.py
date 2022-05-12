@@ -23,120 +23,245 @@ import pytest
 # ============================ CPUDeviceInfo ============================
 def test_cpu_device_info_01():
     with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.context.CPUDeviceInfo(enable_fp16="1")
+        device_info = mslite.CPUDeviceInfo(enable_fp16="1")
     assert "enable_fp16 must be bool" in str(raise_info.value)
 
 
 def test_cpu_device_info_02():
-    device_info = mslite.context.CPUDeviceInfo(enable_fp16=True)
+    device_info = mslite.CPUDeviceInfo(enable_fp16=True)
     assert "enable_fp16: True" in str(device_info)
 
 
 # ============================ GPUDeviceInfo ============================
 def test_gpu_device_info_01():
     with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.context.GPUDeviceInfo(device_id="1")
+        device_info = mslite.GPUDeviceInfo(device_id="1")
     assert "device_id must be int" in str(raise_info.value)
 
 
 def test_gpu_device_info_02():
-    device_info = mslite.context.GPUDeviceInfo(device_id=2)
+    device_info = mslite.GPUDeviceInfo(device_id=2)
     assert "device_id: 2" in str(device_info)
 
 
 def test_gpu_device_info_03():
     with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.context.GPUDeviceInfo(enable_fp16=1)
+        device_info = mslite.GPUDeviceInfo(enable_fp16=1)
     assert "enable_fp16 must be bool" in str(raise_info.value)
 
 
 def test_gpu_device_info_04():
-    device_info = mslite.context.GPUDeviceInfo(enable_fp16=True)
+    device_info = mslite.GPUDeviceInfo(enable_fp16=True)
     assert "enable_fp16: True" in str(device_info)
 
 
 def test_gpu_device_info_05():
-    device_info = mslite.context.GPUDeviceInfo()
+    device_info = mslite.GPUDeviceInfo()
     rank_id = device_info.get_rank_id()
     assert isinstance(rank_id, int)
 
 
 def test_gpu_device_info_06():
-    device_info = mslite.context.GPUDeviceInfo()
+    device_info = mslite.GPUDeviceInfo()
     group_size = device_info.get_group_size()
     assert isinstance(group_size, int)
 
 
 # ============================ AscendDeviceInfo ============================
+def test_ascend_device_info_01():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(device_id="1")
+    assert "device_id must be int" in str(raise_info.value)
+
+
+def test_ascend_device_info_02():
+    device_info = mslite.AscendDeviceInfo(device_id=1)
+    assert "device_id: 1" in str(device_info)
+
+
+def test_ascend_device_info_03():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(input_format=1)
+    assert "input_format must be str" in str(raise_info.value)
+
+
+def test_ascend_device_info_04():
+    device_info = mslite.AscendDeviceInfo(input_format="NCHW")
+    assert "input_format: NCHW" in str(device_info)
+
+
+def test_ascend_device_info_05():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(input_shape="{1: [1, 112, 112, 3]}")
+    assert "input_shape must be dict" in str(raise_info.value)
+
+
+def test_ascend_device_info_06():
+    device_info = mslite.AscendDeviceInfo(input_shape={})
+    assert "input_shape: {}" in str(device_info)
+
+
+def test_ascend_device_info_07():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(input_shape={1: "[1, 112, 112, 3]"})
+    assert "input_shape value must be list" in str(raise_info.value)
+
+
+def test_ascend_device_info_08():
+    device_info = mslite.AscendDeviceInfo(input_shape={1: []})
+    assert "input_shape: {1: []}" in str(device_info)
+
+
+def test_ascend_device_info_09():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(input_shape={1: [1, "112", 112, 3]})
+    assert "input_shape value's element must be int" in str(raise_info.value)
+
+
+def test_ascend_device_info_10():
+    device_info = mslite.AscendDeviceInfo(input_shape={1: [1, 2, 3, 4], 2: [4, 3, 2, 1]})
+    assert "input_shape: {1: [1, 2, 3, 4], 2: [4, 3, 2, 1]}" in str(device_info)
+
+
+def test_ascend_device_info_11():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(precision_mode=1)
+    assert "precision_mode must be str" in str(raise_info.value)
+
+
+def test_ascend_device_info_12():
+    device_info = mslite.AscendDeviceInfo(precision_mode="allow_fp32_to_fp16")
+    assert "precision_mode: allow_fp32_to_fp16" in str(device_info)
+
+
+def test_ascend_device_info_13():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(op_select_impl_mode=1)
+    assert "op_select_impl_mode must be str" in str(raise_info.value)
+
+
+def test_ascend_device_info_14():
+    device_info = mslite.AscendDeviceInfo(op_select_impl_mode="high_precision")
+    assert "op_select_impl_mode: high_precision" in str(device_info)
+
+
+def test_ascend_device_info_15():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(dynamic_batch_size=1)
+    assert "dynamic_batch_size must be list" in str(raise_info.value)
+
+
+def test_ascend_device_info_16():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(dynamic_batch_size=["2", "4"])
+    assert "dynamic_batch_size element must be int" in str(raise_info.value)
+
+
+def test_ascend_device_info_17():
+    device_info = mslite.AscendDeviceInfo(dynamic_batch_size=[2, 4])
+    assert "dynamic_batch_size: 2,4" in str(device_info)
+
+
+def test_ascend_device_info_18():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(dynamic_image_size=1)
+    assert "dynamic_image_size must be str" in str(raise_info.value)
+
+
+def test_ascend_device_info_19():
+    device_info = mslite.AscendDeviceInfo(dynamic_image_size="66,88;32,64")
+    assert "dynamic_image_size: 66,88;32,64" in str(device_info)
+
+
+def test_ascend_device_info_20():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(fusion_switch_config_path=1)
+    assert "fusion_switch_config_path must be str" in str(raise_info.value)
+
+
+def test_ascend_device_info_21():
+    device_info = mslite.AscendDeviceInfo(fusion_switch_config_path="fusion_switch.cfg")
+    assert "fusion_switch_config_path: fusion_switch.cfg" in str(device_info)
+
+
+def test_ascend_device_info_22():
+    with pytest.raises(TypeError) as raise_info:
+        device_info = mslite.AscendDeviceInfo(insert_op_cfg_path=1)
+    assert "insert_op_cfg_path must be str" in str(raise_info.value)
+
+
+def test_ascend_device_info_23():
+    device_info = mslite.AscendDeviceInfo(insert_op_cfg_path="insert_op.cfg")
+    assert "insert_op_cfg_path: insert_op.cfg" in str(device_info)
 
 
 # ============================ Context ============================
 def test_context_01():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context(thread_num="1")
+        context = mslite.Context(thread_num="1")
     assert "thread_num must be int" in str(raise_info.value)
 
 
 def test_context_02():
-    context = mslite.context.Context(thread_num=4)
+    context = mslite.Context(thread_num=4)
     assert "thread_num: 4" in str(context)
 
 
 def test_context_03():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context(thread_affinity_mode="1")
+        context = mslite.Context(thread_affinity_mode="1")
     assert "thread_affinity_mode must be int" in str(raise_info.value)
 
 
 def test_context_04():
-    context = mslite.context.Context(thread_affinity_mode=2)
+    context = mslite.Context(thread_affinity_mode=2)
     assert "thread_affinity_mode: 2" in str(context)
 
 
 def test_context_05():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context(thread_affinity_core_list=2)
+        context = mslite.Context(thread_affinity_core_list=2)
     assert "thread_affinity_core_list must be list" in str(raise_info.value)
 
 
 def test_context_06():
-    context = mslite.context.Context(thread_affinity_core_list=[2])
+    context = mslite.Context(thread_affinity_core_list=[2])
     assert "thread_affinity_core_list: [2]" in str(context)
 
 
 def test_context_07():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context(thread_affinity_core_list=["1", "0"])
+        context = mslite.Context(thread_affinity_core_list=["1", "0"])
     assert "thread_affinity_core_list element must be int" in str(raise_info.value)
 
 
 def test_context_08():
-    context = mslite.context.Context(thread_affinity_core_list=[1, 0])
+    context = mslite.Context(thread_affinity_core_list=[1, 0])
     assert "thread_affinity_core_list: [1, 0]" in str(context)
 
 
 def test_context_09():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context(enable_parallel=1)
+        context = mslite.Context(enable_parallel=1)
     assert "enable_parallel must be bool" in str(raise_info.value)
 
 
 def test_context_10():
-    context = mslite.context.Context(enable_parallel=True)
+    context = mslite.Context(enable_parallel=True)
     assert "enable_parallel: True" in str(context)
 
 
 def test_context_11():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context()
+        context = mslite.Context()
         context.append_device_info("CPUDeviceInfo")
     assert "device_info must be CPUDeviceInfo, GPUDeviceInfo or AscendDeviceInfo" in str(raise_info.value)
 
 
 def test_context_12():
-    gpu_device_info = mslite.context.GPUDeviceInfo()
-    cpu_device_info = mslite.context.CPUDeviceInfo()
-    context = mslite.context.Context()
+    gpu_device_info = mslite.GPUDeviceInfo()
+    cpu_device_info = mslite.CPUDeviceInfo()
+    context = mslite.Context()
     context.append_device_info(gpu_device_info)
     context.append_device_info(cpu_device_info)
     assert "device_list: 1, 0" in str(context)
@@ -145,59 +270,59 @@ def test_context_12():
 # ============================ Tensor ============================
 def test_tensor_01():
     with pytest.raises(TypeError) as raise_info:
-        tensor1 = mslite.tensor.Tensor()
-        tensor2 = mslite.tensor.Tensor(tensor=tensor1)
+        tensor1 = mslite.Tensor()
+        tensor2 = mslite.Tensor(tensor=tensor1)
     assert "tensor must be TensorBind" in str(raise_info.value)
 
 
 def test_tensor_02():
-    tensor = mslite.tensor.Tensor()
+    tensor = mslite.Tensor()
     assert tensor.get_tensor_name() == ""
 
 
 def test_tensor_name_01():
     with pytest.raises(TypeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
+        tensor = mslite.Tensor()
         tensor.set_tensor_name(1)
     assert "tensor_name must be str" in str(raise_info.value)
 
 
 def test_tensor_name_02():
-    tensor = mslite.tensor.Tensor()
+    tensor = mslite.Tensor()
     tensor.set_tensor_name("tensor0")
     assert tensor.get_tensor_name() == "tensor0"
 
 
 def test_tensor_data_type_01():
     with pytest.raises(TypeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
+        tensor = mslite.Tensor()
         tensor.set_data_type(1)
     assert "data_type must be DataType" in str(raise_info.value)
 
 
 def test_tensor_data_type_02():
-    tensor = mslite.tensor.Tensor()
-    tensor.set_data_type(mslite.tensor.DataType.INT32)
-    assert tensor.get_data_type() == mslite.tensor.DataType.INT32
+    tensor = mslite.Tensor()
+    tensor.set_data_type(mslite.DataType.INT32)
+    assert tensor.get_data_type() == mslite.DataType.INT32
 
 
 def test_tensor_shape_01():
     with pytest.raises(TypeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
+        tensor = mslite.Tensor()
         tensor.set_shape(224)
     assert "shape must be list" in str(raise_info.value)
 
 
 def test_tensor_shape_02():
     with pytest.raises(TypeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
+        tensor = mslite.Tensor()
         tensor.set_shape(["224", "224"])
     assert "shape element must be int" in str(raise_info.value)
 
 
 def test_tensor_shape_03():
-    tensor = mslite.tensor.Tensor()
-    tensor.set_data_type(mslite.tensor.DataType.FLOAT32)
+    tensor = mslite.Tensor()
+    tensor.set_data_type(mslite.DataType.FLOAT32)
     tensor.set_shape([16, 16])
     assert tensor.get_shape() == [16, 16]
     assert tensor.get_element_num() == 256
@@ -206,28 +331,28 @@ def test_tensor_shape_03():
 
 def test_tensor_format_01():
     with pytest.raises(TypeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
+        tensor = mslite.Tensor()
         tensor.set_format(1)
     assert "tensor_format must be Format" in str(raise_info.value)
 
 
 def test_tensor_format_02():
-    tensor = mslite.tensor.Tensor()
-    tensor.set_format(mslite.tensor.Format.NHWC4)
-    assert tensor.get_format() == mslite.tensor.Format.NHWC4
+    tensor = mslite.Tensor()
+    tensor.set_format(mslite.Format.NHWC4)
+    assert tensor.get_format() == mslite.Format.NHWC4
 
 
 def test_tensor_data_01():
     with pytest.raises(TypeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
+        tensor = mslite.Tensor()
         tensor.set_data_from_numpy(1)
     assert "numpy_obj must be numpy.ndarray," in str(raise_info.value)
 
 
 def test_tensor_data_02():
     with pytest.raises(RuntimeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
-        tensor.set_data_type(mslite.tensor.DataType.FLOAT32)
+        tensor = mslite.Tensor()
+        tensor.set_data_type(mslite.DataType.FLOAT32)
         in_data = np.arange(2 * 3, dtype=np.float32).reshape((2, 3))
         tensor.set_data_from_numpy(in_data)
     assert "data size not equal" in str(raise_info.value)
@@ -235,8 +360,8 @@ def test_tensor_data_02():
 
 def test_tensor_data_03():
     with pytest.raises(RuntimeError) as raise_info:
-        tensor = mslite.tensor.Tensor()
-        tensor.set_data_type(mslite.tensor.DataType.FLOAT32)
+        tensor = mslite.Tensor()
+        tensor.set_data_type(mslite.DataType.FLOAT32)
         tensor.set_shape([2, 3])
         in_data = np.arange(2 * 3, dtype=np.int32).reshape((2, 3))
         tensor.set_data_from_numpy(in_data)
@@ -244,8 +369,8 @@ def test_tensor_data_03():
 
 
 def test_tensor_data_04():
-    tensor = mslite.tensor.Tensor()
-    tensor.set_data_type(mslite.tensor.DataType.FLOAT32)
+    tensor = mslite.Tensor()
+    tensor.set_data_type(mslite.DataType.FLOAT32)
     tensor.set_shape([2, 3])
     in_data = np.arange(2 * 3, dtype=np.float32).reshape((2, 3))
     tensor.set_data_from_numpy(in_data)
@@ -255,48 +380,48 @@ def test_tensor_data_04():
 
 # ============================ Model ============================
 def test_model_01():
-    model = mslite.model.Model()
+    model = mslite.Model()
     assert "model_path:" in str(model)
 
 
 def test_model_build_01():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context()
-        model = mslite.model.Model()
-        model.build_from_file(model_path=1, model_type=mslite.model.ModelType.MINDIR_LITE, context=context)
+        context = mslite.Context()
+        model = mslite.Model()
+        model.build_from_file(model_path=1, model_type=mslite.ModelType.MINDIR_LITE, context=context)
     assert "model_path must be str" in str(raise_info.value)
 
 
 def test_model_build_02():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.context.Context()
-        model = mslite.model.Model()
+        context = mslite.Context()
+        model = mslite.Model()
         model.build_from_file(model_path="test.ms", model_type="MINDIR_LITE", context=context)
     assert "model_type must be ModelType" in str(raise_info.value)
 
 
 def test_model_build_03():
     with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.context.CPUDeviceInfo()
-        model = mslite.model.Model()
-        model.build_from_file(model_path="test.ms", model_type=mslite.model.ModelType.MINDIR_LITE, context=device_info)
+        device_info = mslite.CPUDeviceInfo()
+        model = mslite.Model()
+        model.build_from_file(model_path="test.ms", model_type=mslite.ModelType.MINDIR_LITE, context=device_info)
     assert "context must be Context" in str(raise_info.value)
 
 
 def test_model_build_04():
     with pytest.raises(RuntimeError) as raise_info:
-        context = mslite.context.Context()
-        model = mslite.model.Model()
-        model.build_from_file(model_path="test.ms", model_type=mslite.model.ModelType.MINDIR_LITE, context=context)
+        context = mslite.Context()
+        model = mslite.Model()
+        model.build_from_file(model_path="test.ms", model_type=mslite.ModelType.MINDIR_LITE, context=context)
     assert "build_from_file failed" in str(raise_info.value)
 
 
 def get_model():
-    cpu_device_info = mslite.context.CPUDeviceInfo()
-    context = mslite.context.Context()
+    cpu_device_info = mslite.CPUDeviceInfo()
+    context = mslite.Context()
     context.append_device_info(cpu_device_info)
-    model = mslite.model.Model()
-    model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.model.ModelType.MINDIR_LITE, context=context)
+    model = mslite.Model()
+    model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE, context=context)
     return model
 
 
@@ -412,7 +537,7 @@ def test_model_predict_06():
 def test_model_predict_07():
     model = get_model()
     inputs = model.get_inputs()
-    input_tensor = mslite.tensor.Tensor()
+    input_tensor = mslite.Tensor()
     input_tensor.set_data_type(inputs[0].get_data_type())
     input_tensor.set_shape(inputs[0].get_shape())
     input_tensor.set_format(inputs[0].get_format())
