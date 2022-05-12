@@ -101,40 +101,23 @@ int ScatterElementsCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     std::accumulate(indices_shape_.begin(), indices_shape_.end(), size_t(1), std::multiplies<size_t>());
   adjusted_indices_.resize(indices_total_num_);
 
-  output_dim_stride_.resize(input_dims_);
-  output_dim_stride_.back() = 1;
+  output_stride_.resize(input_dims_);
+  output_stride_.back() = 1;
   for (int i = static_cast<int>(input_dims_ - 2); i >= 0; --i) {
-    output_dim_stride_[i] = input_shape[i + 1] * output_dim_stride_[i + 1];
+    output_stride_[i] = input_shape[i + 1] * output_stride_[i + 1];
   }
   output_dim_index_.resize(input_dims_);
   output_dim_index_.assign(input_dims_, 0);
-  return 0;
+  return KRET_OK;
 }
 
-template <typename S>
-bool ScatterElementsCpuKernelMod::AdjustIndices(S *in_indices) {
-  for (size_t i = 0; i < indices_total_num_; i++) {
-    auto index = in_indices[i];
-    if (index >= input_axis_size_ || index < -input_axis_size_) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', index: " << index << " is expected to be within bounds ["
-                    << -input_axis_size_ << ", " << input_axis_size_ << ")";
-      return false;
-    }
-    if (index < 0) {
-      index += input_axis_size_;
-    }
-    adjusted_indices_[i] = index;
-  }
-  return true;
-}
-
-size_t ScatterElementsCpuKernelMod::ComputeOutoutOffset(const int64_t &index) {
+size_t ScatterElementsCpuKernelMod::ComputeOutputOffset(const int64_t &index) {
   size_t output_offset = 0;
   for (size_t i = 0; i < input_dims_; ++i) {
     if (static_cast<int64_t>(i) == axis_) {
-      output_offset += index * output_dim_stride_[i];
+      output_offset += index * output_stride_[i];
     } else {
-      output_offset += output_dim_index_[i] * output_dim_stride_[i];
+      output_offset += output_dim_index_[i] * output_stride_[i];
     }
   }
   return output_offset;
@@ -151,15 +134,21 @@ void ScatterElementsCpuKernelMod::UpdateOutputDimIndex() {
   return;
 }
 
-template <typename T, typename ReductionT>
-bool ScatterElementsCpuKernelMod::Scatter(const ReductionT &reduction_func, T *output, const T *updates) {
-  for (size_t i = 0; i < indices_total_num_;) {
-    auto index = adjusted_indices_[i];
-    auto output_offset = ComputeOutoutOffset(index);
-    reduction_func(output + output_offset, *(updates + i));
-    if (++i == indices_total_num_) {
-      break;
+template <typename T, typename S, typename ReductionT>
+bool ScatterElementsCpuKernelMod::Scatter(const ReductionT &reduction_func, T *output, const S *indices,
+                                          const T *updates) {
+  for (size_t i = 0; i < indices_total_num_; ++i) {
+    int64_t index = static_cast<int64_t>(indices[i]);
+    if (index >= input_axis_size_ || index < -input_axis_size_) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', index: " << index << " is expected to be within bounds ["
+                    << -input_axis_size_ << ", " << input_axis_size_ << ")";
+      return false;
     }
+    if (index < 0) {
+      index += input_axis_size_;
+    }
+    auto output_offset = ComputeOutputOffset(index);
+    reduction_func(output + output_offset, *(updates + i));
     UpdateOutputDimIndex();
   }
   return true;
@@ -167,198 +156,76 @@ bool ScatterElementsCpuKernelMod::Scatter(const ReductionT &reduction_func, T *o
 
 template <typename T, typename S, typename ReductionT>
 bool ScatterElementsCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                               const std::vector<kernel::AddressPtr> &outputs) {
+                                               const std::vector<kernel::AddressPtr> &outputs,
+                                               const bool &update_input) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kScatterElementsInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kScatterElementsOutputsNum, kernel_name_);
   auto *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto *indices = reinterpret_cast<S *>(inputs[kIndex1]->addr);
   auto *updates = reinterpret_cast<T *>(inputs[kIndex2]->addr);
   auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-  auto bufferSize = outputs[kIndex0]->size;
-  auto ret = memcpy_s(output, bufferSize, input, input_size_ * sizeof(T));
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
-    return false;
-  }
-  if (!AdjustIndices(indices)) {
-    return false;
-  }
+  auto buffer_size = outputs[kIndex0]->size;
   ReductionT reduction_func;
-  return Scatter(reduction_func, output, updates);
+  if (update_input) {
+    Scatter(reduction_func, input, indices, updates);
+    auto ret = memcpy_s(output, buffer_size, input, input_size_ * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
+      return false;
+    }
+    return true;
+  } else {
+    auto ret = memcpy_s(output, buffer_size, input, input_size_ * sizeof(T));
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret;
+      return false;
+    }
+    return Scatter(reduction_func, output, indices, updates);
+  }
 }
+
+#define SCATTER_ELEMENTS_CPU_REG(MS_T, MS_S, T, S, Reduction_T)                              \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
+    &ScatterElementsCpuKernelMod::LaunchKernel<T, S, Reduction_T<T>>
 
 std::map<std::string, std::vector<std::pair<KernelAttr, ScatterElementsCpuKernelMod::ScatterElementsLaunchFunc>>>
   ScatterElementsCpuKernelMod::func_map_ = {
     {kScatterElements,
-     {{KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int8_t, int32_t, ReductionAssignment<int8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<uint8_t, int32_t, ReductionAssignment<uint8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int32_t, int32_t, ReductionAssignment<int32_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float16, int32_t, ReductionAssignment<float16>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float, int32_t, ReductionAssignment<float>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<double, int32_t, ReductionAssignment<double>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int64_t, int32_t, ReductionAssignment<int64_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int8_t, int64_t, ReductionAssignment<int8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<uint8_t, int64_t, ReductionAssignment<uint8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int32_t, int64_t, ReductionAssignment<int32_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float16, int64_t, ReductionAssignment<float16>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float, int64_t, ReductionAssignment<float>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<double, int64_t, ReductionAssignment<double>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int64_t, int64_t, ReductionAssignment<int64_t>>}}},
+     {{SCATTER_ELEMENTS_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t, ReductionAssignment)},
+
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t, ReductionAssignment)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t, ReductionAssignment)}}},
     {kScatterAddWithAxis,
-     {{KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int8_t, int32_t, ReductionAdd<int8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<uint8_t, int32_t, ReductionAdd<uint8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int32_t, int32_t, ReductionAdd<int32_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float16, int32_t, ReductionAdd<float16>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float, int32_t, ReductionAdd<float>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<double, int32_t, ReductionAdd<double>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int64_t, int32_t, ReductionAdd<int64_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt8)
-         .AddOutputAttr(kNumberTypeInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int8_t, int64_t, ReductionAdd<int8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeUInt8)
-         .AddOutputAttr(kNumberTypeUInt8),
-       &ScatterElementsCpuKernelMod::LaunchKernel<uint8_t, int64_t, ReductionAdd<uint8_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt32)
-         .AddOutputAttr(kNumberTypeInt32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int32_t, int64_t, ReductionAdd<int32_t>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat16)
-         .AddOutputAttr(kNumberTypeFloat16),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float16, int64_t, ReductionAdd<float16>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat32)
-         .AddOutputAttr(kNumberTypeFloat32),
-       &ScatterElementsCpuKernelMod::LaunchKernel<float, int64_t, ReductionAdd<float>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeFloat64)
-         .AddOutputAttr(kNumberTypeFloat64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<double, int64_t, ReductionAdd<double>>},
-      {KernelAttr()
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddInputAttr(kNumberTypeInt64)
-         .AddOutputAttr(kNumberTypeInt64),
-       &ScatterElementsCpuKernelMod::LaunchKernel<int64_t, int64_t, ReductionAdd<int64_t>>}}}};
+     {{SCATTER_ELEMENTS_CPU_REG(kNumberTypeBool, kNumberTypeInt32, bool, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt32, int8_t, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt32, uint8_t, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt32, float16, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double, int32_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt32, int64_t, int32_t, ReductionAdd)},
+
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeUInt8, kNumberTypeInt64, uint8_t, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, float16, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double, int64_t, ReductionAdd)},
+      {SCATTER_ELEMENTS_CPU_REG(kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t, ReductionAdd)}}}};
 
 bool ScatterElementsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs) {
@@ -368,6 +235,12 @@ bool ScatterElementsCpuKernelMod::Init(const BaseOperatorPtr &base_operator, con
     MS_LOG(ERROR) << "Need to be " << kernel_type_ << " but got kernel name as " << kernel_name_;
     return false;
   }
+  if (kernel_name_ == kScatterAddWithAxis) {
+    update_input_ = true;
+  } else if (kernel_name_ == kScatterElements) {
+    update_input_ = false;
+  }
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!pair.first) {

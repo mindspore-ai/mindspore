@@ -47,28 +47,27 @@ class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, outputs, update_input_);
   }
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
   template <typename T, typename S, typename ReductionT>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
+                    const bool &update_input);
 
-  template <typename T, typename ReductionT>
-  bool Scatter(const ReductionT &reduction_func, T *output, const T *updates);
+  template <typename T, typename S, typename ReductionT>
+  bool Scatter(const ReductionT &reduction_func, T *output, const S *indices, const T *updates);
 
-  template <typename S>
-  bool AdjustIndices(S *in_indices);
-
-  size_t ComputeOutoutOffset(const int64_t &index);
+  size_t ComputeOutputOffset(const int64_t &index);
 
   void UpdateOutputDimIndex();
 
  private:
-  using ScatterElementsLaunchFunc = std::function<bool(
-    ScatterElementsCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  using ScatterElementsLaunchFunc =
+    std::function<bool(ScatterElementsCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const bool &update_input)>;
 
   static std::map<std::string, std::vector<std::pair<KernelAttr, ScatterElementsLaunchFunc>>> func_map_;
   ScatterElementsLaunchFunc kernel_func_;
@@ -79,10 +78,11 @@ class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
   size_t input_dims_{0};
   int64_t axis_{0};
   std::vector<int64_t> indices_shape_{};
-  std::vector<size_t> output_dim_stride_{};
+  std::vector<size_t> output_stride_{};
   std::vector<size_t> output_dim_index_{};
   std::vector<int64_t> adjusted_indices_{};
   std::string kernel_name_;
+  bool update_input_ = true;
 };
 }  // namespace mindspore::kernel
 
