@@ -489,6 +489,7 @@ from .lamb_next_right import _lamb_next_right_tbe
 from .sparse_gather_v2 import _sparse_gather_v2_tbe
 from .sparse_gather_v2_ds import _sparse_gather_v2_ds_tbe
 from .sparse_apply_r_m_s_prop import _sparse_apply_r_m_s_prop_tbe
+from .sparse_apply_r_m_s_prop_ds import _sparse_apply_r_m_s_prop_ds_tbe
 from .data_format_dim_map import _data_format_dim_map_tbe
 from .data_format_dim_map_ds import _data_format_dim_map_ds_tbe
 from .histogram_fixed_width import _histogram_fixed_width_tbe
