@@ -17,6 +17,7 @@
 import math
 import numpy as np
 import mindspore.common.dtype as mstype
+from mindspore import context
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
@@ -1475,7 +1476,7 @@ class Roll(Cell):
         ValueError: If length of shape of `shift` is not equal to length of shape of `axis`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
@@ -1500,29 +1501,52 @@ class Roll(Cell):
         self.shift = shift
         self.axis = axis
         self.op_list = []
+        self.gpu = False
 
         if not isinstance(self.axis, (list, tuple)):
-            self.op_list.append((inner.Roll(shift=self.shift, axis=0), self.axis))
-        else:
+            self.axis = [self.axis]
+        if not isinstance(self.shift, (list, tuple)):
+            self.shift = [self.shift]
+        if context.get_context("device_target") == "GPU":
+            Validator.check_int(len(self.shift), 1, Rel.GE, "shift", "Roll")
+            Validator.check_int(len(self.axis), 1, Rel.GE, "axis", "Roll")
+            for s_axis in self.axis:
+                Validator.check_is_int(s_axis, "axis", "Roll")
+            for s_shift in self.shift:
+                Validator.check_is_int(s_shift, "shift", "Roll")
+            self.roll = inner.Roll(self.shift, self.axis)
+            self.gpu = True
             if len(self.shift) != len(self.axis):
                 raise ValueError(f"For '{self.cls_name}', the shape of 'shift' and the shape of 'axis' must be "
-                                 f"the same, but got the length of 'shift' {len(self.shift)} and the length of 'axis'"
-                                 f" {len(self.axis)}.")
-            for idx, _ in enumerate(self.axis):
-                self.op_list.append((inner.Roll(shift=self.shift[idx], axis=0), self.axis[idx]))
+                                 f"the same, but got the length of 'shift' {len(self.shift)} "
+                                 f"and the length of 'axis' {len(self.axis)}.")
+        else:
+            if not isinstance(self.axis, (list, tuple)):
+                self.op_list.append((inner.Roll(shift=self.shift, axis=0), self.axis))
+            else:
+                if len(self.shift) != len(self.axis):
+                    raise ValueError(f"For '{self.cls_name}', the shape of 'shift' and the shape of 'axis' must be "
+                                     f"the same, but got the length of 'shift' {len(self.shift)} "
+                                     f"and the length of 'axis' {len(self.axis)}.")
+                for idx, _ in enumerate(self.axis):
+                    self.op_list.append((inner.Roll(shift=self.shift[idx], axis=0), self.axis[idx]))
 
     def construct(self, input_x):
         dim = len(self.shape_op(input_x))
-        for single_op_roll, single_axis in self.op_list:
-            _check_input_dim(single_axis, dim, self.cls_name)
-            if single_axis < 0:
-                single_axis += dim
-            transpose_perm = []
-            for i in range(dim):
-                transpose_perm.append(i)
-            transpose_perm[0], transpose_perm[single_axis] = single_axis, 0
+        if self.gpu:
+            output = self.roll(input_x)
+        else:
+            for single_op_roll, single_axis in self.op_list:
+                _check_input_dim(single_axis, dim, self.cls_name)
+                if single_axis < 0:
+                    single_axis += dim
+                transpose_perm = []
+                for i in range(dim):
+                    transpose_perm.append(i)
+                transpose_perm[0], transpose_perm[single_axis] = single_axis, 0
 
-            input_x = input_x.transpose(transpose_perm)
-            input_x = single_op_roll(input_x)
-            input_x = input_x.transpose(transpose_perm)
-        return input_x
+                input_x = input_x.transpose(transpose_perm)
+                input_x = single_op_roll(input_x)
+                input_x = input_x.transpose(transpose_perm)
+            output = input_x
+        return output

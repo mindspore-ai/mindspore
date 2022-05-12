@@ -1286,14 +1286,9 @@ class Roll(Primitive):
     Raises:
         TypeError: If `shift` is not an int, a tuple or a list.
         TypeError: If `axis` is not an int, a tuple or a list.
-        TypeError: If element of `shift` is not an int.
-        TypeError: If element of `axis` is not an int.
-        ValueError: If axis is not equal to 0.
-        ValueError: If shape of `shift` is not equal to 1.
-        ValueError: If shape of `axis` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> from mindspore.ops.operations import _inner_ops as inner
@@ -1313,14 +1308,16 @@ class Roll(Primitive):
     @prim_attr_register
     def __init__(self, shift, axis):
         """Initialize Roll"""
-        validator.check_value_type("shift", shift, [int, tuple, list], self.name)
-        validator.check_value_type("axis", axis, [int, tuple, list], self.name)
-        if isinstance(shift, (tuple, list)) and isinstance(axis, (tuple, list)):
-            validator.check_equal_int(len(shift), 1, "shift size", self.name)
-            validator.check_equal_int(len(axis), 1, "shift size", self.name)
-            validator.check_equal_int(axis[0], 0, "axis", self.name)
-        elif isinstance(shift, int) and isinstance(axis, int):
-            validator.check_equal_int(axis, 0, "axis", self.name)
+        if context.get_context("device_target") == "GPU":
+            validator.check_value_type("shift", shift, [int, tuple, list], self.name)
+            validator.check_value_type("axis", axis, [int, tuple, list], self.name)
+        else:
+            if isinstance(shift, (tuple, list)) and isinstance(axis, (tuple, list)):
+                validator.check_equal_int(len(shift), 1, "shift size", self.name)
+                validator.check_equal_int(len(axis), 1, "shift size", self.name)
+                validator.check_equal_int(axis[0], 0, "axis", self.name)
+            elif isinstance(shift, int) and isinstance(axis, int):
+                validator.check_equal_int(axis, 0, "axis", self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 

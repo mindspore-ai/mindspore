@@ -16,7 +16,6 @@
 
 #include "ops/roll.h"
 #include <set>
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
@@ -33,9 +32,6 @@ abstract::ShapePtr RollInferShape(const PrimitivePtr &primitive, const std::vect
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, input_num,
                                            prim_name);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
-  auto x_rank = SizeToLong(x_shape.size());
-  CheckAndConvertUtils::CheckInRange("axis value", axis, kIncludeLeft, {-x_rank, x_rank}, prim_name);
   return std::make_shared<abstract::Shape>(x_shape);
 }
 
@@ -43,11 +39,25 @@ TypePtr RollInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kInt32, kUInt32, kInt8, kUInt8};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kInt32, kUInt32, kInt8, kUInt8, kFloat64};
   auto infer_type = input_args[0]->BuildType();
   return CheckAndConvertUtils::CheckTensorTypeValid("x type", infer_type, valid_types, prim->name());
 }
 }  // namespace
+
+void Roll::Init(const std::vector<int64_t> axis, const std::vector<int64_t> shift) {}
+
+std::vector<int64_t> Roll::get_axis() const {
+  std::vector<int64_t> axis_me;
+  axis_me = GetValue<std::vector<int64_t>>(GetAttr(kAxis));
+  return axis_me;
+}
+
+std::vector<int64_t> Roll::get_shift() const {
+  std::vector<int64_t> shift_me;
+  shift_me = GetValue<std::vector<int64_t>>(GetAttr(kShift));
+  return shift_me;
+}
 
 MIND_API_OPERATOR_IMPL(Roll, BaseOperator);
 AbstractBasePtr RollInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

@@ -14,7 +14,7 @@
 # ============================================================================
 
 """inner_ops"""
-
+from mindspore import context
 from .._grad.grad_base import bprop_getters
 from ..operations import _inner_ops as inner
 from ..operations import _grad_ops as G
@@ -22,6 +22,7 @@ from .. import functional as F
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ...common import dtype as mstype
+
 
 
 @bprop_getters.register(inner.TensorCopySlices)
@@ -40,9 +41,16 @@ def get_bprop_tensor_copy_slices(self):
 @bprop_getters.register(inner.Roll)
 def get_bprop_roll(self):
     """Generate bprop for Roll"""
-    shift = self.shift
-    axis = self.axis
-    roll_grad = inner.Roll(-shift, axis)
+    if context.get_context("device_target") == "GPU":
+        shift = []
+        axis = self.axis
+        for tmp in enumerate(self.shift):
+            shift.append(-tmp[1])
+        roll_grad = inner.Roll(shift, axis)
+    else:
+        shift = self.shift
+        axis = self.axis
+        roll_grad = inner.Roll(-shift, axis)
 
     def bprop(x_input, out, dout):
         dx = roll_grad(dout)

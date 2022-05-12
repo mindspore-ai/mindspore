@@ -31,6 +31,10 @@ class MIND_API Roll : public BaseOperator {
   MIND_API_BASE_MEMBER(Roll);
   /// \brief Constructor.
   Roll() : BaseOperator(kNameRoll) { InitIOName({"input_x"}, {"output"}); }
+  void Init(const std::vector<int64_t> axis, const std::vector<int64_t> shift);
+
+  std::vector<int64_t> get_shift() const;
+  std::vector<int64_t> get_axis() const;
 };
 
 abstract::AbstractBasePtr RollInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
