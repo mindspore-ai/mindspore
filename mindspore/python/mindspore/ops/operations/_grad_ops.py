@@ -2527,3 +2527,39 @@ class TraceGrad(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
+
+
+class IgammaGradA(Primitive):
+    r"""
+    Computes the gradient of igamma(a, x) wrt a.
+
+    Inputs:
+        - **a** (Tensor) - The input tensor. With float32 or float 64 data type.
+        - **x** (Tensor) - The input tensor. With float32 data or float64 type. `x` should have
+          the same dtype with `a`.
+
+    Outputs:
+        Tensor, has the same dtype as `a` and `x`.
+
+    Raises:
+        TypeError: If a or grad is not a Tensor.
+        TypeError: If dtype of input x and a is not float32 nor float64.
+        TypeError: If x has different dtype with a.
+        ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
+
+    Supported Platforms:
+        ``Ascend````CPU``
+
+    Examples:
+        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> igammagrada = G.IgammaGradA()
+        >>> output = igammagrada(a, x)
+        >>> print (output)
+        [-0.2940046  -0.20153049 -0.13028376 -0.08352186]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize IgammaGradA"""
+        self.init_prim_io_names(inputs=['a', 'x'], outputs=['z'])

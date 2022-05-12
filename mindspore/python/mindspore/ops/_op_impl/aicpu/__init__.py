@@ -49,6 +49,9 @@ from .asin_grad import _asin_grad_aicpu
 from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
+from .igamma import _igamma_aicpu
+from .igammac import _igammac_aicpu
+from .igammagrada import _igammagrada_aicpu
 from .reshape import _reshape_aicpu
 from .fill_v2 import _fill_v2_aicpu
 from .flatten import _flatten_aicpu

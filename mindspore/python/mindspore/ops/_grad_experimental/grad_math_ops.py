@@ -19,14 +19,17 @@ from mindspore.common import dtype as mstype
 from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
+from ...nn.layer import math
 from .. import functional as F
 from .. import operations as P
 from ..operations.math_ops import Trace
+from ..functional import broadcast_gradient_args
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
 from ..operations import math_ops as math
+from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
 from ..operations.math_ops import ReduceStd
 
@@ -510,5 +513,53 @@ def get_bprop_trace(self):
         shape = shape_op(x)
         dx = input_grad(dout, cast(to_array(shape), mstype.int64))
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Igamma)
+def get_bprop_igamma(self):
+    """Grad definition for `Igamma` operation."""
+    shape_ = P.Shape()
+    igammagrada = G.IgammaGradA()
+    lgamma = math.LGamma()
+    log_ = P.Log()
+    exp_ = P.Exp()
+    reshape_ = P.Reshape()
+    reduce_sum_ = P.ReduceSum()
+    def bprop(a, x, out, dout):
+        sa = shape_(a)
+        sx = shape_(x)
+        ra, rx = broadcast_gradient_args(sa, sx)
+        partial_a = igammagrada(a, x)
+        partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
+        if ra != () or rx != ():
+            return reshape_(reduce_sum_(partial_a * dout, ra), sa), reshape_(reduce_sum_(partial_x * dout, rx), sx)
+        return reshape_(partial_a * dout, sa), reshape_(partial_x * dout, sx)
+
+    return bprop
+
+
+@bprop_getters.register(Igammac)
+def get_bprop_igammac(self):
+    """Grad definition for `Igammac` operation."""
+    shape_ = P.Shape()
+    igammagrada = G.IgammaGradA()
+    lgamma = math.LGamma()
+    log_ = P.Log()
+    exp_ = P.Exp()
+    reshape_ = P.Reshape()
+    reduce_sum_ = P.ReduceSum()
+    neg_ = P.Neg()
+    def bprop(a, x, out, dout):
+        sa = shape_(a)
+        sx = shape_(x)
+        ra, rx = broadcast_gradient_args(sa, sx)
+        partial_a = igammagrada(a, x)
+        partial_x = exp_(-x + (a - 1) * log_(x) - lgamma(a))
+        if ra != () or rx != ():
+            return neg_(reshape_(reduce_sum_(partial_a * dout, ra), sa)), \
+                   neg_(reshape_(reduce_sum_(partial_x * dout, rx), sx))
+        return neg_(reshape_(partial_a * dout, sa)), neg_(reshape_(partial_x * dout, sx))
 
     return bprop

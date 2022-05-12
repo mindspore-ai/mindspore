@@ -25,8 +25,9 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations._grad_ops import IgammaGradA
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
-from mindspore.ops.operations.math_ops import Zeta
+from mindspore.ops.operations.math_ops import Zeta, Igamma, Igammac
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -478,7 +479,25 @@ raise_set = [
     ('Zeta', {
         'block': Zeta(),
         'desc_inputs': [Tensor(np.array([1, 1, 1, 1], np.float32)),
-                        Tensor([0.5, 0.5, 0.5, 0.5], mstype.float32)],
+                        Tensor([0.5, 0.5, 0.5, 0.5], mstype.float32)]}),
+    ('Igamma', {
+        'block': Igamma(),
+        'desc_inputs': [Tensor(np.array([1.1, 2.2, -4.1], np.float32)),
+                        Tensor(np.array([0.2, 1.2, 2.1], np.float32))],
+        'desc_bprop': [Tensor(np.array([2, 3], np.float32)),
+                       Tensor(np.array([2, 3], np.float32))],
+        'skip': ['backward']}),
+    ('Igammac', {
+        'block': Igammac(),
+        'desc_inputs': [Tensor(np.array([1.1, 2.2, -4.1], np.float32)),
+                        Tensor(np.array([0.2, 1.2, 2.1], np.float32))],
+        'desc_bprop': [Tensor(np.array([2, 3], np.float32)),
+                       Tensor(np.array([2, 3], np.float32))],
+        'skip': ['backward']}),
+    ('IgammaGradA', {
+        'block': IgammaGradA(),
+        'desc_inputs': [Tensor(np.array([1.1, 2.2, 8.1, 2.1], np.float32)),
+                        Tensor(np.array([0.2, 1.2, 2.1, 3.4], np.float32))],
         'skip': ['backward']}),
 ]
 

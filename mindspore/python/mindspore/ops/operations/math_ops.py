@@ -5380,6 +5380,106 @@ class Trunc(Primitive):
         """Initialize Trunc"""
 
 
+class Igamma(Primitive):
+    r"""
+    Calculates lower regularized incomplete Gamma function.
+    The lower regularized incomplete Gamma function is defined as:
+
+    .. math::
+        P(a, x) = gamma(a, x) / Gamma(a) = 1 - Q(a, x)
+
+    where
+
+    .. math::
+        gamma(a, x) = \int_0^x t^{a-1} \exp^{-t} dt
+
+    is the lower incomplete Gamma function.
+
+    Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **a** (Tensor) - The input tensor. With type of float32 or float64.
+        - **x** (Tensor) - The input tensor. With float32 or float64 type. `x` should have
+          the same dtype with `a`.
+
+    Outputs:
+        Tensor, has the same dtype as `a` and `x`.
+
+    Raises:
+        TypeError: If a or x is not a Tensor.
+        TypeError: If dtype of input x and a is not float32 nor float64.
+        TypeError: If x has different dtype with a.
+        ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
+
+    Supported Platforms:
+        ``Ascend````CPU``
+
+    Examples:
+        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> igamma = P.IGamma()
+        >>> output = igamma(a, x)
+        >>> print (output)
+        [0.593994  0.35276785  0.21486944  0.13337152]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Igamma"""
+        self.init_prim_io_names(inputs=['a', 'x'], outputs=['z'])
+
+
+class Igammac(Primitive):
+    r"""
+    Compute the upper regularized incomplete Gamma function Q(a, x).
+
+    The upper regularized incomplete Gamma function is defined as:
+    \(Q(a, x) = Gamma(a, x) / Gamma(a) = 1 - P(a, x)\)
+    where
+    \(Gamma(a, x) = int_{x}^{\infty} t^{a-1} exp(-t) dt\)
+
+    is the upper incomplete Gama function.
+
+    Note, above P(a, x) (Igamma) is the lower regularized complete Gamma function.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Inputs:
+        - **a** (Tensor) - The input tensor of igammac. With float32 or float64 data type.
+        - **x** (Tensor) - The input tensor of igammac. With float32 or float64 type. `x` should have
+          the same type with `a`.
+
+    Outputs:
+        A Tensor, has the same dtype as `a` and `x`.
+
+    Raises:
+        TypeError: If dtype of input x and a is not float32 nor float64.
+        TypeError: If a or x is not a Tensor.
+        TypeError: If x has different dtype with a.
+        ValueError: If `a` could not be broadcast to a tensor with shape of `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
+        >>> x = Tensor(np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32))
+        >>> igammac = P.IGammac()
+        >>> output = igammac(a, x)
+        >>> print (output)
+        [0.40600586 0.6472318  0.7851304  0.8666283 ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Igammac"""
+        self.init_prim_io_names(inputs=['a', 'x'], outputs=['z'])
+
+
 class IsClose(Primitive):
     r"""
     Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
