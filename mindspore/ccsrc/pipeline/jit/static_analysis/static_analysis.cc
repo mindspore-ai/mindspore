@@ -501,35 +501,35 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<MetaFuncGrap
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<JTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr func_orig = func->fn();
-  EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
-  auto jevaluator = std::make_shared<JEvaluator>(evaluator_orig, func_orig);
+  AbstractFunctionPtr primal_func = func->fn();
+  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
+  auto jevaluator = std::make_shared<JEvaluator>(primal_evaluator, primal_func);
   return jevaluator;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<VmapTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr func_orig = func->fn();
+  AbstractFunctionPtr primal_func = func->fn();
   ValuePtr in_axes = func->in_axes();
   ValuePtr out_axes = func->out_axes();
-  EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
-  auto vmap_evaluator = std::make_shared<VmapEvaluator>(evaluator_orig, func_orig, in_axes, out_axes);
+  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
+  auto vmap_evaluator = std::make_shared<VmapEvaluator>(primal_evaluator, primal_func, in_axes, out_axes);
   return vmap_evaluator;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<TaylorTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr func_orig = func->fn();
-  EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
-  auto taylorevaluator = std::make_shared<TaylorEvaluator>(evaluator_orig, func_orig);
+  AbstractFunctionPtr primal_func = func->fn();
+  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
+  auto taylorevaluator = std::make_shared<TaylorEvaluator>(primal_evaluator, primal_func);
   return taylorevaluator;
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<ShardTransformedAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr func_orig = func->fn();
-  EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
-  auto shard_evaluator = std::make_shared<ShardEvaluator>(evaluator_orig, func_orig);
+  AbstractFunctionPtr primal_func = func->fn();
+  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
+  auto shard_evaluator = std::make_shared<ShardEvaluator>(primal_evaluator, primal_func);
   return shard_evaluator;
 }
 
@@ -542,15 +542,15 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<VirtualAbstr
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PartialAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  AbstractFunctionPtr func_orig = func->fn();
-  EvaluatorPtr evaluator_orig = GetEvaluatorFor(func_orig);
-  auto part_pair = std::make_pair(func_orig, func->args());
+  AbstractFunctionPtr primal_func = func->fn();
+  EvaluatorPtr primal_evaluator = GetEvaluatorFor(primal_func);
+  auto part_pair = std::make_pair(primal_func, func->args());
   auto itr = constructors_app_.find(part_pair);
   if (itr != constructors_app_.end()) {
     return itr->second;
   }
   std::shared_ptr<PartialAppEvaluator> partial_evaluator =
-    std::make_shared<PartialAppEvaluator>(evaluator_orig, func->args());
+    std::make_shared<PartialAppEvaluator>(primal_evaluator, func->args());
   constructors_app_[part_pair] = partial_evaluator;
   return partial_evaluator;
 }
@@ -598,8 +598,8 @@ EvaluatorPtr AnalysisEngine::GetEvaluatorFor(const AbstractFunctionPtr &func) {
     MS_LOG(DEBUG) << "The tracking_id: " << func->tracking_id()->DebugString();
   }
 
-  if (func->tracking_id() == nullptr || func->isa<abstract::MetaFuncGraphAbstractClosure>() ||
-      func->isa<abstract::FuncGraphAbstractClosure>()) {
+  if (func->tracking_id() == nullptr || func->isa<MetaFuncGraphAbstractClosure>() ||
+      func->isa<FuncGraphAbstractClosure>()) {
     EvaluatorPtr evaluator = _GetEvaluatorFor(func);
     return evaluator;
   }
@@ -1067,28 +1067,27 @@ EvalResultPtr AnfNodeConfig::ObtainEvalResult() {
   return engine_.lock()->ObtainEvalResultWithCache(self);
 }
 
-abstract::AbstractBasePtr MakeAbstractClosure(const FuncGraphPtr &func_graph,
-                                              const abstract::AnalysisContextPtr &context, const AnfNodePtr &anf_node) {
+AbstractBasePtr MakeAbstractClosure(const FuncGraphPtr &func_graph, const AnalysisContextPtr &context,
+                                    const AnfNodePtr &anf_node) {
   AnalysisContextPtr temp_context = context;
   if (temp_context == nullptr) {
-    temp_context = abstract::AnalysisContext::DummyContext();
+    temp_context = AnalysisContext::DummyContext();
   }
-  return std::make_shared<abstract::FuncGraphAbstractClosure>(func_graph, temp_context, anf_node);
+  return std::make_shared<FuncGraphAbstractClosure>(func_graph, temp_context, anf_node);
 }
 
-abstract::AbstractBasePtr MakeAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, const AnfNodePtr &anf_node) {
-  abstract::MetaFuncGraphAbstractClosurePtr meta_func_graph_fn;
+AbstractBasePtr MakeAbstractClosure(const MetaFuncGraphPtr &meta_func_graph, const AnfNodePtr &anf_node) {
+  MetaFuncGraphAbstractClosurePtr meta_func_graph_fn;
   if (anf_node == nullptr) {
-    meta_func_graph_fn = std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph);
+    meta_func_graph_fn = std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph);
   } else {
-    meta_func_graph_fn =
-      std::make_shared<abstract::MetaFuncGraphAbstractClosure>(meta_func_graph, anf_node, anf_node->scope());
+    meta_func_graph_fn = std::make_shared<MetaFuncGraphAbstractClosure>(meta_func_graph, anf_node, anf_node->scope());
   }
   return meta_func_graph_fn;
 }
 
-abstract::AbstractBasePtr MakeAbstractClosure(const PrimitivePtr &primitive, const AnfNodePtr &anf_node) {
-  auto prim_func = std::make_shared<abstract::PrimitiveAbstractClosure>(primitive, anf_node);
+AbstractBasePtr MakeAbstractClosure(const PrimitivePtr &primitive, const AnfNodePtr &anf_node) {
+  auto prim_func = std::make_shared<PrimitiveAbstractClosure>(primitive, anf_node);
   return prim_func;
 }
 

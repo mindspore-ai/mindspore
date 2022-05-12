@@ -369,7 +369,7 @@ Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_sh
                                        std::vector<StrategyPtr> *sp_vector);
 
 Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
-std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequeue);
+std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequence);
 ValuePtr MakeListValue(const std::vector<int64_t> &v);
 ValuePtr MakeTupleListValue(const Shapes &v);
 AnfNodePtr CreateValueTupleAnfNodePtr(const std::vector<int64_t> &value_tuple);

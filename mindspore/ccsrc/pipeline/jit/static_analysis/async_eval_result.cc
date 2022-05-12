@@ -285,11 +285,11 @@ void AnalysisResultCacheMgr::SetSwitchValue(const AnfNodeConfigPtr &conf, const 
   SetCacheValue(conf, arg, &switch_cache_);
 }
 
-std::string ArgsToString(const AbstractBasePtrList &args_spec_list) {
+std::string ArgsToString(const AbstractBasePtrList &args_abs_list) {
   std::ostringstream buffer;
-  for (const auto &item : args_spec_list) {
-    buffer << item->BuildType()->ToString() << "," << item->BuildShape()->ToString() << " #"
-           << "\n";
+  for (const auto &item : args_abs_list) {
+    buffer << " # " << item->BuildType()->ToString() << ", " << item->BuildShape()->ToString() << ", "
+           << item->BuildValue()->ToString() << "\n";
   }
   return buffer.str();
 }

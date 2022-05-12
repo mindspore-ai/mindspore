@@ -558,7 +558,7 @@ void Parser::GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, 
 
     namelist_for_default_value.push_back(arg_name);
     if (i >= defaults.size()) {
-      MS_LOG(EXCEPTION) << "Index:" << i << " out of range:" << defaults.size();
+      MS_LOG(EXCEPTION) << "Index: " << i << " out of range: " << defaults.size();
     }
     if (py::isinstance<py::none>(defaults[i])) {
       default_values.push_back(NewValueNode(kNull));

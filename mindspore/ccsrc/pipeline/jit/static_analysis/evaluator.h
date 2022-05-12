@@ -53,19 +53,19 @@ class Evaluator : public Base {
   virtual EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                             const AnfNodeConfigPtr &out_conf);
 
-  virtual EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
+  virtual EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list,
                              const AnfNodeConfigPtr &out_conf) = 0;
 
   virtual EvalResultPtr SingleRun(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                   const AnfNodeConfigPtr &out_conf);
 
-  virtual AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const { return args_spec_list; }
+  virtual AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_abs_list) const { return args_abs_list; }
 
-  virtual AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) {
-    return args_spec_list;
+  virtual AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
+    return args_abs_list;
   }
 
-  virtual EvalResultPtr AbstractEval(const AbstractBasePtrList &args_spec_list) {
+  virtual EvalResultPtr EvalUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
@@ -73,7 +73,7 @@ class Evaluator : public Base {
       return nullptr;
     }
 
-    auto is_abstract = std::any_of(args_spec_list.begin(), args_spec_list.end(), [](auto &arg) -> bool {
+    auto is_abstract = std::any_of(args_abs_list.begin(), args_abs_list.end(), [](auto &arg) -> bool {
       if (arg->BuildType()->type_id() == kObjectTypeUndeterminedType) {
         return true;
       }
@@ -125,7 +125,7 @@ class TrivialPrimEvaluator : public PrimEvaluator {
   MS_DECLARE_PARENT(TrivialPrimEvaluator, PrimEvaluator);
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                     const AnfNodeConfigPtr &out_conf) final;
-  virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list) = 0;
+  virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list) = 0;
 
  protected:
   PrimitiveEvalCachePtr eval_cache_;
@@ -139,7 +139,7 @@ class TransitionPrimEvaluator : public PrimEvaluator {
   EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                     const AnfNodeConfigPtr &out_conf) final;
   // Parameter in_conf0 : the first element in args_conf_list;
-  virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+  virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
                                  const ConfigPtr &in_conf, const AnfNodeConfigPtr &out_conf) = 0;
 };
 
@@ -213,10 +213,10 @@ class BaseFuncGraphEvaluator : public Evaluator {
   ~BaseFuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(BaseFuncGraphEvaluator, Evaluator);
 
-  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
+  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list,
                      const AnfNodeConfigPtr &out_conf) override;
 
-  virtual FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) = 0;
+  virtual FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) = 0;
 
   AnalysisContextPtr parent_context() const { return parent_context_; }
   void set_parent_context(const AnalysisContextPtr &parent_context) { parent_context_ = parent_context; }
@@ -257,12 +257,12 @@ class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
   ~FuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(FuncGraphEvaluator, BaseFuncGraphEvaluator);
 
-  FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) override;
 
   FuncGraphPtr func_graph() { return func_graph_; }
 
-  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const override;
-  AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) override;
+  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_abs_list) const override;
+  AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list) override;
   std::string ToString() const override { return identifier_ + "_" + func_graph_->ToString(); }
 
  private:
@@ -280,11 +280,11 @@ class MetaFuncGraphEvaluator : public BaseFuncGraphEvaluator {
   ~MetaFuncGraphEvaluator() override = default;
   MS_DECLARE_PARENT(MetaFuncGraphEvaluator, BaseFuncGraphEvaluator);
 
-  FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) override;
+  FuncGraphPtr GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) override;
 
   // Return normalized versions of the arguments.
-  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_spec_list) const override {
-    return meta_func_graph_->NormalizeArgs(args_spec_list);
+  AbstractBasePtrList NormalizeArgs(const AbstractBasePtrList &args_abs_list) const override {
+    return meta_func_graph_->NormalizeArgs(args_abs_list);
   }
   std::string ToString() const override { return identifier_ + "_" + meta_func_graph_->ToString(); }
 
@@ -329,12 +329,12 @@ class PartialAppEvaluator : public Evaluator {
 
 class VirtualEvaluator : public Evaluator {
  public:
-  VirtualEvaluator(const AbstractBasePtrList &args_spec_list, const AbstractBasePtr &output)
-      : Evaluator("virtual"), args_spec_list_(args_spec_list), output_(output) {}
+  VirtualEvaluator(const AbstractBasePtrList &args_abs_list, const AbstractBasePtr &output)
+      : Evaluator("virtual"), args_spec_list_(args_abs_list), output_(output) {}
   ~VirtualEvaluator() override = default;
   MS_DECLARE_PARENT(VirtualEvaluator, Evaluator);
 
-  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list,
+  EvalResultPtr Eval(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list,
                      const AnfNodeConfigPtr &out_conf) override;
   std::string ToString() const override { return identifier_; }
 
@@ -346,7 +346,7 @@ class VirtualEvaluator : public Evaluator {
 class JEvaluator : public Evaluator {
  public:
   JEvaluator(const EvaluatorPtr &evaluator, const AbstractFunctionPtr &orig_func)
-      : Evaluator("JEvaluator"), evaluator_(evaluator), orig_func_(orig_func) {}
+      : Evaluator("JEvaluator"), evaluator_(evaluator), primal_func_(orig_func) {}
   ~JEvaluator() override = default;
   MS_DECLARE_PARENT(JEvaluator, Evaluator);
   AnfNodePtr bound_node() const override {
@@ -372,13 +372,13 @@ class JEvaluator : public Evaluator {
 
  private:
   EvaluatorPtr evaluator_;
-  AbstractFunctionPtr orig_func_;
+  AbstractFunctionPtr primal_func_;
 };
 
 class TaylorEvaluator : public Evaluator {
  public:
   TaylorEvaluator(const EvaluatorPtr &evaluator, const AbstractFunctionPtr &orig_func)
-      : Evaluator("TaylorEvaluator"), evaluator_(evaluator), orig_func_(orig_func) {}
+      : Evaluator("TaylorEvaluator"), evaluator_(evaluator), primal_func_(orig_func) {}
   ~TaylorEvaluator() override = default;
   MS_DECLARE_PARENT(TaylorEvaluator, Evaluator);
   AnfNodePtr bound_node() const override {
@@ -404,13 +404,13 @@ class TaylorEvaluator : public Evaluator {
 
  private:
   EvaluatorPtr evaluator_;
-  AbstractFunctionPtr orig_func_;
+  AbstractFunctionPtr primal_func_;
 };
 
 class ShardEvaluator : public Evaluator {
  public:
   ShardEvaluator(const EvaluatorPtr &evaluator, const AbstractFunctionPtr &orig_func)
-      : Evaluator("ShardEvaluator"), evaluator_(evaluator), orig_func_(orig_func) {}
+      : Evaluator("ShardEvaluator"), evaluator_(evaluator), primal_func_(orig_func) {}
   ~ShardEvaluator() override = default;
   MS_DECLARE_PARENT(ShardEvaluator, Evaluator);
 
@@ -439,7 +439,7 @@ class ShardEvaluator : public Evaluator {
 
  private:
   EvaluatorPtr evaluator_;
-  AbstractFunctionPtr orig_func_;
+  AbstractFunctionPtr primal_func_;
 };
 
 class VmapEvaluator : public Evaluator {
@@ -448,7 +448,7 @@ class VmapEvaluator : public Evaluator {
                 const ValuePtr &out_axes)
       : Evaluator("VmapEvaluator"),
         evaluator_(evaluator),
-        orig_func_(orig_func),
+        primal_func_(orig_func),
         in_axes_(in_axes),
         out_axes_(out_axes) {}
   ~VmapEvaluator() override = default;
@@ -476,12 +476,12 @@ class VmapEvaluator : public Evaluator {
 
  private:
   EvaluatorPtr evaluator_;
-  AbstractFunctionPtr orig_func_;
+  AbstractFunctionPtr primal_func_;
   ValuePtr in_axes_;
   ValuePtr out_axes_;
 };
 
-void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args);
+void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args);
 
 bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
 }  // namespace abstract

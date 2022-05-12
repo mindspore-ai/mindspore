@@ -357,9 +357,9 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
   return res;
 }
 
-void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList *broaded_args) {
+void BroadenArgs(const AbstractBasePtrList &args_abs_list, AbstractBasePtrList *broaded_args) {
   MS_EXCEPTION_IF_NULL(broaded_args);
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(*broaded_args),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(*broaded_args),
                        [](const AbstractBasePtr &arg) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg);
                          if (arg->GetValueTrack() != kAnyValue) {
@@ -369,45 +369,44 @@ void BroadenArgs(const AbstractBasePtrList &args_spec_list, AbstractBasePtrList 
                        });
 }
 
-AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_spec_list) const {
+AbstractBasePtrList FuncGraphEvaluator::NormalizeArgs(const AbstractBasePtrList &args_abs_list) const {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
     AbstractBasePtrList broaded_list;
-    BroadenArgs(args_spec_list, &broaded_list);
-    MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_spec_list)
+    BroadenArgs(args_abs_list, &broaded_list);
+    MS_LOG(DEBUG) << func_graph_->ToString() << ", original: " << mindspore::ToString(args_abs_list)
                   << ", broadened: " << mindspore::ToString(broaded_list);
     return broaded_list;
   }
-  return args_spec_list;
+  return args_abs_list;
 }
 
-AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtrList FuncGraphEvaluator::BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list) {
   MS_EXCEPTION_IF_NULL(func_graph_);
   if (func_graph_->has_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE)) {
-    return args_spec_list;
+    return args_abs_list;
   }
 
   if (func_graph_->has_flag(kFuncGraphFlagUndetermined)) {
     func_graph_->set_flag(FUNC_GRAPH_FLAG_IGNORE_VALUE, true);
-    auto normalized_args_spec_list = NormalizeArgs(args_spec_list);
+    auto normalized_args_spec_list = NormalizeArgs(args_abs_list);
     MS_LOG(DEBUG) << "Set " << func_graph_->ToString() << " with IGNORE_VALUES flag.";
     MS_LOG(DEBUG) << "Normalized args " << mindspore::ToString(normalized_args_spec_list);
     return normalized_args_spec_list;
   }
-  return args_spec_list;
+  return args_abs_list;
 }
 
-FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) {
-  auto iter = func_graph_cache_.find(args_spec_list);
+FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
+  auto iter = func_graph_cache_.find(args_abs_list);
   FuncGraphPtr res;
   if (iter == func_graph_cache_.end()) {
     auto fg = func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    FuncGraphPtr generated_graph = fg->GenerateGraph(args_spec_list);
-    func_graph_cache_[args_spec_list] = generated_graph;
+    FuncGraphPtr generated_graph = fg->GenerateGraph(args_abs_list);
+    func_graph_cache_[args_abs_list] = generated_graph;
     MS_LOG(DEBUG) << "Generate special instance of function graph: " << ToString()
-                  << ", special function: " << generated_graph->ToString()
-                  << ", args: " << ArgsToString(args_spec_list);
+                  << ", special function: " << generated_graph->ToString() << ", args: " << ArgsToString(args_abs_list);
 
     MS_EXCEPTION_IF_NULL(engine);
     engine->func_graph_manager()->AddFuncGraph(generated_graph);
@@ -425,8 +424,8 @@ FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const Ab
   return res;
 }
 
-FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_spec_list) {
-  auto iter = func_graph_cache_.find(args_spec_list);
+FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const AbstractBasePtrList &args_abs_list) {
+  auto iter = func_graph_cache_.find(args_abs_list);
   if (iter != func_graph_cache_.end()) {
     return iter->second;
   }
@@ -435,9 +434,9 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   FuncGraphPtr generated_func_graph;
   if (this->bound_node() != nullptr) {
     TraceGuard trace_guard(std::make_shared<TraceGenMetaFuncGraph>(bound_node()->debug_info()));
-    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_spec_list);
+    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   } else {
-    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_spec_list);
+    generated_func_graph = meta_func_graph_->GenerateFuncGraph(args_abs_list);
   }
 
   NodeDebugInfoPtr debug_info;
@@ -446,7 +445,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   }
   FuncGraphPtr cloned_func_graph =
     BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope_, debug_info));
-  func_graph_cache_[args_spec_list] = cloned_func_graph;
+  func_graph_cache_[args_abs_list] = cloned_func_graph;
   MS_EXCEPTION_IF_NULL(engine);
   engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);
   return cloned_func_graph;
@@ -454,42 +453,42 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
 
 EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                              const AnfNodeConfigPtr &out_conf) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
-  args_spec_list = NormalizeArgs(args_spec_list);
-  args_spec_list = BroadenUndeterminedArgs(args_spec_list);
+  args_abs_list = NormalizeArgs(args_abs_list);
+  args_abs_list = BroadenUndeterminedArgs(args_abs_list);
 
-  MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
+  MS_LOG(DEBUG) << EvalEntryLogging(shared_from_base<Evaluator>(), args_abs_list, out_conf);
   EvalResultPtr eval_result = nullptr;
   const std::string &evaluator_name = ToString();
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
   auto &cache = evaluator_cache_mgr_->GetCache();
-  auto iter = cache.find(args_spec_list);
+  auto iter = cache.find(args_abs_list);
   if (iter == cache.end()) {
-    MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name << "] cache miss, call Eval(), args: " << args_spec_list;
-    eval_result = Eval(engine, args_spec_list, out_conf);
+    MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name << "] cache miss, call Eval(), args: " << args_abs_list;
+    eval_result = Eval(engine, args_abs_list, out_conf);
     MS_EXCEPTION_IF_NULL(eval_result);
     if (eval_result->abstract() == nullptr) {
-      EvalFailLogging(shared_from_base<Evaluator>(), args_spec_list, out_conf);
+      EvalFailLogging(shared_from_base<Evaluator>(), args_abs_list, out_conf);
       MS_LOG(EXCEPTION) << "Evaluator " << evaluator_name << " result is nullptr.";
     }
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
                   << "] set cache. result: " << eval_result->abstract()->ToString();
-    evaluator_cache_mgr_->SetValue(args_spec_list, eval_result);
+    evaluator_cache_mgr_->SetValue(args_abs_list, eval_result);
   } else {
     eval_result = iter->second;
     MS_EXCEPTION_IF_NULL(eval_result->abstract());
     MS_LOG(DEBUG) << "[" << this << "/" << evaluator_name
-                  << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_spec_list;
+                  << "] cache hit. result: " << eval_result->abstract()->ToString() << ", args: " << args_abs_list;
     // Update inputs sequence nodes info, if matched in cache.
     static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
     if (enable_eliminate_unused_element) {
-      for (size_t i = 0; i < args_spec_list.size(); ++i) {
-        auto new_sequence = dyn_cast<AbstractSequence>(args_spec_list[i]);
+      for (size_t i = 0; i < args_abs_list.size(); ++i) {
+        auto new_sequence = dyn_cast<AbstractSequence>(args_abs_list[i]);
         auto old_sequence = dyn_cast<AbstractSequence>(iter->first[i]);
         if (old_sequence != nullptr && new_sequence != nullptr) {
           MS_LOG(DEBUG) << "Before synchronize sequence nodes use flags for NodeConfig: " << out_conf->ToString()
@@ -508,14 +507,14 @@ EvalResultPtr Evaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args
 
 EvalResultPtr TrivialPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                         const AnfNodeConfigPtr &) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          auto abstract = conf->ObtainEvalResult()->abstract();
                          return abstract;
                        });
-  return EvalPrim(engine, args_spec_list);
+  return EvalPrim(engine, args_abs_list);
 }
 
 EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
@@ -524,13 +523,13 @@ EvalResultPtr TransitionPrimEvaluator::Run(AnalysisEnginePtr engine, const Confi
       identifier_ != "RaiseEvaluator") {
     MS_LOG(EXCEPTION) << "Size should be greater than 0, during running " << identifier_;
   }
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
-  EvalResultPtr res = EvalPrim(engine, args_spec_list, args_conf_list[0], out_conf);
+  EvalResultPtr res = EvalPrim(engine, args_abs_list, args_conf_list[0], out_conf);
   // No need to cache.
   return res;
 }
@@ -542,8 +541,8 @@ EvalResultPtr SymbolicPrimEvaluator::Run(AnalysisEnginePtr, const ConfigPtrList 
 
 EvalResultPtr TrackedEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                     const AnfNodeConfigPtr &out_conf) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
@@ -551,20 +550,20 @@ EvalResultPtr TrackedEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrLis
   EvalResultPtr res = sub_evaluator_->Run(engine, args_conf_list, out_conf);
   // Don't lookup from cache, as different out_conf with same node but different context
   // may add different entry to anfnode_config_map_, like getattr primitive.
-  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
 EvalResultPtr PartialAppEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                        const AnfNodeConfigPtr &out_conf) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
-  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
   if (eval_result != nullptr) {
     return eval_result;
   }
@@ -574,22 +573,22 @@ EvalResultPtr PartialAppEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtr
   (void)std::transform(args_spec_list_.begin(), args_spec_list_.end(), std::back_inserter(partial_args_conf_list),
                        [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
 
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(partial_args_conf_list),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(partial_args_conf_list),
                        [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
   EvalResultPtr res = evaluator_->Run(engine, partial_args_conf_list, out_conf);
-  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
 EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
-  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
   if (eval_result != nullptr) {
     return eval_result;
   }
@@ -602,11 +601,11 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   // Build a virtual function: bprop_f which use sense of y as input, return sense of function free variable and input
   // parameters. (sense_f, sense_x, ...)(*bpro_f) (sense_y)
   AbstractBasePtrList bparams;
-  bparams.push_back(SensitivityTransform(orig_func_));
+  bparams.push_back(SensitivityTransform(primal_func_));
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool enable_sparse = context->get_param<bool>(MS_CTX_ENABLE_SPARSE);
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(bparams),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(bparams),
                        [&enable_sparse](const AbstractBasePtr &arg_spec) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(arg_spec);
                          if (enable_sparse && arg_spec->isa<AbstractTensor>()) {
@@ -622,20 +621,20 @@ EvalResultPtr JEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &arg
   AbstractBasePtrList jargs = {result->abstract(), bprop};
   AbstractBasePtr jtuple = std::make_shared<AbstractTuple>(jargs);
   auto res = std::make_shared<EvalResult>(jtuple, std::make_shared<AttrValueMap>());
-  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
 EvalResultPtr TaylorEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                    const AnfNodeConfigPtr &) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
-  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
   if (eval_result != nullptr) {
     return eval_result;
   }
@@ -643,20 +642,20 @@ EvalResultPtr TaylorEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList
   // Call the original evaluator, get the result: y = f(x)
   EvalResultPtr result = evaluator_->Run(engine, args_conf_list, nullptr);
   MS_EXCEPTION_IF_NULL(result);
-  evaluator_cache_mgr_->SetValue(args_spec_list, result);
+  evaluator_cache_mgr_->SetValue(args_abs_list, result);
   return result;
 }
 
 EvalResultPtr ShardEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                   const AnfNodeConfigPtr &) {
-  AbstractBasePtrList args_spec_list;
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  AbstractBasePtrList args_abs_list;
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          return conf->ObtainEvalResult()->abstract();
                        });
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
-  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
   if (eval_result != nullptr) {
     return eval_result;
   }
@@ -665,7 +664,7 @@ EvalResultPtr ShardEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList 
   EvalResultPtr result = evaluator_->Run(engine, args_conf_list, nullptr);
   MS_EXCEPTION_IF_NULL(result);
   auto res = std::make_shared<EvalResult>(result->abstract(), std::make_shared<AttrValueMap>());
-  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
@@ -832,12 +831,12 @@ AbstractBasePtr GetPhysicalViewAbs(const AbstractBasePtr &logical_view_abs, cons
 // the VmapOperator.
 EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
                                  const AnfNodeConfigPtr &) {
-  AbstractBasePtrList args_spec_list;
+  AbstractBasePtrList args_abs_list;
   int axis_size = -1;
   int index = 0;
   auto in_axes = in_axes_;
   auto in_axes_seq = dyn_cast<ValueSequeue>(in_axes);
-  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_spec_list),
+  (void)std::transform(args_conf_list.begin(), args_conf_list.end(), std::back_inserter(args_abs_list),
                        [&axis_size, &index, &in_axes_seq, in_axes](const ConfigPtr &conf) -> AbstractBasePtr {
                          MS_EXCEPTION_IF_NULL(conf);
                          AbstractBasePtr abs = conf->ObtainEvalResult()->abstract();
@@ -855,12 +854,12 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
                          return arg_abs;
                        });
   MS_EXCEPTION_IF_NULL(evaluator_cache_mgr_);
-  auto eval_result = evaluator_cache_mgr_->GetValue(args_spec_list);
+  auto eval_result = evaluator_cache_mgr_->GetValue(args_abs_list);
   if (eval_result != nullptr) {
     return eval_result;
   }
   ConfigPtrList virtual_conf_list;
-  (void)std::transform(args_spec_list.begin(), args_spec_list.end(), std::back_inserter(virtual_conf_list),
+  (void)std::transform(args_abs_list.begin(), args_abs_list.end(), std::back_inserter(virtual_conf_list),
                        [](const AbstractBasePtr &arg) -> ConfigPtr { return std::make_shared<VirtualConfig>(arg); });
 
   // Call the original evaluator, get the result: y = f(x)
@@ -874,27 +873,27 @@ EvalResultPtr VmapEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &
   AbstractBasePtr after_vmap = GetPhysicalViewAbs(result_abs, out_axes_, axis_size);
 
   auto res = std::make_shared<EvalResult>(after_vmap, std::make_shared<AttrValueMap>());
-  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  evaluator_cache_mgr_->SetValue(args_abs_list, res);
   return res;
 }
 
-EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_spec_list,
+EvalResultPtr VirtualEvaluator::Eval(AnalysisEnginePtr, const AbstractBasePtrList &args_abs_list,
                                      const AnfNodeConfigPtr &out_conf) {
-  if (args_spec_list.size() != args_spec_list_.size()) {
+  if (args_abs_list.size() != args_spec_list_.size()) {
     MS_LOG(EXCEPTION) << "Arguments mismatch, parameters no: " << args_spec_list_.size()
-                      << ", arguments no: " << args_spec_list.size();
+                      << ", arguments no: " << args_abs_list.size();
   }
   static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
   // Check each parameter and argument match;
-  for (std::size_t i = 0; i < args_spec_list.size(); i++) {
-    MS_EXCEPTION_IF_NULL(args_spec_list[i]);
+  for (std::size_t i = 0; i < args_abs_list.size(); i++) {
+    MS_EXCEPTION_IF_NULL(args_abs_list[i]);
     // For VirtualAbstractClosure, likely J's bprop, we just set its tuple arguments as used before really grad.
-    if (enable_eliminate_unused_element && args_spec_list[i]->isa<abstract::AbstractSequence>()) {
+    if (enable_eliminate_unused_element && args_abs_list[i]->isa<abstract::AbstractSequence>()) {
       MS_LOG(INFO) << "Notice: For VirtualAbstractClosure, update all use flags as true for arguments[" << i
-                   << "]: " << args_spec_list[i]->ToString();
-      SetSequenceElementsUseFlagsRecursively(args_spec_list[i], true);
+                   << "]: " << args_abs_list[i]->ToString();
+      SetSequenceElementsUseFlagsRecursively(args_abs_list[i], true);
     }
-    (void)args_spec_list[i]->Join(args_spec_list_[i]);
+    (void)args_abs_list[i]->Join(args_spec_list_[i]);
   }
   return std::make_shared<EvalResult>(output_, std::make_shared<AttrValueMap>());
 }

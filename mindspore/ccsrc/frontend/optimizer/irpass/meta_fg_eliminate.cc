@@ -27,7 +27,7 @@ bool ExpandMetaFg::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr
   // The expanding of meta fg may change the number of outer layer meta fgs.
   // So, find all kinds of candidate meta fgs together and then expands them.
   for (auto expand_meta_fg_element : expand_meta_fg_list_) {
-    expand_meta_fg_element->GetMetaFGPrim(all_nodes);
+    expand_meta_fg_element->GetMetaFgPrim(all_nodes);
   }
   bool ret = false;
   for (auto expand_meta_fg_element : expand_meta_fg_list_) {

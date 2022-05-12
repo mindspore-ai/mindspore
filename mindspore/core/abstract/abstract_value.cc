@@ -908,20 +908,20 @@ BaseShapePtr AbstractTensor::BuildShape() const {
 
 AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   MS_EXCEPTION_IF_NULL(other);
-  auto type = other->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
+  auto other_type = other->BuildType();
+  MS_EXCEPTION_IF_NULL(other_type);
   MS_EXCEPTION_IF_NULL(element_);
 
   // AbstractTensor join with AbstractUndetermined
-  if (type->type_id() == kObjectTypeUndeterminedType) {
+  if (other_type->type_id() == kObjectTypeUndeterminedType) {
     auto other_undetermined_tensor = dyn_cast<AbstractUndetermined>(other);
     MS_EXCEPTION_IF_NULL(other_undetermined_tensor);
-    // check shape
+    // Check shape
     auto res_shape = ShapeJoin(shape(), other_undetermined_tensor->shape());
     if (res_shape == nullptr) {
       ShapeJoinLogging(shape(), other_undetermined_tensor->shape(), shared_from_base<AbstractBase>(), other);
     }
-    // check element
+    // Check element
     auto element = element_->Join(other_undetermined_tensor->element());
     MS_EXCEPTION_IF_NULL(element);
     return std::make_shared<AbstractUndetermined>(element, res_shape);
@@ -935,12 +935,12 @@ AbstractBasePtr AbstractTensor::Join(const AbstractBasePtr &other) {
   if (*this == *other) {
     return shared_from_base<AbstractBase>();
   }
-  // check shape
+  // Check shape
   auto res_shape = ShapeJoin(this->shape(), other_tensor->shape());
   if (res_shape == nullptr) {
     ShapeJoinLogging(shape(), other_tensor->shape(), shared_from_base<AbstractBase>(), other);
   }
-  // check element
+  // Check element
   auto element = element_->Join(other_tensor->element_);
   MS_EXCEPTION_IF_NULL(element);
   return std::make_shared<AbstractTensor>(element, res_shape);
@@ -1481,9 +1481,9 @@ std::string AbstractRowTensor::ToString() const {
   MS_EXCEPTION_IF_NULL(dense_shape_);
   buffer << type_name() << "("
          << "shape: " << shape_track->ToString() << ", element: " << element()->ToString()
-         << ", value_ptr: " << value_track << ", value: " << value_track->ToString() << ")"
-         << ", indices: " << indices_->ToString() << ", values" << values_->ToString()
-         << ", dense_shape: " << dense_shape_->ToString();
+         << ", value_ptr: " << value_track << ", value: " << value_track->ToString()
+         << ", indices: " << indices_->ToString() << ", values: " << values_->ToString()
+         << ", dense_shape: " << dense_shape_->ToString() << ")";
   return buffer.str();
 }
 
