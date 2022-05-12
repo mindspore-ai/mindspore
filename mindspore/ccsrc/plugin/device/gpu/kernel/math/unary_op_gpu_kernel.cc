@@ -36,6 +36,7 @@ constexpr auto kErfc = "Erfc";
 constexpr auto kExp = "Exp";
 constexpr auto kExpm1 = "Expm1";
 constexpr auto kFloor = "Floor";
+constexpr auto kCeil = "Ceil";
 constexpr auto kLog = "Log";
 constexpr auto kLog1p = "Log1p";
 constexpr auto kNeg = "Neg";
@@ -147,6 +148,9 @@ const std::map<std::string, std::vector<std::pair<KernelAttr, UnaryPtrCreatorFun
   {kFloor,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
+  {kCeil,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16), CreateUnaryKernelPtr<half>}}},
   {kRint,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateUnaryKernelPtr<double>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateUnaryKernelPtr<float>},
@@ -226,6 +230,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Expm1,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kExpm1); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Floor,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kFloor); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Ceil,
+                                 []() { return std::make_shared<UnaryOpGpuKernelMod>(kCeil); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Log, []() { return std::make_shared<UnaryOpGpuKernelMod>(kLog); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Log1p,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kLog1p); });

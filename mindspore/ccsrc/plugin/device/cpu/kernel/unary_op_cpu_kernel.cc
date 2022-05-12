@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
+#include "nnacl/fp32/arithmetic_self_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -28,6 +29,7 @@ namespace {
 constexpr auto kReal = "Real";
 constexpr auto kImag = "Imag";
 constexpr auto kConj = "Conj";
+constexpr auto kCeil = "Ceil";
 
 template <typename T, typename S>
 class UnaryOpCpuKernelFunc : public CpuKernelFunc {
@@ -44,6 +46,12 @@ class UnaryOpCpuKernelFunc : public CpuKernelFunc {
   UnaryOpFunc unary_op_func_{nullptr};
   std::string kernel_name_;
 };
+
+void Ceil(const float *input, float *output, size_t start, size_t end) {
+  auto input_s = input + start;
+  auto output_s = output + start;
+  ElementCeil(input_s, output_s, (end - start));
+}
 
 template <typename T, typename S>
 void Real(const T *input, S *output, size_t start, size_t end) {
@@ -81,6 +89,16 @@ void Conj(const T *input, S *output, size_t start, size_t end) {
 
 template <typename T, typename S>
 void UnaryOpCpuKernelFunc<T, S>::GetUnaryOpFunc() {
+  // only support float
+  if constexpr (std::is_same<T, float>::value) {
+    static std::map<std::string, UnaryOpFunc> kFloatSupportedMap = {{prim::kPrimCeil->name(), &Ceil}};
+    auto iter = kFloatSupportedMap.find(kernel_name_);
+    if (iter != kFloatSupportedMap.end()) {
+      unary_op_func_ = iter->second;
+      return;
+    }
+  }
+
   if constexpr (std::is_same<T, complex64>::value || std::is_same<T, complex128>::value) {
     static std::map<std::string, UnaryOpFunc> kComplexSupportedTypeMap = {{prim::kPrimReal->name(), &Real<T, S>},
                                                                           {prim::kPrimImag->name(), &Imag<T, S>},
@@ -147,6 +165,9 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpCpuFuncCreator>>>
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<double, double>},
     {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeUnaryFunc<bool, bool>}}},
+  {kCeil,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeUnaryFunc<float, float>}}},
   {kImag,
    {{KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeFloat64),
      SpecializeUnaryFunc<complex128, double>},
@@ -229,5 +250,7 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Imag,
                                  []() { return std::make_shared<UnaryOpCpuKernelMod>(kImag); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Conj,
                                  []() { return std::make_shared<UnaryOpCpuKernelMod>(kConj); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Ceil,
+                                 []() { return std::make_shared<UnaryOpCpuKernelMod>(kCeil); });
 }  // namespace kernel
 }  // namespace mindspore
