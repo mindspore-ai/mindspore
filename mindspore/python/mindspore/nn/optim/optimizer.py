@@ -33,6 +33,7 @@ from mindspore.parallel._utils import _get_global_rank, _get_device_num, _get_pa
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule
+from ._dist_optimizer_registry import generate_dist_optimizer_list
 
 __all__ = ['Optimizer', 'opt_init_args_register']
 
@@ -794,6 +795,9 @@ class Optimizer(Cell):
             for i in range(F.tuple_len(next_params)):
                 F.assign(param_group[root][i], next_params[i])
         return new_param_group
+
+    def get_distributed_optimizer_list(self, optimizer_type, *args, **kwargs):
+        return generate_dist_optimizer_list(optimizer_type, self._parameters, *args, **kwargs)
 
     def construct(self, *hyper_params):
         raise NotImplementedError

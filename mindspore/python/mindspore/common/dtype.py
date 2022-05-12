@@ -16,6 +16,7 @@
 # ============================================================================
 """Data type for MindSpore."""
 
+from inspect import isfunction
 import numpy as np
 from mindspore import log as logger
 from .._c_expression import typing
@@ -208,6 +209,9 @@ def get_py_obj_dtype(obj):
         return tensor_type(obj.dtype)
     # Primitive or Cell
     if hasattr(obj, '__primitive_flag__') or hasattr(obj, 'construct'):
+        return function
+    # python function type
+    if isfunction(obj):
         return function
     # mindspore type
     if isinstance(obj, typing.Type):

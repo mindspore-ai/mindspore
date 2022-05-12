@@ -24,19 +24,25 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
+from ._dist_optimizer_registry import _register_dist_optimizer
 
 _lazy_adam_opt = C.MultitypeFuncGraph("lazy_adam_opt")
 
 
 @_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
                          "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool",
-                         "Bool")
+                         "Bool", "Function", "Bool", "Function", "Bool")
 def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power, beta2_power,
-                         beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter, cache_enable):
+                         beta1, beta2, eps, lr, gradient, params, m, v, ps_parameter, cache_enable,
+                         distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply sparse lazy adam optimizer to the weight parameter when the gradient is sparse."""
     success = True
     indices = gradient.indices
     values = gradient.values
+    if use_sparse_flag:
+        success = F.depend(success, distributed_sparse_opt(params, m, v, beta1_power, beta2_power, lr, beta1, beta2,
+                                                           eps, values, indices))
+        return success
     if ps_parameter and not cache_enable:
         op_shape = P.Shape()
         shapes = (op_shape(params), op_shape(m), op_shape(v),
@@ -77,12 +83,17 @@ def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov,
 
 
 @_lazy_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+                         "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool",
+                         "Function", "Bool", "Function", "Bool")
 def _run_opt_with_one_number(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power, beta2_power,
-                             beta1, beta2, eps, lr, gradient, params, moment1, moment2, ps_parameter, cache_enable):
+                             beta1, beta2, eps, lr, gradient, params, moment1, moment2, ps_parameter, cache_enable,
+                             distributed_opt, use_flag, distributed_sparse_opt, use_sparse_flag):
     """Apply lazy adam optimizer to the weight parameter using Tensor."""
     success = True
-    if ps_parameter and not cache_enable:
+    if use_flag:
+        success = F.depend(success, distributed_opt(params, moment1, moment2, beta1_power, beta2_power, lr, beta1,
+                                                    beta2, eps, gradient))
+    elif ps_parameter and not cache_enable:
         op_shape = P.Shape()
         success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
                                               (op_shape(params), op_shape(moment1), op_shape(moment2))), params))
@@ -276,6 +287,8 @@ class LazyAdam(Optimizer):
         self._ps_push = P.Push("Adam", [0, 1, 2])
         self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
 
+        self._init_distributed_opts(use_locking, use_nesterov)
+
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
@@ -294,14 +307,18 @@ class LazyAdam(Optimizer):
                                                  self._ps_pull, self.use_locking, self.use_nesterov, self._is_device,
                                                  beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
                                        lr, gradients, self._parameters, self.moment1, self.moment2, self.ps_parameters,
-                                       self.cache_enable)
+                                       self.cache_enable,
+                                       self.dense_lazyadam_opts, self.use_dense_opt_flags,
+                                       self.sparse_lazyadam_opts, self.use_sparse_opt_flags)
         else:
             success = self.map_reverse(F.partial(_lazy_adam_opt, self.opt, self.sparse_opt, self._ps_push,
                                                  self._ps_pull, self.use_locking, self.use_nesterov, self._is_device,
                                                  beta1_power, beta2_power, self.beta1, self.beta2, self.eps,
                                                  lr),
                                        gradients, self._parameters, self.moment1, self.moment2, self.ps_parameters,
-                                       self.cache_enable)
+                                       self.cache_enable,
+                                       self.dense_lazyadam_opts, self.use_dense_opt_flags,
+                                       self.sparse_lazyadam_opts, self.use_sparse_opt_flags)
         return success
 
     @Optimizer.target.setter
@@ -311,3 +328,29 @@ class LazyAdam(Optimizer):
         optimizer operation.
         """
         self._set_base_target(value)
+
+    def _init_distributed_opts(self, use_locking, use_nesterov):
+        self.dense_lazyadam_opts, self.use_dense_opt_flags =\
+        self.get_distributed_optimizer_list("adam", use_locking, use_nesterov)
+        self.sparse_lazyadam_opts, self.use_sparse_opt_flags =\
+        self.get_distributed_optimizer_list("fused_sparse_lazy_adam", use_locking, use_nesterov)
+
+
+def create_distributed_adam(*args, **kwargs):
+    adam = P.Adam(*args, **kwargs)
+    adam.add_prim_attr("gradient_type", "dense_gradient")
+    adam.add_prim_attr("parameter_input_index", 0)
+    adam.add_prim_attr("gradient_input_index", 9)
+    return adam
+
+
+def create_distributed_fused_sparse_lazy_adam(*args, **kwargs):
+    sparse_lazy_adam = P.FusedSparseLazyAdam(*args, **kwargs)
+    sparse_lazy_adam.add_prim_attr("gradient_type", "sparse_gradient")
+    sparse_lazy_adam.add_prim_attr("parameter_input_index", 0)
+    sparse_lazy_adam.add_prim_attr("gradient_input_index", 9)
+    sparse_lazy_adam.add_prim_attr("indices_input_index", 10)
+    return sparse_lazy_adam
+
+_register_dist_optimizer("adam", create_distributed_adam)
+_register_dist_optimizer("fused_sparse_lazy_adam", create_distributed_fused_sparse_lazy_adam)
