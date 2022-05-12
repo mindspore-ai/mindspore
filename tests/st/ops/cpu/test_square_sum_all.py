@@ -110,3 +110,23 @@ def test_cpu_exception_shape_diff():
         inp1 = Tensor(np.array([0, 1]).astype(np.float32))
         net = Net()
         _ = net(inp0, inp1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cpu_float16():
+    """
+    Feature: SquareSumAll cpu op.
+    Description: test data type is float16.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    inp0 = Tensor(np.arange(0, 1, 0.001).astype(np.float16))
+    inp1 = Tensor(np.arange(0, 1, 0.001).astype(np.float16))
+    net = Net()
+    [output0, output1] = net(inp0, inp1)
+    expect0 = np.array(332.75).astype(np.float16)
+    expect1 = np.array(332.75).astype(np.float16)
+    assert output0.asnumpy() == expect0
+    assert output1.asnumpy() == expect1

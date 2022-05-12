@@ -4317,7 +4317,7 @@ class Atan2(_MathBinaryOp):
     """
 
 
-class SquareSumAll(PrimitiveWithInfer):
+class SquareSumAll(Primitive):
     r"""
     Returns the square sum of a tensor element-wise
 
@@ -4359,16 +4359,7 @@ class SquareSumAll(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self):
         """Initialize SquareSumAll"""
-
-    def infer_shape(self, x_shape, y_shape):
-        validator.check("x1_shape", x_shape, "x2_shape", y_shape, Rel.EQ, self.name)
-        return [], []
-
-    def infer_dtype(self, x_type, y_type):
-        valid_types = (mstype.float16, mstype.float32)
-        args = {"x1_type": x_type, "x2_type": y_type}
-        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
-        return x_type, y_type
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output_x', 'output_y'])
 
 
 class BitwiseAnd(_BitwiseBinaryOp):

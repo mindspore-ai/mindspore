@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -389,6 +389,7 @@ from .arg_min import _arg_min_tbe
 from .bn_training_update_v2 import _bn_training_update_v2_tbe
 from .bn_training_update_v3 import _bn_training_update_v3_tbe
 from .square_sum_all import _square_sum_all_tbe
+from .square_sum_all_ds import _square_sum_all_ds_tbe
 from .pack import _pack_tbe
 from .pack_ds import _pack_ds_tbe
 from .unpack import _unpack_tbe
