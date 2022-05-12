@@ -34,9 +34,9 @@ class InputToAttrDeco : public ExpanderDecorator {
       return std::static_pointer_cast<Expander>(std::make_shared<InputToAttrDeco>(decorated, input_idx));
     };
   }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
-  AnfNodePtr Run(const AnfNodePtr &node) override;
   HashSet<size_t> input_idx_;
 };
 
@@ -51,10 +51,20 @@ class ParaToValueDeco : public ExpanderDecorator {
       return std::static_pointer_cast<Expander>(std::make_shared<ParaToValueDeco>(decorated, input_idx));
     };
   }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 
  protected:
-  AnfNodePtr Run(const AnfNodePtr &node) override;
   HashSet<size_t> input_idx_;
+};
+
+class FixFormatDeco : public ExpanderDecorator {
+ public:
+  explicit FixFormatDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~FixFormatDeco() = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<FixFormatDeco>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
 };
 
 class GraphKernelExpanderLite : public GraphKernelExpander {

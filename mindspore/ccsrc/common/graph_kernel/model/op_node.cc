@@ -369,7 +369,7 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
     if (perm == nchw2nhwc) return kOpFormat_NHWC;
   } else if (ori_format == kOpFormat_NHWC) {
     std::vector<int64_t> nhwc2nchw = {0, 3, 1, 2};
-    if (perm == nhwc2nchw) return kOpFormat_DEFAULT;
+    if (perm == nhwc2nchw) return kOpFormat_NCHW;
   }
   return kOpFormat_DEFAULT;
 }

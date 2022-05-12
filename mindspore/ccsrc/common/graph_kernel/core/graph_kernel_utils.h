@@ -30,6 +30,7 @@
 namespace mindspore::graphkernel {
 constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
+constexpr auto kOutputsFormat = "outputs_format";
 
 GVAR_DEF(PrimitivePtr, kPrimFloatStatus, std::make_shared<Primitive>("FloatStatus"));
 GVAR_DEF(PrimitivePtr, kPrimElemAny, std::make_shared<Primitive>("ElemAny"));

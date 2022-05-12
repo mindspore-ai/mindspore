@@ -22,30 +22,21 @@
 #include <vector>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/dtype.h"
+#include "ir/func_graph.h"
 #include "utils/anf_utils.h"
 #include "include/common/utils/utils.h"
+#include "common/graph_kernel/core/graph_kernel_utils.h"
 
 namespace mindspore::graphkernel {
 // register the callback object
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
-
-KernelWithIndex GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t i) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  if (IsPrimitiveCNode(anf_node, prim::kPrimTupleGetItem)) {
-    return AnfUtils::VisitKernel(anf_node, 0);
-  }
-  auto node = anf_node->cast<CNodePtr>();
-  auto input_node = node->input(i + 1);
-  MS_EXCEPTION_IF_NULL(input_node);
-  return AnfUtils::VisitKernel(input_node, 0);
-}
 
 ShapeVector CallbackImpl::GetInputShape(const AnfNodePtr &node, size_t i) { return GetInputInferShape(node, i); }
 
 ShapeVector CallbackImpl::GetOutputShape(const AnfNodePtr &node, size_t i) { return GetOutputInferShape(node, i); }
 
 ShapeVector CallbackImpl::GetInputInferShape(const AnfNodePtr &node, size_t i) {
-  KernelWithIndex kernel_with_index = GetPrevNodeOutput(node, i);
+  KernelWithIndex kernel_with_index = AnfUtils::VisitKernel(node->cast<CNodePtr>()->input(i + 1), 0);
   return GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
 }
 
@@ -87,7 +78,7 @@ TypeId CallbackImpl::GetInputType(const AnfNodePtr &node, size_t i) { return Get
 TypeId CallbackImpl::GetOutputType(const AnfNodePtr &node, size_t i) { return GetOutputInferType(node, i); }
 
 TypeId CallbackImpl::GetInputInferType(const AnfNodePtr &node, size_t i) {
-  KernelWithIndex kernel_with_index = GetPrevNodeOutput(node, i);
+  KernelWithIndex kernel_with_index = AnfUtils::VisitKernel(node->cast<CNodePtr>()->input(i + 1), 0);
   return GetOutputInferType(kernel_with_index.first, kernel_with_index.second);
 }
 
@@ -115,17 +106,72 @@ TypeId CallbackImpl::GetOutputInferType(const AnfNodePtr &node, size_t i) {
   return type_ptr->type_id();
 }
 
-std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_NHWC; }
+std::string CallbackImpl::GetInputFormat(const AnfNodePtr &node, size_t i) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (!cnode->input(i + 1)->isa<CNode>()) {
+    if (cnode->HasAttr(kOutputsFormat)) {
+      auto out_format = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat))[0];
+      if (AnfUtils::GetCNodeName(cnode) != prim::kPrimTranspose->name()) {
+        return out_format;
+      } else {
+        if (out_format == kOpFormat_NCHW) {
+          return kOpFormat_NHWC;
+        } else {
+          return kOpFormat_NCHW;
+        }
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "Get format error for " << cnode->fullname_with_scope();
+    }
+  }
+  return GetOutputFormat(cnode->input(i + 1), 0);
+}
 
-std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) { return kOpFormat_NHWC; }
+std::string CallbackImpl::GetOutputFormat(const AnfNodePtr &node, size_t i) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr || !cnode->HasAttr(kOutputsFormat)) {
+    return "unknown";
+  }
+  auto vec = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat));
+  return vec[i];
+}
 
 std::string CallbackImpl::GetProcessor(const AnfNodePtr &node) { return "cpu"; }
 
 std::string CallbackImpl::GetTargetFromContext() { return "CPU"; }
 
-void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {}
+void CallbackImpl::SetGraphKernelNodeKernelInfo(const AnfNodePtr &node) {
+  std::vector<std::string> graph_output_format;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = GetCNodeFuncGraph(node);
+  MS_EXCEPTION_IF_NULL(fg);
+  AnfNodePtrList outputs;
+  if (IsPrimitiveCNode(fg->output(), prim::kPrimMakeTuple)) {
+    auto fg_output = fg->output()->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(fg_output);
+    outputs.assign(fg_output->inputs().begin() + 1, fg_output->inputs().end());
+  } else {
+    outputs.push_back(fg->output());
+  }
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    auto kernel_with_index = AnfUtils::VisitKernel(outputs[i], 0);
+    graph_output_format.push_back(GetOutputFormat(kernel_with_index.first, kernel_with_index.second));
+  }
+  cnode->AddAttr(kOutputsFormat, MakeValue(graph_output_format));
+}
 
-void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) {}
+void CallbackImpl::SetBasicNodeKernelInfo(const AnfNodePtr &node, const std::vector<inner::NodeBase> &outputs_info) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode != nullptr) {
+    std::vector<std::string> output_formats;
+    for (size_t i = 0; i < outputs_info.size(); ++i) {
+      output_formats.push_back(outputs_info[i].format);
+    }
+    cnode->AddAttr(kOutputsFormat, MakeValue(output_formats));
+  }
+}
 
 void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {}
 

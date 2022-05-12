@@ -29,6 +29,7 @@
 #include "common/graph_kernel/core/graph_kernel_pass_manager.h"
 
 #include "tools/graph_kernel/converter/akg/kernel_builder.h"
+#include "tools/graph_kernel/converter/format_recognition.h"
 #include "tools/graph_kernel/converter/graph_kernel_cluster_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 #include "tools/graph_kernel/converter/insert_abstract.h"
@@ -41,6 +42,7 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
   auto pm = std::make_shared<GraphKernelPassManager>(0, "preprocess");
   // Some ops may lose abstract in converter
   pm->Add(std::make_shared<InsertAbstract>(), OptLevel_1);
+  pm->Add(std::make_shared<FormatRecognition>(), OptLevel_1);
   return pm;
 }
 
