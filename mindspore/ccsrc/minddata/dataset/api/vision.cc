@@ -395,6 +395,16 @@ Status GetImageNumChannels(const mindspore::MSTensor &image, int *channels) {
   return ImageNumChannels(input, channels);
 }
 
+// GetImageSize Function.
+Status GetImageSize(const mindspore::MSTensor &image, std::vector<uint32_t> &size) {  // NOLINT
+  std::shared_ptr<Tensor> input;
+  Status rc = Tensor::CreateFromMSTensor(image, &input);
+  if (rc.IsError()) {
+    RETURN_STATUS_UNEXPECTED("GetImageSize: failed to create image tensor.");
+  }
+  return ImageSize(input, size);
+}
+
 // HorizontalFlip Transform Operation.
 HorizontalFlip::HorizontalFlip() = default;
 

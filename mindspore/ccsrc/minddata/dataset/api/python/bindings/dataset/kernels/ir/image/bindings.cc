@@ -225,6 +225,17 @@ PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {
                                }));
                 }));
 
+PYBIND_REGISTER(GetImageSize, 1, ([](py::module *m) {
+                  (void)m->def("get_image_size", ([](const std::shared_ptr<Tensor> &image) {
+                                 auto size = std::vector<uint32_t>(2);
+                                 THROW_IF_ERROR(ImageSize(image, size));
+                                 py::list size_list;
+                                 size_list.append(size[0]);
+                                 size_list.append(size[1]);
+                                 return size_list;
+                               }));
+                }));
+
 PYBIND_REGISTER(HorizontalFlipOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::HorizontalFlipOperation, TensorOperation,
                                    std::shared_ptr<vision::HorizontalFlipOperation>>(*m, "HorizontalFlipOperation")

@@ -351,3 +351,27 @@ def get_image_num_channels(image):
         return image.channels
 
     raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray, Image.Image, type(image)))
+
+
+def get_image_size(image):
+    """
+    Get the size of input image as [height, width].
+
+    Args:
+        image (Union[numpy.ndarray, PIL.Image.Image]): The image to get size.
+
+    Returns:
+        list[int, int], the image size.
+
+    Examples:
+        >>> image_size = vision.get_image_size(image)
+    """
+
+    if isinstance(image, np.ndarray):
+        return cde.get_image_size(cde.Tensor(image))
+    if isinstance(image, Image.Image):
+        size_list = list(image.size)
+        size_list[0], size_list[1] = size_list[1], size_list[0]
+        return size_list
+
+    raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray, Image.Image, type(image)))

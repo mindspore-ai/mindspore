@@ -109,6 +109,23 @@ Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels) {
   return Status::OK();
 }
 
+Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<uint32_t> &size) {  // NOLINT
+  size = std::vector<uint32_t>(2);
+  if (image->Rank() < MIN_IMAGE_DIMENSION) {
+    RETURN_STATUS_UNEXPECTED("GetImageSize: invalid parameter, image should have at least two dimensions, but got: " +
+                             std::to_string(image->Rank()));
+  } else if (image->Rank() == MIN_IMAGE_DIMENSION) {
+    size[0] = image->shape()[0];
+    size[1] = image->shape()[1];
+  } else {
+    const int32_t kHeightIndex = -3;
+    const int32_t kWidthIndex = -2;
+    size[0] = image->shape()[kHeightIndex];
+    size[1] = image->shape()[kWidthIndex];
+  }
+  return Status::OK();
+}
+
 bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel) {
   if (tensor == nullptr) {
     return false;
