@@ -6453,28 +6453,10 @@ class Range(PrimitiveWithCheck):
     Creates a sequence of numbers that begins at `start` and extends by increments of
     `delta` up to but not including `limit`.
 
-    The types of all 3 inputs must be the same. The type of the resulting tensor is
-    the same as the type of the inputs.
-
-    Args:
-        maxlen (int): Memory that can fit `maxlen` many elements
-            will be allocated for the output. Optional, must be positive, defaults to 1000000.
-            If the output has more than `maxlen` elements, a runtime error
-            will occur.
-
-    Inputs:
-        - **start** (Tensor) - A scalar Tensor. The first number in the sequence. Must have
-          type: int32 or float32
-        - **limit** (Tensor) - A scalar Tensor. Upper limit of the sequence, exclusive. Must
-          have type: int32 or float32
-        - **delta** (Tensor) - A scalar Tensor. Number that increments `start`. Must have
-          type: int32 or float32
-
-    Outputs:
-       A 1-D Tensor, with the same type as the inputs.
+    Refer to :func"`mindspore.ops.range` for more detailed.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> start = Tensor(0, mstype.int32)

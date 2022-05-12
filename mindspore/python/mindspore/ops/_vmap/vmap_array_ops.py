@@ -232,6 +232,25 @@ def get_fill_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Range)
+def get_range_vmap_rule(prim, axis_size):
+    """VmapRule for `Range` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(start_bdim, limit_bdim, delta_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, start_bdim, limit_bdim, delta_bdim)
+        if not is_all_none:
+            _, start_dim = start_bdim
+            _, limit_dim = limit_bdim
+            _, delta_dim = delta_bdim
+            _raise_value_error("For operator Range, all axis for inputs should be None, but got start_dim: {},"
+                               " limit_dim: {} and delta_dim: {}.".format(start_dim, limit_dim, delta_dim))
+        return result
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.TensorShape)
 def get_tensor_shape_vmap_rule(prim, axis_size):
     """VmapRule for `TensorShape` operation."""

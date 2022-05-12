@@ -18,7 +18,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops, ms_function
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -146,3 +146,42 @@ def test_range_invalid_input():
         range_net = RangeNet()
         _ = range_net(Tensor(2, mstype.int32), Tensor(5, mstype.int32), Tensor(-4, mstype.int32)).asnumpy()
     assert "delta cannot be negative when limit > start" in str(info.value)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_range_functional():
+    """
+    Feature: functional range.
+    Description: Test functional interface range.
+    Expectation: success
+    """
+    start = Tensor(0, mstype.int32)
+    limit = Tensor(10, mstype.int32)
+    delta = Tensor(4, mstype.int32)
+    output = ops.range(start, limit, delta)
+    assert np.all(output.asnumpy() == np.array([0, 4, 8]))
+
+
+@ms_function
+def range_fn(x, y, z, a):
+    return ops.range(x, y, z) + a
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_range_vmap():
+    """
+    Feature: Ops range with vmap.
+    Description: Test ops range in vmap.
+    Expectation: success
+    """
+    start = Tensor(0, mstype.int32)
+    limit = Tensor(10, mstype.int32)
+    delta = Tensor(4, mstype.int32)
+    a = Tensor([[1, 1, 1], [1, 1, 1]])
+    vmap_range = ops.vmap(range_fn, (None, None, None, 0), 0)
+    output = vmap_range(start, limit, delta, a)
+    assert np.all(output.asnumpy() == np.array([[1, 5, 9], [1, 5, 9]]))
