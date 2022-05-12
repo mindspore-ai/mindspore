@@ -23,6 +23,8 @@
 #include <iostream>
 #include <string>
 #include <complex>
+#include <map>
+#include <utility>
 
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
@@ -30,23 +32,43 @@
 
 namespace mindspore {
 namespace kernel {
-class GerCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GerCpuKernelMod : public NativeCpuKernelMod {
  public:
   GerCpuKernelMod() = default;
   explicit GerCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~GerCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return func_obj_->RunFunc(inputs, workspace, outputs);
+    return kernel_func_(this, inputs, outputs);
   }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::shared_ptr<CpuKernelFunc> func_obj_;
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+
+  using GerLaunchFunc = std::function<bool(GerCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                           const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, GerLaunchFunc>> func_list_;
+  GerLaunchFunc kernel_func_;
+
   std::string kernel_type_{"Unknown"};
+  std::string kernel_name_;
+  TypeId input_type_1_{kTypeUnknown};
+  TypeId input_type_2_{kTypeUnknown};
+  std::vector<size_t> input_shape_1_;
+  std::vector<size_t> input_shape_2_;
+  std::vector<size_t> output_shape_;
+  size_t batches_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

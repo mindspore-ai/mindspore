@@ -35,10 +35,23 @@ abstract::ShapePtr GerInferShape(const PrimitivePtr &primitive, const std::vecto
 
   auto first_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto second_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x1 rank", SizeToLong(first_input_shape.size()), kEqual, 1, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x2 rank", SizeToLong(second_input_shape.size()), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x1 rank", SizeToLong(first_input_shape.size()), kGreaterEqual, 1,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x2 rank", SizeToLong(second_input_shape.size()), kGreaterEqual, 1,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("two inputs rank", SizeToLong(first_input_shape.size()), kEqual,
+                                           SizeToLong(second_input_shape.size()), prim_name);
 
-  std::vector<int64_t> out_shape = {first_input_shape[0], second_input_shape[0]};
+  std::vector<int64_t> out_shape;
+  out_shape.resize(first_input_shape.size() + 1, 1);
+  size_t shape_index = 0;
+  for (; shape_index < first_input_shape.size() - 1; shape_index++) {
+    (void)CheckAndConvertUtils::CheckInteger("two inputs shape", first_input_shape[shape_index], kEqual,
+                                             second_input_shape[shape_index], prim_name);
+    out_shape[shape_index] = first_input_shape[shape_index];
+  }
+  out_shape[shape_index] = first_input_shape[first_input_shape.size() - 1];
+  out_shape[shape_index + 1] = second_input_shape[second_input_shape.size() - 1];
   return std::make_shared<abstract::Shape>(out_shape);
 }
 

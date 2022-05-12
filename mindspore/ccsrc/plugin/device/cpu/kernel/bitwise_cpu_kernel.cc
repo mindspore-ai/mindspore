@@ -66,7 +66,7 @@ bool BitwiseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
 int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
+  int ret = KRET_OK;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
@@ -78,6 +78,7 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output should be less than or equal to 7, but got " << output_shape.size()
                       << ".";
+    return KRET_RESIZE_FAILED;
   }
   input_shape_1_.resize(input_shape_1.size(), 1);
   input_shape_2_.resize(input_shape_2.size(), 1);
@@ -92,7 +93,7 @@ int BitwiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     output_shape_[i] = static_cast<size_t>(output_shape[i]);
   }
 
-  return 0;
+  return KRET_OK;
 }
 
 template <typename T>
