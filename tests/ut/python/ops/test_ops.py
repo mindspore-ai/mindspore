@@ -51,6 +51,8 @@ from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import PSROIPooling
+from mindspore.ops.operations.nn_ops import MaxPoolV1
+from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore._c_expression import security
@@ -2073,6 +2075,15 @@ test_case_nn_ops = [
         'desc_bprop': [[100, 3, 14, 14]]}),
     ('MaxPoolGrad', {
         'block': G.MaxPoolGrad(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
+        'desc_inputs': [[3, 4, 6, 6], [3, 4, 3, 3], [3, 4, 3, 3]],
+        'desc_bprop': [[3, 4, 6, 6]],
+        'skip': ['backward']}),
+    ('MaxPoolV1', {
+        'block': MaxPoolV1(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
+        'desc_inputs': [[100, 3, 28, 28]],
+        'desc_bprop': [[100, 3, 14, 14]]}),
+    ('MaxPoolGradV1', {
+        'block': MaxPoolGradV1(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[3, 4, 6, 6], [3, 4, 3, 3], [3, 4, 3, 3]],
         'desc_bprop': [[3, 4, 6, 6]],
         'skip': ['backward']}),

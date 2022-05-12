@@ -1641,6 +1641,97 @@ class MaxPool(_Pool):
         super(MaxPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
+class MaxPoolV1(Primitive):
+    r"""
+    Maxpooling operation.
+
+    Applies a 2D maxpooling over an input Tensor which can be regarded as a composition of 2D planes.
+
+    Typically, the input is of shape :math:`(N_{in}, C_{in}, H_{in}, W_{in})`, MaxPoolV1
+    outputs regional maximum in the :math:`(H_{in}, W_{in})`-dimension. Given kernel size
+    :math:`ks = (h_{ker}, w_{ker})` and stride :math:`s = (s_h, s_w)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, h, w) = \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_h \times h + m, s_w \times w + n)
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the max value,
+            is an integer that represents height and width of the kernel, or a tuple
+            of two integers that represent height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an integer that represents
+            the height and width of movement are both strides, or a tuple of two integers that
+            represent height and width of movement, respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid".
+            Default: "valid".
+
+            - same: Adopts the way of completion. The height and width of the output will be the same as
+              the input. The number of padding will be calculated in horizontal and vertical
+              directions, and evenly distributed to top and bottom, left and right if possible.
+              Otherwise, the extra padding will be done from the bottom and the right side.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of the
+              output will be returned without padding. Extra pixels will be discarded.
+        data_format (str) : The optional value for data format, is 'NCHW' or 'NHWC'.
+            Default: 'NCHW'.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
+
+    Raises:
+        TypeError: If `kernel_size` or `strides` is neither int nor tuple.
+        ValueError: If `pad_mode` is neither 'valid' nor 'same' with not case sensitive.
+        ValueError: If `data_format` is neither 'NHWC' nor 'NCHW'.
+        ValueError: If `kernel_size` or `strides` is less than 1.
+        ValueError: If the length of shape of `input` is not equal to 4.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
+        >>> maxpoolv1_op = ops.MaxPoolV1(pad_mode="VALID", kernel_size=2, strides=1)
+        >>> output_ = maxpoolv1_op(x)
+        >>> print(output_)
+        [[[[ 5.  6.  7.]
+           [ 9. 10. 11.]]
+          [[17. 18. 19.]
+           [21. 22. 23.]]
+          [[29. 30. 31.]
+           [33. 34. 35.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        """Initialize MaxPoolV1."""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
+        validator.check_value_type('strides', strides, [int, tuple], self.name)
+        validator.check_value_type('pad_mode', pad_mode, [str], self.name)
+        self.pad_mode = validator.check_string(
+            pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
+        self.format = validator.check_string(
+            data_format, ['NCHW', 'NHWC'], 'format', self.name)
+        self.add_prim_attr('data_format', self.format)
+
+        self.kernel_size = _check_positive_int_or_tuple(
+            "kernel_size", kernel_size, self.name, allow_four=False, ret_four=True)
+        self.strides = _check_positive_int_or_tuple(
+            "strides", strides, self.name, allow_four=False, ret_four=True)
+
+        kernel_size_adapted = self.kernel_size if self.format == 'NCHW' else (
+            self.kernel_size[0], self.kernel_size[2], self.kernel_size[3], self.kernel_size[1])
+        strides_adapted = self.strides if self.format == 'NCHW' else (
+            self.strides[0], self.strides[2], self.strides[3], self.strides[1])
+
+        self.add_prim_attr("kernel_size", kernel_size_adapted)
+        self.add_prim_attr("strides", strides_adapted)
+
+
 class MaxPoolWithArgmax(_Pool):
     r"""
     Performs max pooling on the input Tensor and returns both max values and indices.
