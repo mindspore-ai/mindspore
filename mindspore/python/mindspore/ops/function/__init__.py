@@ -140,6 +140,7 @@ from .math_func import (
     isnan,
     isclose,
     same_type_shape,
+    gcd,
     log,
     log_matrix_determinant,
     matrix_determinant,

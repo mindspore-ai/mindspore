@@ -51,6 +51,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import Lcm
+from mindspore.ops.operations.math_ops import Gcd
 from mindspore.ops.operations.math_ops import RaggedRange
 from mindspore.ops.operations.array_ops import RangeV2
 from mindspore.ops.operations.array_ops import ListDiff
@@ -1492,6 +1493,11 @@ test_case_math_ops = [
                         Tensor(np.array([10., 10., 10., 10.]).astype(np.float32)),
                         Tensor(0.5, mstype.float32)],
         'desc_bprop': [Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))]}),
+    ('Gcd', {
+        'block': Gcd(),
+        'desc_inputs': [Tensor(np.array([3, 4, 5]).astype(np.int32)),
+                        Tensor(np.array([4, 5, 6]).astype(np.int32))],
+        'skip': ['backward']}),
     ('LessEqual', {
         'block': P.LessEqual(),
         'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),

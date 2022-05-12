@@ -473,6 +473,15 @@ class LcmFunc(nn.Cell):
         return self.lcm(x1, x2)
 
 
+class GcdFunc(nn.Cell):
+    def __init__(self):
+        super(GcdFunc, self).__init__()
+        self.gcd = ops.function.gcd
+
+    def construct(self, x1, x2):
+        return self.gcd(x1, x2)
+
+
 class Rad2degNet(nn.Cell):
     def __init__(self):
         super(Rad2degNet, self).__init__()
@@ -636,6 +645,11 @@ raise_set = [
     ('Trunc', {
         'block': P.Trunc(),
         'desc_inputs': [Tensor(np.array([[1.1, 2.2, -4.1]], np.float32))],
+        'skip': ['backward']}),
+    ('Gcd', {
+        'block': GcdFunc(),
+        'desc_inputs': [Tensor(np.array([2, 5, 8]).astype(np.int32)),
+                        Tensor(np.array([4, 3, 12]).astype(np.int32))],
         'skip': ['backward']}),
     ('Zeta', {
         'block': Zeta(),
