@@ -16,8 +16,8 @@
 
 #include "plugin/device/cpu/kernel/matrix_band_part_cpu_kernel.h"
 #include <algorithm>
-#include <utility>
 #include <memory>
+#include <functional>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -26,13 +26,13 @@ bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', got empty inputs or outputs, which is invalid.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(ERROR) << "MatrixBandPart does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For 'MatrixBandPart', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
   kernel_func_ = func_list_[index].second;
@@ -42,16 +42,21 @@ bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
 int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
     return ret;
   }
-
+  shapes_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(shapes_), LongToSize);
+  size_t input_element_num = std::accumulate(shapes_.begin(), shapes_.end(), 1, std::multiplies<size_t>());
+  is_null_input_ = (input_element_num == 0);
+  if (is_null_input_) {
+    return KRET_OK;
+  }
+
   dim_size_ = shapes_.size();
   if (shapes_.size() < kDim2) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input dims must be a matrix greater than or equal to 2D, "
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's input dims must be a matrix greater than or equal to 2D, "
                   << "but got " << shapes_.size() << "D.";
     return KRET_RESIZE_FAILED;
   }
@@ -62,25 +67,12 @@ int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                   << "but got m_=" << m_ << ", n_=" << n_;
     return KRET_RESIZE_FAILED;
   }
+  output_outer_size_ = 1;
   for (size_t i = 0; i < shapes_.size() - kDim2; i++) {
     output_outer_size_ *= shapes_[i];
   }
   output_element_num_ = output_outer_size_ * m_ * n_;
   return KRET_OK;
-}
-
-void MatrixBandPartCpuKernelMod::ResetResource() noexcept {
-  shapes_.clear();
-  dim_size_ = 1;
-  output_element_num_ = 0;
-  output_outer_size_ = 1;
-  m_ = 1;
-  n_ = 1;
-  lower_ = 0;
-  upper_ = 0;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
 }
 
 template <typename T, typename LU>
@@ -92,42 +84,48 @@ bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   const auto upper = reinterpret_cast<LU *>(inputs[2]->addr)[0];
   T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
 
-  lower_ = (lower < 0 || lower > static_cast<int64_t>(m_)) ? m_ : static_cast<size_t>(lower);
-  upper_ = (upper < 0 || upper > static_cast<int64_t>(n_)) ? n_ : static_cast<size_t>(upper);
+  lower_ = (lower < 0 || lower > SizeToLong(m_)) ? m_ : LongToSize(lower);
+  upper_ = (upper < 0 || upper > SizeToLong(n_)) ? n_ : LongToSize(upper);
   if (lower_ >= m_ && upper_ >= n_) {
     auto ret_s2 = memcpy_s(output_ptr, output_element_num_ * sizeof(T), input_ptr, output_element_num_ * sizeof(T));
     if (ret_s2 != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy to output failed. Error no: " << ret_s2;
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy failed. Error no: " << ret_s2;
     }
     return true;
   }
   auto ret_s1 = memset_s(output_ptr, output_element_num_ * sizeof(T), 0, output_element_num_ * sizeof(T));
   if (ret_s1 != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output to 0 failed. Error no: " << ret_s1;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memset failed. Error no: " << ret_s1;
   }
+  bool is_diagonal = (lower_ == 0 && upper_ == 0);
   // The non_zero_len is the length of the non zero element along the -2 axis, so it can skip the position with 0.
   size_t non_zero_len = std::min(m_, lower_ + n_);
   int errno_t = EOK;
-  auto task = [this, &errno_t, non_zero_len, input_ptr, output_ptr](size_t start, size_t end) {
+  auto task = [this, &errno_t, is_diagonal, non_zero_len, input_ptr, output_ptr](size_t start, size_t end) {
     for (size_t t = start; t < end; t++) {
       // The non_zero_len can not be 0.
       const auto i = t / non_zero_len;
       const auto j = t % non_zero_len;
-      const auto s = j < lower_ ? 0 : j - lower_;
-      // When j + upper_ >= n_, the e is n - 1.
-      const auto e = j >= n_ - upper_ ? n_ - 1 : j + upper_;
       const auto offset = i * m_ * n_ + j * n_;
-      errno_t = memcpy_s(output_ptr + offset + s, output_element_num_ * sizeof(T), input_ptr + offset + s,
-                         (e - s + 1) * sizeof(T));
-      if (errno_t != EOK) {
-        // In multi-thread, it can not throw exception.
-        break;
+      if (is_diagonal) {
+        output_ptr[offset + j] = input_ptr[offset + j];
+      } else {
+        const auto s = (j < lower_ ? 0 : j - lower_);
+        // When j + upper_ >= n_, the e is n - 1.
+        const auto e = (j >= n_ - upper_ ? n_ - 1 : j + upper_);
+        auto temp_errno_t = memcpy_s(output_ptr + offset + s, output_element_num_ * sizeof(T), input_ptr + offset + s,
+                                     (e - s + 1) * sizeof(T));
+        if (temp_errno_t != EOK) {
+          // In multi-thread, it can not throw exception.
+          errno_t = temp_errno_t;
+          break;
+        }
       }
     }
   };
   ParallelLaunchAutoSearch(task, output_outer_size_ * non_zero_len, this, &parallel_search_info_, pool_);
   if (errno_t != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy in loop failed. Error no: " << errno_t;
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy failed. Error no: " << errno_t;
   }
   return true;
 }

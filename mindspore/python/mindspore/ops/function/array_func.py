@@ -21,7 +21,6 @@ import mindspore.common.dtype as mstype
 from ...common import Tensor
 from ..operations.array_ops import NonZero
 
-
 eye_ = P.Eye()
 fill_ = P.Fill()
 ones_ = P.Ones()
@@ -111,7 +110,7 @@ def matrix_band_part(x, lower, upper):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
-    Inputs:
+    Args:
         - **x** (Tensor) - Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
           The data type must be float16, float32, float64, int32 or int64.
         - **lower** (int) - Number of subdiagonals to keep. It must be int32 or int64.
@@ -119,7 +118,7 @@ def matrix_band_part(x, lower, upper):
         - **upper** (int) - Number of superdiagonals to keep. It must be int32 or int64.
           If negative, keep entire upper triangle.
 
-    Outputs:
+    Returns:
         Tensor, has the same type and shape as input shape value.
 
     Raises:
@@ -129,7 +128,7 @@ def matrix_band_part(x, lower, upper):
         ValueError: If the shape of `x` is not greater than or equal to 2D.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops import functional as F
@@ -615,7 +614,6 @@ def _check_select_type_match(scalar, tensor_type, scalar_name, tensor_name):
 def _check_select_shape_match(input_shape, cond_shape, tensor_name):
     if input_shape != cond_shape:
         raise ValueError(f"For functional operator[select], the cond shape must be same as {tensor_name} shape.")
-
 
 
 @constexpr

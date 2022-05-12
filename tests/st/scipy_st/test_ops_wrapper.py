@@ -17,7 +17,6 @@ import numpy as onp
 import pytest
 import mindspore.scipy.ops_wrapper as ops_wrapper
 from mindspore import context, Tensor
-from mindspore.ops import functional as F
 from tests.st.scipy_st.utils import match_array
 
 DEFAULT_ALIGNMENT = "LEFT_LEFT"
@@ -309,34 +308,3 @@ def test_matrix_set_diag(data_type):
                 output = ops_wrapper.matrix_set_diag(
                     Tensor(input_mat), Tensor(diagonal[0]), k=k_vec, alignment=align)
                 match_array(output.asnumpy(), expected_diag_matrix)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize('dtype', [onp.int32, onp.float32, onp.float64])
-@pytest.mark.parametrize('batch_shape, rows, cols',
-                         [([], 1, 1), ([], 1, 7), ([], 7, 1), ([], 7, 7),
-                          ([2], 1, 1), ([2], 1, 7), ([2], 7, 1), ([2], 7, 7),
-                          ([1, 3, 2], 1, 1), ([1, 3, 2], 1, 7), ([1, 3, 2], 7, 1), ([1, 3, 2], 7, 7)])
-def test_matrix_band_part(mode, dtype, batch_shape, rows, cols):
-    """
-    Feature: ALL TO ALL
-    Description: test general matrix cases for matrix_band_diag
-    Expectation: the result match numpy.
-    """
-    context.set_context(mode=mode)
-    input_x = onp.ones(batch_shape + [rows, cols]).astype(dtype)
-    for lower in (-1, 0, 1, rows - 1):
-        for upper in (-1, 0, 1, cols - 1):
-            np_output = input_x
-            if lower >= 0:
-                np_output = onp.triu(np_output, -lower)
-            if upper >= 0:
-                np_output = onp.tril(np_output, upper)
-            if batch_shape:
-                np_output = onp.tile(np_output, batch_shape + [1, 1])
-            ms_output = F.matrix_band_part(Tensor(np_output), lower, upper)
-            match_array(ms_output.asnumpy(), np_output)
