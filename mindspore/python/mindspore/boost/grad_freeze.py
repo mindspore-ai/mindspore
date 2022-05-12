@@ -74,8 +74,8 @@ class FreezeOpt(Cell):
 
         self.opts = []
         if train_parameter_groups is None:
-            self.groups_num = 10
-            step = 6
+            self.groups_num = 1
+            step = 1
             parameters = opt.parameters
             train_parameter_groups = (tuple(parameters[(i * step):]) for i in range(self.groups_num))
         else:
@@ -319,7 +319,7 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
         >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
         >>> import mindspore.ops as ops
-        >>> from mindspore.boost.grad_freeze import freeze_cell
+        >>> from mindspore.boost.grad_freeze import freeze_cell, FreezeOpt
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
@@ -334,7 +334,8 @@ def freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulat
         ...
         >>> in_features, out_features = 16, 10
         >>> network = Net(in_features, out_features)
-        >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> optimizer = nn.Momentum(network.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> optimizer = FreezeOpt(optimizer)
         >>> grad = ops.GradOperation(get_by_list=True, sens_param=True)
         >>> freeze_nets = freeze_cell(False, network, optimizer, 1.0, grad, False, None, None, 1)
     """

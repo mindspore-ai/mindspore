@@ -70,20 +70,20 @@ class GroupLossScaleManager(Cell):
         ...         x = self.enhanced_amp(x, 2, 3)
         ...         return x
         >>>
-        >>> net = Net()
-        >>> conv1_param = []
-        >>> conv2_param = []
+        >>> loss_scale_manager = boost.GroupLossScaleManager(4096, [])
+        >>> net = Net(loss_scale_manager)
+        >>> param_group1 = []
+        >>> param_group2 = []
         >>> for param in net.trainable_params():
-        >>>     if 'conv1' in param.name:
-        >>>         conv1_param.append(param)
-        >>>     if 'conv2' in param.name:
-        >>>         conv2_param.append(param)
-        >>> loss_scale_groups = [conv1_param, conv2_param]
-        >>> loss_scale_manager = boost.GroupLossScaleManager(4096, loss_scale_groups)
+        >>>     if 'conv' in param.name:
+        >>>         param_group1.append(param)
+        >>>     else:
+        >>>         param_group2.append(param)
+        >>> loss_scale_manager.loss_scale_groups = [param_group1, param_group2]
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-        >>> boost_config_dict = {"boost": {"mode": "auto", "less_bn": False, "grad_freeze": False, "adasum": False, \
-        >>>                      "grad_accumulation": False, "dim_reduce": False, "group_loss_scale": True}}
+        >>> boost_config_dict = {"boost": {"mode": "manual", "less_bn": False, "grad_freeze": False, "adasum": False, \
+        >>>                      "grad_accumulation": False, "dim_reduce": False, "loss_scale_group": True}}
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager, \
         >>>               boost_level="O1", boost_config_dict=boost_config_dict)
         >>> # For details about how to build the dataset, please refer to the function `create_dataset` in tutorial

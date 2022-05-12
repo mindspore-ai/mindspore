@@ -61,7 +61,7 @@ class OptimizerProcess:
         ...
         >>> size, in_features, out_features = 16, 16, 10
         >>> network = Net(in_features, out_features)
-        >>> optimizer = nn.Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> optimizer = nn.Momentum(network.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> optimizer_process = OptimizerProcess(optimizer)
         >>> optimizer_process.add_grad_centralization(network)
         >>> optimizer = optimizer_process.generate_new_optimizer()
@@ -176,9 +176,10 @@ class ParameterProcess:
     and automatically setting gradient segmentation point.
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore import Tensor, Parameter, nn
         >>> import mindspore.ops as ops
-        >>> from mindspore.boost import OptimizerProcess
+        >>> from mindspore.boost import ParameterProcess
         >>>
         >>> class Net(nn.Cell):
         ...     def __init__(self, in_features, out_features):
@@ -197,9 +198,9 @@ class ParameterProcess:
         ...
         >>> size, in_features, out_features = 16, 16, 10
         >>> network = Net(in_features, out_features)
-        >>> new_parameter = net.trainable_params()[:1]
+        >>> new_parameter = network.trainable_params()[:1]
         >>> parameter_process = ParameterProcess()
-        >>> group_params = parameter_process.generate_group_params(new_parameter, net.trainable_params())
+        >>> group_params = parameter_process.generate_group_params(new_parameter, network.trainable_params())
     """
     def __init__(self):
         self._parameter_indices = 1
