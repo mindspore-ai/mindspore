@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -125,3 +125,25 @@ def test_compile_softsign():
     net = NetSoftsign()
     x = np.array([0, -1, 2, 30, -30], dtype=np.float32)
     _cell_graph_executor.compile(net, Tensor(x))
+
+
+class Hardtanh(nn.Cell):
+    """Hardtanh."""
+
+    def __init__(self, min_val, max_val):
+        super(Hardtanh, self).__init__()
+        self.hard_tanh = nn.Hardtanh(min_val, max_val)
+
+    def construct(self, x):
+        return self.hard_tanh(x)
+
+
+def test_hard_tanh():
+    """
+    Feature: Test Hardtanh.
+    Description: Test Hardtanh functional.
+    Expectation: Success.
+    """
+    net = Hardtanh(-1.0, 1.0)
+    input_data = Tensor(np.array([[1.6, 0, 0.6], [6, 0, -6]], dtype=np.float32))
+    _cell_graph_executor.compile(net, input_data)
