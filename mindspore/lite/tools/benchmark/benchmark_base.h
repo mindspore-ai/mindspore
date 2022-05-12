@@ -29,6 +29,7 @@
 #include <memory>
 #include <cfloat>
 #include <utility>
+#include <mutex>
 #ifndef BENCHMARK_CLIP_JSON
 #include <nlohmann/json.hpp>
 #endif
@@ -446,6 +447,8 @@ class MS_API BenchmarkBase {
   float op_cost_total_ = 0.0f;
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
+  std::map<std::string, float> op_start_times_by_name_;
+  std::mutex op_times_mutex_;
 #ifndef BENCHMARK_CLIP_JSON
   // dump data
   nlohmann::json dump_cfg_json_;
