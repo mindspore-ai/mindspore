@@ -215,6 +215,7 @@ Comparison operators
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.argmin
     mindspore.ops.equal
     mindspore.ops.ge
     mindspore.ops.gt

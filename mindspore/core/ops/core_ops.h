@@ -344,6 +344,7 @@ GVAR_DEF(PrimitivePtr, kPrimEmbeddingLookupCommGrad, std::make_shared<Primitive>
 GVAR_DEF(PrimitivePtr, kPrimSize, std::make_shared<Primitive>("Size"));
 GVAR_DEF(PrimitivePtr, kPrimArgMax, std::make_shared<Primitive>("Argmax"));
 GVAR_DEF(PrimitivePtr, kPrimArgMin, std::make_shared<Primitive>("Argmin"));
+GVAR_DEF(PrimitivePtr, kPrimArgminV2, std::make_shared<Primitive>("ArgminV2"));
 GVAR_DEF(PrimitivePtr, kPrimPack, std::make_shared<Primitive>("Pack"));
 GVAR_DEF(PrimitivePtr, kPrimStack, std::make_shared<Primitive>(kStack));
 GVAR_DEF(PrimitivePtr, kPrimUnpack, std::make_shared<Primitive>("Unpack"));

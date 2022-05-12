@@ -100,6 +100,7 @@ from .math_func import (
     addn,
     absolute,
     abs,
+    argmin,
     tensor_add,
     add,
     neg_tensor,

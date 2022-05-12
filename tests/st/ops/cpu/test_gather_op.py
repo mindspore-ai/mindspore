@@ -122,7 +122,6 @@ def test_gather_vmap_basic():
     axis = 0
 
     outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[1, 2],
                        [5, 6]]).astype(np.float32)
@@ -147,7 +146,6 @@ def test_gather_vmap_negative_axis():
     axis = -2
 
     outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[[1, 2, 3],
                         [4, 5, 6]],
@@ -177,7 +175,6 @@ def test_gather_vmap_with_inaxes():
     axis = 0
 
     outputs = vmap(cal_vmap_gather, in_axes=(2, 1, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[[1, 2, 3],
                         [4, 5, 6]],
@@ -205,7 +202,6 @@ def test_gather_vmap_indices_outofbound():
     axis = 0
 
     outputs = vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[[1, 2, 3],
                         [0, 0, 0]],
@@ -230,7 +226,6 @@ def test_gather_vmap_xdim_is_none():
     axis = 0
 
     outputs = vmap(cal_vmap_gather, in_axes=(None, 0, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[1, 2],
                        [3, 1]]).astype(np.float32)
@@ -253,7 +248,6 @@ def test_gather_vmap_idim_is_none():
     axis = 0
 
     outputs = vmap(cal_vmap_gather, in_axes=(0, None, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[1, 2],
                        [4, 5]]).astype(np.float32)
@@ -283,7 +277,6 @@ def test_gather_vmap_nested():
 
     outputs = vmap(vmap(cal_vmap_gather, in_axes=(0, 0, None), out_axes=0),
                    in_axes=(0, 0, None), out_axes=0)(x, indices, axis)
-    print("output:\n", outputs)
 
     expect = np.array([[[1, 2],
                         [5, 4]],

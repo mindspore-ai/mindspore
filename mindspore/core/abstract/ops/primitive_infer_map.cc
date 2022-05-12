@@ -54,7 +54,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
-  static const auto &kReduceSum = prim::kPrimReduceSum->name();
   static const auto &kRandomPoisson = prim::kPrimRandomPoisson->name();
   static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
   static const auto &kMatrixDiagPartV3 = prim::kPrimMatrixDiagPartV3->name();
@@ -122,7 +121,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kRandomPoisson, ShapeSet{0}},
                                          {kDynamicBroadcastTo, ShapeSet{1}},
                                          {kNonDeterministicInts, ShapeSet{0}},
-                                         {kReduceSum, ShapeSet{1}},
+                                         {prim::kPrimReduceSum->name(), ShapeSet{1}},
+                                         {prim::kPrimArgminV2->name(), ShapeSet{1}},
                                          {kTruncatedNormal, ShapeSet{0}},
                                          {kRaggedRange, ShapeSet{0, 1, 2}},
                                          {kTransposeNOD, ShapeSet{1}},

@@ -56,6 +56,7 @@ const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
                                                           {"ParallelResizeBilinearGrad", "SyncResizeBilinearV2Grad"},
                                                           {"Split", "SplitD"},
                                                           {"CeLU", "CeluV2"},
+                                                          {"ArgminV2", "ArgMin"},
                                                           {"IndexAdd", "InplaceIndexAdd"}};
 
 enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };

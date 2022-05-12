@@ -23,7 +23,6 @@
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(ArgMin, BaseOperator);
 void ArgMin::Init(const int64_t axis, const TypeId output_type) {
   set_axis(axis);
   set_output_type(output_type);
@@ -41,6 +40,7 @@ TypeId ArgMin::get_output_type() const {
   return type_ptr->type_id();
 }
 
+MIND_API_OPERATOR_NAME_IMPL(ArgMin, kNameArgMin, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameArgMin, ArgMin);
 }  // namespace ops
 }  // namespace mindspore

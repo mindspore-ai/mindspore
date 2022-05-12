@@ -274,6 +274,38 @@ def exp2(x):
     return exp2_(tensor_2, x)
 
 
+def argmin(x, axis=-1):
+    """
+    Returns the indices of the minimum value of a tensor across the axis.
+
+    If the shape of input tensor is :math:`(x_1, ..., x_N)`, the shape of the output tensor is
+    :math:`(x_1, ..., x_{axis-1}, x_{axis+1}, ..., x_N)`.
+
+    Args:
+        x (Tensor): Input tensor. The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        axis (int): Axis where the Argmin operation applies to. Default: -1.
+
+    Returns:
+        Tensor, indices of the min value of input tensor across the axis.
+
+    Raises:
+        TypeError: If `axis` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
+        >>> index = ops.argmin(input_x)
+        >>> print(index)
+        2
+    """
+    return P.Argmin(axis)(x)
+
+
+neg_tensor = P.Neg()
+
+
 def neg(x):
     """
     Returns a tensor with negative values of the input tensor element-wise.
@@ -3569,6 +3601,7 @@ __all__ = [
     'abs',
     'tensor_add',
     'add',
+    'argmin',
     'neg_tensor',
     'neg',
     'tensor_lt',

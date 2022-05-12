@@ -16,7 +16,9 @@
 """array_ops vmap impl."""
 
 import numpy as np
+import mindspore
 import mindspore.numpy as mnp
+from mindspore import ops
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -46,6 +48,33 @@ def get_cast_vmap_rule(prim, axis_size):
                                "but got {}.".format(prim_name, type_dim))
         out = prim(input_x, dtype)
         return (out, x_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Argmin)
+def get_unop_vmap_rule(prim, axis_size):
+    """VmapRule for `Argmin` operations."""
+    if isinstance(prim, str):
+        axis = -1
+        output_type = mindspore.int32
+    else:
+        axis = prim.axis
+        output_type = prim.output_type
+
+    @constexpr
+    def trans_axis(axis, rank, dim):
+        if axis < 0:
+            axis += rank - 1
+        axis_processed = axis + 1 if dim <= axis else axis
+        return axis_processed
+
+    def vmap_rule(x_bdim):
+        var, dim = x_bdim
+        rank = ops.rank(var)
+        axis_new = trans_axis(axis, rank, dim)
+        out = P.Argmin(axis_new, output_type)(var)
+        return (out, dim)
 
     return vmap_rule
 

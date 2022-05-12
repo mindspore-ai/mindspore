@@ -343,6 +343,7 @@ constexpr char ARGMAXWITHVALUE[] = "ArgMaxWithValue";
 constexpr char ARGMINWITHVALUE[] = "ArgMinWithValue";
 constexpr char ARGMAX[] = "Argmax";
 constexpr char ARGMIN[] = "Argmin";
+constexpr char ARGMINV2[] = "ArgminV2";
 constexpr char CONV2D[] = "Conv2D";
 constexpr char CONV2D_BACK_PROP_INPUT[] = "Conv2DBackpropInput";
 constexpr char CONV2D_TRANSPOSE[] = "Conv2DTranspose";

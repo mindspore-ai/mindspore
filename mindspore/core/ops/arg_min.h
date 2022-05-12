@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameArgMin = "ArgMin";
+constexpr auto kNameArgMin = "Argmin";
 /// \brief Returns the indices of the minimum value of a tensor across the axis.
 /// Refer to Python API @ref mindspore.ops.Argmin for more details.
 class MIND_API ArgMin : public BaseOperator {
