@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,53 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomChoice op in DE
+Test RandomChoice op in Dataset
 """
 import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.transforms as data_trans
 import mindspore.dataset.vision.transforms as vision
 from mindspore import log as logger
-from util import visualize_list, diff_mse
+from util import visualize_list, diff_mse, config_get_set_seed
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+
+
+def test_random_choice_c():
+    """
+    Feature: RandomChoice Op
+    Description: Test C++ implementation, both valid and invalid input
+    Expectation: Dataset pipeline runs successfully and results are verified for valid input.
+        Invalid input is detected.
+    """
+    original_seed = config_get_set_seed(0)
+
+    def test_config(arr, op_list):
+        try:
+            data = ds.NumpySlicesDataset(arr, column_names="col", shuffle=False)
+            data = data.map(operations=data_trans.RandomChoice(op_list), input_columns=["col"])
+            res = []
+            for i in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+                res.append(i["col"].tolist())
+            return res
+        except (TypeError, ValueError) as e:
+            return str(e)
+
+    # Test whether an operation would be randomly chosen.
+    # In order to prevent random failure, both results need to be checked.
+    res1 = test_config([[0, 1, 2]], [data_trans.PadEnd([4], 0), data_trans.Slice([0, 2])])
+    assert res1 in [[[0, 1, 2, 0]], [[0, 2]]]
+
+    # Test nested structure
+    res2 = test_config([[0, 1, 2]], [data_trans.Compose([data_trans.Duplicate(), data_trans.Concatenate()]),
+                                     data_trans.Compose([data_trans.Slice([0, 1]), data_trans.OneHot(2)])])
+    assert res2 in [[[[1, 0], [0, 1]]], [[0, 1, 2, 0, 1, 2]]]
+    # Test RandomChoice when there is only 1 operation
+    assert test_config([[4, 3], [2, 1]], [data_trans.Slice([0])]) == [[4], [2]]
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
 
 
 def test_random_choice_op(plot=False):
@@ -134,6 +170,7 @@ def test_random_choice_exception_random_crop_badinput():
 
 
 if __name__ == '__main__':
+    test_random_choice_c()
     test_random_choice_op(plot=True)
     test_random_choice_comp(plot=True)
     test_random_choice_exception_random_crop_badinput()

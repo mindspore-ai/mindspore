@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 Testing UniformAugment in DE
 """
 import numpy as np
-import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.transforms
@@ -169,26 +168,6 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
     logger.info("MSE= {}".format(str(np.mean(mse))))
 
 
-def skip_test_cpp_uniform_augment_exception_pyops(num_ops=2):
-    """
-    Test UniformAugment invalid op in operations
-    """
-    logger.info("Test CPP UniformAugment invalid OP exception")
-
-    transforms_ua = [vision.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
-                     vision.RandomHorizontalFlip(),
-                     vision.RandomVerticalFlip(),
-                     vision.RandomColorAdjust(),
-                     vision.RandomRotation(degrees=45),
-                     vision.Invert()]
-
-    with pytest.raises(TypeError) as e:
-        vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
-
-    logger.info("Got an exception in DE: {}".format(str(e)))
-    assert "Type of Transforms[5] must be c_transform" in str(e.value)
-
-
 def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
     """
     Test UniformAugment invalid large number of ops
@@ -280,7 +259,6 @@ if __name__ == "__main__":
     test_uniform_augment_callable(num_ops=2)
     test_uniform_augment(num_ops=1, plot=True)
     test_cpp_uniform_augment(num_ops=1, plot=True)
-    test_cpp_uniform_augment_exception_pyops(num_ops=1)
     test_cpp_uniform_augment_exception_large_numops(num_ops=6)
     test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)
     test_cpp_uniform_augment_exception_float_numops(num_ops=2.5)

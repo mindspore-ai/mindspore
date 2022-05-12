@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -210,7 +210,7 @@ def test_cut_out_comp_hwc(plot=False):
         visualize_list(image_list_1, image_list_2, visualize_mode=2)
 
 
-def skip_test_cut_out_comp_chw():
+def test_cut_out_comp_chw():
     """
     Feature: CutOut op
     Description: Test CutOut with CHW input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) & HWC2CHW
@@ -265,4 +265,4 @@ if __name__ == "__main__":
     test_cut_out_op_multicut(plot=True)
     test_cut_out_md5()
     test_cut_out_comp_hwc(plot=True)
-    skip_test_cut_out_comp_chw()
+    test_cut_out_comp_chw()

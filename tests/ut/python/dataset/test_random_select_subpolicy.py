@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+"""
+Test RandomSelectSubpolicy op in Dataset
+"""
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.transforms as ops
 import mindspore.dataset.vision.transforms as visions
+from util import config_get_set_seed
 
 
 def test_random_select_subpolicy():
-    ds.config.set_seed(0)
+    """
+    Feature: RandomSelectSubpolicy Op
+    Description: Test C++ implementation, both valid and invalid input
+    Expectation: Dataset pipeline runs successfully and results are verified for valid input.
+        Invalid input is detected.
+    """
+    original_seed = config_get_set_seed(0)
 
     def test_config(arr, policy):
         try:
@@ -45,6 +54,9 @@ def test_random_select_subpolicy():
            in test_config([[1, 2, 3]], [[(ops.PadEnd([4], 0), 0.5)], [(1, 0.4)]])
     assert "prob of (op, prob) policy[1][0] is not within the required interval of [0, 1]" in test_config([[1]], [
         [(ops.Duplicate(), 0)], [(ops.Duplicate(), -0.1)]])
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
 
 
 if __name__ == "__main__":

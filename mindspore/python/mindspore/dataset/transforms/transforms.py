@@ -16,7 +16,6 @@
 The module transforms provides common operations, including Compose, OneHot and TypeCast.
 """
 import json
-import typing
 from abc import ABC
 
 import sys

@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,9 +30,11 @@ GENERATE_GOLDEN = False
 
 def test_invert_callable():
     """
-    Test Invert is callable
+    Feature: Invert Op
+    Description: Test op in eager mode
+    Expectation: Output image shape from op is verified
     """
-    logger.info("Test Invert callable")
+    logger.info("Test Invert is callable")
     img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
@@ -45,7 +47,9 @@ def test_invert_callable():
 
 def test_invert_py(plot=False):
     """
-    Test Invert Python implementation
+    Feature: Invert Op
+    Description: Test Python implementation
+    Expectation: Dataset pipeline runs successfully and results are visually verified
     """
     logger.info("Test Invert Python implementation")
 
@@ -100,9 +104,11 @@ def test_invert_py(plot=False):
 
 def test_invert_c(plot=False):
     """
-    Test Invert C implementation
+    Feature: Invert Op
+    Description: Test C++ implementation
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
-    logger.info("Test Invert C implementation")
+    logger.info("Test Invert C++ implementation")
 
     # Original Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -150,9 +156,11 @@ def test_invert_c(plot=False):
 
 def test_invert_py_c(plot=False):
     """
-    Test Invert C implementation and Python implementation
+    Feature: Invert Op
+    Description: Test C++ implementation and Python implementation
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
-    logger.info("Test Invert cpp and Python implementations")
+    logger.info("Test Invert C++ and Python implementation")
 
     # Invert Images in cpp
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -203,9 +211,11 @@ def test_invert_py_c(plot=False):
 
 def test_invert_one_channel():
     """
-    Test Invert C implementation with one channel image
+    Feature: Invert Op
+    Description: Test Invert C++ implementation with one channel images
+    Expectation: Invalid input is detected
     """
-    logger.info("Test Invert C implementation With One Channel Images")
+    logger.info("Test Invert C++ implementation with One Channel Images")
 
     c_op = vision.Invert()
 
@@ -236,15 +246,17 @@ def test_invert_md5_py():
 
     data = data_set.map(operations=transforms_invert, input_columns="image")
     # Compare with expected md5 from images
-    filename = "invert_01_result_py.npz"
+    filename = "invert_01_result_py_unified.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_invert_md5_c():
+def test_invert_md5_c():
     """
-    Test Invert C implementation with md5 check
+    Feature: Invert Op
+    Description: Test Invert C++ implementation with md5 check
+    Expectation: Dataset pipeline runs successfully and md5 results are verified
     """
-    logger.info("Test Invert C implementation with md5 check")
+    logger.info("Test Invert C++ implementation with md5 check")
 
     # Generate dataset
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
@@ -256,7 +268,7 @@ def skip_test_invert_md5_c():
 
     data = data_set.map(operations=transforms_invert, input_columns="image")
     # Compare with expected md5 from images
-    filename = "invert_01_result_c.npz"
+    filename = "invert_01_result_c_unified.npz"
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
 

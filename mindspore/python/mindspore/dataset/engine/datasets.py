@@ -3254,12 +3254,9 @@ class MapDataset(UnionBaseDataset):
     def parse(self, children=None):
         operations = self.__decompose_callable_operations()
 
-        count_old_transforms = sum(
-            [1 if "c_transforms" in str(op) or ("py_transforms" in str(op) and not isinstance(op, FuncWrapper))
-             else 0 for op in operations])
-        count_new_transforms = sum([1 if hasattr(op, "implementation") and not isinstance(op, FuncWrapper)
-                                    else 0 for op in operations])
-        count_pyfunc = sum([1 if isinstance(op, FuncWrapper) else 0 for op in operations])
+        count_old_transforms, count_new_transforms, count_non_data_vision_transforms = \
+            self.__count_transforms(operations)
+        count_pyfunc = self.__count_pyfuncs(operations)
         if count_new_transforms + count_pyfunc == len(operations):
             prev_op = None
             for op in operations:
@@ -3270,10 +3267,10 @@ class MapDataset(UnionBaseDataset):
                         op.implementation = Implementation.C
                 prev_op = op
             operations = transforms.transforms.Compose.reduce(operations)
-        elif count_old_transforms + count_pyfunc == len(operations):
+        elif count_old_transforms + count_pyfunc + count_non_data_vision_transforms == len(operations):
             operations = transforms.py_transforms.Compose.reduce(operations)
         else:
-            raise RuntimeError("Mixing old and new transforms is not allowed.")
+            raise RuntimeError("Mixing old legacy c/py_transforms and new unified transforms is not allowed.")
 
         self.operations = self.__process_final_operations(operations)
         self.prepare_multiprocessing()
@@ -3284,6 +3281,30 @@ class MapDataset(UnionBaseDataset):
 
     def __deepcopy__(self, memodict):
         return self.__safe_deepcopy__(memodict, exclude=("operations", "callbacks", "__transfer_dataset__"))
+
+    @staticmethod
+    def __count_pyfuncs(operations):
+        """
+        Count the number of pyfuncs operations
+        """
+        return sum([1 if isinstance(op, FuncWrapper) else 0 for op in operations])
+
+    @staticmethod
+    def __count_transforms(operations):
+        """
+        Count the various flavors of transforms operations
+        """
+        # Count the number of old legacy data and vision c_transforms and py_transforms
+        count_old_transforms = sum(
+            [1 if "c_transforms" in str(op) or ("py_transforms" in str(op) and not isinstance(op, FuncWrapper))
+             else 0 for op in operations])
+        # Count the number of new unified data and vision transforms
+        count_new_transforms = sum([1 if hasattr(op, "implementation") and not isinstance(op, FuncWrapper)
+                                    else 0 for op in operations])
+        # Count the number of non-data transforms and non-vision transforms
+        count_non_data_vision_transforms = sum(
+            [1 if "text.transforms" in str(op) or "audio.transforms" in str(op) else 0 for op in operations])
+        return count_old_transforms, count_new_transforms, count_non_data_vision_transforms
 
     @staticmethod
     def __operation_valid_for_multiprocessing(op):

@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,14 +29,16 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_decode_op():
     """
-    Test Decode op
+    Feature: Decode Op
+    Description: Test C++ implementation
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
     logger.info("test_decode_op")
 
-    # Decode with rgb format set to True
+    # Serialize and Load dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
 
-    # Serialize and Load dataset requires using vision.Decode instead of vision.Decode().
+    # Decode with rgb format set to True
     data1 = data1.map(operations=[vision.Decode()], input_columns=["image"])
 
     # Second dataset
@@ -51,33 +53,9 @@ def test_decode_op():
         assert mse == 0
 
 
-def test_decode_op_tf_file_dataset():
-    """
-    Test Decode op with tf_file dataset
-    """
-    logger.info("test_decode_op_tf_file_dataset")
-
-    # Decode with rgb format set to True
-    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.FILES)
-    data1 = data1.map(operations=vision.Decode(), input_columns=["image"])
-
-    for item in data1.create_dict_iterator(num_epochs=1):
-        logger.info('decode == {}'.format(item['image']))
-
-    # Second dataset
-    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-        actual = item1["image"]
-        expected = cv2.imdecode(item2["image"], cv2.IMREAD_COLOR)
-        expected = cv2.cvtColor(expected, cv2.COLOR_BGR2RGB)
-        assert actual.shape == expected.shape
-        mse = diff_mse(actual, expected)
-        assert mse == 0
-
-
 class ImageDataset:
+    """Custom class to generate and read image dataset"""
+
     def __init__(self, data_path, data_type="numpy"):
         self.data = [data_path]
         self.label = np.random.sample((1, 1))
@@ -91,7 +69,7 @@ class ImageDataset:
         if self.data_type == "numpy":
             img_bytes = np.frombuffer(img_bytes, dtype=np.uint8)
 
-        # return bytes directly
+        # Return bytes directly
         return (img_bytes, self.label[index])
 
     def __len__(self):
@@ -99,10 +77,15 @@ class ImageDataset:
 
 
 def test_read_image_decode_op():
+    """
+    Feature: Decode Op
+    Description: Test Python implementation
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
     data_path = "../data/dataset/testPK/data/class1/0.jpg"
     dataset1 = ds.GeneratorDataset(ImageDataset(data_path, data_type="numpy"), ["data", "label"])
     dataset2 = ds.GeneratorDataset(ImageDataset(data_path, data_type="bytes"), ["data", "label"])
-    decode_op = vision.Decode(True)
+    decode_op = vision.Decode(to_pil=True)
     to_tensor = vision.ToTensor(output_type=np.int32)
     dataset1 = dataset1.map(operations=[decode_op, to_tensor], input_columns=["data"])
     dataset2 = dataset2.map(operations=[decode_op, to_tensor], input_columns=["data"])
@@ -113,5 +96,4 @@ def test_read_image_decode_op():
 
 if __name__ == "__main__":
     test_decode_op()
-    test_decode_op_tf_file_dataset()
     test_read_image_decode_op()
