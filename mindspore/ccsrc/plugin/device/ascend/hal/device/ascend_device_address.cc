@@ -494,10 +494,10 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) 
                                                 src_device_address->type_id(), src_device_address->GetPtr(),
                                                 src_device_address->format());
   } else {
-    MS_LOG(WARNING) << "Can not copy from device to device directly, format or type is different, src(format:"
-                    << src_device_address->format() << ", type_id:" << TypeIdLabel(src_device_address->type_id())
-                    << "), dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
-                    << ", use the intermediate Tensor copy instead.";
+    MS_LOG(INFO) << "Can not copy from device to device directly, format or type is different, src(format:"
+                 << src_device_address->format() << ", type_id:" << TypeIdLabel(src_device_address->type_id())
+                 << "), dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
+                 << ", use the intermediate Tensor copy instead.";
     return SyncDeviceToDeviceWithDiffFormatType(src_device_addr);
   }
 }
