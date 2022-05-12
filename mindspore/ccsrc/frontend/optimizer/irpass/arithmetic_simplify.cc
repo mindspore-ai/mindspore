@@ -38,7 +38,14 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
     }
   }
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    auto IsSameShape = [node](const AnfNodePtr &real_x) {
+    auto IsAddByZeroSimplifiable = [node](const AnfNodePtr &real_x) {
+      // If real_x is Load CNode, We should not simplify it as Load is a no-op at backend, after simplication, the
+      // result of the Load may be incorrect.
+      if (IsPrimitiveCNode(real_x, prim::kPrimLoad)) {
+        MS_LOG(DEBUG) << "Cannot simplify as real_x is CNode Load: " << real_x->ToString();
+        return false;
+      }
+
       if (real_x->abstract() != nullptr && real_x->abstract()->GetShapeTrack() != nullptr &&
           node->abstract() != nullptr && node->abstract()->GetShapeTrack() != nullptr &&
           *real_x->abstract()->GetShapeTrack() == *node->abstract()->GetShapeTrack()) {
@@ -52,9 +59,8 @@ AnfNodePtr ArithmeticSimplify::operator()(const OptimizerPtr &, const AnfNodePtr
                     << ", node shape: " << node->abstract()->GetShapeTrack()->ToString();
       return false;
     };
-    MATCH_REPLACE_IF(node, x + zero_, x, x.CheckFunc(IsSameShape, node));  // Add by zero
+    MATCH_REPLACE_IF(node, x + zero_, x, x.CheckFunc(IsAddByZeroSimplifiable, node));  // Add by zero
 
-    MATCH_REPLACE(node, x + zero_scalar_, x);                                                    // Add by zero
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarAdd, x, zero_scalar_, true), x);          // Scalar Add by zero
     MATCH_REPLACE_IF(node, x * one_, any_const.WithValueOf(x), !one_.CheckFunc(IsParam, node));  // Multiply by one
     MATCH_REPLACE(node, PBinOperation(prim::kPrimScalarMul, x, one_scalar_, true), x);           // Scalar Mul by one

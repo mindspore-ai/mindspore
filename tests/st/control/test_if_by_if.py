@@ -3,6 +3,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.common.parameter import Parameter
+from mindspore.common import dtype
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 import mindspore.ops.functional as F
@@ -142,3 +143,35 @@ def test_branch_same_shape():
     context.set_context(mode=context.GRAPH_MODE)
     fgrad = grad_net(Tensor(x), Tensor(y))
     print(fgrad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_parallel_if_add_by_zero():
+    """
+    Feature: AddByZero optimization in parallel if.
+    Description: AddByZero optimization should not be performed when one node is a Load CNode.
+    Expectation: out is a value before second assignment.
+    """
+
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.param_a = Parameter(Tensor(3, dtype.float32), name="a")
+            self.zero = Tensor(0, dtype.float32)
+
+        def construct(self, x):
+            out = self.zero
+            if x > 0:
+                F.assign(self.param_a, 1)
+                out = out + self.param_a
+                F.assign(self.param_a, 6)
+            return out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    x = Tensor(3, dtype.float32)
+    net = Net()
+    out = net(x)
+    assert np.allclose(out.asnumpy(), np.array(1, np.float32))
