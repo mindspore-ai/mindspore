@@ -1,5 +1,5 @@
 mindspore.ops.Cdist
-==================
+===================
 
 .. py:class:: mindspore.ops.Cdist()
 

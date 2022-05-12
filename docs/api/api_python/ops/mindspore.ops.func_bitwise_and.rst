@@ -1,5 +1,5 @@
 mindspore.ops.bitwise_and
-========================
+=========================
 
 .. py:function:: mindspore.ops.bitwise_and(x, y)
 

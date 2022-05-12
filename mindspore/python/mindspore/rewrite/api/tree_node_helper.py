@@ -31,10 +31,10 @@ class TreeNodeHelper:
     @staticmethod
     def get_sub_tree(node: Node) -> Optional[SymbolTree]:
         """
-         Getting symbol_tree from a `Tree` type `Node`.
+        Getting symbol_tree from a `Tree` type `Node`.
 
-         Args:
-             node (Node): A `Node` who may hold a sub-symbol_tree.
+        Args:
+            node (Node): A `Node` who may hold a sub-symbol_tree.
 
         Returns:
             An instance of SymbolTree represents sub-symbol_tree. Note that `node`'s symbol_tree maybe None, in this

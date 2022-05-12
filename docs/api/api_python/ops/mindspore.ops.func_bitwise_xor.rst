@@ -1,5 +1,5 @@
 mindspore.ops.bitwise_xor
-========================
+=========================
 
 .. py:function:: mindspore.ops.bitwise_xor(x, y)
 

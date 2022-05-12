@@ -1,5 +1,5 @@
 mindspore.ops.cdist
-==================
+===================
 
 .. py:function:: mindspore.ops.cdist(x, y, p)
 
