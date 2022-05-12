@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,8 @@
 package com.mindspore.config;
 
 public class TrainCfg {
-    // depend "mindspore-lite-train-jni"
     static {
-        try {
-            System.loadLibrary("mindspore-lite-train-jni");
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
-        }
+        MindsporeLite.init();
     }
 
     private long trainCfgPtr;

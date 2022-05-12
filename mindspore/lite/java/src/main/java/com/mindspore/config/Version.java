@@ -16,7 +16,7 @@
 
 package com.mindspore.config;
 
-import com.mindspore.lite.NativeLibrary;
+import java.util.logging.Logger;
 
 /**
  * Define mindspore version info.
@@ -24,14 +24,22 @@ import com.mindspore.lite.NativeLibrary;
  * @since v1.0
  */
 public class Version {
+    private static final Logger LOGGER = Logger.getLogger(Version.class.toString());
     static {
+        LOGGER.info("Version init ...");
+        init();
+    }
+
+    /**
+     * Init function.
+     */
+    public static void init() {
+        LOGGER.info("Version init load ...");
         try {
-            if (!NativeLibrary.loadLibrary()) {
-                NativeLibrary.loadLibs();
-            }
+            NativeLibrary.load();
         } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
+            LOGGER.severe("Failed to load MindSporLite native library.");
+            LOGGER.severe(e.getMessage());
             throw e;
         }
     }
