@@ -15,8 +15,8 @@
     - **dropout_rate** (float) - 表示第二个线性层输出的丢弃率。
     - **hidden_act** (str) - 表示第一个线性层的激活。其值可为'relu'、'relu6'、'tanh'、'gelu'、'fast_gelu'、'elu'、'sigmoid'、'prelu'、'leakyrelu'、'hswish'、'hsigmoid'、'logsigmoid'等等。默认值：'gelu'。
     - **expert_num** (int) - 表示线性层中使用的专家数量。对于expert_num > 1用例，使用BatchMatMul。BatchMatMul中的第一个维度表示expert_num。默认值：1
-    - **param_init_type** (dtype.Number) - 表示参数初始化类型。其值应为dtype.float32或dtype.float16。默认值：dtype.float32
-    - **parallel_config** (OpParallelConfig) - 表示并行配置。更多详情，请参见 `OpParallelConfig` 。默认值为 `default_dpmp_config` ，表示一个带有默认参数的 `OpParallelConfig` 实例。
+    - **param_init_type** (dtype.Number) - 表示参数初始化类型。其值应为mstype.float32或mstype.float16。默认值：mstype.float32
+    - **parallel_config** (OpParallelConfig) - 表示配置该网络的并行度的并行配置。更多详情，请参见 :class:`mindspore.nn.transformer.OpParallelConfig` 。默认值为 `default_dpmp_config` ，表示一个带有默认参数的 `OpParallelConfig` 实例。
 
     **输入：**
 

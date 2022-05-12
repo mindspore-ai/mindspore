@@ -14,11 +14,11 @@
     - **attention_dropout_rate** (float) - 表示注意力score的丢弃率。默认值：0.1
     - **post_layernorm_residual** (bool) - 表示是否在LayerNorm之前使用残差，即是否选择残差为Post-LayerNorm或者Pre-LayerNorm。默认值：False
     - **hidden_act** (str) - 表示内部前馈层的激活函数。其值可为'relu'、'relu6'、'tanh'、'gelu'、'fast_gelu'、'elu'、'sigmoid'、'prelu'、'leakyrelu'、'hswish'、'hsigmoid'、'logsigmoid'等等。默认值：gelu。
-    - **layernorm_compute_type** (dtype.Number) - 表示LayerNorm的计算类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
-    - **softmax_compute_type** (dtype.Number) - 表示注意力中softmax的计算类型。其值应为dtype.float32或dtype.float16。默认值为mstype.float32。
-    - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
-    - **use_past** (bool) - 使用过去状态进行计算，用于增量预测。默认值：False
-    - **moe_config** (MoEConfig) - 表示MoE (Mixture of Expert)的配置。
+    - **layernorm_compute_type** (dtype.Number) - 表示LayerNorm的计算类型。其值应为mstype.float32或mstype.float16。默认值为mstype.float32。
+    - **softmax_compute_type** (dtype.Number) - 表示注意力中softmax的计算类型。其值应为mstype.float32或mstype.float16。默认值为mstype.float32。
+    - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。其值应为mstype.float32或mstype.float16。默认值为mstype.float32。
+    - **use_past** (bool) - 使用过去状态进行计算，用于增量预测。默认值：False。
+    - **moe_config** (MoEConfig) - 表示MoE (Mixture of Expert)的配置。默认值为 `default_moe_config` ，表示带有默认参数的 `MoEConfig` 实例。
     - **parallel_config** (OpParallelConfig) - 表示并行配置。默认值为 `default_dpmp_config` ，表示一个带有默认参数的 `OpParallelConfig` 实例。
 
     **输入：**

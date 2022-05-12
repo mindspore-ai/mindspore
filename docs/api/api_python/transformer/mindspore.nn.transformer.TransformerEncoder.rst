@@ -14,13 +14,13 @@
     - **attention_dropout_rate** (float) - 表示注意力score的丢弃率。默认值：0.1
     - **post_layernorm_residual** (bool) - 表示是否在LayerNorm之前使用残差，即是否选择残差为Post-LayerNorm或者Pre-LayerNorm。默认值：False
     - **hidden_act** (str) - 表示内部前馈层的激活函数。其值可为'relu'、'relu6'、'tanh'、'gelu'、'fast_gelu'、'elu'、'sigmoid'、'prelu'、'leakyrelu'、'hswish'、'hsigmoid'、'logsigmoid'等等。默认值：gelu。
-    - **layernorm_compute_type** (dtype.Number) - 表示LayerNorm的计算类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
-    - **softmax_compute_type** (dtype.Number) - 表示注意力中softmax的计算类型。其值应为dtype.float32或dtype.float16。默认值为mstype.float32。
-    - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。其值应为dtype.float32或dtype.float16。默认值为dtype.float32。
-    - **use_past** (bool) - 使用过去状态进行计算，用于增量预测。例如，如果我们有两个单词，想生成十个或以上单词。我们只需要计算一次这两个单词的状态，然后逐个生成下一个单词。当use_past为True时，有两个步骤可以运行预测。第一步是通过 `model.add_flags_recursive(is_first_iteration=True)` 将is_first_iteration设为True，并传递完整的输入。然后，通过 `model.add_flags_recursive(is_first_iteration=False)` 将is_first_iteration设为False。此时，传递step的输入tensor，并对其进行环回。默认值：False
-    - **lambda_func** - 表示设置融合索引、pipeline阶段和重计算属性的函数。如果用户想确定pipeline阶段和梯度聚合融合，用户可以传递一个接受 `network` 、 `layer_id` 、 `offset` 、 `parallel_config` 和 `layers` 的函数。 `network(Cell)` 表示transformer块， `layer_id(int)` 表示当前模块的层索引，从零开始计数， `offset(int)` 表示如果网络中还有其他模块，则layer_index需要一个偏置。pipeline的默认设置为： `(layer_id + offset) // (layers / pipeline_stage)` 。
-    - **offset** (int) - 表示 `decoder` 的初始层索引。其用于设置梯度聚合的融合值和流水线并行的stage值。
-    - **moe_config** (MoEConfig) - 表示MoE (Mixture of Expert)的配置。
+    - **layernorm_compute_type** (dtype.Number) - 表示LayerNorm的计算类型。其值应为mstype.float32或mstype.float16。默认值为mstype.float32。
+    - **softmax_compute_type** (dtype.Number) - 表示注意力中softmax的计算类型。其值应为mstype.float32或mstype.float16。默认值为mstype.float32。
+    - **param_init_type** (dtype.Number) - 表示模块的参数初始化类型。其值应为mstype.float32或mstype.float16。默认值为mstype.float32。
+    - **use_past** (bool) - 使用过去状态进行计算，用于增量预测。例如，如果我们有两个单词，想生成十个或以上单词。我们只需要计算一次这两个单词的状态，然后逐个生成下一个单词。当use_past为True时，有两个步骤可以运行预测。第一步是通过 `model.add_flags_recursive(is_first_iteration=True)` 将is_first_iteration设为True，并传递完整的输入。然后，通过 `model.add_flags_recursive(is_first_iteration=False)` 将is_first_iteration设为False。此时，传递step的输入tensor，并对其进行环回。默认值：False。
+    - **lambda_func** - 表示设置融合索引、pipeline阶段和重计算属性的函数。如果用户想确定pipeline阶段和梯度聚合融合，用户可以传递一个接受 `network` 、 `layer_id` 、 `offset` 、 `parallel_config` 和 `layers` 的函数。 `network(Cell)` 表示transformer块， `layer_id(int)` 表示当前模块的层索引，从零开始计数， `offset(int)` 表示如果网络中还有其他模块，则layer_index需要一个偏置。pipeline的默认设置为： `(layer_id + offset) // (layers / pipeline_stage)` 。默认值：None。
+    - **offset** (int) - 表示 `decoder` 的初始层索引。其用于设置梯度聚合的融合值和流水线并行的stage值。默认值：0。
+    - **moe_config** (MoEConfig) - 表示MoE (Mixture of Expert)的配置。默认值为 `default_moe_config` ，表示带有默认参数的 `MoEConfig` 实例。
     - **parallel_config** (TransformerOpParallelConfig) - 表示并行配置。默认值为 `default_transformer_config` ，表示带有默认参数的 `TransformerOpParallelConfig` 实例。
 
     **输入：**

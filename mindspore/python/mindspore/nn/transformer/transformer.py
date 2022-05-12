@@ -209,7 +209,7 @@ class TransformerOpParallelConfig(_Config):
             optimizer_shard (bool): Whether to enable optimizer shard. Default False.
             gradient_aggregation_group (int): The fusion group size of the optimizer state sharding. Default: 4.
             recompute (Union[TransformerRecomputeConfig, bool]): The configuration of recomputation for
-                the transformer block. Default: The default configuration of TransformerRecomputeConfig.
+                the transformer block. Default: An instance of TransformerRecomputeConfig with default values.
             vocab_emb_dp (bool): Shard embedding in model parallel or data parallel. Default: True.
 
         Supported Platforms:
@@ -353,8 +353,8 @@ class FeedForward(Cell):
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
             expert_num: (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
                 and the first dimension in BatchMatMul indicate expert_num. Default: 1.
-            param_init_type: (dtype.Number): The parameter initialization type. Should be dtype.float32 or
-                dtype.float16. Default: dtype.float32.
+            param_init_type: (dtype.Number): The parameter initialization type. Should be mstype.float32 or
+                mstype.float16. Default: mstype.float32.
             parallel_config (OpParallelConfig, MoEParallelConfig): The config of parallel setting, see
                 `OpParallelConfig` or `MoEParallelConfig`. When MoE is applied, MoEParallelConfig is effective,
                 otherwise OpParallelConfig is effective. Default `default_dpmp_config`,
@@ -710,12 +710,12 @@ class MultiHeadAttention(Cell):
             num_heads(int): The number of the heads.
             hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
             attention_dropout_rate(float): The dropout rate of the attention scores. Default:0.1.
-            compute_dtype(dtype.Number): The computation type of dense. Default dtype.float16.
-                Should be dtype.float32 or dtype.float16.
-            softmax_compute_type(dtype.Number): The type of softmax computation module. Default dtype.float32.
-                Should be dtype.float32 or dtype.float16.
-            param_init_type(dtype.Number): The parameter initialization type of the module. Default dtype.float32.
-                Should be dtype.float32 or dtype.float16.
+            compute_dtype(dtype.Number): The computation type of dense. Default mstype.float16.
+                Should be mstype.float32 or mstype.float16.
+            softmax_compute_type(dtype.Number): The type of softmax computation module. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16.
+            param_init_type(dtype.Number): The parameter initialization type of the module. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16.
             use_past(bool): Use the past state to compute, used for incremental prediction. For example, if we have two
                 words and want to generate the ten more words. We just need to compute the two words' state only once,
                 and generate the next word one by one. When use_past is True, there are two steps to run the prediction.
@@ -1308,11 +1308,11 @@ class TransformerEncoderLayer(Cell):
             hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
             layernorm_compute_type(dtype.Number): The computation type of the layernorm.
-                Should be dtype.float32 or dtype.float16. Default dtype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
-                Should be dtype.float32 or dtype.float16. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
-                Should be dtype.float32 or dtype.float16. Default dtype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
@@ -2227,11 +2227,11 @@ class TransformerEncoder(Cell):
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
             layernorm_compute_type(dtype.Number): The computation type of the layernorm.
-                Should be dtype.float32 or dtype.float16. Default dtype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
-                Should be dtype.float32 or dtype.float16. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
-                Should be dtype.float32 or dtype.float16. Default dtype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             lambda_func: A function can determine the fusion index, pipeline stages and recompute attribute. If the
                 user wants to determine the pipeline stage and gradient aggregation fusion, the user can pass a
                 function that accepts `network`, `layer_id`, `offset`, `parallel_config`, `layers`. The `network(Cell)`
@@ -2476,11 +2476,11 @@ class TransformerDecoder(Cell):
             hidden_dropout_rate(float): The dropout rate of the final output of the layer. Default:0.1.
             post_layernorm_residual(bool): Do residuals adds before the layernorm. Default False.
             layernorm_compute_type(dtype.Number): The computation type of the layernorm.
-                Should be dtype.float32 or dtype.float16. Default dtype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             softmax_compute_type(dtype.Number): The computation type of the softmax in the attention.
-                Should be dtype.float32 or dtype.float16. Default mstype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             param_init_type(dtype.Number): The parameter initialization type of the module.
-                Should be dtype.float32 or dtype.float16. Default dtype.float32.
+                Should be mstype.float32 or mstype.float16. Default mstype.float32.
             hidden_act(str): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
