@@ -73,7 +73,7 @@ class MetaServerNode : public NodeBase {
   bool Initialize() override;
   bool Initialized() override;
 
-  bool Finalize() override;
+  bool Finalize(bool force = false) override;
 
   // Get the current topology state.
   TopoState TopologyState();

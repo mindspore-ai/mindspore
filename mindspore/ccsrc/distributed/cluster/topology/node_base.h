@@ -39,7 +39,9 @@ class NodeBase {
   virtual bool Initialized() = 0;
 
   // Release the resources hold in this node.
-  virtual bool Finalize() = 0;
+  // If the parameter force is set to true, this node will be finalized without waiting for unregister of all the
+  // compute graph node.
+  virtual bool Finalize(bool force = false) = 0;
 
   size_t rank_id() { return rank_id_; }
 
