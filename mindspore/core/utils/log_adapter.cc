@@ -594,9 +594,8 @@ MS_CORE_API void common_log_init(void) {
   }
   std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
   // Default print log to screen
-  if (logtostderr.empty()) {
-    FLAGS_logtostderr = true;
-  } else if (logtostderr == "0") {
+  FLAGS_logtostderr = true;
+  if (logtostderr == "0") {
     if (mindspore::GetEnv("GLOG_log_dir").empty()) {
 #ifndef BUILD_LITE_INFERENCE
       MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
@@ -604,9 +603,9 @@ MS_CORE_API void common_log_init(void) {
       exit(EXIT_FAILURE);
 #else
       MS_LOG(WARNING) << "`GLOG_log_dir` is empty, log will be printed to stderr.";
-      FLAGS_logtostderr = true;
 #endif
     } else {
+      FLAGS_logtostderr = false;
       // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
 #ifndef BUILD_LITE_INFERENCE
       const std::string rank_id = mindspore::GetEnv("RANK_ID");
