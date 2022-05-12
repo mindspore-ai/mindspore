@@ -51,17 +51,18 @@ abstract::ShapePtr BCEWithLogitsLossInferShape(const PrimitivePtr &primitive,
   auto value_ptr = primitive->GetAttr(kReduction);
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto reduction_value = GetValue<std::string>(value_ptr);
-  // For BCEWithLogitsLoss, if reduction in ('mean', 'sum'), output will be a scalar.
-  if (reduction_value != "none") {
-    std::vector<int64_t> broadcast_shape;
-    return std::make_shared<abstract::Shape>(broadcast_shape);
-  }
+
   auto broadcast_weight_shape = CalBroadCastShape(logits_shape, weight_shape_shape, op_name, "logits", "weight");
   auto broadcast_pos_weight_shape = CalBroadCastShape(logits_shape, pos_weight_shape, op_name, "logits", "pos_weight");
   if (broadcast_weight_shape != broadcast_pos_weight_shape) {
     MS_EXCEPTION(ValueError)
       << "For '" << op_name
       << "', the two input 'weight' and 'pos_weight' shape can not broadcast to logits and label.";
+  }
+  // For BCEWithLogitsLoss, if reduction in ('mean', 'sum'), output will be a scalar.
+  if (reduction_value != "none") {
+    std::vector<int64_t> broadcast_shape;
+    return std::make_shared<abstract::Shape>(broadcast_shape);
   }
   return std::make_shared<abstract::Shape>(broadcast_pos_weight_shape);
 }
@@ -70,15 +71,21 @@ TypePtr BCEWithLogitsLossInferType(const PrimitivePtr &prim, const std::vector<A
   auto op_name = prim->name();
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  std::map<std::string, TypePtr> types;
   const std::vector<std::string> input_args_name = {"logits", "label", "weight", "pos_weight"};
-  for (size_t index = 0; index < input_args.size(); ++index) {
+  const std::set<TypePtr> data_type_check_list = {kFloat16, kFloat32};
+  for (size_t index = kInputIndex1; index < input_args.size(); ++index) {
     auto input_item = input_args.at(index);
     MS_EXCEPTION_IF_NULL(input_item);
     TypePtr input_type = input_item->BuildType();
-    (void)types.emplace(input_args_name.at(index), input_type);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid(input_args_name.at(index), input_type, data_type_check_list,
+                                                     op_name);
   }
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, {kFloat16, kFloat32}, op_name);
+  auto logits_input_item = input_args.at(kInputIndex0);
+  MS_EXCEPTION_IF_NULL(logits_input_item);
+  TypePtr logits_input_type = logits_input_item->BuildType();
+  auto logits_input_name = input_args_name.at(kInputIndex0);
+  return CheckAndConvertUtils::CheckTensorTypeValid(logits_input_name, logits_input_type, data_type_check_list,
+                                                    op_name);
 }
 }  // namespace
 
