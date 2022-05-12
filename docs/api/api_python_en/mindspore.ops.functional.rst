@@ -100,6 +100,7 @@ Element-by-Element Operations
     mindspore.ops.sin
     mindspore.ops.sinh
     mindspore.ops.sub
+    mindspore.ops.svd
     mindspore.ops.tan
 
 .. list-table::
