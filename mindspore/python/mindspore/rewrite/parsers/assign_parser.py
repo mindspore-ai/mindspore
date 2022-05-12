@@ -20,6 +20,7 @@ import astunparse
 from mindspore import log as logger
 from mindspore._extends.parse.namespace import CellNamespace
 from mindspore.nn import Cell
+from mindspore.ops import operations as P
 from mindspore.ops import Primitive
 from ..symbol_tree import SymbolTree
 from ..node import Node, TreeNode
@@ -203,7 +204,7 @@ class AssignParser(Parser):
         """
 
         if func_scope != "self":
-            logger.warning("Not support parse operator which is instantiated at runtime now: ", func_scope, "; name: ",
+            logger.warning("Not support parse operator which is instantiated at runtime now: %s; name: %s", func_scope,
                            func_name)
         var_dict = stree.get_origin_network().__dict__
         for key, value in var_dict["_cells"].items():
@@ -258,7 +259,7 @@ class AssignParser(Parser):
 
         changed = False
         if func_scope != "self":
-            logger.warning("Not support parse operator which is instantiated at runtime now: ", func_scope, "; name: ",
+            logger.warning("Not support parse operator which is instantiated at runtime now: %s; name: %s", func_scope,
                            func_name)
         init_func_ast = stree.get_init_func_ast()
         class_name = sub_tree.get_opt_cls_name()
@@ -280,6 +281,20 @@ class AssignParser(Parser):
             body.value = ast.Call(func=ast.Name(class_name, ast.Store()), args=[args_call], keywords=[])
             break
         return changed
+
+    @staticmethod
+    def _convert_ast_binop_to_node(ast_node: ast.BinOp, father_ast_node: ast.Assign) -> Node:
+        """convert ast.BinOp to Node"""
+
+        # only support ast.Add now
+        op = P.Add()
+        func_ast = ast.Attribute(value=ast.Name(id='F', ctx=ast.Load()), attr='add', ctx=ast.Load())
+        func = ScopedValue.create_naming_value('add', 'F')
+
+        father_ast_node.value = ast.Call(func=func_ast, args=[ast_node.left, ast_node.right], keywords=[])
+        targets = AssignParser._get_targets(AssignParser._create_scopedvalue(father_ast_node.targets[0]))
+        call_args = [AssignParser._create_scopedvalue(arg) for arg in father_ast_node.value.args]
+        return Node.create_call_buildin_op(op, father_ast_node, targets, func, call_args, {})
 
     def _convert_ast_call_to_node(self, ast_node: ast.Call, father_ast_node: ast.Assign, stree: SymbolTree) -> Node:
         """
@@ -362,10 +377,11 @@ class AssignParser(Parser):
     def process(self, stree: SymbolTree, node: ast.Assign):
         """
         Parse ast.Assign and create a node in symbol tree.
-        Will create node when value of ast.Assign is in [ast.Call, ast.Name, ast.Constant, ast.Attribute].
-        Will create python node when value of ast.Assign is in
-        [ast.BinOp, ast.BoolOp, ast.Subscript, ast.List, ast.Tuple, ast.Dict].
-        Other value types are not supported.
+
+        - Create node when value of ast.Assign is in [ast.Call, ast.Name, ast.Constant, ast.Attribute].
+        - Create python node when value of ast.Assign is in [ast.BinOp, ast.BoolOp, ast.Subscript, ast.List, ast.Tuple,
+          ast.Dict].
+        - Other value types are not supported.
 
         Args:
             stree ([SymbolTree]): Symbol Tree under parsing.
@@ -383,7 +399,15 @@ class AssignParser(Parser):
         if isinstance(value, ast.Call):
             node_ = self._convert_ast_call_to_node(value, node, stree)
             stree.append_origin_field(node_)
-        elif isinstance(value, (ast.BinOp, ast.BoolOp, ast.Subscript)):
+        elif isinstance(value, ast.BinOp):
+            if isinstance(value.op, ast.Add):
+                node_ = AssignParser._convert_ast_binop_to_node(value, node)
+                stree.append_origin_field(node_)
+            else:
+                logger.warning(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
+                               f"ignored as a python node now")
+                stree.try_append_python_node(node, node)
+        elif isinstance(value, (ast.BoolOp, ast.Subscript)):
             logger.warning(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
                            f"ignored as a python node now")
             stree.try_append_python_node(node, node)

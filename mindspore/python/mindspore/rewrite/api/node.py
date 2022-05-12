@@ -53,7 +53,7 @@ class Node:
 
     @staticmethod
     def create_call_cell(cell: Cell, targets: [Union[ScopedValue, str]], args: [ScopedValue] = None,
-                         kwargs: {str: ScopedValue}=None, name: str = "") -> 'Node':
+                         kwargs: {str: ScopedValue}=None, name: str = "", is_sub_net: bool = False) -> 'Node':
         """
         Create a node. Only support create from a `Cell` now.
 
@@ -76,6 +76,8 @@ class Node:
             name (str): Indicate the name of node. Used as field name in source code. Default is None. Rewrite will
                 generate name from `targets` when name is None. Rewrite will check and ensure the uniqueness of `name`
                 while node being inserted.
+            is_sub_net (bool): Indicate that is `cell` a network. If `is_sub_net` is true, Rewrite will try to parse the
+                `cell` to a TreeNode, else a CallCell Node. Default is a False.
 
         Returns:
             An instance of `Node`.
@@ -89,7 +91,7 @@ class Node:
                 `CustomObjValue`-`ScopedValue`.
         """
         return Node(NodeImpl.create_call_op(cell, None, targets, ScopedValue.create_naming_value(name, "self"),
-                                            args, kwargs, name))
+                                            args, kwargs, name, is_sub_net))
 
     def get_prev(self) -> 'Node':
         """

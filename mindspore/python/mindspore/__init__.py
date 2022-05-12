@@ -26,7 +26,6 @@ from .context import GRAPH_MODE, PYNATIVE_MODE, set_context, get_context, set_au
                      get_auto_parallel_context, reset_auto_parallel_context, ParallelMode, set_ps_context, \
                      get_ps_context, reset_ps_context, set_fl_context, get_fl_context
 from .version import __version__
-from .rewrite import *
 from .profiler import Profiler
 from .parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters
 
@@ -37,6 +36,5 @@ __all__.extend(common.__all__)
 __all__.extend(train.__all__)
 __all__.extend(log.__all__)
 __all__.extend(context.__all__)
-__all__.extend(rewrite.__all__)
 __all__.extend(parallel.__all__)
 __all__.append("Profiler")
