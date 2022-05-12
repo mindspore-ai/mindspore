@@ -799,6 +799,23 @@ class AvgPoolGradVm(_PoolGrad):
         return out
 
 
+class AvgPoolGradGe(_PoolGrad):
+    """Gradients of the avg pool operation for ge."""
+
+    @prim_attr_register
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        super(AvgPoolGradGe, self).__init__(kernel_size, strides, pad_mode, data_format)
+
+    def __infer__(self, origin_input, dout):
+        out = {
+            'value': None,
+            'shape': tuple(origin_input['value']),
+            'dtype': dout['dtype'],
+        }
+
+        return out
+
+
 class AvgPoolGrad(_PoolGrad):
     """Gradients of the avg pool operation."""
 

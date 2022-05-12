@@ -51,8 +51,10 @@
 #include "frontend/optimizer/irpass/call_graph_tuple_transform.h"
 #include "frontend/optimizer/irpass/recompute_prepare.h"
 #include "frontend/optimizer/irpass/real_op_eliminate.h"
-#include "frontend/optimizer/irpass/ge_tensor_array.h"
+#include "frontend/optimizer/irpass/ge/ge_tensor_array.h"
 #include "frontend/optimizer/irpass/ge/sparse_softmax_cross_entropy_with_logits_split.h"
+#include "frontend/optimizer/irpass/ge/avg_pool_grad_for_ge.h"
+#include "frontend/optimizer/irpass/ge/dropout_for_ge.h"
 
 namespace mindspore {
 namespace opt {
@@ -285,6 +287,14 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   // sparse_softmax_cross_entropy_with_logits split for ge
   sparse_softmax_cross_entropy_with_logits_ = MakeSubstitution(
     std::make_shared<SparseSoftmaxCrossEntropyWithLogitsSplit>(), "sparse_softmax_cross_entropy_with_logits_", IsCNode);
+  // process AvgPoolGrad for ge
+  avg_pool_grad_for_ge_ =
+    MakeSubstitution(std::make_shared<AvgPoolGradForGE>(), "avg_pool_grad_for_ge", prim::kPrimAvgPoolGrad);
+
+  // process Dropout and DropoutGrad for ge
+  dropout_for_ge_ = MakeSubstitution(std::make_shared<DropoutForGE>(), "dropout_for_ge", prim::kPrimDropout);
+  dropout_grad_for_ge_ =
+    MakeSubstitution(std::make_shared<DropoutGradForGE>(), "dropout_grad_for_ge", prim::kPrimDropoutGrad);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
