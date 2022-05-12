@@ -19,44 +19,68 @@ import mindspore_lite as mslite
 import numpy as np
 
 
-# ============================ cpu inference ============================
-def test_cpu_inference_01():
-    cpu_device_info = mslite.context.CPUDeviceInfo(enable_fp16=False)
-    print("cpu_device_info: ", cpu_device_info)
-
-    context = mslite.context.Context(thread_num=1, thread_affinity_mode=2)
-
-    context.append_device_info(cpu_device_info)
-    print("context: ", context)
-
-    model = mslite.model.Model()
-    model.build_from_file("mnist.tflite.ms", mslite.model.ModelType.MINDIR_LITE, context)
-    print("model: ", model)
+def common_predict(context):
+    model = mslite.Model()
+    model.build_from_file("mnist.tflite.ms", mslite.ModelType.MINDIR_LITE, context)
 
     inputs = model.get_inputs()
     outputs = model.get_outputs()
-    print("input num: ", len(inputs))
-    print("output num: ", len(outputs))
-
     in_data = np.fromfile("mnist.tflite.ms.bin", dtype=np.float32)
     inputs[0].set_data_from_numpy(in_data)
-    print("input: ", inputs[0])
-
     model.predict(inputs, outputs)
-
     for output in outputs:
-        print("output: ", output)
         data = output.get_data_to_numpy()
         print("data: ", data)
 
 
+# ============================ cpu inference ============================
+def test_cpu_inference_01():
+    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
+    print("cpu_device_info: ", cpu_device_info)
+    context = mslite.Context(thread_num=1, thread_affinity_mode=2)
+    context.append_device_info(cpu_device_info)
+    common_predict(context)
+
+
+# ============================ gpu inference ============================
+def test_gpu_inference_01():
+    gpu_device_info = mslite.GPUDeviceInfo(device_id=0, enable_fp16=False)
+    print("gpu_device_info: ", gpu_device_info)
+    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
+    print("cpu_device_info: ", cpu_device_info)
+    context = mslite.Context(thread_num=1, thread_affinity_mode=2)
+    context.append_device_info(gpu_device_info)
+    context.append_device_info(cpu_device_info)
+    common_predict(context)
+
+
+# ============================ ascend inference ============================
+def test_ascend_inference_01():
+    ascend_device_info = mslite.AscendDeviceInfo(device_id=0, input_format=None,
+                                                 input_shape=None,
+                                                 precision_mode="force_fp16",
+                                                 op_select_impl_mode="high_performance",
+                                                 dynamic_batch_size=None,
+                                                 dynamic_image_size="",
+                                                 fusion_switch_config_path="",
+                                                 insert_op_cfg_path="")
+    print("ascend_device_info: ", ascend_device_info)
+    cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
+    print("cpu_device_info: ", cpu_device_info)
+    context = mslite.Context(thread_num=1, thread_affinity_mode=2)
+    context.append_device_info(ascend_device_info)
+    context.append_device_info(cpu_device_info)
+    common_predict(context)
+
+
 # ============================ server inference ============================
 def test_server_inference_01():
-    cpu_device_info = mslite.context.CPUDeviceInfo()
-    context = mslite.context.Context(thread_num=4)
+    cpu_device_info = mslite.CPUDeviceInfo()
+    print("cpu_device_info: ", cpu_device_info)
+    context = mslite.Context(thread_num=4)
     context.append_device_info(cpu_device_info)
-    runner_config = mslite.model.RunnerConfig(context, 4)
-    model_parallel_runner = mslite.model.ModelParallelRunner()
+    runner_config = mslite.RunnerConfig(context, 4)
+    model_parallel_runner = mslite.ModelParallelRunner()
     model_parallel_runner.init(model_path="mnist.tflite.ms", runner_config=runner_config)
 
     inputs = model_parallel_runner.get_inputs()

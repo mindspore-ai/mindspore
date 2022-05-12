@@ -16,9 +16,13 @@
 Model API.
 """
 from enum import Enum
+
+from ._checkparam import check_isinstance
+from .context import Context
 from .lib import _c_lite_wrapper
 from .tensor import Tensor
-from .context import Context
+
+__all__ = ['ModelType', 'Model', 'RunnerConfig', 'ModelParallelRunner']
 
 
 class ModelType(Enum):
@@ -34,9 +38,9 @@ class Model:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> model = mslite.model.Model()
-        >>> context.append_device_info(mslite.context.CPUDeviceInfo())
-        >>> model.build_from_file("model.ms", mslite.model.ModelType.MINDIR_LITE, context)
+        >>> model = mslite.Model()
+        >>> context.append_device_info(mslite.CPUDeviceInfo())
+        >>> model.build_from_file("mnist.tflite.ms", mslite.ModelType.MINDIR_LITE, context)
     """
 
     def __init__(self):
@@ -62,14 +66,11 @@ class Model:
             RuntimeError: build model failed.
 
         Examples:
-            >>> model.build_from_file("model.ms", mslite.model.ModelType.MINDIR_LITE, context)
+            >>> model.build_from_file("mnist.tflite.ms", mslite.ModelType.MINDIR_LITE, context)
         """
-        if not isinstance(model_path, str):
-            raise TypeError("model_path must be str, but got {}.".format(type(model_path)))
-        if not isinstance(model_type, ModelType):
-            raise TypeError("model_type must be ModelType, but got {}.".format(type(model_type)))
-        if not isinstance(context, Context):
-            raise TypeError("context must be Context, but got {}.".format(type(context)))
+        check_isinstance("model_path", model_path, str)
+        check_isinstance("model_type", model_type, ModelType)
+        check_isinstance("context", context, Context)
 
         self.model_path_ = model_path
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
@@ -202,8 +203,7 @@ class Model:
         Examples:
             >>> input = model.get_input_by_tensor_name("tensor_in")
         """
-        if not isinstance(tensor_name, str):
-            raise TypeError("tensor_name must be str, but got {}.".format(type(tensor_name)))
+        check_isinstance("tensor_name", tensor_name, str)
         _tensor = self._model.get_input_by_tensor_name(tensor_name)
         if _tensor.is_null():
             raise RuntimeError(f"get_input_by_tensor_name failed!")
@@ -225,8 +225,7 @@ class Model:
         Examples:
             >>> output = model.get_output_by_tensor_name("tensor_out")
         """
-        if not isinstance(tensor_name, str):
-            raise TypeError("tensor_name must be str, but got {}.".format(type(tensor_name)))
+        check_isinstance("tensor_name", tensor_name, str)
         _tensor = self._model.get_output_by_tensor_name(tensor_name)
         if _tensor.is_null():
             raise RuntimeError(f"get_output_by_tensor_name failed!")
@@ -246,14 +245,12 @@ class RunnerConfig:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> runner_config = mslite.model.RunnerConfig(context, 4)
+        >>> runner_config = mslite.RunnerConfig(context, 4)
     """
 
     def __init__(self, context, workers_num):
-        if not isinstance(context, Context):
-            raise TypeError("context must be Context, but got {}.".format(type(context)))
-        if not isinstance(workers_num, int):
-            raise TypeError("workers_num must be int, but got {}.".format(type(workers_num)))
+        check_isinstance("context", context, Context)
+        check_isinstance("workers_num", workers_num, int)
         self._runner_config = _c_lite_wrapper.RunnerConfigBind()
         self._runner_config.set_workers_num(workers_num)
         self._runner_config.set_context(context._context)
@@ -273,7 +270,7 @@ class ModelParallelRunner:
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> model_parallel_runner = mslite.model.ModelParallelRunner()
+        >>> model_parallel_runner = mslite.ModelParallelRunner()
     """
 
     def __init__(self):
@@ -298,10 +295,8 @@ class ModelParallelRunner:
         Examples:
             >>> model_parallel_runner.init("test.ms", runner_config)
         """
-        if not isinstance(model_path, str):
-            raise TypeError("model_path must be str, but got {}.".format(type(model_path)))
-        if not isinstance(runner_config, RunnerConfig):
-            raise TypeError("runner_config must be RunnerConfig, but got {}.".format(type(runner_config)))
+        check_isinstance("model_path", model_path, str)
+        check_isinstance("runner_config", runner_config, RunnerConfig)
 
         self.model_path_ = model_path
         ret = self._model.init(self.model_path_, runner_config._runner_config)

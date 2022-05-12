@@ -23,61 +23,61 @@ import pytest
 # ============================ RunnerConfig ============================
 def test_runner_config_01():
     with pytest.raises(TypeError) as raise_info:
-        cpu_device_info = mslite.context.CPUDeviceInfo()
-        runner_config = mslite.model.RunnerConfig(context=cpu_device_info, workers_num=4)
+        cpu_device_info = mslite.CPUDeviceInfo()
+        runner_config = mslite.RunnerConfig(context=cpu_device_info, workers_num=4)
     assert "context must be Context" in str(raise_info.value)
 
 
 def test_runner_config_02():
     with pytest.raises(TypeError) as raise_info:
-        cpu_device_info = mslite.context.CPUDeviceInfo()
-        context = mslite.context.Context()
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
         context.append_device_info(cpu_device_info)
-        runner_config = mslite.model.RunnerConfig(context=context, workers_num="4")
+        runner_config = mslite.RunnerConfig(context=context, workers_num="4")
     assert "workers_num must be int" in str(raise_info.value)
 
 
 def test_runner_config_03():
-    cpu_device_info = mslite.context.CPUDeviceInfo()
-    context = mslite.context.Context()
+    cpu_device_info = mslite.CPUDeviceInfo()
+    context = mslite.Context()
     context.append_device_info(cpu_device_info)
-    runner_config = mslite.model.RunnerConfig(context=context, workers_num=4)
+    runner_config = mslite.RunnerConfig(context=context, workers_num=4)
 
 
 # ============================ ModelParallelRunner ============================
 def test_model_parallel_runner_01():
-    model_parallel_runner = mslite.model.ModelParallelRunner()
+    model_parallel_runner = mslite.ModelParallelRunner()
     assert "model_path:" in str(model_parallel_runner)
 
 
 def test_model_parallel_runner_init_01():
     with pytest.raises(TypeError) as raise_info:
-        cpu_device_info = mslite.context.CPUDeviceInfo()
-        context = mslite.context.Context()
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
         context.append_device_info(cpu_device_info)
-        runner_config = mslite.model.RunnerConfig(context, 4)
-        model_parallel_runner = mslite.model.ModelParallelRunner()
+        runner_config = mslite.RunnerConfig(context, 4)
+        model_parallel_runner = mslite.ModelParallelRunner()
         model_parallel_runner.init(model_path=["test.ms"], runner_config=runner_config)
     assert "model_path must be str" in str(raise_info.value)
 
 
 def test_model_parallel_runner_init_02():
     with pytest.raises(TypeError) as raise_info:
-        cpu_device_info = mslite.context.CPUDeviceInfo()
-        context = mslite.context.Context()
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
         context.append_device_info(cpu_device_info)
-        model_parallel_runner = mslite.model.ModelParallelRunner()
+        model_parallel_runner = mslite.ModelParallelRunner()
         model_parallel_runner.init(model_path="test.ms", runner_config=context)
     assert "runner_config must be RunnerConfig" in str(raise_info.value)
 
 
 def test_model_parallel_runner_init_03():
     with pytest.raises(RuntimeError) as raise_info:
-        cpu_device_info = mslite.context.CPUDeviceInfo()
-        context = mslite.context.Context()
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
         context.append_device_info(cpu_device_info)
-        runner_config = mslite.model.RunnerConfig(context, 4)
-        model_parallel_runner = mslite.model.ModelParallelRunner()
+        runner_config = mslite.RunnerConfig(context, 4)
+        model_parallel_runner = mslite.ModelParallelRunner()
         model_parallel_runner.init(model_path="test.ms", runner_config=runner_config)
     assert "init failed" in str(raise_info.value)
 
@@ -92,11 +92,11 @@ def test_model_parallel_runner_init_04():
 
 
 def get_model_parallel_runner():
-    cpu_device_info = mslite.context.CPUDeviceInfo()
-    context = mslite.context.Context()
+    cpu_device_info = mslite.CPUDeviceInfo()
+    context = mslite.Context()
     context.append_device_info(cpu_device_info)
-    runner_config = mslite.model.RunnerConfig(context, 4)
-    model_parallel_runner = mslite.model.ModelParallelRunner()
+    runner_config = mslite.RunnerConfig(context, 4)
+    model_parallel_runner = mslite.ModelParallelRunner()
     model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
     return model_parallel_runner
 
@@ -140,8 +140,8 @@ def test_model_parallel_runner_predict_04():
 def test_model_parallel_runner_predict_05():
     with pytest.raises(RuntimeError) as raise_info:
         model_parallel_runner = get_model_parallel_runner()
-        tensor1 = mslite.tensor.Tensor()
-        tensor2 = mslite.tensor.Tensor()
+        tensor1 = mslite.Tensor()
+        tensor2 = mslite.Tensor()
         inputs = [tensor1, tensor2]
         outputs = model_parallel_runner.get_outputs()
         model_parallel_runner.predict(inputs, outputs)
@@ -160,7 +160,7 @@ def test_model_parallel_runner_predict_06():
 def test_model_parallel_runner_predict_07():
     model_parallel_runner = get_model_parallel_runner()
     inputs = model_parallel_runner.get_inputs()
-    input_tensor = mslite.tensor.Tensor()
+    input_tensor = mslite.Tensor()
     input_tensor.set_data_type(inputs[0].get_data_type())
     input_tensor.set_shape(inputs[0].get_shape())
     input_tensor.set_format(inputs[0].get_format())
