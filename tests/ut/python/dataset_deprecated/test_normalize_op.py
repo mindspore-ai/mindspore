@@ -162,7 +162,7 @@ def test_normalize_op_py(plot=False):
         num_iter += 1
 
 
-def test_normalize_md5_01():
+def skip_test_normalize_md5_01():
     """
     Feature: Normalize Op
     Description: Test C++ op and Python op in same dataset pipeline
@@ -179,7 +179,7 @@ def test_normalize_md5_01():
     save_and_check_md5(data_py, filename2, generate_golden=GENERATE_GOLDEN)
 
 
-def test_normalize_md5_02():
+def skip_test_normalize_md5_02():
     """
     Feature: Normalize Op
     Description: Test Python op with len(mean)=len(std)=1 and RGB images
@@ -269,7 +269,7 @@ def test_normalize_exception_invalid_range_py():
         assert "Input mean_value is not within the required interval of [0.0, 1.0]." in str(e)
 
 
-def test_normalize_grayscale_md5_01():
+def skip_test_normalize_grayscale_md5_01():
     """
     Feature: Normalize Op
     Description: Test Python op with len(mean)=len(std)=1 and 1 channel grayscale images
@@ -282,7 +282,7 @@ def test_normalize_grayscale_md5_01():
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def test_normalize_grayscale_md5_02():
+def skip_test_normalize_grayscale_md5_02():
     """
     Feature: Normalize Op
     Description: Test Python op with len(mean)=len(std)=1 and 3 channel grayscale images
@@ -348,12 +348,12 @@ def test_multiple_channels():
 if __name__ == "__main__":
     test_normalize_op_c(plot=True)
     test_normalize_op_py(plot=True)
-    test_normalize_md5_01()
-    test_normalize_md5_02()
+    skip_test_normalize_md5_01()
+    skip_test_normalize_md5_02()
     test_normalize_exception_unequal_size_c()
     test_normalize_exception_unequal_size_py()
     test_normalize_exception_invalid_size_py()
     test_normalize_exception_invalid_range_py()
-    test_normalize_grayscale_md5_01()
-    test_normalize_grayscale_md5_02()
+    skip_test_normalize_grayscale_md5_01()
+    skip_test_normalize_grayscale_md5_02()
     test_normalize_grayscale_exception()
