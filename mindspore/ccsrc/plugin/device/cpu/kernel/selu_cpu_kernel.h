@@ -42,8 +42,6 @@ class SeluCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  void ResetResource() noexcept;
-
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -54,7 +52,6 @@ class SeluCpuKernelMod : public NativeCpuKernelMod {
                                       const std::vector<kernel::AddressPtr> &)>;
   size_t output_size_{1};
   SeluFunc kernel_func_;
-  std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
   static std::vector<std::pair<KernelAttr, SeluFunc>> func_list_;
 };

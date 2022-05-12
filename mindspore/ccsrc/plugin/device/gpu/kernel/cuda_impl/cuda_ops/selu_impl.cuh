@@ -16,9 +16,14 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SELU_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SELU_IMPL_CUH_
+
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
 CUDA_LIB_EXPORT void CalculateSelu(const T *input, size_t input_elements, T scale_dot_alpha, T scale, T *output,
-                                   cudaStream_t cuda_stream);
+                                   const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void CalculateSeluInteger(const T *input, size_t input_elements, float scale_dot_alpha, float scale,
+                                          T *output, const uint32_t &device_id, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_SELU_IMPL_CUH_
