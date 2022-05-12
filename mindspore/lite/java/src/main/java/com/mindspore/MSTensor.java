@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,13 @@
 
 package com.mindspore;
 
-import com.mindspore.lite.NativeLibrary;
+import com.mindspore.config.MindsporeLite;
 
 import java.nio.ByteBuffer;
 
 public class MSTensor {
     static {
-        try {
-            NativeLibrary.load();
-        } catch (Exception e) {
-            System.err.println("Failed to load MindSporLite native library.");
-            e.printStackTrace();
-            throw e;
-        }
+        MindsporeLite.init();
     }
 
     private long tensorPtr;
