@@ -146,6 +146,7 @@ constexpr auto kCummax = "Cummax";
 constexpr auto kTril = "Tril";
 constexpr auto kTriu = "Triu";
 constexpr auto kIndexFill = "IndexFill";
+constexpr auto kMeshgrid = "Meshgrid";
 
 // NN
 constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
@@ -424,6 +425,7 @@ GVAR_DEF(PrimitivePtr, kPrimCummax, std::make_shared<Primitive>(kCummax));
 GVAR_DEF(PrimitivePtr, kPrimRightShift, std::make_shared<Primitive>(kRightShift));
 GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));
 GVAR_DEF(PrimitivePtr, kPrimTriu, std::make_shared<Primitive>(kTriu));
+GVAR_DEF(PrimitivePtr, kPrimMeshgrid, std::make_shared<Primitive>(kMeshgrid));
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
