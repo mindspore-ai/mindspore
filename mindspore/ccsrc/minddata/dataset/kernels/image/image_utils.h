@@ -65,6 +65,12 @@ int GetCVInterpolationMode(InterpolationMode mode);
 /// \return Status code
 int GetCVBorderType(BorderType type);
 
+/// \brief Get the number of input image channels.
+/// \param[in] image Tensor of the image.
+/// \param[out] channels Channels of the image.
+/// \return The status code.
+Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels);
+
 /// \brief Returns the check result of tensor rank and tensor shape
 /// \param[in] tensor: The input tensor need to check
 /// \param[in] channel: The channel index of tensor shape.

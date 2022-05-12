@@ -18,6 +18,7 @@
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "minddata/dataset/kernels/image/image_utils.h"
 
 #include "minddata/dataset/kernels/ir/vision/adjust_gamma_ir.h"
 #include "minddata/dataset/kernels/ir/vision/auto_augment_ir.h"
@@ -215,6 +216,14 @@ PYBIND_REGISTER(
         return gaussian_blur;
       }));
   }));
+
+PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {
+                  (void)m->def("get_image_num_channels", ([](const std::shared_ptr<Tensor> &image) {
+                                 int channels;
+                                 THROW_IF_ERROR(ImageNumChannels(image, &channels));
+                                 return channels;
+                               }));
+                }));
 
 PYBIND_REGISTER(HorizontalFlipOperation, 1, ([](const py::module *m) {
                   (void)py::class_<vision::HorizontalFlipOperation, TensorOperation,

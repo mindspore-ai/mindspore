@@ -1324,3 +1324,34 @@ TEST_F(MindDataTestPipeline, TestAutoAugmentInvalidFillValue) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: GetImageNumChannels
+/// Description: test GetImageNumChannels with pipeline mode
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestGetImageNumChannelsPipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageNumChannelsPipeline.";
+
+  std::shared_ptr<Tensor> input_tensor;
+  std::vector<int> input_vector = {3, 4, 2, 5, 1, 3, 4, 5, 2, 5, 7, 3};
+  ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({2, 2, 3}), &input_tensor));
+  auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
+  int channels = 0;
+  ASSERT_OK(vision::GetImageNumChannels(input_tensor_ms, &channels));
+  int expected = 3;
+
+  ASSERT_EQ(channels, expected);
+}
+
+/// Feature: GetImageNumChannels
+/// Description: test GetImageNumChannels with invalid input
+/// Expectation: the returned result is as expected
+TEST_F(MindDataTestPipeline, TestGetImageNumChannelsInValidInput) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestGetImageNumChannelsInValidInput.";
+
+  std::shared_ptr<Tensor> input_tensor;
+  std::vector<int> input_vector = {3, 4, 2, 5, 1, 3, 4, 5, 2, 5, 7, 3};
+  ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({12}), &input_tensor));
+  auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
+  int channels = 0;
+  ASSERT_FALSE(vision::GetImageNumChannels(input_tensor_ms, &channels));
+}
