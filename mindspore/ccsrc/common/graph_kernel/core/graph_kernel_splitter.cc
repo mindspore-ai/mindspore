@@ -317,7 +317,7 @@ class AreaGraph {
     auto area_graph = std::make_shared<AreaGraph>(node_groups);
     if (area_graph == nullptr) return nullptr;
     if (!area_graph->TopoSort()) {
-      MS_LOG(WARNING) << "The groups have a cycle.";
+      MS_LOG(WARNING) << "The groups have a cycle. The first node is " << node_groups[0][0]->fullname_with_scope();
       return nullptr;
     }
     return area_graph;
