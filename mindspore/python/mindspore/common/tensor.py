@@ -1042,6 +1042,25 @@ class Tensor(Tensor_):
         reshape_op = tensor_operator_registry.get('reshape')()
         return reshape_op(self, (-1,))
 
+    def round(self):
+        """
+        Returns half to even of the tensor element-wise.
+
+        Returns:
+            Tensor, has the same shape and type as the Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
+            >>> output = x.round()
+            >>> print(output)
+            [ 1.  2.  2.  2. -4.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('round')()(self)
+
     def flatten(self, order='C'):
         r"""
         Return a copy of the tensor collapsed into one dimension.

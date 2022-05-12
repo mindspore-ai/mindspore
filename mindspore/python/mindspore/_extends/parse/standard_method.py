@@ -679,6 +679,13 @@ def min(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disa
                                  axis=axis, keepdims=keepdims, initial=initial, where=where)
 
 
+def round(x):  # pylint: disable=redefined-builtin
+    """
+    Returns half to even of a tensor element-wise.
+    """
+    return F.round(x)
+
+
 def resize(x, *new_shape):
     """
     Changes shape and size of array in-place.

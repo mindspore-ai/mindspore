@@ -27,8 +27,7 @@ from .array_func import (unique, eye, matrix_band_part, fill, fill_, tile, size,
                          space_to_batch_nd)
 from .parameter_func import assign, assign_add, assign_sub, index_add
 from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, tensor_lt, less, tensor_le, le, lerp,
-                        lp_norm,
-                        tensor_gt, gt, tensor_ge, ge, tensor_sub, sub, tensor_mul, mul, tensor_div, div,
+                        lp_norm, round, tensor_gt, gt, tensor_ge, ge, tensor_sub, sub, tensor_mul, mul, tensor_div, div,
                         tensor_floordiv, floor_div, floordiv, tensor_pow, pow, pows, tensor_mod, floor_mod, floormod,
                         tensor_exp, exp, tensor_expm1, expm1, equal, not_equal, ne, isfinite, isnan, same_type_shape,
                         log, maximum, invert, minimum, floor, logical_not, logical_or, logical_and, sin, cos, tan,

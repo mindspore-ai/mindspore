@@ -226,6 +226,41 @@ def neg(x):
     return neg_tensor(x)
 
 
+tensor_round = P.Round()
+
+
+def round(x):
+    r"""
+    Returns half to even of a tensor element-wise.
+
+    .. math::
+
+        out_i \approx x_i
+
+    Args:
+        x (Tensor): - The input tensor.
+
+    Returns:
+        Tensor, has the same shape and type as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+         >>> x = Tensor(np.array([0.8, 1.5, 2.3, 2.5, -4.5]), mindspore.float32)
+         >>> output = ops.round(x)
+         >>> print(output)
+         [ 1.  2.  2.  2. -4.]
+    """
+    return tensor_round(x)
+
+
+tensor_sub = P.Sub()
+
+
 def sub(x, y):
     r"""
     Subtracts the second input tensor from the first input tensor element-wise.
@@ -2242,6 +2277,7 @@ __all__ = [
     'acosh',
     'atanh',
     'atan2',
+    'round',
     'bitwise_and',
     'bitwise_or',
     'bitwise_xor',
