@@ -57,7 +57,12 @@ def _environment_check():
 
 class Profiler:
     """
-    MindSpore users can use this class to collect the performance of neural networks.
+    This class to enable the profiling of MindSpore neural networks.
+    MindSpore users can import the mindspore.Profiler, initialize the Profiler object to start profiling,
+    and use Profiler.analyse() to stop profiling and analyse the results.
+    Users can visualize the results using the MindInsight tool.
+    Now, Profiler supports AICORE operator, AICPU operator, HostCPU operator, memory,
+    correspondence, cluster, etc data analysis.
 
     Args:
         output_path (str, optional): Output data path. Default: "./data".

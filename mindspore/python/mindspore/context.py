@@ -615,13 +615,9 @@ def reset_auto_parallel_context():
 def _check_target_specific_cfgs(device, arg_key):
     """Checking whether a config is suitable for a specified device"""
     device_cfgs = {
-        'enable_dump': ['Ascend'],
-        'save_dump_path': ['Ascend'],
         'enable_graph_kernel': ['Ascend', 'GPU', 'CPU'],
         'graph_kernel_flags': ['Ascend', 'GPU', 'CPU'],
         'enable_reduce_precision': ['Ascend'],
-        'enable_profiling': ['Ascend'],
-        'profiling_options': ['Ascend'],
         'print_file_path': ['Ascend'],
         'variable_memory_max_size': ['Ascend'],
         'auto_tune_mode': ['Ascend'],
@@ -642,9 +638,9 @@ def _check_target_specific_cfgs(device, arg_key):
 
 @args_unreset_check(device_id=int, variable_memory_max_size=str, max_device_memory=str, mempool_block_size=str)
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=bool,
-                 save_graphs_path=str, enable_dump=bool, auto_tune_mode=str,
-                 save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
-                 enable_profiling=bool, profiling_options=str, enable_auto_mixed_precision=bool,
+                 save_graphs_path=str, auto_tune_mode=str,
+                 enable_reduce_precision=bool, variable_memory_max_size=str,
+                 enable_auto_mixed_precision=bool,
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, enable_sparse=bool, max_call_depth=int,
                  env_config_path=str, graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int,
@@ -679,14 +675,6 @@ def set_context(**kwargs):
     | Debug Configuration     |  save_graphs                 |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  save_graphs_path            |  CPU/GPU/Ascend            |
-    |                         +------------------------------+----------------------------+
-    |                         |  enable_dump                 |  Ascend                    |
-    |                         +------------------------------+----------------------------+
-    |                         |  save_dump_path              |  Ascend                    |
-    |                         +------------------------------+----------------------------+
-    |                         |  enable_profiling            |  Ascend                    |
-    |                         +------------------------------+----------------------------+
-    |                         |  profiling_options           |  Ascend                    |
     |                         +------------------------------+----------------------------+
     |                         |  print_file_path             |  Ascend                    |
     |                         +------------------------------+----------------------------+
@@ -742,12 +730,6 @@ def set_context(**kwargs):
             If the specified directory does not exist, the system will automatically create the directory.
             During distributed training, graphs will be saved to the directory of
             `save_graphs_path/rank_${rank_id}/`. `rank_id` is the ID of the current device in the cluster.
-        enable_dump (bool): This parameters is deprecated, and will be deleted in the next version.
-        save_dump_path (str): This parameters is deprecated, and will be deleted in the next version.
-        enable_profiling (bool): This parameters is deprecated, and will be deleted in the next version.
-            Please use mindspore.profiler.Profiler api instead.
-        profiling_options (str): This parameters is deprecated, and will be deleted in the next version.
-            Please use mindspore.profiler.Profiler api instead.
         print_file_path (str): The path of saving print data. If this parameter is set, print data is saved to
             a file by default, and print_file_path is not set, the screen will be displayed.
             If the saved file already exists, the timestamp suffix will be added to the file. Saving data to a file
@@ -871,13 +853,10 @@ def set_context(**kwargs):
         >>> set_context(device_id=0)
         >>> set_context(save_graphs=True, save_graphs_path="./model.ms")
         >>> set_context(enable_reduce_precision=True)
-        >>> set_context(enable_dump=True, save_dump_path=".")
         >>> set_context(enable_graph_kernel=True)
         >>> set_context(graph_kernel_flags="--opt_level=2 --dump_as_text")
         >>> set_context(reserve_class_name_in_scope=True)
         >>> set_context(variable_memory_max_size="6GB")
-        >>> set_context(enable_profiling=True,
-        ...                     profiling_options='{"output":"/home/data/output","training_trace":"on"}')
         >>> set_context(check_bprop=True)
         >>> set_context(max_device_memory="3.5GB")
         >>> set_context(mempool_block_size="1GB")
@@ -901,8 +880,7 @@ def set_context(**kwargs):
                              f"type {__device_target__}, but got {device}.")
     device = ctx.get_param(ms_ctx_param.device_target)
     for key, value in kwargs.items():
-        if key in ('enable_profiling', 'profiling_options', 'enable_auto_mixed_precision',
-                   'enable_dump', 'save_dump_path'):
+        if key == 'enable_auto_mixed_precision':
             logger.warning(f"For 'context.set_context', '{key}' parameters will be deprecated."
                            "For details, please see the interface parameter API comments")
             continue
