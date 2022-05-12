@@ -84,7 +84,7 @@ class MS_API InputAndOutput {
  private:
   std::shared_ptr<CellBase> cell_;
   std::vector<InputAndOutput> prev_;
-  int32_t index_;
+  int32_t index_ = 0;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_CELL_H
