@@ -29,6 +29,7 @@
 #include "common/ge_inner_error_codes.h"
 #include "graph/utils/op_desc_utils.h"
 #include "kernel/ascend_kernel_mod.h"
+#include "graph/utils/tensor_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -164,25 +165,40 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(AnfAlgo::GetKernelMod(node));
   MS_EXCEPTION_IF_NULL(kernel_mod);
-  // clean output
-  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node)) {
-    vector<int64_t> output_indexs;
-    auto help = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
-    std::transform(help.begin(), help.end(), std::back_inserter(output_indexs), SizeToLong);
-    ::ge::AttrUtils::SetListInt(*(*op_desc), ::ge::ATOMIC_ATTR_OUTPUT_INDEX, output_indexs);
+  bool has_output = common::AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, node);
+  bool has_workspace = common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node);
+  constexpr size_t kAlignBytes = 32 - 1;
+  // set atomic compile info
+  if (has_output || has_workspace) {
     std::string atomic_compile_info = kernel_mod->GetAtomicCompileInfo();
     std::string atomic_info_key = std::to_string(std::hash<std::string>()(atomic_compile_info));
     (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_KEY, atomic_info_key);
     (void)::ge::AttrUtils::SetStr(*(*op_desc), ATOMIC_COMPILE_INFO_JSON, atomic_compile_info);
   }
+
+  // clean output
+  if (has_output) {
+    vector<int64_t> output_indexs;
+    auto help = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicOutputIndexs);
+    std::transform(help.begin(), help.end(), std::back_inserter(output_indexs), SizeToLong);
+    ::ge::AttrUtils::SetListInt(*(*op_desc), ::ge::ATOMIC_ATTR_OUTPUT_INDEX, output_indexs);
+    auto output_mem_size = kernel_mod->GetOutputSizeList();
+    for (auto index : output_indexs) {
+      auto output_size =
+        static_cast<int64_t>((output_mem_size.at(index) + kMemAlignSize + kAlignBytes) / kMemAlignSize * kMemAlignSize);
+      auto output = (*op_desc)->MutableOutputDesc(index);
+      MS_EXCEPTION_IF_NULL(output);
+      ::ge::TensorUtils::SetSize(*output, output_size);
+    }
+  }
+
   // clean workspace
-  if (common::AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, node)) {
+  if (has_workspace) {
     auto workspace_men_sizes = kernel_mod->GetWorkspaceSizeList();
     std::vector<int64_t> workspace_list;
     std::transform(workspace_men_sizes.begin(), workspace_men_sizes.end(), std::back_inserter(workspace_list),
                    SizeToLong);
     (void)(*op_desc)->SetWorkspaceBytes(workspace_list);
-    constexpr size_t kAlignBytes = 32 - 1;
     std::map<std::string, std::map<int64_t, int64_t>> workspace_info;
     std::map<int64_t, int64_t> clean_size_list;
     auto workspace_indexes = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(node, kAttrAtomicWorkspaceIndexs);
@@ -342,12 +358,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   return ge_node;
 }
 
-::ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(
-  const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-  const std::string &op_compile_info) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(*ge_graph);
-  auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
+::ge::Operator OpTilingCalculateAdapter::GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) {
   MS_EXCEPTION_IF_NULL(ge_node);
   return ::ge::OpDescUtils::CreateOperatorFromNode(ge_node);
 }
@@ -358,6 +369,16 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   return CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
+}
+
+::ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(
+  const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+  const std::string &op_compile_info) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(*ge_graph);
+  auto ge_node = CreateGeNode(node, ge_graph, depend_tensor_map, op_compile_info);
+  MS_EXCEPTION_IF_NULL(ge_node);
+  return ::ge::OpDescUtils::CreateOperatorFromNode(ge_node);
 }
 }  // namespace tiling
 }  // namespace device

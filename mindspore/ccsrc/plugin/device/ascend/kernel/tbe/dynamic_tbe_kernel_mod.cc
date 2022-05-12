@@ -78,15 +78,20 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     MS_LOG(EXCEPTION) << "The node is not dynamic shape: " << cnode->fullname_with_scope();
   }
 
+  // update output size after InferShape.
+  // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
+  AscendKernelMod::UpdateOutputSizeList();
+
   // compute tiling of atomic_clean op.
   device::tiling::OpTilingCalculateAdapter converter;
-  ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("atomic_clean");
   const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map = inputsOnHost;
+  ::ge::ComputeGraphPtr ge_graph = std::make_shared<::ge::ComputeGraph>("default");
+  ::ge::NodePtr ge_node = nullptr;
   if (!atomic_clean_nodes_.empty()) {
     atomic_compile_info_ = ParseCompileJson(atomic_clean_nodes_[0].lock());
-    optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
-    auto ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
+    ge_node = converter.AnfNodeToGeNodeAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
     MS_EXCEPTION_IF_NULL(ge_node);
+    optiling::utils::OpRunInfo atomic_op_info(-1, true, 0);
     auto ret = optiling::OpAtomicCalculateV2(*ge_node, atomic_op_info);
     if (ret != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute atomic tiling failed!";
@@ -97,10 +102,6 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
       dynamic_kernel_mod->InitAtomicOps(atomic_op_info);
     }
   }
-
-  // update output size after InferShape.
-  // avoid atomic_clean memory violation, we need dynamic atomic_clean op.
-  AscendKernelMod::UpdateOutputSizeList();
 
   need_skip_execute_ = AnfAlgo::IsDynamicShapeSkipExecute(cnode);
   if (need_skip_execute_) {
@@ -125,8 +126,9 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   // start compute tiling
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   MS_LOG(INFO) << "Start compute tiling of: " << cnode->fullname_with_scope();
-  ge_graph = std::make_shared<::ge::ComputeGraph>("default");
-  auto ge_op = converter.AnfNodeToGeOperatorAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
+  auto ge_op = (ge_node != nullptr)
+                 ? converter.GeNodeToGeOperatorAdapter(ge_node)
+                 : converter.AnfNodeToGeOperatorAdapter(cnode, &ge_graph, depend_tensor_map, op_compile_info_);
   auto ret = optiling::OpParaCalculateV2(ge_op, op_run_info_v2);
   if (ret != ::ge::GRAPH_SUCCESS) {
     MS_LOG(EXCEPTION) << "The node: " << cnode->fullname_with_scope() << " compute tiling failed!";
