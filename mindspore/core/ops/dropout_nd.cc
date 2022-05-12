@@ -38,7 +38,7 @@ abstract::TupleShapePtr Dropout2DInferShape(const PrimitivePtr &primitive,
   auto input_shape = input_shape_map[kShape];
   // Check Dropout2d input shape whether equal to 4D.
   const int64_t input_rank = 4;
-  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kGreaterEqual, input_rank,
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
                                            primitive->name());
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, input_shape_ptr});
 }
@@ -57,7 +57,7 @@ abstract::TupleShapePtr Dropout3DInferShape(const PrimitivePtr &primitive,
   auto input_shape = input_shape_map[kShape];
   // Check Dropout3d input shape whether equal to 5D.
   const int64_t input_rank = 5;
-  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kGreaterEqual, input_rank,
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
                                            primitive->name());
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{input_shape_ptr, input_shape_ptr});
 }
