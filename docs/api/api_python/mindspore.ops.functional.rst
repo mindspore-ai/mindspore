@@ -256,6 +256,7 @@ Array操作
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.nonzero
+    mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.reshape
     mindspore.ops.scatter_nd

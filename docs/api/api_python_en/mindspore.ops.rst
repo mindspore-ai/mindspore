@@ -434,6 +434,7 @@ Array Operation
     mindspore.ops.Meshgrid
     mindspore.ops.ParallelConcat
     mindspore.ops.PopulationCount
+    mindspore.ops.Range
     mindspore.ops.Rank
     mindspore.ops.Reshape
     mindspore.ops.ReverseSequence
