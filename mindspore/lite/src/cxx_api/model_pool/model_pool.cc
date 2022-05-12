@@ -237,6 +237,10 @@ ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerCon
     return model_pool_config;
   }
   auto device_num = init_context->MutableDeviceInfo().size();
+  if (device_num == 0) {
+    MS_LOG(ERROR) << "device_info is null.";
+    return {};
+  }
   if (device_num > 1) {
     // GPU
     auto worker_config = std::make_shared<WorkerConfig>();
@@ -661,6 +665,10 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
   int max_wait_worker_node_id = 0;
   int max_wait_worker_num = 0;
   auto available_worker = GetMaxWaitWorkerNum(&max_wait_worker_node_id, &max_wait_worker_num);
+  if (inputs.size() == 0 || inputs.front().Shape().size() == 0) {
+    MS_LOG(ERROR) << "inputs is invalid. input size: " << inputs.size();
+    return kLiteError;
+  }
   auto batch = inputs[0].Shape()[0];
   if (use_split_batch_ && predict_task_queue_->GetTaskNum(max_wait_worker_node_id) == 0 && max_wait_worker_num > 1 &&
       batch >= max_wait_worker_num) {

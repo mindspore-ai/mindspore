@@ -82,6 +82,15 @@ def test_model_parallel_runner_init_03():
     assert "init failed" in str(raise_info.value)
 
 
+def test_model_parallel_runner_init_04():
+    with pytest.raises(RuntimeError) as raise_info:
+        context = mslite.context.Context()
+        runner_config = mslite.model.RunnerConfig(context, 4)
+        model_parallel_runner = mslite.model.ModelParallelRunner()
+        model_parallel_runner.init(model_path="mobilenetv2.ms", runner_config=runner_config)
+    assert "init failed" in str(raise_info.value)
+
+
 def get_model_parallel_runner():
     cpu_device_info = mslite.context.CPUDeviceInfo()
     context = mslite.context.Context()
