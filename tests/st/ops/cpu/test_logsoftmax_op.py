@@ -14,6 +14,7 @@
 # ============================================================================
 
 import numpy as np
+import scipy.special
 import pytest
 
 import mindspore.context as context
@@ -26,20 +27,21 @@ from mindspore.ops import operations as P
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_logsoftmax():
-    x = np.array([[-0.08082921, -0.13706027, -0.4711177, -0.05606057],
-                  [-0.46082982, 1.1761844, -1.016654, -1.743829],
-                  [-1.5062045, 0.6910976, 0.4839723, 1.1502692]]).astype(np.float32)
-    expect = np.array([[-1.2939762, -1.3502073, -1.6842647, -1.2692076],
-                       [-1.9445671, -0.3075528, -2.5003912, -3.2275662],
-                       [-3.452001, -1.2546989, -1.4618242, -0.79552734]]).astype(np.float32)
-
+@pytest.mark.parametrize('axis', [-1, 2, 0])
+@pytest.mark.parametrize('dtype, error', [(np.float32, 1.0e-5), (np.float16, 1.0e-3)])
+def test_logsoftmax(axis, dtype, error):
+    """
+    Feature: ALL To ALL
+    Description: test cases for LogSoftmax
+    Expectation: the result match to scipy
+    """
+    np.random.seed(0)
+    x = np.random.random((3, 5, 7, 4)).astype(dtype)
+    expect = scipy.special.log_softmax(x, axis).astype(dtype)
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    logSoftmax = P.LogSoftmax()
-    output = logSoftmax(Tensor(x))
-    diff = output.asnumpy() - expect
-    err = np.ones(shape=expect.shape) * 1.0e-5
-    assert np.all(diff < err)
+
+    output = P.LogSoftmax(axis)(Tensor(x))
+    assert np.allclose(output.asnumpy(), expect, atol=error, rtol=error)
 
 
 class LogSoftmax(nn.Cell):
@@ -66,6 +68,11 @@ class Grad(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_logsoftmaxgrad():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LogSoftmax Grad
+    Expectation: the result match result
+    """
     x = np.array([[-0.47705367, 0.48267725, -1.0453935, 1.574488, 0.20362134, 0.4435456, -0.23984082, -0.43684655,
                    -0.7725506, 1.4481013],
                   [1.1012247, 1.7069651, 0.55062026, 0.3361901, -1.1082426, -0.5001939, -0.3255393, -0.7972024,
@@ -109,6 +116,11 @@ def test_logsoftmaxgrad():
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_logsoftmaxgrad1():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LogSoftmax Grad
+    Expectation: the result match result
+    """
     x = np.array([[-0.47705367, 0.48267725, -1.0453935, 1.574488, 0.20362134, 0.4435456, -0.23984082, -0.43684655,
                    -0.7725506, 1.4481013],
                   [1.1012247, 1.7069651, 0.55062026, 0.3361901, -1.1082426, -0.5001939, -0.3255393, -0.7972024,
@@ -138,7 +150,7 @@ def test_logsoftmaxgrad1():
                        [-0.01768187, 0.26872346, -0.5037259, -0.3376058, -0.3291146, 1.4752979, -0.25972134, 0.8869053,
                         0.25325722, -0.13946185],
                        [-0.5247209, 0.70192003, -1.0808672, 1.4858199, -1.1273282, 0.20728993, 0.38918605, 0.08162117,
-                        0.10445589, 0.3220427]],).astype(np.float32)
+                        0.10445589, 0.3220427]]).astype(np.float32)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     net = LogSoftmax(0)
