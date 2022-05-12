@@ -62,17 +62,12 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
     }
   }
   // Handle disconnect event.
-  if (conn->state == ConnectionState::kDisconnecting ||
-      (conn->recv_message_type != ParseType::kHttpReq && conn->recv_message_type != ParseType::kHttpRsp &&
-       (events & (uint32_t)(EPOLLHUP | EPOLLRDHUP | EPOLLERR)))) {
-    if (conn->recv_message_type == ParseType::kTcpMsg) {
-      if (kPrintCount++ % kPrintCountInterval == 0) {
-        MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
-                     << ", errcode: " << conn->error_code << ", errno: " << errno
-                     << ", to: " << conn->destination.c_str() << ", type:" << conn->recv_message_type
-                     << ", remote: " << conn->is_remote;
-        usleep(kPrintTimeInterval);
-      }
+  if (conn->state == ConnectionState::kDisconnecting || (events & (uint32_t)(EPOLLHUP | EPOLLRDHUP | EPOLLERR))) {
+    if (kPrintCount++ % kPrintCountInterval == 0) {
+      MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
+                   << ", errcode: " << conn->error_code << ", errno: " << errno << ", to: " << conn->destination.c_str()
+                   << ", type:" << conn->recv_message_type << ", remote: " << conn->is_remote;
+      usleep(kPrintTimeInterval);
     }
     conn->state = ConnectionState::kDisconnecting;
     if (conn->event_callback != nullptr) {

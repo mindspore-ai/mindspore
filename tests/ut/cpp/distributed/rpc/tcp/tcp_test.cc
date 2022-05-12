@@ -428,6 +428,67 @@ TEST_F(TCPTest, SingleServerMultiClients) {
   }
   server->Finalize();
 }
+
+/// Feature: test delete invalid tcp connection used in connection pool in tcp client when some socket error happened.
+/// Description: start a socket server and tcp client pair and stop the tcp server.
+/// Expectation: the connection from the tcp client to the tcp server will be deleted automatically.
+TEST_F(TCPTest, DeleteInvalidConnectionForTcpClient) {
+  pid_t pid = fork();
+  EXPECT_LE(0, pid);
+
+  auto server_url = "127.0.0.1:8081";
+  if (pid == 0) {
+    // Start the tcp server.
+    std::unique_ptr<TCPServer> server = std::make_unique<TCPServer>();
+    bool ret = server->Initialize(server_url);
+    ASSERT_TRUE(ret);
+
+    server->SetMessageHandler([](MessageBase *const message) -> MessageBase *const {
+      IncrDataMsgNum(1);
+      return NULL_MSG;
+    });
+
+    // Wait timeout: 30s
+    WaitForDataMsg(1, 30);
+
+    // Check result
+    EXPECT_EQ(1, GetDataMsgNum());
+
+    sleep(60 * 60);
+
+  } else {
+    // Start the tcp client.
+    auto client_url = "127.0.0.1:1234";
+    std::unique_ptr<TCPClient> client = std::make_unique<TCPClient>();
+    auto ret = client->Initialize();
+    ASSERT_TRUE(ret);
+
+    // Create the message.
+    auto message = CreateMessage(server_url, client_url);
+
+    // Send the message.
+    client->Connect(server_url);
+    client->SendAsync(std::move(message));
+
+    // Kill the tcp server process.
+    kill(pid, 9);
+
+    bool disconnected = false;
+    size_t retry = 20;
+    size_t interval = 3;
+    while (!disconnected && retry-- > 0) {
+      if (!client->IsConnected(server_url)) {
+        disconnected = true;
+        continue;
+      }
+      sleep(interval);
+    }
+    // Destroy the tcp client.
+    client->Finalize();
+
+    ASSERT_TRUE(disconnected);
+  }
+}
 }  // namespace rpc
 }  // namespace distributed
 }  // namespace mindspore

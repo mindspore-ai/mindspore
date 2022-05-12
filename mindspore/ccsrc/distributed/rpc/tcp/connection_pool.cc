@@ -62,7 +62,7 @@ void ConnectionPool::ResetAllConnMetrics() {
 void ConnectionPool::DeleteConnection(const std::string &dst_url) {
   Connection *conn = FindConnection(dst_url);
   if (conn != nullptr) {
-    MS_LOG(INFO) << "unLink fd:" << conn->socket_fd << ",to:" << dst_url;
+    MS_LOG(INFO) << "Delete tcp connection to:" << dst_url;
     CloseConnection(conn);
   }
 }

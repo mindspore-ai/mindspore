@@ -40,6 +40,9 @@ class TCPClient {
   // Connect to the specified server.
   bool Connect(const std::string &dst_url, size_t retry_count = 60);
 
+  // Check if the connection to dst_url has been established.
+  bool IsConnected(const std::string &dst_url);
+
   // Disconnect from the specified server.
   bool Disconnect(const std::string &dst_url, size_t timeout_in_sec = 5);
 

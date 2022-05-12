@@ -63,6 +63,8 @@ bool TCPClient::Connect(const std::string &dst_url, size_t retry_count) {
   return false;
 }
 
+bool TCPClient::IsConnected(const std::string &dst_url) { return tcp_comm_->IsConnected(dst_url); }
+
 bool TCPClient::Disconnect(const std::string &dst_url, size_t timeout_in_sec) {
   bool rt = false;
   tcp_comm_->Disconnect(dst_url);
