@@ -295,7 +295,7 @@ bool MetaServerNode::TransitionToInitialized() {
 }
 
 bool MetaServerNode::Recovery() {
-  std::string recovery_path = recovery::RecoveryFullPath();
+  std::string recovery_path = recovery::RecoveryPath();
   configuration_ = std::make_unique<recovery::FileConfiguration>(recovery_path + "/" + kRecoveryFileName);
 
   RETURN_IF_FALSE_WITH_LOG(configuration_->Initialize(),
