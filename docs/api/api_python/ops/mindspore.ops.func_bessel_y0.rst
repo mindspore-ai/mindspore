@@ -1,5 +1,5 @@
 mindspore.ops.bessel_y0
-=====================
+=======================
 
 .. py:class:: mindspore.ops.bessel_y0
 
@@ -15,5 +15,5 @@ mindspore.ops.bessel_y0
 
     **异常：**
 
-    - **TypeError** - `x`不是Tensor。
-    - **TypeError** - `x`的数据类型不是float16，float32或float64。
+    - **TypeError** - `x` 不是Tensor。
+    - **TypeError** - `x` 的数据类型不是float16，float32或float64。
