@@ -432,8 +432,10 @@ Parameter操作算子
     mindspore.ops.core
     mindspore.ops.count_nonzero
     mindspore.ops.cummin
+    mindspore.ops.derivative
     mindspore.ops.dot
     mindspore.ops.grad
+    mindspore.ops.jet
     mindspore.ops.jvp
     mindspore.ops.laplace
     mindspore.ops.narrow
