@@ -10,8 +10,13 @@ public class NativeLibrary {
     private static final Logger LOGGER = Logger.getLogger(NativeLibrary.class.toString());
 
     private static final String GLOG_LIBNAME = "glog";
+    private static final String JPEG_LIBNAME = "jpeg";
+    private static final String TURBOJPEG_LIBNAME = "turbojpeg";
+    private static final String MINDDATA_LITE_LIBNAME = "minddata-lite";
     private static final String MINDSPORE_LITE_LIBNAME = "mindspore-lite";
     private static final String MINDSPORE_LITE_JNI_LIBNAME = "mindspore-lite-jni";
+    private static final String MINDSPORE_LITE_TRAIN_LIBNAME = "mindspore-lite-train";
+    private static final String MINDSPORE_LITE_TRAIN_JNI_LIBNAME = "mindspore-lite-train-jni";
 
     /**
      * Load function.
@@ -29,8 +34,13 @@ public class NativeLibrary {
      */
     public static void loadLibs() {
         loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + JPEG_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + TURBOJPEG_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + MINDDATA_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + MINDSPORE_LITE_TRAIN_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + MINDSPORE_LITE_TRAIN_JNI_LIBNAME + ".so"));
     }
 
     private static boolean isLibLoaded() {
@@ -50,23 +60,18 @@ public class NativeLibrary {
     private static boolean loadLibrary() {
         boolean loadSuccess = false;
         try {
-            System.loadLibrary(GLOG_LIBNAME);
-            LOGGER.info("loadLibrary " + GLOG_LIBNAME + ": success");
-        } catch (UnsatisfiedLinkError e) {
-            LOGGER.info("tryLoadLibrary " + GLOG_LIBNAME + " failed.");
-        }
-        try {
-            System.loadLibrary(MINDSPORE_LITE_LIBNAME);
-            LOGGER.info("loadLibrary " + MINDSPORE_LITE_LIBNAME + ": success");
-        } catch (UnsatisfiedLinkError e) {
-            LOGGER.info("tryLoadLibrary " + MINDSPORE_LITE_LIBNAME + " failed.");
-        }
-        try {
             System.loadLibrary(MINDSPORE_LITE_JNI_LIBNAME);
             loadSuccess = true;
             LOGGER.info("loadLibrary " + MINDSPORE_LITE_JNI_LIBNAME + ": success");
         } catch (UnsatisfiedLinkError e) {
             LOGGER.info("tryLoadLibrary " + MINDSPORE_LITE_JNI_LIBNAME + " failed.");
+        }
+        try {
+            System.loadLibrary(MINDSPORE_LITE_TRAIN_JNI_LIBNAME);
+            loadSuccess = true;
+            LOGGER.info("loadLibrary " + MINDSPORE_LITE_TRAIN_JNI_LIBNAME + ": success.");
+        } catch (UnsatisfiedLinkError e) {
+            LOGGER.info("tryLoadLibrary " + MINDSPORE_LITE_TRAIN_JNI_LIBNAME + " failed.");
         }
         return loadSuccess;
     }
