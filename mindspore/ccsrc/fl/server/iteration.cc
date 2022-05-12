@@ -992,10 +992,10 @@ string Iteration::GetDataRateFilePath() {
 
 void Iteration::StartThreadToRecordDataRate() {
   MS_LOG(INFO) << "Start to create a thread to record data rate";
-  data_rate_thread_ = std::thread([&]() {
+  std::string data_rate_path = GetDataRateFilePath();
+  MS_LOG(INFO) << "The data rate file path is " << data_rate_path;
+  data_rate_thread_ = std::thread([=]() {
     std::fstream file_stream;
-    std::string data_rate_path = GetDataRateFilePath();
-    MS_LOG(DEBUG) << "The data rate file path is " << data_rate_path;
     uint32_t rank_id = server_node_->rank_id();
     while (is_date_rate_thread_running_) {
       // record data every 60 seconds
