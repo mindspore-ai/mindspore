@@ -205,6 +205,8 @@ class Model:
         if not isinstance(tensor_name, str):
             raise TypeError("tensor_name must be str, but got {}.".format(type(tensor_name)))
         _tensor = self._model.get_input_by_tensor_name(tensor_name)
+        if _tensor.is_null():
+            raise RuntimeError(f"get_input_by_tensor_name failed!")
         return Tensor(_tensor)
 
     def get_output_by_tensor_name(self, tensor_name):
@@ -226,6 +228,8 @@ class Model:
         if not isinstance(tensor_name, str):
             raise TypeError("tensor_name must be str, but got {}.".format(type(tensor_name)))
         _tensor = self._model.get_output_by_tensor_name(tensor_name)
+        if _tensor.is_null():
+            raise RuntimeError(f"get_output_by_tensor_name failed!")
         return Tensor(_tensor)
 
 

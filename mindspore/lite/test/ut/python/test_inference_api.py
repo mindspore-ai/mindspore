@@ -430,6 +430,13 @@ def test_model_get_input_by_tensor_name_01():
 
 
 def test_model_get_input_by_tensor_name_02():
+    with pytest.raises(RuntimeError) as raise_info:
+        model = get_model()
+        input_tensor = model.get_input_by_tensor_name("no-exist")
+    assert "get_input_by_tensor_name failed" in str(raise_info.value)
+
+
+def test_model_get_input_by_tensor_name_03():
     model = get_model()
     input_tensor = model.get_input_by_tensor_name("graph_input-173")
     assert "tensor_name: graph_input-173" in str(input_tensor)
@@ -443,6 +450,13 @@ def test_model_get_output_by_tensor_name_01():
 
 
 def test_model_get_output_by_tensor_name_02():
+    with pytest.raises(RuntimeError) as raise_info:
+        model = get_model()
+        output = model.get_output_by_tensor_name("no-exist")
+    assert "get_output_by_tensor_name failed" in str(raise_info.value)
+
+
+def test_model_get_output_by_tensor_name_03():
     model = get_model()
     output = model.get_output_by_tensor_name("Softmax-65")
     assert "tensor_name: Softmax-65" in str(output)
