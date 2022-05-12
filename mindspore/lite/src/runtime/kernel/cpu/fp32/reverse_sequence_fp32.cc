@@ -52,8 +52,8 @@ int ReverseSequenceCPUKernel::CalcCountPreAxis(const std::vector<int> shape, int
 }
 int ReverseSequenceCPUKernel::CalcCountAfterAxis(const std::vector<int> shape, int axis) const {
   int count = 1;
-  for (size_t i = axis + 1; i < shape.size(); ++i) {
-    count *= shape.at(i);
+  for (int i = axis + 1; i < static_cast<int>(shape.size()); ++i) {
+    count *= static_cast<int>(shape.at(i));
   }
   return count;
 }
@@ -68,7 +68,7 @@ int ReverseSequenceCPUKernel::ReSize() {
   ConvertAxisToPositive(input0->shape(), &(para->seq_axis_));
   MS_CHECK_TRUE_RET(para->batch_axis_ >= 0 && para->seq_axis_ >= 0, RET_ERROR);
 
-  para->ndim_ = input0->shape().size();
+  para->ndim_ = static_cast<int>(input0->shape().size());
   for (int i = 0; i < para->ndim_; i++) {
     para->input_shape0_[i] = input0->DimensionSize(i);
     para->output_shape_[i] = output->DimensionSize(i);
@@ -89,7 +89,7 @@ int ReverseSequenceCPUKernel::ReSize() {
   para->inner_stride_ = input0->DimensionSize(greater_axis) * CalcCountAfterAxis(input0->shape(), greater_axis);
 
   para->copy_byte_size_ = sizeof(float) * CalcCountAfterAxis(input0->shape(), greater_axis);
-  para->total_data_size_ = input0->Size();
+  para->total_data_size_ = static_cast<size_t>(input0->Size());
   return RET_OK;
 }
 

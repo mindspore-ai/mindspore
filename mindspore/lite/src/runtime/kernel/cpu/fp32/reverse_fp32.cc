@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_ReverseV2;
 namespace mindspore::kernel {
 int ReverseCPUKernel::Stride(int index) {
   int stride = 1;
-  for (size_t i = static_cast<int>(index) + 1; i < in_tensors_.at(0)->shape().size(); ++i) {
+  for (size_t i = static_cast<size_t>(index) + 1; i < in_tensors_.at(0)->shape().size(); ++i) {
     stride *= in_tensors_.at(0)->shape().at(i);
   }
   return stride;
