@@ -16,11 +16,12 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LPNORM_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LPNORM_IMPL_CUH_
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
 template <typename T>
 CUDA_LIB_EXPORT void CalLpNorm(const T *input, const size_t *input_shape, size_t input_shape_length,
                                size_t input_elements, const size_t *output_axis, const size_t *output_stride,
                                size_t output_shape_length, size_t output_elements, float p, float eps,
-                               float *middle_output, T *output, cudaStream_t cuda_stream_);
+                               float *middle_output, T *output, const uint32_t &device_id, cudaStream_t cuda_stream_);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_LPNORM_IMPL_CUH_

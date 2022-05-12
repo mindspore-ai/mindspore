@@ -110,9 +110,18 @@ AbstractBasePtr LpNormInfer(const abstract::AnalysisEnginePtr &, const Primitive
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-void LpNorm::Init(const int64_t p, const float epsilon) {
+void LpNorm::Init(const std::vector<int64_t> &axis, const int64_t p, const bool keep_dims, const float epsilon) {
+  this->set_axis(axis);
   this->set_p(p);
+  this->set_keep_dims(keep_dims);
   this->set_epsilon(epsilon);
+}
+
+void LpNorm::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+std::vector<int64_t> LpNorm::get_axis() const {
+  auto value_ptr = this->GetAttr(kAxis);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
 void LpNorm::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
@@ -120,6 +129,13 @@ void LpNorm::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p))
 int64_t LpNorm::get_p() const {
   auto value_ptr = this->GetAttr(kP);
   return GetValue<int64_t>(value_ptr);
+}
+
+void LpNorm::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
+
+bool LpNorm::get_keep_dims() const {
+  auto value_ptr = this->GetAttr(kKeepDims);
+  return GetValue<bool>(value_ptr);
 }
 
 void LpNorm::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
