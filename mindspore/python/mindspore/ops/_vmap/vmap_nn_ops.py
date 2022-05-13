@@ -16,6 +16,7 @@
 """nn_ops vmap impl."""
 
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
@@ -120,6 +121,36 @@ def get_dropout_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.FastGeLUGrad)
+def get_fast_gelu_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `FastGeLUGrad`."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+
+    def vmap_rule(x_bdim, dy_bdim):
+        x, x_dim = x_bdim
+        dy, dy_dim = dy_bdim
+        x_shape = F.shape(x)
+        dy_shape = F.shape(dy)
+        if x_dim == dy_dim and x_shape == dy_shape:
+            out = prim(x, dy)
+            return (out, x_dim)
+
+        if F.rank(x):
+            x = _bdim_at_front(x, x_dim, 1)
+        if F.rank(dy):
+            dy = _bdim_at_front(dy, dy_dim, 1)
+        x_shape = F.shape(x)
+        dy_shape = F.shape(dy)
+        if x_shape != dy_shape:
+            raise RuntimeError("For FastGelUGrad vmap, input x shape is supposed to be the same as input dy shape "
+                               "after batch transforming, but got x_shape {}, dy_shape {}".format(x_shape, dy_shape))
+        out = prim(x, dy)
+        return (out, 0)
+
+    return vmap_rule
+
+
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU6)(get_unop_vmap_rule)
@@ -129,7 +160,5 @@ get_unop_vmap_rule = vmap_rules_getters.register(P.Softplus)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.SoftShrink)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HShrink)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.GeLU)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.Gelu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.FastGeLU)(get_unop_vmap_rule)
-get_unop_vmap_rule = vmap_rules_getters.register(P.FastGelu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.HSwish)(get_unop_vmap_rule)

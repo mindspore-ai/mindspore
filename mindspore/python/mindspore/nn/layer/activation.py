@@ -589,7 +589,7 @@ class GELU(Cell):
         if self.approximate:
             return self.gelu(x)
         return x * F.cast(self.const0, x.dtype) * (F.cast(self.const1, x.dtype) + \
-            self.erf(x / self.sqrt(F.cast(self.const2, x.dtype))))
+                                                   self.erf(x / self.sqrt(F.cast(self.const2, x.dtype))))
 
 
 class FastGelu(Cell):
@@ -617,7 +617,7 @@ class FastGelu(Cell):
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore

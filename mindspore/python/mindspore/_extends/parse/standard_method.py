@@ -1558,6 +1558,11 @@ def bitwise_xor(x, y):
     return F.bitwise_xor(x, y)
 
 
+def ger(x, y):
+    """Ger product of `x1` and `x2`.."""
+    return F.ger(x, y)
+
+
 def while_cond(x):
     """For while condition, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):

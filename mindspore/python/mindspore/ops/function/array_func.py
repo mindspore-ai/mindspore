@@ -49,6 +49,7 @@ scalar_to_tensor_ = P.ScalarToTensor()
 tuple_to_array_ = P.TupleToArray()
 masked_fill_ = P.MaskedFill()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
+ger_ = P.Ger()
 
 
 @constexpr
@@ -405,6 +406,46 @@ def unique(x):
     y, idx = unique_op(x)
     idx = reshape_op(idx, shape_x)
     return y, idx
+
+
+def ger(x1, x2):
+    r"""
+    Ger product of `x1` and `x2`. Calculate the outer product of two arrays. If `x1` is a 1D Tensor of
+    shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
+    :math:`(m, n)`. If `x1` is a Tensor of shape :math:`(*B, m)` and `x2` is a Tensor of shape :math:`(*B, n)`, then
+    `output` must be a Tensor of shape :math:`(*B, m, n)`.
+
+    Notes:
+        In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D input
+        Tensors.
+
+    Args:
+        x1 (Tensor): input Tensor, with dtype of float16 or float32.
+        x2 (Tensor): input Tensor, with dtype of float16 or float32.
+
+    Returns:
+        Tensor, output matrix with the same dtype as inputs. With `x1` shape :math:`(*B, m)` and
+        `x2` shape of :math:`(*B, n)`, the `output` has shape :math:`(*B, m, n)`.
+
+    Raises:
+        TypeError: If `x1` or `x2` is not a Tensor.
+        TypeError: If the dtype of `x1` and `x2` is neither float16 nor float32.
+        ValueError: If the batch dimension shapes :math:`(*B,)` of `x1` and `x2` are different.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)
+        >>> x2 = Tensor([1., 2., 3.], mindspore.float32)
+        >>> output = ops.ger(x1, x2)
+        >>> print(output)
+        [[ 1.  2.  3.]
+         [ 2.  4.  6.]
+         [ 3.  6.  9.]
+         [ 4.  8. 12.]]
+    """
+    return ger_(x1, x2)
 
 
 def size(input_x):
@@ -1207,6 +1248,7 @@ def scalar_cast(input_x, input_y):
     """
     return scalar_cast_(input_x, input_y)
 
+
 def tensor_scatter_div(input_x, indices, updates):
     """
     Creates a new tensor by dividing the values from the positions in `input_x` indicated by
@@ -1390,6 +1432,7 @@ __all__ = [
     'fill_',
     'tile',
     'size',
+    'ger',
     'ones',
     'ones_like',
     'shape',
