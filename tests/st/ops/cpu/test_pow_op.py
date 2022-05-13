@@ -79,3 +79,18 @@ def test_net():
     expect = np.power(x3_np, y3_np)
     assert np.all(out == expect)
     assert out.shape == expect.shape
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_pow():
+    """
+    Feature: Tensor interface pow.
+    Description: test tensor interface pow.
+    Expectation: Success.
+    """
+    x = Tensor([1, 2, 3])
+    y = Tensor([1, 2, 3])
+    output = x.pow(y)
+    assert np.all(output.asnumpy() == np.array([1, 4, 27]))

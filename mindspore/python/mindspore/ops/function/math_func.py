@@ -452,7 +452,6 @@ def pow(x, y):
         - The inputs must be two tensors or one tensor and one scalar.
         - When the inputs are two tensors,
           dtypes of them cannot be bool at the same time, and the shapes of them can be broadcast.
-        - When the inputs are one tensor and one scalar, the scalar could only be a constant.
 
     Args:
         x (Union[Tensor, number.Number, bool]): The first input is a number.Number or
@@ -469,7 +468,7 @@ def pow(x, y):
 
     Raises:
         TypeError: If `x` and `y` is not one of the following: Tensor, number.Number or bool.
-        ValueError: If `x` and `y` are not the same shape.
+        ValueError: If the shape of `x` and `y` are different.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
