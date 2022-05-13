@@ -19,7 +19,7 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/runtime/kernel/cpu/base/softmax_base.h"
 
 namespace mindspore::kernel {

@@ -20,7 +20,7 @@
 #include "src/common/file_utils.h"
 #include "common/common_test.h"
 #include "src/common/log_adapter.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore {
 using mindspore::lite::Tensor;

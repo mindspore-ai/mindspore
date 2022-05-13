@@ -20,7 +20,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-#include "src/lite_model.h"
+#include "src/runtime/lite_model.h"
 #include "src/common/tensor_util.h"
 #include "schema/ops_generated.h"
 #include "schema/model_generated.h"

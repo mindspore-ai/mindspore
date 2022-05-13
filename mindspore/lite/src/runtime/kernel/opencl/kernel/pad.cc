@@ -19,7 +19,7 @@
 #include "src/common/utils.h"
 #include "src/runtime/kernel/opencl/kernel/pad.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/cl/pad.cl.inc"
 

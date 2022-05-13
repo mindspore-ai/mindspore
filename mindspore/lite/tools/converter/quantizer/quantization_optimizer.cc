@@ -22,7 +22,7 @@
 #include <deque>
 #include <map>
 #include <set>
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "base/base.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -30,7 +30,7 @@
 #include "tools/converter/quantizer/debug_info_manager.h"
 #include "tools/converter/quantizer/parameter_tunner.h"
 #include "tools/converter/quantizer/dynamic_quantizer.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/cle_strategy.h"
 
 namespace mindspore::lite::quant {

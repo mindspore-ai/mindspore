@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "include/context.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"

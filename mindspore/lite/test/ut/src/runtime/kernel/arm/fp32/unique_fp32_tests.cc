@@ -18,7 +18,7 @@
 #include <memory>
 #include "common/common_test.h"
 #include "nnacl/fp32/unique_fp32.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 
 namespace mindspore {
 class TestUniqueFp32 : public mindspore::CommonTest {

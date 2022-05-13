@@ -17,9 +17,9 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/fp32_grad/nllloss_grad.h"
-#include "src/kernel_registry.h"
-#include "src/kernel_exec.h"
-#include "src/tensor_category.h"
+#include "src/runtime/kernel_registry.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore {
 class TestNLLLossGradFp32 : public mindspore::CommonTest {

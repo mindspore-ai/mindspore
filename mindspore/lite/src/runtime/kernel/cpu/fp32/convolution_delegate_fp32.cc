@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/convolution_delegate_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_fp32.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_1x1_fp32.h"
 #include "src/runtime/kernel/cpu/fp32/convolution_winograd_fp32.h"

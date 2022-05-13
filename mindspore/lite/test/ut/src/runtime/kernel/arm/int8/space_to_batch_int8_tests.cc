@@ -16,7 +16,7 @@
 #include <iostream>
 #include "common/common_test.h"
 #include "nnacl/fp32/space_to_batch_fp32.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 
 namespace mindspore {
 class SpaceToBatchTestInt8 : public mindspore::CommonTest {

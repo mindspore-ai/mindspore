@@ -18,7 +18,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "ir/dtype/type_id.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

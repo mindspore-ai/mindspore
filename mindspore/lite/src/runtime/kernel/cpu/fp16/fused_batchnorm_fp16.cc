@@ -18,7 +18,7 @@
 #include "nnacl/fp16/batchnorm_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/scale_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

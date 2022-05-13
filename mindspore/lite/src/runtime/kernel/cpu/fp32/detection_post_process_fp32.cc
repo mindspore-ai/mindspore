@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/fp32/detection_post_process_fp32.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 

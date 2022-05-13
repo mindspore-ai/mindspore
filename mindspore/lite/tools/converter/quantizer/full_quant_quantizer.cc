@@ -36,7 +36,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/bias_correction_strategy.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/lite_exporter/anf_exporter.h"
 
 using std::string;
 using std::vector;

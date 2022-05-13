@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/tensor.h"
 #include "nnacl/op_base.h"
 #include "nnacl/base/cast_base.h"

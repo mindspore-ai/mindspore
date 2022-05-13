@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp16/gather_fp16.h"
 #include <limits>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "src/runtime/infer_manager.h"
 

@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/control/tensorlist_getitem.h"
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

@@ -31,7 +31,7 @@
 #include "include/train/train_session.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/cpu/fp32_grad/convolution.h"
 
 using mindspore::lite::RET_OK;

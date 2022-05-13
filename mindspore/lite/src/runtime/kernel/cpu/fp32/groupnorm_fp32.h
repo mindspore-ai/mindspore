@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_FP32_GROUPNORM_FP32_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/fp32/group_norm_fp32.h"
 #include "nnacl/fp32/scale_fp32.h"

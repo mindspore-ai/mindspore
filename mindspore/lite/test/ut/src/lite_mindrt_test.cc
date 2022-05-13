@@ -18,7 +18,7 @@
 #include "actor/op_actor.h"
 #include "async/uuid_base.h"
 #include "async/future.h"
-#include "src/lite_mindrt.h"
+#include "src/runtime/lite_mindrt.h"
 #include "thread/hqueue.h"
 #include "thread/actor_threadpool.h"
 #include "common/common_test.h"

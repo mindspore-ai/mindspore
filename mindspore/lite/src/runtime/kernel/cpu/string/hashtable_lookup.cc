@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/string/hashtable_lookup.h"
 #include <string>
 #include <algorithm>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/common/string_utils.h"
 
 using mindspore::lite::KernelRegistrar;

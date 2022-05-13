@@ -6,7 +6,7 @@ set(COMMON_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/file_utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/utils.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/log.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/ops_def.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../src/common/ops/ops_def.cc
         )
 add_executable(schema_gen
         ${CMAKE_CURRENT_SOURCE_DIR}/main.cc

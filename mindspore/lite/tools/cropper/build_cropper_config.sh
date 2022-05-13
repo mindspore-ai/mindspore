@@ -160,7 +160,7 @@ getCommonFile() {
     mindspore/lite/src/runtime/infer_manager.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_utils.h
-    mindspore/lite/src/ops/populate/populate_register.h
+    mindspore/lite/src/common/ops/populate/populate_register.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/op_base.h
     mindspore/core/ir/dtype/type_id.h
     mindspore/core/utils/overload.h
@@ -183,11 +183,11 @@ getCommonFile() {
   done
 
   cxx_api_files=()
-  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/graph/*.cc)
-  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/model/*.cc)
-  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/tensor/*.cc)
-  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/*.cc)
-  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/c_api/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/graph/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/model/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/tensor/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/*.cc)
+  while IFS='' read -r line; do cxx_api_files+=("$line"); done < <(ls mindspore/lite/src/runtime/c_api/*.cc)
   mindrt_files=()
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/*.cc)
   while IFS='' read -r line; do mindrt_files+=("$line"); done < <(ls mindspore/core/mindrt/src/async/*.cc)
@@ -207,8 +207,8 @@ getCommonFile() {
   others_files_c=(
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/nnacl_utils.c
     mindspore/lite/src/runtime/infer_manager.cc
-    mindspore/lite/src/ops/populate/populate_register.cc
-    mindspore/lite/src/ops/populate/custom_populate.cc
+    mindspore/lite/src/common/ops/populate/populate_register.cc
+    mindspore/lite/src/common/ops/populate/custom_populate.cc
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/infer_register.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer/shape_fusion_infer.c
     mindspore/lite/src/runtime/kernel/cpu/fp32/shape_fusion_fp32.cc
@@ -217,9 +217,9 @@ getCommonFile() {
   # save train files
   train_files=()
   while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/train/*.cc)
-  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/callback/*.cc)
-  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/metrics/*.cc)
-  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/cxx_api/train/*.cc)
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/callback/*.cc)
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/metrics/*.cc)
+  while IFS='' read -r line; do train_files+=("$line"); done < <(ls mindspore/lite/src/runtime/cxx_api/train/*.cc)
   others_train_files=(
     mindspore/lite/tools/common/storage.cc
   )
@@ -302,8 +302,8 @@ generateOpsList
 getCommonFile
 wait
 sleep 1
-# get src/ops
-getOpsFile "REG_POPULATE\(PrimitiveType_" "mindspore/lite/src/ops/populate" "prototype" &
+# get src/common/ops
+getOpsFile "REG_POPULATE\(PrimitiveType_" "mindspore/lite/src/common/ops/populate" "prototype" &
 getOpsFile "REG_INFER\(.*?, PrimType_" "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/infer" "prototype" &
 # support for cpu
 getOpsFile "REG_KERNEL\(.*?, kNumberTypeFloat32, PrimitiveType_" "mindspore/lite/src/runtime/kernel/cpu" "kNumberTypeFloat32" &
@@ -325,7 +325,7 @@ chmod 444 ${CPU_TRAIN_MAPPING_OUTPUT_FILE}
 # support for gpu
 opencl_files=()
 while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/kernel/opencl/*.cc)
-while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/gpu/opencl/*.cc)
+while IFS='' read -r line; do opencl_files+=("$line"); done < <(ls mindspore/lite/src/runtime/kernel/gpu/opencl/*.cc)
 opencl_others_files=(
   "mindspore/lite/src/runtime/kernel/opencl/kernel/fusion_eltwise.cc"
   "mindspore/lite/src/runtime/kernel/opencl/kernel/to_format.cc"
@@ -350,9 +350,9 @@ chmod 444 ${GPU_MAPPING_OUTPUT_FILE}
 
 # support for npu
 npu_files=()
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/*.cc)
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/op/*.cc)
-while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/delegate/npu/pass/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/runtime/delegate/npu/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/runtime/delegate/npu/op/*.cc)
+while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/runtime/delegate/npu/pass/*.cc)
 
 # shellcheck disable=SC2068
 for file in ${npu_files[@]}; do

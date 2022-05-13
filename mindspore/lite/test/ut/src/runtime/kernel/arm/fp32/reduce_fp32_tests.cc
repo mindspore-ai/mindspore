@@ -19,7 +19,7 @@
 #include "nnacl/fp32/reduce_fp32.h"
 #include "schema/inner/model_generated.h"
 #include "src/tensor.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "mindspore/lite/src/runtime/inner_allocator.h"
 
 using mindspore::lite::Tensor;

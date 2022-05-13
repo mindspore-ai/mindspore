@@ -18,7 +18,7 @@
 
 #include <vector>
 #include <memory>
-#include "src/sub_graph_kernel.h"
+#include "src/runtime/sub_graph_kernel.h"
 
 namespace mindspore::lite::pass {
 class RuntimePass {

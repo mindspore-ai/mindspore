@@ -15,11 +15,11 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/convolution_fp32.h"
-#include "src/pack_weight_manager.h"
+#include "src/runtime/pack_weight_manager.h"
 #include "include/errorcode.h"
 #include "nnacl/common_func.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/conv_common_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 

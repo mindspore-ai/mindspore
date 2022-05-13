@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp16/transpose_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp16/pack_fp16.h"
 #include "nnacl/fp16/transpose_fp16.h"
 

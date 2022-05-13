@@ -19,7 +19,7 @@
 #include <cstdio>
 #include <cstdarg>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #ifdef ENABLE_ARM64
 #include <arm_neon.h>
 #endif

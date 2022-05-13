@@ -19,9 +19,9 @@
 
 #include <utility>
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/conv_parameter.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore::kernel {
 struct TensorInfo {

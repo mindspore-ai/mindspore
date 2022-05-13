@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/pass/decrease_transpose_algo.h"
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 #include "src/runtime/pass/pass_utils.h"
 #include "nnacl/base/format_transpose.h"
 

@@ -755,7 +755,7 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "lite_cv")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
 endif()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/ops)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/common/ops)
 if(ANDROID_NDK_TOOLCHAIN_INCLUDED)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter/micro/coder)
 endif()

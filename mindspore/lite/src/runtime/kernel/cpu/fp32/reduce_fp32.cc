@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32/reduce_fp32.h"
 #include <cmath>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/reduce_fp32.h"
 #include "src/runtime/kernel/cpu/base/reduce_base.h"

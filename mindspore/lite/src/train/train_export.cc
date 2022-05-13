@@ -29,7 +29,7 @@
 #include "src/common/storage.h"
 #include "src/train/graph_fusion.h"
 #include "src/train/graph_dropout.h"
-#include "src/weight_decoder.h"
+#include "src/runtime/weight_decoder.h"
 
 namespace mindspore {
 namespace lite {

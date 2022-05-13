@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/int8/transpose_int8.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/int8/transpose_int8.h"
 #include "nnacl/int8/pack_int8.h"
 

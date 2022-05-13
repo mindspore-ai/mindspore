@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/cpu/fp32/depth_to_space_fp32.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/base/depth_to_space_base.h"
 #include "nnacl/nnacl_common.h"
 

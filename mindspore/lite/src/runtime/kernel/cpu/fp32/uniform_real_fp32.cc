@@ -17,7 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <vector>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

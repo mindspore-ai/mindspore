@@ -74,7 +74,7 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
     include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel)
     include_directories(${CUDA_PATH})
     file(GLOB_RECURSE TEST_GPU_UT_SRC
-            ${TEST_DIR}/ut/src/runtime/kernel/cuda/*.cc
+            ${TEST_DIR}/ut/src/extendrt/kernel/cuda/*.cc
             )
     list(APPEND TEST_UT_SRC ${TEST_GPU_UT_SRC})
 endif()
@@ -202,7 +202,7 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
             cpu_ops_mid
             nnacl_mid
             cpu_kernel_mid
-            anf_exporter_mid
+            lite_exporter_mid
             mslite_converter_plugin
             graph_pass_mid
             fusion_mid

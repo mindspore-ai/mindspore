@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_RUNTIME_AKG_KERNEL_H_
 #include <vector>
 #include <string>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/custom_parameter.h"
 
 namespace mindspore::kernel {

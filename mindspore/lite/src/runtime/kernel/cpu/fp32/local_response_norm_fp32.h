@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "nnacl/fp32/local_response_norm_fp32.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class LocalResponseNormCPUKernel : public LiteKernel {

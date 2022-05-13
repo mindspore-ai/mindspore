@@ -20,7 +20,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/non_max_suppression_parameter.h"
 
 using mindspore::lite::RET_OK;

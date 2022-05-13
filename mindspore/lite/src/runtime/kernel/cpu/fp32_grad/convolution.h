@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_CONVOLUTION_H_
 
 #include <vector>
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 
 namespace mindspore::kernel {
 class ConvolutionTrainCPUKernel : public LiteKernel {

@@ -18,7 +18,7 @@
 #include <algorithm>
 #include <set>
 #include "src/runtime/kernel/cpu/fp32/matmul_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/splice_fp32.h"
 #include "src/common/utils.h"

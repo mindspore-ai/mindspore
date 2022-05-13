@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/opencl/kernel/resize.h"
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/cl/resize.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;

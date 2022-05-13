@@ -20,7 +20,7 @@
 #include <vector>
 #include "nnacl/fp16/deconv_fp16.h"
 #include "nnacl/fp16/matmul_fp16.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/cpu/base/convolution_base.h"
 
 namespace mindspore::kernel {

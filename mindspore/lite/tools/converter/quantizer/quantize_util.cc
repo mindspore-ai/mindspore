@@ -28,7 +28,7 @@
 #include "ops/fusion/conv2d_transpose_fusion.h"
 #include "ops/gather.h"
 #include "tools/converter/ops/ops_def.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/lite_exporter/anf_exporter.h"
 #include "tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"

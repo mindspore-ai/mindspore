@@ -18,8 +18,8 @@
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "nnacl/arithmetic_self_parameter.h"
-#include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 #include "mindspore/lite/src/tensor.h"
 
 namespace mindspore {

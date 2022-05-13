@@ -18,7 +18,7 @@
 #include "include/errorcode.h"
 #include "nnacl/int8/conv_int8.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #ifdef ENABLE_ARM64
 #include "src/runtime/kernel/cpu/int8/opt_op_handler.h"
 #endif

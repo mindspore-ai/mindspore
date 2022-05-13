@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp32/embedding_lookup_fp32.h"
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

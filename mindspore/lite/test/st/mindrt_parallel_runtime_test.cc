@@ -16,9 +16,9 @@
 
 #include "ut/src/runtime/kernel/opencl/common.h"
 #include "include/errorcode.h"
-#include "src/mindrt_executor.h"
-#include "src/lite_session.h"
-#include "src/kernel_exec.h"
+#include "src/runtime/mindrt_executor.h"
+#include "src/runtime/lite_session.h"
+#include "src/runtime/kernel_exec.h"
 
 class MindrtRuntimeTest : public mindspore::CommonTest {
  public:

@@ -26,7 +26,7 @@
 #include "src/runtime/kernel/cpu/base/group_convolution_creator.h"
 #include "nnacl/base/conv_common_base.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

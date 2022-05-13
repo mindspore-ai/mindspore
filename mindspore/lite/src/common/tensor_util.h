@@ -25,7 +25,7 @@
 #include "src/tensorlist.h"
 #include "nnacl/infer/common_infer.h"
 #include "nnacl/tensorlist_c_utils.h"
-#include "src/cxx_api/tensor/tensor_impl.h"
+#include "src/runtime/cxx_api/tensor/tensor_impl.h"
 
 namespace mindspore {
 namespace lite {

@@ -20,7 +20,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <utility>
-#include "src/lite_session.h"
+#include "src/runtime/lite_session.h"
 #include "src/train/train_session.h"
 
 /*

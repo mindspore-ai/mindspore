@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/fp32/transpose_server_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/pack_fp32.h"
 
 using mindspore::lite::KernelRegistrar;

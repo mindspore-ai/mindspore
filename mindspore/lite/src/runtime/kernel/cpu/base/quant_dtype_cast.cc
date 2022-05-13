@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/base/quant_dtype_cast.h"
 #include <vector>
 #include "nnacl/int8/quant_dtype_cast_int8.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 

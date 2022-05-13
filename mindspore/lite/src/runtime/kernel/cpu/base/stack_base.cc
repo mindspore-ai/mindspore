@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/base/stack_base.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/base/stack_base.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"

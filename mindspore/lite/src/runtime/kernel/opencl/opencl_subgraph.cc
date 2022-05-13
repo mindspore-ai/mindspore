@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include "src/runtime/gpu/opencl/opencl_executor.h"
+#include "src/runtime/kernel/gpu/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/kernel/to_format.h"
 #include "src/runtime/kernel/opencl/kernel/gl_to_cl.h"

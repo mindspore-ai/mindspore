@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp32/glu_fp32.h"
 #include <vector>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/cpu/base/split_base.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"

@@ -22,7 +22,7 @@
 #include <fstream>
 
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32_grad/batch_norm.h"
 #include "include/errorcode.h"
 

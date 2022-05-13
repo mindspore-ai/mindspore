@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
 #include "src/runtime/kernel/cpu/fp32_grad/bias_grad.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore {
 

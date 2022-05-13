@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/int8/slice_int8.h"
 #include <limits>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/int8/slice_int8.h"
 #include "include/errorcode.h"
 

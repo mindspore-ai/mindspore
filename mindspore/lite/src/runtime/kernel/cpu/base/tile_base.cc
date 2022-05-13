@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/base/tile_base.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/nnacl_common.h"
 #include "include/errorcode.h"
 #include "nnacl/errorcode.h"

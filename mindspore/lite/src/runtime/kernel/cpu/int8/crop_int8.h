@@ -22,7 +22,7 @@
 #include "include/errorcode.h"
 #include "include/context.h"
 #include "nnacl/int8/crop_int8.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/runtime/kernel/cpu/base/crop_base.h"
 
 namespace mindspore::kernel {

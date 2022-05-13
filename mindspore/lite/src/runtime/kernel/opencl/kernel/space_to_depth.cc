@@ -16,7 +16,7 @@
 
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/space_to_depth.h"
 #include "src/runtime/kernel/opencl/cl/space_to_depth.cl.inc"
 

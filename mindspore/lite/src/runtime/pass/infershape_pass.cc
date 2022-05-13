@@ -16,7 +16,7 @@
 
 #include "src/runtime/pass/infershape_pass.h"
 #include "src/runtime/infer_manager.h"
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 
 namespace mindspore::lite::pass {
 int Infershape::Run(kernel::SubGraphKernel *subgraph, std::vector<Tensor *> *tensors) {

@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/opencl/kernel/softmax.h"
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "nnacl/softmax_parameter.h"
 #include "src/runtime/kernel/opencl/cl/softmax.cl.inc"

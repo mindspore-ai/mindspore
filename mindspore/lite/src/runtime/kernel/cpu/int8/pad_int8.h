@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include "include/errorcode.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/pad_parameter.h"
 #include "nnacl/int8/pad_int8.h"

@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <set>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/power.cl.inc"
 

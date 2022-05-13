@@ -17,9 +17,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_CPU_KERNEL_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/kernel.h"
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 
 namespace mindspore::kernel {
 class CPUKernel : public LiteKernel {

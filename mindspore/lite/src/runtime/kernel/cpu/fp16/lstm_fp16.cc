@@ -18,7 +18,7 @@
 #include <vector>
 #include <cfloat>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp16/lstm_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"

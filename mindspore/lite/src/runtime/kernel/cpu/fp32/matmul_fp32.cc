@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "include/errorcode.h"
 #include "nnacl/fp32/matmul_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::kCHWDimNumber;
 using mindspore::lite::KernelRegistrar;

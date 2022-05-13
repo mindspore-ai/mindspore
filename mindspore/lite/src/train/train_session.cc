@@ -26,10 +26,10 @@
 #include <map>
 #include <set>
 #include "include/errorcode.h"
-#include "src/lite_model.h"
-#include "src/kernel_exec_util.h"
+#include "src/runtime/lite_model.h"
+#include "src/runtime/kernel_exec_util.h"
 #include "src/tensor.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/common/prim_util.h"
 #include "src/common/tensor_util.h"
 #include "src/common/utils.h"

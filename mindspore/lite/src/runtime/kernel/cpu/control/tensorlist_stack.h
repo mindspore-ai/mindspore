@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/tensorlist.h"
 #include "schema/model_generated.h"
 #include "nnacl/tensorlist_parameter.h"

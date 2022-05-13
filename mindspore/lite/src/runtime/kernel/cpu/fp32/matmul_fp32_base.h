@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_MATMUL_FP32_BASE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
-#include "src/pack_weight_manager.h"
+#include "src/runtime/lite_kernel.h"
+#include "src/runtime/pack_weight_manager.h"
 #include "nnacl/matmul_parameter.h"
 #include "include/errorcode.h"
 #include "src/common/common.h"

@@ -19,7 +19,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-#include "src/kernel_exec.h"
+#include "src/runtime/kernel_exec.h"
 #include "src/runtime/pass/pass_utils.h"
 
 namespace mindspore::lite::pass {

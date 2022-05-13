@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/unique_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/unique_fp32.h"
 #ifdef ENABLE_FP16

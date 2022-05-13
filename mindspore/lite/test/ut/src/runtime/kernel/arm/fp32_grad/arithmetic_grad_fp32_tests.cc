@@ -23,7 +23,7 @@
 #include "src/common/file_utils.h"
 #include "nnacl/fp32/reduce_fp32.h"
 #include "src/runtime/kernel/cpu/fp32_grad/arithmetic_grad.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore {
 

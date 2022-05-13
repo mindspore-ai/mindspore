@@ -19,13 +19,14 @@
 #include <fstream>
 #include <map>
 #include "tools/converter/quantizer/debug_info_manager.h"
-#include "src/weight_decoder.h"
+#include "src/runtime/tensor_category.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "tools/converter/preprocess/image_preprocess.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/file_utils.h"
+#include "src/runtime/weight_decoder.h"
 #include "tools/common/string_util.h"
 
 namespace mindspore::lite {

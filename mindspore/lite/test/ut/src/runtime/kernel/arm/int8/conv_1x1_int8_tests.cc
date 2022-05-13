@@ -15,12 +15,12 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 #include "src/common/file_utils.h"
 #include "nnacl/int8/quantize.h"
 #include "nnacl/common_func.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/int8/convolution_1x1_int8.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore {
 using lite::Tensor;

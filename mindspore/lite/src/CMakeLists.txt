@@ -60,23 +60,23 @@ elseif(NOT MSVC)
 endif()
 
 file(GLOB CXX_API_SRCS
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/graph/*.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/tensor/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/graph/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/tensor/*.cc
         )
 if(MSLITE_ENABLE_PARALLEL_INFERENCE)
     set(CXX_API_SRCS
             ${CXX_API_SRCS}
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/predict_task_queue.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_worker.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_pool.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/model_pool/model_parallel_runner.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/predict_task_queue.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/model_worker.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/model_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/model_pool/model_parallel_runner.cc
             )
 endif()
 
 file(GLOB C_API_SRCS
-        ${CMAKE_CURRENT_SOURCE_DIR}/c_api/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/c_api/*.cc
         )
 set(API_SRC ${CXX_API_SRCS} ${C_API_SRCS})
 if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
@@ -85,10 +85,10 @@ if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
 endif()
 if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     file(GLOB CXX_API_TRAIN_SRCS
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model_impl.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/metrics/*.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/callback/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/model.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/model_impl.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/metrics/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/callback/*.cc
             )
     set(API_TRAIN_SRC
             ${CXX_API_TRAIN_SRCS}
@@ -118,31 +118,31 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_shape_fusion_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pass/runtime_ncx_pass.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/schema_tensor_wrapper.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/schema_tensor_wrapper.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/tensor_category.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/ms_tensor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_exec.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/kernel_exec_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/tensor_category.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/ms_tensor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/inner_context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel_registry.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel_exec.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel_exec_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sub_graph_kernel.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/scheduler.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cpu_info.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cpu_info.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pack_weight_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_flow_scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_subgraph_creator.cc
         )
 
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/model_loader.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/model_loader.cc
 )
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
@@ -156,21 +156,21 @@ remove_definitions(-DBUILD_LITE_INFERENCE)
 
 set(MINDIR_MODEL_SRC
         ${MINDIR_MODEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/mindir_model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/mindir_model_util.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/mindir_model_convertor.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/mindir_model_loader.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/kernel_mod_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_convertor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_loader.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_util.cc
         )
 
 set(MINDIR_KERNEL_SRC
         ${MINDIR_KERNEL_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/inner_kernel.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
 
 set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/less_test_kernel_mod.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_loader/mindir_model/kernel_mod_mock.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/less_test_kernel_mod.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_mock.cc)
 endif()
 
 set(LITE_SRC
@@ -200,14 +200,14 @@ endif()
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/pack_weight.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/pack_weight.cc
         )
 endif()
 
 if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
     set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/thread_cost_model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_cost_model.cc
         )
 endif()
 
@@ -239,9 +239,9 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
     add_definitions(-DPRIMITIVE_WRITEABLE)
     file(GLOB RUNTIME_CONVERT_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_def.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/ops/ops_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/ops/anf_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/ops/ops_def.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/ops/ops_utils.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/common/ops/anf_utils.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_convert.cc)
 
     set(LITE_SRC ${LITE_SRC} ${RUNTIME_CONVERT_SRC})
@@ -268,7 +268,7 @@ endif()
 
 if(MSLITE_ENABLE_WEIGHT_DECODE)
     set(LITE_SRC ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/huffman_decode.cc)
     if(NOT MSLITE_ENABLE_RUNTIME_CONVERT)
         set(LITE_SRC ${LITE_SRC}
             ${TOOLS_DIR}/converter/quantizer/fse_decoder.cc
@@ -279,7 +279,7 @@ endif()
 if(MSLITE_ENABLE_AUTO_PARALLEL)
     set(LITE_SRC
             ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_split.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/sub_graph_split.cc
             )
 endif()
 
@@ -290,12 +290,12 @@ endif()
 set(LITE_SRC
     ${LITE_SRC}
     ${KERNEL_REG_SRC}
-    ${CMAKE_CURRENT_SOURCE_DIR}/weight_decoder.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/runtime/weight_decoder.cc
     )
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/opencl/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/gpu/opencl/*.cc
             )
     set(LITE_SRC
             ${LITE_SRC}
@@ -321,7 +321,7 @@ endif()
 
 
 file(GLOB CXX_API_EXPRESSION
-  ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/expression/*.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/expression/*.cc
   )
 
 file(GLOB EXPRESSION_OPS
@@ -347,10 +347,10 @@ set(TRAIN_SRC
         ${TRAIN_SRC_WITH_MD}
         ${EXPRESSION_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model_build.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/model_build_impl.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/converters.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/cxx_api/train/train_support.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/model_build.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/model_build_impl.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/converters.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/train_support.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/train/graph_fusion.cc
@@ -380,8 +380,8 @@ if(MSLITE_ENABLE_MINDRT)
         add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
     endif()
     set(LITE_SRC ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/lite_mindrt.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindrt_executor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_mindrt.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/mindrt_executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/control_flow/control_actor_creator.cc
         )
     if(MSLITE_ENABLE_CONTROLFLOW)
@@ -412,7 +412,7 @@ add_dependencies(lite_src_mid fbs_src)
 
 if(MSLITE_ENABLE_ACL)
     include_directories(${TOP_DIR}/graphengine/inc/external)
-    add_subdirectory(runtime/kernel/ascend)
+    add_subdirectory(extendrt/kernel/ascend)
     link_directories(${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH} ${ASCEND_CANN_RUNTIME_PATH})
 endif()
 
@@ -479,12 +479,12 @@ if(SUPPORT_TENSORRT)
     set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
     include_directories(${TENSORRT_PATH}/include)
     include_directories(${CUDA_PATH}/include)
-    add_subdirectory(delegate/tensorrt)
+    add_subdirectory(extendrt/delegate/tensorrt)
     target_link_libraries(mindspore-lite tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
     target_link_libraries(mindspore-lite_static tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
 else()
     set(TENSORRT_STUB
-        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
     )
     add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
     target_link_libraries(mindspore-lite tensorrt_stub)
@@ -498,7 +498,7 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
 endif()
 
 if(SUPPORT_NPU)
-    add_subdirectory(delegate/npu)
+    add_subdirectory(runtime/delegate/npu)
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
 endif()
@@ -536,7 +536,7 @@ if(SUPPORT_TRAIN)
 endif()
 
 if(MSLITE_ENABLE_KERNEL_EXECUTOR)
-    add_subdirectory(cxx_api/kernel_executor)
+    add_subdirectory(runtime/cxx_api/kernel_executor)
 endif()
 
 ########################## build optimize and float16 library #################################
@@ -554,12 +554,12 @@ endif()
 if(MSLITE_ENABLE_RUNTIME_CONVERT)
     target_link_libraries(mindspore-lite
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
-            cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
+            cpu_kernel_mid ccsrc_src_mid converter_src_mid lite_exporter_mid
             config_parser_mid mslite_converter_plugin mindspore_core coder_mid
             mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
     target_link_libraries(mindspore-lite_static
             quantizer_mid fusion_mid proto_mid graph_pass_mid preprocess_mid
-            cpu_kernel_mid ccsrc_src_mid converter_src_mid anf_exporter_mid
+            cpu_kernel_mid ccsrc_src_mid converter_src_mid lite_exporter_mid
             config_parser_mid mslite_converter_plugin mindspore_core coder_mid
             mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
     if(NOT ENABLE_CLOUD_AND_LITE)

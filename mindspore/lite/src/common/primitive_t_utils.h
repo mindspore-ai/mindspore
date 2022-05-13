@@ -19,7 +19,7 @@
 #ifdef PRIMITIVE_WRITEABLE
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/common/ops/populate/populate_register.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

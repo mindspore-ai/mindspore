@@ -16,7 +16,7 @@
 
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/transpose.h"
 #include "src/runtime/kernel/opencl/cl/transpose.cl.inc"
 #include "src/runtime/kernel/opencl/utils.h"

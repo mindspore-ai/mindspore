@@ -20,7 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include "include/errorcode.h"
-#include "src/ops/schema_register.h"
+#include "src/common/ops/schema_register.h"
 #include "src/common/log_adapter.h"
 #include "src/common/file_utils.h"
 

@@ -74,8 +74,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
     add_subdirectory(adapter/dpico)
 endif()
-add_subdirectory(../anf_exporter anf_exporter)
-add_subdirectory(../mindir_serializer mindir_serializer)
+add_subdirectory(../lite_exporter lite_exporter)
+add_subdirectory(../mindir_exporter mindir_serializer)
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
 add_subdirectory(parser/onnx)
@@ -105,10 +105,10 @@ if(MSLITE_ENABLE_ACL)
 endif()
 
 file(GLOB CXX_API_SRCS
-        ${SRC_DIR}/cxx_api/*.cc
-        ${SRC_DIR}/cxx_api/model/*.cc
-        ${SRC_DIR}/cxx_api/graph/*.cc
-        ${SRC_DIR}/cxx_api/tensor/*.cc)
+        ${SRC_DIR}/runtime/cxx_api/*.cc
+        ${SRC_DIR}/runtime/cxx_api/model/*.cc
+        ${SRC_DIR}/runtime/cxx_api/graph/*.cc
+        ${SRC_DIR}/runtime/cxx_api/tensor/*.cc)
 
 file(GLOB RUNTIME_PASS_SRCS
         ${SRC_DIR}/runtime/pass/*.cc)
@@ -116,9 +116,9 @@ file(GLOB RUNTIME_PASS_SRCS
 set(LITE_SRC ${API_SRC}
         ${CXX_API_SRCS}
         ${RUNTIME_PASS_SRCS}
-        ${SRC_DIR}/ops/ops_def.cc
-        ${SRC_DIR}/ops/ops_utils.cc
-        ${SRC_DIR}/ops/anf_utils.cc
+        ${SRC_DIR}/common/ops/ops_def.cc
+        ${SRC_DIR}/common/ops/ops_utils.cc
+        ${SRC_DIR}/common/ops/anf_utils.cc
         ${SRC_DIR}/common/utils.cc
         ${SRC_DIR}/common/file_utils.cc
         ${SRC_DIR}/common/context_util.cc
@@ -135,35 +135,35 @@ set(LITE_SRC ${API_SRC}
         ${SRC_DIR}/runtime/infer_manager.cc
         ${SRC_DIR}/runtime/runtime_shape_fusion_pass.cc
         ${SRC_DIR}/runtime/runtime_pass.cc
-        ${SRC_DIR}/inner_context.cc
+        ${SRC_DIR}/runtime/inner_context.cc
         ${SRC_DIR}/tensor.cc
-        ${SRC_DIR}/tensor_category.cc
-        ${SRC_DIR}/schema_tensor_wrapper.cc
-        ${SRC_DIR}/ms_tensor.cc
+        ${SRC_DIR}/runtime/tensor_category.cc
+        ${SRC_DIR}/runtime/schema_tensor_wrapper.cc
+        ${SRC_DIR}/runtime/ms_tensor.cc
         ${SRC_DIR}/tensorlist.cc
-        ${SRC_DIR}/kernel_registry.cc
+        ${SRC_DIR}/runtime/kernel_registry.cc
         ${SRC_DIR}/registry/register_kernel_impl.cc
-        ${SRC_DIR}/lite_kernel.cc
-        ${SRC_DIR}/kernel_exec.cc
-        ${SRC_DIR}/kernel_exec_util.cc
-        ${SRC_DIR}/scheduler.cc
-        ${SRC_DIR}/sub_graph_kernel.cc
-        ${SRC_DIR}/sub_graph_split.cc
-        ${SRC_DIR}/lite_session.cc
-        ${SRC_DIR}/executor.cc
-        ${SRC_DIR}/lite_model.cc
+        ${SRC_DIR}/runtime/lite_kernel.cc
+        ${SRC_DIR}/runtime/kernel_exec.cc
+        ${SRC_DIR}/runtime/kernel_exec_util.cc
+        ${SRC_DIR}/runtime/scheduler.cc
+        ${SRC_DIR}/runtime/sub_graph_kernel.cc
+        ${SRC_DIR}/runtime/sub_graph_split.cc
+        ${SRC_DIR}/runtime/lite_session.cc
+        ${SRC_DIR}/runtime/executor.cc
+        ${SRC_DIR}/runtime/lite_model.cc
         ${SRC_DIR}/errorcode.cc
-        ${SRC_DIR}/weight_decoder.cc
-        ${SRC_DIR}/pack_weight_manager.cc
-        ${SRC_DIR}/huffman_decode.cc
-        ${SRC_DIR}/delegate/tensorrt/distribution/distribution_base.cc
+        ${SRC_DIR}/runtime/weight_decoder.cc
+        ${SRC_DIR}/runtime/pack_weight_manager.cc
+        ${SRC_DIR}/runtime/huffman_decode.cc
+        ${SRC_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
         ${SRC_DIR}/control_flow/control_flow_scheduler.cc
         ${SRC_DIR}/control_flow/control_subgraph_creator.cc
         )
 
 set(MODEL_LOADER_FRAMEWORK_SRC
         ${MODEL_LOADER_FRAMEWORK_SRC}
-        ${SRC_DIR}/model_loader/model_loader.cc
+        ${SRC_DIR}/extendrt/mindir_loader/model_loader.cc
 )
 
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
@@ -174,16 +174,16 @@ string(REPLACE "-Werror" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
 set(MINDIR_MODEL_SRC
         ${MINDIR_MODEL_SRC}
-        ${SRC_DIR}/model_loader/mindir_model/mindir_model.cc
-        ${SRC_DIR}/model_loader/mindir_model/mindir_model_util.cc
-        ${SRC_DIR}/model_loader/mindir_model/mindir_model_convertor.cc
-        ${SRC_DIR}/model_loader/mindir_model/mindir_model_loader.cc
-        ${SRC_DIR}/model_loader/mindir_model/kernel_mod_util.cc
+        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model.cc
+        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_util.cc
+        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_convertor.cc
+        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/mindir_model_loader.cc
+        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/kernel_mod_util.cc
         )
 
 set(MINDIR_KERNEL_SRC
         ${MINDIR_KERNEL_SRC}
-        ${SRC_DIR}/model_loader/mindir_model/inner_kernel.cc)
+        ${SRC_DIR}/extendrt/mindir_loader/mindir_model/inner_kernel.cc)
 endif()
 
 set(LITE_SRC
@@ -212,14 +212,14 @@ endif()
 if(MSLITE_ENABLE_SHARING_MODEL_WEIGHT)
     set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/pack_weight.cc
+        ${SRC_DIR}/runtime/pack_weight.cc
         )
 endif()
 
 if(MSLITE_ENABLE_DYNAMIC_THREAD_DISTRIBUTE)
     set(LITE_SRC
         ${LITE_SRC}
-        ${SRC_DIR}/thread_cost_model.cc
+        ${SRC_DIR}/runtime/thread_cost_model.cc
         )
 endif()
 
@@ -247,8 +247,8 @@ if(MSLITE_ENABLE_MINDRT)
     set(LITE_SRC
             ${LITE_SRC}
             ${MINDRT_SRC}
-            ${SRC_DIR}/lite_mindrt.cc
-            ${SRC_DIR}/mindrt_executor.cc
+            ${SRC_DIR}/runtime/lite_mindrt.cc
+            ${SRC_DIR}/runtime/mindrt_executor.cc
             ${SRC_DIR}/control_flow/control_actor_creator.cc
             )
 
@@ -262,7 +262,7 @@ endif()
 
 if(MSLITE_GPU_BACKEND STREQUAL opencl)
     file(GLOB_RECURSE OPENCL_RUNTIME_SRC
-            ${SRC_DIR}/runtime/gpu/opencl/*.cc
+            ${SRC_DIR}/runtime/kernel/gpu/opencl/*.cc
             )
     set(LITE_SRC
             ${LITE_SRC}
@@ -336,7 +336,7 @@ target_link_libraries(converter_lite PRIVATE
         tf_parser_mid
         caffe_parser_mid
         onnx_parser_mid
-        anf_exporter_mid
+        lite_exporter_mid
         graph_pass_mid
         fusion_mid
         quantizer_mid

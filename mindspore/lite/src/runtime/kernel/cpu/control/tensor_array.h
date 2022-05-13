@@ -20,7 +20,7 @@
 #include <vector>
 #include <memory>
 #include "nnacl/tensor_array_parameter.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/tensorlist.h"
 
 namespace mindspore::kernel {

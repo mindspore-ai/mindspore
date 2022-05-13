@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/int8/space_to_batch_int8.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/space_to_batch_fp32.h"
 #include "nnacl/int8/space_to_batch_int8.h"
 

@@ -19,9 +19,9 @@
 #include "mindspore/lite/src/runtime/kernel/cpu/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
-#include "src/kernel_registry.h"
-#include "src/kernel_exec.h"
-#include "src/tensor_category.h"
+#include "src/runtime/kernel_registry.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/tensor_category.h"
 
 namespace mindspore {
 class TestMatMulFp32 : public mindspore::CommonTest {

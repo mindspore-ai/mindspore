@@ -27,7 +27,7 @@
 #include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/common/prim_util.h"
-#include "src/lite_model.h"
+#include "src/runtime/lite_model.h"
 
 namespace mindspore::lite::micro {
 CoderGraph::~CoderGraph() {

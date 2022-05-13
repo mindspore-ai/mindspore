@@ -17,7 +17,7 @@
 #include <vector>
 #include "src/runtime/kernel/cpu/base/resize_base.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

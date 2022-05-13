@@ -18,7 +18,7 @@
 #include <vector>
 #include <string>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/arithmetic.cl.inc"
 #include "nnacl/arithmetic.h"

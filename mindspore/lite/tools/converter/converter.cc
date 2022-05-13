@@ -22,7 +22,7 @@
 #include "tools/converter/converter_flags.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/meta_graph_serializer.h"
-#include "tools/anf_exporter/anf_exporter.h"
+#include "tools/lite_exporter/anf_exporter.h"
 #include "include/version.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "tools/graph_kernel/converter/graph_kernel_optimization.h"
@@ -40,7 +40,7 @@
 #include "src/common/version_manager.h"
 #include "tools/common/tensor_util.h"
 #include "include/api/model.h"
-#include "tools/mindir_serializer/mindir_serializer.h"
+#include "tools/mindir_exporter/mindir_serializer.h"
 #include "src/common/primitive_t_utils.h"
 
 namespace mindspore {

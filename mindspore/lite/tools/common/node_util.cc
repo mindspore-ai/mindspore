@@ -18,7 +18,7 @@
 #include <memory>
 #include <set>
 #include <vector>
-#include "src/ops/populate/populate_register.h"
+#include "src/common/ops/populate/populate_register.h"
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/graph_util.h"

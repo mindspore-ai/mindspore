@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_PASS_RUNTIME_NCX_PASS__H_
 
 #include <vector>
-#include "src/kernel_exec.h"
-#include "src/sub_graph_kernel.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/sub_graph_kernel.h"
 
 namespace mindspore::lite::pass {
 // To support NC4HW4(fp32) or NC8HW8(fp16) runtime kernel.

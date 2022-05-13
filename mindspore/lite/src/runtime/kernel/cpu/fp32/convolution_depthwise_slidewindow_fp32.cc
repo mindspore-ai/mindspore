@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32/convolution_depthwise_slidewindow_fp32.h"
-#include "src/pack_weight_manager.h"
+#include "src/runtime/pack_weight_manager.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;

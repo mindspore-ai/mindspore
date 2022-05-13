@@ -16,7 +16,7 @@
 
 #include "src/common/primitive_t_utils.h"
 #ifdef PRIMITIVE_WRITEABLE
-#include "src/ops/ops_utils.h"
+#include "src/common/ops/ops_utils.h"
 #include "ops/primitive_c.h"
 
 namespace mindspore {

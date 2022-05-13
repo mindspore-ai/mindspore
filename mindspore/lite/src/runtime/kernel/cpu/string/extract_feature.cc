@@ -15,7 +15,7 @@
  */
 #include "src/runtime/kernel/cpu/string/extract_feature.h"
 #include <string>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

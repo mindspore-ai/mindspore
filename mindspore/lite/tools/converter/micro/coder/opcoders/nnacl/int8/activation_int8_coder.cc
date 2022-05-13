@@ -16,7 +16,7 @@
 
 #include "coder/opcoders/nnacl/int8/sigmoid_int8_coder.h"
 #include "coder/opcoders/nnacl/int8/relux_int8_coder.h"
-#include "src/ops/populate/populate_register.h"
+#include "src/common/ops/populate/populate_register.h"
 #include "nnacl/fp32/activation_fp32.h"
 #include "schema/model_generated.h"
 #include "src/common/version_manager.h"

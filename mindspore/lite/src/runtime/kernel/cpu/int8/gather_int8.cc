@@ -20,7 +20,7 @@
 #include "nnacl/int8/gather_int8.h"
 #include "nnacl/int8/quantize.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

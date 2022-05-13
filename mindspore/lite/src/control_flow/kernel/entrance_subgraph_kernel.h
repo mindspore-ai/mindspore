@@ -22,12 +22,12 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "src/kernel_exec.h"
-#include "src/executor.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/executor.h"
 #include "src/common/log_adapter.h"
 #include "src/common/version_manager.h"
-#include "src/cpu_info.h"
-#include "src/sub_graph_kernel.h"
+#include "src/runtime/cpu_info.h"
+#include "src/runtime/sub_graph_kernel.h"
 
 namespace mindspore::kernel {
 class EntranceSubGraphKernel : public SubGraphKernel {

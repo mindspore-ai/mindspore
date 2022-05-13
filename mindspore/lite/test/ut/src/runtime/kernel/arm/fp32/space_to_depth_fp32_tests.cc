@@ -20,8 +20,8 @@
 #include "common/common_test.h"
 #include "nnacl/space_to_depth_parameter.h"
 #include "nnacl/base/space_to_depth_base.h"
-#include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 
 namespace mindspore {
 

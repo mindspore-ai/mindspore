@@ -18,7 +18,7 @@
 #include <vector>
 #include "nnacl/fp32/common_func_fp32.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/int8/arithmetic.cl.inc"
 #include "nnacl/arithmetic.h"

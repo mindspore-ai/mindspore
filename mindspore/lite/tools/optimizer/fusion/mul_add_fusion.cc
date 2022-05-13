@@ -24,7 +24,7 @@
 #include "ops/fusion/mul_fusion.h"
 #include "ops/fusion/scale_fusion.h"
 #include "ops/op_utils.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {

@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TOPK_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/fp32/topk_fp32.h"
 #ifdef ENABLE_FP16
 #include "nnacl/fp16/topk_fp16.h"

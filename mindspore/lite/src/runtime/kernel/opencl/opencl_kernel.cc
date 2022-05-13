@@ -16,7 +16,7 @@
 
 #include "src/runtime/infer_manager.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/weight_decoder.h"
+#include "src/runtime/weight_decoder.h"
 #include "src/common/file_utils.h"
 
 using mindspore::lite::RET_ERROR;

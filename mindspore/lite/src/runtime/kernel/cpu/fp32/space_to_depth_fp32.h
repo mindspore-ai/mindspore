@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_FP32_SPACE_TO_DEPTH_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/space_to_depth_parameter.h"
 
 namespace mindspore::kernel {

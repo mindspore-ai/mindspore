@@ -20,7 +20,7 @@
 #include "nnacl/int8/matmul_int8.h"
 #include "nnacl/common_func.h"
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;

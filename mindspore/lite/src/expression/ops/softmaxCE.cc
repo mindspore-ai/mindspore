@@ -16,7 +16,7 @@
 
 #include "src/expression/ops/softmaxCE.h"
 #include "include/api/net.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 #include "src/expression/ops/reduce.h"
 namespace mindspore {
 namespace NN {

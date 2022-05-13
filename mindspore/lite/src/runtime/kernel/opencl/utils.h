@@ -23,7 +23,7 @@
 #include "CL/cl2.hpp"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/common/utils.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 

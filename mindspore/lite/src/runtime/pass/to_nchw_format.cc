@@ -16,9 +16,9 @@
 
 #include "src/runtime/pass/to_nchw_format.h"
 #include <unordered_map>
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 #include "src/runtime/pass/pass_utils.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore::lite::pass {
 // Holds the index of the input tensor index that needs to be inserted a transpose kernel.

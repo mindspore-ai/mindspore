@@ -17,7 +17,7 @@
 #include <memory>
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "mindspore/lite/include/context.h"
 #include "nnacl/l2_norm_parameter.h"
 

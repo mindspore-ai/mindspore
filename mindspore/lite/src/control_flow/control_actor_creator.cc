@@ -15,7 +15,7 @@
  */
 
 #include "src/control_flow/control_actor_creator.h"
-#include "src/kernel_exec_util.h"
+#include "src/runtime/kernel_exec_util.h"
 #ifndef CONTROLFLOW_TENSORLIST_CLIP
 #include "src/control_flow/actor/switch_actor.h"
 #include "src/control_flow/actor/entrance_actor.h"

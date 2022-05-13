@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_WINOGRAD_FP32_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/fp32/winograd_transform.h"
 #include "nnacl/base/minimal_filtering_generator.h"
 #include "nnacl/fp32/conv_winograd_fp32.h"

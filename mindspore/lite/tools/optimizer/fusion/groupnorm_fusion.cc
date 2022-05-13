@@ -23,7 +23,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 #include "nnacl/op_base.h"
-#include "src/ops/ops_utils.h"
+#include "src/common/ops/ops_utils.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {

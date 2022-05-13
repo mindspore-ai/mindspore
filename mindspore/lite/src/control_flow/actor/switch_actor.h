@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <set>
 #include <utility>
-#include "src/lite_mindrt.h"
+#include "src/runtime/lite_mindrt.h"
 
 namespace mindspore::lite {
 class LiteSwitchOpActor : public LiteOpActor {

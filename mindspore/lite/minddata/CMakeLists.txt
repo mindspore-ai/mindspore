@@ -108,12 +108,12 @@ if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "full")
     include_directories("${TOP_DIR}")
 
     set(MINDDATA_FULL_SRC
-        ${TOP_DIR}/mindspore/lite/src/cxx_api/types.cc
-        ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor_utils.cc
-        ${TOP_DIR}/mindspore/lite/src/cxx_api/tensor/tensor_impl.cc
+        ${TOP_DIR}/mindspore/lite/src/runtime/cxx_api/types.cc
+        ${TOP_DIR}/mindspore/lite/src/runtime/cxx_api/tensor_utils.cc
+        ${TOP_DIR}/mindspore/lite/src/runtime/cxx_api/tensor/tensor_impl.cc
         ${TOP_DIR}/mindspore/lite/src/tensor.cc
         ${TOP_DIR}/mindspore/lite/src/common/utils.cc
-        ${TOP_DIR}/mindspore/lite/src/ms_tensor.cc
+        ${TOP_DIR}/mindspore/lite/src/runtime/ms_tensor.cc
         ${TOP_DIR}/mindspore/lite/src/common/string_util.cc
         ${TOP_DIR}/mindspore/lite/src/common/lite_utils.cc
         ${CORE_DIR}/utils/status.cc
@@ -433,7 +433,7 @@ elseif(MSLITE_MINDDATA_IMPLEMENT STREQUAL "wrapper")
 
     set(MINDSPORE_LITE_CXXAPI_SRC
             ${CORE_DIR}/utils/status.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../src/cxx_api/types.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src/runtime/cxx_api/types.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/tensor.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/../src/common/utils.cc
             )

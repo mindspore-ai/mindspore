@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/tensor.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 // this file is useless when move create actor before schedule.
 namespace mindspore::kernel {

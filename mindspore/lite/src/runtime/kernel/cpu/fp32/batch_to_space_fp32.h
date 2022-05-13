@@ -20,7 +20,7 @@
 #include "include/errorcode.h"
 #include "nnacl/batch_to_space.h"
 #include "nnacl/base/batch_to_space_base.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 
 namespace mindspore::kernel {
 class BatchToSpaceCPUKernel : public LiteKernel {

@@ -16,8 +16,8 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/base/constant_of_shape.h"
-#include "src/tensor_category.h"
-#include "src/kernel_exec.h"
+#include "src/runtime/tensor_category.h"
+#include "src/runtime/kernel_exec.h"
 
 namespace mindspore {
 class TestConstantOfShapeFp32 : public mindspore::CommonTest {

@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/fp32/ragged_range_fp32.h"
 #include <vector>
 #include "nnacl/fp32/ragged_range_fp32.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

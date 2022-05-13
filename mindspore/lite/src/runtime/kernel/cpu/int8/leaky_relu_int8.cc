@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/int8/leaky_relu_int8.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;

@@ -18,8 +18,8 @@
 #include "common/common_test.h"
 #include "nnacl/fp32/ragged_range_fp32.h"
 #include "src/tensor.h"
-#include "src/kernel_exec.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_exec.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore {
 class TestRaggedRangeFp32 : public mindspore::CommonTest {

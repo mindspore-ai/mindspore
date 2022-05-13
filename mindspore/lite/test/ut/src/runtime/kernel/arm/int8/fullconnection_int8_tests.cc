@@ -19,8 +19,8 @@
 #include "mindspore/lite/src/runtime/kernel/cpu/int8/fullconnection_int8.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/quantize.h"
-#include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 
 namespace mindspore {
 using lite::Tensor;

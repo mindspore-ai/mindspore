@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "src/expression/import.h"
-#include "ops/populate/populate_register.h"
+#include "common/ops/populate/populate_register.h"
 #include "src/expression/ops.h"
 #include "src/expression/ops/activation.h"
 #include "src/expression/ops/batchnorm.h"

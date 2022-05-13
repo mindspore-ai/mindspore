@@ -24,7 +24,7 @@
 #include "tools/converter/quantizer/cle_pattern.h"
 #include "include/errorcode.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "src/common/log_util.h"
 #include "tools/common/statistic_utils.h"

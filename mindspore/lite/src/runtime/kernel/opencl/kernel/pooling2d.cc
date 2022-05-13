@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/opencl/kernel/pooling2d.h"
 #include <string>
 #include "include/errorcode.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/pooling2d.cl.inc"
 

@@ -20,7 +20,7 @@
 #include <vector>
 #include <utility>
 #include "include/errorcode.h"
-#include "tools/anf_exporter/fetch_content.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "ops/make_tuple.h"
 #include "ops/depend.h"
 #include "ops/fusion/pad_fusion.h"

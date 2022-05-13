@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/fp32/local_response_norm_fp32.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

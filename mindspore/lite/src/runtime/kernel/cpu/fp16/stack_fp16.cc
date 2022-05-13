@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/fp16/stack_fp16.h"
 #include <vector>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/stack_parameter.h"
 #include "include/errorcode.h"
 #include "src/runtime/kernel/cpu/fp16/common_fp16.h"

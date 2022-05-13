@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/cpu/fp16/reduce_fp16.h"
 #include <map>
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp16/reduce_fp16.h"
 #include "src/runtime/kernel/cpu/base/reduce_base.h"

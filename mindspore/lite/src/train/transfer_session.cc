@@ -29,7 +29,7 @@
 #include "src/train/loss_kernel.h"
 #include "src/train/optimizer_kernel.h"
 #include "src/train/train_populate_parameter.h"
-#include "src/executor.h"
+#include "src/runtime/executor.h"
 #include "src/train/train_export.h"
 #include "src/train/train_utils.h"
 

@@ -16,7 +16,7 @@
 #include <cstring>
 #include <algorithm>
 #include <set>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/arithmetic_self.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/runtime/kernel/opencl/cl/arithmeticself.cl.inc"

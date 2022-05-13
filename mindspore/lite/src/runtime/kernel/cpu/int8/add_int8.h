@@ -19,7 +19,7 @@
 #include <vector>
 #include <limits>
 #include <algorithm>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/int8/add_int8.h"
 #include "nnacl/arithmetic.h"
 

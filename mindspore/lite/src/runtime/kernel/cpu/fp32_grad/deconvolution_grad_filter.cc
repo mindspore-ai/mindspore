@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32_grad/deconvolution_grad_filter.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/pack.h"
 #include "nnacl/fp32_grad/pack_ext.h"
 #include "nnacl/fp32_grad/gemm.h"

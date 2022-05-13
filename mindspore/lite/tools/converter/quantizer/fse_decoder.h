@@ -20,7 +20,7 @@
 #include <cstdint>
 #include "tools/converter/quantizer/fse_bit_stream.h"
 #include "src/tensor.h"
-#include "src/lite_model.h"
+#include "src/runtime/lite_model.h"
 
 namespace mindspore::lite::quant {
 class FSEDecoder {

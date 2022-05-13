@@ -16,7 +16,7 @@
 #include <vector>
 #include "common/common_test.h"
 #include "nnacl/resize_parameter.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 namespace mindspore {
 

@@ -24,7 +24,7 @@
 #include "nnacl/fp32/pad_fp32.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "src/runtime/kernel/cpu/base/layout_transform.h"
 
 namespace mindspore::kernel {

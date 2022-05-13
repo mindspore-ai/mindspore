@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/fp32_grad/smooth_l1_loss_grad.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;

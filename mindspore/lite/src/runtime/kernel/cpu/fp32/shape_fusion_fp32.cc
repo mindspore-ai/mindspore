@@ -16,7 +16,7 @@
 
 #include "src/runtime/kernel/cpu/fp32/shape_fusion_fp32.h"
 #include <algorithm>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/infer_manager.h"

@@ -16,8 +16,8 @@
 
 #include "common/common_test.h"
 #include "schema/ops_generated.h"
-#include "src/runtime/kernel/cuda/batchtospace.h"
-#include "ut/src/runtime/kernel/cuda/common.h"
+#include "src/extendrt/kernel/cuda/batchtospace.h"
+#include "ut/src/extendrt/kernel/cuda/common.h"
 #include "nnacl/batch_to_space.h"
 
 namespace mindspore {

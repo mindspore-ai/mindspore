@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/cpu/int8/pad_int8.h"
 #include <cfloat>
 #include <cmath>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "nnacl/op_base.h"
 
 using mindspore::lite::RET_ERROR;

@@ -19,7 +19,7 @@
 #include "src/runtime/kernel/cpu/int8/mul_int8.h"
 #include "nnacl/arithmetic.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;

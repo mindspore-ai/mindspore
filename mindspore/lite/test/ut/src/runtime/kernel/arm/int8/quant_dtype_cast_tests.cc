@@ -20,8 +20,8 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/base/quant_dtype_cast.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
-#include "mindspore/lite/src/kernel_registry.h"
-#include "mindspore/lite/src/kernel_exec.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_exec.h"
 
 namespace mindspore {
 

@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <set>
 #include <string>
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 #include "src/runtime/kernel/opencl/kernel/layer_norm.h"
 #include "nnacl/layer_norm_parameter.h"
 #include "src/runtime/kernel/opencl/utils.h"

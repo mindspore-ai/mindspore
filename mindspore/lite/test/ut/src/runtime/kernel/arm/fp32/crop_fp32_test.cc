@@ -15,7 +15,7 @@
  */
 #include "common/common_test.h"
 #include "nnacl/fp32/crop_fp32.h"
-#include "src/tensor_category.h"
+#include "src/runtime/tensor_category.h"
 #include "mindspore/lite/src/runtime/kernel/cpu/fp32/crop_fp32.h"
 
 namespace mindspore {

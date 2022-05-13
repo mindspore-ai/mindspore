@@ -19,7 +19,7 @@
 
 #include <vector>
 
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "nnacl/nllloss_parameter.h"
 
 namespace mindspore::kernel {

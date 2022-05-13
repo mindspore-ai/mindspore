@@ -23,7 +23,7 @@
 #include "nnacl/matmul_parameter.h"
 #include "src/expression/import.h"
 #include "inner/model_generated.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 
 namespace mindspore {
 namespace lite {

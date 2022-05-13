@@ -19,7 +19,7 @@
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "src/common/file_utils.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "nnacl/pack.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/int8/deconv_int8.h"

@@ -18,11 +18,11 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_L2_NORM_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/lite_kernel.h"
 #include "include/context.h"
 #include "nnacl/l2_norm_parameter.h"
 #include "schema/model_generated.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel_registry.h"
 
 using mindspore::lite::InnerContext;
 

@@ -16,15 +16,15 @@
 
 #include "common/common_test.h"
 #include "schema/inner/model_generated.h"
-#include "src/lite_session.h"
-#include "src/sub_graph_kernel.h"
+#include "src/runtime/lite_session.h"
+#include "src/runtime/sub_graph_kernel.h"
 #include "ir/dtype/type_id.h"
 
 #include "include/version.h"
 #include "include/model.h"
 #include "include/api/model.h"
-#include "src/cxx_api/converters.h"
-#include "src/cxx_api/model/model_impl.h"
+#include "src/runtime/cxx_api/converters.h"
+#include "src/runtime/cxx_api/model/model_impl.h"
 
 using mindspore::kernel::KernelExec;
 using mindspore::kernel::KernelKey;

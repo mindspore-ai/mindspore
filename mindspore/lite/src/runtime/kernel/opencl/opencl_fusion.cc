@@ -23,7 +23,7 @@
 #include "src/runtime/kernel/opencl/kernel/conv2d.h"
 #include "src/runtime/kernel/opencl/kernel/fusion_eltwise.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/gpu/opencl/opencl_executor.h"
+#include "src/runtime/kernel/gpu/opencl/opencl_executor.h"
 #include "include/errorcode.h"
 #include "schema/ops_generated.h"
 #include "src/common/utils.h"

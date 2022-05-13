@@ -18,7 +18,7 @@
 #include "schema/inner/model_generated.h"
 #include "common/common_test.h"
 #include "nnacl/fp32/activation_fp32.h"
-#include "mindspore/lite/src/kernel_registry.h"
+#include "mindspore/lite/src/runtime/kernel_registry.h"
 #include "mindspore/lite/include/context.h"
 
 namespace mindspore {

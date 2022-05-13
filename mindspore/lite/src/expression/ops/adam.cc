@@ -23,7 +23,7 @@
 #include "src/expression/ops/arithmetic.h"
 #include "nnacl/fp32_grad/optimizer.h"
 #include "include/api/net.h"
-#include "src/cxx_api/expression/node_impl.h"
+#include "src/runtime/cxx_api/expression/node_impl.h"
 
 namespace mindspore {
 namespace NN {
