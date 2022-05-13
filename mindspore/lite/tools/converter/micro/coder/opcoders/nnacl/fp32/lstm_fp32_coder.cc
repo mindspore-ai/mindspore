@@ -36,7 +36,6 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
   weight_i_ptr_ = reinterpret_cast<float *>(allocator_->Malloc(kNumberTypeFloat32, kOnlineSize, kOnlinePackWeight));
   MS_CHECK_PTR(weight_i_ptr_);
 
-  NNaclFp32Serializer w_init_size_code;
   size_t w_buf_size = 0;
 
   init_code.CodeBufferOffsetExpression(weight_i_ptr_, context->weight_name(), context->weight_offset_name(),
@@ -55,16 +54,14 @@ int LstmFP32Coder::InitInputWeightBias(CoderContext *const context) {
                                        context->weight_size_name(), bias_i_size);
   init_code.CodeFunction("PackLstmBias", input_bias_, bias_i, weight_batch_, lstm_param_->hidden_size_,
                          lstm_param_->input_col_align_, lstm_param_->bidirectional_, "NULL");
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }
 
 int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
   NNaclFp32Serializer init_code;
-  NNaclFp32Serializer w_init_size_code;
   size_t w_buf_size = 0;
 
   Tensor *weight_h = input_tensors().at(kInputSize1);
@@ -93,7 +90,6 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
   init_code.CodeBufferOffsetExpression(state_bias_, context->weight_name(), context->weight_offset_name(),
                                        context->weight_size_name(), state_bias_size);
   w_buf_size += state_bias_size;
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
   Tensor *bias_i = input_tensors_.at(kInputSize2);
   MS_CHECK_PTR(bias_i);
@@ -102,7 +98,7 @@ int LstmFP32Coder::InitStateWeightBias(CoderContext *const context) {
   init_code.CodeFunction("PackLstmBias", state_bias_, state_bias_addr, weight_batch_, lstm_param_->hidden_size_,
                          lstm_param_->state_col_align_, lstm_param_->bidirectional_, "NULL");
 
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }

@@ -23,6 +23,7 @@
 #include "coder/log.h"
 #include "coder/opcoders/parallel.h"
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
+#include "coder/wrapper/int8/conv1x1_init_int8_wrapper.h"
 
 namespace mindspore::lite::micro::nnacl {
 int Conv2D1x1Int8Coder::Prepare(CoderContext *const context) {
@@ -189,15 +190,16 @@ int Conv2D1x1Int8Coder::InitWeightBias(CoderContext *const context) {
                                context->weight_size_name());
     w_init_size_code << context->weight_size_name() << " += ";
     w_init_size_code.CodeFunction("Conv1x1PackWeightSize", input_channel, output_channel, "GetSupportOptFlag()");
+    context->AppendInitWeightSizeCode(w_init_size_code.str());
   } else {
     code.CodeFunctionWithCheck("Conv1x1Init", filter_tensor_str, bias_tensor_str, filter_zp_str, input_channel,
                                output_channel, input_zp, support_optimize_, filter_peroc_, packed_weight_str,
                                bias_data_str, context->weight_name(), ("&" + context->weight_offset_name()),
                                context->weight_size_name());
-    w_init_size_code << context->weight_size_name() << " += ";
-    w_init_size_code.CodeFunction("Conv1x1PackWeightSize", input_channel, output_channel, support_optimize_);
+    size_t w_buf_size = Conv1x1PackWeightSize(input_channel, output_channel, support_optimize_);
+    context->AppendInitWeightSizeCode(w_buf_size);
   }
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+
   context->AppendInitCode(code.str());
   return RET_OK;
 }

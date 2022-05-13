@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include "src/tensor.h"
+
 namespace mindspore::lite::micro {
 class CoderContext {
  public:
@@ -57,6 +58,10 @@ class CoderContext {
   }
   std::vector<std::string> weight_buffer_size_code_blocks() const { return weight_buffer_size_code_blocks_; }
 
+  void set_weight_buffer_size(size_t weight_buffer_size) { weight_buffer_size_ = weight_buffer_size; }
+
+  size_t weight_buffer_size() const { return weight_buffer_size_; }
+
   void set_tensor_map(const std::map<Tensor *, std::string> &tensor_map) {
     tensors_map_.insert(tensor_map.begin(), tensor_map.end());
   }
@@ -85,6 +90,10 @@ class CoderContext {
   void AppendInitCode(const std::string &codeBlock);
 
   void AppendInitWeightSizeCode(const std::string &codeBlock);
+
+  void AppendInitWeightSizeCode(size_t w_buf_size);
+
+  std::vector<std::string> GetInitWeightSizeCode() const;
 
   std::set<std::string> c_files() const { return c_files_; }
   void set_c_files(const std::set<std::string> &files) { c_files_.insert(files.begin(), files.end()); }
@@ -132,6 +141,7 @@ class CoderContext {
   std::vector<std::string> inference_blocks_;
   std::vector<std::string> after_inference_code_blocks_;
   std::vector<std::string> weight_buffer_size_code_blocks_;
+  std::size_t weight_buffer_size_ = 0;
 };
 }  // namespace mindspore::lite::micro
 #endif  // MINDSPORE_LITE_MICRO_CODER_CONTEXT_H_

@@ -99,7 +99,6 @@ int DeConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
   MS_CHECK_PTR(packed_weight_);
 
   NNaclFp32Serializer init_code;
-  NNaclFp32Serializer w_init_size_code;
 
   size_t w_buf_size = 0;
   if (input_tensors_.size() == kInputSize2) {
@@ -112,9 +111,8 @@ int DeConvolutionFP32Coder::InitWeightBias(CoderContext *const context) {
                                        context->weight_size_name(), pack_weight_size_);
   w_buf_size += pack_weight_size_;
   init_code.CodeFunction("PackNHWCToC8HWN8Fp32", filter_tensor_, packed_weight_, in_channel, kernel_plane, out_channel);
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendInitCode(init_code.str());
   return RET_OK;
 }

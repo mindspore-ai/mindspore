@@ -16,6 +16,7 @@
 
 #include "coder/context.h"
 #include "coder/generator/component/component.h"
+#include "coder/opcoders/serializers/nnacl_serializer/nnacl_fp32_serializer.h"
 
 namespace mindspore::lite::micro {
 CoderContext::CoderContext() {
@@ -34,4 +35,16 @@ void CoderContext::AppendInitCode(const std::string &codeBlock) { this->initialC
 void CoderContext::AppendInitWeightSizeCode(const std::string &codeBlock) {
   this->weight_buffer_size_code_blocks_.push_back(codeBlock);
 }
+
+std::vector<std::string> CoderContext::GetInitWeightSizeCode() const {
+  std::vector<std::string> ret(weight_buffer_size_code_blocks_);
+  if (weight_buffer_size_ > 0) {
+    nnacl::NNaclFp32Serializer w_init_size_code;
+    w_init_size_code.CodeAddAssignExpression(pack_weight_size_name_, weight_buffer_size_);
+    ret.push_back(w_init_size_code.str());
+  }
+  return ret;
+}
+
+void CoderContext::AppendInitWeightSizeCode(size_t w_buf_size) { weight_buffer_size_ += w_buf_size; }
 }  // namespace mindspore::lite::micro

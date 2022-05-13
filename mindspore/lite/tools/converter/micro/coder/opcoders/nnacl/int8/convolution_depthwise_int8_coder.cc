@@ -47,7 +47,6 @@ int ConvolutionDepthwiseINT8Coder::InitWeightBias(CoderContext *const context) {
   auto tmp_weight_data_size = static_cast<size_t>(pack_weight_size * sizeof(int8_t));
 
   nnacl::NNaclInt8Serializer code;
-  nnacl::NNaclInt8Serializer w_init_size_code;
   size_t w_buf_size = 0;
 
   int8_t *tmp_weight = reinterpret_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, kOnlineSize, kOnlinePackWeight));
@@ -75,14 +74,13 @@ int ConvolutionDepthwiseINT8Coder::InitWeightBias(CoderContext *const context) {
   code.CodeBufferOffsetExpression(bias_data_, context->weight_name(), context->weight_offset_name(),
                                   context->weight_size_name(), channel_data_size);
   w_buf_size += channel_data_size;
-  w_init_size_code.CodeAddAssignExpression(context->weight_size_name(), w_buf_size);
 
   // init bias
   if (input_tensors_.size() == kInputSize2) {
     code.CodeFunction("memcpy", bias_data_, bias_tensor_, bias_tensor_->ElementsNum() * sizeof(int32_t));
   }
 
-  context->AppendInitWeightSizeCode(w_init_size_code.str());
+  context->AppendInitWeightSizeCode(w_buf_size);
   context->AppendInitCode(code.str());
   return RET_OK;
 }

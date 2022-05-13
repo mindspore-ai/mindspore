@@ -35,9 +35,6 @@ int InferenceGenerator::CodeNetHFile() {
   if (is_get_quant_args_) {
     CodeGraphQuantArgsState(ofs);
   }
-  if (config_->target() != kARM32M) {
-    CodeInitWeightState(ofs);
-  }
   CodeManageResourceState(ofs);
   CodeInferenceState(ofs);
   ofs << kEndExternCpp;

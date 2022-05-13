@@ -68,7 +68,8 @@ void CodeModelParamsData(std::ofstream &ofs, const std::map<std::string, Tensor 
   }
 }
 
-void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx) {
+void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::unique_ptr<CoderContext> &ctx,
+                           Configurator *config) {
   // reverse key and value of tensors_map
   std::map<std::string, Tensor *> address_map;
   for (const auto &item : ctx->tensors_map()) {
@@ -82,7 +83,9 @@ void CodeModelParamsForNet(std::ofstream &hofs, std::ofstream &cofs, const std::
     }
     if (CheckConstantTensor(tensor)) {
       hofs << "extern " << GetTensorDataType(tensor->data_type()) << name << "[];\n";
-      cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
+      if (config->target() != kARM32M) {
+        cofs << GetTensorDataType(tensor->data_type()) << name << "[" << tensor->ElementsNum() << "];\n";
+      }
     } else if (tensor->category() == lite::Category::VAR) {
       hofs << "extern " << GetTensorDataType(tensor->data_type()) << "*" << name << ";\n";
       cofs << GetTensorDataType(tensor->data_type()) << "*" << name << " = NULL;\n";
@@ -99,61 +102,67 @@ void CodeInitWeightState(std::ofstream &ofs) {
       << "int Init(void *weight_buffer, int weight_size);\n\n";
 }
 
-void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx) {
-  ofs << "static size_t PackWeightSize() {\n";
-  ofs << "  size_t w_size = 0;\n";
-  for (const auto &block : ctx->weight_buffer_size_code_blocks()) {
-    ofs << "  " << block;
-  }
-  ofs << "  return w_size;\n";
-  ofs << "}\n\n";
+void CodeWeightInitFunc(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, Configurator *config) {
+  if (config->target() != kARM32M) {
+    ofs << "static size_t PackWeightSize() {\n";
+    ofs << "  size_t w_size = 0;\n";
+    for (const auto &block : ctx->GetInitWeightSizeCode()) {
+      ofs << "  " << block;
+    }
+    ofs << "  return w_size;\n";
+    ofs << "}\n\n";
 
-  ofs << "int Init(void *weight_buffer, int weight_size) {\n"
-      << "  if (weight_buffer == NULL) {\n"
-      << "    return RET_ERROR;\n"
-      << "  }\n";
-  ofs << "  struct ModelParameter {\n"
-      << "    void *addr;\n"
-      << "    size_t size;\n"
-      << "    size_t offset;\n"
-      << "  };\n";
-  ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
-  size_t params_num = 0;
-  size_t offset = 0;
-  std::string params;
-  std::string origins;
-  for (const auto &item : ctx->saved_weights()) {
-    std::string name = item.first;
-    Tensor *tensor = item.second;
-    if (!CheckConstantTensor(tensor)) {
-      continue;
+    ofs << "int Init(void *weight_buffer, int weight_size) {\n"
+        << "  if (weight_buffer == NULL) {\n"
+        << "    return RET_ERROR;\n"
+        << "  }\n";
+    ofs << "  struct ModelParameter {\n"
+        << "    void *addr;\n"
+        << "    size_t size;\n"
+        << "    size_t offset;\n"
+        << "  };\n";
+
+    ofs << "  size_t " << ctx->weight_size_name() << " = PackWeightSize();\n";
+    size_t params_num = 0;
+    size_t offset = 0;
+    std::string params;
+    std::string origins;
+    for (const auto &item : ctx->saved_weights()) {
+      std::string name = item.first;
+      Tensor *tensor = item.second;
+      if (!CheckConstantTensor(tensor)) {
+        continue;
+      }
+      std::map<Tensor *, std::string> ctx_tensor_map = ctx->tensors_map();
+      auto iter = ctx_tensor_map.find(tensor);
+      if (iter != ctx_tensor_map.end()) {
+        origins += "    {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
+        params_num++;
+      } else {
+        TypeId data_type = tensor->data_type();
+        params +=
+          "  " + GetTensorDataType(data_type) + "*" + name + " = (weight_buffer + " + std::to_string(offset) + ");\n";
+      }
+      offset += tensor->Size();
     }
-    std::map<Tensor *, std::string> ctx_tensor_map = ctx->tensors_map();
-    auto iter = ctx_tensor_map.find(tensor);
-    if (iter != ctx_tensor_map.end()) {
-      origins += "    {" + name + ", " + std::to_string(tensor->Size()) + ", " + std::to_string(offset) + "},\n";
-      params_num++;
-    } else {
-      TypeId data_type = tensor->data_type();
-      params +=
-        "  " + GetTensorDataType(data_type) + "*" + name + " = (weight_buffer + " + std::to_string(offset) + ");\n";
-    }
-    offset += tensor->Size();
+    ofs << params << "\n";
+    ofs << "  struct ModelParameter model_params[] = {\n" << origins << "  };\n";
+    ofs << "\n";
+    ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
+        << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
+           "      return RET_ERROR;\n"
+           "    }\n"
+        << "    memcpy(model_params[i].addr, (weight_buffer + model_params[i].offset), model_params[i].size);\n"
+        << "  }\n";
+    ofs << "  if (" << ctx->weight_size_name() << " > 0) {\n";
+    ofs << "    " << ctx->weight_name() << " = malloc(" << ctx->weight_size_name() << ");\n";
+    ofs << "    if (" << ctx->weight_name() << " == NULL) {\n      return RET_ERROR;\n    }\n";
+    ofs << "    memset(" << ctx->weight_name() << ", 0, " << ctx->weight_size_name() << ");\n";
+    ofs << "  }\n";
+  } else {
+    ofs << "int Init(void *weight_buffer, int weight_size) {\n";
+    ofs << "  const size_t w_size = " << ctx->weight_buffer_size() << ";\n";
   }
-  ofs << params << "\n";
-  ofs << "  struct ModelParameter model_params[] = {\n" << origins << "  };\n";
-  ofs << "\n";
-  ofs << "  for(int i = 0; i < " << params_num << "; ++i) {\n"
-      << "    if (model_params[i].offset + model_params[i].size > weight_size) {\n"
-         "      return RET_ERROR;\n"
-         "    }\n"
-      << "    memcpy(model_params[i].addr, (weight_buffer + model_params[i].offset), model_params[i].size);\n"
-      << "  }\n";
-  ofs << "  if (" << ctx->weight_size_name() << " > 0) {\n";
-  ofs << "    " << ctx->weight_name() << " = malloc(" << ctx->weight_size_name() << ");\n";
-  ofs << "    if (" << ctx->weight_name() << " == NULL) {\n      return RET_ERROR;\n    }\n";
-  ofs << "    memset(" << ctx->weight_name() << ", 0, " << ctx->weight_size_name() << ");\n";
-  ofs << "  }\n";
   ofs << "  size_t " << ctx->weight_offset_name() << " = 0;\n";
   for (const auto &block : ctx->init_contents()) {
     ofs << "{\n" << block << "}\n";

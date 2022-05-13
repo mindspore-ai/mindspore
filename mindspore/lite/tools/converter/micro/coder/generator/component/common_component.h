@@ -30,6 +30,7 @@ namespace mindspore::lite::micro {
 void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config);
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config);
+void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
 void CodeCopyOutputsState(std::ofstream &ofs);
 void CodeCopyOutputsImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);

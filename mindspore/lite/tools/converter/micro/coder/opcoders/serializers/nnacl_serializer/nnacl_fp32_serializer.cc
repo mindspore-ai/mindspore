@@ -63,7 +63,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParamete
   code << gThreadNum << " = 1;\n";
   code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
   CodeBaseStruct<false>(
-    "ConvParameter", name, conv_parameter.op_parameter_, "{}", conv_parameter.kernel_h_, conv_parameter.kernel_w_,
+    "ConvParameter", name, conv_parameter.op_parameter_, "{0}", conv_parameter.kernel_h_, conv_parameter.kernel_w_,
     conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_, conv_parameter.dilation_w_,
     conv_parameter.pad_u_, conv_parameter.pad_d_, conv_parameter.pad_l_, conv_parameter.pad_r_, conv_parameter.group_,
     conv_parameter.tile_num_, conv_parameter.input_batch_, conv_parameter.input_h_, conv_parameter.input_w_,
