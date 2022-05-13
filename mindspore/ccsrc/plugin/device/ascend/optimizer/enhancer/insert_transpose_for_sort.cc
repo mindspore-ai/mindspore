@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/insert_transpose_for_sort.h"
 #include <algorithm>
+#include <string>
 
 namespace mindspore {
 namespace opt {
@@ -26,17 +27,31 @@ const BaseRef InsertTransposeForSort::DefinePattern() const {
   return VectorRef({prim, Xs});
 }
 
-std::vector<size_t> InferTransposeOutputShape(const std::vector<size_t> &shape, const std::vector<int64_t> &perm) {
-  std::vector<size_t> out_shape;
-  if (shape.size() != perm.size()) {
+abstract::BaseShapePtr InferTransposeOutputShape(const abstract::BaseShapePtr &shape,
+                                                 const std::vector<int64_t> &perm) {
+  auto shapeptr = shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shapeptr);
+  if (shapeptr->shape().size() != perm.size()) {
     MS_LOG(EXCEPTION) << "Length of input shape and perm must be same, bug got input shape: " << shape
                       << ", perm: " << perm;
   }
+  ShapeVector in_shape = shapeptr->shape();
+  ShapeVector in_shape_max = shapeptr->max_shape();
+  ShapeVector in_shape_min = shapeptr->min_shape();
+  ShapeVector out_shape;
+  ShapeVector out_shape_max;
+  ShapeVector out_shape_min;
   for (size_t i = 0; i < perm.size(); i++) {
     auto idx = LongToSize(perm[i]);
-    out_shape.push_back(shape[idx]);
+    out_shape.push_back(in_shape[idx]);
+    if (!in_shape_min.empty() && !in_shape_max.empty()) {
+      out_shape_max.push_back(in_shape_max[idx]);
+      out_shape_min.push_back(in_shape_min[idx]);
+    }
   }
-  return out_shape;
+
+  abstract::ShapePtr out_shape_ptr = std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
+  return out_shape_ptr;
 }
 
 CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, const std::vector<int64_t> &perm) {
@@ -46,7 +61,7 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
 
   auto in_node = common::AnfAlgo::GetInputNode(node, 0);
   auto type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
-  auto in_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  auto in_shape = common::AnfAlgo::GetPrevNodeOutputDetailShape(node, 0);
   auto transpose_out_shape = InferTransposeOutputShape(in_shape, perm);
 
   auto ori_out_types = common::AnfAlgo::GetAllOutputInferDataTypes(node);
@@ -56,7 +71,9 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
   auto transpose = func_graph->NewCNode(trans_inputs);
   MS_EXCEPTION_IF_NULL(transpose);
   common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
-  common::AnfAlgo::SetOutputInferTypeAndShape({type}, {transpose_out_shape}, transpose.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape({type}, {transpose_out_shape}, transpose.get());
+  std::vector<std::string> transpose_input_names{"input_x", "input_perm"};
+  common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
   new_inputs.push_back(transpose);
 
   CNodePtr new_cnode = nullptr;
@@ -69,8 +86,8 @@ CNodePtr InsertForInput(const FuncGraphPtr &func_graph, const CNodePtr &node, co
   }
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_inputs(new_inputs);
-  common::AnfAlgo::SetOutputInferTypeAndShape(ori_out_types, {transpose_out_shape, transpose_out_shape},
-                                              new_cnode.get());
+  common::AnfAlgo::SetOutputTypeAndDetailShape(ori_out_types, {transpose_out_shape, transpose_out_shape},
+                                               new_cnode.get());
   return new_cnode;
 }
 
@@ -99,14 +116,16 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
     transpose_inputs.push_back(NewValueNode(prim));
     transpose_inputs.push_back(tuple_getitem);
 
-    auto shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
+    auto shape = common::AnfAlgo::GetOutputDetailShape(node, output_idx);
     auto type = common::AnfAlgo::GetOutputInferDataType(node, output_idx);
     auto transpose_out_shape = InferTransposeOutputShape(shape, perm);
 
     CNodePtr transpose = func_graph->NewCNode(transpose_inputs);
     MS_EXCEPTION_IF_NULL(transpose);
     common::AnfAlgo::SetNodeAttr(kAttrPerm, MakeValue(perm), transpose);
-    common::AnfAlgo::SetOutputInferTypeAndShape({type}, {transpose_out_shape}, transpose.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape({type}, {transpose_out_shape}, transpose.get());
+    std::vector<std::string> transpose_input_names{"input_x", "input_perm"};
+    common::AnfAlgo::SetNodeAttr(kAttrInputNames, MakeValue(transpose_input_names), transpose);
     tuple_inputs.push_back(transpose);
   }
   auto make_tuple = func_graph->NewCNode(tuple_inputs);
@@ -136,7 +155,7 @@ const AnfNodePtr InsertTransposeForSort::Process(const FuncGraphPtr &func_graph,
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name != kSortOpName || common::AnfAlgo::IsDynamicShape(node)) {
+  if (op_name != kSortOpName) {
     return nullptr;
   }
 

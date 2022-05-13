@@ -98,6 +98,10 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   auto cdist_cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cdist_cnode);
+  if (common::AnfAlgo::IsDynamicShape(cdist_cnode)) {
+    MS_LOG(EXCEPTION) << "Cdist don't support dynamic shape, node: " << cdist_cnode->fullname_with_scope();
+  }
   if (GetBoolAttr(cdist_cnode, kAttrVisited)) {
     return nullptr;
   }
@@ -107,9 +111,11 @@ const AnfNodePtr CdistFission::Process(const FuncGraphPtr &graph, const AnfNodeP
     MS_LOG(INFO) << "The node " << cdist_cnode->DebugString() << " is not equal to " << cdist_cnode << " inputs";
     return nullptr;
   }
+
   const auto &cdist_inputs = cdist_cnode->inputs();
   auto x_shape = common::AnfAlgo::GetOutputInferShape(cdist_inputs[kDim1], 0);
   auto y_shape = common::AnfAlgo::GetOutputInferShape(cdist_inputs[kDim2], 0);
+
   auto broadcast_to_shape = CalCdistBroadCastShape(x_shape, y_shape);
   auto broadcast_input_x = AddBroadCastToNode(graph, cdist_inputs[kDim1], kInputXDimP, broadcast_to_shape, *this);
   auto broadcast_input_y = AddBroadCastToNode(graph, cdist_inputs[kDim2], kInputYDimR, broadcast_to_shape, *this);
@@ -128,6 +134,9 @@ const AnfNodePtr CdistGradFission::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(node);
   auto cdist_grad_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cdist_grad_cnode);
+  if (common::AnfAlgo::IsDynamicShape(cdist_grad_cnode)) {
+    MS_LOG(EXCEPTION) << "CdistGrad don't support dynamic shape, node: " << cdist_grad_cnode->fullname_with_scope();
+  }
   if (GetBoolAttr(cdist_grad_cnode, kAttrVisited)) {
     return nullptr;
   }

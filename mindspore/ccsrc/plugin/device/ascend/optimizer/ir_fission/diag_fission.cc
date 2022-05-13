@@ -85,6 +85,9 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   auto diag_cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(diag_cnode);
+  if (common::AnfAlgo::IsDynamicShape(diag_cnode)) {
+    MS_LOG(EXCEPTION) << "Diag don't support dynamic shape, node: " << diag_cnode->fullname_with_scope();
+  }
   if (diag_cnode->size() != kDiagInputNum + 1) {
     MS_LOG(INFO) << "The node " << diag_cnode->DebugString() << " is not equal to " << kDiagInputNum << " inputs";
     return nullptr;

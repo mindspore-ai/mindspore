@@ -32,7 +32,7 @@ class InsertPadForNMSWithMask : public PatternProcessPass {
 
  private:
   AnfNodePtr InsertPadToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const TypeId &origin_type,
-                              const std::vector<size_t> &origin_shape) const;
+                              const abstract::BaseShapePtr &origin_shape) const;
 };
 }  // namespace opt
 }  // namespace mindspore

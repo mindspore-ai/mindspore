@@ -249,6 +249,10 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
   MS_EXCEPTION_IF_NULL(node);
   auto avg_pool_3d_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(avg_pool_3d_node);
+  if (common::AnfAlgo::IsDynamicShape(avg_pool_3d_node)) {
+    MS_LOG(EXCEPTION) << "AvgPool3D don't support dynamic shape in ascend yet, node: "
+                      << avg_pool_3d_node->fullname_with_scope();
+  }
   if (avg_pool_3d_node->size() != kAvgPool3DInputNum + 1) {
     MS_LOG(INFO) << "The node " << avg_pool_3d_node->DebugString() << " is not equal to " << kAvgPool3DInputNum
                  << " inputs. Can not do fusion.";

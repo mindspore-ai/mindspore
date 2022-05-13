@@ -30,9 +30,6 @@ void Stack::Init(const int64_t axis) { this->set_axis(axis); }
 namespace {
 abstract::ShapePtr StackInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  if (input_args.size() != 1) {
-    MS_LOG(ERROR) << "Invalid output size:" << input_args.size();
-  }
   if (input_args.size() < 1) {
     MS_LOG(ERROR) << "Invalid input size " << input_args.size();
   }

@@ -2748,17 +2748,6 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
     rank_base = len(x_shape[0])
     n = len(x_shape)
     out_shape = x_shape[0]
-
-    out = {}
-    if -1 in out_shape:
-        x_min_shp = value['min_shape']
-        ret_min_shp = x_min_shp[0].copy()
-        out['min_shape'] = ret_min_shp
-        x_max_shp = value['max_shape']
-        ret_max_shp = x_max_shp[0].copy()
-        out['max_shape'] = ret_max_shp
-        return out
-
     validator.check_int_range(axis, -rank_base - 1, rank_base, Rel.INC_BOTH, 'axis', prim_name)
     if axis < 0:
         axis = axis + rank_base + 1
@@ -2766,6 +2755,21 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
         validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, prim_name, TypeError)
         if x_shape[i] != x_shape[0]:
             raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
+
+    out = {}
+    if -1 in out_shape:
+        x_min_shp = value['min_shape']
+        ret_min_shp = x_min_shp[0].copy()
+        ret_min_shp.insert(axis, n)
+        out['min_shape'] = ret_min_shp
+        x_max_shp = value['max_shape']
+        ret_max_shp = x_max_shp[0].copy()
+        ret_max_shp.insert(axis, n)
+        out['max_shape'] = ret_max_shp
+        out_shape.insert(axis, n)
+        out['shape'] = out_shape
+        return out
+
     out_shape.insert(axis, n)
     return out_shape
 
@@ -2855,7 +2859,7 @@ class Stack(PrimitiveWithInfer):
             infered_value = Tensor(np.stack(input_array, axis=self.axis))
 
         if 'min_shape' in all_shape and 'max_shape' in all_shape:
-            out = {'shape': x_shape[0],
+            out = {'shape': all_shape.get('shape'),
                    'min_shape': all_shape.get('min_shape'),
                    'max_shape': all_shape.get('max_shape'),
                    'dtype': x_type[0],

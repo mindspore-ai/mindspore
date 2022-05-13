@@ -4123,7 +4123,8 @@ class NMSWithMask(PrimitiveWithInfer):
     def infer_shape(self, bboxes_shape):
         cls_name = self.name
         validator.check_equal_int(len(bboxes_shape), 2, "bboxes rank", cls_name)
-        validator.check_positive_int(bboxes_shape[0], "bboxes.shape[0]", cls_name)
+        if bboxes_shape[0] != -1:
+            validator.check_positive_int(bboxes_shape[0], "bboxes.shape[0]", cls_name)
         validator.check_equal_int(bboxes_shape[1], 5, "bboxes.shape[1]", cls_name)
         num = bboxes_shape[0]
         return bboxes_shape, (num,), (num,)

@@ -40,22 +40,32 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
   std::vector<int64_t> dyn_input_sizes{SizeToLong(offset)};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_pack);
   // infer shape
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(origin_pack_cnode, 0);
+  auto output_shape_ptr = common::AnfAlgo::GetOutputDetailShape(origin_pack_cnode, 0);
+  MS_EXCEPTION_IF_NULL(output_shape_ptr);
+  auto output_shape = output_shape_ptr->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(output_shape);
   auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(new_pack, kAttrAxis);
   if (axis < 0) {
-    axis += SizeToLong(output_shape.size());
+    axis += SizeToLong(output_shape->shape().size());
   }
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
                       << trace::DumpSourceLines(origin_pack_cnode);
   }
-  std::vector<size_t> new_shape = output_shape;
+  ShapeVector new_shape = output_shape->shape();
+  ShapeVector new_shape_min = output_shape->min_shape();
+  ShapeVector new_shape_max = output_shape->max_shape();
   auto axis_l = LongToSize(axis);
   if (axis_l < new_shape.size()) {
     new_shape[axis_l] = offset;
+    if (!new_shape_min.empty() && !new_shape_max.empty()) {
+      new_shape_min[axis_l] = offset;
+      new_shape_max[axis_l] = offset;
+    }
   }
-  common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(origin_pack_cnode, 0)},
-                                              {new_shape}, new_pack.get());
+  auto new_output_shape = std::make_shared<abstract::Shape>(new_shape, new_shape_min, new_shape_max);
+  common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_pack_cnode, 0)},
+                                               {new_output_shape}, new_pack.get());
   return new_pack;
 }
 
@@ -67,9 +77,6 @@ const BaseRef PackFission::DefinePattern() const {
 const AnfNodePtr PackFission::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  if (common::AnfAlgo::IsDynamicShape(node)) {
-    return nullptr;
-  }
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   // The real input begins with index 1.
