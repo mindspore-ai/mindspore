@@ -442,19 +442,9 @@ void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   CreateGPUKernel(nodes);
 }
 
-bool GPUDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto custom_func = AnfUtils::GetCustomFunc(kernel);
-  if (!BindDeviceToCurrentThread()) {
-    return false;
-  }
-  custom_func(nullptr);
-  return true;
-}
-
 bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                    bool is_dynamic_shape) const {
+                                    const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
   if (!BindDeviceToCurrentThread()) {
     return false;

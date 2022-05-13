@@ -87,10 +87,7 @@ class AscendDeviceContext : public DeviceContext {
 
   // Launch a kernel via 'KernelMod' of the kernel.
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                    bool is_dynamic_shape) const override;
-
-  bool LaunchCustomFunc(const AnfNodePtr &kernel) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
   // Synchronize stream, device such as GPU and Ascend need stream to launch kernel asynchronously,
   // using 'SyncStream' to block thread and wait for completing all tasks in stream.

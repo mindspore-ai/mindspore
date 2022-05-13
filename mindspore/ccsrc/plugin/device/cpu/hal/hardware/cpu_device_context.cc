@@ -319,16 +319,9 @@ void CPUDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) con
   }
 }
 
-bool CPUDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto custom_func = AnfUtils::GetCustomFunc(kernel);
-  custom_func(nullptr);
-  return true;
-}
-
 bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                    bool) const {
+                                    const std::vector<AddressPtr> &workspace,
+                                    const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);

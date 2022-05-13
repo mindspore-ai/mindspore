@@ -156,7 +156,7 @@ bool EmbeddingCachePrefetchActor::LookupDeviceEmbeddingCache(void *indices, void
   AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, indices_num * embedding_size * sizeof(float))};
 
   MS_EXCEPTION_IF_NULL(device_context_);
-  auto ret = device_context_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs, true);
+  auto ret = device_context_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
     return false;
@@ -206,7 +206,7 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceEmbeddingCache(void *indices, void
     std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float))};
 
   MS_EXCEPTION_IF_NULL(device_context_);
-  auto ret = device_context_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs, true);
+  auto ret = device_context_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_update_node_->fullname_with_scope() << " failed.";
     return false;

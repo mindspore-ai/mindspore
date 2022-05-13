@@ -795,14 +795,6 @@ bool AscendDeviceContext::MemoryCopyAsync(const CNodePtr &node, const vector<Add
   return true;
 }
 
-bool AscendDeviceContext::LaunchCustomFunc(const AnfNodePtr &kernel) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  auto custom_func = AnfUtils::GetCustomFunc(kernel);
-  BindDeviceToCurrentThread();
-  custom_func(nullptr);
-  return true;
-}
-
 void *AscendDeviceContext::GetKernelStream(const CNodePtr &node) const {
   auto kernel_mod = AnfAlgo::GetKernelMod(node);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -849,8 +841,7 @@ bool AscendDeviceContext::GetKernelRealInputs(const CNodePtr &kernel, const vect
 }
 
 bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
-                                       const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
-                                       bool is_dynamic_shape) const {
+                                       const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   BindDeviceToCurrentThread();
@@ -866,7 +857,7 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
+  if (!common::AnfAlgo::IsDynamicShape(kernel) || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     std::lock_guard<std::mutex> locker(launch_mutex_);
     // launch atomic clean
     if (!LaunchAtomicClean(kernel, workspace, outputs)) {

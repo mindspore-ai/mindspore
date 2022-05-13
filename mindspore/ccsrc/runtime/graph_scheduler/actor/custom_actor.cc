@@ -27,11 +27,14 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
-    auto ret = device_contexts_[0]->LaunchCustomFunc(node);
-    if (!ret) {
-      std::string error_info = "Launch custom kernel failed: " + node->fullname_with_scope();
+    // Launch custom func
+    MS_EXCEPTION_IF_NULL(node);
+    auto custom_func = AnfUtils::GetCustomFunc(node);
+    if (!device_contexts_[0]->BindDeviceToCurrentThread()) {
+      std::string error_info = "BindDevice to current thread failed: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
     }
+    custom_func(nullptr);
 
     // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
     // maybe changed.

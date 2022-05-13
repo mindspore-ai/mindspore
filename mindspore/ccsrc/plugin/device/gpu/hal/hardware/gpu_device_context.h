@@ -57,8 +57,7 @@ class GPUDeviceContext : public DeviceContext {
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                    bool is_dynamic_shape) const override;
+                    const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
   bool SyncStream(size_t stream_id = 0) const override;
 
@@ -71,8 +70,6 @@ class GPUDeviceContext : public DeviceContext {
   bool LoadCollectiveCommLib() override;
 
   void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const override;
-
-  bool LaunchCustomFunc(const AnfNodePtr &kernel) const override;
 
  private:
   DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
