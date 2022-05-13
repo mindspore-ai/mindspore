@@ -7617,7 +7617,7 @@ class NonZero(Primitive):
     """
     Return a tensor of the positions of all non-zero values.
 
-    Refer to :func:`mindspore.ops.expand_dims` for more detail.
+    Refer to :func:`mindspore.ops.nonzero` for more detail.
 
     Supported Platforms:
        ``GPU``
