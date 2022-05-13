@@ -38,8 +38,7 @@ CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node) const {
   auto func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr new_node = func_graph->NewCNode(cnode->inputs());
-  new_node->set_abstract(node->abstract());
-  new_node->set_kernel_info(node->kernel_info_ptr());
+  new_node->CloneCNodeInfo(cnode);
   return new_node;
 }
 

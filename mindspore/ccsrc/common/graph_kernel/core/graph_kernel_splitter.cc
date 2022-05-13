@@ -86,13 +86,9 @@ CNodePtr NewRecomputeNode(const AnfNodePtr &orig_node, std::map<AnfNodePtr, AnfN
   }
   CNodePtr cp_node = func_graph->NewCNode(inputs);
   func_graph->AddNode(cp_node);
-  cp_node->set_abstract(cnode->abstract());
-  cp_node->set_forward(cnode->forward().first, cnode->forward().second);
   ScopePtr scope = (orig_node->scope() != kDefaultScope) ? orig_node->scope() : kDefaultScope;
   cp_node->set_scope(scope);
-  cp_node->set_kernel_info(cnode->kernel_info_ptr());
-  cp_node->set_primal_attrs(cnode->primal_attrs());
-  cp_node->set_primal_debug_infos(cnode->primal_debug_infos());
+  cp_node->CloneCNodeInfo(cnode);
   (*node_map)[orig_node] = cp_node;
   return cp_node->cast<CNodePtr>();
 }

@@ -234,8 +234,7 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> BuildGraphFromNodes(con
       [&fg, &input_list, &eqv](const AnfNodePtr &node) { return RefSubGraphNode(fg, node, &input_list, &eqv); });
     TraceGuard tg(std::make_shared<TraceSegmentTransform>(node->debug_info()));
     eqv[node] = fg->NewCNode(new_args);
-    eqv[node]->set_abstract(node->abstract());
-    eqv[node]->set_kernel_info(node->kernel_info_ptr());
+    eqv[node]->cast<CNodePtr>()->CloneCNodeInfo(node->cast<CNodePtr>());
   }
   auto outputs = FindOutputs(nodes, eqv);
   AnfNodePtr fg_output;

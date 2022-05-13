@@ -50,6 +50,25 @@ AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
   return decorated_->Run(cnode);
 }
 
+AnfNodePtr FixFormatDeco::Run(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
+  std::vector<std::string> format = {kOpFormat_DEFAULT};
+  auto ori_format = node->cast<CNodePtr>()->GetAttr(kOutputsFormat);
+  cnode->AddAttr(kOutputsFormat, MakeValue(format));
+  auto ret = decorated_->Run(cnode);
+  if (ret == nullptr) {
+    cnode->AddAttr(kOutputsFormat, ori_format);
+    return nullptr;
+  }
+  auto fg = GetCNodeFuncGraph(ret);
+  for (auto sub_cnode : fg->GetOrderedCnodes()) {
+    sub_cnode->AddAttr(kOutputsFormat, ori_format);
+  }
+  auto ret_cnode = ret->cast<CNodePtr>();
+  ret_cnode->AddAttr(kOutputsFormat, ori_format);
+  return ret_cnode;
+}
+
 std::vector<PrimitivePtr> GraphKernelExpanderLite::InitOpList() {
   std::vector<OpWithLevel> expand_ops_with_level = {
     {kCPUDevice, OpLevel_0, prim::kPrimAddFusion},    {kCPUDevice, OpLevel_0, prim::kPrimMulFusion},
@@ -83,9 +102,10 @@ bool GraphKernelExpanderLite::CanExpand(const CNodePtr &node) const {
 ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
   auto expander = std::make_shared<DefaultExpander>(Callback::Instance());
   std::map<std::string, ExpanderCreatorFuncList> creators = {
-    {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1})}},
-    {prim::kPrimExpandDims->name(), {InputToAttrDeco::GetCreator({1})}},
-    {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1})}},
+    {prim::kPrimReduceFusion->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimExpandDims->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
+    {prim::kPrimSqueeze->name(), {FixFormatDeco::Creator}},
+    {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimTranspose->name(), {ParaToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());

@@ -32,13 +32,9 @@ AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(cnode);
   TraceGuard guard(std::make_shared<TraceOpt>(cnode->debug_info()));
   CNodePtr node = func_graph->NewCNode(cnode->inputs());
-  node->set_abstract(cnode->abstract());
-  node->set_forward(cnode->forward().first, cnode->forward().second);
   ScopePtr scope = (anf_node->scope() != kDefaultScope) ? anf_node->scope() : kDefaultScope;
   node->set_scope(scope);
-  node->set_kernel_info(cnode->kernel_info_ptr());
-  node->set_primal_attrs(cnode->primal_attrs());
-  node->set_primal_debug_infos(cnode->primal_debug_infos());
+  node->CloneCNodeInfo(cnode);
   return node;
 }
 
