@@ -878,8 +878,8 @@ class Tensor(Tensor_):
         If `weight` is a float, the shapes of `end` need to be broadcast.
 
         Args:
-            end (Tensor) - The tensor with the ending points. Data type must be float16 or float32.
-            weight (Union[float, Tensor]) – The weight for the interpolation formula. Must be a float
+            end (Tensor): The tensor with the ending points. Data type must be float16 or float32.
+            weight (Union[float, Tensor]): The weight for the interpolation formula. Must be a float
             or a scalar tensor with float16 or float32 data type.
 
         Returns:
@@ -908,15 +908,15 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('lerp')(self, end, weight)
 
-    def lp_norm(self, p, axis, keep_dims=False, epsilon=1e-12):
+    def lp_norm(self, axis, p=2, keep_dims=False, epsilon=1e-12):
         """
         Returns the matrix norm or vector norm of a given tensor.
 
         Args:
-            p(int): The order of norm. Default: 2.
-            axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
-            keep_dims(bool): Whether the output tensors have dim retained or not. Default: False.
-            epsilon(float): A value added to the denominator for numerical stability. Default: 1e-12.
+            axis (Union[int,list,tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
+            p (int): The order of norm. Default: 2.
+            keep_dims (bool): Whether the output tensors have dim retained or not. Default: False.
+            epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
 
         Returns:
             Tensor, has the same dtype as input tensor, which shape depends on the args axis.
@@ -942,6 +942,58 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('lp_norm')(self, p, axis, keep_dims, epsilon)
+
+    def matrix_determinant(self):
+        """
+        Computes the determinant of one or more square matrices.
+
+        Returns:
+            y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as self tensor.
+
+        Raises:
+            TypeError: If self tensor is not a Tensor.
+            ValueError: If the last two dimensions of self tensor is not same size.
+            ValueError: If the dimension of self tensor is less than 2.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+            >>> output = input_x.matrix_determinant()
+            >>> print(output)
+            [-16.5 21. ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('matrix_determinant')(self)
+
+    def log_matrix_determinant(self):
+        """
+        Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
+
+        Returns:
+            sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`,
+                the dtype is same as self tensor.
+            y (Tensor): The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
+                as self tensor.
+
+        Raises:
+            TypeError: If self tensor is not a Tensor.
+            ValueError: If the last two dimensions of self tensor is not same size.
+            ValueError: If the dimension of self tensor is less than 2.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+            >>> output = input_x.log_matrix_determinant()
+            >>> print(output)
+            (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2],
+            dtype=Float32, value= [ 2.80336046e+00,  3.04452229e+00]))
+        """
+        self._init_check()
+        return tensor_operator_registry.get('log_matrix_determinant')(self)
 
     def mean(self, axis=(), keep_dims=False):
         """
