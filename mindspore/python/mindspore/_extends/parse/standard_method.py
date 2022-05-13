@@ -1803,14 +1803,24 @@ def str_bool(x):
     return True
 
 
+def matrix_determinant(x):
+    """Computes the determinant of one or more square matrices."""
+    return F.matrix_determinant(x)
+
+
+def log_matrix_determinant(x):
+    """Computes the sign and the log of the absolute value of the determinant of one or more square matrices."""
+    return F.log_matrix_determinant(x)
+
+
 def lerp(start, end, weight):
     """Does a linear interpolation of two tensors start and end based on a float or tensor weight."""
     return F.lerp(start, end, weight)
 
 
-def lp_norm(input_x, p, dims, keep_dims=False, epsilon=1e-12):
+def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     """Returns the matrix norm or vector norm of a given tensor."""
-    return F.lp_norm(input_x, p, dims, keep_dims, epsilon)
+    return F.lp_norm(input_x, axis, p, keep_dims, epsilon)
 
 
 def list_bool(x):

@@ -17,7 +17,9 @@
 
 from mindspore.ops import operations as P
 
-addn_ = P.AddN()
+#####################################
+# Public Operation Functions.
+#####################################
 absolute = P.Abs()
 tensor_add = P.Add()
 neg_tensor = P.Neg()
@@ -32,6 +34,16 @@ tensor_mod = P.FloorMod()
 floormod = tensor_mod
 tensor_exp = P.Exp()
 tensor_expm1 = P.Expm1()
+tensor_lt = P.Less()
+tensor_le = P.LessEqual()
+tensor_gt = P.Greater()
+tensor_ge = P.GreaterEqual()
+not_equal = P.NotEqual()
+
+#####################################
+# Private Operation Functions.
+#####################################
+addn_ = P.AddN()
 log_ = P.Log()
 floor_ = P.Floor()
 logical_not_ = P.LogicalNot()
@@ -62,18 +74,18 @@ bessel_i0_ = P.BesselI0()
 bessel_i0e_ = P.BesselI0e()
 bessel_k0_ = P.BesselK0()
 bessel_k0e_ = P.BesselK0e()
-tensor_lt = P.Less()
-tensor_le = P.LessEqual()
-tensor_gt = P.Greater()
-tensor_ge = P.GreaterEqual()
 equal_ = P.Equal()
-not_equal = P.NotEqual()
 isfinite_ = P.IsFinite()
 isnan_ = P.IsNan()
 same_type_shape_ = P.SameTypeShape()
 maximum_ = P.Maximum()
 minimum_ = P.Minimum()
 lerp_ = P.Lerp()
+tensor_round_ = P.Round()
+bessel_y0_ = P.BesselY0()
+bessel_y1_ = P.BesselY1()
+matrix_determinant_ = P.MatrixDeterminant()
+log_matrix_determinant_ = P.LogMatrixDeterminant()
 
 
 #####################################
@@ -226,9 +238,6 @@ def neg(x):
     return neg_tensor(x)
 
 
-tensor_round = P.Round()
-
-
 def round(x):
     r"""
     Returns half to even of a tensor element-wise.
@@ -255,10 +264,7 @@ def round(x):
          >>> print(output)
          [ 1.  2.  2.  2. -4.]
     """
-    return tensor_round(x)
-
-
-tensor_sub = P.Sub()
+    return tensor_round_(x)
 
 
 def sub(x, y):
@@ -1571,7 +1577,6 @@ def bessel_k0e(x):
     return bessel_k0e_(x)
 
 
-bessel_y0_ = P.BesselY0()
 def bessel_y0(x):
     r"""
     Computes the Bessel y0 function of x element-wise.
@@ -1599,7 +1604,6 @@ def bessel_y0(x):
     return bessel_y0_(x)
 
 
-bessel_y1_ = P.BesselY1()
 def bessel_y1(x):
     r"""
     Computes the Bessel y1 function of x element-wise.
@@ -1625,6 +1629,65 @@ def bessel_y1(x):
         [-1.47147239  -0.78121282  -0.10703243  0.39792571]
     """
     return bessel_y1_(x)
+
+
+def matrix_determinant(x):
+    """
+    Computes the determinant of one or more square matrices.
+
+    Args:
+        x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size.
+
+    Returns:
+       y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.matrix_determinant(input_x)
+        >>> print(output)
+        [-16.5 21. ]
+    """
+    return matrix_determinant_(x)
+
+
+def log_matrix_determinant(x):
+    """
+    Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
+
+    Args:
+        x (Tensor): A matrix to be calculated. The matrix must be at least two dimensions, and the last two
+          dimensions must be the same size.
+
+    Returns:
+       sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+       y (Tensor): The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
+         as `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If the last two dimensions of `x` is not same size.
+        ValueError: If the dimension of `x` is less than 2.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
+        >>> output = ops.log_matrix_determinant(input_x)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2], dtype=Float32,
+        value= [ 2.80336046e+00,  3.04452229e+00]))
+    """
+    return log_matrix_determinant_(x)
 
 
 #####################################
@@ -2173,7 +2236,7 @@ def lerp(start, end, weight):
 # Reduction Operation Functions.
 #####################################
 
-def lp_norm(input_x, p, axis, keep_dims=False, epsilon=1e-12):
+def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     r"""
     Returns the matrix norm or vector norm of a given tensor.
 
@@ -2182,10 +2245,10 @@ def lp_norm(input_x, p, axis, keep_dims=False, epsilon=1e-12):
 
     Args:
         input_x (Tensor): Input tensor.
-        p(int): The order of norm. Default: 2.
-        axis(int,list,tuple): Specifies which dimension or dimensions of input to calculate the norm across.
-        keep_dims(bool): Whether the output tensors have dim retained or not. Default: False.
-        epsilon(float): A value added to the denominator for numerical stability. Default: 1e-12.
+        axis (Union[int,list,tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
+        p (int): The order of norm. Default: 2.
+        keep_dims (bool): Whether the output tensors have dim retained or not. Default: False.
+        epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
 
     Returns:
         Tensor, has the same dtype as `input`, which shape depends on the args axis. For example, if the size of input
@@ -2257,6 +2320,8 @@ __all__ = [
     'isfinite',
     'isnan',
     'log',
+    'log_matrix_determinant',
+    'matrix_determinant',
     'same_type_shape',
     'maximum',
     'minimum',
