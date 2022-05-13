@@ -195,7 +195,7 @@ int PreprocessParser::CollectCalibInputs(const std::map<std::string, std::string
 
   for (const auto &image_path : calibrate_data_path) {
     std::vector<std::string> file_names;
-    auto ret = ReadDirectory(image_path.second.c_str(), &file_names);
+    auto ret = ReadDirectory(image_path.second, &file_names);
     if (ret != RET_OK) {
       return ret;
     }
