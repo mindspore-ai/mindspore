@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/winograd_transform.h"
 #include "nnacl/op_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void PrepareTransInput(const float *src_data, float *dst_data, int interval_x_s, int interval_x_e, int interval_y_s,
                        int interval_y_e, int real_c, const ConvParameter *conv_param) {

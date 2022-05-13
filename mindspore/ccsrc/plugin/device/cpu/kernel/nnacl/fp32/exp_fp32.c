@@ -18,6 +18,7 @@
 #include <math.h>
 #include <string.h>
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void ExpFp32(const float *src, float *dst, int num) {
   int i = 0;

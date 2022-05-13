@@ -18,6 +18,7 @@
 #include <math.h>
 #include <float.h>
 #include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void ExpFp32Offset(const float *src, float *dst, float sub_bias, int num) {
   int i = 0;

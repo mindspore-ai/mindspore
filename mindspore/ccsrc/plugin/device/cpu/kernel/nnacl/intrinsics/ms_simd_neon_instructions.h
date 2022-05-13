@@ -164,6 +164,36 @@ static inline MS_FLOAT32X4 MS_SQRT128_F32(MS_FLOAT32X4 src) {
   MS_STQ_F32(output_ptr + 6 * num, dst##7);  \
   MS_STQ_F32(output_ptr + 7 * num, dst##8);
 
+static inline MS_FLOAT32X4 VexpFp32(MS_FLOAT32X4 input) {
+  static MS_FLOAT32X4 param[] = {{0.693147f, 0.693147f, 0.693147f, 0.693147f},
+                                 {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
+                                 {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
+                                 {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
+                                 {0.5f, 0.5f, 0.5f, 0.5f},
+                                 {1.0f, 1.0f, 1.0f, 1.0f}};
+  MS_INT32X4 integer = MS_CVTQPS_EPI32(MS_DIVQ_F32(input, param[0]));
+  MS_FLOAT32X4 decimal = MS_SUBQ_F32(input, MS_MULQ_F32(MS_CVTQEPI32_PS(integer), param[0]));
+  MS_INT32X4 int_exp = MS_SLLIQ_EPI32(MS_ADDQ_EPI32(integer, MS_MOVQ_EPI32(127)), 23);
+  MS_FLOAT32X4 tmp = MS_MULQ_F32(decimal, (MS_ADDQ_F32(param[2], MS_MULQ_F32(decimal, param[1]))));
+  tmp = MS_MULQ_F32(decimal, MS_ADDQ_F32(param[4], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[3], tmp))));
+  MS_FLOAT32X4 decimal_exp = MS_ADDQ_F32(param[5], MS_MULQ_F32(decimal, MS_ADDQ_F32(param[5], tmp)));
+  return MS_MULQ_F32(decimal_exp, MS_CAST_F32_S32(int_exp));
+}
+
+static inline void simd_exp128(MS_FLOAT32X4 input, float *dst) {
+  static MS_FLOAT32X4 maxv = {88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
+  input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
+  MS_STQ_F32(dst, VexpFp32(input));
+}
+
+static inline MS_FLOAT32X4 simd_exp128_f32(MS_FLOAT32X4 input) {
+  static MS_FLOAT32X4 maxv = {88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X4 minv = {-88.0f, -88.0f, -88.0f, -88.0f};
+  input = MS_MAXQ_F32(minv, MS_MINQ_F32(input, maxv));
+  return VexpFp32(input);
+}
+
 static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
   static const MS_FLOAT32X4 data0 = {378.0f, 378.0f, 378.0f, 378.0f};
   static const MS_FLOAT32X4 data1 = {17325.0f, 17325.0f, 17325.0f, 17325.0f};

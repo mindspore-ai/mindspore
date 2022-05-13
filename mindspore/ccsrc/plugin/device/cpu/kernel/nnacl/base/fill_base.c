@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/base/fill_base.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 // 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
 #define SimdFillFp32CoreCalc(block_size, block_num, output, size, data, index)                  \

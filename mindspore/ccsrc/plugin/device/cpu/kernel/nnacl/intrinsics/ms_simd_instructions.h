@@ -70,6 +70,39 @@
 #define MS_MAX32_F32(value1, value2) (fmax((value1), (value2)))
 #define MS_MAX32_EPI32(value1, value2) ((value1) > (value2) ? (value1) : (value2))
 
+static inline float simd_exp32_f32(float data) {
+  typedef union {
+    float f;
+    int i;
+  } fi;
+  static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // Approximate calculation param
+  data = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, data));                               // clamp(-88, 88)
+  int integer = data / param[0];
+  float decimal = data - integer * param[0];
+  fi int_exp;
+  int_exp.i = (integer + 127) << 23;  // Approximate calculation : (integer + 127) << 23
+  // Approximate calculation
+  const float decimal_exp =
+    1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
+  return int_exp.f * decimal_exp;
+}
+
+static inline void simd_exp32(float src, float *dst) {
+  typedef union {
+    float f;
+    int i;
+  } fi;
+  static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // log(2.0f)
+  src = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, src));                                 // clamp(-88.0f, 88.0f)
+  int integer = src / param[0];
+  float decimal = src - integer * param[0];
+  fi int_exp;
+  int_exp.i = (integer + 127) << 23;  // integer num approximate calculation : (x + 127) << 23
+  const float decimal_exp =
+    1.0f + decimal * (1.0f + decimal * (0.5f + decimal * (param[3] + decimal * (param[2] + decimal * param[1]))));
+  *dst = int_exp.f * decimal_exp;
+}
+
 // define (float/int) data
 #define MS_FLOAT_32xN(byte_num) MS_FLOAT32##X##byte_num
 #define MS_INT_32xN(byte_num) MS_INT32##X##byte_num

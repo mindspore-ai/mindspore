@@ -194,6 +194,31 @@ static inline MS_FLOAT32X8 MS_SQRTFX8_F32(MS_FLOAT32X8 src) {
   MS_ST256_F32(output_ptr + 14 * num, dst##15); \
   MS_ST256_F32(output_ptr + 15 * num, dst##16);
 
+static inline MS_FLOAT32X8 simd_exp256_f32(MS_FLOAT32X8 input) {
+  static MS_FLOAT32X8 maxv = {88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f, 88.0f};
+  static MS_FLOAT32X8 minv = {-88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f, -88.0f};
+  static MS_FLOAT32X8 param[] = {
+    {0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f, 0.693147f},
+    {1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120, 1.0f / 120},
+    {1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24, 1.0f / 24},
+    {1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6, 1.0f / 6},
+    {0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f},
+    {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f}};
+  input = MS_MAX256_F32(minv, MS_MIN256_F32(input, maxv));
+  MS_INT32X8 integer = MS_CVT256PS_EPI32(MS_DIV256_F32(input, param[0]));
+  MS_FLOAT32X8 decimal = MS_SUB256_F32(input, MS_MUL256_F32(MS_CVT256EPI32_PS(integer), param[0]));
+  MS_INT32X8 int_exp = MS_SLLI256_EPI32(MS_ADD256_EPI32(integer, MS_MOV256_EPI32(127)), 23);
+  MS_FLOAT32X8 tmp = MS_MUL256_F32(decimal, (MS_ADD256_F32(param[2], MS_MUL256_F32(decimal, param[1]))));
+  tmp = MS_MUL256_F32(decimal, MS_ADD256_F32(param[4], MS_MUL256_F32(decimal, MS_ADD256_F32(param[3], tmp))));
+  MS_FLOAT32X8 decimal_exp = MS_ADD256_F32(param[5], MS_MUL256_F32(decimal, MS_ADD256_F32(param[5], tmp)));
+  return MS_MUL256_F32(decimal_exp, MS_CAST256_F32_S32(int_exp));
+}
+
+static inline void simd_exp256(MS_FLOAT32X8 input, float *dst) {
+  MS_FLOAT32X8 res = simd_exp256_f32(input);
+  MS_ST256_F32(dst, res);
+}
+
 static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
   static const MS_FLOAT32X8 data0 = {378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f, 378.0f};
   static const MS_FLOAT32X8 data1 = {17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f, 17325.0f};

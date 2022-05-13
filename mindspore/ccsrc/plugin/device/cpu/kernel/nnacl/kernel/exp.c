@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/kernel/exp.h"
+#include <math.h>
 #include "nnacl/exp_parameter.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
