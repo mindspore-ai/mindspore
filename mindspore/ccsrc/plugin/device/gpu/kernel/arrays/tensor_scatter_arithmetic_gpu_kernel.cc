@@ -50,7 +50,7 @@ void TensorScatterArithmeticGpuKernelMod::ResetResource() {
   vec_work_shape_.clear();
 }
 
-void TensorScatterArithmeticGpuKernelMod::GetOpTypeAndFuncType(const BaseOperatorPtr &base_operator) {
+bool TensorScatterArithmeticGpuKernelMod::GetOpTypeAndFuncType(const BaseOperatorPtr &base_operator) {
   static const std::map<std::string, TensorScatterArithmeticFunctionType> kTensorScatterOpTypeMap = {
     {"TensorScatterUpdate", TENSOR_SCATTER_FUNC_UPDATE}, {"TensorScatterMin", TENSOR_SCATTER_FUNC_MIN},
     {"TensorScatterMax", TENSOR_SCATTER_FUNC_MAX},       {"TensorScatterAdd", TENSOR_SCATTER_FUNC_ADD},
@@ -58,11 +58,11 @@ void TensorScatterArithmeticGpuKernelMod::GetOpTypeAndFuncType(const BaseOperato
     {"TensorScatterDiv", TENSOR_SCATTER_FUNC_DIV}};
   auto op_type_iter = kTensorScatterOpTypeMap.find(kernel_name_);
   if (op_type_iter == kTensorScatterOpTypeMap.end()) {
-    MS_LOG(EXCEPTION) << "Only support these tensor_scatter function: TensorScatterUpdate, TensorScatterMin, "
-                         "TensorScatterMax, TensorScatterAdd, TensorScatterSub, TensorScatterMul or TensorScatterDiv "
-                         "currently, but got "
-                      << kernel_name_;
-    return;
+    MS_LOG(ERROR) << "Only support these tensor_scatter function: TensorScatterUpdate, TensorScatterMin, "
+                     "TensorScatterMax, TensorScatterAdd, TensorScatterSub, TensorScatterMul or TensorScatterDiv "
+                     "currently, but got "
+                  << kernel_name_;
+    return false;
   }
   op_func_type_ = op_type_iter->second;
 
@@ -78,16 +78,17 @@ void TensorScatterArithmeticGpuKernelMod::GetOpTypeAndFuncType(const BaseOperato
     {"TensorScatterDiv", std::make_shared<ops::TensorScatterDiv>(prim)}};
   auto op_prim_iter = kTensorScatterOpPrimitiveMap.find(kernel_name_);
   if (op_prim_iter == kTensorScatterOpPrimitiveMap.end()) {
-    MS_LOG(EXCEPTION) << "Only support these tensor_scatter function: TensorScatterUpdate, TensorScatterMin, "
-                         "TensorScatterMax, TensorScatterAdd, TensorScatterSub, TensorScatterMul or TensorScatterDiv "
-                         "currently, but got "
-                      << kernel_name_;
-    return;
+    MS_LOG(ERROR) << "Only support these tensor_scatter function: TensorScatterUpdate, TensorScatterMin, "
+                     "TensorScatterMax, TensorScatterAdd, TensorScatterSub, TensorScatterMul or TensorScatterDiv "
+                     "currently, but got "
+                  << kernel_name_;
+    return false;
   }
   kernel_ptr_ = op_prim_iter->second;
+  return true;
 }
 
-void TensorScatterArithmeticGpuKernelMod::GetSize() {
+void TensorScatterArithmeticGpuKernelMod::UpdateSize() {
   input_size_ = data_unit_size_;
   for (const auto &shape_item : input_shapes_) {
     input_size_ *= shape_item;
@@ -133,7 +134,12 @@ bool TensorScatterArithmeticGpuKernelMod::Init(const BaseOperatorPtr &base_opera
   }
 
   kernel_name_ = base_operator->name();
-  GetOpTypeAndFuncType(base_operator);
+  auto ret = GetOpTypeAndFuncType(base_operator);
+  if (!ret) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' get op type and function type failed.";
+    return false;
+  }
+
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -170,7 +176,7 @@ int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   (void)std::transform(shape_me.begin(), shape_me.end(), std::back_inserter(vec_work_shape_),
                        [](const size_t &value) { return static_cast<size_t>(value); });
 
-  GetSize();
+  UpdateSize();
 
   const size_t indices_len = indices_unit_size_ * vec_indices_stride_.size();
   indices_stride_ = device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(indices_len);

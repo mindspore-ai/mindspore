@@ -61,8 +61,8 @@ class TensorScatterArithmeticGpuKernelMod : public NativeGpuKernelMod {
   void ResetResource();
   void InitSizeLists();
   std::vector<KernelAttr> GetOpSupport() override;
-  void GetOpTypeAndFuncType(const BaseOperatorPtr &base_operator);
-  void GetSize();
+  bool GetOpTypeAndFuncType(const BaseOperatorPtr &base_operator);
+  void UpdateSize();
 
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
