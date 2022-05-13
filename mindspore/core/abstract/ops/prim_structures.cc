@@ -309,6 +309,10 @@ AbstractBasePtr InferImplListAppend(const AnalysisEnginePtr &, const PrimitivePt
       }
       // Add one element in flag list.
       auto flags = GetSequenceNodeElementsUseFlags(node);
+      MS_EXCEPTION_IF_NULL(flags);
+      if (flags->size() >= new_list.size()) {
+        continue;
+      }
       (void)flags->emplace_back(false);
     }
   }

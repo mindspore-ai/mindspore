@@ -618,7 +618,12 @@ void PurifySequenceValueNode(const CNodePtr &cnode, size_t index, ProgramSpecial
   }
   std::vector<size_t> dead_node_positions;
   ValuePtrList elements;
-  for (size_t i = 0; i < (*flags).size(); ++i) {
+  auto sequence_value_size = sequence_value->value().size();
+  if (flags->size() < sequence_value_size) {
+    MS_LOG(EXCEPTION) << "Inner exception. CNode: " << cnode->ToString() << " input: " << old_input->ToString()
+                      << " flags size: " << flags->size() << " values size: " << sequence_value->value().size();
+  }
+  for (size_t i = 0; i < sequence_value_size; ++i) {
     ValuePtr old_sequence_value = sequence_value->value()[i];
     auto old_sequence_str_value = old_sequence_value->cast<StringImmPtr>();
     if (!(*flags)[i]) {
@@ -848,8 +853,8 @@ AnfNodePtr FuncGraphSpecializer::BuildReplacedNode(const AnfNodeConfigPtr &conf)
   AddTodoItem(new_conf->node());
   auto repl = GetReplicatedNode(new_conf->node());
   if (repl->func_graph()) {
-    MS_LOG(DEBUG) << "Set repl: graph(" << repl->func_graph()->ToString() << "), node:" << repl->DebugString()
-                  << ") to replace origin:" << new_conf->node()->DebugString();
+    MS_LOG(DEBUG) << "Set repl: graph(" << repl->func_graph()->ToString() << "), node: " << repl->DebugString()
+                  << ") to replace origin: " << new_conf->node()->DebugString();
   } else {
     MS_LOG(DEBUG) << "Set repl: graph(nullptr), node(" << repl->DebugString()
                   << ") to replace origin: " << new_conf->node()->DebugString();
@@ -1039,7 +1044,7 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   std::vector<AbstractBasePtrList> args_vector;
   auto eval_cache_iter = eval_cache_.find(eval);
   if (eval_cache_iter == eval_cache_.end()) {
-    MS_LOG(EXCEPTION) << "Evaluator:" << eval->ToString() << " not exist in cache.";
+    MS_LOG(EXCEPTION) << "Evaluator: " << eval->ToString() << " not exist in cache.";
   }
   auto &origin_eval_cache = eval_cache_iter->second->GetCache();
   for (auto &argvals_map : origin_eval_cache) {
