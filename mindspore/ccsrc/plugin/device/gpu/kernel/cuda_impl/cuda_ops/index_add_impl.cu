@@ -23,7 +23,7 @@ __global__ void IndexAddAtomic(T *dst, const int *index, const T *src, const siz
     const size_t src_axis_idx = (pos / inner_size) % src_axis_size;
     const size_t src_outer_idx = pos / (src_axis_size * inner_size);
     const size_t dst_axis_idx = static_cast<size_t>(index[src_axis_idx]);
-    if (dst_axis_idx >= 0 && dst_axis_idx < dst_axis_size) {
+    if (dst_axis_idx < dst_axis_size) {
       const size_t dst_inner_idx = pos % inner_size;
       const size_t dst_idx = src_outer_idx * (dst_axis_size * inner_size) + dst_axis_idx * inner_size + dst_inner_idx;
       MsAtomicAdd(&dst[dst_idx], src[pos]);
@@ -38,7 +38,7 @@ __global__ void IndexAdd(T *dst, const int *index, const T *src, const size_t sr
     const size_t src_axis_idx = (pos / inner_size) % src_axis_size;
     const size_t src_outer_idx = pos / (src_axis_size * inner_size);
     const size_t dst_axis_idx = static_cast<size_t>(index[src_axis_idx]);
-    if (dst_axis_idx >= 0 && dst_axis_idx < dst_axis_size) {
+    if (dst_axis_idx < dst_axis_size) {
       const size_t dst_inner_idx = pos % inner_size;
       const size_t dst_idx = src_outer_idx * (dst_axis_size * inner_size) + dst_axis_idx * inner_size + dst_inner_idx;
       dst[dst_idx] += src[pos];

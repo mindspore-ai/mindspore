@@ -74,10 +74,12 @@ std::map<std::string, std::string> ParseFlags(const std::string &flags) {
     auto flag = ParseFlag(token);
     if (flag.first != "") {
       if (!flag_map.insert(flag).second) {
-        MS_LOG(WARNING) << "Repeated GraphKernel flag: " << flag.first;
+        MS_LOG(WARNING) << "For 'context.set_context', the flag " << flag.first
+                        << " in the parameter 'graph_kernel_flags' is repeated.";
       }
     } else {
-      MS_LOG(WARNING) << "Invalid GraphKernel flag: " << token << ". " << kLogValidFlag;
+      MS_LOG(WARNING) << "For 'context.set_context', the flag " << flag.first
+                      << " in the parameter 'graph_kernel_flags' is invalid. " << kLogValidFlag;
     }
   }
   return flag_map;
@@ -99,10 +101,11 @@ class FlagRegister {
       } else {
         *flag_var = std::move(default_value);
         if (iter->second.empty()) {
-          MS_LOG(WARNING) << "Invalid GraphKernel flag: --" << iter->first << ". " << kLogValidFlag;
+          MS_LOG(WARNING) << "For 'context.set_context', the flag --" << iter->first
+                          << " in the parameter 'graph_kernel_flags' is invalid. " << kLogValidFlag;
         } else {
-          MS_LOG(WARNING) << "Invalid GraphKernel flag: --" << iter->first << "=" << iter->second << ". "
-                          << kLogValidFlag;
+          MS_LOG(WARNING) << "For 'context.set_context', the flag --" << iter->first << "=" << iter->second
+                          << " in the parameter 'graph_kernel_flags' is invalid. " << kLogValidFlag;
         }
       }
       (void)flag_map_.erase(iter);
@@ -193,14 +196,15 @@ void GraphKernelFlags::CheckSupport() const {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     if (context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
-      MS_LOG(WARNING) << "GraphKernel only supports GRAPH_MODE, so we will turn off GraphKernel now.";
+      MS_LOG(WARNING) << "Graph Kernel Fusion only supports GRAPH_MODE, and it will be turned off now.";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
       return;
     }
 #ifndef USE_LLVM
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
     if (is_cpu) {
-      MS_LOG(WARNING) << "GraphKernel is not usable without LLVM on cpu platform, so we will turn off GraphKernel now.";
+      MS_LOG(WARNING)
+        << "Graph Kernel Fusion is not supported without LLVM on cpu platform, and it will be turned off now.";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
       return;
     }
@@ -213,11 +217,13 @@ void GraphKernelFlags::Refresh() {
   auto flag_map = ParseFlags(flags_cache_);
   RegisterFlags(&flag_map);
   for (auto &item : flag_map) {
-    MS_LOG(WARNING) << "Unknown GraphKernel flag: " << item.first;
+    MS_LOG(WARNING) << "Unknown flag: " << item.first;
   }
   if (!flag_map.empty()) {
-    MS_LOG(WARNING) << "The GraphKernel flags listed above are invalid. For valid flags, please refer to the source "
-                       "code file graph_kernel_flags.h at https://gitee.com/mindspore/mindspore.";
+    MS_LOG(WARNING)
+      << "For 'context.set_context', the flags listed above in the parameter 'graph_kernel_flags' are invalid. For "
+         "valid flags, please refer to the source code file graph_kernel_flags.h at "
+         "https://gitee.com/mindspore/mindspore.";
   }
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
@@ -227,7 +233,7 @@ void GraphKernelFlags::Refresh() {
     auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
     if (is_ascend) {
       MS_LOG(WARNING)
-        << "GraphKernel on Ascend is experimental, please disable it if you meet some compiling or running error. For "
+        << "Graph Kernel Fusion on Ascend is recommended to turned off if getting some compiling or running error. For "
            "more details, please refer to 'mindspore.context' at https://www.mindspore.cn.";
     }
   }
@@ -250,8 +256,9 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   // Default optimization level is level 2 when enable graphkernel
   reg.AddFlag("opt_level", &opt_level, enable_graph_kernel_ ? OptLevel_2 : OptLevel_0);
   if (opt_level > OptLevel_3) {
-    MS_LOG(WARNING) << "GraphKernel flag: opt_level should be in the range [0,3], but got " << opt_level
-                    << ". We will reset opt_level to " << OptLevel_3
+    MS_LOG(WARNING) << "For 'context.set_context', the flag opt_level in the parameter 'graph_kernel_flags' must be in "
+                       "the range [0, 3], but got "
+                    << opt_level << ". It will be set to " << OptLevel_3
                     << ". For more details, please refer to 'graph_kernel_flags' at https://www.mindspore.cn.";
     opt_level = OptLevel_3;
   }

@@ -424,7 +424,7 @@ class Custom(ops.PrimitiveWithInfer):
             self._check_julia_func()
         elif self.func_type == "hybrid":
             if not hasattr(self.func, "ms_hybrid_flag"):
-                raise TypeError("{}, 'func' must a function decorated by ms_hybrid".format(self.log_prefix))
+                raise TypeError("{}, 'func' must be a function decorated by ms_hybrid".format(self.log_prefix))
             self._is_ms_hybrid = True
             self._func_compile_attrs = getattr(self.func, "compile_attrs", {})
         elif self.func_type == "akg":
@@ -671,11 +671,12 @@ class Custom(ops.PrimitiveWithInfer):
                 prev_input_names = func_attr.get("input_names")
                 prev_attr_names = func_attr.get("attr_names")
         if len(input_names) != len(prev_input_names):
-            raise ValueError("{}, input_names's length {} is different from previous saved one: {}"
+            raise ValueError("{}, length of input names set in registration information must be the same as previous "
+                             "saved one, but got {} vs {}"
                              .format(self.log_prefix, len(input_names), len(prev_input_names)))
         if attr_names != prev_attr_names:
-            raise ValueError("{}, attr_names {} is different from previous saved one: {}"
-                             .format(self.log_prefix, attr_names, prev_attr_names))
+            raise ValueError("{}, attr names set in registration information must be the same as previous saved one, "
+                             "but got {} vs {}".format(self.log_prefix, attr_names, prev_attr_names))
 
     def _add_prim_target(self):
         """Add primitive_target to primitive's attr."""
@@ -683,7 +684,7 @@ class Custom(ops.PrimitiveWithInfer):
         if self.func_type == "pyfunc":
             self.add_prim_attr("primitive_target", "CPU")
             if registered_targets and registered_targets != ["CPU"]:
-                logger.warning("{}, only supports CPU platform, but got registered target as {}. "
+                logger.warning("{}, only supports CPU platform, but got registered target {}. "
                                "We will run it on CPU".format(self.log_prefix, registered_targets))
         elif self.func_type == "aot":
             if len(registered_targets) != 1:
@@ -698,10 +699,10 @@ class Custom(ops.PrimitiveWithInfer):
             if device_target == "CPU":
                 pass
             elif device_target == "GPU" and registered_targets and registered_targets == ["CPU"]:
-                logger.warning("{}, only supports CPU platform, but got registered target as {}. "
+                logger.warning("{}, only supports CPU platform, but got registered target {}. "
                                "We will run it on CPU".format(self.log_prefix, registered_targets))
             else:
-                raise ValueError("{}, only supports CPU platform, but got target as {}."
+                raise ValueError("{}, only supports CPU platform, but got target {}."
                                  .format(self.log_prefix, device_target))
 
     def _update_attr(self):
@@ -732,10 +733,10 @@ class Custom(ops.PrimitiveWithInfer):
         """generate backward op for a custom hybrid op"""
         inputs_num = len(inspect.signature(self.func).parameters)
         if inputs_num == 0:
-            logger.warning("{}, 'func' with no input has no backward op.".format(self.log_prefix))
+            logger.warning("{}, 'func' with no input has no backward operator.".format(self.log_prefix))
         elif inputs_num > 10:
-            logger.warning("{}, currently autodiff for 'func' with more than 10 inputs is not supported."
-                           .format(self.log_prefix))
+            logger.warning("{}, currently automatic differentiation for 'func' with more than 10 inputs is not "
+                           "supported.".format(self.log_prefix))
         else:
             grad_func = autodiff_bprop(inputs_num)
 
@@ -812,7 +813,7 @@ class Custom(ops.PrimitiveWithInfer):
         # deal with the case of ms script
         # enable auto infer function if any infer information is missing
         if self._is_ms_hybrid and (infer_dtype is None or infer_shape is None):
-            logger.warning("{}, 'out_shape' or 'out_dtype' is None, so we will infer the output shape and output dtype "
+            logger.warning("{}, 'out_shape' or 'out_dtype' is None, infer the output shape and output dtype "
                            "automatically. There might be some Python RuntimeWarning but it wouldn't influence the "
                            "result.".format(self.log_prefix))
 
@@ -827,11 +828,11 @@ class Custom(ops.PrimitiveWithInfer):
         if self.func_type == "pyfunc":
             if infer_shape == ():
                 logger.warning("{}, 'out_shape' is an empty tuple. Add a placeholder instead. "
-                               "Do not use it as it could be any uninitialized data.".format(self.log_prefix))
+                               "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
                 infer_shape = (1,)
             if infer_dtype == ():
                 logger.warning("{}, 'out_dtype' is an empty tuple. Add a placeholder instead. "
-                               "Do not use it as it could be any uninitialized data.".format(self.log_prefix))
+                               "Not recommend to use it as it could be any uninitialized data.".format(self.log_prefix))
                 infer_dtype = mstype.int32
 
         # after all automatic infer information fulfillment, throw error if infer_shape/infer_dtype is still None

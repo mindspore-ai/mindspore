@@ -24,12 +24,12 @@ def get_akg_path():
            "the path ${mindspore_build_dir}/package is set in env PYTHONPATH."
     search_res = importlib.util.find_spec("mindspore")
     if search_res is None:
-        raise RuntimeError("Cannot find mindspore module! {}".format(hint))
+        raise RuntimeError("Cannot find module mindspore! {}".format(hint))
 
     res_path = search_res.origin
     find_pos = res_path.find("__init__.py")
     if find_pos == -1:
-        raise RuntimeError("Find module mindspore origin file failed! {}".format(hint))
+        raise RuntimeError("Cannot find __init__.py of module mindspore! {}".format(hint))
     akg_path = "{}_akg".format(res_path[:find_pos])
     if not os.path.isdir(akg_path):
         raise RuntimeError("Cannot find akg from mindspore module! {}".format(hint))
