@@ -22,10 +22,7 @@ __global__ void SqrtGradKernel(const T *input, const T *dout, T *output, const s
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     float input_f = static_cast<float>(input[i]);
     float dout_f = static_cast<float>(dout[i]);
-    float res_vmul = 0.0;
-    if (std::abs(input_f) > 1e-9) {
-        res_vmul = dout_f / (input_f * 2.0);
-    }
+    float res_vmul = dout_f / (2.0 * input_f);
     output[i] = static_cast<T>(res_vmul);
   }
   return;
