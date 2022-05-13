@@ -60,38 +60,16 @@ bool HShrinkGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 int HShrinkGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != 0) {
+    return ret;
   }
-
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  if (input_elements_ == 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be greater than zero.";
+  if (input_size_list_.size() != kHShrinkGradInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal 1.";
     return KRET_RESIZE_FAILED;
   }
-  InitSizeLists();
+  input_elements_ = input_size_list_[0] / unit_size_;
   return KRET_OK;
-}
-
-void HShrinkGradGpuKernelMod::ResetResource() noexcept {
-  input_elements_ = 0;
-  input_shape_.clear();
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
-void HShrinkGradGpuKernelMod::InitSizeLists() {
-  size_t input_size = input_elements_ * unit_size_;
-  input_size_list_.push_back(input_size);
-  output_size_list_.push_back(input_size);
 }
 
 template <typename T>

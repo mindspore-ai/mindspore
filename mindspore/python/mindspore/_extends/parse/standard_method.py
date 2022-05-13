@@ -1412,6 +1412,44 @@ def repeat(x, repeats, axis=None):
     return P.Concat(axis)(repeated_subs)
 
 
+def hardshrink(x, lambd=0.5):
+    r"""
+    Apply the Hard Shrink function for a tensor. Calculates the output according to the input elements.
+
+    The formula is defined as follows:
+
+    .. math::
+        \text{HardShrink}(x) =
+        \begin{cases}
+        x, & \text{ if } x > \lambda \\
+        x, & \text{ if } x < -\lambda \\
+        0, & \text{ otherwise }
+        \end{cases}
+
+    Args:
+        x (Tensor): Input tensor.
+        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
+
+    Returns:
+        Tensor, has the same shape and data type as input tensor.
+
+    Raises:
+        TypeError: If `lambd` is not a float.
+        TypeError: If dtype of the input tensor is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]])
+        >>> print(x.hardshrink())
+        [[ 0.      1.      2.    ]
+        [ 0.      0.     -2.1233]]
+    """
+    return P.HShrink(lambd)(x)
+
+
 def getitem(data, index):
     """Implementation of `getitem`."""
     return data.__getitem__(index)

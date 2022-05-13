@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(HShrinkGrad, BaseOperator);
+void HShrinkGrad::Init(const float &lambd) { this->set_lambd(lambd); }
+
 void HShrinkGrad::set_lambd(const float &lambd) { (void)this->AddAttr(kLambd, api::MakeValue(lambd)); }
 
 float HShrinkGrad::get_lambd() const {

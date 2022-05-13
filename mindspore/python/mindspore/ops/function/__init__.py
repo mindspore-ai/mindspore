@@ -34,7 +34,7 @@ from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, t
                         asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh, atan2, bitwise_and, bitwise_or,
                         bitwise_xor, erf, erfc, cdist, bessel_i0, bessel_i0e, bessel_j0, bessel_j1, bessel_k0,
                         bessel_k0e, bessel_y0, bessel_y1)
-from .nn_func import fast_gelu
+from .nn_func import (fast_gelu, hardshrink)
 
 __all__ = []
 __all__.extend(array_func.__all__)

@@ -27,6 +27,8 @@
 
 namespace mindspore {
 namespace ops {
+void HShrink::Init(const float &lambd) { this->set_lambd(lambd); }
+
 void HShrink::set_lambd(const float &lambd) { (void)this->AddAttr(kLambd, api::MakeValue(lambd)); }
 
 float HShrink::get_lambd() const {

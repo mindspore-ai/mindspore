@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 def hshrink_op_np_bencmark(input_x, lambd):
@@ -47,7 +48,7 @@ def test_hshrink(dtype, data_shape, lambd):
     """
     Feature: HShrink cpu kernel
     Description: test the rightness of HShrink cpu kernel
-    Expectation: the output[0] is same as numpy
+    Expectation: the output is same as hshrink_op_np_bencmark output
     """
     class NetHShrink(nn.Cell):
         def __init__(self):
@@ -60,7 +61,17 @@ def test_hshrink(dtype, data_shape, lambd):
     input_data = np.random.uniform(
         low=-1, high=1, size=data_shape).astype(dtype)
     benchmark_output = hshrink_op_np_bencmark(input_data, lambd)
+
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     hshrink = NetHShrink()
     output = hshrink(Tensor(input_data))
+    assert np.allclose(output.asnumpy(), benchmark_output)
+
+    # test functional interface
+    input_tensor = Tensor(input_data)
+    output = F.hardshrink(input_tensor, lambd)
+    assert np.allclose(output.asnumpy(), benchmark_output)
+
+    # test tensor interface
+    output = input_tensor.hardshrink(lambd)
     assert np.allclose(output.asnumpy(), benchmark_output)

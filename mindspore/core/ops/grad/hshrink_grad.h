@@ -28,11 +28,8 @@ class MIND_API HShrinkGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(HShrinkGrad);
   HShrinkGrad() : BaseOperator(kNameHShrinkGrad) { InitIOName({"gradients", "features"}, {"backprops"}); }
-
-  /// \brief Method to set lambd. The Default value is 0.5.
-  void set_lambd(const float &lambd);
-
-  /// \brief Method to get lambd.
+  void Init(const float &lambd = 0.5);
+  void set_lambd(const float &lambd = 0.5);
   float get_lambd() const;
 };
 
