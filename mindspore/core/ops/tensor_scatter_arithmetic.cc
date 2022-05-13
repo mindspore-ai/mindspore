@@ -83,6 +83,9 @@ TypePtr TensorScatterArithmeticInferType(const PrimitivePtr &primitive,
   std::map<std::string, TypePtr> type_dict;
   type_dict.emplace("input_x", input_args[kInputIndex0]->BuildType());
   type_dict.emplace("updates", input_args[kInputIndex2]->BuildType());
+  if (prim_name == prim::kPrimTensorScatterUpdate->name()) {
+    return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_bool, prim_name);
+  }
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace
