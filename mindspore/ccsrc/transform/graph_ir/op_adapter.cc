@@ -359,8 +359,10 @@ Status OpAdapterImpl::UpdateMultiOutputDesc(const OperatorPtr &op, const abstrac
     return FAILED;
   }
 
-  if (output_size != tuple_shp->shape().size()) {
-    MS_LOG(ERROR) << "output_map is not equal to tuple_shape size";
+  // There are scenarios that output_size is greater than tuple_shape size.
+  // Reserved outputs exist in output_map taking BatchNormGrad as an example.
+  if (output_size < tuple_shp->shape().size()) {
+    MS_LOG(ERROR) << "output_map is smaller than tuple_shape size";
     return FAILED;
   }
 
