@@ -26,10 +26,10 @@ int LayerNormGrad(const float *x, const float *dy, const float *var, const float
   if (block_size <= 0) {
     return NNACL_ERRCODE_DIVISOR_ZERO;
   }
-  for (size_t i = 0; i < param_num; ++i) {
+  for (int i = 0; i < param_num; ++i) {
     float dgamma = 0.0f;
     float dbeta = 0.0f;
-    for (size_t j = i; j < param_size * param_num; j += param_num) {
+    for (int j = i; j < param_size * param_num; j += param_num) {
       int norm_shift = (int)(j / block_size);
       dgamma += dy[j] * pow(var[norm_shift] + eps, -0.5) * (x[j] - mean[norm_shift]);
       dbeta += dy[j];
@@ -37,11 +37,11 @@ int LayerNormGrad(const float *x, const float *dy, const float *var, const float
     dg[i] = dgamma;
     db[i] = dbeta;
   }
-  for (size_t i = 0; i < block_num; ++i) {
+  for (int i = 0; i < block_num; ++i) {
     float sum1 = 0.0f;
     float sum2 = 0.0f;
     float sum3 = 0.0f;
-    for (size_t j = 0; j < block_size; ++j) {
+    for (int j = 0; j < block_size; ++j) {
       int index = i * block_size + j;
       float dxm = x[index] - mean[i];
       int param_shift = index % param_num;
@@ -50,7 +50,7 @@ int LayerNormGrad(const float *x, const float *dy, const float *var, const float
       sum2 += dyg;
       sum3 += -2.0f * dxm;
     }
-    for (size_t j = 0; j < block_size; ++j) {
+    for (int j = 0; j < block_size; ++j) {
       int index = i * block_size + j;
       float var_sqrt = pow(var_sqrt_rev[i] + eps, -0.5);
       int param_shift = index % param_num;

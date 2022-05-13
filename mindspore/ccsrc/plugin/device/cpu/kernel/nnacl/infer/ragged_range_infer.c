@@ -72,11 +72,11 @@ int GetOutputValueElementNum(const TensorC *const *inputs, const RaggedRangePara
       float *limits = (float *)(inputs[1]->data_);
       float *deltas = (float *)(inputs[2]->data_);
       for (int i = 0; i < param->rows; i++) {
-        int start = param->starts_is_scalar ? starts[0] : starts[i];
-        int limit = param->limits_is_scalar ? limits[0] : limits[i];
-        int delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
+        float start = param->starts_is_scalar ? starts[0] : starts[i];
+        float limit = param->limits_is_scalar ? limits[0] : limits[i];
+        float delta = param->deltas_is_scalar ? deltas[0] : deltas[i];
         NNACL_CHECK_ZERO_RETURN_ERR(delta);
-        count += MSMAX((int)(ceil((float)(limit - start) / delta)), 0);
+        count += MSMAX((ceil((limit - start) / delta)), 0);
       }
     } break;
     default: {

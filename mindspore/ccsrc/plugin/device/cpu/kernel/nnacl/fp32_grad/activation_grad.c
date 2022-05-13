@@ -23,10 +23,10 @@
 #include "nnacl/intrinsics/ms_simd_instructions.h"
 
 int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
-  int i = 0;
+  size_t i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
-  for (; i < (int)length - C4NUM; i += C4NUM) {
+  for (; i < length - C4NUM; i += C4NUM) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
     uint32x4_t mask_4 = vcleq_f32(src1_4, zero_4);
@@ -41,11 +41,11 @@ int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
 }
 
 int Relu6Grad(const float *src0, const float *src1, size_t length, float *dst) {
-  int i = 0;
+  size_t i = 0;
 #ifdef ENABLE_ARM
   float32x4_t zero_4 = vdupq_n_f32(0.0f);
   float32x4_t six_4 = vdupq_n_f32(6.0f);
-  for (; i < (int)length - C4NUM; i += C4NUM) {
+  for (; i < length - C4NUM; i += C4NUM) {
     float32x4_t src1_4 = vld1q_f32(src1 + i);
     float32x4_t src0_4 = vld1q_f32(src0 + i);
     float32x4_t max_4 = vmaxq_f32(src1_4, zero_4);

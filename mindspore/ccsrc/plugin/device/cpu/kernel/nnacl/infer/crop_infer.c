@@ -28,7 +28,7 @@ int CropInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   size_t input_shape_size = inputs[0]->shape_size_;
   CropParameter *param = (CropParameter *)parameter;
   int64_t axis = param->axis_ < 0 ? param->axis_ + (int64_t)input_shape_size : param->axis_;
-  if (axis < 0 || axis >= input_shape_size) {
+  if (axis < 0 || axis >= (int64_t)input_shape_size) {
     return NNACL_ERR;
   }
 
