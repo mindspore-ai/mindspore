@@ -25,6 +25,7 @@
 #include "plugin/factory/ms_factory.h"
 #include "fl/worker/fl_worker.h"
 #include "fl/armour/secure_protocol/masking.h"
+#include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace kernel {
@@ -149,6 +150,9 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
     MS_EXCEPTION_IF_NULL(fbb_);
     auto fbs_fl_name = fbb->CreateString(fl_name_);
     auto fbs_fl_id = fbb->CreateString(fl_id_);
+    auto time = ps::core::CommUtil::GetNowTime();
+    MS_LOG(INFO) << "now time: " << time.time_str_mill;
+    auto fbs_timestamp = fbb->CreateString(std::to_string(time.time_stamp));
     std::vector<flatbuffers::Offset<schema::FeatureMap>> fbs_feature_maps;
     for (size_t i = 0; i < weight_full_names_.size(); i++) {
       const std::string &weight_name = weight_full_names_[i];
@@ -163,6 +167,7 @@ class UpdateModelKernelMod : public DeprecatedNativeCpuKernelMod {
     schema::RequestUpdateModelBuilder req_update_model_builder(*(fbb.get()));
     req_update_model_builder.add_fl_name(fbs_fl_name);
     req_update_model_builder.add_fl_id(fbs_fl_id);
+    req_update_model_builder.add_timestamp(fbs_timestamp);
     iteration_ = fl::worker::FLWorker::GetInstance().fl_iteration_num();
     req_update_model_builder.add_iteration(SizeToInt(iteration_));
     req_update_model_builder.add_feature_map(fbs_feature_maps_vector);
