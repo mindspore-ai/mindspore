@@ -27,7 +27,7 @@
 #include "tools/converter/micro/coder/config.h"
 
 namespace mindspore::lite::micro {
-void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeMSModelCreate(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx, const Configurator &config);
 void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config);
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config);
 void CodeMSModelPredict(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
@@ -46,7 +46,8 @@ void CodeGraphQuantArgsImplement(std::ofstream &ofs, const std::unique_ptr<Coder
 void CodeManageResourceState(std::ofstream &ofs);
 void CodeInitResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
 
-void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx);
+void CodeFreeResourceImplement(std::ofstream &ofs, const std::unique_ptr<CoderContext> &ctx,
+                               const Configurator &config);
 
 void CodeInferenceState(std::ofstream &ofs);
 }  // namespace mindspore::lite::micro

@@ -131,8 +131,7 @@ int Generator::CodeMSModelImplement() {
   if (config_->support_parallel()) {
     ofs << "#include \"" << kThreadWrapper << "\"\n";
   }
-  ofs << model_runtime_init_source;
-  CodeMSModelCreate(ofs, ctx_);
+  CodeMSModelCreate(ofs, ctx_, *config_);
   CodeMSModelBuild(ofs, config_);
   ofs << model_runtime_other_source;
   CodeMSModelPredict(ofs, ctx_);
@@ -146,7 +145,7 @@ int Generator::CodeWeightFile() {
   std::ofstream hofs(hfile);
   MS_CHECK_TRUE(!hofs.bad(), "filed to open file");
   MS_LOG(INFO) << "write " << hfile;
-  CodeWeightFileHeader(hofs, ctx_);
+  CodeWeightFileHeader(hofs, ctx_, *config_);
 
   // weight source file
   std::string cfile = net_src_file_path_ + "weight.c";
@@ -156,9 +155,9 @@ int Generator::CodeWeightFile() {
   cofs << g_hwLicense;
   cofs << "#include \"" << net_weight_hfile_ << "\"\n\n";
   cofs << "int  " << gThreadNum << " = 1; \n";
-  cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
 
   if (config_->target() != kARM32M) {
+    cofs << "unsigned char * " << ctx_->buffer_name() << " = 0; \n";
     cofs << "unsigned char * " << ctx_->weight_name() << " = 0; \n";
     std::string net_file = net_src_file_path_ + "net.bin";
     SaveDataToNet(ctx_->saved_weights(), net_file);
@@ -167,14 +166,15 @@ int Generator::CodeWeightFile() {
       MS_LOG(ERROR) << "Weight init code generation error ";
       return RET_ERROR;
     }
-    cofs << "unsigned char " << ctx_->weight_name() << "[" << ctx_->weight_buffer_size() << "]; \n";
-    // CodeModelParamsState(hofs, ctx_->saved_weights());
+    cofs << "unsigned char g_buf[" << ctx_->total_buffer_size() + ctx_->weight_buffer_size() << "]; \n";
+    cofs << "unsigned char * " << ctx_->buffer_name() << " = &g_buf[0]; \n";
+    cofs << "unsigned char * " << ctx_->weight_name() << " = &g_buf[" << ctx_->total_buffer_size() << "]; \n";
     CodeModelParamsData(cofs, ctx_->saved_weights());
   }
-  CodeModelParamsForNet(hofs, cofs, ctx_, config_);
+  CodeModelParamsForNet(hofs, cofs, ctx_, *config_);
   CodeInitWeightState(hofs);
 
-  CodeWeightInitFunc(cofs, ctx_, config_);
+  CodeWeightInitFunc(cofs, ctx_, *config_);
   hofs.close();
   cofs.close();
   return RET_OK;

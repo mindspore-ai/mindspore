@@ -59,7 +59,7 @@ int InferenceGenerator::CodeNetCFile() {
   CodeInputImplement(ofs, ctx_);
   CodeCopyOutputsImplement(ofs, ctx_);
   CodeInitResourceImplement(ofs, ctx_);
-  CodeFreeResourceImplement(ofs, ctx_);
+  CodeFreeResourceImplement(ofs, ctx_, *config_);
   if (is_get_quant_args_) {
     CodeGraphQuantArgsImplement(ofs, ctx_);
   }

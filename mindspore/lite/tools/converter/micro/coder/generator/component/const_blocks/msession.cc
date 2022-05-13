@@ -92,28 +92,4 @@ MSStatus MSModelResize(MSModelHandle model, const MSTensorHandleArray inputs, MS
 }
 
 )RAW";
-
-const char model_runtime_init_source[] = R"RAW(
-typedef struct {
-  void *runtime_buffer;
-  MSTensorHandleArray inputs;
-  MSTensorHandleArray outputs;
-} MicroModel;
-MSModelHandle MSModelCreate() {
-  MicroModel *micro_model = (MicroModel *)malloc(sizeof(MicroModel));
-  if (micro_model == NULL) {
-    return NULL;
-  }
-  int buffer_size = GetBufferSize();
-  void *runtime_buffer = malloc(buffer_size);
-  if (runtime_buffer == NULL) {
-    return NULL;
-  }
-  micro_model->runtime_buffer = runtime_buffer;
-  int ret = SetBuffer(runtime_buffer);
-  if (ret != kMSStatusSuccess) {
-    return NULL;
-  }
-
-)RAW";
 }  // namespace mindspore::lite::micro

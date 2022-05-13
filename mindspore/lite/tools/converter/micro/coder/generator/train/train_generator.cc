@@ -62,7 +62,7 @@ int TrainGenerator::CodeNetCFile() {
   MS_LOG(INFO) << "write " << net_impl_file;
   CodeInputImplement(ofs, ctx_);
   CodeInitResourceImplement(ofs, ctx_);
-  CodeFreeResourceImplement(ofs, ctx_);
+  CodeFreeResourceImplement(ofs, ctx_, *config_);
   CodeFeaturesImplement(ofs, ctx_);
   CodeNetRunFunc(ofs);
   CodeGradientFunc(ofs);
