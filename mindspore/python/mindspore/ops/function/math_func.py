@@ -2033,6 +2033,54 @@ def truncate_mod(x, y):
     """
     return truncate_mod_(x, y)
 
+
+def ldexp(x, other):
+    """
+    Multiplies input by 2**:attr:other.
+
+    .. math::
+
+        out_{i} = input_{i} * ( 2_{i} ^{ other} )
+
+    Note:
+        Typically this function can create floating point numbers
+        by multiplying mantissas in input with powers of intger 2
+        from the exponents in :attr:’other’.
+
+    Args:
+        x (Tensor): The input tensor.
+        other (Tensor): A tensor of exponents, typically integers.
+
+    Outputs:
+        out (Tensor, optional) : the output tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `other` is not a Tensor.
+        ValueError: If the size of tensor `x` and `other` are different at non-singleton dimension, and not equal to 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> x = Tensor(np.array([1.]), mindspore.float32)
+        >>> other = Tensor(np.array([1, 2, 3, 4]), mindspore.int32)
+        >>> out = ops.ldexp(x, other)
+        >>> print(out)
+        [ 2.  4.  8. 16.]
+    """
+
+    pow_ops = P.Pow()
+    mul_ops = P.Mul()
+
+    out = mul_ops(x, pow_ops(2.0, other))
+    return out
+
+
 #####################################
 # Comparison Operation Functions.
 #####################################
@@ -3194,6 +3242,7 @@ __all__ = [
     'logical_or',
     'logical_and',
     'logsumexp',
+    'ldexp',
     'sin',
     'cos',
     'tan',
