@@ -323,15 +323,28 @@ void AscendDeviceContext::Destroy() {
   MS_LOG(INFO) << "Status record: Destroy success.";
 }
 
-std::vector<GraphSegmentPtr> AscendDeviceContext::PartitionGraph(
-  const FuncGraphPtr &func_graph, const std::vector<GraphSegmentPtr> &default_partition_segments) {
-  MS_EXCEPTION_IF_NULL(func_graph);
+// @todo move SetRunMode to here when old runtime is delete
+bool AscendDeviceContext::PartitionGraph(const FuncGraphPtr &func_graph) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  if (context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
-    return std::vector<GraphSegmentPtr>();
+  return context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK);
+}
+
+bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
+  return std::any_of(node_list.begin(), node_list.end(),
+                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
+}
+
+RunMode AscendDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode() && !IsDynamicShapeGraph(func_graph)) {
+    return RunMode::kGraphMode;
+  } else {
+    return RunMode::kKernelMode;
   }
-  return default_partition_segments;
 }
 
 void AscendDeviceContext::UnifyMindIR(const KernelGraphPtr &graph) const {
@@ -680,16 +693,6 @@ bool AscendDeviceContext::DestroyStream(void *stream) const {
     return false;
   }
   return true;
-}
-
-bool AscendDeviceContext::IsExecutingSink(const KernelGraphPtr &graph) const {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK) && IsGraphMode() && !graph->is_dynamic_shape();
-}
-
-bool AscendDeviceContext::IsLoopCountSink(const KernelGraphPtr &graph) const {
-  return device::KernelAdjust::NeedLoopSink() && IsGraphMode();
 }
 
 // kernel by kernel mode interface

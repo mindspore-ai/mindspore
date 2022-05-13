@@ -442,6 +442,29 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
   runtime::GraphScheduler::GetInstance().Initialize();
 }
 
+void MindRTBackend::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
+                                           const mindspore::device::DeviceType &old_target,
+                                           const mindspore::device::DeviceType &new_target) {
+  const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+  for (const auto &node : all_nodes) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    if (!common::AnfAlgo::HasNodeAttr(kAttrNotSupportOpForDevice, cnode)) {
+      continue;
+    }
+
+    auto not_support_device = common::AnfAlgo::GetNodeAttr<std::string>(node, kAttrNotSupportOpForDevice);
+    if (device::GetDeviceTypeByName(not_support_device) != old_target) {
+      continue;
+    }
+
+    common::AnfAlgo::SetNodeAttr(kAttrPrimitiveTarget, MakeValue(device::GetDeviceNameByType(new_target)), node);
+  }
+}
+
 const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -462,16 +485,22 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   graph_id_to_device_context_.clear();
   func_graph_to_kernel_graph_ids_.clear();
   control_nodes_.clear();
-  auto subgraph_need_compile = CompileGraph(root_graph);
-  // Compile sub graphs.
-  if (subgraph_need_compile) {
-    MS_EXCEPTION_IF_NULL(root_graph->manager());
-    FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
-    for (auto sub_graph : sub_graphs) {
-      if (sub_graph != func_graph && sub_graph != nullptr) {
-        (void)CompileGraph(sub_graph);
-      }
+
+  const auto &device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
+  MS_EXCEPTION_IF_NULL(device_context);
+  bool all_support = device_context->PartitionGraph(func_graph);
+  if (all_support) {
+    auto run_mode = device_context->GetRunMode(func_graph);
+    if (run_mode == device::RunMode::kGraphMode) {
+      auto graph_id = graph_compiler_->CompileWholeGraphForGraphRunMode(func_graph, device_context);
+      graph_id_to_device_context_[graph_id] = device_context;
+    } else {
+      CompileSubGraph(func_graph, device::RunMode::kKernelMode);
     }
+  } else {
+    ProcessNotSupportCnode(func_graph, device_context->GetDeviceType(), mindspore::device::DeviceType::kCPU);
+    CompileSubGraph(func_graph);
   }
 
   // Construct the graph compiler info.
@@ -495,7 +524,21 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   return actor_info;
 }
 
-bool MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
+void MindRTBackend::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
+  auto root_graph = WrapPrimitives(func_graph);
+  MS_EXCEPTION_IF_NULL(root_graph);
+  CompileGraph(root_graph, run_mode);
+
+  MS_EXCEPTION_IF_NULL(root_graph->manager());
+  FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
+  for (auto sub_graph : sub_graphs) {
+    if (sub_graph != func_graph && sub_graph != nullptr) {
+      CompileGraph(sub_graph, run_mode);
+    }
+  }
+}
+
+void MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph, device::RunMode run_mode) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(graph_partition_);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
@@ -504,26 +547,14 @@ bool MindRTBackend::CompileGraph(const FuncGraphPtr &func_graph) {
   // Split graph to segments.
   const auto &segments = graph_partition_->Partition(func_graph, &contain_multi_target);
   MS_LOG(INFO) << "Compile graph: " << func_graph->ToString() << ", Split segments size:" << segments.size();
-  const auto &device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
-  MS_EXCEPTION_IF_NULL(device_context);
-  const auto &new_segments = device_context->PartitionGraph(func_graph, segments);
-
-  // Compile the whole function graph if not split graph.
-  if (new_segments.size() == 0) {
-    auto graph_id = graph_compiler_->CompileGraph(func_graph, device_context);
-    graph_id_to_device_context_[graph_id] = device_context;
-    return false;
-  }
 
   // Foreach the segments to compile graph.
-  for (const auto &segment : new_segments) {
-    CompileGraph(segment);
+  for (const auto &segment : segments) {
+    CompileGraph(segment, run_mode);
   }
-  return true;
 }
 
-void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment) {
+void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment, device::RunMode run_mode) {
   MS_EXCEPTION_IF_NULL(segment);
   // Compile the normal nodes, which doesn't contain the cut node.
   if (segment->nodes_.size() == 0) {
@@ -550,7 +581,7 @@ void MindRTBackend::CompileGraph(const GraphSegmentPtr &segment) {
     MS_EXCEPTION_IF_NULL(context_ptr);
     // Compile graph.
     auto graph_id =
-      graph_compiler_->CompileGraph(segment, outputs, device_context, real_execution_mode_ == kPynativeMode);
+      graph_compiler_->CompileGraph(segment, outputs, device_context, run_mode, real_execution_mode_ == kPynativeMode);
 
     graph_id_to_device_context_[graph_id] = device_context;
 

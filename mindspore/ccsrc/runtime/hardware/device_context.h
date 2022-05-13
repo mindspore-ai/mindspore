@@ -38,6 +38,7 @@ using mindspore::kernel::KernelMod;
 
 const size_t kDeviceContextsNumOne = 1;
 const size_t kDeviceContextsNumTwo = 2;
+enum class RunMode { kUnknown, kKernelMode, kGraphMode };
 
 struct DeviceContextKey {
   // device type name, such as 'GPU' 'Ascend' 'CPU'.
@@ -62,15 +63,12 @@ class DeviceContext {
   // Destroy device context and release device resource.
   virtual void Destroy() {}
 
-  // Partition the function graph through the device capability and return the partition segments.
-  // The second parameter is the default partition segments which are provided by the framework.
-  // Device can reprocess the default partition segments to new segments, also can partition the function graph again.
-  // If Device can launch the whole graph and not expect partitioning the function graph, then return the empty
-  // segments. The default behavior is return the default partition segments.
-  virtual std::vector<GraphSegmentPtr> PartitionGraph(const FuncGraphPtr &func_graph,
-                                                      const std::vector<GraphSegmentPtr> &default_partition_segments) {
-    return default_partition_segments;
-  }
+  // Analysis the function graph to check whether all nodes are supported, if yes, return true, if no, return false and
+  // mark the unsupported node as "NotSupport" through SetCNodeNotSupported()
+  virtual bool PartitionGraph(const FuncGraphPtr &func_graph) const { return false; }
+
+  // Analysis the function graph and select the appropriate run mode for the graph
+  virtual RunMode GetRunMode(const FuncGraphPtr &func_graph) const { return RunMode::kKernelMode; }
 
   // Relevant function to allocate and free device memory of raw ptr.
   virtual void *AllocateMemory(size_t size) const = 0;
@@ -105,11 +103,6 @@ class DeviceContext {
   virtual void PreprocessBeforeRunGraph(const KernelGraphPtr &graph) const {}
   // Adjust single op kernel graph before run graph, used in PyNative Mode.
   virtual void PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr &graph) const {}
-  // Whether the graph sink executing through the device capability, the default behavior is not sink and return false.
-  virtual bool IsExecutingSink(const KernelGraphPtr &graph) const { return false; }
-  // Whether the graph loop sink executing through the device capability, the default behavior is not loop sink and
-  // return false.
-  virtual bool IsLoopCountSink(const KernelGraphPtr &graph) const { return false; }
 
   // Launch graph, device such as Ascend support the whole graph sink to the device executing.
   virtual bool LaunchGraph(const KernelGraphPtr &graph) const { return true; }

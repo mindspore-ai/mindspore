@@ -46,14 +46,9 @@ class AscendDeviceContext : public DeviceContext {
   // Get rank id for distributed training.
   uint32_t GetRankID() const override { return rank_id_; }
 
-  // Partition the function graph through the device capability and return the partition segments.
-  // The second parameter is the default partition segments which are provided by the framework.
-  // Device can reprocess the default partition segments to new segments, also can partition the function graph again.
-  // If Device can launch the whole graph and not expect partitioning the function graph, then return the empty
-  // segments. The default behavior is return the default partition segments.
-  std::vector<GraphSegmentPtr> PartitionGraph(const FuncGraphPtr &func_graph,
-                                              const std::vector<GraphSegmentPtr> &default_partition_segments) override;
+  bool PartitionGraph(const FuncGraphPtr &func_graph) const override;
 
+  RunMode GetRunMode(const FuncGraphPtr &func_graph) const override;
   // Optimize the kernel graph for graph mode.
   void OptimizeGraph(const KernelGraphPtr &graph) const override;
 
@@ -103,12 +98,6 @@ class AscendDeviceContext : public DeviceContext {
 
   // Unify the MindIR, the default behavior uses the common unified MindIR.
   void UnifyMindIR(const KernelGraphPtr &graph) const override;
-
-  // Whether the graph sink executing through the device capability, the default behavior is not sink and return false.
-  bool IsExecutingSink(const KernelGraphPtr &graph) const override;
-  // Whether the graph loop sink executing through the device capability, the default behavior is not loop sink and
-  // return false.
-  bool IsLoopCountSink(const KernelGraphPtr &graph) const override;
 
   // set rt_context_ to this thread to control device
   bool BindDeviceToCurrentThread() const override;

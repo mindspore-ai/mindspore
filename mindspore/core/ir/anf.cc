@@ -388,7 +388,20 @@ void reset_id() { node_ids.clear(); }
 }  // namespace id_generator
 auto constexpr kTargetUnDefined = "kTargetUnDefined";
 auto constexpr kPrimitiveTarget = "primitive_target";
+auto constexpr kNotSupportOpForDevice = "not_support_op_for_device";
 namespace {
+__attribute__((unused)) void SetCNodeNotSupported(const CNodePtr &node, std::string device_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto primitive = GetCNodePrimitive(node);
+  if (primitive != nullptr) {
+    auto value = MakeValue(device_name);
+    primitive->set_attr(kNotSupportOpForDevice, value);
+  } else {
+    MS_LOG(ERROR) << "Get cnode " << node->fullname_with_scope() << "'s primitive failed in device " << device_name;
+  }
+  MS_LOG(INFO) << "Cnode " << node->fullname_with_scope() << " is not supported for device " << device_name;
+}
+
 PrimitivePtr GetPrimitiveFromValueNode(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;

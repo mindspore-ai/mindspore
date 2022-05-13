@@ -1165,6 +1165,8 @@ MS_CORE_API void reset_id();
 using TaggedNodeMap = mindspore::HashMap<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 MS_CORE_API std::string GetCNodeTarget(const AnfNodePtr &node);
+// mark Cnode as not support for specify device
+MS_CORE_API void SetCNodeNotSupported(const CNodePtr &node, std::string device_name);
 std::string GetOriginNodeTarget(const AnfNodePtr &node);
 MS_CORE_API bool ContainMultiTarget(const std::vector<AnfNodePtr> &nodes);
 struct GraphSegment {
