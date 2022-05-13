@@ -725,9 +725,16 @@ void AscendDeviceContext::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr 
     static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), prim::kPrimExpandDims->name(),
                                                         prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
                                                         prim::kPrimFlattenGrad->name()};
+    // If the 2nd input of reshape is not a value node, then there are two inputs to select the host reshape operator
+    bool is_host_reshape_op = false;
+    if (op_name == prim::kPrimReshape->name()) {
+      auto kernel_mod = AnfAlgo::GetKernelMod(node);
+      MS_EXCEPTION_IF_NULL(kernel_mod);
+      is_host_reshape_op = kernel_mod->GetKernelModType() == kernel::KernelModType::HostKernelMod;
+    }
     bool nop_op_is_not_dynamic_shape = !graph->is_dynamic_shape() && nop_nodes.find(op_name) != nop_nodes.end();
-    if ((op_name == prim::kPrimTranspose->name() && common::AnfAlgo::HasNodeAttr(kAttrNopOp, node)) ||
-        nop_op_is_not_dynamic_shape) {
+    bool is_transpose_nop = op_name == prim::kPrimTranspose->name() && common::AnfAlgo::HasNodeAttr(kAttrNopOp, node);
+    if (is_transpose_nop || (nop_op_is_not_dynamic_shape && !is_host_reshape_op)) {
       nop_op_to_memcpy_.insert(node);
     }
   }

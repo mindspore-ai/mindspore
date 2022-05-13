@@ -53,6 +53,7 @@ class BACKEND_EXPORT OpExecutor {
   const std::vector<std::shared_ptr<OpBuildTask>> &GetOpBuildTasks() const { return op_build_tasks_; }
 
   bool BuildQueueEmpty();
+  bool RunQueueEmpty();
 
   // If the build queue is full, we can compile the kernels in parallel.
   bool BuildQueueFull();

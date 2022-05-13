@@ -62,12 +62,8 @@ using GraphInfoPtr = std::shared_ptr<GraphInfo>;
 struct DynamicShapeInfo {
   bool HasFeedDynamicInput() const { return !feed_dynamic_input.empty(); }
   OrderedMap<std::string, abstract::AbstractBasePtr> obj_id_with_dynamic_output_abs;
-  void reset() {
-    obj_id_with_dynamic_output_abs.clear();
-    feed_dynamic_input_abs.clear();
-  }
+  void reset() { obj_id_with_dynamic_output_abs.clear(); }
   mindspore::HashMap<std::string, std::vector<abstract::AbstractBasePtr>> feed_dynamic_input;
-  mindspore::HashMap<std::string, abstract::AbstractBasePtr> feed_dynamic_input_abs;
 };
 using DynamicShapeInfoPtr = std::shared_ptr<DynamicShapeInfo>;
 
