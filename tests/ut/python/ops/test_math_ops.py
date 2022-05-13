@@ -20,8 +20,8 @@ import numpy as np
 import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
 from mindspore import ops
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -407,6 +407,16 @@ class LogAddExp2Func(nn.Cell):
         return y
 
 
+class Exp2Func(nn.Cell):
+    def __init__(self):
+        super(Exp2Func, self).__init__()
+        self.exp2 = ops.exp2
+
+    def construct(self, x):
+        y = self.exp2(x)
+        return y
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -471,6 +481,10 @@ test_case_math_ops = [
         'block': LogAddExpFunc(),
         'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
         'desc_bprop': [Tensor(np.array([1.0, 2.0, 3.0], np.float16)), Tensor(np.array([2.0], np.float16))],
+    }),
+    ('Exp2', {
+        'block': Exp2Func(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 3.0], np.float16))],
     }),
 ]
 

@@ -35,7 +35,7 @@ from .math_func import (addn, absolute, abs, tensor_add, add, neg_tensor, neg, t
                         invert, minimum, floor, logical_not, logical_or, logical_and, sin, cos, tan,
                         asin, acos, atan, sinh, cosh, tanh, asinh, acosh, atanh, atan2, bitwise_and, bitwise_or,
                         bitwise_xor, erf, erfc, cdist, bessel_i0, bessel_i0e, bessel_j0, bessel_j1, bessel_k0,
-                        bessel_k0e, bessel_y0, bessel_y1, bessel_i1, bessel_i1e, bessel_k1, bessel_k1e)
+                        bessel_k0e, bessel_y0, bessel_y1, bessel_i1, bessel_i1e, bessel_k1, bessel_k1e, exp2)
 from .nn_func import (fast_gelu, hardshrink)
 from .linalg_func import svd
 
