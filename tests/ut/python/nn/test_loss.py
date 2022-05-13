@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -217,4 +217,16 @@ def test_mae_loss():
     loss = nn.MAELoss()
     input_data = Tensor(np.array([[1, 2, 3], [2, 3, 2]]).astype(np.float32))
     target_data = Tensor(np.array([[0, 0, 5], [1, 2, 3]]).astype(np.float32))
+    loss(input_data, target_data)
+
+
+def test_huber_loss():
+    """
+    Feature: Test HuberLoss.
+    Description: Test HuberLoss functional.
+    Expectation: Success.
+    """
+    loss = nn.HuberLoss()
+    input_data = Tensor(np.array([[1, 2, 3], [2, 3, 4]]).astype(np.float32))
+    target_data = Tensor(np.array([[0, 2, 5], [3, 1, 1]]).astype(np.float32))
     loss(input_data, target_data)

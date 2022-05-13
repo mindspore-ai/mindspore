@@ -202,6 +202,7 @@ Loss Function
     mindspore.nn.CosineEmbeddingLoss
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
+    mindspore.nn.HuberLoss
     mindspore.nn.L1Loss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
