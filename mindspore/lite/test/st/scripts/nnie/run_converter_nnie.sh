@@ -23,6 +23,9 @@ function Run_Converter() {
     exec 6<>${fifo_file}
     rm -f ${fifo_file}
     max_parallel_jobs=4
+    if [[ ${level} == "level1" ]]; then
+      max_parallel_jobs=1
+    fi
     for ((i = 0; i < ${max_parallel_jobs}; i++)); do echo; done >&6
 
     # Convert nnie models:
