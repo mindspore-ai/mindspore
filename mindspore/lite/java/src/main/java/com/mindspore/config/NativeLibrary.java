@@ -32,8 +32,8 @@ public class NativeLibrary {
      */
     public static void loadLibs() {
         loadLib(makeResourceName("lib" + GLOG_LIBNAME + ".so"));
-        loadLib(makeResourceName("lib" + JPEG_LIBNAME + ".so.62"));
-        loadLib(makeResourceName("lib" + TURBOJPEG_LIBNAME + ".so.0"));
+        loadLib(makeResourceName("lib" + JPEG_LIBNAME + ".so"));
+        loadLib(makeResourceName("lib" + TURBOJPEG_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDDATA_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_LIBNAME + ".so"));
         loadLib(makeResourceName("lib" + MINDSPORE_LITE_JNI_LIBNAME + ".so"));
