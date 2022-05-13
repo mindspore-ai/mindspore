@@ -32,7 +32,7 @@ namespace distributed {
 namespace rpc {
 using MessageHandler = std::function<MessageBase *const(MessageBase *const)>;
 using DeleteCallBack = void (*)(const std::string &from, const std::string &to);
-using ConnectionCallBack = void (*)(void *conn);
+using ConnectionCallBack = std::function<void(void *connection)>;
 
 constexpr int SEND_MSG_IO_VEC_LEN = 5;
 constexpr int RECV_MSG_IO_VEC_LEN = 4;

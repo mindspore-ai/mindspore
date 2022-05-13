@@ -113,9 +113,9 @@ void OnAccept(int server, uint32_t events, void *arg) {
   conn->conn_mutex = tcpmgr->conn_mutex_;
   conn->message_handler = tcpmgr->message_handler_;
 
-  conn->event_callback = TCPComm::EventCallBack;
-  conn->write_callback = TCPComm::WriteCallBack;
-  conn->read_callback = TCPComm::ReadCallBack;
+  conn->event_callback = std::bind(&TCPComm::EventCallBack, tcpmgr, std::placeholders::_1);
+  conn->write_callback = std::bind(&TCPComm::WriteCallBack, tcpmgr, std::placeholders::_1);
+  conn->read_callback = std::bind(&TCPComm::ReadCallBack, tcpmgr, std::placeholders::_1);
 
   int retval = conn->Initialize();
   if (retval != RPC_OK) {
@@ -229,6 +229,7 @@ void TCPComm::EventCallBack(void *connection) {
     conn->conn_mutex->unlock();
   } else if (conn->state == ConnectionState::kDisconnecting) {
     conn->conn_mutex->lock();
+    conn_pool_->DeleteConnection(conn->destination);
     conn->conn_mutex->unlock();
   }
 }
@@ -388,9 +389,9 @@ bool TCPComm::Connect(const std::string &dst_url) {
     }
 
     conn->socket_fd = sock_fd;
-    conn->event_callback = TCPComm::EventCallBack;
-    conn->write_callback = TCPComm::WriteCallBack;
-    conn->read_callback = TCPComm::ReadCallBack;
+    conn->event_callback = std::bind(&TCPComm::EventCallBack, this, std::placeholders::_1);
+    conn->write_callback = std::bind(&TCPComm::WriteCallBack, this, std::placeholders::_1);
+    conn->read_callback = std::bind(&TCPComm::ReadCallBack, this, std::placeholders::_1);
 
     int ret = TCPComm::DoConnect(conn, (struct sockaddr *)&addr, sizeof(addr));
     if (ret < 0) {

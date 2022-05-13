@@ -91,10 +91,10 @@ class TCPComm {
   static void DropMessage(MessageBase *msg);
 
   // Read and write events.
-  static void ReadCallBack(void *conn);
-  static void WriteCallBack(void *conn);
+  void ReadCallBack(void *conn);
+  void WriteCallBack(void *conn);
   // Connected and Disconnected events.
-  static void EventCallBack(void *conn);
+  void EventCallBack(void *conn);
 
   // The server url.
   std::string url_;
