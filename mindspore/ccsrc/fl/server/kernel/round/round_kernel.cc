@@ -114,6 +114,8 @@ void RoundKernel::Summarize() {
   if (name_ == "updateModel" && accept_client_num() > 0) {
     MS_LOG(INFO) << "Client Upload avg Loss: " << (upload_loss_ / accept_client_num());
   }
+  RecordSendData(send_data_time_, send_data_);
+  RecordReceiveData(receive_data_time_, receive_data_);
 }
 
 size_t RoundKernel::total_client_num() const { return total_client_num_; }
@@ -169,12 +171,12 @@ void RoundKernel::CalculateReceiveData(size_t receive_len) {
 
 void RoundKernel::RecordSendData(uint64_t time_stamp_second, size_t send_data) {
   std::lock_guard<std::mutex> lock(send_data_rate_mutex_);
-  send_data_and_time_.emplace(time_stamp_second, send_data);
+  send_data_and_time_[time_stamp_second] = send_data;
 }
 
 void RoundKernel::RecordReceiveData(uint64_t time_stamp_second, size_t receive_data) {
   std::lock_guard<std::mutex> lock(receive_data_rate_mutex_);
-  receive_data_and_time_.emplace(time_stamp_second, receive_data);
+  receive_data_and_time_[time_stamp_second] = receive_data;
 }
 
 std::map<uint64_t, size_t> RoundKernel::GetSendData() {
