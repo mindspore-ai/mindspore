@@ -142,8 +142,12 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor
 Status BasicTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "BasicTokenizer: input only support one column data.");
-  if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("BasicTokenizer: the input should be scalar with string datatype");
+  if (input[0]->Rank() != 0) {
+    RETURN_STATUS_UNEXPECTED("BasicTokenizer: the input should be a scalar, but got a tensor with rank: " +
+                             std::to_string(input[0]->Rank()));
+  }
+  if (input[0]->type() != DataType::DE_STRING) {
+    RETURN_STATUS_UNEXPECTED("BasicTokenizer: the input should be of type string.");
   }
   std::shared_ptr<Tensor> cur_input;
   std::shared_ptr<Tensor> processed_tensor;
