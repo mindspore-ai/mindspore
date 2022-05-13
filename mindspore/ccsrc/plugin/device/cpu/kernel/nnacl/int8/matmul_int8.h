@@ -35,14 +35,14 @@ void RowMajor2Col4x16MajorInt8(const int8_t *src, int8_t *dst, int row, int col)
 void RowMajor2Col4x16MajorPartInt8(const int8_t *src, int8_t *dst, int row, int col, int cur_oc);
 void PackInput2Col4x4AndInputSumPert(const int8_t *src_input, int8_t *packed_input, int32_t *input_sum, int row,
                                      int col, int row_stride, int32_t filter_zp);
-void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int *dst, DataOrder order);
+void CalcInputSums(const int8_t *input, int row, int col, int weight_zp, int32_t *dst, DataOrder order);
 void CalcWeightBiasSums(const int8_t *weight, int row, int col, int input_zp, const int *weight_zp_ptr, const int *bias,
-                        int *dst, DataOrder order, bool filter_per_channel);
+                        int32_t *dst, DataOrder order, bool filter_per_channel);
 void CalcPartWeightBiasSums(const int8_t *weight, int row, int stride, int cur_col, int input_zp,
                             const int *weight_zp_ptr, const int *bias, int *dst, DataOrder order,
                             bool filter_per_channel);
-void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int *a_sums,
-                   const int *bias, int act_min, int act_max, int out_zp, const int32_t *multiplier,
+void MatmulInt8Opt(const int8_t *a, const int8_t *b, int8_t *dst, int row, int col, int deep16, const int32_t *a_sums,
+                   const int32_t *bias, int act_min, int act_max, int out_zp, const int32_t *multiplier,
                    const int32_t *left_shift, const int32_t *right_shift, size_t stride, size_t filter_peroc,
                    const int32_t *filter_zp);
 /* 8x4 4x8 -> 8x8 */
