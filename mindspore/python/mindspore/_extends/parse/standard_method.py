@@ -679,6 +679,13 @@ def min(x, axis=None, keepdims=False, initial=None, where=True):  # pylint: disa
                                  axis=axis, keepdims=keepdims, initial=initial, where=where)
 
 
+def pow(x, y):  # pylint: disable=redefined-builtin
+    """
+    Calculate the power of Tensor.
+    """
+    return F.pow(x, y)
+
+
 def round(x):  # pylint: disable=redefined-builtin
     """
     Returns half to even of a tensor element-wise.

@@ -202,6 +202,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"matrix_determinant", std::string("matrix_determinant")},          // log_matrix_determinant()
        {"max", std::string("max")},                                        // P.reduce_max()
        {"min", std::string("min")},                                        // P.reduce_min()
+       {"pow", std::string("pow")},                                        // P.Pow()
        {"round", std::string("round")},                                    // P.Round()
        {"fill", std::string("fill")},                                      // P.fill()
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()

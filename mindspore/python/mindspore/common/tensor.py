@@ -995,6 +995,51 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('log_matrix_determinant')(self)
 
+    def pow(self, power):
+        r"""
+        Calculate the power of Tensor.
+
+        .. math::
+
+            out_{i} = x_{i} ^{ y_{i}}
+
+        .. note::
+            - The current Tensor and `power` comply with the implicit type conversion rules to make the data
+             types consistent.
+            - Dtypes of the current Tensor and power cannot be bool at the same time, and the shapes of them
+             can be broadcast.
+
+        Args:
+            power (Union[Tensor, number.Number, bool]): The power value, should be a number.Number or bool value,
+                or a Tensor whose data type is number or bool\_.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+                and the data type is the one with higher precision or higher digits among `Tensor` and `power`.
+
+        Raises:
+            TypeError: If `power` is not one of the following: Tensor, number.Number or bool.
+            ValueError: If the shape of the current Tensor and `power` are different.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> y = 3.0
+            >>> output = x.pow(y)
+            >>> print(output)
+            [ 1.  8. 64.]
+            >>>
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> y = Tensor(np.array([2.0, 4.0, 3.0]), mindspore.float32)
+            >>> output = x.pow(y)
+            >>> print(output)
+            [ 1. 16. 64.]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('pow')()(self, power)
+
     def mean(self, axis=(), keep_dims=False):
         """
         Reduce a dimension of a tensor by averaging all elements in the dimension.
