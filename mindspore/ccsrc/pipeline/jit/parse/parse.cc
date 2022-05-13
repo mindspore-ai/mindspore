@@ -299,6 +299,8 @@ void TransformParallelCallFormerToMiddle(const FuncGraphPtr &former_call_graph, 
     // Adjust the former funcgraph output with Depend.
     new_output = former_call_graph->NewCNodeAfter(
       new_output, {NewValueNode(prim::kPrimDepend), new_output, former_graph_dependency_node});
+    // Origin dependency_node has this attribute(refer to function IsDependOfIsolatedNodes), so we keep it.
+    new_output->AddAttr(kAttrTopoSortRhsFirst, MakeValue(true));
   }
   former_call_graph->set_output(new_output);
 }
