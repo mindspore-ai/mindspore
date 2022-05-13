@@ -22,7 +22,7 @@ mindspore.ops.ScatterAdd
     **输入：**
 
     - **input_x** (Parameter) - ScatterAdd的输入，任意维度的Parameter。
-    - **indices** (Tensor) - 指定相加操作的索引，数据类型为mindspore.int32。
+    - **indices** (Tensor) - 指定相加操作的索引，数据类型为mindspore.int32或者mindspore.int64。
     - **updates** (Tensor) - 指定与 `input_x` 相加操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + x.shape[1:]` 。
 
     **输出：**
@@ -32,6 +32,6 @@ mindspore.ops.ScatterAdd
     **异常：**
 
     - **TypeError** - `use_locking` 不是bool。
-    - **TypeError** - `indices` 不是int32。
+    - **TypeError** - `indices` 不是int32或者int64。
     - **ValueError** - `updates` 的shape不等于 `indices.shape + x.shape[1:]` 。
     - **RuntimeError** - 当 `input_x` 和 `updates` 类型不一致，需要进行类型转换时，如果 `updates` 不支持转成参数 `input_x` 需要的数据类型，就会报错。

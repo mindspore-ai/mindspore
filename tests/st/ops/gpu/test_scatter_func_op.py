@@ -775,11 +775,6 @@ def test_scatter_func_disordered_dynamic_int8():
     ).astype(np.int8)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
-    # min
-    output = scatter_func_d_net("min", inputx, indices, updates)
-    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int8))
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -815,11 +810,6 @@ def test_scatter_func_disordered_dynamic_uint8():
     expected = np.array(
         [[95.0, 96.0, 97.0, 98.0], [67.0, 68.0, 69.0, 70.0], [99.0, 100.0, 101.0, 102.0]]
     ).astype(np.uint8)
-    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
-
-    # min
-    output = scatter_func_d_net("min", inputx, indices, updates)
-    expected = np.flip(np.arange(34, 46).reshape(3, 4).astype(np.uint8))
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
