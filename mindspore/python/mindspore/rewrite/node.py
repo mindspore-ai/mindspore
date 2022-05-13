@@ -66,7 +66,7 @@ class Node:
                  func: Optional[ScopedValue], args: [ScopedValue], kwargs: {str: ScopedValue}, name: str, instance):
         """
         Constructor of Node. Rewrite recommend invoking class method of Node to instantiate an instance of Node such
-        as `create_call_buildin_op`, `create_call_method`, `create_python_node`, `create_input_node` and
+        as `create_call_op`, `create_call_method`, `create_python_node`, `create_input_node` and
         `create_output_node`, etc. rather than invoking constructor of Node directly.
 
         Args:
@@ -102,9 +102,9 @@ class Node:
         self._belong_tree = None
 
     @classmethod
-    def create_call_buildin_op(cls, op: Union[Cell, Primitive], ast_node: Optional[ast.AST],
-                               targets: [Union[ScopedValue, str]], func: Union[ScopedValue, str],
-                               args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None, name: str = ""):
+    def create_call_buildin_op(cls, op: Union[Cell, Primitive], ast_node: Optional[ast.AST], targets: [ScopedValue],
+                               func: ScopedValue, args: [ScopedValue] = None, kwargs: {str: ScopedValue}=None,
+                               name: str = ""):
         """
         Class method of Node. Instantiate an instance of node whose type is `CallCell` or `CallPrimitive`.
         A `CallCell` node represents an invoking to cell-op.
@@ -124,22 +124,15 @@ class Node:
 
         if not isinstance(op, (Cell, Primitive)):
             raise ValueError("Input op is not a buildin op(Cell or Primitive): ", type(op))
-        if args is None:
-            args = []
-        if kwargs is None:
-            kwargs = {}
-        if isinstance(func, str):
-            func = ScopedValue.create_naming_value(func)
         non_custom_args = Node._handle_custom_obj_in_args(args)
         non_custom_kwargs = Node._handle_custom_obj_in_kwargs(kwargs)
-        new_targets = Node._handle_targets(targets)
         if ast_node is None:
-            ast_node = AstModifier.create_call_assign(new_targets, func, non_custom_args, non_custom_kwargs)
+            ast_node = AstModifier.create_call_assign(targets, func, non_custom_args, non_custom_kwargs)
         if isinstance(op, Cell):
             node_type = NodeType.CallCell
         else:
             node_type = NodeType.CallPrimitive
-        return cls(node_type, ast_node, new_targets, func, args, kwargs, name, op)
+        return cls(node_type, ast_node, targets, func, args, kwargs, name, op)
 
     @classmethod
     def create_call_method(cls, ast_node: Optional[ast.AST], targets: [Union[ScopedValue, str]],
@@ -250,17 +243,22 @@ class Node:
         """
         cls_name = type(op).__name__
 
+        if args is None:
+            args = []
+        if kwargs is None:
+            kwargs = {}
+        if isinstance(func, str):
+            func = ScopedValue.create_naming_value(func)
+        new_targets = Node._handle_targets(targets)
         if is_sub_net and is_subtree(cls_name):
             from .symbol_tree_builder import SymbolTreeBuilder
             stb = SymbolTreeBuilder(op)
             stree = stb.build()
             replacer = AstReplacer(stree.get_class_ast())
             replacer.replace_all(stree.get_ori_cls_name(), stree.get_opt_cls_name())
-            return TreeNode.create_tree_node(stree, None, targets, ScopedValue.create_naming_value(name, "self"),
-                                             args, kwargs, name, op)
+            return TreeNode.create_tree_node(stree, ast_node, new_targets, func, args, kwargs, name, op)
 
-        return Node.create_call_buildin_op(op, None, targets, ScopedValue.create_naming_value(name, "self"),
-                                           args, kwargs, name)
+        return Node.create_call_buildin_op(op, ast_node, new_targets, func, args, kwargs, name)
 
     @staticmethod
     def _get_construct_arg_names(parameters):
@@ -1134,8 +1132,8 @@ class TreeNode(Node):
         self.symbol_tree = tree
 
     @classmethod
-    def create_tree_node(cls, tree, ast_node: ast.AST, targets: [ScopedValue], func: Union[ScopedValue, str],
-                         args: [ScopedValue], kwargs: {str: ScopedValue}, name: str = "", instance=None):
+    def create_tree_node(cls, tree, ast_node: ast.AST, targets: [ScopedValue], func: ScopedValue, args: [ScopedValue],
+                         kwargs: {str: ScopedValue}, name: str = "", instance=None):
         """
         Class method of TreeNode. Instantiate an instance of node whose type is Tree. A Tree node represents an invoking
         to sub-network.
@@ -1151,4 +1149,11 @@ class TreeNode(Node):
                 Name of node also used as field name in network class.
             instance: Object in network corresponding to this node.
         """
+
+        if not isinstance(tree, Cell):
+            raise ValueError("Argument tree should be a Cell: ", type(tree))
+        non_custom_args = Node._handle_custom_obj_in_args(args)
+        non_custom_kwargs = Node._handle_custom_obj_in_kwargs(kwargs)
+        if ast_node is None:
+            ast_node = AstModifier.create_call_assign(targets, func, non_custom_args, non_custom_kwargs)
         return cls(tree, ast_node, targets, func, args, kwargs, name, instance)

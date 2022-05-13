@@ -440,7 +440,7 @@ class SymbolTree(Observer, Observable):
             raise RuntimeError("Node is not belong to current SymbolTree: ", node_or_name)
         return Position.create(node.get_belong_symbol_tree(), node, False)
 
-    def insert_node(self, position: Position, node: Node, insert_to_ast: bool = True) -> Node:
+    def insert_node(self, position: Optional[Position], node: Node, insert_to_ast: bool = True) -> Node:
         """
         Insert a node into SymbolTree.
         Note:
@@ -477,6 +477,14 @@ class SymbolTree(Observer, Observable):
         # if position in current SymbolTree
         if position is not None and position.symbol_tree is not self:
             raise RuntimeError("Position is not in current SymbolTree:", position)
+        if position is not None and position.node.get_node_type() == NodeType.Input:
+            valid = True
+            if position.before_node:
+                valid = False
+            if self._tail and position.node is not self._tail:
+                valid = False
+            if not valid:
+                raise RuntimeError("Can not insert a node before or between parameters:", position)
         # unique targets, name while insert node into symbol_tree
         node_name = self._node_name_namer.get_name(node)
         node.set_name(node_name)
@@ -491,6 +499,9 @@ class SymbolTree(Observer, Observable):
         # update init-function-ast and construct-function-ast
         if insert_to_ast:
             node.set_func(ScopedValue.create_naming_value(node_name, "self"))
+            node_ast = node.get_ast()
+            if not isinstance(node_ast, ast.Assign):
+                raise RuntimeError("Only support insert cell op now")
             if isinstance(node, TreeNode):
                 global_vars_key = node.get_name() + "_args"
                 self.add_global_vars(global_vars_key, node.symbol_tree.get_global_vars())
@@ -503,18 +514,13 @@ class SymbolTree(Observer, Observable):
                 assign = ast.Assign(targets=[ast_target], value=value, lineno=0, col_offset=0)
                 AstModifier.insert_assign_ast_to_function(self._init_func_ast, assign)
 
-                assign_construct = AstModifier.create_call_assign(node.get_targets(), ScopedValue.create_naming_value
-                                                                  (node.get_name(), "self"), node.get_args(), {})
-                AstModifier.insert_assign_ast_to_function(self._root_ast, assign_construct,
+                AstModifier.insert_assign_ast_to_function(self._root_ast, node_ast,
                                                           None if position is None else position.node.get_ast(),
                                                           position.before_node)
                 sub_stree: SymbolTree = node.symbol_tree
                 from .symbol_tree_builder import SymbolTreeBuilder
                 SymbolTreeBuilder.merge_module_of_subtree(self, sub_stree)
             else:
-                node_ast = node.get_ast()
-                if not isinstance(node_ast, ast.Assign):
-                    raise RuntimeError("Only support insert cell op now")
                 AstModifier.insert_assign_to_function(self._init_func_ast,
                                                       targets=[ScopedValue(ValueType.NamingValue, "self", node_name)],
                                                       expr=ScopedValue(ValueType.NamingValue, "global_vars", "get"),

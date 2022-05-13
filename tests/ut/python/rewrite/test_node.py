@@ -40,7 +40,8 @@ def test_create_by_cell():
     Description: Call create_call_buildin_op to create a CallCell node.
     Expectation: Success.
     """
-    node = Node.create_call_buildin_op(FakeCell(), None, ['x'], 'new_conv',
+    node = Node.create_call_buildin_op(FakeCell(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
                                        [ScopedValue.create_naming_value('x'), ScopedValue.create_variable_value(1)],
                                        {"cool_boy": ScopedValue.create_naming_value('Naroto')}, 'new_conv')
     assert node._args_num == 2
@@ -88,7 +89,8 @@ def test_create_by_cell2():
     Description: Call create_call_buildin_op to create a CallCell node.
     Expectation: Success.
     """
-    node = Node.create_call_buildin_op(FakeCell2(), None, ['x'], 'new_conv',
+    node = Node.create_call_buildin_op(FakeCell2(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
                                        [ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x"),
                                         ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x"),
                                         ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x")],
@@ -110,7 +112,8 @@ def test_create_by_cell3():
     Description: Call create_call_buildin_op to create a CallCell node.
     Expectation: Success.
     """
-    node = Node.create_call_buildin_op(FakeCell3(), None, ['x'], 'new_conv',
+    node = Node.create_call_buildin_op(FakeCell3(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
                                        [ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x"),
                                         ScopedValue.create_naming_value('x'), ScopedValue.create_naming_value("x")],
                                        {"h": ScopedValue.create_naming_value(1),
