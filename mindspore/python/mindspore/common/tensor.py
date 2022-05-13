@@ -1984,6 +1984,40 @@ class Tensor(Tensor_):
                             "but got {}.".format(type(value)))
         return tensor_operator_registry.get("fill")(self.dtype, self.shape, value)
 
+    def fills(self, value):
+        """
+        Create a tensor of the same shape and type as the input tensor and fill it with specified value.
+
+        Note:
+            Unlike Numpy, tensor.fills() will always returns a new tensor, instead of
+            filling the original tensor.
+
+        Args:
+            value (Union[int, float, Tensor]): All elements of the output tensor will be assigned this value. The
+                type should be int, float or 0-dimensional tensor.
+
+        Returns:
+            Tensor, with the same shape and type as input tensor.
+
+        Raises:
+            TypeError: If `value` has types not specified above.
+            RuntimeError: If `value` cannot be converted to the same type as `x`.
+            ValueError: If `value` is a tensor and the length of dimension is not 0.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.arange(4).reshape((2, 2)).astype('float32'))
+            >>> print(x.fills(1.0))
+            [[1. 1.]
+            [1. 1.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('fills')(self, value)
+
     def masked_fill(self, mask, value):
         """
         Fills elements of self tensor with value where mask is True.

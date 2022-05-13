@@ -206,6 +206,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"pow", std::string("pow")},                                        // P.Pow()
        {"round", std::string("round")},                                    // P.Round()
        {"fill", std::string("fill")},                                      // P.fill()
+       {"fills", std::string("fills")},                                    // P.fills
        {"ptp", std::string("ptp")},                                        // P.reduce_max() - P.reduce_min()
        {"clip", std::string("clip")},                                      // P.maximum(P.minimum)
        {"__bool__", std::string("tensor_bool")},                           // C.tensor_bool

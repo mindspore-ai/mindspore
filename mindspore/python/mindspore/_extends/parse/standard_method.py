@@ -1104,6 +1104,13 @@ def fill(x, value):
     return F.fill(x.dtype, x.shape, value)
 
 
+def fills(x, value):
+    """
+    Create a tensor of the same shape and type as the input tensor and fill it with specified value.
+    """
+    return F.fills(x, value)
+
+
 def ptp(x, axis=None, keepdims=False):
     """
     The name of the function comes from the acronym for "peak to peak".

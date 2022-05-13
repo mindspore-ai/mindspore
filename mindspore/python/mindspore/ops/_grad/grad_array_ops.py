@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ from mindspore.ops import composite as C
 from .. import operations as P
 from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
+from ..operations.array_ops import Fills
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..functional import broadcast_gradient_args
 from .. import functional as F
@@ -48,6 +49,16 @@ def get_bprop_fill(self):
 
     def bprop(dtype, dims, x, out, dout):
         return zeros_like(dims), zeros_like(x)
+
+    return bprop
+
+
+@bprop_getters.register(Fills)
+def get_bprop_fills(self):
+    """Generate bprop for Fills."""
+
+    def bprop(x, value, out, dout):
+        return zeros_like(x), zeros_like(value)
 
     return bprop
 

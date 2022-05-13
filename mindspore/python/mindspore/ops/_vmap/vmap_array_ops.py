@@ -22,6 +22,7 @@ from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
     _handle_broadcasting
+from ..operations.array_ops import Fills
 
 
 @vmap_rules_getters.register("Cast")
@@ -354,6 +355,39 @@ def get_fill_vmap_rule(prim, axis_size):
         value = F.reshape(value, (axis_size,) + (1,) * len(value_shape))
         out = P.BroadcastTo((axis_size,) + value_shape)(value)
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(Fills)
+def get_fills_vmap_rule(prim, axis_size):
+    """VmapRule for `Fills` operation."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+    cast_op = P.Cast()
+
+    def vmap_rule(x_bdim, value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, value_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        value, value_dim = value_bdim
+        out_type = x.dtype
+        out_shape = x.shape
+        value = cast_op(value, out_type)
+        if value_dim is None:
+            out = P.BroadcastTo(out_shape)(value)
+            return out, x_dim
+        value = _bdim_at_front(value, value_dim, axis_size)
+        if x_dim is None:
+            value = F.reshape(value, (axis_size,) + (1,) * len(out_shape))
+            out = P.BroadcastTo((axis_size,) + out_shape)(value)
+        else:
+            x = _bdim_at_front(x, x_dim, axis_size)
+            out_shape = x.shape
+            value = F.reshape(value, (axis_size,) + (1,) * (len(out_shape) - 1))
+            out = P.BroadcastTo(out_shape)(value)
+        return out, 0
 
     return vmap_rule
 

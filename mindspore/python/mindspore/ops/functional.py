@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -921,6 +921,7 @@ tensor_operator_registry.register('expand_dims', expand_dims)
 tensor_operator_registry.register('cast', cast)
 tensor_operator_registry.register('shape_mul', shape_mul)
 tensor_operator_registry.register('fill', fill)
+tensor_operator_registry.register('fills', fills)
 tensor_operator_registry.register('concatenate', P.Concat)
 tensor_operator_registry.register('eye', eye)
 tensor_operator_registry.register('reduce_sum', reduce_sum)

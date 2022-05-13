@@ -21,10 +21,12 @@ from mindspore.ops.primitive import constexpr
 
 from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import NonZero, MatrixDiagV3
+from ..operations.array_ops import Fills
 from ...common import Tensor
 
 eye_ = P.Eye()
 fill_ = P.Fill()
+fills_ = Fills()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
 tile_ = P.Tile()
@@ -238,6 +240,52 @@ def fill(type, shape, value):
          [0. 0. 0.]]
     """
     return fill_(type, shape, value)
+
+
+def fills(x, value):
+    """
+    Create a tensor of the same shape and type as the input tensor and fill it with specified value.
+
+    Args:
+        x (Tensor): Input tensor, used to specify the shape and type of the output tensor. The data type should be
+            int8, int16, int32, float16 or float32.
+        value (Union[int, float, Tensor]): All elements of the output tensor will be assigned this value. The
+            type should be int, float or 0-dimensional tensor.
+
+    Returns:
+        Tensor, with the same shape and type as input tensor.
+
+    Raises:
+        TypeError: If `x` is not a tensor.
+        TypeError: If `value` has types not specified above.
+        RuntimeError: If `value` cannot be converted to the same type as `x`.
+        ValueError: If `value` is a tensor and the length of dimension is not 0.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.arange(4).reshape((2, 2)).astype('float32'))
+        >>> output = ops.fills(x, 1)
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+    """
+    if isinstance(value, float):
+        value_ = value
+    elif isinstance(value, int):
+        value_ = float(value)
+    elif isinstance(value, Tensor):
+        if value.ndim != 0:
+            raise ValueError("For 'ops.fills', if the argument 'value' is a tensor, the number of its dimension"
+                             " should be 0, but got {}".format(value.ndim))
+        value_ = value.astype(mstype.float32)
+    else:
+        raise TypeError("For 'ops.fills', the type of argument 'value' should be int, float or Tensor,"
+                        " but got {}".format(type(value)))
+    return fills_(x, value_)
 
 
 def ones(shape, type):
@@ -2068,6 +2116,7 @@ __all__ = [
     'matrix_band_part',
     'fill',
     'fill_',
+    'fills',
     'tile',
     'size',
     'ger',

@@ -1521,6 +1521,32 @@ class Fill(PrimitiveWithInfer):
         return out
 
 
+class Fills(Primitive):
+    """
+    Create a tensor of the same shape and type as the input tensor and fill it with specified value.
+
+    Refer to :func:`mindspore.ops.fills` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> a = Tensor(np.arange(4).reshape((2,2)).astype('float32'))
+        >>> fills = ops.Fills()
+        >>> output = fills(a, float(1))
+        >>> print(output)
+        [[1. 1.]
+         [1. 1.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Fills."""
+        self.init_prim_io_names(inputs=['x', 'value'], outputs=['y'])
+
+
 class Ones(Primitive):
     r"""
     Creates a tensor filled with value ones.
