@@ -105,7 +105,7 @@ void FSEBitStream::Push(int64_t state, uint8_t bit_count) {
   }
 }
 
-void FSEBitStream::Flush() { curr_chunk_ <<= kCurrentBitCount - curr_bit_count_; }
+void FSEBitStream::Flush() { curr_chunk_ <<= (kCurrentBitCount - curr_bit_count_); }
 
 // The function gives the index of most import `1` in the binary representation.
 // e.g. for the number 00100 it gives 2.
@@ -122,6 +122,5 @@ int FSEBitStream::CountBits(int32_t x) {
 #else
   return __builtin_clz(x) ^ kInt32Mask;
 #endif
-  return 0;
 }
 }  // namespace mindspore::lite::quant
