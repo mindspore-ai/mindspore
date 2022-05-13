@@ -205,7 +205,7 @@ def test_decode_normalize_op():
         num_iter += 1
 
 
-def skip_test_normalize_md5_01():
+def test_normalize_md5_01():
     """
     Test Normalize with md5 check: valid mean and std
     expected to pass
@@ -221,7 +221,7 @@ def skip_test_normalize_md5_01():
     save_and_check_md5(data_py, filename2, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_normalize_md5_02():
+def test_normalize_md5_02():
     """
     Test Normalize with md5 check: len(mean)=len(std)=1 with RGB images
     expected to pass
@@ -310,7 +310,7 @@ def test_normalize_exception_invalid_range():
         assert "Input mean_value is not within the required interval of [0.0, 1.0]." in str(e)
 
 
-def skip_test_normalize_grayscale_md5_01():
+def test_normalize_grayscale_md5_01():
     """
     Test Normalize with md5 check: len(mean)=len(std)=1 with 1 channel grayscale images
     expected to pass
@@ -322,7 +322,7 @@ def skip_test_normalize_grayscale_md5_01():
     save_and_check_md5(data, filename, generate_golden=GENERATE_GOLDEN)
 
 
-def skip_test_normalize_grayscale_md5_02():
+def test_normalize_grayscale_md5_02():
     """
     Test Normalize with md5 check: len(mean)=len(std)=3 with 3 channel grayscale images
     expected to pass
@@ -452,15 +452,15 @@ if __name__ == "__main__":
     test_decode_normalize_op()
     test_normalize_op_hwc(plot=True)
     test_normalize_op_chw(plot=True)
-    skip_test_normalize_md5_01()
-    skip_test_normalize_md5_02()
+    test_normalize_md5_01()
+    test_normalize_md5_02()
     test_normalize_exception_unequal_size_1()
     test_normalize_exception_out_of_range()
     test_normalize_exception_unequal_size_2()
     test_normalize_exception_invalid_size()
     test_normalize_exception_invalid_range()
-    skip_test_normalize_grayscale_md5_01()
-    skip_test_normalize_grayscale_md5_02()
+    test_normalize_grayscale_md5_01()
+    test_normalize_grayscale_md5_02()
     test_normalize_grayscale_exception()
     test_multiple_channels()
     test_normalize_eager_hwc()
