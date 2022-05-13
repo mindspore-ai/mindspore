@@ -1227,7 +1227,7 @@ class MatrixDiagV3(Primitive):
         ValueError: If the x.shape[-2] is not equal to num_diags calculated by k[1] - k[0] + 1.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([[8, 9, 0],

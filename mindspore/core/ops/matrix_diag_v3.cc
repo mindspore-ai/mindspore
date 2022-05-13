@@ -32,6 +32,7 @@ namespace ops {
 namespace {
 const int64_t kNumber1 = 1;
 const int64_t kNumber2 = 2;
+constexpr int64_t kMatrixDiagV3InputsNum = 5;
 void CheckTrueValueValidAndKValue(const std::vector<AbstractBasePtr> &input_args, int64_t row_val, int64_t col_val,
                                   int64_t additional_value, int64_t max_value, int *k_val, size_t k_val_size) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
@@ -206,19 +207,31 @@ TypePtr MatrixDiagV3InferType(const PrimitivePtr &prim, const std::vector<Abstra
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(MatrixDiagV3, BaseOperator);
+void MatrixDiagV3::Init(const std::string &align) { this->set_align(align); }
+
+void MatrixDiagV3::set_align(const std::string &align) { (void)this->AddAttr(kAlign, api::MakeValue(align)); }
+
+std::string MatrixDiagV3::get_align() const {
+  auto value_ptr = GetAttr(kAlign);
+  return GetValue<std::string>(value_ptr);
+}
+
 AbstractBasePtr MatrixDiagV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 5;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kMatrixDiagV3InputsNum, primitive->name());
+  // Check 'align' attribute.
+  auto align_ptr = primitive->GetAttr(kAlign);
+  MS_EXCEPTION_IF_NULL(align_ptr);
+  auto align = GetValue<std::string>(align_ptr);
+  CheckAndConvertUtils::CheckString(kAlign, align, {"LEFT_RIGHT", "RIGHT_LEFT", "LEFT_LEFT", "RIGHT_RIGHT"},
+                                    primitive->name());
   auto infer_type = MatrixDiagV3InferType(primitive, input_args);
   auto infer_shape = MatrixDiagV3InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+MIND_API_OPERATOR_IMPL(MatrixDiagV3, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(MatrixDiagV3, prim::kPrimMatrixDiagV3, MatrixDiagV3Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
