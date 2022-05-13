@@ -120,6 +120,6 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto infer_shape = ConcatInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Concat, prim::kPrimConcat, ConcatInfer, nullptr, true);
+REGISTER_PRIMITIVE_C(kNameConcat, Concat);
 }  // namespace ops
 }  // namespace mindspore

@@ -139,11 +139,13 @@ class MS_CORE_API CheckAndConvertUtils {
                            const std::pair<T, T> &range, const std::string &prim_name) {
     auto iter = kCompareRangeMap<T>.find(compare_operator);
     if (iter == kCompareRangeMap<T>.end()) {
-      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator << " cannot find in the compare map";
+      MS_EXCEPTION(NotExistsError) << "For " << prim_name << ", compare_operator " << compare_operator
+                                   << " cannot find in the compare map";
     }
     if (range.first >= range.second) {
-      MS_EXCEPTION(ArgumentError) << "The check range left must be smaller than right number but got left: "
-                                  << range.first << " and right: " << range.second << ".";
+      MS_EXCEPTION(ValueError) << "For " << prim_name
+                               << ", the check range left must be smaller than right number but got left: "
+                               << range.first << " and right: " << range.second << ".";
     }
     if (iter->second(arg_value, range)) {
       return;
@@ -156,7 +158,7 @@ class MS_CORE_API CheckAndConvertUtils {
     }
     auto iter_to_string = kCompareRangeToString.find(compare_operator);
     if (iter_to_string == kCompareRangeToString.end()) {
-      MS_EXCEPTION(NotExistsError) << "compare_operator " << compare_operator
+      MS_EXCEPTION(NotExistsError) << "For " << prim_name << ", compare_operator " << compare_operator
                                    << " cannot find in the compare string map";
     }
     auto range_strng = iter_to_string->second;
