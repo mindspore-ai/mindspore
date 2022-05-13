@@ -970,12 +970,13 @@ class GraphSplitGpu(GraphSplitByPattern):
             fuse_tensor = dom.dom_op().inputs[arg_idx]
 
             for a, _ in dom.in_relations.items():
+                if not a.check_acyclic(dom):
+                    continue
                 # Rule 1: Same type with at lease one same input.
                 if a.dom_op().prim == dom.dom_op().prim and _same_input(dom.dom_op(), a.dom_op()):
                     return [a], True
                 # Rule 2: Fuse op(reshape/elementwise/broadcast) in specified position inputs.
-                if a.pattern <= PrimLib.BROADCAST and dom.check_acyclic(a) and \
-                        any((op.output in fuse_tensor for op in a.ops)):
+                if a.pattern <= PrimLib.BROADCAST and any((op.output in fuse_tensor for op in a.ops)):
                     return [a], True
             return []
 
