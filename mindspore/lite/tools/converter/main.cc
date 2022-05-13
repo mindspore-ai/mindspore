@@ -23,7 +23,7 @@
 #if defined(__linux__) && !defined(Debug)
 void SignalHandler(int sig) {
   printf("encounter an unknown error, please verify the input model file or build the debug version\n");
-  exit(0);
+  exit(1);
 }
 #endif
 
@@ -48,6 +48,7 @@ int main(int argc, const char **argv) {
     ret = mindspore::lite::RunConverter(argc, argv);
 #ifndef Debug
   } catch (const std::exception &e) {
+    ret = mindspore::lite::RET_ERROR;
     std::cout << e.what() << std::endl;
     std::cout << "encounter an unknown error, please verify the input model file or build the debug version\n";
   }
