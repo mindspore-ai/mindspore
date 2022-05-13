@@ -16,7 +16,7 @@ mindspore.History
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。
+        - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.RunContext`。
 
     .. py:method:: epoch_end(run_context)
 
@@ -24,4 +24,4 @@ mindspore.History
 
         **参数：**
 
-        - **run_context** (RunContext) - 包含模型的一些基本信息。
+        - **run_context** (RunContext) - 包含模型的一些基本信息。详情请参考 :class:`mindspore.RunContext`。

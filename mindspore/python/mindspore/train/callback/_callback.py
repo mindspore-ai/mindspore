@@ -75,13 +75,20 @@ def summary_cb_for_save_op(summary_list):
 
 class Callback:
     """
-    Abstract base class used to build a callback class. Callbacks are context managers
+    Abstract base class used to build a Callback class. Callbacks are context managers
     which will be entered and exited when passing into the Model.
     You can use this mechanism to do some custom operations.
 
-    Callback function can perform some operations before and after step or epoch.
-    To create a custom callback, subclass Callback and override the method associated
-    with the stage of interest. For details of Callback fusion, please check
+    Each method of Callback class corresponds to a stage in training or eval process, and those methods
+    have the same input `run_context`, which hold context information of the model in
+    training or eval process. When defining a Callback subclass or creating a custom Callback,
+    override these methods.
+
+    When creating a custom Callback, model context information can be obtained in Callback
+    methods by calling `RunContext.original_args()`, which is a dictionary varivable
+    recording current attributes. Users can add custimized attributes to the information.
+    Training process can also be stopped by calling `request_stop` method. For details
+    of custom Callback, please check
     `Callback <https://www.mindspore.cn/tutorials/experts/en/master/debug/custom_debug.html>`_.
 
     Examples:
@@ -243,13 +250,65 @@ class InternalCallbackParam(dict):
 
 class RunContext:
     """
-    Provide information about the model.
+    Hold and manage information about the model.
 
-    Provide information about original request to model function.
-    Callback objects can stop the loop by calling request_stop() of run_context.
-    This class needs to be used with :class:`mindspore.train.callback.Callback`.
-    For details of Callback fusion, please check
-    `Callback <https://www.mindspore.cn/tutorials/experts/en/master/debug/custom_debug.html>`_.
+    `RunContext` is mainly used to collect context-related information about the model during
+    training or eval and pass it into the Callback object as an input parameter to share information.
+
+    Callback objects not only can obtain the Model context information by callingby
+    `RunContext.original_args()` and add extral attributes to the information, but also can stop the
+    training process by calling `request_stop` method. For details of custom Callback,
+    please check
+    `Callback <:https//www.mindspore.cn/tutorials/experts/en/master/debug/custom_debug.html>`_.
+
+    `RunContext.original_args()` holds the model context information as a dictionary variable, and
+    different attributes of the dictionary are stored in training or eval process. Details are as follows:
+
+    +--------------------------+------------------------+---------------------------------------+
+    |  Attributes supported in train |  Attributes supported in eval |           meaning                     |
+    +==========================+========================+=======================================+
+    |   train_network          |                        | train network with optimizer and loss |
+    +--------------------------+------------------------+---------------------------------------+
+    |   epoch_num              |                        |      Number of train epochs           |
+    +--------------------------+------------------------+---------------------------------------+
+    |  train_dataset           |                        |         the train dataset             |
+    +--------------------------+------------------------+---------------------------------------+
+    |   loss_fn                |                        |         the loss function             |
+    +--------------------------+------------------------+---------------------------------------+
+    |   optimizer              |                        |         the optimizer                 |
+    +--------------------------+------------------------+---------------------------------------+
+    |  parallel_mode           |                        |         the parallel mode             |
+    +--------------------------+------------------------+---------------------------------------+
+    |   device_number          |                        |         the device number             |
+    +--------------------------+------------------------+---------------------------------------+
+    |   train_dataset_element  |                        | the train data element of current step|
+    +--------------------------+------------------------+---------------------------------------+
+    |  last_save_ckpt_step     |                        |   the last step num of save ckpt      |
+    +--------------------------+------------------------+---------------------------------------+
+    |  latest_ckpt_file        |                        |         the ckpt file                 |
+    +--------------------------+------------------------+---------------------------------------+
+    |   cur_epoch_num          |                        |         number of current epoch       |
+    +--------------------------+------------------------+---------------------------------------+
+    |                          |  eval_network          |     the evaluate network              |
+    +--------------------------+------------------------+---------------------------------------+
+    |                          |  valid_dataset         |     the valid dataset                 |
+    +--------------------------+------------------------+---------------------------------------+
+    |                          |   metrics              |     the evaluate metrics              |
+    +--------------------------+------------------------+---------------------------------------+
+    |   mode                   |   mode                 |     "train" or "eval"                 |
+    +--------------------------+------------------------+---------------------------------------+
+    |  batch_num               |   batch_num            |    the train/eval batch number        |
+    +--------------------------+------------------------+---------------------------------------+
+    |   list_callback          |   list_callback        |       callback list                   |
+    +--------------------------+------------------------+---------------------------------------+
+    |   network                |    network             |       basic network                   |
+    +--------------------------+------------------------+---------------------------------------+
+    |  cur_step_num            |    cur_step_num        |    the train/eval step number         |
+    +--------------------------+------------------------+---------------------------------------+
+    |   dataset_sink_mode      |    dataset_sink_mode   |    the train/eval sink mode           |
+    +--------------------------+------------------------+---------------------------------------+
+    |   net_outputs            |      net_outputs       |     network output results            |
+    +--------------------------+------------------------+---------------------------------------+
 
     Args:
         original_args (dict): Holding the related information of model.

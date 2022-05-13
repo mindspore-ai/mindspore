@@ -58,7 +58,8 @@ class History(Callback):
         Initialize the `epoch` property at the begin of training.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.
+            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`. For more details,
+                    please refer to :class:`mindspore.RunContext`.
         """
         self.epoch = {"epoch": []}
 
@@ -67,7 +68,8 @@ class History(Callback):
         Records the first element of network outputs at the end of epoch.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.
+            run_context (RunContext): Context of the `mindspore.Model.{train | eval}`.  For more details,
+                    please refer to :class:`mindspore.RunContext`.
         """
         cb_params = run_context.original_args()
         epoch = cb_params.get("cur_epoch_num", 1)
