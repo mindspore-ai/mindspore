@@ -54,6 +54,9 @@ constexpr size_t kShapeIndex1st = 1;
 constexpr size_t kShapeIndex2nd = 2;
 constexpr size_t kShapeIndex3rd = 3;
 constexpr size_t kShapeIndex4th = 4;
+constexpr size_t kShapeIndex5nd = 5;
+constexpr size_t kShapeIndex6rd = 6;
+constexpr size_t kShapeIndex7th = 7;
 
 constexpr size_t kDim2DShapeSize = 4;
 constexpr size_t kDim3DShapeSize = 5;
@@ -252,6 +255,22 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
       MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
     }
 
+    dst->push_back(src.size() < kShapeIndex4th ? 1 : src[src.size() - kShapeIndex4th]);
+    dst->push_back(src.size() < kShapeIndex3rd ? 1 : src[src.size() - kShapeIndex3rd]);
+    dst->push_back(src.size() < kShapeIndex2nd ? 1 : src[src.size() - kShapeIndex2nd]);
+    dst->push_back(src.size() == 0 ? 1 : src[src.size() - kShapeIndex1st]);
+  }
+
+  // expand Nd Shape to 7d (N in [0,7])
+  void ShapeNdTo7d(const std::vector<size_t> &src, std::vector<size_t> *dst) {
+    const size_t nd_maximum_size = 7;
+    if (src.size() > nd_maximum_size) {
+      MS_EXCEPTION(ValueError) << src.size() << "-D data is not supported!";
+    }
+
+    dst->push_back(src.size() < kShapeIndex7th ? 1 : src[src.size() - kShapeIndex7th]);
+    dst->push_back(src.size() < kShapeIndex6rd ? 1 : src[src.size() - kShapeIndex6rd]);
+    dst->push_back(src.size() < kShapeIndex5nd ? 1 : src[src.size() - kShapeIndex5nd]);
     dst->push_back(src.size() < kShapeIndex4th ? 1 : src[src.size() - kShapeIndex4th]);
     dst->push_back(src.size() < kShapeIndex3rd ? 1 : src[src.size() - kShapeIndex3rd]);
     dst->push_back(src.size() < kShapeIndex2nd ? 1 : src[src.size() - kShapeIndex2nd]);

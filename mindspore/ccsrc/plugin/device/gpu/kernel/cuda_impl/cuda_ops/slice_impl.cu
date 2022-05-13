@@ -146,6 +146,28 @@ __global__ void Slice4DGrad(const size_t s1, const size_t s2, const size_t s3, c
 }
 
 template <typename T>
+__global__ void Slice7DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                            const size_t s6, const size_t s7, const size_t l1, const size_t l2, const size_t l3,
+                            const size_t l4, const size_t l5, const size_t l6, const size_t l7, const size_t d1,
+                            const size_t d2, const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                            const size_t d7, const T *dy, T *dx) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (l1 * l2 * l3 * l4 * l5 * l6 * l7);
+       pos += blockDim.x * gridDim.x) {
+    size_t i = pos / (l2 * l3 * l4 * l5 * l6 * l7) % l1;
+    size_t j = pos / (l3 * l4 * l5 * l6 * l7) % l2;
+    size_t k = pos / (l4 * l5 * l6 * l7) % l3;
+    size_t o = pos / (l5 * l6 * l7) % l4;
+    size_t q = pos / (l6 * l7) % l5;
+    size_t r = pos / l7 % l6;
+    size_t s = pos % l7;
+    size_t input_idx = (i + s1) * (d2 * d3 * d4 * d5 * d6 * d7) + (j + s2) * (d3 * d4 * d5 * d6 * d7) +
+                       (k + s3) * (d4 * d5 * d6 * d7) + (o + s4) * (d5 * d6 * d7) + (q + s5) * (d6 * d7) +
+                       (r + s6) * d7 + (s + s7);
+    dx[input_idx] = dy[pos];
+  }
+}
+
+template <typename T>
 __global__ void FillArray(T *addr, const size_t len, const float value) {
   T value_ = static_cast<T>(value);
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < len; pos += blockDim.x * gridDim.x) {
@@ -214,6 +236,16 @@ void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const siz
                     const size_t d3, const size_t d4, const T *dy, T *dx, cudaStream_t stream) {
   Slice4DGrad<<<GET_BLOCKS(l1 * l2 * l3 * l4), GET_THREADS, 0, stream>>>(s1, s2, s3, s4, l1, l2, l3, l4, d1, d2, d3, d4,
                                                                          dy, dx);
+}
+
+template <typename T>
+void CalSlice7DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                    const size_t s6, const size_t s7, const size_t l1, const size_t l2, const size_t l3,
+                    const size_t l4, const size_t l5, const size_t l6, const size_t l7, const size_t d1,
+                    const size_t d2, const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                    const size_t d7, const T *dy, T *dx, cudaStream_t stream) {
+  Slice7DGrad<<<GET_BLOCKS(l1 * l2 * l3 * l4 * l5 * l6 * l7), GET_THREADS, 0, stream>>>(
+    s1, s2, s3, s4, s5, s6, s7, l1, l2, l3, l4, l5, l6, l7, d1, d2, d3, d4, d5, d6, d7, dy, dx);
 }
 
 template <typename T>
@@ -301,7 +333,8 @@ template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, co
                                             half *output, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const int *input,
                                             int *output, const uint32_t &device_id, cudaStream_t stream);
-template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const short *input,  // NOLINT
+template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
+                                            const short *input,                                              // NOLINT
                                             short *output, const uint32_t &device_id, cudaStream_t stream);  // NOLINT
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
                                             const unsigned char *input, unsigned char *output,
@@ -324,8 +357,8 @@ template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, co
                                             const size_t d1, const size_t d2, const int *input, int *output,
                                             const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
-                                            const size_t d1, const size_t d2, const short *input, short *output,  // NOLINT
-                                            const uint32_t &device_id, cudaStream_t stream);
+                                            const size_t d1, const size_t d2, const short *input,            // NOLINT
+                                            short *output, const uint32_t &device_id, cudaStream_t stream);  // NOLINT
 template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
                                             const size_t d1, const size_t d2, const unsigned char *input,
                                             unsigned char *output, const uint32_t &device_id, cudaStream_t stream);
@@ -438,7 +471,8 @@ template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, co
 template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t l1, const size_t l2, const size_t l3,
                                             const size_t l4, const size_t l5, const size_t d1, const size_t d2,
-                                            const size_t d3, const size_t d4, const size_t d5, const short *input,  // NOLINT
+                                            const size_t d3, const size_t d4, const size_t d5,
+                                            const short *input,                                              // NOLINT
                                             short *output, const uint32_t &device_id, cudaStream_t stream);  // NOLINT
 template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t l1, const size_t l2, const size_t l3,
@@ -486,7 +520,8 @@ template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, co
                                             const size_t s5, const size_t s6, const size_t l1, const size_t l2,
                                             const size_t l3, const size_t l4, const size_t l5, const size_t l6,
                                             const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                                            const size_t d5, const size_t d6, const short *input, short *output,  // NOLINT
+                                            const size_t d5, const size_t d6, const short *input,  // NOLINT
+                                            short *output,                                         // NOLINT
                                             const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t s6, const size_t l1, const size_t l2,
@@ -574,10 +609,11 @@ template CUDA_LIB_EXPORT void CalSlice4DGrad<int>(const size_t s1, const size_t 
                                                   const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                                   const size_t d1, const size_t d2, const size_t d3, const size_t d4,
                                                   const int *dy, int *dx, cudaStream_t stream);
-template CUDA_LIB_EXPORT void CalSlice4DGrad<short>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,  // NOLINT
-                                                    const size_t l1, const size_t l2, const size_t l3, const size_t l4,
-                                                    const size_t d1, const size_t d2, const size_t d3, const size_t d4,
-                                                    const short *dy, short *dx, cudaStream_t stream);  // NOLINT
+template CUDA_LIB_EXPORT void CalSlice4DGrad<short>(const size_t s1, const size_t s2, const size_t s3,  // NOLINT
+                                                    const size_t s4, const size_t l1, const size_t l2, const size_t l3,
+                                                    const size_t l4, const size_t d1, const size_t d2, const size_t d3,
+                                                    const size_t d4, const short *dy, short *dx,  // NOLINT
+                                                    cudaStream_t stream);
 template CUDA_LIB_EXPORT void CalSlice4DGrad<unsigned char>(const size_t s1, const size_t s2, const size_t s3,
                                                             const size_t s4, const size_t l1, const size_t l2,
                                                             const size_t l3, const size_t l4, const size_t d1,
@@ -593,6 +629,55 @@ template CUDA_LIB_EXPORT void CalSlice4DGrad<bool>(const size_t s1, const size_t
                                                    const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                                    const size_t d1, const size_t d2, const size_t d3, const size_t d4,
                                                    const bool *dy, bool *dx, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void CalSlice7DGrad<double>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                                     const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                                     const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                                     const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                                     const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                                     const size_t d7, const double *dy, double *dx,
+                                                     cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalSlice7DGrad<float>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                                    const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                                    const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                                    const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                                    const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                                    const size_t d7, const float *dy, float *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalSlice7DGrad<half>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                                   const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                                   const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                                   const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                                   const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                                   const size_t d7, const half *dy, half *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalSlice7DGrad<int>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                                  const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                                  const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                                  const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                                  const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                                  const size_t d7, const int *dy, int *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalSlice7DGrad<short>(const size_t s1, const size_t s2, const size_t s3,  // NOLINT
+                                                    const size_t s4, const size_t s5, const size_t s6, const size_t s7,
+                                                    const size_t l1, const size_t l2, const size_t l3, const size_t l4,
+                                                    const size_t l5, const size_t l6, const size_t l7, const size_t d1,
+                                                    const size_t d2, const size_t d3, const size_t d4, const size_t d5,
+                                                    const size_t d6, const size_t d7, const short *dy,  // NOLINT
+                                                    short *dx, cudaStream_t stream);                    // NOLINT
+template CUDA_LIB_EXPORT void CalSlice7DGrad<unsigned char>(
+  const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t s6, const size_t s7,
+  const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5, const size_t l6, const size_t l7,
+  const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5, const size_t d6, const size_t d7,
+  const unsigned char *dy, unsigned char *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalSlice7DGrad<int64_t>(
+  const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5, const size_t s6, const size_t s7,
+  const size_t l1, const size_t l2, const size_t l3, const size_t l4, const size_t l5, const size_t l6, const size_t l7,
+  const size_t d1, const size_t d2, const size_t d3, const size_t d4, const size_t d5, const size_t d6, const size_t d7,
+  const int64_t *dy, int64_t *dx, cudaStream_t stream);
+template CUDA_LIB_EXPORT void CalSlice7DGrad<bool>(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                                   const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                                   const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                                   const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                                   const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                                   const size_t d7, const bool *dy, bool *dx, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void FillDeviceArray<bool>(const size_t input_size, bool *addr, const float value,
                                                     cudaStream_t cuda_stream);

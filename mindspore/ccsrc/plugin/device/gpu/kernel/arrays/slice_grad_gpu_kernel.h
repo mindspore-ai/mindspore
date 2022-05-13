@@ -27,6 +27,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kSliceGradDefaultInputShapeSize = 4;
+constexpr size_t kSliceGradMaxInputShapeSize = 7;
+
 template <typename T>
 class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -47,9 +50,16 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *dy = GetDeviceAddress<T>(inputs, 0);
     T *dx = GetDeviceAddress<T>(outputs, 0);
     FillDeviceArray(outputs[0]->size / sizeof(T), dx, 0.f, reinterpret_cast<cudaStream_t>(stream_ptr));
-    CalSlice4DGrad(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3], input_shape_[0],
-                   input_shape_[1], input_shape_[2], input_shape_[3], dy, dx,
-                   reinterpret_cast<cudaStream_t>(stream_ptr));
+    if (input_shape_.size() <= kSliceGradDefaultInputShapeSize) {
+      CalSlice4DGrad(begin_[0], begin_[1], begin_[2], begin_[3], size_[0], size_[1], size_[2], size_[3],
+                     input_shape_[0], input_shape_[1], input_shape_[2], input_shape_[3], dy, dx,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      CalSlice7DGrad(begin_[0], begin_[1], begin_[2], begin_[3], begin_[4], begin_[5], begin_[6], size_[0], size_[1],
+                     size_[2], size_[3], size_[4], size_[5], size_[6], input_shape_[0], input_shape_[1],
+                     input_shape_[2], input_shape_[3], input_shape_[4], input_shape_[5], input_shape_[6], dy, dx,
+                     reinterpret_cast<cudaStream_t>(stream_ptr));
+    }
     return true;
   }
 
@@ -65,11 +75,11 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       for (auto x : shapex) {
         input_shape_.push_back(static_cast<size_t>(x));
       }
-      for (auto i = input_shape_.size(); i < 4; i++) {
+      for (auto i = input_shape_.size(); i < kSliceGradDefaultInputShapeSize; i++) {
         (void)input_shape_.insert(input_shape_.begin(), 1);
       }
       strides_ = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
-      for (auto i = strides_.size(); i < 4; i++) {
+      for (auto i = strides_.size(); i < kSliceGradDefaultInputShapeSize; i++) {
         (void)strides_.insert(strides_.begin(), 1);
       }
       size_ = GetAttr<std::vector<int64_t>>(kernel_node, "end");
@@ -80,7 +90,11 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         InitSizeLists();
         return true;
       }
-      ShapeNdTo4d(input_shape, &input_shape_);
+      if (input_shape.size() <= kSliceGradDefaultInputShapeSize) {
+        ShapeNdTo4d(input_shape, &input_shape_);
+      } else {
+        ShapeNdTo7d(input_shape, &input_shape_);
+      }
       size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
     }
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
@@ -89,10 +103,18 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    ShapeNdTo4d(dy_shape, &dy_shape_);
-    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-    CalcBeginAndSize(data_format);
-    input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
+    if (dy_shape.size() <= kSliceGradDefaultInputShapeSize) {
+      ShapeNdTo4d(dy_shape, &dy_shape_);
+      begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+      CalcBeginAndSize(data_format, kSliceGradDefaultInputShapeSize);
+      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
+    } else {
+      ShapeNdTo7d(dy_shape, &dy_shape_);
+      begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+      CalcBeginAndSize(data_format, kSliceGradMaxInputShapeSize);
+      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
+                    input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T);
+    }
     output_size_ = sizeof(T);
     for (auto x : dy_shape_) {
       output_size_ = output_size_ * x;
@@ -107,14 +129,14 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(input_size_);
   }
-  void CalcBeginAndSize(const std::string data_format) {
-    for (auto i = begin_.size(); i < 4; i++) {
+  void CalcBeginAndSize(const std::string &data_format, size_t dim = 4) {
+    for (auto i = begin_.size(); i < dim; i++) {
       (void)begin_.insert(begin_.begin(), 0);
     }
-    for (auto i = size_.size(); i < 4; i++) {
+    for (auto i = size_.size(); i < dim; i++) {
       (void)size_.insert(size_.begin(), 1);
     }
-    if (data_format == "NHWC") {
+    if (dim == kSliceGradDefaultInputShapeSize && data_format == "NHWC") {
       std::swap(begin_[1], begin_[3]);
       std::swap(begin_[1], begin_[2]);
       std::swap(size_[1], size_[3]);
@@ -139,8 +161,8 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (input_shape.size() > 4) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 4, but got "
+    if (input_shape.size() > kSliceGradMaxInputShapeSize) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input cannot be greater than 7, but got "
                         << input_shape.size();
     }
   }

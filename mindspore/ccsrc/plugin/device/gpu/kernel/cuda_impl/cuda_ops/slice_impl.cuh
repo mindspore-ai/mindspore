@@ -20,14 +20,21 @@
 #include <vector>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
-template <typename T, typename...S>
+template <typename T, typename... S>
 CUDA_LIB_EXPORT void SliceKernel(const T *input, T *output, const size_t output_size, cudaStream_t cuda_stream,
-                                 S...pack);
+                                 S... pack);
 
 template <typename T>
 CUDA_LIB_EXPORT void CalSlice4DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t l1,
                                     const size_t l2, const size_t l3, const size_t l4, const size_t d1, const size_t d2,
                                     const size_t d3, const size_t d4, const T *dy, T *dx, cudaStream_t stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void CalSlice7DGrad(const size_t s1, const size_t s2, const size_t s3, const size_t s4, const size_t s5,
+                                    const size_t s6, const size_t s7, const size_t l1, const size_t l2, const size_t l3,
+                                    const size_t l4, const size_t l5, const size_t l6, const size_t l7, const size_t d1,
+                                    const size_t d2, const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                    const size_t d7, const T *dy, T *dx, cudaStream_t stream);
 
 template <typename T>
 CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const T *input, T *output,
