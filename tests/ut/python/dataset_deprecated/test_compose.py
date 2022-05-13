@@ -12,19 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-
+"""
+Test Compose op in Dataset
+"""
 import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
+import mindspore.dataset.text as text
 import mindspore.dataset.transforms.c_transforms as c_transforms
 import mindspore.dataset.transforms.py_transforms as py_transforms
+import mindspore.dataset.transforms.transforms as data_trans
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.transforms as vision
 
 from ..dataset.util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
 
 GENERATE_GOLDEN = False
+
+DATA_DIR_PK = "../data/dataset/testPK/data"
+DATA_DIR_VOCAB = "../data/dataset/testVocab/words.txt"
 
 
 def test_compose():
@@ -355,6 +363,154 @@ def test_compose_with_custom_function():
     assert res == [[[3, 6], [9, 36]]]
 
 
+def test_compose_unified_mix_tranforms():
+    """
+    Feature: Compose op
+    Description: Test Unified Compose op containing mixing of old legacy c/py_transforms and new unified transforms
+    Expectation: RuntimeError is detected
+    """
+
+    def test_config(transforms_list):
+        # Not valid to mix legacy c/py_transforms and new unified transforms with unified Compose op
+        my_samples = 5
+        data_set = ds.ImageFolderDataset(DATA_DIR_PK, num_samples=my_samples, num_parallel_workers=1)
+
+        with pytest.raises(RuntimeError) as error_info:
+            compose_op = data_trans.Compose(transforms=transforms_list)
+            data_set = data_set.map(operations=compose_op, input_columns="image")
+            for _ in enumerate(data_set):
+                pass
+        assert "Mixing old legacy c/py_transforms and new unified transforms is not allowed" in str(error_info.value)
+
+    test_config([py_vision.Decode(), lambda x: x, vision.RandomVerticalFlip()])
+    test_config([vision.Decode(), py_vision.RandomVerticalFlip()])
+
+    test_config([vision.Decode(), c_vision.RandomVerticalFlip()])
+    test_config([lambda x: x, vision.Decode(), c_vision.RandomVerticalFlip(), c_vision.HorizontalFlip()])
+
+
+def test_compose_c_legacy_mix_tranforms():
+    """
+    Feature: Compose op
+    Description: Test Legacy C++ Compose op containing mixing of old legacy c_transforms and new unified transforms
+    Expectation: RuntimeError is detected
+    """
+
+    def test_config(transforms_list):
+        # Not valid to mix legacy c_transforms and new unified transforms with C++ Compose op
+        my_samples = 5
+        data_set = ds.ImageFolderDataset(DATA_DIR_PK, num_samples=my_samples, num_parallel_workers=1)
+
+        with pytest.raises(RuntimeError) as error_info:
+            compose_op = data_trans.Compose(transforms=transforms_list)
+            data_set = data_set.map(operations=compose_op, input_columns="image")
+            for _ in enumerate(data_set):
+                pass
+        assert "Mixing old legacy c/py_transforms and new unified transforms is not allowed" in str(error_info.value)
+
+    # Test legacy Compose C++ op with old legacy transform and new unified transform
+    test_config([c_vision.Decode(), vision.RandomVerticalFlip()])
+    test_config([vision.Decode(), c_vision.RandomVerticalFlip(), c_vision.HorizontalFlip()])
+
+
+def test_compose_py_legacy_mix_tranforms():
+    """
+    Feature: Compose op
+    Description: Test Legacy Py Compose op containing mixing of old legacy py_transforms and new unified transforms
+    Expectation: RuntimeError is detected
+    """
+
+    def test_config(transforms_list):
+        # Not valid to mix legacy py_transforms and new unified transforms with C++ Compose op
+        my_samples = 5
+        data_set = ds.ImageFolderDataset(DATA_DIR_PK, num_samples=my_samples, num_parallel_workers=1)
+
+        with pytest.raises(RuntimeError) as error_info:
+            compose_op = data_trans.Compose(transforms=transforms_list)
+            data_set = data_set.map(operations=compose_op, input_columns="image")
+            for _ in enumerate(data_set):
+                pass
+        assert "Mixing old legacy c/py_transforms and new unified transforms is not allowed" in str(error_info.value)
+
+    # Test legacy Compose Python op with old legacy transform and new unified transform
+    test_config([py_vision.Decode(), vision.RandomVerticalFlip()])
+    test_config([vision.Decode(True), py_vision.RandomVerticalFlip(), lambda x: x])
+
+
+def test_compose_text_and_data_transforms():
+    """
+    Feature: Compose op
+    Description: Test Compose op with both Text Transforms and Data Transforms
+    Expectation: Dataset pipeline runs successfully and results are verified
+    """
+    data = ds.TextFileDataset(DATA_DIR_VOCAB, shuffle=False)
+
+    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
+                                    special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
+
+    padend_op = c_transforms.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
+    lookup_op = text.Lookup(vocab, "<unk>")
+
+    # Use both Text Lookup op and Data Transforms PadEnd op in transforms list for Compose
+    compose_op = c_transforms.Compose(transforms=[lookup_op, padend_op])
+    data = data.map(operations=compose_op, input_columns=["text"])
+    res = []
+    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(d["text"].item())
+    assert res == [4, 5, 3, 6, 7, 2]
+
+
+def test_compose_unified_text_mix_transforms():
+    """
+    Feature: Compose op
+    Description: Test Unified Compose op containing text transforms plus mixing of old legacy c/py_transforms
+    Expectation: RuntimeError is detected
+    """
+
+    my_data = ds.TextFileDataset(DATA_DIR_VOCAB, shuffle=False)
+
+    # Use both Text Lookup op and Data Transforms PadEnd op in transforms list for Compose
+    vocab = text.Vocab.from_dataset(my_data, "text", freq_range=None, top_k=None,
+                                    special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
+    lookup_op = text.Lookup(vocab, "<unk>")
+
+    # Test - unified Compose C++ op with legacy data transform
+    padend_legacy_op = c_transforms.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
+    with pytest.raises(RuntimeError) as error_info:
+        compose_op = data_trans.Compose(transforms=[lookup_op, padend_legacy_op])
+        my_data = my_data.map(operations=compose_op, input_columns=["text"])
+        for _ in enumerate(my_data):
+            pass
+    assert "Mixing old legacy c/py_transforms and new unified transforms is not allowed" in str(error_info.value)
+
+
+def test_compose_legacy_text_mix_transforms():
+    """
+    Feature: Compose op
+    Description: Test legacy Compose op containing text transforms plus mixing of new unified transforms
+    Expectation: Dataset pipeline runs successfully for valid input and results verified.
+    """
+
+    my_data = ds.TextFileDataset(DATA_DIR_VOCAB, shuffle=False)
+
+    # Use both Text Lookup op and Data Transforms PadEnd op in transforms list for Compose
+    vocab = text.Vocab.from_dataset(my_data, "text", freq_range=None, top_k=None,
+                                    special_tokens=["<pad>", "<unk>"],
+                                    special_first=True)
+    lookup_op = text.Lookup(vocab, "<unk>")
+
+    # Test#1 - legacy Compose C++ op with new unified data transform
+    padend_unified_op = data_trans.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
+    compose_op = c_transforms.Compose(transforms=[lookup_op, padend_unified_op])
+    my_data = my_data.map(operations=compose_op, input_columns=["text"])
+    res = []
+    for d in my_data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        res.append(d["text"].item())
+    assert res == [4, 5, 3, 6, 7, 2]
+
+
 if __name__ == "__main__":
     test_compose()
     test_lambdas()
@@ -363,3 +519,9 @@ if __name__ == "__main__":
     test_py_transforms_with_c_vision()
     test_py_vision_with_c_transforms()
     test_compose_with_custom_function()
+    test_compose_unified_mix_tranforms()
+    test_compose_c_legacy_mix_tranforms()
+    test_compose_py_legacy_mix_tranforms()
+    test_compose_text_and_data_transforms()
+    test_compose_unified_text_mix_transforms()
+    test_compose_legacy_text_mix_transforms()

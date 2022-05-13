@@ -17,13 +17,16 @@ Test Map op in Dataset
 """
 import pytest
 import mindspore.dataset as ds
+import mindspore.dataset.text as text
 from mindspore.dataset.transforms import c_transforms
 from mindspore.dataset.transforms import py_transforms
-import mindspore.dataset.text as text
+import mindspore.dataset.transforms.transforms as data_trans
 import mindspore.dataset.vision.c_transforms as c_vision
 import mindspore.dataset.vision.py_transforms as py_vision
+import mindspore.dataset.vision.transforms as vision
 
-DATA_DIR = "../data/dataset/testPK/data"
+DATA_DIR_PK = "../data/dataset/testPK/data"
+DATA_DIR_VOCAB = "../data/dataset/testVocab/words.txt"
 
 
 def test_map_c_transform_exception():
@@ -32,7 +35,7 @@ def test_map_c_transform_exception():
     Description: op defined like c_vision.HWC2CHW
     Expectation: success
     """
-    data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
+    data_set = ds.ImageFolderDataset(DATA_DIR_PK, num_parallel_workers=1, shuffle=True)
 
     train_image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -87,7 +90,7 @@ def test_map_py_transform_exception():
     Description: op defined like py_vision.RandomHorizontalFlip
     Expectation: success
     """
-    data_set = ds.ImageFolderDataset(DATA_DIR, num_parallel_workers=1, shuffle=True)
+    data_set = ds.ImageFolderDataset(DATA_DIR_PK, num_parallel_workers=1, shuffle=True)
 
     # define map operations
     decode_op = py_vision.Decode()
@@ -130,7 +133,7 @@ def test_map_text_and_data_transforms():
     Description: Test Map op with both Text Transforms and Data Transforms
     Expectation: Dataset pipeline runs successfully and results are verified
     """
-    data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
+    data = ds.TextFileDataset(DATA_DIR_VOCAB, shuffle=False)
 
     vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
                                     special_tokens=["<pad>", "<unk>"],
@@ -144,35 +147,63 @@ def test_map_text_and_data_transforms():
     res = []
     for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
         res.append(d["text"].item())
-    assert res == [4, 5, 3, 6, 7, 2], res
+    assert res == [4, 5, 3, 6, 7, 2]
 
 
-def test_compose_text_and_data_transforms():
+def test_map_mix_vision_tranforms():
     """
     Feature: Map op
-    Description: Test Compose op with both Text Transforms and Data Transforms
-    Expectation: Dataset pipeline runs successfully and results are verified
+    Description: Test Map op with mixing of old legacy vision c/py_transforms and new unified vision transforms
+    Expectation: RuntimeError is detected
     """
-    data = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
 
-    vocab = text.Vocab.from_dataset(data, "text", freq_range=None, top_k=None,
-                                    special_tokens=["<pad>", "<unk>"],
-                                    special_first=True)
+    def test_config(my_operations):
+        # Not valid to mix legacy c/py_transforms with new unified transforms
+        data_set = ds.ImageFolderDataset(DATA_DIR_PK, num_parallel_workers=1)
+        data_set = data_set.map(operations=my_operations, input_columns="image")
 
-    padend_op = c_transforms.PadEnd([100], pad_value=vocab.tokens_to_ids('<pad>'))
-    lookup_op = text.Lookup(vocab, "<unk>")
+        with pytest.raises(RuntimeError) as error_info:
+            for _ in enumerate(data_set):
+                pass
+        assert "Mixing old legacy c/py_transforms and new unified transforms is not allowed" in str(error_info.value)
 
-    # Use both Text Lookup op and Data Transforms PadEnd op in transforms list for Compose
-    compose_op = c_transforms.Compose(transforms=[lookup_op, padend_op])
-    data = data.map(operations=compose_op, input_columns=["text"])
-    res = []
-    for d in data.create_dict_iterator(num_epochs=1, output_numpy=True):
-        res.append(d["text"].item())
-    assert res == [4, 5, 3, 6, 7, 2], res
+    # Test old legacy transform before new unified transform
+    test_config([c_vision.Decode(), vision.RandomHorizontalFlip()])
+    test_config([py_vision.Decode(), lambda x: x, vision.RandomHorizontalFlip()])
+
+    # Test old legacy transform after new unified transform
+    test_config([lambda x: x, vision.Decode(), c_vision.RandomHorizontalFlip(), c_vision.RandomVerticalFlip()])
+    test_config([vision.Decode(True), py_vision.RandomHorizontalFlip(), py_vision.ToTensor()])
+
+
+def test_map_mix_data_transforms():
+    """
+    Feature: Map op
+    Description: Test Map op with mixing of old legacy data c/py_transforms and new unified data transforms
+    Expectation: RuntimeError is detected
+    """
+
+    def test_config(my_operations):
+        # Not valid to mix legacy c/py_transforms with new unified transforms
+        data_set = ds.NumpySlicesDataset([1, 2, 3], column_names="x")
+
+        data_set = data_set.map(operations=my_operations, input_columns="x")
+
+        with pytest.raises(RuntimeError) as error_info:
+            for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+                pass
+        assert "Mixing old legacy c/py_transforms and new unified transforms is not allowed" in str(error_info.value)
+
+    # Test old legacy transform before new unified transform
+    test_config([c_transforms.Duplicate(), data_trans.Concatenate(), lambda x: x])
+
+    # Test old legacy transform after new unified transform
+    test_config([data_trans.Duplicate(), c_transforms.Concatenate()])
 
 
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
     test_map_text_and_data_transforms()
-    test_compose_text_and_data_transforms()
+    test_map_mix_vision_transforms()
+    test_map_mix_data_transforms()

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd.
+# Copyright 2020-2022 Huawei Technologies Co., Ltd.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -161,8 +161,11 @@ def test_ten_crop_invalid_size_error_msg():
 
 def test_ten_crop_wrong_img_error_msg():
     """
-    Tests TenCrop error message when the image is not in the correct format.
+    Feature: TenCrop op
+    Description: Test TenCrop op when the input image is not in the correct format.
+    Expectation: Invalid input is detected
     """
+
     logger.info("test_ten_crop_wrong_img_error_msg")
 
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -176,9 +179,7 @@ def test_ten_crop_wrong_img_error_msg():
 
     with pytest.raises(RuntimeError) as info:
         data.create_tuple_iterator(num_epochs=1).__next__()
-    error_msg = "TypeError: __call__() takes 2 positional arguments but 11 were given"
-
-    # error msg comes from ToTensor()
+    error_msg = "TypeError: execute_py() takes 2 positional arguments but 11 were given"
     assert error_msg in str(info.value)
 
 

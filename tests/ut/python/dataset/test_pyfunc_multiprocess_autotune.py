@@ -42,7 +42,7 @@ def create_pyfunc_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, 
     transforms_list = [
         vision.ToPIL(),
         vision.RandomGrayscale(prob=0.2),
-        np.array]  # need to convert PIL image to a NumPy array to pass it to C++ operation
+        vision.ToNumpy()]  # need to convert PIL image to a NumPy array to pass it to C++ operation
     compose_op = transforms.Compose(transforms_list)
     cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
                                 num_parallel_workers=num_parallel_workers,
@@ -176,7 +176,7 @@ def create_mp_dataset(batch_size=32, repeat_size=1, num_parallel_workers=1, num_
     transforms_list = [
         vision.ToPIL(),
         vision.RandomGrayscale(prob=0.8),
-        np.array]  # need to convert PIL image to a NumPy array to pass it to C++ operation
+        vision.ToNumpy()]  # need to convert PIL image to a NumPy array to pass it to C++ operation
     compose_op = transforms.Compose(transforms_list)
     cifar10_ds = cifar10_ds.map(operations=compose_op, input_columns="image",
                                 num_parallel_workers=num_parallel_workers, python_multiprocessing=True)

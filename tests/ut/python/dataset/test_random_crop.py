@@ -16,6 +16,7 @@
 Testing RandomCrop op in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset.transforms.transforms as ops
 import mindspore.dataset.vision.transforms as vision
@@ -24,7 +25,6 @@ import mindspore.dataset as ds
 from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, config_get_set_seed, \
     config_get_set_num_parallel_workers, diff_mse
-
 
 GENERATE_GOLDEN = False
 
@@ -527,9 +527,10 @@ def test_random_crop_08_py():
 def test_random_crop_09():
     """
     Feature: RandomCrop op
-    Description: Test RandomCrop Op with invalid type of input image format
-    Expectation: Error is raised as expected
+    Description: Test RandomCrop op with invalid type of input image format
+    Expectation: RuntimeError is raised
     """
+
     logger.info("test_random_crop_09")
 
     # Generate dataset
@@ -542,11 +543,11 @@ def test_random_crop_09():
     ]
     transform = ops.Compose(transforms)
     data = data.map(operations=transform, input_columns=["image"])
-    try:
-        data.create_dict_iterator(num_epochs=1).__next__()
-    except RuntimeError as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Unexpected error. Pad: input shape is not <H,W,C> or <H, W>, got rank: 3" in str(e)
+    with pytest.raises(RuntimeError) as error_info:
+        for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
+            pass
+    assert "img should be PIL image." in str(error_info.value)
+
 
 
 def test_random_crop_comp(plot=False):

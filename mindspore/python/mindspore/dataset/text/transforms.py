@@ -55,6 +55,7 @@ from .validators import check_lookup, check_jieba_add_dict, check_to_vectors, \
     check_sentence_piece_tokenizer
 from ..core.datatypes import mstype_to_detype
 from ..core.validator_helpers import replace_none
+from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import TensorOperation
 from ..transforms.validators import invalidate_callable
 
@@ -63,6 +64,10 @@ class TextTensorOperation(TensorOperation):
     """
     Base class of Text Tensor Ops
     """
+
+    def __init__(self):
+        super().__init__()
+        self.implementation = Implementation.C
 
     def parse(self):
         raise NotImplementedError("TextTensorOperation has to implement parse() method.")

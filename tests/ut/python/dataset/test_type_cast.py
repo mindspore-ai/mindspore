@@ -30,20 +30,20 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_type_cast():
     """
-    Test TypeCast op
+    Feature: TypeCast op
+    Description: Test TypeCast op with mstype.float32 data_type arg.
+    Expectation: Data results are correct
     """
+
     logger.info("test_type_cast")
 
-    # First dataset
+    # First dataset - Use TypeCast with mindspore datatype
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
-
-    type_cast_op = data_trans.TypeCast(mstype.float32)
-
+    type_cast_op = data_trans.TypeCast(data_type=mstype.float32)
     ctrans = [decode_op,
               type_cast_op,
               ]
-
     data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
@@ -54,37 +54,48 @@ def test_type_cast():
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
+    # Third dataset - Use TypeCast with Numpy datatype
+    data3 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    trans3 = [vision.Decode(),
+              data_trans.TypeCast(data_type=mstype.float32)]
+    data3 = data3.map(operations=trans3, input_columns=["image"])
+
     num_iter = 0
-    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+    for item1, item2, item3 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                   data2.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                   data3.create_dict_iterator(num_epochs=1, output_numpy=True)):
         num_iter += 1
         c_image = item1["image"]
         image = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        image3 = item3["image"]
 
-        logger.info("shape of c_image: {}".format(c_image.shape))
-        logger.info("shape of image: {}".format(image.shape))
-
-        logger.info("dtype of c_image: {}".format(c_image.dtype))
-        logger.info("dtype of image: {}".format(image.dtype))
         assert c_image.dtype == "float32"
+        assert image3.dtype == "float32"
+
+        assert isinstance(c_image, np.ndarray)
+        assert isinstance(image, np.ndarray)
+        assert isinstance(image3, np.ndarray)
+
+        assert c_image.shape == image.shape
+        assert image3.shape == image.shape
 
 
 def test_type_cast_string():
     """
-    Test TypeCast op
+    Feature: TypeCast op
+    Description: Test TypeCast op with string "float16" data_type arg.
+    Expectation: Data results are correct
     """
+
     logger.info("test_type_cast_string")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     decode_op = vision.Decode()
-
-    type_cast_op = data_trans.TypeCast(mstype.float16)
-
+    type_cast_op = data_trans.TypeCast(data_type="float16")
     ctrans = [decode_op,
               type_cast_op
               ]
-
     data1 = data1.map(operations=ctrans, input_columns=["image"])
 
     # Second dataset
@@ -108,6 +119,11 @@ def test_type_cast_string():
         logger.info("dtype of c_image: {}".format(c_image.dtype))
         logger.info("dtype of image: {}".format(image.dtype))
         assert c_image.dtype == "float16"
+
+        assert isinstance(c_image, np.ndarray)
+        assert isinstance(image, np.ndarray)
+
+        assert c_image.shape == image.shape
 
 
 def test_type_cast_eager():
@@ -151,8 +167,76 @@ def test_type_cast_exception():
         _ = type_cast_op2([1, 2, 3, 4])
 
 
+def test_type_cast_invalid_arg():
+    """
+    Feature: TypeCast op
+    Description: Test TypeCast op with invalid output_type arg.
+    Expectation: Invalid input is detected.
+    """
+
+    with pytest.raises(TypeError) as error_info:
+        # Generate dataset
+        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+        transforms = [
+            vision.Decode(True),
+            vision.ToTensor(),
+            # Note: if argument name is not correct
+            data_trans.TypeCast(output_type="float32")
+        ]
+        transform = data_trans.Compose(transforms)
+        _ = data.map(operations=transform, input_columns=["image"])
+    assert "unexpected keyword argument" in str(error_info.value)
+
+
+def test_type_cast_err_missing_arg():
+    """
+    Feature: TypeCast op
+    Description: Test TypeCast op with missing data_type argument
+    Expectation: Invalid input is detected.
+    """
+    logger.info("test_type_cast_err_missing_arg")
+
+    with pytest.raises(TypeError) as error_info:
+        # Generate dataset
+        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+        transforms = [
+            vision.Decode(True),
+            vision.ToTensor(),
+            # Note: if data_type is not explicitly given
+            data_trans.TypeCast()
+        ]
+        transform = data_trans.Compose(transforms)
+        _ = data.map(operations=transform, input_columns=["image"])
+    assert "missing" in str(error_info.value)
+
+
+def test_type_cast_err_invalid_arg():
+    """
+    Feature: TypeCast op
+    Description: Test TypeCast op with invalid data_type arg.
+    Expectation: Invalid input is detected.
+    """
+    logger.info("test_type_cast_err_invalid_arg")
+
+    with pytest.raises(TypeError) as error_info:
+        # Generate dataset
+        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+        transforms = [
+            vision.Decode(True),
+            vision.ToTensor(),
+            # Note: if data_type is not valid
+            data_trans.TypeCast("junk")
+        ]
+        transform = data_trans.Compose(transforms)
+        _ = data.map(operations=transform, input_columns=["image"])
+    assert "data type" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_type_cast()
     test_type_cast_string()
     test_type_cast_eager()
     test_type_cast_exception()
+    test_type_cast_invalid_arg()
+    test_type_cast_err_missing_arg()
+    test_type_cast_err_invalid_arg()

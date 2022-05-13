@@ -12,17 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This module is to support common augmentations. C_transforms is a high performance
-augmentation module which is developed by C++. Py_transforms provides an optional
-implementation which is developed by Python & NumPy.
+This module is to support common data augmentations. Some operations are implemented in C++
+to provide high performance.
+Other operations are implemented in Python including using NumPy.
 
 Common imported modules in corresponding API examples are as follows:
 
 .. code-block::
 
     import mindspore.dataset as ds
-    import mindspore.dataset.vision.c_transforms as c_vision
-    import mindspore.dataset.vision.py_transforms as py_vision
+    import mindspore.dataset.transforms
+
+Alternative and equivalent imported transforms is as follows:
+
+.. code-block::
+
+    import mindspore.dataset.transforms.transforms as transforms
+
+Note: Legacy c_transforms and py_transforms are deprecated but can still be imported as follows:
+
+.. code-block::
+
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
@@ -35,3 +45,5 @@ from .. import vision
 from . import c_transforms
 from . import py_transforms
 from . import transforms
+from .transforms import not_random, Relational, Compose, Concatenate, Duplicate, Fill, Mask, OneHot, PadEnd, Plugin, \
+    RandomApply, RandomChoice, RandomOrder, Slice, TypeCast, Unique

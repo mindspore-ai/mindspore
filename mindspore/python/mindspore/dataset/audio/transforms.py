@@ -22,7 +22,6 @@ their training models.
 import numpy as np
 
 import mindspore._c_dataengine as cde
-from ..transforms.transforms import TensorOperation
 from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormType, \
     ScaleType, WindowType
 from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_biquad, check_bandpass_biquad, \
@@ -33,12 +32,18 @@ from .validators import check_allpass_biquad, check_amplitude_to_db, check_band_
     check_mask_along_axis, check_mask_along_axis_iid, check_masking, check_mel_scale, check_mu_law_coding, \
     check_overdrive, check_phase_vocoder, check_phaser, check_riaa_biquad, check_sliding_window_cmn, \
     check_spectral_centroid, check_spectrogram, check_time_stretch, check_treble_biquad, check_vol
+from ..transforms.py_transforms_util import Implementation
+from ..transforms.transforms import TensorOperation
 
 
 class AudioTensorOperation(TensorOperation):
     """
     Base class of Audio Tensor Ops.
     """
+
+    def __init__(self):
+        super().__init__()
+        self.implementation = Implementation.C
 
     def __call__(self, *input_tensor_list):
         for tensor in input_tensor_list:

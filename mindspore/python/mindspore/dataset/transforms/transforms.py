@@ -25,6 +25,9 @@ import numpy as np
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
 from mindspore.common import dtype as mstype
+import mindspore.dataset.transforms.c_transforms as c_transforms
+import mindspore.dataset.transforms.py_transforms as py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
 from . import py_transforms_util as util
 from .py_transforms_util import Implementation, FuncWrapper
 from .validators import check_fill_value, check_slice_option, check_slice_op, check_num_classes, check_compose_call, \
@@ -44,9 +47,13 @@ class TensorOperation:
         self.callable_op_ = None
 
     def __call__(self, *input_tensor_list):
-        # Check for PIL input
-        if len(input_tensor_list) == 1 and is_pil(input_tensor_list[0]) and getattr(self, 'execute_pil', None):
-            return self.execute_pil(*input_tensor_list)
+        """
+        Call method.
+        """
+        # Check if Python implementation of op, or PIL input
+        if (self.implementation == Implementation.PY) or \
+                (len(input_tensor_list) == 1 and is_pil(input_tensor_list[0]) and getattr(self, 'execute_py', None)):
+            return self.execute_py(*input_tensor_list)
 
         tensor_row = []
         for tensor in input_tensor_list:
@@ -91,7 +98,7 @@ class PyTensorOperation:
         Returns:
             PIL Image, augmented image.
         """
-        return self.execute_pil(img)
+        return self.execute_py(img)
 
     @classmethod
     def from_json(cls, json_string):
@@ -148,10 +155,16 @@ class CompoundOperation(TensorOperation, PyTensorOperation, ABC):
         self.transforms = []
         trans_with_imple = []
         for op in transforms:
-            if callable(op) and not hasattr(op, "implementation"):
+            if callable(op) and not hasattr(op, "implementation") and \
+                    not isinstance(op, c_transforms.TensorOperation) and \
+                    not isinstance(op, py_transforms.PyTensorOperation) and \
+                    not isinstance(op, c_vision.ImageTensorOperation):
                 op = util.FuncWrapper(op)
-            if hasattr(op, "implementation") and op.implementation is not None:
-                trans_with_imple.append(op)
+            if hasattr(op, "implementation"):
+                if op.implementation is not None:
+                    trans_with_imple.append(op)
+            else:
+                raise RuntimeError("Mixing old legacy c/py_transforms and new unified transforms is not allowed.")
             self.transforms.append(op)
 
         if all([t.implementation == Implementation.PY for t in self.transforms]):
@@ -263,16 +276,6 @@ class Compose(CompoundOperation):
         if all(hasattr(transform, "random") and not transform.random for transform in self.transforms):
             self.random = False
 
-    @check_compose_call
-    def __call__(self, *args):
-        """
-        Call method.
-
-        Returns:
-            lambda function, Lambda function that takes in an args to apply transformations on.
-        """
-        return util.compose(self.transforms, *args)
-
     @staticmethod
     def decompose(operations):
         """
@@ -327,6 +330,16 @@ class Compose(CompoundOperation):
                 composed_op.implementation = Implementation.PY
             new_ops.append(composed_op)
         return new_ops
+
+    @check_compose_call
+    def execute_py(self, *args):
+        """
+        Execute method.
+
+        Returns:
+            lambda function, Lambda function that takes in an args to apply transformations on.
+        """
+        return util.compose(self.transforms, *args)
 
     def parse(self):
         operations = self.parse_transforms()
@@ -500,7 +513,7 @@ class Mask(TensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Relational
+        >>> from mindspore.dataset.transforms import Relational
         >>> # Data before
         >>> # |  col   |
         >>> # +---------+
@@ -665,7 +678,7 @@ class RandomApply(CompoundOperation):
         >>> rand_apply = data_transforms.RandomApply([vision.RandomCrop(512)])
         >>> image_folder_dataset = image_folder_dataset.map(operations=rand_apply)
         >>>
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
         ...                    vision.RandomErasing()]
@@ -680,9 +693,9 @@ class RandomApply(CompoundOperation):
         super().__init__(transforms)
         self.prob = prob
 
-    def __call__(self, img):
+    def execute_py(self, img):
         """
-        Call method.
+        Execute method.
 
         Args:
             img (PIL image): Image to be randomly applied a list transformations.
@@ -717,7 +730,7 @@ class RandomChoice(CompoundOperation):
         >>> rand_choice = data_transforms.RandomChoice([vision.CenterCrop(50), vision.RandomCrop(512)])
         >>> image_folder_dataset = image_folder_dataset.map(operations=rand_choice)
         >>>
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
         ...                    vision.RandomErasing()]
@@ -732,9 +745,9 @@ class RandomChoice(CompoundOperation):
     def __init__(self, transforms):
         super().__init__(transforms)
 
-    def __call__(self, img):
+    def execute_py(self, img):
         """
-        Call method.
+        Execute method.
 
         Args:
             img (PIL image): Image to be applied transformation.
@@ -767,7 +780,7 @@ class RandomOrder(PyTensorOperation):
         ``CPU``
 
     Examples:
-        >>> from mindspore.dataset.transforms.transforms import Compose
+        >>> from mindspore.dataset.transforms import Compose
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
         ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
         ...                    vision.RandomErasing()]
@@ -782,9 +795,9 @@ class RandomOrder(PyTensorOperation):
         self.transforms = transforms
         self.implementation = Implementation.PY
 
-    def __call__(self, img):
+    def execute_py(self, img):
         """
-        Call method.
+        Execute method.
 
         Args:
             img (PIL image): Image to apply transformations in a random order.
@@ -887,7 +900,7 @@ class TypeCast(TensorOperation):
         to be cast to.
 
     Raises:
-        TypeError: If `data_type` is not of type bool, int, float, string or type :class:`numpy.ndarray`.
+        TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type :class:`numpy.ndarray`.
 
     Supported Platforms:
         ``CPU`` ``Ascend`` ``GPU``

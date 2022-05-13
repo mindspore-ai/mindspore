@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 Testing ToType op in DE
 """
 import numpy as np
+import pytest
 import mindspore._c_dataengine as cde
+import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.transforms
 import mindspore.dataset.vision.transforms as vision
@@ -32,7 +34,9 @@ SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
 
 def test_to_type_op():
     """
-    Test ToType Op
+    Feature: ToType op
+    Description: Test ToType op with numpy.dtype output_type arg.
+    Expectation: Data results are correct and the same
     """
     logger.info("test_to_type_op")
 
@@ -68,11 +72,88 @@ def test_to_type_op():
         assert image1.shape == image2.shape
 
 
+def test_to_type_data_type():
+    """
+    Feature: ToType op
+    Description: Test ToType op with mstype.dtype versus numpy.dtype data_type arg.
+        Test ToType alias gives same results as TypeCast op.
+    Expectation: Data results are correct and the same
+    """
+
+    # First dataset - Use default datatype float32
+    data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms1 = [
+        vision.Decode(True),
+        vision.ToTensor()
+    ]
+    transform1 = mindspore.dataset.transforms.transforms.Compose(transforms1)
+    data1 = data1.map(operations=transform1, input_columns=["image"])
+
+    # Second dataset - Convert the datatype from float32 to nptype.int32
+    data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms2 = [
+        vision.Decode(True),
+        vision.ToTensor(),
+        # Note: Convert the datatype from float32 to np.int16.  Use explicit argument name.
+        vision.ToType(data_type=np.int32)
+
+    ]
+    transform2 = mindspore.dataset.transforms.transforms.Compose(transforms2)
+    data2 = data2.map(operations=transform2, input_columns=["image"])
+
+    # Third dataset - Convert the datatype from float32 to mstype.int32
+    data3 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms3 = [
+        vision.Decode(True),
+        vision.ToTensor(),
+        # Note: Convert the datatype from float32 to mstype.int32.  Use explicit argument name.
+        vision.ToType(data_type=mstype.int32)
+    ]
+    transform3 = mindspore.dataset.transforms.transforms.Compose(transforms3)
+    data3 = data3.map(operations=transform3, input_columns=["image"])
+
+    # Fourth dataset - Use TypeCast op. Convert the datatype from float32 to mstype.int32
+    data4 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms4 = [
+        vision.Decode(True),
+        vision.ToTensor(),
+        # Note: Convert the datatype from float32 to mstype.int32.  Use TypeCast op and argument name.
+        mindspore.dataset.transforms.transforms.TypeCast(data_type=mstype.int32)
+    ]
+    transform4 = mindspore.dataset.transforms.transforms.Compose(transforms4)
+    data4 = data4.map(operations=transform4, input_columns=["image"])
+
+    for item1, item2, item3, item4 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                          data2.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                          data3.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                          data4.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        image1 = item1["image"]
+        image2 = item2["image"]
+        image3 = item3["image"]
+        image4 = item4["image"]
+
+        assert isinstance(image1, np.ndarray)
+        assert isinstance(image2, np.ndarray)
+        assert isinstance(image3, np.ndarray)
+        assert isinstance(image4, np.ndarray)
+
+        assert image1.dtype == np.float32
+        assert image2.dtype == np.int32
+        assert image3.dtype == np.int32
+        assert image4.dtype == "int32"
+
+        assert image1.shape == image2.shape
+        assert image1.shape == image3.shape
+        assert image1.shape == image4.shape
+
+
 def test_to_type_01():
     """
-    Test ToType Op with md5 comparison: valid input (Numpy dtype)
-    Expect to pass
+    Feature: ToType op
+    Description: Test ToType op with valid numpy.dtype input
+    Expectation: Dataset pipeline runs successfully and md5 results are verified
     """
+
     logger.info("test_to_type_01")
 
     # Generate dataset
@@ -93,9 +174,11 @@ def test_to_type_01():
 
 def test_to_type_02():
     """
-    Test ToType Op with md5 comparison: valid input (str)
-    Expect to pass
+    Feature: ToType op
+    Description: Test ToType op with valid string input
+    Expectation: Dataset pipeline runs successfully and md5 results are verified
     """
+
     logger.info("test_to_type_02")
     # Generate dataset
     data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -115,70 +198,91 @@ def test_to_type_02():
 
 def test_to_type_03():
     """
-    Test ToType Op: invalid input image type
-    Expect to raise error
+    Feature: ToType op
+    Description: Test ToType op with PIL input to ToType op
+    Expectation: Dataset pipeline runs successfully
     """
+
     logger.info("test_to_type_03")
 
-    try:
-        # Generate dataset
-        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-        transforms = [
-            vision.Decode(True),
-            # Note: If the object is not numpy, e.g. PIL image, TypeError will raise
-            vision.ToType(np.int32)
-        ]
-        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
-        data = data.map(operations=transform, input_columns=["image"])
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Numpy" in str(e)
+    data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    transforms = [
+        vision.Decode(True),
+        # Note: No error PIL image input to ToType
+        vision.ToType(np.int32)
+    ]
+    transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+    data = data.map(operations=transform, input_columns=["image"])
+
+    num_iter = 0
+    for _ in enumerate(data):
+        num_iter += 1
+    assert num_iter == 3
 
 
 def test_to_type_04():
     """
-    Test ToType Op: no output_type given
-    Expect to raise error
+    Feature: ToType op
+    Description: Test ToType op with missing data_type argument
+    Expectation: Invalid input is detected.
     """
     logger.info("test_to_type_04")
 
-    try:
+    with pytest.raises(TypeError) as error_info:
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         transforms = [
             vision.Decode(True),
             vision.ToTensor(),
-            # Note: if output_type is not explicitly given
+            # Note: if data_type is not explicitly given
             vision.ToType()
         ]
         transform = mindspore.dataset.transforms.transforms.Compose(transforms)
-        data = data.map(operations=transform, input_columns=["image"])
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "missing" in str(e)
+        _ = data.map(operations=transform, input_columns=["image"])
+    assert "missing" in str(error_info.value)
 
 
 def test_to_type_05():
     """
-    Test ToType Op: invalid output_type
-    Expect to raise error
+    Feature: ToType op
+    Description: Test ToType op with invalid data_type arg.
+    Expectation: Invalid input is detected.
     """
     logger.info("test_to_type_05")
 
-    try:
+    with pytest.raises(TypeError) as error_info:
         # Generate dataset
         data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
         transforms = [
             vision.Decode(True),
             vision.ToTensor(),
-            # Note: if output_type is not explicitly given
+            # Note: if data_type is not valid
             vision.ToType('invalid')
         ]
         transform = mindspore.dataset.transforms.transforms.Compose(transforms)
-        data = data.map(operations=transform, input_columns=["image"])
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "data type" in str(e)
+        _ = data.map(operations=transform, input_columns=["image"])
+    assert "data type" in str(error_info.value)
+
+
+def test_to_type_invalid_arg():
+    """
+    Feature: ToType op
+    Description: Test ToType op with invalid output_type arg.
+    Expectation: Invalid input is detected.
+    """
+
+    with pytest.raises(TypeError) as error_info:
+        # Generate dataset
+        data = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+        transforms = [
+            vision.Decode(True),
+            vision.ToTensor(),
+            # Note: if argument name is not correct
+            vision.ToType(output_type="int32")
+        ]
+        transform = mindspore.dataset.transforms.transforms.Compose(transforms)
+        _ = data.map(operations=transform, input_columns=["image"])
+    assert "unexpected keyword argument" in str(error_info.value)
 
 
 def test_np_to_de():
@@ -229,9 +333,11 @@ def test_np_to_de():
 
 if __name__ == "__main__":
     test_to_type_op()
+    test_to_type_data_type()
     test_to_type_01()
     test_to_type_02()
     test_to_type_03()
     test_to_type_04()
     test_to_type_05()
+    test_to_type_invalid_arg()
     test_np_to_de()

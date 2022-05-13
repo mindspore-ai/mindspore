@@ -29,9 +29,10 @@ GENERATE_GOLDEN = False
 
 def test_compose():
     """
-    Feature: Compose op
-    Description: Test Compose op in Cpp and Python implementation
-    Expectation: Output is equal to the expected value or correct error is raised as expected when appropriate
+    Feature: Compose Op
+    Description: Test Compose op, C++ implementation and Python implementation, valid and invalid input
+    Expectation: For valid input, dataset pipeline runs successfully, and results are verified.
+                 For invalid input, error message is verified.
     """
     original_seed = config_get_set_seed(0)
 
@@ -104,10 +105,9 @@ def test_compose():
     assert "op_list can not be empty." in str(error_info.value)
 
     # Pass in extra brackets
-    with pytest.raises(TypeError) as error_info:
+    with pytest.raises(RuntimeError) as error_info:
         transforms.Compose([(lambda x: x + x)])()
-    assert "Compose was called without an image. Fix invocation (avoid it being invoked as Compose([...])())." in str(
-        error_info.value)
+    assert "Input Tensor is not valid." in str(error_info.value)
 
     # Restore configuration
     ds.config.set_seed(original_seed)
@@ -192,9 +192,9 @@ def test_c_py_compose_transforms_module():
 
 def test_c_py_compose_vision_module(plot=False, run_golden=True):
     """
-    Feature: Compose op
-    Description: Test combining Cpp and Python vision transformations
-    Expectation: Output is equal to the expected value
+    Feature: Compose Op
+    Description: Test Compose op combining Python and C++ vision transforms
+    Expectation: Dataset pipeline runs successfully, results are visually verified and md5 results are verified
     """
     original_seed = config_get_set_seed(10)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
@@ -224,13 +224,13 @@ def test_c_py_compose_vision_module(plot=False, run_golden=True):
     test_config(op_list=[vision.Decode(),
                          vision.ToPIL(),
                          vision.Resize((224, 224)),
-                         np.array],
+                         vision.ToNumpy()],
                 plot=plot, file_name="compose_c_py_1.npz")
 
     test_config(op_list=[vision.Decode(),
                          vision.Resize((224, 244)),
                          vision.ToPIL(),
-                         np.array,
+                         vision.ToNumpy(),
                          vision.Resize((24, 24))],
                 plot=plot, file_name="compose_c_py_2.npz")
 
@@ -266,7 +266,7 @@ def test_vision_with_transforms():
 
     # Test with Mask Op
     output_arr = test_config([vision.Decode(True),
-                              vision.CenterCrop((2)), np.array,
+                              vision.CenterCrop((2)), vision.ToNumpy(),
                               transforms.Mask(transforms.Relational.GE, 100)])
 
     exp_arr = [np.array([[[True, False, False],
@@ -283,7 +283,7 @@ def test_vision_with_transforms():
 
     # Test with Fill Op
     output_arr = test_config([vision.Decode(True),
-                              vision.CenterCrop((4)), np.array,
+                              vision.CenterCrop((4)), vision.ToNumpy(),
                               transforms.Fill(10)])
 
     exp_arr = [np.ones((4, 4, 3)) * 10] * 2
@@ -293,7 +293,7 @@ def test_vision_with_transforms():
     # Test with Concatenate Op, which will raise an error since ConcatenateOp only supports rank 1 tensors.
     with pytest.raises(RuntimeError) as error_info:
         test_config([vision.Decode(True),
-                     vision.CenterCrop((2)), np.array,
+                     vision.CenterCrop((2)), vision.ToNumpy(),
                      transforms.Concatenate(0)])
     assert "only 1D input supported" in str(error_info.value)
 
