@@ -3269,14 +3269,8 @@ class Select(Primitive):
 
     Returns the selected elements, either from input :math:`x` or input :math:`y`, depending on the `condition`.
 
-    Given a tensor as input, this operation inserts a dimension of 1 at the dimension,
-    it was invalid when both :math:`x` and :math:`y` are none.
-    Keep in mind that the shape of the output tensor can vary depending
-    on how many true values are in the input. Indexes are output in row-first
-    order.
-
     The conditional tensor acts as an optional compensation (mask), which
-    determines whether the corresponding element / row in the output must be
+    determines whether the corresponding element in the output must be
     selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each
     element.
 
@@ -3288,9 +3282,7 @@ class Select(Primitive):
         y_i, & \text{otherwise}
         \end{cases}
 
-    If condition is a vector, then :math:`x` and :math:`y` are higher-dimensional matrices, then it
-    chooses to copy that row (external dimensions) from :math:`x` and :math:`y`. If condition has
-    the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
+    The condition has the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
     and :math:`y`.
 
     Inputs:

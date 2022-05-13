@@ -1575,6 +1575,47 @@ def narrow(x, axis, start, length):
     return F.narrow(x, axis, start, length)
 
 
+@constexpr
+def check_select_condition(cond_type):
+    """
+    Check select input condition.
+    """
+    if isinstance(cond_type, mstype.tensor_type):
+        return
+    raise TypeError(f"For select, the argument condition should be Tensor, but got {cond_type}.")
+
+
+@constexpr
+def check_select_input(y, x_dtype):
+    """
+    Check select input x and y.
+    """
+    if not isinstance(y, (int, float)):
+        raise TypeError(f"For 'Tensor.select', the argument 'y' should be Tensor, int or float,"
+                        f" but got {type(y)}.")
+    if isinstance(y, int) and x_dtype != mstype.int32:
+        raise TypeError(f"For 'Tensor.select', if the argument 'y' is int,"
+                        f" then the tensor type should be int32 but got {x_dtype}")
+    if isinstance(y, float) and x_dtype != mstype.float32:
+        raise TypeError(f"For 'Tensor.select', if the argument 'y' is float,"
+                        f" then the tensor type should be float32 but got {x_dtype}")
+
+
+def select(x, condition, y):
+    """Returns the selected elements for tensor 'x' and input 'y' according to input 'condition'"""
+    check_select_condition(F.typeof(condition))
+    if not isinstance(y, Tensor):
+        check_select_input(y, x.dtype)
+    input_y = y
+    if isinstance(y, (int, float)):
+        input_y = F.zeros_like(x) + y
+        if isinstance(y, int):
+            input_y = F.cast(input_y, mstype.int32)
+        else:
+            input_y = F.cast(input_y, mstype.float32)
+    return F.select(condition, x, y)
+
+
 def view(x, *shape):
     """Reshape tensor, if shape is -1, reshape tensor into one dimension"""
     shape = check_view_shape(shape)

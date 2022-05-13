@@ -146,6 +146,30 @@ def get_reshape_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Select)
+def get_select_vmap_rule(prim, axis_size):
+    """VmapRule for 'Select' operation."""
+    def vmap_rule(condition_bdim, x_bdim, y_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, condition_bdim, x_bdim, y_bdim)
+        if is_all_none:
+            return result
+
+        condition, condition_dim = condition_bdim
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+
+        condition = _bdim_at_front(condition, condition_dim, axis_size)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+
+        out = prim(condition, x, y)
+
+        return (out, 0)
+
+    return vmap_rule
+
+
+
 @vmap_rules_getters.register(P.ScatterAdd)
 @vmap_rules_getters.register(P.ScatterNdAdd)
 def get_scatter_add_vmap_rule(prim, axis_size):
