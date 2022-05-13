@@ -103,10 +103,10 @@ class CommonPattern:
         if dom.pattern != PrimLib.RESHAPE or len(dom.ops) != 1:
             return []
         for a, _ in dom.out_relations.items():
-            if dom.check_acyclic(a):
+            if a.mode == GraphSplitByPattern.Area.MODE_COMPOSITE and dom.check_acyclic(a):
                 return [a], False
         for a, _ in dom.in_relations.items():
-            if a.check_acyclic(dom):
+            if a.mode == GraphSplitByPattern.Area.MODE_COMPOSITE and a.check_acyclic(dom):
                 return [a], True
         return []
 
@@ -745,7 +745,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             fused = []
             for a, r in dom.out_relations.items():
                 if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a) or \
-                        (fused and fused[0].dom_op().output.shape != a.dom_op().output.shape):
+                        (fused and tensor_size(fused[0].dom_op().output) != tensor_size(a.dom_op().output)):
                     return []
                 fused.append(a)
             return fused, False
@@ -1139,7 +1139,7 @@ class GraphSplitAscend(GraphSplitByPattern):
             fused = []
             for a, r in dom.out_relations.items():
                 if _broadcast_pat_exclude(dom, a, r) or not dom.check_acyclic(a) or \
-                        (fused and fused[0].dom_op().output.shape != a.dom_op().output.shape):
+                        (fused and tensor_size(fused[0].dom_op().output) != tensor_size(a.dom_op().output)):
                     return []
                 fused.append(a)
             return fused, False

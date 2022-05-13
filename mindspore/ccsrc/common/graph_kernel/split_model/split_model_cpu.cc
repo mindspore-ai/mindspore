@@ -35,9 +35,6 @@ class FuseReshape : public FusePattern {
     }
 
     for (auto &inp : dom->inputs()) {
-      if (inp->is_output() || inp->user_num() > 1) {
-        continue;
-      }
       if (inp->pattern() <= NodePattern::BROADCAST && !HasCircle(inp, dom)) {
         KeepMinimumArea(inp, FuseDirection::FORWARD);
       }
@@ -54,6 +51,32 @@ class FuseReshape : public FusePattern {
     }
   }
   AreaPtr min_area_;
+};
+
+class FuseIsolateReshape : public FusePattern {
+ public:
+  FuseIsolateReshape() : FusePattern("isolate_reshape") {}
+  ~FuseIsolateReshape() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override { return dom->pattern() == NodePattern::RESHAPE && dom->size() == 1; }
+  bool Match(const AreaPtr &dom) override {
+    for (auto &user : dom->users()) {
+      if (user->mode() == AreaMode::COMPOSITE && !HasCircle(dom, user)) {
+        (void)fused_areas_.emplace_back(user);
+        direction_ = FuseDirection::BACKWARD;
+        return true;
+      }
+    }
+    for (auto &inp : dom->inputs()) {
+      if (inp->mode() == AreaMode::COMPOSITE && !HasCircle(inp, dom)) {
+        (void)fused_areas_.emplace_back(inp);
+        direction_ = FuseDirection::FORWARD;
+        return true;
+      }
+    }
+    return false;
+  }
 };
 
 class FuseElemwiseBroadcastFwd : public FusePattern {
@@ -84,7 +107,7 @@ class FuseElemwiseBroadcastFwd : public FusePattern {
         if (fuse_type_ == FuseType::kWidth && HasCircle(a, dom)) {
           continue;
         }
-        if (a->dom()->shape == dom->dom()->shape) {
+        if (a->compute_size() == dom->compute_size()) {
           (void)fused_areas_.emplace_back(a);
         }
       }
@@ -179,7 +202,7 @@ class FuseElemwiseBroadcastBwd : public FusePattern {
         return false;
       }
       if (fuse_type_ == FuseType::kWidth) {
-        if (!fused_areas_.empty() && fused_areas_[0]->dom()->shape != a->dom()->shape) {
+        if (!fused_areas_.empty() && fused_areas_[0]->compute_size() != a->compute_size()) {
           return false;
         }
         if (HasCircle(dom, a)) {
@@ -216,6 +239,7 @@ void SplitModelCpu::InitFusePatterns() {
   AddPattern(FuseReduceFwd::CreateWidthMatcher(kReduceFusionDepth), true);
   AddPattern(FuseElemwiseBroadcastBwd::CreateDepthMatcher(kBroadcastFusionDepth), true);
   AddPattern(FuseElemwiseBroadcastBwd::CreateWidthMatcher(kBroadcastFusionDepth), true);
+  AddPattern(std::make_shared<FuseIsolateReshape>(), true);
 }
 
 AreaMode SplitModelCpu::GetDefaultAreaMode(const PrimOpPtr &) const { return AreaMode::COMPOSITE; }
