@@ -31,7 +31,7 @@ constexpr int32_t kNumThreads = 8;
 constexpr int kNumDeviceInfo = 2;
 constexpr int kNumMaxTaskQueueSize = 1000;
 constexpr int kNumBindMode = lite::HIGHER_CPU;
-constexpr int32_t kNumInterOpParallel = 0;
+constexpr int32_t kNumInterOpParallel = 4;
 constexpr bool is_enable_parallel = true;
 int GetCoreNum() {
   int core_num = 1;
