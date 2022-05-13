@@ -22,19 +22,12 @@
 #include <map>
 #include <string>
 
-#include "backend/common/optimizer/const_input_to_attr.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
-AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node);
-  opt::ConstInputToAttr(cnode, input_idx_);
-  return decorated_->Run(cnode);
-}
-
 AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
   for (const auto &idx : input_idx_) {

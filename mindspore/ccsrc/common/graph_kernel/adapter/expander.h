@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_EXPANDER_H_
 #define MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_EXPANDER_H_
 #include <vector>
+#include <string>
+#include <unordered_set>
 #include <memory>
 #include "common/graph_kernel/core/expander.h"
 #include "ir/func_graph.h"
@@ -40,6 +42,16 @@ class ComplexOpDecorator : public ExpanderDecorator {
   ~ComplexOpDecorator() override = default;
   static ExpanderPtr Creator(const ExpanderPtr &decorated) {
     return std::static_pointer_cast<Expander>(std::make_shared<ComplexOpDecorator>(decorated));
+  }
+  AnfNodePtr Run(const AnfNodePtr &node) override;
+};
+
+class COMMON_EXPORT AttrToInputDeco : public ExpanderDecorator {
+ public:
+  explicit AttrToInputDeco(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
+  ~AttrToInputDeco() override = default;
+  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
+    return std::static_pointer_cast<Expander>(std::make_shared<AttrToInputDeco>(decorated));
   }
   AnfNodePtr Run(const AnfNodePtr &node) override;
 };

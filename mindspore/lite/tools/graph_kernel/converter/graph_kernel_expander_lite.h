@@ -23,23 +23,6 @@
 #include "utils/hash_set.h"
 
 namespace mindspore::graphkernel {
-class InputToAttrDeco : public ExpanderDecorator {
- public:
-  InputToAttrDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
-      : ExpanderDecorator(decorated), input_idx_(input_idx) {}
-  ~InputToAttrDeco() = default;
-
-  static ExpanderCreatorFunc GetCreator(const HashSet<size_t> &input_idx) {
-    return [input_idx](const ExpanderPtr &decorated) {
-      return std::static_pointer_cast<Expander>(std::make_shared<InputToAttrDeco>(decorated, input_idx));
-    };
-  }
-  AnfNodePtr Run(const AnfNodePtr &node) override;
-
- protected:
-  HashSet<size_t> input_idx_;
-};
-
 class ParaToValueDeco : public ExpanderDecorator {
  public:
   ParaToValueDeco(const ExpanderPtr &decorated, const HashSet<size_t> &input_idx)
