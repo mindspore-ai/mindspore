@@ -1002,7 +1002,7 @@ class GraphSplitGpu(GraphSplitByPattern):
 
             fused = []
             for a, _ in dom.in_relations.items():
-                if a.pattern <= PrimLib.BROADCAST and a.check_acyclic(dom):
+                if a.pattern < PrimLib.BROADCAST and a.check_acyclic(dom):
                     fused.append(a)
 
             return fused, True
