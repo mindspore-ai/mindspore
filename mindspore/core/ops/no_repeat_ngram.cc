@@ -29,6 +29,9 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t kNoRepeatNGramParamValue = 1;
+}  // namespace
+namespace {
 abstract::ShapePtr NoRepeatNGramInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -58,6 +61,10 @@ abstract::ShapePtr NoRepeatNGramInferShape(const PrimitivePtr &primitive,
                                          log_shape.at(kIndex1), prim_name);
   (void)CheckAndConvertUtils::CheckValue("ngram_size", ngram_size, kLessEqual, "state_seq shape[2] + 1",
                                          state_shape.at(kIndex2), prim_name);
+  if ((ngram_size < kNoRepeatNGramParamValue)) {
+    MS_EXCEPTION(ValueError) << "Param ngram_size  << " << ngram_size << " is illegal. ";
+  }
+
   return std::make_shared<abstract::Shape>(log_shape);
 }
 TypePtr NoRepeatNGramInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -74,6 +81,12 @@ TypePtr NoRepeatNGramInferType(const PrimitivePtr &prim, const std::vector<Abstr
   return CheckAndConvertUtils::CheckTensorTypeSame(log_types, valid_params_types, prim->name());
 }
 }  // namespace
+
+void NoRepeatNGram::set_ngram(const int64_t ngram) { (void)this->AddAttr(kNgramSize, api::MakeValue(ngram)); }
+/// \brief Get ngram.
+///
+/// \return ngram.
+int64_t NoRepeatNGram::get_ngram() const { return GetValue<int64_t>(GetAttr(kNgramSize)); }
 
 MIND_API_OPERATOR_IMPL(NoRepeatNGram, BaseOperator);
 AbstractBasePtr NoRepeatNGramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
