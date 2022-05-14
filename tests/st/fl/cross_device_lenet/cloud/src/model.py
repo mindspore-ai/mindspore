@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.initializer import TruncatedNormal
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
     """weight initial for conv layer"""
@@ -40,7 +40,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 def weight_variable():
     """weight initial"""
-    return TruncatedNormal(0.02)
+    return ms.common.initializer.TruncatedNormal(0.02)
 
 
 class LeNet5(nn.Cell):
