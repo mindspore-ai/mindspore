@@ -20,6 +20,7 @@ import re
 import ast
 import hashlib
 import inspect
+import importlib
 import numpy as np
 from mindspore._c_expression import Oplib, typing
 from mindspore import context
@@ -31,6 +32,60 @@ from mindspore import ops
 from ._ms_hybrid import determine_variable_usage
 from ._custom_grad import autodiff_bprop
 from ._pyfunc_registry import add_pyfunc
+
+
+def _compile_aot(file):
+    """
+    Automatically compile the source file for custom aot
+
+    Args:
+        file (str): the path to the source file
+
+    Returns:
+        str: the path to the compiled library
+    """
+    cache_path = os.getenv('MS_COMPILER_CACHE_PATH')
+    if cache_path is None:
+        cache_path = "./kernel_meta/"
+    elif cache_path[-1] != "/":
+        cache_path = cache_path + "/"
+
+    if not os.path.exists(cache_path):
+        os.makedirs(cache_path)
+
+    search_res = importlib.util.find_spec("mindspore")
+    if search_res is None:
+        raise RuntimeError("Cannot find mindspore module!")
+
+    res_path = search_res.origin
+    find_pos = res_path.find("__init__.py")
+    if find_pos == -1:
+        raise RuntimeError(
+            "Find module mindspore __init__.py file failed!")
+    include_file = "-I{}include/api/".format(res_path[:find_pos])
+
+    file_name = file.split('/')[-1]
+    func_path = cache_path + file_name + ".so"
+
+    if file.endswith("cpp") or file.endswith("cc"):
+        cmd = "g++ -std=c++17 --shared -fPIC " + \
+            include_file + " -o " + func_path + " " + file
+    elif file.endswith("cu"):
+        cmd = "nvcc --shared -Xcompiler -fPIC " + \
+            include_file + " -o " + func_path + " " + file
+    else:
+        raise ValueError("The source file must be a cc/cpp/cu file, but get: {}".format(file))
+
+    with os.popen(cmd) as f:
+        r = f.read()
+    if os.path.exists(func_path) and not r:
+        pass
+    else:
+        if os.path.exists(func_path):
+            os.remove(func_path)
+        assert False, "Failed to compile " + file + " to so library"
+
+    return func_path
 
 
 class Custom(ops.PrimitiveWithInfer):
@@ -353,7 +408,8 @@ class Custom(ops.PrimitiveWithInfer):
         self._update_func_info()
         self.add_prim_attr("func_name", self.func_name)
         self.add_prim_attr("uniq_name", self.uniq_name)
-        self.add_prim_attr("func_compile_attrs", self._func_compile_attrs)
+        if self.func_type == "hybrid":
+            self.add_prim_attr("func_compile_attrs", self._func_compile_attrs)
 
         self.add_prim_attr("imply_path", self.imply_path)
         if self.func_type == "pyfunc":
@@ -420,6 +476,15 @@ class Custom(ops.PrimitiveWithInfer):
             if not isinstance(self.func, str):
                 raise TypeError("{}, 'func' must be of type str, but got {}".format(
                     self.log_prefix, type(self.func)))
+            file_name_list = self.func.split(":")
+            if len(file_name_list) != 2:
+                raise TypeError(
+                    "{}, 'func' should be like 'file_name:func_name', but got {}".format(
+                        self.log_prefix, self.func))
+            if not file_name_list[0].endswith("so"):
+                file_path = _compile_aot(file_name_list[0])
+                self.func = file_path + ":" + file_name_list[1]
+
         elif self.func_type == "julia":
             self._check_julia_func()
         elif self.func_type == "hybrid":
@@ -504,6 +569,16 @@ class Custom(ops.PrimitiveWithInfer):
                 for i in reg_info["dtype_format"]:
                     new_dtype_format.append(i + (DataType.I32_Default,))
                 reg_info["dtype_format"] = new_dtype_format
+            if isinstance(reg_info["outputs"], list):
+                for i, item in enumerate(reg_info["outputs"]):
+                    output_name_list = []
+                    if isinstance(item, dict) and item.get("name") is not None:
+                        output_name_list.append(reg_info["outputs"][i]["name"])
+                    self.add_prim_attr("output_names", output_name_list)
+
+            if isinstance(reg_info.get("op_name"), str):
+                self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
+
             target = self._get_target(reg_info)
             # Reg info for func is only registered once for a certain target
             if self._has_registered(target):
@@ -593,6 +668,12 @@ class Custom(ops.PrimitiveWithInfer):
         if reg_info["imply_type"] == "AKG":
             target_to_processor = {"Ascend": "AiCore", "GPU": "CUDA", "CPU": "CPU"}
             reg_info["processor"] = reg_info.get("processor", target_to_processor.get(target))
+        if self.func_type == "aot":
+            if reg_info.get("attr") is not None and isinstance(reg_info["attr"], list):
+                for i, item in enumerate(reg_info["attr"]):
+                    if isinstance(item, dict) and item.get("value") is not None:
+                        self.add_prim_attr(reg_info["attr"][i]["name"], reg_info["attr"][i]["value"])
+                reg_info["attr"] = []
         return reg_info
 
     def _get_target(self, reg_info):
