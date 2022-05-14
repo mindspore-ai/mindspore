@@ -53,6 +53,7 @@ constexpr auto kAtan = "Atan";
 constexpr auto kSin = "Sin";
 constexpr auto kCos = "Cos";
 constexpr auto kTan = "Tan";
+constexpr auto kLog = "Log";
 constexpr auto kSinh = "Sinh";
 constexpr auto kCosh = "Cosh";
 constexpr auto kAsinh = "Asinh";
@@ -433,6 +434,26 @@ void Abs(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size)
 }
 
 template <typename T>
+void Log(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(log(static_cast<double>(in[i])));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
+void ComplexLog(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
+  auto task = [&in, &out](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      out[i] = static_cast<T>(log(in[i]));
+    }
+  };
+  ParallelLaunchAutoSearch(task, size, content, &content->parallel_search_info_);
+}
+
+template <typename T>
 void Sqrt(ArithmeticSelfCpuKernelFunc *content, const T *in, T *out, size_t size) {
   auto task = [&in, &out](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
@@ -567,33 +588,20 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
   const size_t lens = outputs[0]->size / sizeof(T);
   static const std::unordered_map<std::string,
                                   std::function<void(ArithmeticSelfCpuKernelFunc *, const T *, T *, size_t)>>
-    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>},
-                          {prim::kPrimSign->name(), Sign<T>},
-                          {prim::kPrimNeg->name(), Neg<T>},
-                          {prim::kPrimAtanh->name(), Atanh<T>},
-                          {prim::kPrimAcosh->name(), Acosh<T>},
-                          {prim::kPrimFloor->name(), Floor<T>},
-                          {prim::kPrimSin->name(), Sin<T>},
-                          {prim::kPrimGeLU->name(), Gelu<T>},
-                          {prim::kPrimCos->name(), Cos<T>},
-                          {prim::kPrimTan->name(), Tan<T>},
-                          {prim::kPrimAsin->name(), Asin<T>},
-                          {prim::kPrimACos->name(), ACos<T>},
-                          {prim::kPrimAtan->name(), Atan<T>},
-                          {prim::kPrimSinh->name(), Sinh<T>},
-                          {prim::kPrimCosh->name(), Cosh<T>},
-                          {prim::kPrimAsinh->name(), Asinh<T>},
-                          {prim::kPrimReciprocal->name(), Reciprocal<T>},
-                          {prim::kPrimInv->name(), Inv<T>},
-                          {prim::kPrimInvert->name(), Invert<T>},
-                          {prim::kPrimRint->name(), Rint<T>},
-                          {prim::kPrimRound->name(), Round<T>},
-                          {prim::kPrimAbs->name(), Abs<T>},
-                          {prim::kPrimSqrt->name(), Sqrt<T>},
-                          {prim::kPrimRsqrt->name(), Rsqrt<T>},
-                          {prim::kPrimErf->name(), Erf<T>},
-                          {prim::kPrimErfc->name(), Erfc<T>},
-                          {prim::kPrimSoftsign->name(), Softsign<T>},
+    arithmeticSelfFuncMap{{prim::kPrimSquare->name(), Square<T>}, {prim::kPrimSign->name(), Sign<T>},
+                          {prim::kPrimNeg->name(), Neg<T>},       {prim::kPrimAtanh->name(), Atanh<T>},
+                          {prim::kPrimAcosh->name(), Acosh<T>},   {prim::kPrimFloor->name(), Floor<T>},
+                          {prim::kPrimSin->name(), Sin<T>},       {prim::kPrimGeLU->name(), Gelu<T>},
+                          {prim::kPrimCos->name(), Cos<T>},       {prim::kPrimLog->name(), Log<T>},
+                          {prim::kPrimTan->name(), Tan<T>},       {prim::kPrimAsin->name(), Asin<T>},
+                          {prim::kPrimACos->name(), ACos<T>},     {prim::kPrimAtan->name(), Atan<T>},
+                          {prim::kPrimSinh->name(), Sinh<T>},     {prim::kPrimCosh->name(), Cosh<T>},
+                          {prim::kPrimAsinh->name(), Asinh<T>},   {prim::kPrimReciprocal->name(), Reciprocal<T>},
+                          {prim::kPrimInv->name(), Inv<T>},       {prim::kPrimInvert->name(), Invert<T>},
+                          {prim::kPrimRint->name(), Rint<T>},     {prim::kPrimRound->name(), Round<T>},
+                          {prim::kPrimAbs->name(), Abs<T>},       {prim::kPrimSqrt->name(), Sqrt<T>},
+                          {prim::kPrimRsqrt->name(), Rsqrt<T>},   {prim::kPrimErf->name(), Erf<T>},
+                          {prim::kPrimErfc->name(), Erfc<T>},     {prim::kPrimSoftsign->name(), Softsign<T>},
                           {prim::kPrimRelu->name(), Relu<T>}};
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
@@ -617,7 +625,8 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernelComplex(const std::vector<AddressP
                           {prim::kPrimSinh->name(), ComplexSinh<T>},   {prim::kPrimCosh->name(), ComplexCosh<T>},
                           {prim::kPrimSin->name(), ComplexSin<T>},     {prim::kPrimCos->name(), ComplexCos<T>},
                           {prim::kPrimRsqrt->name(), Rsqrt<T>},        {prim::kPrimTan->name(), Tan<T>},
-                          {prim::kPrimAtanh->name(), Atanh<T>},        {prim::kPrimSign->name(), ComplexSign<T>}};
+                          {prim::kPrimAtanh->name(), Atanh<T>},        {prim::kPrimSign->name(), ComplexSign<T>},
+                          {prim::kPrimLog->name(), ComplexLog<T>}};
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
     MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', it does not support " << kernel_name_ << " with complex as input. ";
@@ -630,6 +639,30 @@ class SqrtMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
  public:
   SqrtMKLKernelFunc() : EltWiseCpuKernelMod(kSqrt) {}
   ~SqrtMKLKernelFunc() override = default;
+
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override {
+    EltWiseCpuKernelMod::Init(base_operator, inputs, outputs);
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override {
+    // The Resize of EltWiseCpuKernelMod must be called here.
+    return EltWiseCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  }
+
+  bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+               const std::vector<AddressPtr> &outputs) override {
+    return EltWiseCpuKernelMod::Launch(inputs, workspace, outputs);
+  }
+};
+
+// MKLDNN Log
+class LogMKLKernelFunc : public CpuKernelFunc, private EltWiseCpuKernelMod {
+ public:
+  LogMKLKernelFunc() : EltWiseCpuKernelMod(kLog) {}
+  ~LogMKLKernelFunc() override = default;
 
   void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                 const std::vector<KernelTensorPtr> &outputs) override {
@@ -766,6 +799,12 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithFuncCreator>
    {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      []() { return std::make_shared<SqrtMKLKernelFunc>(); }}}},
+  {kLog,
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128), CreateArithSelfFunc},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     []() { return std::make_shared<LogMKLKernelFunc>(); }}}},
   {kErf,
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), CreateArithSelfFunc},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64), CreateArithSelfFunc}}},
@@ -927,6 +966,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Abs,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kAbs); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sqrt,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kSqrt); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Log,
+                                 []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kLog); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erf,
                                  []() { return std::make_shared<ArithmeticSelfCpuKernelMod>(kErf); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Erfc,

@@ -1739,6 +1739,11 @@ test_case_math_ops = [
         'block': P.GreaterEqual(),
         'desc_inputs': [[2, 3, 4, 1], [4, 5]],
         'desc_bprop': [Tensor(np.ones((2, 3, 4, 5), np.bool_))]}),
+    ('Log', {
+        'block': P.Log(),
+        'desc_inputs': [Tensor(np.array([1.0, 2.0, 4.0], np.float32))],
+        'desc_bprop': [Tensor(np.array([1.0, 2.0, 4.0], np.float32))],
+        'skip': ['backward']}),
     ('LogicalNot', {
         'block': P.LogicalNot(),
         'desc_inputs': [Tensor(np.zeros((3, 4, 5), np.bool_))],

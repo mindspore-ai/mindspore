@@ -2413,7 +2413,7 @@ class HistogramFixedWidth(PrimitiveWithInfer):
         return y_dtype
 
 
-class Log(PrimitiveWithInfer):
+class Log(Primitive):
     """
     Returns the natural logarithm of a tensor element-wise.
 
@@ -2434,21 +2434,10 @@ class Log(PrimitiveWithInfer):
     def __init__(self):
         """Initialize Log."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x):
-        return x
-
-    def infer_dtype(self, x):
-        validator.check_subclass("x", x, mstype.tensor, self.name)
-        return x
-
-    def infer_value(self, x):
-        if x is not None:
-            x = x.asnumpy()
-            out = np.log(x)
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
+        self.add_prim_attr("cust_aicpu", self.name)
+        self.add_prim_attr('base', -1.0)
+        self.add_prim_attr('scale', 1.0)
+        self.add_prim_attr('shift', 0.0)
 
 
 class Log1p(Primitive):

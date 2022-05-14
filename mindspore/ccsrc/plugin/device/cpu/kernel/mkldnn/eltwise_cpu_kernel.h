@@ -30,7 +30,6 @@ constexpr auto kElu = "Elu";
 constexpr auto kReLU = "ReLU";
 constexpr auto kReLU6 = "ReLU6";
 constexpr auto kExp = "Exp";
-constexpr auto kLog = "Log";
 constexpr auto kSigmoid = "Sigmoid";
 constexpr auto kTanh = "Tanh";
 constexpr auto kSoftplus = "Softplus";

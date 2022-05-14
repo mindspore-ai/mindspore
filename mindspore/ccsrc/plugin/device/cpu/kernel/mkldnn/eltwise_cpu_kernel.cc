@@ -146,7 +146,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
     {kExp,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {kLog,
+    {prim::kPrimLog->name(),
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
     {kSigmoid,
@@ -169,7 +169,6 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Elu, []() { return std::mak
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kReLU6); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp, []() { return std::make_shared<EltWiseCpuKernelMod>(kExp); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Log, []() { return std::make_shared<EltWiseCpuKernelMod>(kLog); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kSigmoid); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
