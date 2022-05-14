@@ -117,37 +117,9 @@ __global__ void ErfcKernel(const double *input, double *output, const size_t cou
 }
 template <typename T>
 __global__ void NegativeKernel(const T *input, T *output, const size_t count) {
-  T neg_one = -1;
+  T neg_one = static_cast<T>(-1);
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = neg_one * input[i];
-  }
-  return;
-}
-template <>
-__global__ void NegativeKernel(const uint8_t *input, uint8_t *output, const size_t count) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = input[i];
-  }
-  return;
-}
-template <>
-__global__ void NegativeKernel(const uint16_t *input, uint16_t *output, const size_t count) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = input[i];
-  }
-  return;
-}
-template <>
-__global__ void NegativeKernel(const uint32_t *input, uint32_t *output, const size_t count) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = input[i];
-  }
-  return;
-}
-template <>
-__global__ void NegativeKernel(const uint64_t *input, uint64_t *output, const size_t count) {
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
-    output[i] = input[i];
   }
   return;
 }
