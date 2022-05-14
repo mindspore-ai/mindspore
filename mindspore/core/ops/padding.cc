@@ -51,8 +51,8 @@ abstract::ShapePtr PaddingInferShape(const PrimitivePtr &primitive, const std::v
   CheckAndConvertUtils::CheckInteger("x rank", x_rank, kGreaterEqual, kNumber2, prim_name);
   int64_t x_last_dim = x_shape[x_shape.size() - 1];
   if (x_last_dim != kNumber1) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', the last dimension of 'x' must be 1, but got: " << x_last_dim
-                      << ".";
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', the last dimension of 'x' must be 1, but got: " << x_last_dim << ".";
   }
 
   auto value_ptr = primitive->GetAttr(kPadDimSize);

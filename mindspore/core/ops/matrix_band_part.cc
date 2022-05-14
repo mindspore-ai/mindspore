@@ -39,7 +39,11 @@ TypePtr MatrixBandPartInferType(const PrimitivePtr &prim, const std::vector<Abst
   }
   auto x_type = input_args[kInputIndex0]->BuildType();
   const std::set valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("lower", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
+                                             prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("upper", input_args[kInputIndex2]->BuildType(), {kInt32, kInt64},
+                                             prim_name);
   return x_type;
 }
 

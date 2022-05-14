@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/padding_cpu_kernel.h"
+#include "plugin/device/gpu/kernel/arrays/padding_gpu_kernel.h"
 #include <functional>
-#include <algorithm>
 #include <utility>
+#include <algorithm>
 #include <memory>
 #include "mindspore/core/ops/padding.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/padding_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
-bool PaddingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+bool PaddingGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   if (kernel_name_ != prim::kPrimPadding->name()) {
@@ -46,7 +47,7 @@ bool PaddingCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::
   return true;
 }
 
-int PaddingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+int PaddingGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &) {
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
@@ -76,55 +77,50 @@ int PaddingCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
 }
 
 template <typename T>
-bool PaddingCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                       const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_ptr = reinterpret_cast<T *>(inputs[0]->addr);
-  T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
-
-  auto memset_errno = memset_s(output_ptr, output_element_num_ * sizeof(T), 0, output_element_num_ * sizeof(T));
-  if (memset_errno != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memset failed. Error no: " << memset_errno;
-  }
-  auto task = [this, input_ptr, output_ptr](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      output_ptr[i * pad_dim_size_] = input_ptr[i];
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_outer_size_, this, &parallel_search_info_, pool_);
+bool PaddingGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+  T *input_ptr = GetDeviceAddress<T>(inputs, kIndex0);
+  T *output_ptr = GetDeviceAddress<T>(outputs, kIndex0);
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+    cudaMemsetAsync(output_ptr, 0, output_element_num_ * sizeof(T), reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "For 'Padding', it's cudaMemsetAsync failed.");
+  CalculatePadding(input_ptr, output_outer_size_, pad_dim_size_, output_ptr, device_id_,
+                   reinterpret_cast<cudaStream_t>(cuda_stream_));
   return true;
 }
 
-std::vector<std::pair<KernelAttr, PaddingCpuKernelMod::PaddingFunc>> PaddingCpuKernelMod::func_list_ = {
+std::vector<std::pair<KernelAttr, PaddingGpuKernelMod::PaddingFunc>> PaddingGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &PaddingCpuKernelMod::LaunchKernel<int8_t>},
+   &PaddingGpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &PaddingCpuKernelMod::LaunchKernel<int16_t>},
+   &PaddingGpuKernelMod::LaunchKernel<int16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &PaddingCpuKernelMod::LaunchKernel<int32_t>},
+   &PaddingGpuKernelMod::LaunchKernel<int32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &PaddingCpuKernelMod::LaunchKernel<int64_t>},
+   &PaddingGpuKernelMod::LaunchKernel<int64_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &PaddingCpuKernelMod::LaunchKernel<uint8_t>},
+   &PaddingGpuKernelMod::LaunchKernel<uint8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &PaddingCpuKernelMod::LaunchKernel<uint16_t>},
+   &PaddingGpuKernelMod::LaunchKernel<uint16_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &PaddingCpuKernelMod::LaunchKernel<uint32_t>},
+   &PaddingGpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &PaddingCpuKernelMod::LaunchKernel<uint64_t>},
+   &PaddingGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+   &PaddingGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &PaddingCpuKernelMod::LaunchKernel<float>},
+   &PaddingGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &PaddingCpuKernelMod::LaunchKernel<double>},
+   &PaddingGpuKernelMod::LaunchKernel<double>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   &PaddingCpuKernelMod::LaunchKernel<bool>}};
+   &PaddingGpuKernelMod::LaunchKernel<bool>}};
 
-std::vector<KernelAttr> PaddingCpuKernelMod::GetOpSupport() {
+std::vector<KernelAttr> PaddingGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, PaddingFunc> &pair) { return pair.first; });
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Padding, PaddingCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Padding, PaddingGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
