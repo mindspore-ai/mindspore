@@ -15,10 +15,8 @@
  */
 
 #include "ops/non_zero.h"
-
 #include <functional>
 #include <iostream>
-
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -32,7 +30,8 @@ constexpr size_t kNonZeroInputMinDim = 1;
 constexpr int64_t kNonZeroInputNum = 1;
 
 abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];
   if (x_shape.size() < kNonZeroInputMinDim) {
     MS_EXCEPTION(ValueError) << "For NonZero, the dimension of input argument[x] must greater or equal to "
                              << kNonZeroInputMinDim << ", but got " << x_shape.size() << ".";
