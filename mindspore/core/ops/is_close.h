@@ -31,6 +31,20 @@ class MIND_API IsClose : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IsClose);
   IsClose() : BaseOperator(kNameIsClose) { InitIOName({"x1", "x2"}, {"y"}); }
+
+  void Init(const float rtol, const float atol, const bool equal_nan);
+
+  void set_rtol(const float rtol);
+
+  void set_atol(const float atol);
+
+  void set_equal_nan(const bool equal_nan);
+
+  float get_rtol() const;
+
+  float get_atol() const;
+
+  bool get_equal_nan() const;
 };
 abstract::AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<abstract::AbstractBasePtr> &input_args);

@@ -17,7 +17,9 @@
 #include "plugin/device/cpu/kernel/is_close_cpu_kernel.h"
 #include <cmath>
 #include <algorithm>
+#include <memory>
 #include "abstract/utils.h"
+#include "mindspore/core/ops/is_close.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -25,13 +27,6 @@ namespace kernel {
 namespace {
 constexpr size_t kIsCloseInputsNum = 2;
 constexpr size_t kIsCloseOutputsNum = 1;
-constexpr size_t kIsCloseInputIndex = 0;
-constexpr size_t kIsCloseOtherIndex = 1;
-constexpr size_t kIsCloseOutputIndex = 0;
-constexpr char RTOL[] = "rtol";
-constexpr char ATOL[] = "atol";
-constexpr char EQUAL_NAN[] = "equal_nan";
-
 template <typename T>
 inline bool compute(T a, T b, float rtol, float atol, bool equal_nan) {
   if (a == b) {
@@ -49,21 +44,41 @@ inline bool compute(T a, T b, float rtol, float atol, bool equal_nan) {
 }
 }  // namespace
 
-void IsCloseCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+bool IsCloseCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsCloseInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsCloseOutputsNum, kernel_name_);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
-    MS_LOG(EXCEPTION) << "IsClose does not support this kernel data type: " << kernel_attr;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel data type: " << kernel_attr;
+    return false;
   }
   kernel_func_ = func_list_[index].second;
-  rtol_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, RTOL);
-  atol_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, ATOL);
-  equal_nan_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, EQUAL_NAN);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIsCloseInputIndex);
-  other_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIsCloseOtherIndex);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, kIsCloseOutputIndex);
+  auto kernel_ptr = std::make_shared<ops::IsClose>(base_operator->GetPrim());
+  rtol_ = kernel_ptr->get_rtol();
+  atol_ = kernel_ptr->get_atol();
+  equal_nan_ = kernel_ptr->get_equal_nan();
+  return true;
+}
+
+int IsCloseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                const std::vector<KernelTensorPtr> &outputs,
+                                const std::map<uint32_t, tensor::TensorPtr> &) {
+  if (int ret = KernelMod::Resize(base_operator, inputs, outputs) != KRET_OK) {
+    return ret;
+  }
+  input_shape_.clear();
+  other_shape_.clear();
+  output_shape_.clear();
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
+  auto other_shape = inputs.at(kIndex1)->GetShapeVector();
+  (void)std::transform(other_shape.begin(), other_shape.end(), std::back_inserter(other_shape_), LongToSize);
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+  return KRET_OK;
 }
 
 template <typename T>
@@ -71,9 +86,9 @@ bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                        const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIsCloseInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIsCloseOutputsNum, kernel_name_);
-  auto input = reinterpret_cast<T *>(inputs[kIsCloseInputIndex]->addr);
-  auto other = reinterpret_cast<T *>(inputs[kIsCloseOtherIndex]->addr);
-  auto output = reinterpret_cast<bool *>(outputs[kIsCloseOutputIndex]->addr);
+  auto input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  auto other = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  auto output = reinterpret_cast<bool *>(outputs[kIndex0]->addr);
 
   CTask task;
   BroadcastIterator base_iter(input_shape_, other_shape_, output_shape_);
@@ -109,12 +124,12 @@ bool IsCloseCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
       return common::SUCCESS;
     };
   }
-  size_t elem_num = outputs[kIsCloseOutputIndex]->size / sizeof(bool);
+  size_t elem_num = outputs[kIndex0]->size / sizeof(bool);
   ParallelLaunchAutoSearch(task, elem_num, this, &parallel_search_info_);
   return true;
 }
 
-std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::IsCloseFunc>> IsCloseCpuKernelMod::func_list_ = {
+std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::IsCloseLaunchFunc>> IsCloseCpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    &IsCloseCpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
@@ -143,7 +158,7 @@ std::vector<std::pair<KernelAttr, IsCloseCpuKernelMod::IsCloseFunc>> IsCloseCpuK
 std::vector<KernelAttr> IsCloseCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, IsCloseFunc> &pair) { return pair.first; });
+                       [](const std::pair<KernelAttr, IsCloseLaunchFunc> &pair) { return pair.first; });
   return support_list;
 }
 
