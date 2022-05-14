@@ -79,7 +79,34 @@ TypePtr IsCloseInferType(const PrimitivePtr &primitive, const std::vector<Abstra
 }
 }  // namespace
 
+void IsClose::Init(const float rtol, const float atol, const bool equal_nan) {
+  this->set_rtol(rtol);
+  this->set_atol(atol);
+  this->set_equal_nan(equal_nan);
+}
+
+void IsClose::set_rtol(const float rtol) { (void)this->AddAttr(kRtol, api::MakeValue(rtol)); }
+
+void IsClose::set_atol(const float atol) { (void)this->AddAttr(kAtol, api::MakeValue(atol)); }
+
+void IsClose::set_equal_nan(const bool equal_nan) { (void)this->AddAttr(kEqualNan, api::MakeValue(equal_nan)); }
+
+float IsClose::get_rtol() const {
+  auto value_ptr = this->GetAttr(kRtol);
+  return GetValue<float>(value_ptr);
+}
+
+float IsClose::get_atol() const {
+  auto value_ptr = this->GetAttr(kAtol);
+  return GetValue<float>(value_ptr);
+}
+
+bool IsClose::get_equal_nan() const {
+  auto value_ptr = this->GetAttr(kEqualNan);
+  return GetValue<bool>(value_ptr);
+}
 MIND_API_OPERATOR_IMPL(IsClose, BaseOperator);
+
 AbstractBasePtr IsCloseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

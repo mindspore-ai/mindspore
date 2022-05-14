@@ -25,14 +25,18 @@
 
 namespace mindspore {
 namespace kernel {
-class IsCloseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class IsCloseCpuKernelMod : public NativeCpuKernelMod {
  public:
   IsCloseCpuKernelMod() = default;
   ~IsCloseCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, outputs);
   }
@@ -42,15 +46,15 @@ class IsCloseCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
-  using IsCloseFunc = std::function<bool(IsCloseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                         const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, IsCloseFunc>> func_list_;
-  IsCloseFunc kernel_func_;
-  float rtol_;
-  float atol_;
-  bool equal_nan_;
+  using IsCloseLaunchFunc = std::function<bool(IsCloseCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                               const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, IsCloseLaunchFunc>> func_list_;
+  IsCloseLaunchFunc kernel_func_;
+  float rtol_{1e-5};
+  float atol_{1e-8};
+  bool equal_nan_{true};
   std::vector<size_t> input_shape_;
   std::vector<size_t> other_shape_;
   std::vector<size_t> output_shape_;
