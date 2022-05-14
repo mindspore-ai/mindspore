@@ -37,13 +37,15 @@ class OpTilingCalculateAdapter {
   OpTilingCalculateAdapter() = default;
   ~OpTilingCalculateAdapter() = default;
 
-  ::ge::Operator AnfNodeToGeOperatorAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
-                                            const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                            const std::string &op_compile_info);
+  ::ge::Operator GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node);
 
   ::ge::NodePtr AnfNodeToGeNodeAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
                                        const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
                                        const std::string &op_compile_info);
+
+  ::ge::Operator AnfNodeToGeOperatorAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
+                                            const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                                            const std::string &op_compile_info);
 
  private:
   void ConvertInputShapeAndType(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
