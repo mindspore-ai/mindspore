@@ -72,6 +72,7 @@ class AclPassImpl {
   STATUS TraceOutput(const AnfNodePtr &node);
 
  private: /* modify graph by custom node */
+  CNodePtr CreateMakeTupleGraphOutput(const FuncGraphPtr &func_graph, const CNodePtr &custom_node);
   STATUS ModifyGraphByCustomNode(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &manager,
                                  const CNodePtr &custom_node);
   STATUS ReplaceInputsByAippInputs(const FuncGraphPtr &func_graph);
