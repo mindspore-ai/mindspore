@@ -1399,7 +1399,7 @@ class MatrixBandPart(PrimitiveWithInfer):
     Refer to :func:`mindspore.ops.matrix_band_part` for more detail.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.array_ops import MatrixBandPart

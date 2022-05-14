@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_BAND_PART_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MATRIX_BAND_PART_CPU_KERNEL_H_
 #include <vector>
-#include <complex>
 #include <utility>
 #include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -35,9 +34,11 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  void ResetResource() noexcept;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
+    if (is_null_input_) {
+      return true;
+    }
     return kernel_func_(this, inputs, outputs);
   }
 
@@ -51,6 +52,7 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
                                                 const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MatrixBandPartFunc>> func_list_;
   MatrixBandPartFunc kernel_func_;
+  bool is_null_input_{false};
   std::vector<size_t> shapes_{};
   size_t dim_size_{1};
   size_t output_element_num_{0};

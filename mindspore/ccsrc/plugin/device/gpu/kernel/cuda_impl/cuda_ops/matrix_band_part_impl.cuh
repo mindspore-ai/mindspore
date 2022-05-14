@@ -18,7 +18,8 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MATRIX_BAND_PART_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 template <typename T>
-CUDA_LIB_EXPORT void MatrixBandPart(const size_t size, const T *input_matrix_addr, const size_t m, const size_t n,
-                                    const int64_t l, const int64_t u, T *output_addr, cudaStream_t cuda_stream);
+CUDA_LIB_EXPORT void MatrixBandPart(const size_t size, const T *input_ptr, const size_t m, const size_t n,
+                                    const int64_t lower, const int64_t upper, T *output_ptr, const uint32_t &device_id,
+                                    cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_MATRIX_BAND_PART_IMPL_CUH_
