@@ -49,6 +49,8 @@ class Namer:
         Returns:
             A string represents real-name.
         """
+        if name == '_':
+            raise RuntimeError("Invalid name '_' in code")
         pos = name.rfind("_")
         if pos == -1:
             return name
@@ -100,6 +102,19 @@ class TargetNamer(Namer):
     """
     Used for unique-ing targets of node.
     """
+    def __init__(self):
+        super().__init__()
+        self._origin_name_map = {}
+
+    def get_name(self, origin_name: str) -> str:
+        ret = super(TargetNamer, self).get_name(origin_name)
+        self._origin_name_map[origin_name] = ret
+        return ret
+
+    def add_name(self, name: str):
+        super(TargetNamer, self).add_name(name)
+        self._origin_name_map[name] = name
+
     def get_real_arg(self, origin_arg: str) -> str:
         """
         Get real argument from 'origin_arg' because target of node which produces 'origin_arg' may be change for unique.
@@ -110,10 +125,10 @@ class TargetNamer(Namer):
         Returns:
             A string represents real argument name.
         """
-        num = self._names.get(origin_arg)
-        if num is None or num == 1:
-            return origin_arg
-        return f"{origin_arg}_{num - 1}"
+        real_arg = self._origin_name_map.get(origin_arg)
+        if real_arg:
+            return real_arg
+        return origin_arg
 
 
 class NodeNamer(Namer):

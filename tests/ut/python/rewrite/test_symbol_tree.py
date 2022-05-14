@@ -114,7 +114,8 @@ def test_insert_node():
     assert len(relu2.get_normalized_args().values()) == 1
     assert relu1.get_targets()[0] == list(relu2.get_normalized_args().values())[0]
     input1 = 1
-    node = Node.create_call_buildin_op(Add(), None, ['x'], 'new_conv',
+    node = Node.create_call_buildin_op(Add(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
                                        [ScopedValue.create_naming_value('x'),
                                         ScopedValue.create_variable_value(input1)], {},
                                        'new_conv')
@@ -150,6 +151,29 @@ def test_insert_node():
     assert isinstance(args[0], ast.Name)
     assert isinstance(args[1], ast.Constant)
     assert len(construct_ast.body) == 7
+
+
+def test_insert_node_before_input():
+    """
+    Feature: Python api insert_node of SymbolTree of Rewrite.
+    Description: Call insert_node to insert a node before an input node.
+    Expectation: Failure.
+    """
+    stree, _, _, _ = create_symbol_tree()
+    input1 = 1
+    node = Node.create_call_buildin_op(Add(), None, [ScopedValue.create_naming_value('x')],
+                                       ScopedValue.create_naming_value('new_conv'),
+                                       [ScopedValue.create_naming_value('x'),
+                                        ScopedValue.create_variable_value(input1)], {},
+                                       'new_conv')
+    input_node = stree.get_inputs()[0]
+    position = stree.before(input_node)
+    failed = False
+    try:
+        stree.insert_node(position, node)
+    except RuntimeError:
+        failed = True
+    assert failed
 
 
 def test_set_node_arg():
