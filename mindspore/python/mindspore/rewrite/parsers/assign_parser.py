@@ -96,6 +96,10 @@ class AssignParser(Parser):
             return AssignParser._create_scopedvalue_from_tuple_ast(node)
         if isinstance(node, ast.Constant):
             return ScopedValue.create_variable_value(node.value)
+        if isinstance(node, ast.Num):
+            return ScopedValue.create_variable_value(node.n)
+        if isinstance(node, (ast.Str, ast.Bytes)):
+            return ScopedValue.create_variable_value(node.s)
         raise RuntimeError("Unsupported ast type to argument:", node)
 
     @staticmethod
@@ -404,12 +408,12 @@ class AssignParser(Parser):
                 node_ = AssignParser._convert_ast_binop_to_node(value, node)
                 stree.append_origin_field(node_)
             else:
-                logger.warning(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
-                               f"ignored as a python node now")
+                logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
+                            f"ignored as a python node now")
                 stree.try_append_python_node(node, node)
         elif isinstance(value, (ast.BoolOp, ast.Subscript)):
-            logger.warning(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
-                           f"ignored as a python node now")
+            logger.info(f"ops-call({astunparse.unparse(node)}) in assign will be supported in near feature, "
+                        f"ignored as a python node now")
             stree.try_append_python_node(node, node)
         elif isinstance(value, (ast.Name, ast.Constant, ast.Attribute, ast.Num, ast.NameConstant, ast.Bytes, ast.Str)):
             if isinstance(value, ast.Name):
@@ -422,7 +426,14 @@ class AssignParser(Parser):
             call_args = [AssignParser._create_scopedvalue(value)]
             node_ = Node.create_call_pass_through_method(node, targets, call_args, {}, node_name)
             stree.append_origin_field(node_)
-        elif isinstance(value, (ast.List, ast.Tuple, ast.Dict)):
+        elif isinstance(value, ast.Tuple):
+            targets = AssignParser._get_targets(AssignParser._create_scopedvalue(node.targets[0]))
+            args = []
+            for elt in value.elts:
+                args.append(AssignParser._create_scopedvalue(elt))
+            node_ = Node.create_call_method(node, targets, ScopedValue.create_naming_value("tuple"), args, {}, "tuple")
+            stree.append_origin_field(node_)
+        elif isinstance(value, (ast.List, ast.Dict)):
             # add these as callmethod node if necessary
             stree.try_append_python_node(node, node)
         else:

@@ -64,7 +64,7 @@ def create_symbol_tree():
     stree.set_class_ast(ast_class)
     stree.set_init_func_ast(ast_init_func)
     stree.set_ast_root(ast_construct_func)
-    stree.append_input_node("x")
+    stree.append_input_node(ast.arg(arg="x", annotation=None, type_comment=None), "x")
     conv_node = Node.create_call_buildin_op(net.conv, ast_conv, [ScopedValue.create_naming_value("x")],
                                             ScopedValue.create_naming_value("conv", "self"),
                                             [ScopedValue.create_naming_value("x")],

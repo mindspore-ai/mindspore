@@ -19,6 +19,7 @@ from mindspore import Tensor, nn
 from mindspore.ops import operations as P
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType, TreeNodeHelper
 from mindspore.common.api import _cell_graph_executor
+from .comp_network import CompNet
 
 
 class SubNet(nn.Cell):
@@ -176,3 +177,49 @@ def test_subtree_net():
     net_opt = stree.get_network()
     data_in = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)
     _cell_graph_executor.compile(net_opt, data_in)
+
+
+def test_subtree_create_erase():
+    """
+    Feature: Test SymbolTree from a network with sub-tree.
+    Description: Create a SymbolTree from a network with sub-network.
+    Expectation: Rewrite can parse a network with sub-network and can erase node in sub-network successfully.
+    """
+    net = CompNet(mul_size=(16, 3, 8, 8), add_size=(16, 3, 8, 8))
+    stree = SymbolTree.create(net)
+    del_node = stree.get_node("mul")
+    input_node = del_node.get_inputs()[0]
+    output_nodes = del_node.get_users()
+    for node in output_nodes:
+        node.set_arg_by_node(0, input_node)
+    stree.erase_node(del_node)
+    assert stree.get_node("mul") is None
+    assert 'z_1 = self.relu(x_4)' in stree.get_code()
+    new_net = stree.get_network()
+    data_in = Tensor(np.ones([16, 3, 8, 8]), mindspore.float32)
+    _cell_graph_executor.compile(new_net, data_in)
+
+
+def test_insert_del_replace():
+    """
+    Feature: Test insert api of SymbolTree.
+    Description: Test insert a node after an input node.
+    Expectation: Success.
+    """
+    net = CompNet(mul_size=(16, 3, 8, 8), add_size=(16, 3, 8, 8))
+    stree = SymbolTree.create(net)
+    nodes = stree.nodes()
+    position = stree.after(next(nodes))
+    new_node = Node.create_call_cell(P.Mul(), targets=[ScopedValue.create_naming_value("inputs")],
+                                     args=[ScopedValue.create_naming_value("inputs"),
+                                           ScopedValue.create_naming_value("mul_weight", "self")],
+                                     name="mulnet")
+    stree.insert(position, new_node)
+    for node in stree.nodes():
+        if node.get_instance_type() == P.Add:
+            new_node2 = Node.create_call_cell(P.Mul(), targets=["mulnet"], args=node.get_args(),
+                                              kwargs=node.get_kwargs(), name="mulnet")
+            stree.replace(node, [new_node2])
+    new_net = stree.get_network()
+    data_in = Tensor(np.ones([16, 3, 8, 8]), mindspore.float32)
+    _cell_graph_executor.compile(new_net, data_in)

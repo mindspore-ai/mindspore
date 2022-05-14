@@ -14,7 +14,7 @@
 # ============================================================================
 """Find specific type ast node in specific scope."""
 
-from typing import Type
+from typing import Type, Any
 import ast
 
 
@@ -67,3 +67,61 @@ class AstFinder(ast.NodeVisitor):
         self._results.clear()
         self.visit(self._scope)
         return self._results
+
+
+class StrChecker(ast.NodeVisitor):
+    """
+    Check if specific String exists in specific scope.
+
+    Args:
+        node (ast.AST): An instance of ast node as check scope.
+    """
+
+    def __init__(self, node: ast.AST):
+        self._context = node
+        self._pattern = ""
+        self._hit = False
+
+    def visit_Attribute(self, node: ast.Attribute) -> Any:
+        if isinstance(node.value, ast.Name) and node.value.id == self._pattern:
+            self._hit = True
+        return super(StrChecker, self).generic_visit(node)
+
+    def visit_Name(self, node: ast.Name) -> Any:
+        if node.id == self._pattern:
+            self._hit = True
+        return super(StrChecker, self).generic_visit(node)
+
+    def generic_visit(self, node: ast.AST) -> Any:
+        for _, value in ast.iter_fields(node):
+            if self._hit:
+                break
+            if isinstance(value, (list, tuple)):
+                for item in value:
+                    if isinstance(item, ast.AST):
+                        self.visit(item)
+                    if self._hit:
+                        break
+            elif isinstance(value, dict):
+                for item in value.values():
+                    if isinstance(item, ast.AST):
+                        self.visit(item)
+                    if self._hit:
+                        break
+            elif isinstance(value, ast.AST):
+                self.visit(value)
+
+    def check(self, pattern: str) -> bool:
+        """
+        Check if `pattern` exists in `_context`.
+
+        Args:
+            pattern (str): A string indicates target pattern.
+
+        Returns:
+            A bool indicates if `pattern` exists in `_context`.
+        """
+        self._pattern = pattern
+        self._hit = False
+        self.generic_visit(self._context)
+        return self._hit

@@ -210,7 +210,7 @@ class ClassDefParser(Parser):
                     self._replace_ori_field_of_init_func(stree, body.orelse, -1)
                     continue
                 else:
-                    logger.warning("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
+                    logger.info("Ignoring un-eval-able if: %s", astunparse.unparse(body.test))
             if not isinstance(body, ast.Assign):  # if not assign node, delete
                 body_index_to_be_deleted.append(body_index)
                 continue
@@ -266,11 +266,11 @@ class ClassDefParser(Parser):
                     parser: Parser = ParserRegister.instance().get_parser(ast.FunctionDef)
                     parser.process(stree, body)
                 else:
-                    logger.warning(
+                    logger.info(
                         "Ignoring ast.FunctionDef in ast.ClassDef except __init__ and construct function: %s",
                         body.name)
             else:
-                logger.warning("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
+                logger.info("Ignoring unsupported node(%s) in ast.ClassDef.", type(body).__name__)
 
 
 g_classdef_parser = reg_parser(ClassDefParser())

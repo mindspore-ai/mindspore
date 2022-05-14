@@ -44,7 +44,7 @@ class ArgumentsParser(Parser):
         for arg in node.args:
             if not isinstance(arg, ast.arg):
                 raise RuntimeError("Unsupported ast type in arguments arg: ", arg)
-            stree.append_input_node(arg.arg)
+            stree.append_input_node(arg, arg.arg)
 
         if hasattr(node, "vararg"):
             stree.try_append_python_node(node, node.vararg)

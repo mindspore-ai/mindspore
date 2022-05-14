@@ -45,3 +45,4 @@ def test_target_namer():
     assert len(inputs) == 1
     input0 = inputs[0]
     assert input0.get_name() == 'relu'
+    stree.get_network()

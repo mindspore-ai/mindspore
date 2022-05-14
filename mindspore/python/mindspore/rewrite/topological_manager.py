@@ -136,6 +136,8 @@ class TopoManager(Observable):
         if node.get_targets() is not None:
             for i in range(0, len(node.get_targets())):
                 target = node.get_targets()[i]
+                if target.value == "_":
+                    continue
                 if self._target_provider.get(target) is not None:
                     raise RuntimeError("target duplicated:", target)
                 self._target_provider[target] = (node, i)

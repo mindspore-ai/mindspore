@@ -17,8 +17,8 @@
 Define some ast helpers for manipulating python ast.
 """
 
-from .ast_finder import AstFinder
+from .ast_finder import AstFinder, StrChecker
 from .ast_replacer import AstReplacer
 from .ast_modifier import AstModifier
 
-__all__ = ["AstFinder", "AstReplacer", "AstModifier"]
+__all__ = ["AstFinder", "AstReplacer", "AstModifier", "StrChecker"]

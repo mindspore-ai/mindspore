@@ -24,7 +24,7 @@ from mindspore.nn import Cell
 from mindspore import log as logger
 from .node import Node, TreeNode
 from .api.node_type import NodeType
-from .ast_helpers import AstModifier, AstReplacer
+from .ast_helpers import AstModifier, AstReplacer, StrChecker
 from .api.scoped_value import ScopedValue, ValueType
 from .symbol_tree_dumper import SymbolTreeDumper
 from .topological_manager import TopoManager
@@ -115,6 +115,8 @@ class SymbolTree(Observer, Observable):
 
         self._modified = False
         self._node_visitor = None
+
+        self._tmp_file = None
 
     @staticmethod
     def _link_nodes_and_find_root(nodes: [Node]) -> Node:
@@ -321,10 +323,10 @@ class SymbolTree(Observer, Observable):
 
     def nodes(self):
         """
-        Getter of nodes if current SymbolTree.
+        Get generator of nodes of current `SymbolTree`.
 
         Returns:
-            A list of instance of Nodes.
+            A generator for iterating Nodes of `SymbolTree`.
         """
         if self._node_visitor is None:
             self._node_visitor = NodeVisitor(self)
@@ -481,7 +483,7 @@ class SymbolTree(Observer, Observable):
             valid = True
             if position.before_node:
                 valid = False
-            if self._tail and position.node is not self._tail:
+            if position.node.get_next() is not None and position.node.get_next().get_node_type() == NodeType.Input:
                 valid = False
             if not valid:
                 raise RuntimeError("Can not insert a node before or between parameters:", position)
@@ -565,12 +567,13 @@ class SymbolTree(Observer, Observable):
             self._inputs.append(node)
         return self.append_node(node, False)
 
-    def append_input_node(self, param_name: str, default: Optional[ScopedValue] = None):
+    def append_input_node(self, ast_node, param_name: str, default: Optional[ScopedValue] = None):
         """
         Append an input node to SymbolTree corresponding to parameter of forward method of network class.
         This method is called while building SymbolTree usually.
 
         Args:
+            ast_node (ast.AST): A ast Node corresponding to current parameter.
             param_name (str): A str represents name of parameter of forward method of network class.
             default (ScopedValue, optional): A ScopedValue represents default value of parameter. Default is None which
                 means parameter has no default value.
@@ -592,7 +595,7 @@ class SymbolTree(Observer, Observable):
             exist_param = target.value
             if exist_param == param_name:
                 raise RuntimeError("input duplicated:", param_name)
-        input_node = Node.create_input_node(None, param_name, default, name=f"input_{param_name}")
+        input_node = Node.create_input_node(ast_node, param_name, default, name=f"input_{param_name}")
         self.append_origin_field(input_node)
 
     def try_append_python_node(self, ast_scope: ast.AST, ast_node: ast.AST) -> Optional[Node]:
@@ -626,10 +629,10 @@ class SymbolTree(Observer, Observable):
         Returns:
             An instance of python node which has been appended to SymbolTree.
         """
-        logger.info("Ignoring unsupported node(%s) in %s.", type(ast_node).__name__, type(ast_scope).__name__)
+        logger.warning("Ignoring unsupported node(%s) in %s.", type(ast_node).__name__, type(ast_scope).__name__)
         node_name = self._node_name_namer.get_name(type(ast_node).__name__)
         node = Node.create_python_node(ast_node, node_name)
-        self._insert_node(Position.create(self, self._tail, True), node)
+        self._insert_node(Position.create(self, self._tail, False), node)
         return node
 
     def set_output(self, return_value: str, index: int) -> Node:
@@ -798,6 +801,7 @@ class SymbolTree(Observer, Observable):
         Returns:
             A str represents source code of modified network.
         """
+        self._remove_unused_import()
         ast.fix_missing_locations(self._module_ast)
         # Find all ast.ClassDef which can be export to code
         # Replace duplicated ast.ClassDef reference in main-ClassDef
@@ -831,6 +835,22 @@ class SymbolTree(Observer, Observable):
         """
         cls = self._get_cls_through_file()
         return cls(self._global_vars)
+
+    def _remove_unused_import(self):
+        """remove unused import in self._module_ast"""
+        str_checker = StrChecker(self._module_ast)
+        for i in range(len(self._module_ast.body) - 1, -1, -1):
+            body = self._module_ast.body[i]
+            if not isinstance(body, (ast.Import, ast.ImportFrom)):
+                continue
+            for alias in body.names:
+                name = alias.asname if alias.asname else alias.name
+                if not str_checker.check(name):
+                    if len(body.names) == 1:
+                        self._module_ast.body.remove(body)
+                        i += 1
+                    else:
+                        body.names.remove(alias)
 
     def _get_real_node(self, node_or_name: Union[Node, str]) -> Optional[Node]:
         if isinstance(node_or_name, Node):
@@ -1006,10 +1026,12 @@ class SymbolTree(Observer, Observable):
             A class handle.
         """
         source = self.get_code()
-        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.py')
-        tmp_file.write(source.encode('utf8'))
-        tmp_file.flush()
-        tmp_file_name = tmp_file.name
+        if self._tmp_file:
+            self._tmp_file.close()
+        self._tmp_file = tempfile.NamedTemporaryFile(suffix='.py')
+        self._tmp_file.write(source.encode('utf8'))
+        self._tmp_file.flush()
+        tmp_file_name = self._tmp_file.name
         tmp_module_path, tmp_module_file = os.path.split(tmp_file_name)
         tmp_module_name = tmp_module_file[:-3]
         sys.path.append(tmp_module_path)

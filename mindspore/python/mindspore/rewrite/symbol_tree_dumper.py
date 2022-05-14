@@ -15,7 +15,6 @@
 """SymbolTree dumper."""
 import inspect
 
-from mindspore import log as logger
 from .node import Node
 from .api.node_type import NodeType
 from .api.scoped_value import ScopedValue, ValueType
@@ -110,7 +109,6 @@ class SymbolTreeDumper:
                     if arg_name in self._dump_key2index.keys():
                         arg_str += f"{self._dump_key2index[arg_name]}, "
                     else:
-                        logger.warning("arg not appears before")
                         arg_str += f"{arg_name}, "
                 self._dump_buffer += f"({arg_str[:-2]})"
 
